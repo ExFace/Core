@@ -57,7 +57,6 @@ class OracleSqlBuilder extends AbstractSqlBuilder
     
     public function buildSqlQuerySelect()
     {
-        $filter_object_ids = array();
         $where = '';
         $having = '';
         $group_by = '';
@@ -92,7 +91,6 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             $where = $this->buildSqlWhere($this->getFilters());
             $having = $this->buildSqlHaving($this->getFilters());
             $core_joins = array_merge($core_joins, $this->buildSqlJoins($this->getFilters()));
-            $filter_object_ids = $this->getFilters()->getObjectIdsSafeForAggregation();
             foreach ($this->getFilters()->getUsedRelations() as $rel_alias => $rel) {
                 $core_relations[] = $rel_alias;
             }
@@ -170,7 +168,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 // TODO actually we need to make sure, the filter returns exactly one object, which probably means,
                 // that the filter should be layed over an attribute, which uniquely identifies the object (e.g.
                 // its UID column).
-                if ($group_by && in_array($qpart->getAttribute()->getObject()->getId(), $filter_object_ids) === false) {
+                if ($group_by && $this->isFilterUnambiguousForObject($this->getFilters(), $qpart->getAttribute()->getObject()) === false) {
                     if (! $this->isQpartRelatedToAggregator($qpart)) {
                         continue;
                     }
@@ -239,7 +237,6 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             $where = $this->buildSqlWhere($this->getFilters());
             $having = $this->buildSqlHaving($this->getFilters());
             $joins = $this->buildSqlJoins($this->getFilters());
-            $filter_object_ids = $this->getFilters()->getObjectIdsSafeForAggregation();
             
             // Object data source property SQL_SELECT_WHERE -> WHERE
             if ($custom_where = $this->getMainObject()->getDataAddressProperty('SQL_SELECT_WHERE')) {
@@ -266,7 +263,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->getAlias())) {
                     $select .= ', ' . $this->buildSqlSelect($qpart);
                     $joins = array_merge($joins, $this->buildSqlJoins($qpart));
-                } elseif (in_array($qpart->getAttribute()->getObject()->getId(), $filter_object_ids) !== false) {
+                } elseif ($this->isFilterUnambiguousForObject($this->getFilters(), $qpart->getAttribute()->getObject()) === true) {
                     $rels = $qpart->getUsedRelations();
                     $first_rel = false;
                     if (! empty($rels)) {

@@ -31,6 +31,7 @@ use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\TimeDataType;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * A query builder for generic SQL syntax.
@@ -1969,5 +1970,44 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         $this->reserved_words = $value;
         return $this;
+    }
+    
+    
+    
+    /**
+     * Returns TRUE if the given filter group produces data with only a single UID of the provided object.
+     * 
+     *  can assumed to be unique in the result of the query because of filtering for
+     * a single instance of that meta object.
+     *
+     * @return array
+     */
+    protected function isFilterUnambiguousForObject(QueryPartFilterGroup $filterGroup, MetaObjectInterface $object) : bool
+    {
+        $objId = $object->getId();
+        foreach ($filterGroup->getFilters() as $qpart) {
+            // TODO The current checks do not really ensure, that the object is unique. Need a better idea!
+            $isFilterUnambiguous = false;
+            if ($qpart->getComparator() == EXF_COMPARATOR_IS || $qpart->getComparator() == EXF_COMPARATOR_EQUALS) {
+                $isFilterUnambiguous = true;
+            } elseif ($qpart->getComparator() === EXF_COMPARATOR_IN) {
+                $values = is_array($qpart->getCompareValue()) ? $qpart->getCompareValue() : explode($qpart->getValueListDelimiter(), $qpart->getCompareValue());
+                if (count($values) === 1) {
+                    $isFilterUnambiguous = true;
+                }
+            }
+            if ($isFilterUnambiguous) {
+                $fltrObjId = ($qpart->getAttribute()->isRelation() ? $this->getMainObject()->getRelatedObject($qpart->getAlias())->getId() : $qpart->getAttribute()->getObject()->getId());
+                if ($fltrObjId === $objId) {
+                    return true;
+                }
+            }
+        }
+        foreach ($filterGroup->getNestedGroups() as $qpart) {
+            if ($qpart->getOperator() === EXF_LOGICAL_AND && $this->isFilteredByObject($qpart, $object) === true) {
+                return true;
+            }
+        }
+        return false;
     }
 }
