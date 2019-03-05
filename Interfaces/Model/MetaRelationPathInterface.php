@@ -134,6 +134,8 @@ interface MetaRelationPathInterface extends \IteratorAggregate, iCanBeCopied
     public function isEmpty();
     
     /**
+     * Returns a new relation path from the end object of this path to it's start object.
+     * 
      * TODO Make the staic method relation_path_reverse protected or remove it once all calls are replaced
      * by this method!
      *

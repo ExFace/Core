@@ -134,18 +134,26 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::addRow()
      */
-    public function addRow(array $row, bool $merge_uid_dublicates = false, bool $auto_add_columns = true) : DataSheetInterface
+    public function addRow(array $row, bool $merge_uid_dublicates = false, bool $auto_add_columns = true, int $index = null) : DataSheetInterface
     {
         if (! empty($row)) {
-            if ($merge_uid_dublicates && $this->getUidColumn() && $uid = $row[$this->getUidColumn()->getName()]) {
+            if ($merge_uid_dublicates === true && $this->hasUidColumn() === true && $uid = $row[$this->getUidColumn()->getName()]) {
                 $uid_row_nr = $this->getUidColumn()->findRowByValue($uid);
                 if ($uid_row_nr !== false) {
                     $this->rows[$uid_row_nr] = array_merge($this->rows[$uid_row_nr], $row);
                 } else {
-                    $this->rows[] = $row;
+                    if ($index === null || is_numeric($index) === false) {
+                        $this->rows[] = $row;
+                    } else {
+                        array_splice($this->rows, $index, 0, [$row]);
+                    }
                 }
             } else {
-                $this->rows[] = $row;
+                if ($index === null || is_numeric($index) === false) {
+                    $this->rows[] = $row;
+                } else {
+                    array_splice($this->rows, $index, 0, [$row]);
+                }
             }
             
             // ensure, that all columns used in the rows are present in the data sheet
@@ -163,31 +171,51 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::joinLeft()
      */
-    public function joinLeft(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $left_key_column = null, $right_key_column = null, $relation_path = '')
+    public function joinLeft(\exface\Core\Interfaces\DataSheets\DataSheetInterface $other_sheet, $left_key_column = null, $right_key_column = null, $relation_path = '')
     {
         // First copy the columns of the right data sheet ot the left one
         $right_cols = array();
-        foreach ($data_sheet->getColumns() as $col) {
+        foreach ($other_sheet->getColumns() as $col) {
             $right_cols[] = $col->copy();
         }
         $this->getColumns()->addMultiple($right_cols, RelationPathFactory::createFromString($this->getMetaObject(), $relation_path));
         // Now process the data and join rows
         if (! is_null($left_key_column) && ! is_null($right_key_column)) {
             foreach ($this->rows as $left_row_nr => $row) {
-                if (! $rCol = $data_sheet->getColumns()->get($right_key_column)) {
+                // Check if the right column is really present in the data to be joined
+                if (! $rCol = $other_sheet->getColumns()->get($right_key_column)) {
                     throw new DataSheetMergeError($this, 'Cannot find right key column "' . $right_key_column . '" for a left join!', '6T5E849');
                 }
-                $right_row_nr = $rCol->findRowByValue($row[$left_key_column]);
-                if ($right_row_nr !== false) {
-                    $right_row = $data_sheet->getRow($right_row_nr);
-                    foreach ($right_row as $col_name => $val) {
-                        $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col_name), $left_row_nr, $val);
+                // Find rows in the other sheet, that match the currently processed key
+                $right_row_nrs = $rCol->findRowsByValue($row[$left_key_column]);
+                if (false === empty($right_row_nrs)) {
+                    // Since we do an OUTER JOIN, there may be multiple matching rows, so we need
+                    // to loop through them. The first row is simply joined to the current left row
+                    // (i.e. the columns of the other sheet are appended). For subsequent rows a
+                    // copy of the left row is created and appended right next to it, than the
+                    // right columns are appended to this row copy.
+                    $needRowCopy = false;
+                    $left_row_new_nr = null;
+                    $left_row = $this->getRow($left_row_nr);
+                    foreach ($right_row_nrs as $right_row_nr) {
+                        if ($needRowCopy === true) {
+                            $left_row_new_nr = ($left_row_new_nr ?? $left_row_nr) + 1;
+                            $this->addRow($left_row, false, false, $left_row_new_nr);
+                        }
+                        $right_row = $other_sheet->getRow($right_row_nr);
+                        foreach ($right_row as $col_name => $val) {
+                            $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col_name), ($left_row_new_nr ?? $left_row_nr), $val);
+                        }
+                        $needRowCopy = true;
                     }
                 }
             }
         } elseif (is_null($left_key_column) && is_null($right_key_column)) {
+            // TODO this only joins the first other sheet row. A real LEFT OUT JOIN would
+            // need to dublicate rows as in the case above - but it's unclear, what should
+            // happen if there are actually no key columns...
             foreach ($this->rows as $left_row_nr => $row) {
-                $this->rows[$left_row_nr] = array_merge($row, $data_sheet->getRow($left_row_nr));
+                $this->rows[$left_row_nr] = array_merge($row, $other_sheet->getRow($left_row_nr));
             }
         } else {
             throw new DataSheetJoinError($this, 'Cannot join data sheets, if only one key column specified!', '6T5V0GU');
@@ -377,56 +405,74 @@ class DataSheet implements DataSheetInterface
                 $query->addAttribute($attr);
             } elseif (! $attribute->getRelationPath()->isEmpty()) {
                 // If the query builder cannot read the attribute, make a subsheet and ultimately a separate query.
-                // To create a subsheet we need to split the relation path to the current attribute into the part leading to the foreign key in the main data source
-                // and the part in the next data source. We always split into two parts by the first data source border: if there are more data sources involved,
-                // the subsheet will take care of splitting the rest of the path. Here is an example: Concider comparing turnover between the point-of-sale system and
-                // the backend ERP. Each system shall have stores and their turnover in different data bases: TURNOVER<-POS->FLOOR->POS_STORE<->ERP_STORE->TURNOVER. One way
-                // would be creating a data sheet for the POS object with one of the columns being FLOOR->POS_STORE->ERP_STORE->TURNOVER. This relation path will need
-                // to be split into FLOOR->POS_STORE->FOREIGN_KEY_TO_ERP_STORE and ERP_STORE->TURNOVER. The first path will make sure, the main sheet will have a key
-                // to join the subsheet afterwards, while the second part will become on of the subsheet columns.
+                // To create a subsheet we need to split the relation path to the current attribute into the part 
+                // leading to the foreign key in the main data source and the part in the next data source. 
+                // We always split into two parts by the first data source border: if there are more data sources 
+                // involved, the subsheet will take care of splitting the rest of the path. 
                 
-                // TODO This piece of code is really hard to read. It should be a separate method.
+                // Here is an example: Concider comparing turnover between the point-of-sale system and
+                // the backend ERP. Each system shall have stores and their turnover in different data bases: 
+                // TURNOVER<-POS->FLOOR->POS_STORE<->ERP_STORE<-ERP_STATS->TURNOVER. 
+                // One way to make the comparison would be creating a data sheet for the POS object with one of 
+                // the columns being FLOOR__POS_STORE__ERP_STORE__ERP_STATS__TURNOVER. This relation path will need to be split 
+                // into FLOOR__POS_STORE__STORE_ID and ERP_STORE__ERP_STATS__TURNOVER. The first path will make 
+                // sure, the main sheet will have a key to join the subsheet afterwards, while the second part will 
+                // become on of the subsheet columns.
+                // In the following code, this example would result in a subsheet based on the object ERP_STORE with
+                // two columns: ID (of the ERP_STORE) and ERP_STATS__TURNOVER.                 
+                
                 // IDEA This will probably not work, if the relation path returns to some attribute of the initial data source. Is it possible at all?!
-                $rel_path_in_main_ds = '';
-                $rel_path_in_subsheet = '';
-                $rel_path_to_subsheet = '';
-                $last_rel_path = '';
-                $rels = RelationPath::relationPathParse($attribute->getAliasWithRelationPath());
-                foreach ($rels as $depth => $rel) {
-                    $rel_path = RelationPath::relationPathAdd($last_rel_path, $rel);
-                    $rel_right_key_alias = RelationPath::relationPathAdd($rel_path, $sheetObject->getRelation($rel_path)->getRightKeyAttribute()->getAlias());
-                    if ($query->canReadAttribute($sheetObject->getAttribute($rel_right_key_alias))) {
-                        $rel_path_in_main_ds = $last_rel_path;
+                /* @var $relPathToSubsheet \exface\Core\Interfaces\Model\MetaRelationPathInterface 
+                 * In the above example, this would be FLOOR__POS_STORE__ERP_STORE
+                 */
+                $relPathToSubsheet = null;
+                /* @var $relPathInParentSheet \exface\Core\Interfaces\Model\MetaRelationPathInterface 
+                 * In the above example, this would be FLOOR__POS_STORE
+                 */
+                $relPathInParentSheet = RelationPathFactory::createForObject($sheetObject);
+                /* @var $relPathInSubsheet \exface\Core\Interfaces\Model\MetaRelationPathInterface 
+                 * In the above example, this would be ERP_STATS
+                 */
+                $relPathInSubsheet = null;
+                
+                // Loop through the relations in the path to the target attribute, to find the
+                // data source border.
+                /* @var $lastRelPath \exface\Core\Interfaces\Model\MetaRelationPathInterface */
+                $lastRelPath = RelationPathFactory::createForObject($sheetObject);
+                foreach ($attribute->getRelationPath()->getRelations() as $rel) {
+                    $relPath = $lastRelPath->copy()->appendRelation($rel);
+                    $relRightKey = $relPath->getAttributeOfEndObject($relPath->getRelationLast()->getRightKeyAttribute()->getAlias());
+                    if (true === $query->canRead($relRightKey->getAliasWithRelationPath())) {
+                        $relPathInParentSheet->appendRelation($rel);
                     } else {
-                        if (! $rel_path_to_subsheet) {
+                        if ($relPathToSubsheet === null) {
                             // Remember the path to the relation to the object of the other query
-                            $rel_path_to_subsheet = $rel_path;
+                            $relPathToSubsheet = $relPath->copy();
+                            $relPathInSubsheet = RelationPathFactory::createForObject($relPathToSubsheet->getEndObject());
                         } else {
                             // All path parts following the one to the other data source, go into the subsheet
-                            $rel_path_in_subsheet = RelationPath::relationPathAdd($rel_path_in_subsheet, $rel);
+                            $relPathInSubsheet->appendRelation($rel);
                         }
                     }
-                    $last_rel_path = $rel_path;
-                    if ($depth == (count($rels) - 2)) {
-                        break; // stop one path step before the end because that would be the attribute of the related object
-                    }
+                    $lastRelPath = $relPath;
                 }
+                
                 // Create a subsheet for the relation if not yet existent and add the required attribute
-                if (! $subsheet = $this->getSubsheets()->get($rel_path_to_subsheet)) {
-                    $subsheet_object = $sheetObject->getRelatedObject($rel_path_to_subsheet);
-                    $subsheet = DataSheetSubsheetFactory::createForObject($subsheet_object, $this);
-                    $this->getSubsheets()->add($subsheet, $rel_path_to_subsheet);
-                    if (! $sheetObject->getRelation($rel_path_to_subsheet)->isReverseRelation()) {
-                        // add the foreign key to the main query and to this sheet
-                        $query->addAttribute($rel_path_to_subsheet);
-                        // IDEA do we need to add the column to the sheet? This is just useless data...
-                        // Additionally it would make trouble when the column has formatters...
-                        
-                        $this->getColumns()->addFromExpression($rel_path_to_subsheet, '', true);
-                    }
+                if (! $subsheet = $this->getSubsheets()->get($relPathToSubsheet->toString())) {
+                    $subsheet_object = $relPathToSubsheet->getEndObject();
+                    $parentSheetKeyAlias = $relPathInParentSheet->getAttributeOfEndObject($relPathToSubsheet->getRelationLast()->getLeftKeyAttribute()->getAlias())->getAliasWithRelationPath();
+                    $subsheetKeyAlias = $relPathToSubsheet->getRelationLast()->getRightKeyAttribute()->getAlias();
+                    $subsheet = DataSheetFactory::createSubsheet($this, $subsheet_object, $subsheetKeyAlias, $parentSheetKeyAlias, $relPathToSubsheet);
+                    $this->getSubsheets()->add($subsheet, $relPathToSubsheet->toString());
+                    // add the foreign key to the main query and to this sheet
+                    $query->addAttribute($parentSheetKeyAlias);
+                    // IDEA do we need to add the column to the sheet? This is just useless data...
+                    // Additionally it would make trouble when the column has formatters...
+                    $this->getColumns()->addFromExpression($parentSheetKeyAlias, null, true);
                 }
+                
                 // Add the current attribute to the subsheet prefixing it with it's relation path relative to the subsheet's object
-                $subsheet_attribute_alias = RelationPath::relationPathAdd($rel_path_in_subsheet, $attribute->getAlias());
+                $subsheet_attribute_alias = $relPathInSubsheet->getAttributeOfEndObject($attribute->getAlias())->getAliasWithRelationPath();
                 if ($attribute_aggregator) {
                     $subsheet_attribute_alias = DataAggregation::addAggregatorToAlias($subsheet_attribute_alias, $attribute_aggregator);
                     // If the attribute, we are looking for has an aggregator, we need to aggregate
@@ -436,15 +482,11 @@ class DataSheet implements DataSheetInterface
                     $needGroup = false;
                 }
                 $subsheet->getColumns()->addFromExpression($subsheet_attribute_alias);
+                
                 // Add the related object key alias of the relation to the subsheet to that subsheet. This will be the right key in the future JOIN.
-                if ($rel_path_to_subsheet_right_key = $sheetObject->getRelation($rel_path_to_subsheet)->getRightKeyAttribute()->getAlias()) {
-                    $keyAlias = RelationPath::relationPathAdd($rel_path_in_main_ds, $rel_path_to_subsheet_right_key);
-                    $subsheet->getColumns()->addFromExpression($keyAlias);
-                    if ($needGroup === true) {
-                       $subsheet->getAggregations()->addFromString($keyAlias); 
-                    }
-                } else {
-                    throw new DataSheetUidColumnNotFoundError($this, 'Cannot find UID (primary key) for subsheet: no key alias can be determined for the relation "' . $rel_path_to_subsheet . '" from "' . $sheetObject->getAliasWithNamespace() . '" to "' . $sheetObject->getRelation($rel_path_to_subsheet)->getRightObject()->getAliasWithNamespace() . '"!');
+                $subsheet->getColumns()->addFromExpression($subsheet->getJoinKeyAliasOfSubsheet());
+                if ($needGroup === true) {
+                    $subsheet->getAggregations()->addFromString($subsheet->getJoinKeyAliasOfSubsheet()); 
                 }
             } else {
                 throw new DataSheetReadError($this, 'QueryBuilder "' . get_class($query) . '" cannot read attribute "' . $attribute->getAliasWithRelationPath() . '" of object "' . $attribute->getObject()->getAliasWithNamespace() .'"!');
@@ -521,23 +563,16 @@ class DataSheet implements DataSheetInterface
         $this->dataSourceHasMoreRows = $result->hasMoreRows();
         
         // load data for subsheets if needed
-        if ($this->countRows()) {
-            foreach ($this->getSubsheets() as $rel_path => $subsheet) {
-                $rel = $thisObject->getRelation($rel_path);
-                if (! $rel->isReverseRelation()) {
-                    $foreign_keys = $this->getColumnValues($rel_path);
-                    $subsheet->addFilterFromString($rel->getRightKeyAttribute()->getAlias(), implode($rel->getRightKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
-                    $left_key_column = $this->getColumns()->getByAttribute($thisObject->getAttribute($rel_path))->getName();
-                    $right_key_column = $subsheet->getColumns()->getByAttribute($rel->getRightKeyAttribute())->getName();
-                } else {
-                    $foreign_keys = $this->getColumnValues($rel->getLeftKeyAttribute()->getAlias(), false);
-                    $subsheet->addFilterFromString($rel->getRightKeyAttribute()->getAlias(), implode($rel->getRightKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
-                    $left_key_column = $this->getColumns()->getByAttribute($rel->getLeftKeyAttribute())->getName();
-                    $right_key_column = $subsheet->getColumns()->getByAttribute($rel->getRightKeyAttribute())->getName();
-                }
+        if ($this->isEmpty() === false) {
+            foreach ($this->getSubsheets() as $subsheet) {
+                // Add filter over parent keys
+                $parentSheetKeyCol = $subsheet->getJoinKeyColumnOfParentSheet();
+                $foreign_keys = $parentSheetKeyCol->getValues(false);
+                $subsheet->addFilterFromString($subsheet->getJoinKeyAliasOfSubsheet(), implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+                // Read data
                 $subsheet->dataRead();
-                // add the columns from the sub-sheets, but prefix their names with the relation alias, because they came from this relation!
-                $this->joinLeft($subsheet, $left_key_column, $right_key_column, $rel_path);
+                // Do the JOIN
+                $this->joinLeft($subsheet, $parentSheetKeyCol->getName(), $subsheet->getJoinKeyColumnOfSubsheet()->getName(), ($subsheet->hasRelationToParent() ? $subsheet->getRelationPathFromParentSheet()->toString() : ''));
             }
         }
         
