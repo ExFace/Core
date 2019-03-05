@@ -83,17 +83,16 @@
                 "attribute_alias": "OBJECT__APP__LABEL"
             },
             {
-                "attribute_alias": "OBJECT__LABEL"
+                "attribute_alias": "OBJECT__NAME"
             },
             {
-                "attribute_alias": "LABEL"
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "OBJECT__ALIAS"
             },
             {
                 "attribute_alias": "ALIAS"
-            },
-            {
-                "attribute_alias": "DISPLAYORDER",
-                "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTES.DISPLAY_ORDER')"
             },
             {
                 "attribute_alias": "DATA_ADDRESS",
@@ -118,6 +117,10 @@
             {
                 "attribute_alias": "RELATED_OBJ__LABEL",
                 "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECT_EDITOR.RELATION_TO')"
+            },
+            {
+                "attribute_alias": "DISPLAYORDER",
+                "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTES.DISPLAY_ORDER')"
             },
             {
                 "attribute_alias": "DATA_ADDRESS_PROPS",
