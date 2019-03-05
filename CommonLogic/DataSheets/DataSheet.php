@@ -134,18 +134,26 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::addRow()
      */
-    public function addRow(array $row, bool $merge_uid_dublicates = false, bool $auto_add_columns = true) : DataSheetInterface
+    public function addRow(array $row, bool $merge_uid_dublicates = false, bool $auto_add_columns = true, int $index = null) : DataSheetInterface
     {
         if (! empty($row)) {
-            if ($merge_uid_dublicates && $this->getUidColumn() && $uid = $row[$this->getUidColumn()->getName()]) {
+            if ($merge_uid_dublicates === true && $this->hasUidColumn() === true && $uid = $row[$this->getUidColumn()->getName()]) {
                 $uid_row_nr = $this->getUidColumn()->findRowByValue($uid);
                 if ($uid_row_nr !== false) {
                     $this->rows[$uid_row_nr] = array_merge($this->rows[$uid_row_nr], $row);
                 } else {
-                    $this->rows[] = $row;
+                    if ($index === null || is_numeric($index) === false) {
+                        $this->rows[] = $row;
+                    } else {
+                        array_splice($this->rows, $index, 0, [$row]);
+                    }
                 }
             } else {
-                $this->rows[] = $row;
+                if ($index === null || is_numeric($index) === false) {
+                    $this->rows[] = $row;
+                } else {
+                    array_splice($this->rows, $index, 0, [$row]);
+                }
             }
             
             // ensure, that all columns used in the rows are present in the data sheet
@@ -163,31 +171,51 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::joinLeft()
      */
-    public function joinLeft(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $left_key_column = null, $right_key_column = null, $relation_path = '')
+    public function joinLeft(\exface\Core\Interfaces\DataSheets\DataSheetInterface $other_sheet, $left_key_column = null, $right_key_column = null, $relation_path = '')
     {
         // First copy the columns of the right data sheet ot the left one
         $right_cols = array();
-        foreach ($data_sheet->getColumns() as $col) {
+        foreach ($other_sheet->getColumns() as $col) {
             $right_cols[] = $col->copy();
         }
         $this->getColumns()->addMultiple($right_cols, RelationPathFactory::createFromString($this->getMetaObject(), $relation_path));
         // Now process the data and join rows
         if (! is_null($left_key_column) && ! is_null($right_key_column)) {
             foreach ($this->rows as $left_row_nr => $row) {
-                if (! $rCol = $data_sheet->getColumns()->get($right_key_column)) {
+                // Check if the right column is really present in the data to be joined
+                if (! $rCol = $other_sheet->getColumns()->get($right_key_column)) {
                     throw new DataSheetMergeError($this, 'Cannot find right key column "' . $right_key_column . '" for a left join!', '6T5E849');
                 }
-                $right_row_nr = $rCol->findRowByValue($row[$left_key_column]);
-                if ($right_row_nr !== false) {
-                    $right_row = $data_sheet->getRow($right_row_nr);
-                    foreach ($right_row as $col_name => $val) {
-                        $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col_name), $left_row_nr, $val);
+                // Find rows in the other sheet, that match the currently processed key
+                $right_row_nrs = $rCol->findRowsByValue($row[$left_key_column]);
+                if (false === empty($right_row_nrs)) {
+                    // Since we do an OUTER JOIN, there may be multiple matching rows, so we need
+                    // to loop through them. The first row is simply joined to the current left row
+                    // (i.e. the columns of the other sheet are appended). For subsequent rows a
+                    // copy of the left row is created and appended right next to it, than the
+                    // right columns are appended to this row copy.
+                    $needRowCopy = false;
+                    $left_row_new_nr = null;
+                    $left_row = $this->getRow($left_row_nr);
+                    foreach ($right_row_nrs as $right_row_nr) {
+                        if ($needRowCopy === true) {
+                            $left_row_new_nr = ($left_row_new_nr ?? $left_row_nr) + 1;
+                            $this->addRow($left_row, false, false, $left_row_new_nr);
+                        }
+                        $right_row = $other_sheet->getRow($right_row_nr);
+                        foreach ($right_row as $col_name => $val) {
+                            $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col_name), ($left_row_new_nr ?? $left_row_nr), $val);
+                        }
+                        $needRowCopy = true;
                     }
                 }
             }
         } elseif (is_null($left_key_column) && is_null($right_key_column)) {
+            // TODO this only joins the first other sheet row. A real LEFT OUT JOIN would
+            // need to dublicate rows as in the case above - but it's unclear, what should
+            // happen if there are actually no key columns...
             foreach ($this->rows as $left_row_nr => $row) {
-                $this->rows[$left_row_nr] = array_merge($row, $data_sheet->getRow($left_row_nr));
+                $this->rows[$left_row_nr] = array_merge($row, $other_sheet->getRow($left_row_nr));
             }
         } else {
             throw new DataSheetJoinError($this, 'Cannot join data sheets, if only one key column specified!', '6T5V0GU');
