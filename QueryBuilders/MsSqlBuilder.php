@@ -41,7 +41,6 @@ class MsSqlBuilder extends AbstractSqlBuilder
      */
     public function buildSqlQuerySelect()
     {
-        $filter_object_ids = array();
         $where = '';
         $having = '';
         $group_by = '';
@@ -61,7 +60,6 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $where = $this->buildSqlWhere($this->getFilters());
         $having = $this->buildSqlHaving($this->getFilters());
         $joins = $this->buildSqlJoins($this->getFilters());
-        $filter_object_ids = $this->getFilters()->getObjectIdsSafeForAggregation();
         // Object data source property SQL_SELECT_WHERE -> WHERE
         if ($custom_where = $this->getMainObject()->getDataAddressProperty('SQL_SELECT_WHERE')) {
             $where = $this->appendCustomWhere($where, $custom_where);
@@ -113,7 +111,7 @@ else {
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
                 // If aggregating, also add attributes, that are aggregated over or can be assumed unique due to set filters
-            } elseif (in_array($qpart->getAttribute()->getObject()->getId(), $filter_object_ids) !== false) {
+            } elseif ($this->isFilterUnambiguousForObject($this->getFilters(), $qpart->getAttribute()->getObject()->getId()) === true) {
                 $rels = $qpart->getUsedRelations();
                 $first_rel = false;
                 if (! empty($rels)) {
