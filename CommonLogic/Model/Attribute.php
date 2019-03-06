@@ -631,7 +631,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function getHint()
     {
-        return ($this->getShortDescription() ? $this->getShortDescription() : $this->getName()) . ' [' . $this->getDataType()->getName() . ']';
+        return ($this->getShortDescription() ? $this->getShortDescription() : $this->getName());
     }
 
     /**

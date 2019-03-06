@@ -107,17 +107,6 @@ class DataManager implements DataManagerInterface
 
     /**
      *
-     * @deprecated use DataSheetFactory instead
-     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $meta_object            
-     * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
-     */
-    public function createDataSheet(\exface\Core\Interfaces\Model\MetaObjectInterface $meta_object)
-    {
-        return DataSheetFactory::createFromObject($meta_object);
-    }
-
-    /**
-     *
      * @deprecated use DataContext instead
      * @param unknown $path            
      * @param unknown $id            

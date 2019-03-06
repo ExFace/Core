@@ -3,6 +3,7 @@ namespace exface\Core\Formulas;
 
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\PriceDataType;
+use exface\Core\Factories\DataSheetFactory;
 
 /**
  * Formats prices based on a currency meta object.
@@ -38,8 +39,7 @@ class Price extends \exface\Core\CommonLogic\Model\Formula
         if ($cache = $exface->data()->getCache('currencies', $currency_oid))
             return $cache;
         
-        $curr = $exface->model()->getObject('alexa.RMS.CURRENCY');
-        $ds = $curr->createDataSheet();
+        $ds = DataSheetFactory::createFromObjectIdOrAlias('alexa.RMS.CURRENCY');
         $ds->getColumns()->addFromExpression('SUFFIX');
         $ds->addFilterFromString('OID', $currency_oid);
         $ds->dataRead();
