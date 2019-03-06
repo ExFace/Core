@@ -811,16 +811,6 @@ class MetaObject implements MetaObjectInterface
         return $this->getModel()->getWorkbench()->data()->getQueryBuilder($this->data_source_id);
     }
 
-    /**
-     *
-     * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
-     */
-    function createDataSheet()
-    {
-        $ds = $this->getModel()->getWorkbench()->data()->createDataSheet($this);
-        return $ds;
-    }
-
     public function getId()
     {
         return $this->id;

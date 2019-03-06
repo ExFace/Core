@@ -3,16 +3,20 @@ namespace exface\Core\Interfaces;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\CommonLogic\WidgetLink;
-use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\WidgetDimension;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\Widgets\iHaveCaption;
 
-interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iHaveCaption
 {
 
     /**
@@ -91,13 +95,6 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
     public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface;
 
     /**
-     * Sets the widget caption/title
-     *
-     * @param string $caption            
-     */
-    public function setCaption($caption);
-
-    /**
      * Returns the widget id specified for this widget explicitly (e.g.
      * in the UXON description). Returns NULL if there was no id
      * explicitly specified! Use get_id() instead, if you just need the currently valid widget id.
@@ -155,26 +152,6 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
      * @return WidgetInterface
      */
     public function setIdSpace($value);
-
-    /**
-     *
-     * @return string
-     */
-    public function getCaption();
-
-    /**
-     * Returns TRUE if the caption is supposed to be hidden
-     *
-     * @return boolean
-     */
-    public function getHideCaption();
-
-    /**
-     *
-     * @param WidgetInterface $value            
-     * @return WidgetInterface
-     */
-    public function setHideCaption($value);
 
     /**
      *

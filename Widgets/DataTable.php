@@ -7,10 +7,10 @@ use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveContextMenu;
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Widgets\Parts\DataRowGrouper;
 
 /**
  * Renders data as a table with filters, columns, and toolbars.
@@ -196,10 +196,6 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
         if ($this->hasRowDetails()) {
             yield $this->getRowDetailsContainer();
         }
-        
-        if ($this->hasRowGroups()) {
-            yield $this->getRowGrouper();
-        }
     }
 
     public function getRowDetailsContainer()
@@ -235,7 +231,6 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * ```json
      * {
      *  "widget_type": "DataTable",
-     *  ...
      *  "row_grouper": {
      *      "group_by_attribute_alias": "MY_ATTRIBUTE",
      *      "expand_all_groups": true,
@@ -246,7 +241,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * ```
      *
      * @uxon-property row_grouper
-     * @uxon-type \exface\Core\Widgets\DataRowGrouper
+     * @uxon-type \exface\Core\Widgets\Parts\DataRowGrouper
      * @uxon-template {"group_by_attribute_alias": ""}
      *
      * @param UxonObject $uxon            
@@ -254,10 +249,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setRowGrouper(UxonObject $uxon)
     {
-        $grouper = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'DataRowGrouper');
-        if (! ($grouper instanceof DataRowGrouper)) {
-            throw new WidgetPropertyInvalidValueError($this, 'Invalid widget type for the data row grouping: expecting DataRowGrouper or derivatives, received ' . $grouper->getWidgetType() . ' instead!');
-        }
+        $grouper = new DataRowGrouper($this, $uxon);
         $this->row_grouper = $grouper;
         return $this;
     }
@@ -283,7 +275,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function hasRowGroups()
     {
-        return is_null($this->row_grouper) ? false : true;
+        return $this->row_grouper !== null;
     }
 
     public function getContextMenuEnabled()

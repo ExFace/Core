@@ -76,7 +76,7 @@ class GoToPage extends ShowWidget
      *
      * @uxon-property take_along_filters
      * @uxon-type object[]
-     * @uxon-template [{"": ""}]
+     * @uxon-template {"": ""}
      *
      * @param UxonObject $takeAlongFilters
      * @return ShowWidget

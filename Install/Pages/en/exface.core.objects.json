@@ -122,14 +122,18 @@
             {
                 "action": {
                     "alias": "exface.Core.GoToPage",
-                    "page_alias": "exface.core.attributes"
+                    "page_alias": "exface.core.attributes",
+                    "input_rows_min": 1,
+                    "input_rows_max": 1
                 },
                 "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ATTRIBUTES')"
             },
             {
                 "action": {
                     "alias": "exface.Core.GoToPage",
-                    "page_alias": "exface.core.relations"
+                    "page_alias": "exface.core.relations",
+                    "input_rows_min": 1,
+                    "input_rows_max": 1
                 },
                 "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.RELATIONS')"
             },
