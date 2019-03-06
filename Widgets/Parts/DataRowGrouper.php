@@ -1,16 +1,23 @@
 <?php
-namespace exface\Core\Widgets;
+namespace exface\Core\Widgets\Parts;
 
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
+use exface\Core\Widgets\Traits\DataWidgetPartTrait;
+use exface\Core\Interfaces\Widgets\WidgetPartInterface;
+use exface\Core\Widgets\DataTable;
+use exface\Core\Widgets\DataColumn;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iHaveCaption;
+use exface\Core\Widgets\Traits\iHaveCaptionTrait;
 
 /**
- * This widget is used to group rows in a data table.
+ * This widget part is used to group rows in a data table.
  * 
- * The widget itself basically represents the group headers. It also defines,
- * how the rows are group: what is the grouping criteria, if and how sorting
+ * The widget part itself basically represents the group headers. It also defines,
+ * how the rows are grouped: what is the grouping criteria, if and how sorting
  * is to be performed, etc.
  * 
  * Example:
@@ -18,7 +25,6 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
  * ```json
  * {
  *  "widget_type": "DataTable",
- *  ...
  *  "row_grouper": {
  *      "group_by_attribute_alias": "MY_ATTRIBUTE",
  *      "expand_all_groups": true,
@@ -33,8 +39,13 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
  * @author Andrej Kabachnik
  *        
  */
-class DataRowGrouper extends AbstractWidget
+class DataRowGrouper implements WidgetPartInterface, iHaveCaption
 {
+    use DataWidgetPartTrait;
+    use iHaveCaptionTrait {
+        getCaption as getCaptionViaTrait;
+    }
+    
     const EXPAND_ALL_GROUPS = 'ALL';
     const EXPAND_FIRST_GROUP = 'FIRST';
     const EXPAND_NO_GROUPS = 'NONE';
@@ -74,7 +85,7 @@ class DataRowGrouper extends AbstractWidget
      */
     public function getDataTable()
     {
-        $table = $this->getParent();
+        $table = $this->getDataWidget();
         if (! ($table instanceof DataTable)) {
             throw new WidgetConfigurationError($this, 'A DataRowGrouper cannot be used outside of a DataTable widget!', '6Z5MAVK');
         }
@@ -103,10 +114,11 @@ class DataRowGrouper extends AbstractWidget
      * @uxon-type uxon:.columns..id
      * 
      * @param string $value
-     * @return \exface\Core\Widgets\DataRowGrouper
+     * @return DataRowGrouper
      */
     public function setGroupByColumnId($value)
     {
+        $this->group_by_column = null;
         $this->group_by_column_id = $value;
         return $this;
     }
@@ -121,21 +133,23 @@ class DataRowGrouper extends AbstractWidget
      */
     public function getGroupByColumn()
     {
-        if (! is_null($this->group_by_attribute_alias)) {
-            if (! is_null($this->group_by_column_id)) {
-                throw new WidgetConfigurationError($this, 'Alternative properties "group_by_attribute_alias" and "group_by_column_id" are defined at the same time for a DataRowGrouper widget: please use only one of them!', '6Z5MAVK');
+        if ($this->group_by_column === null) {
+            if (! is_null($this->group_by_attribute_alias)) {
+                if (! is_null($this->group_by_column_id)) {
+                    throw new WidgetConfigurationError($this, 'Alternative properties "group_by_attribute_alias" and "group_by_column_id" are defined at the same time for a DataRowGrouper widget: please use only one of them!', '6Z5MAVK');
+                }
+                if (! $col = $this->getDataTable()->getColumnByAttributeAlias($this->group_by_attribute_alias)) {
+                    throw new WidgetLogicError('No data column "' . $this->group_by_attribute_alias . '" could be added automatically by the DataRowGrouper: try to add it manually to the DataTable.');
+                }
+            } elseif (! is_null($this->group_by_column_id)) {
+                if (! $col = $this->getDataTable()->getColumn($this->group_by_column_id)) {
+                    throw new WidgetNotFoundError('Cannot find the column "' . $this->group_by_column_id . '" to group rows by!', '6Z5MAVK');
+                }
+            } else {
+                throw new WidgetConfigurationError($this, 'No column to group by can be found for DataRowGrouper!', '6Z5MAVK');
             }
-            if (! $col = $this->getDataTable()->getColumnByAttributeAlias($this->group_by_attribute_alias)) {
-                throw new WidgetLogicError('No data column "' . $this->group_by_attribute_alias . '" could be added automatically by the DataRowGrouper: try to add it manually to the DataTable.');
-            }
-        } elseif (! is_null($this->group_by_column_id)) {
-            if (! $col = $this->getDataTable()->getColumn($this->group_by_column_id)) {
-                throw new WidgetNotFoundError('Cannot find the column "' . $this->group_by_column_id . '" to group rows by!', '6Z5MAVK');
-            }
-        } else {
-            throw new WidgetConfigurationError($this, 'No column to group by can be found for DataRowGrouper!', '6Z5MAVK');
+            $this->group_by_column = $col;
         }
-        $this->group_by_column = $col;
         
         return $this->group_by_column;
     }
@@ -157,7 +171,7 @@ class DataRowGrouper extends AbstractWidget
      * @uxon-default true
      * 
      * @param boolean $true_or_false
-     * @return \exface\Core\Widgets\DataRowGrouper
+     * @return \exface\Core\Widgets\Parts\DataRowGrouper
      */
     public function setExpandAllGroups($true_or_false)
     {
@@ -182,7 +196,7 @@ class DataRowGrouper extends AbstractWidget
      * @uxon-default false
      *
      * @param boolean $true_or_false
-     * @return \exface\Core\Widgets\DataRowGrouper
+     * @return \exface\Core\Widgets\Parts\DataRowGrouper
      */
     public function setExpandFirstGroupOnly($true_or_false)
     {
@@ -207,7 +221,7 @@ class DataRowGrouper extends AbstractWidget
      * @uxon-default false
      * 
      * @param boolean $true_or_false
-     * @return \exface\Core\Widgets\DataRowGrouper
+     * @return \exface\Core\Widgets\Parts\DataRowGrouper
      */
     public function setShowCounter($true_or_false)
     {
@@ -237,28 +251,39 @@ class DataRowGrouper extends AbstractWidget
      * @uxon-type metamodel:attribute
      * 
      * @param string $alias
-     * @return \exface\Core\Widgets\DataRowGrouper
+     * @return \exface\Core\Widgets\Parts\DataRowGrouper
      */
     public function setGroupByAttributeAlias($alias)
     {
         $this->group_by_attribute_alias = $alias;
-        if (! $col = $this->getDataTable()->getColumnByAttributeAlias($this->group_by_attribute_alias)) {
-            $col = $this->getDataTable()->createColumnFromAttribute($this->getMetaObject()->getAttribute($this->group_by_attribute_alias), null, true);
-            $this->getDataTable()->addColumn($col);
-        }
         return $this;
     }
     
     /**
-     * Since the DataRowGrouper basically represents the group header, no width can be set, as it is allways
-     * as wide as the data table.
      * 
-     * @see \exface\Core\Widgets\AbstractWidget::setWidth()
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
      */
-    public function setWidth($value)
+    public function exportUxonObject()
     {
-        return $this;
+        $uxon = new UxonObject([
+            'group_by_attribute_alias' => $this->getGroupByAttributeAlias()
+        ]);
+        
+        return $uxon;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveCaption::getCaption()
+     */
+    public function getCaption()
+    {
+        if (! $cap = $this->getCaptionViaTrait()) {
+            $cap = $this->getGroupByColumn()->getCaption();
+            $this->setCaption($cap);
+        }
+        return $cap;
+    }
 }
-?>
