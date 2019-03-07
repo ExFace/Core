@@ -75,6 +75,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             $enrichment_order_by = '';
             $core_selects = array();
             $core_select = '';
+            $select_comment = '';
             
             // Build core query: join tables needed for filtering, grouping and sorting and select desired attributes from these tables
             // determine the needed JOINS
@@ -122,24 +123,26 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             
             // separate core SELECTs from enrichment SELECTs
             foreach ($enrichment_selects as $nr => $qpart) {
-                if (in_array($qpart->getAttribute()->getRelationPath()->toString(), $core_relations) || $qpart->getAttribute()->getRelationPath()->isEmpty()) {
+                $qpartAttr = $qpart->getAttribute();
+                if (in_array($qpartAttr->getRelationPath()->toString(), $core_relations) || $qpartAttr->getRelationPath()->isEmpty()) {
                     // Workaround to ensure, the UID is always in the query!
                     // If we are grouping, we will not select any fields, that could be ambigous, thus
                     // we can use MAX(UID), since all other values are the same within the group.
-                    if ($group_by && $qpart->getAlias() == $this->getMainObject()->getUidAttributeAlias() && ! $qpart->getAggregator()) {
+                    if ($group_by && $qpart->getAttribute()->isExactly($qpart->getAttribute()->getObject()->getUidAttribute()) && ! $qpart->getAggregator()) {
                         $qpart->setAggregator(new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                     }
                     // If we are grouping, we can only select valid GROUP BY expressions from the core table.
                     // These are either the ones with an aggregate function or thouse we are grouping by
-                    if ($group_by && ! $qpart->getAggregator() && ! $this->getAggregation($qpart->getAlias())) {
+                    if ($group_by && ! $qpart->getAggregator() && ! $this->isAggregatedBy($qpart)) {
                         // IDEA at this point, we could use the default aggregate function of the attributes. However it is probably a good
                         // idea to set the default aggregator somewhere in the qpart code, not in the query builders. If we set the aggregator
                         // to the default, this place will pass without a problem.
+                        $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
                         continue;
                     }
                     // also skip selects based on custom sql substatements if not being grouped over
                     // they should be done after pagination as they are potentially very time consuming
-                    if ($this->checkForSqlStatement($qpart->getAttribute()->getDataAddress()) && (! $group_by || ! $qpart->getAggregator())) {
+                    if ($this->checkForSqlStatement($qpartAttr->getDataAddress()) && (! $group_by || ! $qpart->getAggregator())) {
                         continue;
                     } elseif ($qpart->getUsedRelations(RelationTypeDataType::REVERSE) && ! $this->getAggregation($qpart->getAlias()) && $this->isQpartRelatedToAggregator($qpart)) {
                         // Also skip selects with reverse relations that can be joined later in the enrichment.                      
@@ -168,8 +171,9 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 // TODO actually we need to make sure, the filter returns exactly one object, which probably means,
                 // that the filter should be layed over an attribute, which uniquely identifies the object (e.g.
                 // its UID column).
-                if ($group_by && $this->isFilterUnambiguousForObject($this->getFilters(), $qpart->getAttribute()->getObject()) === false) {
+                if ($group_by && $this->isObjectGroupSafe($qpart->getAttribute()->getObject()) === false) {
                     if (! $this->isQpartRelatedToAggregator($qpart)) {
+                        $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
                         continue;
                     }
                 }
@@ -188,6 +192,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ');
                 } elseif ($group_by && ! $qpart->getFirstRelation() && ! $qpart->getAggregator()) {
                     // If in a GROUP BY the attribute belongs to the main object and does not have an aggregate function, skip it - oracle cannot deal with it
+                    $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because the attribute belongs to the main object and does not have an aggregate function - oracle does not support this!' . "\n";
                     continue;
                 } else {
                     // Otherwise the selects can rely on the joins
@@ -209,13 +214,14 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             $enrichment_join = implode(' ', $enrichment_joins);
             $enrichment_order_by = $enrichment_order_by ? ' ORDER BY ' . substr($enrichment_order_by, 2) : '';
             $distinct = $this->getSelectDistinct() ? 'DISTINCT ' : '';
+            $select_comment = $select_comment ? "\n" . $select_comment : '';
             
             // build the query itself
             $core_query = "
-								SELECT " . $distinct . $core_select . " FROM " . $core_from . $core_join . $where . $group_by . $having . $order_by;
+								SELECT " . $distinct . $core_select . $select_comment . " FROM " . $core_from . $core_join . $where . $group_by . $having . $order_by;
             
             // Increase limit by one to check if there are more rows (see AbstractSqlBuilder::read())
-            $query = "\n SELECT " . $distinct . $enrichment_select . " FROM
+            $query = "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM
 				(SELECT *
 					FROM
 						(SELECT exftbl.*, ROWNUM EXFRN
@@ -253,17 +259,18 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             
             // SELECT
             foreach ($this->getAttributes() as $qpart) {
+                $qpartAttr = $qpart->getAttribute();
                 // if the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
                 // otherwise the enrichment joins won't work!
-                if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAttributeAlias()) {
+                if ($group_by && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute())) {
                     $select .= ', ' . $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                     $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ');
                 } // if we are aggregating, leave only attributes, that have an aggregate function,
                   // and ones, that are aggregated over or can be assumed unique due to set filters
-                elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->getAlias())) {
+                elseif (! $group_by || $qpart->getAggregator() || $this->isAggregatedBy($qpart)) {
                     $select .= ', ' . $this->buildSqlSelect($qpart);
                     $joins = array_merge($joins, $this->buildSqlJoins($qpart));
-                } elseif ($this->isFilterUnambiguousForObject($this->getFilters(), $qpart->getAttribute()->getObject()) === true) {
+                } elseif ($this->isObjectGroupSafe($qpartAttr->getObject()) === true) {
                     $rels = $qpart->getUsedRelations();
                     $first_rel = false;
                     if (! empty($rels)) {
@@ -275,9 +282,12 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     $enrichment_select .= ', ' . $this->buildSqlSelect($qpart);
                     $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
                     $joins = array_merge($joins, $this->buildSqlJoins($qpart));
+                } else {
+                    $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
                 }
             }
             $select = substr($select, 2);
+            $select_comment = $select_comment ? "\n" . $select_comment : '';
             $enrichment_select = 'EXFCOREQ' . $this->getAliasDelim() . '*' . ($enrichment_select ? ', ' . substr($enrichment_select, 2) : '');
             // FROM
             $from = $this->buildSqlFrom();
@@ -293,9 +303,9 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             $distinct = $this->getSelectDistinct() ? 'DISTINCT ' : '';
             
             if (($group_by && $where) || $this->getSelectDistinct()) {
-                $query = "\n SELECT " . $distinct . $enrichment_select . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . $group_by . $having . $order_by . ") EXFCOREQ " . $enrichment_join . $order_by;
+                $query = "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . $group_by . $having . $order_by . ") EXFCOREQ " . $enrichment_join . $order_by;
             } else {
-                $query = "\n SELECT " . $distinct . $select . " FROM " . $from . $join . $where . $group_by . $having . $order_by;
+                $query = "\n SELECT " . $distinct . $select . $select_comment . " FROM " . $from . $join . $where . $group_by . $having . $order_by;
             }
         }
         return $query;
