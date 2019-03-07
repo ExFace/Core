@@ -51,6 +51,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         $order_by = '';
         $selects = array();
         $select = '';
+        $select_comment = '';
         $joins = array();
         $join = '';
         $enrichment_selects = [];
@@ -90,12 +91,13 @@ class MySqlBuilder extends AbstractSqlBuilder
         // SELECT
         /* @var $qpart \exface\Core\CommonLogic\QueryBuilder\QueryPartSelect */
         foreach ($this->getAttributes() as $qpart) {
+            $qpartAttr = $qpart->getAttribute();
             // First see, if the attribute has some kind of special data type (e.g. binary)
-            if ($qpart->getAttribute()->getDataAddressProperty('SQL_DATA_TYPE') == 'binary') {
+            if ($qpartAttr->getDataAddressProperty('SQL_DATA_TYPE') == 'binary') {
                 $this->addBinaryColumn($qpart->getAlias());
             }
             
-            if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAttributeAlias() && ! $qpart->getAggregator()) {
+            if ($group_by && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $qpart->getAggregator()) {
                 // If the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
                 // otherwise the enrichment joins won't work! Be carefull to apply this rule only to the plain UID column, not to columns
                 // using the UID with aggregate functions
@@ -105,8 +107,8 @@ class MySqlBuilder extends AbstractSqlBuilder
                 // If we are not aggregating or the attribute has a group function, add it regulary
                 $selects[] = $this->buildSqlSelect($qpart);
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
-                $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
-            } elseif ($this->isFilterUnambiguousForObject($this->getFilters(), $qpart->getAttribute()->getObject()) === true) {
+                $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
+            } elseif ($this->isObjectGroupSafe($qpartAttr->getObject()) === true) {
                 // If aggregating, also add attributes, that are aggregated over or can be assumed unique due to set filters
                 $rels = $qpart->getUsedRelations();
                 $first_rel = false;
@@ -119,18 +121,22 @@ class MySqlBuilder extends AbstractSqlBuilder
                 $enrichment_select[] = $this->buildSqlSelect($qpart);
                 $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
-                $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
-            } elseif ($group_by && $this->getAggregation($qpart->getAttribute()->getRelationPath()->toString())) {
+                $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
+            } elseif ($group_by && $this->getAggregation($qpartAttr->getRelationPath()->toString())) {
                 // If aggregating, also add attributes, that belong directly to objects, we are aggregating 
                 // over (they can be assumed unique too, since their object is unique per row)
+                // FIXME it should be possible to integrate this into the if-branch with isObjectGroupSafe())
                 $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
-                $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
+                $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
+            } else {
+                $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
             }
         }
         
         // Core SELECT
         $select = implode(', ', array_unique(array_filter($selects)));
+        $select_comment = $select_comment ? "\n" . $select_comment : '';
         
         // Enrichment SELECT
         $enrichment_select = implode(', ', array_unique(array_filter($enrichment_selects)));
@@ -163,9 +169,9 @@ class MySqlBuilder extends AbstractSqlBuilder
         }
         
         if ($this->isEnrichmentAllowed() && (($group_by && $where) || $this->getSelectDistinct())) {
-            $query = "\n SELECT " . $distinct . $enrichment_select . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . $group_by . $having . $order_by . ") EXFCOREQ " . $enrichment_join . $order_by . $limit;
+            $query = "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . $group_by . $having . $order_by . ") EXFCOREQ " . $enrichment_join . $order_by . $limit;
         } else {
-            $query = "\n SELECT " . $distinct . $select . " FROM " . $from . $join . $where . $group_by . $order_by . $having . $limit;
+            $query = "\n SELECT " . $distinct . $select . $select_comment . " FROM " . $from . $join . $where . $group_by . $order_by . $having . $limit;
         }
         
         return $query;

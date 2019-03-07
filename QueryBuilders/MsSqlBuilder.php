@@ -48,6 +48,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $order_by = '';
         $selects = array();
         $select = '';
+        $select_comment = '';
         $joins = array();
         $join = '';
         $enrichment_selects = [];
@@ -94,24 +95,25 @@ else {
         // SELECT
         /*	@var $qpart \exface\Core\CommonLogic\QueryBuilder\QueryPartSelect */
         foreach ($this->getAttributes() as $qpart) {
+            $qpartAttr = $qpart->getAttribute();
             $skipped = false;
             // First see, if the attribute has some kind of special data type (e.g. binary)
-            if ($qpart->getAttribute()->getDataAddressProperty('SQL_DATA_TYPE') == 'binary') {
+            if ($qpartAttr->getDataAddressProperty('SQL_DATA_TYPE') == 'binary') {
                 $this->addBinaryColumn($qpart->getAlias());
             }
             // if the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
             // otherwise the enrichment joins won't work!
-            if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAttributeAlias() && ! $has_attributes_with_reverse_relations) {
+            if ($group_by && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $has_attributes_with_reverse_relations) {
                 $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
-                $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $qpart->getAttribute()->getObject()->getUidAttributeAlias());
-                $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
-            } elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->getAlias())) {
+                $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $qpartAttr->getObject()->getUidAttributeAlias());
+                $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
+            } elseif (! $group_by || $qpart->getAggregator() || $this->isAggregatedBy($qpart)) {
                 // If we are not aggregating or the attribute has a group function, add it regulary
                 $selects[] = $this->buildSqlSelect($qpart);
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
-                $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
+                $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
                 // If aggregating, also add attributes, that are aggregated over or can be assumed unique due to set filters
-            } elseif ($this->isFilterUnambiguousForObject($this->getFilters(), $qpart->getAttribute()->getObject()->getId()) === true) {
+            } elseif ($this->isObjectGroupSafe($qpartAttr->getObject()) === true) {
                 $rels = $qpart->getUsedRelations();
                 $first_rel = false;
                 if (! empty($rels)) {
@@ -123,14 +125,15 @@ else {
                 $enrichment_selects[] = $this->buildSqlSelect($qpart);
                 $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
-                $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
+                $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
                 // If aggregating, also add attributes, that belong directly to objects, we are aggregating over (they can be assumed unique too, since their object is unique per row)
-            } elseif ($group_by && $this->getAggregation($qpart->getAttribute()->getRelationPath()->toString())) {
+            } elseif ($group_by && $this->getAggregation($qpartAttr->getRelationPath()->toString())) {
                 $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
-                $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
+                $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
             } else {
                 $skipped = true;
+                $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
             }
             
             // If we have attributes, that need reverse relations, we must move the group by to the outer (enrichment) query, because
@@ -141,6 +144,7 @@ else {
         }
         // Core SELECT
         $select = implode(', ', array_unique(array_filter($selects)));
+        $select_comment = $select_comment ? "\n" . $select_comment : '';
         
         // Enrichment SELECT
         $enrichment_select = implode(', ', array_unique(array_filter($enrichment_selects)));
@@ -173,12 +177,12 @@ else {
         
         if (($group_by && ($where || $has_attributes_with_reverse_relations)) || $this->getSelectDistinct()) {
             if (count($this->getAttributesWithReverseRelations()) > 0) {
-                $query = "\n SELECT " . $distinct . $enrichment_select . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . ") EXFCOREQ " . $enrichment_join . $group_by . $having . $order_by . $limit;
+                $query = "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . ") EXFCOREQ " . $enrichment_join . $group_by . $having . $order_by . $limit;
             } else {
-                $query = "\n SELECT " . $distinct . $enrichment_select . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . $group_by . $having . ") EXFCOREQ " . $enrichment_join . $order_by . $limit;
+                $query = "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . $group_by . $having . ") EXFCOREQ " . $enrichment_join . $order_by . $limit;
             }
         } else {
-            $query = "\n SELECT " . $distinct . $select . " FROM " . $from . $join . $where . $group_by . $having . $order_by . $limit;
+            $query = "\n SELECT " . $distinct . $select . $select_comment . " FROM " . $from . $join . $where . $group_by . $having . $order_by . $limit;
         }
         
         return $query;
