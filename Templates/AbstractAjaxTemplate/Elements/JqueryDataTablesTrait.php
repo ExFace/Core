@@ -640,11 +640,15 @@ JS;
         if ($rightclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_RIGHT_CLICK)[0]) {
             $rightclick_script = $this->getTemplate()->getElement($rightclick_button)->buildJsClickFunctionName() . '()';
         }
-
+        
+        // Need to wait for the default handlers to run before performing our click handlers - that's why some
+        // are wrapped in setTimeout().
         return <<<JS
 
 	$('#{$this->getId()} tbody').on( 'click', '{$this->buildCssSelectorDataRows()}', function () {
-		{$leftclick_script}
+	    setTimeout(function(){
+            {$leftclick_script}
+        }, 0);
     } );
     
     $('#{$this->getId()} tbody').on( 'dblclick', '{$this->buildCssSelectorDataRows()}', function(e){
