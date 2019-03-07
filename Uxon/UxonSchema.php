@@ -404,8 +404,8 @@ class UxonSchema implements WorkbenchDependantInterface
      */
     protected function getMetamodelAttributeAliases(MetaObjectInterface $object, string $search = null) : array
     {
-        $rels = RelationPath::relationPathParse($search);
-        $search = array_pop($rels);
+        $rels = $search !== null ? RelationPath::relationPathParse($search) : [];
+        $search = array_pop($rels) ?? '';
         $relPath = null;
         if (! empty($rels)) {
             $relPath = implode(RelationPath::RELATION_SEPARATOR, $rels);
