@@ -131,7 +131,7 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
         if (! is_null($cmsId = $this->getCachedPageCmsId($page))) {
             return $cmsId;
         } else {
-            $this->getPage($page->getAliasWithNamespace());
+            $this->getPage($page->getSelector());
             if (! is_null($cmsId = $this->getCachedPageCmsId($page))) {
                 return $cmsId;
             } else {
