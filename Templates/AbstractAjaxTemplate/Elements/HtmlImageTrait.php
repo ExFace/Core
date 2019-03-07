@@ -57,7 +57,7 @@ trait HtmlImageTrait
                 $style .= 'float: right';
         }
         
-        $output = '<img src="' . $src . '" class="' . $this->buildCssElementClass() . '" style="' . $style . '" />';
+        $output = '<img src="' . $src . '" class="' . $this->buildCssElementClass() . '" style="' . $style . '" id="' . $this->getId() . '" />';
         return $output;
     }
     
