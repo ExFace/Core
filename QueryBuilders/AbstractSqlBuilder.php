@@ -2041,7 +2041,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if ($isFilterEquals) {
                 $filterAttr = $qpart->getAttribute();
                 // Condition (2) - see method doc
-                if ($filterAttr->getObject()->isExactly($object) && ($filterAttr->isExactly($object->getUidAttribute()) || $filterAttr->getDataAddress() || $filterAttr->getDataAddress() === $object->getUidAttribute()->getDataAddress())) {
+                if ($filterAttr->getObject()->isExactly($object) && ($filterAttr->isExactly($object->getUidAttribute()) || $filterAttr->getDataAddress() && $filterAttr->getDataAddress() === $object->getUidAttribute()->getDataAddress())) {
                     return true;
                 }
                 // Condition (3) - see method doc
