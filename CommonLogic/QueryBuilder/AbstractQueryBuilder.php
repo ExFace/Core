@@ -631,6 +631,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     }
     
     /**
+     * Returns TRUE If the query is aggregated by the given query part or another one with the same data address.
      * 
      * @param QueryPartAttribute $qpart
      * @return bool

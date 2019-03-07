@@ -178,27 +178,6 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
     }
 
     /**
-     * Returns an array of meta object ids, that are assumed to be unique in the result of the query because of filtering for
-     * a single instance of that meta object.
-     *
-     * @return array
-     */
-    public function getObjectIdsSafeForAggregation()
-    {
-        $ids = array();
-        foreach ($this->getFilters() as $qpart) {
-            // TODO The current checks do not really ensure, that the object is unique. Need a better idea!
-            if ($qpart->getComparator() == EXF_COMPARATOR_IS || $qpart->getComparator() == EXF_COMPARATOR_EQUALS) {
-                $ids[] = ($qpart->getAttribute()->isRelation() ? $this->getQuery()->getMainObject()->getRelatedObject($qpart->getAlias())->getId() : $qpart->getAttribute()->getObject()->getId());
-            }
-        }
-        foreach ($this->getNestedGroups() as $qpart) {
-            $ids = array_merge($ids, $qpart->getObjectIdsSafeForAggregation());
-        }
-        return $ids;
-    }
-
-    /**
      * Returns the condition group represented by this filter group.
      *
      * IDEA Currently the condition group is updated every time something happens to the filter group (add_filter(), add_nested_group(), etc.). Perhaps it

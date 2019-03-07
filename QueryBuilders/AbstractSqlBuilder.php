@@ -31,6 +31,7 @@ use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\TimeDataType;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * A query builder for generic SQL syntax.
@@ -1969,5 +1970,95 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         $this->reserved_words = $value;
         return $this;
+    }
+    
+    
+    
+    /**
+     * Returns TRUE if the resulting data can be assumed to contain only a single UID 
+     * of the provided object per row.
+     * 
+     * In other words, attributes of this object are group-safe - i.e. can be selected
+     * without a grouping function.
+     * 
+     * The optional parameters $filterGroup and $aggregations allow to do custom checks
+     * against specific filters and aggregations. If not set, filters and aggregations
+     * of the query will be used automatically.
+     * 
+     * Technically, this method checks for the following conditions:
+     * (1) Is the query aggregated by an attribute based on the UID column of the given object
+     * (2) Is there an equals-filter, over the UID of the given object or anohter attribute with the same data address
+     * (3) Is there an equals-filter over a forward-relation to the given object
+     * 
+     * @param MetaObjectInterface $object
+     * @param QueryPartFilterGroup $filterGroup
+     * @param QueryPartAttribute[] $aggregations
+     *
+     * @return array
+     */
+    protected function isObjectGroupSafe(MetaObjectInterface $object, QueryPartFilterGroup $filterGroup = null, array $aggregations = null) : bool
+    {
+        if ($filterGroup === null) {
+            $filterGroup = $this->getFilters();
+        }
+        
+        // The whole logic only works if multiple conditions or condition groups are combined via AND!
+        if ($filterGroup->getOperator() !== EXF_LOGICAL_AND) {
+            // If it's not AND expclicitly, it's AND-equivalent if the operator is OR or XOR and there
+            // is only one operand, so exclude this case
+            if (! (($filterGroup->getOperator() === EXF_LOGICAL_OR || $filterGroup->getOperator() === EXF_LOGICAL_XOR) && (count($filterGroup->getFilters()) + count($filterGroup->getNestedGroups())) === 1)) {
+                return false;
+            }
+        }
+        
+        if ($aggregations === null) {
+            $aggregations = $this->getAggregations();
+        }
+        
+        // Condition (1) - see method doc
+        if ($object->hasUidAttribute()) {
+            $uidDataAddress = $object->getUidAttribute()->getDataAddress();
+            foreach ($aggregations as $qpart) {
+                if ($qpart->getAttribute()->getObject()->isExactly($object) && $qpart->getDataAddress() === $uidDataAddress) {
+                    return true;
+                }
+            }
+        }
+        
+        foreach ($filterGroup->getFilters() as $qpart) {
+            
+            // TODO The current checks do not really ensure, that the object is unique. Need a better idea!
+            $isFilterEquals = false;
+            if ($qpart->getComparator() == EXF_COMPARATOR_IS || $qpart->getComparator() == EXF_COMPARATOR_EQUALS) {
+                $isFilterEquals = true;
+            } elseif ($qpart->getComparator() === EXF_COMPARATOR_IN) {
+                $values = is_array($qpart->getCompareValue()) ? $qpart->getCompareValue() : explode($qpart->getValueListDelimiter(), $qpart->getCompareValue());
+                if (count($values) === 1) {
+                    $isFilterEquals = true;
+                }
+            }
+            
+            if ($isFilterEquals) {
+                $filterAttr = $qpart->getAttribute();
+                // Condition (2) - see method doc
+                if ($filterAttr->getObject()->isExactly($object) && ($filterAttr->isExactly($object->getUidAttribute()) || $filterAttr->getDataAddress() || $filterAttr->getDataAddress() === $object->getUidAttribute()->getDataAddress())) {
+                    return true;
+                }
+                // Condition (3) - see method doc
+                if ($filterAttr->isRelation() === true && $filterAttr->getRelation()->isForwardRelation() === true) {
+                    if ($this->getMainObject()->getRelatedObject($qpart->getAlias())->isExactly($object)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        foreach ($filterGroup->getNestedGroups() as $qpart) {
+            if ($qpart->getOperator() === EXF_LOGICAL_AND && $this->isObjectGroupSafe($object, $qpart) === true) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 }
