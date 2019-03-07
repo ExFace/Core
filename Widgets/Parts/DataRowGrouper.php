@@ -136,17 +136,17 @@ class DataRowGrouper implements WidgetPartInterface, iHaveCaption
         if ($this->group_by_column === null) {
             if (! is_null($this->group_by_attribute_alias)) {
                 if (! is_null($this->group_by_column_id)) {
-                    throw new WidgetConfigurationError($this, 'Alternative properties "group_by_attribute_alias" and "group_by_column_id" are defined at the same time for a DataRowGrouper widget: please use only one of them!', '6Z5MAVK');
+                    throw new WidgetConfigurationError($this->getDataTable(), 'Alternative properties "group_by_attribute_alias" and "group_by_column_id" are defined at the same time for a DataRowGrouper widget: please use only one of them!', '6Z5MAVK');
                 }
                 if (! $col = $this->getDataTable()->getColumnByAttributeAlias($this->group_by_attribute_alias)) {
-                    throw new WidgetLogicError('No data column "' . $this->group_by_attribute_alias . '" could be added automatically by the DataRowGrouper: try to add it manually to the DataTable.');
+                    throw new WidgetLogicError($this->getDataTable(), 'No data column "' . $this->group_by_attribute_alias . '" could be added automatically by the DataRowGrouper: try to add it manually to the DataTable.');
                 }
             } elseif (! is_null($this->group_by_column_id)) {
                 if (! $col = $this->getDataTable()->getColumn($this->group_by_column_id)) {
                     throw new WidgetNotFoundError('Cannot find the column "' . $this->group_by_column_id . '" to group rows by!', '6Z5MAVK');
                 }
             } else {
-                throw new WidgetConfigurationError($this, 'No column to group by can be found for DataRowGrouper!', '6Z5MAVK');
+                throw new WidgetConfigurationError($this->getDataTable(), 'No column to group by can be found for DataRowGrouper!', '6Z5MAVK');
             }
             $this->group_by_column = $col;
         }
