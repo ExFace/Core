@@ -29,6 +29,11 @@ trait JqueryQrCodeTrait
      */
     public function buildJs()
     {
+        return $this->buildJsQrCodeRenderer();
+    }
+    
+    protected function buildJsQrCodeRenderer() : string
+    {
         return '$("#' . $this->getId() . '").children("canvas").remove(); $("#' . $this->getId() . '").qrcode("' . $this->getWidget()->getValueWithDefaults() . '");';
     }
     
