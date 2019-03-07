@@ -118,7 +118,7 @@ class MySqlBuilder extends AbstractSqlBuilder
                     // IDEA this does not support relations based on custom sql. Perhaps this needs to change
                     $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                 }
-                $enrichment_select[] = $this->buildSqlSelect($qpart);
+                $enrichment_selects[] = $this->buildSqlSelect($qpart);
                 $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
