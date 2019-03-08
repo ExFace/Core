@@ -53,7 +53,7 @@ trait JqueryQrCodeTrait
             $style .= 'height: ' . $this->getHeight() . '; ';
         }
         
-        $output = '<div class="exf-qrcode-wrapper"><div class="' . $this->buildCssElementClass() . '" style="' . $style . '" id="' . $this->getId() . '" /></div>';
+        $output = '<div class="' . $this->buildCssElementClass() . '" style="' . $style . '" id="' . $this->getId() . '" />';
         return $output;
     }
     
