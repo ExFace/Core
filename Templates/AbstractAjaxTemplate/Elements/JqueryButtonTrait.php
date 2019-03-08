@@ -248,7 +248,6 @@ JS;
 
             {$input_element->buildJsBusyIconShow()}
 			{$this->buildJsNavigateToPage($action->getPageAlias(), $prefill_param . $filters_param, $input_element, $newWindow)}
-            {$input_element->buildJsBusyIconHide()}
 
 JS;
         }
