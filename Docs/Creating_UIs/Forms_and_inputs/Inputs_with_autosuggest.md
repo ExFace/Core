@@ -1,6 +1,10 @@
-# Input-widgets with autosuggest
+# Combo-widgets with autosuggest
 
-Select-Inputs like `InputSelect`, `InputCombo` or `InputComboTable` have dropdowns with possible values and an autosuggest when typing. There are multiple ways to tell the widget, where it should take the selectable values from.
+So-called combo-widgets like `InputCombo` or `InputComboTable` have dropdowns with possible values and an autosuggest when typing. There are multiple ways to tell the widget, where it should take the selectable values from.
+
+**Use** these widgets if you need to select one or more values from a data source (typically an id of a related object).
+
+**Don't use** these widgets, if you need to select one or more values from a static set of values (enumeration) - use [InputSelect](Select-Inputs.md) instead.
 
 ## Autosuggest based on related Objects
 
@@ -28,10 +32,6 @@ The attibute `OBJECT` is a relation to the object `exface.Core.OBJECT`. This wil
 
 TODO
 
-## Autosuggest based on enumeration data types
-
-TODO
-
-## Custom autosuggest configuation 
+## Autosuggest based on an arbitrary column
 
 TODO

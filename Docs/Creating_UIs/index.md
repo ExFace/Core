@@ -15,7 +15,7 @@ If you prefer real-world examples, take a look at the administration pages (Admi
 
 ## Forms, inputs and display-widgets
 
-- [Overview + list of available input/display widgets](Forms_and_inputs/index.html)
+- [Overview + list of available input/display widgets](Forms_and_inputs/index.md)
 - [Creating an editor-dialog for an object](Forms_and_inputs/Editor-dialogs_for_objects.md)
 - [Inputs with Autosuggest](Forms_and_inputs/Inputs_with_autosuggest.md)
 
