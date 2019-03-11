@@ -23,14 +23,14 @@ use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
  * A dropdown menu to select from.
  * 
  * Each menu item has a value and a text. Multiple selection can be enabled with select_multiple: true.
- *
- * The selectable options can either be specified directly (via the property "selectable_options") or generated from
- * the data source. In the latter case, attributes for text and values can be specified via text_attribute_alias and
- * value_attribute_alias. They do not need to have something to do with the object or attribute, that the widget
+ * 
+ * The selectable options can either be specified directly (via the property `selectable_options`) or generated from
+ * the data source. In the latter case, attributes for text and values can be specified via `text_attribute_alias` and
+ * `value_attribute_alias`. They do not need to have something to do with the object or attribute, that the widget
  * represents: the options are just values to pick from. Event a totally unrelated object can be specified to fetch
- * the options - via options_object_alias property. The selected value will then be saved to the attribute being
- * represented by the InputSelect itself.
- *
+ * the options - via `options_object_alias` property. The selected value will then be saved to the attribute being
+ * represented by the `InputSelect` itself.
+ * 
  * Example 1 (manually defined options):
  * 
  * ```
@@ -46,7 +46,7 @@ use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
  *  }
  *  
  * ```
- *
+ * 
  * Example 2 (attributes of another object as options):
  * 
  * ```
@@ -60,8 +60,8 @@ use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
  *  }
  *  
  * ```
- *
- * By turning "use_prefill_to_filter_options" on or off, the prefill 
+ * 
+ * By turning `use_prefill_to_filter_options` on or off, the prefill 
  * behavior can be customized. By default, the values from the prefill 
  * data will be used as options in the select automatically.
  * 
@@ -69,8 +69,8 @@ use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
  * - an option to empty the selection if the widget is not required 
  * (the value of this option is an empty string)
  * - an option to select empty values if the widget is based on an 
- * attribute which is not required (the value is the empty-comparator "__")
- *
+ * attribute which is not required (the value is the empty-comparator `NULL`)
+ * 
  * InputSelects should be used for small data sets, as not all frameworks 
  * will support searching for values or lazy loading. If you have a large 
  * amount of data, use an InputCombo instead!
