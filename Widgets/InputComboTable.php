@@ -16,18 +16,18 @@ use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Factories\QueryBuilderFactory;
 
 /**
- * A InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
- *
+ * An InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
+ * 
  * Thus, the user can see more information about every suggested object. The InputComboTable is very often used with relations,
  * where the related object may have many more data, then merely it's id (which is the value of the relation attribute).
- *
+ * 
  * The DataTable for autosuggests can either be genreated automatically based on the meta object, or specified by the user via
  * UXON or even extended from any other ready-made DataTable!
- *
+ * 
  * While not every UI-framework supports such a kind of widget, there are many ways to implement the main idea of the InputComboTable:
  * showing more data about a selectable object in the autosuggest. Mobile templates might use cards like in Googles material design,
  * for example.
- *
+ * 
  * InputComboTables support two type of live references to other objects: in the value and in the data filters. Concider the following
  * example, where we need a product selector for an order position. We order a specific product variant, but we need a two-step
  * selector, so we can select the product first and choose one of it's variants afterwards. To do this, we need an extra product
@@ -39,55 +39,55 @@ use exface\Core\Factories\QueryBuilderFactory;
  * selector takes care of that: It sets the value of the selector to the product id of the selected variant. Of course, if
  * the product id does not belong to the default display attributes of the variant, we need to add it to the respective combo
  * manually: just add it next to the `~DEFAULT_DISPLAY` attribute group.
- *
+ * 
  * ```
+ * {
+ *  "widget_type": "Form",
+ *  "object_alias": "MY.APP.ORDER_POSITION",
  *  {
- *      "widget_type": "Form",
- *      "object_alias": "MY.APP.ORDER_POSITION",
- *      {
- *          "widget_type": "InputComboTable",
- *          "object_alias": "MY.APP.PRODUCT",
- *          "id": "product_selector",
- *          "value": "=product_variant_selector!product_id",
- *          "display_only": true
- *      },
- *      {
- *          "widget_type": "InputComboTable",
- *          "attribute_alias: "PRODUCT_VARIANT"
- *          "id": "product_variant_selector",
- *          "table": {
- *              "columns": [
- *                  { "attribute_group_alias": "~DEFAULT_DISPLAY" },
- *                  { "attribute_alias": "PRODUCT"}
- *              ],
- *          "filters": [
- *              {
- *                  "attribute_alias": "PRODUCT"
- *                  "value": "=product_selector!id"
- *              }
- *          ]
- *      }
+ *      "widget_type": "InputComboTable",
+ *      "object_alias": "MY.APP.PRODUCT",
+ *      "id": "product_selector",
+ *      "value": "=product_variant_selector!product_id",
+ *      "display_only": true
+ *  },
+ *  {
+ *      "widget_type": "InputComboTable",
+ *      "attribute_alias: "PRODUCT_VARIANT"
+ *      "id": "product_variant_selector",
+ *      "table": {
+ *          "columns": [
+ *              { "attribute_group_alias": "~DEFAULT_DISPLAY" },
+ *              { "attribute_alias": "PRODUCT"}
+ *          ],
+ *      "filters": [
+ *          {
+ *              "attribute_alias": "PRODUCT"
+ *              "value": "=product_selector!id"
+ *          }
+ *      ]
  *  }
+ * }
  *  
  * ```
- *
+ * 
  * You can add as many widgets in this chain of live references, as you wish. This way, interactive selectors can be built
  * for very complex hierarchies. If you do not want the lower hierarchy levels to be selectable before the higher levels
  * are set, make the respective fiters required (in the above example, adding "required": "true" to the PRODUCT-filter of
  * the variant selector would make this selector disabled until a product is selected).
- *
+ * 
  * Note, that if a value is changed by the user, all the referencing filters will be updated causing their widgets
  * to revalidate. This means, that changing the product in our example, will reload data for the variant selector filtered
  * by the new product. Most likely, the previously selected variant will not belong to the new product, so the variant
  * selector will be emptied automatically. Unless, of course, the new product only has one variant and
  * autoselect_single_suggestion is true, than the value of the only variant of the new product will be automatically selected.
- *
+ * 
  * Changing or removing a value will also change/empty all referencing values.
- *
+ * 
  * For hierarchies like the one in the above example this means, that changing a value at a certain level will change the
  * values at higher levels and revalidate values at lower levels. Similarly, removing a value will in the middle will empty
  * higher level selectors and revalidate lower level fields.
- *
+ * 
  * @author Andrej Kabachnik
  *        
  */

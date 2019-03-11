@@ -8,7 +8,7 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 /**
  * InputCombo is similar to InputSelect extended by an autosuggest, that supports lazy loading.
  * It also can optionally accept new values.
- *
+ * 
  * @see InputSelect
  *
  * @author Andrej Kabachnik
