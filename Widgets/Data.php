@@ -1345,7 +1345,8 @@ class Data
         $table->setPaginate(false);
         $table->setNowrap(false);
         $table->setRowGrouper(UxonObject::fromArray(array(
-            'group_by_attribute_alias' => 'GROUP'
+            'group_by_attribute_alias' => 'GROUP',
+            'hide_caption' => true
         )));
         
         // IMPORTANT: make sure the help table does not have a help button itself, because that would result in having
