@@ -134,12 +134,18 @@ class DataRowGrouper implements WidgetPartInterface, iHaveCaption
     public function getGroupByColumn()
     {
         if ($this->group_by_column === null) {
+            $table = $this->getDataTable();
             if (! is_null($this->group_by_attribute_alias)) {
                 if (! is_null($this->group_by_column_id)) {
                     throw new WidgetConfigurationError($this->getDataTable(), 'Alternative properties "group_by_attribute_alias" and "group_by_column_id" are defined at the same time for a DataRowGrouper widget: please use only one of them!', '6Z5MAVK');
                 }
                 if (! $col = $this->getDataTable()->getColumnByAttributeAlias($this->group_by_attribute_alias)) {
-                    throw new WidgetLogicError($this->getDataTable(), 'No data column "' . $this->group_by_attribute_alias . '" could be added automatically by the DataRowGrouper: try to add it manually to the DataTable.');
+                    try {
+                        $col = $this->getDataTable()->createColumnFromAttribute($this->getMetaObject()->getAttribute($this->group_by_attribute_alias), null, true);
+                        $table->addColumn($col);
+                    } catch (\Throwable $e) {
+                        throw new WidgetLogicError($this->getDataTable(), 'No data column "' . $this->group_by_attribute_alias . '" could be added automatically by the DataRowGrouper: try to add it manually to the DataTable.', null, $e);
+                    }
                 }
             } elseif (! is_null($this->group_by_column_id)) {
                 if (! $col = $this->getDataTable()->getColumn($this->group_by_column_id)) {
