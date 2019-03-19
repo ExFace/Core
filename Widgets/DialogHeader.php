@@ -156,10 +156,5 @@ class DialogHeader extends Form
         
         return parent::doPrefill($dataSheet);
     }
-    
-    public function isReadonly() : bool
-    {
-        return true;
-    }
 }
 ?>
