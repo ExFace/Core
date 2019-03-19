@@ -41,7 +41,14 @@ class ReadPrefill extends ReadData
             // TODO Throw exception!
         }
         
-        $data_sheet = $this->getInputDataSheet($task);
+        // Get the prefill data from the request. 
+        // TODO The logic here should ideally be the same as in ShowWidget::prefillWidget(), but at the
+        // moment, there is no way to use the very same code. Perhaps trait could help...
+        if ($task->hasInputData() === false && $task->hasPrefillData() === true) {
+            $data_sheet = $task->getPrefillData();
+        } else {
+            $data_sheet = $this->getInputDataSheet($task);
+        }
         
         if ($data_sheet->isEmpty()) {
             return ResultFactory::createDataResult($task, $data_sheet);
