@@ -8,6 +8,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\DataTypeFactory;
+use exface\Core\Exceptions\LogicException;
 
 trait EnumStaticDataTypeTrait {
     
@@ -152,5 +153,14 @@ trait EnumStaticDataTypeTrait {
     public function toArray() : array
     {
         return $this->getValues();
+    }
+    
+    public function getLabelOfValue($value = null) : string
+    {
+        $value = $value ?? $this->getValue();
+        if ($value === null) {
+            throw new LogicException('Cannot get text label for an enumeration value: neither an internal value exists, nor is one passed as parameter');
+        }
+        return $this->getLabels()[$value];
     }
 }
