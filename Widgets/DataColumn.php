@@ -380,9 +380,19 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         }
     }
 
-    public function getAggregator()
+    public function getAggregator() : ?AggregatorInterface
     {
+        if ($this->aggregate_function === null) {
+            if ($aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $this->getAttributeAlias())) {
+                $this->setAggregator($aggr);
+            }
+        }
         return $this->aggregate_function;
+    }
+    
+    public function hasAggregator() : bool
+    {
+        return $this->getAggregator() !== null;
     }
 
     /**
@@ -473,11 +483,15 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         $caption = parent::getCaption();
         if ($caption === null || $caption === '') {
             if ($attr = $this->getAttribute()) {
+                if ($this->hasAggregator()) {
+                    $aggr = ' (' . $this->getAggregator()->getFunction()->getLabelOfValue() . ')';
+                }
+                
                 // FIXME isLabelForObject works instable, as MetaObject->getLabelAlias() will yield LABEL or the Label of the underlying attribute pretty unpredictabely
                 if (/*$attr->isLabelForObject() === true && */$attr->getRelationPath()->isEmpty() === false && $this->isLabelColumn() === true) {
-                    $this->setCaption($attr->getRelationPath()->getRelationLast()->getName());
+                    $this->setCaption($attr->getRelationPath()->getRelationLast()->getName() . $aggr);
                 } else {
-                    $this->setCaption($attr->getName());
+                    $this->setCaption($attr->getName() . $aggr);
                 }
             }
         }

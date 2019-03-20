@@ -243,9 +243,9 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iSupportAggregators::getAggregator()
      */
-    public function getAggregator()
+    public function getAggregator(): ?AggregatorInterface
     {
-        if (is_null($this->aggregate_function)) {
+        if ($this->aggregate_function === null) {
             if ($aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $this->getAttributeAlias())) {
                 $this->setAggregator($aggr);
             }
@@ -253,9 +253,9 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         return $this->aggregate_function;
     }
     
-    public function hasAggregator()
+    public function hasAggregator() : bool
     {
-        return is_null($this->getAggregator()) ? false : true;
+        return $this->getAggregator() !== null;
     }
 
     /**
@@ -283,7 +283,10 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     {
         if (! parent::getCaption()) {
             if ($this->isBoundToAttribute()) {
-                $this->setCaption($this->getAttribute()->getName());
+                if ($this->hasAggregator()) {
+                    $aggr = ' (' . $this->getAggregator()->getFunction()->getLabelOfValue() . ')';
+                }
+                $this->setCaption($this->getAttribute()->getName() . $aggr);
             }
         }
         return parent::getCaption();

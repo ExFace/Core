@@ -1026,20 +1026,24 @@ class Data
     }
 
     /**
-     * Makes the data get aggregated by the given attribute (i.e.
-     * GROUP BY attribute_alias in SQL).
+     * Makes the data get aggregated by the given attribute (i.e. GROUP BY attribute_alias in SQL).
      *
-     * Multiple attiribute_alias can be passed separated by commas.
+     * Multiple attiribute_alias can be passed as an UXON array (recommended) or separated by commas.
      *
      * @uxon-property aggregate_by_attribute_alias
-     * @uxon-type string
+     * @uxon-type metamodel:attribute[]|string
+     * @uxon-template [""]
      *
-     * @param string $value            
-     * @return \exface\Core\Widgets\Data
+     * @param string|UxonObject $value            
+     * @return Data
      */
     public function setAggregateByAttributeAlias($value)
     {
-        $this->aggregate_by_attribute_alias = str_replace(', ', ',', $value);
+        if ($value instanceof UxonObject) {
+            $this->aggregate_by_attribute_alias = implode(',', $value->toArray());
+        } else {
+            $this->aggregate_by_attribute_alias = str_replace(', ', ',', $value);
+        }
         return $this;
     }
 

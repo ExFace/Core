@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\DataTypes;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
+use exface\Core\Exceptions\LogicException;
 
 trait EnumDynamicDataTypeTrait {
     
@@ -35,12 +36,33 @@ trait EnumDynamicDataTypeTrait {
         if ($this->getShowValues() === true) {
             foreach ($labels as $val => $label) {
                 if (strcasecmp($val, $label) !== 0) {
-                    $labels[$val] = $val . $this->getValueLabelDelimiter() . $label;
+                    $labels[$val] = $this->buildLabel($val, $label);
                 }
             }
         }
         
         return $labels;
+    }
+    
+    protected function buildLabel($value, $text) : string
+    {
+        if ($this->getShowValues() === true) {
+            return $value . $this->getValueLabelDelimiter() . $text;
+        }
+        return $text;
+    }
+    
+    public function getLabelOfValue($value = null) : string
+    {
+        $value = $value ?? $this->getValue();
+        if ($value === null) {
+            throw new LogicException('Cannot get text label for an enumeration value: neither an internal value exists, nor is one passed as parameter');
+        }
+        $text = $this->values[$value];
+        if ($text === null) {
+            throw $this->createValidationError('Value "' . $value . '" not part of enumeration data type ' . $this->getAliasWithNamespace() . '!', '6XGN2H6');
+        }
+        return $this->buildLabel($value, $text);
     }
     
     /**
