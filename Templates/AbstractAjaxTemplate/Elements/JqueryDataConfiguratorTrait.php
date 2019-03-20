@@ -17,21 +17,30 @@ trait JqueryDataConfiguratorTrait
     {
         $result = parent::init();
         
+        $this->registerFiltersWithApplyOnChange();
+        
+        return $result;
+    }
+    
+    /**
+     * 
+     * @param AbstractJqueryElement $elementToRefresh
+     */
+    public function registerFiltersWithApplyOnChange(AbstractJqueryElement $elementToRefresh = null)
+    {
         $widget = $this->getWidget();
-        $data_element = null;
         foreach ($widget->getFilters() as $filter) {
             // For each filter with auto-apply trigger a refresh once the value of the filter changes.
             if ($filter->getApplyOnChange()) {
-                $data_element = is_null($data_element) ? $this->getTemplate()->getElement($widget->getWidgetConfigured()) : $data_element;
+                $elementToRefresh = is_null($elementToRefresh) ? $this->getTemplate()->getElement($widget->getWidgetConfigured()) : $elementToRefresh;
                 $filter_element = $this->getTemplate()->getElement($filter);
                 // Wrap the refresh in setTimeout() to make sure multiple filter can get their values before
                 // one of the actually triggers the refresh. This also solved a strange bug, where the refresh
                 // did not start with the first value change, but only with the second one an onwards.
-                $filter_element->addOnChangeScript('setTimeout(function(){' . $data_element->buildJsRefresh() . '}, 50)');
+                $filter_element->addOnChangeScript('setTimeout(function(){' . $elementToRefresh->buildJsRefresh() . '}, 50)');
             }
         }
-        
-        return $result;
+        return;
     }
     
     /**
