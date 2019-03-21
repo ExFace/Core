@@ -230,9 +230,9 @@ class StateMachineBehavior extends AbstractBehavior
                 'textMap' => new UxonObject($texts),
                 'colorMap' => new UxonObject($colorMap)
             ]);
+            $this->getStateAttribute()->setDefaultDisplayUxon($uxon);
         }
         
-        $this->getStateAttribute()->setDefaultDisplayUxon($uxon);
         return $this;
     }
 
