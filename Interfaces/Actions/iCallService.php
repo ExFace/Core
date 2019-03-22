@@ -26,5 +26,5 @@ interface iCallService extends iAccessDataSources
      * @param string $name
      * @return ServiceParameterInterface
      */
-    public function getArgument(string $name) : ServiceParameterInterface;
+    public function getParameter(string $name) : ServiceParameterInterface;
 }

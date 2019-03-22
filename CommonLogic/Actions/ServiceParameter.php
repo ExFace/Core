@@ -37,7 +37,12 @@ class ServiceParameter implements ServiceParameterInterface
      */
     public function exportUxonObject()
     {
-        return new UxonObject();
+        $uxon = new UxonObject([
+            'name' => $this->getName(),
+            'required' => $this->isRequired()
+        ]);
+        
+        return $uxon;
     } 
     
     /**
@@ -50,6 +55,10 @@ class ServiceParameter implements ServiceParameterInterface
     }
     
     /**
+     * The technical name of the parameter (i.e. variable name)
+     * 
+     * @uxon-property name
+     * @uxon-type string
      * 
      * @param string $value
      * @return ServiceParameter
@@ -67,13 +76,20 @@ class ServiceParameter implements ServiceParameterInterface
     public function getDataType() : DataTypeInterface
     {
         if ($this->dataType === null) {
-            $this->dataType = DataTypeFactory::createFromUxon($workbench, $this->dataTypeUxon);
+            $this->dataType = DataTypeFactory::createFromUxon($this->getWorkbench(), $this->dataTypeUxon);
         }
         return $this->dataType;
     }
     
     /**
-     *
+     * A UXON-description of a data type.
+     * 
+     * If not set, a simple string data type will be assumed.
+     * 
+     * @uxon-property data_type
+     * @uxon-type \exface\Core\CommonLogic\DataTypes\AbstractDataType
+     * @uxon-template {"alias": ""}
+     * 
      * @param UxonObject $value
      * @return ServiceParameter
      */
@@ -94,6 +110,11 @@ class ServiceParameter implements ServiceParameterInterface
     }
     
     /**
+     * Set to TRUE to mark the parameter as mandatory.
+     * 
+     * @uxon-property required
+     * @uxon-type boolean
+     * @uxon-default false
      * 
      * @param bool $value
      * @return ServiceParameter
@@ -119,11 +140,15 @@ class ServiceParameter implements ServiceParameterInterface
         return $this->action->getWorkbench();
     }
     
-    public function sanitize($val) : bool
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ServiceParameterInterface::isValidValue()
+     */
+    public function isValidValue($val): bool
     {
         if ($this->isRequired() && $this->getDataType()->isEmptyValue($val)) {
             throw new ActionInputMissingError($this->getAction(), 'Service parameter "' . $this->getName() . '" cannot be empty!');
         }
     }
-  
 }
