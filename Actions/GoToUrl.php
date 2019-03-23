@@ -137,6 +137,7 @@ class GoToUrl extends AbstractAction implements iShowUrl
      * 
      * @uxon-property urlencode_placeholders
      * @uxon-type boolean
+     * @uxon-default true
      * 
      * @param bool|string $value
      * @return \exface\Core\Actions\GoToUrl
