@@ -386,8 +386,11 @@ abstract class AbstractDataType implements DataTypeInterface
     }
 
     /**
+     * The code of the message to be used if this data type fails to pass validation.
      * 
-     * {@inheritDoc}
+     * @uxon-property validation_error_code
+     * @uxon-type metamodel:message
+     * 
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setValidationErrorCode()
      */
     public function setValidationErrorCode($validationErrorCode)
@@ -407,8 +410,11 @@ abstract class AbstractDataType implements DataTypeInterface
     }
 
     /**
+     * An explanation text for validation errors - typically explaining, what the data type expects.
      * 
-     * {@inheritDoc}
+     * @uxon-property validation_error_text
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setValidationErrorText()
      */
     public function setValidationErrorText($string)
