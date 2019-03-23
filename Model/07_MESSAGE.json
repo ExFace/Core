@@ -1996,6 +1996,20 @@
             "HINT": "Please, correct the UXON code shown in the tab \"UXON\" of this error message or pick another prototype.",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2019-03-23 06:21:53",
+            "MODIFIED_ON": "2019-03-23 06:26:56",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e94d33cfbba0b8afe50205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "74W2U4X",
+            "TITLE": "Invalid app alias",
+            "DESCRIPTION": "The alias must consist of two parts separated by a dot: the vendor (namespace) and the actual app alias. Both, vendor name and alias may contain letters, numbers and underscores.\n\nThe app's alias will automatically be used to name the package, which the app will be exported to. So, if you plan to add PHP code to the package, it is a good idea to make the alias adhere to the PSR2 standard: use lowercase for vendor and PascalCase for the app alias.\n\nHere are some typical examples:\n\n- exface.Core\n- mycompany.MyAppWithPSRCompilantAlias\n- me.my_very_long_app_name",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

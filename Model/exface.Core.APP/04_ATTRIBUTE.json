@@ -165,7 +165,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2018-12-23 11:43:56",
+            "MODIFIED_ON": "2019-03-23 06:22:15",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32303400000000000000000000000000",
@@ -199,11 +199,11 @@
             "SORTERPOS": null,
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
-            "SHORT_DESCRIPTION": "Unique alias of the app: e.g. \"exface.Core\"",
+            "SHORT_DESCRIPTION": "Unique alias of the app: e.g. \"exface.Core\". The alias must consist of two parts separated by a dot: the vendor (namespace) and the actual app alias.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": "{\"validator_regex\":\"\\\/^[a-zA-Z0-9_]+\\\\.{1}[a-zA-Z0-9_]+$\\\/\",\"validation_error_code\":\"74W2U4X\"}"
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
