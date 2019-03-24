@@ -2,7 +2,7 @@
     "id": "0xb90bb0b8949f11e7a605028037ec0200",
     "alias_with_namespace": "exface.core.logs",
     "menu_parent_page_alias": "exface.core.administration",
-    "menu_index": "9",
+    "menu_index": "7",
     "menu_visible": true,
     "name": "Logs",
     "description": "View system\/error logs",
