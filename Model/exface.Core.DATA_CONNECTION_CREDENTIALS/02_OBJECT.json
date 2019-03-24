@@ -77,7 +77,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2017-06-05 06:05:01",
+            "MODIFIED_ON": "2019-03-23 07:18:16",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31343500000000000000000000000000",
@@ -91,7 +91,7 @@
             "SHORT_DESCRIPTION": "User specific credential configuration for data connections",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"width\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"DATA_CONNECTION\"},{\"attribute_alias\":\"USER_CREDENTIALS\"}]}",
             "ALIAS": "DATA_CONNECTION_CREDENTIALS",
             "DATA_ADDRESS": "exf_data_connection_credentials"
         }

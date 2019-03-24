@@ -1,8 +1,8 @@
 {
     "id": "0x0a3e0996949f11e78ac4028037ec0200",
     "alias_with_namespace": "exface.core.users",
-    "menu_parent_page_alias": "exface.core.metamodel",
-    "menu_index": "6",
+    "menu_parent_page_alias": "exface.core.administration",
+    "menu_index": "1",
     "menu_visible": true,
     "name": "Users",
     "description": "Manage users and credentials",
@@ -21,10 +21,26 @@
         ],
         "columns": [
             {
-                "attribute_group_alias": "~VISIBLE"
+                "attribute_alias": "USERNAME"
             },
             {
-                "attribute_alias": "USER_CREDENTIALS__NAME:COUNT"
+                "attribute_alias": "LAST_NAME"
+            },
+            {
+                "attribute_alias": "FIRST_NAME"
+            },
+            {
+                "attribute_alias": "EMAIL"
+            },
+            {
+                "attribute_alias": "LOCALE"
+            },
+            {
+                "attribute_alias": "USER_CREDENTIALS__NAME:COUNT",
+                "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS')"
+            },
+            {
+                "attribute_alias": "UID"
             }
         ],
         "buttons": [
@@ -40,18 +56,6 @@
             },
             {
                 "action_alias": "exface.Core.DeleteObject"
-            },
-            {
-                "action": {
-                    "alias": "exface.Core.GoToPage",
-                    "page_alias": "exface.core.credentials"
-                },
-                "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS')"
-            },
-            {
-                "action_alias": "exface.Core.GoToPage",
-                "action_page_alias": "exface.core.connection-credentials",
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.CONNECTIONS')"
             }
         ]
     }
