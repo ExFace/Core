@@ -36,8 +36,11 @@
                 "attribute_alias": "LOCALE"
             },
             {
-                "attribute_alias": "USER_CREDENTIALS__NAME:LIST_DISTINCT",
+                "attribute_alias": "USER_CREDENTIALS__UID:COUNT",
                 "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS')"
+            },
+            {
+                "attribute_alias": "USER_CREDENTIALS__NAME:LIST_DISTINCT"
             },
             {
                 "attribute_alias": "UID"
