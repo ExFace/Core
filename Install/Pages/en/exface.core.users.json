@@ -36,7 +36,7 @@
                 "attribute_alias": "LOCALE"
             },
             {
-                "attribute_alias": "USER_CREDENTIALS__DATA_CONNECTION_CREDENTIALS__DATA_CONNECTION__LABEL:LIST_DISTINCT",
+                "attribute_alias": "USER_CREDENTIALS__NAME:LIST_DISTINCT",
                 "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS')"
             },
             {
