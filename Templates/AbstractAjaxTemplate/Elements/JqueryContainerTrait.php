@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\Container;
@@ -17,7 +17,7 @@ trait JqueryContainerTrait {
     public function buildHtmlForChildren()
     {
         foreach ($this->getWidget()->getChildren() as $subw) {
-            $output .= $this->getTemplate()->getElement($subw)->buildHtml() . "\n";
+            $output .= $this->getFacade()->getElement($subw)->buildHtml() . "\n";
         }
         
         return $output;
@@ -26,7 +26,7 @@ trait JqueryContainerTrait {
     public function buildJsForChildren()
     {
         foreach ($this->getWidget()->getChildren() as $subw) {
-            $output .= $this->getTemplate()->getElement($subw)->buildJs() . "\n";
+            $output .= $this->getFacade()->getElement($subw)->buildJs() . "\n";
         }
         ;
         return $output;
@@ -35,7 +35,7 @@ trait JqueryContainerTrait {
     public function buildHtmlForWidgets()
     {
         foreach ($this->getWidget()->getWidgets() as $subw) {
-            $output .= $this->getTemplate()->getElement($subw)->buildHtml() . "\n";
+            $output .= $this->getFacade()->getElement($subw)->buildHtml() . "\n";
         }
         ;
         return $output;
@@ -44,7 +44,7 @@ trait JqueryContainerTrait {
     public function buildJsForWidgets()
     {
         foreach ($this->getWidget()->getWidgets() as $subw) {
-            $output .= $this->getTemplate()->getElement($subw)->buildJs() . "\n";
+            $output .= $this->getFacade()->getElement($subw)->buildJs() . "\n";
         }
         ;
         return $output;
@@ -54,7 +54,7 @@ trait JqueryContainerTrait {
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement::buildJsDataGetter()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsDataGetter()
      */
     public function buildJsDataGetter(ActionInterface $action = null)
     {
@@ -64,7 +64,7 @@ trait JqueryContainerTrait {
         // Collect JS data objects from all inputs in the container
         foreach ($widget->getInputWidgets() as $child) {
             if (! $child->implementsInterface('iSupportStagedWriting')) {
-                $data_getters[] = $this->getTemplate()->getElement($child)->buildJsDataGetter($action);
+                $data_getters[] = $this->getFacade()->getElement($child)->buildJsDataGetter($action);
             } else {
                 // TODO get data from non-input widgets, that support deferred CRUD operations staging their data in the GUI
             }
@@ -92,7 +92,7 @@ trait JqueryContainerTrait {
         $output = '
 				(function(){';
         foreach ($this->getWidgetsToValidate() as $child) {
-            $validator = $this->getTemplate()->getElement($child)->buildJsValidator();
+            $validator = $this->getFacade()->getElement($child)->buildJsValidator();
             $output .= '
 					if(!' . $validator . ') { return false; }';
         }
@@ -117,7 +117,7 @@ trait JqueryContainerTrait {
         $output = '
 				var invalidElements = [];';
         foreach ($this->getWidgetsToValidate() as $child) {
-            $validator = $this->getTemplate()->getElement($child)->buildJsValidator();
+            $validator = $this->getFacade()->getElement($child)->buildJsValidator();
             if (! $alias = $child->getCaption()) {
                 $alias = method_exists($child, 'getAttributeAlias') ? $child->getAttributeAlias() : $child->getMetaObject()->getAliasWithNamespace();
             }
@@ -162,7 +162,7 @@ trait JqueryContainerTrait {
             $setters .= <<<JS
             
                 if (row['{$child->getAttributeAlias()}']) {
-                    {$this->getTemplate()->getElement($child)->buildJsValueSetter('row["' . $child->getAttributeAlias() . '"]')};
+                    {$this->getFacade()->getElement($child)->buildJsValueSetter('row["' . $child->getAttributeAlias() . '"]')};
                 }
 JS;
         }

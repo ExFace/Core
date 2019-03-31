@@ -7,7 +7,7 @@ namespace exface\Core\Widgets;
  *
  * Additionally to the normal button functionality this button can be assigned as a click action. So, if a button is bound to
  * a double click, it's action will be called if the user doubleclicks a data element. In theory multiple buttons can be bound
- * to a click action - if so, the template should show a popup menu for this action.
+ * to a click action - if so, the facade should show a popup menu for this action.
  *
  * @author Andrej Kabachnik
  *        

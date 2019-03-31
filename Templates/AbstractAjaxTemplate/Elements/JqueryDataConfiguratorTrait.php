@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\DataConfigurator;
@@ -32,8 +32,8 @@ trait JqueryDataConfiguratorTrait
         foreach ($widget->getFilters() as $filter) {
             // For each filter with auto-apply trigger a refresh once the value of the filter changes.
             if ($filter->getApplyOnChange()) {
-                $elementToRefresh = is_null($elementToRefresh) ? $this->getTemplate()->getElement($widget->getWidgetConfigured()) : $elementToRefresh;
-                $filter_element = $this->getTemplate()->getElement($filter);
+                $elementToRefresh = is_null($elementToRefresh) ? $this->getFacade()->getElement($widget->getWidgetConfigured()) : $elementToRefresh;
+                $filter_element = $this->getFacade()->getElement($filter);
                 // Wrap the refresh in setTimeout() to make sure multiple filter can get their values before
                 // one of the actually triggers the refresh. This also solved a strange bug, where the refresh
                 // did not start with the first value change, but only with the second one an onwards.
@@ -62,17 +62,17 @@ trait JqueryDataConfiguratorTrait
         $filters = [];
         if (! $unrendered) {
             foreach ($widget->getFilters() as $filter) {
-                $filters[] = $this->getTemplate()->getElement($filter)->buildJsConditionGetter();
+                $filters[] = $this->getFacade()->getElement($filter)->buildJsConditionGetter();
             }
         } else {
             foreach ($widget->getFilters() as $filter) {
                 if ($link = $filter->getValueWidgetLink()) {
-                    $linked_element = $this->getTemplate()->getElement($link->getTargetWidget());
+                    $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
                     $filter_value = $linked_element->buildJsValueGetter($link->getTargetColumnId());
                 } else {
                     $filter_value = '"' . $filter->getValue() . '"';
                 }
-                $filters[] = $this->getTemplate()->getElement($filter)->buildJsConditionGetter($filter_value);
+                $filters[] = $this->getFacade()->getElement($filter)->buildJsConditionGetter($filter_value);
             }
         }
         // Remove empty values
@@ -90,7 +90,7 @@ trait JqueryDataConfiguratorTrait
             $('#{$this->getId()}').find('input').keyup(function (ev) {
                 var keycode = (ev.keyCode ? ev.keyCode : ev.which);
                 if (keycode == '13') {
-                    {$this->getTemplate()->getElement($this->getWidget()->getWidgetConfigured())->buildJsRefresh()};
+                    {$this->getFacade()->getElement($this->getWidget()->getWidgetConfigured())->buildJsRefresh()};
                 }
             })
         }, 10)

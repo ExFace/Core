@@ -1,8 +1,8 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\DataTypes\DateDataType;
-use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsDateFormatter;
+use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsDateFormatter;
 use exface\Core\Widgets\InputDate;
 use exface\Core\Widgets\InputDateTime;
 use exface\Core\Factories\DataTypeFactory;
@@ -41,8 +41,8 @@ trait JqueryInputDateTrait {
             if (! $type instanceof DateDataType) {
                 $type = DataTypeFactory::createFromPrototype($this->getWorkbench(), DateDataType::class);
             }
-            /* @var $formatter \exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsDateFormatter */
-            $this->formatter = $this->getTemplate()->getDataTypeFormatter($type);
+            /* @var $formatter \exface\Core\Facades\AbstractAjaxFacade\Formatters\JsDateFormatter */
+            $this->formatter = $this->getFacade()->getDataTypeFormatter($type);
             if ($format = $this->getWidget()->getFormat()) {
                 $this->formatter->setFormat($format);
             } else {

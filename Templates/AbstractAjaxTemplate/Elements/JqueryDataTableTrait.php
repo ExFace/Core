@@ -1,10 +1,10 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\DataTable;
 
 /**
- * This trait contains common methods for templates elements inheriting from the AbstractJqueryElement and representing
+ * This trait contains common methods for facades elements inheriting from the AbstractJqueryElement and representing
  * the DataTable widget.
  *
  * @method DataTable getWidget()
@@ -35,7 +35,7 @@ trait JqueryDataTableTrait {
             if ($filter->isDisplayOnly()) {
                 continue;
             }
-            $filter_element = $this->getTemplate()->getElement($filter);
+            $filter_element = $this->getFacade()->getElement($filter);
             $detail_filters_js .= '
 				if (' . $filter_element->buildJsValueGetter() . '){
 					filters.conditions.push(' . $filter_element->buildJsConditionGetter() . ');

@@ -6,7 +6,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Tasks\GenericTask;
-use exface\Core\Interfaces\Templates\TemplateInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\CommonLogic\Tasks\HttpTask;
 use exface\Core\Interfaces\Tasks\HttpTaskInterface;
@@ -51,13 +51,13 @@ class TaskFactory extends AbstractStaticFactory
     
     /**
      * 
-     * @param TemplateInterface $template
+     * @param FacadeInterface $facade
      * @param ServerRequestInterface $request
      * @return HttpTaskInterface
      */
-    public static function createHttpTask(TemplateInterface $template, ServerRequestInterface $request) : HttpTaskInterface
+    public static function createHttpTask(FacadeInterface $facade, ServerRequestInterface $request) : HttpTaskInterface
     {
-        return new HttpTask($template->getWorkbench(), $template, $request);
+        return new HttpTask($facade->getWorkbench(), $facade, $request);
     }
 }
 ?>

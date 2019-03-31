@@ -42,13 +42,13 @@ trait iHaveToolbarsTrait {
      * grouping within each toolbar. Refer to the description of the Toolbar
      * widget for more details.
      * 
-     * Depending on the template used, the position-property of a toolbar can be
+     * Depending on the facade used, the position-property of a toolbar can be
      * used to place it at a specific point of the widget. For example, a
      * DataTable widget will typically have a top and a bottom toolbar. 
      * 
      * @uxon-property toolbars
      * @uxon-type \exface\Core\Widgets\Toolbar[]
-     * @uxon-template [{"buttons": [{"action_alias": ""}] }]
+     * @uxon-facade [{"buttons": [{"action_alias": ""}] }]
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveToolbars::setToolbars()

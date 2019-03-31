@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Actions\GoBack;
@@ -15,7 +15,7 @@ trait JqueryButtonTrait {
     {
         $js = ($widget->getRefreshInput() && $input_element->buildJsRefresh() ? $input_element->buildJsRefresh(true) . ";" : "");
         if ($link = $widget->getRefreshWidgetLink()) {
-            if ($widget->getPage()->is($link->getTargetPageAlias()) && $linked_element = $this->getTemplate()->getElement($link->getTargetWidget())) {
+            if ($widget->getPage()->is($link->getTargetPageAlias()) && $linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
                 $js .= "\n" . $linked_element->buildJsRefresh(true);
             }
         }
@@ -101,7 +101,7 @@ trait JqueryButtonTrait {
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement::getWidget()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::getWidget()
      * @return Button
      */
     public function getWidget()
@@ -126,8 +126,8 @@ trait JqueryButtonTrait {
         
         if ($action instanceof RefreshWidget) {
             $output = $this->buildJsClickRefreshWidget($action, $input_element);
-        } elseif ($action->implementsInterface('iRunTemplateScript')) {
-            $output = $this->buildJsClickRunTemplateScript($action, $input_element);
+        } elseif ($action->implementsInterface('iRunFacadeScript')) {
+            $output = $this->buildJsClickRunFacadeScript($action, $input_element);
         } elseif ($action->implementsInterface('iShowDialog')) {
             $output = $this->buildJsClickShowDialog($action, $input_element);
         } elseif ($action->implementsInterface('iShowUrl')) {
@@ -235,9 +235,9 @@ JS;
             
             if ($action instanceof GoToPage){
                 /* @var $widgetLink \exface\Core\CommonLogic\WidgetLink */
-                $prefix = $this->getTemplate()->getUrlFilterPrefix();
+                $prefix = $this->getFacade()->getUrlFilterPrefix();
                 foreach ($action->getTakeAlongFilters() as $attributeAlias => $widgetLink){
-                    $filters_param .= "&{$prefix}{$attributeAlias}='+{$this->getTemplate()->getElement($widgetLink->getTargetWidget())->buildJsValueGetter($widgetLink->getTargetColumnId(), null)}+'";
+                    $filters_param .= "&{$prefix}{$attributeAlias}='+{$this->getFacade()->getElement($widgetLink->getTargetWidget())->buildJsValueGetter($widgetLink->getTargetColumnId(), null)}+'";
                 }
                 $newWindow = $action->getOpenInNewWindow();
             } else {
@@ -264,7 +264,7 @@ JS;
      */
     protected function buildJsNavigateToPage(string $pageSelector, string $urlParams = '', AbstractJqueryElement $input_element, bool $newWindow = false) : string
     {
-        $url = "{$this->getTemplate()->buildUrlToPage($pageSelector)}?{$urlParams}";
+        $url = "{$this->getFacade()->buildUrlToPage($pageSelector)}?{$urlParams}";
         if ($newWindow === true) {
             return "window.open('{$url}');";
         }
@@ -290,7 +290,7 @@ JS;
         return $output;
     }
 
-    protected function buildJsClickRunTemplateScript(ActionInterface $action, AbstractJqueryElement $input_element)
+    protected function buildJsClickRunFacadeScript(ActionInterface $action, AbstractJqueryElement $input_element)
     {
         $widget = $this->getWidget();
         
@@ -320,11 +320,11 @@ JS;
     }
     
     /**
-     * Return the template element corresponding to the input widget of this button
+     * Return the facade element corresponding to the input widget of this button
      */
     public function getInputElement()
     {
-        return $this->getTemplate()->getElement($this->getWidget()->getInputWidget());
+        return $this->getFacade()->getElement($this->getWidget()->getInputWidget());
     }
 }
 ?>

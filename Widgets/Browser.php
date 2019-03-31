@@ -3,7 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\DataTypes\StringDataType;
 /**
- * Shows a URL or an action in an embedded web browser (e.g. an iFrame in HTML-templates).
+ * Shows a URL or an action in an embedded web browser (e.g. an iFrame in HTML-facades).
  *
  * @author Andrej Kabachnik
  *        

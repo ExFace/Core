@@ -15,8 +15,8 @@ interface iHaveIcon extends WidgetInterface
     /**
      * The icon name to be displayed.
      * 
-     * Refer to the documentation of the template for supported icon names. Most
-     * templates will support font awesome icons and some poprietary icon set
+     * Refer to the documentation of the facade for supported icon names. Most
+     * facades will support font awesome icons and some poprietary icon set
      * additionally.
      * 
      * @uxon-property icon
@@ -37,7 +37,7 @@ interface iHaveIcon extends WidgetInterface
     /**
      * Force the icon to show (TRUE) or hide (FALSE)
      * 
-     * The default depends on the template used.
+     * The default depends on the facade used.
      * 
      * @uxon-property show_icon
      * @uxon-type boolean 

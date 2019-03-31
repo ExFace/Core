@@ -22,7 +22,7 @@ class WidgetGrid extends Container implements iLayoutWidgets
      *
      * @uxon-property widgets
      * @uxon-type \exface\Core\Widgets\Value[]|\exface\Core\Widgets\AbstractWidget[]
-     * @uxon-template [{"attribute_alias": ""}]
+     * @uxon-facade [{"attribute_alias": ""}]
      *
      * @see \exface\Core\Widgets\Container::setWidgets()
      */

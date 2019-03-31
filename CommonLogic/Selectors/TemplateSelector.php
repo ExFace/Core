@@ -2,17 +2,17 @@
 namespace exface\Core\CommonLogic\Selectors;
 
 use exface\Core\CommonLogic\Selectors\Traits\ResolvableNameSelectorTrait;
-use exface\Core\Interfaces\Selectors\TemplateSelectorInterface;
+use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 
 /**
- * Generic implementation of the TemplateSelectorInterface.
+ * Generic implementation of the FacadeSelectorInterface.
  * 
- * @see TemplateSelectorInterface
+ * @see FacadeSelectorInterface
  * 
  * @author Andrej Kabachnik
  *
  */
-class TemplateSelector extends AbstractSelector implements TemplateSelectorInterface
+class FacadeSelector extends AbstractSelector implements FacadeSelectorInterface
 {
     use ResolvableNameSelectorTrait;
     
@@ -23,6 +23,6 @@ class TemplateSelector extends AbstractSelector implements TemplateSelectorInter
      */
     public function getComponentType() : string
     {
-        return 'template';
+        return 'facade';
     }
 }

@@ -1,24 +1,24 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate;
+namespace exface\Core\Facades\AbstractAjaxFacade;
 
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement;
+use exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\NumberDataType;
-use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsNumberFormatter;
+use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsNumberFormatter;
 use exface\Core\DataTypes\DateDataType;
-use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsDateFormatter;
+use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsDateFormatter;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
-use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsTransparentFormatter;
-use exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface;
-use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsEnumFormatter;
+use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsTransparentFormatter;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface;
+use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsEnumFormatter;
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsBooleanFormatter;
-use exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate;
+use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsBooleanFormatter;
+use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
@@ -27,29 +27,29 @@ use exface\Core\Interfaces\Tasks\ResultUriInterface;
 use exface\Core\Interfaces\Tasks\ResultFileInterface;
 use exface\Core\Interfaces\Tasks\ResultDataInterface;
 use GuzzleHttp\Psr7\Response;
-use exface\Core\Exceptions\Templates\TemplateOutputError;
+use exface\Core\Exceptions\Facades\FacadeOutputError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Factories\UiPageFactory;
-use exface\Core\Templates\HttpFileServerTemplate;
-use exface\Core\Templates\AbstractHttpTemplate\Middleware\TaskUrlParamReader;
-use exface\Core\Templates\AbstractHttpTemplate\Middleware\DataUrlParamReader;
-use exface\Core\Templates\AbstractHttpTemplate\Middleware\QuickSearchUrlParamReader;
-use exface\Core\Templates\AbstractHttpTemplate\Middleware\PrefixedFilterUrlParamsReader;
+use exface\Core\Facades\HttpFileServerFacade;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskUrlParamReader;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\DataUrlParamReader;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\QuickSearchUrlParamReader;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\PrefixedFilterUrlParamsReader;
 use exface\Core\Factories\ResultFactory;
-use exface\Core\Templates\AbstractHttpTemplate\Middleware\ContextBarApi;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\ContextBarApi;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Widget\OnRemoveEvent;
 use exface\Core\Interfaces\Tasks\ResultTextContentInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\DataTypes\TimeDataType;
-use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsTimeFormatter;
+use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsTimeFormatter;
 
 /**
  * 
  * @author Andrej Kabachnik
  *
  */
-abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
+abstract class AbstractAjaxFacade extends AbstractHttpFacade
 {
     const MODE_HEAD = 'HEAD';
     const MODE_BODY = 'BODY';
@@ -75,7 +75,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Templates\AbstractTemplate\AbstractTemplate::init()
+     * @see \exface\Core\Facades\AbstractFacade\AbstractFacade::init()
      */
     protected function init()
     {
@@ -88,7 +88,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::handle()
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::handle()
      */
     public function handle(ServerRequestInterface $request, $useCacheKey = null) : ResponseInterface
     {
@@ -169,8 +169,8 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     }
 
     /**
-     * Creates a template element for a given ExFace widget.
-     * Elements are cached within the template engine, so multiple calls to this method do
+     * Creates a facade element for a given ExFace widget.
+     * Elements are cached within the facade engine, so multiple calls to this method do
      * not cause the element to get recreated from scratch. This improves performance.
      *
      * @param WidgetInterface $widget            
@@ -201,7 +201,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     /**
      * 
      * @param AbstractWidget $widget
-     * @return AbstractAjaxTemplate
+     * @return AbstractAjaxFacade
      */
     public function removeElement(WidgetInterface $widget)
     {
@@ -212,7 +212,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     /**
      * 
      * @param AbstractJqueryElement $element
-     * @return \exface\Core\Templates\AbstractAjaxTemplate\AbstractAjaxTemplate
+     * @return \exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade
      */
     public function registerElement(AbstractJqueryElement $element)
     {
@@ -258,7 +258,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     }
 
     /**
-     * Creates a template element for a widget of the give resource, specified by the
+     * Creates a facade element for a widget of the give resource, specified by the
      * widget's ID.
      * It's just a shortcut in case you do not have the widget object at
      * hand, but know it's ID and the resource, where it resides.
@@ -301,9 +301,9 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     /**
      * 
      * @param string $value
-     * @return \exface\Core\Templates\AbstractAjaxTemplate\AbstractAjaxTemplate
+     * @return \exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade
      */
-    protected function setClassPrefix($value) : AbstractAjaxTemplate
+    protected function setClassPrefix($value) : AbstractAjaxFacade
     {
         $this->class_prefix = $value;
         return $this;
@@ -348,7 +348,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::getMiddleware()
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::getMiddleware()
      */
     protected function getMiddleware() : array
     {
@@ -373,7 +373,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponseFromTaskResult()
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::createResponseFromTaskResult()
      */
     protected function createResponseFromTaskResult(ServerRequestInterface $request, ResultInterface $result) : ResponseInterface
     {
@@ -390,7 +390,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         
         if ($result->isEmpty()) {
             // Empty results must still produce output if rendering HTML HEAD - the common includes must still
-            // be there for the template to work.
+            // be there for the facade to work.
             if ($mode === static::MODE_HEAD) {
                 $body = implode("\n", $this->buildHtmlHeadCommonIncludes());
             } else {
@@ -422,7 +422,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                 break;
                 
             case $result instanceof ResultFileInterface:
-                $url = HttpFileServerTemplate::buildUrlForDownload($this->getWorkbench(), $result->getPathAbsolute());
+                $url = HttpFileServerFacade::buildUrlForDownload($this->getWorkbench(), $result->getPathAbsolute());
                 $message = 'Download ready. If it does not start automatically, click <a href="' . $url . '">here</a>.';
                 $json = [
                     "success" => $message,
@@ -483,14 +483,14 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      *
      * @param array|\stdClass $serializable_data
      * @param string $add_extras
-     * @throws TemplateOutputError
+     * @throws FacadeOutputError
      * @return string
      */
     public function encodeData($serializable_data)
     {        
         $result = json_encode($serializable_data, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_QUOT);
         if (! $result) {
-            throw new TemplateOutputError('Error encoding data: ' . json_last_error() . ' ' . json_last_error_msg());
+            throw new FacadeOutputError('Error encoding data: ' . json_last_error() . ' ' . json_last_error_msg());
         }
         return $result;
     }
@@ -498,7 +498,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponseFromError()
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::createResponseFromError()
      */
     protected function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface {
         $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench());
@@ -581,11 +581,11 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     }
     
     /**
-     * Returns an array of allowed origins for AJAX requests to the template.
+     * Returns an array of allowed origins for AJAX requests to the facade.
      * 
      * The core config key TEMPLATES.AJAX.ACCESS_CONTROL_ALLOW_ORIGIN provides basic configuration
-     * for all AJAX templates. Templates are free to use their own configuration though - please
-     * refer to the documentation of the template used.
+     * for all AJAX facades. Facades are free to use their own configuration though - please
+     * refer to the documentation of the facade used.
      * 
      * @return string[]
      */

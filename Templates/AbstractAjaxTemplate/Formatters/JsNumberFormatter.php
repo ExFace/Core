@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Formatters;
+namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\NumberDataType;
@@ -27,7 +27,7 @@ class JsNumberFormatter extends AbstractJsDataTypeFormatter
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface::buildJsFormatter()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFormatter()
      */
     public function buildJsFormatter($jsInput)
     {
@@ -67,7 +67,7 @@ JS;
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface::buildJsFormatParser()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFormatParser()
      */
     public function buildJsFormatParser($jsInput)
     {
@@ -78,7 +78,7 @@ JS;
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface::buildHtmlHeadIncludes()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildHtmlHeadIncludes()
      */
     public function buildHtmlHeadIncludes()
     {
@@ -88,7 +88,7 @@ JS;
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface::buildHtmlBodyIncludes()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildHtmlBodyIncludes()
      */
     public function buildHtmlBodyIncludes()
     {

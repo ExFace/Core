@@ -1,27 +1,27 @@
 <?php
-namespace exface\Core\Templates;
+namespace exface\Core\Facades;
 
-use exface\Core\Templates\AbstractTemplate\AbstractTemplate;
-use exface\Core\Interfaces\Templates\HttpTemplateInterface;
+use exface\Core\Facades\AbstractFacade\AbstractFacade;
+use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use kabachello\FileRoute\FileRouteMiddleware;
 use Psr\Http\Message\UriInterface;
-use kabachello\FileRoute\Templates\PlaceholderFileTemplate;
-use exface\Core\Templates\AbstractHttpTemplate\NotFoundHandler;
+use kabachello\FileRoute\Facades\PlaceholderFileFacade;
+use exface\Core\Facades\AbstractHttpFacade\NotFoundHandler;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\Filemanager;
 use function GuzzleHttp\Psr7\stream_for;
-use exface\Core\Templates\DocsTemplate\MarkdownDocsReader;
-use exface\Core\Templates\DocsTemplate\Middleware\AppUrlRewriterMiddleware;
-use exface\Core\Templates\AbstractHttpTemplate\HttpRequestHandler;
+use exface\Core\Facades\DocsFacade\MarkdownDocsReader;
+use exface\Core\Facades\DocsFacade\Middleware\AppUrlRewriterMiddleware;
+use exface\Core\Facades\AbstractHttpFacade\HttpRequestHandler;
 
 /**
  *  
  * @author Andrej Kabachnik
  *
  */
-class DocsTemplate extends AbstractTemplate implements HttpTemplateInterface
+class DocsFacade extends AbstractFacade implements HttpFacadeInterface
 {    
     private $url = null;
     
@@ -56,8 +56,8 @@ class DocsTemplate extends AbstractTemplate implements HttpTemplateInterface
             return $url;
         };
         $reader = new MarkdownDocsReader($this->getWorkbench());
-        $templatePath = Filemanager::pathJoin([$this->getApp()->getDirectoryAbsolutePath(), 'Templates/DocsTemplate/template.html']);
-        $template = new PlaceholderFileTemplate($templatePath, $this->getBaseUrl());
+        $templatePath = Filemanager::pathJoin([$this->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/template.html']);
+        $template = new PlaceholderFileFacade($templatePath, $this->getBaseUrl());
         $template->setBreadcrumbsRootName('Documentation');
         $handler->add(new FileRouteMiddleware($matcher, $this->getWorkbench()->filemanager()->getPathToVendorFolder(), $reader, $template));
         
@@ -78,7 +78,7 @@ class DocsTemplate extends AbstractTemplate implements HttpTemplateInterface
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Templates\HttpTemplateInterface::getUrlRoutePatterns()
+     * @see \exface\Core\Interfaces\Facades\HttpFacadeInterface::getUrlRoutePatterns()
      */
     public function getUrlRoutePatterns() : array
     {

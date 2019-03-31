@@ -520,7 +520,7 @@ class Data
      *
      * @uxon-property columns
      * @uxon-type \exface\Core\Widgets\DataColumn[]|\exface\Core\Widgets\DataColumnGroup[]
-     * @uxon-template [{"attribute_alias": ""}]
+     * @uxon-facade [{"attribute_alias": ""}]
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::setColumns()
      */
@@ -687,7 +687,7 @@ class Data
      *
      * @uxon-property filters
      * @uxon-type \exface\Core\Widgets\Filter[]
-     * @uxon-template [{"attribute_alias": ""}]
+     * @uxon-facade [{"attribute_alias": ""}]
      *
      * @param UxonObject $uxon_objects
      * @return Data
@@ -922,7 +922,7 @@ class Data
      * 
      * @uxon-property paginator
      * @uxon-type \exface\Core\Widgets\DataPaginator
-     * @uxon-template {"count_all_rows": "true"}
+     * @uxon-facade {"count_all_rows": "true"}
      * 
      * @param UxonObject $uxon
      * @return Data
@@ -937,7 +937,7 @@ class Data
      * @deprecated use getPaginator()->setPageSize() instead!
      * 
      * Sets the number of rows to show on one page (only if pagination is enabled).
-     * If not set, the template's default value will be used.
+     * If not set, the facade's default value will be used.
      *
      * @param integer $value
      * @return \exface\Core\Widgets\Data
@@ -995,7 +995,7 @@ class Data
      *
      * @uxon-property sorters
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSorter[]
-     * @uxon-template [{"attribute_alias": "", "direction": "asc"}]
+     * @uxon-facade [{"attribute_alias": "", "direction": "asc"}]
      *
      * TODO use special sorter widgets here instead of plain uxon objects
      * 
@@ -1032,7 +1032,7 @@ class Data
      *
      * @uxon-property aggregate_by_attribute_alias
      * @uxon-type metamodel:attribute[]|string
-     * @uxon-template [""]
+     * @uxon-facade [""]
      *
      * @param string|UxonObject $value            
      * @return Data
@@ -1105,7 +1105,7 @@ class Data
     }
 
     /**
-     * Makes data values get loaded asynchronously in background if the template supports it (i.e.
+     * Makes data values get loaded asynchronously in background if the facade supports it (i.e.
      * via AJAX).
      *
      * @uxon-property lazy_loading
@@ -1164,7 +1164,7 @@ class Data
     /**
      * Sets a custom text to be displayed in the Data widget, if not data is found.
      *
-     * The text may contain any template-specific formatting: e.g. HTML for HTML-templates.
+     * The text may contain any facade-specific formatting: e.g. HTML for HTML-facades.
      *
      * @uxon-property empty_text
      * @uxon-type string|metamodel:formula
@@ -1663,7 +1663,7 @@ class Data
      * 
      * @uxon-property buttons
      * @uxon-type \exface\Core\Widgets\DataButton[]
-     * @uxon-template [{"action_alias": ""}]
+     * @uxon-facade [{"action_alias": ""}]
      * 
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
      */
@@ -1696,7 +1696,7 @@ class Data
     /**
      * Set to TRUE/FALSE to enable or disable quick search functionality.
      * 
-     * By default, the templates are free to decide, if quick search should be used
+     * By default, the facades are free to decide, if quick search should be used
      * for specific data widgets.
      * 
      * @uxon-property quick_search_enabled

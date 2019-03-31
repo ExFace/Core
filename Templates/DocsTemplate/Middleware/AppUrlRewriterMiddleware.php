@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\DocsTemplate\Middleware;
+namespace exface\Core\Facades\DocsFacade\Middleware;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -7,11 +7,11 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use exface\Core\Factories\DataSheetFactory;
 use function GuzzleHttp\Psr7\stream_for;
-use exface\Core\Interfaces\Templates\HttpTemplateInterface;
+use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\DataTypes\StringDataType;
 
 /**
- * This middeware rewrites URLs in documentation files to make them usable with the DocsTemplate.
+ * This middeware rewrites URLs in documentation files to make them usable with the DocsFacade.
  * 
  * This middleware only works with apps, that have a composer.json with support/docs or support/source
  * properties!
@@ -23,12 +23,12 @@ class AppUrlRewriterMiddleware implements MiddlewareInterface
 {
     private $workbench = null;
     
-    private $template = null;
+    private $facade = null;
     
-    public function __construct(HttpTemplateInterface $template)
+    public function __construct(HttpFacadeInterface $facade)
     {
-        $this->workbench = $template->getWorkbench();
-        $this->template = $template;
+        $this->workbench = $facade->getWorkbench();
+        $this->facade = $facade;
     }
     
     /**
@@ -96,7 +96,7 @@ class AppUrlRewriterMiddleware implements MiddlewareInterface
         $urls = [];
         foreach ($appSheet->getRows() as $row) {
             if ($url = $this->getRepoDocsUrl($row['PACKAGE'])) {
-                $urls[$url] = $this->template->getBaseUrl(). '/' . $row['PACKAGE'] . '/' . StringDataType::substringAfter($url, '/', '', false, true); 
+                $urls[$url] = $this->facade->getBaseUrl(). '/' . $row['PACKAGE'] . '/' . StringDataType::substringAfter($url, '/', '', false, true); 
             }
         }
         

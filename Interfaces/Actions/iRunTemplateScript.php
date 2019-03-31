@@ -1,9 +1,9 @@
 <?php
 namespace exface\Core\Interfaces\Actions;
 
-use exface\Core\Interfaces\Templates\TemplateInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
 
-interface iRunTemplateScript extends ActionInterface
+interface iRunFacadeScript extends ActionInterface
 {
 
     /**
@@ -18,11 +18,11 @@ interface iRunTemplateScript extends ActionInterface
     public function getScript();
 
     /**
-     * Returns an array of include paths relative to the templates js-folder
+     * Returns an array of include paths relative to the facades js-folder
      *
      * @return array()
      */
-    public function getIncludes(TemplateInterface $template) : array;
+    public function getIncludes(FacadeInterface $facade) : array;
 
     /**
      * Returns valid java script, that executes the action.
@@ -48,6 +48,6 @@ interface iRunTemplateScript extends ActionInterface
      * @param string $element_id            
      * @return string valid java script
      */
-    public function buildScriptHelperFunctions(TemplateInterface $template) : string;
+    public function buildScriptHelperFunctions(FacadeInterface $facade) : string;
 }
 ?>

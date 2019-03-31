@@ -7,8 +7,8 @@ use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\CommonLogic\Selectors\AppSelector;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
-use exface\Core\CommonLogic\Selectors\TemplateSelector;
-use exface\Core\Interfaces\Selectors\TemplateSelectorInterface;
+use exface\Core\CommonLogic\Selectors\FacadeSelector;
+use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 use exface\Core\CommonLogic\Selectors\DataConnectorSelector;
@@ -80,11 +80,11 @@ abstract class SelectorFactory extends AbstractStaticFactory
      *
      * @param WorkbenchInterface $workbench
      * @param string $selectorString
-     * @return TemplateSelectorInterface
+     * @return FacadeSelectorInterface
      */
-    public static function createTemplateSelector(WorkbenchInterface $workbench, string $selectorString) : TemplateSelectorInterface
+    public static function createFacadeSelector(WorkbenchInterface $workbench, string $selectorString) : FacadeSelectorInterface
     {
-        return new TemplateSelector($workbench, $selectorString);
+        return new FacadeSelector($workbench, $selectorString);
     }
     
     /**

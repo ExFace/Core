@@ -17,9 +17,9 @@ use exface\Core\Widgets\Traits\iAmCollapsibleTrait;
  * 
  * Configurators are organized in tabs. Each type of configurator will have 
  * a different set of tabs. However, since configurators are separate widgets,
- * templates may render them as something different than the regular tabs widget:
- * perhaps, an accordion. Templates can also rearrange tab contents: e.g. a
- * desktop template with lot's of space could render a DataConfigurator with 
+ * facades may render them as something different than the regular tabs widget:
+ * perhaps, an accordion. Facades can also rearrange tab contents: e.g. a
+ * desktop facade with lot's of space could render a DataConfigurator with 
  * only two tabs - one for filters and one for everything else. Another option
  * could be a panel with promoted filters and sorters and a dialog with the
  * rest of the configurator rendered as regular tabs. There are lots of

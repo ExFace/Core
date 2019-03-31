@@ -1,14 +1,14 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
-use exface\Core\Templates\AbstractAjaxTemplate\AbstractAjaxTemplate;
+use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 
 /**
- * TODO use template elements for Toolbar and ButtonGroup instead of this trait.
+ * TODO use facade elements for Toolbar and ButtonGroup instead of this trait.
  * 
  * @method iHaveToolbars getWidget()
- * @method AbstractAjaxTemplate getTemplate()
+ * @method AbstractAjaxFacade getFacade()
  * 
  * @author Andrej Kabachnik
  *
@@ -20,7 +20,7 @@ trait JqueryToolbarsTrait
     {
         $output = '';
         foreach ($this->getWidget()->getToolbars() as $toolbar){
-            $output .= $this->getTemplate()->getElement($toolbar)->buildHtml();
+            $output .= $this->getFacade()->getElement($toolbar)->buildHtml();
         }
         return $output;
     }
@@ -32,7 +32,7 @@ trait JqueryToolbarsTrait
     protected function buildJsButtons(){
         $output = '';
         foreach ($this->getWidget()->getToolbars() as $toolbar) {
-            $output .= $this->getTemplate()->buildJs($toolbar);
+            $output .= $this->getFacade()->buildJs($toolbar);
         }
         return $output;
     }

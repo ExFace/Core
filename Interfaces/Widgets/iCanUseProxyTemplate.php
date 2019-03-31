@@ -9,7 +9,7 @@ use exface\Core\Interfaces\WidgetInterface;
  * @author Andrej Kabachnik
  *        
  */
-interface iCanUseProxyTemplate extends WidgetInterface
+interface iCanUseProxyFacade extends WidgetInterface
 {
     /**
      * 
@@ -20,9 +20,9 @@ interface iCanUseProxyTemplate extends WidgetInterface
     /**
      * 
      * @param bool|int|string $trueOrFalse
-     * @return iCanUseProxyTemplate
+     * @return iCanUseProxyFacade
      */
-    public function setUseProxy($trueOrFalse) : iCanUseProxyTemplate;
+    public function setUseProxy($trueOrFalse) : iCanUseProxyFacade;
     
     /**
      *

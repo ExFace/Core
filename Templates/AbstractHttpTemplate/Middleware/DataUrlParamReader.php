@@ -1,16 +1,16 @@
 <?php
-namespace exface\Core\Templates\AbstractHttpTemplate\Middleware;
+namespace exface\Core\Facades\AbstractHttpFacade\Middleware;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
-use exface\Core\Interfaces\Templates\HttpTemplateInterface;
+use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Templates\AbstractHttpTemplate\Middleware\Traits\TaskRequestTrait;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\Traits\TaskRequestTrait;
 
 /**
  * This PSR-15 middleware reads a DataSheet from the given URL or body parameter
@@ -23,7 +23,7 @@ class DataUrlParamReader implements MiddlewareInterface
 {
     use TaskRequestTrait;
     
-    private $template = null;
+    private $facade = null;
     
     private $taskAttributeName = null;
     
@@ -33,14 +33,14 @@ class DataUrlParamReader implements MiddlewareInterface
     
     /**
      * 
-     * @param HttpTemplateInterface $template
+     * @param HttpFacadeInterface $facade
      * @param string $readUrlParam
      * @param string $passToMethod
      * @param string $taskAttributeName
      */
-    public function __construct(HttpTemplateInterface $template, string $readUrlParam, string $passToMethod = 'setInputData', string $taskAttributeName = 'task')
+    public function __construct(HttpFacadeInterface $facade, string $readUrlParam, string $passToMethod = 'setInputData', string $taskAttributeName = 'task')
     {
-        $this->template = $template;
+        $this->facade = $facade;
         $this->taskAttributeName = $taskAttributeName;
         $this->urlParamData = $readUrlParam;
         $this->methodName = $passToMethod;
@@ -53,7 +53,7 @@ class DataUrlParamReader implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $task = $this->getTask($request, $this->taskAttributeName, $this->template);
+        $task = $this->getTask($request, $this->taskAttributeName, $this->facade);
         $data = $request->getQueryParams()[$this->urlParamData];
         
         if (is_null($data)) {

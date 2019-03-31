@@ -116,7 +116,7 @@ class ProgressBar extends Display implements iCanBeAligned
      * 
      * @uxon-property override_attribute_data_type
      * @uxon-type object
-     * @uxon-template {"10": "yellow", "90": "green", "100" : "gray"}
+     * @uxon-facade {"10": "yellow", "90": "green", "100" : "gray"}
      * 
      * @param UxonObject $value
      * @return ProgressBar
@@ -171,7 +171,7 @@ class ProgressBar extends Display implements iCanBeAligned
      * 
      * @uxon-property text_map
      * @uxon-type object
-     * @uxon-template {"10": "Pending", "20": "In Progress", "90": "Canceled", "100" : "Finished"}
+     * @uxon-facade {"10": "Pending", "20": "In Progress", "90": "Canceled", "100" : "Finished"}
      * 
      * @param UxonObject $value
      * @return ProgressBar

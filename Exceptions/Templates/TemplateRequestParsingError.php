@@ -1,14 +1,14 @@
 <?php
-namespace exface\Core\Exceptions\Templates;
+namespace exface\Core\Exceptions\Facades;
 
 use exface\Core\Exceptions\RuntimeException;
 
 /**
- * Exception thrown if the template fails to read data from the current HTTP request.
+ * Exception thrown if the facade fails to read data from the current HTTP request.
  *
  * @author Andrej Kabachnik
  *        
  */
-class TemplateRequestParsingError extends RuntimeException
+class FacadeRequestParsingError extends RuntimeException
 {
 }

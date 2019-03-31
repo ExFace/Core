@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\Filter;
 
@@ -54,7 +54,7 @@ trait JqueryFilterTrait {
 
     public function getInputElement()
     {
-        return $this->getTemplate()->getElement($this->getWidget()->getInputWidget());
+        return $this->getFacade()->getElement($this->getWidget()->getInputWidget());
     }
     
     public function addOnChangeScript($string)
@@ -65,7 +65,7 @@ trait JqueryFilterTrait {
 
     /**
      * Magic method to forward all calls to methods, not explicitly defined in the filter to ist value widget.
-     * Thus, the filter is a simple proxy from the point of view of the template. However, it can be easily
+     * Thus, the filter is a simple proxy from the point of view of the facade. However, it can be easily
      * enhanced with additional methods, that will override the ones of the value widget.
      * TODO this did not really work so far. Don't know why. As a work around, added some explicit proxy methods
      * -> __call wird aufgerufen, wenn eine un!zugreifbare Methode in einem Objekt aufgerufen wird

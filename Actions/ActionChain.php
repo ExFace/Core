@@ -7,7 +7,7 @@ use exface\Core\Factories\ActionFactory;
 use exface\Core\CommonLogic\Model\ActionList;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Interfaces\Actions\iShowWidget;
-use exface\Core\Interfaces\Actions\iRunTemplateScript;
+use exface\Core\Interfaces\Actions\iRunFacadeScript;
 use exface\Core\Interfaces\ActionListInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
@@ -141,8 +141,8 @@ class ActionChain extends AbstractAction
             throw new ActionConfigurationError($this, 'Actions showing widgets cannot be used within action chains!');
         }
         
-        if ($action instanceof iRunTemplateScript){
-            throw new ActionConfigurationError($this, 'Actions running template scripts cannot be used within action chains!');
+        if ($action instanceof iRunFacadeScript){
+            throw new ActionConfigurationError($this, 'Actions running facade scripts cannot be used within action chains!');
         }
         
         $this->getActions()->add($action);

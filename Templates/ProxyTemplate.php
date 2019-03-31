@@ -1,8 +1,8 @@
 <?php
-namespace exface\Core\Templates;
+namespace exface\Core\Facades;
 
-use exface\Core\Templates\AbstractTemplate\AbstractTemplate;
-use exface\Core\Interfaces\Templates\HttpTemplateInterface;
+use exface\Core\Facades\AbstractFacade\AbstractFacade;
+use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use function GuzzleHttp\Psr7\stream_for;
@@ -10,7 +10,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Response;
 
 /**
- * This template act's as a proxy: it fetches and passes along data located at the URI in the request parameter "url".
+ * This facade act's as a proxy: it fetches and passes along data located at the URI in the request parameter "url".
  * 
  * This can be use for cross-origin AJAX requests or HTTP-requests on an HTTPS-server. Concider the following examples:
  * 
@@ -18,7 +18,7 @@ use GuzzleHttp\Psr7\Response;
  * source contains a resource URI (e.g. an image), the `Image` widget would normally just tell the client browser
  * to fetch the image from the given URI. This will fail because the browser would not want an HTTP-image in an
  * HTTPS-page. Since we trust the data source, a solution may be to wrap the real resource URI in a call to the
- * proxy template: https://my.plattform.serv/api/proxy?url=[urlencodedURI]. Now the browser will request a safe
+ * proxy facade: https://my.plattform.serv/api/proxy?url=[urlencodedURI]. Now the browser will request a safe
  * resource from our server, which in-turn will fetch it from the data source and pass the result on to the
  * browser.
  * 
@@ -26,9 +26,9 @@ use GuzzleHttp\Psr7\Response;
  * types (again, images), to be requested separately: e.g. an image cannot be loaded if the corresponding web page
  * was not requested from the same origin previously. When fetching data from websites with this kind of restrictions 
  * via the UrlDataConnector, we can't let the browser fetch resources directly, but can tunnel requests through
- * the ProxyTemplate, which would be the same origin as the data reading request from the connector.
+ * the ProxyFacade, which would be the same origin as the data reading request from the connector.
  * 
- * Last, but not least, using the ProxyTemplate, an additional caching layer may be implemented, allowing to reduce
+ * Last, but not least, using the ProxyFacade, an additional caching layer may be implemented, allowing to reduce
  * the load on external servers or even fetch resources if the original data source is not accessible (e.g. down). 
  * 
  * TODO The caching functionality is not implemented yet.
@@ -36,7 +36,7 @@ use GuzzleHttp\Psr7\Response;
  * @author Andrej Kabachnik
  *
  */
-class ProxyTemplate extends AbstractTemplate implements HttpTemplateInterface
+class ProxyFacade extends AbstractFacade implements HttpFacadeInterface
 {    
     private $url = null;
     
@@ -64,7 +64,7 @@ class ProxyTemplate extends AbstractTemplate implements HttpTemplateInterface
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Templates\HttpTemplateInterface::getUrlRoutePatterns()
+     * @see \exface\Core\Interfaces\Facades\HttpFacadeInterface::getUrlRoutePatterns()
      */
     public function getUrlRoutePatterns() : array
     {

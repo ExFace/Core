@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\DataCarousel;
 use exface\Core\Factories\ActionFactory;
@@ -31,7 +31,7 @@ JS;
      */
     protected function getDataElement()
     {
-        return $this->getTemplate()->getElement($this->getWidget()->getDataWidget());
+        return $this->getFacade()->getElement($this->getWidget()->getDataWidget());
     }
     
     /**
@@ -40,7 +40,7 @@ JS;
      */
     protected function getDetailsElement()
     {
-        return $this->getTemplate()->getElement($this->getWidget()->getDetailsWidget());
+        return $this->getFacade()->getElement($this->getWidget()->getDetailsWidget());
     }
     
     /**
@@ -50,7 +50,7 @@ JS;
      */
     public function buildJsValueGetter()
     {
-        return $this->getTemplate()->getElement($this->getWidget()->getDataWidget())->buildJsValueGetter();
+        return $this->getFacade()->getElement($this->getWidget()->getDataWidget())->buildJsValueGetter();
     }
     
     /**
@@ -60,7 +60,7 @@ JS;
      */
     public function buildJsDataGetter(ActionInterface $action = null)
     {
-        return $this->getTemplate()->getElement($this->getWidget()->getDataWidget())->buildJsDataGetter($action);
+        return $this->getFacade()->getElement($this->getWidget()->getDataWidget())->buildJsDataGetter($action);
     }
 }
 ?>

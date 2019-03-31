@@ -62,7 +62,7 @@ class Tabs extends Container implements iFillEntireContainer
      * 
      * @uxon-property tabs
      * @uxon-type \exface\Core\Widgets\Tab[]|\exface\Core\Widgets\AbstractWidget[]
-     * @uxon-template [{"caption": "", "widgets": [{"widget_type": ""}]}]
+     * @uxon-facade [{"caption": "", "widgets": [{"widget_type": ""}]}]
      * 
      * @param UxonObject|Tab $widget_or_uxon_array
      * @return Tabs
@@ -111,7 +111,7 @@ class Tabs extends Container implements iFillEntireContainer
     }
     
     /**
-     * Explicitly sets the position of the tabs-strip (by default, the template decides, where to place it).
+     * Explicitly sets the position of the tabs-strip (by default, the facade decides, where to place it).
      * 
      * @uxon-property tab_position
      * @uxon-type [top,bottom,left,right]
@@ -164,7 +164,7 @@ class Tabs extends Container implements iFillEntireContainer
      * 
      * @uxon-property widgets
      * @uxon-type \exface\Core\Widgets\Tab[]|\exface\Core\Widgets\AbstractWidget[]
-     * @uxon-template [{"caption": "", "widgets": [{"widget_type": ""}]}]
+     * @uxon-facade [{"caption": "", "widgets": [{"widget_type": ""}]}]
      *
      * @see \exface\Core\Widgets\Container::setWidgets()
      */

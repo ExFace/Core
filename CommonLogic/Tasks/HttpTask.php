@@ -2,7 +2,7 @@
 namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\Tasks\HttpTaskInterface;
-use exface\Core\Interfaces\Templates\TemplateInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use GuzzleHttp\Psr7\ServerRequest;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -18,12 +18,12 @@ class HttpTask extends GenericTask implements HttpTaskInterface
     
     /**
      * 
-     * @param TemplateInterface $template
+     * @param FacadeInterface $facade
      * @param ServerRequestInterface $request
      */
-    public function __construct(WorkbenchInterface $workbench, TemplateInterface $template = null, ServerRequestInterface $request = null)
+    public function __construct(WorkbenchInterface $workbench, FacadeInterface $facade = null, ServerRequestInterface $request = null)
     {
-        parent::__construct($workbench, $template);
+        parent::__construct($workbench, $facade);
         if (is_null($request)) {
             $request = ServerRequest::fromGlobals();
         }

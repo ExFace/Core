@@ -13,9 +13,9 @@ The most simple Table can be created by merely specifying the meta object to sho
 }
 ```
 
-## A universal table template to start with
+## A universal table facade to start with
 
-If you want more control, you will probably need filters, columns and sorters. Here is a template to start with.
+If you want more control, you will probably need filters, columns and sorters. Here is a facade to start with.
 
 ```json
 {

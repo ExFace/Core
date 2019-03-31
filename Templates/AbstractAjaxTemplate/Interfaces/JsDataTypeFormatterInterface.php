@@ -1,11 +1,11 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Interfaces;
+namespace exface\Core\Facades\AbstractAjaxFacade\Interfaces;
 
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 /**
  * This interface defines the structure of reusable data type formatters for
- * javascript templates.
+ * javascript facades.
  * 
  * @author Andrej Kabachnik
  *

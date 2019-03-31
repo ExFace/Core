@@ -7,7 +7,7 @@ use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 /**
- * A UXON editor with autosuggest, templates and validation.
+ * A UXON editor with autosuggest, facades and validation.
  *
  * @author Andrej Kabachnik
  *        

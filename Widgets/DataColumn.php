@@ -38,7 +38,7 @@ use exface\Core\CommonLogic\DataSheets\DataAggregation;
  * Many widgets support inline-editing. Their columns can be made editable by defining an cell widget
  * for the column. Any input or display widget (Inputs, Combo, Text, ProgressBar etc.) can be used as cell widget.
  *
- * DataColumns can also be made sortable. This is usefull for template features like changing the sort
+ * DataColumns can also be made sortable. This is usefull for facade features like changing the sort
  * order via mouse click on the colum header.
  *
  * @method DataColumnGroup getParent()
@@ -307,7 +307,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      *
      * @uxon-property cell_widget
      * @uxon-type \exface\Core\Widgets\Value
-     * @uxon-template {"widget_type": ""}
+     * @uxon-facade {"widget_type": ""}
      *
      * @param UxonObject $uxon_object            
      * @return DataColumn
@@ -451,11 +451,11 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     }
 
     /**
-     * Specifies a template-specific script to style the column: e.g.
-     * JavaScript for HTML-templates.
+     * Specifies a facade-specific script to style the column: e.g.
+     * JavaScript for HTML-facades.
      *
      * The exact effect of the cell_styler_script depends solemly on the implementation of the widget
-     * in the specific template.
+     * in the specific facade.
      *
      * @uxon-property cell_styler_script
      * @uxon-type string

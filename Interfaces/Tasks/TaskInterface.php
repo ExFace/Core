@@ -4,7 +4,7 @@ namespace exface\Core\Interfaces\Tasks;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
-use exface\Core\Interfaces\Templates\TemplateInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
@@ -105,9 +105,9 @@ interface TaskInterface extends WorkbenchDependantInterface
     
     /**
      * 
-     * @return TemplateInterface
+     * @return FacadeInterface
      */
-    public function getTemplate() : TemplateInterface;
+    public function getFacade() : FacadeInterface;
     
     /**
      * 

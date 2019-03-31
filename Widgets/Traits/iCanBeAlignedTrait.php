@@ -23,7 +23,7 @@ trait iCanBeAlignedTrait {
      * Sets the alignment within the widget: left, right, center, default or opposite.
      * 
      * If not set, the alignment depends on the specific implementation of the 
-     * current template.
+     * current facade.
      *
      * @uxon-property align
      * @uxon-type string

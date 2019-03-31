@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 
@@ -44,7 +44,7 @@ trait JqueryMasonryGridTrait {
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Elements\JqueryLayoutTrait::buildJsLayouter()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\JqueryLayoutTrait::buildJsLayouter()
      */
     public function buildJsLayouter() : string
     {
@@ -54,7 +54,7 @@ trait JqueryMasonryGridTrait {
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Elements\JqueryLayoutInterface::buildJsLayouterFunction()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\JqueryLayoutInterface::buildJsLayouterFunction()
      */
     protected function buildJsLayouterFunction() : string
     {
@@ -65,7 +65,7 @@ trait JqueryMasonryGridTrait {
         $layoutWidgetScript = '';
         if ($layoutWidget = $widget->getParentByType('exface\\Core\\Interfaces\\Widgets\\iLayoutWidgets')) {
             $layoutWidgetScript = <<<JS
-{$this->getTemplate()->getElement($layoutWidget)->buildJsLayouter()};
+{$this->getFacade()->getElement($layoutWidget)->buildJsLayouter()};
 JS;
         }
         

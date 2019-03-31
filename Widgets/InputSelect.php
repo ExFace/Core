@@ -221,7 +221,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @uxon-property selectable_options
      * @uxon-type object
-     * @uxon-template {"": ""}
+     * @uxon-facade {"": ""}
      *
      * When adding options programmatically an assotiative array can be used or separate arrays 
      * with equal length: one for values and one for the text labels.
@@ -779,7 +779,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @uxon-property filters
      * @uxon-type \exface\Core\CommonLogic\Model\Condition[]
-     * @uxon-template [{"attribute_alias": "", "value": "", "comparator": "="}]
+     * @uxon-facade [{"attribute_alias": "", "value": "", "comparator": "="}]
      *
      * @param Condition[]|UxonObject $conditions_or_uxon_objects            
      * @return \exface\Core\Widgets\InputSelect
@@ -822,7 +822,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @uxon-property sorters
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSorter[]
-     * @uxon-template [{"attribute_alias": "", "direction": "asc"}]
+     * @uxon-facade [{"attribute_alias": "", "direction": "asc"}]
      *
      * @param DataSorter[]|UxonObject $data_sorters_or_uxon_object            
      * @return \exface\Core\Widgets\InputSelect

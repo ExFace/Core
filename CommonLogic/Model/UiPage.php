@@ -3,7 +3,7 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Templates\TemplateInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
 use exface\Core\DataTypes\StringDataType;
@@ -48,7 +48,7 @@ class UiPage implements UiPageInterface
 
     private $widgets = array();
 
-    private $template = null;
+    private $facade = null;
 
     private $cms = null;
     
@@ -441,25 +441,25 @@ class UiPage implements UiPageInterface
 
     /**
      *
-     * @return \exface\Core\Interfaces\Templates\TemplateInterface
+     * @return \exface\Core\Interfaces\Facades\FacadeInterface
      */
-    public function getTemplate()
+    public function getFacade()
     {
-        if (is_null($this->template)) {
-            // FIXME need a method to get the template from the CMS page here somehow. It should probably become a method of the CMS-connector
-            // The mapping between CMS-templates and ExFace-templates needs to move to a config variable of the CMS-connector app!
+        if (is_null($this->facade)) {
+            // FIXME need a method to get the facade from the CMS page here somehow. It should probably become a method of the CMS-connector
+            // The mapping between CMS-facades and ExFace-facades needs to move to a config variable of the CMS-connector app!
         }
-        return $this->template;
+        return $this->facade;
     }
 
     /**
      *
-     * @param TemplateInterface $template            
+     * @param FacadeInterface $facade            
      * @return \exface\Core\CommonLogic\Model\UiPage
      */
-    protected function setTemplate(TemplateInterface $template)
+    protected function setFacade(FacadeInterface $facade)
     {
-        $this->template = $template;
+        $this->facade = $facade;
         return $this;
     }
 

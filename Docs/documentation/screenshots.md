@@ -14,4 +14,4 @@ Adding a screenshot-image is pretty straight-foward. Take a screenshot with your
 
 ## Live-Screenshots (UXON-description)
 
-Instead of adding a static image, you can describe a screen and it's data in UXON and let the platform generate the corresponding widget in the current template. A the moment, this is only possible in very few situations, but we are working hard to make this approach widely usable.
+Instead of adding a static image, you can describe a screen and it's data in UXON and let the platform generate the corresponding widget in the current facade. A the moment, this is only possible in very few situations, but we are working hard to make this approach widely usable.

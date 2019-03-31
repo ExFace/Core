@@ -25,7 +25,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Exceptions\AppComponentNotFoundError;
-use exface\Core\Interfaces\Selectors\TemplateSelectorInterface;
+use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 use exface\Core\Interfaces\Selectors\BehaviorSelectorInterface;
 use exface\Core\Interfaces\CmsConnectorInterface;
@@ -598,8 +598,8 @@ class App implements AppInterface
         switch (true) {
             case $selector instanceof ActionSelectorInterface:
                 return 'Actions';
-            case $selector instanceof TemplateSelectorInterface:
-                return 'Templates';
+            case $selector instanceof FacadeSelectorInterface:
+                return 'Facades';
             case $selector instanceof BehaviorSelectorInterface:
                 return 'Behaviors';
             case $selector instanceof CmsConnectorInterface:

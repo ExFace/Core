@@ -4,7 +4,7 @@ namespace exface\Core\Actions;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Interfaces\Actions\iRunTemplateScript;
+use exface\Core\Interfaces\Actions\iRunFacadeScript;
 use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
@@ -15,7 +15,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
  * This action performs another action specified in the action_alias property or via request parameter "call=your_action_alias".
  *
  * This action behaves exactly as the action to be called, but offers a universal interface for multiple action types. Thus, if you
- * need a custom server call somewhere in a template, but you do not know, which action will be called in advance, you can request
+ * need a custom server call somewhere in a facade, but you do not know, which action will be called in advance, you can request
  * this action an pass the actually desired one as a request parameter.
  *
  * @author Andrej Kabachnik
@@ -54,8 +54,8 @@ class CallAction extends AbstractAction
 
     protected function validateAction(ActionInterface $action)
     {
-        if ($action instanceof iRunTemplateScript) {
-            throw new ActionInputError($this, 'Cannot call actions running template scripts for object baskets! Attempted to call "' . $action->getAliasWithNamespace() . '".');
+        if ($action instanceof iRunFacadeScript) {
+            throw new ActionInputError($this, 'Cannot call actions running facade scripts for object baskets! Attempted to call "' . $action->getAliasWithNamespace() . '".');
         }
         // Add other checks
     }

@@ -19,10 +19,10 @@ interface iHaveColor extends WidgetInterface
     public function getColor();
 
     /**
-     * Sets a specific color for the widget - if not set, templates will use their own color scheme.
+     * Sets a specific color for the widget - if not set, facades will use their own color scheme.
      * 
      * HTML color names are supported by default. Additionally any color selector supported by
-     * the current template can be used. Most HTML templates will support css colors.
+     * the current facade can be used. Most HTML facades will support css colors.
      * 
      * @link https://www.w3schools.com/colors/colors_groups.asp
      * 

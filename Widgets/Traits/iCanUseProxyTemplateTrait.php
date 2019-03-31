@@ -2,11 +2,11 @@
 namespace exface\Core\Widgets\Traits;
 
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\Interfaces\Widgets\iCanUseProxyTemplate;
-use exface\Core\Templates\ProxyTemplate;
-use exface\Core\Factories\TemplateFactory;
+use exface\Core\Interfaces\Widgets\iCanUseProxyFacade;
+use exface\Core\Facades\ProxyFacade;
+use exface\Core\Factories\FacadeFactory;
 
-trait iCanUseProxyTemplateTrait {
+trait iCanUseProxyFacadeTrait {
     
     private $useProxy = false;
     
@@ -15,7 +15,7 @@ trait iCanUseProxyTemplateTrait {
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Widgets\iCanUseProxyTemplate::getUseProxy()
+     * @see \exface\Core\Interfaces\Widgets\iCanUseProxyFacade::getUseProxy()
      */
     public function getUseProxy() : bool
     {
@@ -29,15 +29,15 @@ trait iCanUseProxyTemplateTrait {
      * view of the resource server. The latter will not know anything about the
      * the actual client consuming the UI.
      * 
-     * @see ProxyTemplate for common examples.
+     * @see ProxyFacade for common examples.
      * 
      * @uxon-property use_proxy
      * @uxon-type boolean
      * 
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Widgets\iCanUseProxyTemplate::setUseProxy()
+     * @see \exface\Core\Interfaces\Widgets\iCanUseProxyFacade::setUseProxy()
      */
-    public function setUseProxy($trueOrFalse) : iCanUseProxyTemplate
+    public function setUseProxy($trueOrFalse) : iCanUseProxyFacade
     {
         $this->useProxy = BooleanDataType::cast($trueOrFalse);
         return $this;
@@ -46,20 +46,20 @@ trait iCanUseProxyTemplateTrait {
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Widgets\iCanUseProxyTemplate::buildProxyUrl()
+     * @see \exface\Core\Interfaces\Widgets\iCanUseProxyFacade::buildProxyUrl()
      */
     public function buildProxyUrl(string $uri) : string
     {
-        return $this->getProxyTemplate()->getProxyUrl($uri);
+        return $this->getProxyFacade()->getProxyUrl($uri);
     }
     
     /**
      * 
-     * @return ProxyTemplate
+     * @return ProxyFacade
      */
-    protected function getProxyTemplate() : ProxyTemplate
+    protected function getProxyFacade() : ProxyFacade
     {
-        return TemplateFactory::createFromString(ProxyTemplate::class, $this->getWorkbench());
+        return FacadeFactory::createFromString(ProxyFacade::class, $this->getWorkbench());
     }
     
 }

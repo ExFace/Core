@@ -1,32 +1,32 @@
 <?php
-namespace exface\Core\Interfaces\Templates;
+namespace exface\Core\Interfaces\Facades;
 
 use exface\Core\CommonLogic\Configuration;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\AppInterface;
-use exface\Core\Interfaces\Selectors\TemplateSelectorInterface;
+use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 
-interface TemplateInterface extends WorkbenchDependantInterface, AliasInterface
+interface FacadeInterface extends WorkbenchDependantInterface, AliasInterface
 {
     /**
-     * Returns TRUE if this template matches the given template alias and false otherwise (case insensitive!)
+     * Returns TRUE if this facade matches the given facade alias and false otherwise (case insensitive!)
      *
-     * @param string $template_alias            
+     * @param string $facade_alias            
      */
-    public function is($template_alias) : bool;
+    public function is($facade_alias) : bool;
 
     /**
-     * Returns the app, that contains the template
+     * Returns the app, that contains the facade
      *
      * @return AppInterface
      */
     public function getApp() : AppInterface;
 
     /**
-     * Returns the configuration object for this template.
-     * By default, it is the configuration object of the app of the template
+     * Returns the configuration object for this facade.
+     * By default, it is the configuration object of the app of the facade
      *
      * @return Configuration
      */
@@ -34,8 +34,8 @@ interface TemplateInterface extends WorkbenchDependantInterface, AliasInterface
     
     /**
      * 
-     * @return TemplateSelectorInterface
+     * @return FacadeSelectorInterface
      */
-    public function getSelector() : TemplateSelectorInterface;
+    public function getSelector() : FacadeSelectorInterface;
 }
 ?>

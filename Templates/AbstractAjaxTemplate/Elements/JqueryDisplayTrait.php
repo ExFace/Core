@@ -1,9 +1,9 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\Display;
-use exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface;
-use exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsValueDecoratingInterface;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
 
 /**
  *
@@ -31,7 +31,7 @@ trait JqueryDisplayTrait {
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement::buildJsValueSetter()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsValueSetter()
      */
     public function buildJsValueSetter($value, $disable_formatting = false)
     {
@@ -45,7 +45,7 @@ trait JqueryDisplayTrait {
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement::buildJsValueGetter()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsValueGetter()
      */
     public function buildJsValueGetter()
     {
@@ -83,7 +83,7 @@ trait JqueryDisplayTrait {
      */
     protected function getFormatter()
     {
-        return $this->getTemplate()->getDataTypeFormatter($this->getWidget()->getValueDataType());
+        return $this->getFacade()->getDataTypeFormatter($this->getWidget()->getValueDataType());
     }
     
     /**
@@ -108,7 +108,7 @@ trait JqueryDisplayTrait {
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement::buildCssHeightDefaultValue()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildCssHeightDefaultValue()
      */
     protected function buildCssHeightDefaultValue()
     {

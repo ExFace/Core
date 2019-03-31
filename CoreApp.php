@@ -5,11 +5,11 @@ use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\CommonLogic\Model\App;
-use exface\Core\Templates\AbstractHttpTemplate\HttpTemplateInstaller;
-use exface\Core\Factories\TemplateFactory;
-use exface\Core\Templates\DocsTemplate;
-use exface\Core\Templates\HttpFileServerTemplate;
-use exface\Core\Templates\ProxyTemplate;
+use exface\Core\Facades\AbstractHttpFacade\HttpFacadeInstaller;
+use exface\Core\Factories\FacadeFactory;
+use exface\Core\Facades\DocsFacade;
+use exface\Core\Facades\HttpFileServerFacade;
+use exface\Core\Facades\ProxyFacade;
 
 class CoreApp extends App
 {
@@ -27,17 +27,17 @@ class CoreApp extends App
         // Make sure, it runs before any other installers do.
         $installer->addInstaller(new CoreInstaller($this->getSelector()), true);
         
-        // Add template installers for core templates
-        $tplInstaller = new HttpTemplateInstaller($this->getSelector());
-        $tplInstaller->setTemplate(TemplateFactory::createFromString(HttpFileServerTemplate::class, $this->getWorkbench()));
+        // Add facade installers for core facades
+        $tplInstaller = new HttpFacadeInstaller($this->getSelector());
+        $tplInstaller->setFacade(FacadeFactory::createFromString(HttpFileServerFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
         
-        $tplInstaller = new HttpTemplateInstaller($this->getSelector());
-        $tplInstaller->setTemplate(TemplateFactory::createFromString(DocsTemplate::class, $this->getWorkbench()));
+        $tplInstaller = new HttpFacadeInstaller($this->getSelector());
+        $tplInstaller->setFacade(FacadeFactory::createFromString(DocsFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
         
-        $tplInstaller = new HttpTemplateInstaller($this->getSelector());
-        $tplInstaller->setTemplate(TemplateFactory::createFromString(ProxyTemplate::class, $this->getWorkbench()));
+        $tplInstaller = new HttpFacadeInstaller($this->getSelector());
+        $tplInstaller->setFacade(FacadeFactory::createFromString(ProxyFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
         
         return $installer;

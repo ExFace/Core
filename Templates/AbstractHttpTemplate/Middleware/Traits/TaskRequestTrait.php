@@ -1,8 +1,8 @@
 <?php
-namespace exface\Core\Templates\AbstractHttpTemplate\Middleware\Traits;
+namespace exface\Core\Facades\AbstractHttpFacade\Middleware\Traits;
 
 use Psr\Http\Message\ServerRequestInterface;
-use exface\Core\Interfaces\Templates\HttpTemplateInterface;
+use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Interfaces\Tasks\HttpTaskInterface;
 use exface\Core\Factories\TaskFactory;
 
@@ -18,14 +18,14 @@ Trait TaskRequestTrait
      * 
      * @param ServerRequestInterface $request
      * @param string $attributeName
-     * @param HttpTemplateInterface $template
+     * @param HttpFacadeInterface $facade
      * @return HttpTaskInterface
      */
-    protected function getTask(ServerRequestInterface $request, string $attributeName, HttpTemplateInterface $template) : HttpTaskInterface
+    protected function getTask(ServerRequestInterface $request, string $attributeName, HttpFacadeInterface $facade) : HttpTaskInterface
     {
         $task = $request->getAttribute($attributeName);
         if ($task === null) {
-            $task = TaskFactory::createHttpTask($template, $request);
+            $task = TaskFactory::createHttpTask($facade, $request);
         }
         
         return $task;

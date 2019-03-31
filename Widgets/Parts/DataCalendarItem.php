@@ -130,7 +130,7 @@ class DataCalendarItem implements WidgetPartInterface
     /**
      * The default duration will be used for the event length if no end-time is found in the data item.
      * 
-     * Leave blank to let the template decide itself (typically depending on the timeline granularity).
+     * Leave blank to let the facade decide itself (typically depending on the timeline granularity).
      * 
      * @uxon-property default_duration_hours
      * @uxon-type integer

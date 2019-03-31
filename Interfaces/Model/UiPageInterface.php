@@ -22,9 +22,9 @@ use exface\Core\Interfaces\Selectors\AppSelectorInterface;
  * page automatically like the ContextBar. These can never be used as root
  * widgets.
  * 
- * Pages are abstract models. Their actual look is determined by the template, that
- * renders the page. Templates - in turn - are managed by the CMS. Thus, depending
- * on the template selection strategy of the CMS every page can be rendered as
+ * Pages are abstract models. Their actual look is determined by the facade, that
+ * renders the page. Facades - in turn - are managed by the CMS. Thus, depending
+ * on the facade selection strategy of the CMS every page can be rendered as
  * a mobile or desktop application or even as a REST-API.
  * 
  * @author Andrej Kabachnik
@@ -269,7 +269,7 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
     /**
      * Returns the name of the page.
      * 
-     * The name is what most templates will show as header and menu title.
+     * The name is what most facades will show as header and menu title.
      * 
      * @return string
      */
@@ -286,7 +286,7 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
     /**
      * Returns the description of this page.
      * 
-     * The description is used as hint, tooltip or similar by most templates.
+     * The description is used as hint, tooltip or similar by most facades.
      * It is a short text describing, what functionality the page offers:
      * e.g. "View an manage meta object of installed apps" for the object-page
      * in the metamodel editor.
@@ -298,7 +298,7 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
     /**
      * Overwrites the description of this page.
      *
-     * The description is used as hint, tooltip or similar by most templates.
+     * The description is used as hint, tooltip or similar by most facades.
      * It is a short text describing, what functionality the page offers:
      * e.g. "View an manage meta object of installed apps" for the object-page
      * in the metamodel editor.

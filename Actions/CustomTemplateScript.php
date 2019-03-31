@@ -1,16 +1,16 @@
 <?php
 namespace exface\Core\Actions;
 
-use exface\Core\Interfaces\Actions\iRunTemplateScript;
+use exface\Core\Interfaces\Actions\iRunFacadeScript;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
-use exface\Core\Interfaces\Templates\TemplateInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
 
-class CustomTemplateScript extends AbstractAction implements iRunTemplateScript
+class CustomFacadeScript extends AbstractAction implements iRunFacadeScript
 {
 
     private $script_language = "javascript";
@@ -39,7 +39,7 @@ class CustomTemplateScript extends AbstractAction implements iRunTemplateScript
 
     /**
      *
-     * @see \exface\Core\Interfaces\Actions\iRunTemplateScript::getScript()
+     * @see \exface\Core\Interfaces\Actions\iRunFacadeScript::getScript()
      */
     public function getScript()
     {
@@ -58,7 +58,7 @@ class CustomTemplateScript extends AbstractAction implements iRunTemplateScript
 
     /**
      *
-     * @see \exface\Core\Interfaces\Actions\iRunTemplateScript::buildScript()
+     * @see \exface\Core\Interfaces\Actions\iRunFacadeScript::buildScript()
      */
     public function buildScript($widget_id)
     {
@@ -70,14 +70,14 @@ class CustomTemplateScript extends AbstractAction implements iRunTemplateScript
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\iRunTemplateScript::buildScriptHelperFunctions()
+     * @see \exface\Core\Interfaces\Actions\iRunFacadeScript::buildScriptHelperFunctions()
      */
-    public function buildScriptHelperFunctions(TemplateInterface $template) : string
+    public function buildScriptHelperFunctions(FacadeInterface $facade) : string
     {
         return '';
     }
 
-    public function getIncludes(TemplateInterface $template) : array
+    public function getIncludes(FacadeInterface $facade) : array
     {
         return array();
     }

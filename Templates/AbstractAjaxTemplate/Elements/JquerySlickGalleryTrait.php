@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\ImageCarousel;
 use exface\Core\DataTypes\UrlDataType;
@@ -8,7 +8,7 @@ use exface\Core\Widgets\Imagegallery;
 /**
  * Helps implement ImageCarousel widgets with jQuery and the slick carousel.
  * 
- * See euiImageCarousel (jEasyUI template) for an example.
+ * See euiImageCarousel (jEasyUI facade) for an example.
  * 
  * To use this trait, you will need the following JS dependency:
  * 
@@ -18,7 +18,7 @@ use exface\Core\Widgets\Imagegallery;
  * ```
  * 
  * For the horizontal slider to work automatically with images of different
- * diemnsions, add the following code to the template's CSS. This makes sure,
+ * diemnsions, add the following code to the facade's CSS. This makes sure,
  * the image height allways fits the height of the element.
  * 
  * ```
@@ -99,7 +99,7 @@ JS;
     /**
      * Returns the options for slick initialization (ending with a comma!).
      * 
-     * This method is intended to be overridden in templates, so they can add
+     * This method is intended to be overridden in facades, so they can add
      * their own options like buttons, styling, etc.
      * 
      * @return string
@@ -152,7 +152,7 @@ JS;
     /**
      * Returns the JS code to read data and populate the carousel with slides.
      * 
-     * Should be overridden by template implementations
+     * Should be overridden by facade implementations
      * 
      * @return string
      */

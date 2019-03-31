@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractHttpTemplate\Middleware;
+namespace exface\Core\Facades\AbstractHttpFacade\Middleware;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

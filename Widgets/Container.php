@@ -20,7 +20,7 @@ use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
  * is just a technical grouping element. Use it, if you just need to place multiple widgets somewhere, where only one widget is expected. The
  * Container is also a common base for many other wigdets: the Panel (a visible UI area, that contains other widgets), the Form, Tabs and Splits, etc.
  *
- * In HTML-templates the container will either be a simple (invisible) <div> or completely invisible - thus, just a list of it's contents without
+ * In HTML-facades the container will either be a simple (invisible) <div> or completely invisible - thus, just a list of it's contents without
  * any wrapper.
  *
  * @author Andrej Kabachnik
@@ -259,7 +259,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
      *
      * @uxon-property widgets
      * @uxon-type \exface\Core\Widgets\AbstractWidget[]
-     * @uxon-template [{"": ""}]
+     * @uxon-facade [{"": ""}]
      *
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::setWidgets()
      */

@@ -224,7 +224,7 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
 
     /**
      * Magic method to forward all calls to methods, not explicitly defined in the filter to ist value widget.
-     * Thus, the filter is a simple proxy from the point of view of the template. However, it can be easily
+     * Thus, the filter is a simple proxy from the point of view of the facade. However, it can be easily
      * enhanced with additional methods, that will override the ones of the value widget.
      * TODO this did not really work so far. Don't know why. As a work around, added some explicit proxy methods
      *

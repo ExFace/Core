@@ -84,10 +84,10 @@ class ShowLookupDialog extends ShowDialog
         $save_button->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.SHOWLOOKUPDIALOG.SAVE_BUTTON"));
         $save_button->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED);
         
-        // @var $save_action \exface\Core\Actions\CustomTemplateScript
-        $save_action = ActionFactory::createFromString($this->getWorkbench(), 'exface.Core.CustomTemplateScript', $save_button);
-        $source_element = $this->getTemplate()->getElement($data_table);
-        $target_element = $this->getTemplate()->getElementByWidgetId($this->getTargetWidgetId(), $page);
+        // @var $save_action \exface\Core\Actions\CustomFacadeScript
+        $save_action = ActionFactory::createFromString($this->getWorkbench(), 'exface.Core.CustomFacadeScript', $save_button);
+        $source_element = $this->getFacade()->getElement($data_table);
+        $target_element = $this->getFacade()->getElementByWidgetId($this->getTargetWidgetId(), $page);
         $save_action_script = $target_element->buildJsValueSetter($source_element->buildJsValueGetter());
         $save_action->setScript($save_action_script);
         

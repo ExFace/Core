@@ -1,14 +1,14 @@
 <?php
-namespace exface\Core\Templates;
+namespace exface\Core\Facades;
 
-use exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate;
+use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use Psr\Http\Message\ResponseInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
-class HttpFileServerTemplate extends AbstractHttpTemplate
+class HttpFileServerFacade extends AbstractHttpFacade
 {
     public static function buildUrlForDownload(WorkbenchInterface $workbench, $absolutePath)
     {
@@ -18,7 +18,7 @@ class HttpFileServerTemplate extends AbstractHttpTemplate
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponseFromTaskResult()
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::createResponseFromTaskResult()
      */
     protected function createResponseFromTaskResult(ServerRequestInterface $request, ResultInterface $result): ResponseInterface
     {
@@ -28,7 +28,7 @@ class HttpFileServerTemplate extends AbstractHttpTemplate
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponseFromError()
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::createResponseFromError()
      */
     protected function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null): ResponseInterface
     {
@@ -38,7 +38,7 @@ class HttpFileServerTemplate extends AbstractHttpTemplate
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Templates\HttpTemplateInterface::getUrlRoutePatterns()
+     * @see \exface\Core\Interfaces\Facades\HttpFacadeInterface::getUrlRoutePatterns()
      */
     public function getUrlRoutePatterns() : array
     {

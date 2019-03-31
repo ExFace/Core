@@ -1,14 +1,14 @@
 <?php
-namespace exface\Core\Exceptions\Templates;
+namespace exface\Core\Exceptions\Facades;
 
 use exface\Core\Exceptions\Warning;
 
 /**
- * Warning thrown if the current template does not support a specific widget property.
+ * Warning thrown if the current facade does not support a specific widget property.
  *
  * @author Andrej Kabachnik
  *        
  */
-class TemplateUnsupportedWidgetPropertyWarning extends Warning
+class FacadeUnsupportedWidgetPropertyWarning extends Warning
 {
 }

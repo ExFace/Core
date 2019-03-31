@@ -118,7 +118,7 @@ class ActionContext extends AbstractContext
         $array = $this->action_history_raw;
         // ... and add the actions performed in the current request to the end of ist
         foreach ($this->getActions() as $action) {
-            // Exclude actions, that do not modify data, such as navigation, template scripts, etc. (they are not historized)
+            // Exclude actions, that do not modify data, such as navigation, facade scripts, etc. (they are not historized)
             if (! $action->isDataModified())
                 continue;
             // Otherwise create a new UXON object to hold the action itself and the undo data, if the action is undoable.

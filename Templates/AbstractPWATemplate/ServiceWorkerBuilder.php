@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractPWATemplate;
+namespace exface\Core\Facades\AbstractPWAFacade;
 
 /**
  * Generates the JS for a ServiceWorker based on the workbox toolkit.

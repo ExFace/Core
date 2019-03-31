@@ -24,7 +24,7 @@ Instead, provide new methods and call them in the child class, overriding parent
 
 Examples:
 
-- There are many traits for javascript implementations of widgets in the AbstractAjaxTemplate. Most of them will probably get used in classes inheriting from the AbstractJqueryElement. These traits should not override any methods of the AbstractcJqueryElement like `buildHtml()`. If the trait can provide a common implementation, place it in a separate method like `JqueryContainerTrait::buildHtmlForChildren()` and call the method from the classes that need it:
+- There are many traits for javascript implementations of widgets in the AbstractAjaxFacade. Most of them will probably get used in classes inheriting from the AbstractJqueryElement. These traits should not override any methods of the AbstractcJqueryElement like `buildHtml()`. If the trait can provide a common implementation, place it in a separate method like `JqueryContainerTrait::buildHtmlForChildren()` and call the method from the classes that need it:
 
 ```php
 
@@ -35,7 +35,7 @@ class lteContainer extends lteAbstractElement
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement::buildHtml()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildHtml()
      */
     public function buildHtml()
     {

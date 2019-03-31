@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Formatters;
+namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
 /**
  * The transparent formatter does not do any formatting, but just returns it's input as is.
@@ -14,7 +14,7 @@ class JsTransparentFormatter extends AbstractJsDataTypeFormatter
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface::buildJsFormatter()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFormatter()
      */
     public function buildJsFormatter($jsInput)
     {
@@ -24,7 +24,7 @@ class JsTransparentFormatter extends AbstractJsDataTypeFormatter
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface::buildJsFormatParser()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFormatParser()
      */
     public function buildJsFormatParser($jsInput)
     {
@@ -34,7 +34,7 @@ class JsTransparentFormatter extends AbstractJsDataTypeFormatter
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface::buildHtmlHeadIncludes()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildHtmlHeadIncludes()
      */
     public function buildHtmlHeadIncludes()
     {
@@ -44,7 +44,7 @@ class JsTransparentFormatter extends AbstractJsDataTypeFormatter
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface::buildHtmlBodyIncludes()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildHtmlBodyIncludes()
      */
     public function buildHtmlBodyIncludes()
     {

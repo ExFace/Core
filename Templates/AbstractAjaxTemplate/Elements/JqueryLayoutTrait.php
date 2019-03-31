@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 
@@ -47,7 +47,7 @@ trait JqueryLayoutTrait {
                 } else {
                     if ($this->inheritsNumberOfColumns()) {
                         if ($layoutWidget = $widget->getParentByType('exface\\Core\\Interfaces\\Widgets\\iLayoutWidgets')) {
-                            $parentElement = $this->getTemplate()->getElement($layoutWidget);
+                            $parentElement = $this->getFacade()->getElement($layoutWidget);
                             if (true === method_exists($parentElement, 'getNumberOfColumns')) {
                                 $parentColumnNumber = $parentElement->getNumberOfColumns();
                             }

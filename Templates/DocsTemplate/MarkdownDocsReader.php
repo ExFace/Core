@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\DocsTemplate;
+namespace exface\Core\Facades\DocsFacade;
 
 use kabachello\FileRoute\Interfaces\ContentInterface;
 use kabachello\FileRoute\FileReaders\MarkdownReader;

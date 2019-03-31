@@ -7,7 +7,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
-use exface\Core\Interfaces\Templates\TemplateInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -25,7 +25,7 @@ use exface\Core\Interfaces\Model\UiPageInterface;
  */
 class GenericTask implements TaskInterface
 {
-    private $template = null;
+    private $facade = null;
     
     private $workbench = null;
     
@@ -53,22 +53,22 @@ class GenericTask implements TaskInterface
     
     /**
      * 
-     * @param TemplateInterface $template
+     * @param FacadeInterface $facade
      */
-    public function __construct(WorkbenchInterface $workbench, TemplateInterface $template = null)
+    public function __construct(WorkbenchInterface $workbench, FacadeInterface $facade = null)
     {
-        $this->template = $template;
+        $this->facade = $facade;
         $this->workbench = $workbench;
     }
     
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskInterface::getTemplate()
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::getFacade()
      */
-    public function getTemplate() : TemplateInterface
+    public function getFacade() : FacadeInterface
     {
-        return $this->template;
+        return $this->facade;
     }
     
     /**

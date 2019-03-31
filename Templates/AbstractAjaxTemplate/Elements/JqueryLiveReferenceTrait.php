@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Interfaces\Widgets\iHaveValue;
 
@@ -16,7 +16,7 @@ use exface\Core\Interfaces\Widgets\iHaveValue;
  * onChange listener is not part of this trait!
  * 
  * Also note, that registerLiveReferenceAtLinkedElement() MUST be called before
- * that element is is actually rendered. This is not a problem for most templates, 
+ * that element is is actually rendered. This is not a problem for most facades, 
  * though, because the init all elements when generating <head> tags, thus
  * triggering the reference registration before even starting the HTML rendering.
  * 
@@ -38,7 +38,7 @@ trait JqueryLiveReferenceTrait {
     protected function buildJsLiveReference()
     {
         $output = '';
-        if ($linked_element = $this->getLinkedTemplateElement()) {
+        if ($linked_element = $this->getLinkedFacadeElement()) {
             $output = '
 					' . $this->buildJsValueSetter($linked_element->buildJsValueGetter($this->getWidget()->getValueWidgetLink()->getTargetColumnId())) . ';';
         }
@@ -64,22 +64,22 @@ trait JqueryLiveReferenceTrait {
      */
     protected function registerLiveReferenceAtLinkedElement()
     {
-        if ($linked_element = $this->getLinkedTemplateElement()) {
+        if ($linked_element = $this->getLinkedFacadeElement()) {
             $linked_element->addOnChangeScript($this->buildJsLiveReference());
         }
         return $this;
     }
     
     /**
-     * Returns the referenced template element or NULL if this element has no live reference.
+     * Returns the referenced facade element or NULL if this element has no live reference.
      * 
      * @return AbstractJqueryElement||NULL
      */
-    public function getLinkedTemplateElement()
+    public function getLinkedFacadeElement()
     {
         $linked_element = null;
         if ($link = $this->getWidget()->getValueWidgetLink()) {
-            $linked_element = $this->getTemplate()->getElement($link->getTargetWidget());
+            $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
         }
         return $linked_element;
     }
