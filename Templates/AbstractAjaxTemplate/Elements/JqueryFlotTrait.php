@@ -1,13 +1,13 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
-use exface\Core\Exceptions\Templates\TemplateUnsupportedWidgetPropertyWarning;
+use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 use exface\Core\Widgets\ChartSeries;
 use exface\Core\Widgets\Chart;
 use exface\Core\Widgets\ChartAxis;
 
 /**
- * This trait contains common methods to use the flot charing library in jQuery templates.
+ * This trait contains common methods to use the flot charing library in jQuery facades.
  * 
  * @method Chart getWidget()
  * 
@@ -20,7 +20,7 @@ trait JqueryFlotTrait {
     {
         $output = '';
         if ($link = $this->getWidget()->getDataWidgetLink()) {
-            $linked_element = $this->getTemplate()->getElement($link->getTargetWidget());
+            $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
             $output .= $this->buildJsFunctionPrefix() . 'plot(' . $linked_element->buildJsDataGetter() . ".rows);";
         }
         return $output;
@@ -44,7 +44,7 @@ trait JqueryFlotTrait {
     protected function registerLiveReferenceAtLinkedElement()
     {
         if ($link = $this->getWidget()->getDataWidgetLink()) {
-            $linked_element = $this->getTemplate()->getElement($link->getTargetWidget());
+            $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
             if ($linked_element) {
                 $linked_element->addOnLoadSuccess($this->buildJsLiveReference());
             }
@@ -205,14 +205,14 @@ JS;
         $output = '';
         if ($this->isPieChart()) {
             if (count($this->getWidget()->getSeries()) > 1) {
-                throw new TemplateUnsupportedWidgetPropertyWarning('The template "' . $this->getTemplate()->getAlias() . '" does not support pie charts with multiple series!');
+                throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support pie charts with multiple series!');
             }
             
             $output = $this->sanitizeSeriesId($this->getWidget()->getSeries()[0]->getId());
         } else {
             foreach ($this->getWidget()->getSeries() as $series) {
                 if ($series->getChartType() == ChartSeries::CHART_TYPE_PIE) {
-                    throw new TemplateUnsupportedWidgetPropertyWarning('The template "' . $this->getTemplate()->getAlias() . '" does not support pie charts with multiple series!');
+                    throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support pie charts with multiple series!');
                 }
                 $series_options = $this->buildJsSeriesOptions($series);
                 $output .= ',
@@ -369,25 +369,25 @@ JS;
     
     protected function buildHtmlHeadDefaultIncludes()
     {
-        $template = $this->getTemplate();
+        $facade = $this->getFacade();
         $includes = [];
         // flot
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.js"></script>';
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.resize.js"></script>';
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.categories.js"></script>';
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.time.js"></script>';
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.crosshair.js"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.js"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.resize.js"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.categories.js"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.time.js"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.crosshair.js"></script>';
         
         if ($this->getWidget()->getStackSeries()) {
-            $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.stack.js"></script>';
+            $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.stack.js"></script>';
         }
         
         if ($this->isPieChart()) {
-            $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.pie.js"></script>';
+            $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.pie.js"></script>';
         }
         
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.PLUGINS.AXISLABELS') . '"></script>';
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.PLUGINS.ORDERBARS') . '"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.FLOT.PLUGINS.AXISLABELS') . '"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.FLOT.PLUGINS.ORDERBARS') . '"></script>';
         
         return $includes;
     }

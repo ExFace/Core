@@ -3,7 +3,7 @@
 namespace exface\Core\CommonLogic\Constants;
 
 /**
- * Color constants for basic colors supported by all templates.
+ * Color constants for basic colors supported by all facades.
  * 
  * These are default HTML color names. See the link below for preview and
  * official definition.
@@ -15,9 +15,9 @@ namespace exface\Core\CommonLogic\Constants;
  */
 abstract class Colors 
 {
-    // Default color to make the template pick a color
+    // Default color to make the facade pick a color
     const DEFAULT_COLOR = '';
-    // No-color-color to tell a template that something is transparent
+    // No-color-color to tell a facade that something is transparent
     const NONE = null;
     
     // Pink Colors

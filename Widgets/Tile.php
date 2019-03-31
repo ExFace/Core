@@ -236,7 +236,7 @@ class Tile extends Button implements iHaveColor
     }
 
     /**
-     * Changes the color of the tile to any HTML color value (or other template-specific value)
+     * Changes the color of the tile to any HTML color value (or other facade-specific value)
      * 
      * @uxon-property color
      * @uxon-type color|string

@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Factories\WidgetLinkFactory;
 
@@ -26,7 +26,7 @@ trait JqueryDisableConditionTrait {
         $widget = $this->getWidget();
         if (($condition = $widget->getDisableCondition()) && $condition->getProperty('widget_link')) {
             $link = WidgetLinkFactory::createFromWidget($widget, $condition->getProperty('widget_link'));
-            $linked_element = $this->getTemplate()->getElement($link->getTargetWidget());
+            $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
             if ($linked_element) {
                 switch ($condition->getProperty('comparator')) {
                     case EXF_COMPARATOR_IS_NOT: // !=
@@ -71,7 +71,7 @@ JS;
         /* @var $condition \exface\Core\CommonLogic\UxonObject */
         if (($condition = $widget->getDisableCondition()) && $condition->hasProperty('widget_link')) {
             $link = WidgetLinkFactory::createFromWidget($widget, $condition->getProperty('widget_link'));
-            $linked_element = $this->getTemplate()->getElement($link->getTargetWidget());
+            $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
             if ($linked_element) {
                 switch ($condition->getProperty('comparator')) {
                     case EXF_COMPARATOR_IS_NOT: // !=
@@ -105,11 +105,11 @@ JS;
     /**
      * Registers an onChange-Skript on the element linked by the disable condition.
      *
-     * @return \exface\Core\Templates\AbstractAjaxTemplate\Elements\JqueryLiveReferenceTrait
+     * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\JqueryLiveReferenceTrait
      */
     protected function registerDisableConditionAtLinkedElement()
     {
-        if ($linked_element = $this->getDisableConditionTemplateElement()) {
+        if ($linked_element = $this->getDisableConditionFacadeElement()) {
             $linked_element->addOnChangeScript($this->buildJsDisableCondition());
         }
         return $this;
@@ -121,13 +121,13 @@ JS;
      * @return
      *
      */
-    public function getDisableConditionTemplateElement()
+    public function getDisableConditionFacadeElement()
     {
         $linked_element = null;
         $widget = $this->getWidget();
         if (($condition = $widget->getDisableCondition()) && $condition->hasProperty('widget_link')) {
             $link = WidgetLinkFactory::createFromWidget($widget, $condition->getProperty('widget_link'));
-            $linked_element = $this->getTemplate()->getElement($link->getTargetWidget());
+            $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
         }
         return $linked_element;
     }

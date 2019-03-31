@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\MessageList;
 
@@ -18,7 +18,7 @@ trait JqueryMessageListTrait {
         $widget = $this->getWidget();
         $messagesHtml = '';
         foreach ($widget->getMessages() as $message) {
-            $messagesHtml .= $this->getTemplate()->getElement($message)->buildHtml();
+            $messagesHtml .= $this->getFacade()->getElement($message)->buildHtml();
         }
         
         return <<<HTML

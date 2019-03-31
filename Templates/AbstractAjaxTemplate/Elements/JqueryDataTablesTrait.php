@@ -1,11 +1,11 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iReadData;
-use exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsValueDecoratingInterface;
-use exface\Core\Exceptions\Templates\TemplateOutputError;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
+use exface\Core\Exceptions\Facades\FacadeOutputError;
 use exface\Core\Widgets\DataTable;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Widgets\iTakeInput;
@@ -13,7 +13,7 @@ use exface\Core\Widgets\Input;
 use exface\Core\Widgets\DataTableResponsive;
 
 /**
- * This trait contains common methods for template elements using the jQuery DataTables library.
+ * This trait contains common methods for facade elements using the jQuery DataTables library.
  *
  * @see http://www.datatables.net
  *
@@ -182,7 +182,7 @@ JS;
         } elseif ($action instanceof iReadData) {
             // If we are reading, than we need the special data from the configurator
             // widget: filters, sorters, etc.
-            return $this->getTemplate()->getElement($this->getWidget()->getConfiguratorWidget())->buildJsDataGetter($action);
+            return $this->getFacade()->getElement($this->getWidget()->getConfiguratorWidget())->buildJsDataGetter($action);
         } elseif ($this->isEditable() && $action->implementsInterface('iModifyData')) {
             // TODO
             $rows = "[]";
@@ -215,7 +215,7 @@ JS;
         // Data type specific formatting
         $formatter_js = '';
         $cellWidget = $col->getCellWidget();
-        $cellTpl = $this->getTemplate()->getElement($cellWidget);
+        $cellTpl = $this->getFacade()->getElement($cellWidget);
         if (($cellTpl instanceof JsValueDecoratingInterface) && $cellTpl->hasDecorator()) {
             $formatter_js = $cellTpl->buildJsValueDecorator('data');
         } elseif ($cellWidget instanceof Input) {
@@ -237,7 +237,7 @@ JS;
 							name: "' . $col->getAttributeAlias() . '"
                             , data: ' . ($col->isBoundToAttribute() ? '"' . $col->getDataColumnName() . '"' : 'null') . '
                             ' . ($col->isHidden() || $col->getVisibility() === EXF_WIDGET_VISIBILITY_OPTIONAL ? ', visible: false' : '') . '
-                            ' . ($col->getWidth()->isTemplateSpecific() ? ', width: "' . $col->getWidth()->getValue() . '"': '') . '
+                            ' . ($col->getWidth()->isFacadeSpecific() ? ', width: "' . $col->getWidth()->getValue() . '"': '') . '
                             , className: "' . $this->buildCssColumnClass($col) . '"' . '
                             , orderable: ' . $sortable . '
                             ' . ($formatter_js ? ", render: function(data, type, row){try {return " . $formatter_js . "} catch (e) {return data;} }" : '') . '
@@ -288,7 +288,7 @@ JS;
         }
         
         if (! $column_widget) {
-            throw new TemplateOutputError('Column "' . $column . '" of ' . $widget->getWidgetType() . ' "' . $widget->getCaption() . '" required for in-page scripting is missing!');
+            throw new FacadeOutputError('Column "' . $column . '" of ' . $widget->getWidgetType() . ' "' . $widget->getCaption() . '" required for in-page scripting is missing!');
         }
         
         $column_name = $column_widget->getDataColumnName();
@@ -321,7 +321,7 @@ JS;
     protected function buildJsDataSource($js_filters = '')
     {
         $widget = $this->getWidget();
-        $configurator_element = $this->getTemplate()->getElement($widget->getConfiguratorWidget());
+        $configurator_element = $this->getFacade()->getElement($widget->getConfiguratorWidget());
         
         $headers = ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : '';
         
@@ -382,7 +382,7 @@ JS;
 				    $result = <<<JS
 			"ajax": function (data, callback, settings) {
 				callback(
-						{$this->getTemplate()->encodeData($this->getTemplate()->buildResponseData($data, $widget))}
+						{$this->getFacade()->encodeData($this->getFacade()->buildResponseData($data, $widget))}
 						);
 				}
 JS;
@@ -470,7 +470,7 @@ JS;
         
         // configure pagination
         if ($widget->isPaged()) {
-            $paging_options = ', pageLength: ' . $widget->getPaginator()->getPageSize($this->getTemplate()->getConfig()->getOption('WIDGET.DATATABLE.PAGE_SIZE'));
+            $paging_options = ', pageLength: ' . $widget->getPaginator()->getPageSize($this->getFacade()->getConfig()->getOption('WIDGET.DATATABLE.PAGE_SIZE'));
         } else {
             $paging_options = ', paging: false';
         }
@@ -629,16 +629,16 @@ JS;
         // Click actions
         // Single click. Currently only supports one double click action - the first one in the list of buttons
         if ($leftclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_LEFT_CLICK)[0]) {
-            $leftclick_script = $this->getTemplate()->getElement($leftclick_button)->buildJsClickFunctionName() . '()';
+            $leftclick_script = $this->getFacade()->getElement($leftclick_button)->buildJsClickFunctionName() . '()';
         }
         // Double click. Currently only supports one double click action - the first one in the list of buttons
         if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[0]) {
-            $dblclick_script = $this->getTemplate()->getElement($dblclick_button)->buildJsClickFunctionName() . '()';
+            $dblclick_script = $this->getFacade()->getElement($dblclick_button)->buildJsClickFunctionName() . '()';
         }
         
         // Double click. Currently only supports one double click action - the first one in the list of buttons
         if ($rightclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_RIGHT_CLICK)[0]) {
-            $rightclick_script = $this->getTemplate()->getElement($rightclick_button)->buildJsClickFunctionName() . '()';
+            $rightclick_script = $this->getFacade()->getElement($rightclick_button)->buildJsClickFunctionName() . '()';
         }
         
         // Need to wait for the default handlers to run before performing our click handlers - that's why some
@@ -747,22 +747,22 @@ JS;
     public function buildHtmlHeadTags()
     {
         $includes = parent::buildHtmlHeadTags();
-        $template = $this->getTemplate();
+        $facade = $this->getFacade();
         // DataTables
-        $includes[] = '<link rel="stylesheet" type="text/css" href="' . $template->buildUrlToSource('LIBS.DATATABLES.THEME.CSS') . '">';
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.DATATABLES.CORE.JS') . '"></script>';
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.DATATABLES.THEME.JS') . '"></script>';
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.DATATABLES.SELECT.JS') . '"></script>';
-        $includes[] = '<link rel="stylesheet" type="text/css" href="' . $template->buildUrlToSource('LIBS.DATATABLES.SELECT.CSS') . '">';
+        $includes[] = '<link rel="stylesheet" type="text/css" href="' . $facade->buildUrlToSource('LIBS.DATATABLES.THEME.CSS') . '">';
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.DATATABLES.CORE.JS') . '"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.DATATABLES.THEME.JS') . '"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.DATATABLES.SELECT.JS') . '"></script>';
+        $includes[] = '<link rel="stylesheet" type="text/css" href="' . $facade->buildUrlToSource('LIBS.DATATABLES.SELECT.CSS') . '">';
         
         if ($this->getWidget()->hasRowGroups()){
-            $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.DATATABLES.ROWGROUP.JS') . '"></script>';
-            $includes[] = '<link rel="stylesheet" type="text/css" href="' . $template->buildUrlToSource('LIBS.DATATABLES.ROWGROUP.CSS') . '">';
+            $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.DATATABLES.ROWGROUP.JS') . '"></script>';
+            $includes[] = '<link rel="stylesheet" type="text/css" href="' . $facade->buildUrlToSource('LIBS.DATATABLES.ROWGROUP.CSS') . '">';
         }
         
         if ($this->isResponsive()){
-            $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.DATATABLES.RESPONSIVE.JS') . '"></script>';
-            $includes[] = '<link rel="stylesheet" type="text/css" href="' . $template->buildUrlToSource('LIBS.DATATABLES.RESPONSIVE.CSS') . '">';
+            $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.DATATABLES.RESPONSIVE.JS') . '"></script>';
+            $includes[] = '<link rel="stylesheet" type="text/css" href="' . $facade->buildUrlToSource('LIBS.DATATABLES.RESPONSIVE.CSS') . '">';
         }
         
         return $includes;

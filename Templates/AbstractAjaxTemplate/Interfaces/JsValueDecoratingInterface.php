@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Interfaces;
+namespace exface\Core\Facades\AbstractAjaxFacade\Interfaces;
 
 /**
  * 

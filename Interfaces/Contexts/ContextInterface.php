@@ -76,7 +76,7 @@ interface ContextInterface extends AliasInterface, iCanBeConvertedToUxon, Workbe
     /**
      * Returns a string indicating the current state of the context.
      * 
-     * Most templates will show the indicator next to the context button or
+     * Most facades will show the indicator next to the context button or
      * in a "badge" or label within it. Indicators are typically counters (e.g.
      * "3" if there are three items in the favorites context), abbrevations or
      * symbols/pictograms.
@@ -103,7 +103,7 @@ interface ContextInterface extends AliasInterface, iCanBeConvertedToUxon, Workbe
     /**
      * Changes the color of the indicator of this context.
      * 
-     * Any color code supported by the templates can be used, althogh the
+     * Any color code supported by the facades can be used, althogh the
      * core colors specified in the Colors::CONSTANTS are recommended.
      *
      * @param string $indicator

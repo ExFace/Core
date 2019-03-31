@@ -43,7 +43,7 @@ class DataTableResponsive extends DataTable
      * I.e. high priority data is shown in "normal" rows while overflow data is hidden
      * by default and can be shown by expanding the rows or a similar action.
      * 
-     * The default setting depends on the template.
+     * The default setting depends on the facade.
      *
      * @uxon-property overflow_collapsible
      * @uxon-type boolean
@@ -76,7 +76,7 @@ class DataTableResponsive extends DataTable
      * I.e. high priority data is shown in "normal" rows while overflow data is hidden
      * by default and can be shown by expanding the rows or a similar action.
      * 
-     * The default setting depends on the template.
+     * The default setting depends on the facade.
      * 
      * @uxon-property overflow_collapsed
      * @uxon-type boolean

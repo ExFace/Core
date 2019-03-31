@@ -1,21 +1,21 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\Interfaces\Templates\TemplateInterface;
-use exface\Core\Interfaces\Selectors\TemplateSelectorInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\WorkbenchInterface;
-use exface\Core\CommonLogic\Selectors\TemplateSelector;
+use exface\Core\CommonLogic\Selectors\FacadeSelector;
 
-abstract class TemplateFactory extends AbstractSelectableComponentFactory
+abstract class FacadeFactory extends AbstractSelectableComponentFactory
 {
 
     /**
      *
-     * @param TemplateSelectorInterface $name_resolver            
-     * @return TemplateInterface
+     * @param FacadeSelectorInterface $name_resolver            
+     * @return FacadeInterface
      */
-    public static function create(TemplateSelectorInterface $selector) : TemplateInterface
+    public static function create(FacadeSelectorInterface $selector) : FacadeInterface
     {
         return parent::createFromSelector($selector);
     }
@@ -24,32 +24,32 @@ abstract class TemplateFactory extends AbstractSelectableComponentFactory
      *
      * @param string $aliasOrPathOrClassname            
      * @param WorkbenchInterface $exface            
-     * @return TemplateInterface
+     * @return FacadeInterface
      */
-    public static function createFromString(string $aliasOrPathOrClassname, WorkbenchInterface $exface) : TemplateInterface
+    public static function createFromString(string $aliasOrPathOrClassname, WorkbenchInterface $exface) : FacadeInterface
     {
-        $selector = new TemplateSelector($exface, $aliasOrPathOrClassname);
+        $selector = new FacadeSelector($exface, $aliasOrPathOrClassname);
         return static::create($selector);
     }
 
     /**
      *
-     * @param string|TemplateSelectorInterface|TemplateInterface $selectorOrString            
+     * @param string|FacadeSelectorInterface|FacadeInterface $selectorOrString            
      * @param WorkbenchInterface $exface            
-     * @return \exface\Core\Interfaces\Templates\TemplateInterface
+     * @return \exface\Core\Interfaces\Facades\FacadeInterface
      */
-    public static function createFromAnything($selectorOrString, WorkbenchInterface $exface) : TemplateInterface
+    public static function createFromAnything($selectorOrString, WorkbenchInterface $exface) : FacadeInterface
     {
-        if ($selectorOrString instanceof TemplateInterface) {
-            $template = $selectorOrString;
-        } elseif ($selectorOrString instanceof TemplateSelectorInterface) {
-            $template = static::create($selectorOrString);
+        if ($selectorOrString instanceof FacadeInterface) {
+            $facade = $selectorOrString;
+        } elseif ($selectorOrString instanceof FacadeSelectorInterface) {
+            $facade = static::create($selectorOrString);
         } elseif (is_string($selectorOrString)) {
-            $template = static::createFromString($selectorOrString, $exface);
+            $facade = static::createFromString($selectorOrString, $exface);
         } else {
-            throw new InvalidArgumentException('Cannot create template from "' . get_class($selectorOrString) . '": expecting "TemplateSelector" or valid selector string!');
+            throw new InvalidArgumentException('Cannot create facade from "' . get_class($selectorOrString) . '": expecting "FacadeSelector" or valid selector string!');
         }
-        return $template;
+        return $facade;
     }
 }
 ?>

@@ -64,7 +64,7 @@ interface iHaveValue extends WidgetInterface
     public function getValueDataType();
     
     /**
-     * Returns the placeholder text to be used by templates if the widget has no value.
+     * Returns the placeholder text to be used by facades if the widget has no value.
      *
      * @return string
      */

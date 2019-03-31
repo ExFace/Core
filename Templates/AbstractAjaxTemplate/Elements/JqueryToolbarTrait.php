@@ -1,10 +1,10 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\Toolbar;
 
 /**
- * This is the reference implementation of the Toolbar widget for jQuery templates.
+ * This is the reference implementation of the Toolbar widget for jQuery facades.
  * 
  * In a nutshell, it is a <div> with all the button groups one-after-another.
  * 
@@ -27,7 +27,7 @@ trait JqueryToolbarTrait
     
     /**
      * 
-     * @return \exface\Core\Templates\AbstractAjaxTemplate\Elements\JqueryToolbarTrait
+     * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\JqueryToolbarTrait
      */
     protected function moveButtonsToMoreButtonsMenu()
     {
@@ -66,10 +66,10 @@ trait JqueryToolbarTrait
                 // produce a single menu button.
                 if ($prev_grp && $grp !== $prev_grp){
                     $toolbar->removeButtonGroup($grp);
-                    $this->getTemplate()->getElement($prev_grp)->getMoreButtonsMenu()->getMenu()->addButtonGroup($grp);
+                    $this->getFacade()->getElement($prev_grp)->getMoreButtonsMenu()->getMenu()->addButtonGroup($grp);
                 }
             } else {
-                $this->getTemplate()->getElement($grp)->moveButtonsToMoreButtonsMenu(EXF_WIDGET_VISIBILITY_OPTIONAL, EXF_WIDGET_VISIBILITY_OPTIONAL);
+                $this->getFacade()->getElement($grp)->moveButtonsToMoreButtonsMenu(EXF_WIDGET_VISIBILITY_OPTIONAL, EXF_WIDGET_VISIBILITY_OPTIONAL);
             }
         }
         return $this;
@@ -82,7 +82,7 @@ trait JqueryToolbarTrait
     protected function buildHtmlButtons(){
         $button_html = '';
         foreach ($this->getWidget()->getButtonGroups() as $grp){
-            $button_html .= $this->getTemplate()->getElement($grp)->buildHtml();
+            $button_html .= $this->getFacade()->getElement($grp)->buildHtml();
         }
         return $button_html;
     }
@@ -94,7 +94,7 @@ trait JqueryToolbarTrait
     protected function buildJsButtons(){
         $output = '';
         foreach ($this->getWidget()->getButtons() as $button) {
-            $output .= $this->getTemplate()->buildJs($button);
+            $output .= $this->getFacade()->buildJs($button);
         }
         return $output;
     }

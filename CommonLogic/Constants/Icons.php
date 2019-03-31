@@ -3,12 +3,12 @@
 namespace exface\Core\CommonLogic\Constants;
 
 /**
- * Icon names for basic icons supported by all templates.
+ * Icon names for basic icons supported by all facades.
  * 
  * Apart from a few custom icons, all font awsome (4.7) icon names are supported.
  * Preview and search for icons available via link below.
  * 
- * While every template should support the icon names listed below, it is free
+ * While every facade should support the icon names listed below, it is free
  * to use its own icon names in addition to it. 
  * 
  * The constants in this class are meant to provide an easy lookup option for
@@ -645,7 +645,7 @@ abstract class Icons
     /**
      * Returns TRUE if the given icon name is part of the base icons set and FALSE otherwise.
      * 
-     * This is usefull for templates, that offer their own icon sets in additon to font awesome.
+     * This is usefull for facades, that offer their own icon sets in additon to font awesome.
      * in this case, you can easily check if the given icon name belongs to font awesome using
      * this method.
      * 

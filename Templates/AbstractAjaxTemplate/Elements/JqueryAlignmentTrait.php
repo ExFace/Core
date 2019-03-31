@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 trait JqueryAlignmentTrait {
 
@@ -15,7 +15,7 @@ trait JqueryAlignmentTrait {
     {        
         if ($widget_align === EXF_ALIGN_DEFAULT || $widget_align === EXF_ALIGN_OPPOSITE){
             if (is_null($default_alignment)){
-                $default_alignment = $this->getTemplate()->getConfig()->getOption('WIDGET.ALL.DEFAULT_ALIGNMENT');
+                $default_alignment = $this->getFacade()->getConfig()->getOption('WIDGET.ALL.DEFAULT_ALIGNMENT');
             }
             
             if ($widget_align === EXF_ALIGN_DEFAULT){

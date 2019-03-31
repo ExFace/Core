@@ -284,7 +284,7 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
     /**
      * Places the toolbar at a specific position within the widget.
      * 
-     * Which positions are possible, depends on the widget and on the template
+     * Which positions are possible, depends on the widget and on the facade
      * used. As a rule of thumb, most widgets will support "top", "bottom" and 
      * "menu".
      * 

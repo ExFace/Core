@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 trait JqueryInputTrait
 {
@@ -35,7 +35,7 @@ trait JqueryInputTrait
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement::buildJsValidator()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsValidator()
      */
     public function buildJsValidator()
     {

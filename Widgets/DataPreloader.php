@@ -11,7 +11,7 @@ use exface\Core\Factories\WidgetFactory;
 /**
  * The preloader allows to configure a widget to keep certain data on the client (preload it).
  * 
- * If supported by the template, preloading can be used to improve performnce (e.g. if only a
+ * If supported by the facade, preloading can be used to improve performnce (e.g. if only a
  * small part of the data is required for daily work) or event to create an offline data storage
  * for a progressive web app.
  * 

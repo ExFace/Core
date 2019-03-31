@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Interfaces\Widgets\iCanUseProxyTemplate;
-use exface\Core\Widgets\Traits\iCanUseProxyTemplateTrait;
+use exface\Core\Interfaces\Widgets\iCanUseProxyFacade;
+use exface\Core\Widgets\Traits\iCanUseProxyFacadeTrait;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\ImageUrlDataType;
 use exface\Core\CommonLogic\UxonObject;
@@ -14,7 +14,7 @@ use exface\Core\CommonLogic\UxonObject;
  * you need to do, is define `image_url_attribute_alias` and optionally an 
  * `image_title_attribute_alias`.
  * 
- * The galleries can be oriented vertically or horizontally. Templates should produce
+ * The galleries can be oriented vertically or horizontally. Facades should produce
  * a scrollable column or row of similarly sized images, depending on the `orientation`
  * property. Horizontal galleries will have images of equal height, while vertical
  * galleries will equalize the width of all images.
@@ -22,9 +22,9 @@ use exface\Core\CommonLogic\UxonObject;
  * Each image is a separate data item (comparable to a table row or a list item), so
  * it can be selected and passed to actions as input data. 
  * 
- * Templates may also provide additional image-specific functionality like uploading.
+ * Facades may also provide additional image-specific functionality like uploading.
  * 
- * The following simple exmple will produce a default gallery (the template will choose
+ * The following simple exmple will produce a default gallery (the facade will choose
  * it's orientation):
  * 
  * ```
@@ -41,7 +41,7 @@ use exface\Core\CommonLogic\UxonObject;
  * In particular, buttons can be used to navigate to business objects, represented
  * by the images (e.g. products) or to modify/delete image data. 
  * 
- * Additional columns may be added to the data widget manually: depending on the template,
+ * Additional columns may be added to the data widget manually: depending on the facade,
  * this additional information may be displayed in overlays or descriptions of some kind.
  * While this functionality is optional, the additional information however must be
  * passed to actions, performed on the meta object behind each image.
@@ -91,9 +91,9 @@ use exface\Core\CommonLogic\UxonObject;
  * @author Andrej Kabachnik
  *
  */
-class ImageGallery extends Data implements iCanUseProxyTemplate
+class ImageGallery extends Data implements iCanUseProxyFacade
 {
-    use iCanUseProxyTemplateTrait;
+    use iCanUseProxyFacadeTrait;
     
     const ORIENTATION_HORIZONTAL = 'horizontal';
     const ORIENTATION_VERTICAL = 'vertical';
@@ -190,7 +190,7 @@ class ImageGallery extends Data implements iCanUseProxyTemplate
         $this->image_title_attribute_alias = $value;
         $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
         // Make the column show images. This ensures backward compatibility to other data widget (e.g. DataTable),
-        // so templates, that do not have a gallery implementation, can simply fall back to a table and it
+        // so facades, that do not have a gallery implementation, can simply fall back to a table and it
         // would automatically show the images.
         $col->setCellWidget(new UxonObject([
             "widget_type" => "Image"

@@ -1,12 +1,12 @@
 <?php
-namespace exface\Core\Templates\AbstractHttpTemplate\Middleware;
+namespace exface\Core\Facades\AbstractHttpFacade\Middleware;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use exface\Core\Interfaces\Templates\HttpTemplateInterface;
-use exface\Core\Templates\AbstractHttpTemplate\Middleware\Traits\TaskRequestTrait;
+use exface\Core\Interfaces\Facades\HttpFacadeInterface;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\Traits\TaskRequestTrait;
 
 /**
  * This PSR-15 middleware passes the value of a given URL/body parameter or attribute to the specified
@@ -24,7 +24,7 @@ class TaskUrlParamReader implements MiddlewareInterface
 {
     use TaskRequestTrait;
     
-    private $template = null;
+    private $facade = null;
     
     private $taskAttributeName = null;
     
@@ -36,15 +36,15 @@ class TaskUrlParamReader implements MiddlewareInterface
     
     /**
      * 
-     * @param HttpTemplateInterface $template
+     * @param HttpFacadeInterface $facade
      * @param string $readUrlParam
      * @param string $passToMethod
      * @param string $valueAttributeName
      * @param string $taskAttributeName
      */
-    public function __construct(HttpTemplateInterface $template, string $readUrlParam, string $passToMethod, string $valueAttributeName = null, string $taskAttributeName = 'task')
+    public function __construct(HttpFacadeInterface $facade, string $readUrlParam, string $passToMethod, string $valueAttributeName = null, string $taskAttributeName = 'task')
     {
-        $this->template = $template;
+        $this->facade = $facade;
         $this->taskAttributeName = $taskAttributeName;
         $this->valueAttributeName = $valueAttributeName;
         $this->methodName = $passToMethod;
@@ -73,7 +73,7 @@ class TaskUrlParamReader implements MiddlewareInterface
         }
         
         if (! is_null($value)) {
-            $task = $this->getTask($request, $this->taskAttributeName, $this->template);
+            $task = $this->getTask($request, $this->taskAttributeName, $this->facade);
             $request = $request->withAttribute($this->taskAttributeName, $this->updateTask($task, $this->methodName, $value));
         }
         

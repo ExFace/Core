@@ -1,21 +1,21 @@
 <?php
-namespace exface\Core\Templates\AbstractHttpTemplate;
+namespace exface\Core\Facades\AbstractHttpFacade;
 
 use exface\Core\CommonLogic\AppInstallers\AbstractAppInstaller;
 use exface\Core\CommonLogic\Model\App;
-use exface\Core\Interfaces\Templates\HttpTemplateInterface;
+use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 
 /**
- * This installer registeres routes for it's HTTP template in the system's
- * template routing configuration (System.config.json > TEMPLATES.ROUTES).
+ * This installer registeres routes for it's HTTP facade in the system's
+ * facade routing configuration (System.config.json > TEMPLATES.ROUTES).
  * 
  * @author Andrej Kabachnik
  *        
  */
-class HttpTemplateInstaller extends AbstractAppInstaller
+class HttpFacadeInstaller extends AbstractAppInstaller
 {
-    private $template = null;
+    private $facade = null;
 
     /**
      * 
@@ -28,18 +28,18 @@ class HttpTemplateInstaller extends AbstractAppInstaller
             $config = $this->getWorkbench()->getConfig();
             $routes = $config->getOption('TEMPLATES.ROUTES');
             $before = $routes->toJson();
-            foreach ($this->getTemplate()->getUrlRoutePatterns() as $pattern) {
-                $routes->setProperty($pattern, $this->getTemplate()->getAliasWithNamespace());
+            foreach ($this->getFacade()->getUrlRoutePatterns() as $pattern) {
+                $routes->setProperty($pattern, $this->getFacade()->getAliasWithNamespace());
             }      
             $config->setOption('TEMPLATES.ROUTES', $routes, App::CONFIG_SCOPE_SYSTEM);
         } catch (\Throwable $e) {
-            throw new InstallerRuntimeError($this, 'Failed to setup HTTP template routing!', null, $e);
+            throw new InstallerRuntimeError($this, 'Failed to setup HTTP facade routing!', null, $e);
         }
         
         if ($routes->toJson() === $before) {
-            return 'HTTP template routing already up to date';    
+            return 'HTTP facade routing already up to date';    
         } else {
-            return 'Updated HTTP template routing configuration';
+            return 'Updated HTTP facade routing configuration';
         }
     }
 
@@ -65,14 +65,14 @@ class HttpTemplateInstaller extends AbstractAppInstaller
         try {
             $config = $this->getWorkbench()->getConfig();
             $routes = $config->getOption('TEMPLATES.ROUTES');
-            foreach ($this->getTemplate()->getUrlRoutePatterns() as $pattern) {
+            foreach ($this->getFacade()->getUrlRoutePatterns() as $pattern) {
                 $routes->unsetProperty($pattern);
             }
             $config->setOption('TEMPLATES.ROUTES', $routes, App::CONFIG_SCOPE_SYSTEM);
         } catch (\Throwable $e) {
-            throw new InstallerRuntimeError($this, 'Failed to uninstall HTTP template routes!', null, $e);
+            throw new InstallerRuntimeError($this, 'Failed to uninstall HTTP facade routes!', null, $e);
         }
-        return 'Template URL routes uninstalled.';
+        return 'Facade URL routes uninstalled.';
     }
 
     /**
@@ -87,21 +87,21 @@ class HttpTemplateInstaller extends AbstractAppInstaller
     
     /**
      * 
-     * @return HttpTemplateInterface
+     * @return HttpFacadeInterface
      */
-    public function getTemplate() : HttpTemplateInterface
+    public function getFacade() : HttpFacadeInterface
     {
-        return $this->template;
+        return $this->facade;
     }
     
     /**
      * 
-     * @param HttpTemplateInterface $tpl
-     * @return HttpTemplateInstaller
+     * @param HttpFacadeInterface $tpl
+     * @return HttpFacadeInstaller
      */
-    public function setTemplate(HttpTemplateInterface $tpl) : HttpTemplateInstaller
+    public function setFacade(HttpFacadeInterface $tpl) : HttpFacadeInstaller
     {
-        $this->template = $tpl;
+        $this->facade = $tpl;
         return $this;
     }
 }

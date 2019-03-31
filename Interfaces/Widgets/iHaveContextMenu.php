@@ -14,7 +14,7 @@ interface iHaveContextMenu extends WidgetInterface
     public function getContextMenuEnabled();
 
     /**
-     * If set, the widget will display the defined icon (if the template supports it, of course)
+     * If set, the widget will display the defined icon (if the facade supports it, of course)
      *
      * @param boolean $value            
      * @return iHaveContextMenu

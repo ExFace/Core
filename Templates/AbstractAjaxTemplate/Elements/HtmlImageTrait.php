@@ -1,8 +1,8 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\Image;
-use exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsValueDecoratingInterface;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
 
 /**
  *

@@ -1,14 +1,14 @@
 <?php
-namespace exface\Core\Templates\AbstractTemplate;
+namespace exface\Core\Facades\AbstractFacade;
 
-use exface\Core\Interfaces\Templates\TemplateInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\Interfaces\Selectors\TemplateSelectorInterface;
+use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\CommonLogic\Traits\AliasTrait;
 
-abstract class AbstractTemplate implements TemplateInterface
+abstract class AbstractFacade implements FacadeInterface
 {
     use AliasTrait;
 
@@ -18,7 +18,7 @@ abstract class AbstractTemplate implements TemplateInterface
 
     private $selector = null;
 
-    public final function __construct(TemplateSelectorInterface $selector)
+    public final function __construct(FacadeSelectorInterface $selector)
     {
         $this->exface = $selector->getWorkbench();
         $this->selector = $selector;
@@ -31,9 +31,9 @@ abstract class AbstractTemplate implements TemplateInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Templates\TemplateInterface::getSelector()
+     * @see \exface\Core\Interfaces\Facades\FacadeInterface::getSelector()
      */
-    public function getSelector() : TemplateSelectorInterface
+    public function getSelector() : FacadeSelectorInterface
     {
         return $this->selector;
     }
@@ -53,11 +53,11 @@ abstract class AbstractTemplate implements TemplateInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Templates\TemplateInterface::is()
+     * @see \exface\Core\Interfaces\Facades\FacadeInterface::is()
      */
-    public function is($template_alias) : bool
+    public function is($facade_alias) : bool
     {
-        if (strcasecmp($this->getAlias(), $template_alias) === 0 || strcasecmp($this->getAliasWithNamespace(), $template_alias) === 0) {
+        if (strcasecmp($this->getAlias(), $facade_alias) === 0 || strcasecmp($this->getAliasWithNamespace(), $facade_alias) === 0) {
             return true;
         } else {
             return false;
@@ -68,7 +68,7 @@ abstract class AbstractTemplate implements TemplateInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Templates\TemplateInterface::getApp()
+     * @see \exface\Core\Interfaces\Facades\FacadeInterface::getApp()
      */
     public function getApp() : AppInterface
     {
@@ -81,7 +81,7 @@ abstract class AbstractTemplate implements TemplateInterface
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Templates\TemplateInterface::getConfig()
+     * @see \exface\Core\Interfaces\Facades\FacadeInterface::getConfig()
      */
     public function getConfig() : ConfigurationInterface
     {

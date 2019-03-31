@@ -13,7 +13,7 @@ use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
  * `left_attribute_alias` and `right_attribute_alias`. 
  * 
  * Although the texts are called "left" and "right", their actual positioning 
- * depends on the template.
+ * depends on the facade.
  * 
  * @author Andrej Kabachnik
  *        

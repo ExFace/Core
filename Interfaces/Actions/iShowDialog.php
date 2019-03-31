@@ -24,7 +24,7 @@ interface iShowDialog extends ActionInterface
     /**
      * Set to TRUE to maximize the dialog when opened.
      *
-     * If not set, every template will use it's own defaults.
+     * If not set, every facade will use it's own defaults.
      *
      * @uxon-property maximize
      * @uxon-type boolean

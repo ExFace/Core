@@ -137,8 +137,8 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     /**
      * Makes each row have a collapsible detail container with arbitrary widgets.
      * 
-     * Most templates will render an expand-button in each row, allowing to expand/collapse the detail widget.
-     * This only works with interactiv templates (e.g. HTML-templates)
+     * Most facades will render an expand-button in each row, allowing to expand/collapse the detail widget.
+     * This only works with interactiv facades (e.g. HTML-facades)
      * 
      * The widget type of the details-widget can be omitted. It defaults to Container in this case.
      * 
@@ -164,7 +164,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *
      * @uxon-property row_details
      * @uxon-type \exface\Core\Widgets\Container
-     * @uxon-template {"height": "", "widgets": [{"widget_type": ""}]}
+     * @uxon-facade {"height": "", "widgets": [{"widget_type": ""}]}
      *
      * @param UxonObject $detail_widget
      * @return boolean
@@ -217,7 +217,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * 
      * Rows with equal values in the column being grouped by will be visually grouped together and separated
      * from other groups via a group header, which will show the grouped value and additional information if
-     * configured. Most templates will support collapsing and expanding groups.
+     * configured. Most facades will support collapsing and expanding groups.
      *
      * You can group by column id if the data column already exists in the table or by attribute alias to
      * make the system add a corresponding hidden column automatically.
@@ -242,7 +242,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *
      * @uxon-property row_grouper
      * @uxon-type \exface\Core\Widgets\Parts\DataRowGrouper
-     * @uxon-template {"group_by_attribute_alias": ""}
+     * @uxon-facade {"group_by_attribute_alias": ""}
      *
      * @param UxonObject $uxon            
      * @return DataTable
@@ -305,7 +305,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     }
 
     /**
-     * Set to TRUE to show a special row with filters for each column (if supported by the template).
+     * Set to TRUE to show a special row with filters for each column (if supported by the facade).
      *
      * This is a handy alternative to defining filter individually.
      *
@@ -327,7 +327,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     }
 
     /**
-     * Set to TRUE to enable click-sorting via column headers for multiple columns simultanuosly (if supported by template)
+     * Set to TRUE to enable click-sorting via column headers for multiple columns simultanuosly (if supported by facade)
      *
      * @uxon-property header_sort_multiple
      * @uxon-type boolean

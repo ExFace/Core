@@ -1,10 +1,10 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
-use exface\Core\Interfaces\Templates\TemplateInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Templates\AbstractAjaxTemplate\AbstractAjaxTemplate;
+use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
@@ -18,7 +18,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
 
     private $exf_widget = null;
 
-    private $template = null;
+    private $facade = null;
 
     private $width_relative_unit = null;
 
@@ -49,17 +49,17 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     private $element_style = '';
 
     /**
-     * Creates a template element for a given widget
+     * Creates a facade element for a given widget
      *
      * @param WidgetInterface $widget            
-     * @param TemplateInterface $template            
+     * @param FacadeInterface $facade            
      * @return void
      */
-    public function __construct(WidgetInterface $widget, TemplateInterface $template)
+    public function __construct(WidgetInterface $widget, FacadeInterface $facade)
     {
         $this->setWidget($widget);
-        $this->template = $template;
-        $template->registerElement($this);
+        $this->facade = $facade;
+        $facade->registerElement($this);
         $this->init();
     }
 
@@ -89,7 +89,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
      * The array provides an easy way to get rid of identical lines.
      *
      * Note, that the main includes for the core of jEasyUI generally need to be
-     * placed in the template of the CMS. This method ensures, that widgets can
+     * placed in the facade of the CMS. This method ensures, that widgets can
      * add other includes like plugins, a plotting framework or other JS-resources.
      * Thus, the abstract widget returns an empty array.
      *
@@ -99,13 +99,13 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     {
         $headers = array();
         foreach ($this->getWidget()->getChildren() as $child) {
-            $headers = array_merge($headers, $this->getTemplate()->getElement($child)->buildHtmlHeadTags());
+            $headers = array_merge($headers, $this->getFacade()->getElement($child)->buildHtmlHeadTags());
         }
         return $headers;
     }
 
     /**
-     * Returns the widget, that this template element represents
+     * Returns the widget, that this facade element represents
      *
      * @return WidgetInterface
      */
@@ -129,13 +129,13 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     }
 
     /**
-     * Returns the template engine
+     * Returns the facade engine
      *
-     * @return AbstractAjaxTemplate
+     * @return AbstractAjaxFacade
      */
-    public function getTemplate()
+    public function getFacade()
     {
-        return $this->template;
+        return $this->facade;
     }
 
     /**
@@ -149,20 +149,20 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     }
 
     /**
-     * Returns the maximum number of characters in one line for hint messages in this template
+     * Returns the maximum number of characters in one line for hint messages in this facade
      *
      * @return string
      */
     protected function getHintMaxCharsInLine()
     {
         if (is_null($this->hint_max_chars_in_line)) {
-            $this->hint_max_chars_in_line = $this->getTemplate()->getConfig()->getOption('HINT_MAX_CHARS_IN_LINE');
+            $this->hint_max_chars_in_line = $this->getFacade()->getConfig()->getOption('HINT_MAX_CHARS_IN_LINE');
         }
         return $this->hint_max_chars_in_line;
     }
 
     /**
-     * Returns a ready-to-use hint text, that will generally be included in float-overs for template elements
+     * Returns a ready-to-use hint text, that will generally be included in float-overs for facade elements
      *
      * @param string $hint_text            
      * @param string $remove_linebreaks            
@@ -207,7 +207,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
      */
     public function getAjaxUrl()
     {
-        return $this->getTemplate()->getBaseUrl();
+        return $this->getFacade()->getBaseUrl();
     }
     
     /**
@@ -217,7 +217,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     public function getAjaxHeaders() : array
     {
         $headers = [];
-        $subrequest_id = $this->getTemplate()->getWorkbench()->getContext()->getScopeRequest()->getSubrequestId();
+        $subrequest_id = $this->getFacade()->getWorkbench()->getContext()->getScopeRequest()->getSubrequestId();
         if ($subrequest_id) {
             $headers['Subrequest-ID'] = $subrequest_id;
         }
@@ -242,7 +242,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     public function buildJsFunctionPrefix()
     {
         if (is_null($this->function_prefix)) {
-            $this->function_prefix = str_replace($this->getTemplate()->getConfig()->getOption('FORBIDDEN_CHARS_IN_FUNCTION_PREFIX')->toArray(), '_', $this->getId()) . '_';
+            $this->function_prefix = str_replace($this->getFacade()->getConfig()->getOption('FORBIDDEN_CHARS_IN_FUNCTION_PREFIX')->toArray(), '_', $this->getId()) . '_';
         }
         return $this->function_prefix;
     }
@@ -283,7 +283,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     /**
      * 
      * @param string $string
-     * @return \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement
+     * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement
      */
     public function removeElementCssClass($string)
     {
@@ -336,7 +336,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     public function getId()
     {
         if (is_null($this->id)) {
-            $subrequest = $this->getTemplate()->getWorkbench()->getContext()->getScopeRequest()->getSubrequestId();
+            $subrequest = $this->getFacade()->getWorkbench()->getContext()->getScopeRequest()->getSubrequestId();
             $this->id = $this->cleanId($this->getWidget()->getId()) . ($subrequest ? '_' . $subrequest : '');
         }
         return $this->id;
@@ -351,7 +351,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
      */
     public function cleanId($id)
     {
-        return str_replace($this->getTemplate()->getConfig()->getOption('FORBIDDEN_CHARS_IN_ELEMENT_ID')->toArray(), '_', $id);
+        return str_replace($this->getFacade()->getConfig()->getOption('FORBIDDEN_CHARS_IN_ELEMENT_ID')->toArray(), '_', $id);
     }
 
     /**
@@ -441,7 +441,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
             if (! $dimension->isMax()) {
                 $width = ($this->getWidthRelativeUnit() * $dimension->getValue()) . 'px';
             }
-        } elseif ($dimension->isTemplateSpecific() || $dimension->isPercentual()) {
+        } elseif ($dimension->isFacadeSpecific() || $dimension->isPercentual()) {
             $width = $dimension->getValue();
         } else {
             $width = ($this->getWidthRelativeUnit() * $this->getWidthDefault()) . 'px';
@@ -460,7 +460,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
         $dimension = $this->getWidget()->getHeight();
         if ($dimension->isRelative()) {
             $height = $this->getHeightRelativeUnit() * $dimension->getValue() . 'px';
-        } elseif ($dimension->isTemplateSpecific() || $dimension->isPercentual()) {
+        } elseif ($dimension->isFacadeSpecific() || $dimension->isPercentual()) {
             $height = $dimension->getValue();
         } else {
             $height = $this->buildCssHeightDefaultValue();
@@ -485,7 +485,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     public function getWidthDefault()
     {
         if (is_null($this->width_default)) {
-            $this->width_default = $this->getTemplate()->getConfig()->getOption('WIDTH_DEFAULT');
+            $this->width_default = $this->getFacade()->getConfig()->getOption('WIDTH_DEFAULT');
         }
         return $this->width_default;
     }
@@ -494,7 +494,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
      * Sets the default relative width of this element
      *
      * @param string $value            
-     * @return \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement
+     * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement
      */
     public function setWidthDefault($value)
     {
@@ -510,7 +510,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     public function getWidthRelativeUnit()
     {
         if (is_null($this->width_relative_unit)) {
-            $this->width_relative_unit = $this->getTemplate()->getConfig()->getOption('WIDTH_RELATIVE_UNIT');
+            $this->width_relative_unit = $this->getFacade()->getConfig()->getOption('WIDTH_RELATIVE_UNIT');
         }
         return $this->width_relative_unit;
     }
@@ -523,7 +523,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     public function getWidthMinimum()
     {
         if (is_null($this->width_minimum)) {
-            $this->width_minimum = $this->getTemplate()->getConfig()->getOption('WIDTH_MINIMUM');
+            $this->width_minimum = $this->getFacade()->getConfig()->getOption('WIDTH_MINIMUM');
         }
         return $this->width_minimum;
     }
@@ -536,7 +536,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     public function getHeightRelativeUnit()
     {
         if (is_null($this->height_relative_unit)) {
-            $this->height_relative_unit = $this->getTemplate()->getConfig()->getOption('HEIGHT_RELATIVE_UNIT');
+            $this->height_relative_unit = $this->getFacade()->getConfig()->getOption('HEIGHT_RELATIVE_UNIT');
         }
         return $this->height_relative_unit;
     }
@@ -570,7 +570,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
      * NOTE: the event object is available via the javascript variable "event".
      *
      * @param string $string            
-     * @return \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement
+     * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement
      */
     public function addOnChangeScript($string)
     {
@@ -613,7 +613,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
      * Overwrites the JavaScript snippet, that will get executed every time the size of this element changes
      *
      * @param string $value            
-     * @return \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement
+     * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement
      */
     public function setOnResizeScript($value)
     {
@@ -625,7 +625,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
      * Adds a JavaScript snippet to the script, that will get executed every time the size of this element changes
      *
      * @param string $js            
-     * @return \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement
+     * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement
      */
     public function addOnResizeScript($js)
     {
@@ -690,8 +690,8 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     }
 
     /**
-     * Returns a template specific CSS class for a given icon.
-     * In most templates this string will be used as a class for an <a> or <i> element.
+     * Returns a facade specific CSS class for a given icon.
+     * In most facades this string will be used as a class for an <a> or <i> element.
      *
      * @param string $icon            
      * @return string
@@ -699,10 +699,10 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     public function buildCssIconClass($icon)
     {
         try {
-            $class = $this->getTemplate()->getConfig()->getOption('ICON_CLASSES.' . strtoupper($icon));
+            $class = $this->getFacade()->getConfig()->getOption('ICON_CLASSES.' . strtoupper($icon));
             return $class;
         } catch (ConfigOptionNotFoundError $e) {
-            return $this->getTemplate()->getConfig()->getOption('ICON_CLASSES.DEFAULT_CLASS_PREFIX') . $icon;
+            return $this->getFacade()->getConfig()->getOption('ICON_CLASSES.DEFAULT_CLASS_PREFIX') . $icon;
         }
     }
     
@@ -712,13 +712,13 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
      */
     public function getWorkbench()
     {
-        return $this->getTemplate()->getWorkbench();
+        return $this->getFacade()->getWorkbench();
     }
 
     /**
      * Returns the translation string for the given message id.
      *
-     * This is a shortcut for calling $this->getTemplate()->getApp()->getTranslator()->translate().
+     * This is a shortcut for calling $this->getFacade()->getApp()->getTranslator()->translate().
      *
      * @see Translation::translate()
      *
@@ -730,7 +730,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     public function translate($message_id, array $placeholders = array(), $number_for_plurification = null)
     {
         $message_id = trim($message_id);
-        return $this->getTemplate()->getApp()->getTranslator()->translate($message_id, $placeholders, $number_for_plurification);
+        return $this->getFacade()->getApp()->getTranslator()->translate($message_id, $placeholders, $number_for_plurification);
     }
 
     /**

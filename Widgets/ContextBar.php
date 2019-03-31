@@ -75,14 +75,14 @@ class ContextBar extends Toolbar
      *  }
      *  
      * The visibility property takes the following options, that customize the
-     * appearance of the context button depending on the template used.
+     * appearance of the context button depending on the facade used.
      * 
      * - show_allways - makes the context button always visible
      * - show_if_not_empty - hides the context button if there is no popup content
      * - hide_allways - hides the context button allways
      * - disabled - disables loading of the context into the context bar (this 
      * way default contexts can be disabled)
-     * - default - leaves showing/hiding the context upto the template
+     * - default - leaves showing/hiding the context upto the facade
      * - emphasized
      * 
      * @uxon-property contexts

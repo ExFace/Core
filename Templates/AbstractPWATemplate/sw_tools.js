@@ -12,7 +12,7 @@
 -----------------------------------------------------------
 importScripts('exface/vendor/npm-asset/workbox-sw/build/workbox-sw.js');
 importScripts('exface/vendor/npm-asset/dexie/dist/dexie.min.js');
-importScripts('exface/vendor/exface/Core/Templates/AbstractPWATemplate/sw_tools.js');
+importScripts('exface/vendor/exface/Core/Facades/AbstractPWAFacade/sw_tools.js');
 
 workbox.routing.registerRoute(
     /.*\/api\/jeasyui.* /i,

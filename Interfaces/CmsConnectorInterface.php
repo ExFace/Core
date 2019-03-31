@@ -89,7 +89,7 @@ interface CmsConnectorInterface extends WorkbenchDependantInterface
 
     /**
      * Escapes all CMS specific tags in the given string to make sure the string is interpreted as pure text/HTML by the CMS and not
-     * as a script or template.
+     * as a script or facade.
      *
      * @param string $string  
      * @return string          
@@ -128,7 +128,7 @@ interface CmsConnectorInterface extends WorkbenchDependantInterface
     public function buildUrlToApi();
     
     /**
-     * Returns the URL to include a given path in the template code: e.g. for CSS/JS tags in the HTML head.
+     * Returns the URL to include a given path in the facade code: e.g. for CSS/JS tags in the HTML head.
      * 
      * @param string $pathFromVendorFolder
      * 

@@ -1,8 +1,8 @@
 <?php
-namespace exface\Core\Templates\AbstractHttpTemplate;
+namespace exface\Core\Facades\AbstractHttpFacade;
 
-use exface\Core\Templates\AbstractTemplate\AbstractTemplate;
-use exface\Core\Interfaces\Templates\HttpTemplateInterface;
+use exface\Core\Facades\AbstractFacade\AbstractFacade;
+use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
@@ -10,21 +10,21 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use exface\Core\Exceptions\InternalError;
-use exface\Core\Templates\AbstractHttpTemplate\Middleware\RequestContextReader;
-use exface\Core\Templates\AbstractHttpTemplate\Middleware\RequestIdNegotiator;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\RequestContextReader;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\RequestIdNegotiator;
 
 /**
- * Common base structure for HTTP templates.
+ * Common base structure for HTTP facades.
  *
  * Uses a middleware bus internally to transform incoming HTTP requests into tasks.
- * To standardise the middleware somehat, this template getter methods for names
+ * To standardise the middleware somehat, this facade getter methods for names
  * of most important request attributes needed for tasks, page and action selectors,
  * etc.
  *
  * @author Andrej Kabachnik
  *
  */
-abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemplateInterface
+abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeInterface
 {
     const REQUEST_ATTRIBUTE_NAME_TASK = 'task';
     const REQUEST_ATTRIBUTE_NAME_PAGE = 'page';
@@ -58,12 +58,12 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     }
     
     /**
-     * Makes the template create an HTTP response for the given request - after all middlewares were run.
+     * Makes the facade create an HTTP response for the given request - after all middlewares were run.
      * 
      * This method retrieves the task from the request attributes and attempts to let the workbench
      * handle it. If it succeseeds, the task result is passed on to createResponseFromTaskResult(),
      * otherwise, any exception caught is passed to createResponseFromError(). These methods are
-     * reponsible for the actual rendering of the response and differ from template to template,
+     * reponsible for the actual rendering of the response and differ from facade to facade,
      * while the generic createResponse() method can mostly be used as-is.
      * 
      * @see createResponseFromTaskResult()
@@ -89,7 +89,7 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     /**
      * Returns the middleware stack to use in the request handler.
      *
-     * Override this method to add/change middleware. For example, template can add their own
+     * Override this method to add/change middleware. For example, facade can add their own
      * middleware to read specific URL parameters built-in the used UI frameworks.
      *
      * @return MiddlewareInterface[]
@@ -124,7 +124,7 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Templates\HttpTemplateInterface::getRequestAttributeForAction()
+     * @see \exface\Core\Interfaces\Facades\HttpFacadeInterface::getRequestAttributeForAction()
      */
     public function getRequestAttributeForAction() : string
     {
@@ -134,7 +134,7 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Templates\HttpTemplateInterface::getRequestAttributeForTask()
+     * @see \exface\Core\Interfaces\Facades\HttpFacadeInterface::getRequestAttributeForTask()
      */
     public function getRequestAttributeForTask() : string
     {
@@ -144,7 +144,7 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Templates\HttpTemplateInterface::getRequestAttributeForPage()
+     * @see \exface\Core\Interfaces\Facades\HttpFacadeInterface::getRequestAttributeForPage()
      */
     public function getRequestAttributeForPage() : string
     {
@@ -154,7 +154,7 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Templates\HttpTemplateInterface::getRequestAttributeForRenderingMode()
+     * @see \exface\Core\Interfaces\Facades\HttpFacadeInterface::getRequestAttributeForRenderingMode()
      */
     public function getRequestAttributeForRenderingMode() : string
     {

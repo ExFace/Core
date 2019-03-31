@@ -16,19 +16,19 @@ class WidgetDimension
     /**
      * Parses a dimension string.
      * Dimensions may be specified in relative ExFace units (in this case, the value is numeric)
-     * or in any unit compatible with the current template (in this case, the value is alphanumeric because the unit must be
+     * or in any unit compatible with the current facade (in this case, the value is alphanumeric because the unit must be
      * specified directltly).
      *
-     * How much a relative unit really is, depends on the template. E.g. a relative height of 1 would mean, that the widget
-     * occupies on visual line in the template (like a simple input), while a relative height of 2 would span the widget over
+     * How much a relative unit really is, depends on the facade. E.g. a relative height of 1 would mean, that the widget
+     * occupies on visual line in the facade (like a simple input), while a relative height of 2 would span the widget over
      * two lines, etc. The same goes for widths.
      *
      * Examples:
-     * - "1" - relative height of 1 (e.g. a simple input widget). The template would need to translate this into a specific height like 300px or similar.
+     * - "1" - relative height of 1 (e.g. a simple input widget). The facade would need to translate this into a specific height like 300px or similar.
      * - "2" - double relative height (an input with double height).
      * - "0.5" - half relative height (an input with half height)
-     * - "300px" - template specific height defined via the CSS unit "px". This is only compatible with templates, that understand CSS!
-     * - "100%" - percentual height. Most templates will support this directly, while others will transform it to relative or template specific units.
+     * - "300px" - facade specific height defined via the CSS unit "px". This is only compatible with facades, that understand CSS!
+     * - "100%" - percentual height. Most facades will support this directly, while others will transform it to relative or facade specific units.
      */
     public function parseDimension($string)
     {
@@ -93,11 +93,11 @@ class WidgetDimension
     }
 
     /**
-     * Returns TRUE if the dimension was specified in template specific units and FALSE otherwise.
+     * Returns TRUE if the dimension was specified in facade specific units and FALSE otherwise.
      *
      * @return boolean
      */
-    public function isTemplateSpecific()
+    public function isFacadeSpecific()
     {
         if (! $this->isUndefined() && ! $this->isPercentual() && ! $this->isRelative())
             return true;

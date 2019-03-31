@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\InputUxon;
 
@@ -16,7 +16,7 @@ trait JsonEditorTrait
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement::buildCssHeightDefaultValue()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildCssHeightDefaultValue()
      */
     protected function buildCssHeightDefaultValue()
     {
@@ -164,8 +164,8 @@ JS;
     		}
     		var path = node.getPath();
     		var prop = path[path.length-1];
-    		if (editor._autosuggestLastResult && editor._autosuggestLastResult.templates) {
-    			var tpl = editor._autosuggestLastResult.templates[prop];
+    		if (editor._autosuggestLastResult && editor._autosuggestLastResult.facades) {
+    			var tpl = editor._autosuggestLastResult.facades[prop];
     			if (tpl) {
     				var val = JSON.parse(tpl);
     				node.setValue(val, (Array.isArray(val) ? 'array' : 'object'));
@@ -206,7 +206,7 @@ JS;
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement::buildJsValueGetter()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsValueGetter()
      */
     public function buildJsValueGetter()
     {
@@ -225,7 +225,7 @@ JS;
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement::buildJsValidator()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsValidator()
      */
     public function buildJsValidator()
     {
@@ -242,7 +242,7 @@ JS;
                     return '"' . $expr->toString() . '"';
                 } elseif ($expr->isReference() === true) {
                     $link = $expr->getWidgetLink($widget);
-                    return $this->getTemplate()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetColumnId());
+                    return $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetColumnId());
                 }
             }
         }
@@ -259,7 +259,7 @@ JS;
                     return '"' . $expr->toString() . '"';
                 } elseif ($expr->isReference() === true) {
                     $link = $expr->getWidgetLink($widget);
-                    return $this->getTemplate()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetColumnId());
+                    return $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetColumnId());
                 }
             }
         }

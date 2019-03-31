@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Interfaces\Widgets\iCanUseProxyTemplate;
-use exface\Core\Widgets\Traits\iCanUseProxyTemplateTrait;
+use exface\Core\Interfaces\Widgets\iCanUseProxyFacade;
+use exface\Core\Widgets\Traits\iCanUseProxyFacadeTrait;
 
 /**
  * Shows an image carousel with images from data rows.
@@ -10,9 +10,9 @@ use exface\Core\Widgets\Traits\iCanUseProxyTemplateTrait;
  * @author Andrej Kabachnik
  *
  */
-class ImageCarousel extends DataCards implements iCanUseProxyTemplate
+class ImageCarousel extends DataCards implements iCanUseProxyFacade
 {
-    use iCanUseProxyTemplateTrait;
+    use iCanUseProxyFacadeTrait;
 
     private $image_url_column_id = null;
 

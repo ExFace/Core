@@ -11,7 +11,7 @@
 const EXF_WIDGET_VISIBILITY_NORMAL = 50;
 
 /**
- * @const EXF_WIDGET_VISIBILITY_OPTIONAL may be hidden by the template, so the user will need to open popups etc.
+ * @const EXF_WIDGET_VISIBILITY_OPTIONAL may be hidden by the facade, so the user will need to open popups etc.
  * to see the widget (especially on mobile devices)
  */
 const EXF_WIDGET_VISIBILITY_OPTIONAL = 30;

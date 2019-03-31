@@ -25,7 +25,7 @@ use exface\Core\Factories\QueryBuilderFactory;
  * UXON or even extended from any other ready-made DataTable!
  * 
  * While not every UI-framework supports such a kind of widget, there are many ways to implement the main idea of the InputComboTable:
- * showing more data about a selectable object in the autosuggest. Mobile templates might use cards like in Googles material design,
+ * showing more data about a selectable object in the autosuggest. Mobile facades might use cards like in Googles material design,
  * for example.
  * 
  * InputComboTables support two type of live references to other objects: in the value and in the data filters. Concider the following
@@ -194,7 +194,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
      *
      * @uxon-property table
      * @uxon-type \exface\Core\Widgets\Data
-     * @uxon-template {"object_alias": "", "columns": [{"attribute_alias": ""}]}
+     * @uxon-facade {"object_alias": "", "columns": [{"attribute_alias": ""}]}
      *
      * @param UxonObject|DataTable $widget_or_uxon_object            
      * @throws WidgetConfigurationError
@@ -383,7 +383,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         
         // Be carefull with the value text. If the combo stands for a relation, it can be retrieved from the prefill data,
         // but if the text comes from an unrelated object, it cannot be part of the prefill data and thus we can not
-        // set it here. In most templates, setting merely the value of the combo well make the template load the
+        // set it here. In most facades, setting merely the value of the combo well make the facade load the
         // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
         if ($this->getAttribute()->isRelation()) {
             $text_column_expr = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getTextColumn()->getAttributeAlias());
@@ -503,7 +503,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             
             // Be carefull with the value text. If the combo stands for a relation, it can be retrieved from the prefill data,
             // but if the text comes from an unrelated object, it cannot be part of the prefill data and thus we can not
-            // set it here. In most templates, setting merely the value of the combo will make the template load the
+            // set it here. In most facades, setting merely the value of the combo will make the facade load the
             // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
             if ($this->getAttribute() && $this->getAttribute()->isRelation()) {
                 $text_column_expr = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getTextColumn()->getAttributeAlias());
@@ -639,7 +639,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
      *
      * @uxon-property filters
      * @uxon-type \exface\Core\CommonLogic\Model\Condition[]
-     * @uxon-template [{"attribute_alias": "", "value": "", "comparator": "="}]
+     * @uxon-facade [{"attribute_alias": "", "value": "", "comparator": "="}]
      *
      * @param Condition[]|UxonObject $conditions_or_uxon_objects            
      * @return \exface\Core\Widgets\InputSelect
@@ -678,7 +678,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     }
     
     /**
-     * Set to TRUE to preload table data asynchronously (e.g. for offline-capable templates)
+     * Set to TRUE to preload table data asynchronously (e.g. for offline-capable facades)
      * 
      * @uxon-property preload_data
      * @uxon-type boolean

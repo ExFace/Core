@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Formatters;
+namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\DateDataType;
@@ -34,7 +34,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Formatters\AbstractJsDataTypeFormatter::setDataType()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Formatters\AbstractJsDataTypeFormatter::setDataType()
      */
     protected function setDataType(DataTypeInterface $dataType)
     {
@@ -47,7 +47,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface::buildJsFormatter()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFormatter()
      */
     public function buildJsFormatter($jsInput)
     {
@@ -108,7 +108,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
         
         
         // IDEA: Der Code des Parsers wird noch hier erzeugt und steht nicht an einer
-        // einzelnen Stelle wie z.B. template.js, da er aus einer Konfiguration erzeugt
+        // einzelnen Stelle wie z.B. facade.js, da er aus einer Konfiguration erzeugt
         // werden soll. Diese muesste die regulaeren Ausdruecke, sowie die Zuordnungen
         // der matches zu dd, MM, yyyy enthalten. Die Schwierigkeit besteht darin auch
         // Operationen wie 2000 + Number(match[3]) oder (new Date()).getFullYear()
@@ -272,7 +272,7 @@ JS;
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface::buildJsFormatParser()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFormatParser()
      */
     public function buildJsFormatParser($jsInput)
     {
@@ -289,7 +289,7 @@ JS;
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface::buildHtmlHeadIncludes()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildHtmlHeadIncludes()
      */
     public function buildHtmlHeadIncludes()
     {
@@ -299,7 +299,7 @@ JS;
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface::buildHtmlBodyIncludes()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildHtmlBodyIncludes()
      */
     public function buildHtmlBodyIncludes()
     {
@@ -376,7 +376,7 @@ JS;
      * with the javascript library used for formatting.
      * 
      * @param string $formatString
-     * @return \exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsDateFormatter
+     * @return \exface\Core\Facades\AbstractAjaxFacade\Formatters\JsDateFormatter
      */
     public function setFormat($formatString)
     {

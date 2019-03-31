@@ -6,7 +6,7 @@ use exface\Core\DataTypes\BooleanDataType;
 /**
  * Shows a pagination-control (e.g. toolbar), displaying the the current position, number of pages, navigation controls, etc.
  * 
- * In most cases, the template will set up pagination settings most suitable for it's widget representation automatically.
+ * In most cases, the facade will set up pagination settings most suitable for it's widget representation automatically.
  * However, you can customize the paginator using this widget as shown below:
  * 
  * ```
@@ -80,13 +80,13 @@ class DataPaginator extends AbstractWidget
     }
     
     /**
-     * Sets page sizes, the user can pick from (some templates will allow to change the page size).
+     * Sets page sizes, the user can pick from (some facades will allow to change the page size).
      * 
      * Set to an empty array to enforce the preset page size!
      * 
      * @uxon-property page_sizes
      * @uxon-type integer[]
-     * @uxon-template [""]
+     * @uxon-facade [""]
      * 
      * @param int[] $value
      * @return DataPaginator

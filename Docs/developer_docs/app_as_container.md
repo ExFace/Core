@@ -28,7 +28,7 @@ To simplify the development of apps, there is a built-in app class available, wh
 - Events - contains classes of events
 - Formulas - contains classes of formulas (class name = formula alias: e.g. "sum")
 - QueryBuilders - contains classes of query builers (class name = query builder alias: e.g. "MySqlBuilder")
-- Templates - contains classes of templates (class name = template alias: e.g. "AdminLteTeplate"). Subfolders often contain template dependencies.
+- Facades - contains classes of facades (class name = facade alias: e.g. "AdminLteTeplate"). Subfolders often contain facade dependencies.
 - Translations - contains JSON translation files. All files suffixed by the curren language code will be loaded into the translator automatically.
 
 Note: The core app uses the component type as suffix in the alias and class name (e.g. "MySqlConnector"), which has proven to be a good practice to make sure the component type is allways visible in the file header of the IDE.

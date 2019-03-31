@@ -27,7 +27,7 @@ trait iSupportLazyLoadingTrait {
     }
     
     /**
-     * Makes data values get loaded asynchronously in background if the template supports it (i.e.
+     * Makes data values get loaded asynchronously in background if the facade supports it (i.e.
      * via AJAX).
      *
      * @uxon-property lazy_loading
@@ -59,7 +59,7 @@ trait iSupportLazyLoadingTrait {
      *
      * By default, it is the ReadData action, but it can be substituted by any compatible action. Compatible
      * means in this case, that it should fill a given data sheet with data and output the data in a format
-     * compatible with the template (e.g. via AbstractAjaxTemplate::encodeData()).
+     * compatible with the facade (e.g. via AbstractAjaxFacade::encodeData()).
      *
      * @uxon-property lazy_loading_action_alias
      * @uxon-type string

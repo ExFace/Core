@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\Form;
 
@@ -16,7 +16,7 @@ trait JqueryFormTrait {
     {
         $output = '';
         foreach ($this->getWidget()->getButtons() as $btn) {
-            $output .= $this->getTemplate()->buildHtml($btn);
+            $output .= $this->getFacade()->buildHtml($btn);
         }
         
         return $output;
@@ -26,7 +26,7 @@ trait JqueryFormTrait {
     {
         $output = '';
         foreach ($this->getWidget()->getButtons() as $btn) {
-            $output .= $this->getTemplate()->buildJs($btn);
+            $output .= $this->getFacade()->buildJs($btn);
         }
         
         return $output;

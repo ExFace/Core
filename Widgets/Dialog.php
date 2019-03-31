@@ -122,10 +122,10 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
      * It only gets created if this method is called. It is not added to the dialog, so it will not get listed by get_children(),
      * etc.
      *
-     * When lazy loading the contents of the dialog, it is important to let the template render all contained widgets
-     * at once (i.e. draw this container). If we draw each widget individually, the respective template elements will get
+     * When lazy loading the contents of the dialog, it is important to let the facade render all contained widgets
+     * at once (i.e. draw this container). If we draw each widget individually, the respective facade elements will get
      * instantiated one after another, so those instatiated first, can't access the ones instantiated later on. Putting
-     * everything in a container makes the template instatiate all elements before actually drawing them!
+     * everything in a container makes the facade instatiate all elements before actually drawing them!
      *
      * @return Container
      */
@@ -167,7 +167,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
     /**
      * Makes the dialog open maximized (TRUE) or regular (FALSE).
      * 
-     * The default behavior depends on the template.
+     * The default behavior depends on the facade.
      * 
      * @uxon-property maximized
      * @uxon-type boolean
@@ -349,7 +349,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
      * 
      * @uxon-property header
      * @uxon-type \exface\Core\Widgets\DialogHeader
-     * @uxon-template {"widgets": [{"": ""}]}
+     * @uxon-facade {"widgets": [{"": ""}]}
      * 
      * @param UxonObject|DialogHeader $uxon_or_widget
      * @throws WidgetConfigurationError
@@ -385,7 +385,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
     /**
      * Forces the dialog header to hide (TRUE) or show (FALSE)
      * 
-     * By default, the template decides, if the header should be shown or not.
+     * By default, the facade decides, if the header should be shown or not.
      * 
      * @uxon-property hide_header
      * @uxon-type boolean

@@ -31,7 +31,7 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
  * be listed. By default, two levels are listed, which is a good choice for menus with
  * not too many pages on each level.
  * 
- * The visual representation, as allways, depends on the template. A typical visualization
+ * The visual representation, as allways, depends on the facade. A typical visualization
  * is something like the Windows 8 start menu: tiles are organized in groups.
  * 
  * @method Tiles[] getWidgets()

@@ -6,7 +6,7 @@ use exface\Core\DataTypes\TimeDataType;
 /**
  * An input-field for time-values (without date).
  * 
- * The look and handling of the time-input depends on the template used. It is recommended to 
+ * The look and handling of the time-input depends on the facade used. It is recommended to 
  * render time spinners (an input with up/down buttons) or other types of selectors: a clock 
  * (like android) or hour/minute sliders (like iOS).
  * 

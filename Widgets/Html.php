@@ -3,13 +3,13 @@ namespace exface\Core\Widgets;
 
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Templates\HttpFileServerTemplate;
+use exface\Core\Facades\HttpFileServerFacade;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 /**
  * The HTML widget simply shows some HTML.
  * 
- * In contrast to a Text widget it will be seamlessly embedded in an HTML-based template
+ * In contrast to a Text widget it will be seamlessly embedded in an HTML-based facade
  * and not put into a paragraph as plain text.
  *
  * @author Andrej Kabachnik
@@ -162,8 +162,8 @@ class Html extends Display
     /**
      * Allows to specify HTML tags for the <head> section of the resulting page.
      * 
-     * NOTE: only HTML-templates will actually place these tags in the head of the page, 
-     * while other templates may use a different location with a similar result.
+     * NOTE: only HTML-facades will actually place these tags in the head of the page, 
+     * while other facades may use a different location with a similar result.
      * 
      * @uxon-property head_tags
      * @uxon-type string
@@ -268,7 +268,7 @@ class Html extends Display
         if ($base = $this->getBaseUrl()) {
             $fm = $this->getWorkbench()->filemanager();
             if ($fm::pathGetCommonBase([$base, $fm->getPathToBaseFolder()])) {
-                $base = HttpFileServerTemplate::buildUrlForDownload($this->getWorkbench(), $base);
+                $base = HttpFileServerFacade::buildUrlForDownload($this->getWorkbench(), $base);
             }
             $base = rtrim($base, "/\\") . '/';
             $html = preg_replace('#(href|src)="([^:"]*)("|(?:(?:%20|\s|\+)[^"]*"))#','$1="' . $base . '$2$3', $html);

@@ -1,8 +1,8 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Formatters;
+namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 
 abstract class AbstractJsDataTypeFormatter implements JsDataTypeFormatterInterface, WorkbenchDependantInterface
@@ -28,7 +28,7 @@ abstract class AbstractJsDataTypeFormatter implements JsDataTypeFormatterInterfa
      * Override this method to include additional checks for specific compatible data types.
      * 
      * @param DataTypeInterface $dataType
-     * @return \exface\Core\Templates\AbstractAjaxTemplate\Formatters\AbstractJsDataTypeFormatter
+     * @return \exface\Core\Facades\AbstractAjaxFacade\Formatters\AbstractJsDataTypeFormatter
      */
     protected function setDataType(DataTypeInterface $dataType)
     {
@@ -39,7 +39,7 @@ abstract class AbstractJsDataTypeFormatter implements JsDataTypeFormatterInterfa
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface::getDataType()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::getDataType()
      */
     public function getDataType()
     {

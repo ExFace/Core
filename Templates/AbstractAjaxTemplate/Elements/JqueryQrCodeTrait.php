@@ -1,7 +1,7 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
-use exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsValueDecoratingInterface;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
 use exface\Core\Widgets\QrCode;
 
 /**
@@ -11,8 +11,8 @@ use exface\Core\Widgets\QrCode;
  * 
  * How to use: 
  * 
- * 1. Add the following dependency to the composer.json of the template: "bower-asset/jquery-qrcode" : "^1.0"
- * 2. Add the config option "LIBS.QRCODE.JS": "bower-asset/jquery-qrcode/jquery.qrcode.min.js" to the template
+ * 1. Add the following dependency to the composer.json of the facade: "bower-asset/jquery-qrcode" : "^1.0"
+ * 2. Add the config option "LIBS.QRCODE.JS": "bower-asset/jquery-qrcode/jquery.qrcode.min.js" to the facade
  * 3. Use the trait in your element and call buildHtmlQrCode() and buildJsQrCodeRenderer() where needed.
  * 
  * @method QrCode getWidget()
@@ -80,8 +80,8 @@ JS;
     public function buildHtmlHeadTags()
     {
         $includes = parent::buildHtmlHeadTags();
-        $template = $this->getTemplate();
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.QRCODE.JS') . '"></script>';
+        $facade = $this->getFacade();
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.QRCODE.JS') . '"></script>';
         return $includes;
     }
     

@@ -8,7 +8,7 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
  * 
  * Lazy loading widgets trigger a secondary action asynchronously when being instantiated.
  * This action actually does the lazy loading. Depending on the widget and the currently
- * used template, the action can load different parts of the widget: e.g. the data in
+ * used facade, the action can load different parts of the widget: e.g. the data in
  * lazy data widgets or the entire widget itself for panels or dialogs.
  * 
  * @author Andrej Kabachnik
@@ -68,8 +68,8 @@ interface iSupportLazyLoading extends iTriggerAction
      * loading group can be found in the consumer complaint dialog.
      *
      * The concrete implementation of the lazy_loading_group is done in the individual
-     * templates, consequently the behavior of such a group might vary in the different
-     * templates.
+     * facades, consequently the behavior of such a group might vary in the different
+     * facades.
      *
      * @uxon-property lazy_loading_group_id
      * @uxon-type string

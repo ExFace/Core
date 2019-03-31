@@ -554,7 +554,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     }
 
     /**
-     * Set to TRUE for asynchronous data loading (must be supported by template)
+     * Set to TRUE for asynchronous data loading (must be supported by facade)
      *
      * @uxon-property lazy_loading
      * @uxon-type boolean

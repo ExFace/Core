@@ -12,7 +12,7 @@ use exface\Core\CommonLogic\UxonObject;
  *
  * If the MenuButton itself does not have an action, pressing it will merely open the menu. With an action defined,
  * the MenuButton will have actually two functions: performing the action and opening the menu with other buttons.
- * In the latter case, most templates will render a split button with a larger area for the action and a smaller
+ * In the latter case, most facades will render a split button with a larger area for the action and a smaller
  * area for the menu - e.g. multitool buttons with little triangles on the right in MS Word, Photoshop, etc.
  *
  * @author Andrej Kabachnik
@@ -44,7 +44,7 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
      * 
      * @uxon-property menu
      * @uxon-type \exface\Core\Widgets\Menu
-     * @uxon-template {"widget_type": "Menu", "buttons": [{"action_alias": ""}]}
+     * @uxon-facade {"widget_type": "Menu", "buttons": [{"action_alias": ""}]}
      * 
      * @see \exface\Core\Interfaces\Widgets\iHaveMenu::setMenu()
      */
@@ -80,7 +80,7 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
      * 
      * @uxon-property buttons
      * @uxon-type \exface\Core\Widgets\Button[]
-     * @uxon-template [{"action_alias": ""}]
+     * @uxon-facade [{"action_alias": ""}]
      * 
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
      */

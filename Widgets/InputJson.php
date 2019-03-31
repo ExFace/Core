@@ -6,7 +6,7 @@ use exface\Core\DataTypes\JsonDataType;
 /**
  * A special text input widget for JSON editing.
  * 
- * Templates may have a WYSIWYG editor for JSON or should fall back to a regular
+ * Facades may have a WYSIWYG editor for JSON or should fall back to a regular
  * text input.
  *
  * @author Andrej Kabachnik

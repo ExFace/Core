@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractPWATemplate;
+namespace exface\Core\Facades\AbstractPWAFacade;
 
 use exface\Core\CommonLogic\AppInstallers\AbstractAppInstaller;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;

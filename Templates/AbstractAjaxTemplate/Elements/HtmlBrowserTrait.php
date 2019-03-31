@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 use exface\Core\Widgets\Browser;
 /**
  * Renders a browser widget as an iFrame

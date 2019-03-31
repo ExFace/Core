@@ -20,7 +20,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
         setLazyLoadingActionAlias as setLazyLoadingActionAliasViaTrait;
     }
     
-    // FIXME move default value to template config option WIDGET.INPUTCOMBO.MAX_SUGGESTION like PAGE_SIZE of tables
+    // FIXME move default value to facade config option WIDGET.INPUTCOMBO.MAX_SUGGESTION like PAGE_SIZE of tables
     private $max_suggestions = 20;
 
     private $allow_new_values = false;
@@ -88,7 +88,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
     /**
      * Limits the number of suggestions loaded for every autosuggest.
      * 
-     * The default value depends on the template used.
+     * The default value depends on the facade used.
      *
      * @uxon-property max_suggestions
      * @uxon-type integer

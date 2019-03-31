@@ -7,10 +7,10 @@ use exface\Core\DataTypes\BooleanDataType;
 /**
  * The Display is the basic widget to show formatted values.
  * 
- * Beside the value itself, the display will also show a title in most templates. In case,
+ * Beside the value itself, the display will also show a title in most facades. In case,
  * the value is empty, it can be replaced by the special text using the property "empty_text".
  * 
- * Templates will format the value automatically based on it's data type. By default, the
+ * Facades will format the value automatically based on it's data type. By default, the
  * data type of the underlying meta attribute is used. If no data type can be derived from
  * the meta model, all values will be treated as regular strings.
  * 

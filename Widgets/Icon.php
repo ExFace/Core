@@ -58,7 +58,7 @@ class Icon extends Display implements iHaveColor
     /**
      * Sets the position of the icon relativ to the caption/value (LEFT, RIGHT, CENTER).
      * 
-     * The default setting depends on the template used.
+     * The default setting depends on the facade used.
      * 
      * @uxon-property icon_position
      * @uxon-type [left,right,center]
@@ -108,10 +108,10 @@ class Icon extends Display implements iHaveColor
     }
     
     /**
-     * Sets a specific color for the text - if not set, templates will use their own color scheme.
+     * Sets a specific color for the text - if not set, facades will use their own color scheme.
      *
      * HTML color names are supported by default. Additionally any color selector supported by
-     * the current template can be used. Most HTML templates will support css colors.
+     * the current facade can be used. Most HTML facades will support css colors.
      *
      * @link https://www.w3schools.com/colors/colors_groups.asp
      *
@@ -139,8 +139,8 @@ class Icon extends Display implements iHaveColor
     /**
      * The name of the icon to be displayed.
      * 
-     * Refer to the documentation of the template for supported icon names. Most
-     * templates will support font awesome icons and some poprietary icon set
+     * Refer to the documentation of the facade for supported icon names. Most
+     * facades will support font awesome icons and some poprietary icon set
      * additionally.
      * 
      * @uxon-property icon

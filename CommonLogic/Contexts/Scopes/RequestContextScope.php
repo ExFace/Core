@@ -44,13 +44,13 @@ class RequestContextScope extends AbstractContextScope
      * optionally extended by a subrequest id (separated by the SUBREQUEST_SEPARATOR)
      * to enable bundling of AJAX-requests with the actual user request.
      * 
-     * Each template is free to deal with request ids and x-request-id headers 
-     * in it's own way. If no request id is set by the template each request
+     * Each facade is free to deal with request ids and x-request-id headers 
+     * in it's own way. If no request id is set by the facade each request
      * will get it's own id (no subrequests!). If identifying subrequests is 
-     * desired, templates must set either a request id with a subrequest part
+     * desired, facades must set either a request id with a subrequest part
      * or the subrequest id explicitly.
      * 
-     * While using subrequest ids is advisable for AJAX-templates, API-templates
+     * While using subrequest ids is advisable for AJAX-facades, API-facades
      * are encouraged to use the x-request-id header to pass an external
      * request id. This will get logged with every log message, so logs for
      * specific requests made by external systems can be easily found.

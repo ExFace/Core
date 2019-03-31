@@ -14,7 +14,7 @@ use exface\Core\Factories\WidgetFactory;
  * Forms and their derivatives provide input data for actions.
  *
  * While having similar purpose as HTML forms, ExFace forms are not the same! They can be nested, they may include tabs,
- * optional panels with lazy loading, etc. Thus, in most HTML-templates the form widget will not be mapped to an HTML
+ * optional panels with lazy loading, etc. Thus, in most HTML-facades the form widget will not be mapped to an HTML
  * form, but rather to some container element (e.g. <div>), while fetching data from the form will need to be custom
  * implemented (i.e. with JavaScript).
  *
@@ -118,7 +118,7 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
      * 
      * @uxon-property widgets
      * @uxon-type \exface\Core\Widgets\Input[]|\exface\Core\Widgets\AbstractWidget[]
-     * @uxon-template [{"attribute_alias": ""}]
+     * @uxon-facade [{"attribute_alias": ""}]
      * 
      * @see \exface\Core\Widgets\Container::setWidgets()
      */

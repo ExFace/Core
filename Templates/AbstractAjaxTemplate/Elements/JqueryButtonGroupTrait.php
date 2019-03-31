@@ -1,11 +1,11 @@
 <?php
-namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
+namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\MenuButton;
 use exface\Core\Widgets\ButtonGroup;
 
 /**
- * This is the reference implementation of the ButtonGroup widget for jQuery templates.
+ * This is the reference implementation of the ButtonGroup widget for jQuery facades.
  * 
  * In a nutshell, it is a <div> containing all buttons with normal or promoted
  * visibility one-after-another.
@@ -109,7 +109,7 @@ trait JqueryButtonGroupTrait
                 // Optional buttons were already placed in the more-buttons-menu in init()
                 if (! $button->isHidden()) {
                     if ($button->getVisibility() !== EXF_WIDGET_VISIBILITY_OPTIONAL){
-                        $button_html .= $this->getTemplate()->buildHtml($button);
+                        $button_html .= $this->getFacade()->buildHtml($button);
                     } else {
                         $this->getMoreButtonsMenu()->addButton($button);
                         $widget->removeButton($button);
@@ -120,7 +120,7 @@ trait JqueryButtonGroupTrait
         
         // Add the menu button - even if there were no regular buttons!
         if ($more_buttons_menu->hasButtons()) {
-            $button_html .= $this->getTemplate()->getElement($more_buttons_menu)->buildHtml();
+            $button_html .= $this->getFacade()->getElement($more_buttons_menu)->buildHtml();
         }
         
         return $button_html;
@@ -139,7 +139,7 @@ trait JqueryButtonGroupTrait
      * Returns the caption for the MenuButton with additional buttons.
      *
      * The default is an empty string. Override this method to add a caption to
-     * the MenuButton in a specific template.
+     * the MenuButton in a specific facade.
      *
      * @return string
      */
@@ -151,7 +151,7 @@ trait JqueryButtonGroupTrait
      * Returns the icon for the MenuButton with additional buttons.
      *
      * The default is an empty string. Override this method to add an icon to
-     * the MenuButton in a specific template.
+     * the MenuButton in a specific facade.
      *
      * @return string
      */
@@ -167,7 +167,7 @@ trait JqueryButtonGroupTrait
     {
         $js = '';
         foreach ($this->getWidget()->getButtons() as $button) {
-            $js .= $this->getTemplate()->buildJs($button);
+            $js .= $this->getFacade()->buildJs($button);
         }
         return $js;
     }

@@ -4,7 +4,7 @@ namespace exface\Core\Widgets;
 /**
  * A FileUploader lets users upload one or more files to the server.
  * 
- * Depending on the template, it may be a select-field linked to the file system, an
+ * Depending on the facade, it may be a select-field linked to the file system, an
  * URL-input or a drop/paste area.
  * 
  * @author Andrej Kabachnik

@@ -14,14 +14,14 @@ interface iLayoutWidgets extends iContainOtherWidgets
      * Returns the number of columns in the layout.
      * 
      * Returns NULL if the creator of the widget had made no preference and 
-     * thus the number of columns is completely upto the template. 
+     * thus the number of columns is completely upto the facade. 
      *
      * @return int|NULL
      */
     public function getColumnsInGrid() : ?int;
 
     /**
-     * Set the number of columns in the layout. The default depends on the template.
+     * Set the number of columns in the layout. The default depends on the facade.
      *
      * @param int $value
      * @return iLayoutWidgets            

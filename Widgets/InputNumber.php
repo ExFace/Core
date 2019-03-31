@@ -191,7 +191,7 @@ class InputNumber extends Input
     }
 
     /**
-     * Sets the increment step for helper-buttons (if supported by the template).
+     * Sets the increment step for helper-buttons (if supported by the facade).
      * 
      * @uxon-property step
      * @uxon-type integer

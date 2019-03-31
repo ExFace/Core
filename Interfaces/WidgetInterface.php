@@ -204,7 +204,7 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iHa
     /**
      * Sets the width of the widget.
      * The width may be specified in relative ExFace units (in this case, the value is numeric)
-     * or in any unit compatible with the current template (in this case, the value is alphanumeric because the unit must be
+     * or in any unit compatible with the current facade (in this case, the value is alphanumeric because the unit must be
      * specified directltly).
      *
      * @param WidgetDimension|string $value            
@@ -222,7 +222,7 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iHa
     /**
      * Sets the height of the widget.
      * The height may be specified in relative ExFace units (in this case, the value is numeric)
-     * or in any unit compatible with the current template (in this case, the value is alphanumeric because the unit must be
+     * or in any unit compatible with the current facade (in this case, the value is alphanumeric because the unit must be
      * specified directltly).
      *
      * @param WidgetDimension|string $value            

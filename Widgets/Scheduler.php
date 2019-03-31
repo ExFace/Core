@@ -37,7 +37,7 @@ class Scheduler extends Data
      * 
      * @uxon-property timeline
      * @uxon-type \exface\Core\Widgets\Parts\DataTimeline
-     * @uxon-template {"granularity": ""}
+     * @uxon-facade {"granularity": ""}
      * 
      * @param UxonObject $uxon
      * @return Scheduler
@@ -78,7 +78,7 @@ class Scheduler extends Data
      * 
      * @uxon-property items
      * @uxon-type \exface\Core\Widgets\Parts\DataCalendarItem
-     * @uxon-template {"start_time": ""}
+     * @uxon-facade {"start_time": ""}
      * 
      * @param DataCalendarItem $uxon
      * @return Scheduler
@@ -103,7 +103,7 @@ class Scheduler extends Data
      * 
      * @uxon-property resources
      * @uxon-type \exface\Core\Widgets\Parts\DataSchedulerResource
-     * @uxon-template {"title": ""}
+     * @uxon-facade {"title": ""}
      * 
      * @param DataSchedulerResource $value
      * @return Scheduler

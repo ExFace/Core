@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * Using warnings enables code to distinguish between a critical error
  * condition, that should prevent further execution an non-critical errors, that do not endager the correct execution.
  *
- * For example, if a template does not support certain widget attributes, the widget can still be drawn - probably not
+ * For example, if a facade does not support certain widget attributes, the widget can still be drawn - probably not
  * exactly the way, the user intended, but still well useable.
  *
  * @author Andrej Kabachnik
