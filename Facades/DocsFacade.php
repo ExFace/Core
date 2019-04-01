@@ -7,7 +7,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use kabachello\FileRoute\FileRouteMiddleware;
 use Psr\Http\Message\UriInterface;
-use kabachello\FileRoute\Facades\PlaceholderFileFacade;
+use kabachello\FileRoute\Templates\PlaceholderFileTemplate;
 use exface\Core\Facades\AbstractHttpFacade\NotFoundHandler;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\Filemanager;
@@ -57,7 +57,7 @@ class DocsFacade extends AbstractFacade implements HttpFacadeInterface
         };
         $reader = new MarkdownDocsReader($this->getWorkbench());
         $templatePath = Filemanager::pathJoin([$this->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/template.html']);
-        $template = new PlaceholderFileFacade($templatePath, $this->getBaseUrl());
+        $template = new PlaceholderFileTemplate($templatePath, $this->getBaseUrl());
         $template->setBreadcrumbsRootName('Documentation');
         $handler->add(new FileRouteMiddleware($matcher, $this->getWorkbench()->filemanager()->getPathToVendorFolder(), $reader, $template));
         
