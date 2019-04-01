@@ -85,7 +85,7 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
     
     protected function buildServiceWorker(ConfigurationInterface $config, CmsConnectorInterface $cms) : string
     {
-        $workboxUrl = $this->getWorkbench()->getCms()->buildUrlToInclude($this->getWorkbench()->getConfig()->getOption('TEMPLATES.ABSTRACTPWATEMPLATE.WORKBOX_VENDOR_PATH'));
+        $workboxUrl = $this->getWorkbench()->getCms()->buildUrlToInclude($this->getWorkbench()->getConfig()->getOption('FACADES.ABSTRACTPWAFACADE.WORKBOX_VENDOR_PATH'));
         $builder = new ServiceWorkerBuilder($workboxUrl);
         foreach ($config->exportUxonObject() as $appAlias => $code) {
             if ($appAlias === '_IMPORTS') {

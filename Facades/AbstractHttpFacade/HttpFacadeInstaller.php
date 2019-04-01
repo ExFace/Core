@@ -8,7 +8,7 @@ use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 
 /**
  * This installer registeres routes for it's HTTP facade in the system's
- * facade routing configuration (System.config.json > TEMPLATES.ROUTES).
+ * facade routing configuration (System.config.json > FACADES.ROUTES).
  * 
  * @author Andrej Kabachnik
  *        
@@ -26,12 +26,12 @@ class HttpFacadeInstaller extends AbstractAppInstaller
     {
         try {
             $config = $this->getWorkbench()->getConfig();
-            $routes = $config->getOption('TEMPLATES.ROUTES');
+            $routes = $config->getOption('FACADES.ROUTES');
             $before = $routes->toJson();
             foreach ($this->getFacade()->getUrlRoutePatterns() as $pattern) {
                 $routes->setProperty($pattern, $this->getFacade()->getAliasWithNamespace());
             }      
-            $config->setOption('TEMPLATES.ROUTES', $routes, App::CONFIG_SCOPE_SYSTEM);
+            $config->setOption('FACADES.ROUTES', $routes, App::CONFIG_SCOPE_SYSTEM);
         } catch (\Throwable $e) {
             throw new InstallerRuntimeError($this, 'Failed to setup HTTP facade routing!', null, $e);
         }
@@ -64,11 +64,11 @@ class HttpFacadeInstaller extends AbstractAppInstaller
     {
         try {
             $config = $this->getWorkbench()->getConfig();
-            $routes = $config->getOption('TEMPLATES.ROUTES');
+            $routes = $config->getOption('FACADES.ROUTES');
             foreach ($this->getFacade()->getUrlRoutePatterns() as $pattern) {
                 $routes->unsetProperty($pattern);
             }
-            $config->setOption('TEMPLATES.ROUTES', $routes, App::CONFIG_SCOPE_SYSTEM);
+            $config->setOption('FACADES.ROUTES', $routes, App::CONFIG_SCOPE_SYSTEM);
         } catch (\Throwable $e) {
             throw new InstallerRuntimeError($this, 'Failed to uninstall HTTP facade routes!', null, $e);
         }

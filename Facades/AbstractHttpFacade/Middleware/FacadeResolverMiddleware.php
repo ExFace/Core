@@ -16,7 +16,7 @@ use GuzzleHttp\Psr7\Response;
 
 /**
  * This PSR-15 middleware will look for a facade responsible for the given request
- * based on the routing configuration in the key TEMPLATES.ROUTES of System.config.json.
+ * based on the routing configuration in the key FACADES.ROUTES of System.config.json.
  * 
  * If one of the facade URL patterns matches the URI of the request, the middleware
  * will pass the request to the facade handler. If not, the request will be passed
@@ -56,7 +56,7 @@ class FacadeResolverMiddleware implements MiddlewareInterface
         }
         
         if (! ($facade instanceof RequestHandlerInterface)) {
-            throw new FacadeIncompatibleError('Facade "' . $facade->getAliasWithNamespace() . '" is cannot be used as a standard HTTP request handler - please check system configuration option TEMPLATES.ROUTES!');
+            throw new FacadeIncompatibleError('Facade "' . $facade->getAliasWithNamespace() . '" is cannot be used as a standard HTTP request handler - please check system configuration option FACADES.ROUTES!');
         }
         
         return $facade->handle($request);
@@ -71,15 +71,15 @@ class FacadeResolverMiddleware implements MiddlewareInterface
     protected function getFacadeForUri(UriInterface $uri) : HttpFacadeInterface
     {
         $url = $uri->getPath() . '?' . $uri->getQuery();
-        $routes = $this->workbench->getConfig()->getOption('TEMPLATES.ROUTES');
+        $routes = $this->workbench->getConfig()->getOption('FACADES.ROUTES');
         if ($routes->isEmpty()) {
-            throw new FacadeRoutingError('No route configuration found is system config option TEMPLATES.ROUTES - (re)install at least one facade!');
+            throw new FacadeRoutingError('No route configuration found is system config option FACADES.ROUTES - (re)install at least one facade!');
         }
         foreach ($routes as $pattern => $facadeAlias) {
             if (preg_match($pattern, $url) === 1) {
                 return FacadeFactory::createFromString($facadeAlias, $this->workbench);
             }
         }
-        throw new FacadeRoutingError('No route can be found for URL "' . $url . '" - please check system configuration option TEMPLATES.ROUTES or reinstall your facade!');
+        throw new FacadeRoutingError('No route can be found for URL "' . $url . '" - please check system configuration option FACADES.ROUTES or reinstall your facade!');
     }
 }

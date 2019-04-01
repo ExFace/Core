@@ -4,7 +4,7 @@
 	"CMS_CONNECTOR": "exface/ModxCmsConnector/CmsConnectors/Modx.php",
 	
 	"DEBUG.LIVE_CLASS_AUTOLOADER": true,
-    "DEBUG.DISABLE_TEMPLATE_ERROR_HANDLERS": false,
+    "DEBUG.DISABLE_FACADE_ERROR_HANDLERS": false,
     "DEBUG.PRETTIFY_ERRORS": true,
     "DEBUG.SHOW_REQUEST_DUMP": false,
     "DEBUG.SHOW_META_MODEL_DETAILS": true,
@@ -24,7 +24,7 @@
     
     "LOCALE.DEFAULT": "en_US",
     
-    "TEMPLATES.ROUTES": {},
+    "FACADES.ROUTES": {},
     
-    "TEMPLATES.ABSTRACTPWATEMPLATE.WORKBOX_VENDOR_PATH": "npm-asset/workbox-sw/build/workbox-sw.js"
+    "FACADES.ABSTRACTPWAFACADE.WORKBOX_VENDOR_PATH": "npm-asset/workbox-sw/build/workbox-sw.js"
 }
