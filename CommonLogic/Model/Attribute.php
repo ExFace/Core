@@ -1004,7 +1004,7 @@ class Attribute implements MetaAttributeInterface
         
         // If the attribute is a relation and no widget type was specified explicitly, take it from the config!
         if ($this->isRelation() && ! $this->default_editor_uxon->hasProperty('widget_type')) {
-            $relationWidgetType = $this->getWorkbench()->getConfig()->getOption('TEMPLATES.DEFAULT_WIDGET_FOR_RELATIONS');
+            $relationWidgetType = $this->getWorkbench()->getConfig()->getOption('FACADES.DEFAULT_WIDGET_FOR_RELATIONS');
             $this->default_editor_uxon->setProperty("widget_type", $relationWidgetType);
             if ($relationWidgetType === 'InputComboTable' && $this->getRelation()->getRightKeyAttribute()->isUidForObject() === false) {
                 $this->default_editor_uxon->setProperty("value_attribute_alias", $this->getRelation()->getRightKeyAttribute()->getAliasWithRelationPath());

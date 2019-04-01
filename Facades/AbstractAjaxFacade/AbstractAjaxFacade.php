@@ -583,7 +583,7 @@ abstract class AbstractAjaxFacade extends AbstractHttpFacade
     /**
      * Returns an array of allowed origins for AJAX requests to the facade.
      * 
-     * The core config key TEMPLATES.AJAX.ACCESS_CONTROL_ALLOW_ORIGIN provides basic configuration
+     * The core config key FACADES.AJAX.ACCESS_CONTROL_ALLOW_ORIGIN provides basic configuration
      * for all AJAX facades. Facades are free to use their own configuration though - please
      * refer to the documentation of the facade used.
      * 
@@ -591,10 +591,10 @@ abstract class AbstractAjaxFacade extends AbstractHttpFacade
      */
     protected function buildHeadersAccessControl() : array
     {
-        if (! $this->getConfig()->hasOption('TEMPLATES.AJAX.HEADERS.ACCESS_CONTROL')) {
-            $headers = $this->getWorkbench()->getConfig()->getOption('TEMPLATES.AJAX.HEADERS.ACCESS_CONTROL')->toArray();
+        if (! $this->getConfig()->hasOption('FACADES.AJAX.HEADERS.ACCESS_CONTROL')) {
+            $headers = $this->getWorkbench()->getConfig()->getOption('FACADES.AJAX.HEADERS.ACCESS_CONTROL')->toArray();
         } else {
-            $headers = $this->getConfig()->getOption('TEMPLATES.AJAX.HEADERS.ACCESS_CONTROL')->toArray();
+            $headers = $this->getConfig()->getOption('FACADES.AJAX.HEADERS.ACCESS_CONTROL')->toArray();
         }
         return array_filter($headers);
     }
