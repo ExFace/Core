@@ -8,7 +8,7 @@ use exface\Core\Widgets\Imagegallery;
 /**
  * Helps implement ImageCarousel widgets with jQuery and the slick carousel.
  * 
- * See euiImageCarousel (jEasyUI facade) for an example.
+ * See EuiImageCarousel (jEasyUI facade) for an example.
  * 
  * To use this trait, you will need the following JS dependency:
  * 

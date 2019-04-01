@@ -3,7 +3,7 @@
 	
 	"METAMODEL.OBJECT_LABEL_ALIAS": "LABEL",
 	
-	"TEMPLATES.DEFAULT_UI_TEMPLATE": "exface.JEasyUiFacade.JEasyUiFacade",
+	"TEMPLATES.DEFAULT_UI_TEMPLATE": "exface.JEasyUIFacade.JEasyUIFacade",
 	"TEMPLATES.AJAX.HEADERS.ACCESS_CONTROL" : {
 		"Access-Control-Allow-Origin": "",
 		"Access-Control-Allow-Credentials": "true",

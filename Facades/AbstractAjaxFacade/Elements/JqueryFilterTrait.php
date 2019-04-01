@@ -69,7 +69,7 @@ trait JqueryFilterTrait {
      * enhanced with additional methods, that will override the ones of the value widget.
      * TODO this did not really work so far. Don't know why. As a work around, added some explicit proxy methods
      * -> __call wird aufgerufen, wenn eine un!zugreifbare Methode in einem Objekt aufgerufen wird
-     * (werden die ueberschriebenen Proxymethoden entfernt, existieren sie ja aber auch noch euiInput)
+     * (werden die ueberschriebenen Proxymethoden entfernt, existieren sie ja aber auch noch EuiInput)
      *
      * @param string $name            
      * @param array $arguments            
