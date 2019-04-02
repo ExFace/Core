@@ -32,6 +32,7 @@ use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Interfaces\Widgets\iHaveQuickSearch;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -56,6 +57,7 @@ class Data
         iHaveToolbars, 
         iHaveButtons, 
         iHaveFilters, 
+        iHaveQuickSearch,
         iSupportLazyLoading, 
         iHaveContextualHelp, 
         iHaveConfigurator, 
@@ -1674,7 +1676,10 @@ class Data
         return $this->setButtonsViaTrait($buttons);
     }
     
-    public function getQuickSearchPlaceholder()
+    /**
+     * 
+     */
+    public function getQuickSearchPlaceholder() : string
     {
         $quick_search_fields = $this->getMetaObject()->getLabelAttribute() ? $this->getMetaObject()->getLabelAttribute()->getName() : '';
         foreach ($this->getConfiguratorWidget()->getQuickSearchFilters() as $qfltr) {
@@ -1685,8 +1690,9 @@ class Data
     }
     
     /**
-     *
-     * @return bool
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveQuickSearch::getQuickSearchEnabled()
      */
     public function getQuickSearchEnabled() : bool
     {
@@ -1702,18 +1708,18 @@ class Data
      * @uxon-property quick_search_enabled
      * @uxon-type boolean
      * 
-     * @param bool $value
-     * @return Data
+     * @see \exface\Core\Interfaces\Widgets\iHaveQuickSearch::setQuickSearchEnabled()
      */
-    public function setQuickSearchEnabled(bool $value) : Data
+    public function setQuickSearchEnabled(bool $value) : iHaveQuickSearch
     {
         $this->quickSearchEnabled = $value;
         return $this;
     }
     
     /**
-     *
-     * @return Input
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveQuickSearch::getQuickSearchWidget()
      */
     public function getQuickSearchWidget() : Input
     {
@@ -1730,10 +1736,9 @@ class Data
      * @uxon-type \exface\Core\Widgets\Input
      * @uxon-tempalte {"widget_type": ""} 
      * 
-     * @param UxonObject $value
-     * @return Data
+     * @see \exface\Core\Interfaces\Widgets\iHaveQuickSearch::setQuickSearchWidget()
      */
-    public function setQuickSearchWidget(UxonObject $uxon) : Data
+    public function setQuickSearchWidget(UxonObject $uxon) : iHaveQuickSearch
     {
         $this->quickSearchWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Input');
         return $this;
