@@ -63,7 +63,7 @@ class Split extends Container
      * 
      * @uxon-property panels
      * @uxon-type \exface\Core\Widgets\SplitPanel[]|\exface\Core\Widgets\AbstractWidget[]
-     * @uxon-facade [{"caption": "", "widgets": [{"": ""}]}]
+     * @uxon-template [{"caption": "", "widgets": [{"": ""}]}]
      *
      * @param UxonObject|SplitPanel|AbstractWidget $widget_or_uxon_array
      * @return \exface\Core\Widgets\SplitVertical
@@ -83,7 +83,7 @@ class Split extends Container
      * 
      * @uxon-property widgets
      * @uxon-type \exface\Core\Widgets\SplitPanel[]|\exface\Core\Widgets\AbstractWidget[]
-     * @uxon-facade [{"widgets": [{"": ""}]}]
+     * @uxon-template [{"widgets": [{"": ""}]}]
      *
      * @see \exface\Core\Widgets\Container::setWidgets()
      */

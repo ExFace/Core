@@ -259,7 +259,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
      *
      * @uxon-property widgets
      * @uxon-type \exface\Core\Widgets\AbstractWidget[]
-     * @uxon-facade [{"": ""}]
+     * @uxon-template [{"": ""}]
      *
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::setWidgets()
      */

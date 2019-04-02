@@ -17,7 +17,6 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\CommonLogic\UxonObject;
 
 /**

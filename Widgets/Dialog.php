@@ -349,7 +349,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
      * 
      * @uxon-property header
      * @uxon-type \exface\Core\Widgets\DialogHeader
-     * @uxon-facade {"widgets": [{"": ""}]}
+     * @uxon-template {"widgets": [{"": ""}]}
      * 
      * @param UxonObject|DialogHeader $uxon_or_widget
      * @throws WidgetConfigurationError

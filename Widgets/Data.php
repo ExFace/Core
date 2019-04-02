@@ -520,7 +520,7 @@ class Data
      *
      * @uxon-property columns
      * @uxon-type \exface\Core\Widgets\DataColumn[]|\exface\Core\Widgets\DataColumnGroup[]
-     * @uxon-facade [{"attribute_alias": ""}]
+     * @uxon-template [{"attribute_alias": ""}]
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::setColumns()
      */
@@ -687,7 +687,7 @@ class Data
      *
      * @uxon-property filters
      * @uxon-type \exface\Core\Widgets\Filter[]
-     * @uxon-facade [{"attribute_alias": ""}]
+     * @uxon-template [{"attribute_alias": ""}]
      *
      * @param UxonObject $uxon_objects
      * @return Data
@@ -922,7 +922,7 @@ class Data
      * 
      * @uxon-property paginator
      * @uxon-type \exface\Core\Widgets\DataPaginator
-     * @uxon-facade {"count_all_rows": "true"}
+     * @uxon-template {"count_all_rows": "true"}
      * 
      * @param UxonObject $uxon
      * @return Data
@@ -995,7 +995,7 @@ class Data
      *
      * @uxon-property sorters
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSorter[]
-     * @uxon-facade [{"attribute_alias": "", "direction": "asc"}]
+     * @uxon-template [{"attribute_alias": "", "direction": "asc"}]
      *
      * TODO use special sorter widgets here instead of plain uxon objects
      * 
@@ -1032,7 +1032,7 @@ class Data
      *
      * @uxon-property aggregate_by_attribute_alias
      * @uxon-type metamodel:attribute[]|string
-     * @uxon-facade [""]
+     * @uxon-template [""]
      *
      * @param string|UxonObject $value            
      * @return Data
@@ -1663,7 +1663,7 @@ class Data
      * 
      * @uxon-property buttons
      * @uxon-type \exface\Core\Widgets\DataButton[]
-     * @uxon-facade [{"action_alias": ""}]
+     * @uxon-template [{"action_alias": ""}]
      * 
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
      */

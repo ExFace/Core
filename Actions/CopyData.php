@@ -263,7 +263,7 @@ class CopyData extends SaveData implements iCreateData
      *
      * @uxon-property copy_related_objects
      * @uxon-type metamodel:relation[]
-     * @uxon-facade [""]
+     * @uxon-template [""]
      *
      * @param UxonObject $relationAliases
      * @return CopyData

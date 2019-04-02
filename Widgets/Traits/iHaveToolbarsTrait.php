@@ -48,7 +48,7 @@ trait iHaveToolbarsTrait {
      * 
      * @uxon-property toolbars
      * @uxon-type \exface\Core\Widgets\Toolbar[]
-     * @uxon-facade [{"buttons": [{"action_alias": ""}] }]
+     * @uxon-template [{"buttons": [{"action_alias": ""}] }]
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveToolbars::setToolbars()

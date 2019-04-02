@@ -38,7 +38,7 @@ class FormToolbar extends Toolbar
      * 
      * @uxon-property buttons
      * @uxon-type \exface\Core\Widgets\Button[]
-     * @uxon-facade [{"action_alias": ""}]
+     * @uxon-template [{"action_alias": ""}]
      * 
      * Since buttons are not neccessarily added using FormToolbar::addButton(), but can be
      * added to enclosed button groups directly, the check for required widgets in the form

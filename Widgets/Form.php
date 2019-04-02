@@ -118,7 +118,7 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
      * 
      * @uxon-property widgets
      * @uxon-type \exface\Core\Widgets\Input[]|\exface\Core\Widgets\AbstractWidget[]
-     * @uxon-facade [{"attribute_alias": ""}]
+     * @uxon-template [{"attribute_alias": ""}]
      * 
      * @see \exface\Core\Widgets\Container::setWidgets()
      */

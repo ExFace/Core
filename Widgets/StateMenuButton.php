@@ -124,7 +124,7 @@ class StateMenuButton extends MenuButton
      * 
      * @uxon-property show_states
      * @uxon-type array
-     * @uxon-facade []
+     * @uxon-template []
      *
      * @param string[]|UxonObject $value            
      * @return \exface\Core\Widgets\StateMenuButton

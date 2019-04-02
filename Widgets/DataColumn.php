@@ -307,7 +307,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      *
      * @uxon-property cell_widget
      * @uxon-type \exface\Core\Widgets\Value
-     * @uxon-facade {"widget_type": ""}
+     * @uxon-template {"widget_type": ""}
      *
      * @param UxonObject $uxon_object            
      * @return DataColumn
