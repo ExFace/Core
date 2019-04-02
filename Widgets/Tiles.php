@@ -30,7 +30,7 @@ class Tiles extends WidgetGrid
      * 
      * @uxon-property tiles
      * @uxon-type \exface\Core\Widgets\Tile[]
-     * @uxon-facade [{"": ""}]
+     * @uxon-template [{"": ""}]
      * 
      * @param UxonObject $uxon
      * @return Tiles

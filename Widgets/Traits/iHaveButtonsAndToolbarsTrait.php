@@ -106,7 +106,7 @@ trait iHaveButtonsAndToolbarsTrait
      * 
      * @uxon-property buttons
      * @uxon-type \exface\Core\Widgets\Button[]
-     * @uxon-facade [{"action_alias": ""}]
+     * @uxon-template [{"action_alias": ""}]
      * 
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
      */

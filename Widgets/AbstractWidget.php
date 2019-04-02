@@ -1182,7 +1182,7 @@ else {
      *
      * @uxon-property disable_condition
      * @uxon-type object
-     * @uxon-facade {"widget_link": "", "comparator": "", "value": ""}
+     * @uxon-template {"widget_link": "", "comparator": "", "value": ""}
      *
      * @param UxonObject $value            
      * @return \exface\Core\Widgets\AbstractWidget

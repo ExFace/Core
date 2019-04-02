@@ -164,7 +164,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *
      * @uxon-property row_details
      * @uxon-type \exface\Core\Widgets\Container
-     * @uxon-facade {"height": "", "widgets": [{"widget_type": ""}]}
+     * @uxon-template {"height": "", "widgets": [{"widget_type": ""}]}
      *
      * @param UxonObject $detail_widget
      * @return boolean
@@ -242,7 +242,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *
      * @uxon-property row_grouper
      * @uxon-type \exface\Core\Widgets\Parts\DataRowGrouper
-     * @uxon-facade {"group_by_attribute_alias": ""}
+     * @uxon-template {"group_by_attribute_alias": ""}
      *
      * @param UxonObject $uxon            
      * @return DataTable

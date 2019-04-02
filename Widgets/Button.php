@@ -83,7 +83,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
      *
      * @uxon-property action
      * @uxon-type \exface\Core\CommonLogic\AbstractAction
-     * @uxon-facade {"alias": ""}
+     * @uxon-template {"alias": ""}
      *
      * {@inheritdoc}
      *

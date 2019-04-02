@@ -62,7 +62,7 @@ class Tabs extends Container implements iFillEntireContainer
      * 
      * @uxon-property tabs
      * @uxon-type \exface\Core\Widgets\Tab[]|\exface\Core\Widgets\AbstractWidget[]
-     * @uxon-facade [{"caption": "", "widgets": [{"widget_type": ""}]}]
+     * @uxon-template [{"caption": "", "widgets": [{"widget_type": ""}]}]
      * 
      * @param UxonObject|Tab $widget_or_uxon_array
      * @return Tabs
@@ -164,7 +164,7 @@ class Tabs extends Container implements iFillEntireContainer
      * 
      * @uxon-property widgets
      * @uxon-type \exface\Core\Widgets\Tab[]|\exface\Core\Widgets\AbstractWidget[]
-     * @uxon-facade [{"caption": "", "widgets": [{"widget_type": ""}]}]
+     * @uxon-template [{"caption": "", "widgets": [{"widget_type": ""}]}]
      *
      * @see \exface\Core\Widgets\Container::setWidgets()
      */

@@ -228,6 +228,13 @@ JS;
             $formatter_js = "'" . $cellHtml . "'";
         }
         
+        // Default values
+        if ($cellWidget instanceof iTakeInput) {
+            $defaultVal = $cellWidget->getValueWithDefaults();
+        } else {
+            $defaultVal = '';
+        }
+        
         // In datatables with remote source sorting is allways performed remotely, so
         // it cannot be done for columns without attribute binding (the server cannot
         // sort those)
@@ -240,6 +247,7 @@ JS;
                             ' . ($col->getWidth()->isFacadeSpecific() ? ', width: "' . $col->getWidth()->getValue() . '"': '') . '
                             , className: "' . $this->buildCssColumnClass($col) . '"' . '
                             , orderable: ' . $sortable . '
+                            , defaultContent: "' . $defaultVal . '"
                             ' . ($formatter_js ? ", render: function(data, type, row){try {return " . $formatter_js . "} catch (e) {return data;} }" : '') . '
                             
                     }';

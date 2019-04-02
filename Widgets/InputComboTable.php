@@ -194,7 +194,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
      *
      * @uxon-property table
      * @uxon-type \exface\Core\Widgets\Data
-     * @uxon-facade {"object_alias": "", "columns": [{"attribute_alias": ""}]}
+     * @uxon-template {"object_alias": "", "columns": [{"attribute_alias": ""}]}
      *
      * @param UxonObject|DataTable $widget_or_uxon_object            
      * @throws WidgetConfigurationError
@@ -639,7 +639,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
      *
      * @uxon-property filters
      * @uxon-type \exface\Core\CommonLogic\Model\Condition[]
-     * @uxon-facade [{"attribute_alias": "", "value": "", "comparator": "="}]
+     * @uxon-template [{"attribute_alias": "", "value": "", "comparator": "="}]
      *
      * @param Condition[]|UxonObject $conditions_or_uxon_objects            
      * @return \exface\Core\Widgets\InputSelect

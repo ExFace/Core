@@ -86,7 +86,7 @@ class DataPaginator extends AbstractWidget
      * 
      * @uxon-property page_sizes
      * @uxon-type integer[]
-     * @uxon-facade [""]
+     * @uxon-template [""]
      * 
      * @param int[] $value
      * @return DataPaginator
