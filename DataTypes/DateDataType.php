@@ -16,6 +16,13 @@ class DateDataType extends AbstractDataType
             return null;
         }
         
+        // If a timestamp is passed (seconds since epoche), it must not be interpreted as
+        // a relative date - therefore prefix really large numbers with an @, which will
+        // mark it as a timestamp for the \DateTime consturctor.
+        if (is_numeric($string) && intval($string) > 100000) {
+            $string = '@' . $string;
+        }
+        
         if ($relative = static::parseRelativeDate($string)){
             return $relative;
         }
