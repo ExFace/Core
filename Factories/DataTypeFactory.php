@@ -117,7 +117,7 @@ abstract class DataTypeFactory extends AbstractSelectableComponentFactory
      * @throws DataTypeNotFoundError
      * @return DataTypeInterface
      */
-    public function createFromUxon(WorkbenchInterface $workbench, UxonObject $uxon) : DataTypeInterface
+    public static function createFromUxon(WorkbenchInterface $workbench, UxonObject $uxon) : DataTypeInterface
     {
         $alias = $uxon->getProperty('alias');
         
