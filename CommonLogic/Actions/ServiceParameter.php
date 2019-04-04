@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iCallService;
 use exface\Core\Interfaces\Actions\ServiceParameterInterface;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
+use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 
 class ServiceParameter implements ServiceParameterInterface
 {
@@ -17,6 +18,8 @@ class ServiceParameter implements ServiceParameterInterface
     private $name = null;
     
     private $required = false;
+    
+    private $defaultValue = null;
     
     private $dataType = null;
     
@@ -147,8 +150,45 @@ class ServiceParameter implements ServiceParameterInterface
      */
     public function isValidValue($val): bool
     {
+        try {
+            $this->parseValue($val);
+        } catch (DataTypeValidationError $e) {
+            return false;
+        }
+        return true;
+    }
+    
+    public function parseValue($val) : string
+    {
         if ($this->isRequired() && $this->getDataType()->isEmptyValue($val)) {
             throw new ActionInputMissingError($this->getAction(), 'Service parameter "' . $this->getName() . '" cannot be empty!');
         }
+        
+        return $this->getDataType()->parse($val);
+    }
+    
+    public function getDefaultValue() : string
+    {
+        return $this->defaultValue;
+    }
+    
+    public function hasDefaultValue() : bool
+    {
+        return $this->defaultValue !== null;
+    }
+    
+    /**
+     * Use this value if no input data available for this parameter
+     * 
+     * @uxon-property default_value
+     * @uxon-type string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ServiceParameterInterface::setDefaultValue()
+     */
+    public function setDefaultValue(string $string) : ServiceParameterInterface
+    {
+        $this->defaultValue = $string;
+        return $this;
     }
 }
