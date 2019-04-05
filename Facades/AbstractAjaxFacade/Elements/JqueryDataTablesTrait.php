@@ -204,7 +204,7 @@ JS;
     public function buildJsRefresh($keep_pagination_position = false)
     {
         if (! $this->isLazyLoading()) {
-            return "{$this->getId()}_table.search($('#" . $this->getId() . "_quickSearch').val(), false, true).draw();";
+            return "{$this->getId()}_table.search({$this->getFacade()->getElement($widget->getQuickSearchWidget())->buildJsValueGetter()}, false, true).draw();";
         } else {
             return $this->getId() . "_table.draw(" . ($keep_pagination_position ? "false" : "true") . ");";
         }
@@ -259,6 +259,7 @@ JS;
     
     protected function buildJsQuicksearch()
     {
+        $widget = $this->getWidget();
         $output = <<<JS
         	$('#{$this->getId()}_quickSearch_form').on('submit', function(event) {
         		{$this->buildJsRefresh(false)}
@@ -266,7 +267,7 @@ JS;
         		return false;
         	});
         	
-        	$('#{$this->getId()}_quickSearch').on('change', function(event) {
+        	$('#{$this->getFacade()->getElement($widget->getQuickSearchWidget())->getId()}').on('change', function(event) {
         		{$this->buildJsRefresh(false)}
         	});
 JS;
@@ -341,7 +342,7 @@ JS;
 				d.resource = "{$widget->getPage()->getAliasWithNamespace()}";
 				d.element = "{$widget->getId()}";
 				d.object = "{$this->getWidget()->getMetaObject()->getId()}";
-                d.q = $('#{$this->getId()}_quickSearch').val();
+                d.q = {$this->getFacade()->getElement($widget->getQuickSearchWidget())->buildJsValueGetter()};
 				d.data = {$configurator_element->buildJsDataGetter()};
 				
 				{$this->buildJsFilterIndicatorUpdater()}
