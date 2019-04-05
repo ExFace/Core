@@ -204,7 +204,7 @@ JS;
     public function buildJsRefresh($keep_pagination_position = false)
     {
         if (! $this->isLazyLoading()) {
-            return "{$this->getId()}_table.search({$this->getFacade()->getElement($widget->getQuickSearchWidget())->buildJsValueGetter()}, false, true).draw();";
+            return "{$this->getId()}_table.search({$this->getFacade()->getElement($this->getWidget()->getQuickSearchWidget())->buildJsValueGetter()}, false, true).draw();";
         } else {
             return $this->getId() . "_table.draw(" . ($keep_pagination_position ? "false" : "true") . ");";
         }
