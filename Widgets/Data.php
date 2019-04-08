@@ -31,7 +31,6 @@ use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
 use exface\Core\Interfaces\Actions\iShowWidget;
-use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\Widgets\iHaveQuickSearch;
 
 /**
@@ -1117,26 +1116,10 @@ class Data
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoading()
      */
-    public function setLazyLoading($value)
+    public function setLazyLoading(bool $value) : iSupportLazyLoading
     {
         $result = $this->setLazyLoadingViaTrait($value);
         $this->getConfiguratorWidget()->setLazyLoading($value);
-        return $result;
-    }
-    
-    /**
-     *
-     * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingActionAlias()
-     */
-    public function getLazyLoadingActionAlias()
-    {
-        try {
-            $result = $this->getLazyLoadingActionAliasViaTrait();
-        } catch (WidgetPropertyNotSetError $e) {
-            $this->setLazyLoadingActionAlias('exface.Core.ReadData');
-            $result = $this->getLazyLoadingActionAliasViaTrait();
-        }
         return $result;
     }
 

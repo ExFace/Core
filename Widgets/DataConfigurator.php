@@ -12,6 +12,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
+use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 
 /**
  * The configurator for data widgets contains tabs for filters and sorters.
@@ -441,7 +442,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         return $filter_widget;
     }
     
-    public function setLazyLoading($value)
+    public function setLazyLoading(bool $value)
     {
         foreach ($this->getFilters() as $filter) {
             $this->setLazyLoadingForFilter($filter);
