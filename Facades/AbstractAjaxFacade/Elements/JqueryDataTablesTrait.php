@@ -275,35 +275,48 @@ JS;
 		return $output;
     }
     
-    public function buildJsValueGetter($column = null, $row = null)
+    public function buildJsValueGetter($dataColumnName = null, $rowNr = null)
     {
         $widget = $this->getWidget();
         $output = $this->getId() . "_table";
-        if (is_null($row)) {
+        if (is_null($rowNr)) {
             $output .= ".rows('.selected').data()";
         } else {
             // TODO
         }
         
         $uid_column = $widget->getUidColumn();
-        if (is_null($column)) {
+        if ($dataColumnName === null) {
             $column_widget = $uid_column;
         } else {
             // FIXME #uid-column-missing remove this ugly if once UID column are added to tables by default again
-            if ($column == $uid_column->getDataColumnName()) {
+            if ($dataColumnName == $uid_column->getDataColumnName()) {
                 $column_widget = $uid_column;
             } else {
-                $column_widget = $widget->getColumnByDataColumnName($column);
+                $column_widget = $widget->getColumnByDataColumnName($dataColumnName);
             }
         }
         
         if (! $column_widget) {
-            throw new FacadeOutputError('Column "' . $column . '" of ' . $widget->getWidgetType() . ' "' . $widget->getCaption() . '" required for in-page scripting is missing!');
+            throw new FacadeOutputError('Column "' . $dataColumnName . '" of ' . $widget->getWidgetType() . ' "' . $widget->getCaption() . '" required for in-page scripting is missing!');
         }
         
         $column_name = $column_widget->getDataColumnName();
         $delimiter = $column_widget->getAttribute()->getValueListDelimiter();
         return "{$output}.pluck('{$column_name}').join('{$delimiter}')";
+    }
+    
+    public function buildJsValueSetter($value, $dataColumnName = null, $rowNr = null)
+    {
+        if ($dataColumnName === null) {
+            $dataColumnName = $this->getWidget()->getUidColumn()->getDataColumnName();
+        }
+        
+        if ($rowNr === null) {
+            $rowNr = $this->getId() . "_table.rows('.selected').indexes()[0]";
+        }
+        
+        return $this->getId() . "_table.cell({$rowNr}, '{$dataColumnName}:name').data({$value}).nodes().to$().fadeOut(0, function(){ $(this).fadeIn(200); });";
     }
     
     /**
@@ -805,7 +818,7 @@ var {$rowIdxJs} = function() {
     if (rowIdx == -1){
 		{$onNotFoundJs};
 	} else {
-        {$this->getId()}_table.row(rowIdx).scrollIntoView();
+        // {$this->getId()}_table.row(rowIdx).to$().scrollIntoView();
         {$this->getId()}_table.rows(rowIdx).select();
 	}
     return rowIdx;
