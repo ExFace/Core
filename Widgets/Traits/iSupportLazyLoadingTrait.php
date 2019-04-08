@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
 
 /**
  * This trait helps implement the iSupportLazyLoading widget interface.
@@ -121,6 +122,9 @@ trait iSupportLazyLoadingTrait {
      */
     public function setLazyLoadingAction(UxonObject $uxon) : iSupportLazyLoading
     {
+        if ($this->lazy_loading_action !== null) {
+            throw new WidgetLogicError($this, 'Cannot set lazy_loading_action for ' . $this->getWidgetType() . ': the action has been already instantiated!');
+        }
         $this->lazy_loading_action_uxon = $uxon;
         return $this;
     }
