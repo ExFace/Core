@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * InputCombo is similar to InputSelect extended by an autosuggest, that supports lazy loading.
@@ -16,8 +17,7 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 class InputCombo extends InputSelect implements iSupportLazyLoading
 {
     use iSupportLazyLoadingTrait {
-        getLazyLoadingActionAlias as getLazyLoadingActionAliasViaTrait;
-        setLazyLoadingActionAlias as setLazyLoadingActionAliasViaTrait;
+        setLazyLoadingAction as setLazyLoadingActionViaTrait;
     }
     
     // FIXME move default value to facade config option WIDGET.INPUTCOMBO.MAX_SUGGESTION like PAGE_SIZE of tables
@@ -28,35 +28,31 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
     private $autoselect_single_suggestion = true;
 
     /**
-     * Returns the alias of the action to be called by the lazy autosuggest.
-     *
-     * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingActionAlias()
-     */
-    public function getLazyLoadingActionAlias()
-    {
-        try {
-            $result = $this->getLazyLoadingActionAliasViaTrait();
-        } catch (WidgetPropertyNotSetError $e) {
-            $this->setLazyLoadingActionAlias('exface.Core.Autosuggest');
-            $result = $this->getLazyLoadingActionAliasViaTrait();
-        }
-        return $result;
-    }
-
-    /**
      * Defines the alias of the action to be called by the autosuggest.
      * 
-     * @uxon-property lazy_loading_action_alias
-     * @uxon-type metamodel:action
-     * @uxon-default exface.Core.Autosuggest.
+     * @uxon-property lazy_loading_action
+     * @uxon-type \exface\Core\CommonLogic\AbstractAction
+     * @uxon-template {"alias": "exface.Core.Autosuggest"}
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingActionAlias()
+     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingAction()
      */
-    public function setLazyLoadingActionAlias($value)
+    public function setLazyLoadingAction(UxonObject $uxon) : iSupportLazyLoading
     {
-        return $this->setLazyLoadingActionAliasViaTrait($value);
+        $this->setLazyLoadingActionViaTrait($uxon);
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see \exface\Core\Widgets\Traits\iSupportLazyLoadingTrait::getLazyLoadingActionUxonDefault()
+     */
+    protected function getLazyLoadingActionUxonDefault() : UxonObject
+    {
+        return new UxonObject([
+           "alias" => "exface.Core.AutoSuggest" 
+        ]);
     }
 
     public function getAllowNewValues() : bool

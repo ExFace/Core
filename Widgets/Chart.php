@@ -17,6 +17,7 @@ use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
 use exface\Core\Interfaces\Widgets\iConfigureWidgets;
+use exface\Core\Interfaces\Actions\ActionInterface;
 
 /**
  * A Chart widget draws a chart with upto two axis and any number of series.
@@ -563,20 +564,20 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoading()
      */
-    public function setLazyLoading($value)
+    public function setLazyLoading(bool $value) : iSupportLazyLoading
     {
-        return $this->getData()->setLazyLoading($value);
+        $this->getData()->setLazyLoading($value);
+        return $this;
     }
 
     /**
      *
      * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingActionAlias()
+     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingAction()
      */
-    public function getLazyLoadingActionAlias()
+    public function getLazyLoadingAction() : ActionInterface
     {
-        return $this->getData()->getLazyLoadingActionAlias();
+        return $this->getData()->getLazyLoadingAction();
     }
 
     /**
@@ -587,11 +588,12 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingActionAlias()
+     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingAction()
      */
-    public function setLazyLoadingActionAlias($value)
+    public function setLazyLoadingAction(UxonObject $uxon) : iSupportLazyLoading
     {
-        return $this->getData()->setLazyLoadingActionAlias($value);
+        $this->getData()->setLazyLoadingAction($uxon);
+        return $this;
     }
 
     /**
