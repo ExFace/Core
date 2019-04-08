@@ -166,7 +166,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         // Enforce those options that cannot be overridden in the table's UXON description
         $table->setMultiSelect($this->getMultiSelect());
         $table->setLazyLoading($this->getLazyLoading());
-        $table->setLazyLoadingActionAlias($this->getLazyLoadingActionAlias());
+        $table->setLazyLoadingAction($this->getLazyLoadingActionUxon());
         
         $this->data_table = $table;
         

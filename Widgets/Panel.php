@@ -10,6 +10,7 @@ use exface\Core\Widgets\Traits\iAmCollapsibleTrait;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * A panel is a visible container with a configurable layout (number of columns,
@@ -32,24 +33,18 @@ class Panel extends WidgetGrid implements iSupportLazyLoading, iHaveIcon, iAmCol
     use WidgetLayoutTrait;
     use iAmCollapsibleTrait;
     use iHaveIconTrait;
-    use iSupportLazyLoadingTrait {
-        getLazyLoadingActionAlias as getLazyLoadingActionAliasViaTrait;
-    }
-
+    use iSupportLazyLoadingTrait;
+    
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingActionAlias()
+     * @see \exface\Core\Widgets\Traits\iSupportLazyLoadingTrait::getLazyLoadingActionUxonDefault()
      */
-    public function getLazyLoadingActionAlias()
+    protected function getLazyLoadingActionUxonDefault() : UxonObject
     {
-        try {
-            $result = $this->getLazyLoadingActionAliasViaTrait();
-        } catch (WidgetPropertyNotSetError $e) {
-            $this->setLazyLoadingActionAlias('exface.Core.ShowWidget');
-            $result = $this->getLazyLoadingActionAliasViaTrait();
-        }
-        return $result;
+        return new UxonObject([
+            'alias' => 'exface.Core.ShowWidget'
+        ]);
     }
 
     /**
