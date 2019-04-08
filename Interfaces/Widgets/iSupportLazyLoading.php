@@ -3,6 +3,7 @@ namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 
 /**
  * This interface defines, how widgets can support optional lazy (asynchronous) loading.
@@ -43,6 +44,7 @@ interface iSupportLazyLoading extends iTriggerAction
     
     /**
      * 
+     * @throws WidgetPropertyNotSetError if no action can be determined
      * @return ActionInterface
      */
     public function getLazyLoadingAction() : ActionInterface;
