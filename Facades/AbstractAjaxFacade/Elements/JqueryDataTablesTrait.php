@@ -11,6 +11,7 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Widgets\Input;
 use exface\Core\Widgets\DataTableResponsive;
+use exface\Core\Widgets\DataColumn;
 
 /**
  * This trait contains common methods for facade elements using the jQuery DataTables library.
@@ -775,6 +776,42 @@ JS;
         }
         
         return $includes;
+    }
+    
+    /**
+     * Returns JS code to select the first row in a table, that has the given value in the specified column.
+     * 
+     * The generated code will search the current values of the $column for an exact match
+     * for the value of $valueJs JS variable, mark the first matching row as selected and
+     * scroll to it to ensure it is visible to the user.
+     * 
+     * The row index (starting with 0) is saved to the JS variable specified in $rowIdxJs.
+     * 
+     * If the $valueJs is not found, $onNotFoundJs will be executed and $rowIdxJs will be
+     * set to -1.
+     * 
+     * @param DataColumn $column
+     * @param string $valueJs
+     * @param string $onNotFoundJs
+     * @param string $rowIdxJs
+     * @return string
+     */
+    public function buildJsSelectRowByValue(DataColumn $column, string $valueJs, string $onNotFoundJs = '', string $rowIdxJs = 'rowIdx') : string
+    {
+        return <<<JS
+
+var {$rowIdxJs} = function() {
+    var rowIdx = {$this->getId()}_table.column('{$column->getAttributeAlias()}:name').data().indexOf({$valueJs});
+    if (rowIdx == -1){
+		{$onNotFoundJs};
+	} else {
+        {$this->getId()}_table.row(rowIdx).scrollIntoView();
+        {$this->getId()}_table.rows(rowIdx).select();
+	}
+    return rowIdx;
+}();
+
+JS;
     }
 }
 ?>
