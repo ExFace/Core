@@ -43,6 +43,7 @@ use exface\Core\CommonLogic\Selectors\DataTypeSelector;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 use exface\Core\Contexts\DataContext;
+use exface\Core\Interfaces\Selectors\WidgetSelectorInterface;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -616,6 +617,8 @@ class App implements AppInterface
                 return 'ModelLoaders';
             case $selector instanceof QueryBuilderSelectorInterface:
                 return 'QueryBuilders';
+            case $selector instanceof WidgetSelectorInterface:
+                return 'Widgets';
         }
         return '';
     }
