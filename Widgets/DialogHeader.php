@@ -147,7 +147,7 @@ class DialogHeader extends Form
                     $this->setCaption($cnt . 'x ' . $this->getMetaObject()->getName());
                     $pointer = DataPointerFactory::createFromColumn($col);
                 } else {
-                    $this->setCaption($col->getCellValue(0));
+                    $this->setCaption($this->getMetaObject()->getName() . ' ' . $col->getCellValue(0));
                     $pointer = DataPointerFactory::createFromColumn($col, 0);
                 }
                 $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'caption', $pointer));
