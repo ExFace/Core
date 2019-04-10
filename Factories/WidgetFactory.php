@@ -173,5 +173,17 @@ abstract class WidgetFactory extends AbstractStaticFactory
             throw new LogicException('Cannot create widget from ' . gettype($widget_or_uxon_object) . ': expecting instance of WidgetInterface or a UxonObject!');
         }
     }
+    
+    /**
+     * 
+     * @param WidgetInterface $parent
+     * @param UxonObject $uxon
+     * @param string $fallbackWidgetType
+     * @return WidgetInterface
+     */
+    public static function createFromUxonInParent(WidgetInterface $parent, UxonObject $uxon, string $fallbackWidgetType = null) : WidgetInterface
+    {
+        return static::createFromUxon($parent->getPage(), $uxon, $parent, $fallbackWidgetType);
+    }
 }
 ?>
