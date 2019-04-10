@@ -19,6 +19,8 @@ class ServiceParameter implements ServiceParameterInterface
     
     private $required = false;
     
+    private $empty = false;
+    
     private $defaultValue = null;
     
     private $dataType = null;
@@ -125,6 +127,31 @@ class ServiceParameter implements ServiceParameterInterface
     public function setRequired(bool $value) : ServiceParameter
     {
         $this->required = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isEmpty() : bool
+    {
+        return $this->empty;
+    }
+    
+    /**
+     * Set to TRUE to mark the parameter as empty.
+     *
+     * @uxon-property empty
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return ServiceParameter
+     */
+    public function setEmpty(bool $value) : ServiceParameter
+    {
+        $this->empty = $value;
         return $this;
     }
     
