@@ -32,6 +32,8 @@ interface ServiceParameterInterface extends  iCanBeConvertedToUxon, WorkbenchDep
      */
     public function isRequired() : bool;
     
+    public function isEmpty() : bool;
+    
     public function getAction() : iCallService;
     
     public function isValidValue($val) : bool;
