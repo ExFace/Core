@@ -1073,17 +1073,15 @@ class Data
     }
 
     /**
-     * Returns an array of aliases of attributes, that should be used for quick search relative to the meta object of the widget
      * 
-     * IDEA move to to configurator?
-     *
-     * @return array
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveQuickSearch::getAttributesForQuickSearch()
      */
-    public function getAttributesForQuickSearch()
+    public function getAttributesForQuickSearch() : array
     {
         $aliases = array();
         foreach ($this->getConfiguratorWidget()->getQuickSearchFilters() as $fltr) {
-            $aliases[] = $fltr->getAttributeAlias();
+            $aliases[] = $fltr->getAttribute();
         }
         return $aliases;
     }
