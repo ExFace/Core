@@ -1516,7 +1516,7 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6W5WLSA",
             "TITLE": "Invalid widget alignment value",
-            "DESCRIPTION": "The \"align\" property of an alignable widget takes the following values:\n\n- left\n- right\n- center\n- default (the default alignment for the widget type in the current facade)\n- opposite (the inverse to the default alignment: e.g. \"right\" if the default is \"left\")",
+            "DESCRIPTION": "The \"align\" property of an alignable widget takes the following values:\n\n- left\n- right\n- center\n- default (the default alignment for the widget type in the current template)\n- opposite (the inverse to the default alignment: e.g. \"right\" if the default is \"left\")",
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
@@ -1642,7 +1642,7 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6XQM0HG",
             "TITLE": "The UID of this UI page isn't unique.",
-            "DESCRIPTION": "This error occurs if several UI pages have the same UID.\n\nThis problem has to be solved by direct manipulation of the page UID facade variables in the database (modx_site_tmplvar_contentvalues).",
+            "DESCRIPTION": "This error occurs if several UI pages have the same UID.\n\nThis problem has to be solved by direct manipulation of the page UID template variables in the database (modx_site_tmplvar_contentvalues).",
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
@@ -1656,7 +1656,7 @@
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6XQM0SZ",
             "TITLE": "This UI page has no UID.",
-            "DESCRIPTION": "This error occurs an UI page has no UID.\n\nThis problem might be solved by recreation of the page or by direct manipulation of the page UID facade variable in the database (modx_site_tmplvar_contentvalues).",
+            "DESCRIPTION": "This error occurs an UI page has no UID.\n\nThis problem might be solved by recreation of the page or by direct manipulation of the page UID template variable in the database (modx_site_tmplvar_contentvalues).",
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
