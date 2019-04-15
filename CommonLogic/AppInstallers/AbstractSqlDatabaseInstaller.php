@@ -15,11 +15,11 @@ use exface\Core\Exceptions\Installers\InstallerRuntimeError;
  * default "install/sql").
  *
  * How to add an AbstractSqlDatabaseInstaller to your app:
- * 1) Make sure, your app includes the following folder structure: Install/Sql/Migrations
- * 2) Place your init scripts in Install/Sql and your migration scripts in the
- * migration subfolder. The scripts will be executed in alphabetic order.
- * 3) Add the SqlSchemaInstaller to the getInstaller() method of your app as
- * follows:
+ * 1) Make sure, your app includes the following folder structure: Install/Sql/%Database_Version%Migrations
+ * 2) Place your init scripts in Install/%DatabaseVersion%/Sql/InitDB and your migration scripts in the
+ * Install/%Database_Version%/Sql/Migrations subfolder. The scripts will be executed in alphabetic order.
+ * 3) Write Installer specific for your Database Version (for example MySQL) extending this Abstract Class
+ * and add that Installer to the getInstaller() method of your app as follows:
  *
  
  public function getInstaller(InstallerInterface $injected_installer = null)
@@ -299,11 +299,11 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
                
 
     /**
-     * Iterates through the files in "%source_absolute_path%/%install_folder_name%/%sql_folder_name%/%foldername%"
+     * Iterates through the files in "%source_absolute_path%/%install_folder_name%/%sql_folder_name%/%sql_db_type%/%folder_name%"
      * and all subfolders attempting to execute the SQL scripts stored in those files
      *
      * @param string $source_absolute_path
-     *        string $foldername
+     *        string $folder_name
      * @return string
      */    
     protected function performSql($source_absolute_path, string $folder_name){
@@ -332,7 +332,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
        
     /**
-     * Gets all files in the folder %source_absolute_path%/%install_folder_name%/%sql_folder_name%/%$foldername% and all subfolders
+     * Gets all files in the folder %source_absolute_path%/%install_folder_name%/%sql_folder_name%/%sql_db_type%/%folder_name% and all subfolders
      * 
      * @param string $source_absolute_path
      *        string $folder_name
@@ -425,7 +425,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
-     * Gets all files in the $folderpath and all subfolders
+     * Gets all files in the $folder_path folder and all subfolders
      * 
      * @param string $folder
      * @return array

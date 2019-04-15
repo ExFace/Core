@@ -3,7 +3,7 @@
 namespace exface\Core\CommonLogic\AppInstallers;
 
 /**
- * AppInstaller for Apps with MySQL Database.
+ * Class for SQL Database Migrations.
  *
  * @author Ralf Mulansky
  *
@@ -34,76 +34,137 @@ class SqlMigration
         $this->down_script=$down_script;
     }
     
+    /**
+     * 
+     * @param string $id
+     * @return $this
+     */
     public function setId($id)
     {
         $this->id=$id;
         return $this;
     }
     
+    /**
+     *
+     * @return string
+     */
     public function getId()
     {
         return $this->id;
     }
     
+    /**
+     *
+     * @return string
+     */
     public function getMigrationName()
     {
         return $this->migration_name;
     }
     
+    /**
+     *
+     * @param string $up_datetime
+     * @return $this
+     */
     public function setUpDatetime($up_datetime)
     {
         $this->up_datetime = $up_datetime;
         return $this;
     }
     
+    /**
+     *
+     * @return string
+     */
     public function getUpDatetime()
     {
         return $this->up_datetime;
     }
     
+    /**
+     *
+     * @return string
+     */
     public function getUpScript()
     {
         return $this->up_script;
     }
     
+    /**
+     *
+     * @param string $up_result
+     * @return $this
+     */
     public function setUpResult($up_result)
     {
         $this->up_result = $up_result;
         return $this;
     }
     
+    /**
+     *
+     * @return string
+     */
     public function getUpResult()
     {
         return $this->up_result;
     }
     
+    /**
+     *
+     * @param string $down_datetime
+     * @return $this
+     */
     public function setDownDatetime($down_datetime)
     {
         $this->down_datetime = $down_datetime;
         return $this;
     }
     
+    /**
+     *
+     * @return string
+     */
     public function getDownDatetime()
     {
         return $this->down_datetime;
     }
     
+    /**
+     *
+     * @return string
+     */
     public function getDownScript()
     {
         return $this->down_script;
     }
     
+    /**
+     *
+     * @param string $down_result
+     * @return $this
+     */
     public function setDownResult($down_result)
     {
         $this->down_result = $down_result;
         return $this;
     }
     
+    /**
+     *
+     * @return string
+     */
     public function getDownResult()
     {
         return $this->down_result;
     }
     
+    /**
+     *
+     * @return bool
+     */
     public function isUp(): bool
     {
         if ($this->up_datetime === null){
@@ -113,6 +174,10 @@ class SqlMigration
         }
     }
     
+    /**
+     *
+     * @return bool
+     */
     public function isDown(): bool
     {
         if ($this->down_datetime === null){
@@ -122,6 +187,11 @@ class SqlMigration
         }
     }
     
+    /**
+     * 
+     * @param SqlMigration $otherMigration
+     * @return bool
+     */
     public function equals(SqlMigration $otherMigration) : bool
     {
         return $this->getMigrationName() === $otherMigration->getMigrationName();
