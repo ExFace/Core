@@ -27,6 +27,8 @@ class SqlMigration
     
     private $down_result = '';
     
+    private $is_up = FALSE;
+    
     
     /**
      * 
@@ -65,7 +67,7 @@ class SqlMigration
      *
      * @return string
      */
-    public function getMigrationName()
+    public function getMigrationName() : string
     {
         return $this->migration_name;
     }
@@ -172,26 +174,20 @@ class SqlMigration
      *
      * @return bool
      */
-    public function isUp(): bool
+    public function getIsUp(): bool
     {
-        if ($this->up_datetime === null){
-            return FALSE;
-        } else {
-            return TRUE;
-        }
+        return $this->is_up;
     }
     
     /**
-     *
-     * @return bool
+     * 
+     * @param bool $bool
+     * @return SqlMigration
      */
-    public function isDown(): bool
+    public function setIsUp(bool $bool)
     {
-        if ($this->down_datetime === null){
-            return FALSE;
-        } else {
-            return TRUE;
-        }
+        $this->is_up=$bool;
+        return $this;
     }
     
     /**
@@ -204,3 +200,4 @@ class SqlMigration
         return $this->getMigrationName() === $otherMigration->getMigrationName();
     }
 }
+?>

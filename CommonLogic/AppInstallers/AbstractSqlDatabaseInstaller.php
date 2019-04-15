@@ -3,7 +3,6 @@
 namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
-use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 
 /**
  * This creates and manages SQL databases and performs SQL updates.
@@ -14,7 +13,8 @@ use exface\Core\Exceptions\Installers\InstallerRuntimeError;
  * by performing SQL scripts stored in a specifal folder within the app (by
  * default "install/sql").
  *
- * How to add an SqlDatabaseInstaller to your app:
+ * ## How to add an SqlDatabaseInstaller to your app:
+ * 
  * 1) Make sure, your app includes the following folder structure: Install/Sql/%Database_Version%/
  * 2) Place your init scripts in Install/%DatabaseVersion%/Sql/InitDB and your migration scripts in
  * Install/%Database_Version%/Sql/Migrations. The scripts will be executed in alphabetic order.
@@ -26,7 +26,7 @@ use exface\Core\Exceptions\Installers\InstallerRuntimeError;
  {
  $installer = parent::getInstaller($injected_installer);
  
- // ...receding installers here...
+ // ...preceding installers here...
  
  $schema_installer = new SqlDatabaseInstaller($this->getSelectorInstalling());
  $schema_installer->setDataConnection(...);
@@ -38,28 +38,27 @@ use exface\Core\Exceptions\Installers\InstallerRuntimeError;
  }
  
  *
+ * ## Transaction handling
+ * 
+ * The abstract installer does not handle transactions. Transactions must be started/committed in
+ * the concrete implementations as not all DBMS support transactional DDL statements.
+ * 
  * @author Ralf Mulansky
  *
  */
 abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
 {
-    private $sql_db_type = '';
-    
-    private $comment_sign = '';
-    
     private $sql_folder_name = 'Sql';
-    
-    private $sql_migrations_folder_name = 'Migrations';
-    
-    private $sql_install_folder_name = 'Install';
-    
-    private $sql_initdb_folder_name = 'InitDB';
-    
-    private $sql_demodata_folder_name = 'DemoData';
-    
+        
     private $sql_uninstall_folder_name = 'uninstall';
     
     private $data_connection = null;
+    
+    private $sql_migration_folders = [];
+    
+    private $sql_static_folders = [];
+    
+    private $sql_migrations_table = '_migrations';
     
     /**
      *
@@ -70,30 +69,40 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     public function install($source_absolute_path)
     {
         //TODO Test ob Db-Schema existiert
-        $result = $this->performSql($source_absolute_path, $this->getSqlInitDbFolderName());
-        $result .= $this->update($source_absolute_path);
-        $result .= $this->performSql($source_absolute_path, $this->getSqlDemoDataFolderName());
+        //$result = $this->runSqlFromFilesInFolder($source_absolute_path, $this->getSqlInitDbFolderName());
+        $result .= $this->installMigrations($source_absolute_path);
+        $result .= $this->installStaticSql($source_absolute_path);
         return $result;
     }
     
-    /**
-     *
-     * {@inheritdoc}
-     * 
-     * @see \exface\Core\Interfaces\InstallerInterface::update()
-     */
-    public function update($source_absolute_path)
+    protected function installStaticSql(string $source_absolute_path) : string
+    {
+        return $this->runSqlFromFilesInFolder($source_absolute_path, $this->getFoldersWithStaticSql());
+    }
+    
+    protected function installMigrations($source_absolute_path)
     {
         $migrationsInApp = $this->getMigrationsFromApp($source_absolute_path);
         $migrationsInDB = $this->getMigrationsFromDb($this->getDataConnection());
+        $migratedUp = 0;
+        $migratedDown = 0;
         
-        foreach ($this->getMigrations($migrationsInDB, $migrationsInApp) as $migration) {
+        foreach ($this->diffMigrations($migrationsInDB, $migrationsInApp) as $migration) {
             $this->migrateDown($migration, $this->getDataConnection());
+            $migratedDown++;
         }
-        foreach ($this->getMigrations($migrationsInApp, $migrationsInDB) as $migration) {
+        foreach ($this->diffMigrations($migrationsInApp, $migrationsInDB) as $migration) {
             $this->migrateUp($migration, $this->getDataConnection());
+            $migratedUp++;
         }
-        return ' Migration successful!';
+        
+        if ($migratedDown === 0 && $migratedUp === 0) {
+            $message = ' not needed';
+        } else {
+            $message = ($migratedUp > 0 ? ' ' . $migratedUp . ' UP' : '') . ($migratedDown > 0 ? ' ' . $migratedDown . ' DOWN' : '');
+        }
+        
+        return ' SQL migrations:' . $message;
     }
     
     /**
@@ -150,105 +159,6 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     
     /**
      *
-     * @return string
-     */
-    public function getSqlInstallFolderName()
-    {
-        return $this->sql_install_folder_name;
-    }
-    
-    /**
-     *
-     * @param string $value
-     * @return $this
-     */
-    public function setSqlInstallFolderName($value)
-    {
-        $this->sql_install_folder_name = $value;
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return string
-     */
-    public function getSqlInitDbFolderName()
-    {
-        return $this->sql_initdb_folder_name;
-    }
-    
-    /**
-     *
-     * @param string $value
-     * @return $this
-     */
-    public function setSqlInitDbFolderName($value)
-    {
-        $this->sql_initdb_folder_name = $value;
-        return $this;
-    }
-    
-    /**
-     *
-     * @return string
-     */
-    public function getSqlDemoDataFolderName()
-    {
-        return $this->sql_demodata_folder_name;
-    }
-    
-    /**
-     *
-     * @param string $value
-     * @return $this
-     */
-    public function setSqlDemoDataFolderName($value)
-    {
-        $this->sql_demodata_folder_name = $value;
-        return $this;
-    }
-    /**
-     *
-     * @return string
-     */
-    public function getSqlMigrationsFolderName()
-    {
-        return $this->sql_migrations_folder_name;
-    }
-    
-    /**
-     *
-     * @param string $value
-     * @return $this
-     */
-    public function setSqlMigrationsFolderName($value)
-    {
-        $this->sql_migrations_folder_name = $value;
-        return $this;
-    }
-    
-    /**
-     *
-     * @return string
-     */
-    public function getSqlUninstallFolderName()
-    {
-        return $this->sql_uninstall_folder_name;
-    }
-    
-    /**
-     *
-     * @param string $value
-     * @return $this
-     */
-    public function setSqlUninstallFolderName($value)
-    {
-        $this->sql_uninstall_folder_name = $value;
-        return $this;
-    }
-    
-    /**
-     *
      * @return SqlDataConnectorInterface
      */
     public function getDataConnection()
@@ -267,6 +177,39 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         return $this;
     }
     
+    protected function getFoldersWithMigrations() : array
+    {
+        return $this->sql_migration_folders;
+    }
+    
+    public function setFoldersWithMigrations(array $pathsRelativeToSqlFolder) : AbstractSqlDatabaseInstaller
+    {
+        $this->sql_migration_folders = $pathsRelativeToSqlFolder;
+        return $this;
+    }
+    
+    protected function getFoldersWithStaticSql() : array
+    {
+        return $this->sql_static_folders;
+    }
+    
+    public function setFoldersWithStaticSql(array $pathsRelativeToSqlFolder) : AbstractSqlDatabaseInstaller
+    {
+        $this->sql_static_folders = $pathsRelativeToSqlFolder;
+        return $this;
+    }
+    
+    protected function getMigrationsTableName()
+    {
+        return $this->sql_migrations_table;
+    }
+    
+    public function setMigrationsTableName(string $migrations_table_name) : AbstractSqlDatabaseInstaller
+    {
+        $this->sql_migrations_table = $migrations_table_name;
+        return $this;
+    }
+    
     /**
      *
      * @return string
@@ -277,7 +220,15 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      *
      * @return string
      */
-    abstract protected function getCommentSign() : string;
+    protected function getMarkerUp() : string
+    {
+        return '-- UP';
+    }
+    
+    protected function getMarkerDown() : string
+    {
+        return '-- DOWN';
+    }
     
     /**
      * 
@@ -304,59 +255,55 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
                
 
     /**
-     * Iterates through the files in "%source_absolute_path%/%install_folder_name%/%sql_folder_name%/%sql_db_type%/%folder_name%"
+     * Iterates through the files in "%source_absolute_path%/%install_folder_name%/%sql_folder_name%/%sql_db_type%/%folders%"
      * and all subfolders attempting to execute the SQL scripts stored in those files
      *
      * @param string $source_absolute_path
      *        string $folder_name
      * @return string
      */    
-    protected function performSql($source_absolute_path, string $folder_name)
+    protected function runSqlFromFilesInFolder($source_absolute_path, array $folders)
     {
-        $files = $this->getFiles($source_absolute_path, $folder_name);
+        $files = $this->getFiles($source_absolute_path, $folders);
         $result = ' No SQL Files found!';
         foreach ($files as $file){
-            $this->getWorkbench()->getLogger()->debug('Performing SQL');
             $sql = file_get_contents($file);
             $sql = $this->stripComments($sql);
             $connection = $this->getDataConnection();
             try {
-                $connection->transactionStart();
-                foreach (preg_split("/;\R/", $sql) as $statement) {
-                    if ($statement) {
-                        $connection->runSql($statement);
-                    }
-                }
-                $connection->transactionCommit();
-                $result = $folder_name . ' ' . $file . ' Performing Sql succeded ';
+                $this->runSqlMultiStatementScript($connection, $sql);
+                $this->getWorkbench()->getLogger()->debug('SQL script ' . $file . ' executed successfully ');
+                $result = ' Static Sql files: Performing SQL succeded ';
             } catch (\Throwable $e) {
                 $this->getWorkbench()->getLogger()->logException($e);
-                $connection->transactionRollback();
-                $result = $folder_name . ' ' . $file . ' Performing Sql failed ';
+                $result = ' Static Sql files: Performing SQL failed ';
             }
         }
         return $result;
     }
        
     /**
-     * Gets all files in the folder %source_absolute_path%/%install_folder_name%/%sql_folder_name%/%sql_db_type%/%folder_name% and all subfolders
+     * Gets all files in the folder %source_absolute_path%/%install_folder_name%/%sql_folder_name%/%sql_db_type%/%folders% and all subfolders
      * 
      * @param string $source_absolute_path
-     *        string $folder_name
+     * @param array $folders
      * @return array
      */
-    protected function getFiles($source_absolute_path, string $folder_name)
+    protected function getFiles($source_absolute_path, array $folders)
     {
-        $folder_path = $this->getSqlFolderAbsolutePath($source_absolute_path) . DIRECTORY_SEPARATOR . $this->getSqlDbType() . DIRECTORY_SEPARATOR . $folder_name;
         $files = array();
-        if (is_dir($folder_path) === false) {
-            return $files;
-        }              
-        $files=$this->getFilesFromDir($folder_path);
+        foreach ($folders as $folder_name){
+            $folder_path = $this->getSqlFolderAbsolutePath($source_absolute_path) . DIRECTORY_SEPARATOR . $this->getSqlDbType() . DIRECTORY_SEPARATOR . $folder_name;
+            if (is_dir($folder_path) === false) {
+                return $files;
+            }
+            $files=array_merge($files,$this->getFilesFromDir($folder_path));
+        }
         return $files;
     }
    
     /**
+     * Gets all migrations in the SqlDbType folder of the app
      * 
      * @param string $source_absolute_path
      * @return SqlMigration[]
@@ -364,9 +311,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     protected function getMigrationsFromApp($source_absolute_path)
     {
         $migrs = [];
-        foreach ($this->getFiles($source_absolute_path, $this->getSqlMigrationsFolderName()) as $path) {
-            $fileContents = file_get_contents($path);
-            $migrs[] = new SqlMigration(pathinfo($path, PATHINFO_FILENAME), $this->getMigrationScript($fileContents), $this->getMigrationScript($fileContents, false));
+        foreach ($this->getFiles($source_absolute_path, $this->getFoldersWithMigrations()) as $path) {
+            $file_content = file_get_contents($path);
+            $migrs[] = new SqlMigration($this->transformFilepathToMigrationName($path), $this->getMigrationScript($file_content), $this->getMigrationScript($file_content, false));
         }
         return $migrs;
     }
@@ -374,11 +321,11 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     /**
      * Builds an array containing items that are in $migrations_base but are not in $migrations_substract
      * 
-     * @param array $migrations_base
-     *        array $migrations_substract
+     * @param SqlMigration[] $migrations_base
+     * @param SqlMigration[] $migrations_substract
      * @return SqlMigration[]
      */
-    protected function getMigrations(array $migrations_base, array $migrations_substract)
+    protected function diffMigrations(array $migrations_base, array $migrations_substract)
     {        
         if (empty($migrations_substract)){
             return $migrations_base;
@@ -399,27 +346,41 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
-     * Cuts the input string at the $comment_sign.DOWN occurence
+     * Cuts the input string at the dowm-marker occurence
      * and gives back either the part before that or from that point on
      * 
      * @param string $src
-     *        bool $up
+     * @param bool $up
      * @return string
      */
     protected function getMigrationScript(string $src, bool $up = true)
     {
         $length=strlen($src);
-        $cut=strpos($src, $this->getCommentSign() . 'DOWN');
-        if ($cut == FALSE){
-            throw new InstallerRuntimeError($this, ' Migrationscript has no Down Script ');
+        $cut_down=strpos($src, $this->getMarkerDown());
+        $cut_up=strpos($src, $this->getMarkerUp());
+        if ($cut_down == FALSE){
+            if ($up == TRUE){
+                $migstr = $src;
+            } elseif ($up == FALSE){
+                $migstr = '';
+                $this->getWorkbench()->getLogger()->error('SQL Script hat kein Down-Script! '); 
+            }                       
         }
-       
-        if ($up === true){
-            $migstr = substr($src, 0, $cut);
-        } elseif ($up === false){
-            $migstr = substr($src, $cut, ($length-$cut));
+        else{
+            if ($up === true){
+                if ($cut_down > $cut_up){
+                    $migstr = substr($src, 0, $cut_down);
+                } elseif($cut_down < $cut_up){
+                    $migstr = substr($src, $cut_up, ($length - $cut_up));
+                }
+            } elseif($up === false){
+                if ($cut_down > $cut_up){
+                    $migstr = substr($src, $cut_down, $length - $cut_down);
+                } elseif($cut_down < $cut_up){
+                    $migstr = substr($src, 0, $cut_down);
+                }
+            }                
         }
-        
         return $this->stripComments($migstr);
     }
     
@@ -469,6 +430,37 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
+     * 
+     * @param SqlDataConnectorInterface $connection
+     * @param string $script
+     * @return string
+     */
+    protected function runSqlMultiStatementScript (SqlDataConnectorInterface $connection, string $script, bool $wrapInTransaction = false) : array
+    {
+        $result = [];
+        try {
+            if ($wrapInTransaction === true) {
+                $connection->transactionStart();
+            }
+            
+            foreach (preg_split("/;\R/", $script) as $statement) {
+                if ($statement) {
+                    $result[] = $connection->runSql($statement)->getResultArray();
+                }
+            }
+            
+            if ($wrapInTransaction === true) {
+                $connection->transactionCommit();
+            }
+        } catch (\Throwable $e) {
+            $connection->transactionRollback();
+            throw $e;
+        }
+        
+        return $result;
+    }
+    
+    /**
      * Removes comments from a SQL string
      *  
      * @param string $sql
@@ -481,10 +473,24 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         return $str;
     }
     
+    /**
+     * Transforms the given $path to the migration name by cutting of the beginning of the $path string till the SqlDbType folder
+     * 
+     * @param string $path
+     * @return string
+     */
+    protected function transformFilepathToMigrationName (string $path)
+    {
+        $length=strlen($path);
+        $cut=strpos($path, $this->getSqlDbType());
+        $file_str = substr($path, $cut, ($length-$cut));
+        return $file_str;
+        
+    }
+    
     protected function getInstallerApp()
     {
         return $this->getWorkbench()->getCoreApp();
-    }
-    
+    }    
 }
 ?>
