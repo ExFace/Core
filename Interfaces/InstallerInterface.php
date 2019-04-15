@@ -14,12 +14,6 @@ interface InstallerInterface extends WorkbenchDependantInterface
      *
      * @return string
      */
-    public function update($source_absolute_path);
-
-    /**
-     *
-     * @return string
-     */
     public function backup($absolute_path);
 
     /**

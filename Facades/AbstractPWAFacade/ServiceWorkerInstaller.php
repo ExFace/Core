@@ -112,17 +112,6 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\InstallerInterface::update()
-     */
-    public function update($source_absolute_path)
-    {
-        return $this->install($source_absolute_path);
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\InstallerInterface::uninstall()
      */
     public function uninstall()

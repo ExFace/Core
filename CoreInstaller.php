@@ -33,22 +33,6 @@ class CoreInstaller extends AbstractAppInstaller
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\InstallerInterface::update()
-     */
-    public function update($source_absolute_path)
-    {
-        $model_source_installer = $this->getWorkbench()->model()->getModelLoader()->getInstaller();
-        $result = $model_source_installer->update($this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $model_source_installer->getSelectorInstalling()->getFolderRelativePath());
-        $result .= $this->copyDefaultHtaccess($source_absolute_path);
-        $result .= $this->createApiPhp($source_absolute_path);
-        $result .= $this->removeLegacyFiles($source_absolute_path);
-        return $result;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\InstallerInterface::uninstall()
      */
     public function uninstall()

@@ -7,83 +7,81 @@ use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 
 /**
  * Database AppInstaller for Apps with MySQL Database.
+ * 
+ * ## Transaction handling
+ * 
+ * NOTE: MySQL does not support rollbacks of DDL-statements. This is why the
+ * MySqlDatabaseInstaller wraps each UP/DOWN script in a transaction - this
+ * ensures, that if a script was performed successfully, all it's changes
+ * are committed - DDL and DML. If not done so, DML changes might get rolled
+ * back if something in the next migration script goes wrong, while DDL
+ * changes would remain due to their implicit commit.
  *
  * @author Ralf Mulansky
  *
  */
-
 class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
-{    
-    private $migration_table_query = 'CREATE TABLE IF NOT EXISTS `_migrations` (
-                                     `id` int(8) NOT NULL AUTO_INCREMENT,
-                                     `migration_name` varchar(300) NOT NULL,
-                                     `up_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                     `up_script` varchar(1000) NOT NULL,
-                                     `up_result` varchar(1000) NOT NULL,
-                                     `down_datetime` timestamp NULL,
-                                     `down_script` varchar(1000) NOT NULL,
-                                     `down_result` varchar(100) NULL,
-                                      PRIMARY KEY (`id`)
-                                      ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;';  
-    
+{   
     /**
      *
      * @return string
      */
-    protected function getSqlDbType()
+    protected function getSqlDbType() : string
     {
         return 'MySQL';
     }
     
     /**
-     *
-     * @return string
-     */
-    protected function getCommentSign()
-    {
-        return '#';
-    }
-    
-    /**
-     * Checks if _migrations table already exist, if not creates the table
+     * Checks if migrations table already exist, if not creates the table
      * 
      * @param string SqlDataConnectorInterface $connection
-     * @return string
+     * @return MySqlDatabaseInstaller
      */  
-    protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection)
+    protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : MySqlDatabaseInstaller
     {
-        $sql = 'SHOW tables LIKE "_migrations"';
-        $result = ' Migration Table already exists';
+        $sql = <<<SQL
+
+SHOW tables LIKE "{$this->getMigrationsTableName()}";
+
+SQL;
         if (empty($connection->runSql($sql)->getResultArray())) {
             try {
-                $this->getDataConnection()->transactionStart();
-                foreach (preg_split("/;\R/", $this->migration_table_query) as $statement) {
-                    if ($statement) {
-                        $this->getDataConnection()->runSql($statement);
-                    }
-                }
-                $this->getDataConnection()->transactionCommit();
-                $result = ' Migration Table generated';
+                $migrations_table_create = <<<SQL
+
+CREATE TABLE IF NOT EXISTS `{$this->getMigrationsTableName()}` (
+`id` int(8) NOT NULL AUTO_INCREMENT,
+`migration_name` varchar(300) NOT NULL,
+`up_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`up_script` text NOT NULL,
+`up_result` varchar(1000) NOT NULL,
+`down_datetime` timestamp NULL,
+`down_script` text NOT NULL,
+`down_result` varchar(1000) NULL,
+PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+SQL;
+                $this->runSqlMultiStatementScript($connection, $migrations_table_create);
+                $this->getWorkbench()->getLogger()->debug('SQL migration table' . $this->getMigrationsTableName() . ' created! ');
             } catch (\Throwable $e) {
                 $this->getWorkbench()->getLogger()->logException($e);
-                $connection->transactionRollback();
                 throw new InstallerRuntimeError($this, 'Generating Migration table failed!');
             }
         }
-        return $result;
+        return $this;
     }
     
     /**
-     * Gets all migrations from DB that are currently UP/applied
+     * Gets all migrations from database that are currently UP/applied
      *
      * @param string SqlDataConnectorInterface $connection
      * @return SqlMigration[]
      */
-    protected function getMigrationsFromDb($connection)
+    protected function getMigrationsFromDb($connection) : array
     {
         $this->ensureMigrationsTableExists($connection);
         //DESC, damit Down Skripte von neuster zu ältester Version ausgeführt werden
-        $sql = 'SELECT * FROM _migrations WHERE down_datetime IS NULL ORDER BY migration_name DESC';
+        $sql = "SELECT * FROM {$this->getMigrationsTableName()} WHERE down_datetime IS NULL ORDER BY migration_name DESC";
         $migrs_db = $connection->runSql($sql)->getResultArray();
         $migrs = array ();       
         if (empty($migrs_db)){
@@ -94,91 +92,110 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             $mig->setId($a['id']);
             $mig->setUpDatetime($a['up_datetime']);
             $mig->setUpResult($a['up_result']);
+            $mig->setIsUp(TRUE);
             $migrs[] = $mig;      
         }
         return $migrs;        
     }
     
     /**
-     * UPs/applies the Migration $migration and writes Log into _migrations table
+     * UPs/applies the Migration $migration and writes Log into migrations table
      *
      * @param SqlMigration $migration
      *        SqlDataConnectorInterface $connection
      * @return SqlMigration[]
      */
-    protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection)
+    protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration
     {
-        if ($migration->isUp()) {
+        if ($migration->getIsUp() == TRUE) {
             throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' already up!');
         }
         $this->ensureMigrationsTableExists($connection);
         $up_script = $migration->getUpScript();
         try {
             $connection->transactionStart();
-            foreach (preg_split("/;\R/", $up_script) as $statement) {
-                if ($statement) {
-                    $up_result_array = $connection->runSql($statement)->getResultArray();                    
-                    //Erscheint unschön. Gibt mgl. bessere Variante
-                    $up_result .= '| '. implode('| ', $up_result_array);
-                }                
-            }
+            $up_result = json_encode($this->runSqlMultiStatementScript($connection, $up_script, false));
+            //da Transaction Rollback nicht korrekt funktioniert
+            $migration->setIsUp(TRUE);
             $migration_name = $migration->getMigrationName();
             $down_script = $migration->getDownScript();
-            $sql_insert = "INSERT INTO _migrations (migration_name, up_script, up_result, down_script)
-                        VALUES ('$migration_name', \"'$up_script'\", '$up_result', \"'$down_script'\");";
+            $sql_insert = <<<SQL
+
+INSERT INTO {$this->getMigrationsTableName()} 
+    (
+        migration_name, 
+        up_script, 
+        up_result, 
+        down_script
+    )
+    VALUES (
+        "{$this->escapeSqlStringValue($migration_name)}", 
+        "{$this->escapeSqlStringValue($up_script)}", 
+        "{$this->escapeSqlStringValue($up_result)}", 
+        "{$this->escapeSqlStringValue($down_script)}"
+    );
+
+SQL;
             $query_insert = $connection->runSql($sql_insert);
             $id = intval($query_insert->getLastInsertId());
-            $connection->transactionCommit();            
+            $migration->setId($id);
+            $connection->transactionCommit();
+            $this->getWorkbench()->getLogger()->debug('SQL ' . $migration_name . ': script UP executed successfully ');            
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
             $connection->transactionRollback();
-            throw new InstallerRuntimeError($this, 'Migration up' . $migration->getMigrationName() . ' failed!');
+            throw new InstallerRuntimeError($this, 'Migration up ' . $migration->getMigrationName() . ' failed!');
         }
-        $sql_select = "SELECT * FROM _migrations WHERE id='$id'";
+        $sql_select = "SELECT * FROM {$this->getMigrationsTableName()} WHERE id='$id'";
         $select_array = $connection->runSql($sql_select)->getResultArray();
         if (empty($select_array)){
-            throw new InstallerRuntimeError($this, 'Migration up ' . $migration->getMigrationName() . ' failed to write into _migrations table!');
-        }
-        $migration->setId($id);
+            throw new InstallerRuntimeError($this, 'Migration up ' . $migration->getMigrationName() . ' failed to write into migrations table!');
+        }        
         $migration->setUpResult($up_result);
         //Array kann eigentlich nur eine Resultzeile als Array als Inhalt haben, da id PRIMARY KEY
         $migration->setUpDatetime($select_array[0]['up_datetime']);
         return $migration;        
-    }
-    
+    }  
+   
     /**
-     * DOWNs/Reverts the Migration $migration and writes Log into _migrations table
+     * DOWNs/Reverts the Migration $migration and writes Log into migrations table
      *
      * @param SqlMigration $migration
-     *        SqlDataConnectorInterface $connection
+     * @param SqlDataConnectorInterface $connection
      * @return SqlMigration[]
      */
-    protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection)
+    protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration
     {
-        if ($migration->isDown()) {
+        if ($migration->getIsUp() == FALSE) {
             throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' already down!');
         }
         $this->ensureMigrationsTableExists($connection);
         $down_script=$migration->getDownScript();
+        if (empty($down_script)){
+            return $migration;
+        }
         $id = $migration->getId();
         try {
             $connection->transactionStart();
-            foreach (preg_split("/;\R/", $down_script) as $statement) {
-                if ($statement) {
-                    $down_result_array=$connection->runSql($statement)->getResultArray();
-                    //Erscheint unschön. Gibt mgl. bessere Variante
-                    $down_result .= '| '. implode('| ', $down_result_array);
-                } 
-            }
-            $sql_update = "UPDATE _migrations SET down_datetime=now(), down_result='$down_result' WHERE id='$id';";
+            $down_result = json_encode($this->runSqlMultiStatementScript($connection, $down_script, false));
+            //da Transaction Rollback nicht korrekt funktioniert
+            $migration->setIsUp(FALSE);
+            $sql_update = <<<SQL
+            
+UPDATE {$this->getMigrationsTableName()}
+SET down_datetime=now(), down_result="{$this->escapeSqlStringValue($down_result)}"
+WHERE id='$id';
+
+SQL;
             $connection->runSql($sql_update);
             $connection->transactionCommit();
+            $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ': script DOWN executed successfully ');
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
             $connection->transactionRollback();
             throw new InstallerRuntimeError($this, 'Migration down ' . $migration->getMigrationName() . ' failed!');
         }
-        $sql_select = "SELECT * FROM _migrations WHERE id='$id'";
+        $sql_select = "SELECT * FROM {$this->getMigrationsTableName()} WHERE id='$id'";
         $select_array = $connection->runSql($sql_select)->getResultArray();
         if (empty($select_array)){
             throw new InstallerRuntimeError($this, 'Something went very wrong');
@@ -187,6 +204,16 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         //Array kann eigentlich nur eine Resultzeile als Array als Inhalt haben, da id PRIMARY KEY
         $migration->setDownDatetime($select_array[0]['down_datetime']);
         return $migration;
+    }
+    
+    /**
+     * 
+     * @param string $value
+     * @return string
+     */
+    protected function escapeSqlStringValue(string $value) : string
+    {
+        return addslashes($value);
     }
 }
 ?>
