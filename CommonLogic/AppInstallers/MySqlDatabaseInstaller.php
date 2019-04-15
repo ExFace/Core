@@ -63,7 +63,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
                     }
                 }
                 $this->getDataConnection()->transactionCommit();
-                $result = 'Migration Table generated ';
+                $result = ' Migration Table generated';
             } catch (\Throwable $e) {
                 $this->getWorkbench()->getLogger()->logException($e);
                 $connection->transactionRollback();
@@ -84,23 +84,19 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         $this->ensureMigrationsTableExists($connection);
         //DESC, damit Down Skripte von neuster zu ältester Version ausgeführt werden
         $sql = 'SELECT * FROM _migrations WHERE down_datetime IS NULL ORDER BY migration_name DESC';
-        //$array = array ();
-        $array = $connection->runSql($sql)->getResultArray();
-        $migrs = array ();
-        
-        //$array = $query->getResultArray();
-        if (empty($array)){
+        $migrs_db = $connection->runSql($sql)->getResultArray();
+        $migrs = array ();       
+        if (empty($migrs_db)){
             return $migrs;
         }
-        foreach ($array as $a){
+        foreach ($migrs_db as $a){
             $mig = new SqlMigration($a['migration_name'], $a['up_script'], $a['down_script']);
             $mig->setId($a['id']);
             $mig->setUpDatetime($a['up_datetime']);
             $mig->setUpResult($a['up_result']);
             $migrs[] = $mig;      
         }
-        return $migrs;
-        
+        return $migrs;        
     }
     
     /**

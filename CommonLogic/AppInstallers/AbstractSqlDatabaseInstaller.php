@@ -64,6 +64,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     /**
      *
      * {@inheritDoc}
+     * 
      * @see \exface\Core\Interfaces\InstallerInterface::install()
      */
     public function install($source_absolute_path)
@@ -78,7 +79,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     /**
      *
      * {@inheritdoc}
-     *
+     * 
      * @see \exface\Core\Interfaces\InstallerInterface::update()
      */
     public function update($source_absolute_path)
@@ -270,13 +271,13 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      *
      * @return string
      */
-    abstract protected function getSqlDbType() :string ;
+    abstract protected function getSqlDbType() : string;
     
     /**
      *
      * @return string
      */
-    abstract protected function getCommentSign() :string ;
+    abstract protected function getCommentSign() : string;
     
     /**
      * 
@@ -293,6 +294,13 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @return SqlMigration
      */
     abstract protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration;
+    
+    /**
+     *
+     * @param SqlDataConnectorInterface $connection
+     * @return SqlMigration[]
+     */
+    abstract protected function getMigrationsFromDb($connection) : array;
                
 
     /**
@@ -347,15 +355,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         $files=$this->getFilesFromDir($folder_path);
         return $files;
     }
-    
-    
-    /**
-     *
-     * @param SqlDataConnectorInterface $connection
-     * @return SqlMigration[]
-     */
-    abstract protected function getMigrationsFromDb($connection) : array;
-    
+   
     /**
      * 
      * @param string $source_absolute_path
