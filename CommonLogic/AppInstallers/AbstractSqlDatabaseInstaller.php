@@ -14,11 +14,11 @@ use exface\Core\Exceptions\Installers\InstallerRuntimeError;
  * by performing SQL scripts stored in a specifal folder within the app (by
  * default "install/sql").
  *
- * How to add an AbstractSqlDatabaseInstaller to your app:
- * 1) Make sure, your app includes the following folder structure: Install/Sql/%Database_Version%Migrations
- * 2) Place your init scripts in Install/%DatabaseVersion%/Sql/InitDB and your migration scripts in the
- * Install/%Database_Version%/Sql/Migrations subfolder. The scripts will be executed in alphabetic order.
- * 3) Write Installer specific for your Database Version (for example MySQL) extending this Abstract Class
+ * How to add an SqlDatabaseInstaller to your app:
+ * 1) Make sure, your app includes the following folder structure: Install/Sql/%Database_Version%/
+ * 2) Place your init scripts in Install/%DatabaseVersion%/Sql/InitDB and your migration scripts in
+ * Install/%Database_Version%/Sql/Migrations. The scripts will be executed in alphabetic order.
+ * 3) Write specific Installer for your Database Version (for example MySQL) extending this Abstract Class
  * and add that Installer to the getInstaller() method of your app as follows:
  *
  
@@ -28,7 +28,7 @@ use exface\Core\Exceptions\Installers\InstallerRuntimeError;
  
  // ...receding installers here...
  
- $schema_installer = new SqlSchemaInstaller($this->getSelectorInstalling());
+ $schema_installer = new SqlDatabaseInstaller($this->getSelectorInstalling());
  $schema_installer->setDataConnection(...);
  $installer->addInstaller($schema_installer);
  
@@ -57,8 +57,6 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     
     private $sql_demodata_folder_name = 'DemoData';
     
-    private $sql_migrations_table_query ='';
-    
     private $sql_uninstall_folder_name = 'uninstall';
     
     private $data_connection = null;
@@ -71,7 +69,6 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     public function install($source_absolute_path)
     {
         //TODO Test ob Db-Schema existiert
-        //if ($this->getDataConnection()->runSql($this->getSqlDbExistsQuery()) ===
         $result = $this->performSql($source_absolute_path, $this->getSqlInitDbFolderName());
         $result .= $this->update($source_absolute_path);
         $result .= $this->performSql($source_absolute_path, $this->getSqlDemoDataFolderName());
@@ -171,7 +168,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
-     *
+     * 
      * @return string
      */
     public function getSqlInitDbFolderName()
@@ -282,18 +279,18 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     abstract protected function getCommentSign() :string ;
     
     /**
-     *
+     * 
      * @param SqlMigration $migration
-     *        SqlDataConnectorInterface $connection
-     * @return $this
+     * @param SqlDataConnectorInterface $connection
+     * @return SqlMigration
      */
     abstract protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration;
     
     /**
-     *
+     * 
      * @param SqlMigration $migration
-     *        SqlDataConnectorInterface $connection
-     * @return $this
+     * @param SqlDataConnectorInterface $connection
+     * @return SqlMigration
      */
     abstract protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration;
                
@@ -306,8 +303,10 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      *        string $folder_name
      * @return string
      */    
-    protected function performSql($source_absolute_path, string $folder_name){
+    protected function performSql($source_absolute_path, string $folder_name)
+    {
         $files = $this->getFiles($source_absolute_path, $folder_name);
+        $result = ' No SQL Files found!';
         foreach ($files as $file){
             $this->getWorkbench()->getLogger()->debug('Performing SQL');
             $sql = file_get_contents($file);
@@ -336,9 +335,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * 
      * @param string $source_absolute_path
      *        string $folder_name
-     * @return string
+     * @return array
      */
-    protected function getFiles($source_absolute_path, string $folder_name) : array
+    protected function getFiles($source_absolute_path, string $folder_name)
     {
         $folder_path = $this->getSqlFolderAbsolutePath($source_absolute_path) . DIRECTORY_SEPARATOR . $this->getSqlDbType() . DIRECTORY_SEPARATOR . $folder_name;
         $files = array();
@@ -362,7 +361,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param string $source_absolute_path
      * @return SqlMigration[]
      */
-    protected function getMigrationsFromApp($source_absolute_path) : array
+    protected function getMigrationsFromApp($source_absolute_path)
     {
         $migrs = [];
         foreach ($this->getFiles($source_absolute_path, $this->getSqlMigrationsFolderName()) as $path) {
@@ -379,7 +378,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      *        array $migrations_substract
      * @return SqlMigration[]
      */
-    protected function getMigrations(array $migrations_base, array $migrations_substract) : array
+    protected function getMigrations(array $migrations_base, array $migrations_substract)
     {        
         if (empty($migrations_substract)){
             return $migrations_base;
@@ -407,7 +406,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      *        bool $up
      * @return string
      */
-    protected function getMigrationScript(string $src, bool $up = true) : string
+    protected function getMigrationScript(string $src, bool $up = true)
     {
         $length=strlen($src);
         $cut=strpos($src, $this->getCommentSign() . 'DOWN');
@@ -430,7 +429,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param string $folder
      * @return array
      */
-    protected function getFilesFromDir($folder_path) : array
+    protected function getFilesFromDir($folder_path)
     {
         $files = array();
         if ($handle = opendir($folder_path)) {
@@ -456,7 +455,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param array $array
      * @return array
      */
-    protected function arrayFlat($array) : array
+    protected function arrayFlat($array)
     {
         $tmp = array();
         foreach($array as $a) {
@@ -475,7 +474,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param string $sql
      * return string
      */
-    protected function stripComments(string $sql) : string
+    protected function stripComments(string $sql)
     {
         $str= preg_replace('!/\*.*?\*/!s', '', $sql);
         $str = preg_replace('/\n\s*\n/', "\n", $str);
