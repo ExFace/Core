@@ -24,18 +24,13 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
                                      `down_script` varchar(1000) NOT NULL,
                                      `down_result` varchar(100) NULL,
                                       PRIMARY KEY (`id`)
-                                      ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;';
-    
-    
-    private $arrayup = array ();
-    
-    private $arraydown = array();
+                                      ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;';  
     
     /**
      *
      * @return string
      */
-    protected function getSqlDbType(): string
+    protected function getSqlDbType()
     {
         return 'MySQL';
     }
@@ -44,7 +39,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      *
      * @return string
      */
-    protected function getCommentSign(): string
+    protected function getCommentSign()
     {
         return '#';
     }
@@ -55,7 +50,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      * @param string SqlDataConnectorInterface $connection
      * @return string
      */  
-    protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : string
+    protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection)
     {
         $sql = 'SHOW tables LIKE "_migrations"';
         $result = ' Migration Table already exists';
@@ -79,12 +74,12 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
     }
     
     /**
-     * Gets all migrations from DB that are currently UP
+     * Gets all migrations from DB that are currently UP/applied
      *
      * @param string SqlDataConnectorInterface $connection
      * @return SqlMigration[]
      */
-    protected function getMigrationsFromDb($connection): array
+    protected function getMigrationsFromDb($connection)
     {
         $this->ensureMigrationsTableExists($connection);
         //DESC, damit Down Skripte von neuster zu ältester Version ausgeführt werden
@@ -109,13 +104,13 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
     }
     
     /**
-     * UPs/Applies the Migration $migration and writes Log into _migrations table
+     * UPs/applies the Migration $migration and writes Log into _migrations table
      *
      * @param SqlMigration $migration
      *        SqlDataConnectorInterface $connection
      * @return SqlMigration[]
      */
-    protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration
+    protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection)
     {
         if ($migration->isUp()) {
             throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' already up!');
@@ -162,7 +157,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      *        SqlDataConnectorInterface $connection
      * @return SqlMigration[]
      */
-    protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration
+    protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection)
     {
         if ($migration->isDown()) {
             throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' already down!');

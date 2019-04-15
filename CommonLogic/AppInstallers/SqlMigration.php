@@ -27,6 +27,13 @@ class SqlMigration
     
     private $down_result = '';
     
+    
+    /**
+     * 
+     * @param string $migration_name
+     * @param string $up_script
+     * @param string $down_script
+     */
     public function __construct($migration_name, $up_script, $down_script)
     {
         $this->migration_name=$migration_name;
@@ -46,7 +53,7 @@ class SqlMigration
     }
     
     /**
-     *
+     * 
      * @return string
      */
     public function getId()
