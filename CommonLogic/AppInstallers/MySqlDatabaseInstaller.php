@@ -6,7 +6,7 @@ use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 
 /**
- * AppInstaller for Apps with MySQL Database.
+ * Database AppInstaller for Apps with MySQL Database.
  *
  * @author Ralf Mulansky
  *
@@ -112,7 +112,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      * UPs/Applies the Migration $migration and writes Log into _migrations table
      *
      * @param SqlMigration $migration
-     *        string SqlDataConnectorInterface $connection
+     *        SqlDataConnectorInterface $connection
      * @return SqlMigration[]
      */
     protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration
@@ -134,7 +134,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             $migration_name = $migration->getMigrationName();
             $down_script = $migration->getDownScript();
             $sql_insert = "INSERT INTO _migrations (migration_name, up_script, up_result, down_script)
-                        VALUES ('$migration_name', \"'$up_script'\", '$up_result', '$down_script');";
+                        VALUES ('$migration_name', \"'$up_script'\", '$up_result', \"'$down_script'\");";
             $query_insert = $connection->runSql($sql_insert);
             $id = intval($query_insert->getLastInsertId());
             $connection->transactionCommit();            
@@ -146,7 +146,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         $sql_select = "SELECT * FROM _migrations WHERE id='$id'";
         $select_array = $connection->runSql($sql_select)->getResultArray();
         if (empty($select_array)){
-            throw new InstallerRuntimeError($this, 'Migration up ' . $migration->getMigrationName() . ' failed to write into _migration table!');
+            throw new InstallerRuntimeError($this, 'Migration up ' . $migration->getMigrationName() . ' failed to write into _migrations table!');
         }
         $migration->setId($id);
         $migration->setUpResult($up_result);
@@ -159,7 +159,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      * DOWNs/Reverts the Migration $migration and writes Log into _migrations table
      *
      * @param SqlMigration $migration
-     *        string SqlDataConnectorInterface $connection
+     *        SqlDataConnectorInterface $connection
      * @return SqlMigration[]
      */
     protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration
