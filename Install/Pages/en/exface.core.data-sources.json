@@ -40,6 +40,10 @@
                 "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCES.BASE_OBJECT')"
             },
             {
+                "attribute_alias": "OBJECT__UID:COUNT",
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.OBJECTS')"
+            },
+            {
                 "attribute_alias": "READABLE_FLAG"
             },
             {
@@ -51,12 +55,15 @@
             },
             {
                 "attribute_alias": "APP__LABEL"
+            },
+            {
+                "attribute_alias": "CREATED_ON"
             }
         ],
         "sorters": [
             {
-                "attribute_alias": "LABEL",
-                "direction": "ASC"
+                "attribute_alias": "CREATED_ON",
+                "direction": "desc"
             }
         ],
         "buttons": [

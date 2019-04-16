@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Exceptions\Facades\FacadeRequestParsingError;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\Traits\DataEnricherTrait;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\Traits\TaskRequestTrait;
+use exface\Core\Interfaces\Widgets\iHaveQuickSearch;
 
 /**
  * This PSR-15 middleware transforms the specified URL or body parameter into a quick search
@@ -76,10 +77,10 @@ class QuickSearchUrlParamReader implements MiddlewareInterface
         // the quick search filters are defined in the UXON of the widget.
         if ($task->isTriggeredByWidget()) {
             $widget = $task->getWidgetTriggeredBy();
-            $quick_search_filter = $widget->getMetaObject()->getLabelAttributeAlias();
-            if ($widget->is('Data') && count($widget->getAttributesForQuickSearch()) > 0) {
+            $quick_search_filter = $widget->getMetaObject()->hasLabelAttribute() ? $widget->getMetaObject()->getLabelAttributeAlias() : '';
+            if ($widget instanceof iHaveQuickSearch && ! empty($widget->getAttributesForQuickSearch())) {
                 foreach ($widget->getAttributesForQuickSearch() as $attr) {
-                    $quick_search_filter .= ($quick_search_filter ? EXF_LIST_SEPARATOR : '') . $attr;
+                    $quick_search_filter .= ($quick_search_filter ? EXF_LIST_SEPARATOR : '') . $attr->getAliasWithRelationPath();
                 }
             }
             if ($quick_search_filter) {
