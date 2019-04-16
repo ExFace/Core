@@ -137,7 +137,7 @@ INSERT INTO {$this->getMigrationsTableName()}
 
 SQL;
             $query_insert = $connection->runSql($sql_insert);
-            $id = intval($query_insert->getLastInsertId());
+            $id = $query_insert->getLastInsertId();
             $migration->setId($id);
             $connection->transactionCommit();
             $this->getWorkbench()->getLogger()->debug('SQL ' . $migration_name . ': script UP executed successfully ');            
@@ -172,6 +172,7 @@ SQL;
         $this->ensureMigrationsTableExists($connection);
         $down_script=$migration->getDownScript();
         if (empty($down_script)){
+            $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ': Migration has no down script');
             return $migration;
         }
         $id = $migration->getId();

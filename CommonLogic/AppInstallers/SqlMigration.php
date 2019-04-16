@@ -46,9 +46,9 @@ class SqlMigration
     /**
      * 
      * @param string $id
-     * @return $this
+     * @return SqlMigration
      */
-    public function setId($id)
+    public function setId(string $id) : SqlMigration
     {
         $this->id=$id;
         return $this;
@@ -58,7 +58,7 @@ class SqlMigration
      * 
      * @return string
      */
-    public function getId()
+    public function getId() : string
     {
         return $this->id;
     }
@@ -73,11 +73,11 @@ class SqlMigration
     }
     
     /**
-     *
+     * 
      * @param string $up_datetime
-     * @return $this
+     * @return SqlMigration
      */
-    public function setUpDatetime($up_datetime)
+    public function setUpDatetime(string $up_datetime) : SqlMigration
     {
         $this->up_datetime = $up_datetime;
         return $this;
@@ -87,7 +87,7 @@ class SqlMigration
      *
      * @return string
      */
-    public function getUpDatetime()
+    public function getUpDatetime() : string
     {
         return $this->up_datetime;
     }
@@ -96,7 +96,7 @@ class SqlMigration
      *
      * @return string
      */
-    public function getUpScript()
+    public function getUpScript() : string
     {
         return $this->up_script;
     }
@@ -106,7 +106,7 @@ class SqlMigration
      * @param string $up_result
      * @return $this
      */
-    public function setUpResult($up_result)
+    public function setUpResult(string $up_result)
     {
         $this->up_result = $up_result;
         return $this;
@@ -116,17 +116,17 @@ class SqlMigration
      *
      * @return string
      */
-    public function getUpResult()
+    public function getUpResult() : string
     {
         return $this->up_result;
     }
     
     /**
-     *
+     * 
      * @param string $down_datetime
-     * @return $this
+     * @return SqlMigration
      */
-    public function setDownDatetime($down_datetime)
+    public function setDownDatetime(string $down_datetime) : SqlMigration
     {
         $this->down_datetime = $down_datetime;
         return $this;
@@ -136,7 +136,7 @@ class SqlMigration
      *
      * @return string
      */
-    public function getDownDatetime()
+    public function getDownDatetime() : string
     {
         return $this->down_datetime;
     }
@@ -145,17 +145,17 @@ class SqlMigration
      *
      * @return string
      */
-    public function getDownScript()
+    public function getDownScript() : string
     {
         return $this->down_script;
     }
     
     /**
-     *
+     * 
      * @param string $down_result
-     * @return $this
+     * @return SqlMigration
      */
-    public function setDownResult($down_result)
+    public function setDownResult(string $down_result) : SqlMigration
     {
         $this->down_result = $down_result;
         return $this;
@@ -165,7 +165,7 @@ class SqlMigration
      *
      * @return string
      */
-    public function getDownResult()
+    public function getDownResult() : string
     {
         return $this->down_result;
     }
@@ -184,7 +184,7 @@ class SqlMigration
      * @param bool $bool
      * @return SqlMigration
      */
-    public function setIsUp(bool $bool)
+    public function setIsUp(bool $bool) : SqlMigration
     {
         $this->is_up=$bool;
         return $this;
