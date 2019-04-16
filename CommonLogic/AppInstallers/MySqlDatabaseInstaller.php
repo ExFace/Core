@@ -34,7 +34,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
     /**
      * Checks if migrations table already exist, if not creates the table
      * 
-     * @param string SqlDataConnectorInterface $connection
+     * @param SqlDataConnectorInterface $connection
      * @return MySqlDatabaseInstaller
      */  
     protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : MySqlDatabaseInstaller
@@ -74,10 +74,10 @@ SQL;
     /**
      * Gets all migrations from database that are currently UP/applied
      *
-     * @param string SqlDataConnectorInterface $connection
+     * @param SqlDataConnectorInterface $connection
      * @return SqlMigration[]
      */
-    protected function getMigrationsFromDb($connection) : array
+    protected function getMigrationsFromDb(SqlDataConnectorInterface $connection) : array
     {
         $this->ensureMigrationsTableExists($connection);
         //DESC, damit Down Skripte von neuster zu ältester Version ausgeführt werden
@@ -102,7 +102,7 @@ SQL;
      * UPs/applies the Migration $migration and writes Log into migrations table
      *
      * @param SqlMigration $migration
-     *        SqlDataConnectorInterface $connection
+     * @param SqlDataConnectorInterface $connection
      * @return SqlMigration[]
      */
     protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration

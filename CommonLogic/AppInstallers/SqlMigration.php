@@ -15,13 +15,13 @@ class SqlMigration
     
     private $migration_name= '';
     
-    private $up_datetime = null;
+    private $up_datetime = '';
     
     private $up_script = '';
     
     private $up_result = '';
     
-    private $down_datetime = null;
+    private $down_datetime = '';
     
     private $down_script = '';
     
@@ -102,11 +102,11 @@ class SqlMigration
     }
     
     /**
-     *
+     * 
      * @param string $up_result
-     * @return $this
+     * @return SqlMigration
      */
-    public function setUpResult(string $up_result)
+    public function setUpResult(string $up_result) : SqlMigration
     {
         $this->up_result = $up_result;
         return $this;
