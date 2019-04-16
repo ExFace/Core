@@ -1,10 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\DataSources;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\Model;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
-use exface\Core\CommonLogic\UxonObject;
 
 interface DataSourceInterface extends WorkbenchDependantInterface
 {
@@ -13,7 +11,14 @@ interface DataSourceInterface extends WorkbenchDependantInterface
      *
      * @return DataConnectionInterface
      */
-    public function getConnection();
+    public function getConnection() : DataConnectionInterface;
+    
+    /**
+     * 
+     * @param DataConnectionInterface $connection
+     * @return DataSourceInterface
+     */
+    public function setConnection(DataConnectionInterface $connection) : DataSourceInterface;
 
     /**
      *
@@ -31,30 +36,6 @@ interface DataSourceInterface extends WorkbenchDependantInterface
      *
      * @return string
      */
-    public function getDataConnectorAlias();
-
-    /**
-     *
-     * @param string $value            
-     */
-    public function setDataConnectorAlias($value);
-
-    /**
-     *
-     * @return string
-     */
-    public function getConnectionId();
-
-    /**
-     *
-     * @param string $value            
-     */
-    public function setConnectionId($value);
-
-    /**
-     *
-     * @return string
-     */
     public function getQueryBuilderAlias();
 
     /**
@@ -62,20 +43,6 @@ interface DataSourceInterface extends WorkbenchDependantInterface
      * @param string $value            
      */
     public function setQueryBuilderAlias($value);
-
-    /**
-     * Returns a UXON object with configuration options for this connections (e.g.
-     * [user => user_value, password => password_value, ...]
-     *
-     * @return UxonObject
-     */
-    public function getConnectionConfig();
-
-    /**
-     *
-     * @param UxonObject $value            
-     */
-    public function setConnectionConfig(UxonObject $value);
 
     /**
      * Returns TRUE if write-opertaions are allowed on the data source with it's 

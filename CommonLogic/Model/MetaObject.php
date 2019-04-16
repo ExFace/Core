@@ -782,7 +782,7 @@ class MetaObject implements MetaObjectInterface
         if (! $this->hasDataSource()) {
             throw new MetaObjectHasNoDataSourceError($this, 'Cannot get the data connection for "' . $this->getName() . '" (' . $this->getAliasWithNamespace() . '): the object does not have a data source!');
         }
-        return $this->getModel()->getWorkbench()->data()->getDataConnection($this->data_source_id, $this->data_connection_alias);
+        return $this->getDataSource()->getConnection();
     }
 
     /**
