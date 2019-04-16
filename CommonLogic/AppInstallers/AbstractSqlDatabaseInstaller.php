@@ -10,17 +10,19 @@ use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
  * If the app has it's own SQL database (= is not built on top of an existing
  * data source), changes to the SQL schema must go hand-in-hand with changes of
  * the meta model and the code. This installer takes care of migrating the schema
- * by performing SQL scripts stored in a specifal folder within the app (by
+ * by performing SQL scripts stored in a special folder within the app (by
  * default "install/Sql/%Database_Version").
  *
  * ## How to add an SqlDatabaseInstaller to your app:
  * 
- * 1) Make sure, your app includes the following folder structure: Install/Sql/%Database_Version%/
+ * 1) Make sure, your app includes the following folder structure: Install/Sql/%SqlDbType%/
  * 2) Write specific Installer for your Database Version (for example MySQL) extending this Abstract Class
  * and add that Installer to the getInstaller() method of your app as follows:
  *
  
-         $schema_installer = new MySqlDatabaseInstaller($this->getSelector());
+ // ...receding installers here...
+        
+        $schema_installer = new MySqlDatabaseInstaller($this->getSelector());
         $schema_installer
             ->setFoldersWithMigrations(['InitDB','Migrations', 'DemoData'])
             ->setFoldersWithStaticSql(['Views']);
@@ -37,7 +39,8 @@ use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
  }
  
  * 3) Change the setFoldersWithMigrations array and the setFoldersWitStatcSql fitting
- * to your folder structur in Install/Sql/%Database_Version%/ 
+ * to your folder structur in Install/Sql/%SqlDbType%/ 
+ *
  *
  * ## Transaction handling
  * 
@@ -297,7 +300,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
                
 
     /**
-     * Iterates through the files in "%source_absolute_path%/%install_folder_name%/%sql_folder_name%/%sql_db_type%/%folders%"
+     * Iterates through the files in "%source_absolute_path%/%install_folder_name%/%sql_folder_name%/%SqlDbType%/%folders%"
      * and all subfolders attempting to execute the SQL scripts stored in those files
      *
      * @param string $source_absolute_path
@@ -325,7 +328,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
        
     /**
-     * Gets all files in the folder %source_absolute_path%/%install_folder_name%/%sql_folder_name%/%sql_db_type%/%folders% and all subfolders
+     * Gets all files in the folder %source_absolute_path%/%install_folder_name%/%sql_folder_name%/%SqlDbType%/%folders%
+     * and all subfolders
      * 
      * @param string $source_absolute_path
      * @param array $folders
@@ -509,7 +513,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * Removes comments from a SQL string
      *  
      * @param string $sql
-     * return string
+     * @return string
      */
     protected function stripComments(string $sql) : string
     {
