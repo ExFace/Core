@@ -73,18 +73,6 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
     protected function setCurrentConnection($value)
     {
         $this->current_connection = $value;
-        $this->setConnected(true);
-        return $this;
-    }
-
-    public function isConnected()
-    {
-        return $this->connected;
-    }
-
-    protected function setConnected($value)
-    {
-        $this->connected = BooleanDataType::cast($value);
         return $this;
     }
 

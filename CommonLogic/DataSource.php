@@ -3,17 +3,14 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
 use exface\Core\CommonLogic\Model\Model;
-use exface\Core\DataTypes\UxonDataType;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 
 class DataSource implements DataSourceInterface
 {
-
     private $model;
-
-    private $data_connector;
-
-    private $connection_id;
+    
+    private $connection = null;
 
     private $query_builder;
 
@@ -21,12 +18,15 @@ class DataSource implements DataSourceInterface
     
     private $data_source_name;
 
-    private $connection_config = array();
-
     private $readable = true;
     
     private $writable = true;
 
+    /**
+     * @deprecated use DataSourceFactory instead!
+     * 
+     * @param Model $model
+     */
     function __construct(Model $model)
     {
         $this->model = $model;
@@ -43,6 +43,11 @@ class DataSource implements DataSourceInterface
         return $this->model;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
+     */
     public function getWorkbench()
     {
         return $this->getModel()->getWorkbench();
@@ -54,9 +59,20 @@ class DataSource implements DataSourceInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataSourceInterface::getConnection()
      */
-    public function getConnection()
+    public function getConnection() : DataConnectionInterface
     {
-        return $this->getWorkbench()->data()->getDataConnection($this->getId(), $this->getConnectionId());
+        return $this->connection;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataSourceInterface::setConnection()
+     */
+    public function setConnection(DataConnectionInterface $connection) : DataSourceInterface
+    {
+        $this->connection = $connection;
+        return $this;
     }
 
     /**
@@ -79,50 +95,6 @@ class DataSource implements DataSourceInterface
     public function setId($value)
     {
         $this->data_source_id = $value;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DataSources\DataSourceInterface::getDataConnectorAlias()
-     */
-    public function getDataConnectorAlias()
-    {
-        return $this->data_connector;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DataSources\DataSourceInterface::setDataConnectorAlias()
-     */
-    public function setDataConnectorAlias($value)
-    {
-        $this->data_connector = $value;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DataSources\DataSourceInterface::getConnectionId()
-     */
-    public function getConnectionId()
-    {
-        return $this->connection_id;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DataSources\DataSourceInterface::setConnectionId()
-     */
-    public function setConnectionId($value)
-    {
-        $this->connection_id = $value;
     }
 
     /**
@@ -211,16 +183,24 @@ class DataSource implements DataSourceInterface
         return $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataSourceInterface::setName()
+     */
     public function setName(string $readableName) : DataSourceInterface
     {
         $this->data_source_name = $readableName;
         return $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataSourceInterface::getName()
+     */
     public function getName() : string
     {
         return $this->data_source_name;
     }
-
 }
-?>

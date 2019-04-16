@@ -4,7 +4,6 @@ namespace exface\Core\CommonLogic\Selectors;
 use exface\Core\CommonLogic\Selectors\Traits\AliasSelectorTrait;
 use exface\Core\CommonLogic\Selectors\Traits\UidSelectorTrait;
 use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
-use exface\Core\Exceptions\Selectors\SelectorTypeInvalidError;
 
 /**
  * Default implementation of the MetaObjectSelectorInterface
@@ -24,7 +23,7 @@ class MetaObjectSelector extends AbstractSelector implements MetaObjectSelectorI
      */
     public function isAlias()
     {
-        return $this->isUid() ? false : true;
+        return $this->isUid() === false;
     }
     
     /**
