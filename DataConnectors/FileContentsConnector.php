@@ -27,8 +27,8 @@ class FileContentsConnector extends TransparentConnector
             $base_path = $this->getWorkbench()->filemanager()->getPathToBaseFolder();
         }
         
-        if (Filemanager::pathIsAbsolute($this->getBasePath())) {
-            $base_path = Filemanager::pathJoin($this->getWorkbench()->filemanager()->getPathToBaseFolder(), $this->getBasePath());
+        if ($this->getBasePath() !== null && false === Filemanager::pathIsAbsolute($this->getBasePath())) {
+            $base_path = Filemanager::pathJoin([$this->getWorkbench()->filemanager()->getPathToBaseFolder(), $this->getBasePath()]);
         }
         
         $this->setBasePath($base_path);

@@ -4,12 +4,16 @@ namespace exface\Core\Interfaces\Selectors;
 /**
  * Interface for data connector selectors.
  * 
- * A connector can be identified by 
- * - fully qualified alias (with vendor and app prefix)
- * - file path or qualified class name of the app's PHP class (if there is one)
+ * A connector is the prototype for a metamodel connection.
+ * 
+ * A connector can be identified by
+ * - file path to a PHP class file
+ * - qualified class name of the app's PHP class
+ * 
+ * @see DataConnectionSelectorInterface for selectors of metamodel connections
  * 
  * @author Andrej Kabachnik
  *
  */
-interface DataConnectorSelectorInterface extends AliasSelectorInterface, PrototypeSelectorInterface
+interface DataConnectorSelectorInterface extends PrototypeSelectorInterface
 {}

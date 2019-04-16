@@ -414,6 +414,11 @@ class Expression implements ExpressionInterface
     {
         return $this->originalString;
     }
+    
+    public function __toString()
+    {
+        return $this->toString();
+    }
 
     /**
      * {@inheritdoc}

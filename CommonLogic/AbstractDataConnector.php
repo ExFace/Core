@@ -8,43 +8,160 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Exceptions\ModelBuilders\ModelBuilderNotAvailableError;
 use exface\Core\Interfaces\Selectors\DataConnectorSelectorInterface;
-use exface\Core\CommonLogic\Traits\AliasTrait;
 use exface\Core\Events\DataConnection\OnBeforeConnectEvent;
 use exface\Core\Events\DataConnection\OnConnectEvent;
 use exface\Core\Events\DataConnection\OnBeforeDisconnectEvent;
 use exface\Core\Events\DataConnection\OnDisconnectEvent;
 use exface\Core\Events\DataConnection\OnBeforeQueryEvent;
 use exface\Core\Events\DataConnection\OnQueryEvent;
+use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\CommonLogic\Traits\MetaModelPrototypeTrait;
 
 abstract class AbstractDataConnector implements DataConnectionInterface
 {
     use ImportUxonObjectTrait {
 		importUxonObject as importUxonObjectDefault;
 	}
-	use AliasTrait;
+	use MetaModelPrototypeTrait;
 
     private $config_array = array();
 
     private $exface = null;
     
-    private $selector = null;
-
+    private $prototypeSelector = null;
+    
+    private $id = null;
+    
+    private $alias = null;
+    
+    private $alias_namespace = null;
+    
+    private $name = '';
+    
+    private $connected = false;
+    
+    private $readonly = false;
+    
     /**
      *
-     * @deprecated Use DataConnectorFactory instead!
+     * @deprecated Use DataConnectionFactory instead!
      */
-    public function __construct(DataConnectorSelectorInterface $selector, UxonObject $config = null)
+    public function __construct(DataConnectorSelectorInterface $prototypeSelector, UxonObject $config = null)
     {
-        $this->exface = $selector->getWorkbench();
-        $this->selector = $selector;
+        $this->exface = $prototypeSelector->getWorkbench();
+        $this->prototypeSelector = $prototypeSelector;
         if ($config !== null) {
             $this->importUxonObject($config);
         }
     }
     
-    public function getSelector() : DataConnectorSelectorInterface
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getAlias()
+     */
+    public function getAlias()
+    {
+        return $this->alias ?? '';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::setAlias()
+     */
+    public function setAlias(string $alias, string $namespace = null) : DataConnectionInterface
+    {
+        $this->alias = $alias;
+        $this->alias_namespace = $namespace;
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getAliasWithNamespace()
+     */
+    public function getAliasWithNamespace()
+    {
+        return $this->getNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getAlias();
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
+     */
+    public function getNamespace()
+    {
+        return $this->alias_namespace ?? '';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::getId()
+     */
+    public function getId() : ?string
+    {
+        return $this->id;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::setId()
+     */
+    public function setId(string $uid) : DataConnectionInterface
+    {
+        $this->id = $uid;
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::getName()
+     */
+    public function getName() : string
+    {
+        return $this->name;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::setName()
+     */
+    public function setName(string $string) : DataConnectionInterface
+    {
+        $this->name = $string;
+        return $this;
+    }
+    
+    public function hasModel() : bool
+    {
+        return $this->id !== null;
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    protected function getClassnameSuffixToStripFromAlias() : string
+    {
+        return '';
+    }
+    
+    public function getSelector() : ?DataConnectionSelectorInterface
     {
         return $this->selector;
+    }
+    
+    public function getPrototypeSelector() : DataConnectorSelectorInterface
+    {
+        return $this->getPrototypeSelector();
     }
 
     /**
@@ -84,11 +201,22 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     {
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeConnectEvent($this));
         $result = $this->performConnect();
+        $this->connected = true;
         $this->getWorkbench()->eventManager()->dispatch(new OnConnectEvent($this));
         return $result;
     }
 
     protected abstract function performConnect();
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::isConnected()
+     */
+    public function isConnected() : bool
+    {
+        return $this->connected;
+    }
 
     /**
      *
@@ -99,6 +227,7 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     {
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeDisconnectEvent($this));
         $result = $this->performDisconnect();
+        $this->connected = false;
         $this->getWorkbench()->eventManager()->dispatch(new OnDisconnectEvent($this));
         return $result;
     }
@@ -113,6 +242,9 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      */
     public final function query(DataQueryInterface $query) : DataQueryInterface
     {
+        if ($this->isConnected() === false) {
+            $this->connect();
+        }
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeQueryEvent($this, $query));
         $result = $this->performQuery($query);
         $this->getWorkbench()->eventManager()->dispatch(new OnQueryEvent($this, $query));
@@ -175,5 +307,26 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     public function getModelBuilder()
     {
         throw new ModelBuilderNotAvailableError('No model builder implemented for data connector ' . $this->getAliasWithNamespace() . '!');
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::isReadOnly()
+     */
+    public function isReadOnly() : bool
+    {
+        return $this->readonly;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::setReadOnly()
+     */
+    public function setReadOnly(bool $trueOrFalse) : DataConnectionInterface
+    {
+        $this->readonly = $trueOrFalse;
+        return $this;
     }
 }

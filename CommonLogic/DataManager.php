@@ -1,17 +1,12 @@
 <?php
 namespace exface\Core\CommonLogic;
 
-use exface\Core\Factories\DataConnectorFactory;
-use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSources\DataManagerInterface;
 use exface\Core\Factories\DataSourceFactory;
 
 class DataManager implements DataManagerInterface
 {
-
-    private $active_connections;
-
-    private $active_sources;
+    private $active_sources = [];
 
     private $cache;
 
@@ -24,8 +19,6 @@ class DataManager implements DataManagerInterface
     function __construct(\exface\Core\CommonLogic\Workbench $exface)
     {
         $this->exface = $exface;
-        $this->active_sources = array();
-        $this->active_connections = array();
     }
 
     /**
@@ -41,8 +34,7 @@ class DataManager implements DataManagerInterface
             return $this->active_sources[$id . '-' . $data_connection_id_or_alias];
         
         // if it is a new source, create it here
-        $model = $this->getWorkbench()->model();
-        $data_source = DataSourceFactory::createForDataConnection($model, $id, $data_connection_id_or_alias);
+        $data_source = DataSourceFactory::createFromModel($this->getWorkbench(), $id, $data_connection_id_or_alias);
         $this->active_sources[$id . '-' . $data_connection_id_or_alias] = $data_source;
         return $data_source;
     }
@@ -51,46 +43,13 @@ class DataManager implements DataManagerInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\DataSources\DataManagerInterface::connect()
-     */
-    public function connect($data_connector, $config, $data_connection_id)
-    {
-        // check if connection exists (we only need a data_connection once!)
-        if ($data_connection_id && $this->active_connections[$data_connection_id]) {
-            return $this->active_connections[$data_connection_id];
-        }
-        
-        $con = DataConnectorFactory::createFromAlias($this->exface, $data_connector, $config);
-        $con->connect();
-        
-        // cache the new connection
-        $this->active_connections[$data_connection_id] = $con;
-        return $con;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSources\DataManagerInterface::disconnectAll()
      */
-    function disconnectAll()
+    public function disconnectAll()
     {
-        foreach ($this->active_connections as $src) {
-            $src->disconnect();
+        foreach ($this->active_sources as $src) {
+            $src->getConnection()->disconnect();
         }
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DataSources\DataManagerInterface::getDataConnection()
-     */
-    function getDataConnection($data_source_id, $data_connection_id_or_alias = NULL)
-    {
-        $data_source = $this->getDataSource($data_source_id, $data_connection_id_or_alias);
-        return $this->connect($data_source->getDataConnectorAlias(), $data_source->getConnectionConfig(), $data_source->getConnectionId());
     }
 
     /**

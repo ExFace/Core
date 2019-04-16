@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Selectors;
 
-use exface\Core\CommonLogic\Selectors\Traits\ResolvableNameSelectorTrait;
 use exface\Core\Interfaces\Selectors\DataConnectorSelectorInterface;
+use exface\Core\CommonLogic\Selectors\Traits\PrototypeSelectorTrait;
 
 /**
  * Generic implementation of the DataConnectorSelectorInterface.
@@ -14,7 +14,7 @@ use exface\Core\Interfaces\Selectors\DataConnectorSelectorInterface;
  */
 class DataConnectorSelector extends AbstractSelector implements DataConnectorSelectorInterface
 {
-    use ResolvableNameSelectorTrait;
+    use PrototypeSelectorTrait;
     
     /**
      *

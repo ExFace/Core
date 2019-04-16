@@ -8,9 +8,50 @@ use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\Interfaces\Selectors\DataConnectorSelectorInterface;
+use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
+use exface\Core\Interfaces\Model\MetaModelPrototypeInterface;
 
-interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeConvertedToUxon
+interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeConvertedToUxon, MetaModelPrototypeInterface
 {
+    /**
+     * 
+     * @return bool
+     */
+    public function hasModel() : bool;
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getId() : ?string;
+    
+    /**
+     * 
+     * @param string $uid
+     * @return DataConnectionInterface
+     */
+    public function setId(string $uid) : DataConnectionInterface;
+    
+    /**
+     * 
+     * @param string $alias
+     * @param string $namespace
+     * @return DataConnectionInterface
+     */
+    public function setAlias(string $alias, string $namespace = null) : DataConnectionInterface;
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getName() : string;
+    
+    /**
+     * 
+     * @param string $string
+     * @return DataConnectionInterface
+     */
+    public function setName(string $string) : DataConnectionInterface;
 
     /**
      * Connects to the data source using the configuration array passed to the constructor of the connector
@@ -21,6 +62,12 @@ interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInte
      * @return void
      */
     public function connect();
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isConnected() : bool;
 
     /**
      * Closes the connection to the data source
@@ -79,9 +126,7 @@ interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInte
      * @return boolean
      */
     public function transactionIsStarted();
-    
-    
-    
+
     /**
      * Returns an instance of the model builder, that can be used to generate meta models from this data connection.
      *
@@ -91,8 +136,17 @@ interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInte
     
     /**
      * 
+     * @return DataConnectionSelectorInterface
+     */
+    public function getSelector() : ?DataConnectionSelectorInterface;
+    
+    /**
+     * 
      * @return DataConnectorSelectorInterface
      */
-    public function getSelector() : DataConnectorSelectorInterface;
+    public function getPrototypeSelector() : DataConnectorSelectorInterface;   
+    
+    public function isReadOnly() : bool;
+    
+    public function setReadOnly(bool $trueOrFalse) : DataConnectionInterface;
 }
-?>

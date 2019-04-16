@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces\Widgets;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Input;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * This interface describes widgets, that have a quick search field.
@@ -54,4 +55,13 @@ interface iHaveQuickSearch extends WidgetInterface
      * @return iHaveQuickSearch
      */
     public function setQuickSearchWidget(UxonObject $uxon) : iHaveQuickSearch;
+    
+    /**
+     * Returns an array of aliases of attributes, that should be used for quick search relative to the meta object of the widget
+     *
+     * IDEA move to to configurator?
+     *
+     * @return MetaAttributeInterface[]
+     */
+    public function getAttributesForQuickSearch() : array;
 }
