@@ -42,6 +42,10 @@
             "attribute_alias": "NAME"
         },
         {
+            "name": "INHERIT_DATA_SOURCE_BASE_OBJECT",
+            "attribute_alias": "INHERIT_DATA_SOURCE_BASE_OBJECT"
+        },
+        {
             "name": "DATA_SOURCE",
             "attribute_alias": "DATA_SOURCE"
         },
@@ -86,6 +90,7 @@
             "COMMENTS": "",
             "DOCS": "",
             "NAME": "Data Source",
+            "INHERIT_DATA_SOURCE_BASE_OBJECT": "1",
             "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "This is the logical definition of data source. It includes some meta information and the QueryBuilder type. The specific location (e.g. DB server, etc.) is stored in it's connection. ",
