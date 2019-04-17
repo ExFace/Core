@@ -3,7 +3,11 @@
 namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
+use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
+use exface\Core\Factories\DataSourceFactory;
+use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
+use function GuzzleHttp\json_encode;
 
 /**
  * Database AppInstaller for Apps with MySQL Database.
@@ -31,9 +35,39 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         return 'MySQL';
     }
     
+    /***
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::ensureDbExists()
+     */
+    protected function ensureDatabaseExists(SqlDataConnectorInterface $connection) : string
+    {        
+        $msg = ' Database already exists ';
+        try {
+            $connection->connect();
+        } catch (DataConnectionFailedError $e) {
+            $mysqlException = $e->getPrevious();
+            if ($mysqlException instanceof \mysqli_sql_exception) {
+                if ($mysqlException->getCode() === 1049) {
+                    $dbName = $connection->getDbase();
+                    $connection->setDbase('');
+                    $connection->connect();
+                    $database_create = "CREATE DATABASE {$dbName} CHARACTER SET utf8 COLLATE utf8_general_ci";
+                    $connection->runSql($database_create);
+                    $database_use = "USE {$dbName};";
+                    $connection->runSql($database_use);
+                    $connection->disconnect();
+                    $connection->setDbase($dbName);
+                    $msg = ' Database ' . $dbName . ' created! ';
+                }
+            }
+        }
+        return $msg;
+    }
+    
     /**
      * Checks if migrations table already exist, if not creates the table
-     * 
+     *
      * @param SqlDataConnectorInterface $connection
      * @return MySqlDatabaseInstaller
      */  
@@ -53,10 +87,10 @@ CREATE TABLE IF NOT EXISTS `{$this->getMigrationsTableName()}` (
 `migration_name` varchar(300) NOT NULL,
 `up_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 `up_script` text NOT NULL,
-`up_result` varchar(1000) NOT NULL,
+`up_result` text NOT NULL,
 `down_datetime` timestamp NULL,
 `down_script` text NOT NULL,
-`down_result` varchar(1000) NULL,
+`down_result` text NULL,
 PRIMARY KEY (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
@@ -67,7 +101,7 @@ SQL;
                 $this->getWorkbench()->getLogger()->logException($e);
                 throw new InstallerRuntimeError($this, 'Generating Migration table failed!');
             }
-        }
+        }        
         return $this;
     }
     
@@ -114,7 +148,8 @@ SQL;
         $up_script = $migration->getUpScript();
         try {
             $connection->transactionStart();
-            $up_result = json_encode($this->runSqlMultiStatementScript($connection, $up_script, false));
+            $up_result = $this->runSqlMultiStatementScript($connection, $up_script, false);
+            $up_result_string = $this->stringifyQueryResults($up_result);
             //da Transaction Rollback nicht korrekt funktioniert
             $migration->setIsUp(TRUE);
             $migration_name = $migration->getMigrationName();
@@ -131,7 +166,7 @@ INSERT INTO {$this->getMigrationsTableName()}
     VALUES (
         "{$this->escapeSqlStringValue($migration_name)}", 
         "{$this->escapeSqlStringValue($up_script)}", 
-        "{$this->escapeSqlStringValue($up_result)}", 
+        "{$this->escapeSqlStringValue($up_result_string)}", 
         "{$this->escapeSqlStringValue($down_script)}"
     );
 
@@ -151,12 +186,12 @@ SQL;
         if (empty($select_array)){
             throw new InstallerRuntimeError($this, 'Migration up ' . $migration->getMigrationName() . ' failed to write into migrations table!');
         }        
-        $migration->setUpResult($up_result);
+        $migration->setUpResult($up_result_string);
         //Array kann eigentlich nur eine Resultzeile als Array als Inhalt haben, da id PRIMARY KEY
         $migration->setUpDatetime($select_array[0]['up_datetime']);
         return $migration;        
     }  
-   
+           
     /**
      * DOWNs/Reverts the Migration $migration and writes Log into migrations table
      *
@@ -178,13 +213,14 @@ SQL;
         $id = $migration->getId();
         try {
             $connection->transactionStart();
-            $down_result = json_encode($this->runSqlMultiStatementScript($connection, $down_script, false));
+            $down_result = $this->runSqlMultiStatementScript($connection, $down_script, false);
+            $down_result_string = $this->stringifyQueryResults($down_result);
             //da Transaction Rollback nicht korrekt funktioniert
             $migration->setIsUp(FALSE);
             $sql_update = <<<SQL
             
 UPDATE {$this->getMigrationsTableName()}
-SET down_datetime=now(), down_result="{$this->escapeSqlStringValue($down_result)}"
+SET down_datetime=now(), down_result="{$this->escapeSqlStringValue($down_result_string)}"
 WHERE id='$id';
 
 SQL;
@@ -201,7 +237,7 @@ SQL;
         if (empty($select_array)){
             throw new InstallerRuntimeError($this, 'Something went very wrong');
         }
-        $migration->setDownResult($down_result);        
+        $migration->setDownResult($down_result_string);        
         //Array kann eigentlich nur eine Resultzeile als Array als Inhalt haben, da id PRIMARY KEY
         $migration->setDownDatetime($select_array[0]['down_datetime']);
         return $migration;
