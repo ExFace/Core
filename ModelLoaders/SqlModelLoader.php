@@ -154,7 +154,7 @@ class SqlModelLoader implements ModelLoaderInterface
             
             // find all parents
             // When loading a data source base object, make sure not to inherit from itself to avoid recursion.
-            if ($row['base_object_oid'] && $row['base_object_oid'] != $object->getId()&& $row['inherit_data_source_base_object'] == 1) {
+            if ($row['base_object_oid'] && $row['base_object_oid'] != $object->getId() && ($row['inherit_data_source_base_object'] ?? 1)) {
                 $object->extendFromObjectId($row['base_object_oid']);
             }
             if ($row['parent_object_oid']) {
