@@ -46,6 +46,8 @@ use exface\Core\Factories\DataSourceFactory;
 use exface\Core\Factories\DataConnectionFactory;
 use exface\Core\CommonLogic\Selectors\DataConnectorSelector;
 use exface\Core\Exceptions\DataSources\DataConnectionNotFoundError;
+use exface\Core\CommonLogic\AppInstallers\AppInstallerContainer;
+use exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller;
 
 /**
  * 
@@ -152,7 +154,7 @@ class SqlModelLoader implements ModelLoaderInterface
             
             // find all parents
             // When loading a data source base object, make sure not to inherit from itself to avoid recursion.
-            if ($row['base_object_oid'] && $row['base_object_oid'] != $object->getId()) {
+            if ($row['base_object_oid'] && $row['base_object_oid'] != $object->getId()&& $row['inherit_data_source_base_object'] == 1) {
                 $object->extendFromObjectId($row['base_object_oid']);
             }
             if ($row['parent_object_oid']) {
@@ -731,8 +733,23 @@ class SqlModelLoader implements ModelLoaderInterface
 
     public function getInstaller()
     {
-        $installer = new SqlSchemaInstaller(new AppSelector($this->getDataConnection()->getWorkbench(), 'exface.Core'));
-        $installer->setDataConnection($this->getDataConnection());
+        $coreAppSelector = new AppSelector($this->getDataConnection()->getWorkbench(), 'exface.Core');
+        $installer = new AppInstallerContainer($coreAppSelector);
+        
+        $dbInstaller = new MySqlDatabaseInstaller($coreAppSelector);
+        $dbInstaller
+            ->setFoldersWithMigrations(['InitDB','Migrations', 'DemoData'])
+            ->setFoldersWithStaticSql(['Views'])
+            ->setDataConnection($this->getDataConnection());
+        
+        $oldInstaller = new SqlSchemaInstaller($coreAppSelector);
+        $oldInstaller
+            ->setDataConnection($this->getDataConnection())
+            ->setSqlFolderName($dbInstaller->getSqlFolderName());
+        
+        $installer->addInstaller($oldInstaller);
+        $installer->addInstaller($dbInstaller);
+        
         return $installer;
     }
     
