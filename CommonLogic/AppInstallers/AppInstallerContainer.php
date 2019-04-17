@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Interfaces\AppInstallerInterface;
-use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Interfaces\InstallerContainerInterface;
 
@@ -11,39 +10,10 @@ use exface\Core\Interfaces\InstallerContainerInterface;
  * @author Andrej Kabachnik
  *        
  */
-class AppInstallerContainer implements AppInstallerInterface, InstallerContainerInterface
+class AppInstallerContainer extends AbstractAppInstaller implements AppInstallerInterface, InstallerContainerInterface
 {
 
-    private $app = null;
-
     private $installers = array();
-
-    public function __construct(AppInterface $app)
-    {
-        $this->app = $app;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\AppInstallerInterface::getApp()
-     */
-    public function getApp()
-    {
-        return $this->app;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
-     */
-    public function getWorkbench()
-    {
-        return $this->getApp()->getWorkbench();
-    }
 
     /**
      *
@@ -54,23 +24,23 @@ class AppInstallerContainer implements AppInstallerInterface, InstallerContainer
     public final function install($source_absolute_path)
     {
         $result = '';
-        // TODO Dispatch App.Install.Before
+        
         foreach ($this->getInstallers() as $installer) {
             $res = $installer->install($source_absolute_path);
             $result .= rtrim($res, " .\n\r") . '. ';
         }
-        // TODO Dispatch App.Install.After
+        
         return $result;
     }
 
     public final function update($source_absolute_path)
     {
         $result = '';
-        // TODO Dispatch App.Install.Before
+        
         foreach ($this->getInstallers() as $installer) {
             $result .= $installer->update($source_absolute_path);
         }
-        // TODO Dispatch App.Install.After
+        
         return $result;
     }
 
@@ -87,18 +57,17 @@ class AppInstallerContainer implements AppInstallerInterface, InstallerContainer
      */
     public final function backup($destination_absolute_path)
     {
-        $exface = $this->getWorkbench();
-        $app = $this->getApp();
-        $appSelector = $app->getSelector();
-        $appPath = $exface->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $appSelector->getFolderRelativePath();
+        $fm = $this->getWorkbench()->filemanager();
+        $appSelector = $this->getSelectorInstalling();
+        $appPath = $fm->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $appSelector->getFolderRelativePath();
         $result = '';
-        $app->getWorkbench()->filemanager()->pathConstruct($destination_absolute_path);
-        // TODO Dispatch App.Backup.Before
-        $exface->filemanager()->copyDir($appPath, $destination_absolute_path);
+        $this->getWorkbench()->filemanager()->pathConstruct($destination_absolute_path);
+        $fm->copyDir($appPath, $destination_absolute_path);
+        
         foreach ($this->getInstallers() as $installer) {
             $result .= $installer->backup($destination_absolute_path);
         }
-        // TODO Dispatch App.Backup.After
+        
         $result .= '';
         return $result;
     }
