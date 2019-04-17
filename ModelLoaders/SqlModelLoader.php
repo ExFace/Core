@@ -45,6 +45,7 @@ use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
 use exface\Core\Factories\DataSourceFactory;
 use exface\Core\Factories\DataConnectionFactory;
 use exface\Core\CommonLogic\Selectors\DataConnectorSelector;
+use exface\Core\Exceptions\DataSources\DataConnectionNotFoundError;
 
 /**
  * 
@@ -465,6 +466,7 @@ class SqlModelLoader implements ModelLoaderInterface
         $sql = '
 			SELECT
 				ds.name as data_source_name,
+				ds.alias as data_source_alias,
 				ds.custom_query_builder,
 				ds.default_query_builder,
 				ds.readable_flag AS data_source_readable,
@@ -519,23 +521,34 @@ class SqlModelLoader implements ModelLoaderInterface
             $data_source->setQueryBuilderAlias($ds['custom_query_builder'] ? $ds['custom_query_builder'] : $ds['default_query_builder']);
         }
         
+        if (! $ds['data_connection_alias']) {
+            throw new DataConnectionNotFoundError('No data connection found for data source "' . $ds['data_source_name'] . '" (' . $ds['data_source_alias'] . ')');
+        }
+        
         // Give the data source a connection
         // First see, if the connection had been already loaded previously
         foreach ($this->connections_loaded as $conn) {
-            if ($conn->getSelector()->toString() === $ds['data_connector']) {
+            if ($conn->getSelector() && $conn->getSelector()->toString() === $ds['data_connection_oid']) {
                 $data_source->setConnection($conn);
                 return $data_source;
             }
         }
         
-        $data_source->setConnection($this->createDataConnectionFromDbRow($ds));
+        // If not cached, instantiate the connection and put it into the cache
+        $connection = $this->createDataConnectionFromDbRow($ds);
+        $data_source->setConnection($connection);
+        $this->connections_loaded[] = $connection;
         
         return $data_source;
     }
     
     protected function createDataConnectionFromDbRow(array $row) : DataConnectionInterface
     {
-        $connectorSelector = new DataConnectorSelector($this->getWorkbench(), $row['data_connector']);
+        try {
+            $connectorSelector = new DataConnectorSelector($this->getWorkbench(), $row['data_connector']);
+        } catch (\Throwable $e) {
+            throw new DataConnectionNotFoundError('Invalid or missing connector prototype in data connection "' . $row['data_connection_name'] . '" (' . $row['data_connection_alias'] . ')!');
+        }
         // Merge config from the connection and the user credentials
         $config = UxonObject::fromJson($row['data_connector_config']);
         $config = $config->extend(UxonObject::fromJson($row['user_connector_config']));
