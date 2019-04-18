@@ -8,14 +8,13 @@ The core includes a couple of installer classes for common purposes like maintai
 
 ## Adding an Installer to an app
 
-To add a custom installer to an app create a PHP file in the app main folder, named like the app without spaces and add 'App' to it. For example for an App named `Demo MES` the PHP installation needs to be named `DemoMESApp.php`.
+To add a custom installer to an app create a PHP file in the app main folder, named like the app without spaces and add 'App' to it. For example for an App named `Demo MES` the PHP installation file needs to be named `DemoMESApp.php`.  
 This PHP file contains the class named like the file which extends the class `App`. In this class override the function `public function getInstaller()` from the `App` class.
 
 To include the base installer in the App call the function `$installer = parent::getInstaller($injected_installer);`.
 
-To add an installer to an app create a new object of the desired installer, for example like: `$schema_installer = new MySqlDatabaseInstaller($this->getSelector())`.
-Configure the new installer and then add it to the AppInstaller like
-`$installer->addInstaller($schema_installer);`
+To add an installer to an app create a new object of the desired installer, for example like: `$schema_installer = new MySqlDatabaseInstaller($this->getSelector())`.  
+Configure the new installer and then add it to the AppInstaller like: `$installer->addInstaller($schema_installer);`
 
 It is possible to add multiple installers like that to the AppInstaller.
 
