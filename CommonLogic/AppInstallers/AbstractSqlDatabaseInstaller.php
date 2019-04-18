@@ -19,21 +19,18 @@ use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
  * 
  * 1) Make sure, your app includes the following folder structure: Install/Sql/%SqlDbType%/
  * 2) Write specific Installer for your Database Version (for example MySQL) extending this Abstract Class
- * and add that Installer to the getInstaller() method of your app as follows:
+ * and add that Installer to the getInstaller() method of your app similar to as follows:
  *
  
  // ...receding installers here...
         
         $schema_installer = new MySqlDatabaseInstaller($this->getSelector());
+        $dataSource = DataSourceFactory::createFromModel($this->getWorkbench(), %SourceUid%);
         $schema_installer
             ->setFoldersWithMigrations(['InitDB','Migrations', 'DemoData'])
-            ->setFoldersWithStaticSql(['Views']);
-        try {
-            $schema_installer->setDataConnection(...);
-            $installer->addInstaller($schema_installer);
-        } catch (MetaObjectNotFoundError $e) {
-            $this->getWorkbench()->getLogger()->warning('Cannot init SQLDatabaseInstaller for app ' . $this->getAliasWithNamespace() . ': no model there yet!');
-        }
+            ->setFoldersWithStaticSql(['Views'])
+            ->setDataConnection($dataSource->getConnection());
+        $installer->addInstaller($schema_installer);
  
  // ...subsequent installers here...
  
@@ -149,6 +146,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * Method to check if Database already exists, if not, needs to create it.
      * Custom for every SQL Database Type.
      * 
+     * @param SqlDataConnectorInterface
      * @return string
      */
     abstract protected function ensureDatabaseExists(SqlDataConnectorInterface $connection) : string;
@@ -174,7 +172,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
 
     /**
-     * Default: %app_folder%/Install/sql
+     * Default: %app_folder%/Install/Sql
      *
      * @return string
      */
@@ -204,8 +202,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
-     * Returns the configuration key used to store the migrations in
-     * the app, that this installer should skip when installing.
+     * Returns the configuration key used to store the file names of
+     * migrations in the app, that this installer should skip when installing.
      * 
      * Default: INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS
      * 
@@ -217,8 +215,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
-     * Changes the name of the configuration key to be used to the migrations that
-     * should be skipped during installation.
+     * Changes the name of the configuration key to be used to get the file names
+     * for the migrations that should be skipped during installation.
      * 
      * Default: INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS.
      *
@@ -232,7 +230,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
-     * Gets the array from the config file that
+     * Gets the array with the file names for the migrations that should be skipped
+     * during installation from the config file.
      * 
      * @return array
      */
@@ -333,6 +332,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
+     * Function to perform migrations on the database.
      * 
      * @param SqlMigration $migration
      * @param SqlDataConnectorInterface $connection
@@ -341,6 +341,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     abstract protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration;
     
     /**
+     * Function to rollback migrations in Database
      * 
      * @param SqlMigration $migration
      * @param SqlDataConnectorInterface $connection
@@ -349,6 +350,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     abstract protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration;
     
     /**
+     * Function to get all on the database currently applied migrations
      *
      * @param SqlDataConnectorInterface $connection
      * @return SqlMigration[]
@@ -361,7 +363,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * and all subfolders attempting to execute the SQL scripts stored in those files
      *
      * @param string $source_absolute_path
-     *        string $folder_name
+     * @param string $folder_name
      * @return string
      */    
     protected function runSqlFromFilesInFolder(string $source_absolute_path, array $folders) : string
@@ -604,7 +606,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
-     * Transforms the given $path to the migration name by cutting of the beginning of the $path string till the SqlDbType folder
+     * Transforms the given $path to the migration name by cutting of the beginning
+     * of the $path string till the SqlDbType folder
      * 
      * @param string $path
      * @return string
