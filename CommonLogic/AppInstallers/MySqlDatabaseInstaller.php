@@ -106,10 +106,9 @@ SQL;
     }
     
     /**
-     * Gets all migrations from database that are currently UP/applied
-     *
-     * @param SqlDataConnectorInterface $connection
-     * @return SqlMigration[]
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::getMigrationsFromDb()
      */
     protected function getMigrationsFromDb(SqlDataConnectorInterface $connection) : array
     {
@@ -133,11 +132,9 @@ SQL;
     }
     
     /**
-     * UPs/applies the Migration $migration and writes Log into migrations table
-     *
-     * @param SqlMigration $migration
-     * @param SqlDataConnectorInterface $connection
-     * @return SqlMigration[]
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::migrateUp()
      */
     protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration
     {
@@ -193,11 +190,9 @@ SQL;
     }  
            
     /**
-     * DOWNs/Reverts the Migration $migration and writes Log into migrations table
-     *
-     * @param SqlMigration $migration
-     * @param SqlDataConnectorInterface $connection
-     * @return SqlMigration[]
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::migrateDown()
      */
     protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration
     {
