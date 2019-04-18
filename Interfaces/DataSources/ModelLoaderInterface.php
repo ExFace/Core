@@ -20,6 +20,8 @@ use exface\Core\Interfaces\Selectors\ModelLoaderSelectorInterface;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\Exceptions\UserNotFoundError;
 use exface\Core\Exceptions\UserNotUniqueError;
+use exface\Core\Interfaces\Selectors\DataSourceSelectorInterface;
+use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
 
 interface ModelLoaderInterface
 {
@@ -80,14 +82,13 @@ interface ModelLoaderInterface
     public function loadRelation(MetaObjectInterface $object, $relation_alias);
 
     /**
-     * Fills th given data source with model data (query builder, connection configuration, user credentials, etc.)
-     *
-     * @param DataSourceInterface $data_source            
-     * @param string $data_connection_id_or_alias   
-     *          
+     * Loads the models for the data source and the corresponding connection and returns the resulting instances.
+     * 
+     * @param DataSourceSelectorInterface $selector
+     * @param DataConnectionSelectorInterface $connectionSelector
      * @return DataSourceInterface
      */
-    public function loadDataSource(DataSourceInterface $data_source, $data_connection_id_or_alias = null);
+    public function loadDataSource(DataSourceSelectorInterface $selector, DataConnectionSelectorInterface $connectionSelector = null) : DataSourceInterface;
 
     /**
      * Returns the data connection, that is used to fetch model data

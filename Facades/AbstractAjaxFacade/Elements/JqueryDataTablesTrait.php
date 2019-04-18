@@ -11,6 +11,7 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Widgets\Input;
 use exface\Core\Widgets\DataTableResponsive;
+use exface\Core\Widgets\DataColumn;
 
 /**
  * This trait contains common methods for facade elements using the jQuery DataTables library.
@@ -274,35 +275,48 @@ JS;
 		return $output;
     }
     
-    public function buildJsValueGetter($column = null, $row = null)
+    public function buildJsValueGetter($dataColumnName = null, $rowNr = null)
     {
         $widget = $this->getWidget();
         $output = $this->getId() . "_table";
-        if (is_null($row)) {
+        if (is_null($rowNr)) {
             $output .= ".rows('.selected').data()";
         } else {
             // TODO
         }
         
         $uid_column = $widget->getUidColumn();
-        if (is_null($column)) {
+        if ($dataColumnName === null) {
             $column_widget = $uid_column;
         } else {
             // FIXME #uid-column-missing remove this ugly if once UID column are added to tables by default again
-            if ($column == $uid_column->getDataColumnName()) {
+            if ($dataColumnName == $uid_column->getDataColumnName()) {
                 $column_widget = $uid_column;
             } else {
-                $column_widget = $widget->getColumnByDataColumnName($column);
+                $column_widget = $widget->getColumnByDataColumnName($dataColumnName);
             }
         }
         
         if (! $column_widget) {
-            throw new FacadeOutputError('Column "' . $column . '" of ' . $widget->getWidgetType() . ' "' . $widget->getCaption() . '" required for in-page scripting is missing!');
+            throw new FacadeOutputError('Column "' . $dataColumnName . '" of ' . $widget->getWidgetType() . ' "' . $widget->getCaption() . '" required for in-page scripting is missing!');
         }
         
         $column_name = $column_widget->getDataColumnName();
         $delimiter = $column_widget->getAttribute()->getValueListDelimiter();
         return "{$output}.pluck('{$column_name}').join('{$delimiter}')";
+    }
+    
+    public function buildJsValueSetter($value, $dataColumnName = null, $rowNr = null)
+    {
+        if ($dataColumnName === null) {
+            $dataColumnName = $this->getWidget()->getUidColumn()->getDataColumnName();
+        }
+        
+        if ($rowNr === null) {
+            $rowNr = $this->getId() . "_table.rows('.selected').indexes()[0]";
+        }
+        
+        return $this->getId() . "_table.cell({$rowNr}, '{$dataColumnName}:name').data({$value}).nodes().to$().fadeOut(0, function(){ $(this).fadeIn(200); });";
     }
     
     /**
@@ -775,6 +789,42 @@ JS;
         }
         
         return $includes;
+    }
+    
+    /**
+     * Returns JS code to select the first row in a table, that has the given value in the specified column.
+     * 
+     * The generated code will search the current values of the $column for an exact match
+     * for the value of $valueJs JS variable, mark the first matching row as selected and
+     * scroll to it to ensure it is visible to the user.
+     * 
+     * The row index (starting with 0) is saved to the JS variable specified in $rowIdxJs.
+     * 
+     * If the $valueJs is not found, $onNotFoundJs will be executed and $rowIdxJs will be
+     * set to -1.
+     * 
+     * @param DataColumn $column
+     * @param string $valueJs
+     * @param string $onNotFoundJs
+     * @param string $rowIdxJs
+     * @return string
+     */
+    public function buildJsSelectRowByValue(DataColumn $column, string $valueJs, string $onNotFoundJs = '', string $rowIdxJs = 'rowIdx') : string
+    {
+        return <<<JS
+
+var {$rowIdxJs} = function() {
+    var rowIdx = {$this->getId()}_table.column('{$column->getAttributeAlias()}:name').data().indexOf({$valueJs});
+    if (rowIdx == -1){
+		{$onNotFoundJs};
+	} else {
+        // {$this->getId()}_table.row(rowIdx).to$().scrollIntoView();
+        {$this->getId()}_table.rows(rowIdx).select();
+	}
+    return rowIdx;
+}();
+
+JS;
     }
 }
 ?>

@@ -10,6 +10,8 @@ use exface\Core\Actions\RefreshWidget;
 use exface\Core\DataTypes\StringDataType;
 
 trait JqueryButtonTrait {
+    
+    private $onSuccessJs = [];
 
     protected function buildJsInputRefresh(Button $widget, $input_element)
     {
@@ -191,6 +193,7 @@ trait JqueryButtonTrait {
 												}
 	                       					}
 										}
+                                        {$this->buildJsOnSuccessScript()}
 				                    } else {
 										" . $this->buildJsBusyIconHide() . "
 										" . $this->buildJsShowMessageError('response.error', '"Server error"') . "
@@ -325,6 +328,26 @@ JS;
     public function getInputElement()
     {
         return $this->getFacade()->getElement($this->getWidget()->getInputWidget());
+    }
+    
+    /**
+     * 
+     * @param string $js
+     * @return AbstractJqueryElement
+     */
+    public function addOnSuccessScript(string $js) : AbstractJqueryElement
+    {
+        $this->onSuccessJs[] = $js;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function buildJsOnSuccessScript() : string
+    {
+        return implode("\n\n", array_unique($this->onSuccessJs));
     }
 }
 ?>

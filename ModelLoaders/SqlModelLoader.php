@@ -33,17 +33,24 @@ use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
 use exface\Core\Interfaces\Selectors\ModelLoaderSelectorInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
-use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
 use exface\Core\Exceptions\Model\MetaRelationBrokenError;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\UserNotFoundError;
 use exface\Core\Exceptions\UserNotUniqueError;
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\DataTypes\RelationDataType;
 use exface\Core\DataTypes\RelationCardinalityDataType;
+use exface\Core\Interfaces\Selectors\DataSourceSelectorInterface;
+use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
+use exface\Core\Factories\DataSourceFactory;
+use exface\Core\Factories\DataConnectionFactory;
+use exface\Core\CommonLogic\Selectors\DataConnectorSelector;
 
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class SqlModelLoader implements ModelLoaderInterface
 {
     private $data_connection = null;
@@ -51,6 +58,8 @@ class SqlModelLoader implements ModelLoaderInterface
     private $data_types_by_uid = [];
     
     private $data_type_uids = [];
+    
+    private $connections_loaded = [];
     
     private $selector = null;
     
@@ -430,90 +439,78 @@ class SqlModelLoader implements ModelLoaderInterface
         return $attr;
     }
 
-    public function loadDataSource(DataSourceInterface $data_source, $data_connection_id_or_alias = NULL)
+    public function loadDataSource(DataSourceSelectorInterface $selector, DataConnectionSelectorInterface $connectionSelector = null) : DataSourceInterface
     {
-        $exface = $data_source->getWorkbench();
-        // If the data connector was not set for this data source previously, load it now
-        if (! $data_source->getDataConnectorAlias()) {
-            if ($data_connection_id_or_alias) {
-                // See if a (hex-)ID is given or an alias. The latter will need to be wrapped in qotes!
-                if (! $this->isUid($data_connection_id_or_alias)) {
-                    $data_connection_id_or_alias = '"' . $data_connection_id_or_alias . '"';
-                }
-                $join_on = "(dc.oid = " . $data_connection_id_or_alias . " OR dc.alias = " . $data_connection_id_or_alias . ")";
-            } else {
-                $join_on = 'IF (ds.custom_connection_oid IS NOT NULL, ds.custom_connection_oid, ds.default_connection_oid) = dc.oid';
+        $exface = $selector->getWorkbench();
+        
+        if ($connectionSelector !== null) {
+            // See if a (hex-)ID is given or an alias. The latter will need to be wrapped in qotes!
+            if (false === $connectionSelector->isUid()) {
+                $data_connection_id_or_alias = '"' . $connectionSelector->toString() . '"';
             }
-            
-            // If there is a user logged in, fetch his specific connctor config (credentials)
-            if ($user_name = $data_source->getWorkbench()->getContext()->getScopeUser()->getUsername()) {
-                $join_user_credentials = ' LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.user_credentials_oid = uc.oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = "' . $user_name . '") ON dcc.data_connection_oid = dc.oid';
-                $select_user_credentials = ', uc.data_connector_config AS user_connector_config';
+            $join_on = "(dc.oid = " . $data_connection_id_or_alias . " OR dc.alias = " . $data_connection_id_or_alias . ")";
+        } else {
+            $join_on = 'IF (ds.custom_connection_oid IS NOT NULL, ds.custom_connection_oid, ds.default_connection_oid) = dc.oid';
+        }
+        
+        // If there is a user logged in, fetch his specific connctor config (credentials)
+        if ($user_name = $exface->getContext()->getScopeUser()->getUsername()) {
+            $join_user_credentials = ' LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.user_credentials_oid = uc.oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = "' . $user_name . '") ON dcc.data_connection_oid = dc.oid';
+            $select_user_credentials = ', uc.data_connector_config AS user_connector_config';
+        }
+        
+        // The following IF is needed to install SQL update 8 introducing new columns in the
+        // data source table. If the updated had not yet been installed, these columns are
+        // not selected.
+        $sql = '
+			SELECT
+				ds.name as data_source_name,
+				ds.custom_query_builder,
+				ds.default_query_builder,
+				ds.readable_flag AS data_source_readable,
+				ds.writable_flag AS data_source_writable,
+				dc.read_only_flag AS connection_read_only,
+				' . $this->buildSqlUuidSelector('dc.oid') . ' AS data_connection_oid,
+				dc.alias AS data_connection_alias,
+				dc.name AS data_connection_name,
+				dc.data_connector,
+				dc.data_connector_config,
+				dc.filter_context_uxon,
+                a.app_alias AS data_connection_app_alias' . $select_user_credentials . '
+			FROM exf_data_source ds 
+                LEFT JOIN exf_data_connection dc ON ' . $join_on . '
+                ' . $join_user_credentials . '
+                LEFT JOIN exf_app a ON dc.app_oid = a.oid
+			WHERE ds.oid = ' . $selector->toString();
+        $query = $this->getDataConnection()->runSql($sql);
+        $ds = $query->getResultArray();
+        if (count($ds) > 1) {
+            throw new RangeException('Multiple user credentials found for data connection "' . $data_connection_id_or_alias . '" and user "' . $user_name . '"!', '6T4R8UM');
+        } elseif (count($ds) != 1) {
+            throw new RangeException('Cannot find data connection "' . $data_connection_id_or_alias . '"!', '6T4R97R');
+        }
+        $ds = $ds[0];
+        
+        $data_source = DataSourceFactory::createFromSelector($selector);
+        $data_source->setName($ds['data_source_name']);
+        
+        if (! is_null($ds['data_source_readable'])){
+            $data_source->setReadable($ds['data_source_readable']);
+        }
+        if (! is_null($ds['data_source_writable'])){
+            $data_source->setWritable($ds['data_source_writable'] && ! $ds['connection_read_only']);
+        }
+        
+        // Some data connections may have their own filter context. Add them to the application context scope
+        if ($ds['filter_context_uxon'] && $filter_context = UxonObject::fromJson($ds['filter_context_uxon'])) {
+            // If there is only one filter, make an array out of it (needed for backwards compatibility)
+            if (! $filter_context->isArray()){
+                $filter_context = new UxonObject([$filter_context->toArray()]);
             }
-            
-            // The following IF is needed to install SQL update 8 introducing new columns in the
-            // data source table. If the updated had not yet been installed, these columns are
-            // not selected.
-            // TODO remove the IF leaving only the ELSE after 01.01.2018
-            if ($data_source->getWorkbench()->getConfig()->getOption('INSTALLER.SQL_UPDATE_LAST_PERFORMED_ID') < 8){
-                $sql = '
-				SELECT
-					ds.name as data_source_name,
-					ds.custom_query_builder,
-					ds.default_query_builder,
-					dc.read_only_flag AS connection_read_only,
-					' . $this->buildSqlUuidSelector('dc.oid') . ' AS data_connection_oid,
-					dc.name,
-					dc.data_connector,
-					dc.data_connector_config,
-					dc.filter_context_uxon' . $select_user_credentials . '
-				FROM exf_data_source ds LEFT JOIN exf_data_connection dc ON ' . $join_on . $join_user_credentials . '
-				WHERE ds.oid = ' . $data_source->getId();
-            } else {
-                $sql = '
-				SELECT
-					ds.name as data_source_name,
-					ds.custom_query_builder,
-					ds.default_query_builder,
-					ds.readable_flag AS data_source_readable,
-					ds.writable_flag AS data_source_writable,
-					dc.read_only_flag AS connection_read_only,
-					' . $this->buildSqlUuidSelector('dc.oid') . ' AS data_connection_oid,
-					dc.name,
-					dc.data_connector,
-					dc.data_connector_config,
-					dc.filter_context_uxon' . $select_user_credentials . '
-				FROM exf_data_source ds LEFT JOIN exf_data_connection dc ON ' . $join_on . $join_user_credentials . '
-				WHERE ds.oid = ' . $data_source->getId();
-            }
-            $query = $this->getDataConnection()->runSql($sql);
-            $ds = $query->getResultArray();
-            if (count($ds) > 1) {
-                throw new RangeException('Multiple user credentials found for data connection "' . $data_connection_id_or_alias . '" and user "' . $user_name . '"!', '6T4R8UM');
-            } elseif (count($ds) != 1) {
-                throw new RangeException('Cannot find data connection "' . $data_connection_id_or_alias . '"!', '6T4R97R');
-            }
-            $ds = $ds[0];
-            $data_source->setDataConnectorAlias($ds['data_connector']);
-            $data_source->setName($ds['data_source_name']);
-            $data_source->setConnectionId($ds['data_connection_oid']);
-            if (! is_null($ds['data_source_readable'])){
-                $data_source->setReadable($ds['data_source_readable']);
-            }
-            if (! is_null($ds['data_source_writable'])){
-                $data_source->setWritable($ds['data_source_writable'] && ! $ds['connection_read_only']);
-            }
-            // Some data connections may have their own filter context. Add them to the application context scope
-            if ($ds['filter_context_uxon'] && $filter_context = UxonObject::fromJson($ds['filter_context_uxon'])) {
-                // If there is only one filter, make an array out of it (needed for backwards compatibility)
-                if (! $filter_context->isArray()){
-                    $filter_context = new UxonObject([$filter_context->toArray()]);
-                }
-                // Register the filters in the application context scope
-                foreach ($filter_context as $filter) {
-                    $condition = ConditionFactory::createFromUxonOrArray($exface, $filter);
-                    $data_source->getWorkbench()->getContext()->getScopeApplication()->getFilterContext()->addCondition($condition);
-                }
+            // Register the filters in the application context scope
+            foreach ($filter_context as $filter) {
+                $condition = ConditionFactory::createFromUxonOrArray($exface, $filter);
+                $data_source->getWorkbench()->getContext()->getScopeApplication()->getFilterContext()->addCondition($condition);
             }
         }
         
@@ -522,13 +519,91 @@ class SqlModelLoader implements ModelLoaderInterface
             $data_source->setQueryBuilderAlias($ds['custom_query_builder'] ? $ds['custom_query_builder'] : $ds['default_query_builder']);
         }
         
-        // The configuration of the connection: if not given, get the configuration from DB
-        $data_source->setConnectionId($ds['data_connection_oid']);
-        $config = UxonObject::fromJson($ds['data_connector_config']);
-        $config = $config->extend(UxonObject::fromJson($ds['user_connector_config']));
-        $data_source->setConnectionConfig($config);
+        // Give the data source a connection
+        // First see, if the connection had been already loaded previously
+        foreach ($this->connections_loaded as $conn) {
+            if ($conn->getSelector()->toString() === $ds['data_connector']) {
+                $data_source->setConnection($conn);
+                return $data_source;
+            }
+        }
+        
+        $data_source->setConnection($this->createDataConnectionFromDbRow($ds));
         
         return $data_source;
+    }
+    
+    protected function createDataConnectionFromDbRow(array $row) : DataConnectionInterface
+    {
+        $connectorSelector = new DataConnectorSelector($this->getWorkbench(), $row['data_connector']);
+        // Merge config from the connection and the user credentials
+        $config = UxonObject::fromJson($row['data_connector_config']);
+        $config = $config->extend(UxonObject::fromJson($row['user_connector_config']));
+        // Instantiate the connection
+        $connection = DataConnectionFactory::create(
+            $connectorSelector,
+            $config,
+            $row['data_connection_oid'],
+            $row['data_connection_alias'],
+            $row['data_connection_app_alias'],
+            $row['data_connection_name'],
+            $row['connection_read_only']
+            );
+        return $connection;
+    }
+    
+    public function loadDataConnection(DataConnectionSelectorInterface $selector) : DataConnectionInterface
+    {
+        foreach ($this->connections_loaded as $conn) {
+            if ($conn->getSelector()->toString() === $selector->toString()) {
+                return $conn;
+            }
+        }
+        
+        $exface = $selector->getWorkbench();
+        // See if a (hex-)ID is given or an alias. The latter will need to be wrapped in qotes!
+        $data_connection_id_or_alias = $selector->toString();
+        if (false === $selector->isUid()) {
+            $data_connection_id_or_alias = '"' . $selector->toString() . '"';
+        }
+        $filter = "(dc.oid = " . $data_connection_id_or_alias . " OR dc.alias = " . $data_connection_id_or_alias . ")";
+        
+        // If there is a user logged in, fetch his specific connctor config (credentials)
+        if ($user_name = $exface->getContext()->getScopeUser()->getUsername()) {
+            $join_user_credentials = ' LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.user_credentials_oid = uc.oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = "' . $user_name . '") ON dcc.data_connection_oid = dc.oid';
+            $select_user_credentials = ', uc.data_connector_config AS user_connector_config';
+        }
+        
+        // The following IF is needed to install SQL update 8 introducing new columns in the
+        // data source table. If the updated had not yet been installed, these columns are
+        // not selected.
+        $sql = '
+			SELECT
+				dc.read_only_flag AS connection_read_only,
+				' . $this->buildSqlUuidSelector('dc.oid') . ' AS data_connection_oid,
+				dc.alias AS data_connection_alias,
+				dc.name AS data_connection_name,
+				dc.data_connector,
+				dc.data_connector_config,
+				dc.filter_context_uxon,
+                a.app_alias AS data_connection_app_alias' . $select_user_credentials . '
+			FROM exf_data_connection dc
+                ' . $join_user_credentials . '
+                LEFT JOIN exf_app a ON dc.app_oid = a.oid
+			WHERE ' . $filter;
+        $query = $this->getDataConnection()->runSql($sql);
+        $ds = $query->getResultArray();
+        if (count($ds) > 1) {
+            throw new RangeException('Multiple user credentials found for data connection "' . $data_connection_id_or_alias . '" and user "' . $user_name . '"!', '6T4R8UM');
+        } elseif (count($ds) != 1) {
+            throw new RangeException('Cannot find data connection "' . $data_connection_id_or_alias . '"!', '6T4R97R');
+        }
+        $ds = $ds[0];
+        
+        $conn = $this->createDataConnectionFromDbRow($ds);
+        
+        $this->connections_loaded[] = $conn;
+        return $conn;
     }
 
     /**
