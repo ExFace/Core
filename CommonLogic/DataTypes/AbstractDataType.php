@@ -13,11 +13,12 @@ use exface\Core\Interfaces\ValueObjectInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Traits\AliasTrait;
 use exface\Core\Factories\DataTypeFactory;
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\CommonLogic\Traits\MetaModelPrototypeTrait;
 
 abstract class AbstractDataType implements DataTypeInterface
 {
     use ImportUxonObjectTrait;
+    use MetaModelPrototypeTrait;
     use AliasTrait {
         getAlias as getAliasFromSelector;
     }
@@ -278,15 +279,6 @@ abstract class AbstractDataType implements DataTypeInterface
     {
         $this->app = $app;
         return $this;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaModelPrototypeInterface::getPrototypeClassName()
-     */
-    public static function getPrototypeClassName()
-    {
-        return "\\" . __CLASS__;
     }
     
     /**

@@ -47,12 +47,15 @@
             },
             {
                 "attribute_alias": "CREATED_BY_USER__LABEL"
+            },
+            {
+                "attribute_alias": "CREATED_ON"
             }
         ],
         "sorters": [
             {
-                "attribute_alias": "LABEL",
-                "direction": "ASC"
+                "attribute_alias": "CREATED_ON",
+                "direction": "desc"
             }
         ],
         "buttons": [

@@ -21,7 +21,7 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
  * @author Andrej Kabachnik
  *
  */
-abstract class ActionFactory extends AbstractSelectableComponentFactory
+abstract class ActionFactory extends AbstractStaticFactory
 {
 
     /**

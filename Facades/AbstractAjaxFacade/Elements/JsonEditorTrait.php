@@ -164,8 +164,8 @@ JS;
     		}
     		var path = node.getPath();
     		var prop = path[path.length-1];
-    		if (editor._autosuggestLastResult && editor._autosuggestLastResult.facades) {
-    			var tpl = editor._autosuggestLastResult.facades[prop];
+    		if (editor._autosuggestLastResult && editor._autosuggestLastResult.templates) {
+    			var tpl = editor._autosuggestLastResult.templates[prop];
     			if (tpl) {
     				var val = JSON.parse(tpl);
     				node.setValue(val, (Array.isArray(val) ? 'array' : 'object'));

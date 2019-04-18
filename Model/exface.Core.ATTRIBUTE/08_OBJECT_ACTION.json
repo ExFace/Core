@@ -1,0 +1,103 @@
+{
+    "object_alias": "exface.Core.OBJECT_ACTION",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        },
+        {
+            "name": "ACTION_PROTOTYPE",
+            "attribute_alias": "ACTION_PROTOTYPE"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "SHORT_DESCRIPTION",
+            "attribute_alias": "SHORT_DESCRIPTION"
+        },
+        {
+            "name": "CONFIG_UXON",
+            "attribute_alias": "CONFIG_UXON"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "USE_IN_OBJECT_BASKET_FLAG",
+            "attribute_alias": "USE_IN_OBJECT_BASKET_FLAG"
+        },
+        {
+            "name": "DOCS",
+            "attribute_alias": "DOCS"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2019-04-14 07:13:11",
+            "MODIFIED_ON": "2019-04-14 07:18:02",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e95e84baee610e9677e4b318306b9a",
+            "OBJECT": "0x32350000000000000000000000000000",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "ALIAS": "QuickEditAttributes",
+            "NAME": "Quick Edit",
+            "SHORT_DESCRIPTION": "Tabular editor for selected attributes",
+            "CONFIG_UXON": "{\"icon\":\"table\",\"maximize\":true,\"object_alias\":\"exface.Core.ATTRIBUTE\",\"prefill_with_input_Data\":true,\"widget\":{\"widget_type\":\"Dialog\",\"object_alias\":\"exface.Core.ATTRIBUTE\",\"widgets\":[{\"widget_type\":\"DataTable\",\"hide_header\":true,\"editable\":true,\"paginate\":false,\"filters\":[{\"attribute_alias\":\"OBJECT\",\"widget_type\":\"InputHidden\",\"required\":true}],\"columns\":[{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"DATA_ADDRESS\",\"width_max\":\"300px\"},{\"attribute_alias\":\"DISPLAYORDER\",\"caption\":\"=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTES.DISPLAY_ORDER')\"},{\"attribute_alias\":\"READABLEFLAG\"},{\"attribute_alias\":\"WRITABLEFLAG\"},{\"attribute_alias\":\"REQUIREDFLAG\"},{\"attribute_alias\":\"EDITABLEFLAG\"},{\"attribute_alias\":\"HIDDENFLAG\"},{\"attribute_alias\":\"SORTABLEFLAG\"},{\"attribute_alias\":\"FILTERABLEFLAG\"},{\"attribute_alias\":\"AGGREGATABLEFLAG\"},{\"attribute_alias\":\"UIDFLAG\",\"caption\":\"=TRANSLATE('exface.Core', 'GLOBAL.MODEL.UID')\"},{\"attribute_alias\":\"LABELFLAG\",\"caption\":\"=TRANSLATE('exface.Core', 'GLOBAL.MODEL.LABEL')\"},{\"attribute_alias\":\"DEFAULT_VALUE\"},{\"attribute_alias\":\"FIXED_VALUE\"},{\"attribute_alias\":\"SHORT_DESCRIPTION\",\"width_max\":\"400px\"}]}],\"buttons\":[{\"action_alias\":\"exface.Core.UpdateData\",\"align\":\"opposite\",\"visibility\":\"promoted\"}]}}",
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "DOCS": ""
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.OBJECT_ACTION"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}
