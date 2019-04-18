@@ -9,37 +9,59 @@
     "intro": "",
     "replaces_page_alias": null,
     "contents": {
-        "widget_type": "DataTable",
-        "object_alias": "exface.Core.LOG",
-        "filters": [
+        "widget_type": "SplitHorizontal",
+        "panels": [
             {
-                "attribute_alias": "NAME"
+                "caption": "System Log",
+                "width": "50%",
+                "widgets": [
+                    {
+                        "widget_type": "DataTable",
+                        "object_alias": "exface.Core.LOG",
+                        "filters": [
+                            {
+                                "attribute_alias": "NAME"
+                            },
+                            {
+                                "attribute_alias": "PATHNAME_RELATIVE"
+                            }
+                        ],
+                        "columns": [
+                            {
+                                "attribute_alias": "NAME"
+                            },
+                            {
+                                "attribute_alias": "PATHNAME_RELATIVE"
+                            },
+                            {
+                                "attribute_alias": "SIZE"
+                            }
+                        ],
+                        "sorters": [
+                            {
+                                "attribute_alias": "NAME",
+                                "direction": "DESC"
+                            }
+                        ],
+                        "buttons": [
+                            {
+                                "action_alias": "exface.Core.ShowObjectInfoDialog",
+                                "bind_to_double_click": true
+                            }
+                        ]
+                    }
+                ]
             },
             {
-                "attribute_alias": "PATHNAME_RELATIVE"
-            }
-        ],
-        "columns": [
-            {
-                "attribute_alias": "NAME"
-            },
-            {
-                "attribute_alias": "PATHNAME_RELATIVE"
-            },
-            {
-                "attribute_alias": "SIZE"
-            }
-        ],
-        "sorters": [
-            {
-                "attribute_alias": "NAME",
-                "direction": "DESC"
-            }
-        ],
-        "buttons": [
-            {
-                "action_alias": "exface.Core.ShowObjectInfoDialog",
-                "bind_to_double_click": true
+                "caption": "Other Logs",
+                "width": "50%",
+                "columns_in_grid": 2,
+                "widgets": [
+                    {
+                        "widget_type": "NavTiles",
+                        "object_alias": "exface.Core.PAGE"
+                    }
+                ]
             }
         ]
     }
