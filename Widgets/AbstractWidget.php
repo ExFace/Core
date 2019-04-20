@@ -30,6 +30,8 @@ use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\CommonLogic\Selectors\WidgetSelector;
 
 /**
  * Basic ExFace widget
@@ -302,18 +304,29 @@ abstract class AbstractWidget implements WidgetInterface
     }
 
     /**
-     * Sets the widget type.
-     * Set to the name of the widget, to instantiate it (e.g. "DataTable").
+     * Sets the widget type (= widget selector).
+     * 
+     * In contrast to the widget selector, the widget type has only two syntax variants:
+     * - the name of the widget (e.g. `DataTable`) for core widgets
+     * - a namespaced widget alias for custom widgets from other apps (i.e. `my.App.MyCustomWidget`).
      *
      * @uxon-property widget_type
      * @uxon-type metamodel:widget
      *
-     * @param string $value            
+     * @param string $selectorString    
+     * @return WidgetInterface        
      */
-    protected function setWidgetType($value)
+    protected function setWidgetType($selectorString) : WidgetInterface
     {
-        if ($value)
-            $this->widget_type = $value;
+        if ($selectorString) {
+            if (stripos($selectorString, 'exface.Core.') === 0) {
+                $this->widget_type = str_replace('exface.Core.', '', $selectorString);
+            } elseif (strpos($selectorString, '/') !== false || strpos($selectorString, '\\') !== false) {
+                throw new WidgetPropertyInvalidValueError('Invalid widget type "' . $selectorString . '": classname and filepath selectors not yet supported - please use alias!');
+            } else {
+                $this->widget_type = $selectorString;
+            }
+        }
         return $this;
     }
     
