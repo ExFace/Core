@@ -6,7 +6,7 @@ namespace exface\Core\Interfaces\Selectors;
  * 
  * A widget can be identified by 
  * - widget type (short alias) for core widgets
- * - fully qualified alias (with vendor and app prefix)
+ * - fully qualified alias (with vendor and app prefix) for custom widgets in other apps
  * - file path or qualified class name of the app's PHP class (if there is one)
  * 
  * @author Andrej Kabachnik

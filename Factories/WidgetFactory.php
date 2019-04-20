@@ -5,12 +5,18 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\LogicException;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\CommonLogic\Selectors\WidgetSelector;
 
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 abstract class WidgetFactory extends AbstractStaticFactory
 {
 
@@ -32,8 +38,13 @@ abstract class WidgetFactory extends AbstractStaticFactory
         }
         
         /* @var $widget \exface\Core\Widgets\AbstractWidget */
-        $widget_class = static::getWidgetClassFromType($widget_type);
-        $widget = new $widget_class($page, $parent_widget);
+        if (strpos($widget_type, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER) !== false) {
+            $selector = new WidgetSelector($page->getWorkbench(), $widget_type);
+            $widget = $page->getWorkbench()->getApp($selector->getAppSelector())->get($selector, null, [$page, $parent_widget]);
+        } else {
+            $widget_class = static::getWidgetClassFromType($widget_type);
+            $widget = new $widget_class($page, $parent_widget);
+        }
         
         return $widget;
     }
