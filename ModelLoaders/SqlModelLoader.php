@@ -48,6 +48,9 @@ use exface\Core\CommonLogic\Selectors\DataConnectorSelector;
 use exface\Core\Exceptions\DataSources\DataConnectionNotFoundError;
 use exface\Core\CommonLogic\AppInstallers\AppInstallerContainer;
 use exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller;
+use exface\Core\DataConnectors\MySqlConnector;
+use exface\Core\Events\Installer\OnInstallEvent;
+use exface\Core\DataTypes\UUIDDataType;
 
 /**
  * 
@@ -65,6 +68,8 @@ class SqlModelLoader implements ModelLoaderInterface
     private $connections_loaded = [];
     
     private $selector = null;
+    
+    private $installer = null;
     
     /**
      * 
@@ -651,8 +656,8 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     public function setDataConnection(DataConnectionInterface $connection)
     {
-        if (! ($connection instanceof SqlDataConnectorInterface)) {
-            throw new MetaModelLoadingFailedError('Cannot use data connection "' . get_class($connection) . '" for the SQL model loader: the connection must implement the SqlDataConnector interface!');
+        if (! ($connection instanceof MySqlConnector)) {
+            throw new \RuntimeException('Incompatible connector "' . $connection->getPrototypeClassName() . '" used for the model loader "' . get_class($this) . '": expecting a MySqlConnector or a drivative.');
         }
         $this->data_connection = $connection;
         return $this;
@@ -733,24 +738,84 @@ class SqlModelLoader implements ModelLoaderInterface
 
     public function getInstaller()
     {
-        $coreAppSelector = new AppSelector($this->getDataConnection()->getWorkbench(), 'exface.Core');
-        $installer = new AppInstallerContainer($coreAppSelector);
+        if ($this->installer === null) {
+            $coreAppSelector = new AppSelector($this->getDataConnection()->getWorkbench(), 'exface.Core');
+            $installer = new AppInstallerContainer($coreAppSelector);
+            
+            // Init the SQL installer
+            $modelConnection = $this->getDataConnection();
+            $dbInstaller = new MySqlDatabaseInstaller($coreAppSelector);
+            $dbInstaller
+                ->setFoldersWithMigrations(['InitDB','Migrations'])
+                ->setDataConnection($modelConnection);
+            
+            $this->getWorkbench()->eventManager()->addListener(OnInstallEvent::getEventName(), [$this, 'finalizeInstallation']);
+            
+            // Also add the old SqlSchemInstaller, so that in can update existing installations
+            // upto it's last update script. After this, this installer will not do anything.
+            // DON'T USE this one, only the first one!
+            $oldInstaller = new SqlSchemaInstaller($coreAppSelector);
+            $oldInstaller
+                ->setDataConnection($this->getDataConnection())
+                ->setSqlFolderName($dbInstaller->getSqlFolderName())
+                ->setSqlUpdatesFolderName('LegacyInstallerUpdates');
+            
+            $installer->addInstaller($oldInstaller);
+            $installer->addInstaller($dbInstaller);
+            $this->installer = $installer;
+        }
+        return $this->installer;
+    }
+    
+    public function finalizeInstallation(OnInstallEvent $event)
+    {
+        if ($event->getInstaller() !== $this->getInstaller()->getInstallers()[1]) {
+            return;
+        }
+        $conn = $this->getDataConnection();
         
-        $dbInstaller = new MySqlDatabaseInstaller($coreAppSelector);
-        $dbInstaller
-            ->setFoldersWithMigrations(['InitDB','Migrations', 'DemoData'])
-            ->setFoldersWithStaticSql(['Views'])
-            ->setDataConnection($this->getDataConnection());
+        // Make sure, the model-connection in the metamodel has the same configuration as
+        // the current connection of the model loader (= the connection, that was used to install
+        // the model DB).
         
-        $oldInstaller = new SqlSchemaInstaller($coreAppSelector);
-        $oldInstaller
-            ->setDataConnection($this->getDataConnection())
-            ->setSqlFolderName($dbInstaller->getSqlFolderName());
-        
-        $installer->addInstaller($oldInstaller);
-        $installer->addInstaller($dbInstaller);
-        
-        return $installer;
+        $dataSourceData = $conn->runSql('SELECT * FROM exf_data_source WHERE oid = 0x32000000000000000000000000000000')->getResultArray();
+        if ($dataSourceData[0]['custom_connection_oid'] === null) {
+            $conn->transactionStart();
+            $oid = '0x' . str_replace('-', '', UUIDDataType::generateUuidV4());
+            $connectorClassFile = str_replace('\\', '/', get_class($conn)) . '.php';
+            $sqlCreateConnection = <<<SQL
+INSERT INTO `exf_data_connection` (
+    `oid`,
+    `alias`, 
+    `app_oid`, 
+    `name`, 
+    `data_connector`, 
+    `data_connector_config`, 
+    `read_only_flag`, 
+    `filter_context_uxon`, 
+    `created_on`, 
+    `modified_on`, 
+    `created_by_user_oid`, 
+    `modified_by_user_oid`
+) VALUES (
+    {$oid}, 
+    'CORE_MODEL_CONNECTION', 
+    NULL, 
+    'Metamodel DB (autocreated)', 
+    '{$connectorClassFile}', 
+    NULL, 
+    0, 
+    '', 
+    NOW(), 
+    NOW(), 
+    0, 
+    0
+)
+SQL;
+            $conn->runSql($sqlCreateConnection);
+            $conn->runSql("UPDATE exf_data_source SET custom_connection_oid = {$oid} WHERE oid = 0x32000000000000000000000000000000");
+            $conn->transactionCommit();
+        }
     }
     
     /**

@@ -33,17 +33,6 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
         return $result;
     }
 
-    public final function update($source_absolute_path)
-    {
-        $result = '';
-        
-        foreach ($this->getInstallers() as $installer) {
-            $result .= $installer->update($source_absolute_path);
-        }
-        
-        return $result;
-    }
-
     /**
      * Creates the given backup path if neccessary, copies the entire app folder
      * there and runs the backup-procedures of all installers in the container
