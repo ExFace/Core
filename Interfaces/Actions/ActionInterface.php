@@ -255,9 +255,6 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
      * By default, an action accepts data of any object and attempts to deal with it.
      * Many of the core actions are actually agnostic to objects.
      * 
-     * @uxon-property input_object_alias
-     * @uxon-type metamodel:object
-     * 
      * @param string $aliasWithNamespace
      * @return ActionInterface
      */
@@ -269,9 +266,6 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
      * If performing the action results in another object, it will produce an error.
      * 
      * By default, an action does not check the result object.
-     * 
-     * @uxon-property input_object_alias
-     * @uxon-type metamodel:object
      * 
      * @param string $aliasWithNamespace
      * @return ActionInterface

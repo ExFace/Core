@@ -985,12 +985,17 @@ abstract class AbstractAction implements ActionInterface
     }
     
     /**
-     * Only allow input data with this object.
+     * Only allow input data with this object or a derivative.
+     * 
+     * Attempting to perform the action upon data of another object will result in an error.
+     * You can use `input_mappers` to map input data to the correct object.
+     * 
+     * By default, an action accepts data of any object and attempts to deal with it.
+     * Many of the core actions are actually agnostic to objects.
      * 
      * @uxon-property input_object_alias
      * @uxon-type metamodel:object
      * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputObjectAlias()
      */
     public function setInputObjectAlias(string $aliasWithNamespace) : ActionInterface
@@ -1000,8 +1005,15 @@ abstract class AbstractAction implements ActionInterface
     }
     
     /**
+     * Force the result of the action to be based on given meta object or a derivative.
      * 
-     * {@inheritDoc}
+     * If performing the action results in another object, it will produce an error.
+     * 
+     * By default, an action does not check the result object.
+     * 
+     * @uxon-property result_object_alias
+     * @uxon-type metamodel:object
+     * 
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setResultObjectAlias()
      */
     public function setResultObjectAlias(string $aliasWithNamespace) : ActionInterface
