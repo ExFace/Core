@@ -67,7 +67,16 @@ Second option is to keep the files in the folders and tell the installer what fi
 To do so create, if not already existing, a `config` folder in the base folder of the App and in that folder create, if not already existing, a config `.json` file. The file needs to be named like `%vendor%.%AppName%.config.json` where the App Name needs to be without spaces. So for an App called `Demo MES` with the vendor `powerui` the config file would be named `powerui.DemoMES.config.json`. 
 In this file include the option `"INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS":` and in square brackets, in quotation marks, separated by commas add the file names of the migrations you want to skip or rollback. The file name needs to include the `.sql` ending but not the order structure.  
 Example for two migration files that should be skipped/rolled back:
-	"INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS": ["20190101_120000_01_NEW_column3_and_column4.sql", "20190102_130000_02_NEW_column5_and_column6.sql"]
+
+```
+{
+  "INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS": [
+    "20190101_120000_01_NEW_column3_and_column4.sql",
+    "20190102_130000_02_NEW_column5_and_column6.sql"
+  ]	
+}
+	
+```
 
 It is possible to change the option name by calling the method `setSqlMigrationsToSkipConfigOption`. 
 
