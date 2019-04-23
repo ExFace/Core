@@ -160,6 +160,7 @@ class SqlMigration
         $this->id = $id;
         $this->up_datetime = $dateTime;
         $this->up_result = $result;
+        return $this;
     }
     
     /***
@@ -174,6 +175,7 @@ class SqlMigration
         $this->is_up = false;
         $this->down_datetime = $dateTime;
         $this->down_result = $result;
+        return $this;
     }
 }
 ?>
