@@ -50,7 +50,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
      */
     public function setAutocommit($value)
     {
-        $this->autocommit = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->autocommit = BooleanDataType::cast($value);
         return $this;
     }
 
@@ -83,7 +83,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
 
     protected function setTransactionStarted($value)
     {
-        $this->transaction_started = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->transaction_started = BooleanDataType::cast($value);
         return $this;
     }
 
