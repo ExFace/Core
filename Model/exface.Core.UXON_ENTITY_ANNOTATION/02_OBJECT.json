@@ -42,6 +42,10 @@
             "attribute_alias": "NAME"
         },
         {
+            "name": "INHERIT_DATA_SOURCE_BASE_OBJECT",
+            "attribute_alias": "INHERIT_DATA_SOURCE_BASE_OBJECT"
+        },
+        {
             "name": "DATA_SOURCE",
             "attribute_alias": "DATA_SOURCE"
         },
@@ -86,6 +90,7 @@
             "COMMENTS": "",
             "DOCS": "",
             "NAME": "UXON Entity (class) Annotation",
+            "INHERIT_DATA_SOURCE_BASE_OBJECT": "1",
             "DATA_SOURCE": "0x11e6bbc75f27b3a29ee0e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",

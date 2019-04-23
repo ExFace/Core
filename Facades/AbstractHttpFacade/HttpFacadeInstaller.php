@@ -47,17 +47,6 @@ class HttpFacadeInstaller extends AbstractAppInstaller
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\InstallerInterface::update()
-     */
-    public function update($source_absolute_path)
-    {
-        return $this->install();
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\InstallerInterface::uninstall()
      */
     public function uninstall()

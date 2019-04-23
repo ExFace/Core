@@ -1,0 +1,70 @@
+{
+    "id": "0xe9c7828260f811e9845bf816544f0673",
+    "alias_with_namespace": "exface.core.core-sql-migrations",
+    "menu_parent_page_alias": "exface.core.logs",
+    "menu_index": "0",
+    "menu_visible": true,
+    "name": "Core SQL Migrations",
+    "description": "",
+    "intro": "",
+    "replaces_page_alias": null,
+    "contents": {
+        "widget_type": "DataTable",
+        "object_alias": "exface.Core.metamodel_db_migrations",
+        "columns": [
+            {
+                "attribute_alias": "migration_name"
+            },
+            {
+                "attribute_alias": "up_datetime"
+            },
+            {
+                "attribute_alias": "is_down"
+            },
+            {
+                "attribute_alias": "down_datetime"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectInfoDialog",
+                "bind_to_double_click": true
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "up_datetime",
+                "direction": "DESC"
+            },
+            {
+                "attribute_alias": "id",
+                "direction": "DESC"
+            }
+        ],
+        "filters": [
+            {
+                "attribute_alias": "migration_name"
+            },
+            {
+                "attribute_alias": "is_down",
+                "value": 0
+            },
+            {
+                "attribute_alias": "up_datetime",
+                "comparator": ">="
+            },
+            {
+                "attribute_alias": "up_datetime",
+                "comparator": "<="
+            },
+            {
+                "attribute_alias": "down_datetime",
+                "comparator": ">="
+            },
+            {
+                "attribute_alias": "down_datetime",
+                "comparator": "<="
+            }
+        ]
+    }
+}

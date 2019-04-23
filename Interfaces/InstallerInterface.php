@@ -5,25 +5,25 @@ interface InstallerInterface extends WorkbenchDependantInterface
 {
 
     /**
-     *
+     * 
+     * @triggers \exface\Core\Interfaces\Events\InstallerEventInterface
+     * 
      * @return string
      */
     public function install($source_absolute_path);
 
     /**
-     *
-     * @return string
-     */
-    public function update($source_absolute_path);
-
-    /**
-     *
+     * 
+     * @triggers \exface\Core\Interfaces\Events\InstallerEventInterface
+     * 
      * @return string
      */
     public function backup($absolute_path);
 
     /**
-     *
+     * 
+     * @triggers \exface\Core\Interfaces\Events\InstallerEventInterface
+     * 
      * @return string
      */
     public function uninstall();

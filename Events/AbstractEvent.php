@@ -68,7 +68,7 @@ abstract class AbstractEvent extends Event implements EventInterface
     }
     
     /**
-     * @return void
+     * @return string[]
      */
     private static function getAliasFromClass() : array
     {

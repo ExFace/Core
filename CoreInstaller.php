@@ -21,27 +21,15 @@ class CoreInstaller extends AbstractAppInstaller
      */
     public function install($source_absolute_path)
     {
-        $model_source_installer = $this->getWorkbench()->model()->getModelLoader()->getInstaller();
-        $result = $model_source_installer->install($this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $model_source_installer->getSelectorInstalling()->getFolderRelativePath());
+        // Install model DB
+        $modelLoaderInstaller = $this->getWorkbench()->model()->getModelLoader()->getInstaller();
+        $result = $modelLoaderInstaller->install($this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $modelLoaderInstaller->getSelectorInstalling()->getFolderRelativePath());
+        
+        // Add required files to root folder
         $result .= $this->copyDefaultHtaccess($source_absolute_path);
         $result .= $this->createApiPhp($source_absolute_path);
         $result .= $this->removeLegacyFiles($source_absolute_path);
-        return $result;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\InstallerInterface::update()
-     */
-    public function update($source_absolute_path)
-    {
-        $model_source_installer = $this->getWorkbench()->model()->getModelLoader()->getInstaller();
-        $result = $model_source_installer->update($this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $model_source_installer->getSelectorInstalling()->getFolderRelativePath());
-        $result .= $this->copyDefaultHtaccess($source_absolute_path);
-        $result .= $this->createApiPhp($source_absolute_path);
-        $result .= $this->removeLegacyFiles($source_absolute_path);
+        
         return $result;
     }
 
