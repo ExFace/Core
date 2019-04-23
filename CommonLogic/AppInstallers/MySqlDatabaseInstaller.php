@@ -5,8 +5,6 @@ namespace exface\Core\CommonLogic\AppInstallers;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
-use exface\Core\Factories\DataSourceFactory;
-use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use function GuzzleHttp\json_encode;
 
 /**
@@ -60,6 +58,8 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
                     $connection->setDbase($dbName);
                     $msg = ' Database ' . $dbName . ' created! ';
                 }
+            } else {
+                throw $e;
             }
         }
         return $msg;
@@ -146,7 +146,7 @@ SQL;
         try {
             $connection->transactionStart();
             $up_result = $this->runSqlMultiStatementScript($connection, $up_script, false);
-            $up_result_string = $this->stringifyQueryResults($up_result);
+            $up_result_string = $this->stringifyQueryResults($up_result);            
             //da Transaction Rollback nicht korrekt funktioniert
             $migration->setIsUp(TRUE);
             $migration_name = $migration->getMigrationName();
@@ -176,7 +176,7 @@ SQL;
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
             $connection->transactionRollback();
-            throw new InstallerRuntimeError($this, 'Migration up ' . $migration->getMigrationName() . ' failed!');
+            throw new InstallerRuntimeError($this, 'Migration up ' . $migration->getMigrationName() . ' failed!', null, $e);
         }
         $sql_select = "SELECT * FROM {$this->getMigrationsTableName()} WHERE id='$id'";
         $select_array = $connection->runSql($sql_select)->getResultArray();
@@ -209,6 +209,7 @@ SQL;
         try {
             $connection->transactionStart();
             $down_result = $this->runSqlMultiStatementScript($connection, $down_script, false);
+            $down_result_string = 'Empty SQL Result';
             $down_result_string = $this->stringifyQueryResults($down_result);
             //da Transaction Rollback nicht korrekt funktioniert
             $migration->setIsUp(FALSE);
