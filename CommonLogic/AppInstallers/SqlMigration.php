@@ -94,18 +94,6 @@ class SqlMigration
     }
     
     /**
-     * Function to set Down datetime of Sql Migration
-     * 
-     * @param string $down_datetime
-     * @return SqlMigration
-     */
-    public function setDownDatetime(string $down_datetime) : SqlMigration
-    {
-        $this->down_datetime = $down_datetime;
-        return $this;
-    }
-    
-    /**
      * Returns Down datetime of SqlMigration
      *
      * @return string
@@ -123,18 +111,6 @@ class SqlMigration
     public function getDownScript() : string
     {
         return $this->down_script;
-    }
-    
-    /**
-     * Function to set Down script of SqlMigration
-     * 
-     * @param string $down_result
-     * @return SqlMigration
-     */
-    public function setDownResult(string $down_result) : SqlMigration
-    {
-        $this->down_result = $down_result;
-        return $this;
     }
     
     /**
@@ -184,6 +160,20 @@ class SqlMigration
         $this->id = $id;
         $this->up_datetime = $dateTime;
         $this->up_result = $result;
+    }
+    
+    /***
+     * Function to change the state of migration to DOWN, meaning $is_up = FALSE.
+     * 
+     * @param string $dateTime
+     * @param string $result
+     * @return SqlMigration
+     */
+    public function setDown (string $dateTime, string $result) : SqlMigration
+    {
+        $this->is_up = false;
+        $this->down_datetime = $dateTime;
+        $this->down_result = $result;
     }
 }
 ?>

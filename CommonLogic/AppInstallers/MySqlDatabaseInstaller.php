@@ -203,7 +203,6 @@ SQL;
             $down_result = $this->runSqlMultiStatementScript($connection, $down_script, false);
             $down_result_string = $this->stringifyQueryResults($down_result);
             //da Transaction Rollback nicht korrekt funktioniert
-            $migration->setIsUp(FALSE);
             $sql_update = <<<SQL
             
 UPDATE {$this->getMigrationsTableName()}
@@ -224,9 +223,7 @@ SQL;
         if (empty($select_array)){
             throw new InstallerRuntimeError($this, 'Something went very wrong');
         }
-        $migration->setDownResult($down_result_string);        
-        //Array kann eigentlich nur eine Resultzeile als Array als Inhalt haben, da id PRIMARY KEY
-        $migration->setDownDatetime($select_array[0]['down_datetime']);
+        $migration->setDown($select_array[0]['down_datetime'], $down_result_string);
         return $migration;
     }
     
