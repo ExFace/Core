@@ -5,6 +5,7 @@ namespace exface\Core\CommonLogic\AppInstallers;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
+use exface\Core\Events\Installer\OnInstallEvent;
 
 /**
  * This creates and manages SQL databases and performs SQL updates.
@@ -68,7 +69,6 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     /**
      *
      * {@inheritDoc}
-     * 
      * @see \exface\Core\Interfaces\InstallerInterface::install()
      */
     public function install($source_absolute_path) : string
@@ -77,6 +77,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         $result .= $this->ensureDatabaseExists($this->getDataConnection());
         $result .= $this->installMigrations($source_absolute_path);
         $result .= ' Static SQL: ' . $this->installStaticSql($source_absolute_path);
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnInstallEvent($this));
+        
         return $result;
     }
     
@@ -486,7 +489,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
                 }
             }                
         }
-        return $this->stripComments($migstr);
+        return $this->stripLinebreaks($migstr);
     }
     
     /**
@@ -600,9 +603,12 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      */
     protected function stripComments(string $sql) : string
     {
-        $str= preg_replace('!/\*.*?\*/!s', '', $sql);
-        $str = preg_replace('/\n\s*\n/', "\n", $str);
-        return $str;
+        return preg_replace('!/\*.*?\*/!s', '', $sql);
+    }
+    
+    protected function stripLinebreaks(string $sql) : string
+    {
+        return preg_replace('/\n\s*\n/', "\n", $sql);
     }
     
     /**
