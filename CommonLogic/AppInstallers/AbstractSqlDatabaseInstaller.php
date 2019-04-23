@@ -305,6 +305,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
+     * Returns the name of the SQL table to store the migration log.
      * 
      * @return string
      */
@@ -327,13 +328,17 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
-     *
+     * Returns the SQL dialect name (e.g. used as subfolder name)
+     * 
      * @return string
      */
     abstract protected function getSqlDbType() : string;
     
     /**
-     *
+     * Returns the string, that flags the beginning of the UP-script in a migration.
+     * 
+     * Override this method to define a custom marker for a specific SQL dialect.
+     * 
      * @return string
      */
     protected function getMarkerUp() : string
@@ -342,6 +347,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
+     * Returns the string, that flags the beginning of the DOWN-script in a migration.
+     * 
+     * Override this method to define a custom marker for a specific SQL dialect.
      * 
      * @return string
      */
