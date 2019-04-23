@@ -36,6 +36,10 @@ interface AppInterface extends WorkbenchDependantInterface, AliasInterface, Task
      * The selector can either be an instance of the SelectorInterface or a string, but in
      * the latter case a selector class must be passed as well.
      * 
+     * Callers can provide an array of constructor arguments. These should be used when
+     * instantiating the class. If not provide, the app should take care of the entire
+     * instantiation process.
+     * 
      * In future apps will be extended by the possibility to add any custom services in
      * order to act as true dependency injection containers. This is why the method also
      * accepts strings.
@@ -43,13 +47,14 @@ interface AppInterface extends WorkbenchDependantInterface, AliasInterface, Task
      * @see \Psr\Container\ContainerInterface::get()
      * 
      * @param SelectorInterface|string $selectorOrString
-     * @param string $selectorClass
+     * @param string|NULL $selectorClass
+     * @param array|NULL $constructorArguments
      * 
      * @throws AppComponentNotFoundError
      * 
      * @return mixed
      */
-    public function get($selectorOrString, $selectorClass = null);
+    public function get($selectorOrString, $selectorClass = null, array $constructorArguments = null);
     
     /**
      * Returns TRUE if the app contains a component or service specified by the given selector.

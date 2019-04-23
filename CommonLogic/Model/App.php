@@ -43,6 +43,7 @@ use exface\Core\CommonLogic\Selectors\DataTypeSelector;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 use exface\Core\Contexts\DataContext;
+use exface\Core\Interfaces\Selectors\WidgetSelectorInterface;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -616,6 +617,8 @@ class App implements AppInterface
                 return 'ModelLoaders';
             case $selector instanceof QueryBuilderSelectorInterface:
                 return 'QueryBuilders';
+            case $selector instanceof WidgetSelectorInterface:
+                return 'Widgets';
         }
         return '';
     }
@@ -625,7 +628,7 @@ class App implements AppInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\AppInterface::get()
      */
-    public function get($selectorOrString, $selectorClass = null)
+    public function get($selectorOrString, $selectorClass = null, array $constructorArguments = null)
     {
         if (! array_key_exists((string) $selectorOrString, $this->selector_cache)) {
             // has() will cache the class
@@ -648,7 +651,12 @@ class App implements AppInterface
             $selector = $cache['selector'];
             $class = $cache['class'];
             if ($class !== null) {
-                return new $class($selector);
+                if ($constructorArguments === null) {
+                    return new $class($selector);
+                } else {
+                    $reflector = new \ReflectionClass($class);
+                    return $reflector->newInstanceArgs($constructorArguments);
+                }
             } else {
                 return $this->loadFromModel($selector);
             }

@@ -9,6 +9,7 @@ use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Events\DataConnection\OnBeforeQueryEvent;
 use exface\Core\Events\DataConnection\OnQueryEvent;
 use exface\Core\Interfaces\Events\ActionEventInterface;
+use exface\Core\DataTypes\StringDataType;
 
 class Profiler implements WorkbenchDependantInterface
 {
@@ -29,15 +30,29 @@ class Profiler implements WorkbenchDependantInterface
 
     public function startAction(ActionEventInterface $event)
     {
-        $this->stopwatch->start($event->getAction()->getId());
+        try {
+            $this->getWorkbench()->getLogger()->debug('Action "' . $event->getAction()->getAliasWithNamespace() . '" started.', array());
+            $this->stopwatch->start($event->getAction()->getId());
+        } catch (\Throwable $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
+        }
     }
 
     public function stopAction(ActionEventInterface $event)
     {
         try {
-            //$this->getWorkbench()->getLogger()->debug('Action ' . $event->getAction()->getAliasWithNamespace() . ' performed.', array());
             $this->stopwatch->stop($event->getAction()->getId());
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            // FIXME event-not-started exceptions are thrown here when perforimng
+            // ContextApi actions. Need to find out why, than reenable the following
+            // line. Currently it produces extra trace files with a single error line
+            // - this is very confusing!
+            // $this->getWorkbench()->getLogger()->logException($e);
+        }
+        
+        try {
+            $this->getWorkbench()->getLogger()->debug('Action "' . $event->getAction()->getAliasWithNamespace() . '" finished.', array());
+        } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
         }
     }
@@ -54,9 +69,11 @@ class Profiler implements WorkbenchDependantInterface
     {
         try {
             $query = $event->getQuery();
-            $message = $event->getConnection()->getAlias() . ': ' . substr(str_replace(array("\r", "\n", "\t", "  "), '', $query->toString(false)), 0, 50);
-            $this->getWorkbench()->getLogger()->debug($message, array(), $query);
             $this->stopwatch->stop($query->exportString());
+            $conn = $event->getConnection()->hasModel() ? 'Connection "' . $event->getConnection()->getAlias() . '"' : 'Connector "' . get_class($event->getConnection()) . '"';
+            $queryString = str_replace(array("\r", "\n", "\t", "  "), '', $query->toString(false));
+            $extract = substr($queryString, 0, 50) . (strlen($queryString) > 50 ? '...' : '');
+            $this->getWorkbench()->getLogger()->debug($conn . ': ' . $extract, array(), $query);
         } catch (\Throwable $e){
             $this->getWorkbench()->getLogger()->logException($e);
         }
