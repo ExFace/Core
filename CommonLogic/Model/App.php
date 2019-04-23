@@ -450,7 +450,7 @@ class App implements AppInterface
      */
     public function getInstaller(InstallerInterface $injected_installer = null)
     {
-        $app_installer = new AppInstallerContainer($this);
+        $app_installer = new AppInstallerContainer($this->getSelector());
         // Add the injected installer
         if ($injected_installer) {
             $app_installer->addInstaller($injected_installer);
