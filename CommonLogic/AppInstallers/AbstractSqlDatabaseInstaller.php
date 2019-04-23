@@ -155,6 +155,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     abstract protected function ensureDatabaseExists(SqlDataConnectorInterface $connection) : string;
     
     /**
+     *Returns foldername containing subfolders for SQL Database Types.
+     *
+     *Default: 'Sql'
      *
      * @return string
      */
@@ -164,6 +167,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
+     * Function to set folder name which contains subfolders for SQL Database Types.
+     * 
+     * Default: 'Sql'
      *
      * @param string $value
      * @return $this
@@ -175,8 +181,11 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
 
     /**
+     * Returns absolute path to Sql folder
+     * 
      * Default: %app_folder%/Install/Sql
      *
+     * @param string $source_absolute_path
      * @return string
      */
     public function getSqlFolderAbsolutePath(string $source_absolute_path) : string
@@ -185,6 +194,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
+     * Returns Data Connection
      *
      * @return SqlDataConnectorInterface
      */
@@ -194,6 +204,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
+     * Set Data Connection
      * 
      * @param SqlDataConnectorInterface $value
      * @return AbstractSqlDatabaseInstaller
@@ -206,9 +217,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     
     /**
      * Returns the configuration key used to store the file names of
-     * migrations in the app, that this installer should skip when installing.
+     * migrations in the app, that this installer should skip during installation.
      * 
-     * Default: INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS
+     * Default: 'INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS'
      * 
      * @return string
      */
@@ -220,8 +231,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     /**
      * Changes the name of the configuration key to be used to get the file names
      * for the migrations that should be skipped during installation.
-     * 
-     * Default: INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS.
+     *  
+     * Default: 'INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS'
      *
      * @param string $value
      * @return AbstractSqlDatabaseInstaller
@@ -260,6 +271,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
+     * Function to set the folders which contain Sql files that should be migrated
      * 
      * @param array $pathsRelativeToSqlFolder
      * @return AbstractSqlDatabaseInstaller
@@ -280,6 +292,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
+     * Function to set folders which contain static Sql files, meaning files which contain Sql Statements
+     * that should be run on every installation or update
      * 
      * @param array $pathsRelativeToSqlFolder
      * @return AbstractSqlDatabaseInstaller
@@ -300,6 +314,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
+     * Function to set the migration table name.
+     * Default: '_migration'
      * 
      * @param string $migrations_table_name
      * @return AbstractSqlDatabaseInstaller
@@ -540,12 +556,14 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         return $tmp;
     }
     
-    /**
-     * Runs multiple SQL statements, wrapping them in a transaction when $wrapInTransaction set to TRUE
+    /***
+     * Runs multiple SQL statements, wrapping them in a transaction when $wrapInTransaction set to TRUE.
      * 
      * @param SqlDataConnectorInterface $connection
      * @param string $script
-     * @return SqlDataQuery[]
+     * @param bool $wrapInTransaction
+     * @throws Throwable
+     * @return array
      */
     protected function runSqlMultiStatementScript (SqlDataConnectorInterface $connection, string $script, bool $wrapInTransaction = false) : array
     {
@@ -606,6 +624,12 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         return preg_replace('!/\*.*?\*/!s', '', $sql);
     }
     
+    /**
+     * Removes linebreaks from a SQl string
+     * 
+     * @param string $sql
+     * @return string
+     */
     protected function stripLinebreaks(string $sql) : string
     {
         return preg_replace('/\n\s*\n/', "\n", $sql);

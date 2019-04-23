@@ -122,10 +122,7 @@ SQL;
         }
         foreach ($migrs_db as $a){
             $mig = new SqlMigration($a['migration_name'], $a['up_script'], $a['down_script']);
-            $mig->setId($a['id']);
-            $mig->setUpDatetime($a['up_datetime']);
-            $mig->setUpResult($a['up_result']);
-            $mig->setIsUp(TRUE);
+            $mig->setUp(intval($a['id']), $a['up_datetime'], $a['up_result']);
             $migrs[] = $mig;      
         }
         return $migrs;        
@@ -138,7 +135,7 @@ SQL;
      */
     protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration
     {
-        if ($migration->getIsUp() == TRUE) {
+        if ($migration->isUp() == TRUE) {
             throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' already up!');
         }
         $this->ensureMigrationsTableExists($connection);
@@ -147,8 +144,6 @@ SQL;
             $connection->transactionStart();
             $up_result = $this->runSqlMultiStatementScript($connection, $up_script, false);
             $up_result_string = $this->stringifyQueryResults($up_result);            
-            //da Transaction Rollback nicht korrekt funktioniert
-            $migration->setIsUp(TRUE);
             $migration_name = $migration->getMigrationName();
             $down_script = $migration->getDownScript();
             $sql_insert = <<<SQL
@@ -169,8 +164,7 @@ INSERT INTO {$this->getMigrationsTableName()}
 
 SQL;
             $query_insert = $connection->runSql($sql_insert);
-            $id = $query_insert->getLastInsertId();
-            $migration->setId($id);
+            $id = intval($query_insert->getLastInsertId());
             $connection->transactionCommit();
             $this->getWorkbench()->getLogger()->debug('SQL ' . $migration_name . ': script UP executed successfully ');            
         } catch (\Throwable $e) {
@@ -182,10 +176,8 @@ SQL;
         $select_array = $connection->runSql($sql_select)->getResultArray();
         if (empty($select_array)){
             throw new InstallerRuntimeError($this, 'Migration up ' . $migration->getMigrationName() . ' failed to write into migrations table!');
-        }        
-        $migration->setUpResult($up_result_string);
-        //Array kann eigentlich nur eine Resultzeile als Array als Inhalt haben, da id PRIMARY KEY
-        $migration->setUpDatetime($select_array[0]['up_datetime']);
+        }       
+        $migration->setUp($id, $select_array[0]['up_datetime'], $up_result_string);
         return $migration;        
     }  
            
@@ -209,7 +201,6 @@ SQL;
         try {
             $connection->transactionStart();
             $down_result = $this->runSqlMultiStatementScript($connection, $down_script, false);
-            $down_result_string = 'Empty SQL Result';
             $down_result_string = $this->stringifyQueryResults($down_result);
             //da Transaction Rollback nicht korrekt funktioniert
             $migration->setIsUp(FALSE);

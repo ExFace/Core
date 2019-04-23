@@ -44,17 +44,7 @@ class SqlMigration
     }
     
     /**
-     * 
-     * @param string $id
-     * @return SqlMigration
-     */
-    public function setId(string $id) : SqlMigration
-    {
-        $this->id=$id;
-        return $this;
-    }
-    
-    /**
+     * Returns id of the SqlMigration
      * 
      * @return string
      */
@@ -64,26 +54,17 @@ class SqlMigration
     }
     
     /**
+     * Returns name of the SqlMigration
      *
      * @return string
      */
     public function getMigrationName() : string
     {
         return $this->migration_name;
-    }
-    
+    }    
+ 
     /**
-     * 
-     * @param string $up_datetime
-     * @return SqlMigration
-     */
-    public function setUpDatetime(string $up_datetime) : SqlMigration
-    {
-        $this->up_datetime = $up_datetime;
-        return $this;
-    }
-    
-    /**
+     * Returns Up Datetime ofthe SqlMigration
      *
      * @return string
      */
@@ -93,6 +74,7 @@ class SqlMigration
     }
     
     /**
+     * Returns Up script of the SqlMigration
      *
      * @return string
      */
@@ -100,19 +82,9 @@ class SqlMigration
     {
         return $this->up_script;
     }
-    
+   
     /**
-     * 
-     * @param string $up_result
-     * @return SqlMigration
-     */
-    public function setUpResult(string $up_result) : SqlMigration
-    {
-        $this->up_result = $up_result;
-        return $this;
-    }
-    
-    /**
+     * Returns up result of the SqlMigration
      *
      * @return string
      */
@@ -122,6 +94,7 @@ class SqlMigration
     }
     
     /**
+     * Function to set Down datetime of Sql Migration
      * 
      * @param string $down_datetime
      * @return SqlMigration
@@ -133,6 +106,7 @@ class SqlMigration
     }
     
     /**
+     * Returns Down datetime of SqlMigration
      *
      * @return string
      */
@@ -142,6 +116,7 @@ class SqlMigration
     }
     
     /**
+     * Returns Down script of SqlMigration
      *
      * @return string
      */
@@ -151,6 +126,7 @@ class SqlMigration
     }
     
     /**
+     * Function to set Down script of SqlMigration
      * 
      * @param string $down_result
      * @return SqlMigration
@@ -162,6 +138,7 @@ class SqlMigration
     }
     
     /**
+     * Returns Down result of SqlMigration
      *
      * @return string
      */
@@ -171,26 +148,18 @@ class SqlMigration
     }
     
     /**
+     * Returns if Migration is up (TRUE) or not (FALSE)
      *
      * @return bool
      */
-    public function getIsUp(): bool
+    public function isUp(): bool
     {
         return $this->is_up;
-    }
-    
+    }    
+ 
     /**
-     * 
-     * @param bool $bool
-     * @return SqlMigration
-     */
-    public function setIsUp(bool $bool) : SqlMigration
-    {
-        $this->is_up=$bool;
-        return $this;
-    }
-    
-    /**
+     * Function to compare if this migration equals other Migration.
+     * They are equal when the Migration name is the same.
      * 
      * @param SqlMigration $otherMigration
      * @return bool
@@ -198,6 +167,23 @@ class SqlMigration
     public function equals(SqlMigration $otherMigration) : bool
     {
         return $this->getMigrationName() === $otherMigration->getMigrationName();
+    }
+    
+    /**
+     * Function to change the state of the migration to UP, meaning $is_up = TRUE.
+     * 
+     * @param int $id
+     * @param string $dateTime
+     * @param string $script
+     * @param string $result
+     * @return SqlMigration
+     */
+    public function setUp(int $id, string $dateTime, string $result) : SqlMigration
+    {
+        $this->is_up = true;
+        $this->id = $id;
+        $this->up_datetime = $dateTime;
+        $this->up_result = $result;
     }
 }
 ?>
