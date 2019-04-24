@@ -1675,7 +1675,7 @@ class Data
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveQuickSearch::getQuickSearchEnabled()
      */
-    public function getQuickSearchEnabled() : bool
+    public function getQuickSearchEnabled() : ?bool
     {
         return $this->quickSearchEnabled;
     }
