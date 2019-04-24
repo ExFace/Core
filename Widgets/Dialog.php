@@ -103,8 +103,9 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
             $btn->setIcon(Icons::TIMES);
             $btn->setCaption($this->translate('WIDGET.DIALOG.CLOSE_BUTTON_CAPTION'));
             $btn->setAlign(EXF_ALIGN_OPPOSITE);
-            if ($this->getHideCloseButton())
+            if ($this->getHideCloseButton()) {
                 $btn->setHidden(true);
+            }
             $this->close_button = $btn;
         }
         return $this->close_button;
@@ -342,6 +343,8 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
         if (! $this->getHideHelpButton()) {
             yield $this->getHelpButton();
         }
+        
+        yield $this->getCloseButton();
     }
     
     /**

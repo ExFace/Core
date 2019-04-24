@@ -117,7 +117,7 @@ class ShowObjectEditDialog extends ShowObjectInfoDialog
      * 
      * @return UxonObject
      */
-    public function getSaveActionUxon() : UxonObject
+    protected function getSaveActionUxon() : UxonObject
     {
         if ($this->save_action_uxon === null) {
             $this->save_action_uxon = new UxonObject();

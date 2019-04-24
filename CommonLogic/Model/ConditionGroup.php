@@ -106,8 +106,11 @@ class ConditionGroup implements ConditionGroupInterface
      * {@inheritdoc}
      * @see ConditionGroupInterface::getConditions()
      */
-    public function getConditions() : array
+    public function getConditions(callable $filter = null) : array
     {
+        if ($filter !== null){
+            return array_values(array_filter($this->conditions, $filter));
+        }
         return $this->conditions;
     }
 
