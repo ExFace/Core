@@ -2,6 +2,7 @@
 namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\CommonLogic\UxonObject;
 
 interface iHaveContextualHelp extends WidgetInterface
 {
@@ -10,7 +11,13 @@ interface iHaveContextualHelp extends WidgetInterface
      *
      * @return iTriggerAction
      */
-    public function getHelpButton();
+    public function getHelpButton() : iTriggerAction;
+
+    /**
+     * 
+     * @return iHaveContextualHelp
+     */
+    public function setHelpButton(UxonObject $uxon) : iHaveContextualHelp;
 
     /**
      * Fills the given container to build up context-sensitive help for an end-user.
@@ -20,18 +27,18 @@ interface iHaveContextualHelp extends WidgetInterface
      * @param iContainOtherWidgets $help_container            
      * @return WidgetInterface
      */
-    public function getHelpWidget(iContainOtherWidgets $help_container);
+    public function getHelpWidget(iContainOtherWidgets $help_container) : iContainOtherWidgets;
 
     /**
      *
      * @return boolean
      */
-    public function getHideHelpButton();
+    public function getHideHelpButton() : bool;
 
     /**
      *
      * @param boolean $value            
      * @return \exface\Core\Interfaces\Widgets\iHaveContextualHelp
      */
-    public function setHideHelpButton($value);
+    public function setHideHelpButton(bool $value) : iHaveContextualHelp;
 }
