@@ -140,7 +140,7 @@ class ProgressBar extends Display implements iCanBeAligned
     /**
      * 
      * @param string $value
-     * @return string
+     * @return string|NULL
      */
     public function getText(string $value) : ?string
     {
@@ -228,7 +228,7 @@ class ProgressBar extends Display implements iCanBeAligned
      * 
      * @param float $value
      * @param array $textMap
-     * @return string
+     * @return string|NULL
      */
     public static function findText(float $value, array $textMap = null) : ?string
     {
