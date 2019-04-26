@@ -22,6 +22,8 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
+use exface\Core\Interfaces\Actions\iDeleteData;
+use exface\Core\Interfaces\Actions\iCreateData;
 
 /**
  * This behavior locks it's object by calling configurable lock and unlock actions.
@@ -31,16 +33,66 @@ use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
  * - When a form, editable table or any other widget with buttons performing modifying actions is prefilled
  * - When a dialog is opened with buttons, that can potentially modify the data 
  * 
- * After the data is being modified, or the editing mode is dismissed (e.g. an editor dialog is
- * closed), the unlock action is performed automatically.
+ * After the data had been modified, or the editor was dismissed (e.g. the dialog closed), the unlock 
+ * action is performed automatically to release the locks.
  * 
  * This behavior can be used to lock and unlock objects in their data source. The locking type (e.g.
  * pessimistic, optimistic locking, etc.) is completely upto the the actions taken in the data source. The
  * behavior only takes care of triggering them whenever a modification is possible.
  * 
- * **NOTE**: currently this behavior works well with dialogs, as it is clear, that a modification can only take
- * place as long as the dialog is opened. When using editable tables or forms outside of dialogs, locking
- * works well, but there is no trigger for unlocking.
+ * **NOTE**: currently this behavior works well with dialogs, as with dialogs, it's obvious, when to
+ * unlock the data - when the dialog is closed. Editors outside of dialogs will lock their data, but
+ * will need dedicated buttons to unlock it (just a button with the unlock action). At the moment, there
+ * is no way to notify the behavior, when the user navigates away from the editor.
+ * 
+ * ## How to use
+ * 
+ * Add a behavior to the object, that should be locked with `LockingBehavior` as prototype and
+ * a configuration as follows:
+ * 
+ * ```
+ * {
+ *  "lock_action": {
+ *      "alias": "my.App.LockMyObject"
+ *  },
+ *  "unlock_action": {
+ *      "alias": "my.App.UnlockMyObject"
+ *  }
+ * }
+ * 
+ * ```
+ * 
+ * If you want to add other actions, that require locking (e.g. a remote function call, that
+ * cannot be automatically identifying as lock-worthy):
+ * 
+ * ```
+ * {
+ *  "lock_action": {
+ *      "alias": "my.App.LockMyObject"
+ *  },
+ *  "unlock_action": {
+ *      "alias": "my.App.UnlockMyObject"
+ *  },
+ *  "lock_for_actions": [
+ *      "my.App.CustomAction1",
+ *      "my.App.CustomAction2"
+ *  ]
+ * }
+ * 
+ * ```
+ * 
+ * ## How exactly is the data being locked and unlocked
+ * 
+ * After data had been read (via an action implementing the `iReadData` interface), it will
+ * be passed to the lock action if
+ * 
+ * - it was read for a widget, that has modifying buttons
+ * - it was read for a widget, that opens a dialog, that has modifying buttons
+ * 
+ * A button is concidered modifying if it has an action and that action 
+ * - implements the interface `iModifyData`, but does not implement `iDeleteData` or `iCreateData`
+ * - is in the list of action aliases defined in `lock_for_actions` or is a derivative of one of
+ * these actions.
  * 
  * @author Andrej Kabachnik
  *
@@ -50,6 +102,8 @@ class LockingBehavior extends AbstractBehavior
     private $lockActionUxon = null;
     
     private $unlockActionUxon = null;
+    
+    private $actionsToLockFor = [];
     
     public function register() : BehaviorInterface
     {
@@ -142,7 +196,7 @@ class LockingBehavior extends AbstractBehavior
         
         $modifyingButtons = [];
         foreach ($widget->getButtons() as $btn) {
-            if ($btn->hasAction() && $btn->getAction() instanceof iModifyData) {
+            if ($btn->hasAction() && $this->needsLock($btn->getAction()) === true) {
                 $modifyingButtons[] = $btn;
             }
         }
@@ -162,6 +216,31 @@ class LockingBehavior extends AbstractBehavior
         }
         
         return $result;
+    }
+    
+    /**
+     * Returns TRUE a lock should be put on data, which is being read for the given action.
+     * 
+     * In general, a lock is required for action, which can modify an existing object. Among
+     * the core action, that would be any action implementing `iModifyData`, but not those
+     * creating or deleting data.
+     * 
+     * @param ActionInterface $action
+     * @return bool
+     */
+    protected function needsLock(ActionInterface $action) : bool
+    {
+        if ($action instanceof iModifyData && ! ($action instanceof iDeleteData) && ! ($action instanceof iCreateData)) {
+            return true;
+        }
+        
+        foreach ($this->getLockForActionAliases() as $alias) {
+            if ($action->is($alias) === true) {
+                return true;
+            }
+        }
+        
+        return false;
     }
     
     protected function lock(DataSheetInterface $data, DataTransactionInterface $transaction) : ResultInterface
@@ -250,5 +329,29 @@ class LockingBehavior extends AbstractBehavior
         return $this;
     }
     
+    /**
+     * 
+     * @return string[]
+     */
+    protected function getLockForActionAliases() : array
+    {
+        return $this->actionsToLockFor;
+    }
+    
+    /**
+     * Array of action aliases, that require locking (in addition to standard modifying actions)
+     * 
+     * @uxon-property lock_for_actions
+     * @uxon-type metamodel:action[]
+     * @uxon-template [""]
+     * 
+     * @param array $uxonArray
+     * @return LockingBehavior
+     */
+    public function setLockForActions(UxonObject $uxonArray) : LockingBehavior
+    {
+        $this->actionsToLockFor = $uxonArray->toArray();
+        return $this;
+    }
     
 }
