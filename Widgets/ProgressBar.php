@@ -142,7 +142,7 @@ class ProgressBar extends Display implements iCanBeAligned
      * @param string $value
      * @return string
      */
-    public function getText(string $value) : string
+    public function getText(string $value) : ?string
     {
         return static::findText($value, $this->getTextMap());
     }
@@ -210,7 +210,7 @@ class ProgressBar extends Display implements iCanBeAligned
      */
     public static function findColor($value, array $colorMap = null) : string
     {
-        if ($colorMap === null) {
+        if ($colorMap === null || $value === null) {
             $colorMap = static::getColorMapDefault();
         }
         
@@ -230,7 +230,7 @@ class ProgressBar extends Display implements iCanBeAligned
      * @param array $textMap
      * @return string
      */
-    public static function findText(float $value, array $textMap = null) : string
+    public static function findText(float $value, array $textMap = null) : ?string
     {
         if (empty($textMap)) {
             return $value;
