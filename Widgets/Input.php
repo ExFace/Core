@@ -276,5 +276,19 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
         $uxon->setProperty('required', $this->isRequired());
         return $uxon;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Value::getValueWithDefaults()
+     */
+    public function getValueWithDefaults()
+    {
+        $value = parent::getValueWithDefaults();
+        if ($value === null || $value === '') {
+            $value = $this->getDefaultValue();
+        }
+        return $value;
+    }
 }
 ?>
