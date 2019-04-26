@@ -396,9 +396,6 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         } else {
             $value = $this->getValue();
         }
-        if (is_null($value) || $value === '') {
-            $value = $this->getDefaultValue();
-        }
         return $value;
     }
     
