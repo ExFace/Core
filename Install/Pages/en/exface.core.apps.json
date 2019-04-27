@@ -97,7 +97,7 @@
                 }
             },
             {
-                "action_alias": "axenox.PackageManager.BackupApp"
+                "action_alias": "axenox.PackageManager.ExportAppModel"
             },
             {
                 "action": {
@@ -109,11 +109,9 @@
                 }
             },
             {
-                "action_alias": "axenox.PackageManager.ExportAppModel"
-            },
-            {
                 "widget_type": "MenuButton",
                 "caption": "=TRANSLATE('exface.Core', 'PAGE.APPS.REPAIR')",
+                "icon": "wrench",
                 "buttons": [
                     {
                         "action_alias": "axenox.PackageManager.InstallApp",
@@ -126,6 +124,9 @@
                         "action_alias": "axenox.PackageManager.ComposerCleanupPreviousActions"
                     }
                 ]
+            },
+            {
+                "action_alias": "axenox.PackageManager.BackupApp"
             },
             {
                 "action_alias": "axenox.PackageManager.InstallAppFromVendorFolder",
