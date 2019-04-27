@@ -84,13 +84,26 @@
                 "action_alias": "exface.Core.ShowObjectEditDialog"
             },
             {
-                "action_alias": "exface.Core.DeleteObject"
+                "action_alias": "exface.Core.DeleteObject",
+                "visibility": "optional"
             },
             {
                 "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.OBJECTS')",
                 "action": {
                     "alias": "exface.Core.GoToPage",
                     "page_alias": "exface.core.objects",
+                    "input_rows_min": 1,
+                    "input_rows_max": 1
+                }
+            },
+            {
+                "action_alias": "axenox.PackageManager.BackupApp"
+            },
+            {
+                "action": {
+                    "alias": "exface.Core.DownloadZippedFolder",
+                    "folder_path_attribute_alias": "PACKAGE",
+                    "folder_path_subfolder": "vendor",
                     "input_rows_min": 1,
                     "input_rows_max": 1
                 }
@@ -113,9 +126,6 @@
                         "action_alias": "axenox.PackageManager.ComposerCleanupPreviousActions"
                     }
                 ]
-            },
-            {
-                "action_alias": "axenox.PackageManager.BackupApp"
             },
             {
                 "action_alias": "axenox.PackageManager.InstallAppFromVendorFolder",
