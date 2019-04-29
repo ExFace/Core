@@ -5,6 +5,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * 
@@ -51,4 +52,29 @@ interface ServiceParameterInterface extends  iCanBeConvertedToUxon, WorkbenchDep
     public function hasDefaultValue() : bool;
     
     public function setDefaultValue(string $string) : ServiceParameterInterface;
+    
+    /**
+     *
+     * @return UxonObject
+     */
+    public function getCustomProperties() : UxonObject;
+    
+    /**
+     * Custom parameter properties (similar to data address settings in attributes).
+     *
+     * @uxon-property custom_properties
+     * @uxon-type object
+     * @uxon-template {"": ""}
+     *
+     * @param UxonObject $value
+     * @return ServiceParameterInterface
+     */
+    public function setCustomProperties(UxonObject $value) : ServiceParameterInterface;
+    
+    /**
+     *
+     * @param string $name
+     * @return string|NULL
+     */
+    public function getCustomProperty(string $name) : ?string;
 }

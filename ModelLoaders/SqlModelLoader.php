@@ -467,9 +467,11 @@ class SqlModelLoader implements ModelLoaderInterface
             $select_user_credentials = ', uc.data_connector_config AS user_connector_config';
         }
         
-        // The following IF is needed to install SQL update 8 introducing new columns in the
-        // data source table. If the updated had not yet been installed, these columns are
-        // not selected.
+        if ($selector->isUid() === true) {
+            $selectorFilter = 'ds.oid = ' . $selector->toString();
+        } else {
+            $selectorFilter = 'ds.alias = "' . $selector->toString() . '"';
+        }
         $sql = '
 			SELECT
 				ds.name as data_source_name,
@@ -490,7 +492,8 @@ class SqlModelLoader implements ModelLoaderInterface
                 LEFT JOIN exf_data_connection dc ON ' . $join_on . '
                 ' . $join_user_credentials . '
                 LEFT JOIN exf_app a ON dc.app_oid = a.oid
-			WHERE ds.oid = ' . $selector->toString();
+			WHERE ' . $selectorFilter;
+        
         $query = $this->getDataConnection()->runSql($sql);
         $ds = $query->getResultArray();
         if (count($ds) > 1) {

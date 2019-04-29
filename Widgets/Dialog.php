@@ -14,9 +14,19 @@ use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iHaveHeader;
+use exface\Core\Widgets\Traits\iHaveContextualHelpTrait;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
 
+/**
+ * Dialogs are pop-up forms (i.e. windows), that can be moved and/or maximized.
+ * 
+ * @author Andrej Kabachnik
+ */
 class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHeader
 {
+    use iHaveContextualHelpTrait  {
+        getHelpButton as getHelpButtonViaTrait;
+    }
 
     private $hide_close_button = false;
 
@@ -25,10 +35,6 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
     private $maximizable = true;
 
     private $maximized = null;
-
-    private $help_button = null;
-
-    private $hide_help_button = false;
     
     private $header = null;
     
@@ -103,8 +109,9 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
             $btn->setIcon(Icons::TIMES);
             $btn->setCaption($this->translate('WIDGET.DIALOG.CLOSE_BUTTON_CAPTION'));
             $btn->setAlign(EXF_ALIGN_OPPOSITE);
-            if ($this->getHideCloseButton())
+            if ($this->getHideCloseButton()) {
                 $btn->setHidden(true);
+            }
             $this->close_button = $btn;
         }
         return $this->close_button;
@@ -212,15 +219,17 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
         // TODO add properties specific to this widget here
         return $uxon;
     }
-
-    public function getHelpButton()
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveContextualHelp::getHelpButton()
+     */
+    public function getHelpButton() : iTriggerAction
     {
-        if (is_null($this->help_button)) {
-            $this->help_button = WidgetFactory::create($this->getPage(), $this->getButtonWidgetType(), $this);
-            $this->help_button->setActionAlias('exface.Core.ShowHelpDialog');
-            $this->help_button->setCloseDialogAfterActionSucceeds(false);
-        }
-        return $this->help_button;
+        $button = $this->getHelpButtonViaTrait();
+        $button->setCloseDialogAfterActionSucceeds(false);
+        return $button;
     }
 
     /**
@@ -229,7 +238,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveContextualHelp::getHelpWidget()
      */
-    public function getHelpWidget(iContainOtherWidgets $help_container)
+    public function getHelpWidget(iContainOtherWidgets $help_container) : iContainOtherWidgets
     {
         /**
          *
@@ -290,37 +299,6 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveContextualHelp::getHideHelpButton()
-     */
-    public function getHideHelpButton()
-    {
-        if (! $this->hide_help_button && count($this->getInputWidgets()) == 0) {
-            $this->hide_help_button = true;
-        }
-        return $this->hide_help_button;
-    }
-
-    /**
-     * Set to TRUE to remove the contextual help button.
-     *
-     * @uxon-property hide_help_button
-     * @uxon-type boolean
-     * @uxon-default false
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveContextualHelp::setHideHelpButton()
-     */
-    public function setHideHelpButton($value)
-    {
-        $this->hide_help_button = BooleanDataType::cast($value);
-        return $this;
-    }
-
-    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Form::getChildren()
@@ -342,6 +320,8 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
         if (! $this->getHideHelpButton()) {
             yield $this->getHelpButton();
         }
+        
+        yield $this->getCloseButton();
     }
     
     /**
