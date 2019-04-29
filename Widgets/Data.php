@@ -32,6 +32,7 @@ use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Interfaces\Widgets\iHaveQuickSearch;
+use exface\Core\Widgets\Traits\iHaveContextualHelpTrait;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -72,6 +73,7 @@ class Data
         setLazyLoading as setLazyLoadingViaTrait;
         getLazyLoadingActionAlias as getLazyLoadingActionAliasViaTrait;
     }
+    use iHaveContextualHelpTrait;
 
     // properties
     private $paginate = true;
@@ -107,10 +109,6 @@ class Data
      */
     private $empty_text = null;
 
-    private $help_button = null;
-
-    private $hide_help_button = false;
-    
     private $configurator = null;
     
     private $hide_refresh_button = null;
@@ -1300,23 +1298,13 @@ class Data
         return $this;
     }
 
-    public function getHelpButton()
-    {
-        if (is_null($this->help_button)) {
-            $this->help_button = WidgetFactory::create($this->getPage(), $this->getButtonWidgetType(), $this);
-            $this->help_button->setActionAlias('exface.Core.ShowHelpDialog');
-            $this->help_button->setHidden(true);
-        }
-        return $this->help_button;
-    }
-
     /**
      *
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveContextualHelp::getHelpWidget()
      */
-    public function getHelpWidget(iContainOtherWidgets $help_container)
+    public function getHelpWidget(iContainOtherWidgets $help_container) : iContainOtherWidgets
     {
         /**
          *
@@ -1387,34 +1375,6 @@ class Data
             $row['DESCRIPTION'] .= $attr->getObject()->getShortDescription() ? ' ' . rtrim($attr->getObject()->getShortDescription(), ".") . '.' : '';
         }
         return $row;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveContextualHelp::getHideHelpButton()
-     */
-    public function getHideHelpButton()
-    {
-        return $this->hide_help_button;
-    }
-
-    /**
-     * Set to TRUE to remove the contextual help button.
-     * Default: FALSE.
-     *
-     * @uxon-property hide_help_button
-     * @uxon-type boolean
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveContextualHelp::setHideHelpButton()
-     */
-    public function setHideHelpButton($value)
-    {
-        $this->hide_help_button = BooleanDataType::cast($value);
-        return $this;
     }
 
     public function exportUxonObject()
@@ -1675,7 +1635,7 @@ class Data
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveQuickSearch::getQuickSearchEnabled()
      */
-    public function getQuickSearchEnabled() : bool
+    public function getQuickSearchEnabled() : ?bool
     {
         return $this->quickSearchEnabled;
     }

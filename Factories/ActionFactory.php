@@ -58,9 +58,7 @@ abstract class ActionFactory extends AbstractStaticFactory
      */
     public static function createFromUxon(Workbench $workbench, UxonObject $uxon, WidgetInterface $trigger_widget = null) : ActionInterface
     {
-        if ($action_alias = $uxon->getProperty('alias')) {
-            $uxon->unsetProperty('alias');
-        } else {
+        if (! $action_alias = $uxon->getProperty('alias')) {
             throw new UxonParserError($uxon, 'Cannot instantiate action from UXON: no action alias found!');
         }
         $selector = new ActionSelector($workbench, $action_alias);

@@ -20,9 +20,9 @@ interface iHaveQuickSearch extends WidgetInterface
     
     /**
      *
-     * @return bool
+     * @return bool|NULL
      */
-    public function getQuickSearchEnabled() : bool;
+    public function getQuickSearchEnabled() : ?bool;
     
     /**
      * Set to TRUE/FALSE to enable or disable quick search functionality.

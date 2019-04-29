@@ -86,11 +86,11 @@ CREATE TABLE IF NOT EXISTS `{$this->getMigrationsTableName()}` (
 `id` int(8) NOT NULL AUTO_INCREMENT,
 `migration_name` varchar(300) NOT NULL,
 `up_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-`up_script` text NOT NULL,
-`up_result` text NOT NULL,
+`up_script` longtext NOT NULL,
+`up_result` longtext NOT NULL,
 `down_datetime` timestamp NULL,
-`down_script` text NOT NULL,
-`down_result` text NULL,
+`down_script` longtext NOT NULL,
+`down_result` longtext NULL,
 PRIMARY KEY (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 

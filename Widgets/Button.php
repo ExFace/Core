@@ -54,12 +54,14 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
 
     public function getAction()
     {
-        if (is_null($this->action)) {
+        if ($this->action === null) {
             if ($this->getActionAlias()) {
                 $this->action = ActionFactory::createFromString($this->getWorkbench(), $this->getActionAlias(), $this);
-            }
-            if (! is_null($this->action_uxon)) {
-                $this->action->importUxonObject($this->action_uxon);
+                if ($this->action_uxon !== null) {
+                    $this->action->importUxonObject($this->action_uxon);
+                }
+            } elseif ($this->action_uxon !== null) {
+                $this->action = ActionFactory::createFromUxon($this->getWorkbench(), $this->action_uxon, $this);
             }
         }
         return $this->action;

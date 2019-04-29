@@ -29,6 +29,8 @@ class ServiceParameter implements ServiceParameterInterface
     
     private $action = null;
     
+    private $dataSourceProperties = null;
+    
     public function __construct(ActionInterface $action, UxonObject $uxon)
     {
         $this->action = $action;
@@ -218,4 +220,43 @@ class ServiceParameter implements ServiceParameterInterface
         $this->defaultValue = $string;
         return $this;
     }
+    
+    /**
+     * 
+     * @return UxonObject
+     */
+    public function getCustomProperties() : UxonObject
+    {
+        if ($this->dataSourceProperties === null) {
+            $this->dataSourceProperties = new UxonObject();
+        }
+        return $this->dataSourceProperties;
+    }
+    
+    /**
+     * Custom parameter properties (similar to data address settings in attributes).
+     * 
+     * @uxon-property custom_properties
+     * @uxon-type object
+     * @uxon-template {"": ""}
+     * 
+     * @param UxonObject $value
+     * @return ServiceParameter
+     */
+    public function setCustomProperties(UxonObject $value) : ServiceParameterInterface
+    {
+        $this->dataSourceProperties = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param string $name
+     * @return string|NULL
+     */
+    public function getCustomProperty(string $name) : ?string
+    {
+        return $this->getCustomProperties()->getProperty($name);
+    }
+    
 }
