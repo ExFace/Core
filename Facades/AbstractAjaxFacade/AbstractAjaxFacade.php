@@ -43,6 +43,7 @@ use exface\Core\Interfaces\Tasks\ResultTextContentInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsTimeFormatter;
+use exface\Core\Interfaces\Widgets\CustomWidgetInterface;
 
 /**
  * 
@@ -195,6 +196,11 @@ abstract class AbstractAjaxFacade extends AbstractHttpFacade
     {
         $elem_class = $this->getClass($widget);
         $instance = new $elem_class($widget, $this);
+        
+        if ($widget instanceof CustomWidgetInterface) {
+            $instance = $widget->createFacadeElement($this, $instance);
+        }
+        
         return $instance;
     }
 
