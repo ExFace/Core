@@ -11,7 +11,42 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
- * This Action adds all files of a designated folder into a ZIP Archive.
+ * This action packs all files of a given folder into a ZIP archive lets the user download it.
+ * 
+ * The folder to zip can be either defined statically (`folder_path`) or derived from from
+ * the input data of the action (`folder_path_attribute_alias`).
+ * 
+ * All path properties accept either an absolute path or a path relative to the base installation
+ * folder. If you need to define a path relatively to another folder, use the `folder_path_subfolder`
+ * property to specify the path between the installation folder and the base folder of your path.
+ * 
+ * The ZIP file will contain the name of the zipped folder followed by a timestamp.
+ * 
+ * ## Examples:
+ * 
+ * Zip and download an app. The path to the app (relative to the `vendor` folder corresponds to
+ * it's package name. So we use the package name as a relative path and use the `folder_path_subfolder`
+ * property to make sure, it is resolved relatively to the `vendor` folder. Exporting 
+ * 
+ * ```
+ * {
+ *  "object_alias": "exface.Core.APP",
+ *  "folder_path_attribute_alias": "PACKAGE",
+ *  "folder_path_subfolder": "vendor",
+ *  "input_rows_min": 1,
+ *  "input_rows_max": 1
+ * }
+ * 
+ * ```
+ * 
+ * Zip and download all config files of the current installation.
+ * 
+ * ```
+ * {
+ *  "folder_path": "config"
+ * }
+ * 
+ * ```
  * 
  * @author Andrej Kabachnik
  *
@@ -34,6 +69,7 @@ class DownloadZippedFolder extends AbstractAction
     protected function init()
     {
         $this->setIcon(Icons::DOWNLOAD);
+        $this->setInputRowsMax(1);
     }
 
     /**
@@ -85,6 +121,8 @@ class DownloadZippedFolder extends AbstractAction
     /**
      * Defines a custom path and filename for the created zip file.
      * 
+     * If not set, the ZIP file will be saved in the cache folder.
+     * 
      * @uxon-property zip_path
      * @uxon-type string
      * 
@@ -120,7 +158,9 @@ class DownloadZippedFolder extends AbstractAction
     }
     
     /**
-     * Sets a constant path to the folder to zip and download.
+     * Sets a static path to the folder to zip and download.
+     * 
+     * The path can be either static or relative to the installation folder of the plattform.
      * 
      * @uxon-property folder_path
      * @uxon-type string
@@ -172,6 +212,10 @@ class DownloadZippedFolder extends AbstractAction
         return $this->folderPathAttributeAlias;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     protected function isFolderPathBoundToAttribute() : bool
     {
         return $this->folderPathAttributeAlias !== null;
@@ -184,6 +228,8 @@ class DownloadZippedFolder extends AbstractAction
     
     /**
      * Alias of the attribute, that holds the relative or absolute path to the folder to zip.
+     * 
+     * The path can be either static or relative to the installation folder of the plattform.
      * 
      * @uxon-property folder_path_attribute_alias
      * @uxon-type metamodel:attribute
@@ -207,7 +253,7 @@ class DownloadZippedFolder extends AbstractAction
     }
     
     /**
-     * Subfolder path between the base installation folder and the folder used as base of a relativ path.
+     * Subfolder path between the installation folder and the base folder when using relative paths.
      * 
      * E.g. `vendor` if you use folder paths relative to the vendor folder.
      * 
