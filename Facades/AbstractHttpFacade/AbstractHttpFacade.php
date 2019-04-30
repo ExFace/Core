@@ -27,7 +27,7 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
             if (! $this->getWorkbench()->isStarted()) {
                 $this->getWorkbench()->start();
             }
-            $this->url = $this->getWorkbench()->getCMS()->buildUrlToApi() . '/' .  $this->getUrlRouteDefault();
+            $this->url = $this->getWorkbench()->getCMS()->buildUrlToRouter() . '/' .  $this->getUrlRouteDefault();
         }
         return $this->url;
     }

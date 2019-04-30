@@ -28,7 +28,7 @@ class Browser extends AbstractWidget
     public function setUrl($url) : Browser
     {
         $phs = [
-            'api' => $this->getWorkbench()->getCMS()->buildUrlToApi() . '/api'
+            'api' => $this->getWorkbench()->getCMS()->buildUrlToRouter() . '/api'
         ];
         $this->url = StringDataType::replacePlaceholders($url, $phs);
         return $this;
@@ -42,7 +42,7 @@ class Browser extends AbstractWidget
     public function setUrlBase(string $url) : Browser
     {
         $phs = [
-            'api' => $this->getWorkbench()->getCMS()->buildUrlToApi() . '/api'
+            'api' => $this->getWorkbench()->getCMS()->buildUrlToRouter() . '/api'
         ];
         $this->urlBase = StringDataType::replacePlaceholders($url, $phs);
         return $this;
