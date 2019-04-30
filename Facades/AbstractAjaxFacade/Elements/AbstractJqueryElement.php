@@ -12,6 +12,7 @@ use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 use exface\Core\Widgets\Container;
+use exface\Core\DataTypes\StringDataType;
 
 abstract class AbstractJqueryElement implements WorkbenchDependantInterface
 {
@@ -702,7 +703,8 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
             $class = $this->getFacade()->getConfig()->getOption('ICON_CLASSES.' . strtoupper($icon));
             return $class;
         } catch (ConfigOptionNotFoundError $e) {
-            return $this->getFacade()->getConfig()->getOption('ICON_CLASSES.DEFAULT_CLASS_PREFIX') . $icon;
+            $defaultPrefix = $this->getFacade()->getConfig()->getOption('ICON_CLASSES.DEFAULT_CLASS_PREFIX');
+            return ($defaultPrefix !== '' && StringDataType::startsWith($icon, $defaultPrefix, false) === false ? $defaultPrefix : '') . $icon;
         }
     }
     
