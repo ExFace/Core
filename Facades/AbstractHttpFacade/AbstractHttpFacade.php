@@ -3,172 +3,50 @@ namespace exface\Core\Facades\AbstractHttpFacade;
 
 use exface\Core\Facades\AbstractFacade\AbstractFacade;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use exface\Core\Interfaces\Tasks\ResultInterface;
-use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
-use Psr\Http\Server\MiddlewareInterface;
-use exface\Core\Exceptions\InternalError;
-use exface\Core\Facades\AbstractHttpFacade\Middleware\RequestContextReader;
-use exface\Core\Facades\AbstractHttpFacade\Middleware\RequestIdNegotiator;
 
 /**
  * Common base structure for HTTP facades.
  *
- * Uses a middleware bus internally to transform incoming HTTP requests into tasks.
- * To standardise the middleware somehat, this facade getter methods for names
- * of most important request attributes needed for tasks, page and action selectors,
- * etc.
+ * Provides methods to register routes and generate URLs.
  *
  * @author Andrej Kabachnik
  *
  */
 abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeInterface
 {
-    const REQUEST_ATTRIBUTE_NAME_TASK = 'task';
-    const REQUEST_ATTRIBUTE_NAME_PAGE = 'page';
-    const REQUEST_ATTRIBUTE_NAME_ACTION = 'action';
-    const REQUEST_ATTRIBUTE_NAME_RENDERING_MODE = 'rendering_mode';
-    
-    protected function init()
-    {
-        parent::init();
-        if (! $this->getWorkbench()->isStarted()){
-            $this->getWorkbench()->start();
-        }
-    }
+    private $url;
     
     /**
      *
      * {@inheritDoc}
-     * @see \Psr\Http\Server\RequestHandlerInterface::handle()
+     * @see \exface\Core\Interfaces\Facades\HttpFacadeInterface::buildUrlToFacade()
      */
-    public function handle(ServerRequestInterface $request) : ResponseInterface
+    public function buildUrlToFacade() : string
     {
-        if ($request->getAttribute($this->getRequestAttributeForTask()) === null) {
-            $handler = new HttpRequestHandler($this);
-            foreach ($this->getMiddleware() as $middleware) {
-                $handler->add($middleware);
+        if ($this->url === null) {
+            if (! $this->getWorkbench()->isStarted()) {
+                $this->getWorkbench()->start();
             }
-            // TODO Throw event to allow adding middleware from outside (e.g. a PhpDebugBar or similar)
-            return $handler->handle($request);
+            $this->url = $this->getWorkbench()->getCMS()->buildUrlToApi() . '/' .  $this->getUrlRouteDefault();
         }
-        return $this->createResponse($request);
+        return $this->url;
     }
     
     /**
-     * Makes the facade create an HTTP response for the given request - after all middlewares were run.
      * 
-     * This method retrieves the task from the request attributes and attempts to let the workbench
-     * handle it. If it succeseeds, the task result is passed on to createResponseFromTaskResult(),
-     * otherwise, any exception caught is passed to createResponseFromError(). These methods are
-     * reponsible for the actual rendering of the response and differ from facade to facade,
-     * while the generic createResponse() method can mostly be used as-is.
-     * 
-     * @see createResponseFromTaskResult()
-     * @see createResponseFromError()
-     * 
-     * @param ServerRequestInterface $request
-     * @return ResponseInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Facades\HttpFacadeInterface::getUrlRoutePatterns()
      */
-    protected function createResponse(ServerRequestInterface $request) : ResponseInterface
-    {
-        try {
-            $task = $request->getAttribute($this->getRequestAttributeForTask());
-            $result = $this->getWorkbench()->handle($task);
-            return $this->createResponseFromTaskResult($request, $result);
-        } catch (\Throwable $e) {
-            if (! $e instanceof ExceptionInterface){
-                $e = new InternalError($e->getMessage(), null, $e);
-            }
-            return $this->createResponseFromError($request, $e);
-        }
-    }
-    
-    /**
-     * Returns the middleware stack to use in the request handler.
-     *
-     * Override this method to add/change middleware. For example, facade can add their own
-     * middleware to read specific URL parameters built-in the used UI frameworks.
-     *
-     * @return MiddlewareInterface[]
-     */
-    protected function getMiddleware() : array
+    public function getUrlRoutePatterns() : array
     {
         return [
-            new RequestIdNegotiator(), // make sure, there is a X-Request-ID header
-            new RequestContextReader($this->getWorkbench()->getContext()) // Pass request data to the request context
+            '/' . preg_quote($this->getUrlRouteDefault() . '[/?]', '/') . '/'
         ];
     }
     
     /**
-     * Creates and returns an HTTP response from the given task result.
-     * 
-     * @param ServerRequestInterface $request
-     * @param ResultInterface $result
-     * @return ResponseInterface
-     */
-    protected abstract function createResponseFromTaskResult(ServerRequestInterface $request, ResultInterface $result): ResponseInterface;
-    
-    /**
-     * Creates and returns an HTTP response from the given exception.
-     * 
-     * @param ServerRequestInterface $request
-     * @param \Throwable $exception
-     * @param UiPageInterface $page
-     * @return ResponseInterface
-     */
-    protected abstract function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface;
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Facades\HttpFacadeInterface::getRequestAttributeForAction()
-     */
-    public function getRequestAttributeForAction() : string
-    {
-        return static::REQUEST_ATTRIBUTE_NAME_ACTION;
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Facades\HttpFacadeInterface::getRequestAttributeForTask()
-     */
-    public function getRequestAttributeForTask() : string
-    {
-        return static::REQUEST_ATTRIBUTE_NAME_TASK;
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Facades\HttpFacadeInterface::getRequestAttributeForPage()
-     */
-    public function getRequestAttributeForPage() : string
-    {
-        return static::REQUEST_ATTRIBUTE_NAME_PAGE;
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Facades\HttpFacadeInterface::getRequestAttributeForRenderingMode()
-     */
-    public function getRequestAttributeForRenderingMode() : string
-    {
-        return static::REQUEST_ATTRIBUTE_NAME_RENDERING_MODE;
-    }
-    
-    /**
-     * 
+     * Returns the default route to the pattern: e.g. "api/docs" for the DocsFacade.
      * @return string
      */
-    public function getBaseUrl() : string{
-        if (is_null($this->url)) {
-            $this->url = $this->getWorkbench()->getCMS()->buildUrlToApi() . $this->getConfig()->getOption('DEFAULT_AJAX_URL');
-        }
-        return $this->url;
-    }
+    abstract public function getUrlRouteDefault() : string;
 }

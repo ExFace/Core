@@ -13,7 +13,7 @@ use exface\Core\DataTypes\StringDataType;
 /**
  * This middeware rewrites URLs in documentation files to make them usable with the DocsFacade.
  * 
- * This middleware only works with apps, that have a composer.json with support/docs or support/source
+ * This middleware only works with apps, that have a composer.json with `support/docs` or `support/source`
  * properties!
  * 
  * @author Andrej Kabachnik
@@ -96,7 +96,7 @@ class AppUrlRewriterMiddleware implements MiddlewareInterface
         $urls = [];
         foreach ($appSheet->getRows() as $row) {
             if ($url = $this->getRepoDocsUrl($row['PACKAGE'])) {
-                $urls[$url] = $this->facade->getBaseUrl(). '/' . $row['PACKAGE'] . '/' . StringDataType::substringAfter($url, '/', '', false, true); 
+                $urls[$url] = $this->facade->buildUrlToFacade(). '/' . $row['PACKAGE'] . '/' . StringDataType::substringAfter($url, '/', '', false, true); 
             }
         }
         
