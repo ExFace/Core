@@ -76,11 +76,12 @@ class HttpRequestHandler implements RequestHandlerInterface
             }
         }
         $stream = $response->getBody();
+        $chunk = $stream instanceof IteratorStream ? 1 : 1024 * 8;
         if ($stream->isSeekable()) {
             $stream->rewind();
         }
         while (!$stream->eof()) {
-            echo $stream->read(1024 * 8);
+            echo $stream->read($chunk);
         }
         
         return;
