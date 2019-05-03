@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\Facades;
 
-use exface\Core\Facades\AbstractFacade\AbstractFacade;
-use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use kabachello\FileRoute\FileRouteMiddleware;
@@ -15,16 +13,15 @@ use function GuzzleHttp\Psr7\stream_for;
 use exface\Core\Facades\DocsFacade\MarkdownDocsReader;
 use exface\Core\Facades\DocsFacade\Middleware\AppUrlRewriterMiddleware;
 use exface\Core\Facades\AbstractHttpFacade\HttpRequestHandler;
+use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
 
 /**
  *  
  * @author Andrej Kabachnik
  *
  */
-class DocsFacade extends AbstractFacade implements HttpFacadeInterface
+class DocsFacade extends AbstractHttpFacade
 {    
-    private $url = null;
-    
     protected function init()
     {
         parent::init();
@@ -57,7 +54,7 @@ class DocsFacade extends AbstractFacade implements HttpFacadeInterface
         };
         $reader = new MarkdownDocsReader($this->getWorkbench());
         $templatePath = Filemanager::pathJoin([$this->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/template.html']);
-        $template = new PlaceholderFileTemplate($templatePath, $this->getBaseUrl());
+        $template = new PlaceholderFileTemplate($templatePath, $this->buildUrlToFacade());
         $template->setBreadcrumbsRootName('Documentation');
         $handler->add(new FileRouteMiddleware($matcher, $this->getWorkbench()->filemanager()->getPathToVendorFolder(), $reader, $template));
         
@@ -66,24 +63,11 @@ class DocsFacade extends AbstractFacade implements HttpFacadeInterface
     
     /**
      * 
-     * @return string
-     */
-    public function getBaseUrl() : string{
-        if (is_null($this->url)) {
-            $this->url = $this->getWorkbench()->getCMS()->buildUrlToApi() . '/api/docs';
-        }
-        return $this->url;
-    }
-    
-    /**
-     *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Facades\HttpFacadeInterface::getUrlRoutePatterns()
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::getUrlRouteDefault()
      */
-    public function getUrlRoutePatterns() : array
+    public function getUrlRouteDefault(): string
     {
-        return [
-            "/\/api\/docs[\/?]/"
-        ];
+        return 'api/docs';
     }
 }
