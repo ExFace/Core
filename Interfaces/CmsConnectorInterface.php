@@ -121,11 +121,15 @@ interface CmsConnectorInterface extends WorkbenchDependantInterface
     public function buildUrlToSiteRoot();
     
     /**
-     * Returns the full URL of the root of the plattform API site: e.g. https://www.exface.com/demo/api
+     * Returns the full URL of the workbench router: e.g. https://www.exface.com/demo.
+     * 
+     * This URL is used by HTTP facades to create/parse their routes. The facade's route
+     * begins at this URL. E.g. if an facade is avaliable under `https://www.exface.com/demo/api/facade`
+     * and the URL to the router is `https://www.exface.com/demo`, than it's route is `/api/facade`.
      *
      * @return string
      */
-    public function buildUrlToApi();
+    public function buildUrlToRouter();
     
     /**
      * Returns the URL to include a given path in the facade code: e.g. for CSS/JS tags in the HTML head.

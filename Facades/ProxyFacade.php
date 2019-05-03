@@ -1,13 +1,12 @@
 <?php
 namespace exface\Core\Facades;
 
-use exface\Core\Facades\AbstractFacade\AbstractFacade;
-use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use function GuzzleHttp\Psr7\stream_for;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Response;
+use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
 
 /**
  * This facade act's as a proxy: it fetches and passes along data located at the URI in the request parameter "url".
@@ -36,10 +35,8 @@ use GuzzleHttp\Psr7\Response;
  * @author Andrej Kabachnik
  *
  */
-class ProxyFacade extends AbstractFacade implements HttpFacadeInterface
+class ProxyFacade extends AbstractHttpFacade
 {    
-    private $url = null;
-    
     /**
      * 
      * {@inheritDoc}
@@ -62,38 +59,22 @@ class ProxyFacade extends AbstractFacade implements HttpFacadeInterface
     }
     
     /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Facades\HttpFacadeInterface::getUrlRoutePatterns()
-     */
-    public function getUrlRoutePatterns() : array
-    {
-        return [
-            "/\/api\/proxy[\/?]/"
-        ];
-    }
-    
-    /**
-     *
-     * @return string
-     */
-    public function getBaseUrl() : string{
-        if (is_null($this->url)) {
-            if (! $this->getWorkbench()->isStarted()) {
-                $this->getWorkbench()->start();
-            }
-            $this->url = $this->getWorkbench()->getCMS()->buildUrlToApi() . '/api/proxy';
-        }
-        return $this->url;
-    }
-    
-    /**
      * 
      * @param string $uri
      * @return string
      */
     public function getProxyUrl(string $uri) : string
     {
-        return $this->getBaseUrl() . '?url=' . urlencode($uri);
+        return $this->buildUrlToFacade() . '?url=' . urlencode($uri);
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::getUrlRouteDefault()
+     */
+    public function getUrlRouteDefault(): string
+    {
+        return 'api/proxy';
     }
 }
