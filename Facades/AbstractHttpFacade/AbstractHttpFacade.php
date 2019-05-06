@@ -40,7 +40,7 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
     public function getUrlRoutePatterns() : array
     {
         return [
-            '/' . preg_quote($this->getUrlRouteDefault() . '[/?]', '/') . '/'
+            '/' . preg_quote('/' . $this->getUrlRouteDefault(), '/') . '[\/?]' . '/'
         ];
     }
     
