@@ -25,8 +25,8 @@ use exface\Core\Interfaces\Widgets\iCanBeAligned;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\WidgetDimension;
 use exface\Core\Factories\WidgetDimensionFactory;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\Widgets\Traits\AttributeCaptionTrait;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -51,6 +51,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     use iCanBeAlignedTrait {
         getAlign as getAlignDefault;
     }
+    use AttributeCaptionTrait;
     
     private $attribute_alias = null;
 
@@ -467,65 +468,6 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     {
         $this->cell_styler_script = $value;
         return $this;
-    }
-
-    /**
-     * Depending on the content of the column, it will get a different default caption:
-     * 
-     * - If the column shows a regular attribute, the name of the that attribute will be used
-     * - If the column shows a __LABEL attribute of a related object, the name of the last relation will be used
-     * 
-     * {@inheritdoc} 
-     * @see \exface\Core\Widgets\AbstractWidget::getCaption()
-     */
-    public function getCaption()
-    {
-        $caption = parent::getCaption();
-        if ($caption === null || $caption === '') {
-            if ($attr = $this->getAttribute()) {
-                if ($this->hasAggregator()) {
-                    $aggr = ' (' . $this->getAggregator()->getFunction()->getLabelOfValue() . ')';
-                }
-                
-                // FIXME isLabelForObject works instable, as MetaObject->getLabelAlias() will yield LABEL or the Label of the underlying attribute pretty unpredictabely
-                if (/*$attr->isLabelForObject() === true && */$attr->getRelationPath()->isEmpty() === false && $this->isLabelColumn() === true) {
-                    $this->setCaption($attr->getRelationPath()->getRelationLast()->getName() . $aggr);
-                } else {
-                    $this->setCaption($attr->getName() . $aggr);
-                }
-            }
-        }
-        return parent::getCaption();
-    }
-    
-    
-    
-    /**
-     * Returns TRUE if this column has an attribute alias ending with __LABEL and FALSE otherwise.
-     *
-     * @return bool
-     */
-    protected function isLabelColumn() : bool
-    {
-        $alias = $this->getAttributeAlias();
-        
-        if ($alias === null || $alias === '') {
-            return false;
-        } 
-        
-        if ($this->getAttribute()) {
-            $labelAlias = $this->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS');
-            if (StringDataType::endsWith($alias, $labelAlias, false) === true) {
-                return true;
-            } else {
-                $alias = DataAggregation::stripAggregator($alias);
-                if (StringDataType::endsWith($alias, $labelAlias, false) === true) {
-                    return true;
-                }
-            }
-        }
-        
-        return false;
     }
 
     /**
