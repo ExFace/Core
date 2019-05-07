@@ -12,7 +12,6 @@ use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
-use exface\Core\Widgets\Message;
 use exface\Core\DataTypes\MessageTypeDataType;
 
 /**
@@ -338,5 +337,14 @@ trait ExceptionTrait {
         }
         return $config->getOption($option);
     }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return null;
+    }
 }
-?>

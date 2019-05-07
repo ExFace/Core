@@ -340,7 +340,7 @@ class Condition implements ConditionInterface
     /**
      * Imports data from UXON objects like {"object_alias": "...", "expression": "...", "value": "...", "comparator": "..."}
      *
-     * @param UxonObject $uxon_object            
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::importUxonObject()            
      */
     public function importUxonObject(UxonObject $uxon_object)
     {
@@ -381,6 +381,16 @@ class Condition implements ConditionInterface
                 $this->setValue($value);
             }
         }
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return null;
     }
     
     /**

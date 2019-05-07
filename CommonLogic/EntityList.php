@@ -354,5 +354,14 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
         uasort($this->content_array, $callback);
         return $this;
     }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return null;
+    }
 }
-?>

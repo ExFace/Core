@@ -17,8 +17,8 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
  * @author Andrej Kabachnik
  *
  */
-class DataColumnMapping implements DataColumnMappingInterface {
-    
+class DataColumnMapping implements DataColumnMappingInterface 
+{
     use ImportUxonObjectTrait;
     
     private $mapper = null;

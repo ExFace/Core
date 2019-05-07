@@ -113,4 +113,14 @@ class DataAggregation implements iCanBeConvertedToUxon
     {
         return clone $this;
     }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return null;
+    }
 }

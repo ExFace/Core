@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic;
 
-use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Exceptions\UnexpectedValueException;
@@ -250,6 +249,16 @@ class WidgetLink implements WidgetLinkInterface
         $uxon->setProperty('column_id', $this->targetColumnId);
         $uxon->setProperty('row_number', $this->targetRowNumber);
         return $uxon;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return null;
     }
 
     /**

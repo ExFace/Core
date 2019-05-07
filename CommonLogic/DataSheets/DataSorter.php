@@ -133,4 +133,14 @@ class DataSorter implements iCanBeConvertedToUxon, WorkbenchDependantInterface
     {
         return $this->getDataSheet()->getMetaObject()->getAttribute($this->getAttributeAlias());
     }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return null;
+    }
 }
