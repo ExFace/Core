@@ -2,18 +2,18 @@
 namespace exface\Core\CommonLogic\Model\Behaviors;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\TranslationInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Interfaces\Actions\iCreateData;
-use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Behaviors\StateMachineBehavior;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
+use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Defines a state for the StateMachineBehavior.
@@ -22,6 +22,7 @@ use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
  */
 class StateMachineState
 {
+    use TranslatablePropertyTrait;
 
     private $state_id = null;
 
@@ -260,17 +261,19 @@ class StateMachineState
 
     /**
      * Returns the name of the state.
+     * 
+     * If the name was specified as a formula (e.g. =TRANSLATE(...)), the formula will be evaluated.
      *
      * @return string
      */
     public function getName($prependId = false)
     {
-        if (Expression::detectFormula($this->name)) {
-            $expr = ExpressionFactory::createForObject($this->getStateMachine()->getObject(), $this->name);
-            if (false === $expr->isFormula() || false === $expr->isStatic()) {
-                throw new BehaviorConfigurationError($this->getStateMachine()->getObject(), 'Invalid value for state name "' . $this->name . '": only strings and static formulas like =TRANSLATE() are allowed!');
+        if ($this->isValueFormula($this->name) === true) {
+            try {
+                $this->name = $this->evaluatePropertyExpression($this->name);
+            } catch (RuntimeException $e) {
+                throw new BehaviorConfigurationError($this->getStateMachine()->getObject(), 'Invalid value for state name "' . $this->name . '": only strings and static formulas like =TRANSLATE() are allowed!', $e->getAlias(), $e);
             }
-            $this->name = $expr->evaluate();
         }
         return ($prependId === true ? $this->getStateId() . ' ' : '') . $this->name;
     }
