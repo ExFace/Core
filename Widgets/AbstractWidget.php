@@ -30,8 +30,6 @@ use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\CommonLogic\Selectors\WidgetSelector;
 
 /**
  * Basic ExFace widget

@@ -2,8 +2,7 @@
 namespace exface\Core\Widgets\Traits;
 
 use exface\Core\Interfaces\Widgets\iHaveCaption;
-use exface\Core\CommonLogic\Model\Expression;
-use exface\Core\Factories\ExpressionFactory;
+use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 
 /**
  * This trait adds the caption property to a widget or a widget part.
@@ -12,6 +11,8 @@ use exface\Core\Factories\ExpressionFactory;
  *
  */
 trait iHaveCaptionTrait {
+    
+    use TranslatablePropertyTrait;
     
     private $hide_caption = false;
     
@@ -30,33 +31,7 @@ trait iHaveCaptionTrait {
     {
         $this->caption = $this->evaluatePropertyExpression($caption);
         return $this;
-    }
-    
-    /**
-     * Evaluates the formula in the passed $value and returns the result.
-     *
-     * This can be used to translate certain attributes, e.g. the caption:
-     * =TRANSLATE('exface.Core', 'TRANSLATION.KEY', '%placeholder1%=>value1|%placeholder2%=>value2', '1')
-     * =TRANSLATE('exface.Core', 'ACTION.CREATEDATA.RESULT', '%number%=>Zwei', '2')
-     * =TRANSLATE('exface.Core', 'ACTION.CREATEDATA.NAME')
-     *
-     * Only static formulas are evaluated, otherwise the passed $value is returned.
-     *
-     * @param string $string
-     * @return string
-     */
-    protected function evaluatePropertyExpression(string $string) : string
-    {
-        if (Expression::detectFormula($string)) {
-            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $string);
-            if ($expr->isStatic()) {
-                return $expr->evaluate();
-            }
-        }
-        return $string;
-    }
-    
-    
+    }    
     
     /**
      *
