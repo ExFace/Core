@@ -30,6 +30,7 @@ use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
+use exface\Core\Uxon\WidgetSchema;
 
 /**
  * Basic ExFace widget
@@ -139,7 +140,7 @@ abstract class AbstractWidget implements WidgetInterface
      *
      * @see \exface\Core\Interfaces\WidgetInterface::importUxonObject()
      */
-    function importUxonObject(UxonObject $uxon)
+    public function importUxonObject(UxonObject $uxon)
     {
         // Save the original UXON description
         $this->uxon_original = $uxon->copy();
@@ -165,6 +166,16 @@ abstract class AbstractWidget implements WidgetInterface
             throw new WidgetPropertyUnknownError($this, 'Unknown UXON property found for widget "' . $this->getWidgetType() . '": ' . $e->getMessage(), '6UNTXJE', $e);
         }
         return;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return WidgetSchema::class;
     }
 
     public function exportUxonObject()

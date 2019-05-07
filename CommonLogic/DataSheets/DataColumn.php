@@ -18,11 +18,9 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 class DataColumn implements DataColumnInterface
 {
-
     const COLUMN_NAME_VALIDATOR = '[^A-Za-z0-9_]';
 
     // Properties, _not_ to be dublicated on copy()
@@ -842,5 +840,15 @@ class DataColumn implements DataColumnInterface
     public function getMetaObject()
     {
         return $this->getDataSheet()->getMetaObject();
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return null;
     }
 }

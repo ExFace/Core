@@ -31,6 +31,7 @@ use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
+use exface\Core\Uxon\ActionSchema;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -1050,6 +1051,16 @@ abstract class AbstractAction implements ActionInterface
     protected function getResultObjectExpected() : ?MetaObjectInterface
     {
         return $this->hasResultObjectRestriction() ? $this->getWorkbench()->model()->getObject($this->result_object_alias) : null;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return ActionSchema::class;
     }
 }
 ?>

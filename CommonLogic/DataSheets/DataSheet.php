@@ -2046,6 +2046,14 @@ class DataSheet implements DataSheetInterface
         $this->rows = $sorter->sort($this->getRows());
         return $this;
     }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return null;
+    }
 }
-
-?>

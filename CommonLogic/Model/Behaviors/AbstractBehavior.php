@@ -9,6 +9,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\AliasTrait;
+use exface\Core\Uxon\BehaviorSchema;
 
 /**
  *
@@ -91,6 +92,16 @@ abstract class AbstractBehavior implements BehaviorInterface
         $uxon = new UxonObject();
         $uxon->setProperty('disabled', $this->isDisabled());
         return $uxon;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return BehaviorSchema::class;
     }
 
     /**

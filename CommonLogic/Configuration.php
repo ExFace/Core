@@ -237,6 +237,14 @@ class Configuration implements ConfigurationInterface
     {
         return $this->setConfigUxon($uxon);
     }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return null;
+    }
 }
-
-?>

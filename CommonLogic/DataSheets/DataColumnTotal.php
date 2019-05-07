@@ -5,7 +5,6 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
-use exface\Core\Exceptions\DomainException;
 use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\Interfaces\Model\AggregatorInterface;
@@ -17,6 +16,11 @@ class DataColumnTotal implements iCanBeConvertedToUxon, WorkbenchDependantInterf
 
     private $data_column = null;
 
+    /**
+     * 
+     * @param DataColumnInterface $column
+     * @param unknown $aggregator_string
+     */
     function __construct(DataColumnInterface $column, $aggregator_string = null)
     {
         $this->setColumn($column);
@@ -68,6 +72,11 @@ class DataColumnTotal implements iCanBeConvertedToUxon, WorkbenchDependantInterf
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
     public function exportUxonObject()
     {
         $uxon = new UxonObject();
@@ -75,6 +84,11 @@ class DataColumnTotal implements iCanBeConvertedToUxon, WorkbenchDependantInterf
         return $uxon;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::importUxonObject()
+     */
     public function importUxonObject(UxonObject $uxon)
     {
         // Map "function" to the aggregator for backwards compatibility! (13.09.2017)
@@ -86,7 +100,22 @@ class DataColumnTotal implements iCanBeConvertedToUxon, WorkbenchDependantInterf
             $this->setAggregator($uxon->getProperty('aggregator'));
         }
     }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return null;
+    }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
+     */
     public function getWorkbench()
     {
         return $this->getColumn()->getWorkbench();

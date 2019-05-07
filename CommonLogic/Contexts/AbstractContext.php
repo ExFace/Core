@@ -275,6 +275,16 @@ abstract class AbstractContext implements ContextInterface
     public function getApp(){
         return $this->getWorkbench()->getApp($this->selector->getAppSelector());
     }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        null;
+    }
  
 }
 ?>

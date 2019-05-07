@@ -3,7 +3,6 @@ namespace exface\Core\Uxon;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -18,6 +17,8 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\UxonSchemaInterface;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
 
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
@@ -59,7 +60,7 @@ use exface\Core\CommonLogic\UxonObject;
  * @author Andrej Kabachnik
  *
  */
-class UxonSchema implements WorkbenchDependantInterface
+class UxonSchema implements UxonSchemaInterface
 {    
     private $prototypePropCache = [];
     
@@ -80,12 +81,9 @@ class UxonSchema implements WorkbenchDependantInterface
     }
     
     /**
-     * Returns the prototype class for a given path.
-     * 
-     * @param UxonObject $uxon
-     * @param array $path
-     * @param string $rootPrototypeClass
-     * @return string
+     *
+     * {@inheritdoc}
+     * @see UxonSchemaInterface::getPrototypeClass()
      */
     public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass) : string
     {
@@ -113,16 +111,9 @@ class UxonSchema implements WorkbenchDependantInterface
     }
     
     /**
-     * Returns the value of an inheritable property from the point of view of the end of the given path.
      * 
-     * This is usefull for common properties like `object_alias`, that get inherited from the parent 
-     * prototype automatically, but can be specified explicitly by the user.
-     * 
-     * @param UxonObject $uxon
-     * @param array $path
-     * @param string $propertyName
-     * @param string $rootValue
-     * @return mixed
+     * {@inheritdoc}
+     * @see UxonSchemaInterface::getPropertyValueRecursive()
      */
     public function getPropertyValueRecursive(UxonObject $uxon, array $path, string $propertyName, string $rootValue = '')
     {
@@ -145,10 +136,9 @@ class UxonSchema implements WorkbenchDependantInterface
     }
     
     /**
-     * Returns an array with names of all properties of a given prototype class.
      * 
-     * @param string $prototypeClass
-     * @return string[]
+     * {@inheritdoc}
+     * @see UxonSchemaInterface::getProperties()
      */
     public function getProperties(string $prototypeClass) : array
     {
@@ -159,6 +149,11 @@ class UxonSchema implements WorkbenchDependantInterface
         return [];
     }
     
+    /**
+     *
+     * {@inheritdoc}
+     * @see UxonSchemaInterface::getPropertiesTemplates()
+     */
     public function getPropertiesTemplates(string $prototypeClass) : array
     {
         $tpls = [];
@@ -228,15 +223,9 @@ class UxonSchema implements WorkbenchDependantInterface
     }
     
     /**
-     * Returns an array of UXON types valid for the given prototype class property.
      * 
-     * The result is an array, because a property may accept multiple types
-     * (separated by a pipe (|) in the UXON annotations). The array elements
-     * have the same order, as the types in the annotation.
-     * 
-     * @param string $prototypeClass
-     * @param string $property
-     * @return string[]
+     * {@inheritdoc}
+     * @see UxonSchemaInterface::getPropertyTypes()
      */
     public function getPropertyTypes(string $prototypeClass, string $property) : array
     {
@@ -261,12 +250,9 @@ class UxonSchema implements WorkbenchDependantInterface
     }
     
     /**
-     * Returns an array of valid values for properties with fixed values (or an empty array for non-enum properties).
      * 
-     * @param UxonObject $uxon
-     * @param array $path
-     * @param string $search
-     * @return string[]
+     * {@inheritdoc}
+     * @see UxonSchemaInterface::getValidValues()
      */
     public function getValidValues(UxonObject $uxon, array $path, string $search = null, string $rootPrototypeClass = null, MetaObjectInterface $rootObject = null) : array
     {
@@ -348,12 +334,9 @@ class UxonSchema implements WorkbenchDependantInterface
     }
     
     /**
-     * Returns the meta object for the prototype at the end of the path.
-     * 
-     * @param UxonObject $uxon
-     * @param array $path
-     * @param MetaObjectInterface $rootObject
-     * @return MetaObjectInterface
+     *
+     * {@inheritdoc}
+     * @see UxonSchemaInterface::getMetaObject()
      */
     public function getMetaObject(UxonObject $uxon, array $path, MetaObjectInterface $rootObject = null) : MetaObjectInterface
     {
@@ -560,15 +543,10 @@ class UxonSchema implements WorkbenchDependantInterface
      */
     protected function getSchemaForClass(string $prototypeClass) : UxonSchema
     {
-        if (is_subclass_of($prototypeClass, WidgetInterface::class)) {
-            $class = WidgetSchema::class;
-        } elseif (is_subclass_of($prototypeClass, ActionInterface::class)) {
-            $class = ActionSchema::class;
-        } elseif (is_subclass_of($prototypeClass, DataTypeInterface::class)) {
-            $class = DatatypeSchema::class;
-        } elseif (is_subclass_of($prototypeClass, BehaviorInterface::class)) {
-            $class = BehaviorSchema::class;
-        }
+        $class = null;
+        if (is_subclass_of($prototypeClass, iCanBeConvertedToUxon::class)) {
+            $class = $prototypeClass::getUxonSchemaClass();
+        } 
         
         if ($class === null || is_subclass_of($this, $class)) {
             return $this;
@@ -586,9 +564,9 @@ class UxonSchema implements WorkbenchDependantInterface
     }
     
     /**
-     * Returns TRUE if this schema was instantiated as part of another one (it's parent schema)
      * 
-     * @return bool
+     * {@inheritdoc}
+     * @see UxonSchemaInterface::hasParentSchema()
      */
     public function hasParentSchema() : bool
     {
@@ -596,11 +574,11 @@ class UxonSchema implements WorkbenchDependantInterface
     }
     
     /**
-     * Returns the parent schema (if exists).
      * 
-     * @return UxonSchema
+     * {@inheritdoc}
+     * @see UxonSchemaInterface::getParentSchema()
      */
-    public function getParentSchema() : UxonSchema
+    public function getParentSchema() : UxonSchemaInterface
     {
         return $this->parentSchema;
     }
