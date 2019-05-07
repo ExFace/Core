@@ -19,6 +19,7 @@ use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
+use exface\Core\Widgets\Traits\AttributeCaptionTrait;
 
 /**
  * The Value widget simply shows a raw (unformatted) value.
@@ -40,6 +41,8 @@ use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
  */
 class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, iShowDataColumn, iSupportAggregators
 {
+    use AttributeCaptionTrait;
+    
     private $attribute_alias = null;
 
     private $data_type = null;
@@ -272,24 +275,6 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         }
         $this->aggregate_function = $aggregator;
         return $this;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\AbstractWidget::getCaption()
-     */
-    public function getCaption()
-    {
-        if (! parent::getCaption()) {
-            if ($this->isBoundToAttribute()) {
-                if ($this->hasAggregator()) {
-                    $aggr = ' (' . $this->getAggregator()->getFunction()->getLabelOfValue() . ')';
-                }
-                $this->setCaption($this->getAttribute()->getName() . $aggr);
-            }
-        }
-        return parent::getCaption();
     }
     
     /**
