@@ -1102,7 +1102,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                             $right_join_on = $this->buildSqlJoinSide($rel->getRightKeyAttribute()->getDataAddress(), $right_table_alias);
                             $join .=  $left_join_on . ' = ' . $right_join_on;
                             if ($customSelectWhere = $right_obj->getDataAddressProperty('SQL_SELECT_WHERE')) {
-                                $join .= ' AND ' . StringDataType::replacePlaceholders($customSelectWhere, ['~alias' => $right_table_alias]);
+                                if (stripos($customSelectWhere, 'SELECT ') === false) {
+                                    $join .= ' AND ' . StringDataType::replacePlaceholders($customSelectWhere, ['~alias' => $right_table_alias]);
+                                } else {
+                                    $join .= $this->buildSqlComment('Cannot use SQL_SELECT_WHERE of object "' . $right_obj->getName() . '" (' . $right_obj->getAliasWithNamespace() . ') in a JOIN - a column may not be outer-joined to a subquery!');
+                                }
                             }
                         }
                         $joins[$right_table_alias] = $join;
@@ -2060,5 +2064,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         return false;
+    }
+    
+    /**
+     * Returns an SQL commentary containing the given text.
+     * 
+     * @param string $text
+     * @return string
+     */
+    protected function buildSqlComment(string $text) : string
+    {
+        return '/* ' . str_replace(['/*', '*/'], '', $text) . ' */';
     }
 }
