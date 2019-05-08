@@ -506,22 +506,50 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::createResponseFromError()
      */
-    protected function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface {
-        $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench());
-        
+    protected function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface 
+    {
         $status_code = is_numeric($exception->getStatusCode()) ? $exception->getStatusCode() : 500;
         $headers = [];
         $body = '';
         
+        if ($this->isShowingErrorDetails() === true) {
+            $body = $this->buildHtmlFromError($request, $exception, $page);
+            $headers['Content-Type'] = ['text/html;charset=utf-8'];
+        } else {
+            $body = $this->encodeData($this->buildResponseError($exception));
+            $headers['Content-Type'] = ['application/json;charset=utf-8'];
+        }
+        
+        $this->getWorkbench()->getLogger()->logException($exception);
+        
+        return new Response($status_code, $headers, $body);
+    }
+    
+    /**
+     * Returns TRUE if error detail widgets are to be shown.
+     * 
+     * @return bool
+     */
+    protected function isShowingErrorDetails() : bool
+    {
+        return $this->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY') && $this->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAdmin();
+    }
+    
+    /**
+     * Renders the given exception as HTML widget.
+     * 
+     * @param ServerRequestInterface $request
+     * @param \Throwable $exception
+     * @param UiPageInterface $page
+     * @throws RuntimeException
+     * @return string
+     */
+    protected function buildHtmlFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : string 
+    {
+        $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench());
+        $body = '';
         try {
             $debug_widget = $exception->createWidget($page);
-            if ($page->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY') && ! $page->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAdmin()) {
-                foreach ($debug_widget->getTabs() as $nr => $tab) {
-                    if ($nr > 0) {
-                        $tab->setHidden(true);
-                    }
-                }
-            }
             $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
             switch ($mode) {
                 case static::MODE_HEAD:
@@ -542,16 +570,41 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade
             throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
         }
         
-        $this->getWorkbench()->getLogger()->logException($exception);
-        
         // If using the cache, we can store the error widget in that cache to make sure it is shown.
         // Otherwise if the error only occurs in certain modes, it might never get really shown!
         if ($cacheKey = $request->getAttribute('result_cache_key')) {
             $task = $request->getAttribute($this->getRequestAttributeForTask());
             $this->requestIdCache[$cacheKey] = ResultFactory::createWidgetResult($task, $debug_widget);
         }
+        return $body;
+    }
+    
+    /**
+     * Returns a serializable version of the given exception.
+     * 
+     * @param \Throwable $exception
+     * @return mixed
+     */
+    protected function buildResponseError(\Throwable $exception)
+    {
+        $error = [
+            'code' => $exception->getCode(),
+            'message' => $exception->getMessage(),
+        ];
         
-        return new Response($status_code, $headers, $body);
+        if ($exception instanceof ExceptionInterface) {
+            $wb = $this->getWorkbench();
+            $error['code'] = $exception->getAlias();
+            $error['logid'] = $exception->getId();
+            $error['title'] = $exception->getMessageTitle($wb);
+            $error['hint'] = $exception->getMessageHint($wb);
+            $error['description'] = $exception->getMessageDescription($wb);
+            $error['type'] = $exception->getMessageType($wb);
+        }
+        
+        return [
+            'error' => $error
+        ];
     }
     
     /**
