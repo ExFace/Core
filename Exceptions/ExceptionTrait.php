@@ -229,26 +229,42 @@ trait ExceptionTrait {
     
     public function getMessageTitle(WorkbenchInterface $workbench) : ?string
     {
-        $ds = $this->getMessageModelData($workbench, $this->getAlias());
-        return $ds->getCellValue('TITLE', 0);
+        try {
+            $ds = $this->getMessageModelData($workbench, $this->getAlias());
+            return $ds->getCellValue('TITLE', 0);
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
     
     public function getMessageHint(WorkbenchInterface $workbench) : ?string
     {
-        $ds = $this->getMessageModelData($workbench, $this->getAlias());
-        return $ds->getCellValue('HINT', 0);
+        try {
+            $ds = $this->getMessageModelData($workbench, $this->getAlias());
+            return $ds->getCellValue('HINT', 0);
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
     
     public function getMessageDescription(WorkbenchInterface $workbench) : ?string
     {
-        $ds = $this->getMessageModelData($workbench, $this->getAlias());
-        return $ds->getCellValue('DESCRIPTION', 0);
+        try {
+            $ds = $this->getMessageModelData($workbench, $this->getAlias());
+            return $ds->getCellValue('DESCRIPTION', 0);
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
     
     public function getMessageType(WorkbenchInterface $workbench) : ?string
     {
-        $ds = $this->getMessageModelData($workbench, $this->getAlias());
-        return $ds->getCellValue('TYPE', 0);
+        try {
+            $ds = $this->getMessageModelData($workbench, $this->getAlias());
+            return $ds->getCellValue('TYPE', 0);
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     /**
