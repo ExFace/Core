@@ -5,6 +5,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Widgets\ErrorMessage;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * This interface describes ExFace exceptions. They are compatible to the
@@ -102,4 +103,32 @@ interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWid
      * @return string
      */
     public function getDefaultLogLevel();
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @return string|NULL
+     */
+    public function getMessageTitle(WorkbenchInterface $workbench) : ?string;
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @return string|NULL
+     */
+    public function getMessageHint(WorkbenchInterface $workbench) : ?string;
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @return string|NULL
+     */
+    public function getMessageDescription(WorkbenchInterface $workbench) : ?string;
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @return string|NULL
+     */
+    public function getMessageType(WorkbenchInterface $workbench) : ?string;
 }

@@ -13,6 +13,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\DataTypes\MessageTypeDataType;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * This trait enables an exception to output more usefull specific debug information.
@@ -37,6 +38,8 @@ trait ExceptionTrait {
     private $system = false;
 
     private $support_mail = false;
+    
+    private $messageData = null;
 
     public function __construct($message, $alias = null, $previous = null)
     {
@@ -119,7 +122,7 @@ trait ExceptionTrait {
             $error_tab->setNumberOfColumns(1);
             if ($this->getAlias()) {
                 try {
-                    $error_ds = $this->getErrorData($page->getWorkbench(), $this->getAlias());
+                    $error_ds = $this->getMessageModelData($page->getWorkbench(), $this->getAlias());
                     $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
                         ->setHeadingLevel(2)
                         ->setValue($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION') . ' ' . $this->getAlias() . ': ' . $error_ds->getCellValue('TITLE', 0));
@@ -210,15 +213,42 @@ trait ExceptionTrait {
         return $debug_widget;
     }
 
-    protected function getErrorData(Workbench $exface, $error_code)
+    protected function getMessageModelData(Workbench $exface, $error_code)
     {
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.MESSAGE');
-        $ds->getColumns()->addMultiple(['TITLE', 'HINT', 'DESCRIPTION']);
-        if ($error_code) {
-            $ds->addFilterFromString('CODE', $error_code);
-            $ds->dataRead();
+        if ($this->messageData === null) {
+            $ds = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.MESSAGE');
+            $ds->getColumns()->addMultiple(['TITLE', 'HINT', 'DESCRIPTION', 'TYPE']);
+            if ($error_code) {
+                $ds->addFilterFromString('CODE', $error_code);
+                $ds->dataRead();
+            }
+            $this->messageData = $ds;
         }
-        return $ds;
+        return $this->messageData;
+    }
+    
+    public function getMessageTitle(WorkbenchInterface $workbench) : ?string
+    {
+        $ds = $this->getMessageModelData($workbench, $this->getAlias());
+        return $ds->getCellValue('TITLE', 0);
+    }
+    
+    public function getMessageHint(WorkbenchInterface $workbench) : ?string
+    {
+        $ds = $this->getMessageModelData($workbench, $this->getAlias());
+        return $ds->getCellValue('HINT', 0);
+    }
+    
+    public function getMessageDescription(WorkbenchInterface $workbench) : ?string
+    {
+        $ds = $this->getMessageModelData($workbench, $this->getAlias());
+        return $ds->getCellValue('DESCRIPTION', 0);
+    }
+    
+    public function getMessageType(WorkbenchInterface $workbench) : ?string
+    {
+        $ds = $this->getMessageModelData($workbench, $this->getAlias());
+        return $ds->getCellValue('TYPE', 0);
     }
 
     /**
