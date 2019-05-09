@@ -24,7 +24,6 @@ use exface\Core\CommonLogic\Filemanager;
  */
 class WebConsoleFacade extends AbstractHttpFacade
 {
-    private $rootDirectory = '';
     
     /***
      * 
@@ -53,6 +52,7 @@ class WebConsoleFacade extends AbstractHttpFacade
     }
     
     /***
+     * Perform commands from request
      * 
      * @param RequestInterface $request
      * @throws RuntimeException
@@ -72,6 +72,9 @@ class WebConsoleFacade extends AbstractHttpFacade
             if (Filemanager::pathIsAbsolute($cwd)) {
                 throw new RuntimeException('Absolute Path syntax not allowed!');
             }
+            /*if (is_dir($this->getRootDirectory() . DIRECTORY_SEPARATOR . $cwd) === false){
+                throw new RuntimeException('Working Directory is not a folder!');
+            }*/
         }
         chdir($this->getRootDirectory() . DIRECTORY_SEPARATOR . $cwd);
         
