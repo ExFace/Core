@@ -5,12 +5,13 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\ConsoleCommandPreset;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\Filemanager;
+use exface\Core\Exceptions\RuntimeException;
 
 class Console extends AbstractWidget
 {
     private $allowedCommands = [];
     
-    private $rootDirectoryPath = null;
+    private $workingDirectoryPath = null;
     
     private $startCommands = [];
     
@@ -22,7 +23,9 @@ class Console extends AbstractWidget
     
     private $environmentVars = [];
     
-    private $folderPathSubfolder = null;
+    private $workingDirectorySubfolder = null;
+    
+    private $workingDirectoyAttributeAlias = '';
     
     
     
@@ -54,22 +57,27 @@ class Console extends AbstractWidget
     
     
     /**
-     * Returns the root path for the console relative to the installation folder.
+     * Returns the working directory path for the console relative to the installation folder.
      * 
      * @param string $pathRelativeToSubfolder
      * @return string
      */
     protected function buildWorkingDirectoryPath(string $pathRelativeToSubfolder) : string
     {
-        return Filemanager::pathJoin([$this->getWorkingDirectorySubfolder() ?? '', $pathRelativeToSubfolder]);
+        $baseFolder = $this->getWorkbench()->filemanager()->getPathToBaseFolder();
+        $workingFolder = Filemanager::pathJoin([$this->getWorkingDirectorySubfolder() ?? '', $pathRelativeToSubfolder]);
+        if (is_dir(Filemanager::pathJoin([$baseFolder, $workingFolder])) === false) {
+            throw new RuntimeException('Working Directory is not a folder!');
+        }
+        return $workingFolder;
     }
     
     /**
-     * Sets a static path to the root directory for the console.
+     * Sets a static path to the working directory for the console.
      *
      * The path can be either static or relative to the default folder of the plattform.
      *
-     * @uxon-property root_directory_path
+     * @uxon-property working_directory_path
      * @uxon-type string
      *
      * @param string $pathRelativeToSubfolder
@@ -77,18 +85,18 @@ class Console extends AbstractWidget
      */
     public function setWorkingDirectoryPath(string $pathRelativeToSubfolder) : Console
     {
-        $this->rootDirectoryPath = $pathRelativeToSubfolder;
+        $this->workingDirectoryPath = $pathRelativeToSubfolder;
         return $this;
     }
     
     /**
-     * Returns the path to the root directory of the console terminal relative to the installation folder.
+     * Returns the path to the working directory of the console terminal relative to the installation folder.
      * @return string
      */
     public function getWorkingDirectoryPath() : ?string
     {
-        if ($this->rootDirectoryPath !== null) {
-            return $this->buildWorkingDirectoryPath($this->rootDirectoryPath);
+        if ($this->workingDirectoryPath !== null) {
+            return $this->buildWorkingDirectoryPath($this->workingDirectoryPath);
         }
         
         if ($this->isWorkingDirectoryBoundToAttribute() === true) {
@@ -107,15 +115,15 @@ class Console extends AbstractWidget
      */
     protected function getWorkingDirectorySubfolder() : ?string
     {
-        return $this->folderPathSubfolder;
+        return $this->workingDirectorySubfolder;
     }
     
     /**
-     * Path between the installation folder and the path in root_directory or root_directory_attribute_alias.
+     * Path between the installation folder and the path in working_directory or working_directory_attribute_alias.
      *
      * E.g. `vendor` if you use folder paths relative to the vendor folder.
      *
-     * @uxon-property root_directory_subfolder
+     * @uxon-property working_directory_subfolder
      * @uxon-type string
      *
      * @param string $pathRelativeToInstallationBase
@@ -123,7 +131,7 @@ class Console extends AbstractWidget
      */
     public function setWorkingDirectorySubfolder(string $pathRelativeToInstallationBase) : Console
     {
-        $this->folderPathSubfolder = $pathRelativeToInstallationBase;
+        $this->workingDirectorySubfolder = $pathRelativeToInstallationBase;
         return $this;
     }
     
@@ -277,7 +285,7 @@ class Console extends AbstractWidget
      */
     protected function getWorkingDirectoryAttributeAlias() : string
     {
-        return $this->folderPathAttributeAlias;
+        return $this->workingDirectoryAttributeAlias;
     }
     
     /**
@@ -286,7 +294,7 @@ class Console extends AbstractWidget
      */
     protected function isWorkingDirectoryBoundToAttribute() : bool
     {
-        return $this->folderPathAttributeAlias !== null;
+        return $this->workingDirectoryAttributeAlias !== null;
     }
     
     /**
@@ -303,7 +311,7 @@ class Console extends AbstractWidget
      *
      * The path can be either static or relative to the installation folder of the plattform.
      *
-     * @uxon-property root_directory_attribute_alias
+     * @uxon-property working_directory_attribute_alias
      * @uxon-type metamodel:attribute
      *
      * @param string $value
@@ -311,7 +319,7 @@ class Console extends AbstractWidget
      */
     public function setWorkingDirectoryAttributeAlias(string $value) : Console
     {
-        $this->folderPathAttributeAlias = $value;
+        $this->workingDirectoryAttributeAlias = $value;
         return $this;
     }
 }
