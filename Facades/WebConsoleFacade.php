@@ -18,6 +18,7 @@ use exface\Core\CommonLogic\Filemanager;
 
 /***
  * This is the Facade for Console Widgets
+ * It streams the cmd outputs to the Console while the commands are executed
  * 
  * @author Ralf Mulansky
  *
@@ -110,7 +111,7 @@ class WebConsoleFacade extends AbstractHttpFacade
                 }
             };
             
-            $stream = new IteratorStream($generator(3));
+            $stream = new IteratorStream($generator(10));
         } else {
             $envVars = array_merge(getenv(), $widget->getEnvironmentVars());
             $envVars = [];
@@ -140,6 +141,11 @@ class WebConsoleFacade extends AbstractHttpFacade
         return $response;
     }
     
+    /**
+     * Configurates the Server to be able to stream the output
+     * 
+     * @return WebConsoleFacade
+     */
     protected function setupStreaming() : WebConsoleFacade
     {
         ob_end_clean();
@@ -157,7 +163,14 @@ class WebConsoleFacade extends AbstractHttpFacade
         return $this;
     }    
       
-    protected function getCommand(string $cmd){
+    /**
+     * Returns the part of $cmd preceding the first ' '
+     * 
+     * @param string $cmd
+     * @return string
+     */
+    protected function getCommand(string $cmd) :string
+    {
         if (StringDataType::substringBefore($cmd, ' ') == false){
             return $cmd;
         } else {
@@ -165,11 +178,21 @@ class WebConsoleFacade extends AbstractHttpFacade
         }
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::getUrlRouteDefault()
+     */
     public function getUrlRouteDefault() : string
     {
         return 'api/webconsole';
     }
     
+    /**
+     * 
+     * @param RequestInterface $request
+     * @return Console
+     */
     protected function getWidgetFromRequest(RequestInterface $request) : Console
     {
         $pageSelector = $request->getParsedBody()['page'];
@@ -178,6 +201,10 @@ class WebConsoleFacade extends AbstractHttpFacade
         return $page->getWidget($widgetId);
     }
     
+    /***
+     * 
+     * @return string
+     */
     protected function getRootDirectory() : string
     {
         return $this->getWorkbench()->filemanager()->getPathToBaseFolder();

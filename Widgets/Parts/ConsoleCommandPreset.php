@@ -9,15 +9,12 @@ use exface\Core\Widgets\Console;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
 use exface\Core\Interfaces\Widgets\iHaveCaption;
 
+
 /**
- * Configuration for resources (people, rooms, etc.) in calendar-related data widgets.
+ * Class to a handle console command preset being part of console widgets.
  * 
- * IDEA resources typically are represented by a different meta object, than calendar items.
- * Perhaps, it would be better to make the resource a widget, so that it can be selected,
- * maybe have actions, etc.
+ * @author Ralf Mulansky
  * 
- * @author Andrej Kabachnik
- *
  */
 class ConsoleCommandPreset implements WidgetPartInterface, iHaveCaption
 {
@@ -64,6 +61,7 @@ class ConsoleCommandPreset implements WidgetPartInterface, iHaveCaption
     }
     
     /**
+     * Returns console widget the presets is part of
      * 
      * @return Console
      */
@@ -83,6 +81,7 @@ class ConsoleCommandPreset implements WidgetPartInterface, iHaveCaption
     }
     
     /**
+     * Returns hint for the preset
      * 
      * @return string
      */
@@ -92,6 +91,7 @@ class ConsoleCommandPreset implements WidgetPartInterface, iHaveCaption
     }
     
     /**
+     * Set the hint for the preset
      * 
      * @param string $value
      * @return ConsoleCommandPreset
@@ -103,6 +103,7 @@ class ConsoleCommandPreset implements WidgetPartInterface, iHaveCaption
     }
     
     /**
+     * Set the commands for the preset
      * 
      * @param UxonObject $array
      * @return ConsoleCommandPreset
@@ -114,6 +115,7 @@ class ConsoleCommandPreset implements WidgetPartInterface, iHaveCaption
     }
     
     /**
+     * Returns the commands being part of the preset
      * 
      * @return array
      */
@@ -122,11 +124,22 @@ class ConsoleCommandPreset implements WidgetPartInterface, iHaveCaption
         return $this->commands;
     }
     
+    /**
+     * Returns true if the preset has placeholders.
+     * Placeholders are parts of a command embraced by '<>'
+     * 
+     * @return bool
+     */
     public function hasPlaceholders() : bool
     {
         return empty($this->getPlaceholders()) === false;
     }
     
+    /**
+     * Returns array containing all placeholders included in all commands of the preset
+     * 
+     * @return array
+     */
     public function getPlaceholders() : array
     {
         $phs = [];
@@ -136,7 +149,13 @@ class ConsoleCommandPreset implements WidgetPartInterface, iHaveCaption
         return $phs;
     }
     
-    protected function findPlaceholders($string) : array
+    /**
+     * Returns array containing every placeholder included in a command
+     * 
+     * @param string $string
+     * @return array
+     */
+    protected function findPlaceholders(string $string) : array
     {
         $placeholders = array();
         preg_match_all("/<[^<>]+>/", $string, $placeholders);
