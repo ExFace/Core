@@ -18,6 +18,12 @@ use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
 use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Widgets\Parts\Charts\ChartAxis;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
 
 /**
  * A Chart widget draws a chart with upto two axis and any number of series.
@@ -96,10 +102,6 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
             yield $this->getData();
         }
         
-        foreach ($this->getAxes() as $axis) {
-            yield $axis;
-        }
-        
         foreach ($this->getSeries() as $series) {
             yield $series;
         }
@@ -131,16 +133,15 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     public function setAxisX($axis_or_uxon_object)
     {
         if ($axis_or_uxon_object instanceof ChartAxis) {
-            $this->addAxis('x', $axis_or_uxon_object);
+            $this->addAxis(static::AXIS_X, $axis_or_uxon_object);
         } elseif ($axis_or_uxon_object instanceof UxonObject) {
             if ($axis_or_uxon_object->isArray()) {
                 foreach ($axis_or_uxon_object as $axis) {
                     $this->setAxisX($axis);
                 }
             } else {
-                $axis = $this->getPage()->createWidget('ChartAxis', $this);
-                $axis->importUxonObject($axis_or_uxon_object);
-                $this->addAxis('x', $axis);
+                $axis = new ChartAxis($this, $axis_or_uxon_object);
+                $this->addAxis(static::AXIS_X, $axis);
             }
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Cannot set X axis of ' . $this->getWidgetType() . ': expecting instantiated axis widget or its UXON description or an array of UXON descriptions for multiple axes - ' . gettype($axis_or_uxon_object) . ' given instead!');
@@ -186,27 +187,34 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     public function setAxisY($axis_or_uxon_object)
     {
         if ($axis_or_uxon_object instanceof ChartAxis) {
-            $this->addAxis('y', $axis_or_uxon_object);
+            $this->addAxis(static::AXIS_Y, $axis_or_uxon_object);
         } elseif ($axis_or_uxon_object instanceof UxonObject) {
             if ($axis_or_uxon_object->isArray()) {
                 foreach ($axis_or_uxon_object as $axis) {
                     $this->setAxisY($axis);
                 }
             } else {
-                $axis = $this->getPage()->createWidget('ChartAxis', $this);
-                $axis->importUxonObject($axis_or_uxon_object);
-                $this->addAxis('y', $axis);
+                $axis = new ChartAxis($this, $axis_or_uxon_object);
+                $this->addAxis(static::AXIS_Y, $axis);
             }
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Cannot set Y axis of ' . $this->getWidgetType() . ': expecting instantiated axis widget or its UXON description or an array of UXON descriptions for multiple axes - ' . gettype($axis_or_uxon_object) . ' given instead!');
         }
         return $this;
     }
-
-    public function addAxis($x_or_y, ChartAxis $axis)
+    
+    public function addAxisX(ChartAxis $axis) : Chart
     {
-        $axis->setChart($this);
-        $axis->setDimension($x_or_y);
+        return $this->addAxis(static::AXIS_X, $axis);
+    }
+    
+    public function addAxisY(ChartAxis $axis) : Chart
+    {
+        return $this->addAxis(static::AXIS_Y, $axis);
+    }
+
+    protected function addAxis($x_or_y, ChartAxis $axis)
+    {
         if (! $axis->getPosition()) {
             switch ($x_or_y) {
                 case $this::AXIS_Y:
@@ -220,14 +228,55 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
             }
         }
         $var = 'axes_' . $x_or_y;
-        $count = array_push($this->$var, $axis);
-        $axis->setNumber($count);
+        array_push($this->$var, $axis);
         return $this;
+    }
+    
+    /**
+     * 
+     * @param ChartAxis $axis
+     * @throws WidgetLogicError
+     * @return int
+     */
+    public function getAxisIndex(ChartAxis $axis) : int
+    {
+        $idx = array_search($axis, $this->axes_x, true);
+        if ($idx !== false) {
+            return $idx;
+        }
+        
+        $idx = array_search($axis, $this->axes_y, true);
+        if ($idx !== false) {
+            return $idx;
+        }
+        
+        throw new WidgetLogicError($this, 'Axis not "' . $axis->getCaption() . '" found in chart "' . $this->getId() . '"!');
+    }
+    
+    /**
+     * 
+     * @param ChartAxis $axis
+     * @throws WidgetLogicError
+     * @return string
+     */
+    public function getAxisDimension(ChartAxis $axis) : string
+    {
+        $idx = array_search($axis, $this->axes_x, true);
+        if ($idx !== false) {
+            return static::AXIS_X;
+        }
+        
+        $idx = array_search($axis, $this->axes_y, true);
+        if ($idx !== false) {
+            return static::AXIS_Y;
+        }
+        
+        throw new WidgetLogicError($this, 'Axis not "' . $axis->getCaption() . '" found in chart "' . $this->getId() . '"!');
     }
 
     public function getData()
     {
-        if (is_null($this->data)) {
+        if ($this->data === null) {
             if ($link = $this->getDataWidgetLink()) {
                 return $link->getTargetWidget();
             } else {
@@ -270,32 +319,32 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      *
      * @param string $column_id            
      * @param string $x_or_y            
-     * @return ChartAxis | boolean
+     * @return ChartAxis|NULL
      */
-    public function findAxisByColumnId($column_id, $x_or_y = null)
+    public function findAxis(DataColumn $column, string $x_or_y = null) : ChartAxis
     {
         foreach ($this->getAxes($x_or_y) as $axis) {
-            if ($axis->getDataColumnId() == $column_id) {
+            if ($axis->getDataColumn() === $column) {
                 return $axis;
             }
         }
-        return false;
+        return null;
     }
-
+    
     /**
-     *
-     * @param string $alias_with_relation_path            
-     * @param string $x_or_y            
-     * @return ChartAxis | boolean
+     * 
+     * @param MetaAttributeInterface $attribute
+     * @param string $dimension
+     * @return ChartAxis|NULL
      */
-    public function findAxisByAttributeAlias($alias_with_relation_path, $x_or_y = null)
+    public function findAxisByAttribute(MetaAttributeInterface $attribute, string $dimension = null) : ?ChartAxis
     {
-        foreach ($this->getAxes($x_or_y) as $axis) {
-            if ($axis->getDataColumn()->getAttribute() && $axis->getDataColumn()->getAttribute()->getAliasWithRelationPath() == $alias_with_relation_path) {
+        foreach ($this->getAxes($dimension) as $axis) {
+            if ($axis->getDataColumn()->getAttribute()->is($attribute)) {
                 return $axis;
             }
         }
-        return false;
+        return null;
     }
 
     /**
@@ -343,13 +392,34 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
                     $this->setSeries($series);
                 }
             } else {
-                $series = $this->createSeries(null, $series_or_uxon_object);
+                $series = $this->createSeriesFromUxon($series_or_uxon_object);
                 $this->addSeries($series);
             }
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Cannot set series in ' . $this->getWidgetType() . ': expecting instantiated ChartSeries widget or its UXON description or an array of UXON descriptions for multiple series - ' . gettype($series_or_uxon_object) . ' given instead!');
         }
         return $this;
+    }
+    
+    public function createAxisFromAttribute(MetaAttributeInterface $attribute, AggregatorFunctionsDataType $aggregator = null) : ChartAxis
+    {
+        if (! $this->getMetaObject()->is($attribute->getRelationPath()->getStartObject())) {
+            throw new WidgetConfigurationError($this, 'Cannot create a chart axis for attribute "' . $attribute->getName() . '" (' . $attribute->getAliasWithRelationPath() . '): it is not related to the chart object "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . ')!');
+        }
+        
+        return new ChartAxis($this, new UxonObject([
+            'attribute_alias' => $attribute->getAliasWithRelationPath() . ($aggregator !== null ? $aggregator->__toString() : '')
+        ]));
+    }
+    
+    public function createAxisFromAttributeAlias(string $alias) : ChartAxis
+    {
+        $aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $alias);
+        if ($aggr) {
+            return $this->createAxisFromAttribute($this->getMetaObject()->getAttribute($alias), $aggr);
+        } else {
+            return $this->createAxisFromAttribute($this->getMetaObject()->getAttribute($alias));
+        }
     }
 
     /**
@@ -358,21 +428,17 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      * @param UxonObject $uxon            
      * @return ChartSeries
      */
-    public function createSeries($chart_type = null, UxonObject $uxon = null)
+    public function createSeriesFromUxon(UxonObject $uxon = null)
     {
         $series = $this->getPage()->createWidget('ChartSeries', $this);
         if ($uxon) {
             $series->importUxonObject($uxon);
-        }
-        if (! is_null($chart_type)) {
-            $series->setChartType($chart_type);
         }
         return $series;
     }
 
     public function addSeries(ChartSeries $series)
     {
-        $series->setChart($this);
         $this->series[] = $series;
         return $this;
     }
