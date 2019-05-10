@@ -4,7 +4,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 use exface\Core\Widgets\ChartSeries;
 use exface\Core\Widgets\Chart;
-use exface\Core\Widgets\ChartAxis;
+use exface\Core\Widgets\Parts\Charts\ChartAxis;
 
 /**
  * This trait contains common methods to use the flot charing library in jQuery facades.
