@@ -19,7 +19,7 @@ class Console extends AbstractWidget
     
     private $commandPresetsUxon = null;
     
-    private $commandTimeout = null;
+    private $commandTimeout = 600;
     
     private $environmentVars = [];
     
@@ -41,7 +41,7 @@ class Console extends AbstractWidget
     }
     
     /**
-     * Array of regular expressions to check if a command is allowed
+     * Set array of regular expressions to check if a command is allowed
      * 
      * @uxon-proberty allowed_commands
      * @uxon-type object
@@ -57,7 +57,7 @@ class Console extends AbstractWidget
     
     
     /**
-     * Returns the working directory path for the console relative to the installation folder.
+     * Builds the working directory path for the console relative to the installation folder.
      * 
      * @param string $pathRelativeToSubfolder
      * @return string
@@ -73,9 +73,7 @@ class Console extends AbstractWidget
     }
     
     /**
-     * Sets a static path to the working directory for the console.
-     *
-     * The path can be either static or relative to the default folder of the plattform.
+     * Sets a path to the working directory for the console relative to the installation folder.
      *
      * @uxon-property working_directory_path
      * @uxon-type string
@@ -91,9 +89,10 @@ class Console extends AbstractWidget
     
     /**
      * Returns the path to the working directory of the console terminal relative to the installation folder.
+     *
      * @return string
      */
-    public function getWorkingDirectoryPath() : ?string
+    public function getWorkingDirectoryPath() : string
     {
         if ($this->workingDirectoryPath !== null) {
             return $this->buildWorkingDirectoryPath($this->workingDirectoryPath);
@@ -110,16 +109,17 @@ class Console extends AbstractWidget
     } 
     
     /**
-     *
-     * @return string|NULL
+     * Returns path between the installation folder and the path in working_directory_path or working_directory_attribute_alias.
+     * 
+     * @return string
      */
-    protected function getWorkingDirectorySubfolder() : ?string
+    protected function getWorkingDirectorySubfolder() : string
     {
         return $this->workingDirectorySubfolder;
     }
     
     /**
-     * Path between the installation folder and the path in working_directory or working_directory_attribute_alias.
+     * Path between the installation folder and the path in working_directory_path or working_directory_attribute_alias.
      *
      * E.g. `vendor` if you use folder paths relative to the vendor folder.
      *
@@ -146,7 +146,7 @@ class Console extends AbstractWidget
     }
     
     /**
-     * Array of commands to be performed when the widget is loaded.
+     * Set array of commands to be performed when the widget is loaded.
      * 
      * @uxon-proberty start_commands
      * @uxon-type object
@@ -217,7 +217,7 @@ class Console extends AbstractWidget
     }
     
     /**
-     * Check if Widget has command presets
+     * Check if widget has command presets
      * 
      * @return bool
      */
@@ -227,7 +227,8 @@ class Console extends AbstractWidget
     }
         
     /**
-     * Timeout for the commands in seconds
+     * Set timeout for the commands in seconds.
+     * Default is 600.
      * 
      * @uxon-proberty command_timeout
      * @uxon-type string
@@ -242,21 +243,19 @@ class Console extends AbstractWidget
     }
     
     /**
-     * Return the Timeout for the commands in seconds
+     * Return the Timeout for the commands in seconds.
+     * To deactivate timeout set it to '0.0'.
      * 
      * @return float
      */
     public function getCommandTimeout() : float
     {
-        if ($this->commandTimeout != null){
-            return $this->commandTimeout;
-        }
         return 600;
     }
     
     
     /**
-     * Array of Environment Variables to be used executing the commands
+     * Array of environment variables to be used executing the commands
      * 
      * @uxon-object environment_variables
      * @uxon-type object
@@ -270,7 +269,7 @@ class Console extends AbstractWidget
     }
     
     /**
-     * Returns array of Environment Variables to be used executing the commands
+     * Returns array of environment variables to be used executing the commands
      * 
      * @return array
      */
@@ -307,9 +306,7 @@ class Console extends AbstractWidget
     }
     
     /**
-     * Alias of the attribute, that holds the relative or absolute path to the folder to zip.
-     *
-     * The path can be either static or relative to the installation folder of the plattform.
+     * Alias of the attribute, that holds the relative path from the installation folder to the working directory.
      *
      * @uxon-property working_directory_attribute_alias
      * @uxon-type metamodel:attribute
