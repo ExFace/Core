@@ -2,8 +2,10 @@
 namespace exface\Core\Widgets\Parts\Charts;
 
 use exface\Core\Interfaces\Widgets\iHaveColor;
+use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\Chart;
+use exface\Core\Widgets\DataColumn;
 
 class LineChart extends AbstractChartType
 {
@@ -56,12 +58,18 @@ class LineChart extends AbstractChartType
     public function getAxisX() : ChartAxis
     {
         if ($this->axis_x === null) {
-            $axis = $this->getChart()->findAxis($this->getDataColumn(), Chart::AXIS_X);
-            if (! $axis) {
-                $axis = $this->getChart()->getAxesY()[0];
+            if ($this->axis_x_attribute_alias !== null) {
+                $attr = $this->getChartSeries()->getMetaObject()->getAttribute($this->axis_x_attribute_alias);
+                $axes = $this->getChart()->findAxesByAttribute($attr, Chart::AXIS_X);
+                if (empty($axes)) {
+                    $axis = $this->getChart()->createAxisFromExpression($this->axis_x_attribute_alias);
+                    $this->getChart()->addAxisX($axis);
+                } else {
+                    $axis = $axes[0];
+                }
             }
             if (! $axis) {
-                throw new WidgetConfigurationError($this->getLineChart(), 'Cannot find x-axis for series "' . $this->getId() . '" of widget "' . $this->getChart()->getId() . '"!', '6T90UV9');
+                throw new WidgetConfigurationError($this->getChart(), 'Cannot find x-axis for series "' . $this->getChartSeries()->getId() . '" of widget "' . $this->getChart()->getId() . '"!', '6T90UV9');
             }
             $this->axis_x = $axis;
         }
@@ -77,12 +85,18 @@ class LineChart extends AbstractChartType
     public function getAxisY()
     {
         if ($this->axis_y === null) {
-            $axis = $this->getChart()->findAxis($this->getDataColumn(), Chart::AXIS_Y);
-            if (! $axis) {
-                $axis = $this->getChart()->getAxesY()[0];
+            if ($this->axis_y_attribute_alias !== null) {
+                $attr = $this->getChartSeries()->getMetaObject()->getAttribute($this->axis_y_attribute_alias);
+                $axes = $this->getChart()->findAxesByAttribute($attr, Chart::AXIS_Y);
+                if (empty($axes)) {
+                    $axis = $this->getChart()->createAxisFromExpression($this->axis_y_attribute_alias);
+                    $this->getChart()->addAxisY($axis);
+                } else {
+                    $axis = $axes[0];
+                }
             }
             if (! $axis) {
-                throw new WidgetConfigurationError($this->getLineChart(), 'Cannot find y-axis for series "' . $this->getChartType() . '" of widget "' . $this->getChart()->getId() . '"!', '6T90UV9');
+                throw new WidgetConfigurationError($this->getChart(), 'Cannot find y-axis for series "' . $this->getChartSeries()->getId() . '" of widget "' . $this->getChart()->getId() . '"!', '6T90UV9');
             }
             $this->axis_y = $axis;
         }
@@ -104,4 +118,17 @@ class LineChart extends AbstractChartType
     {
         return $this->getAxisY()->getCaption();
     }
+    
+    public function getValueDataColumn(): DataColumn
+    {
+        return $this->getAxisY()->getDataColumn();
+    }
+
+    public function prepareData(iShowData $dataWidget): AbstractChartType
+    {
+        $this->getAxisX();
+        $this->getAxisY();
+        return $this;
+    }
+
 }

@@ -24,6 +24,9 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 
 /**
  * A Chart widget draws a chart with upto two axis and any number of series.
@@ -39,6 +42,10 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     use iHaveButtonsAndToolbarsTrait;
     use iSupportLazyLoadingTrait;
 
+    const AXIS_X = 'x';
+
+    const AXIS_Y = 'y';
+    
     /**
      *
      * @var ChartAxis[]
@@ -68,12 +75,6 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      * @var UxonObject|string
      */
     private $data_widget_link = null;
-
-    /**
-     *
-     * @var boolean
-     */
-    private $stack_series = false;
     
     private $legendAlignment = null;
 
@@ -91,10 +92,12 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
 
     /** @var Button[] */
     private $buttons = array();
-
-    const AXIS_X = 'x';
-
-    const AXIS_Y = 'y';
+    
+    /**
+     * 
+     * @var bool
+     */
+    private $dataPrepared = false;
 
     public function getChildren() : \Iterator
     {
@@ -278,12 +281,32 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     {
         if ($this->data === null) {
             if ($link = $this->getDataWidgetLink()) {
-                return $link->getTargetWidget();
+                $data = $link->getTargetWidget();
+                if ($this->dataPrepared === false) {
+                    $this->prepareData($data);
+                    $this->dataPrepared = true;
+                }
             } else {
                 throw new WidgetConfigurationError($this, 'Cannot get data for ' . $this->getWidgetType() . ' "' . $this->getId() . '": either data or data_widget_link must be defined in the UXON description!', '6T90WFX');
             }
+        } else {
+            $data = $this->data;
         }
-        return $this->data;
+        
+        return $data;
+    }
+    
+    protected function prepareData(iShowData $dataWidget) : Chart
+    {
+        foreach ($this->getSeries() as $series) {
+            $series->getChartType()->prepareData($dataWidget);
+        }
+        
+        foreach ($this->getAxes() as $axis) {
+            $axis->prepareData($dataWidget);
+        }
+        
+        return $this;
     }
 
     /**
@@ -324,8 +347,14 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     public function findAxis(DataColumn $column, string $x_or_y = null) : ChartAxis
     {
         foreach ($this->getAxes($x_or_y) as $axis) {
-            if ($axis->getDataColumn() === $column) {
-                return $axis;
+            try {
+                if ($axis->getDataColumn() === $column) {
+                    return $axis;
+                }
+            } catch (\Throwable $e) {
+                if ($this->dataPrepared === true) {
+                    throw $e;
+                }
             }
         }
         return null;
@@ -335,16 +364,23 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      * 
      * @param MetaAttributeInterface $attribute
      * @param string $dimension
-     * @return ChartAxis|NULL
+     * @return ChartAxis[]
      */
-    public function findAxisByAttribute(MetaAttributeInterface $attribute, string $dimension = null) : ?ChartAxis
+    public function findAxesByAttribute(MetaAttributeInterface $attribute, string $dimension = null) : array
     {
+        $result = [];
         foreach ($this->getAxes($dimension) as $axis) {
-            if ($axis->getDataColumn()->getAttribute()->is($attribute)) {
-                return $axis;
+            try {
+                if ($axis->getDataColumn()->getAttribute()->is($attribute)) {
+                    $result[] = $axis;
+                }
+            } catch (\Throwable $e) {
+                if ($this->dataPrepared === true) {
+                    throw $e;
+                }
             }
         }
-        return null;
+        return $result;
     }
 
     /**
@@ -401,25 +437,11 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
         return $this;
     }
     
-    public function createAxisFromAttribute(MetaAttributeInterface $attribute, AggregatorFunctionsDataType $aggregator = null) : ChartAxis
+    public function createAxisFromExpression(string $expression) : ChartAxis
     {
-        if (! $this->getMetaObject()->is($attribute->getRelationPath()->getStartObject())) {
-            throw new WidgetConfigurationError($this, 'Cannot create a chart axis for attribute "' . $attribute->getName() . '" (' . $attribute->getAliasWithRelationPath() . '): it is not related to the chart object "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . ')!');
-        }
-        
         return new ChartAxis($this, new UxonObject([
-            'attribute_alias' => $attribute->getAliasWithRelationPath() . ($aggregator !== null ? $aggregator->__toString() : '')
+            'attribute_alias' => $expression
         ]));
-    }
-    
-    public function createAxisFromAttributeAlias(string $alias) : ChartAxis
-    {
-        $aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $alias);
-        if ($aggr) {
-            return $this->createAxisFromAttribute($this->getMetaObject()->getAttribute($alias), $aggr);
-        } else {
-            return $this->createAxisFromAttribute($this->getMetaObject()->getAttribute($alias));
-        }
     }
 
     /**
@@ -464,25 +486,6 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     public function setDataWidgetLink($value)
     {
         $this->data_widget_link = WidgetLinkFactory::createFromWidget($this, $value);
-        return $this;
-    }
-
-    public function getStackSeries()
-    {
-        return $this->stack_series;
-    }
-
-    /**
-     * Set to true to stack all series of this chart
-     *
-     * @uxon-property stack_series
-     *
-     * @param boolean $value            
-     * @return \exface\Core\Widgets\Chart
-     */
-    public function setStackSeries($value)
-    {
-        $this->stack_series = $value;
         return $this;
     }
 
@@ -736,6 +739,31 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
         $this->legendAlignment = $legendAlignment;
         return $this;
     }
-
+    
+    /**
+     *
+     * @param ChartAxis $axis
+     * @throws WidgetLogicError
+     * @return int
+     */
+    public function getSeriesIndex(ChartSeries $series) : int
+    {
+        $idx = array_search($series, $this->series, true);
+        if ($idx !== false) {
+            return $idx;
+        }
+        
+        throw new WidgetLogicError($this, 'Series not "' . $series->getCaption() . '" found in chart "' . $this->getId() . '"!');
+    }
+    
+    public function ImportUxonObject(UxonObject $uxon)
+    {
+        parent::importUxonObject($uxon);
+        if ($uxon->hasProperty('data') === true) {
+            $this->prepareData($this->getData());
+            $this->dataPrepared = true;
+        }
+        return;
+    }
 }
 ?>

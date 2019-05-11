@@ -7,6 +7,7 @@ use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Widgets\iHaveCaption;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iShowData;
 
 /**
  * The ChartAxis represents the X or Y axis of a chart.
@@ -26,6 +27,8 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     private $axis_type = null;
 
     private $data_column_id = null;
+    
+    private $data_column = null;
     
     private $attributeAlias = null;
 
@@ -55,26 +58,9 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      *
      * @return DataColumn
      */
-    public function getDataColumn()
+    public function getDataColumn() : DataColumn
     {
-        $data = $this->getChart()->getData();
-        
-        if ($this->attributeAlias !== null) {
-            if (! $result = $data->getColumnByAttributeAlias($this->attributeAlias)) {
-                $result = $data->createColumnFromAttribute($data->getMetaObject()->getAttribute($this->attributeAlias));
-                $data->addColumn($result);
-            }
-        } elseif ($this->data_column_id !== null) {
-            if (! $result = $data->getColumn($this->data_column_id)) {
-                $result = $data->getColumnByAttributeAlias($this->data_column_id);
-                if (! $result) {
-                    throw new WidgetConfigurationError($this, 'Column "' . $this->data_column_id . '" required for axis ' . $this->getNumber() . ' not found in chart data!', '6XUZ9ZE');
-                }
-            }
-        } else {
-            throw new WidgetConfigurationError($this, 'Invalid chart axis configuration: neither attribute_alias nor data_colum_id were specified!', '6XUZ9ZE');
-        }
-        return $result;
+        return $this->data_column;
     }
 
     /**
@@ -168,37 +154,6 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
         return $this;
     }
 
-    /**
-     * 
-     * @return string
-     */
-    public function getAxisType()
-    {
-        return $this->axis_type;
-    }
-
-    /**
-     * Sets the type of the axis: TIME, TEXT or NUMBER.
-     * 
-     * @deprecated use correct data type on the corresponding column instead
-     *
-     * @uxon-property axis_type
-     * @uxon-type [time,text,number]
-     *
-     * @param string $value            
-     * @return ChartAxis
-     */
-    public function setAxisType($value)
-    {
-        $value = mb_strtoupper($value);
-        if (defined('\\exface\\Core\\Widgets\\ChartAxis::AXIS_TYPE_' . $value)) {
-            $this->axis_type = $value;
-        } else {
-            throw new WidgetPropertyInvalidValueError($this, 'Invalid axis type "' . $value . '". Only TIME, TEXT or NUMBER allowed!', '6TA2Y6A');
-        }
-        return $this;
-    }
-
     public function getDimension()
     {
         return $this->getChart()->getAxisDimension($this);
@@ -251,7 +206,7 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      *
      * @return bool
      */
-    public function getHidden() : bool
+    public function isHidden() : bool
     {
         return $this->hidden;
     }
@@ -270,5 +225,35 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
         $this->hidden = $value;
         return $this;
     }
+
+    /**
+     * 
+     * @param iShowData $dataWidget
+     * @throws WidgetConfigurationError
+     * @return AbstractChartType
+     */
+    public function prepareData(iShowData $dataWidget) : ChartAxis
+    {
+        if ($this->attributeAlias !== null) {
+            if (! $column = $dataWidget->getColumnByAttributeAlias($this->attributeAlias)) {
+                $column = $dataWidget->createColumnFromUxon(new UxonObject([
+                    'attribute_alias' => $this->attributeAlias
+                ]));
+                $dataWidget->addColumn($column);
+            }
+        } elseif ($this->data_column_id !== null) {
+            if (! $column = $dataWidget->getColumn($this->data_column_id)) {
+                $column = $dataWidget->getColumnByAttributeAlias($this->data_column_id);
+                if (! $column) {
+                    throw new WidgetConfigurationError($this, 'Column "' . $this->data_column_id . '" required for axis ' . $this->getNumber() . ' not found in chart data!', '6XUZ9ZE');
+                }
+            }
+        } else {
+            throw new WidgetConfigurationError($this, 'Invalid chart axis configuration: neither attribute_alias nor data_colum_id were specified!', '6XUZ9ZE');
+        }
+        
+        $this->data_column = $column;
+        
+        return $this;
+    }
 }
-?>

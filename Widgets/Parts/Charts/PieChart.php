@@ -2,6 +2,8 @@
 namespace exface\Core\Widgets\Parts\Charts;
 
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Widgets\DataColumn;
+use exface\Core\Interfaces\Widgets\iShowData;
 
 class PieChart extends AbstractChartType
 {
@@ -45,23 +47,26 @@ class PieChart extends AbstractChartType
     public function getValueAxis() : ChartAxis
     {
         if ($this->value_axis === null) {
-            $axis = $this->getChart()->findAxisByAttribute($this->getValueAttribute());
-            if ($axis === null) {
-                $axis = $this->getChart()->createAxisFromAttribute($this->value_attribute_alias);
+            $axes = $this->getChart()->findAxesByAttribute($this->getValueAttribute());
+            if (empty($axes)) {
+                $axis = $this->getChart()->createAxisFromExpression($this->value_attribute_alias);
                 $this->getChart()->addAxisY($axis);
+            } else {
+                $axis = $axes[0];
             }
-            $this->text_axis = $axis;
+            $this->value_axis = $axis;
         }
         return $this->value_axis;
     }
     
     /**
-     *
-     * @return MetaAttributeInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Charts\AbstractChartType::getValueDataColumn()
      */
-    public function getTextAttribute() : MetaAttributeInterface
+    public function getValueDataColumn() : DataColumn
     {
-        return $this->getChartSeries()->getMetaObject()->getAttribute($this->text_attribute_alias);
+        return $this->getValueAxis()->getDataColumn();
     }
     
     /**
@@ -79,6 +84,15 @@ class PieChart extends AbstractChartType
         return $this;
     }
     
+    /**
+     *
+     * @return MetaAttributeInterface
+     */
+    public function getTextAttribute() : MetaAttributeInterface
+    {
+        return $this->getChartSeries()->getMetaObject()->getAttribute($this->text_attribute_alias);
+    }
+    
     public function isTextBoundToAttribute() : bool
     {
         return $this->text_attribute_alias !== null;
@@ -87,10 +101,12 @@ class PieChart extends AbstractChartType
     public function getTextAxis() : ChartAxis
     {
         if ($this->text_axis === null) {
-            $axis = $this->getChart()->findAxisByAttribute($this->getTextAttribute());
-            if ($axis === null) {
-                $axis = $this->getChart()->createAxisFromAttributeAlias($this->text_attribute_alias);
+            $axes = $this->getChart()->findAxesByAttribute($this->getTextAttribute());
+            if (empty($axes)) {
+                $axis = $this->getChart()->createAxisFromExpression($this->text_attribute_alias);
                 $this->getChart()->addAxisX($axis);
+            } else {
+                $axis = $axes[0];
             }
             $this->text_axis = $axis;
         }
@@ -107,7 +123,7 @@ class PieChart extends AbstractChartType
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Parts\Charts\AbstractChartType::prepareAxes()
      */
-    public function prepareAxes() : AbstractChartType
+    public function prepareData(iShowData $dataWidget) : AbstractChartType
     {
         $this->getTextAxis();
         $this->getValueAxis();

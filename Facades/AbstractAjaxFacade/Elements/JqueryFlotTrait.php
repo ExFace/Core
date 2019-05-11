@@ -5,6 +5,11 @@ use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 use exface\Core\Widgets\ChartSeries;
 use exface\Core\Widgets\Chart;
 use exface\Core\Widgets\Parts\Charts\ChartAxis;
+use exface\Core\Widgets\Parts\Charts\PieChart;
+use exface\Core\Widgets\Parts\Charts\BarChart;
+use exface\Core\Widgets\Parts\Charts\LineChart;
+use exface\Core\Widgets\Parts\Charts\ColumnChart;
+use exface\Core\Widgets\Parts\Charts\AreaChart;
 
 /**
  * This trait contains common methods to use the flot charing library in jQuery facades.
@@ -97,18 +102,21 @@ JS;
         // Transform the input data to a flot dataset
         foreach ($widget->getSeries() as $series) {
             $series_id = $this->sanitizeSeriesId($series->getId());
-            $series_column = $series->getDataColumn();
-            $x_column = $series->getAxisX()->getDataColumn();
-            $y_column = $series->getAxisY()->getDataColumn();
+            $chartType = $series->getChartType();
+            $series_column = $chartType->getValueDataColumn();
             $output .= '
 					var ' . $series_id . ' = [];';
             
-            if ($series->getChartType() == ChartSeries::CHART_TYPE_PIE) {
+            if ($chartType instanceof PieChart) {
+                $x_column = $chartType->getTextAxis()->getDataColumn();
+                $y_column = $chartType->getValueAxis()->getDataColumn();
                 $series_data = $series_id . '[i] = { label: ' . $js_rows . '[i]["' . $x_column->getDataColumnName() . '"], data: ' . $js_rows . '[i]["' . $series_column->getDataColumnName() . '"] }';
             } else {
+                $x_column = $chartType->getAxisX()->getDataColumn();
+                $y_column = $chartType->getAxisY()->getDataColumn();
                 // Prepare the code to transform the ajax data to flot data. It will later run in a for loop.
-                switch ($series->getChartType()) {
-                    case ChartSeries::CHART_TYPE_BARS:
+                switch (true) {
+                    case $chartType instanceof BarChart:
                         $data_key = $series_column->getDataColumnName();
                         $data_value = $y_column->getDataColumnName();
                         break;
@@ -117,7 +125,7 @@ JS;
                         $data_value = $series_column->getDataColumnName();
                 }
                 $series_data .= '
-							' . $series_id . '[i] = [ (' . $js_rows . '[i]["' . $data_key . '"]' . ($series->getAxisX()->getAxisType() == 'time' ? '*1000' : '') . '), ' . $js_rows . '[i]["' . $data_value . '"] ];';
+							' . $series_id . '[i] = [ (' . $js_rows . '[i]["' . $data_key . '"]' . ($chartType->getAxisX()->getAxisType() == 'time' ? '*1000' : '') . '), ' . $js_rows . '[i]["' . $data_value . '"] ];';
             }
         }
         
@@ -193,7 +201,7 @@ JS;
     
     protected function isPieChart()
     {
-        if ($this->getWidget()->getSeries()[0]->getChartType() == ChartSeries::CHART_TYPE_PIE) {
+        if ($this->getWidget()->getSeries()[0]->getChartType() instanceof PieChart) {
             return true;
         } else {
             return false;
@@ -211,16 +219,16 @@ JS;
             $output = $this->sanitizeSeriesId($this->getWidget()->getSeries()[0]->getId());
         } else {
             foreach ($this->getWidget()->getSeries() as $series) {
-                if ($series->getChartType() == ChartSeries::CHART_TYPE_PIE) {
+                if ($series->getChartType() instanceof PieChart) {
                     throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support pie charts with multiple series!');
                 }
                 $series_options = $this->buildJsSeriesOptions($series);
                 $output .= ',
 								{
-									data: ' . $this->sanitizeSeriesId($series->getId()) . ($series->getChartType() == ChartSeries::CHART_TYPE_BARS ? '.reverse()' : '') . '
+									data: ' . $this->sanitizeSeriesId($series->getId()) . ($series->getChartType() instanceof BarChart ? '.reverse()' : '') . '
 									, label: "' . $series->getCaption() . '"
-									, yaxis:' . $series->getAxisY()->getNumber() . '
-									, xaxis:' . $series->getAxisX()->getNumber() . '
+									, yaxis:' . $series->getChartType()->getAxisY()->getIndex() . '
+									, xaxis:' . $series->getChartType()->getAxisX()->getIndex() . '
 									' . ($series_options ? ', ' . $series_options : '') . '
 								}';
             }
@@ -294,39 +302,31 @@ JS;
     {
         $options = '';
         $color = $series->getColor();
-        switch ($series->getChartType()) {
-            case ChartSeries::CHART_TYPE_LINE:
-            case ChartSeries::CHART_TYPE_AREA:
-                $options = 'lines:
-								{
-									show: true
-									' . ($series->getChartType() == ChartSeries::CHART_TYPE_AREA ? ', fill: true' : '') . '
-                                }
-                            ' . ($color ? ', color: "' . $color . '"' : '') . '';
-                break;
-            case ChartSeries::CHART_TYPE_BARS:
-            case ChartSeries::CHART_TYPE_COLUMNS:
+        $chartType = $series->getChartType();
+        switch (true) {
+            
+            case $chartType instanceof ColumnChart:
                 $options = 'bars:
 								{
 									show: true
                                     , lineWidth: 0
 									, align: "center"
                                     ';
-                if (! $series->getChart()->getStackSeries() && count($series->getChart()->getSeriesByChartType($series->getChartType())) > 1) {
+                if ($chartType->isStacked() === true) {
                     $options .= '
                                     , barWidth: 0.2
-                                    , order: ' . $series->getSeriesNumber();
+                                    , order: ' . $series->getChart()->getSeriesIndex($series);
                 } else {
                     $options .= '
                                     , barWidth: 0.8';
                 }
                 
-                if ($series->getAxisX()->getAxisType() == ChartAxis::AXIS_TYPE_TIME || $series->getAxisY()->getAxisType() == ChartAxis::AXIS_TYPE_TIME) {
+                if ($chartType->getAxisX()->getAxisType() == ChartAxis::AXIS_TYPE_TIME || $chartType->getAxisY()->getAxisType() == ChartAxis::AXIS_TYPE_TIME) {
                     $options .= '
 									, barWidth: 24*60*60*1000*0.8';
                 }
                 
-                if ($series->getChartType() == ChartSeries::CHART_TYPE_BARS) {
+                if ($chartType instanceof BarChart) {
                     $options .= '
 									, horizontal: true';
                 }
@@ -335,7 +335,15 @@ JS;
 								}
                             ' . ($color ? ', color: "' . $color . '"' : '') . '';
                 break;
-            case ChartSeries::CHART_TYPE_PIE:
+            case $chartType instanceof LineChart:
+                $options = 'lines:
+								{
+									show: true
+									' . ($chartType instanceof AreaChart ? ', fill: true' : '') . '
+                                }
+                            ' . ($color ? ', color: "' . $color . '"' : '') . '';
+                break;
+            case $chartType instanceof PieChart:
                 $options = 'pie: {show: true}';
                 break;
         }
@@ -378,8 +386,11 @@ JS;
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.time.js"></script>';
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.crosshair.js"></script>';
         
-        if ($this->getWidget()->getStackSeries()) {
-            $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.stack.js"></script>';
+        foreach ($this->getWidget()->getSeries() as $series) {
+            $type = $series->getChartType();
+            if ($type instanceof ColumnChart && $type->isStacked()) {
+                $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.stack.js"></script>';
+            }
         }
         
         if ($this->isPieChart()) {
@@ -397,11 +408,12 @@ JS;
         $output = '';
         $config_array = array();
         foreach ($this->getWidget()->getSeries() as $series) {
-            switch ($series->getChartType()) {
-                case ChartSeries::CHART_TYPE_PIE:
-                    $config_array[$series->getChartType()]['show'] = 'show: true';
-                    $config_array[$series->getChartType()]['radius'] = 'radius: 1';
-                    $config_array[$series->getChartType()]['label'] = 'label: {
+            $chartType = $series->getChartType();
+            switch (true) {
+                case $chartType instanceof PieChart:
+                    $config_array['pie']['show'] = 'show: true';
+                    $config_array['pie']['radius'] = 'radius: 1';
+                    $config_array['pie']['label'] = 'label: {
 							show: true,
 							radius: 0.8,
 							formatter: function (label, series) {
@@ -409,8 +421,7 @@ JS;
 							},
 							background: {opacity: 0.8}}';
                     break;
-                case ChartSeries::CHART_TYPE_COLUMNS:
-                case ChartSeries::CHART_TYPE_BARS:
+                case $chartType instanceof ColumnChart:
                     
                     break;
                 default:
@@ -418,12 +429,12 @@ JS;
             }
         }
         
-        if ($this->getWidget()->getStackSeries()) {
+        if ($chartType instanceof ColumnChart && $chartType->isStacked() === true) {
             $config_array['stack'] = 'true';
         }
         
-        foreach ($config_array as $chart_type => $options) {
-            $output .= $chart_type . ': ' . (is_array($options) ? '{' . implode(', ', $options) . '}' : $options) . ', ';
+        foreach ($config_array as $flot_chart_type => $options) {
+            $output .= $flot_chart_type . ': ' . (is_array($options) ? '{' . implode(', ', $options) . '}' : $options) . ', ';
         }
         
         $output = $output ? substr($output, 0, - 2) : $output;
