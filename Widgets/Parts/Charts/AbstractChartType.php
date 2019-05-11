@@ -9,6 +9,7 @@ use exface\Core\Uxon\UxonSchema;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\ChartSeries;
 use exface\Core\Widgets\DataColumn;
+use exface\Core\Interfaces\Widgets\iShowData;
 
 /**
  * 
@@ -107,5 +108,7 @@ abstract class AbstractChartType implements WidgetPartInterface
     
     abstract public function getCaption() : string;
     
-    abstract public function prepareAxes() : AbstractChartType;
+    abstract public function getValueDataColumn() : DataColumn;
+    
+    abstract public function prepareData(iShowData $dataWidget) : AbstractChartType;
 }
