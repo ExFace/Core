@@ -8,6 +8,46 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Exceptions\RuntimeException;
 
 /**
+ * Shows a command line terminal.
+ * 
+ * Example:
+ * 
+ * ```
+ * {
+ * 	"widget_type": "Console",
+ *  "allowed_commands": [
+ *      "/cd .* /",
+ *      "/git .* /",
+ *      "/whoami/"
+ *  ],
+ *  "start_commands": [
+ *      "git status"
+ *  ]
+ * 	"command_prsets": [
+ * 		{
+ * 			"caption": "Commit/Push all",
+ * 			"hint": "Commits all local changes and pushes them to the current remote",
+ * 			"commands": [
+ * 				"git commit -a -m <message>",
+ * 				"git push"
+ * 			]
+ * 		},
+ * 		{
+ * 			"caption": "List branches",
+ * 			"commands": [
+ * 				"git branch -a"
+ * 			]
+ * 		},
+ * 		{
+ * 			"caption": "Switch branch",
+ * 			"commands": [
+ * 				"git checkout <branch>"
+ * 			]
+ * 		}
+ * 	]
+ * }
+ * 
+ * ```
  * 
  * @author Ralf Mulansky
  *
@@ -43,7 +83,11 @@ class Console extends AbstractWidget
     }
     
     /**
-     * Set array of regular expressions to check if a command is allowed
+     * Set array of regular expressions to check if a command is allowed.
+     * 
+     * Each command is treated as aregular expression, so take care of placing it
+     * between valid regex delimiters: e.g. type `/whoami/` to allow the `whoami`
+     * command (the `/` would be the regex delimiter).
      * 
      * @uxon-property allowed_commands
      * @uxon-type array
@@ -172,6 +216,12 @@ class Console extends AbstractWidget
     /**
      * Add command presets - buttons or menu items, that perform a predefined set of commands.
      * 
+     * Each preset has caption, hint, visibilty and a set of commands, it performs. The commands
+     * may include palceholders (e.g. `<message>`). If so, the user will be asked to provide
+     * values for every placeholder once the preset is activated.
+     * 
+     * Captions and hints support static formulas like `=TRANSLATE()`.
+     * 
      * Example:
      * 
      * ```
@@ -179,9 +229,10 @@ class Console extends AbstractWidget
      *  {
      *      "caption": "Commit all",
      *      "hint": "Performs a git commit for all current changes with a default message",
+     *      "visibility": "promoted",
      *      "commands": [
      *          "git add --all",
-     *          "git commit"
+     *          "git commit -m <message>"
      *      ]
      *  },
      *  {
