@@ -13,7 +13,6 @@ use exface\Core\CommonLogic\Filemanager;
  */
 class CoreInstaller extends AbstractAppInstaller
 {
-
     /**
      * 
      * {@inheritDoc}
@@ -26,7 +25,6 @@ class CoreInstaller extends AbstractAppInstaller
         $result = $modelLoaderInstaller->install($this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $modelLoaderInstaller->getSelectorInstalling()->getFolderRelativePath());
         
         // Add required files to root folder
-        $result .= $this->copyDefaultHtaccess($source_absolute_path);
         $result .= $this->createApiPhp($source_absolute_path);
         $result .= $this->removeLegacyFiles($source_absolute_path);
         
@@ -53,23 +51,6 @@ class CoreInstaller extends AbstractAppInstaller
     public function backup($destination_absolute_path)
     {
         return 'Backup not implemented for' . $this->getSelectorInstalling()->getAliasWithNamespace() . '!';
-    }
-    
-    protected function copyDefaultHtaccess(string $source_absolute_path) : string
-    {
-        $result = '';
-        // Copy default .htaccess to the root of the installation
-        $file = Filemanager::pathJoin([$this->getWorkbench()->getInstallationPath(), '.htaccess']);
-        if (! file_exists($file)) {
-            try {
-                $this->getWorkbench()->filemanager()->copy($this->getInstallFolderAbsolutePath($source_absolute_path) . DIRECTORY_SEPARATOR . 'default.htaccess', $file);
-                $result .= "\nGenerated default .htaccess file in plattform root.";
-            } catch (\Exception $e) {
-                $result .= "\nFailed to copy default .htaccss file: " . $e->getMessage() . ' in ' . $e->getFile() . ' at ' . $e->getLine() . '.';
-            }
-        }
-        
-        return $result;
     }
     
     protected function createApiPhp(string $source_absolute_path) : string

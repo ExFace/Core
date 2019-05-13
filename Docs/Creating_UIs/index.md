@@ -19,4 +19,9 @@ If you prefer real-world examples, take a look at the administration pages (Admi
 - [Creating an editor-dialog for an object](Forms_and_inputs/Editor-dialogs_for_objects.md)
 - [Inputs with Autosuggest](Forms_and_inputs/Inputs_with_autosuggest.md)
 
+## Displaying external content
+
+- [Using IFrames](Special_widgets/Browser_widget_(Iframe).md) to integrate external web pages
+- [Using the `Console` widget](Special_widgets/Console_widget.md) to run command line commands from the UI and display the results
+
 
