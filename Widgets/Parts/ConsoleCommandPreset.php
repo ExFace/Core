@@ -94,7 +94,12 @@ class ConsoleCommandPreset implements WidgetPartInterface, iHaveCaption, iHaveVi
     }
     
     /**
-     * Set the hint for the preset
+     * Set the hint for the preset.
+     * 
+     * Static formulas like `=TRANSLATE()` are supported.
+     * 
+     * @uxon-property hint
+     * @uxon-type string|metamodel:formula
      * 
      * @param string $value
      * @return ConsoleCommandPreset
