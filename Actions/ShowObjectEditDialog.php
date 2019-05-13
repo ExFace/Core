@@ -69,6 +69,7 @@ class ShowObjectEditDialog extends ShowObjectInfoDialog
             $this->getWidgetDefinedIn()->setRefreshWidgetLink(null);
         }
         $dialog->addButton($save_button);
+        $dialog->getCloseButton()->setCaption($this->getApp()->getTranslator()->translate('ACTION.SHOWDIALOG.CANCEL_BUTTON'));
         return $dialog;
     }
 
