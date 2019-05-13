@@ -131,6 +131,79 @@
             {
                 "action_alias": "axenox.PackageManager.InstallAppFromVendorFolder",
                 "caption": "=TRANSLATE('axenox.PackageManager', 'ACTION.INSTALLAPP.NAME')"
+            },
+            {
+                "widget_type": "Button",
+                "caption": "Console",
+                "icon": "git",
+                "action": {
+                    "alias": "exface.Core.ShowDialog",
+                    "widget": {
+                        "widgets": [
+                            {
+                                "widget_type": "Console",
+                                "working_directory_attribute_alias": "PACKAGE",
+                                "working_directory_subfolder": "vendor",
+                                "allowed_commands": [
+                                    "\/dir\/",
+                                    "\/test\/",
+                                    "\/git .*\/ ",
+                                    "\/cd .*\/"
+                                ],
+                                "start_commands": [
+                                    "git status",
+                                    "dir"
+                                ],
+                                "command_presets": [
+                                    {
+                                        "caption": "=TRANSLATE('exface.Core', 'WIDGET.CONSOLE_BTN_SHOW_CHANGES')",
+                                        "hint": "=TRANSLATE('exface.Core', 'WIDGET.CONSOLE_BTN_SHOW_CHANGES_HINT')",
+                                        "commands": [
+                                            "git status"
+                                        ]
+                                    },
+                                    {
+                                        "caption": "=TRANSLATE('exface.Core', 'WIDGET.CONSOLE_BTN_GIT_COMMIT')",
+                                        "hint": "=TRANSLATE('exface.Core', 'WIDGET.CONSOLE_BTN_GIT_COMMIT_HINT')",
+                                        "commands": [
+                                            "git add -a",
+                                            "git commit -a -m <message>",
+                                            "git push"
+                                        ]
+                                    },
+                                    {
+                                        "caption": "=TRANSLATE('exface.Core', 'WIDGET.CONSOLE_BTN_GIT_PUSH')",
+                                        "hint": "=TRANSLATE('exface.Core', 'WIDGET.CONSOLE_BTN_GIT_PUSH_HINT')",
+                                        "commands": [
+                                            "git push"
+                                        ]
+                                    },
+                                    {
+                                        "caption": "=TRANSLATE('exface.Core', 'WIDGET.CONSOLE_BTN_GIT_PULL')",
+                                        "hint": "=TRANSLATE('exface.Core', 'WIDGET.CONSOLE_BTN_GIT_PULL_HINT')",
+                                        "commands": [
+                                            "git pull"
+                                        ]
+                                    },
+                                    {
+                                        "caption": "=TRANSLATE('exface.Core', 'WIDGET.CONSOLE_BTN_GIT_LIST_BRANCH')",
+                                        "hint": "=TRANSLATE('exface.Core', 'WIDGET.CONSOLE_BTN_GIT_LIST_BRANCH_HINT')",
+                                        "commands": [
+                                            "git branch -a"
+                                        ]
+                                    },
+                                    {
+                                        "caption": "=TRANSLATE('exface.Core', 'WIDGET.CONSOLE_BTN_GIT_SWITCH_BRANCH')",
+                                        "hint": "=TRANSLATE('exface.Core', 'WIDGET.CONSOLE_BTN_GIT_SWITCH_BRANCH_HINT')",
+                                        "commands": [
+                                            "git checkout <branch>"
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
             }
         ]
     }
