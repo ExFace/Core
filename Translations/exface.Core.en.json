@@ -207,6 +207,21 @@
 	
 	"WIDGET.STATEMENUBUTTON.CAPTION": "Change state",
 	
+	"WIDGET.CONSOLE_BTN_CANCEL": "Cancel",
+	"WIDGET.CONSOLE_BTN_OK": "OK",
+	"WIDGET.CONSOLE_BTN_GIT_COMMIT": "Commit",
+	"WIDGET.CONSOLE_BTN_GIT_COMMIT_HINT": "Commit local changes to repository",
+	"WIDGET.CONSOLE_BTN_GIT_LIST_BRANCH": "Branches",
+	"WIDGET.CONSOLE_BTN_GIT_LIST_BRANCH_HINT": "List existing repository branches",
+	"WIDGET.CONSOLE_BTN_GIT_PULL": "Pull",
+	"WIDGET.CONSOLE_BTN_GIT_PULL_HINT": "Pull commits from repository",
+	"WIDGET.CONSOLE_BTN_GIT_PUSH": "Push",
+	"WIDGET.CONSOLE_BTN_GIT_PUSH_HINT": "Push commits to repository",
+	"WIDGET.CONSOLE_BTN_GIT_SWITCH_BRANCH": "Switch Branch",
+	"WIDGET.CONSOLE_BTN_GIT_SWITCH_BRANCH_HINT": "Switch to another repository branch",
+	"WIDGET.CONSOLE_BTN_SHOW_CHANGES": "Show Changes",
+	"WIDGET.CONSOLE_BTN_SHOW_CHANGES_HINT": "Shows changes compared to git Repository",
+	
 	"WIDGET.DATA.NO_DATA_FOUND": "No data could be found for the current set of filters!",
 	"WIDGET.DATA.HELP.FILTERS": "Filters",
 	"WIDGET.DATA.HELP.COLUMNS": "Columns",
