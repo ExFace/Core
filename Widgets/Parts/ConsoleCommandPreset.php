@@ -8,6 +8,8 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Console;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
 use exface\Core\Interfaces\Widgets\iHaveCaption;
+use exface\Core\Widgets\Traits\iHaveVisibilityTrait;
+use exface\Core\Interfaces\Widgets\iHaveVisibility;
 
 
 /**
@@ -16,10 +18,11 @@ use exface\Core\Interfaces\Widgets\iHaveCaption;
  * @author Ralf Mulansky
  * 
  */
-class ConsoleCommandPreset implements WidgetPartInterface, iHaveCaption
+class ConsoleCommandPreset implements WidgetPartInterface, iHaveCaption, iHaveVisibility
 {
     use ImportUxonObjectTrait;
     use iHaveCaptionTrait;
+    use iHaveVisibilityTrait;
     
     private $console = null;
     
@@ -111,6 +114,8 @@ class ConsoleCommandPreset implements WidgetPartInterface, iHaveCaption
     public function setCommands(UxonObject $array) : ConsoleCommandPreset
     {
         $this->commands = $array->toArray();
+        // Placeholders (e.g. <message>) sometimes come with encoded html characters
+        $this->commands = array_map('html_entity_decode', $this->commands);
         return $this;
     }
     
