@@ -18,7 +18,6 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterfa
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsEnumFormatter;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsBooleanFormatter;
-use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
@@ -44,13 +43,14 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsTimeFormatter;
 use exface\Core\Interfaces\Widgets\CustomWidgetInterface;
+use exface\Core\Facades\AbstractHttpFacade\AbstractHttpTaskFacade;
 
 /**
  * 
  * @author Andrej Kabachnik
  *
  */
-abstract class AbstractAjaxFacade extends AbstractHttpFacade
+abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade
 {
     const MODE_HEAD = 'HEAD';
     const MODE_BODY = 'BODY';
@@ -620,6 +620,16 @@ abstract class AbstractAjaxFacade extends AbstractHttpFacade
             }  
         }
         return $tags;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::getUrlRouteDefault()
+     */
+    public function getUrlRouteDefault() : string
+    {
+        return $this->getConfig()->getOption('DEFAULT_AJAX_URL');
     }
 }
 ?>

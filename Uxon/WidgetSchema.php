@@ -3,6 +3,8 @@ namespace exface\Core\Uxon;
 
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\Selectors\WidgetSelector;
+use exface\Core\Factories\UiPageFactory;
 
 /**
  * UXON-schema class for widgets.
@@ -25,7 +27,14 @@ class WidgetSchema extends UxonSchema
         
         foreach ($uxon as $key => $value) {
             if (strcasecmp($key, 'widget_type') === 0) {
-                $w = $this->getPrototypeClassFromWidgetType($value);
+                $selector = new WidgetSelector($this->getWorkbench(), $value);
+                if ($selector->isCoreWidget() === true) {
+                    // This is faster, than instantiating a page and a widget,
+                    // but it only works for core widgets!
+                    $w = $this->getPrototypeClassFromWidgetType($value);
+                } else {
+                    $w = get_class(WidgetFactory::create(UiPageFactory::createEmpty($this->getWorkbench()), $value));
+                }
                 if ($this->validatePrototypeClass($w) === true) {
                     $name = $w;
                 }
