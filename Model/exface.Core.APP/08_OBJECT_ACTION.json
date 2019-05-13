@@ -1,0 +1,103 @@
+{
+    "object_alias": "exface.Core.OBJECT_ACTION",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        },
+        {
+            "name": "ACTION_PROTOTYPE",
+            "attribute_alias": "ACTION_PROTOTYPE"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "SHORT_DESCRIPTION",
+            "attribute_alias": "SHORT_DESCRIPTION"
+        },
+        {
+            "name": "CONFIG_UXON",
+            "attribute_alias": "CONFIG_UXON"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "USE_IN_OBJECT_BASKET_FLAG",
+            "attribute_alias": "USE_IN_OBJECT_BASKET_FLAG"
+        },
+        {
+            "name": "DOCS",
+            "attribute_alias": "DOCS"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2019-05-13 09:02:35",
+            "MODIFIED_ON": "2019-05-13 09:44:30",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e9755dcd59222586490205857feb80",
+            "OBJECT": "0x35370000000000000000000000000000",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "ALIAS": "ShowAppGitConsoleDialog",
+            "NAME": "Console",
+            "SHORT_DESCRIPTION": "Shows a GIT console for a selected app",
+            "CONFIG_UXON": "{\"prefill_with_input_data\":true,\"input_rows_max\":1,\"icon\":\"git\",\"widget\":{\"widgets\":[{\"widget_type\":\"Console\",\"working_directory_attribute_alias\":\"PACKAGE\",\"working_directory_subfolder\":\"vendor\",\"allowed_commands\":[\"\\\/dir\\\/\",\"\\\/cd .*\\\/\",\"\\\/git .*\\\/ \"],\"start_commands\":[\"git status\"],\"command_presets\":[{\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_COMMIT')\",\"hint\":\"=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_COMMIT_HINT')\",\"visibility\":\"promoted\",\"commands\":[\"git add --all\",\"git commit -a -m \\\"<message>\\\"\",\"git push\"]},{\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_SHOW_CHANGES')\",\"hint\":\"=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_SHOW_CHANGES_HINT')\",\"commands\":[\"git status\"]},{\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_PUSH')\",\"hint\":\"=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_PUSH_HINT')\",\"commands\":[\"git push\"]},{\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_PULL')\",\"hint\":\"=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_PULL_HINT')\",\"commands\":[\"git pull\"]},{\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_LIST_BRANCH')\",\"hint\":\"=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_LIST_BRANCH_HINT')\",\"commands\":[\"git branch -a\"]},{\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_SWITCH_BRANCH')\",\"hint\":\"=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_SWITCH_BRANCH_HINT')\",\"commands\":[\"git checkout &lt;branch&gt;\"]}]}]}}",
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "DOCS": ""
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.OBJECT_ACTION"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}
