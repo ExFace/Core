@@ -24,7 +24,7 @@ Here is how to create a button, that openes a dialog with an interactive console
 			"widgets": [
 				{
 					"widget_type": "Console",
-					"commands_allowed": [
+					"allowed_commands": [
 						"/cd.*/",
 						"/dir.*/",
 						"/git .*/"
@@ -56,7 +56,7 @@ Use disabled `Console` widgets with `commands_on_start` to achieve this behavior
 				{
 					"widget_type": "Console",
 					"disabled": true,
-					"commands_on_start": [
+					"start_commands": [
 						"php composer.phar update"
 					]
 				}
@@ -88,7 +88,7 @@ If the commands are somehow related to data, the user previously worked on, you 
 				{
 					"widget_type": "Console",
 					"disabled": true,
-					"commands_on_start": [
+					"start_commands": [
 						"php composer.phar update [#PACKAGE#]"
 					]
 				}
@@ -108,18 +108,32 @@ The following example creates a simple git console, that let's the user commit a
 ```
 {
 	"widget_type": "Console",
-	"command_prsets": {
-		"Commit/Push all": [
-			"git commit -a -m <message>",
-			"git push"
-		],
-		"List branches": "git branch -a",
-		"Switch branch": "git checkout <branch>"
-	}
+	"command_prsets": [
+		{
+			"caption": "Commit/Push all",
+			"hint": "Commits all local changes and pushes them to the current remote",
+			"commands": [
+				"git commit -a -m <message>",
+				"git push"
+			]
+		},
+		{
+			"caption": "List branches",
+			"commands": [
+				"git branch -a"
+			]
+		},
+		{
+			"caption": "Switch branch",
+			"commands": [
+				"git checkout <branch>"
+			]
+		}
+	]
 }
 
 ```
 
-A preset may contain a single command or an array with commands.
+A preset may contain a single command or an array with commands. If at least one of the commands contains a placeholder (e.g. `<message>`), the user will be asked to fill-in values for all placeholders in the preset befor the commands are executed: most facades will show a small input-dialog when the user presses the preset-button.
 
 **Note:** command presets are automatically added to the allowed commands. In the above example, users will be able to execute only the 4 commands, that are part of the presets. Command placeholders like `<message>` will be treated as wildcards.

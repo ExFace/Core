@@ -7,6 +7,11 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Exceptions\RuntimeException;
 
+/**
+ * 
+ * @author Ralf Mulansky
+ *
+ */
 class Console extends AbstractWidget
 {
     private $allowedCommands = [];
@@ -27,9 +32,6 @@ class Console extends AbstractWidget
     
     private $workingDirectoyAttributeAlias = '';
     
-    
-    
-    
     /**
      * Returns Array of regular expressions with allowed commands
      * 
@@ -43,8 +45,9 @@ class Console extends AbstractWidget
     /**
      * Set array of regular expressions to check if a command is allowed
      * 
-     * @uxon-proberty allowed_commands
-     * @uxon-type object
+     * @uxon-property allowed_commands
+     * @uxon-type array
+     * @uxon-template [""]
      * 
      * @param UxonObject $uxon
      * @return Console
@@ -115,7 +118,7 @@ class Console extends AbstractWidget
      */
     protected function getWorkingDirectorySubfolder() : string
     {
-        return $this->workingDirectorySubfolder;
+        return $this->workingDirectorySubfolder ?? '';
     }
     
     /**
@@ -125,6 +128,7 @@ class Console extends AbstractWidget
      *
      * @uxon-property working_directory_subfolder
      * @uxon-type string
+     * @uxon-default ''
      *
      * @param string $pathRelativeToInstallationBase
      * @return Console
@@ -148,8 +152,10 @@ class Console extends AbstractWidget
     /**
      * Set array of commands to be performed when the widget is loaded.
      * 
-     * @uxon-proberty start_commands
-     * @uxon-type object
+     * @uxon-property start_commands
+     * @uxon-type array
+     * @uxon-template [""]
+     * 
      * @param UxonObject $uxon
      * @return Console
      */
@@ -188,6 +194,10 @@ class Console extends AbstractWidget
      * ]
      * 
      * ```
+     * 
+     * @uxon-property command_presets
+     * @uxon-type \exface\Core\Widgets\Parts\ConsoleCommandPreset[]
+     * @uxon-template [{"caption": "", "hint": "", "commands": [""]}]
      * 
      * @param UxonObject $uxon
      * @return Console
@@ -230,8 +240,9 @@ class Console extends AbstractWidget
      * Set timeout for the commands in seconds.
      * Default is 600.
      * 
-     * @uxon-proberty command_timeout
-     * @uxon-type string
+     * @uxon-property command_timeout
+     * @uxon-type integer
+     * @uxon-default 600
      * 
      * @param string $timeout
      * @return Console
@@ -255,10 +266,12 @@ class Console extends AbstractWidget
     
     
     /**
-     * Array of environment variables to be used executing the commands
+     * Environment variables to be used when executing commands as key-value-pairs.
      * 
      * @uxon-object environment_variables
      * @uxon-type object
+     * @uxon-template {"VARNAME": "value"}
+     * 
      * @param UxonObject $uxon
      * @return Console
      */
