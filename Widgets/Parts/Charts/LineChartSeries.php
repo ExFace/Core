@@ -7,7 +7,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\Chart;
 use exface\Core\Widgets\DataColumn;
 
-class LineChart extends AbstractChartType
+class LineChartSeries extends AbstractChartSeries
 {
     private $color = null;
     
@@ -18,6 +18,18 @@ class LineChart extends AbstractChartType
     private $axis_y_attribute_alias = null;
     
     private $axis_y = null;
+    
+    /**
+     *
+     * @var bool
+     */
+    private $stack = false;
+    
+    /**
+     * 
+     * @var bool
+     */
+    private $fill = false;
     
     /**
      * Returns the color of this series or NULL if no color explicitly defined.
@@ -47,7 +59,7 @@ class LineChart extends AbstractChartType
      * @uxon-type string
      *
      * @param string $color
-     * @return LineChart
+     * @return LineChartSeries
      */
     public function setColor(string $color) : LineChart
     {
@@ -59,7 +71,7 @@ class LineChart extends AbstractChartType
     {
         if ($this->axis_x === null) {
             if ($this->axis_x_attribute_alias !== null) {
-                $attr = $this->getChartSeries()->getMetaObject()->getAttribute($this->axis_x_attribute_alias);
+                $attr = $this->getMetaObject()->getAttribute($this->axis_x_attribute_alias);
                 $axes = $this->getChart()->findAxesByAttribute($attr, Chart::AXIS_X);
                 if (empty($axes)) {
                     $axis = $this->getChart()->createAxisFromExpression($this->axis_x_attribute_alias);
@@ -69,7 +81,7 @@ class LineChart extends AbstractChartType
                 }
             }
             if (! $axis) {
-                throw new WidgetConfigurationError($this->getChart(), 'Cannot find x-axis for series "' . $this->getChartSeries()->getId() . '" of widget "' . $this->getChart()->getId() . '"!', '6T90UV9');
+                throw new WidgetConfigurationError($this->getChart(), 'Cannot find x-axis for series ' . $this->getIndex() . ' of widget "' . $this->getChart()->getId() . '"!', '6T90UV9');
             }
             $this->axis_x = $axis;
         }
@@ -86,7 +98,7 @@ class LineChart extends AbstractChartType
     {
         if ($this->axis_y === null) {
             if ($this->axis_y_attribute_alias !== null) {
-                $attr = $this->getChartSeries()->getMetaObject()->getAttribute($this->axis_y_attribute_alias);
+                $attr = $this->getMetaObject()->getAttribute($this->axis_y_attribute_alias);
                 $axes = $this->getChart()->findAxesByAttribute($attr, Chart::AXIS_Y);
                 if (empty($axes)) {
                     $axis = $this->getChart()->createAxisFromExpression($this->axis_y_attribute_alias);
@@ -96,7 +108,7 @@ class LineChart extends AbstractChartType
                 }
             }
             if (! $axis) {
-                throw new WidgetConfigurationError($this->getChart(), 'Cannot find y-axis for series "' . $this->getChartSeries()->getId() . '" of widget "' . $this->getChart()->getId() . '"!', '6T90UV9');
+                throw new WidgetConfigurationError($this->getChart(), 'Cannot find y-axis for series ' . $this->getIndex() . ' of widget "' . $this->getChart()->getId() . '"!', '6T90UV9');
             }
             $this->axis_y = $axis;
         }
@@ -112,7 +124,7 @@ class LineChart extends AbstractChartType
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Widgets\Parts\Charts\AbstractChartType::getCaption()
+     * @see \exface\Core\Widgets\Parts\Charts\AbstractChartSeries::getCaption()
      */
     public function getCaption() : string
     {
@@ -124,11 +136,49 @@ class LineChart extends AbstractChartType
         return $this->getAxisY()->getDataColumn();
     }
 
-    public function prepareData(iShowData $dataWidget): AbstractChartType
+    public function prepareData(iShowData $dataWidget): AbstractChartSeries
     {
         $this->getAxisX();
         $this->getAxisY();
         return $this;
     }
-
+    
+    public function isStacked() : bool
+    {
+        return $this->stack;
+    }
+    
+    /**
+     * Set to true to stack all series of this chart
+     *
+     * @uxon-property stack_series
+     *
+     * @param boolean $value
+     * @return ColumnChartSeries
+     */
+    public function setStacked(bool $value) : ColumnChartSeries
+    {
+        $this->stack = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getFilled() : bool
+    {
+        return $this->fill;
+    }
+    
+    /**
+     * 
+     * @param bool $value
+     * @return LineChartSeries
+     */
+    public function setFilled(bool $value) : LineChartSeries
+    {
+        $this->fill = $value;
+        return $this;
+    }
 }

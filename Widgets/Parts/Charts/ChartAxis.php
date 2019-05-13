@@ -230,7 +230,7 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      * 
      * @param iShowData $dataWidget
      * @throws WidgetConfigurationError
-     * @return AbstractChartType
+     * @return ChartAxis
      */
     public function prepareData(iShowData $dataWidget) : ChartAxis
     {
