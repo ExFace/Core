@@ -10,6 +10,9 @@ use exface\Core\Factories\FacadeFactory;
 use exface\Core\Facades\DocsFacade;
 use exface\Core\Facades\HttpFileServerFacade;
 use exface\Core\Facades\ProxyFacade;
+use exface\Core\Facades\WebConsoleFacade;
+use exface\Core\CommonLogic\AppInstallers\FileContentInstaller;
+use exface\Core\CommonLogic\Filemanager;
 
 class CoreApp extends App
 {
@@ -27,6 +30,14 @@ class CoreApp extends App
         // Make sure, it runs before any other installers do.
         $installer->addInstaller(new CoreInstaller($this->getSelector()), true);
         
+        $htaccessInstaller = new FileContentInstaller($this->getSelector());
+        $htaccessInstaller
+            ->setFilePath(Filemanager::pathJoin([$this->getWorkbench()->getInstallationPath(), '.htaccess']))
+            ->setFileTemplatePath('default.htaccess')
+            ->setMarkerBegin("\n# BEGIN ")
+            ->setMarkerEnd('# END ');
+        $installer->addInstaller($htaccessInstaller);
+        
         // Add facade installers for core facades
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(HttpFileServerFacade::class, $this->getWorkbench()));
@@ -39,6 +50,16 @@ class CoreApp extends App
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(ProxyFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
+        
+        $tplInstaller = new HttpFacadeInstaller($this->getSelector());
+        $tplInstaller->setFacade(FacadeFactory::createFromString(WebConsoleFacade::class, $this->getWorkbench()));
+        $installer->addInstaller($tplInstaller);
+        $htaccessInstaller->addContent("zlib compression off for webconsole facade \n", "
+<If \"'%{THE_REQUEST}' =~ m#api/webconsole#\">
+    php_flag zlib.output_compression Off
+</If>
+            
+");
         
         return $installer;
     }
