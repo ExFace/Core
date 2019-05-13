@@ -7,6 +7,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Uxon\UxonSchema;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * 
@@ -64,8 +65,17 @@ abstract class AbstractChartPart implements WidgetPartInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
      */
-    public static function getUxonSchemaClass() : string
+    public static function getUxonSchemaClass() : ?string
     {
         return UxonSchema::class;
+    }
+    
+    /**
+     * 
+     * @return MetaObjectInterface
+     */
+    public function getMetaObject() : MetaObjectInterface
+    {
+        return $this->chart->getMetaObject();
     }
 }

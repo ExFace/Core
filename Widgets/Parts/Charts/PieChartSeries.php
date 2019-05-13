@@ -5,7 +5,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Widgets\iShowData;
 
-class PieChart extends AbstractChartType
+class PieChartSeries extends AbstractChartSeries
 {
     private $value_attribute_alias = null;
     
@@ -21,7 +21,7 @@ class PieChart extends AbstractChartType
      */
     protected function getValueAttribute() : MetaAttributeInterface
     {
-        return $this->getChartSeries()->getMetaObject()->getAttribute($this->value_attribute_alias);
+        return $this->getMetaObject()->getAttribute($this->value_attribute_alias);
     }
     
     /**
@@ -31,9 +31,9 @@ class PieChart extends AbstractChartType
      * @uxon-type metamodel:attribute
      * 
      * @param string $aliasRelativeToSeriesObject
-     * @return PieChart
+     * @return PieChartSeries
      */
-    public function setValueAttributeAlias(string $aliasRelativeToSeriesObject) : PieChart
+    public function setValueAttributeAlias(string $aliasRelativeToSeriesObject) : PieChartSeries
     {
         $this->value_attribute_alias = $aliasRelativeToSeriesObject;
         return $this;
@@ -62,7 +62,7 @@ class PieChart extends AbstractChartType
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Widgets\Parts\Charts\AbstractChartType::getValueDataColumn()
+     * @see \exface\Core\Widgets\Parts\Charts\AbstractChartSeries::getValueDataColumn()
      */
     public function getValueDataColumn() : DataColumn
     {
@@ -76,9 +76,9 @@ class PieChart extends AbstractChartType
      * @uxon-type metamodel:attribute
      *
      * @param string $aliasRelativeToSeriesObject
-     * @return PieChart
+     * @return PieChartSeries
      */
-    public function setTextAttributeAlias(string $aliasRelativeToSeriesObject) : PieChart
+    public function setTextAttributeAlias(string $aliasRelativeToSeriesObject) : PieChartSeries
     {
         $this->text_attribute_alias = $aliasRelativeToSeriesObject;
         return $this;
@@ -90,7 +90,7 @@ class PieChart extends AbstractChartType
      */
     public function getTextAttribute() : MetaAttributeInterface
     {
-        return $this->getChartSeries()->getMetaObject()->getAttribute($this->text_attribute_alias);
+        return $this->getMetaObject()->getAttribute($this->text_attribute_alias);
     }
     
     public function isTextBoundToAttribute() : bool
@@ -121,9 +121,9 @@ class PieChart extends AbstractChartType
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Widgets\Parts\Charts\AbstractChartType::prepareAxes()
+     * @see \exface\Core\Widgets\Parts\Charts\AbstractChartSeries::prepareAxes()
      */
-    public function prepareData(iShowData $dataWidget) : AbstractChartType
+    public function prepareData(iShowData $dataWidget) : AbstractChartSeries
     {
         $this->getTextAxis();
         $this->getValueAxis();

@@ -21,12 +21,8 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\Parts\Charts\ChartAxis;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\DataTypes\AggregatorFunctionsDataType;
-use exface\Core\CommonLogic\Model\Aggregator;
-use exface\Core\CommonLogic\DataSheets\DataAggregation;
-use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\Widgets\iShowData;
-use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\Widgets\Parts\Charts\AbstractChartSeries;
 
 /**
  * A Chart widget draws a chart with upto two axis and any number of series.
@@ -60,7 +56,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
 
     /**
      *
-     * @var ChartSeries[]
+     * @var AbstractChartSeries[]
      */
     private $series = array();
 
@@ -299,7 +295,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     protected function prepareData(iShowData $dataWidget) : Chart
     {
         foreach ($this->getSeries() as $series) {
-            $series->getChartType()->prepareData($dataWidget);
+            $series->prepareData($dataWidget);
         }
         
         foreach ($this->getAxes() as $axis) {
@@ -385,7 +381,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
 
     /**
      *
-     * @return ChartSeries[]
+     * @return AbstractChartSeries[]
      */
     public function getSeries()
     {
@@ -393,34 +389,19 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     }
 
     /**
-     *
-     * @param string $chart_type            
-     * @return ChartSeries[]
-     */
-    public function getSeriesByChartType($chart_type)
-    {
-        $result = array();
-        foreach ($this->getSeries() as $series) {
-            if ($series->getChartType() === $chart_type) {
-                $result[] = $series;
-            }
-        }
-        return $result;
-    }
-
-    /**
      * Sets the series to be displayed in the chart.
      * Multiple series are possible.
      *
      * @uxon-property series
-     * @uxon-type \exface\Core\Widget\ChartSeries[]
+     * @uxon-type \exface\Core\Widgets\Parts\ChartsAbstractChartSeries[]
+     * @uxon-template [{"type": ""}]
      *
-     * @param ChartSeries|UxonObject $series_or_uxon_object            
+     * @param AbstractChartSeries|UxonObject $series_or_uxon_object            
      * @return \exface\Core\Widgets\Chart
      */
     public function setSeries($series_or_uxon_object)
     {
-        if ($series_or_uxon_object instanceof ChartSeries) {
+        if ($series_or_uxon_object instanceof AbstractChartSeries) {
             $this->addSeries($series_or_uxon_object);
         } elseif ($series_or_uxon_object instanceof UxonObject) {
             if ($series_or_uxon_object->isArray()){
@@ -432,7 +413,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
                 $this->addSeries($series);
             }
         } else {
-            throw new WidgetPropertyInvalidValueError($this, 'Cannot set series in ' . $this->getWidgetType() . ': expecting instantiated ChartSeries widget or its UXON description or an array of UXON descriptions for multiple series - ' . gettype($series_or_uxon_object) . ' given instead!');
+            throw new WidgetPropertyInvalidValueError($this, 'Cannot set series in ' . $this->getWidgetType() . ': expecting instantiated AbstractChartSeries widget or its UXON description or an array of UXON descriptions for multiple series - ' . gettype($series_or_uxon_object) . ' given instead!');
         }
         return $this;
     }
@@ -448,18 +429,16 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      *
      * @param string $chart_type            
      * @param UxonObject $uxon            
-     * @return ChartSeries
+     * @return AbstractChartSeries
      */
-    public function createSeriesFromUxon(UxonObject $uxon = null)
+    public function createSeriesFromUxon(UxonObject $uxon = null) : AbstractChartSeries
     {
-        $series = $this->getPage()->createWidget('ChartSeries', $this);
-        if ($uxon) {
-            $series->importUxonObject($uxon);
-        }
-        return $series;
+        $type = mb_strtolower($uxon->getProperty('type'));
+        $class = '\\exface\\Core\\Widgets\\Parts\\Charts\\' . ucfirst($type) . 'ChartSeries';
+        return new $class($this, $uxon);
     }
 
-    public function addSeries(ChartSeries $series)
+    public function addSeries(AbstractChartSeries $series) : Chart
     {
         $this->series[] = $series;
         return $this;
@@ -746,7 +725,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      * @throws WidgetLogicError
      * @return int
      */
-    public function getSeriesIndex(ChartSeries $series) : int
+    public function getSeriesIndex(AbstractChartSeries $series) : int
     {
         $idx = array_search($series, $this->series, true);
         if ($idx !== false) {
@@ -766,4 +745,3 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
         return;
     }
 }
-?>
