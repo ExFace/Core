@@ -123,7 +123,7 @@ class PieChartSeries extends ChartSeries
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Parts\Charts\ChartSeries::prepareAxes()
      */
-    public function prepareData(iShowData $dataWidget) : ChartSeries
+    public function prepareDataWidget(iShowData $dataWidget) : ChartSeries
     {
         $this->getTextAxis();
         $this->getValueAxis();

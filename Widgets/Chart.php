@@ -275,7 +275,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
             if ($link = $this->getDataWidgetLink()) {
                 $data = $link->getTargetWidget();
                 if ($this->dataPrepared === false) {
-                    $this->prepareData($data);
+                    $this->prepareDataWidget($data);
                     $this->dataPrepared = true;
                 }
             } else {
@@ -288,14 +288,14 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
         return $data;
     }
     
-    protected function prepareData(iShowData $dataWidget) : Chart
+    protected function prepareDataWidget(iShowData $dataWidget) : Chart
     {
         foreach ($this->getSeries() as $series) {
-            $series->prepareData($dataWidget);
+            $series->prepareDataWidget($dataWidget);
         }
         
         foreach ($this->getAxes() as $axis) {
-            $axis->prepareData($dataWidget);
+            $axis->prepareDataWidget($dataWidget);
         }
         
         return $this;
@@ -389,7 +389,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      * Multiple series are possible.
      *
      * @uxon-property series
-     * @uxon-type \exface\Core\Widgets\Parts\ChartsChartSeries[]
+     * @uxon-type \exface\Core\Widgets\Parts\Charts\ChartSeries[]
      * @uxon-template [{"type": ""}]
      *
      * @param ChartSeries|UxonObject $series_or_uxon_object            
@@ -437,8 +437,13 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     public function createSeriesFromUxon(UxonObject $uxon = null) : ChartSeries
     {
         $type = mb_strtolower($uxon->getProperty('type'));
-        $class = '\\exface\\Core\\Widgets\\Parts\\Charts\\' . ucfirst($type) . 'ChartSeries';
+        $class = $this::getSeriesClassName($type);
         return new $class($this, $uxon);
+    }
+    
+    public static function getSeriesClassName(string $chartType) : string
+    {
+        return '\\exface\\Core\\Widgets\\Parts\\Charts\\' . ucfirst($chartType) . 'ChartSeries';
     }
 
     public function addSeries(ChartSeries $series) : Chart
@@ -742,7 +747,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     {
         parent::importUxonObject($uxon);
         if ($uxon->hasProperty('data') === true) {
-            $this->prepareData($this->getData());
+            $this->prepareDataWidget($this->getData());
             $this->dataPrepared = true;
         }
         return;

@@ -232,7 +232,7 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      * @throws WidgetConfigurationError
      * @return ChartAxis
      */
-    public function prepareData(iShowData $dataWidget) : ChartAxis
+    public function prepareDataWidget(iShowData $dataWidget) : ChartAxis
     {
         if ($this->attributeAlias !== null) {
             if (! $column = $dataWidget->getColumnByAttributeAlias($this->attributeAlias)) {
