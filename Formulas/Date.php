@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Formulas;
 
+use exface\Core\Factories\DataTypeFactory;
+use exface\Core\DataTypes\DateDataType;
+
 class Date extends \exface\Core\CommonLogic\Model\Formula
 {
 
@@ -22,5 +25,14 @@ class Date extends \exface\Core\CommonLogic\Model\Formula
         }
         return $date->format($format);
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::getDataType()
+     */
+    public function getDataType()
+    {
+        return DataTypeFactory::createFromPrototype($this->getWorkbench(), DateDataType::class);
+    }
 }
-?>

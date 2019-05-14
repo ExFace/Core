@@ -4,19 +4,19 @@ namespace exface\Core\Interfaces;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\WidgetDimension;
-use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Widgets\iHaveCaption;
+use exface\Core\Interfaces\Widgets\iHaveVisibility;
 
 /**
  * 
  * @author Andrej Kabachnik
  *
  */
-interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iHaveCaption
+interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iHaveCaption, iHaveVisibility
 {
 
     /**
@@ -317,24 +317,6 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iHa
      * @param boolean $value            
      */
     public function setHidden($value);
-
-    /**
-     * Returns the current visibility option (one of the EXF_WIDGET_VISIBILITY_xxx constants)
-     *
-     * @return integer
-     */
-    public function getVisibility();
-
-    /**
-     * Sets visibility of the widget. 
-     * 
-     * Accepted values are either one of the EXF_WIDGET_VISIBILITY_xxx or the
-     * the "xxx" part of the constant name as string: e.g. "normal", "promoted".
-     *
-     * @param string $value            
-     * @throws WidgetPropertyInvalidValueError
-     */
-    public function setVisibility($value);
 
     /**
      * Returns the data sheet used to prefill the widget or null if the widget is not prefilled
