@@ -11,7 +11,7 @@ use exface\Core\Widgets\Parts\Charts\LineChartSeries;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\TimestampDataType;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\Widgets\Parts\Charts\AbstractChartSeries;
+use exface\Core\Widgets\Parts\Charts\ChartSeries;
 
 /**
  * This trait contains common methods to use the flot charing library in jQuery facades.
@@ -311,7 +311,18 @@ JS;
         ), '_', $this->getId()).'_series'.$seriesIndex;
     }
     
-    protected function buildJsSeriesOptions(AbstractChartSeries $series)
+    protected function countSeries(string $type) : int
+    {
+        $cnt = 0;
+        foreach ($this->getWidget()->getSeries() as $series) {
+            if ($series->getType() === $type) {
+                $cnt++;
+            }
+        }
+        return $cnt;
+    }
+    
+    protected function buildJsSeriesOptions(ChartSeries $series)
     {
         $options = '';
         $color = $series->getColor();
@@ -324,7 +335,7 @@ JS;
                                     , lineWidth: 0
 									, align: "center"
                                     ';
-                if ($series->isStacked() === false) {
+                if ($series->isStacked() === false && $this->countSeries($series->getType()) > 1) {
                     $options .= '
                                     , barWidth: 0.2
                                     , order: ' . $series->getChart()->getSeriesIndex($series);

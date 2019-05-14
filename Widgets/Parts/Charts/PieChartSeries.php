@@ -5,7 +5,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Widgets\iShowData;
 
-class PieChartSeries extends AbstractChartSeries
+class PieChartSeries extends ChartSeries
 {
     private $value_attribute_alias = null;
     
@@ -62,7 +62,7 @@ class PieChartSeries extends AbstractChartSeries
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Widgets\Parts\Charts\AbstractChartSeries::getValueDataColumn()
+     * @see \exface\Core\Widgets\Parts\Charts\ChartSeries::getValueDataColumn()
      */
     public function getValueDataColumn() : DataColumn
     {
@@ -121,9 +121,9 @@ class PieChartSeries extends AbstractChartSeries
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Widgets\Parts\Charts\AbstractChartSeries::prepareAxes()
+     * @see \exface\Core\Widgets\Parts\Charts\ChartSeries::prepareAxes()
      */
-    public function prepareData(iShowData $dataWidget) : AbstractChartSeries
+    public function prepareData(iShowData $dataWidget) : ChartSeries
     {
         $this->getTextAxis();
         $this->getValueAxis();

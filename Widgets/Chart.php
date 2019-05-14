@@ -22,7 +22,7 @@ use exface\Core\Widgets\Parts\Charts\ChartAxis;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iShowData;
-use exface\Core\Widgets\Parts\Charts\AbstractChartSeries;
+use exface\Core\Widgets\Parts\Charts\ChartSeries;
 
 /**
  * A Chart widget draws a chart with upto two axis and any number of series.
@@ -56,7 +56,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
 
     /**
      *
-     * @var AbstractChartSeries[]
+     * @var ChartSeries[]
      */
     private $series = array();
 
@@ -377,7 +377,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
 
     /**
      *
-     * @return AbstractChartSeries[]
+     * @return ChartSeries[]
      */
     public function getSeries()
     {
@@ -389,15 +389,15 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      * Multiple series are possible.
      *
      * @uxon-property series
-     * @uxon-type \exface\Core\Widgets\Parts\ChartsAbstractChartSeries[]
+     * @uxon-type \exface\Core\Widgets\Parts\ChartsChartSeries[]
      * @uxon-template [{"type": ""}]
      *
-     * @param AbstractChartSeries|UxonObject $series_or_uxon_object            
+     * @param ChartSeries|UxonObject $series_or_uxon_object            
      * @return \exface\Core\Widgets\Chart
      */
     public function setSeries($series_or_uxon_object)
     {
-        if ($series_or_uxon_object instanceof AbstractChartSeries) {
+        if ($series_or_uxon_object instanceof ChartSeries) {
             $this->addSeries($series_or_uxon_object);
         } elseif ($series_or_uxon_object instanceof UxonObject) {
             if ($series_or_uxon_object->isArray()){
@@ -409,7 +409,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
                 $this->addSeries($series);
             }
         } else {
-            throw new WidgetPropertyInvalidValueError($this, 'Cannot set series in ' . $this->getWidgetType() . ': expecting instantiated AbstractChartSeries widget or its UXON description or an array of UXON descriptions for multiple series - ' . gettype($series_or_uxon_object) . ' given instead!');
+            throw new WidgetPropertyInvalidValueError($this, 'Cannot set series in ' . $this->getWidgetType() . ': expecting instantiated ChartSeries widget or its UXON description or an array of UXON descriptions for multiple series - ' . gettype($series_or_uxon_object) . ' given instead!');
         }
         return $this;
     }
@@ -420,21 +420,28 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
             'attribute_alias' => $expression
         ]));
     }
+    
+    public function createAxisFromColumnId(string $columnId) : ChartAxis
+    {
+        return new ChartAxis($this, new UxonObject([
+            'data_column_id' => $columnId
+        ]));
+    }
 
     /**
      *
      * @param string $chart_type            
      * @param UxonObject $uxon            
-     * @return AbstractChartSeries
+     * @return ChartSeries
      */
-    public function createSeriesFromUxon(UxonObject $uxon = null) : AbstractChartSeries
+    public function createSeriesFromUxon(UxonObject $uxon = null) : ChartSeries
     {
         $type = mb_strtolower($uxon->getProperty('type'));
         $class = '\\exface\\Core\\Widgets\\Parts\\Charts\\' . ucfirst($type) . 'ChartSeries';
         return new $class($this, $uxon);
     }
 
-    public function addSeries(AbstractChartSeries $series) : Chart
+    public function addSeries(ChartSeries $series) : Chart
     {
         $this->series[] = $series;
         return $this;
@@ -721,7 +728,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      * @throws WidgetLogicError
      * @return int
      */
-    public function getSeriesIndex(AbstractChartSeries $series) : int
+    public function getSeriesIndex(ChartSeries $series) : int
     {
         $idx = array_search($series, $this->series, true);
         if ($idx !== false) {
