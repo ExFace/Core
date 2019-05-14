@@ -113,8 +113,8 @@ JS;
                 $y_column = $series->getValueAxis()->getDataColumn();
                 $series_data = $series_id . '[i] = { label: ' . $js_rows . '[i]["' . $x_column->getDataColumnName() . '"], data: ' . $js_rows . '[i]["' . $series_column->getDataColumnName() . '"] }';
             } else {
-                $x_column = $series->getAxisX()->getDataColumn();
-                $y_column = $series->getAxisY()->getDataColumn();
+                $x_column = $series->getXDataColumn();
+                $y_column = $series->getYDataColumn();
                 // Prepare the code to transform the ajax data to flot data. It will later run in a for loop.
                 switch (true) {
                     case $series instanceof BarChartSeries:
@@ -125,8 +125,8 @@ JS;
                         $data_key = $x_column->getDataColumnName();
                         $data_value = $series_column->getDataColumnName();
                 }
-                $xAxisDataType = $series->getAxisX()->getDataColumn()->getDataType();
-                $xAxisPostProcessing = $xAxisDataType instanceof DateDataType && ! ($xAxisDataType instanceof TimestampDataType) ? '*1000' : '';
+                $xDataType = $series->getXDataColumn()->getDataType();
+                $xAxisPostProcessing = $xDataType instanceof DateDataType && ! ($xDataType instanceof TimestampDataType) ? '*1000' : '';
                 $series_data .= '
 							' . $series_id . '[i] = [ (' . $js_rows . '[i]["' . $data_key . '"]' . $xAxisPostProcessing  . '), ' . $js_rows . '[i]["' . $data_value . '"] ];';
             }
@@ -240,8 +240,8 @@ JS;
 								{
 									data: ' . $this->getSeriesId($series->getIndex()) . ($series instanceof BarChartSeries ? '.reverse()' : '') . '
 									, label: "' . $series->getCaption() . '"
-									, yaxis:' . ($series->getAxisY()->getIndex()+1) . '
-									, xaxis:' . ($series->getAxisX()->getIndex()+1) . '
+									, yaxis:' . ($series->getYAxis()->getIndex()+1) . '
+									, xaxis:' . ($series->getXAxis()->getIndex()+1) . '
 									' . ($series_options ? ', ' . $series_options : '') . '
 								}';
             }
@@ -344,7 +344,7 @@ JS;
                                     , barWidth: 0.8';
                 }
                 
-                if ($this->getAxisType($series->getAxisX()) == 'time' || $this->getAxisType($series->getAxisY()) == 'time') {
+                if ($this->getAxisType($series->getXAxis()) == 'time' || $this->getAxisType($series->getYAxis()) == 'time') {
                     $options .= '
 									, barWidth: 24*60*60*1000*0.8';
                 }

@@ -63,7 +63,12 @@ abstract class ChartSeries extends AbstractChartPart implements iHaveCaption
         return $this->getChart()->getSeriesIndex($this);
     }
     
+    public static function getUxonSchemaClass() : ?string
+    {
+        return ChartSeriesUxonSchema::class;
+    }
+    
     abstract public function getValueDataColumn() : DataColumn;
     
-    abstract public function prepareData(iShowData $dataWidget) : ChartSeries;
+    abstract public function prepareDataWidget(iShowData $dataWidget) : ChartSeries;
 }
