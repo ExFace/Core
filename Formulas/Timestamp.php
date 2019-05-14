@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Formulas;
 
+use exface\Core\DataTypes\TimestampDataType;
+use exface\Core\Factories\DataTypeFactory;
+
 class Timestamp extends \exface\Core\CommonLogic\Model\Formula
 {
 
@@ -16,5 +19,14 @@ class Timestamp extends \exface\Core\CommonLogic\Model\Formula
             return 0;
         return strtotime($date) * $multiplier;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::getDataType()
+     */
+    public function getDataType()
+    {
+        return DataTypeFactory::createFromPrototype($this->getWorkbench(), TimestampDataType::class);
+    }
 }
-?>
