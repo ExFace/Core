@@ -13,7 +13,7 @@ use exface\Core\Widgets\Traits\iHaveCaptionTrait;
  * @author Andrej Kabachnik
  *
  */
-abstract class AbstractChartSeries extends AbstractChartPart implements iHaveCaption
+abstract class ChartSeries extends AbstractChartPart implements iHaveCaption
 {
     use ImportUxonObjectTrait;
     use iHaveCaptionTrait {
@@ -34,10 +34,15 @@ abstract class AbstractChartSeries extends AbstractChartPart implements iHaveCap
         return $uxon;
     }
     
-    public function setType(string $value) : AbstractChartSeries
+    public function setType(string $value) : ChartSeries
     {
         $this->type = $value;
         return $this;
+    }
+    
+    public function getType() : string
+    {
+        return $this->type;
     }
     
     /**
@@ -60,5 +65,5 @@ abstract class AbstractChartSeries extends AbstractChartPart implements iHaveCap
     
     abstract public function getValueDataColumn() : DataColumn;
     
-    abstract public function prepareData(iShowData $dataWidget) : AbstractChartSeries;
+    abstract public function prepareData(iShowData $dataWidget) : ChartSeries;
 }

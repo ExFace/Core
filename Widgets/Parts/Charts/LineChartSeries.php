@@ -8,7 +8,7 @@ use exface\Core\Widgets\Chart;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\CommonLogic\UxonObject;
 
-class LineChartSeries extends AbstractChartSeries
+class LineChartSeries extends ChartSeries
 {
     private $color = null;
     
@@ -84,28 +84,6 @@ class LineChartSeries extends AbstractChartSeries
     
     public function getAxisX() : ChartAxis
     {
-        if ($this->axis_x === null) {
-            if ($this->getUseAxisX() !== null) {
-                $axis = $this->getChart()->getAxesX()[$this->getUseAxisX()];
-            } elseif ($this->axis_x_attribute_alias !== null) {
-                $attr = $this->getMetaObject()->getAttribute($this->axis_x_attribute_alias);
-                $axes = $this->getChart()->findAxesByAttribute($attr, Chart::AXIS_X);
-                if (empty($axes)) {
-                    $axis = $this->getChart()->createAxisFromExpression($this->axis_x_attribute_alias);
-                    $this->getChart()->addAxisX($axis);
-                } else {
-                    $axis = $axes[0];
-                }
-            } elseif ($this->getAxisXColumnId() !== null) {
-                $axis = $this->getChart()->getData()->getColumn($this->getAxisXColumnId());
-            } else {
-                $axis = $this->getChart()->getAxesX()[0];
-            }
-            if (! $axis) {
-                throw new WidgetConfigurationError($this->getChart(), 'Cannot find x-axis for series ' . $this->getIndex() . ' of widget "' . $this->getChart()->getId() . '"!', '6T90UV9');
-            }
-            $this->axis_x = $axis;
-        }
         return $this->axis_x;
     }
     
@@ -122,28 +100,6 @@ class LineChartSeries extends AbstractChartSeries
     
     public function getAxisY()
     {
-        if ($this->axis_y === null) {
-            if ($this->axis_y_use_index !== null) {
-                $axis = $this->getChart()->getAxesY()[$this->axis_y_use_index];
-            } elseif ($this->axis_y_attribute_alias !== null) {
-                $attr = $this->getMetaObject()->getAttribute($this->axis_y_attribute_alias);
-                $axes = $this->getChart()->findAxesByAttribute($attr, Chart::AXIS_Y);
-                if (empty($axes)) {
-                    $axis = $this->getChart()->createAxisFromExpression($this->axis_y_attribute_alias);
-                    $this->getChart()->addAxisY($axis);
-                } else {
-                    $axis = $axes[0];
-                }
-            } elseif ($this->getAxisYColumnId() !== null) {
-                $axis = $this->getChart()->getData()->getColumn($this->getAxisYColumnId());
-            } else {
-                $axis = $this->getChart()->getAxesY()[0];
-            }
-            if (! $axis) {
-                throw new WidgetConfigurationError($this->getChart(), 'Cannot find y-axis for series ' . $this->getIndex() . ' of widget "' . $this->getChart()->getId() . '"!', '6T90UV9');
-            }
-            $this->axis_y = $axis;
-        }
         return $this->axis_y;
     }
     
@@ -160,7 +116,21 @@ class LineChartSeries extends AbstractChartSeries
     
     public function getValueDataColumn(): DataColumn
     {
-        if ($this->valueColumnId !== null) {
+        if ($this->getValueColumnDimension() === chart::AXIS_X) {
+            return $this->getXDataColumn();
+        } else {
+            return $this->getYDataColumn();
+        }
+    }
+    
+    protected function getValueColumnDimension() : string
+    {
+        return Chart::AXIS_Y;
+    }
+    
+    public function getYDataColumn() : DataColumn
+    {
+        if ($this->getValueColumnDimension() === Chart::AXIS_Y && $this->valueColumnId !== null) {
             $this->yColumn = $this->getChart()->getData()->getColumn($this->valueColumnId);
         } elseif ($this->hasOwnYAxis() === true) {
             $this->yColumn = $this->getAxisY()->getDataColumn();
@@ -169,15 +139,48 @@ class LineChartSeries extends AbstractChartSeries
         return $this->yColumn;
     }
     
+    public function getXDataColumn() : DataColumn
+    {
+        if ($this->getValueColumnDimension() === Chart::AXIS_X && $this->valueColumnId !== null) {
+            $this->xColumn = $this->getChart()->getData()->getColumn($this->valueColumnId);
+        } elseif ($this->hasOwnXAxis() === true) {
+            $this->xColumn = $this->getAxisX()->getDataColumn();
+        }
+        
+        return $this->xColumn;
+    }
+    
     public function setValueColumnId(string $widgetId) : LineChartSeries
     {
         $this->valueColumnId = $widgetId;
         return $this;
     }
 
-    public function prepareData(iShowData $dataWidget): AbstractChartSeries
+    public function prepareData(iShowData $dataWidget): ChartSeries
     {
-        $this->getAxisX();
+        if ($this->axis_x === null) {
+            if ($this->getUseAxisX() !== null) {
+                $axis = $this->getChart()->getAxesX()[$this->getUseAxisX()];
+            } elseif ($this->axis_x_attribute_alias !== null) {
+                $attr = $this->getMetaObject()->getAttribute($this->axis_x_attribute_alias);
+                $axes = $this->getChart()->findAxesByAttribute($attr, Chart::AXIS_X);
+                if (empty($axes)) {
+                    $axis = $this->getChart()->createAxisFromExpression($this->axis_x_attribute_alias);
+                    $this->getChart()->addAxisX($axis);
+                } else {
+                    $axis = $axes[0];
+                }
+            } elseif ($this->getAxisXColumnId() !== null) {
+                $axis = $this->getChart()->createAxisFromColumnId($this->getAxisXColumnId());
+                $this->getChart()->addAxisX($axis);
+            } else {
+                $axis = $this->getChart()->getAxesX()[0];
+            }
+            if (! $axis) {
+                throw new WidgetConfigurationError($this->getChart(), 'Cannot find x-axis for series ' . $this->getIndex() . ' of widget "' . $this->getChart()->getId() . '"!', '6T90UV9');
+            }
+            $this->axis_x = $axis;
+        }
         if ($this->hasOwnXAxis() === false && $this->axis_x_attribute_alias !== null) {
             $xCol = $dataWidget->createColumnFromUxon(new UxonObject([
                 'attribute_alias' => $this->axis_x_attribute_alias
@@ -186,7 +189,30 @@ class LineChartSeries extends AbstractChartSeries
             $dataWidget->addColumn($xCol);
             
         }
-        $this->getAxisY();
+        
+        if ($this->axis_y === null) {
+            if ($this->axis_y_use_index !== null) {
+                $axis = $this->getChart()->getAxesY()[$this->axis_y_use_index];
+            } elseif ($this->axis_y_attribute_alias !== null) {
+                $attr = $this->getMetaObject()->getAttribute($this->axis_y_attribute_alias);
+                $axes = $this->getChart()->findAxesByAttribute($attr, Chart::AXIS_Y);
+                if (empty($axes)) {
+                    $axis = $this->getChart()->createAxisFromExpression($this->axis_y_attribute_alias);
+                    $this->getChart()->addAxisY($axis);
+                } else {
+                    $axis = $axes[0];
+                }
+            } elseif ($this->getAxisYColumnId() !== null) {
+                $axis = $this->getChart()->createAxisFromColumnId($this->getAxisYColumnId());
+                $this->getChart()->addAxisY($axis);
+            } else {
+                $axis = $this->getChart()->getAxesY()[0];
+            }
+            if (! $axis) {
+                throw new WidgetConfigurationError($this->getChart(), 'Cannot find y-axis for series ' . $this->getIndex() . ' of widget "' . $this->getChart()->getId() . '"!', '6T90UV9');
+            }
+            $this->axis_y = $axis;
+        }
         if ($this->hasOwnYAxis() === false && $this->axis_y_attribute_alias !== null) {
             $yCol = $dataWidget->createColumnFromUxon(new UxonObject([
                 'attribute_alias' => $this->axis_y_attribute_alias
