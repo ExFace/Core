@@ -101,10 +101,6 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
             yield $this->getData();
         }
         
-        foreach ($this->getSeries() as $series) {
-            yield $series;
-        }
-        
         foreach ($this->getToolbars() as $toolbar) {
             yield $toolbar;
         }
@@ -114,7 +110,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      *
      * @return ChartAxis[]
      */
-    public function getAxesX()
+    public function getAxesX() : array
     {
         return $this->axes_x;
     }
@@ -152,7 +148,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      *
      * @return ChartAxis[]
      */
-    public function getAxesY()
+    public function getAxesY() : array
     {
         return $this->axes_y;
     }
@@ -161,7 +157,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      *
      * @return ChartAxis[]
      */
-    public function getAxes($x_or_y = null)
+    public function getAxes($x_or_y = null) : array
     {
         switch ($x_or_y) {
             case $this::AXIS_X:

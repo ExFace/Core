@@ -2,16 +2,16 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
-use exface\Core\Widgets\ChartSeries;
 use exface\Core\Widgets\Chart;
 use exface\Core\Widgets\Parts\Charts\ChartAxis;
 use exface\Core\Widgets\Parts\Charts\PieChartSeries;
-use exface\Core\Widgets\Parts\Charts\BarChart;
-use exface\Core\Widgets\Parts\Charts\LineChart;
 use exface\Core\Widgets\Parts\Charts\ColumnChartSeries;
-use exface\Core\Widgets\Parts\Charts\AreaChart;
 use exface\Core\Widgets\Parts\Charts\BarChartSeries;
 use exface\Core\Widgets\Parts\Charts\LineChartSeries;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\TimestampDataType;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Widgets\Parts\Charts\AbstractChartSeries;
 
 /**
  * This trait contains common methods to use the flot charing library in jQuery facades.
@@ -117,7 +117,7 @@ JS;
                 $y_column = $series->getAxisY()->getDataColumn();
                 // Prepare the code to transform the ajax data to flot data. It will later run in a for loop.
                 switch (true) {
-                    case $series instanceof BarChart:
+                    case $series instanceof BarChartSeries:
                         $data_key = $series_column->getDataColumnName();
                         $data_value = $y_column->getDataColumnName();
                         break;
@@ -125,8 +125,10 @@ JS;
                         $data_key = $x_column->getDataColumnName();
                         $data_value = $series_column->getDataColumnName();
                 }
+                $xAxisDataType = $series->getAxisX()->getDataColumn()->getDataType();
+                $xAxisPostProcessing = $xAxisDataType instanceof DateDataType && ! ($xAxisDataType instanceof TimestampDataType) ? '*1000' : '';
                 $series_data .= '
-							' . $series_id . '[i] = [ (' . $js_rows . '[i]["' . $data_key . '"]' . ($series->getAxisX()->getAxisType() == 'time' ? '*1000' : '') . '), ' . $js_rows . '[i]["' . $data_value . '"] ];';
+							' . $series_id . '[i] = [ (' . $js_rows . '[i]["' . $data_key . '"]' . $xAxisPostProcessing  . '), ' . $js_rows . '[i]["' . $data_value . '"] ];';
             }
         }
         
@@ -174,6 +176,16 @@ JS;
     protected function buildJsGridOptions()
     {
         return 'hoverable: true';
+    }
+    
+    protected function getAxisType(ChartAxis $axis) : string
+    {
+        $dataType = $axis->getDataColumn()->getDataType();
+        switch (true) {
+            case $dataType instanceof DateDataType || $dataType instanceof TimestampDataType : return 'time';
+            case $dataType instanceof StringDataType : return 'text';
+            default: return 'numeric';
+        }
     }
     
     protected function buildJsLegendOptions()
@@ -228,8 +240,8 @@ JS;
 								{
 									data: ' . $this->getSeriesId($series->getIndex()) . ($series instanceof BarChartSeries ? '.reverse()' : '') . '
 									, label: "' . $series->getCaption() . '"
-									, yaxis:' . $series->getAxisY()->getIndex() . '
-									, xaxis:' . $series->getAxisX()->getIndex() . '
+									, yaxis:' . ($series->getAxisY()->getIndex()+1) . '
+									, xaxis:' . ($series->getAxisX()->getIndex()+1) . '
 									' . ($series_options ? ', ' . $series_options : '') . '
 								}';
             }
@@ -299,7 +311,7 @@ JS;
         ), '_', $this->getId()).'_series'.$seriesIndex;
     }
     
-    protected function buildJsSeriesOptions(ChartSeries $series)
+    protected function buildJsSeriesOptions(AbstractChartSeries $series)
     {
         $options = '';
         $color = $series->getColor();
@@ -312,7 +324,7 @@ JS;
                                     , lineWidth: 0
 									, align: "center"
                                     ';
-                if ($series->isStacked() === true) {
+                if ($series->isStacked() === false) {
                     $options .= '
                                     , barWidth: 0.2
                                     , order: ' . $series->getChart()->getSeriesIndex($series);
@@ -321,12 +333,12 @@ JS;
                                     , barWidth: 0.8';
                 }
                 
-                if ($series->getAxisX()->getAxisType() == ChartAxis::AXIS_TYPE_TIME || $series->getAxisY()->getAxisType() == ChartAxis::AXIS_TYPE_TIME) {
+                if ($this->getAxisType($series->getAxisX()) == 'time' || $this->getAxisType($series->getAxisY()) == 'time') {
                     $options .= '
 									, barWidth: 24*60*60*1000*0.8';
                 }
                 
-                if ($series instanceof BarChart) {
+                if ($series instanceof BarChartSeries) {
                     $options .= '
 									, horizontal: true';
                 }
@@ -335,11 +347,11 @@ JS;
 								}
                             ' . ($color ? ', color: "' . $color . '"' : '') . '';
                 break;
-            case $series instanceof LineChart:
+            case $series instanceof LineChartSeries:
                 $options = 'lines:
 								{
 									show: true
-									' . ($series instanceof AreaChart ? ', fill: true' : '') . '
+									' . ($series instanceof LineChartSeries && $series->isFilled() === true ? ', fill: true' : '') . '
                                 }
                             ' . ($color ? ', color: "' . $color . '"' : '') . '';
                 break;
@@ -358,12 +370,12 @@ JS;
 								axisLabel: "' . $axis->getCaption() . '"
 								, position: "' . strtolower($axis->getPosition()) . '"' . ($axis->getPosition() == ChartAxis::POSITION_RIGHT || $axis->getPosition() == ChartAxis::POSITION_TOP ? ', alignTicksWithAxis: 1' : '') . (is_numeric($axis->getMinValue()) ? ', min: ' . $axis->getMinValue() : '') . (is_numeric($axis->getMaxValue()) ? ', max: ' . $axis->getMaxValue() : '');
         
-        switch ($axis->getAxisType()) {
-            case ChartAxis::AXIS_TYPE_TEXT:
+        switch ($this->getAxisType($axis)) {
+            case 'text':
                 $output .= '
 								, mode: "categories"';
                 break;
-            case ChartAxis::AXIS_TYPE_TIME:
+            case 'time':
                 $output .= '
 								, mode: "time"';
                 break;
@@ -419,16 +431,12 @@ JS;
 							},
 							background: {opacity: 0.8}}';
                     break;
-                case $series instanceof ColumnChartSeries:
-                    
-                    break;
-                default:
-                    break;
             }
-        }
-        
-        if ($series instanceof ColumnChartSeries && $series->isStacked() === true) {
-            $config_array['stack'] = 'true';
+            if ($series instanceof LineChartSeries || $series instanceof ColumnChartSeries) {
+                if ($series->isStacked() === true) {
+                    $config_array['stack'] = 'true';
+                }
+            }
         }
         
         foreach ($config_array as $flot_chart_type => $options) {
