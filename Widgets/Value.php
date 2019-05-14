@@ -20,6 +20,7 @@ use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Widgets\Traits\AttributeCaptionTrait;
+use exface\Core\CommonLogic\Model\Expression;
 
 /**
  * The Value widget simply shows a raw (unformatted) value.
@@ -249,7 +250,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function getAggregator(): ?AggregatorInterface
     {
         if ($this->aggregate_function === null) {
-            if ($aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $this->getAttributeAlias())) {
+            if ((Expression::detectFormula($this->getAttributeAlias()) === false) && $aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $this->getAttributeAlias())) {
                 $this->setAggregator($aggr);
             }
         }
