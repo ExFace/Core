@@ -38,6 +38,7 @@ class WidgetSchema extends UxonSchema
                 if ($this->validatePrototypeClass($w) === true) {
                     $name = $w;
                 }
+                break;
             }
         }
         
