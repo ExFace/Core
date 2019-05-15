@@ -34,6 +34,10 @@ class ChartSeriesUxonSchema extends UxonSchema
             }
         }
         
+        if (count($path) > 1) {
+            return parent::getPrototypeClass($uxon, $path, $name);
+        }
+        
         return $name;
     }
 }
