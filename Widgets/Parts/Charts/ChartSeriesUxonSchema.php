@@ -6,7 +6,10 @@ use exface\Core\Uxon\UxonSchema;
 use exface\Core\Widgets\Chart;
 
 /**
- * UXON-schema class for chart widget parts.
+ * UXON-schema class for chart series widget parts.
+ * 
+ * This schema loads the correct widget part depending on the `type` property of
+ * series UXON.
  * 
  * @see UxonSchema for general information.
  * 
