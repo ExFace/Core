@@ -19,47 +19,47 @@ use exface\Core\Widgets\Parts\Charts\Traits\XYChartSeriesTrait;
  *  "object_alias": "my.SalesAnalyzer.sales",
  *  "widget_type": "Chart",
  *  "data": {
- *    "paginate": false,
- *    "aggregate_by_attribute_alias": "date",
- *    "filters": [
- *      {
- *    "attribute_alias": "date",
- *    "value": "-1M"
- *      }
- *    ],
- *    "sorters": [
- *      {
- *    "attribute_alias": "date",
- *    "direction": "ASC"
- *      }
- *    ]
+ *      "paginate": false,
+ *      "aggregate_by_attribute_alias": "date",
+ *      "filters": [
+ *          {
+ *              "attribute_alias": "date",
+ *              "value": "-1M"
+ *          }
+ *      ],
+ *      "sorters": [
+ *          {
+ *              "attribute_alias": "date",
+ *              "direction": "ASC"
+ *          }
+ *      ]
  *  },
  *  "axis_x": [
- *    {
- *      "attribute_alias": "Date"
- *    }
+ *      {
+ *          "attribute_alias": "Date"
+ *      }
  *  ],
  *  "series": [
- *    {
- *      "type": "line",
- *      "filled": true,
- *      "stacked": true,
- *      "y_attribute_alias": "costs:SUM"
- *    },
- *    {
- *      "type": "line",
- *      "filled": true,
- *      "stacked": true,
- *      "y_axis_no": 0,
- *      "y_attribute_alias": "earnings:SUM"
- *    },
- *    {
- *      "type": "line",
- *      "filled": true,
- *      "stacked": true,
- *      "y_axis_no": 0,
- *      "y_attribute_alias": "discount:SUM"
- *    }
+ *      {
+ *          "type": "line",
+ *          "filled": true,
+ *          "stacked": true,
+ *          "y_attribute_alias": "costs:SUM"
+ *      },
+ *      {
+ *          "type": "line",
+ *          "filled": true,
+ *          "stacked": true,
+ *          "y_axis_no": 0,
+ *          "y_attribute_alias": "earnings:SUM"
+ *      },
+ *      {
+ *          "type": "line",
+ *          "filled": true,
+ *          "stacked": true,
+ *          "y_axis_no": 0,
+ *          "y_attribute_alias": "discount:SUM"
+ *      }
  *  ]
  * }
  * 

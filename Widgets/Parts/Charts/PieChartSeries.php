@@ -13,11 +13,13 @@ use exface\Core\Interfaces\Widgets\iShowData;
  * ```
  * {
  *  "widget_type": "Chart",
- *  "object_alias": "exface.Core.APP"
+ *  "object_alias": "exface.Core.APP",
  *  "series": [
- *      "type": "pie",
- *      "value_attribute_alias": "OBJECT__UID:COUNT",
- *      "text_attribute_alias: "LABEL"
+ *      {
+ *          "type": "pie",
+ *          "value_attribute_alias": "OBJECT__UID:COUNT",
+ *          "text_attribute_alias": "LABEL"
+ *      }
  *  ]
  * }
  * 

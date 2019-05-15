@@ -10,14 +10,16 @@ use exface\Core\Widgets\Chart;
  * ```
  * {
  *  "widget_type": "Chart",
- *  "object_alias": "exface.Core.APP"
+ *  "object_alias": "exface.Core.APP",
  *  "data": {
  *      "paginate": false
- *  }
+ *  },
  *  "series": [
- *      "type": "bar",
- *      "x_attribute_alias": "OBJECT__UID:COUNT",
- *      "y_attribute_alias: "LABEL"
+ *      {
+ *          "type": "bar",
+ *          "x_attribute_alias": "OBJECT__UID:COUNT",
+ *          "y_attribute_alias": "LABEL"
+ *      }
  *  ]
  * }
  *
