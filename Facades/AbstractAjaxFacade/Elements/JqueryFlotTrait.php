@@ -109,9 +109,9 @@ JS;
 					var ' . $series_id . ' = [];';
             
             if ($series instanceof PieChartSeries) {
-                $x_column = $series->getTextAxis()->getDataColumn();
-                $y_column = $series->getValueAxis()->getDataColumn();
-                $series_data = $series_id . '[i] = { label: ' . $js_rows . '[i]["' . $x_column->getDataColumnName() . '"], data: ' . $js_rows . '[i]["' . $series_column->getDataColumnName() . '"] }';
+                $x_column = $series->getTextDataColumn();
+                $y_column = $series->getValueDataColumn();
+                $series_data = $series_id . '[i] = { label: ' . $js_rows . '[i]["' . $x_column->getDataColumnName() . '"], data: ' . $js_rows . '[i]["' . $y_column->getDataColumnName() . '"] }';
             } else {
                 $x_column = $series->getXDataColumn();
                 $y_column = $series->getYDataColumn();

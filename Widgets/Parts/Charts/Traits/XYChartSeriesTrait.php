@@ -385,4 +385,22 @@ trait XYChartSeriesTrait
         $this->yColumnId = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isXBoundToAttribute() : bool
+    {
+        return $this->xAttributeAlias !== null;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isYBoundToAttribute() : bool
+    {
+        return $this->yAttributeAlias !== null;
+    }
 }

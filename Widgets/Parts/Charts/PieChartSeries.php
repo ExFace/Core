@@ -5,6 +5,27 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Widgets\iShowData;
 
+/**
+ * Pie chart using a meta attribute for values and another one for labels.
+ * 
+ * This example shows which of installed apps have the most objects:
+ * 
+ * ```
+ * {
+ *  "widget_type": "Chart",
+ *  "object_alias": "exface.Core.APP"
+ *  "series": [
+ *      "type": "pie",
+ *      "value_attribute_alias": "OBJECT__UID:COUNT",
+ *      "text_attribute_alias: "LABEL"
+ *  ]
+ * }
+ * 
+ * ```
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class PieChartSeries extends ChartSeries
 {
     private $value_attribute_alias = null;
@@ -39,11 +60,19 @@ class PieChartSeries extends ChartSeries
         return $this;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     public function isValueBoundToAttribute() : bool
     {
         return $this->value_attribute_alias !== null;
     }
     
+    /**
+     * 
+     * @return ChartAxis
+     */
     public function getValueAxis() : ChartAxis
     {
         if ($this->value_axis === null) {
@@ -93,11 +122,19 @@ class PieChartSeries extends ChartSeries
         return $this->getMetaObject()->getAttribute($this->text_attribute_alias);
     }
     
+    /**
+     * 
+     * @return bool
+     */
     public function isTextBoundToAttribute() : bool
     {
         return $this->text_attribute_alias !== null;
     }
     
+    /**
+     * 
+     * @return ChartAxis
+     */
     public function getTextAxis() : ChartAxis
     {
         if ($this->text_axis === null) {
@@ -113,9 +150,13 @@ class PieChartSeries extends ChartSeries
         return $this->text_axis;
     }
     
-    public function getCaption(): string
+    /**
+     * 
+     * @return DataColumn
+     */
+    public function getTextDataColumn() : DataColumn
     {
-        return $this->getValueAxis()->getCaption();
+        return $this->getTextAxis()->getDataColumn();
     }
     
     /**
