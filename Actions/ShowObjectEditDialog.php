@@ -42,7 +42,7 @@ class ShowObjectEditDialog extends ShowObjectInfoDialog
             $editors[] = WidgetFactory::create($parent_widget->getPage(), 'Message', $parent_widget)
             ->setType(MessageTypeDataType::WARNING)
             ->setWidth('100%')
-            ->setText($this->getApp()->getTranslator()->translate('ACTION.SHOWOBJECTEDITDIALOG.DATA_SOURCE_NOT_WRITABLE'));
+            ->setText($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.SHOWOBJECTEDITDIALOG.DATA_SOURCE_NOT_WRITABLE'));
         }
         $editors = array_merge($editors, parent::createWidgetsForAttributes($parent_widget));
         return $editors;
@@ -69,7 +69,7 @@ class ShowObjectEditDialog extends ShowObjectInfoDialog
             $this->getWidgetDefinedIn()->setRefreshWidgetLink(null);
         }
         $dialog->addButton($save_button);
-        $dialog->getCloseButton()->setCaption($this->getApp()->getTranslator()->translate('ACTION.SHOWDIALOG.CANCEL_BUTTON'));
+        $dialog->getCloseButton()->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.SHOWDIALOG.CANCEL_BUTTON'));
         return $dialog;
     }
 
