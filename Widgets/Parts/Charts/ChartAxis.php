@@ -38,7 +38,7 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
 
     private $position = null;
     
-    private $hidden = false;
+    private $hidden = null;
 
     const POSITION_TOP = 'TOP';
 
@@ -47,12 +47,6 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     const POSITION_BOTTOM = 'BOTTOM';
 
     const POSITION_LEFT = 'LEFT';
-
-    const AXIS_TYPE_TIME = 'TIME';
-
-    const AXIS_TYPE_TEXT = 'TEXT';
-
-    const AXIS_TYPE_NUMBER = 'NUMBER';
 
     /**
      *
@@ -71,9 +65,10 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      *
      * @param string $value            
      */
-    public function setDataColumnId($value)
+    public function setDataColumnId($value) : ChartAxis
     {
         $this->data_column_id = $value;
+        return $this;
     }
     
     /**
@@ -91,45 +86,62 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
         return $this;
     }
 
+    /**
+     * 
+     * @return number|string
+     */
     public function getMinValue()
     {
-        return $this->min_value;
+        return $this->getDataColumn()->getDataType()->parse($this->min_value);
     }
 
     /**
      * Sets the minimum value for the scale of this axis.
+     * 
+     * The value must be a valid value for the axis's data type!
+     * 
      * If not set, the minimum value of the underlying data will be used.
      *
      * @uxon-property min_value
-     * @uxon-type number
+     * @uxon-type string
      *
-     * @param float $value            
+     * @param number|string $value            
      */
     public function setMinValue($value)
     {
         $this->min_value = $value;
     }
 
+    /**
+     * 
+     * @return number|string
+     */
     public function getMaxValue()
     {
-        return $this->max_value;
+        return $this->getDataColumn()->getDataType()->parse($this->max_value);
     }
 
     /**
      * Sets the maximum value for the scale of this axis.
+     * 
+     * The value must be a valid value for the axis's data type!
+     * 
      * If not set, the maximum value of the underlying data will be used.
      *
      * @uxon-property max_value
-     * @uxon-type number
+     * @uxon-type string
      *
-     * @param float $value            
+     * @param number|string $value            
      */
     public function setMaxValue($value)
     {
         $this->max_value = $value;
     }
 
-    public function getPosition()
+    /**
+     * @return string
+     */
+    public function getPosition() : string
     {
         return $this->position;
     }
@@ -143,7 +155,7 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      * @param string $value            
      * @return ChartAxis
      */
-    public function setPosition($value)
+    public function setPosition($value) : ChartAxis
     {
         $value = mb_strtoupper($value);
         if (defined(__CLASS__ . '::POSITION_' . $value)) {
@@ -154,7 +166,11 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
         return $this;
     }
 
-    public function getDimension()
+    /**
+     * Returns the axis dimension: `x` or `y`.
+     * @return string
+     */
+    public function getDimension() : string
     {
         return $this->getChart()->getAxisDimension($this);
     }
@@ -206,13 +222,16 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      *
      * @return bool
      */
-    public function isHidden() : bool
+    public function isHidden() : ?bool
     {
         return $this->hidden;
     }
     
     /**
-     * Set to TRUE to make the axis invisible.
+     * Set to TRUE to make the axis invisible or to FALSE to force showing it.
+     * 
+     * If not set explicitly, the visibility of the axis is controlled by the
+     * facade used.
      * 
      * @uxon-property hidden
      * @uxon-type boolean
