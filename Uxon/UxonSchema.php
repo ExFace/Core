@@ -44,7 +44,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
  * - metamodel:widget_link
  * - metamodel:event
  * - uxon:path - where path is a JSONpath relative to the current field
- * - [enum,values] - enumeration of commma-separated values (in square brackets)
+ * - [val1,val2] - enumeration of commma-separated values (in square brackets)
  * 
  * There are dedicated schema-classes for some UXON schemas:
  * 
