@@ -15,11 +15,13 @@ use exface\Core\Widgets\Parts\Charts\Traits\StackableChartSeriesTrait;
  *  "object_alias": "exface.Core.APP"
  *  "data": {
  *      "paginate": false
- *  }
+ *  },
  *  "series": [
- *      "type": "column",
- *      "y_attribute_alias": "OBJECT__UID:COUNT",
- *      "x_attribute_alias: "LABEL"
+ *      {
+ *          "type": "column",
+ *          "y_attribute_alias": "OBJECT__UID:COUNT",
+ *          "x_attribute_alias": "LABEL"
+ *      }
  *  ]
  * }
  * 
