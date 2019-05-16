@@ -110,12 +110,14 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         // If it's a different object, than try to find some relation wetween them.
         if ($prefill_object->is($widget_object)) {
             // If we are looking for attributes of the object of this widget, then just return the attribute_alias
-            $data_sheet->getColumns()->addFromExpression($this->getAttributeAlias());
+            if ($this->isBoundToAttribute() === true) {
+                $data_sheet->getColumns()->addFromExpression($this->getAttributeAlias());
+            }
         } else {
             // If not, we are dealing with a prefill with data of another object. It only makes sense to try to prefill here,
             // if the widgets shows an attribute, because then we have a chance to find a relation between the widget's object
             // and the prefill object
-            if ($this->getAttribute()) {
+            if ($this->isBoundToAttribute() === true) {
                 // If the widget shows an attribute with a relation path, try to rebase that attribute relative to the
                 // prefill object (this is possible, if the prefill object sits somewhere along the relation path. So,
                 // traverse up this path to see if it includes the prefill object. If so, add a column to the prefill
