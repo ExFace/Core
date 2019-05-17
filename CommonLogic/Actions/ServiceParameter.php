@@ -83,7 +83,11 @@ class ServiceParameter implements ServiceParameterInterface
     public function getDataType() : DataTypeInterface
     {
         if ($this->dataType === null) {
-            $this->dataType = DataTypeFactory::createFromUxon($this->getWorkbench(), $this->dataTypeUxon);
+            if ($this->dataTypeUxon !== null) {
+                $this->dataType = DataTypeFactory::createFromUxon($this->getWorkbench(), $this->dataTypeUxon);
+            } else {
+                $this->dataType = DataTypeFactory::createBaseDataType($this->getWorkbench());
+            }
         }
         return $this->dataType;
     }
