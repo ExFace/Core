@@ -4,6 +4,7 @@ namespace exface\Core\Widgets\Parts\Charts;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * Pie chart using a meta attribute for values and another one for labels.
@@ -37,6 +38,8 @@ class PieChartSeries extends ChartSeries
     private $text_attribute_alias = null;
     
     private $text_axis = null;
+    
+    private $inner_radius = '0%';
     
     /**
      * 
@@ -160,6 +163,28 @@ class PieChartSeries extends ChartSeries
     {
         return $this->getTextAxis()->getDataColumn();
     }
+
+    /**
+     * Set the radius of the inner circle of the Pie chart.
+     * Value should be between 0% (will be a pie chart) and 70%.
+     *
+     * @param string $radius
+     * @return PieChartSeries
+     */
+    public function setInnerRadius(string $radius) : PieChartSeries
+    {
+        $this->inner_radius = $radius;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getInnerRadius() : string
+    {
+        return $this->inner_radius;
+    }   
     
     /**
      * 
