@@ -42,7 +42,7 @@ class PieChartSeries extends ChartSeries
      * 
      * @return MetaAttributeInterface
      */
-    protected function getValueAttribute() : MetaAttributeInterface
+    public function getValueAttribute() : MetaAttributeInterface
     {
         return $this->getMetaObject()->getAttribute($this->value_attribute_alias);
     }
