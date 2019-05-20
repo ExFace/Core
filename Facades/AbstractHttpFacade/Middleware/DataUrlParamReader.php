@@ -11,6 +11,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\Traits\TaskRequestTrait;
+use exface\Core\DataTypes\ArrayDataType;
 
 /**
  * This PSR-15 middleware reads a DataSheet from the given URL or body parameter
@@ -136,7 +137,7 @@ class DataUrlParamReader implements MiddlewareInterface
                         }
                     }
                 }
-                if (is_array($val)) {
+                if (is_array($val) === true && ArrayDataType::isAssociative($val) === true) {
                     if ($attr || $data_sheet->getMetaObject()->hasAttribute($field)) {
                         $result_before = $result;
                         foreach ($result_before as $nr => $r){
