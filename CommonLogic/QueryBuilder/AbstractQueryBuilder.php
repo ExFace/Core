@@ -3,7 +3,6 @@ namespace exface\Core\CommonLogic\QueryBuilder;
 
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Model\ConditionGroup;
-use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Exceptions\Model\MetaObjectDataConnectionNotFoundError;
@@ -40,8 +39,6 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     private $selector = null;
     
     private $workbench = null;
-    
-    private $countAllRows = true;
     
     public function __construct(QueryBuilderSelectorInterface $selector)
     {
