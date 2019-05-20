@@ -141,7 +141,7 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     /**
      * @return string
      */
-    public function getPosition() : string
+    public function getPosition() : ?string
     {
         return $this->position;
     }
