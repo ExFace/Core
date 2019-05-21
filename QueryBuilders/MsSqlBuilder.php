@@ -2,7 +2,10 @@
 namespace exface\Core\QueryBuilders;
 
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 
 /**
  * A query builder for Microsoft SQL.
@@ -248,6 +251,28 @@ else {
     protected function buildSqlSelectNullCheckFunctionName()
     {
         return 'ISNULL';
+    }
+    
+    protected function getReadResultRows(SqlDataQuery $query) : array
+    {
+        $rows = parent::getReadResultRows($query);
+        foreach ($this->getAttributes() as $qpart) {
+            $shortAlias = $this->getShortAlias($qpart->getColumnKey());
+            $type = $qpart->getDataType();
+            switch (true) {
+                case $type instanceof DateTimeDataType:
+                case $type instanceof DateDataType:
+                    foreach ($rows as $nr => $row) {
+                        $val = $row[$shortAlias];
+                        if ($val instanceof \DateTime) {
+                            $val = $type::formatDate($val);
+                        }
+                        $rows[$nr][$qpart->getColumnKey()] = $val;
+                    }
+                    break;
+            }
+        }
+        return $rows;
     }
 }
 ?>
