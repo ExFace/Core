@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Widgets\Parts\Charts;
 
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\TimestampDataType;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\DataColumn;
@@ -38,7 +41,9 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
 
     private $position = null;
     
-    private $hidden = null;
+    private $visible = null;
+    
+    private $grid = null;
 
     const POSITION_TOP = 'TOP';
 
@@ -47,6 +52,14 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     const POSITION_BOTTOM = 'BOTTOM';
 
     const POSITION_LEFT = 'LEFT';
+    
+    const AXIS_TYPE_TIME = 'TIME';
+    
+    const AXIS_TYPE_CATEGORY = 'CATEGORY';
+    
+    const AXIS_TYPE_VALUE = 'VALUE';
+    
+    const AXIS_TYPE_LOG = 'LOG';
 
     /**
      *
@@ -143,7 +156,7 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      */
     public function getPosition() : ?string
     {
-        return $this->position;
+        return mb_strtolower($this->position);
     }
 
     /**
@@ -222,26 +235,94 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      *
      * @return bool
      */
-    public function isHidden() : ?bool
+    public function isVisible() : bool
     {
-        return $this->hidden;
+        if ($this->visible === null){
+            return true;
+        }
+        return $this->visible;
     }
     
     /**
-     * Set to TRUE to make the axis invisible or to FALSE to force showing it.
+     * Set to FALSE to make the axis invisible or to TRUE (default) to force showing it.
      * 
-     * If not set explicitly, the visibility of the axis is controlled by the
-     * facade used.
      * 
-     * @uxon-property hidden
+     * @uxon-property visible
      * @uxon-type boolean
      * 
      * @param bool $value
      * @return ChartAxis
      */
-    public function setHidden(bool $value) : ChartAxis
+    public function setVisible(bool $value) : ChartAxis
     {
-        $this->hidden = $value;
+        $this->visibile = $value;
+        return $this;
+    }
+    
+    /**
+     * Set the axis type. Possible types are 'value', 'category', 'time', 'log'.
+     * 
+     * @uxon-property axis_type
+     * @uxon-type [value,category,time,log]
+     * 
+     * @param string $type
+     * @return ChartAxis
+     */
+    public function setAxisType(string $axis_type) : ChartAxis
+    {
+        $axis_type = mb_strtoupper($axis_type);
+        if (defined(__CLASS__ . '::AXIS_TYPE_' . $axis_type)) {
+            $this->axis_type = $axis_type;
+        } else {
+            throw new WidgetPropertyInvalidValueError($this->getChart(), 'Invalid axis type "' . $axis_type . '". Only TIME, CATEGORY, VALUE or LOG allowed!', '6TA2Y6A');
+        }
+        $this->axis_type = $axis_type;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getAxisType() : string
+    {
+        if ($this->axis_type === null){
+            $dataType = $this->getDataColumn()->getDataType();
+            switch (true) {
+                case $dataType instanceof DateDataType || $dataType instanceof TimestampDataType : $this->axis_type = 'TIME';
+                case $dataType instanceof StringDataType : $this->axis_type = 'CATEGORY';
+                default: $this->axis_type = 'VALUE';
+            }
+            
+        }
+        return mb_strtolower($this->axis_type);
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasGrid() : bool
+    {
+        if($this->grid === null){
+            return false;
+        }
+        return $this->grid;    
+    }
+    
+    /**
+     * Set to TRUE to make the gridline for this axis visible or to FALSE (default) to force hiding it.
+     * 
+     * 
+     * @uxon-property grid
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return ChartAxis
+     */
+    public function setGrid(bool $value) : ChartAxis
+    {
+        $this->grid = $value;
         return $this;
     }
 
