@@ -921,7 +921,7 @@ class Data
      * 
      * @uxon-property paginator
      * @uxon-type \exface\Core\Widgets\DataPaginator
-     * @uxon-template {"count_all_rows": "true"}
+     * @uxon-template {"count_all_rows": true}
      * 
      * @param UxonObject $uxon
      * @return Data
