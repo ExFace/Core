@@ -3,11 +3,14 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 use exface\Core\Widgets\Chart;
+use exface\Core\Widgets\Parts\Charts\ColumnChartSeries;
 use exface\Core\Widgets\Parts\Charts\LineChartSeries;
 use exface\Core\Widgets\Parts\Charts\ChartSeries;
 use exface\Core\Widgets\Parts\Charts\PieChartSeries;
 use exface\Core\Widgets\Parts\Charts\DonutChartSeries;
 use exface\Core\Widgets\Parts\Charts\RoseChartSeries;
+use exface\Core\Widgets\Parts\Charts\ChartAxis;
+use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
 
 /**
  * 
@@ -102,8 +105,8 @@ JS;
 	grid: {$this->buildJsChartPropertyGrid()}
     tooltip : {$this->buildJsChartPropertyTooltip()}
    	legend: {$this->buildJsChartPropertyLegend()}
-	series: $seriesConfig
-    {$this->buildJsChartPropertyPie()}
+	series: [$seriesConfig],
+    {$this->buildJsAxes()}
 }
 
 JS;
@@ -136,10 +139,12 @@ JS;
         switch (true) {
             case $series instanceof LineChartSeries:
                 return $this->buildJsLineChart($series);
+            case $series instanceof ColumnChartSeries:
+                return $this->buildJsColumnChart($series);
             case $series instanceof RoseChartSeries:
                 return $this->buildJsRoseChart($series);
-            /*case $series instanceof DonutChartSeries:
-                return $this->buildJsPieChart($series);*/
+            case $series instanceof DonutChartSeries:
+                return $this->buildJsPieChart($series);
             case $series instanceof PieChartSeries:
                 return $this->buildJsPieChart($series);
             
@@ -148,13 +153,61 @@ JS;
     
     protected function buildJsLineChart(LineChartSeries $series) : string
     {
+        if ($series->isFilled() === true){
+            $filledJs = 'areaStyle: {},';
+        } else {
+            $filledJs = '';
+        }
+        
         return <<<JS
 
 {
-    name: {$this->getWidget()->getSeries()->get
-}
+    name: '{$series->getCaption()}',
+    type: 'line',
+    encode: {
+        x: '{$series->getXDataColumn()->getDataColumnName()}',
+        y: '{$series->getYDataColumn()->getDataColumnName()}'
+    },
+    xAxisIndex: {$series->getXAxis()->getIndex()},
+    yAxisIndex: {$series->getYAxis()->getIndex()},
+    $filledJs
+    {$this->buildJsStack($series)}
+},
 
 JS;
+    }
+        
+    protected function buildJsColumnChart(ColumnChartSeries $series) : string
+    {
+       return <<<JS
+        
+{
+    name: '{$series->getCaption()}',
+    type: 'bar',
+    encode: {
+        x: '{$series->getXDataColumn()->getDataColumnName()}',
+        y: '{$series->getYDataColumn()->getDataColumnName()}'
+    },
+    xAxisIndex: {$series->getXAxis()->getIndex()},
+    yAxisIndex: {$series->getYAxis()->getIndex()},
+    {$this->buildJsStack($series)}
+},
+
+JS;
+    }
+       
+    protected function buildJsStack(StackableChartSeriesInterface $series) : string
+    {
+        if ($series->isStacked() === true){
+            if ($series->getStackGroupId() !== null && !empty($series->getStackGroupId())){
+                $stack = "stack: '{$series->getStackGroupId()},'";
+            } else {
+                $stack = "stack: 'defaultstackgroup1',";
+            }            
+        } else {
+            $stack = '';
+        }        
+        return $stack;
     }
         
     protected function buildJsRoseChart(RoseChartSeries $series) : string
@@ -221,24 +274,105 @@ JS;
     center: ['$centerX', '50%'],
     data: [],
     label: $label,
-    roseType: '$roseType'
     							
 },
         
 JS;
     }
         
-    protected function buildJsAxis($axes) : string
+    protected function buildJsAxes() : string
     {
-        return <<<JS
+        if ($this->isPieChartSeries() === true){
+            return '';
+        }
+        $xaxesJS = '';
+        $yaxesJS = '';
+        $position_bottom_count = 0;
+        $position_top_count = 0;
+        $position_left_count = 0;
+        $position_right_count = 0;
+        foreach ($this->getWidget()->getAxesX() as $axis){
+            $position = $axis->getPosition();
+            $offset = 0;
+            if ($position == null){
+                $position = 'bottom';
+            }
+            if ($position == 'top'){
+                $offset = 25*$position_top_count;
+                $position_top_count++;
+            } elseif ($position == 'bottom'){
+                $offset = 25*$position_bottom_count;
+                $position_bottom_count++;
+            }
+            $xaxesJS .= $this->buildJsAxisProperties($axis, $position, $offset);
+        }
         
-        {
-            show: false
-        },
+        foreach ($this->getWidget()->getAxesY() as $axis){
+            $position = $axis->getPosition();
+            $offset = 0;
+            if ($axis->getPosition() == null){
+                $position = 'left';
+            }
+            if ($position == 'left'){
+                $offset = 25*$position_top_count;
+                $position_left_count++;
+            } elseif ($position == 'right'){
+                $offset = 25*$position_bottom_count;
+                $position_right_count++;
+            }
+            $yaxesJS .= $this->buildJsAxisProperties($axis, $position, $offset);
+        }
+        
+        
+        
+        return <<<JS
+
+xAxis: [$xaxesJS],
+yAxis: [$yaxesJS],
 
 JS;
     }
         
+    protected function buildJsAxisProperties(ChartAxis $axis, string $position, int $offset) : string
+    {
+        if ($axis->hasGrid() === false){
+            $grid = 'false';
+        } else {
+            $grid = 'true';
+        }
+        if ($axis->isVisible() === false){
+            $visible = 'false';
+        } else {
+            $visible = 'true';
+        }
+        if ($axis->getMinValue() === null){
+            $min = "";
+        } else {
+            $min = "min: '" . $axis->getMinValue() . "',";
+        }
+        if ($axis->getMaxValue() === null){
+            $max = 'max: null,';
+        } else {
+            $max = "max: '" . $axis->getMaxValue() . "',";
+        }
+        
+        
+        return <<<JS
+        
+    {
+        name: '{$axis->getCaption()}',
+        type: '{$axis->getAxisType()}',
+        splitLine: { show: $grid },
+        position: '$position',
+        offset: $offset,
+        show: $visible,
+        $min
+        $max
+    },
+
+JS;
+    }
+    
     protected function buildJsRedraw(string $dataJs) : string
     {
         if ($this->isPieChartSeries() === true) {
@@ -275,7 +409,7 @@ JS;
         }
     }
 
-    protected function isPieChartSeries()
+    protected function isPieChartSeries() : bool
     {
         if ($this->getWidget()->getSeries()[0] instanceof PieChartSeries || $this->getWidget()->getSeries()[0] instanceof DonutChartSeries) {
             return true;
@@ -283,22 +417,8 @@ JS;
             return false;
         }
     }
-    
-    protected function buildJsChartPropertyPie()
-    {
-        if ($this->isPieChartSeries() === true) {
-        //TODO check if Nightingale rose, get if area or radius
-            return <<<JS
-
-
-
-JS;
-        } else {
-            return '';
-        }
-    }
-        
-    protected function buildJsChartPropertyTooltip()
+            
+    protected function buildJsChartPropertyTooltip() : string
     {
         if ($this->isPieChartSeries() === true) {
             return <<<JS
@@ -323,8 +443,9 @@ JS;
         }        
     }
     
-    protected function buildJsChartPropertyLegend()
+    protected function buildJsChartPropertyLegend() : string
     {
+        $padding = '';
         $position = $this->getWidget()->getLegendPosition();
         if ($position === null && $this->getWidget()->getSeries()[0] instanceof PieChartSeries) {
             $positionJs = "show: false";
@@ -337,10 +458,14 @@ JS;
         } elseif ($position == 'right'){
             $positionJs = "left: 'right', orient: 'vertical',";
         }
+        if ($this->getWidget()->getSeries()[0] instanceof PieChartSeries){            
+            $padding = 'padding: [20,10,20,10],';
+        }
         return <<<JS
 
 {
 	type: 'scroll',
+    $padding    
     $positionJs
 
 },
@@ -348,11 +473,15 @@ JS;
 JS;
     }
         
-    protected function buildJsChartPropertyGrid()
+    protected function buildJsChartPropertyGrid() : string
     {
         return <<<JS
 
 {
+	bottom: '20%',
+	left: '10%',
+	right: '20%',
+
 	containLable: true,
 },
 
