@@ -289,7 +289,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     protected function doPrefillWithWidgetObject(DataSheetInterface $data_sheet)
     {
-        if (! $this->getAttribute() || ! $data_sheet->getMetaObject()->is($this->getMetaObject())){
+        if ($this->isBoundToAttribute() === false || ! $data_sheet->getMetaObject()->is($this->getMetaObject())){
             return;
         }
         
