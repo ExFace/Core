@@ -155,7 +155,7 @@ class Panel extends WidgetGrid implements iSupportLazyLoading, iHaveIcon, iAmCol
     
     public function getHideHelpButton($default = false) : ?bool
     {
-        return $this->getHideHelpButtonViaTrait(null) ?? $this->hasParent() === false;
+        return $this->getHideHelpButtonViaTrait(null) ?? $this->hasParent() === true;
     }
 }
 ?>
