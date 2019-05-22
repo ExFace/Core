@@ -11,6 +11,8 @@ use exface\Core\Interfaces\Widgets\iHaveCaption;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * The ChartAxis represents the X or Y axis of a chart.
@@ -67,6 +69,9 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      */
     public function getDataColumn() : DataColumn
     {
+        if ($this->data_column === null && $this->data_column_id !== null) {
+            $this->data_column = $this->getChart()->getData()->getColumn($this->data_column_id);
+        }
         return $this->data_column;
     }
 
@@ -289,13 +294,18 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
         if ($this->axis_type === null){
             $dataType = $this->getDataColumn()->getDataType();
             switch (true) {
-                case $dataType instanceof DateDataType || $dataType instanceof TimestampDataType : $this->axis_type = 'TIME';
-                case $dataType instanceof StringDataType : $this->axis_type = 'CATEGORY';
-                default: $this->axis_type = 'VALUE';
+                case $dataType instanceof DateDataType || $dataType instanceof TimestampDataType : 
+                    $this->axis_type = self::AXIS_TYPE_TIME;
+                    break;
+                case $dataType instanceof NumberDataType: 
+                    $this->axis_type = self::AXIS_TYPE_VALUE;
+                    break;
+                default :
+                    $this->axis_type = self::AXIS_TYPE_CATEGORY;
             }
             
         }
-        return mb_strtolower($this->axis_type);
+        return $this->axis_type;
     }
     
     /**
@@ -355,5 +365,24 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
         $this->data_column = $column;
         
         return $this;
+    }
+    
+    public function isBoundToAttribute() : bool
+    {
+        if ($this->data_column !== null || $this->data_column_id !== null) {
+            return $this->getDataColumn()->isBoundToAttribute();
+        }
+        return $this->attributeAlias !== null;
+    }
+    
+    public function getAttribute() : MetaAttributeInterface
+    {
+        if ($this->data_column !== null || $this->data_column_id !== null) {
+            return $this->getDataColumn()->getAttribute();
+        }
+        if ($this->attributeAlias !== null) {
+            return $this->getChart()->getMetaObject()->getAttribute($this->attributeAlias);
+        }
+        return null;
     }
 }
