@@ -42,6 +42,14 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
         foreach ($this->getToolbars() as $tb) {
             yield $tb;
         }
+        
+        // Add the help button, so pages will be able to find it when dealing with the ShowHelpDialog action.
+        // IMPORTANT: Add the help button to the children only if it is not hidden. This is needed to hide the button in
+        // help widgets themselves, because otherwise they would produce their own help widgets, with - in turn - even
+        // more help widgets, resulting in an infinite loop.
+        if (! $this->getHideHelpButton()) {
+            yield $this->getHelpButton();
+        }
     }
     
     public function getToolbarWidgetType(){
