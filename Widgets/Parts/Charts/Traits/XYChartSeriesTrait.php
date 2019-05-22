@@ -9,6 +9,7 @@ use exface\Core\Widgets\DataColumn;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\Charts\ChartAxis;
 use exface\Core\Widgets\Parts\Charts\ChartSeries;
+use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
 
 trait XYChartSeriesTrait
 {
@@ -238,54 +239,76 @@ trait XYChartSeriesTrait
         } 
         
         // Find X-axis
-        $axis = null;
-        if ($this->getXAxisNo() !== null) {
-            $axis = $this->getChart()->getAxesX()[$this->getXAxisNo()];
-        } elseif ($this->xAttributeAlias !== null) {
-            $attr = $this->getMetaObject()->getAttribute($this->xAttributeAlias);
-            $axes = $this->getChart()->findAxesByAttribute($attr, Chart::AXIS_X);
-            if (empty($axes)) {
-                $axis = $this->getChart()->createAxisFromColumnId($this->xColumn->getId());
-                $this->getChart()->addAxisX($axis);
-            } else {
-                $axis = $axes[0];
-            }
-        } elseif (empty($this->getChart()->getAxesX()) === false) {
-            $axis = $this->getChart()->getAxesX()[0];
-        } elseif ($this->getXColumnId() !== null) {
-            $axis = $this->getChart()->createAxisFromColumnId($this->getXColumnId());
-            $this->getChart()->addAxisX($axis);
-        }
-        if (! $axis) {
+        if (! $axis = $this->findAxis(Chart::AXIS_X)) {
             throw new WidgetConfigurationError($this->getChart(), 'Cannot find X-axis for series ' . $this->getIndex() . ' of widget "' . $this->getChart()->getId() . '"!', '6T90UV9');
         }
         $this->xAxis = $axis;
         
         // Find Y-axis
-        $axis = null;
-        if ($this->getYAxisNo() !== null) {
-            $axis = $this->getChart()->getAxesY()[$this->getYAxisNo()];
-        } elseif ($this->yAttributeAlias !== null) {
-            $attr = $this->getMetaObject()->getAttribute($this->yAttributeAlias);
-            $axes = $this->getChart()->findAxesByAttribute($attr, Chart::AXIS_Y);
-            if (empty($axes)) {
-                $axis = $this->getChart()->createAxisFromColumnId($this->yColumn->getId());
-                $this->getChart()->addAxisY($axis);
-            } else {
-                $axis = $axes[0];
-            }
-        } elseif (empty($this->getChart()->getAxesY()) === false) {
-            $axis = $this->getChart()->getAxesY()[0];
-        } elseif ($this->getYColumnId() !== null) {
-            $axis = $this->getChart()->createAxisFromColumnId($this->getYColumnId());
-            $this->getChart()->addAxisY($axis);
-        }
-        if (! $axis) {
+        if (! $axis = $this->findAxis(Chart::AXIS_Y)) {
             throw new WidgetConfigurationError($this->getChart(), 'Cannot find Y-axis for series ' . $this->getIndex() . ' of widget "' . $this->getChart()->getId() . '"!', '6T90UV9');
         }
         $this->yAxis = $axis;
         
         return $this;
+    }
+    
+    protected function findAxis(string $dimension) : ?ChartAxis
+    {
+        $axis = null;
+        $axisNo = $dimension === Chart::AXIS_X ? $this->getXAxisNo() : $this->getYAxisNo();
+        $attributeAlias = $dimension === Chart::AXIS_X ? $this->xAttributeAlias : $this->yAttributeAlias;
+        $column = $dimension === Chart::AXIS_X ? $this->xColumn : $this->yColumn;
+        $columnId = $dimension === Chart::AXIS_X ? $this->xColumnId : $this->yColumnId;
+        $secondaryAxisPosition = $dimension === Chart::AXIS_X ? 'bottom' : 'right';
+        $chart = $this->getChart();
+        
+        if ($this instanceof StackableChartSeriesInterface && $this->isStacked() && $this->getValueColumnDimension() === $dimension && $this->getIndex() > 0) {
+            $prevSeries = $this->getChart()->getSeries()[($this->getIndex() - 1)];
+            if ($prevSeries instanceof StackableChartSeriesInterface && $prevSeries->getStackGroupId() === $this->getStackGroupId()) {
+                return $dimension === Chart::AXIS_X ? $prevSeries->getXAxis() : $prevSeries->getYAxis();
+            }
+        }
+        
+        switch (true) {
+            case $axisNo !== null:
+                try {
+                    $axis = $chart->getAxes($dimension)[$axisNo];
+                    if ($axis !== null) {
+                        break;
+                    }
+                } catch (\Throwable $e) {
+                    // Continue with the other cases
+                }
+            case $attributeAlias !== null:
+                $existingAxes = $chart->getAxes($dimension);
+                switch (count($existingAxes)) {
+                    case 0:
+                        $axis = $chart->createAxisFromColumnId($column->getId());
+                        $chart->addAxis($dimension, $axis);
+                        break;
+                    default:
+                        $attr = $this->getMetaObject()->getAttribute($attributeAlias);
+                        $attrAxes = $chart->findAxesByAttribute($attr, $dimension);
+                        if (empty($attrAxes)) {
+                            $axis = $chart->createAxisFromColumnId($column->getId());
+                            $axis->setPosition($secondaryAxisPosition);
+                            $chart->addAxis($dimension, $axis);
+                        } else {
+                            $axis = $attrAxes[0];
+                        }
+                        
+                }
+                break;
+            case empty($chart->getAxes($dimension)) === false:
+                $axis = $chart->getAxes($dimension)[0];
+                break;
+            case $columnId !== null:
+                $axis = $chart->createAxisFromColumnId($columnId);
+                $chart->addAxis($dimension, $axis);
+                break;
+        }
+        return $axis;
     }
     
     /**
