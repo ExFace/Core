@@ -73,7 +73,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      */
     function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        throw new QueryBuilderException('Read method not implemented in "' . get_class($this) . '"!');
+        throw new QueryBuilderException('READ not implemented in "' . get_class($this) . '"!');
     }
 
     /**
@@ -83,7 +83,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      */
     function update(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        throw new QueryBuilderException('Update method not implemented in "' . get_class($this) . '"!');
+        throw new QueryBuilderException('UPDATE not implemented in "' . get_class($this) . '"!');
     }
 
     /**
@@ -93,7 +93,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      */
     function delete(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        throw new QueryBuilderException('Delete method not implemented in "' . get_class($this) . '"!');
+        throw new QueryBuilderException('DELETE not implemented in "' . get_class($this) . '"!');
     }
     
     /**
@@ -103,7 +103,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      */
     function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        throw new QueryBuilderException('Delete method not implemented in "' . get_class($this) . '"!');
+        throw new QueryBuilderException('COUNT not implemented in "' . get_class($this) . '"!');
     }
 
     /**
