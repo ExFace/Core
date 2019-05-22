@@ -3,6 +3,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 use exface\Core\Widgets\Chart;
+use exface\Core\Widgets\Parts\Charts\BarChartSeries;
 use exface\Core\Widgets\Parts\Charts\ColumnChartSeries;
 use exface\Core\Widgets\Parts\Charts\LineChartSeries;
 use exface\Core\Widgets\Parts\Charts\ChartSeries;
@@ -10,6 +11,7 @@ use exface\Core\Widgets\Parts\Charts\PieChartSeries;
 use exface\Core\Widgets\Parts\Charts\DonutChartSeries;
 use exface\Core\Widgets\Parts\Charts\RoseChartSeries;
 use exface\Core\Widgets\Parts\Charts\ChartAxis;
+use exface\Core\Widgets\Parts\Charts\SplineChartSeries;
 use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
 
 /**
@@ -19,7 +21,7 @@ use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
  *
  */
 trait EChartsTrait
-{
+{    
     protected function buildJsLiveReference()
     {
         $output = '';
@@ -137,8 +139,12 @@ JS;
     protected function buildJsChartSeriesConfig(ChartSeries $series) : string
     {
         switch (true) {
+            case $series instanceof SplineChartSeries:
+                return $this->buildJsLineChart($series);
             case $series instanceof LineChartSeries:
                 return $this->buildJsLineChart($series);
+            case $series instanceof BarChartSeries:
+                return $this->buildJsColumnChart($series);
             case $series instanceof ColumnChartSeries:
                 return $this->buildJsColumnChart($series);
             case $series instanceof RoseChartSeries:
@@ -158,6 +164,13 @@ JS;
         } else {
             $filledJs = '';
         }
+        $smooth = '';
+        if ($series instanceof SplineChartSeries){
+            $smooth = 'smooth: true,';
+            if ($series->getSmoothness() !== null){
+                $smooth = 'smooth: ' . $series->getSmoothness() . ',';
+            }
+        }
         
         return <<<JS
 
@@ -170,6 +183,7 @@ JS;
     },
     xAxisIndex: {$series->getXAxis()->getIndex()},
     yAxisIndex: {$series->getYAxis()->getIndex()},
+    $smooth
     $filledJs
     {$this->buildJsStack($series)}
 },
@@ -285,50 +299,51 @@ JS;
         if ($this->isPieChartSeries() === true){
             return '';
         }
-        $xaxesJS = '';
-        $yaxesJS = '';
-        $position_bottom_count = 0;
-        $position_top_count = 0;
-        $position_left_count = 0;
-        $position_right_count = 0;
-        foreach ($this->getWidget()->getAxesX() as $axis){
+        $widget = $this->getWidget();
+        $xAxesJS = '';
+        $yAxesJS = '';
+        $positionBottomCount = 0;
+        $positionTopCount = 1;
+        $positionLeftCount = 0;
+        $positionRightCount = 0;
+        foreach ($widget->getAxesX() as $axis){
             $position = $axis->getPosition();
             $offset = 0;
             if ($position == null){
                 $position = 'bottom';
             }
             if ($position == 'top'){
-                $offset = 25*$position_top_count;
-                $position_top_count++;
+                $offset = $widget->getXAxisOffset()*$positionTopCount;
+                $positionTopCount++;
             } elseif ($position == 'bottom'){
-                $offset = 25*$position_bottom_count;
-                $position_bottom_count++;
+                $offset = $widget->getXAxisOffset()*$positionBottomCount;
+                $positionBottomCount++;
             }
-            $xaxesJS .= $this->buildJsAxisProperties($axis, $position, $offset);
+            $xAxesJS .= $this->buildJsAxisProperties($axis, $position, $offset);
         }
         
-        foreach ($this->getWidget()->getAxesY() as $axis){
+        foreach ($widget->getAxesY() as $axis){
             $position = $axis->getPosition();
             $offset = 0;
             if ($axis->getPosition() == null){
                 $position = 'left';
             }
             if ($position == 'left'){
-                $offset = 25*$position_top_count;
-                $position_left_count++;
+                $offset = $widget->getYAxisOffset()*$positionLeftCount;
+                $positionLeftCount++;
             } elseif ($position == 'right'){
-                $offset = 25*$position_bottom_count;
-                $position_right_count++;
+                $offset = $widget->getYAxisOffset()*$positionRightCount;
+                $positionRightCount++;
             }
-            $yaxesJS .= $this->buildJsAxisProperties($axis, $position, $offset);
+            $yAxesJS .= $this->buildJsAxisProperties($axis, $position, $offset);
         }
         
         
         
         return <<<JS
 
-xAxis: [$xaxesJS],
-yAxis: [$yaxesJS],
+xAxis: [$xAxesJS],
+yAxis: [$yAxesJS],
 
 JS;
     }
@@ -346,22 +361,23 @@ JS;
             $visible = 'true';
         }
         if ($axis->getMinValue() === null){
-            $min = "";
+            $min = '';
         } else {
             $min = "min: '" . $axis->getMinValue() . "',";
         }
         if ($axis->getMaxValue() === null){
-            $max = 'max: null,';
+            $max = '';
         } else {
             $max = "max: '" . $axis->getMaxValue() . "',";
         }
         
+        $axisType = mb_strtolower($axis->getAxisType());
         
         return <<<JS
         
     {
         name: '{$axis->getCaption()}',
-        type: '{$axis->getAxisType()}',
+        type: '{$axisType}',
         splitLine: { show: $grid },
         position: '$position',
         offset: $offset,
@@ -475,17 +491,64 @@ JS;
         
     protected function buildJsChartPropertyGrid() : string
     {
+        if ($this->getWidget()->getSeries()[0] instanceof PieChartSeries){
+            return '{},';
+        }
+        
+        $marginPerYAxis = $this->getWidget()->getYAxisOffset();
+        $marginPerXAxis = $this->getWidget()->getXAxisOffset();
+        $baseMarginTop = 60;
+        $baseMarginBottom = 60;
+        $baseMarginLeft = 60;
+        $baseMarginRight = 60;
+        $bottomAxisCount = 0;
+        $topAxisCount = 0;
+        $leftAxisCount = 0;
+        $rightAxisCount = 0;
+        
+        foreach ($this->getWidget()->getAxesX() as $xAxis){
+            if ($xAxis->getPosition() == 'bottom' || $xAxis->getPosition() === null){
+                $bottomAxisCount++;
+            } elseif ($xAxis->getPosition() == 'top'){
+                $topAxisCount++;
+            }
+        }            
+        foreach ($this->getWidget()->getAxesY() as $yAxis){
+            if ($yAxis->getPosition() == 'left' || $yAxis->getPosition() === null){
+                $leftAxisCount++;
+            } else if ($yAxis->getPosition() == 'right'){
+                $rightAxisCount++;
+            }
+        }
+        if ($bottomAxisCount > 0){
+            $bottomAxisCount = $bottomAxisCount - 1;
+        }
+        if ($rightAxisCount > 0){
+            $rightAxisCount = $rightAxisCount - 1;
+        }
+        if ( $leftAxisCount > 0){
+            $leftAxisCount = $leftAxisCount - 1;
+        }
+        $bottomMargin = $baseMarginBottom + $bottomAxisCount * $marginPerXAxis;
+        $topMargin = $baseMarginTop + $topAxisCount * $marginPerXAxis;
+        $leftMargin = $baseMarginLeft + $leftAxisCount * $marginPerYAxis;
+        $rightMargin = $baseMarginRight + $rightAxisCount * $marginPerYAxis;
+        
+        //return '{},';
+        
         return <<<JS
 
 {
-	bottom: '20%',
-	left: '10%',
-	right: '20%',
+	bottom: '$bottomMargin',
+    top: '$topMargin',
+	left: '$leftMargin',
+	right: '$rightMargin',
 
 	containLable: true,
 },
 
 JS;
+      
     }
         
     protected function buildJsEChartsVar() : string
