@@ -263,6 +263,7 @@ trait XYChartSeriesTrait
         $secondaryAxisPosition = $dimension === Chart::AXIS_X ? 'bottom' : 'right';
         $chart = $this->getChart();
         
+        //Check if series is stacked and if so find previous series with same stack and use axis from that series
         if ($this instanceof StackableChartSeriesInterface && $this->isStacked() && $this->getValueColumnDimension() === $dimension && $this->getIndex() > 0) {
             $prevSeries = $this->getChart()->getSeries()[($this->getIndex() - 1)];
             if ($prevSeries instanceof StackableChartSeriesInterface && $prevSeries->getStackGroupId() === $this->getStackGroupId()) {
@@ -271,6 +272,7 @@ trait XYChartSeriesTrait
         }
         
         switch (true) {
+            //when series has number given, try get axis with that number, if that fails, continue
             case $axisNo !== null:
                 try {
                     $axis = $chart->getAxes($dimension)[$axisNo];
@@ -280,29 +282,36 @@ trait XYChartSeriesTrait
                 } catch (\Throwable $e) {
                     // Continue with the other cases
                 }
+            //series has attribute_alias set
             case $attributeAlias !== null:
                 $existingAxes = $chart->getAxes($dimension);
                 switch (count($existingAxes)) {
+                    //when no axis already exists create new axis
                     case 0:
                         $axis = $chart->createAxisFromColumnId($column->getId());
                         $chart->addAxis($dimension, $axis);
                         break;
+                    //when there are already axes existing, search if one has same attribute
                     default:
                         $attr = $this->getMetaObject()->getAttribute($attributeAlias);
                         $attrAxes = $chart->findAxesByAttribute($attr, $dimension);
+                        //when there is no axis with same attribute, create new axis
                         if (empty($attrAxes)) {
                             $axis = $chart->createAxisFromColumnId($column->getId());
                             $axis->setPosition($secondaryAxisPosition);
                             $chart->addAxis($dimension, $axis);
+                        //when there are axes with same attribute, use first of those axes
                         } else {
                             $axis = $attrAxes[0];
                         }
                         
                 }
                 break;
+            //when no attribute_alias or axisNo given, check if already axes exist and if so, take the first
             case empty($chart->getAxes($dimension)) === false:
                 $axis = $chart->getAxes($dimension)[0];
                 break;
+            //when columnId given, create axis base on that columnId
             case $columnId !== null:
                 $axis = $chart->createAxisFromColumnId($columnId);
                 $chart->addAxis($dimension, $axis);
