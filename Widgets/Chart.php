@@ -93,6 +93,18 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      * @var bool
      */
     private $dataPrepared = false;
+    
+    /**
+     * 
+     * @var integer
+     */
+    private $xAxisOffset = 25;
+    
+    /**
+     * 
+     * @var integer
+     */
+    private $yAxisOffset = 60;
 
     /**
      * 
@@ -229,7 +241,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      * @throws WidgetPropertyInvalidValueError
      * @return Chart
      */
-    protected function addAxis(string $x_or_y, ChartAxis $axis) : Chart
+    public function addAxis(string $x_or_y, ChartAxis $axis) : Chart
     {
         if (! $axis->getPosition()) {
             switch ($x_or_y) {
@@ -431,7 +443,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
         $result = [];
         foreach ($this->getAxes($dimension) as $axis) {
             try {
-                if ($axis->getDataColumn()->getAttribute()->is($attribute)) {
+                if ($axis->isBoundToAttribute() === true && $axis->getAttribute()->is($attribute)) {
                     $result[] = $axis;
                 }
             } catch (\Throwable $e) {
@@ -816,6 +828,59 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     {
         $this->legendPosition = $leftRigthTopBottom;
         return $this;
+    }
+    
+    /**
+     * Give value how far x-axes on the same position (top/bottom) should be apart from each other.
+     * Default is 25, if x-axes overlap each other increase that value.
+     * 
+     * @uxon-property x_axis_offset
+     * @uxon-type integer
+     * @uxon-template 25
+     * 
+     * @param string $offset
+     * @return Chart
+     */
+    public function setXAxisOffset(int $offset) : Chart
+    {
+        $this->xAxisOffset = $offset;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return int
+     */
+    public function getXAxisOffset() : int
+    {
+        
+        return $this->xAxisOffset;
+    }
+    
+    /**
+     * Give value how far y-axes on the same position (left/right) should be apart from each other.
+     * Default is 60, if y-axes overlap each other increase that value.
+     *
+     * @uxon-property y_axis_offset
+     * @uxon-type integer
+     * @uxon-template 60
+     *
+     * @param string $offset
+     * @return Chart
+     */
+    public function setYAxisOffset(int $offset) : Chart
+    {
+        $this->yAxisOffset = $offset;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return int
+     */
+    public function getYAxisOffset() : int
+    {
+        return $this->yAxisOffset;
     }
     
     /**
