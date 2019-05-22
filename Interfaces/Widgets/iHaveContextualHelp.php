@@ -30,10 +30,11 @@ interface iHaveContextualHelp extends WidgetInterface
     public function getHelpWidget(iContainOtherWidgets $help_container) : iContainOtherWidgets;
 
     /**
-     *
-     * @return boolean
+     * 
+     * @param bool|NULL $default
+     * @return bool|NULL
      */
-    public function getHideHelpButton() : bool;
+    public function getHideHelpButton($default = false) : ?bool;
 
     /**
      *
