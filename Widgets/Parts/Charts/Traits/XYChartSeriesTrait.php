@@ -271,17 +271,19 @@ trait XYChartSeriesTrait
             }
         }
         
-        switch (true) {
-            //when series has number given, try get axis with that number, if that fails, continue
-            case $axisNo !== null:
-                try {
-                    $axis = $chart->getAxes($dimension)[$axisNo];
-                    if ($axis !== null) {
-                        break;
-                    }
-                } catch (\Throwable $e) {
-                    // Continue with the other cases
+        //when series has number given, try get axis with that number, if that fails, continue
+        if ($axisNo !== null) {
+            try {
+                $axis = $chart->getAxes($dimension)[$axisNo];
+                if ($axis !== null) {
+                    return $axis;
                 }
+            } catch (\Throwable $e) {
+                // Continue with the other cases
+            }
+        }
+        
+        switch (true) {
             //series has attribute_alias set
             case $attributeAlias !== null:
                 $existingAxes = $chart->getAxes($dimension);
