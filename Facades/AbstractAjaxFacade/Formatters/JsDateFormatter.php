@@ -51,7 +51,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatter($jsInput)
     {
-        return "(! {$jsInput} ? {$jsInput} : Date.parse({$jsInput}).toString(\"{$this->getFormat()}\"))";
+        return "(! {$jsInput} ? {$jsInput} : (isNaN({$jsInput}) ? Date.parse({$jsInput}) : new Date({$jsInput})).toString(\"{$this->getFormat()}\"))";
     }
     
     /**
