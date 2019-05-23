@@ -563,17 +563,30 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     }
 
     /**
+     * @deprecated use setPrefillDisabled() instead
+     * 
+     * Still here for backwards compatibility
+     * 
+     * @param bool $value
+     * @return iShowWidget
+     */
+    public function setDoNotPrefill(bool $value) : iShowWidget
+    {
+        return $this->setPrefillDisabled($value);
+    }
+    
+    /**
      * Set to TRUE to disable the prefill for this action entirely.
      *
-     * @uxon-property do_not_prefill
+     * @uxon-property prefill_disabled
      * @uxon-type boolean
      *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowWidget::setDoNotPrefill($value)
      */
-    public function setDoNotPrefill($value) : iShowWidget
+    public function setPrefillDisabled(bool $value) : iShowWidget
     {
-        $value = BooleanDataType::cast($value) ? false : true;
+        $value = ! $value;
         $this->setPrefillWithFilterContext($value);
         $this->setPrefillWithInputData($value);
         $this->setPrefillWithPrefillData($value);
