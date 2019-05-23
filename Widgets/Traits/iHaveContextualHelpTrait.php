@@ -123,4 +123,31 @@ trait iHaveContextualHelpTrait {
         $table->setHideHelpButton(true);
         return $table;
     }
+    
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iHaveContextualHelp::getHelpWidget()
+     */
+    public function getHelpWidget(iContainOtherWidgets $help_container) : iContainOtherWidgets
+    {
+        $message = WidgetFactory::createFromUxonInParent($help_container, new UxonObject([
+            'widget_type' => 'Message',
+            'type' => 'warning',
+            'text' => 'No automatically generated help available: please add a help_button in the widget configuration!'
+        ]));
+        $help_container->addWidget($message);
+        
+        return $help_container;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    private function getButtonWidgetType()
+    {
+        return 'Button';
+    }
 }
