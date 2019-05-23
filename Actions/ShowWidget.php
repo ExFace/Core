@@ -576,6 +576,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         $value = BooleanDataType::cast($value) ? false : true;
         $this->setPrefillWithFilterContext($value);
         $this->setPrefillWithInputData($value);
+        $this->setPrefillWithPrefillData($value);
         return $this;
     }
 
