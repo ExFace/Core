@@ -563,9 +563,14 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     }
 
     /**
-     * @deprecated use setPrefillDisabled() instead
+     * Same as prefill_disabled.
      * 
-     * Still here for backwards compatibility
+     * Since widgets have a property `do_not_prefill`, it is convenient to have
+     * this options for actions too.
+     * 
+     * @uxon-property do_not_prefill
+     * @uxon-type boolean
+     * @uxon-default false
      * 
      * @param bool $value
      * @return iShowWidget
@@ -580,6 +585,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      *
      * @uxon-property prefill_disabled
      * @uxon-type boolean
+     * @uxon-default false
      *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowWidget::setDoNotPrefill($value)
