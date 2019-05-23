@@ -13,6 +13,9 @@ use exface\Core\Widgets\Parts\Charts\RoseChartSeries;
 use exface\Core\Widgets\Parts\Charts\ChartAxis;
 use exface\Core\Widgets\Parts\Charts\SplineChartSeries;
 use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
+use exface\Core\Widgets\DataColumn;
+use exface\Core\Interfaces\Widgets\iDisplayValue;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
 
 /**
  * 
@@ -27,7 +30,8 @@ trait EChartsTrait
         $output = '';
         if ($link = $this->getWidget()->getDataWidgetLink()) {
             $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
-            $output .= $this->buildJsFunctionPrefix() . 'plot(' . $linked_element->buildJsDataGetter() . ".rows);";
+            $output .= $this->buildJsRedrawFunctionName(). '(' . $linked_element->buildJsDataGetter() . ')';
+            //$output .= $this->buildJsFunctionPrefix() . 'plot(' . $linked_element->buildJsDataGetter() . ".rows);";
         }
         return $output;
     }
@@ -61,9 +65,20 @@ trait EChartsTrait
     // Create the load function to fetch the data via AJAX or from another widget
     function {$this->buildJsDataLoadFunctionName()}() {
         {$this->buildJsDataLoadFunctionBody()}
-    }
+    };
+
+    function {$this->buildJsRedrawFunctionName()}(oData) {
+        {$this->buildJsRedrawFunctionBody('oData')}
+    };
+
+
     
 JS;
+    }
+
+    protected function buildJsRedrawFunctionName() : string
+    {
+        return $this->buildJsFunctionPrefix() . 'redraw';
     }
     
     public function buildJsRefresh()
@@ -88,9 +103,28 @@ JS;
         {$this->buildJsRefresh()}
     }, 1000);
 
+    ...on('click', function(params) {
+        // Logik
+
+        {$this->getOnChangeScript()}
+        
+    });
+
 JS;
     }
         
+    protected function buildJsOnClickFunction() : string {
+        return <<<JS
+
+        {$this->buildJsFunctionPrefix()}.on('click', function(params){
+        option.series[params.seriesIndex].data.forEach((data, index) 
+
+    });
+
+JS;
+        //TODO
+    }
+    
     protected function buildJsChartConfig() : string
     {
         $series = $this->getWidget()->getSeries();
@@ -104,11 +138,12 @@ JS;
         return <<<JS
 
 {
-	grid: {$this->buildJsChartPropertyGrid()}
+	
     tooltip : {$this->buildJsChartPropertyTooltip()}
    	legend: {$this->buildJsChartPropertyLegend()}
 	series: [$seriesConfig],
     {$this->buildJsAxes()}
+    
 }
 
 JS;
@@ -183,8 +218,8 @@ JS;
     },
     xAxisIndex: {$series->getXAxis()->getIndex()},
     yAxisIndex: {$series->getYAxis()->getIndex()},
-    $smooth
-    $filledJs
+    {$smooth}
+    {$filledJs}
     {$this->buildJsStack($series)}
 },
 
@@ -256,8 +291,8 @@ JS;
     radius: ['$radius', '80%'],
     center: ['$centerX', '50%'],
     data: [],
-    label: $label,
-    roseType: '$valueMode'
+    label: {$label},
+    roseType: '{$valueMode}'
     
 },
 
@@ -287,7 +322,7 @@ JS;
     radius: ['$radius','80%'],
     center: ['$centerX', '50%'],
     data: [],
-    label: $label,
+    label: {$label},
     							
 },
         
@@ -299,47 +334,23 @@ JS;
         if ($this->isPieChartSeries() === true){
             return '';
         }
+        $countAxisRight = 0;
+        $countAxisLeft = 0;
         $widget = $this->getWidget();
         $xAxesJS = '';
         $yAxesJS = '';
-        $positionBottomCount = 0;
-        $positionTopCount = 1;
-        $positionLeftCount = 0;
-        $positionRightCount = 0;
         foreach ($widget->getAxesX() as $axis){
-            $position = $axis->getPosition();
-            $offset = 0;
-            if ($position == null){
-                $position = 'bottom';
-            }
-            if ($position == 'top'){
-                $offset = $widget->getXAxisOffset()*$positionTopCount;
-                $positionTopCount++;
-            } elseif ($position == 'bottom'){
-                $offset = $widget->getXAxisOffset()*$positionBottomCount;
-                $positionBottomCount++;
-            }
-            $xAxesJS .= $this->buildJsAxisProperties($axis, $position, $offset);
-        }
-        
+           $xAxesJS .= $this->buildJsAxisProperties($axis);
+        }        
         foreach ($widget->getAxesY() as $axis){
-            $position = $axis->getPosition();
-            $offset = 0;
-            if ($axis->getPosition() == null){
-                $position = 'left';
-            }
-            if ($position == 'left'){
-                $offset = $widget->getYAxisOffset()*$positionLeftCount;
-                $positionLeftCount++;
-            } elseif ($position == 'right'){
-                $offset = $widget->getYAxisOffset()*$positionRightCount;
-                $positionRightCount++;
-            }
-            $yAxesJS .= $this->buildJsAxisProperties($axis, $position, $offset);
-        }
-        
-        
-        
+            if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false){
+                $countAxisLeft++;
+                $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisLeft);
+            } elseif ($axis->getPosition() === ChartAxis::POSITION_RIGHT && $axis->isHidden() === false){
+                $countAxisRight++;
+                $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisRight);
+            }            
+        }   
         return <<<JS
 
 xAxis: [$xAxesJS],
@@ -348,17 +359,12 @@ yAxis: [$yAxesJS],
 JS;
     }
         
-    protected function buildJsAxisProperties(ChartAxis $axis, string $position, int $offset) : string
+    protected function buildJsAxisProperties(ChartAxis $axis, int $nameGapMulti = 1) : string
     {
         if ($axis->hasGrid() === false){
             $grid = 'false';
         } else {
             $grid = 'true';
-        }
-        if ($axis->isVisible() === false){
-            $visible = 'false';
-        } else {
-            $visible = 'true';
         }
         if ($axis->getMinValue() === null){
             $min = '';
@@ -372,33 +378,65 @@ JS;
         }
         
         $axisType = mb_strtolower($axis->getAxisType());
+        $position = mb_strtolower($axis->getPosition());
+        $nameGap = $this->baseAxisNameGap()* $nameGapMulti;
+        
+        
         
         return <<<JS
         
     {
+        id: '{$axis->getIndex()}',
         name: '{$axis->getCaption()}',
         type: '{$axisType}',
         splitLine: { show: $grid },
-        position: '$position',
-        offset: $offset,
-        show: $visible,
+        position: '{$position}',
+        show: false,
+        nameGap: {$nameGap},
+        axisLabel: {
+            formatter: function(a) {
+                return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'a')}
+            }
+        },
         $min
         $max
     },
 
 JS;
     }
+        
+    protected function buildJsLabelFormatter(DataColumn $col, string $js_var_value) : string
+    {
+        $cellWidget = $col->getCellWidget();
+        
+        if (($cellWidget instanceof iDisplayValue) && $cellWidget->getDisableFormatting()) {
+            return '';
+        }
+        
+        // Data type specific formatting
+        $formatter_js = '';
+        $cellTpl = $this->getFacade()->getElement($cellWidget);
+        if (($cellTpl instanceof JsValueDecoratingInterface) && $cellTpl->hasDecorator()) {
+            $formatter_js = $cellTpl->buildJsValueDecorator($js_var_value);
+        }
+        
+        return $formatter_js ? $formatter_js : $js_var_value;
+    }
+        
+    protected function baseAxisNameGap() : int
+    {
+        return 15;
+    }
     
-    protected function buildJsRedraw(string $dataJs) : string
+    protected function buildJsRedrawFunctionBody(string $dataJs) : string
     {
         if ($this->isPieChartSeries() === true) {
-            return <<<JS
+            $js = <<<JS
 
-var completeData = $dataJs.rows;
-var arrayLength = completeData.length;
+var arrayLength = rowData.length;
 var chartData = [];
 for (var i = 0; i < arrayLength; i++){
-	var item = { value: completeData[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} , name: completeData[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} };
+	var item = { value: rowData[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} , name: rowData[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} };
 	chartData.push(item);
 }
 
@@ -407,22 +445,166 @@ chart_{$this->getId()}.setOption({
 		data: chartData							
 	}],
 	legend: {
-		data: completeData.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
+		data: rowData.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
 	}					
 })
 JS;
         } else {
-            return <<<JS
             
-var chartData = $dataJs.rows;
-chart_{$this->getId()}.setOption({
-	dataset: {
-	source: chartData
-	},
-});
+            $axesOffsetCalc = '';
+            $axesJsObjectInit = '';
+            foreach ($this->getWidget()->getAxes() as $axis){
+                if ($axis->isHidden() === true) {
+                    continue;
+                }
+                
+                $xAxisIndex = 0;
+                if ($axis->getDimension() === Chart::AXIS_X) {
+                    $offset = ++$xAxisIndex . ' * 20 * 2';
+                } else {
+                    $offset = 'len * 7';
+                }
+                $axesOffsetCalc .= <<<JS
+
+        val = row['{$axis->getDataColumn()->getDataColumnName()}'];
+        len = (typeof val === 'string' || val instanceof String ? val.length : val.toString().length);
+        offset = {$offset};
+        if (axes["{$axis->getDataColumn()->getDataColumnName()}"]['offset'] < offset) {
+            axes["{$axis->getDataColumn()->getDataColumnName()}"]['offset'] = offset;
+        }
 
 JS;
+                $postion = mb_strtolower($axis->getPosition());
+                $axesJsObjectInit .= <<<JS
+
+    axes["{$axis->getDataColumn()->getDataColumnName()}"] = {
+        offset: 0,
+        dimension: "{$axis->getDimension()}",
+        position: "{$postion}"
+    };
+
+JS;
+            }
+            
+            $js = <<<JS
+            
+    var keys = Object.keys(rowData[0]);
+    var longestString = 0;
+    
+    
+    chart_{$this->getId()}.setOption({
+    	dataset: {
+    	source: rowData,
+        },
+        
+    });
+    
+    var axes = {};
+    {$axesJsObjectInit}
+    
+    // Danach
+    var val, offset;
+    var len = 0;
+    $dataJs.rows.forEach(function(row){
+        {$axesOffsetCalc}
+    })
+    
+    var newOptions = {yAxis: [], xAxis: []};
+    var axis;
+    offsets = {
+        'top': 0,
+        'right': 0,
+        'bottom': 0,
+        'left': 0
+    };
+    for (var i in axes) {
+        axis = axes[i];
+        newOptions[axis.dimension + 'Axis'].push({
+            offset: offsets[axis.position],
+            show: true
+        });
+        offsets[axis.position] += axis.offset;
+    }
+    
+    var gridmargin = offsets;
+    gridmargin['top'] += {$this->buildJsGridMarginTop()};
+    gridmargin['right'] += {$this->buildJsGridMarginRight()};
+    gridmargin['bottom'] += {$this->buildJsGridMarginBottom()};
+    gridmargin['left'] += {$this->buildJsGridMarginLeft()};
+    
+    newOptions.grid = gridmargin;
+    newOptions.dataset = {source: rowData};
+
+    chart_{$this->getId()}.setOption(newOptions);
+    
+JS;
+    }
+        
+    return <<<JS
+    
+    if (! $dataJs) {
+        return;
+    }
+    
+    var rowData = $dataJs.rows;
+    if (! rowData || rowData.count === 0) {
+        {$this->buildJsDataResetter()};
+        return;
+    }
+
+$js
+
+JS;
+    }
+    
+    protected function buildJsGridMarginTop() : int
+    {
+        $baseMargin = 40;
+        $countAxisLeft = 0;
+        $countAxisRight = 0;        
+        foreach ($this->getWidget()->getAxesY() as $axis){
+            if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false){
+                $countAxisLeft++;
+            } elseif ($axis->getPosition() === ChartAxis::POSITION_RIGHT && $axis->isHidden() === false){
+                $countAxisRight++;
+            }
         }
+        if ($countAxisLeft >= $countAxisRight){
+            return $baseMargin + $this->baseAxisNameGap() * $countAxisLeft;
+        } else {
+            return $baseMargin + $this->baseAxisNameGap() * $countAxisRight;
+        }
+    }
+    
+    protected function buildJsGridMarginRight() : int
+    {
+        /*$countAxisRight = 0;
+        foreach ($this->getWidget()->getAxesY() as $axis){
+            if ($axis->getPosition() === ChartAxis::POSITION_RIGHT && $axis->isHidden() === false){
+                $countAxisRight++;               
+            }
+        }
+        $captionLength = 0;
+        if ($countAxisRight == 0){
+            foreach ($this->getWidget()->getAxesX() as $axis){
+                if (strlen($axis->getCaption() > $captionLength)){
+                    $captionLength = strlen($axis->getCaption());
+                }                    
+            }
+            return $captionLength * 7;
+        }*/
+        
+        return 10;
+    }
+    
+    protected function buildJsGridMarginBottom() : int
+    {
+        return 10;
+    }
+    
+    protected function buildJsGridMarginLeft() : int
+    {
+        return 10;
     }
 
     protected function isPieChartSeries() : bool
@@ -481,8 +663,8 @@ JS;
 
 {
 	type: 'scroll',
-    $padding    
-    $positionJs
+    {$padding}    
+    {$positionJs}
 
 },
 
@@ -491,7 +673,7 @@ JS;
         
     protected function buildJsChartPropertyGrid() : string
     {
-        if ($this->getWidget()->getSeries()[0] instanceof PieChartSeries){
+        /*if ($this->getWidget()->getSeries()[0] instanceof PieChartSeries){
             return '{},';
         }
         
@@ -507,16 +689,16 @@ JS;
         $rightAxisCount = 0;
         
         foreach ($this->getWidget()->getAxesX() as $xAxis){
-            if ($xAxis->getPosition() == 'bottom' || $xAxis->getPosition() === null){
+            if ($xAxis->getPosition() === ChartAxis::POSITION_BOTTOM){
                 $bottomAxisCount++;
-            } elseif ($xAxis->getPosition() == 'top'){
+            } elseif ($xAxis->getPosition() === ChartAxis::POSITION_TOP){
                 $topAxisCount++;
             }
         }            
         foreach ($this->getWidget()->getAxesY() as $yAxis){
-            if ($yAxis->getPosition() == 'left' || $yAxis->getPosition() === null){
+            if ($yAxis->getPosition() === ChartAxis::POSITION_LEFT){
                 $leftAxisCount++;
-            } else if ($yAxis->getPosition() == 'right'){
+            } else if ($yAxis->getPosition() ===ChartAxis::POSITION_RIGHT){
                 $rightAxisCount++;
             }
         }
@@ -549,7 +731,7 @@ JS;
 
 JS;
       
-    }
+    */}
         
     protected function buildJsEChartsVar() : string
     {
@@ -559,6 +741,32 @@ JS;
     protected function buildJsEChartsResize() : string
     {
         return "{$this->buildJsEChartsVar()}.resize()";
+    }
+    
+    public function buildJsValueGetter($column = null, $row = null)
+    {
+        return <<<JS
+
+function(){
+var = val;
+
+// Logik
+
+return val;
+}()
+
+JS;
+    }
+    
+    /**
+     * Returns a JS snippet, that empties the chart.
+     *
+     * @return string
+     */
+    protected function buildJsDataResetter() : string
+    {
+        // TODO
+        return "";
     }
     
 }
