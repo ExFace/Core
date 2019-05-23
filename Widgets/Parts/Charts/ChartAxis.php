@@ -13,6 +13,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Widgets\Chart;
 
 /**
  * The ChartAxis represents the X or Y axis of a chart.
@@ -43,7 +44,7 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
 
     private $position = null;
     
-    private $visible = null;
+    private $hidden = null;
     
     private $grid = null;
 
@@ -159,9 +160,12 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     /**
      * @return string
      */
-    public function getPosition() : ?string
+    public function getPosition() : string
     {
-        return mb_strtolower($this->position);
+        if ($this->position === null) {
+            $this->position = $this->getDimension() === Chart::AXIS_X ? self::POSITION_BOTTOM : self::POSITION_LEFT;
+        }
+        return $this->position;
     }
 
     /**
@@ -240,27 +244,24 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      *
      * @return bool
      */
-    public function isVisible() : bool
+    public function isHidden() : bool
     {
-        if ($this->visible === null){
-            return true;
-        }
-        return $this->visible;
+        return $this->hidden ?? false;
     }
     
     /**
      * Set to FALSE to make the axis invisible or to TRUE (default) to force showing it.
      * 
      * 
-     * @uxon-property visible
+     * @uxon-property hidden
      * @uxon-type boolean
      * 
      * @param bool $value
      * @return ChartAxis
      */
-    public function setVisible(bool $value) : ChartAxis
+    public function setHidden(bool $value) : ChartAxis
     {
-        $this->visibile = $value;
+        $this->hidden = $value;
         return $this;
     }
     
