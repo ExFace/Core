@@ -9,15 +9,15 @@ trait FillableChartSeriesTrait
      *
      * @var bool
      */
-    private $filled = false;
+    private $filled = null;
     
     /**
      *
      * @return bool
      */
-    public function isFilled() : bool
+    public function isFilled(bool $default = false) : bool
     {
-        return $this->filled;
+        return $this->filled ?? $default;
     }
     
     /**
