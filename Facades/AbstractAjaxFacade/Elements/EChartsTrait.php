@@ -2,20 +2,21 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
+use exface\Core\Interfaces\Widgets\iDisplayValue;
 use exface\Core\Widgets\Chart;
+use exface\Core\Widgets\DataColumn;
 use exface\Core\Widgets\Parts\Charts\BarChartSeries;
-use exface\Core\Widgets\Parts\Charts\ColumnChartSeries;
-use exface\Core\Widgets\Parts\Charts\LineChartSeries;
-use exface\Core\Widgets\Parts\Charts\ChartSeries;
-use exface\Core\Widgets\Parts\Charts\PieChartSeries;
-use exface\Core\Widgets\Parts\Charts\DonutChartSeries;
-use exface\Core\Widgets\Parts\Charts\RoseChartSeries;
 use exface\Core\Widgets\Parts\Charts\ChartAxis;
+use exface\Core\Widgets\Parts\Charts\ChartSeries;
+use exface\Core\Widgets\Parts\Charts\ColumnChartSeries;
+use exface\Core\Widgets\Parts\Charts\DonutChartSeries;
+use exface\Core\Widgets\Parts\Charts\LineChartSeries;
+use exface\Core\Widgets\Parts\Charts\PieChartSeries;
+use exface\Core\Widgets\Parts\Charts\RoseChartSeries;
 use exface\Core\Widgets\Parts\Charts\SplineChartSeries;
 use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
-use exface\Core\Widgets\DataColumn;
-use exface\Core\Interfaces\Widgets\iDisplayValue;
-use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
+use exface\Core\Widgets\Parts\Charts\AreaChartSeries;
 
 /**
  * 
@@ -102,13 +103,10 @@ JS;
         // Call the data loader to populate the Chart initially
         {$this->buildJsRefresh()}
     }, 1000);
-
-    ...on('click', function(params) {
-        // Logik
+        {$this->buildJsOnClickFunction()}
 
         {$this->getOnChangeScript()}
         
-    });
 
 JS;
     }
@@ -116,9 +114,35 @@ JS;
     protected function buildJsOnClickFunction() : string {
         return <<<JS
 
-        {$this->buildJsFunctionPrefix()}.on('click', function(params){
-        option.series[params.seriesIndex].data.forEach((data, index) 
-
+        {$this->buildJsEChartsVar()}.on('click', function(params){
+            console.log(params);
+            var dataRow = params.data;
+            if (params.seriesType == 'pie') {
+            
+            } else {
+                var options = {$this->buildJsEChartsVar()}.getOption();
+                var newOptions = {series: []};        
+                options.series.forEach((series) => {
+                    newOptions.series.push({markLine: {data: {}}});                
+                });            
+                if (("_bar" in options.series[params.seriesIndex]) == true) {
+                    newOptions.series[params.seriesIndex].markLine.data = [ 
+                        {
+            				yAxis: dataRow[options.series[params.seriesIndex].encode.y]
+            			}
+                    ];
+                } else {  
+                    newOptions.series[params.seriesIndex].markLine.data = [ 
+                        {
+            				xAxis: dataRow[options.series[params.seriesIndex].encode.x]
+            			}
+                    ];
+                }
+                {$this->buildJsEChartsVar()}.setOption(newOptions);
+            }
+            {$this->buildJsEChartsVar()}._selection = dataRow;
+            {$this->getOnChangeScript()}
+            console.log('data getter: ', {$this->buildJsValueGetter('Datum__Tag')});
     });
 
 JS;
@@ -143,6 +167,7 @@ JS;
    	legend: {$this->buildJsChartPropertyLegend()}
 	series: [$seriesConfig],
     {$this->buildJsAxes()}
+    {$this->buildJsZoom()}
     
 }
 
@@ -174,12 +199,10 @@ JS;
     protected function buildJsChartSeriesConfig(ChartSeries $series) : string
     {
         switch (true) {
-            case $series instanceof SplineChartSeries:
-                return $this->buildJsLineChart($series);
             case $series instanceof LineChartSeries:
                 return $this->buildJsLineChart($series);
             case $series instanceof BarChartSeries:
-                return $this->buildJsColumnChart($series);
+                return $this->buildJsBarChart($series);
             case $series instanceof ColumnChartSeries:
                 return $this->buildJsColumnChart($series);
             case $series instanceof RoseChartSeries:
@@ -194,17 +217,24 @@ JS;
     
     protected function buildJsLineChart(LineChartSeries $series) : string
     {
-        if ($series->isFilled() === true){
-            $filledJs = 'areaStyle: {},';
+        if ($series instanceof AreaChartSeries || $series->isFilled() === true){
+            if ($series->isFilled() === false) {
+                $filledJs = '';
+            } else {
+                $filledJs = 'areaStyle: {},';
+            }
         } else {
             $filledJs = '';
         }
-        $smooth = '';
-        if ($series instanceof SplineChartSeries){
-            $smooth = 'smooth: true,';
-            if ($series->getSmoothness() !== null){
-                $smooth = 'smooth: ' . $series->getSmoothness() . ',';
+        
+        if ($series instanceof SplineChartSeries || $series->isSmooth() === true ){
+            if ($series->isSmooth() === false) {
+                $smoothJs = '';
+            } else {
+                $smoothJs = 'smooth: true,';
             }
+        } else {
+            $smoothJs = '';
         }
         
         return <<<JS
@@ -218,19 +248,19 @@ JS;
     },
     xAxisIndex: {$series->getXAxis()->getIndex()},
     yAxisIndex: {$series->getYAxis()->getIndex()},
-    {$smooth}
+    {$smoothJs}
     {$filledJs}
     {$this->buildJsStack($series)}
+    {$this->buildJsMarkLineProperties()}
 },
 
 JS;
     }
-        
-    protected function buildJsColumnChart(ColumnChartSeries $series) : string
+    
+    protected function buildJsColumnBarChartProperties (ColumnChartSeries $series) :string
     {
-       return <<<JS
-        
-{
+        return <<<JS
+
     name: '{$series->getCaption()}',
     type: 'bar',
     encode: {
@@ -240,6 +270,29 @@ JS;
     xAxisIndex: {$series->getXAxis()->getIndex()},
     yAxisIndex: {$series->getYAxis()->getIndex()},
     {$this->buildJsStack($series)}
+    {$this->buildJsMarkLineProperties()}
+
+JS;
+    }
+        
+    protected function buildJsColumnChart(ColumnChartSeries $series) : string
+    {
+       return <<<JS
+        
+{
+{$this->buildJsColumnBarChartProperties($series)}  
+},
+
+JS;
+    }
+    
+    protected function buildJsBarChart(BarChartSeries $series) : string
+    {
+        return <<<JS
+
+{
+{$this->buildJsColumnBarChartProperties($series)}
+    _bar: true    
 },
 
 JS;
@@ -323,6 +376,7 @@ JS;
     center: ['$centerX', '50%'],
     data: [],
     label: {$label},
+    selectedMode: 'single',
     							
 },
         
@@ -377,10 +431,20 @@ JS;
             $max = "max: '" . $axis->getMaxValue() . "',";
         }
         
+        if ($axis->getDimension() == Chart::AXIS_X){
+            $nameLocation = "nameLocation: 'center',";
+        } else {
+            $nameLocation = '';
+        }
+        
         $axisType = mb_strtolower($axis->getAxisType());
         $position = mb_strtolower($axis->getPosition());
-        $nameGap = $this->baseAxisNameGap()* $nameGapMulti;
         
+        if ($axis->getDimension() == Chart::AXIS_Y){
+            $nameGap = $this->baseAxisNameGap()* $nameGapMulti;
+        } else {
+            $nameGap = $this->baseAxisNameGap() * 1.5;
+        }
         
         
         return <<<JS
@@ -388,6 +452,7 @@ JS;
     {
         id: '{$axis->getIndex()}',
         name: '{$axis->getCaption()}',
+        $nameLocation
         type: '{$axisType}',
         splitLine: { show: $grid },
         position: '{$position}',
@@ -400,6 +465,60 @@ JS;
         },
         $min
         $max
+    },
+
+JS;
+    }
+        
+    protected function buildJsZoom() : string
+    {
+        if ($this->isPieChartSeries() === true){
+            return '';
+        }
+        return <<<JS
+
+        dataZoom: [
+        {
+            type: 'slider',
+            xAxisIndex: 0,
+            filterMode: 'empty'
+        },
+        {
+            type: 'slider',
+            yAxisIndex: 0,
+            filterMode: 'empty'
+        },
+        {
+            type: 'inside',
+            xAxisIndex: 0,
+            filterMode: 'empty'
+        },
+        {
+            type: 'inside',
+            yAxisIndex: 0,
+            filterMode: 'empty'
+        }
+        ],
+
+JS;
+    }
+        
+    protected function buildJsMarkLineProperties() : string
+    {
+        return <<<JS
+
+    markLine: {
+        data: {},
+        silent: true,
+        symbol: 'circle',
+        animation: false,
+        label: {
+            show: true
+        },
+        lineStyle: {
+            color: '#000',
+            type: 'solid',
+        }
     },
 
 JS;
@@ -440,7 +559,7 @@ for (var i = 0; i < arrayLength; i++){
 	chartData.push(item);
 }
 
-chart_{$this->getId()}.setOption({
+{$this->buildJsEChartsVar()}.setOption({
 	series: [{
 		data: chartData							
 	}],
@@ -492,12 +611,6 @@ JS;
     var longestString = 0;
     
     
-    chart_{$this->getId()}.setOption({
-    	dataset: {
-    	source: rowData,
-        },
-        
-    });
     
     var axes = {};
     {$axesJsObjectInit}
@@ -535,7 +648,7 @@ JS;
     newOptions.grid = gridmargin;
     newOptions.dataset = {source: rowData};
 
-    chart_{$this->getId()}.setOption(newOptions);
+    {$this->buildJsEChartsVar()}.setOption(newOptions);
     
 JS;
     }
@@ -577,34 +690,18 @@ JS;
     }
     
     protected function buildJsGridMarginRight() : int
-    {
-        /*$countAxisRight = 0;
-        foreach ($this->getWidget()->getAxesY() as $axis){
-            if ($axis->getPosition() === ChartAxis::POSITION_RIGHT && $axis->isHidden() === false){
-                $countAxisRight++;               
-            }
-        }
-        $captionLength = 0;
-        if ($countAxisRight == 0){
-            foreach ($this->getWidget()->getAxesX() as $axis){
-                if (strlen($axis->getCaption() > $captionLength)){
-                    $captionLength = strlen($axis->getCaption());
-                }                    
-            }
-            return $captionLength * 7;
-        }*/
-        
-        return 10;
+    {             
+        return 100;
     }
     
     protected function buildJsGridMarginBottom() : int
     {
-        return 10;
+        return 50;
     }
     
     protected function buildJsGridMarginLeft() : int
     {
-        return 10;
+        return 20;
     }
 
     protected function isPieChartSeries() : bool
@@ -748,11 +845,7 @@ JS;
         return <<<JS
 
 function(){
-var = val;
-
-// Logik
-
-return val;
+return {$this->buildJsEChartsVar()}._selection;
 }()
 
 JS;
