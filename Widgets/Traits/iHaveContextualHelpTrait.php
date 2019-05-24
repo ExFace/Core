@@ -29,7 +29,12 @@ trait iHaveContextualHelpTrait {
     public function getHelpButton() : iTriggerAction
     {
         if ($this->help_button === null) {
-            $this->help_button = WidgetFactory::createFromUxonInParent($this, $this->getHelpButtonUxon(), $this->getButtonWidgetType());
+            if (method_exists($this, 'getButtonWidgetType')) {
+                $btnType = $this->getButtonWidgetType();
+            } else {
+                $btnType = 'Button';
+            }
+            $this->help_button = WidgetFactory::createFromUxonInParent($this, $this->getHelpButtonUxon(), $btnType);
         }
         return $this->help_button;
     }
