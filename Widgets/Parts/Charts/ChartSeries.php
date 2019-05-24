@@ -3,6 +3,7 @@ namespace exface\Core\Widgets\Parts\Charts;
 
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\Chart;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iHaveCaption;
@@ -21,6 +22,14 @@ abstract class ChartSeries extends AbstractChartPart implements iHaveCaption
     }
     
     private $type = null;
+    
+    public function __construct(Chart $widget, UxonObject $uxon = null, string $seriesType = null)
+    {
+        parent::__construct($widget, $uxon);
+        if ($seriesType !== null) {
+            $this->type = $seriesType;
+        }
+    }
     
     /**
      * 
