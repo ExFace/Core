@@ -164,6 +164,29 @@ trait XYChartSeriesTrait
     }
     
     /**
+     * Alias of the attribute to display on the value axis.
+     * 
+     * Which axis is the value axis, depends on the chart type. This property
+     * allows to bind the value regardless of the axis dimension, making it
+     * easier to switch chart types (you don't need to chang `x_attribute_alias`
+     * to `y_attribute_alias` or vice versa).
+     * 
+     * @uxon-property value_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $alias
+     * @return ChartSeries
+     */
+    public function setValueAttributeAlias(string $alias) : ChartSeries
+    {
+        if ($this->getValueColumnDimension() === chart::AXIS_X) {
+            return $this->setXAttributeAlias($alias);
+        } else {
+            return $this->setYAttributeAlias($alias);
+        }
+    }
+    
+    /**
      * 
      * @return string
      */
