@@ -501,9 +501,15 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      */
     public function createSeriesFromUxon(UxonObject $uxon = null) : ChartSeries
     {
-        $type = mb_strtolower($uxon->getProperty('type'));
+        if ($uxon->hasProperty('type')) {
+            $type = mb_strtolower($uxon->getProperty('type'));
+        } elseif (empty($this->series) === false) {
+            $type = $this->series[count($this->series)-1]->getType();
+        } else {
+            throw new WidgetLogicError($this, 'Chart series type not set for series ' . count($this->series). '!');
+        }
         $class = $this::getSeriesClassName($type);
-        return new $class($this, $uxon);
+        return new $class($this, $uxon, $type);
     }
     
     public static function getSeriesClassName(string $chartType) : string
