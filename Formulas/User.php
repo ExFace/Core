@@ -1,9 +1,13 @@
 <?php
 namespace exface\Core\Formulas;
 
+use exface\Core\Exceptions\OutOfBoundsException;
+use exface\Core\DataTypes\StringDataType;
+
 /**
- * Replaces a set of characters with another.
- * E.g. SUBSTITUTE('asdf', 'df', 'as') = 'asas'
+ * Gets a property of the current user.
+ * 
+ * E.g. =User('username') or =User('email').
  *
  * @author Andrej Kabachnik
  *        
@@ -11,15 +15,23 @@ namespace exface\Core\Formulas;
 class User extends \exface\Core\CommonLogic\Model\Formula
 {
 
-    function run($variable = null)
+    function run($property = null)
     {
-        switch ($variable) {
+        $user = $this->getWorkbench()->getContext()->getScopeUser()->getUserCurrent();
+        if ($property === null || $property === 'user_name') {
+            return $user->getUsername();
+        }
+        switch ($property) {
             case "id":
-                return $this->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->getUid();
-            case "user_name":
+                return $user->getUid();
+            case "full_name": 
+                return $user->getFirstName() . ' ' . $user->getLastName();
             default:
-                return $this->getWorkbench()->getContext()->getScopeUser()->getUsername();
-            // TODO Add the possibility to fetch other user data like first and last name, etc.
+                $getter ='get' . StringDataType::convertCaseUnderscoreToPascal($property);
+                if (method_exists($user, $getter)) {
+                    return call_user_func([$user, $getter]);
+                }
+                throw new OutOfBoundsException('User property "' . $property . '" not found!');
         }
     }
 }
