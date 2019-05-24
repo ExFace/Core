@@ -320,7 +320,7 @@ class Console extends AbstractWidget
      * 
      * @uxon-property environment_vars
      * @uxon-type object
-     * @uxon-template {"VARNAME": "value"}
+     * @uxon-template {"VARNAME": "value"} 
      * 
      * @param UxonObject $uxon
      * @return Console
