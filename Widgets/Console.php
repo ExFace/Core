@@ -14,11 +14,10 @@ use exface\Core\Exceptions\RuntimeException;
  * 
  * ```
  * {
- * 	"widget_type": "Console",
+ *  "widget_type": "Console",
  *  "allowed_commands": [
- *      "/cd .* /",
- *      "/git .* /",
- *      "/whoami/"
+ *      "@cd .*@",
+ *      "@git .*@"
  *  ],
  *  "start_commands": [
  *      "git status"
@@ -319,14 +318,14 @@ class Console extends AbstractWidget
     /**
      * Environment variables to be used when executing commands as key-value-pairs.
      * 
-     * @uxon-object environment_variables
+     * @uxon-property environment_vars
      * @uxon-type object
      * @uxon-template {"VARNAME": "value"}
      * 
      * @param UxonObject $uxon
      * @return Console
      */
-    public function setEvironmentVars(UxonObject $uxon) : Console
+    public function setEnvironmentVars(UxonObject $uxon) : Console
     {
         $this->environmentVars = $uxon->toArray();
         return $this;
