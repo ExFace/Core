@@ -74,4 +74,30 @@ class LineChartSeries extends ChartSeries implements StackableChartSeriesInterfa
     use FillableChartSeriesTrait;
     use StackableChartSeriesTrait;
     use XYChartSeriesTrait;
+    
+    private $smooth = null;
+    
+    /**
+     *
+     * @return float
+     */
+    public function isSmooth(bool $default = false) : ?bool
+    {
+        return $this->smooth ?? $default;
+    }
+    
+    /**
+     * Set to true if you want the series to have a smooth line.
+     *
+     * @uxon-property smooth
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return LineChartSeries
+     */
+    public function setSmooth(bool $value) : LineChartSeries
+    {
+        $this->smooth = $value;
+        return $this;
+    }
 }
