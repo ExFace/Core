@@ -58,6 +58,29 @@ trait iHaveContextualHelpTrait {
     /**
      * Custom configuration for the contextual help button.
      * 
+     * For example, a help-dialog showing some external HTML help page:
+     * 
+     * ```
+     * {
+     *  "widget_type": "Form",
+     *  "help_button": {
+     *      "action": {
+     *          "alias": "exface.Core.ShowHelpDialog",
+     *          "widget": {
+     *              "widget_type": "Dialog",
+     *              "widgets": [
+     *                  {
+     *                      "widget_type": "Browser",
+     *                      "url": "http://yourdomain.com/custom/help/url"
+     *                  }
+     *              ]
+     *          }
+     *      }
+     *  }
+     * }
+     * 
+     * ```
+     * 
      * @uxon-property help_button
      * @uxon-type \exface\Core\Widgets\Button
      * @uxon-template {"action": {"alias": "exface.Core.ShowHelpDialog", "widget": {"":""}}}
