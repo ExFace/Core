@@ -538,6 +538,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     {
         if ($string_or_widget_link) {
             $this->prefill_with_data_from_widget_link = WidgetLinkFactory::createFromWidget($this->getWidgetDefinedIn(), $string_or_widget_link);
+            $this->setPrefillWithPrefillData(true);
         }
         return $this;
     }
