@@ -47,6 +47,7 @@ use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeReplaceDataEvent;
 use exface\Core\Events\DataSheet\OnReplaceDataEvent;
 use exface\Core\Factories\RelationPathFactory;
+use exface\Core\DataTypes\DataSheetDataType;
 
 /**
  * Internal data respresentation object in exface.
@@ -731,10 +732,22 @@ class DataSheet implements DataSheetInterface
                 // throw new MetaAttributeNotFoundError($this->getMetaObject(), 'Cannot find attribute for data sheet column "' . $col->getName() . '"!');
                 continue;
             }
+            
             // Fetch all attributes with fixed values and add them to the sheet if not already there
+            
+            // If it's a column with a related attribute, we only need to process the relation
+            // once, so skip already processed relations at this point.
             $rel_path = $col->getAttribute()->getRelationPath()->toString();
-            if ($processed_relations[$rel_path])
+            if ($processed_relations[$rel_path]) {
                 continue;
+            }
+            
+            // If there is a relation path, but the column contains subsheets, it's data will
+            // be treated in the subsheet, so we don't need to process it here.
+            if ($col->getDataType()->is(DataSheetDataType::class) === true) {
+                continue;
+            }
+            
             /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
             foreach ($col->getAttribute()->getObject()->getAttributes() as $attr) {
                 if ($expr = $attr->getFixedValue()) {
@@ -766,9 +779,22 @@ class DataSheet implements DataSheetInterface
             if (! $column->getExpressionObj()->isMetaAttribute()) {
                 // Skip columns, that do not represent a meta attribute
                 continue;
-            } elseif ($column->getAttribute()->isWritable() === false && ($this->hasUidColumn() && $column === $this->getUidColumn()) === false) {
+            } elseif ($column->getAttribute()->isWritable() === false && ($this->hasUidColumn() === true && $column === $this->getUidColumn()) === false) {
                 // Skip read-only attributes unless it is the UID column (which will be used as a filter later on)
                 continue;
+            } elseif ($column->getDataType()->is(DataSheetDataType::class)) {
+                // Update nested sheets
+                foreach ($column->getValues(false) as $sheetArr) {
+                    if (! $sheetArr) {
+                        continue;
+                    }
+                    
+                    $nestedSheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $sheetArr);
+                    if ($nestedSheet->isEmpty() === false) {
+                        $nestedSheet->dataUpdate($create_if_uid_not_found, $transaction);
+                    }
+                }
+                continue;                
             } elseif (! $column->getAttribute()) {
                 // Skip columns, that reference non existing attributes
                 // TODO Is throwing an exception appropriate here?
@@ -934,8 +960,10 @@ class DataSheet implements DataSheetInterface
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeCreateDataEvent($this, $transaction));
+        
         // Create a query
         $query = QueryBuilderFactory::createForObject($this->getMetaObject());
+        $nestedSheets = [];
         
         // Add values for columns based on attributes with defaults or fixed values
         foreach ($this->getMetaObject()->getAttributes()->getAll() as $attr) {
@@ -987,10 +1015,26 @@ class DataSheet implements DataSheetInterface
             if (! $column->getExpressionObj()->isMetaAttribute()) {
                 continue;
             }
+            // if the column contains nested data sheets, we will need to save them after we
+            // created the data for the main sheet.
+            if ($column->getDataType()->is(DataSheetDataType::class)) {
+                foreach ($column->getValues(false) as $rowNr => $sheetArr) {
+                    if (! $sheetArr) {
+                        $nestedSheets[$rowNr][] = null;
+                        continue;
+                    }
+                    
+                    $nestedSheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $sheetArr);
+                    $nestedSheets[$rowNr][] = $nestedSheet;
+                }
+                continue;
+            } 
+            
             // Skip columns with read-only attributes
             if (! $column->getAttribute()->isWritable()) {
                 continue;
             }
+            
             // Check if the meta attribute really exists
             if (! $column->getAttribute()) {
                 throw new MetaAttributeNotFoundError($this->getMetaObject(), 'Cannot find attribute for data sheet column "' . $column->getName() . '"!');
@@ -1028,6 +1072,17 @@ class DataSheet implements DataSheetInterface
             $transaction->rollback();
             $commit = false;
             throw new DataSheetWriteError($this, $e->getMessage(), ($e instanceof ExceptionInterface ? $e->getAlias() : null), $e);
+        }
+        
+        // Create data for the nested sheets
+        if (empty($nestedSheets) === false) {
+            if (count($new_uids) !== count($nestedSheets)) {
+                throw new DataSheetRuntimeError($this, 'Cannot create nested data: ' . count($nestedSheet) . ' nested data sheets found for ' . count($new_uids) . ' UID keys in the parent sheet.');
+            }
+            
+            // TODO create nested data: need to use $new_uids as values in the corresponding columns
+            // of the nested data sheets!
+            throw new DataSheetRuntimeError($this, 'Creating nested data at the same time, as parent data not implemented yet!');
         }
         
         if ($commit && ! $transaction->isRolledBack()) {
