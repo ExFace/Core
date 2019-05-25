@@ -44,7 +44,7 @@ class ArrayDataType extends AbstractDataType
      */
     public static function isSequential(array $array) : bool
     {
-        static::isAssociative($array) === false;
+        return static::isAssociative($array) === false;
     }
     
     /**
