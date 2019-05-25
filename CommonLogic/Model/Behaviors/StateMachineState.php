@@ -268,7 +268,7 @@ class StateMachineState
      */
     public function getName($prependId = false)
     {
-        if ($this->isValueFormula($this->name) === true) {
+        if ($this->name !== null && $this->isValueFormula($this->name) === true) {
             try {
                 $this->name = $this->evaluatePropertyExpression($this->name);
             } catch (RuntimeException $e) {

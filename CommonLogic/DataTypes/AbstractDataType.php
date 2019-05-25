@@ -145,9 +145,9 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::cast()
      */
-    public static function cast($string)
+    public static function cast($value)
     {
-        return static::isEmptyValue($string) === true ? null : $string;
+        return static::isEmptyValue($value) === true ? null : $value;
     }
     
     /**
@@ -155,9 +155,9 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::isEmptyValue()
      */
-    public static function isEmptyValue($string) : bool
+    public static function isEmptyValue($value) : bool
     {
-        return $string === null || $string === '';
+        return $value === null || $value === '';
     }
     
     /**
@@ -165,10 +165,10 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::parse()
      */
-    public function parse($string)
+    public function parse($value)
     {
         try {
-            return static::cast($string);
+            return static::cast($value);
         } catch (\Throwable $e) {
             throw $this->createValidationError($e->getMessage(), null, $e);
         }

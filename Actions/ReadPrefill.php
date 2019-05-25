@@ -50,6 +50,9 @@ class ReadPrefill extends ReadData
             $data_sheet = $this->getInputDataSheet($task);
         }
         
+        // We don't need the total row count for prefills.
+        $data_sheet->setAutoCount(false);
+        
         if ($data_sheet->isEmpty()) {
             return ResultFactory::createDataResult($task, $data_sheet);
         } else {

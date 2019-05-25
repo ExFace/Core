@@ -9,7 +9,6 @@ use exface\Core\CommonLogic\Traits\WidgetLayoutTrait;
 use exface\Core\Widgets\Traits\iAmCollapsibleTrait;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
-use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 use exface\Core\CommonLogic\UxonObject;
 
 /**
@@ -60,4 +59,3 @@ class Panel extends WidgetGrid implements iSupportLazyLoading, iHaveIcon, iAmCol
         return $this;
     }
 }
-?>
