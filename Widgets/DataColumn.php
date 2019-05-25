@@ -181,9 +181,13 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             if ($this->isBoundToAttribute() === true) {
                 $attr = $this->getAttribute();
                 if ($this->isEditable() === true) {
-                    $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $attr->getDefaultEditorUxon(), $this, 'Input');
+                    $uxon = $attr->getDefaultEditorUxon();
+                    $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
+                    $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Input');
                 } else {
-                    $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $attr->getDefaultDisplayUxon(), $this, 'Display');
+                    $uxon = $attr->getDefaultDisplayUxon();
+                    $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
+                    $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Display');
                 } 
             } else {
                 $this->cellWidget = WidgetFactory::create($this->getPage(), 'Display', $this);

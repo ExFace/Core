@@ -26,7 +26,6 @@ use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 use exface\Core\Interfaces\Widgets\iHaveHeader;
 use exface\Core\Interfaces\Widgets\iHaveFooter;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
-use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
@@ -921,7 +920,7 @@ class Data
      * 
      * @uxon-property paginator
      * @uxon-type \exface\Core\Widgets\DataPaginator
-     * @uxon-template {"count_all_rows": "true"}
+     * @uxon-template {"count_all_rows": true}
      * 
      * @param UxonObject $uxon
      * @return Data
@@ -1306,29 +1305,8 @@ class Data
      */
     public function getHelpWidget(iContainOtherWidgets $help_container) : iContainOtherWidgets
     {
-        /**
-         *
-         * @var DataTable $table
-         */
-        $table = WidgetFactory::create($help_container->getPage(), 'DataTableResponsive', $help_container);
-        $object = $this->getWorkbench()->model()->getObject('exface.Core.USER_HELP_ELEMENT');
-        $table->setMetaObject($object);
-        $table->setCaption($this->getWidgetType() . ($this->getCaption() ? '"' . $this->getCaption() . '"' : ''));
-        $table->addColumn($table->createColumnFromAttribute($object->getAttribute('TITLE')));
-        $table->addColumn($table->createColumnFromAttribute($object->getAttribute('DESCRIPTION')));
-        $table->setLazyLoading(false);
-        $table->setPaginate(false);
-        $table->setNowrap(false);
-        $table->setRowGrouper(UxonObject::fromArray(array(
-            'group_by_attribute_alias' => 'GROUP',
-            'hide_caption' => true
-        )));
-        
-        // IMPORTANT: make sure the help table does not have a help button itself, because that would result in having
-        // infinite children!
-        $table->setHideHelpButton(true);
-        
-        $data_sheet = DataSheetFactory::createFromObject($object);
+        $table = $this->getHelpTable($help_container);
+        $data_sheet = DataSheetFactory::createFromObject($table->getMetaObject());
         
         foreach ($this->getFilters() as $filter) {
             $row = array(

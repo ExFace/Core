@@ -131,6 +131,9 @@
             {
                 "action_alias": "axenox.PackageManager.InstallAppFromVendorFolder",
                 "caption": "=TRANSLATE('axenox.PackageManager', 'ACTION.INSTALLAPP.NAME')"
+            },
+            {
+                "action_alias": "exface.Core.ShowAppGitConsoleDialog"
             }
         ]
     }

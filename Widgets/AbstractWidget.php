@@ -31,6 +31,7 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
 use exface\Core\Uxon\WidgetSchema;
+use exface\Core\Widgets\Traits\iHaveVisibilityTrait;
 
 /**
  * Basic ExFace widget
@@ -44,6 +45,7 @@ abstract class AbstractWidget implements WidgetInterface
 		importUxonObject as importUxonObjectDefault;
 	}
 	use iHaveCaptionTrait;
+	use iHaveVisibilityTrait;
 
     private $id_specified = null;
 
@@ -982,42 +984,6 @@ else {
             $this->setVisibility(EXF_WIDGET_VISIBILITY_HIDDEN);
         } else {
             $this->setVisibility(EXF_WIDGET_VISIBILITY_NORMAL);
-        }
-        return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\WidgetInterface::getVisibility()
-     */
-    public function getVisibility()
-    {
-        if ($this->visibility === null)
-            $this->setVisibility(EXF_WIDGET_VISIBILITY_NORMAL);
-        return $this->visibility;
-    }
-
-    /**
-     * Sets the visibility of the widget: normal, hidden, optional, promoted.
-     *
-     * @uxon-property visibility
-     * @uxon-type [normal,promoted,optional,hidden]
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\WidgetInterface::setVisibility()
-     */
-    public function setVisibility($value)
-    {
-        if (is_int($value)){
-            $this->visibility = $value;
-        } else {
-            if (! defined('EXF_WIDGET_VISIBILITY_' . mb_strtoupper($value))) {
-                throw new WidgetPropertyInvalidValueError($this, 'Invalid visibility value "' . $value . '" for widget "' . $this->getWidgetType() . '"!', '6T90UH3');
-            }
-            $this->visibility = constant('EXF_WIDGET_VISIBILITY_'. mb_strtoupper($value));
         }
         return $this;
     }
