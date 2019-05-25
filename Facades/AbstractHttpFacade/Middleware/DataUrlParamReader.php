@@ -137,7 +137,7 @@ class DataUrlParamReader implements MiddlewareInterface
                         }
                     }
                 }
-                if (is_array($val) === true && ArrayDataType::isAssociative($val) === true) {
+                if (is_array($val) === true && ArrayDataType::isSequential($val) === true) {
                     if ($attr || $data_sheet->getMetaObject()->hasAttribute($field)) {
                         $result_before = $result;
                         foreach ($result_before as $nr => $r){
