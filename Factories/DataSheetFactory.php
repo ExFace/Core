@@ -97,7 +97,9 @@ abstract class DataSheetFactory extends AbstractUxonFactory
             return $data_sheet_or_uxon;
         } elseif ($data_sheet_or_uxon instanceof UxonObject) {
             return static::createFromUxon($exface, $data_sheet_or_uxon);
-        } elseif (! is_object($data_sheet_or_uxon)) {
+        } elseif (is_array($data_sheet_or_uxon) === true) {
+            return static::createFromUxon($exface, new UxonObject($data_sheet_or_uxon));
+        } elseif (is_string($data_sheet_or_uxon) === true) {
             return static::createFromUxon($exface, UxonObject::fromJson($data_sheet_or_uxon));
         } else {
             throw new InvalidArgumentException('Cannot create data sheet from "' . get_class($data_sheet_or_uxon) . '"!');
