@@ -118,7 +118,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      *
      * @return boolean
      */
-    public function getSortable()
+    public function isSortable()
     {
         if (is_null($this->sortable)) {
             if ($attr = $this->getAttribute()) {
