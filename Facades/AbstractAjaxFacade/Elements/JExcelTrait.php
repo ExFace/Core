@@ -9,6 +9,9 @@ use exface\Core\Widgets\InputCombo;
 use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Widgets\InputHidden;
+use exface\Core\Widgets\InputNumber;
+use exface\Core\Widgets\InputCheckBox;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -22,6 +25,21 @@ use exface\Core\DataTypes\StringDataType;
  *  }
  * }
  * 
+ * ```
+ * 
+ * If your facade is based on the `AbstractAjaxFacade`, add these configuration options
+ * to the facade config file. Make sure, each config option points to an existing
+ * inlcude file!
+ * 
+ * ```
+ *  "LIBS.JEXCEL.JS": "paulhodel/jexcel/dist/js/jquery.jexcel.js",
+ *  "LIBS.JEXCEL.JS_DROPDOWN": "paulhodel/jexcel/dist/js/jquery.jdropdown.js",
+ *  "LIBS.JEXCEL.JS_FORMULAS": "paulhodel/jexcel/dist/js/jexcel-formula.min.js",
+ *  "LIBS.JEXCEL.JS_CALENDAR": "paulhodel/jexcel/dist/js/jquery.jcalendar.js",
+ *  "LIBS.JEXCEL.CSS": "paulhodel/jexcel/dist/css/jquery.jexcel.css",
+ *	"LIBS.JEXCEL.CSS_DROPDOWN": "paulhodel/jexcel/dist/css/jquery.jdropdown.css",
+ *	"LIBS.JEXCEL.CSS_CALENDAR": "paulhodel/jexcel/dist/css/jquery.jcalendar.css",
+ *	
  * ```
  * 
  * @method DataImporter getWidget()
@@ -111,19 +129,20 @@ JS;
      */
     protected function buildJsJExcelColumn(DataColumn $col) : string
     {
-        if ($col->isHidden() === true) {
-            return '';
-        }
         $cellWidget = $col->getCellWidget();
         switch (true) {
-            case ($cellWidget instanceof InputCombo):
+            case $col->isHidden() === true:
+            case $cellWidget instanceof InputHidden:
+                return "{ type: 'hidden' }";
+            case $cellWidget instanceof InputNumber:
+                return "{ type: 'numeric' }";
+            case $cellWidget instanceof InputCheckBox:
+                return "{ type: 'checkbox' }";
+            case $cellWidget instanceof InputCombo:
                 return $this->buildJsJExcelColumnAutocomplete($cellWidget);
         }
-        return <<<JS
-
-            { type: 'text' }
-
-JS;
+        
+        return "{ type: 'text' }";
     }
         
     protected function buildJsJExcelColumnAutocomplete(InputSelect $cellWidget) : string
