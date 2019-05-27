@@ -20,9 +20,9 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
  * 
  * Forms and their derivatives provide input data for actions.
  *
- * While having similar purpose as HTML forms, ExFace forms are not the same! They can be nested, they may include tabs,
- * optional panels with lazy loading, etc. Thus, in most HTML-facades the form widget will not be mapped to an HTML
- * form, but rather to some container element (e.g. <div>), while fetching data from the form will need to be custom
+ * While having similar purpose as HTML forms, `Form` widgets are not the same! They can be nested, they may include tabs,
+ * optional panels with lazy loading, etc. Thus, in most HTML-facades the `Form` widget will not be mapped to an HTML
+ * form, but rather to some container element (e.g. `<div>`), while fetching data from the form will need to be custom
  * implemented (i.e. with JavaScript).
  *
  * @author Andrej Kabachnik
