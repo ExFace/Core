@@ -460,4 +460,9 @@ trait XYChartSeriesTrait
     {
         return $this->yAttributeAlias !== null;
     }
+    
+    public function getValueAxis() : ChartAxis
+    {
+        return $this->getValueColumnDimension() === Chart::AXIS_X ? $this->getXAxis() : $this->getYAxis();
+    }
 }
