@@ -17,6 +17,8 @@ use exface\Core\Widgets\Parts\Charts\RoseChartSeries;
 use exface\Core\Widgets\Parts\Charts\SplineChartSeries;
 use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
 use exface\Core\Widgets\Parts\Charts\AreaChartSeries;
+use exface\Core\Exceptions\Facades\FacadeOutputError;
+use exface\Core\Widgets\Parts\Charts\Traits\XYChartSeriesTrait;
 
 /**
  * 
@@ -72,6 +74,13 @@ trait EChartsTrait
         {$this->buildJsRedrawFunctionBody('oData')}
     };
 
+    function {$this->buildJsSelectFunctionName()}(selection) {
+        {$this->buildJsSelectFunctionBody('selection')}
+    };
+
+
+    {$this->buildJsOnClickFunction()}
+
 
     
 JS;
@@ -98,51 +107,86 @@ JS;
     {
         return <<<JS
     var {$this->buildJsEChartsVar()} = echarts.init(document.getElementById('{$this->getId()}'));
-    setTimeout(function(){
+    $(function(){
         {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()});
         // Call the data loader to populate the Chart initially
         {$this->buildJsRefresh()}
-    }, 1000);
-        {$this->buildJsOnClickFunction()}
-
-        {$this->getOnChangeScript()}
-        
+    });        
 
 JS;
+    }
+        
+    protected function buildJsSelectFunctionName() : string
+    {
+        return $this->buildJsFunctionPrefix() . 'select';
+    }
+    
+    protected function buildJsSelectFunctionBody(string $selection) : string
+    {
+        return <<<JS
+
+            var data = '';
+            if (typeof {$this->buildJsEChartsVar()}._oldselection == 'undefined') {
+                {$this->buildJsEChartsVar()}._oldSelection = $selection;
+                {$this->getOnChangeScript()}
+            } else {
+                if (({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', $selection)}) == false) {
+                    {$this->buildJsEChartsVar()}._oldSelection = $selection;
+                    data = {$this->buildJsValueGetter('FilialeNr')};
+                    {$this->getOnChangeScript()}
+                }
+            }
+    
+JS;
+    }
+                
+    protected function buildJsRowCompare(string $leftRowJs, string $rightRowJs) : string
+    {
+        return "(JSON.stringify({$leftRowJs}) == JSON.stringify({$rightRowJs}))";
     }
         
     protected function buildJsOnClickFunction() : string {
         return <<<JS
 
         {$this->buildJsEChartsVar()}.on('click', function(params){
-            console.log(params);
             var dataRow = params.data;
+
             if (params.seriesType == 'pie') {
-            
+                if ((typeof {$this->buildJsEChartsVar()}._oldSelection != 'undefined') && ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')}) == true) {
+                    {$this->buildJsSelectFunctionName()}()                    
+                } else {
+                    {$this->buildJsSelectFunctionName()}(dataRow)
+                }            
             } else {
                 var options = {$this->buildJsEChartsVar()}.getOption();
-                var newOptions = {series: []};        
+                var newOptions = {series: []};
+                var sameValue = false;
                 options.series.forEach((series) => {
                     newOptions.series.push({markLine: {data: {}}});                
-                });            
-                if (("_bar" in options.series[params.seriesIndex]) == true) {
-                    newOptions.series[params.seriesIndex].markLine.data = [ 
-                        {
-            				yAxis: dataRow[options.series[params.seriesIndex].encode.y]
-            			}
-                    ];
-                } else {  
-                    newOptions.series[params.seriesIndex].markLine.data = [ 
-                        {
-            				xAxis: dataRow[options.series[params.seriesIndex].encode.x]
-            			}
-                    ];
+                });
+                if ((typeof {$this->buildJsEChartsVar()}._oldSelection != 'undefined') && ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')}) == true) {
+                    {$this->buildJsSelectFunctionName()}()                    
+                } else {
+                    if (("_bar" in options.series[params.seriesIndex]) == true) {
+                        newOptions.series[params.seriesIndex].markLine.data = [ 
+                            {
+                				yAxis: dataRow[options.series[params.seriesIndex].encode.y]
+                			}
+                        ];
+                    } else {  
+                        newOptions.series[params.seriesIndex].markLine.data = [ 
+                            {
+                				xAxis: dataRow[options.series[params.seriesIndex].encode.x]
+                			}
+                        ];
+                    }
+                    {$this->buildJsSelectFunctionName()}(dataRow)
                 }
                 {$this->buildJsEChartsVar()}.setOption(newOptions);
             }
-            {$this->buildJsEChartsVar()}._selection = dataRow;
-            {$this->getOnChangeScript()}
-            console.log('data getter: ', {$this->buildJsValueGetter('Datum__Tag')});
+            
+            //{$this->getOnChangeScript()}
+            
     });
 
 JS;
@@ -158,7 +202,14 @@ JS;
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support pie charts with multiple series!');
             }
             $seriesConfig .= $this->buildJsChartSeriesConfig($s);
+            
+            if ($s instanceof BarChartSeries && $s->getIndex() != 0) {
+                if ($series[$s->getIndex() - 1] instanceof BarChartSeries === false) {
+                    throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support bar charts mixed with other chart types!');
+                }
+            }
         }
+            
         return <<<JS
 
 {
@@ -167,7 +218,6 @@ JS;
    	legend: {$this->buildJsChartPropertyLegend()}
 	series: [$seriesConfig],
     {$this->buildJsAxes()}
-    {$this->buildJsZoom()}
     
 }
 
@@ -178,23 +228,6 @@ JS;
     {
         return $series->getValueDataColumn()->getDataColumnName();
     }
-    
-    /*protected function buildJsPropertyLine() : string
-    {
-        $opts = [];
-        foreach ($this->getWidget()->getSeries() as $series) {
-            if (! $series instanceof LineChartSeries) {
-                continue;
-            }
-            
-            $opts['point'][$this->getSeriesKey($series)] = true;
-        }
-        
-        if (empty($opts) === false) {
-            return 'line: ' . json_encode($opts) . ',';
-        }
-        return '';
-    }*/
         
     protected function buildJsChartSeriesConfig(ChartSeries $series) : string
     {
@@ -393,10 +426,13 @@ JS;
         $widget = $this->getWidget();
         $xAxesJS = '';
         $yAxesJS = '';
+        $zoom = '';
         foreach ($widget->getAxesX() as $axis){
            $xAxesJS .= $this->buildJsAxisProperties($axis);
+           $zoom .= $this->buildJsAxisZoom($axis);
         }        
         foreach ($widget->getAxesY() as $axis){
+            $zoom .= $this->buildJsAxisZoom($axis);
             if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false){
                 $countAxisLeft++;
                 $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisLeft);
@@ -409,6 +445,7 @@ JS;
 
 xAxis: [$xAxesJS],
 yAxis: [$yAxesJS],
+dataZoom: [$zoom],
 
 JS;
     }
@@ -439,20 +476,28 @@ JS;
         
         $axisType = mb_strtolower($axis->getAxisType());
         $position = mb_strtolower($axis->getPosition());
-        
         if ($axis->getDimension() == Chart::AXIS_Y){
             $nameGap = $this->baseAxisNameGap()* $nameGapMulti;
+            if ($axis->isReverse() === true) {
+                $inverse = "inverse: true,";
+                $nameLocation = "nameLocation: 'start',";
+            } else {
+                $inverse = '';
+            }
         } else {
             $nameGap = $this->baseAxisNameGap() * 1.5;
         }
+        
+        
         
         
         return <<<JS
         
     {
         id: '{$axis->getIndex()}',
-        name: '{$axis->getCaption()}',
-        $nameLocation
+        name: '{$axis->getCaption()}',        
+        {$nameLocation}
+        {$inverse}
         type: '{$axisType}',
         splitLine: { show: $grid },
         position: '{$position}',
@@ -463,44 +508,34 @@ JS;
                 return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'a')}
             }
         },
-        $min
-        $max
+        {$min}
+        {$max}
     },
 
 JS;
     }
         
-    protected function buildJsZoom() : string
+    protected function buildJsAxisZoom(ChartAxis $axis) : string
     {
-        if ($this->isPieChartSeries() === true){
-            return '';
-        }
-        return <<<JS
+        if ($axis->isZoomable() === true){
+                $zoom = <<<JS
 
-        dataZoom: [
         {
             type: 'slider',
-            xAxisIndex: 0,
-            filterMode: 'empty'
-        },
-        {
-            type: 'slider',
-            yAxisIndex: 0,
-            filterMode: 'empty'
+            {$axis->getDimension()}AxisIndex: {$axis->getIndex()},
+            filterMode: 'filter'
         },
         {
             type: 'inside',
-            xAxisIndex: 0,
-            filterMode: 'empty'
+            {$axis->getDimension()}AxisIndex: {$axis->getIndex()},
+            filterMode: 'filter'
         },
-        {
-            type: 'inside',
-            yAxisIndex: 0,
-            filterMode: 'empty'
-        }
-        ],
 
 JS;
+        } else {
+            $zoom = '';
+        }        
+        return $zoom;
     }
         
     protected function buildJsMarkLineProperties() : string
@@ -508,7 +543,7 @@ JS;
         return <<<JS
 
     markLine: {
-        data: {},
+        data: [],
         silent: true,
         symbol: 'circle',
         animation: false,
@@ -584,9 +619,13 @@ JS;
                     $offset = 'len * 7';
                 }
                 $axesOffsetCalc .= <<<JS
-
+        
         val = row['{$axis->getDataColumn()->getDataColumnName()}'];
-        len = (typeof val === 'string' || val instanceof String ? val.length : val.toString().length);
+        if (val === undefined) {
+            len = 0;
+        } else {
+            len = (typeof val === 'string' || val instanceof String ? val.length : val.toString().length);
+        }
         offset = {$offset};
         if (axes["{$axis->getDataColumn()->getDataColumnName()}"]['offset'] < offset) {
             axes["{$axis->getDataColumn()->getDataColumnName()}"]['offset'] = offset;
@@ -599,7 +638,9 @@ JS;
     axes["{$axis->getDataColumn()->getDataColumnName()}"] = {
         offset: 0,
         dimension: "{$axis->getDimension()}",
-        position: "{$postion}"
+        position: "{$postion}",
+        index: "{$axis->getIndex()}",
+        name: "{$axis->getDataColumn()->getDataColumnName()}",
     };
 
 JS;
@@ -607,7 +648,7 @@ JS;
             
             $js = <<<JS
             
-    var keys = Object.keys(rowData[0]);
+    //var keys = Object.keys(rowData[0]);
     var longestString = 0;
     
     
@@ -636,6 +677,11 @@ JS;
             offset: offsets[axis.position],
             show: true
         });
+        
+        if (axis.offset === 0) {
+            {$this->buildJsShowMessageError("'{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.ECHARTS.AXIS_NO_DATA')} \"' + axis.name + '\"'")}
+        }
+        
         offsets[axis.position] += axis.offset;
     }
     
@@ -741,8 +787,10 @@ JS;
     protected function buildJsChartPropertyLegend() : string
     {
         $padding = '';
-        $position = $this->getWidget()->getLegendPosition();
-        if ($position === null && $this->getWidget()->getSeries()[0] instanceof PieChartSeries) {
+        $widget = $this->getWidget();
+        $firstSeries = $widget->getSeries()[0];
+        $position = $widget->getLegendPosition();
+        if ($position === null && $firstSeries instanceof PieChartSeries) {
             $positionJs = "show: false";
         } elseif ($position == 'top' ){
             $positionJs = "top: 'top',";            
@@ -753,13 +801,22 @@ JS;
         } elseif ($position == 'right'){
             $positionJs = "left: 'right', orient: 'vertical',";
         }
-        if ($this->getWidget()->getSeries()[0] instanceof PieChartSeries){            
+        if ($firstSeries instanceof PieChartSeries){            
             $padding = 'padding: [20,10,20,10],';
+        }
+        
+        if (count($widget->getSeries()) == 1 && ($firstSeries instanceof PieChartSeries) === false) {
+            if ($firstSeries->getValueDataColumn() == $firstSeries->getValueAxis()->getDataColumn()){
+                $show = 'show: false,';                
+            } else {
+                $show = '';
+            }
         }
         return <<<JS
 
 {
 	type: 'scroll',
+    {$show}
     {$padding}    
     {$positionJs}
 
@@ -842,11 +899,28 @@ JS;
     
     public function buildJsValueGetter($column = null, $row = null)
     {
+        if ($column != null) {
+            $key = $column;
+        } else {
+            if ($this->getWidget()->hasUidColumn() === true) {
+                $column = $this->getWidget()->getUidColumn()->getDataColumn();
+            } else {
+                throw new FacadeOutputError('Cannot create a value getter for a data widget without a UID column: either specify a column to get the value from or a UID column for the table.');
+            }
+        } 
+        
+        
+        
         return <<<JS
 
-function(){
-return {$this->buildJsEChartsVar()}._selection;
-}()
+                function(){
+                    var data = '';
+                    var selectedRow = {$this->buildJsEChartsVar()}._oldSelection;
+                    if (selectedRow && '{$key}' in selectedRow) {
+                        data = selectedRow["{$key}"];
+                    }
+                return data;
+                }()
 
 JS;
     }
@@ -858,8 +932,39 @@ JS;
      */
     protected function buildJsDataResetter() : string
     {
-        // TODO
-        return "";
+        foreach ($this->getWidget()->getAxes() as $axis){
+            if ($axis->isHidden() === true) {
+                continue;
+            }
+            $axesJsObjectInit .= <<<JS
+            
+axes["{$axis->getDataColumn()->getDataColumnName()}"] = {
+    dimension: "{$axis->getDimension()}"
+};
+ 
+JS;
+            
+        return <<<JS
+
+var axes = {};
+{$axesJsObjectInit}
+
+var newOptions = {yAxis: [], xAxis: []};
+var axis;
+
+for (var i in axes) {
+    axis = axes[i];
+    newOptions[axis.dimension + 'Axis'].push({
+        show: false
+    });
+}
+
+newOptions.dataset = {source: []};
+
+{$this->buildJsEChartsVar()}.setOption(newOptions);
+
+JS;
+        }
     }
     
 }
