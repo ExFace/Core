@@ -48,6 +48,7 @@ use exface\Core\Events\DataSheet\OnBeforeReplaceDataEvent;
 use exface\Core\Events\DataSheet\OnReplaceDataEvent;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\DataTypes\DataSheetDataType;
+use exface\Core\DataTypes\RelationCardinalityDataType;
 
 /**
  * Internal data respresentation object in exface.
@@ -1025,7 +1026,7 @@ class DataSheet implements DataSheetInterface
                     }
                     
                     $nestedSheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $sheetArr);
-                    $nestedSheets[$rowNr][] = $nestedSheet;
+                    $nestedSheets[$rowNr][$column->getName()] = $nestedSheet;
                 }
                 continue;
             } 
@@ -1080,9 +1081,23 @@ class DataSheet implements DataSheetInterface
                 throw new DataSheetRuntimeError($this, 'Cannot create nested data: ' . count($nestedSheet) . ' nested data sheets found for ' . count($new_uids) . ' UID keys in the parent sheet.');
             }
             
-            // TODO create nested data: need to use $new_uids as values in the corresponding columns
-            // of the nested data sheets!
-            throw new DataSheetRuntimeError($this, 'Creating nested data at the same time, as parent data not implemented yet!');
+            foreach ($nestedSheets as $rowNr => $rowNestedSheets) {
+                $rowUid = $new_uids[$rowNr];
+                if ($rowUid === null || $rowUid === '') {
+                    throw new DataSheetRuntimeError($this, 'Number of created head-rows does not match the number of children rows!', '75TPT5L');
+                }
+                
+                foreach ($rowNestedSheets as $columnName => $nestedSheet) {
+                    $nestedRel = $this->getMetaObject()->getRelation($columnName);
+                    if ($nestedRel->getCardinality()->__toString() !== RelationCardinalityDataType::ONE_TO_N) {
+                        throw new DataSheetRuntimeError($this, 'Cannot create nested data for "' . $this->getMetaObject()->getName() . '" (' . $nestedRel->getRightObject()->getAliasWithNamespace() . ') within "' . $this->getMetaObject()->getRightObject()->getName() . '": only one-to-many relations allowed!');
+                    }
+                    $nestedFKeyAttr = $nestedRel->getRightKeyAttribute();
+                    $nestedFKeyCol = $nestedSheet->getColumns()->addFromAttribute($nestedFKeyAttr);
+                    $nestedFKeyCol->setValueOnAllRows($rowUid);
+                    $nestedSheet->dataCreate(false, $transaction);
+                }
+            }
         }
         
         if ($commit && ! $transaction->isRolledBack()) {

@@ -742,6 +742,19 @@ class DataColumn implements DataColumnInterface
     {
         $this->getDataSheet()->setCellValue($this->getName(), $row_number, $value);
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setValueOnAllRows()
+     */
+    public function setValueOnAllRows($value) : DataColumnInterface
+    {
+        foreach (array_keys($this->getDataSheet()->getRows()) as $row_number) {
+            $this->setValue($row_number, $value);
+        }
+        return $this;
+    }
 
     /**
      *
