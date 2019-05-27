@@ -47,6 +47,10 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     
     private $hidden = null;
     
+    private $reverse_direction = null;
+    
+    private $zoomable = null;
+    
     private $grid = null;
 
     const POSITION_TOP = 'TOP';
@@ -267,6 +271,56 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     }
     
     /**
+     *
+     * @return bool
+     */
+    public function isReverse(bool $default = false) : bool
+    {
+        return $this->reverse_direction ?? $default;
+    }
+    
+    /**
+     * Set to true to reverse the axis direction. Default is false
+     * 
+     * 
+     * @uxon-property reverse_direction
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return ChartAxis
+     */
+    public function setReverseDirection(bool $value) : ChartAxis
+    {
+        $this->reverse_direction = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isZoomable() : bool
+    {
+        return $this->zoomable ?? false;
+    }
+    
+    /**
+     * Set to true to be able to zoom data on that axis
+     *
+     *
+     * @uxon-property zoomable
+     * @uxon-type boolean
+     *
+     * @param bool $value
+     * @return ChartAxis
+     */
+    public function setZoomable(bool $value) : ChartAxis
+    {
+        $this->zoomable = $value;
+        return $this;
+    }
+    
+    /**
      * Set the axis type. Possible types are 'value', 'category', 'time', 'log'.
      * 
      * @uxon-property axis_type
@@ -364,6 +418,8 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
             throw new WidgetConfigurationError($this, 'Invalid chart axis configuration: neither attribute_alias nor data_colum_id were specified!', '6XUZ9ZE');
         }
         
+        $this->data_column = $column;
+        
         // If we have a time axis, we should to sort data - unsorted time looks really strange :)
         // Still, the user may choose to sort based on other criteria.
         if ($this->getAxisType() === self::AXIS_TYPE_TIME) {
@@ -372,8 +428,6 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
                 $dataWidget->addSorter($this->getDataColumn()->getAttributeAlias(), SortingDirectionsDataType::ASC);
             }
         }
-        
-        $this->data_column = $column;
         
         return $this;
     }
