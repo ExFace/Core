@@ -14,6 +14,7 @@ use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Widgets\Chart;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
  * The ChartAxis represents the X or Y axis of a chart.
@@ -361,6 +362,15 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
             }
         } else {
             throw new WidgetConfigurationError($this, 'Invalid chart axis configuration: neither attribute_alias nor data_colum_id were specified!', '6XUZ9ZE');
+        }
+        
+        // If we have a time axis, we should to sort data - unsorted time looks really strange :)
+        // Still, the user may choose to sort based on other criteria.
+        if ($this->getAxisType() === self::AXIS_TYPE_TIME) {
+            // If sorting was not taken care of at all - sort over time.
+            if (empty($dataWidget->getSorters()) === true) {
+                $dataWidget->addSorter($this->getDataColumn()->getAttributeAlias(), SortingDirectionsDataType::ASC);
+            }
         }
         
         $this->data_column = $column;
