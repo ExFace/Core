@@ -33,7 +33,7 @@ trait EChartsTrait
         $output = '';
         if ($link = $this->getWidget()->getDataWidgetLink()) {
             $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
-            $output .= $this->buildJsRedraw($linked_element->buildJsDataGetter());
+            $output .= $this->buildJsRedraw($linked_element->buildJsDataGetter().'.rows');
             //$output .= $this->buildJsFunctionPrefix() . 'plot(' . $linked_element->buildJsDataGetter() . ".rows);";
         }
         return $output;
@@ -50,9 +50,9 @@ trait EChartsTrait
         return $this;
     }
     
-    protected function buildHtmlChart() : string
+    protected function buildHtmlChart($style = 'height:100%; min-height: 100px; overflow: hidden;') : string
     {
-        return '<div id="' . $this->getId() . '" style="height:100%; min-height: 100px; overflow: hidden;"></div>';
+        return '<div id="' . $this->getId() . '" style="' . $style . '"></div>';
     }
     
     protected function buildHtmlHeadDefaultIncludes()
@@ -62,6 +62,10 @@ trait EChartsTrait
         
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.ECHARTS.ECHARTS_JS') . '"></script>';
         
+        foreach ($this->getWidget()->getData()->getColumns() as $col) {
+            $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
+            $includes = array_merge($includes, $formatter->buildHtmlBodyIncludes());
+        }
                 
         return $includes;
     }
@@ -108,16 +112,11 @@ JS;
     
     abstract protected function buildJsDataLoadFunctionBody();
     
-    public function buildJsEChartsInit() : string
+    public function buildJsEChartsInit($theme = null) : string
     {
         return <<<JS
-    var {$this->buildJsEChartsVar()} = echarts.init(document.getElementById('{$this->getId()}'));
-    $(function(){
-        
-        // Call the data loader to populate the Chart initially
-        {$this->buildJsRefresh()}
-    });
-       
+
+    var {$this->buildJsEChartsVar()} = echarts.init(document.getElementById('{$this->getId()}'), '{$theme}');
 
 JS;
     }
@@ -416,7 +415,7 @@ JS;
         
 {
     type: 'pie',
-    radius: ['$radius','80%'],
+    radius: ['$radius','60%'],
     center: ['$centerX', '50%'],
     data: [],
     label: {$label},
@@ -579,13 +578,9 @@ JS;
         }
         
         // Data type specific formatting
-        $formatter_js = '';
-        $cellTpl = $this->getFacade()->getElement($cellWidget);
-        if (($cellTpl instanceof JsValueDecoratingInterface) && $cellTpl->hasDecorator()) {
-            $formatter_js = $cellTpl->buildJsValueDecorator($js_var_value);
-        }
+        $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
         
-        return $formatter_js ? $formatter_js : $js_var_value;
+        return $formatter->buildJsFormatter($js_var_value);
     }
         
     protected function baseAxisNameGap() : int
@@ -611,7 +606,7 @@ for (var i = 0; i < arrayLength; i++){
 	}],
 	legend: {
 		data: rowData.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
-	}					
+	}				
 })
 JS;
         } else {
@@ -661,22 +656,20 @@ JS;
             
     //var keys = Object.keys(rowData[0]);
     var longestString = 0;
-    
-    
-    
+
     var axes = {};
     {$axesJsObjectInit}
     
     // Danach
     var val, offset;
     var len = 0;
-    $dataJs.rows.forEach(function(row){
+    rowData.forEach(function(row){
         {$axesOffsetCalc}
     })
     
     var newOptions = {yAxis: [], xAxis: []};
     var axis;
-    offsets = {
+    var offsets = {
         'top': 0,
         'right': 0,
         'bottom': 0,
@@ -712,11 +705,7 @@ JS;
         
     return <<<JS
     
-    if (! $dataJs) {
-        return;
-    }
-    
-    var rowData = $dataJs.rows;
+    var rowData = $dataJs;
     if (! rowData || rowData.count === 0) {
         {$this->buildJsDataResetter()};
         return;
@@ -767,7 +756,7 @@ JS;
             }
         }
         $margin = 35 + 15*$count;        
-        return $margin;;
+        return $margin;
     }
     
     protected function buildJsGridMarginLeft() : int
@@ -850,68 +839,6 @@ JS;
 JS;
     }
         
-    protected function buildJsChartPropertyGrid() : string
-    {
-        /*if ($this->getWidget()->getSeries()[0] instanceof PieChartSeries){
-            return '{},';
-        }
-        
-        $marginPerYAxis = $this->getWidget()->getYAxisOffset();
-        $marginPerXAxis = $this->getWidget()->getXAxisOffset();
-        $baseMarginTop = 60;
-        $baseMarginBottom = 60;
-        $baseMarginLeft = 60;
-        $baseMarginRight = 60;
-        $bottomAxisCount = 0;
-        $topAxisCount = 0;
-        $leftAxisCount = 0;
-        $rightAxisCount = 0;
-        
-        foreach ($this->getWidget()->getAxesX() as $xAxis){
-            if ($xAxis->getPosition() === ChartAxis::POSITION_BOTTOM){
-                $bottomAxisCount++;
-            } elseif ($xAxis->getPosition() === ChartAxis::POSITION_TOP){
-                $topAxisCount++;
-            }
-        }            
-        foreach ($this->getWidget()->getAxesY() as $yAxis){
-            if ($yAxis->getPosition() === ChartAxis::POSITION_LEFT){
-                $leftAxisCount++;
-            } else if ($yAxis->getPosition() ===ChartAxis::POSITION_RIGHT){
-                $rightAxisCount++;
-            }
-        }
-        if ($bottomAxisCount > 0){
-            $bottomAxisCount = $bottomAxisCount - 1;
-        }
-        if ($rightAxisCount > 0){
-            $rightAxisCount = $rightAxisCount - 1;
-        }
-        if ( $leftAxisCount > 0){
-            $leftAxisCount = $leftAxisCount - 1;
-        }
-        $bottomMargin = $baseMarginBottom + $bottomAxisCount * $marginPerXAxis;
-        $topMargin = $baseMarginTop + $topAxisCount * $marginPerXAxis;
-        $leftMargin = $baseMarginLeft + $leftAxisCount * $marginPerYAxis;
-        $rightMargin = $baseMarginRight + $rightAxisCount * $marginPerYAxis;
-        
-        //return '{},';
-        
-        return <<<JS
-
-{
-	bottom: '$bottomMargin',
-    top: '$topMargin',
-	left: '$leftMargin',
-	right: '$rightMargin',
-
-	containLable: true,
-},
-
-JS;
-      
-    */}
-        
     protected function buildJsEChartsVar() : string
     {
         return "chart_{$this->getId()}";
@@ -988,8 +915,9 @@ for (var i in axes) {
 }
 
 newOptions.dataset = {source: []};
-
-{$this->buildJsEChartsVar()}.setOption(newOptions);
+if ({$this->buildJsEChartsVar()}) {
+    {$this->buildJsEChartsVar()}.setOption(newOptions);
+}
 
 JS;
         }
