@@ -3,7 +3,6 @@ namespace exface\Core\CommonLogic\QueryBuilder;
 
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Model\ConditionGroup;
-use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Exceptions\Model\MetaObjectDataConnectionNotFoundError;
@@ -41,8 +40,6 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     
     private $workbench = null;
     
-    private $countAllRows = true;
-    
     public function __construct(QueryBuilderSelectorInterface $selector)
     {
         $this->selector = $selector;
@@ -76,7 +73,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      */
     function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        throw new QueryBuilderException('Read method not implemented in "' . get_class($this) . '"!');
+        throw new QueryBuilderException('READ not implemented in "' . get_class($this) . '"!');
     }
 
     /**
@@ -86,7 +83,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      */
     function update(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        throw new QueryBuilderException('Update method not implemented in "' . get_class($this) . '"!');
+        throw new QueryBuilderException('UPDATE not implemented in "' . get_class($this) . '"!');
     }
 
     /**
@@ -96,7 +93,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      */
     function delete(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        throw new QueryBuilderException('Delete method not implemented in "' . get_class($this) . '"!');
+        throw new QueryBuilderException('DELETE not implemented in "' . get_class($this) . '"!');
     }
     
     /**
@@ -106,7 +103,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      */
     function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        throw new QueryBuilderException('Delete method not implemented in "' . get_class($this) . '"!');
+        throw new QueryBuilderException('COUNT not implemented in "' . get_class($this) . '"!');
     }
 
     /**

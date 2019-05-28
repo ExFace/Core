@@ -538,6 +538,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     {
         if ($string_or_widget_link) {
             $this->prefill_with_data_from_widget_link = WidgetLinkFactory::createFromWidget($this->getWidgetDefinedIn(), $string_or_widget_link);
+            $this->setPrefillWithPrefillData(true);
         }
         return $this;
     }
@@ -563,19 +564,39 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     }
 
     /**
-     * Set to TRUE to disable the prefill for this action entirely.
-     *
+     * Same as prefill_disabled.
+     * 
+     * Since widgets have a property `do_not_prefill`, it is convenient to have
+     * this options for actions too.
+     * 
      * @uxon-property do_not_prefill
      * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return iShowWidget
+     */
+    public function setDoNotPrefill(bool $value) : iShowWidget
+    {
+        return $this->setPrefillDisabled($value);
+    }
+    
+    /**
+     * Set to TRUE to disable the prefill for this action entirely.
+     *
+     * @uxon-property prefill_disabled
+     * @uxon-type boolean
+     * @uxon-default false
      *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowWidget::setDoNotPrefill($value)
      */
-    public function setDoNotPrefill($value) : iShowWidget
+    public function setPrefillDisabled(bool $value) : iShowWidget
     {
-        $value = BooleanDataType::cast($value) ? false : true;
+        $value = ! $value;
         $this->setPrefillWithFilterContext($value);
         $this->setPrefillWithInputData($value);
+        $this->setPrefillWithPrefillData($value);
         return $this;
     }
 

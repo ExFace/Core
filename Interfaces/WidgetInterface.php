@@ -16,28 +16,8 @@ use exface\Core\Interfaces\Widgets\iHaveVisibility;
  * @author Andrej Kabachnik
  *
  */
-interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iHaveCaption, iHaveVisibility
+interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCanBeConvertedToUxon, iHaveCaption, iHaveVisibility
 {
-
-    /**
-     * Loads data from a standard object into any widget using setter functions.
-     * E.g. calls $this->setId($source->id) for every property of the source object. Thus the behaviour of this
-     * function like error handling, input checks, etc. can easily be customized by programming good
-     * setters.
-     *
-     * @param UxonObject $source            
-     */
-    public function importUxonObject(UxonObject $source);
-
-    /**
-     * Returns the UXON description of the widget.
-     * If the widget was described by a user, the original description
-     * is returned. If the widget was built via API, a description is automatically generated.
-     *
-     * @return UxonObject
-     */
-    public function exportUxonObject();
-
     /**
      * Prefills the widget with values of a data sheet.
      * 

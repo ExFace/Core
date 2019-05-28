@@ -6,6 +6,7 @@ use exface\Core\Widgets\Parts\ConsoleCommandPreset;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 
 /**
  * Shows a command line terminal.
@@ -14,15 +15,19 @@ use exface\Core\Exceptions\RuntimeException;
  * 
  * ```
  * {
- * 	"widget_type": "Console",
+ *  "widget_type": "Console",
  *  "allowed_commands": [
- *      "/cd .* /",
- *      "/git .* /",
- *      "/whoami/"
+ *      "@cd .*@",
+ *      "@git .*@"
  *  ],
  *  "start_commands": [
  *      "git status"
- *  ]
+ *  ],
+ *  "environment_vars": {
+ *    "GIT_SSL_NO_VERIFY": true,
+ *    "GIT_COMMITTER_NAME": "=User('full_name')",
+ *    "GIT_COMMITTER_EMAIL": "=User('email')"
+ *  },
  * 	"command_prsets": [
  * 		{
  * 			"caption": "Commit/Push all",
@@ -54,6 +59,8 @@ use exface\Core\Exceptions\RuntimeException;
  */
 class Console extends AbstractWidget
 {
+    use TranslatablePropertyTrait;
+    
     private $allowedCommands = [];
     
     private $workingDirectoryPath = null;
@@ -319,16 +326,20 @@ class Console extends AbstractWidget
     /**
      * Environment variables to be used when executing commands as key-value-pairs.
      * 
-     * @uxon-object environment_variables
+     * Static formulas like `=User('username')` are supported in values.
+     * 
+     * @uxon-property environment_vars
      * @uxon-type object
-     * @uxon-template {"VARNAME": "value"}
+     * @uxon-template {"VAR_NAME": "value"}
      * 
      * @param UxonObject $uxon
      * @return Console
      */
-    public function setEvironmentVars(UxonObject $uxon) : Console
+    public function setEnvironmentVars(UxonObject $uxon) : Console
     {
-        $this->environmentVars = $uxon->toArray();
+        foreach ($uxon->toArray() as $var => $val) {
+            $this->environmentVars[$var] = $this->evaluatePropertyExpression($val);
+        }
         return $this;
     }
     
