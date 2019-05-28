@@ -178,6 +178,8 @@ JS;
         return 'hoverable: true';
     }
     
+    abstract protected function buildJsDataLoader();
+    
     protected function getAxisType(ChartAxis $axis) : string
     {
         $dataType = $axis->getDataColumn()->getDataType();
