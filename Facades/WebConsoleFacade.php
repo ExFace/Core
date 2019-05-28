@@ -113,8 +113,9 @@ class WebConsoleFacade extends AbstractHttpFacade
             
             $stream = new IteratorStream($generator(10));
         } else {
-            $envVars = array_merge(getenv(), $widget->getEnvironmentVars());
-            $envVars = [];
+            // FIXME for some reason merging with etenv() makes git push/pull freeze...
+            //$envVars = array_merge(getenv(), $widget->getEnvironmentVars());
+            $envVars = $widget->getEnvironmentVars();
             $process = Process::fromShellCommandline($cmd, null, $envVars, null, $widget->getCommandTimeout());
             $process->start();
             $generator = function ($process) {

@@ -2,7 +2,6 @@
 namespace exface\Core\Interfaces\DataTypes;
 
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
-use exface\Core\CommonLogic\Model\Model;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\AppInterface;
@@ -83,21 +82,21 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * instantiated types.
      * @see DataTypeInterface::isEmptyValue($string) for a type-specific check for empty values.
      *
-     * @param mixed $string
+     * @param mixed $value
      *        
      * @throws DataTypeCastingError
      * 
      * @return string
      */
-    public static function cast($string);
+    public static function cast($value);
     
     /**
      * Returns true if the given value is empty (i.e. cast() will return NULL) and FALSE otherwise
      * 
-     * @param mixed $string
+     * @param mixed $value
      * @return bool
      */
-    public static function isEmptyValue($string) : bool;
+    public static function isEmptyValue($value) : bool;
     
     /**
      * Returns a normalized representation of the given string mathing all the rules defined in the
@@ -110,13 +109,13 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * because the natural number model not only casts anything to a number, but also rounds it to
      * the a whole number.
      *
-     * @param mixed $string
+     * @param mixed $value
      * 
      * @throws DataTypeValidationError
      * 
      * @return string
      */
-    public function parse($string);
+    public function parse($value);
     
     /**
      * Returns the unique error code (error model alias) used for parsing errors of this data type.

@@ -33,12 +33,6 @@
                "context_alias": "exface.Core.DebugContext",
                "visibility": "show_allways",
                "restrict_only_admins": true
-           },
-           {
-               "context_scope": "Window",
-               "context_alias": "exface.ActionTest.ActionTestContext",
-               "visibility": "show_allways",
-               "restrict_only_admins": true
            }
 	   ]
 	},

@@ -45,6 +45,8 @@ class ShowObjectInfoDialog extends ShowDialog
     private $show_only_editable_attributes = false;
 
     private $disable_editing = true;
+    
+    private $showSmallDialogIfLessAttributesThen = 7;
 
     /**
      * 
@@ -184,8 +186,34 @@ class ShowObjectInfoDialog extends ShowDialog
             // IDEA A separate method "create_object_editor" would probably be handy, once we have attribute groups and
             // other information, that would enable us to build better editors (with tabs, etc.)
             $dialog->addWidgets($this->createWidgetsForAttributes($dialog));
+            
+            if ($dialog->countWidgets() < $this->getShowSmallDialogIfLessAttributesThen()) {
+                $dialog->setColumnsInGrid(1);
+            }
         }
+        
         return $dialog;
+    }
+    
+    protected function getShowSmallDialogIfLessAttributesThen() : int
+    {
+        return $this->showSmallDialogIfLessAttributesThen; 
+    }
+    
+    /**
+     * Auto-generated editor will be smaller if object has less attributes, than defined here.
+     * 
+     * @uxon-property show_small_dialog_if_less_attributes_then
+     * @uxon-type int
+     * @uxon-default 7
+     * 
+     * @param int $number
+     * @return ShowObjectInfoDialog
+     */
+    public function setShowSmallDialogIfLessAttributesThen(int $number) : ShowObjectInfoDialog
+    {
+        $this->showSmallDialogIfLessAttributesThen = $number;
+        return $this;
     }
 
     /**
