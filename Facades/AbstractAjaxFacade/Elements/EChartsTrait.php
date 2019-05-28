@@ -33,7 +33,7 @@ trait EChartsTrait
         $output = '';
         if ($link = $this->getWidget()->getDataWidgetLink()) {
             $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
-            $output .= $this->buildJsRedrawFunctionName(). '(' . $linked_element->buildJsDataGetter() . ')';
+            $output .= $this->buildJsRedraw($linked_element->buildJsDataGetter());
             //$output .= $this->buildJsFunctionPrefix() . 'plot(' . $linked_element->buildJsDataGetter() . ".rows);";
         }
         return $output;
@@ -48,6 +48,11 @@ trait EChartsTrait
             }
         }
         return $this;
+    }
+    
+    protected function buildHtmlChart() : string
+    {
+        return '<div id="' . $this->getId() . '" style="height:100%; min-height: 100px; overflow: hidden;"></div>';
     }
     
     protected function buildHtmlHeadDefaultIncludes()
@@ -77,13 +82,13 @@ trait EChartsTrait
     function {$this->buildJsSelectFunctionName()}(selection) {
         {$this->buildJsSelectFunctionBody('selection')}
     };
-
-
-    {$this->buildJsOnClickFunction()}
-
-
     
 JS;
+    }
+    
+    protected function buildJsRedraw(string $dataJs) : string
+    {
+        return $this->buildJsRedrawFunctionName(). '(' . $dataJs . ')';
     }
 
     protected function buildJsRedrawFunctionName() : string
@@ -108,12 +113,18 @@ JS;
         return <<<JS
     var {$this->buildJsEChartsVar()} = echarts.init(document.getElementById('{$this->getId()}'));
     $(function(){
-        {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()});
+        
         // Call the data loader to populate the Chart initially
         {$this->buildJsRefresh()}
-    });        
+    });
+       
 
 JS;
+    }
+        
+    protected function buildJsSelect(string $oRowJs = '') : string
+    {
+        return $this->buildJsSelectFunctionName() . '(' . $oRowJs . ')';
     }
         
     protected function buildJsSelectFunctionName() : string
@@ -145,7 +156,7 @@ JS;
         return "(JSON.stringify({$leftRowJs}) == JSON.stringify({$rightRowJs}))";
     }
         
-    protected function buildJsOnClickFunction() : string {
+    protected function buildJsOnClickHandlers() : string {
         return <<<JS
 
         {$this->buildJsEChartsVar()}.on('click', function(params){
@@ -153,9 +164,9 @@ JS;
 
             if (params.seriesType == 'pie') {
                 if ((typeof {$this->buildJsEChartsVar()}._oldSelection != 'undefined') && ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')}) == true) {
-                    {$this->buildJsSelectFunctionName()}()                    
+                    {$this->buildJsSelect()}                    
                 } else {
-                    {$this->buildJsSelectFunctionName()}(dataRow)
+                    {$this->buildJsSelect('dataRow')}
                 }            
             } else {
                 var options = {$this->buildJsEChartsVar()}.getOption();
@@ -165,7 +176,7 @@ JS;
                     newOptions.series.push({markLine: {data: {}}});                
                 });
                 if ((typeof {$this->buildJsEChartsVar()}._oldSelection != 'undefined') && ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')}) == true) {
-                    {$this->buildJsSelectFunctionName()}()                    
+                    {$this->buildJsSelect()}                    
                 } else {
                     if (("_bar" in options.series[params.seriesIndex]) == true) {
                         newOptions.series[params.seriesIndex].markLine.data = [ 
@@ -180,7 +191,7 @@ JS;
                 			}
                         ];
                     }
-                    {$this->buildJsSelectFunctionName()}(dataRow)
+                    {$this->buildJsSelect('dataRow')}
                 }
                 {$this->buildJsEChartsVar()}.setOption(newOptions);
             }
@@ -583,7 +594,7 @@ JS;
     }
     
     protected function buildJsRedrawFunctionBody(string $dataJs) : string
-    {
+    {              
         if ($this->isPieChartSeries() === true) {
             $js = <<<JS
 
@@ -710,7 +721,7 @@ JS;
         {$this->buildJsDataResetter()};
         return;
     }
-
+{$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()});
 $js
 
 JS;
@@ -737,12 +748,26 @@ JS;
     
     protected function buildJsGridMarginRight() : int
     {             
-        return 100;
+        $count = 0;
+        foreach ($this->getWidget()->getAxesY() as $axis) {
+            if ($axis->isZoomable() === true) {
+                $count++;    
+            }
+        }
+        $margin = 50 + 15*$count;
+        return  $margin;       
     }
     
     protected function buildJsGridMarginBottom() : int
     {
-        return 50;
+        $count = 0;
+        foreach ($this->getWidget()->getAxesX() as $axis) {
+            if ($axis->isZoomable() === true) {
+                $count++;
+            }
+        }
+        $margin = 35 + 15*$count;        
+        return $margin;;
     }
     
     protected function buildJsGridMarginLeft() : int
@@ -907,7 +932,10 @@ JS;
             } else {
                 throw new FacadeOutputError('Cannot create a value getter for a data widget without a UID column: either specify a column to get the value from or a UID column for the table.');
             }
-        } 
+        }
+        if ($row != null) {
+            throw new FacadeOutputError('Unsupported function ');
+        }
         
         
         
