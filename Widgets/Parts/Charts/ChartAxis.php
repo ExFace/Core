@@ -379,9 +379,9 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     /**
      * Set to TRUE to make the gridline for this axis visible or to FALSE (default) to force hiding it.
      * 
-     * 
      * @uxon-property grid
      * @uxon-type boolean
+     * @uxon-default false
      * 
      * @param bool $value
      * @return ChartAxis
