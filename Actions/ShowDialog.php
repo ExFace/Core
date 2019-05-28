@@ -178,6 +178,21 @@ class ShowDialog extends ShowWidget implements iShowDialog
         }
         return $this->dialog_buttons_uxon;
     }
+    
+    /**
+     * Defines the dialog to show (same as the `widget` property).
+     * 
+     * @uxon-property dialog
+     * @uxon-type \exface\Core\Widgets\Dialog
+     * @uxon-template {"widgets": [{"": ""}]}
+     * 
+     * @param UxonObject|WidgetInterface $widget_or_uxon_object
+     * @return ShowDialog
+     */
+    public function setDialog($widget_or_uxon_object) : ShowDialog
+    {
+        return $this->setWidget($widget_or_uxon_object);
+    }
 
     /**
      * Adds extra buttons to a dialog.

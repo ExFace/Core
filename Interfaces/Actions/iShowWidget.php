@@ -65,7 +65,7 @@ interface iShowWidget extends iNavigate, iUsePrefillData
      *
      * @return iShowWidget
      */
-    public function setDoNotPrefill($value) : iShowWidget;
+    public function setPrefillDisabled(bool $value) : iShowWidget;
     
     /**
      * Returns the default widget type, that this action will show: e.g. "Dialog" for ShowDialog-actions

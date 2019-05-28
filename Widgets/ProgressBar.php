@@ -5,6 +5,11 @@ use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Interfaces\Widgets\iCanBeAligned;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Factories\DataPointerFactory;
+use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * Displays the widgets value as a progress bar with a floating label text.
@@ -28,6 +33,8 @@ class ProgressBar extends Display implements iCanBeAligned
     private $colorMap = null;
     
     private $textMap = null;
+    
+    private $textAttributeAlias = null;
     
     /**
      *
@@ -302,5 +309,103 @@ class ProgressBar extends Display implements iCanBeAligned
     {
         $range = $this->getMax() - $this->getMin();
         return $value / $range * 100;
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getTextAttributeAlias() : string
+    {
+        return $this->textAttributeAlias;
+    }
+    
+    /**
+     * Makes the progressbar show the value of a different attribute than the one used for the progress.
+     * 
+     * @uxon-property text_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $value
+     * @return ProgressBar
+     */
+    public function setTextAttributeAlias(string $value) : ProgressBar
+    {
+        $this->textAttributeAlias = $value;
+        return $this;
+    }
+    
+    public function isTextBoundToAttribute() : bool
+    {
+        return $this->textAttributeAlias !== null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Value::prepareDataSheetToRead()
+     */
+    public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
+    {
+        $data_sheet = parent::prepareDataSheetToRead($data_sheet);
+        if ($this->isTextBoundToAttribute() === true) {
+            $textPrefillExpr = $this->getPrefillExpression($data_sheet, $this->getTextAttributeAlias());
+            if ($textPrefillExpr !== null) {
+                $data_sheet->getColumns()->addFromExpression($textPrefillExpr);
+            }
+        }
+        return $data_sheet;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Value::doPrefill()
+     */
+    protected function doPrefill(DataSheetInterface $data_sheet)
+    {
+        parent::doPrefill($data_sheet);
+        if ($this->isTextBoundToAttribute() === true) {
+            $textPrefillExpression = $this->getPrefillExpression($data_sheet, $this->getTextAttributeAlias());
+            if ($textPrefillExpression !== null && $col = $data_sheet->getColumns()->getByExpression($textPrefillExpression)) {
+                if (count($col->getValues(false)) > 1 && $this->getAggregator()) {
+                    // TODO #OnPrefillChangeProperty
+                    $valuePointer = DataPointerFactory::createFromColumn($col);
+                    $value = DataColumn::aggregateValues($col->getValues(false), $this->getAggregator());
+                } else {
+                    $valuePointer = DataPointerFactory::createFromColumn($col, 0);
+                    $value = $valuePointer->getValue();
+                }
+                // Ignore empty values because if value is a live-references as the ref would get overwritten
+                // even without a meaningfull prefill value
+                if ($this->isBoundByReference() === false || ($value !== null && $value != '')) {
+                    $this->setValue($value);
+                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'text', $valuePointer));
+                }
+            }
+        }
+        return;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowDataColumn::getDataColumnName()
+     */
+    public function getTextDataColumnName()
+    {
+        return $this->isTextBoundToAttribute() ? DataColumn::sanitizeColumnName($this->getTextAttributeAlias()) : $this->getDataColumnName();
+    }
+    
+    /**
+     * 
+     * @return MetaAttributeInterface
+     */
+    public function getTextAttribute() : MetaAttributeInterface
+    {
+        if ($this->isTextBoundToAttribute() === true) {
+            return $this->getMetaObject()->getAttribute($this->getTextAttributeAlias());
+        }
+        return $this->getAttribute();
     }
 }

@@ -508,7 +508,11 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade
      */
     protected function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface 
     {
-        $status_code = is_numeric($exception->getStatusCode()) ? $exception->getStatusCode() : 500;
+        if ($exception instanceof ExceptionInterface) {
+            $status_code = is_numeric($exception->getStatusCode()) ? $exception->getStatusCode() : 500;
+        } else {
+            $status_code = 500;
+        }
         $headers = [];
         $body = '';
         

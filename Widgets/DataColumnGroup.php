@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Widgets\iShowData;
 
 
 /**
@@ -42,18 +43,21 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     {
         $column->setMetaObject($this->getMetaObject());
         if ($column->isEditable()) {
-            $this->getParent()->setEditable(true);
-            $this->getParent()->addColumnsForSystemAttributes();
-            // If an attribute of a related object should be editable, we need it's system attributes as columns -
-            // that is, at least a column with the UID of the related object, but maybe also some columns needed for
-            // the behaviors of the related object
-            if ($column->isBoundToAttribute() && $rel_path = $column->getAttribute()->getRelationPath()->toString()) {
-                $rel = $this->getMetaObject()->getRelation($rel_path);
-                if ($rel->isForwardRelation()) {
-                    $this->getParent()->addColumnsForSystemAttributes($rel_path);
-                } elseif ($rel->isReverseRelation()) {
-                    // TODO Concatennate UIDs here?
-                } 
+            $parent = $this->getParent();
+            if ($parent instanceof iShowData) {
+                $parent->setEditable(true);
+                $parent->addColumnsForSystemAttributes();
+                // If an attribute of a related object should be editable, we need it's system attributes as columns -
+                // that is, at least a column with the UID of the related object, but maybe also some columns needed for
+                // the behaviors of the related object
+                if ($column->isBoundToAttribute() && $rel_path = $column->getAttribute()->getRelationPath()->toString()) {
+                    $rel = $this->getMetaObject()->getRelation($rel_path);
+                    if ($rel->isForwardRelation()) {
+                        $parent->addColumnsForSystemAttributes($rel_path);
+                    } elseif ($rel->isReverseRelation()) {
+                        // TODO Concatennate UIDs here?
+                    } 
+                }
             }
         }
         
@@ -422,7 +426,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     public function setEditable($trueOrFalse) : DataColumnGroup
     {
         $this->editable = BooleanDataType::cast($trueOrFalse);
-        if ($this->editable === true) {
+        if ($this->editable === true && $this->getDataWidget() instanceof iShowData) {
             $this->getDataWidget()->setEditable(true);
         }
         return $this;

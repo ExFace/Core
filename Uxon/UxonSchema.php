@@ -43,6 +43,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
  * - metamodel:formula
  * - metamodel:widget_link
  * - metamodel:event
+ * - metamodel:data_source
  * - uxon:path - where path is a JSONpath relative to the current field
  * - [val1,val2] - enumeration of commma-separated values (in square brackets)
  * 

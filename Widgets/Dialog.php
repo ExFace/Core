@@ -4,17 +4,13 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iAmClosable;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Interfaces\Widgets\iHaveContextualHelp;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iHaveHeader;
-use exface\Core\Widgets\Traits\iHaveContextualHelpTrait;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 
 /**
@@ -22,12 +18,8 @@ use exface\Core\Interfaces\Widgets\iTriggerAction;
  * 
  * @author Andrej Kabachnik
  */
-class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHeader
+class Dialog extends Form implements iAmClosable, iHaveHeader
 {
-    use iHaveContextualHelpTrait  {
-        getHelpButton as getHelpButtonViaTrait;
-    }
-
     private $hide_close_button = false;
 
     private $close_button = null;
@@ -227,75 +219,9 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
      */
     public function getHelpButton() : iTriggerAction
     {
-        $button = $this->getHelpButtonViaTrait();
+        $button = parent::getHelpButton();
         $button->setCloseDialogAfterActionSucceeds(false);
         return $button;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveContextualHelp::getHelpWidget()
-     */
-    public function getHelpWidget(iContainOtherWidgets $help_container) : iContainOtherWidgets
-    {
-        /**
-         *
-         * @var DataTable $table
-         */
-        $table = WidgetFactory::create($help_container->getPage(), 'DataTableResponsive', $help_container);
-        $object = $this->getWorkbench()->model()->getObject('exface.Core.USER_HELP_ELEMENT');
-        $table->setMetaObject($object);
-        $table->setCaption($this->getWidgetType() . ($this->getCaption() ? '"' . $this->getCaption() . '"' : ''));
-        $table->addColumn($table->createColumnFromAttribute($object->getAttribute('TITLE')));
-        $table->addColumn($table->createColumnFromAttribute($object->getAttribute('DESCRIPTION')));
-        $table->setLazyLoading(false);
-        $table->setPaginate(false);
-        $table->setNowrap(false);
-        // $table->setRowGrouper(UxonObject::fromArray(array('group_by_column_id' => 'GROUP')));
-        
-        // IMPORTANT: make sure the help table does not have a help button itself, because that would result in having
-        // infinite children!
-        $table->setHideHelpButton(true);
-        
-        $data_sheet = DataSheetFactory::createFromObject($object);
-        
-        foreach ($this->getInputWidgets() as $widget) {
-            if ($widget->isHidden())
-                continue;
-            $row = array(
-                'TITLE' => $widget->getCaption()
-            );
-            if ($widget instanceof iShowSingleAttribute && $attr = $widget->getAttribute()) {
-                $row = array_merge($row, $this->getHelpRowFromAttribute($attr));
-            }
-            $data_sheet->addRow($row);
-        }
-        
-        $table->prefill($data_sheet);
-        
-        $help_container->addWidget($table);
-        return $help_container;
-    }
-
-    /**
-     * Returns a row (assotiative array) for a data sheet with exface.Core.USER_HELP_ELEMENT filled with information about
-     * the given attribute.
-     * The inforation is derived from the attributes meta model.
-     *
-     * @param MetaAttributeInterface $attr            
-     * @return string[]
-     */
-    protected function getHelpRowFromAttribute(MetaAttributeInterface $attr)
-    {
-        $row = array();
-        $row['DESCRIPTION'] = $attr->getShortDescription() ? rtrim(trim($attr->getShortDescription()), ".") . '.' : '';
-        
-        if (! $attr->getRelationPath()->isEmpty()) {
-            $row['DESCRIPTION'] .= $attr->getObject()->getShortDescription() ? ' ' . rtrim($attr->getObject()->getShortDescription(), ".") . '.' : '';
-        }
-        return $row;
     }
 
     /**
@@ -311,14 +237,6 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
         
         if (! $this->getHideHeader() && $this->hasHeader()) {
             yield $this->getHeader();
-        }
-        
-        // Add the help button, so pages will be able to find it when dealing with the ShowHelpDialog action.
-        // IMPORTANT: Add the help button to the children only if it is not hidden. This is needed to hide the button in
-        // help widgets themselves, because otherwise they would produce their own help widgets, with - in turn - even
-        // more help widgets, resulting in an infinite loop.
-        if (! $this->getHideHelpButton()) {
-            yield $this->getHelpButton();
         }
         
         yield $this->getCloseButton();
@@ -375,6 +293,16 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
     public function setHideHeader($boolean)
     {
         $this->hide_header = BooleanDataType::cast($boolean);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Form::getHideHelpButton()
+     */
+    public function getHideHelpButton($default = false) : ?bool
+    {
+        return $this->getHideHelpButtonViaTrait($default);
     }
 }
 ?>

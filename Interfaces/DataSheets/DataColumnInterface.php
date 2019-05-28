@@ -273,6 +273,14 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @param string $value            
      */
     public function setValue($row_number, $value);
+    
+    /**
+     * Replaces the value of this column in all rows by the given one.
+     * 
+     * @param mixed $value
+     * @return DataColumnInterface
+     */
+    public function setValueOnAllRows($value) : DataColumnInterface;
 
     /**
      * Returns TRUE if setting fixed values from the meta model is disabled for this column and FALSE otherwise

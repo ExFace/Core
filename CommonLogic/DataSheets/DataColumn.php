@@ -18,6 +18,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\DataSheetDataType;
 
 class DataColumn implements DataColumnInterface
 {
@@ -230,6 +231,15 @@ class DataColumn implements DataColumnInterface
     {
         if (is_null($this->data_type)) {
             if ($attribute_alias = $this->getAttributeAlias()) {
+                // If the column's alias expression is actually a reverse relation, it must
+                // contain a subsheet because a reverse relation is not an attribute of it's
+                // left object and, thus, cannot contain scalar values.
+                if ($this->getMetaObject()->hasRelation($attribute_alias) === true){
+                    if ($this->getMetaObject()->getRelation($attribute_alias)->isReverseRelation() === true){
+                        $this->data_type = DataTypeFactory::createFromPrototype($this->getWorkbench(), DataSheetDataType::class);
+                        return $this->data_type;
+                    }
+                }
                 try {
                     return $this->getMetaObject()->getAttribute($attribute_alias)->getDataType();
                 } catch (MetaAttributeNotFoundError $e) {
@@ -731,6 +741,19 @@ class DataColumn implements DataColumnInterface
     public function setValue($row_number, $value)
     {
         $this->getDataSheet()->setCellValue($this->getName(), $row_number, $value);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setValueOnAllRows()
+     */
+    public function setValueOnAllRows($value) : DataColumnInterface
+    {
+        foreach (array_keys($this->getDataSheet()->getRows()) as $row_number) {
+            $this->setValue($row_number, $value);
+        }
+        return $this;
     }
 
     /**

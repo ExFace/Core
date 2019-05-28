@@ -35,6 +35,7 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
         }
         
         // Create a backup of the current data for this data sheet (it can be used for undo operations later)
+        /* TODO #undo-action
         if ($data_sheet->countRows() && $data_sheet->getUidColumn()) {
             $backup = $data_sheet->copy();
             $backup->addFilterFromColumnValues($backup->getUidColumn());
@@ -43,7 +44,8 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
             $undoable = true;
         } else {
             $undoable = false;
-        }
+        }*/
+        $undoable = false;
         
         $affectedRows = $data_sheet->dataUpdate(false, $transaction);
         
