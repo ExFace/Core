@@ -43,6 +43,14 @@ abstract class ChartSeries extends AbstractChartPart implements iHaveCaption
         return $uxon;
     }
     
+    /**
+     * @uxon-property type
+     * @uxon-type [line, spline, area, pie, donut, bar, column, rose]
+     * @uxon-required true
+     * 
+     * @param string $value
+     * @return ChartSeries
+     */
     public function setType(string $value) : ChartSeries
     {
         $this->type = $value;
