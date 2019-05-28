@@ -91,6 +91,7 @@
 	"ACTION.SHOWLOOKUPDIALOG.SAVE_BUTTON": "Übernehmen",
 
 	"ACTION.SHOWHELPDIALOG.NAME": "Hilfe",
+	"ACTION.SHOWHELPDIALOG.NO_HELP": "Keine Informationen verfügbar",
 	
 	"ACTION.SHOWMODELBUILDERDIALOG.NAME": "Modell generieren",
 

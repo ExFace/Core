@@ -160,7 +160,9 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         
         // Add default attributes
         if (! $table_uxon->hasProperty('columns') || $table_uxon->getProperty('columns')->isEmpty()) {
-            $table->addColumnsForDefaultDisplayAttributes();
+            foreach ($table->createDefaultColumns() as $col) {
+                $table->addColumn($col);
+            }
         }
         
         // Enforce those options that cannot be overridden in the table's UXON description

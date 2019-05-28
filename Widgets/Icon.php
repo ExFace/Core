@@ -2,25 +2,83 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iHaveColor;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
+use exface\Core\Factories\DataTypeFactory;
+use exface\Core\DataTypes\NumberEnumDataType;
 
 /**
- * The Icon widget is a standard Display widget with an icon beside it.
+ * This widget shows an icon - either a static one or derived from an attribute's value.
  * 
- * @see Display
+ * ## Examples
+ * 
+ * A static icon:
+ * 
+ * ```
+ * {
+ *  "widget_type": "Icon",
+ *  "icon": "battery-full"
+ * }
+ * 
+ * ```
+ * 
+ * An icon for an attribute, that contains it's name (i.e. our object has the attribute
+ * `icon_name`):
+ * 
+ * ```
+ * {
+ *  "widget_type": "Icon",
+ *  "attribute_alias": "icon_name"
+ * }
+ * 
+ * ```
+ * 
+ * An icon derived from attribute values through a mapping.
+ * 
+ * ```
+ * {
+ *  "widget_type": "Icon",
+ *  "attribute_alias": "battery_percentage",
+ *  "icon_map": {
+ *      0: "battery-empty",
+ *      25: "battery-quater",
+ *      50: "battery-half",
+ *      100: "battery-full"
+ *  }
+ * }
+ * 
+ * ```
+ * 
+ * A display widget with an icon (user name with a user icon)
+ * 
+ * ```
+ * {
+ *  "widget_type": "Icon",
+ *  "icon": "user",
+ *  "value_widget": {
+ *      "attribute_alias": "user__name"
+ *  }
+ * }
+ * 
+ * ```
  *
  * @author Andrej Kabachnik
  *        
  */
 class Icon extends Display implements iHaveColor
 {
-    private $icon = null;
-    
     private $iconSize = null;
     
     private $iconPosition = EXF_ALIGN_LEFT;
+    
+    private $iconsMap = null;
 
     private $color = null;
     
+    private $valueWidget = null;
+    
+    private $valueWidgetUxon = null;
     /**
      * 
      * @return string|NULL
@@ -131,9 +189,9 @@ class Icon extends Display implements iHaveColor
      *
      * @return string
      */
-    public function getIcon() : string
+    public function getIcon() : ?string
     {
-        return $this->icon;
+        return $this->getValue();
     }
     
     /**
@@ -151,7 +209,87 @@ class Icon extends Display implements iHaveColor
      */
     public function setIcon(string $value) : Icon
     {
-        $this->icon = $value;
+        return $this->setValue($value);
+    }
+    
+    /**
+     *
+     * @return Value
+     */
+    public function getValueWidget() : Value
+    {
+        if ($this->valueWidget === null) {
+            if ($this->valueWidgetUxon !== null) {
+                $this->valueWidget = WidgetFactory::createFromUxonInParent($this, $this->valueWidgetUxon, 'Display');
+            } else {
+                throw new WidgetChildNotFoundError($this, 'Value widget not specified for "' . $this->getWidgetType() . '"!');
+            }
+        }
+        return $this->valueWidget;
+    }
+    
+    /**
+     * Display a value widget next to the icon.
+     * 
+     * @uxon-property value_widget
+     * @uxon-type \exface\Core\Widgets\Value
+     * @uxon-template {"widget_type": ""}
+     * 
+     * @param Value $value
+     * @return Icon
+     */
+    public function setValueWidget(UxonObject $uxon) : Icon
+    {
+        $this->valueWidgetUxon = $uxon;
+        $this->valueWidget = null;
         return $this;
     }
+    
+    
+    public function hasValueWidget() : bool
+    {
+        return $this->valueWidget !== null || $this->valueWidgetUxon !== null;
+    }
+    
+    /**
+     *
+     * @return array
+     */
+    public function getIconsMap() : array
+    {
+        return $this->iconsMap;
+    }
+    
+    /**
+     * Map values (e.g. numbers or strings) to icon names.
+     * 
+     * For example, a battery icon filled depending on a percentage attribute.
+     * 
+     * ```
+     * {
+     *  "widget_type": "Icon",
+     *  "attribute_alias": "battery_percentage",
+     *  "icon_map": {
+     *      0: "battery-empty",
+     *      25: "battery-quater",
+     *      50: "battery-half",
+     *      100: "battery-full"
+     *  }
+     * }
+     * 
+     * ```
+     * 
+     * @uxon-property icons_map
+     * @uxon-type array
+     * @uxon-template {"0": "battery-empty", "50": "battery-half", "100": "battery-full"}
+     * 
+     * @param UxonObject $valueIconPairs
+     * @return Icon
+     */
+    public function setIconsMap(UxonObject $valueIconPairs) : Icon
+    {
+        $this->iconsMap = $valueIconPairs->toArray();
+        return $this;
+    }
+    
 }
