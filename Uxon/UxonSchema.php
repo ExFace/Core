@@ -10,10 +10,6 @@ use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\ComparatorDataType;
-use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\UxonObject;
@@ -49,7 +45,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
  * - metamodel:event
  * - metamodel:data_source
  * - uxon:path - where path is a JSONpath relative to the current field
- * - [enum,values] - enumeration of commma-separated values (in square brackets)
+ * - [val1,val2] - enumeration of commma-separated values (in square brackets)
  * 
  * There are dedicated schema-classes for some UXON schemas:
  * 

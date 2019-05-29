@@ -10,7 +10,6 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
-use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
@@ -18,6 +17,13 @@ use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
 use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Widgets\Parts\Charts\ChartAxis;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Widgets\Parts\Charts\ChartSeries;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 
 /**
  * A Chart widget draws a chart with upto two axis and any number of series.
@@ -33,75 +39,72 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     use iHaveButtonsAndToolbarsTrait;
     use iSupportLazyLoadingTrait;
 
+    const AXIS_X = 'x';
+
+    const AXIS_Y = 'y';
+    
     /**
-     *
      * @var ChartAxis[]
      */
     private $axes_x = array();
 
     /**
-     *
      * @var ChartAxis[]
      */
     private $axes_y = array();
 
     /**
-     *
      * @var ChartSeries[]
      */
     private $series = array();
 
     /**
-     *
      * @var Data
      */
     private $data = null;
 
     /**
-     *
-     * @var UxonObject|string
+     * @var WidgetLinkInterface|NULL
      */
     private $data_widget_link = null;
-
-    /**
-     *
-     * @var boolean
-     */
-    private $stack_series = false;
     
-    private $legendAlignment = null;
+    /**
+     * @var string
+     */
+    private $legendPosition = null;
+    
+    /**
+     * @var bool
+     */
+    private $legenPositionInsideChart = null;
 
     /**
-     *
-     * @var boolean
+     * @var bool
      */
     private $hide_header = false;
 
     /**
      *
-     * @var boolean
+     * @var bool
      */
     private $hide_footer = false;
+    
+    /**
+     * @var bool
+     */
+    private $dataPrepared = false;
+    
+    private $empty_text = null;
 
-    /** @var Button[] */
-    private $buttons = array();
-
-    const AXIS_X = 'x';
-
-    const AXIS_Y = 'y';
-
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getChildren()
+     */
     public function getChildren() : \Iterator
     {
         if (! $this->getDataWidgetLink()) {
             yield $this->getData();
-        }
-        
-        foreach ($this->getAxes() as $axis) {
-            yield $axis;
-        }
-        
-        foreach ($this->getSeries() as $series) {
-            yield $series;
         }
         
         foreach ($this->getToolbars() as $toolbar) {
@@ -113,34 +116,33 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      *
      * @return ChartAxis[]
      */
-    public function getAxesX()
+    public function getAxesX() : array
     {
         return $this->axes_x;
     }
 
     /**
-     * Sets X-axis of the chart.
-     * Multiple axes are possible, at least one must be provided!
+     * Sets X-axes of the chart.
      *
      * @uxon-property axis_x
-     * @uxon-type \exface\Core\Widget\ChartAxis[]
+     * @uxon-type \exface\Core\Widgets\Parts\Charts\ChartAxis[]
+     * @uxon-template [{"attribute_alias": ""}]
      *
      * @param ChartAxis|UxonObject $axis_or_uxon_object            
      * @return \exface\Core\Widgets\Chart
      */
-    public function setAxisX($axis_or_uxon_object)
+    public function setAxisX($axis_or_uxon_object) : Chart
     {
         if ($axis_or_uxon_object instanceof ChartAxis) {
-            $this->addAxis('x', $axis_or_uxon_object);
+            $this->addAxis(static::AXIS_X, $axis_or_uxon_object);
         } elseif ($axis_or_uxon_object instanceof UxonObject) {
             if ($axis_or_uxon_object->isArray()) {
                 foreach ($axis_or_uxon_object as $axis) {
                     $this->setAxisX($axis);
                 }
             } else {
-                $axis = $this->getPage()->createWidget('ChartAxis', $this);
-                $axis->importUxonObject($axis_or_uxon_object);
-                $this->addAxis('x', $axis);
+                $axis = new ChartAxis($this, $axis_or_uxon_object);
+                $this->addAxis(static::AXIS_X, $axis);
             }
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Cannot set X axis of ' . $this->getWidgetType() . ': expecting instantiated axis widget or its UXON description or an array of UXON descriptions for multiple axes - ' . gettype($axis_or_uxon_object) . ' given instead!');
@@ -152,7 +154,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      *
      * @return ChartAxis[]
      */
-    public function getAxesY()
+    public function getAxesY() : array
     {
         return $this->axes_y;
     }
@@ -161,7 +163,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      *
      * @return ChartAxis[]
      */
-    public function getAxes($x_or_y = null)
+    public function getAxes($x_or_y = null) : array
     {
         switch ($x_or_y) {
             case $this::AXIS_X:
@@ -174,80 +176,199 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     }
 
     /**
-     * Sets Y-axis of the chart.
-     * Multiple axes are possible, at least one must be provided!
+     * Sets Y-axes of the chart.
      *
      * @uxon-property axis_y
-     * @uxon-type \exface\Core\Widget\ChartAxis[]
+     * @uxon-type \exface\Core\Widgets\Parts\Charts\ChartAxis[]
+     * @uxon-template [{"attribute_alias": ""}]
      *
      * @param ChartAxis|UxonObject $axis_or_uxon_object_or_array            
      * @return \exface\Core\Widgets\Chart
      */
-    public function setAxisY($axis_or_uxon_object)
+    public function setAxisY($axis_or_uxon_object) : Chart
     {
         if ($axis_or_uxon_object instanceof ChartAxis) {
-            $this->addAxis('y', $axis_or_uxon_object);
+            $this->addAxis(static::AXIS_Y, $axis_or_uxon_object);
         } elseif ($axis_or_uxon_object instanceof UxonObject) {
             if ($axis_or_uxon_object->isArray()) {
                 foreach ($axis_or_uxon_object as $axis) {
                     $this->setAxisY($axis);
                 }
             } else {
-                $axis = $this->getPage()->createWidget('ChartAxis', $this);
-                $axis->importUxonObject($axis_or_uxon_object);
-                $this->addAxis('y', $axis);
+                $axis = new ChartAxis($this, $axis_or_uxon_object);
+                $this->addAxis(static::AXIS_Y, $axis);
             }
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Cannot set Y axis of ' . $this->getWidgetType() . ': expecting instantiated axis widget or its UXON description or an array of UXON descriptions for multiple axes - ' . gettype($axis_or_uxon_object) . ' given instead!');
         }
         return $this;
     }
-
-    public function addAxis($x_or_y, ChartAxis $axis)
+    
+    /**
+     * 
+     * @param ChartAxis $axis
+     * @return Chart
+     */
+    public function addAxisX(ChartAxis $axis) : Chart
     {
-        $axis->setChart($this);
-        $axis->setDimension($x_or_y);
-        if (! $axis->getPosition()) {
-            switch ($x_or_y) {
-                case $this::AXIS_Y:
-                    $axis->setPosition(ChartAxis::POSITION_LEFT);
-                    break;
-                case $this::AXIS_X:
-                    $axis->setPosition(ChartAxis::POSITION_BOTTOM);
-                    break;
-                default:
-                    throw new WidgetPropertyInvalidValueError($this, 'Invalid axis coordinate: "' . $x_or_y . '"! "x" or "y" expected!', '6T90UV9');
-            }
-        }
-        $var = 'axes_' . $x_or_y;
-        $count = array_push($this->$var, $axis);
-        $axis->setNumber($count);
-        return $this;
+        return $this->addAxis(static::AXIS_X, $axis);
     }
-
-    public function getData()
+    
+    /**
+     * 
+     * @param ChartAxis $axis
+     * @return Chart
+     */
+    public function addAxisY(ChartAxis $axis) : Chart
     {
-        if (is_null($this->data)) {
-            if ($link = $this->getDataWidgetLink()) {
-                return $link->getTargetWidget();
-            } else {
-                throw new WidgetConfigurationError($this, 'Cannot get data for ' . $this->getWidgetType() . ' "' . $this->getId() . '": either data or data_widget_link must be defined in the UXON description!', '6T90WFX');
-            }
-        }
-        return $this->data;
+        return $this->addAxis(static::AXIS_Y, $axis);
     }
 
     /**
-     * Sets the Data widget (simple table with data), wich will be the source for the chart.
+     * 
+     * @param string $x_or_y
+     * @param ChartAxis $axis
+     * @throws WidgetPropertyInvalidValueError
+     * @return Chart
+     */
+    public function addAxis(string $x_or_y, ChartAxis $axis) : Chart
+    {
+        $var = 'axes_' . $x_or_y;
+        array_push($this->$var, $axis);
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param ChartAxis $axis
+     * @throws WidgetLogicError
+     * @return int
+     */
+    public function getAxisIndex(ChartAxis $axis) : int
+    {
+        $idx = array_search($axis, $this->axes_x, true);
+        if ($idx !== false) {
+            return $idx;
+        }
+        
+        $idx = array_search($axis, $this->axes_y, true);
+        if ($idx !== false) {
+            return $idx;
+        }
+        
+        throw new WidgetLogicError($this, 'Axis not "' . $axis->getCaption() . '" found in chart "' . $this->getId() . '"!');
+    }
+    
+    /**
+     * 
+     * @param ChartAxis $axis
+     * @throws WidgetLogicError
+     * @return string
+     */
+    public function getAxisDimension(ChartAxis $axis) : string
+    {
+        $idx = array_search($axis, $this->axes_x, true);
+        if ($idx !== false) {
+            return static::AXIS_X;
+        }
+        
+        $idx = array_search($axis, $this->axes_y, true);
+        if ($idx !== false) {
+            return static::AXIS_Y;
+        }
+        
+        throw new WidgetLogicError($this, 'Axis "' . $axis->getCaption() . '" not found in chart "' . $this->getId() . '"!');
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iUseData::getData()
+     */
+    public function getData() : iShowData
+    {
+        if ($this->data === null) {
+            if ($link = $this->getDataWidgetLink()) {
+                $this->data = $link->getTargetWidget();
+            } else {
+                $this->data = WidgetFactory::createFromUxonInParent($this, new UxonObject(), 'Data');
+            }
+            if ($this->dataPrepared === false) {
+                $this->prepareDataWidget($this->data);
+                $this->dataPrepared = true;
+            }
+        }
+        
+        return $this->data;
+    }
+    
+    /**
+     * Makes sure, the given widget includes columns required for the chart.
+     * 
+     * @param iShowData $dataWidget
+     * @return Chart
+     */
+    protected function prepareDataWidget(iShowData $dataWidget) : Chart
+    {
+        foreach ($this->getSeries() as $series) {
+            $series->prepareDataWidget($dataWidget);
+        }
+        
+        foreach ($this->getAxes() as $axis) {
+            $axis->prepareDataWidget($dataWidget);
+        }
+        
+        return $this;
+    }
+
+    /**
+     * Configure the data used for the chart: filters, pagination, sorting, etc.
      *
-     * Chart axes and series will be bound to columns of this data widget. In the simplest case, there should
-     * be a coulum with x-axis-values and one with y-axis-values. The series property is optional, as you can also
-     * add a chart_type property to any axis to have get an automatically generated series for values of that axis.
+     * If not specified explicitly, the data widget will be created automatically using
+     * the information from chart series and axes.
+     * 
+     * Use an explicitly defined data widget to specify filters, sorters, aggregations, etc.
+     * In most cases, you do not need to specify any columns - they will be added automatically.
+     * 
+     * ## Typical examples
+     * 
+     * Disable pagination:
+     * 
+     * ```
+     * {
+     *  "widget_type": "Chart",
+     *  "data": {
+     *      "paginate": false
+     *  }
+     * }
+     * 
+     * ```
+     * 
+     * Add filters and sorters:
+     * 
+     * ```
+     * {
+     *  "widget_type": "Chart",
+     *  "data": {
+     *      "filters": [
+     *           {
+     *              "attribute_alias": ""
+     *           }
+     *      ],
+     *      "sorters": [
+     *           {
+     *              "attribute_alias": "",
+     *              "direction": "asc"
+     *           }
+     *      ]
+     *  }
+     * }
+     * 
+     * ```
      *
      * @uxon-property data
-     * @uxon-type \exface\Core\Widget\Data
-     *
-     * {@inheritdoc}
+     * @uxon-type \exface\Core\Widgets\Data
+     * @uxon-template {"": ""}
      *
      * @see \exface\Core\Interfaces\Widgets\iUseData::setData()
      */
@@ -267,73 +388,71 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     }
 
     /**
-     *
+     * Returns the first axis based on the given column.
+     * 
      * @param string $column_id            
      * @param string $x_or_y            
-     * @return ChartAxis | boolean
+     * @return ChartAxis|NULL
      */
-    public function findAxisByColumnId($column_id, $x_or_y = null)
+    public function findAxis(DataColumn $column, string $x_or_y = null) : ?ChartAxis
     {
         foreach ($this->getAxes($x_or_y) as $axis) {
-            if ($axis->getDataColumnId() == $column_id) {
-                return $axis;
+            try {
+                if ($axis->getDataColumn() === $column) {
+                    return $axis;
+                }
+            } catch (\Throwable $e) {
+                if ($this->dataPrepared === true) {
+                    throw $e;
+                }
             }
         }
-        return false;
+        return null;
     }
-
+    
     /**
-     *
-     * @param string $alias_with_relation_path            
-     * @param string $x_or_y            
-     * @return ChartAxis | boolean
+     * 
+     * @param MetaAttributeInterface $attribute
+     * @param string $dimension
+     * @return ChartAxis[]
      */
-    public function findAxisByAttributeAlias($alias_with_relation_path, $x_or_y = null)
+    public function findAxesByAttribute(MetaAttributeInterface $attribute, string $dimension = null) : array
     {
-        foreach ($this->getAxes($x_or_y) as $axis) {
-            if ($axis->getDataColumn()->getAttribute() && $axis->getDataColumn()->getAttribute()->getAliasWithRelationPath() == $alias_with_relation_path) {
-                return $axis;
-            }
-        }
-        return false;
-    }
-
-    /**
-     *
-     * @return ChartSeries[]
-     */
-    public function getSeries()
-    {
-        return $this->series;
-    }
-
-    /**
-     *
-     * @param string $chart_type            
-     * @return ChartSeries[]
-     */
-    public function getSeriesByChartType($chart_type)
-    {
-        $result = array();
-        foreach ($this->getSeries() as $series) {
-            if ($series->getChartType() === $chart_type) {
-                $result[] = $series;
+        $result = [];
+        foreach ($this->getAxes($dimension) as $axis) {
+            try {
+                if ($axis->isBoundToAttribute() === true && $axis->getAttribute()->is($attribute)) {
+                    $result[] = $axis;
+                }
+            } catch (\Throwable $e) {
+                if ($this->dataPrepared === true) {
+                    throw $e;
+                }
             }
         }
         return $result;
     }
 
     /**
+     *
+     * @return ChartSeries[]
+     */
+    public function getSeries() : array
+    {
+        return $this->series;
+    }
+
+    /**
      * Sets the series to be displayed in the chart.
-     * Multiple series are possible.
      *
      * @uxon-property series
-     * @uxon-type \exface\Core\Widget\ChartSeries[]
+     * @uxon-type \exface\Core\Widgets\Parts\Charts\ChartSeries[]
+     * @uxon-template [{"type": ""}]
      *
      * @param ChartSeries|UxonObject $series_or_uxon_object            
      * @return \exface\Core\Widgets\Chart
      */
-    public function setSeries($series_or_uxon_object)
+    public function setSeries($series_or_uxon_object) : Chart
     {
         if ($series_or_uxon_object instanceof ChartSeries) {
             $this->addSeries($series_or_uxon_object);
@@ -343,13 +462,37 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
                     $this->setSeries($series);
                 }
             } else {
-                $series = $this->createSeries(null, $series_or_uxon_object);
+                $series = $this->createSeriesFromUxon($series_or_uxon_object);
                 $this->addSeries($series);
             }
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Cannot set series in ' . $this->getWidgetType() . ': expecting instantiated ChartSeries widget or its UXON description or an array of UXON descriptions for multiple series - ' . gettype($series_or_uxon_object) . ' given instead!');
         }
         return $this;
+    }
+    
+    /**
+     * 
+     * @param string $expression
+     * @return ChartAxis
+     */
+    public function createAxisFromExpression(string $expression) : ChartAxis
+    {
+        return new ChartAxis($this, new UxonObject([
+            'attribute_alias' => $expression
+        ]));
+    }
+    
+    /**
+     * 
+     * @param string $columnId
+     * @return ChartAxis
+     */
+    public function createAxisFromColumnId(string $columnId) : ChartAxis
+    {
+        return new ChartAxis($this, new UxonObject([
+            'data_column_id' => $columnId
+        ]));
     }
 
     /**
@@ -358,25 +501,35 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      * @param UxonObject $uxon            
      * @return ChartSeries
      */
-    public function createSeries($chart_type = null, UxonObject $uxon = null)
+    public function createSeriesFromUxon(UxonObject $uxon = null) : ChartSeries
     {
-        $series = $this->getPage()->createWidget('ChartSeries', $this);
-        if ($uxon) {
-            $series->importUxonObject($uxon);
+        if ($uxon->hasProperty('type')) {
+            $type = mb_strtolower($uxon->getProperty('type'));
+        } elseif (empty($this->series) === false) {
+            $type = $this->series[count($this->series)-1]->getType();
+        } else {
+            throw new WidgetLogicError($this, 'Chart series type not set for series ' . count($this->series). '!');
         }
-        if (! is_null($chart_type)) {
-            $series->setChartType($chart_type);
-        }
-        return $series;
+        $class = $this::getSeriesClassName($type);
+        return new $class($this, $uxon, $type);
+    }
+    
+    public static function getSeriesClassName(string $chartType) : string
+    {
+        return '\\exface\\Core\\Widgets\\Parts\\Charts\\' . ucfirst($chartType) . 'ChartSeries';
     }
 
-    public function addSeries(ChartSeries $series)
+    public function addSeries(ChartSeries $series) : Chart
     {
-        $series->setChart($this);
         $this->series[] = $series;
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iUseData::getDataWidgetLink()
+     */
     public function getDataWidgetLink()
     {
         return $this->data_widget_link;
@@ -401,36 +554,19 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
         return $this;
     }
 
-    public function getStackSeries()
-    {
-        return $this->stack_series;
-    }
-
     /**
-     * Set to true to stack all series of this chart
-     *
-     * @uxon-property stack_series
-     *
-     * @param boolean $value            
-     * @return \exface\Core\Widgets\Chart
-     */
-    public function setStackSeries($value)
-    {
-        $this->stack_series = $value;
-        return $this;
-    }
-
-    /**
-     * Set to TRUE to hide axes.
+     * Set to TRUE to hide all axes.
      *
      * @uxon-property hide_axes
+     * @uxon-type boolean
+     * @uxon-default false
      *
-     * @param boolean $boolean            
+     * @param boolean $trueOrFalse            
      * @return \exface\Core\Widgets\Chart
      */
-    public function setHideAxes($boolean)
+    public function setHideAxes(bool $trueOrFalse) : Chart
     {
-        if ($boolean) {
+        if ($trueOrFalse === true) {
             foreach ($this->getAxes() as $axis) {
                 $axis->setHidden(true);
             }
@@ -650,26 +786,115 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
         return 'DataToolbar';
     }
     /**
-     * @return string
+     * @return string|NULL
      */
-    public function getLegendAlignment()
+    public function getLegendPosition() : ?string
     {
-        return $this->legendAlignment;
+        return $this->legendPosition;
     }
 
     /**
+     * Position of the legend relative to the chart: left, right, top, bottom.
      * 
-     * @uxon-property legend_alignment
-     * @uxon-type string [ left, right ]
+     * Using the property `legend_position_inside_chart` you can make the
+     * legend appear inside (over) the chart to save space or next to it.
      * 
-     * @param string $legendAlignment
+     * If the position of the legend is not defined explicitly, the facade
+     * will pick an option automatically.
+     * 
+     * @uxon-property legend_position
+     * @uxon-type string [left,right,top,bottom]
+     * 
+     * @param string $legendPosition
      * @return Chart
      */
-    public function setLegendAlignment($legendAlignment)
+    public function setLegendPosition(string $leftRigthTopBottom) : Chart
     {
-        $this->legendAlignment = $legendAlignment;
+        $this->legendPosition = $leftRigthTopBottom;
         return $this;
     }
 
+    /**
+     *
+     * @return bool
+     */
+    public function getLegendPositionInsideChart() : bool
+    {
+        return $this->legenPositionInsideChart;
+    }
+    
+    /**
+     * Position the legend inside (true) or outside (false) of the chart.
+     * 
+     * If the position of the legend is not defined explicitly, the facade
+     * will pick an option automatically. Mobile facades will mostly position 
+     * legends inside the chart canvas to save space, while desktop facades 
+     * can place it next to the chart in order to avoid overlapping.
+     * 
+     * In any case, the property `legend_position` controls the position
+     * relative to the center of the chart. 
+     * 
+     * @uxon-property legend_position_inside_chart
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return Chart
+     */
+    public function setLegendPositionInsideChart(bool $value) : Chart
+    {
+        $this->legenPositionInsideChart = $value;
+        return $this;
+    }
+    
+    
+    /**
+     *
+     * @param ChartAxis $axis
+     * @throws WidgetLogicError
+     * @return int
+     */
+    public function getSeriesIndex(ChartSeries $series) : int
+    {
+        $idx = array_search($series, $this->series, true);
+        if ($idx !== false) {
+            return $idx;
+        }
+        
+        throw new WidgetLogicError($this, 'Series not "' . $series->getCaption() . '" found in chart "' . $this->getId() . '"!');
+    }
+    
+    public function ImportUxonObject(UxonObject $uxon)
+    {
+        parent::importUxonObject($uxon);
+        if ($uxon->hasProperty('data') === true) {
+            $this->prepareDataWidget($this->getData());
+            $this->dataPrepared = true;
+        }
+        return;
+    }
+    
+    public function getEmptyText()
+    {
+        if (! $this->empty_text) {
+            $this->empty_text = $this->translate('WIDGET.DATA.NO_DATA_FOUND');
+        }
+        return $this->empty_text;
+    }
+    
+    /**
+     * Sets a custom text to be displayed in the Data widget, if not data is found.
+     *
+     * The text may contain any facade-specific formatting: e.g. HTML for HTML-facades.
+     *
+     * @uxon-property empty_text
+     * @uxon-type string|metamodel:formula
+     *
+     * @param string $value
+     * @return Data
+     */
+    public function setEmptyText($value)
+    {
+        $this->empty_text = $this->evaluatePropertyExpression($value);
+        return $this;
+    }
 }
-?>
