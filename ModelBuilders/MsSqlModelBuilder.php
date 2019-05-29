@@ -3,6 +3,7 @@ namespace exface\Core\ModelBuilders;
 
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\NotImplementedError;
+use exface\Core\DataTypes\StringDataType;
 
 class MSSqlModelBuilder extends AbstractSqlModelBuilder
 {
@@ -29,14 +30,27 @@ class MSSqlModelBuilder extends AbstractSqlModelBuilder
         $columns_array = $meta_object->getDataConnection()->runSql($columns_sql)->getResultArray();
         $rows = array();
         foreach ($columns_array as $col) {
+            $type = $col['TYPE_NAME'];
+            if (StringDataType::endsWith($type, ' identity') === true) {
+                $type = substr($type, 0, (-1)*strlen(' identity'));
+                $isUid = 1;
+                $isRequired = 0;
+                $isEditable = 0;
+            } else {
+                $isUid = 0;
+                $isRequired = $col['NULLABLE'] == 0 ? 1 : 0;
+                $isEditable = 1;
+            }
             $rows[] = array(
                 'NAME' => $this->generateLabel($col['COLUMN_NAME']),
                 'ALIAS' => $col['COLUMN_NAME'],
-                'DATATYPE' => $this->getDataTypeId($this->guessDataType($meta_object, $col['TYPE_NAME'], $col['PRECISION'], $col['SCALE'])),
+                'DATATYPE' => $this->getDataTypeId($this->guessDataType($meta_object, $type, $col['PRECISION'], $col['SCALE'])),
                 'DATA_ADDRESS' => $col['COLUMN_NAME'],
                 'OBJECT' => $meta_object->getId(),
-                'REQUIREDFLAG' => ($col['NULLABLE'] == 0 ? 1 : 0),
-                'DEFAULT_VALUE' => (! is_null($col['COLUMN_DEF']) ? $col['COLUMN_DEF'] : '')
+                'REQUIREDFLAG' => $isRequired,
+                'EDITABLEFLAG' => $isEditable,
+                'DEFAULT_VALUE' => (! is_null($col['COLUMN_DEF']) ? $col['COLUMN_DEF'] : ''),
+                'UIDFLAG' => $isUid
             );
         }
         return $rows;
