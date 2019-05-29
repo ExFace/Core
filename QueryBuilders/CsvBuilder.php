@@ -97,7 +97,11 @@ class CsvBuilder extends FileContentsBuilder
         
         $assocKeys = $this->getAssocKeys($colCount, $field_map);
         $result_rows = $filtered->fetchAssoc($assocKeys);
-        $result_rows = iterator_to_array($result_rows);
+        try {
+            $result_rows = iterator_to_array($result_rows);
+        } catch (\OutOfBoundsException $e) {
+            $result_rows = [];
+        }
         
         // add static values
         foreach ($static_values as $alias => $val) {
