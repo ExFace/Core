@@ -93,6 +93,8 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      * @var bool
      */
     private $dataPrepared = false;
+    
+    private $empty_text = null;
 
     /**
      * 
@@ -869,5 +871,30 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
             $this->dataPrepared = true;
         }
         return;
+    }
+    
+    public function getEmptyText()
+    {
+        if (! $this->empty_text) {
+            $this->empty_text = $this->translate('WIDGET.DATA.NO_DATA_FOUND');
+        }
+        return $this->empty_text;
+    }
+    
+    /**
+     * Sets a custom text to be displayed in the Data widget, if not data is found.
+     *
+     * The text may contain any facade-specific formatting: e.g. HTML for HTML-facades.
+     *
+     * @uxon-property empty_text
+     * @uxon-type string|metamodel:formula
+     *
+     * @param string $value
+     * @return Data
+     */
+    public function setEmptyText($value)
+    {
+        $this->empty_text = $this->evaluatePropertyExpression($value);
+        return $this;
     }
 }
