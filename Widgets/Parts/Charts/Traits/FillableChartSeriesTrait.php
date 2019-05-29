@@ -9,18 +9,23 @@ trait FillableChartSeriesTrait
      *
      * @var bool
      */
-    private $filled = false;
+    private $filled = null;
     
     /**
      *
      * @return bool
      */
-    public function isFilled() : bool
+    public function isFilled(bool $default = false) : bool
     {
-        return $this->filled;
+        return $this->filled ?? $default;
     }
     
     /**
+     * Set if line/spline series should be filled or not.
+     * 
+     * @uxon-property filled
+     * @uxon-type boolean
+     * @uxon-default false
      *
      * @param bool $value
      * @return ChartSeries

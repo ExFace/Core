@@ -4,6 +4,7 @@ namespace exface\Core\Widgets\Parts\Charts;
 use exface\Core\Widgets\Parts\Charts\Traits\FillableChartSeriesTrait;
 use exface\Core\Widgets\Parts\Charts\Traits\StackableChartSeriesTrait;
 use exface\Core\Widgets\Parts\Charts\Traits\XYChartSeriesTrait;
+use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
 
 /**
  * Line chart using a meta attributes or column references for X and Y values.
@@ -68,9 +69,35 @@ use exface\Core\Widgets\Parts\Charts\Traits\XYChartSeriesTrait;
  * @author Andrej kabachnik
  *
  */
-class LineChartSeries extends ChartSeries
+class LineChartSeries extends ChartSeries implements StackableChartSeriesInterface
 {
     use FillableChartSeriesTrait;
     use StackableChartSeriesTrait;
     use XYChartSeriesTrait;
+    
+    private $smooth = null;
+    
+    /**
+     *
+     * @return float
+     */
+    public function isSmooth(bool $default = false) : ?bool
+    {
+        return $this->smooth ?? $default;
+    }
+    
+    /**
+     * Set to true if you want the series to have a smooth line.
+     *
+     * @uxon-property smooth
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return LineChartSeries
+     */
+    public function setSmooth(bool $value) : LineChartSeries
+    {
+        $this->smooth = $value;
+        return $this;
+    }
 }

@@ -93,6 +93,8 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      * @var bool
      */
     private $dataPrepared = false;
+    
+    private $empty_text = null;
 
     /**
      * 
@@ -229,20 +231,8 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      * @throws WidgetPropertyInvalidValueError
      * @return Chart
      */
-    protected function addAxis(string $x_or_y, ChartAxis $axis) : Chart
+    public function addAxis(string $x_or_y, ChartAxis $axis) : Chart
     {
-        if (! $axis->getPosition()) {
-            switch ($x_or_y) {
-                case $this::AXIS_Y:
-                    $axis->setPosition(ChartAxis::POSITION_LEFT);
-                    break;
-                case $this::AXIS_X:
-                    $axis->setPosition(ChartAxis::POSITION_BOTTOM);
-                    break;
-                default:
-                    throw new WidgetPropertyInvalidValueError($this, 'Invalid axis coordinate: "' . $x_or_y . '"! "x" or "y" expected!', '6T90UV9');
-            }
-        }
         $var = 'axes_' . $x_or_y;
         array_push($this->$var, $axis);
         return $this;
@@ -431,7 +421,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
         $result = [];
         foreach ($this->getAxes($dimension) as $axis) {
             try {
-                if ($axis->getDataColumn()->getAttribute()->is($attribute)) {
+                if ($axis->isBoundToAttribute() === true && $axis->getAttribute()->is($attribute)) {
                     $result[] = $axis;
                 }
             } catch (\Throwable $e) {
@@ -513,9 +503,15 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      */
     public function createSeriesFromUxon(UxonObject $uxon = null) : ChartSeries
     {
-        $type = mb_strtolower($uxon->getProperty('type'));
+        if ($uxon->hasProperty('type')) {
+            $type = mb_strtolower($uxon->getProperty('type'));
+        } elseif (empty($this->series) === false) {
+            $type = $this->series[count($this->series)-1]->getType();
+        } else {
+            throw new WidgetLogicError($this, 'Chart series type not set for series ' . count($this->series). '!');
+        }
         $class = $this::getSeriesClassName($type);
-        return new $class($this, $uxon);
+        return new $class($this, $uxon, $type);
     }
     
     public static function getSeriesClassName(string $chartType) : string
@@ -817,7 +813,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
         $this->legendPosition = $leftRigthTopBottom;
         return $this;
     }
-    
+
     /**
      *
      * @return bool
@@ -875,5 +871,30 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
             $this->dataPrepared = true;
         }
         return;
+    }
+    
+    public function getEmptyText()
+    {
+        if (! $this->empty_text) {
+            $this->empty_text = $this->translate('WIDGET.DATA.NO_DATA_FOUND');
+        }
+        return $this->empty_text;
+    }
+    
+    /**
+     * Sets a custom text to be displayed in the Data widget, if not data is found.
+     *
+     * The text may contain any facade-specific formatting: e.g. HTML for HTML-facades.
+     *
+     * @uxon-property empty_text
+     * @uxon-type string|metamodel:formula
+     *
+     * @param string $value
+     * @return Data
+     */
+    public function setEmptyText($value)
+    {
+        $this->empty_text = $this->evaluatePropertyExpression($value);
+        return $this;
     }
 }
