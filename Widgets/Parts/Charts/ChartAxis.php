@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Widgets\Parts\Charts;
 
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\TimestampDataType;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\DataColumn;
@@ -8,6 +11,10 @@ use exface\Core\Interfaces\Widgets\iHaveCaption;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Widgets\Chart;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
  * The ChartAxis represents the X or Y axis of a chart.
@@ -39,6 +46,12 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     private $position = null;
     
     private $hidden = null;
+    
+    private $reverse_direction = null;
+    
+    private $zoomable = null;
+    
+    private $grid = null;
 
     const POSITION_TOP = 'TOP';
 
@@ -47,6 +60,14 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     const POSITION_BOTTOM = 'BOTTOM';
 
     const POSITION_LEFT = 'LEFT';
+    
+    const AXIS_TYPE_TIME = 'TIME';
+    
+    const AXIS_TYPE_CATEGORY = 'CATEGORY';
+    
+    const AXIS_TYPE_VALUE = 'VALUE';
+    
+    const AXIS_TYPE_LOG = 'LOG';
 
     /**
      *
@@ -54,6 +75,9 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      */
     public function getDataColumn() : DataColumn
     {
+        if ($this->data_column === null && $this->data_column_id !== null) {
+            $this->data_column = $this->getChart()->getData()->getColumn($this->data_column_id);
+        }
         return $this->data_column;
     }
 
@@ -143,6 +167,9 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      */
     public function getPosition() : string
     {
+        if ($this->position === null) {
+            $this->position = $this->getDimension() === Chart::AXIS_X ? self::POSITION_BOTTOM : self::POSITION_LEFT;
+        }
         return $this->position;
     }
 
@@ -222,16 +249,14 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      *
      * @return bool
      */
-    public function isHidden() : ?bool
+    public function isHidden() : bool
     {
-        return $this->hidden;
+        return $this->hidden ?? false;
     }
     
     /**
-     * Set to TRUE to make the axis invisible or to FALSE to force showing it.
+     * Set to FALSE to make the axis invisible or to TRUE (default) to force showing it.
      * 
-     * If not set explicitly, the visibility of the axis is controlled by the
-     * facade used.
      * 
      * @uxon-property hidden
      * @uxon-type boolean
@@ -242,6 +267,128 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     public function setHidden(bool $value) : ChartAxis
     {
         $this->hidden = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isReverse(bool $default = false) : bool
+    {
+        return $this->reverse_direction ?? $default;
+    }
+    
+    /**
+     * Set to true to reverse the axis direction. Default is false
+     * 
+     * 
+     * @uxon-property reverse_direction
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return ChartAxis
+     */
+    public function setReverseDirection(bool $value) : ChartAxis
+    {
+        $this->reverse_direction = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isZoomable() : bool
+    {
+        return $this->zoomable ?? false;
+    }
+    
+    /**
+     * Set to true to be able to zoom data on that axis
+     *
+     *
+     * @uxon-property zoomable
+     * @uxon-type boolean
+     *
+     * @param bool $value
+     * @return ChartAxis
+     */
+    public function setZoomable(bool $value) : ChartAxis
+    {
+        $this->zoomable = $value;
+        return $this;
+    }
+    
+    /**
+     * Set the axis type. Possible types are 'value', 'category', 'time', 'log'.
+     * 
+     * @uxon-property axis_type
+     * @uxon-type [value,category,time,log]
+     * 
+     * @param string $type
+     * @return ChartAxis
+     */
+    public function setAxisType(string $axis_type) : ChartAxis
+    {
+        $axis_type = mb_strtoupper($axis_type);
+        if (defined(__CLASS__ . '::AXIS_TYPE_' . $axis_type)) {
+            $this->axis_type = $axis_type;
+        } else {
+            throw new WidgetPropertyInvalidValueError($this->getChart(), 'Invalid axis type "' . $axis_type . '". Only TIME, CATEGORY, VALUE or LOG allowed!', '6TA2Y6A');
+        }
+        $this->axis_type = $axis_type;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getAxisType() : string
+    {
+        if ($this->axis_type === null){
+            $dataType = $this->getDataColumn()->getDataType();
+            switch (true) {
+                case $dataType instanceof DateDataType || $dataType instanceof TimestampDataType : 
+                    $this->axis_type = self::AXIS_TYPE_TIME;
+                    break;
+                case $dataType instanceof NumberDataType: 
+                    $this->axis_type = self::AXIS_TYPE_VALUE;
+                    break;
+                default :
+                    $this->axis_type = self::AXIS_TYPE_CATEGORY;
+            }
+            
+        }
+        return $this->axis_type;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasGrid() : bool
+    {
+        if($this->grid === null){
+            return false;
+        }
+        return $this->grid;    
+    }
+    
+    /**
+     * Set to TRUE to make the gridline for this axis visible or to FALSE (default) to force hiding it.
+     * 
+     * @uxon-property grid
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return ChartAxis
+     */
+    public function setGrid(bool $value) : ChartAxis
+    {
+        $this->grid = $value;
         return $this;
     }
 
@@ -273,6 +420,34 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
         
         $this->data_column = $column;
         
+        // If we have a time axis, we should to sort data - unsorted time looks really strange :)
+        // Still, the user may choose to sort based on other criteria.
+        if ($this->getAxisType() === self::AXIS_TYPE_TIME) {
+            // If sorting was not taken care of at all - sort over time.
+            if (empty($dataWidget->getSorters()) === true) {
+                $dataWidget->addSorter($this->getDataColumn()->getAttributeAlias(), SortingDirectionsDataType::ASC);
+            }
+        }
+        
         return $this;
+    }
+    
+    public function isBoundToAttribute() : bool
+    {
+        if ($this->data_column !== null || $this->data_column_id !== null) {
+            return $this->getDataColumn()->isBoundToAttribute();
+        }
+        return $this->attributeAlias !== null;
+    }
+    
+    public function getAttribute() : MetaAttributeInterface
+    {
+        if ($this->data_column !== null || $this->data_column_id !== null) {
+            return $this->getDataColumn()->getAttribute();
+        }
+        if ($this->attributeAlias !== null) {
+            return $this->getChart()->getMetaObject()->getAttribute($this->attributeAlias);
+        }
+        return null;
     }
 }

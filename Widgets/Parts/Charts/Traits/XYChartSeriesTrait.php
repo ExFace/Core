@@ -9,6 +9,7 @@ use exface\Core\Widgets\DataColumn;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\Charts\ChartAxis;
 use exface\Core\Widgets\Parts\Charts\ChartSeries;
+use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
 
 trait XYChartSeriesTrait
 {
@@ -163,6 +164,29 @@ trait XYChartSeriesTrait
     }
     
     /**
+     * Alias of the attribute to display on the value axis.
+     * 
+     * Which axis is the value axis, depends on the chart type. This property
+     * allows to bind the value regardless of the axis dimension, making it
+     * easier to switch chart types (you don't need to chang `x_attribute_alias`
+     * to `y_attribute_alias` or vice versa).
+     * 
+     * @uxon-property value_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $alias
+     * @return ChartSeries
+     */
+    public function setValueAttributeAlias(string $alias) : ChartSeries
+    {
+        if ($this->getValueColumnDimension() === chart::AXIS_X) {
+            return $this->setXAttributeAlias($alias);
+        } else {
+            return $this->setYAttributeAlias($alias);
+        }
+    }
+    
+    /**
      * 
      * @return string
      */
@@ -238,54 +262,87 @@ trait XYChartSeriesTrait
         } 
         
         // Find X-axis
-        $axis = null;
-        if ($this->getXAxisNo() !== null) {
-            $axis = $this->getChart()->getAxesX()[$this->getXAxisNo()];
-        } elseif ($this->xAttributeAlias !== null) {
-            $attr = $this->getMetaObject()->getAttribute($this->xAttributeAlias);
-            $axes = $this->getChart()->findAxesByAttribute($attr, Chart::AXIS_X);
-            if (empty($axes)) {
-                $axis = $this->getChart()->createAxisFromColumnId($this->xColumn->getId());
-                $this->getChart()->addAxisX($axis);
-            } else {
-                $axis = $axes[0];
-            }
-        } elseif (empty($this->getChart()->getAxesX()) === false) {
-            $axis = $this->getChart()->getAxesX()[0];
-        } elseif ($this->getXColumnId() !== null) {
-            $axis = $this->getChart()->createAxisFromColumnId($this->getXColumnId());
-            $this->getChart()->addAxisX($axis);
-        }
-        if (! $axis) {
+        if (! $axis = $this->findAxis(Chart::AXIS_X)) {
             throw new WidgetConfigurationError($this->getChart(), 'Cannot find X-axis for series ' . $this->getIndex() . ' of widget "' . $this->getChart()->getId() . '"!', '6T90UV9');
         }
         $this->xAxis = $axis;
         
         // Find Y-axis
-        $axis = null;
-        if ($this->getYAxisNo() !== null) {
-            $axis = $this->getChart()->getAxesY()[$this->getYAxisNo()];
-        } elseif ($this->yAttributeAlias !== null) {
-            $attr = $this->getMetaObject()->getAttribute($this->yAttributeAlias);
-            $axes = $this->getChart()->findAxesByAttribute($attr, Chart::AXIS_Y);
-            if (empty($axes)) {
-                $axis = $this->getChart()->createAxisFromColumnId($this->yColumn->getId());
-                $this->getChart()->addAxisY($axis);
-            } else {
-                $axis = $axes[0];
-            }
-        } elseif (empty($this->getChart()->getAxesY()) === false) {
-            $axis = $this->getChart()->getAxesY()[0];
-        } elseif ($this->getYColumnId() !== null) {
-            $axis = $this->getChart()->createAxisFromColumnId($this->getYColumnId());
-            $this->getChart()->addAxisY($axis);
-        }
-        if (! $axis) {
+        if (! $axis = $this->findAxis(Chart::AXIS_Y)) {
             throw new WidgetConfigurationError($this->getChart(), 'Cannot find Y-axis for series ' . $this->getIndex() . ' of widget "' . $this->getChart()->getId() . '"!', '6T90UV9');
         }
         $this->yAxis = $axis;
         
         return $this;
+    }
+    
+    protected function findAxis(string $dimension) : ?ChartAxis
+    {
+        $axis = null;
+        $axisNo = $dimension === Chart::AXIS_X ? $this->getXAxisNo() : $this->getYAxisNo();
+        $attributeAlias = $dimension === Chart::AXIS_X ? $this->xAttributeAlias : $this->yAttributeAlias;
+        $column = $dimension === Chart::AXIS_X ? $this->xColumn : $this->yColumn;
+        $columnId = $dimension === Chart::AXIS_X ? $this->xColumnId : $this->yColumnId;
+        $secondaryAxisPosition = $dimension === Chart::AXIS_X ? 'bottom' : 'right';
+        $chart = $this->getChart();
+        
+        //Check if series is stacked and if so find previous series with same stack and use axis from that series
+        if ($this instanceof StackableChartSeriesInterface && $this->isStacked() && $this->getValueColumnDimension() === $dimension && $this->getIndex() > 0) {
+            $prevSeries = $this->getChart()->getSeries()[($this->getIndex() - 1)];
+            if ($prevSeries instanceof StackableChartSeriesInterface && $prevSeries->getStackGroupId() === $this->getStackGroupId()) {
+                return $dimension === Chart::AXIS_X ? $prevSeries->getXAxis() : $prevSeries->getYAxis();
+            }
+        }
+        
+        //when series has number given, try get axis with that number, if that fails, continue
+        if ($axisNo !== null) {
+            try {
+                $axis = $chart->getAxes($dimension)[$axisNo];
+                if ($axis !== null) {
+                    return $axis;
+                }
+            } catch (\Throwable $e) {
+                // Continue with the other cases
+            }
+        }
+        
+        switch (true) {
+            //series has attribute_alias set
+            case $attributeAlias !== null:
+                $existingAxes = $chart->getAxes($dimension);
+                switch (count($existingAxes)) {
+                    //when no axis already exists create new axis
+                    case 0:
+                        $axis = $chart->createAxisFromColumnId($column->getId());
+                        $chart->addAxis($dimension, $axis);
+                        break;
+                    //when there are already axes existing, search if one has same attribute
+                    default:
+                        $attr = $this->getMetaObject()->getAttribute($attributeAlias);
+                        $attrAxes = $chart->findAxesByAttribute($attr, $dimension);
+                        //when there is no axis with same attribute, create new axis
+                        if (empty($attrAxes)) {
+                            $axis = $chart->createAxisFromColumnId($column->getId());
+                            $axis->setPosition($secondaryAxisPosition);
+                            $chart->addAxis($dimension, $axis);
+                        //when there are axes with same attribute, use first of those axes
+                        } else {
+                            $axis = $attrAxes[0];
+                        }
+                        
+                }
+                break;
+            //when no attribute_alias or axisNo given, check if already axes exist and if so, take the first
+            case empty($chart->getAxes($dimension)) === false:
+                $axis = $chart->getAxes($dimension)[0];
+                break;
+            //when columnId given, create axis base on that columnId
+            case $columnId !== null:
+                $axis = $chart->createAxisFromColumnId($columnId);
+                $chart->addAxis($dimension, $axis);
+                break;
+        }
+        return $axis;
     }
     
     /**
@@ -402,5 +459,10 @@ trait XYChartSeriesTrait
     protected function isYBoundToAttribute() : bool
     {
         return $this->yAttributeAlias !== null;
+    }
+    
+    public function getValueAxis() : ChartAxis
+    {
+        return $this->getValueColumnDimension() === Chart::AXIS_X ? $this->getXAxis() : $this->getYAxis();
     }
 }

@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets\Parts\Charts;
 
+use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Widgets\Chart;
 /**
  * A bar chart shows horizontal bars for every value on the X axis.
@@ -33,5 +34,19 @@ class BarChartSeries extends ColumnChartSeries
     protected function getValueColumnDimension() : string
     {
         return Chart::AXIS_X;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Charts\ChartSeries::prepareDataWidget()
+     */
+    public function prepareDataWidget(iShowData $dataWidget): ChartSeries
+    {
+        parent::prepareDataWidget($dataWidget);
+        if ($this->getYAxis()->isReverse(true) === true) {
+            $this->getYAxis()->setReverseDirection(true);
+        }
+        return $this;
     }
 }

@@ -245,6 +245,8 @@
 	
 	"WIDGET.INPUT.EMPTY_TEXT": "",
 	
+	"ERROR.ECHARTS.AXIS_NO_DATA": "No data received for axis",
+	
 	"ERROR.CAPTION": "Error",
 	"ERROR.REQUEST_CAPTION": "Request",
 	"ERROR.CONTEXT_CAPTION": "Context",
