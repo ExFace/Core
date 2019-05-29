@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\DataConnectors;
 
-use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionTransactionStartError;
 use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
@@ -9,6 +8,7 @@ use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\ModelBuilders\MsSqlModelBuilder;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Microsoft SQL Server connector via sqlsrv PHP extension.
@@ -67,7 +67,11 @@ class MsSqlConnector extends AbstractSqlConnector
      */
     protected function performQuerySql(SqlDataQuery $query)
     {
-        if (! $result = sqlsrv_query($this->getCurrentConnection(), $query->getSql())) {
+        $sql = $query->getSql();
+        if (StringDataType::startsWith($sql, 'INSERT', false) === true) {
+            $sql .= '; SELECT SCOPE_IDENTITY() AS IDENTITY_COLUMN_NAME';
+        }
+        if (! $result = sqlsrv_query($this->getCurrentConnection(), $sql)) {
             throw new DataQueryFailedError($query, "SQL query failed! " . $this->getLastError(), '6T2T2UI');
         } else {
             $query->setResultResource($result);
@@ -75,14 +79,20 @@ class MsSqlConnector extends AbstractSqlConnector
         }
     }
 
-    function getInsertId(SqlDataQuery $query)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\SqlDataConnectorInterface::getInsertId()
+     */
+    public function getInsertId(SqlDataQuery $query)
     {
         $id = "";
-        $rs = sqlsrv_query("SELECT @@identity AS id");
-        if ($row = mssql_fetch_row($rs)) {
-            $id = trim($row[0]);
+        $resource = $query->getResultResource();
+        if ($resource) {
+            sqlsrv_next_result($resource);
+            sqlsrv_fetch($resource);
+            $id = sqlsrv_get_field($resource, 0);
         }
-        mssql_free_result($rs);
         return $id;
     }
 
@@ -161,8 +171,8 @@ class MsSqlConnector extends AbstractSqlConnector
             throw new DataConnectionRollbackFailedError($this, 'Cannot rollback transaction in "' . $this->getAliasWithNamespace() . '": The autocommit options is set to TRUE for this connection!');
         }
         
-        if (! sqlsrv_begin_transaction($this->getCurrentConnection())) {
-            throw new DataConnectionRollbackFailedError($this, 'Cannot rollback transaction in "' . $this->getAliasWithNamespace() . '": ' . $this->getLastError(), '6T2T2S1');
+        if (! sqlsrv_rollback($this->getCurrentConnection())) {
+            throw new DataConnectionRollbackFailedError($this, $this->getLastError(), '6T2T2S1');
         } else {
             $this->setTransactionStarted(false);
         }
