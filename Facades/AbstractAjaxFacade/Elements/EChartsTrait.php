@@ -34,7 +34,6 @@ trait EChartsTrait
         if ($link = $this->getWidget()->getDataWidgetLink()) {
             $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
             $output .= $this->buildJsRedraw($linked_element->buildJsDataGetter().'.rows');
-            //$output .= $this->buildJsFunctionPrefix() . 'plot(' . $linked_element->buildJsDataGetter() . ".rows);";
         }
         return $output;
     }
@@ -134,18 +133,20 @@ JS;
     protected function buildJsSelectFunctionBody(string $selection) : string
     {
         return <<<JS
-
-            var data = '';
-            if (typeof {$this->buildJsEChartsVar()}._oldselection == 'undefined') {
-                {$this->buildJsEChartsVar()}._oldSelection = $selection;
-                {$this->getOnChangeScript()}
+            var echart = {$this->buildJsEChartsVar()};
+            var oSelectedRow = {$selection};
+            console.log('selected', oSelectedRow);
+            if (typeof echart._oldselection === 'undefined') {
+                echart._oldSelection = oSelectedRow;
             } else {
-                if (({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', $selection)}) == false) {
-                    {$this->buildJsEChartsVar()}._oldSelection = $selection;
-                    data = {$this->buildJsValueGetter('FilialeNr')};
-                    {$this->getOnChangeScript()}
+                if (({$this->buildJsRowCompare('echart._oldSelection', 'oSelectedRow')}) === false) {
+                    echart._oldSelection = oSelectedRow;
+                } else {
+                    return;
                 }
             }
+
+            {$this->getOnChangeScript()}
     
 JS;
     }
@@ -195,12 +196,11 @@ JS;
                 {$this->buildJsEChartsVar()}.setOption(newOptions);
             }
             
-            //{$this->getOnChangeScript()}
+            /*{$this->getOnChangeScript()}*/
             
     });
 
 JS;
-        //TODO
     }
     
     protected function buildJsChartConfig() : string
@@ -708,12 +708,34 @@ JS;
     var rowData = $dataJs;
     if (! rowData || rowData.count === 0) {
         {$this->buildJsDataResetter()};
+        {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
         return;
     }
+{$this->buildJsMessageOverlayHide()}
 {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()});
 $js
 
 JS;
+    }
+
+    protected function buildJsMessageOverlayShow(string $message) : string
+    {
+        return <<<JS
+
+$({$this->buildJsEChartsVar()}.getDom()).prepend($('<div class="exf-chart-message" style="position: absolute; padding: 10px; width: 100%; text-align: center;">{$message}</div>'));
+
+JS;
+    }
+    
+    protected function buildJsMessageOverlayHide() : string
+    {
+        return <<<JS
+if ($(".exf-chart-message")[0]) {       
+    $(".exf-chart-message").remove();
+}
+
+JS;
+        
     }
     
     protected function buildJsGridMarginTop() : int
@@ -743,7 +765,7 @@ JS;
                 $count++;    
             }
         }
-        $margin = 50 + 15*$count;
+        $margin = 25 + 40*$count;
         return  $margin;       
     }
     
@@ -755,7 +777,7 @@ JS;
                 $count++;
             }
         }
-        $margin = 35 + 15*$count;        
+        $margin = 5+40*$count;        
         return $margin;
     }
     
@@ -887,40 +909,7 @@ JS;
      */
     protected function buildJsDataResetter() : string
     {
-        foreach ($this->getWidget()->getAxes() as $axis){
-            if ($axis->isHidden() === true) {
-                continue;
-            }
-            $axesJsObjectInit .= <<<JS
-            
-axes["{$axis->getDataColumn()->getDataColumnName()}"] = {
-    dimension: "{$axis->getDimension()}"
-};
- 
-JS;
-            
-        return <<<JS
-
-var axes = {};
-{$axesJsObjectInit}
-
-var newOptions = {yAxis: [], xAxis: []};
-var axis;
-
-for (var i in axes) {
-    axis = axes[i];
-    newOptions[axis.dimension + 'Axis'].push({
-        show: false
-    });
-}
-
-newOptions.dataset = {source: []};
-if ({$this->buildJsEChartsVar()}) {
-    {$this->buildJsEChartsVar()}.setOption(newOptions);
-}
-
-JS;
-        }
+        return "{$this->buildJsEChartsVar()}.setOption({}, true);";
     }
     
 }
