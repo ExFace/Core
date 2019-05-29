@@ -1021,7 +1021,7 @@ class DataSheet implements DataSheetInterface
             if ($column->getDataType()->is(DataSheetDataType::class)) {
                 foreach ($column->getValues(false) as $rowNr => $sheetArr) {
                     if (! $sheetArr) {
-                        $nestedSheets[$rowNr][] = null;
+                        $nestedSheets[$rowNr][$column->getName()] = null;
                         continue;
                     }
                     
@@ -1088,6 +1088,9 @@ class DataSheet implements DataSheetInterface
                 }
                 
                 foreach ($rowNestedSheets as $columnName => $nestedSheet) {
+                    if ($nestedSheet === null) {
+                        continue;
+                    }
                     $nestedRel = $this->getMetaObject()->getRelation($columnName);
                     if ($nestedRel->getCardinality()->__toString() !== RelationCardinalityDataType::ONE_TO_N) {
                         throw new DataSheetRuntimeError($this, 'Cannot create nested data for "' . $this->getMetaObject()->getName() . '" (' . $nestedRel->getRightObject()->getAliasWithNamespace() . ') within "' . $this->getMetaObject()->getRightObject()->getName() . '": only one-to-many relations allowed!');
