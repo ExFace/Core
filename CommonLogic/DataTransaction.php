@@ -91,7 +91,7 @@ class DataTransaction implements DataTransactionInterface
                 $connection->transactionRollback();
                 $this->is_rolled_back = true;
             } catch (ErrorExceptionInterface $e) {
-                throw new DataTransactionRollbackError('Cannot rollback transaction for "' . $connection->getAliasWithNamespace() . '":' . $e->getMessage());
+                throw new DataTransactionRollbackError('Cannot rollback transaction for "' . $connection->getAliasWithNamespace() . '": ' . $e->getMessage(), null, $e);
             }
         }
         return $this;
@@ -155,14 +155,14 @@ class DataTransaction implements DataTransactionInterface
             try {
                 $connection->transactionStart();
             } catch (ErrorExceptionInterface $e) {
-                throw new DataTransactionStartError('Cannot start new transaction for "' . $connection->getAliasWithNamespace() . '":' . $e->getMessage());
+                throw new DataTransactionStartError('Cannot start new transaction for "' . $connection->getAliasWithNamespace() . '":' . $e->getMessage(), null, $e);
             }
             $this->connections[] = $connection;
         } elseif (! $existing_connection->transactionIsStarted()) {
             try {
                 $existing_connection->transactionStart();
             } catch (ErrorExceptionInterface $e) {
-                throw new DataTransactionStartError('Cannot start new transaction for "' . $connection->getAliasWithNamespace() . '":' . $e->getMessage());
+                throw new DataTransactionStartError('Cannot start new transaction for "' . $connection->getAliasWithNamespace() . '":' . $e->getMessage(), null, $e);
             }
         }
         
