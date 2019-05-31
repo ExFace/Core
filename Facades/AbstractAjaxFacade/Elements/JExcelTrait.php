@@ -12,6 +12,9 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\InputHidden;
 use exface\Core\Widgets\InputNumber;
 use exface\Core\Widgets\InputCheckBox;
+use exface\Core\Widgets\Display;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -130,19 +133,31 @@ JS;
     protected function buildJsJExcelColumn(DataColumn $col) : string
     {
         $cellWidget = $col->getCellWidget();
+        $js = '';
         switch (true) {
             case $col->isHidden() === true:
             case $cellWidget instanceof InputHidden:
-                return "{ type: 'hidden' }";
+                $js = "type: 'hidden',";
+                break;
             case $cellWidget instanceof InputNumber:
-                return "{ type: 'numeric' }";
+            case $cellWidget instanceof Display && $cellWidget->getValueDataType() instanceof NumberDataType:
+                $js = "type: 'numeric',";
+                break;
             case $cellWidget instanceof InputCheckBox:
-                return "{ type: 'checkbox' }";
+            case $cellWidget instanceof Display && $cellWidget->getValueDataType() instanceof BooleanDataType:
+                $js = "type: 'checkbox',";
+                break;
             case $cellWidget instanceof InputCombo:
                 return $this->buildJsJExcelColumnAutocomplete($cellWidget);
+            default:
+                $js = "type: 'text',";
         }
         
-        return "{ type: 'text' }";
+        if ($col->isEditable() === false) {
+            $js .= 'readOnly: true,';
+        }
+        
+        return '{' . rtrim($js, ","). '}';
     }
         
     protected function buildJsJExcelColumnAutocomplete(InputSelect $cellWidget) : string
