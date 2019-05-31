@@ -21,6 +21,8 @@ trait iHaveColumnsAndColumnGroupsTrait
     /** @var DataColumnGroup[] */
     private $column_groups = array();
     
+    private $columnsAutoAddDefaults = true;
+    
     /**
      *
      * {@inheritDoc}
@@ -30,7 +32,7 @@ trait iHaveColumnsAndColumnGroupsTrait
     {
         parent::init();
         // Add the main column group
-        if (count($this->getColumnGroups()) == 0) {
+        if (empty($this->getColumnGroups()) === true && $this->getColumnsAutoAddDefaultDisplayAttributes() === true) {
             $this->addColumnGroup($this->getPage()->createWidget('DataColumnGroup', $this));
         }
     }
@@ -398,4 +400,29 @@ trait iHaveColumnsAndColumnGroupsTrait
      * @return bool
      */
     abstract public function isEditable() : bool;
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function getColumnsAutoAddDefaultDisplayAttributes() : bool
+    {
+        return $this->columnsAutoAddDefaults;
+    }
+    
+    /**
+     * Set to FALSE to disable autogeneration of columns from default display attributes.
+     * 
+     * @uxon-property columns_auto_add_from_default_display_attributes
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return iHaveColumns
+     */
+    public function setColumnsAutoAddDefaultDisplayAttributes(bool $value) : iHaveColumns
+    {
+        $this->columnsAutoAddDefaults = $value;
+        return $this;
+    }
 }
