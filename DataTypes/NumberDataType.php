@@ -58,11 +58,19 @@ class NumberDataType extends AbstractDataType
         } else {
             $string = trim($string);
             $matches = array();
-            preg_match('!-?\d+[,\.]?\d*+!', str_replace(' ', '', $string), $matches);
-            $match = str_replace(',', '.', $matches[0]);
-            if (is_numeric($match)) {
-                return $match;
-            }
+            preg_match_all('!^(-?\d+([,\.])?)+$!', str_replace(' ', '', $string), $matches);
+            if (empty($matches[0]) === false) {
+                $decimalSep = $matches[2][0];
+                if ($decimalSep === ',') {
+                    $number = str_replace('.', '', $string);
+                    $number = str_replace($decimalSep, '.', $number);
+                } else {
+                    $number = str_replace(',', '', $string);
+                }
+                if (is_numeric($number)) {
+                    return $number;
+                }
+            }            
             throw new DataTypeCastingError('Cannot convert "' . $string . '" to a number!');
             return '';
         }
