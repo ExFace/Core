@@ -291,7 +291,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
             if ($link = $this->getDataWidgetLink()) {
                 $this->data = $link->getTargetWidget();
             } else {
-                $this->data = WidgetFactory::createFromUxonInParent($this, new UxonObject(), 'Data');
+                $this->data = WidgetFactory::createFromUxonInParent($this, new UxonObject(['columns_auto_add_default_display_attributes' => false]), 'Data');
             }
             if ($this->dataPrepared === false) {
                 $this->prepareDataWidget($this->data);
@@ -375,6 +375,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     public function setData(UxonObject $uxon_object)
     {
         $data = $this->getPage()->createWidget('Data', $this);
+        $data->setColumnsAutoAddDefaultDisplayAttributes(false);
         $data->setMetaObject($this->getMetaObject());
         $data->importUxonObject($uxon_object);
         // Do not add action automatically as the internal data toolbar will
