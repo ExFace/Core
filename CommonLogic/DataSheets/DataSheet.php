@@ -1081,8 +1081,12 @@ class DataSheet implements DataSheetInterface
                 throw new DataSheetRuntimeError($this, 'Cannot create nested data: ' . count($nestedSheet) . ' nested data sheets found for ' . count($new_uids) . ' UID keys in the parent sheet.');
             }
             
-            foreach ($nestedSheets as $rowNr => $rowNestedSheets) {
-                $rowUid = $new_uids[$rowNr];
+            // Since $new_uids has it's own keys (not the row numbers), we must use $uidIdx
+            // instead of $rowNr to get the correct UID
+            $uidIdx = 0;
+            foreach ($nestedSheets as $rowNestedSheets) {
+                $rowUid = $new_uids[$uidIdx];
+                $uidIdx++;
                 if ($rowUid === null || $rowUid === '') {
                     throw new DataSheetRuntimeError($this, 'Number of created head-rows does not match the number of children rows!', '75TPT5L');
                 }
@@ -1743,9 +1747,12 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRow()
      */
-    public function removeRow($row_number)
+    public function removeRow(int $row_number, bool $reindex = false) : DataSheetInterface
     {
         unset($this->rows[$row_number]);
+        if ($reindex === true) {
+            $this->rows = array_values($this->rows);
+        }
         return $this;
     }
 

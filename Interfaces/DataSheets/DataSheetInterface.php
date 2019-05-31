@@ -412,7 +412,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @param integer $row_number            
      * @return DataSheetInterface
      */
-    public function removeRow($row_number);
+    public function removeRow(int $row_number, bool $reindex = false) : DataSheetInterface;
 
     /**
      * Removes all rows with the given value in the UID column
