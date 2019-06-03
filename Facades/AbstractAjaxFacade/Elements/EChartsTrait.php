@@ -61,6 +61,7 @@ trait EChartsTrait
         
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.ECHARTS.ECHARTS_JS') . '"></script>';
         
+        
         foreach ($this->getWidget()->getData()->getColumns() as $col) {
             $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
             $includes = array_merge($includes, $formatter->buildHtmlBodyIncludes());
@@ -280,6 +281,12 @@ JS;
             $smoothJs = '';
         }
         
+        if ($series->getColor() !== null) {
+            $color = "lineStyle: { color: '{$series->getColor()}' },";
+        } else {
+            $color = '';
+        }
+        
         return <<<JS
 
 {
@@ -293,6 +300,7 @@ JS;
     yAxisIndex: {$series->getYAxis()->getIndex()},
     {$smoothJs}
     {$filledJs}
+    {$color}
     {$this->buildJsStack($series)}
     {$this->buildJsMarkLineProperties()}
 },
@@ -302,6 +310,12 @@ JS;
     
     protected function buildJsColumnBarChartProperties (ColumnChartSeries $series) :string
     {
+        if ($series->getColor() !== null) {
+            $color = "itemStyle: { color: '{$series->getColor()}' },";
+        } else {
+            $color = '';
+        }
+        
         return <<<JS
 
     name: '{$series->getCaption()}',
@@ -312,6 +326,7 @@ JS;
     },
     xAxisIndex: {$series->getXAxis()->getIndex()},
     yAxisIndex: {$series->getYAxis()->getIndex()},
+    {$color}
     {$this->buildJsStack($series)}
     {$this->buildJsMarkLineProperties()}
 
@@ -462,6 +477,12 @@ JS;
         
     protected function buildJsAxisProperties(ChartAxis $axis, int $nameGapMulti = 1) : string
     {
+        if ($axis->getHideCaption() === false) {
+            $name = $axis->getCaption();
+        } else {
+            $name = '';
+        }
+        
         if ($axis->hasGrid() === false){
             $grid = 'false';
         } else {
@@ -505,7 +526,7 @@ JS;
         
     {
         id: '{$axis->getIndex()}',
-        name: '{$axis->getCaption()}',        
+        name: '{$name}',        
         {$nameLocation}
         {$inverse}
         type: '{$axisType}',
@@ -528,12 +549,18 @@ JS;
     protected function buildJsAxisZoom(ChartAxis $axis) : string
     {
         if ($axis->isZoomable() === true){
+            if ($this->getWidget()->getLegendPosition() === 'bottom') {
+                $bottom = 'bottom: 25';
+            } else {
+                $bottom = '';
+            }
                 $zoom = <<<JS
 
         {
             type: 'slider',
             {$axis->getDimension()}AxisIndex: {$axis->getIndex()},
-            filterMode: 'filter'
+            filterMode: 'filter',
+            {$bottom}
         },
         {
             type: 'inside',
@@ -740,50 +767,84 @@ JS;
     
     protected function buildJsGridMarginTop() : int
     {
-        $baseMargin = 40;
+        $baseMargin = 10;
         $countAxisLeft = 0;
         $countAxisRight = 0;        
+        $widget = $this->getWidget();
         foreach ($this->getWidget()->getAxesY() as $axis){
-            if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false){
+            if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false && $axis->getHideCaption() === false ){
                 $countAxisLeft++;
-            } elseif ($axis->getPosition() === ChartAxis::POSITION_RIGHT && $axis->isHidden() === false){
+            } elseif ($axis->getPosition() === ChartAxis::POSITION_RIGHT && $axis->isHidden() === false && $axis->getHideCaption() === false){
                 $countAxisRight++;
             }
         }
-        if ($countAxisLeft >= $countAxisRight){
-            return $baseMargin + $this->baseAxisNameGap() * $countAxisLeft;
-        } else {
-            return $baseMargin + $this->baseAxisNameGap() * $countAxisRight;
+        if ($countAxisLeft > 0 || $countAxisRight > 0) {
+            $margin = 10;
         }
+        if ($countAxisLeft >= $countAxisRight){
+            $margin += $this->baseAxisNameGap() * $countAxisLeft;
+        } else {
+            $margin += $this->baseAxisNameGap() * $countAxisRight;
+        }
+        
+        if ($this->legendHidden() === false && ($widget->getLegendPosition() === 'top' || $widget->getLegendPosition() === null)) {
+            $margin += 20;
+        }
+        return $baseMargin + $margin;
     }
     
     protected function buildJsGridMarginRight() : int
     {             
         $count = 0;
+        $rightAxis = false;
         foreach ($this->getWidget()->getAxesY() as $axis) {
             if ($axis->isZoomable() === true) {
                 $count++;    
             }
+            if ($axis->getPosition() === ChartAxis::POSITION_RIGHT) {
+                $rightAxis = true;
+            }
+        }        
+        if ($rightAxis === true) {
+            $basemargin = 0;
+        } else {
+            $basemargin = 40;
         }
-        $margin = 25 + 40*$count;
+        $margin = $basemargin + 40*$count;
         return  $margin;       
     }
     
     protected function buildJsGridMarginBottom() : int
     {
         $count = 0;
-        foreach ($this->getWidget()->getAxesX() as $axis) {
+        $widget = $this->getWidget();
+        foreach ($widget->getAxesX() as $axis) {
             if ($axis->isZoomable() === true) {
                 $count++;
             }
         }
-        $margin = 5+40*$count;        
+        if ($this->legendHidden() === false && $widget->getLegendPosition() === 'bottom') {
+            $margin += 20;
+        }
+        $margin += 5+40*$count;        
         return $margin;
     }
     
     protected function buildJsGridMarginLeft() : int
     {
-        return 20;
+        $leftAxis = false;
+        foreach ($this->getWidget()->getAxesY() as $axis) {
+            if ($axis->getPosition() === ChartAxis::POSITION_LEFT) {
+                $leftAxis = true;
+            }
+        }        
+        if ($leftAxis === true) {
+            $basemargin = 5;
+        } else {
+            $basemargin = 40;
+        }
+        $margin = $basemargin;
+        return  $margin; 
     }
 
     protected function isPieChartSeries() : bool
@@ -841,12 +902,10 @@ JS;
             $padding = 'padding: [20,10,20,10],';
         }
         
-        if (count($widget->getSeries()) == 1 && ($firstSeries instanceof PieChartSeries) === false) {
-            if ($firstSeries->getValueDataColumn() == $firstSeries->getValueAxis()->getDataColumn()){
-                $show = 'show: false,';                
-            } else {
-                $show = '';
-            }
+        if ($this->legendHidden() === true) {
+            $show = 'show: false,';
+        } else {
+            $show = '';
         }
         return <<<JS
 
@@ -910,6 +969,20 @@ JS;
     protected function buildJsDataResetter() : string
     {
         return "{$this->buildJsEChartsVar()}.setOption({}, true);";
+    }
+    
+    protected function legendHidden() : bool
+    {
+        $widget = $this->getWidget();
+        $firstSeries = $widget->getSeries()[0];
+        if (count($widget->getSeries()) == 1 && ($firstSeries instanceof PieChartSeries) === false) {
+            if ($firstSeries->getValueDataColumn() == $firstSeries->getValueAxis()->getDataColumn()){
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return false;
     }
     
 }
