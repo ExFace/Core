@@ -9,6 +9,8 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Widgets\Button;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * Shows a dialog for mass editing based on selection or filters.
@@ -64,7 +66,26 @@ class ShowMassEditDialog extends ShowDialog
         $this->setAffectedCounterWidget($counter_widget);
         $counter_widget->setCaption('Affected objects');
         $dialog->addWidget($counter_widget, 0);
-        // TODO Add a default save button that uses filter contexts
+        
+        // Add a default save button that uses filter contexts
+        // TODO make this button configurable via UXON
+        $save_button = $dialog->createButton(new UxonObject([
+            'action' => [
+                'alias' => 'exface.Core.UpdateData',
+                'use_context_filters' => true
+            ],
+            'visibility' => EXF_WIDGET_VISIBILITY_PROMOTED,
+            'align' => EXF_ALIGN_OPPOSITE,
+            'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.SHOWOBJECTEDITDIALOG.SAVE_BUTTON")
+        ]));
+        
+        // Make the save button refresh the same widget as the Button showing the dialog would do
+        if ($this->getWidgetDefinedIn() instanceof Button) {
+            $save_button->setRefreshWidgetLink($this->getWidgetDefinedIn()->getRefreshWidgetLink());
+            $this->getWidgetDefinedIn()->setRefreshWidgetLink(null);
+        }
+        $dialog->addButton($save_button);
+        
         return parent::enhanceDialogWidget($dialog);
     }
 
