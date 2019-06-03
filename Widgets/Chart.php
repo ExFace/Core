@@ -809,9 +809,9 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      * @param string $legendPosition
      * @return Chart
      */
-    public function setLegendPosition(string $leftRigthTopBottom) : Chart
+    public function setLegendPosition(string $leftRightTopBottom) : Chart
     {
-        $this->legendPosition = $leftRigthTopBottom;
+        $this->legendPosition = $leftRightTopBottom;
         return $this;
     }
 
