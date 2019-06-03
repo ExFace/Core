@@ -649,7 +649,7 @@ JS;
                 if ($axis->getDimension() === Chart::AXIS_X) {
                     $offset = ++$xAxisIndex . ' * 20 * 2';
                 } else {
-                    $offset = 'len * 10';
+                    $offset = 'len * 9';
                 }
                 $axesOffsetCalc .= <<<JS
         
