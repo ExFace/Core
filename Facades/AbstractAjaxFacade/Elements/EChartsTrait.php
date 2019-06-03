@@ -649,7 +649,7 @@ JS;
                 if ($axis->getDimension() === Chart::AXIS_X) {
                     $offset = ++$xAxisIndex . ' * 20 * 2';
                 } else {
-                    $offset = 'len * 7';
+                    $offset = 'len * 10';
                 }
                 $axesOffsetCalc .= <<<JS
         
@@ -666,10 +666,15 @@ JS;
 
 JS;
                 $postion = mb_strtolower($axis->getPosition());
+                if ($axis->getHideCaption() === false) {
+                    $offset = strlen($axis->getCaption())*3.5;
+                } else {
+                    $offset = 0;
+                }
                 $axesJsObjectInit .= <<<JS
 
     axes["{$axis->getDataColumn()->getDataColumnName()}"] = {
-        offset: 0,
+        offset: {$offset},
         dimension: "{$axis->getDimension()}",
         position: "{$postion}",
         index: "{$axis->getIndex()}",
@@ -681,8 +686,7 @@ JS;
             
             $js = <<<JS
             
-    //var keys = Object.keys(rowData[0]);
-    var longestString = 0;
+    //var longestString = 0;
 
     var axes = {};
     {$axesJsObjectInit}
@@ -788,7 +792,7 @@ JS;
         }
         
         if ($this->legendHidden() === false && ($widget->getLegendPosition() === 'top' || $widget->getLegendPosition() === null)) {
-            $margin += 20;
+            $margin += 30;
         }
         return $baseMargin + $margin;
     }
