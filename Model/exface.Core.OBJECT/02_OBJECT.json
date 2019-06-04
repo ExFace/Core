@@ -82,7 +82,7 @@
         {
             "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2019-04-17 08:56:44",
-            "CREATED_BY_USER": "",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
             "UID": "0x31350000000000000000000000000000",
             "READABLE_FLAG": "1",
