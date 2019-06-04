@@ -7,6 +7,7 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
 
 /**
  * A query builder to read CSV files.
@@ -32,13 +33,10 @@ class CsvBuilder extends FileContentsBuilder
         $data_connection->query($query);
         
         $static_values = array();
-        $field_map = array();
         foreach ($this->getAttributes() as $qpart) {
             if ($this->getFileProperty($query, $qpart->getDataAddress()) !== false) {
                 $static_values[$qpart->getColumnKey()] = $this->getFileProperty($query, $qpart->getDataAddress());
-            } else {
-                $field_map[$qpart->getColumnKey()] = $qpart->getDataAddress();
-            }
+            } 
         }
         
         // configuration
@@ -47,16 +45,7 @@ class CsvBuilder extends FileContentsBuilder
         $hasHeaderRow = $this->hasHeaderRow();
         
         // prepare filters
-        $readerFiltering = false;
-        foreach ($this->getFilters()->getFilters() as $qpart) {
-            if ($this->getFileProperty($query, $qpart->getDataAddress()) === false) {
-                $qpart->setAlias($qpart->getDataAddress()); // use numeric alias since league/csv filter on arrays with numeric indexes
-                $qpart->setApplyAfterReading(true);
-                $readerFiltering = true;
-            } else {
-                // TODO check if the filters on file properties match. Only need to check that once, as the query onle deals with a single file
-            }
-        }
+        $readerFiltering = $this->prepareFilters($query);
         
         // prepare sorting
         foreach ($this->getSorters() as $qpart) {
@@ -78,12 +67,11 @@ class CsvBuilder extends FileContentsBuilder
         });
         
         // pagination
-        $readerPagination = true;
         if ($readerFiltering === false) {
-            $offset = $hasHeaderRow === true ? $this->getOffset() + 1 : $this->getOffset();
+            // Increase offset if there is a header row and another time to find out if more rows are there
+            $offset = ($hasHeaderRow === true ? $this->getOffset() + 1 : $this->getOffset()) + 1;
             $filtered->setOffset($offset);
             $filtered->setLimit($this->getLimit()+1);
-            $readerPagination = false;
         }
         
         // sorting
@@ -100,16 +88,24 @@ class CsvBuilder extends FileContentsBuilder
         
         $resultIterator = $filtered->fetch();
         $result_rows = [];
+        $hasMoreRows = false;
         try {
             //$result_rows = iterator_to_array($resultIterator);
             foreach ($this->getAttributes() as $qpart) {
-                $colKey = $qpart->getAlias();
+                $colKey = $qpart->getColumnKey();
                 $rowKey = $qpart->getDataAddress();
                 if (is_numeric($rowKey) === false) {
                     continue;
                 }
                 $rowNr = 0;
+                $maxRow = $this->getLimit() > 0 ? $this->getLimit() + $this->getOffset() : null;
                 foreach ($resultIterator as $row) {
+                    if ($maxRow !== null) {
+                        if ($rowNr >= $maxRow) {
+                            $hasMoreRows = true;
+                            break;
+                        }
+                    }
                     $result_rows[$rowNr][$colKey] = $row[$rowKey];
                     $rowNr++;
                 }
@@ -117,10 +113,6 @@ class CsvBuilder extends FileContentsBuilder
             }
         } catch (\OutOfBoundsException $e) {
             $result_rows = [];
-        }
-        
-        if ($readerPagination === false) {
-            $result_rows = $this->applyPagination($result_rows);
         }
         
         // add static values
@@ -131,16 +123,34 @@ class CsvBuilder extends FileContentsBuilder
         }
         
         $rowCnt = count($result_rows);
-        if ($this->getLimit() > 0 && $rowCnt === $this->getLimit() + 1) {
+        if ($this->getLimit() > 0 && $hasMoreRows === true) {
             $affectedRowCount = $this->getLimit();
-            $hasMoreRows = true;
-            array_pop($result_rows);
         } else {
             $affectedRowCount = $rowCnt;
-            $hasMoreRows = false;
         }
         
         return new DataQueryResultData($result_rows, $affectedRowCount, $hasMoreRows);
+    }
+    
+    /**
+     * Returns TRUE if filtering is neaded in the CSV reader and FALSE otherwise.
+     * 
+     * @param FileContentsDataQuery $query
+     * @return bool
+     */
+    protected function prepareFilters(FileContentsDataQuery $query) : bool
+    {
+        $readerFiltering = false;
+        foreach ($this->getFilters()->getFilters() as $qpart) {
+            if ($this->getFileProperty($query, $qpart->getDataAddress()) === false) {
+                $qpart->setAlias($qpart->getDataAddress()); // use numeric alias since league/csv filter on arrays with numeric indexes
+                $qpart->setApplyAfterReading(true);
+                $readerFiltering = true;
+            } else {
+                // TODO check if the filters on file properties match. Only need to check that once, as the query onle deals with a single file
+            }
+        }
+        return $readerFiltering;
     }
     
     /**
@@ -174,6 +184,7 @@ class CsvBuilder extends FileContentsBuilder
     public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $query = $data_connection->query($this->buildQuery());
+        $this->prepareFilters($query);
         $rowCount = $this->getRowCount($query->getPathAbsolute(), $this->getDelimiter(), $this->getEnclosure());
         if ($this->hasHeaderRow()) {
             $rowCount = max(0, $rowCount - 1);
