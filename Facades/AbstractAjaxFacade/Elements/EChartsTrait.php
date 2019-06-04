@@ -136,7 +136,6 @@ JS;
         return <<<JS
             var echart = {$this->buildJsEChartsVar()};
             var oSelectedRow = {$selection};
-            console.log('selected', oSelectedRow);
             if (typeof echart._oldselection === 'undefined') {
                 echart._oldSelection = oSelectedRow;
             } else {
@@ -156,13 +155,18 @@ JS;
     {
         return "(JSON.stringify({$leftRowJs}) == JSON.stringify({$rightRowJs}))";
     }
-        
+    
+    protected function buildJsEventHandlers() : string
+    {
+        $handlersJs = $this->buildJsLegendSelectHandler();
+        $handlersJs .= $this->buildJsOnClickHandlers();
+        return $handlersJs;
+    }
     protected function buildJsOnClickHandlers() : string {
         return <<<JS
 
         {$this->buildJsEChartsVar()}.on('click', function(params){
             var dataRow = params.data;
-
             if (params.seriesType == 'pie') {
                 if ((typeof {$this->buildJsEChartsVar()}._oldSelection != 'undefined') && ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')}) == true) {
                     {$this->buildJsSelect()}                    
@@ -170,11 +174,11 @@ JS;
                     {$this->buildJsSelect('dataRow')}
                 }            
             } else {
-                var options = {$this->buildJsEChartsVar()}.getOption();
+                var options = {$this->buildJsEChartsVar()}.getOption(); 
                 var newOptions = {series: []};
                 var sameValue = false;
                 options.series.forEach((series) => {
-                    newOptions.series.push({markLine: {data: {}}});                
+                    newOptions.series.push({markLine: {data: {}}, _show: false});               
                 });
                 if ((typeof {$this->buildJsEChartsVar()}._oldSelection != 'undefined') && ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')}) == true) {
                     {$this->buildJsSelect()}                    
@@ -185,23 +189,59 @@ JS;
                 				yAxis: dataRow[options.series[params.seriesIndex].encode.y]
                 			}
                         ];
+                        newOptions.series[params.seriesIndex].markLine._show = true;
                     } else {  
                         newOptions.series[params.seriesIndex].markLine.data = [ 
                             {
                 				xAxis: dataRow[options.series[params.seriesIndex].encode.x]
                 			}
                         ];
+                        newOptions.series[params.seriesIndex].markLine._show = true;
                     }
                     {$this->buildJsSelect('dataRow')}
                 }
                 {$this->buildJsEChartsVar()}.setOption(newOptions);
-            }
-            
-            /*{$this->getOnChangeScript()}*/
-            
+            }            
     });
 
 JS;
+    }
+                
+    protected function buildJsLegendSelectHandler() : string
+    {
+        return <<<JS
+        
+        {$this->buildJsEChartsVar()}.on('legendselectchanged', function(params){
+            var options = {$this->buildJsEChartsVar()}.getOption();
+            if (params.selected[params.name] === false) {
+                if (options.series[0].seriesType === 'pie') {
+                    //do nothing
+                } else {
+                    var newOptions = {series: []};
+                    var markLineSet = false;
+                    var markLineData;
+                    options.series.forEach((series) => {                        
+                        if (series.name === params.name && series.markLine._show === true) {
+                            markLineData = series.markLine.data;                            
+                        }
+                    });
+                    options.series.forEach((series) => {
+                        newOptions.series.push({markLine: {data: {}}, _show: false});                      
+                        if (series.name !== params.name && params.selected[series.name] === true && markLineSet === false && markLineData !== undefined ) {
+                            newOptions.series[series._index].markLine.data = markLineData;
+                            newOptions.series[series._index].markLine._show = true;
+                            markLineSet = true;
+                        }
+                    });
+                    if (markLineSet === true) {
+                        {$this->buildJsEChartsVar()}.setOption(newOptions);
+                    }
+                }
+            }            
+        });
+        
+JS;
+        
     }
     
     protected function buildJsChartConfig() : string
@@ -291,6 +331,7 @@ JS;
 
 {
     name: '{$series->getCaption()}',
+    _index: {$series->getIndex()},
     type: 'line',
     encode: {
         x: '{$series->getXDataColumn()->getDataColumnName()}',
@@ -302,7 +343,7 @@ JS;
     {$filledJs}
     {$color}
     {$this->buildJsStack($series)}
-    {$this->buildJsMarkLineProperties()}
+    {$this->buildJsMarkLineProperties($series)}
 },
 
 JS;
@@ -319,6 +360,7 @@ JS;
         return <<<JS
 
     name: '{$series->getCaption()}',
+    _index: {$series->getIndex()},
     type: 'bar',
     encode: {
         x: '{$series->getXDataColumn()->getDataColumnName()}',
@@ -328,7 +370,7 @@ JS;
     yAxisIndex: {$series->getYAxis()->getIndex()},
     {$color}
     {$this->buildJsStack($series)}
-    {$this->buildJsMarkLineProperties()}
+    {$this->buildJsMarkLineProperties($series)}
 
 JS;
     }
@@ -539,6 +581,13 @@ JS;
                 return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'a')}
             }
         },
+        axisPointer: { 
+            label: {
+                formatter: function(params) {
+                return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'params.value')}
+                },
+            },
+        },
         {$min}
         {$max}
     },
@@ -575,17 +624,27 @@ JS;
         return $zoom;
     }
         
-    protected function buildJsMarkLineProperties() : string
+    protected function buildJsMarkLineProperties($series) : string
     {
+        if ($series instanceof BarChartSeries) {
+            $position = "position: 'middle',";
+        } else {
+            $position = '';
+        }
         return <<<JS
 
     markLine: {
+        _show: false,
         data: [],
         silent: true,
         symbol: 'circle',
         animation: false,
         label: {
-            show: true
+            show: true,
+            {$position}
+            formatter: function(params) {                
+                return {$this->buildJsLabelFormatter($series->getXDataColumn(), 'params.value')}
+            }
         },
         lineStyle: {
             color: '#000',
@@ -593,6 +652,34 @@ JS;
         }
     },
 
+JS;
+    }
+        
+    protected function buildJsMarkAreaProperties($series) : string
+    {
+        
+        return <<<JS
+        
+    markArea: {
+        _show: false,
+        data: [],
+        silent: true,
+        symbol: 'circle',
+        animation: false,
+        label: {
+            show: true,
+            color: '#000'
+            formatter: function(params) {
+                return {$this->buildJsLabelFormatter($series->getXDataColumn(), 'params.value')}
+            }
+        },
+        itemStyle: {
+            color: '#000',
+            bordertype: 'solid',
+
+        }
+    },
+    
 JS;
     }
         
@@ -878,7 +965,26 @@ JS;
 	trigger: 'axis',
 	axisPointer: {
 		type: 'cross'
-	}
+	},
+    /*formatter: (params) => {
+        //console.log(params)
+        var options = {$this->buildJsEChartsVar()}.getOption(); 
+        let tooltip = params[0].axisValueLabel + '<br/>';
+        params.forEach(({marker, seriesName, value, seriesIndex}) => {
+            //console.log(options)
+            if (("_bar" in options.series[seriesIndex]) == true) {
+                data = options.series[seriesIndex].encode.x;
+            } else {
+                data = options.series[seriesIndex].encode.y;
+            }            
+            //console.log(data);           
+            tooltip += marker +' ' + seriesName + ': ' + value[data] + '<br/>';            
+        });
+        return tooltip;
+    },*/
+/*formatter: function(params) {
+    console.log(params)
+},*/
 },
 
 JS;
