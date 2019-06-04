@@ -62,8 +62,8 @@
         {
             "CREATED_ON": "2017-10-18 10:22:26",
             "MODIFIED_ON": "2017-10-18 10:26:55",
-            "CREATED_BY_USER": "",
-            "MODIFIED_BY_USER": "",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7b3dd794eaa45a9d40242ac110004",
             "OBJECT": "0x11e73172ba930d0a9cea0242ac110004",
             "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialogFromFile.php",
