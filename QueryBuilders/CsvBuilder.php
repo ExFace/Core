@@ -47,10 +47,12 @@ class CsvBuilder extends FileContentsBuilder
         $hasHeaderRow = $this->hasHeaderRow();
         
         // prepare filters
+        $readerFiltering = false;
         foreach ($this->getFilters()->getFilters() as $qpart) {
             if ($this->getFileProperty($query, $qpart->getDataAddress()) === false) {
                 $qpart->setAlias($qpart->getDataAddress()); // use numeric alias since league/csv filter on arrays with numeric indexes
                 $qpart->setApplyAfterReading(true);
+                $readerFiltering = true;
             } else {
                 // TODO check if the filters on file properties match. Only need to check that once, as the query onle deals with a single file
             }
@@ -67,9 +69,6 @@ class CsvBuilder extends FileContentsBuilder
         $csv->setDelimiter($delimiter);
         $csv->setEnclosure($enclosure);
         
-        // column count
-        $colCount = count($csv->fetchOne());
-        
         // add filter based on "normal" filtering
         $filtered = $csv;
         $filtered = $filtered->addFilter(function ($row) {
@@ -79,9 +78,13 @@ class CsvBuilder extends FileContentsBuilder
         });
         
         // pagination
-        $offset = $hasHeaderRow === true ? $this->getOffset() + 1 : $this->getOffset();
-        $filtered->setOffset($offset);
-        $filtered->setLimit($this->getLimit()+1);
+        $readerPagination = true;
+        if ($readerFiltering === false) {
+            $offset = $hasHeaderRow === true ? $this->getOffset() + 1 : $this->getOffset();
+            $filtered->setOffset($offset);
+            $filtered->setLimit($this->getLimit()+1);
+            $readerPagination = false;
+        }
         
         // sorting
         $filtered->addSortBy(function ($row1, $row2) {
@@ -95,12 +98,29 @@ class CsvBuilder extends FileContentsBuilder
                 return 1;
         });
         
-        $assocKeys = $this->getAssocKeys($colCount, $field_map);
-        $result_rows = $filtered->fetchAssoc($assocKeys);
+        $resultIterator = $filtered->fetch();
+        $result_rows = [];
         try {
-            $result_rows = iterator_to_array($result_rows);
+            //$result_rows = iterator_to_array($resultIterator);
+            foreach ($this->getAttributes() as $qpart) {
+                $colKey = $qpart->getAlias();
+                $rowKey = $qpart->getDataAddress();
+                if (is_numeric($rowKey) === false) {
+                    continue;
+                }
+                $rowNr = 0;
+                foreach ($resultIterator as $row) {
+                    $result_rows[$rowNr][$colKey] = $row[$rowKey];
+                    $rowNr++;
+                }
+                $resultIterator->rewind();
+            }
         } catch (\OutOfBoundsException $e) {
             $result_rows = [];
+        }
+        
+        if ($readerPagination === false) {
+            $result_rows = $this->applyPagination($result_rows);
         }
         
         // add static values
@@ -160,21 +180,6 @@ class CsvBuilder extends FileContentsBuilder
         }
         
         return new DataQueryResultData([], $rowCount, false, $rowCount);
-    }
-    
-    protected function getAssocKeys($colCount, $field_map)
-    {
-        $keys = array_flip($field_map);
-        
-        $assocKeys = array();
-        for ($i = 0; $i < $colCount; $i ++) {
-            if (isset($keys[$i]))
-                $assocKeys[$keys[$i]] = $keys[$i];
-            else
-                $assocKeys[$i] = '- unused' . $i; // unique value, not used by query
-        }
-        
-        return $assocKeys;
     }
 
     /**
