@@ -49,12 +49,23 @@ trait EChartsTrait
         return $this;
     }
     
+    /**
+     * Function to build the div element forthe chart
+     * 
+     * @param string $style
+     * @return string
+     */
     protected function buildHtmlChart($style = 'height:100%; min-height: 100px; overflow: hidden;') : string
     {
         return '<div id="' . $this->getId() . '" style="' . $style . '"></div>';
     }
     
-    protected function buildHtmlHeadDefaultIncludes()
+    /**
+     * Build the necessary script includes for the charts
+     * 
+     * @return array
+     */
+    protected function buildHtmlHeadDefaultIncludes() : array
     {
         $facade = $this->getFacade();
         $includes = [];
@@ -70,6 +81,11 @@ trait EChartsTrait
         return $includes;
     }
     
+    /**
+     * Build the javascript function
+     * 
+     * @return string
+     */
     protected function buildJsFunctions()
     {
         return <<<JS
@@ -78,11 +94,13 @@ trait EChartsTrait
     function {$this->buildJsDataLoadFunctionName()}() {
         {$this->buildJsDataLoadFunctionBody()}
     };
-
+    
+    //Create the redraw function for the chart
     function {$this->buildJsRedrawFunctionName()}(oData) {
         {$this->buildJsRedrawFunctionBody('oData')}
     };
 
+    //Create the select function
     function {$this->buildJsSelectFunctionName()}(selection) {
         {$this->buildJsSelectFunctionBody('selection')}
     };
@@ -90,29 +108,57 @@ trait EChartsTrait
 JS;
     }
     
+    /**
+     * 
+     * @param string $dataJs
+     * @return string
+     */
     protected function buildJsRedraw(string $dataJs) : string
     {
         return $this->buildJsRedrawFunctionName(). '(' . $dataJs . ')';
     }
 
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsRedrawFunctionName() : string
     {
         return $this->buildJsFunctionPrefix() . 'redraw';
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function buildJsRefresh()
     {
         return $this->buildJsDataLoadFunctionName() . '();';
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsDataLoadFunctionName() : string
     {
         return $this->buildJsFunctionPrefix() . 'load';
     }
     
-    abstract protected function buildJsDataLoadFunctionBody();
+    /**
+     * Function to load the data for the chart, needs to be implemtened in the facade chart element
+     * 
+     * @return string
+     */
+    abstract protected function buildJsDataLoadFunctionBody() : string;
     
-    public function buildJsEChartsInit($theme = null) : string
+    /**
+     * function to initalize echart, optional it's possible to set a theme
+     * 
+     * @param string $theme
+     * @return string
+     */
+    public function buildJsEChartsInit(string $theme = null) : string
     {
         return <<<JS
 
@@ -121,16 +167,31 @@ JS;
 JS;
     }
         
+    /**
+     * 
+     * @param string $oRowJs
+     * @return string
+     */
     protected function buildJsSelect(string $oRowJs = '') : string
     {
         return $this->buildJsSelectFunctionName() . '(' . $oRowJs . ')';
     }
         
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsSelectFunctionName() : string
     {
         return $this->buildJsFunctionPrefix() . 'select';
     }
     
+    /**
+     * Body for the javascript function that gets calles when a data gets selected
+     * 
+     * @param string $selection
+     * @return string
+     */
     protected function buildJsSelectFunctionBody(string $selection) : string
     {
         return <<<JS
@@ -151,18 +212,37 @@ JS;
 JS;
     }
                 
+    /**
+     * javascript to compare if two data rows are equal
+     * 
+     * @param string $leftRowJs
+     * @param string $rightRowJs
+     * @return string
+     */
     protected function buildJsRowCompare(string $leftRowJs, string $rightRowJs) : string
     {
         return "(JSON.stringify({$leftRowJs}) == JSON.stringify({$rightRowJs}))";
     }
     
+    /**
+     * function to return javascript eventhandler functions
+     * 
+     * @return string
+     */
     protected function buildJsEventHandlers() : string
     {
         $handlersJs = $this->buildJsLegendSelectHandler();
         $handlersJs .= $this->buildJsOnClickHandlers();
         return $handlersJs;
     }
-    protected function buildJsOnClickHandlers() : string {
+    
+    /**
+     * javascript function to handle clicks on the chart
+     * 
+     * @return string
+     */
+    protected function buildJsOnClickHandlers() : string 
+    {
         return <<<JS
 
         {$this->buildJsEChartsVar()}.on('click', function(params){
@@ -207,12 +287,19 @@ JS;
 JS;
     }
                 
+    /**
+     * javascript function handling legend select changes
+     * moves shown markLine to a still visible chart series on the same axis
+     * 
+     * @return string
+     */
     protected function buildJsLegendSelectHandler() : string
     {
         return <<<JS
         
         {$this->buildJsEChartsVar()}.on('legendselectchanged', function(params){
             var options = {$this->buildJsEChartsVar()}.getOption();
+            //Check if series gets hidden, if not (means getting shown) do nothing
             if (params.selected[params.name] === false) {
                 if (options.series[0].seriesType === 'pie') {
                     //do nothing
@@ -220,22 +307,42 @@ JS;
                     var newOptions = {series: []};
                     var markLineSet = false;
                     var markLineData;
+                    var axisIndex;
                     options.series.forEach((series) => {                        
-                        if (series.name === params.name && series.markLine._show === true) {
-                            markLineData = series.markLine.data;                            
+                        //check if the series that gets hidden was showing markLine
+                        //if so, save markLine.data and the axisIndex of series
+                        if (params.name === series.name && series.markLine._show === true) {
+                            markLineData = series.markLine.data;
+                            if (series._bar === true) {
+                                axisIndex = series.yAxisIndex;
+                            } else {
+                                axisIndex = series.xAxisIndex;
+                            }
                         }
                     });
                     options.series.forEach((series) => {
-                        newOptions.series.push({markLine: {data: {}}, _show: false});                      
-                        if (series.name !== params.name && params.selected[series.name] === true && markLineSet === false && markLineData !== undefined ) {
-                            newOptions.series[series._index].markLine.data = markLineData;
-                            newOptions.series[series._index].markLine._show = true;
+                        //check if series is shown, if no markLine is set yet
+                        //and if markLineData was saved, means if a markLine was show on the
+                        //series that got hidden 
+                        if (params.selected[series.name] === true && markLineSet === false && markLineData !== undefined ) {
+                            if ((series._bar === true && series.yAxisIndex === axisIndex) || (series._bar === undefined && series.xAxisIndex === axisIndex)) {
+                                newOptions.series.push({markLine: {data: markLineData, _show: true}});
+                                markLineSet = true;
+                            }
+                        //check if series already shows markLine and if its not hidden
+                        } else if(params.selected[series.name] === true && series.markLine._show === true) {
+                            newOptions.series.push(series);
                             markLineSet = true;
+                        //if none of the above checks succeed
+                        } else {
+                            newOptions.series.push({markLine: {data: {}, _show: false}}); 
                         }
-                    });
-                    if (markLineSet === true) {
-                        {$this->buildJsEChartsVar()}.setOption(newOptions);
-                    }
+                    });                   
+                    {$this->buildJsEChartsVar()}.setOption(newOptions);
+                    //when no series left that can show the markLine set selected data empty
+                    if (markLineSet === false) {
+                        {$this->buildJsSelect()}
+                    }                    
                 }
             }            
         });
@@ -244,6 +351,12 @@ JS;
         
     }
     
+    /**
+     * function to build javascript for the base config of the chart (tooltip, legend, series, axis)
+     * 
+     * @throws FacadeUnsupportedWidgetPropertyWarning
+     * @return string
+     */
     protected function buildJsChartConfig() : string
     {
         $series = $this->getWidget()->getSeries();
@@ -267,7 +380,7 @@ JS;
 	
     tooltip : {$this->buildJsChartPropertyTooltip()}
    	legend: {$this->buildJsChartPropertyLegend()}
-	series: [$seriesConfig],
+	series: [{$seriesConfig}],
     {$this->buildJsAxes()}
     
 }
@@ -280,6 +393,14 @@ JS;
         return $series->getValueDataColumn()->getDataColumnName();
     }
         
+    
+    
+    /**
+     * function to select what kind of series, choosing the right configuration for the series
+     * 
+     * @param ChartSeries $series
+     * @return string
+     */
     protected function buildJsChartSeriesConfig(ChartSeries $series) : string
     {
         switch (true) {
@@ -299,6 +420,12 @@ JS;
         }
     }
     
+    /**
+     * build line series configuration
+     * 
+     * @param LineChartSeries $series
+     * @return string
+     */
     protected function buildJsLineChart(LineChartSeries $series) : string
     {
         if ($series instanceof AreaChartSeries || $series->isFilled() === true){
@@ -349,6 +476,12 @@ JS;
 JS;
     }
     
+    /**
+     * build configuration that is equal for bar and column series
+     * 
+     * @param ColumnChartSeries $series
+     * @return string
+     */
     protected function buildJsColumnBarChartProperties (ColumnChartSeries $series) :string
     {
         if ($series->getColor() !== null) {
@@ -375,6 +508,12 @@ JS;
 JS;
     }
         
+    /**
+     * build column series configuration
+     * 
+     * @param ColumnChartSeries $series
+     * @return string
+     */
     protected function buildJsColumnChart(ColumnChartSeries $series) : string
     {
        return <<<JS
@@ -386,6 +525,12 @@ JS;
 JS;
     }
     
+    /**
+     * build bar series configuration
+     * 
+     * @param BarChartSeries $series
+     * @return string
+     */
     protected function buildJsBarChart(BarChartSeries $series) : string
     {
         return <<<JS
@@ -398,6 +543,12 @@ JS;
 JS;
     }
        
+    /**
+     * build stack options configuration
+     * 
+     * @param StackableChartSeriesInterface $series
+     * @return string
+     */
     protected function buildJsStack(StackableChartSeriesInterface $series) : string
     {
         if ($series->isStacked() === true){
@@ -412,6 +563,12 @@ JS;
         return $stack;
     }
         
+    /**
+     * build rose series configuration
+     * 
+     * @param RoseChartSeries $series
+     * @return string
+     */
     protected function buildJsRoseChart(RoseChartSeries $series) : string
     {
         $label = '{}';
@@ -452,6 +609,12 @@ JS;
 JS;
     }  
 
+    /**
+     * build pie series configuration
+     * 
+     * @param PieChartSeries $series
+     * @return string
+     */
     protected function buildJsPieChart(PieChartSeries $series) : string
     {
         $label = '{}';
@@ -483,6 +646,11 @@ JS;
 JS;
     }
         
+    /**
+     * build axes configuration
+     * 
+     * @return string
+     */
     protected function buildJsAxes() : string
     {
         if ($this->isPieChartSeries() === true){
@@ -517,6 +685,13 @@ dataZoom: [$zoom],
 JS;
     }
         
+    /**
+     * build axis properties
+     * 
+     * @param ChartAxis $axis
+     * @param int $nameGapMulti
+     * @return string
+     */
     protected function buildJsAxisProperties(ChartAxis $axis, int $nameGapMulti = 1) : string
     {
         if ($axis->getHideCaption() === false) {
@@ -594,7 +769,13 @@ JS;
 
 JS;
     }
-        
+    
+    /**
+     * build axis zoom configuration
+     * 
+     * @param ChartAxis $axis
+     * @return string
+     */
     protected function buildJsAxisZoom(ChartAxis $axis) : string
     {
         if ($axis->isZoomable() === true){
@@ -624,7 +805,13 @@ JS;
         return $zoom;
     }
         
-    protected function buildJsMarkLineProperties($series) : string
+    /**
+     * build basic markLine configuration
+     * 
+     * @param ChartSeries $series
+     * @return string
+     */
+    protected function buildJsMarkLineProperties(ChartSeries $series) : string
     {
         if ($series instanceof BarChartSeries) {
             $position = "position: 'middle',";
@@ -683,6 +870,13 @@ JS;
 JS;
     }
         
+    /**
+     * build formatter for axis labels
+     * 
+     * @param DataColumn $col
+     * @param string $js_var_value
+     * @return string
+     */
     protected function buildJsLabelFormatter(DataColumn $col, string $js_var_value) : string
     {
         $cellWidget = $col->getCellWidget();
@@ -697,11 +891,22 @@ JS;
         return $formatter->buildJsFormatter($js_var_value);
     }
         
+    /**
+     * basic axis name gab
+     * 
+     * @return int
+     */
     protected function baseAxisNameGap() : int
     {
         return 15;
     }
     
+    /**
+     * function to analyse data and calculate axis/grid offsets and draw the chart
+     * 
+     * @param string $dataJs
+     * @return string
+     */
     protected function buildJsRedrawFunctionBody(string $dataJs) : string
     {              
         if ($this->isPieChartSeries() === true) {
@@ -814,7 +1019,7 @@ JS;
     gridmargin['left'] += {$this->buildJsGridMarginLeft()};
     
     newOptions.grid = gridmargin;
-    newOptions.dataset = {source: rowData};
+    //newOptions.dataset = {source: rowData};
 
     {$this->buildJsEChartsVar()}.setOption(newOptions);
     
@@ -832,10 +1037,46 @@ JS;
 {$this->buildJsMessageOverlayHide()}
 {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()});
 $js
+    var split = "{$this->getWidget()->getSeries()[0]->getSplitByAttributeAlias()}" || undefined
+if (split === undefined) {
+    {$this->buildJsEChartsVar()}.setOption({dataset: {source: rowData}})
+} else {
+    {$this->buildJsSplitSeries()}
+//TODO
+
+}
+JS;
+    }
+
+    /**
+     * function to split the dataset and configure series for each split
+     * 
+     * @return string
+     */
+    protected function buildJsSplitSeries() : string
+    {
+        //TODO
+        return <<<JS
+    console.log(split)
+    var grouped = {};
+        for (var i=0; i<rowData.length; i++) {
+        var p = rowData[i][split];
+        console.log(p)
+        if (!grouped[p]) { grouped[p] = []; }
+        grouped[p].push(rowData[i]);
+    }
+    console.log(grouped)
+  
 
 JS;
     }
 
+    /**
+     * function to build overlay and show given message
+     * 
+     * @param string $message
+     * @return string
+     */
     protected function buildJsMessageOverlayShow(string $message) : string
     {
         return <<<JS
@@ -845,6 +1086,11 @@ $({$this->buildJsEChartsVar()}.getDom()).prepend($('<div class="exf-chart-messag
 JS;
     }
     
+    /**
+     * function to hide overlay message
+     * 
+     * @return string
+     */
     protected function buildJsMessageOverlayHide() : string
     {
         return <<<JS
@@ -856,9 +1102,14 @@ JS;
         
     }
     
+    /**
+     * calculate the basic grid top margin
+     * 
+     * @return int
+     */
     protected function buildJsGridMarginTop() : int
     {
-        $baseMargin = 10;
+        $baseMargin = 20;
         $countAxisLeft = 0;
         $countAxisRight = 0;        
         $widget = $this->getWidget();
@@ -884,6 +1135,11 @@ JS;
         return $baseMargin + $margin;
     }
     
+    /**
+     * calculate the basic grid right margin
+     *
+     * @return int
+     */
     protected function buildJsGridMarginRight() : int
     {             
         $count = 0;
@@ -905,6 +1161,11 @@ JS;
         return  $margin;       
     }
     
+    /**
+     * calculate the basic grid bottom margin
+     *
+     * @return int
+     */
     protected function buildJsGridMarginBottom() : int
     {
         $count = 0;
@@ -921,6 +1182,11 @@ JS;
         return $margin;
     }
     
+    /**
+     * calculate the basic grid left margin
+     *
+     * @return int
+     */
     protected function buildJsGridMarginLeft() : int
     {
         $leftAxis = false;
@@ -938,6 +1204,11 @@ JS;
         return  $margin; 
     }
 
+    /**
+     * function to chekc if series is a pie series
+     * 
+     * @return bool
+     */
     protected function isPieChartSeries() : bool
     {
         if ($this->getWidget()->getSeries()[0] instanceof PieChartSeries || $this->getWidget()->getSeries()[0] instanceof DonutChartSeries) {
@@ -947,6 +1218,11 @@ JS;
         }
     }
             
+    /**
+     * build basic tooltip configuration
+     * 
+     * @return string
+     */
     protected function buildJsChartPropertyTooltip() : string
     {
         if ($this->isPieChartSeries() === true) {
@@ -991,6 +1267,11 @@ JS;
         }        
     }
     
+    /**
+     * build basic legend configuration
+     * 
+     * @return string
+     */
     protected function buildJsChartPropertyLegend() : string
     {
         $padding = '';
@@ -1030,16 +1311,34 @@ JS;
 JS;
     }
         
+    /**
+     * build the chart element id
+     * 
+     * @return string
+     */
     protected function buildJsEChartsVar() : string
     {
         return "chart_{$this->getId()}";
     }
     
+    /**
+     * build function thats calles when chart gets resized
+     * 
+     * @return string
+     */
     protected function buildJsEChartsResize() : string
     {
         return "{$this->buildJsEChartsVar()}.resize()";
     }
     
+    /**
+     * build function to get value of a selected data row
+     * 
+     * @param unknown $column
+     * @param unknown $row
+     * @throws FacadeOutputError
+     * @return string
+     */
     public function buildJsValueGetter($column = null, $row = null)
     {
         if ($column != null) {
@@ -1081,6 +1380,11 @@ JS;
         return "{$this->buildJsEChartsVar()}.setOption({}, true);";
     }
     
+    /**
+     * function to check if legend should be hidden
+     * 
+     * @return bool
+     */
     protected function legendHidden() : bool
     {
         $widget = $this->getWidget();
