@@ -3,6 +3,8 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
+use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Interfaces\Widgets\iDisplayValue;
 use exface\Core\Widgets\Chart;
 use exface\Core\Widgets\DataColumn;
@@ -1022,6 +1024,14 @@ JS;
     //newOptions.dataset = {source: rowData};
 
     {$this->buildJsEChartsVar()}.setOption(newOptions);
+
+    var split = "{$this->getWidget()->getSeries()[0]->getSplitByAttributeAlias()}" || undefined
+    if (split === undefined) {
+        {$this->buildJsEChartsVar()}.setOption({dataset: {source: rowData}})
+    } else {
+        {$this->buildJsSplitSeries()}
+    
+    }
     
 JS;
     }
@@ -1030,21 +1040,16 @@ JS;
     
     var rowData = $dataJs;
     if (! rowData || rowData.count === 0) {
-        {$this->buildJsDataResetter()};
+        {$this->buildJsDataResetter()}
         {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
-        return;
+        return
     }
+    var echart = {$this->buildJsEChartsVar()}
+    echart._dataset = rowData;
 {$this->buildJsMessageOverlayHide()}
-{$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()});
+{$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
 $js
-    var split = "{$this->getWidget()->getSeries()[0]->getSplitByAttributeAlias()}" || undefined
-if (split === undefined) {
-    {$this->buildJsEChartsVar()}.setOption({dataset: {source: rowData}})
-} else {
-    {$this->buildJsSplitSeries()}
-//TODO
 
-}
 JS;
     }
 
@@ -1344,8 +1349,9 @@ JS;
         if ($column != null) {
             $key = $column;
         } else {
-            if ($this->getWidget()->hasUidColumn() === true) {
-                $column = $this->getWidget()->getUidColumn()->getDataColumn();
+            if ($this->getWidget()->getData()->hasUidColumn() === true) {
+                $column = $this->getWidget()->getData()->getUidColumn();
+                $key = $column->getDataColumnName();
             } else {
                 throw new FacadeOutputError('Cannot create a value getter for a data widget without a UID column: either specify a column to get the value from or a UID column for the table.');
             }
@@ -1369,6 +1375,40 @@ JS;
 
 JS;
     }
+        
+    public function buildJsDataGetter(ActionInterface $action = null)
+    {
+        $widget = $this->getWidget();
+        $rows = '';
+        if (is_null($action)) {
+            $rows = "{$this->buildJsEChartsVar()}._dataset";
+        } elseif ($action instanceof iReadData) {
+            // If we are reading, than we need the special data from the configurator
+            // widget: filters, sorters, etc.
+            return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
+        } else {
+            if ($this->getWidget()->getSeries()[0] instanceof PieChartSeries) {
+                //return "console.log({$this->buildJsEChartsVar()}._oldSelection, {$this->buildJsEChartsVar()}._dataset )";
+                $rows = <<<JS
+
+                    function(){
+                        var dataset = {$this->buildJsEChartsVar()}._dataset;
+                        var selectedRow = {$this->buildJsEChartsVar()}._oldSelection;
+                        for (var i = 0; i < dataset.length; i++) {
+                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} === selectedRow.name) {
+                                return [dataset[i]]
+                            }
+                        }
+                    }()
+                    
+JS;
+            } else {
+                $rows = "[{$this->buildJsEChartsVar()}._oldSelection]";
+            }
+        }
+        return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($rows ? ", rows: " . $rows : '') . "}";
+    }
+    
     
     /**
      * Returns a JS snippet, that empties the chart.
