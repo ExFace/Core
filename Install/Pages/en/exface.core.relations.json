@@ -102,6 +102,22 @@
                         ]
                     }
                 }
+            },
+            {
+                "caption": "Open relation",
+                "refresh_input": false,
+                "action": {
+                    "alias": "exface.Core.ShowObjectEditDialog",
+                    "object_alias": "exface.Core.ATTRIBUTE",
+                    "input_mapper": {
+                        "column_to_column_mappings": [
+                            {
+                                "from": "ATTRIBUTE",
+                                "to": "UID"
+                            }
+                        ]
+                    }
+                }
             }
         ]
     }
