@@ -16,15 +16,25 @@
         "uid_column_id": "RELATION_ALIAS_SHORT",
         "tree_leaf_id_concatenate": "__",
         "tree_leaf_id_column_id": "RELATION_PATH",
+        "autoload_data": false,
         "filters": [
             {
                 "attribute_alias": "LEFT_OBJECT"
             },
             {
+                "attribute_alias": "RIGHT_OBJECT"
+            },
+            {
                 "attribute_alias": "RELATION_ALIAS_SHORT"
+            },
+            {
+                "attribute_alias": "OBJECT__APP"
             }
         ],
         "columns": [
+            {
+                "attribute_alias": "LEFT_OBJECT__LABEL"
+            },
             {
                 "attribute_alias": "RELATION_NAME",
                 "caption": "Relation"
