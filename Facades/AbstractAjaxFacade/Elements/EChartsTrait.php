@@ -199,7 +199,8 @@ JS;
         return <<<JS
             var echart = {$this->buildJsEChartsVar()};
             var oSelectedRow = {$selection};
-            if (typeof echart._oldselection === 'undefined') {
+            console.log(oSelectedRow)
+            if (echart._oldselection === undefined) {
                 echart._oldSelection = oSelectedRow;
             } else {
                 if (({$this->buildJsRowCompare('echart._oldSelection', 'oSelectedRow')}) === false) {
@@ -208,7 +209,7 @@ JS;
                     return;
                 }
             }
-
+            console.log(echart._oldSelection)
             {$this->getOnChangeScript()}
     
 JS;
@@ -234,7 +235,8 @@ JS;
     protected function buildJsEventHandlers() : string
     {
         $handlersJs = $this->buildJsLegendSelectHandler();
-        $handlersJs .= $this->buildJsOnClickHandlers();
+        $handlersJs .= $this->buildJsOnClickHandler();
+        $handlersJs .= $this->buildJsOnDoubleClickHandler();
         return $handlersJs;
     }
     
@@ -243,14 +245,14 @@ JS;
      * 
      * @return string
      */
-    protected function buildJsOnClickHandlers() : string 
+    protected function buildJsOnClickHandler() : string 
     {
         return <<<JS
 
         {$this->buildJsEChartsVar()}.on('click', function(params){
             var dataRow = params.data;
             if (params.seriesType == 'pie') {
-                if ((typeof {$this->buildJsEChartsVar()}._oldSelection != 'undefined') && ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')}) == true) {
+                if ((typeof {$this->buildJsEChartsVar()}._oldSelection != undefined) && ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')}) == true) {
                     {$this->buildJsSelect()}                    
                 } else {
                     {$this->buildJsSelect('dataRow')}
@@ -262,7 +264,7 @@ JS;
                 options.series.forEach((series) => {
                     newOptions.series.push({markLine: {data: {}}, _show: false});               
                 });
-                if ((typeof {$this->buildJsEChartsVar()}._oldSelection != 'undefined') && ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')}) == true) {
+                if ((typeof {$this->buildJsEChartsVar()}._oldSelection != undefined) && ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')}) == true) {
                     {$this->buildJsSelect()}                    
                 } else {
                     if (("_bar" in options.series[params.seriesIndex]) == true) {
@@ -351,6 +353,26 @@ JS;
         
 JS;
         
+    }
+                        
+    protected function buildJsOnDoubleClickHandler() : string
+    {
+        $widget = $this->getWidget();
+        $output = '';
+        
+        // Double click actions. Currently only supports one double click action - the first one in the list of buttons
+        if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[0]) {
+            $output .= <<<JS
+            
+            {$this->buildJsEChartsVar()}.on('dblclick', function(params){
+                {$this->buildJsEChartsVar()}._oldSelection =  params.data
+                {$this->getFacade()->getElement($dblclick_button)->buildJsClickFunction()}
+            });
+        
+JS;
+
+        }        
+        return $output;
     }
     
     /**
@@ -633,6 +655,7 @@ JS;
         }
         
         $radius = $series->getInnerRadius();
+        
         return <<<JS
         
 {
@@ -642,6 +665,8 @@ JS;
     data: [],
     label: {$label},
     selectedMode: 'single',
+    animationType: 'scale',
+    animationEasing: 'backOut',
     							
 },
         
@@ -1045,7 +1070,8 @@ JS;
         return
     }
     var echart = {$this->buildJsEChartsVar()}
-    echart._dataset = rowData;
+    echart._dataset = rowData
+    echart._oldSelection = undefined
 {$this->buildJsMessageOverlayHide()}
 {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
 $js
@@ -1417,7 +1443,13 @@ JS;
      */
     protected function buildJsDataResetter() : string
     {
-        return "{$this->buildJsEChartsVar()}.setOption({}, true);";
+        return <<<JS
+var echarts = {$this->buildJsEChartsVar()};        
+{$this->buildJsEChartsVar()}.setOption({}, true);
+echarts._oldSelection = undefined
+
+JS;
+        
     }
     
     /**
