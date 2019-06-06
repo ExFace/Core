@@ -3,6 +3,8 @@
 	"MODEL_LOADER": "exface/Core/ModelLoaders/SqlModelLoader.php",
 	"CMS_CONNECTOR": "exface/ModxCmsConnector/CmsConnectors/Modx.php",
 	
+	"CACHE.ENABLED": true,
+	
 	"DEBUG.LIVE_CLASS_AUTOLOADER": true,
     "DEBUG.DISABLE_FACADE_ERROR_HANDLERS": false,
     "DEBUG.PRETTIFY_ERRORS": true,

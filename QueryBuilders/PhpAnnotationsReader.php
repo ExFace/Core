@@ -2,7 +2,6 @@
 namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
-use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\DataQueries\PhpAnnotationsDataQuery;
 use Wingu\OctopusCore\Reflection\ReflectionMethod;
 use Wingu\OctopusCore\Reflection\ReflectionClass;
@@ -215,11 +214,16 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
             
             // First look through the real tags for exact matches
             try {
+                $delim = $qpart->getAttribute()->getValueListDelimiter();
+                $colKey = $qpart->getColumnKey();
+                $colVal = null;
                 foreach ($comment->getAnnotationsCollection()->getAnnotations() as $tag) {
                     if ($tag->getTagName() == $qpart->getDataAddress()) {
-                        $row[$qpart->getColumnKey()] = $tag->getDescription();
-                        break;
+                        $colVal = ($colVal !== null ? $colVal . $delim : '') . $tag->getDescription();
                     }
+                }
+                if ($colVal !== null) {
+                    $row[$colKey] = $colVal;
                 }
             } catch (\Exception $e) {
                 throw new DataQueryFailedError($this->getLastQuery(), 'Cannot read annotation "' . $comment->getOriginalDocBlock() . '": ' . $e->getMessage(), null, $e);
