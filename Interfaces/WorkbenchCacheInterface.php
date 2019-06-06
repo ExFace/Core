@@ -52,4 +52,10 @@ interface WorkbenchCacheInterface extends CacheInterface, WorkbenchDependantInte
      * @param CacheInterface|CacheItemPoolInterface $psr6or16
      */
     public function addPool(string $name, $psr6or16) : WorkbenchCacheInterface;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isDisabled() : bool;
 }
