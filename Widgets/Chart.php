@@ -673,9 +673,11 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     {
         $result = array();
         foreach ($this->getButtons() as $btn) {
-            if ($btn->getBindToMouseAction() == $mouse_action) {
-                $result[] = $btn;
-            }
+            if ($btn instanceof DataButton) {
+                if ($btn->getBindToMouseAction() == $mouse_action) {
+                    $result[] = $btn;
+                }
+            }        
         }
         return $result;
     }
