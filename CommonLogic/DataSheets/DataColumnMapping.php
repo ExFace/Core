@@ -27,6 +27,8 @@ class DataColumnMapping implements DataColumnMappingInterface
     
     private $toExpression = null;
     
+    private $createRowInEmptyData = false;
+    
     public function __construct(DataSheetMapper $mapper)
     {
         $this->mapper = $mapper;
@@ -156,7 +158,12 @@ class DataColumnMapping implements DataColumnMappingInterface
         $toExpr = $this->getToExpression();
         
         if ($fromExpr->isConstant()){
-            $toSheet->getColumns()->addFromExpression($toExpr)->setValuesByExpression($fromExpr);
+            $newCol = $toSheet->getColumns()->addFromExpression($toExpr)->setValuesByExpression($fromExpr);
+            // If the sheet has no rows, setValuesByExpression() will not have an effect, so
+            // we need to add a row manually.
+            if ($toSheet->isEmpty() === true) {
+                $toSheet->addRow([$newCol->getName() => $fromExpr->evaluate()]);
+            }
         } elseif ($fromCol = $fromSheet->getColumns()->getByExpression($fromExpr)){
             $toSheet->getColumns()->addFromExpression($toExpr, '', $fromCol->getHidden())->setValues($fromCol->getValues(false));
         }
@@ -164,4 +171,31 @@ class DataColumnMapping implements DataColumnMappingInterface
         return $toSheet;
     }
     
+    /**
+     *
+     * @return bool
+     */
+    public function getCreateRowInEmptyData() : bool
+    {
+        return $this->createRowInEmptyData;
+    }
+    
+    /**
+     * Set to TRUE to make this mapper add a row with it's column to empty input sheets.
+     * 
+     * By default, a column mapper will not have effect on empty data sheets. This property
+     * can be used to make it add a new row if a static value is used in the mapper. This
+     * allows to create update-by-filter actions with static values using input mappers.
+     * 
+     * @uxon-property create_row_in_empty_data
+     * @uxon-type bool
+     * 
+     * @param bool $value
+     * @return DataColumnMapping
+     */
+    public function setCreateRowInEmptyData(bool $value) : DataColumnMapping
+    {
+        $this->createRowInEmptyData = $value;
+        return $this;
+    }
 }
