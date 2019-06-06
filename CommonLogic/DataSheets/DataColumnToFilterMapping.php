@@ -27,7 +27,7 @@ class DataColumnToFilterMapping extends DataColumnMapping implements DataColumnT
         $toExpr = $this->getToExpression();
         
         if ($fromExpr->isConstant()){
-            $toSheet->getFilters()->addConditionFromExpression($toExpr, $fromExpr, $this->getComparator());
+            $toSheet->getFilters()->addConditionFromExpression($toExpr, $fromExpr->evaluate(), $this->getComparator());
         } elseif ($fromCol = $fromSheet->getColumns()->getByExpression($fromExpr)){
             $separator = $fromExpr->isMetaAttribute() ? $fromExpr->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
             $comparator = $fromSheet->countRows() > 1 ? EXF_COMPARATOR_IN : $this->getComparator();

@@ -9,6 +9,8 @@ use Psr\Cache\CacheItemPoolInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\OutOfRangeException;
 use exface\Core\Exceptions\OutOfBoundsException;
+use Symfony\Component\Cache\Simple\ArrayCache;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 /**
  * Default implementation of the WorkbenchCacheInterface.
@@ -156,6 +158,9 @@ class WorkbenchCache implements WorkbenchCacheInterface
      */
     public static function createDefaultPool(WorkbenchInterface $workbench, string $name = null): CacheInterface
     {
+        if ($workbench->getConfig()->getOption('CACHE.ENABLED') === false) {
+            return new ArrayCache();
+        }
         return new FilesystemCache($name ?? '_workbench', 0, $workbench->filemanager()->getPathToCacheFolder());
     }
 
@@ -204,5 +209,15 @@ class WorkbenchCache implements WorkbenchCacheInterface
     public function getPoolDefault()
     {
         return $this->mainPool;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchCacheInterface::isDisabled()
+     */
+    public function isDisabled() : bool
+    {
+        return $this->getWorkbench()->getConfig()->getOption('CACHE.ENABLED') === false;
     }
 }

@@ -61,7 +61,10 @@ class Html extends Display
      */
     public function setValue($value)
     {
-        return parent::setValue($this->rebaseRelativeLinks($value));
+        if ($value !== null) {
+            $value = $this->rebaseRelativeLinks($value);
+        }
+        return parent::setValue($value);
     }
 
     /**
