@@ -7,6 +7,19 @@ use exface\Core\DataTypes\StringDataType;
 
 class MSSqlModelBuilder extends AbstractSqlModelBuilder
 {
+    /**
+     * Replace all characters except alphanumeric signs or underscore with underscore in a given string.
+     * 
+     * @param string $openSqlName
+     * @return string
+     */
+    protected function generateAlias(string $msSqlName) : string
+    {
+        $alias = preg_replace('/[^a-zA-Z0-9_]/', '_', $msSqlName);
+        $alias = trim($alias, "_");
+       
+        return $alias;
+    }
 
     /**
      * 
@@ -43,7 +56,7 @@ class MSSqlModelBuilder extends AbstractSqlModelBuilder
             }
             $rows[] = array(
                 'NAME' => $this->generateLabel($col['COLUMN_NAME']),
-                'ALIAS' => $col['COLUMN_NAME'],
+                'ALIAS' => $this->generateAlias($col['COLUMN_NAME']),
                 'DATATYPE' => $this->getDataTypeId($this->guessDataType($meta_object, $type, $col['PRECISION'], $col['SCALE'])),
                 'DATA_ADDRESS' => $col['COLUMN_NAME'],
                 'OBJECT' => $meta_object->getId(),
