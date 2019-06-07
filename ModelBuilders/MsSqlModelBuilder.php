@@ -8,6 +8,7 @@ use exface\Core\DataTypes\StringDataType;
 class MSSqlModelBuilder extends AbstractSqlModelBuilder
 {
     /**
+     * Replace all characters except alphanumeric signs or underscore with underscore in a given string.
      * 
      * @param string $openSqlName
      * @return string
@@ -19,6 +20,7 @@ class MSSqlModelBuilder extends AbstractSqlModelBuilder
        
         return $alias;
     }
+
     /**
      * 
      * {@inheritDoc}
