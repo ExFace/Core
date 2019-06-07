@@ -10,7 +10,7 @@ class DonutChartSeries extends PieChartSeries
     public function getInnerRadius() : string
     {
         if (parent::getInnerRadius() =='0%'){
-            return '50%';
+            return '40%';
         }
         return parent::getInnerRadius();
     }     
