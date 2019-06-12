@@ -158,7 +158,7 @@ JS;
      *
      * @return string
      */
-    public function buildJsRefresh()
+    public function buildJsRefresh() : string
     {
         return $this->buildJsDataLoadFunctionName() . '();';
     }
