@@ -467,7 +467,9 @@ JS;
     }
     
     /**
-     * DoubleClickHandler, implementation for EasyUI Facade, other Facades probably have to overwritte this function with their facade specific implementation
+     * Function to handle a double click on a chart, when a button is bound to double click
+     * Implementation for EasyUI Facade, other Facades probably have to overwrite this function with
+     * their facade specific implementation
      * 
      * @return string
      */
