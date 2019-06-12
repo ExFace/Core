@@ -112,7 +112,7 @@ trait EChartsTrait
     };
     
     function {$this->buildJsClicksFunctionName()}(params) {
-        {$this->buildJsClickFunctionBody('params')}
+        {$this->buildJsClicksFunctionBody('params')}
     };
     
 JS;
@@ -125,6 +125,7 @@ JS;
      */
     protected function buildJsEventHandlers() : string
     {
+        $handlersJs = '';
         $handlersJs = $this->buildJsLegendSelectHandler();
         $handlersJs .= $this->buildJsOnClickHandler();
         $handlersJs .= $this->buildJsOnDoubleClickHandler();
@@ -142,6 +143,8 @@ JS;
     }
     
     /**
+     * javascript function name for function that gets called when the chart should be redrawn,
+     * e.g. when data got successfully loaded by ajax request
      *
      * @return string
      */
@@ -151,6 +154,7 @@ JS;
     }
     
     /**
+     * Function to refresh the chart
      *
      * @return string
      */
@@ -201,6 +205,7 @@ JS;
     }
     
     /**
+     * Javascript function name for js function that gets called when a data point in the chart gets selected
      *
      * @return string
      */
@@ -234,21 +239,38 @@ JS;
 JS;
     }
     
+    /**
+     * 
+     * @param string $params
+     * @return string
+     */
     protected function buildJsClicks(string $params = '') : string
     {
         return $this->buildJsClicksFunctionName() . '(' . $params . ')';
     }
     
+    /**
+     * Function name for javascript function that evalutes clicks on a chart
+     * 
+     * @return string
+     */
     protected function buildJsClicksFunctionName() : string
     {
         return $this->buildJsFunctionPrefix() . 'clicks';
     }
     
-    protected function buildJsClickFunctionBody($params) : string
+    /**
+     * Javascript function body for function that evaluates if a click on a chart was a single click or a double click,
+     * if it was a single click the single click function is called
+     * 
+     * @param string $params
+     * @return string
+     */
+    protected function buildJsClicksFunctionBody(string $params) : string
     {
         return <<<JS
 
-            clickCount = {$this->buildJsEChartsVar()}._clickCount
+            var clickCount = {$this->buildJsEChartsVar()}._clickCount
             
             clickCount++;
             {$this->buildJsEChartsVar()}._clickCount = clickCount
@@ -361,6 +383,11 @@ JS;
                         
     }
     
+    /**
+     * Javascript function name for function that handles a single click on a chart
+     * 
+     * @return string
+     */
     protected function buildJsSingleClickFunctionName() : string
     {
         return $this->buildJsFunctionPrefix() . 'singleClick';
@@ -371,6 +398,12 @@ JS;
         return $this->buildJsSingleClickFunctionName() . '(' . $params . ')';
     }
     
+    /**
+     * Javascript function body for function that handles a single click on a chart
+     * 
+     * @param string $params
+     * @return string
+     */
     protected function buildJsSingleClickFunctionBody(string $params) : string
     {
         return <<<JS
@@ -433,6 +466,11 @@ JS;
 JS;
     }
     
+    /**
+     * DoubleClickHandler, implementation for EasyUI Facade, other Facades probably have to overwritte this function with their facade specific implementation
+     * 
+     * @return string
+     */
     protected function buildJsOnDoubleClickHandler() : string
     {
         $widget = $this->getWidget();
@@ -489,13 +527,6 @@ JS;
 
 JS;
     }
-    
-    protected function getSeriesKey(ChartSeries $series) : string
-    {
-        return $series->getValueDataColumn()->getDataColumnName();
-    }
-    
-    
     
     /**
      * function to select what kind of series, choosing the right configuration for the series
@@ -949,7 +980,13 @@ JS;
 JS;
     }
     
-    protected function buildJsMarkAreaProperties($series) : string
+    /**
+     * build basic MarkArea configuration (MarkAreas are not used yet)
+     * 
+     * @param ChartSeries $series
+     * @return string
+     */
+    protected function buildJsMarkAreaProperties(ChartSeries $series) : string
     {
         
         return <<<JS
@@ -999,7 +1036,7 @@ JS;
     }
     
     /**
-     * basic axis name gab
+     * basic gap between an axis and it's name
      *
      * @return int
      */
@@ -1009,7 +1046,7 @@ JS;
     }
     
     /**
-     * function to analyse data and calculate axis/grid offsets and draw the chart
+     * javascript function body to analyse data and calculate axis/grid offsets and draw the chart
      *
      * @param string $dataJs
      * @return string
@@ -1161,7 +1198,7 @@ JS;
     }
     
     /**
-     * function to split the dataset and configure series for each split
+     * function to split the dataset and configure series for each split (not used yet)
      *
      * @return string
      */
@@ -1317,7 +1354,7 @@ JS;
     }
     
     /**
-     * function to chekc if series is a pie series
+     * function to check if series is a pie series
      *
      * @return bool
      */
@@ -1483,6 +1520,11 @@ JS;
 JS;
     }
     
+    /**
+     *
+     * {@inheritDoc}
+     * @see exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsDataGetter()
+     */
     public function buildJsDataGetter(ActionInterface $action = null)
     {
         $widget = $this->getWidget();
@@ -1525,9 +1567,9 @@ JS;
     protected function buildJsDataResetter() : string
     {
         return <<<JS
-var echarts = {$this->buildJsEChartsVar()};
+var echart = {$this->buildJsEChartsVar()};
 {$this->buildJsEChartsVar()}.setOption({}, true);
-echarts._oldSelection = undefined
+echart._oldSelection = undefined
 
 JS;
 
