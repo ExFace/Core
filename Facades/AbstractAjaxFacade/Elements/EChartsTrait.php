@@ -21,6 +21,7 @@ use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
 use exface\Core\Widgets\Parts\Charts\AreaChartSeries;
 use exface\Core\Exceptions\Facades\FacadeOutputError;
 use exface\Core\Widgets\Parts\Charts\Traits\XYChartSeriesTrait;
+use exface\Core\Widgets\Parts\Charts\GraphChartSeries;
 
 /**
  *
@@ -515,6 +516,9 @@ JS;
             if ($s instanceof PieChartSeries && count($series) > 1) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support pie charts with multiple series!');
             }
+            if ($s instanceof GraphChartSeries && count($series) > 1) {
+                throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support graph charts with multiple series!');
+            }
             $seriesConfig .= $this->buildJsChartSeriesConfig($s);
             
             if ($s instanceof BarChartSeries && $s->getIndex() != 0) {
@@ -559,7 +563,8 @@ JS;
                 return $this->buildJsPieChart($series);
             case $series instanceof PieChartSeries:
                 return $this->buildJsPieChart($series);
-                
+            case $series instanceof GraphChartSeries:
+                return $this->buildJsGraphChart($series);                
         }
     }
     
@@ -791,6 +796,61 @@ JS;
 
 JS;
     }
+        
+    /**
+     * build pie series configuration
+     *
+     * @param PieChartSeries $series
+     * @return string
+     */
+    protected function buildJsGraphChart(GraphChartSeries $series) : string
+    {        
+        return <<<JS
+        
+{    
+	height: '50%',
+	name: 'Graph',
+    type: 'graph',
+	hoverAnimation: true,
+	animationEasing: 'backOut',
+	layout: 'circular',
+	
+	circular: { 
+		rotateLabel: true,
+	},
+	force: {
+		initLayout: 'circular',
+		gravity: 0.1,
+		repulsion: 70,
+		edgeLength: 70,
+		layoutAnimation: false,
+	}, 
+    roam: true,
+    focusNodeAdjacency: true,
+    itemStyle: {
+        normal: {
+            borderColor: '#fff',
+            borderWidth: 1,
+        }
+    },
+    label: {
+        position: 'right',
+        formatter: '{b}',
+		show: true
+    },
+    lineStyle: {
+        color: 'source',
+        curveness: 0.2
+    },
+    emphasis: {
+        lineStyle: {
+            width: 10
+        }
+    }
+},
+
+JS;
+    }
     
     /**
      * build axes configuration
@@ -799,7 +859,7 @@ JS;
      */
     protected function buildJsAxes() : string
     {
-        if ($this->isPieChartSeries() === true) {
+        if ($this->isPieChart() === true || $this->isGraphChart() === true) {
             return '';
         }
         $countAxisRight = 0;
@@ -1063,7 +1123,7 @@ JS;
      */
     protected function buildJsRedrawFunctionBody(string $dataJs) : string
     {
-        if ($this->isPieChartSeries() === true) {
+        if ($this->isPieChart() === true) {
             $js = <<<JS
             
 var arrayLength = rowData.length;
@@ -1081,6 +1141,103 @@ for (var i = 0; i < arrayLength; i++) {
 		data: rowData.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
 	}
 })
+
+JS;
+        } elseif ($this->isGraphChart() === true) {
+            $js = <<<JS
+
+var nodes = []
+var links = []
+var node = {}
+var link = {}
+
+for (i = 0; i< rowData.length; i++) {
+	if (i === 0) {
+		node = {
+			id: rowData[i].LEFT_OBJECT,
+			name: rowData[i].LEFT_OBJECT__NAME,
+			itemStyle: null,
+			symbolSize: 10,
+			x: null,
+			y: null,
+			value: 10,
+			draggable: false
+		};
+		nodes.push(node)
+		
+		node = {
+			id: rowData[i].RIGHT_OBJECT,
+			name: rowData[i].RIGHT_OBJECT__NAME,
+			itemStyle: null,
+			symbolSize: 10,
+			x: null,
+			y: null,
+			value: 10,
+			draggable: false
+		};
+		nodes.push(node)
+		
+	} else {
+		var existingNodeLeft = false
+		var existingNodeRight = false
+		for (j = 0; j<nodes.length; j++) {
+			if (nodes[j].id == rowData[i].RIGHT_OBJECT) {
+				
+				existingNodeRight = true
+			}
+			if (nodes[j].id == rowData[i].LEFT_OBJECT) {
+				existingNodeLeft = true
+			}
+		}
+		if (existingNodeLeft === false ) {
+			node = {
+				id: rowData[i].LEFT_OBJECT,
+				name: rowData[i].LEFT_OBJECT__NAME,
+				itemStyle: null,
+				symbolSize: 10,
+				x: null,
+				y: null,
+				value: 10,
+				draggable: false
+			};
+			nodes.push(node)
+		}
+		if (existingNodeRight === false ) {
+			node = {
+				id: rowData[i].RIGHT_OBJECT,
+				name: rowData[i].RIGHT_OBJECT__NAME,
+				itemStyle: null,
+				symbolSize: 10,
+				x: null,
+				y: null,
+				value: 10,
+				draggable: false
+			};
+			nodes.push(node)
+		}
+	}
+	if (rowData[i].DIRECTION == "regular") {
+		var source = rowData[i].LEFT_OBJECT
+		var target = rowData[i].RIGHT_OBJECT
+	} else {
+		var source = rowData[i].RIGHT_OBJECT
+		var target = rowData[i].LEFT_OBJECT
+	}
+	link = {
+		id: rowData[i].UID,
+		name: rowData[i].RELATION_NAME,
+		source: source,
+		target: target,
+	}
+	links.push(link)
+}
+
+{$this->buildJsEChartsVar()}.setOption({
+	series: [{
+		data: nodes,
+        links: links,
+	}],
+
 JS;
         } else {
             
@@ -1364,13 +1521,27 @@ JS;
     }
     
     /**
-     * function to check if series is a pie series
+     * function to check if graph is a graph series
      *
      * @return bool
      */
-    protected function isPieChartSeries() : bool
+    protected function isPieChart() : bool
     {
         if ($this->getWidget()->getSeries()[0] instanceof PieChartSeries || $this->getWidget()->getSeries()[0] instanceof DonutChartSeries) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    /**
+     * function to check if chart is a graph chart
+     *
+     * @return bool
+     */
+    protected function isGraphChart() : bool
+    {
+        if ($this->getWidget()->getSeries()[0] instanceof GraphChartSeries) {
             return true;
         } else {
             return false;
@@ -1384,7 +1555,7 @@ JS;
      */
     protected function buildJsChartPropertyTooltip() : string
     {
-        if ($this->isPieChartSeries() === true) {
+        if ($this->isPieChart() === true) {
             return <<<JS
             
 {
@@ -1393,6 +1564,17 @@ JS;
 },
 
 JS;
+        } elseif ($this->isGraphChart() === true) {
+            return <<<JS
+
+{
+	formatter: function(params) {
+		return params.data.name
+	}
+},
+
+JS;
+            
         } else {
             return <<<JS
             
@@ -1433,6 +1615,9 @@ JS;
      */
     protected function buildJsChartPropertyLegend() : string
     {
+        if ($this->isGraphChart() === true) {
+            return '{show: false}';
+        }
         $padding = '';
         $widget = $this->getWidget();
         $firstSeries = $widget->getSeries()[0];
