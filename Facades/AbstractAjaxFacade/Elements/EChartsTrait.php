@@ -30,7 +30,11 @@ use exface\Core\Widgets\Parts\Charts\Traits\XYChartSeriesTrait;
  */
 trait EChartsTrait
 {
-    protected function buildJsLiveReference()
+    /**
+     * 
+     * @return string
+     */
+    protected function buildJsLiveReference() : string
     {
         $output = '';
         if ($link = $this->getWidget()->getDataWidgetLink()) {
@@ -40,6 +44,10 @@ trait EChartsTrait
         return $output;
     }
     
+    /**
+     * 
+     * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\EChartsTrait
+     */
     protected function registerLiveReferenceAtLinkedElement()
     {
         if ($link = $this->getWidget()->getDataWidgetLink()) {
@@ -88,7 +96,7 @@ trait EChartsTrait
      *
      * @return string
      */
-    protected function buildJsFunctions()
+    protected function buildJsFunctions() : string
     {
         return <<<JS
         
@@ -617,7 +625,7 @@ JS;
      * @param ColumnChartSeries $series
      * @return string
      */
-    protected function buildJsColumnBarChartProperties (ColumnChartSeries $series) :string
+    protected function buildJsColumnBarChartProperties (ColumnChartSeries $series) : string
     {
         if ($series->getColor() !== null) {
             $color = "itemStyle: { color: '{$series->getColor()}' },";
@@ -1490,7 +1498,7 @@ JS;
      * @throws FacadeOutputError
      * @return string
      */
-    public function buildJsValueGetter($column = null, $row = null)
+    public function buildJsValueGetter($column = null, $row = null) : string
     {
         if ($column != null) {
             $key = $column;
@@ -1527,7 +1535,7 @@ JS;
      * {@inheritDoc}
      * @see exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsDataGetter()
      */
-    public function buildJsDataGetter(ActionInterface $action = null)
+    public function buildJsDataGetter(ActionInterface $action = null) : string
     {
         $widget = $this->getWidget();
         $rows = '';
