@@ -276,7 +276,7 @@ JS;
             {$this->buildJsEChartsVar()}._clickCount = clickCount
             if (clickCount == 1) {
                 setTimeout(function(){
-                    if(clickCount == 1) {                        
+                    if (clickCount == 1) {                        
                         // Single click code, or invoke a function
                         {$this->buildJsSingleClick($params)}
                     } else {
@@ -362,7 +362,7 @@ JS;
                                 markLineSet = true;
                             }
                         //check if series already shows markLine and if its not hidden
-                        } else if(params.selected[series.name] === true && series.markLine._show === true) {
+                        } else if (params.selected[series.name] === true && series.markLine._show === true) {
                             newOptions.series.push(series);
                             markLineSet = true;
                         //if none of the above checks succeed
@@ -563,7 +563,7 @@ JS;
      */
     protected function buildJsLineChart(LineChartSeries $series) : string
     {
-        if ($series instanceof AreaChartSeries || $series->isFilled() === true){
+        if ($series instanceof AreaChartSeries || $series->isFilled() === true) {
             if ($series->isFilled() === false) {
                 $filledJs = '';
             } else {
@@ -573,7 +573,7 @@ JS;
             $filledJs = '';
         }
         
-        if ($series instanceof SplineChartSeries || $series->isSmooth() === true ){
+        if ($series instanceof SplineChartSeries || $series->isSmooth() === true ) {
             if ($series->isSmooth() === false) {
                 $smoothJs = '';
             } else {
@@ -686,8 +686,8 @@ JS;
      */
     protected function buildJsStack(StackableChartSeriesInterface $series) : string
     {
-        if ($series->isStacked() === true){
-            if ($series->getStackGroupId() !== null && !empty($series->getStackGroupId())){
+        if ($series->isStacked() === true) {
+            if ($series->getStackGroupId() !== null && !empty($series->getStackGroupId())) {
                 $stack = "stack: '{$series->getStackGroupId()},'";
             } else {
                 $stack = "stack: 'defaultstackgroup1',";
@@ -708,23 +708,23 @@ JS;
     {
         $label = '{}';
         $position = $this->getWidget()->getLegendPosition();
-        if ($position !== null){
+        if ($position !== null) {
             $label = '{show: false}';
         }
-        if($position == 'top' || $position == 'bottom' || $position == null){
+        if ($position == 'top' || $position == 'bottom' || $position == null) {
             $centerX = '50%';
-        } elseif ($position == 'left'){
+        } elseif ($position == 'left') {
             $centerX = '70%';
-        } elseif ($position == 'right'){
+        } elseif ($position == 'right') {
             $centerX = '30%';
         }
         
         $valueMode = $series->getValueMode();
-        if ($valueMode == null){
+        if ($valueMode == null) {
             $valueMode = '';
-        } elseif ($valueMode == 'angle'){
+        } elseif ($valueMode == 'angle') {
             $valueMode = 'radius';
-        } elseif( $valueMode == 'radius'){
+        } elseif ($valueMode == 'radius') {
             $valueMode = 'area';
         }
         
@@ -754,14 +754,14 @@ JS;
     {
         $label = '{}';
         $position = $this->getWidget()->getLegendPosition();
-        if ($position !== null){
+        if ($position !== null) {
             $label = '{show: false}';
         }
-        if($position == 'top' || $position == 'bottom' || $position == null){
+        if ($position == 'top' || $position == 'bottom' || $position == null) {
             $centerX = '50%';
-        } elseif ($position == 'left'){
+        } elseif ($position == 'left') {
             $centerX = '70%';
-        } elseif ($position == 'right'){
+        } elseif ($position == 'right') {
             $centerX = '30%';
         }
         
@@ -791,7 +791,7 @@ JS;
      */
     protected function buildJsAxes() : string
     {
-        if ($this->isPieChartSeries() === true){
+        if ($this->isPieChartSeries() === true) {
             return '';
         }
         $countAxisRight = 0;
@@ -800,16 +800,16 @@ JS;
         $xAxesJS = '';
         $yAxesJS = '';
         $zoom = '';
-        foreach ($widget->getAxesX() as $axis){
+        foreach ($widget->getAxesX() as $axis) {
             $xAxesJS .= $this->buildJsAxisProperties($axis);
             $zoom .= $this->buildJsAxisZoom($axis);
         }
-        foreach ($widget->getAxesY() as $axis){
+        foreach ($widget->getAxesY() as $axis) {
             $zoom .= $this->buildJsAxisZoom($axis);
-            if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false){
+            if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false) {
                 $countAxisLeft++;
                 $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisLeft);
-            } elseif ($axis->getPosition() === ChartAxis::POSITION_RIGHT && $axis->isHidden() === false){
+            } elseif ($axis->getPosition() === ChartAxis::POSITION_RIGHT && $axis->isHidden() === false) {
                 $countAxisRight++;
                 $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisRight);
             }
@@ -838,23 +838,23 @@ JS;
             $name = '';
         }
         
-        if ($axis->hasGrid() === false){
+        if ($axis->hasGrid() === false) {
             $grid = 'false';
         } else {
             $grid = 'true';
         }
-        if ($axis->getMinValue() === null){
+        if ($axis->getMinValue() === null) {
             $min = '';
         } else {
             $min = "min: '" . $axis->getMinValue() . "',";
         }
-        if ($axis->getMaxValue() === null){
+        if ($axis->getMaxValue() === null) {
             $max = '';
         } else {
             $max = "max: '" . $axis->getMaxValue() . "',";
         }
         
-        if ($axis->getDimension() == Chart::AXIS_X){
+        if ($axis->getDimension() == Chart::AXIS_X) {
             $nameLocation = "nameLocation: 'center',";
         } else {
             $nameLocation = '';
@@ -862,7 +862,7 @@ JS;
         
         $axisType = mb_strtolower($axis->getAxisType());
         $position = mb_strtolower($axis->getPosition());
-        if ($axis->getDimension() == Chart::AXIS_Y){
+        if ($axis->getDimension() == Chart::AXIS_Y) {
             $nameGap = $this->baseAxisNameGap()* $nameGapMulti;
             if ($axis->isReverse() === true) {
                 $inverse = "inverse: true,";
@@ -916,7 +916,7 @@ JS;
      */
     protected function buildJsAxisZoom(ChartAxis $axis) : string
     {
-        if ($axis->isZoomable() === true){
+        if ($axis->isZoomable() === true) {
             if ($this->getWidget()->getLegendPosition() === 'bottom') {
                 $bottom = 'bottom: 25';
             } else {
@@ -1060,7 +1060,7 @@ JS;
             
 var arrayLength = rowData.length;
 var chartData = [];
-for (var i = 0; i < arrayLength; i++){
+for (var i = 0; i < arrayLength; i++) {
 	var item = { value: rowData[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} , name: rowData[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} };
 	chartData.push(item);
 }
@@ -1078,7 +1078,7 @@ JS;
             
             $axesOffsetCalc = '';
             $axesJsObjectInit = '';
-            foreach ($this->getWidget()->getAxes() as $axis){
+            foreach ($this->getWidget()->getAxes() as $axis) {
                 if ($axis->isHidden() === true) {
                     continue;
                 }
@@ -1264,17 +1264,17 @@ JS;
         $countAxisLeft = 0;
         $countAxisRight = 0;
         $widget = $this->getWidget();
-        foreach ($this->getWidget()->getAxesY() as $axis){
-            if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false && $axis->getHideCaption() === false ){
+        foreach ($this->getWidget()->getAxesY() as $axis) {
+            if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false && $axis->getHideCaption() === false ) {
                 $countAxisLeft++;
-            } elseif ($axis->getPosition() === ChartAxis::POSITION_RIGHT && $axis->isHidden() === false && $axis->getHideCaption() === false){
+            } elseif ($axis->getPosition() === ChartAxis::POSITION_RIGHT && $axis->isHidden() === false && $axis->getHideCaption() === false) {
                 $countAxisRight++;
             }
         }
         if ($countAxisLeft > 0 || $countAxisRight > 0) {
             $margin = 10;
         }
-        if ($countAxisLeft >= $countAxisRight){
+        if ($countAxisLeft >= $countAxisRight) {
             $margin += $this->baseAxisNameGap() * $countAxisLeft;
         } else {
             $margin += $this->baseAxisNameGap() * $countAxisRight;
@@ -1431,16 +1431,16 @@ JS;
         $position = $widget->getLegendPosition();
         if ($position === null && $firstSeries instanceof PieChartSeries) {
             $positionJs = "show: false";
-        } elseif ($position == 'top' ){
+        } elseif ($position == 'top' ) {
             $positionJs = "top: 'top',";
-        } elseif ($position == 'bottom'){
+        } elseif ($position == 'bottom') {
             $positionJs = "top: 'bottom',";
-        } elseif ($position == 'left'){
+        } elseif ($position == 'left') {
             $positionJs = "left: 'left', orient: 'vertical',";
-        } elseif ($position == 'right'){
+        } elseif ($position == 'right') {
             $positionJs = "left: 'right', orient: 'vertical',";
         }
-        if ($firstSeries instanceof PieChartSeries){
+        if ($firstSeries instanceof PieChartSeries) {
             $padding = 'padding: [20,10,20,10],';
         }
         
