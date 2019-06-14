@@ -805,6 +805,11 @@ JS;
      */
     protected function buildJsGraphChart(GraphChartSeries $series) : string
     {        
+        if ($series->getGraphType() === null) {
+            $type = 'circular';
+        } else {
+            $type = $series->getGraphType();
+        }
         return <<<JS
         
 {    
@@ -813,16 +818,16 @@ JS;
     type: 'graph',
 	hoverAnimation: true,
 	animationEasing: 'backOut',
-	layout: 'circular',
-	
+	layout: '{$type}',
+	edgeSymbol: ['circle', 'none'],
 	circular: { 
 		rotateLabel: true,
 	},
 	force: {
 		initLayout: 'circular',
 		gravity: 0.1,
-		repulsion: 70,
-		edgeLength: 70,
+		repulsion: 100,
+		edgeLength: 120,
 		layoutAnimation: false,
 	}, 
     roam: true,
@@ -1144,6 +1149,7 @@ for (var i = 0; i < arrayLength; i++) {
 
 JS;
         } elseif ($this->isGraphChart() === true) {
+            $series = $this->getWidget()->getSeries()[0];
             $js = <<<JS
 
 var nodes = []
@@ -1154,8 +1160,8 @@ var link = {}
 for (i = 0; i< rowData.length; i++) {
 	if (i === 0) {
 		node = {
-			id: rowData[i].LEFT_OBJECT,
-			name: rowData[i].LEFT_OBJECT__NAME,
+			id: rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()},
+			name: rowData[i].{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
 			itemStyle: null,
 			symbolSize: 10,
 			x: null,
@@ -1166,8 +1172,8 @@ for (i = 0; i< rowData.length; i++) {
 		nodes.push(node)
 		
 		node = {
-			id: rowData[i].RIGHT_OBJECT,
-			name: rowData[i].RIGHT_OBJECT__NAME,
+			id: rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()},
+			name: rowData[i].{$series->getRightObjectNameDataColumn()->getDataColumnName()},
 			itemStyle: null,
 			symbolSize: 10,
 			x: null,
@@ -1181,18 +1187,19 @@ for (i = 0; i< rowData.length; i++) {
 		var existingNodeLeft = false
 		var existingNodeRight = false
 		for (j = 0; j<nodes.length; j++) {
-			if (nodes[j].id == rowData[i].RIGHT_OBJECT) {
-				
+			if (nodes[j].id == rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}) {				
 				existingNodeRight = true
+                nodes[j].symbolSize += 0.5;
 			}
-			if (nodes[j].id == rowData[i].LEFT_OBJECT) {
+			if (nodes[j].id == rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
 				existingNodeLeft = true
+                nodes[j].symbolSize += 0.5;
 			}
 		}
 		if (existingNodeLeft === false ) {
 			node = {
-				id: rowData[i].LEFT_OBJECT,
-				name: rowData[i].LEFT_OBJECT__NAME,
+				id: rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()},
+				name: rowData[i].{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
 				itemStyle: null,
 				symbolSize: 10,
 				x: null,
@@ -1204,8 +1211,8 @@ for (i = 0; i< rowData.length; i++) {
 		}
 		if (existingNodeRight === false ) {
 			node = {
-				id: rowData[i].RIGHT_OBJECT,
-				name: rowData[i].RIGHT_OBJECT__NAME,
+				id: rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()},
+				name: rowData[i].{$series->getRightObjectNameDataColumn()->getDataColumnName()},
 				itemStyle: null,
 				symbolSize: 10,
 				x: null,
@@ -1216,16 +1223,16 @@ for (i = 0; i< rowData.length; i++) {
 			nodes.push(node)
 		}
 	}
-	if (rowData[i].DIRECTION == "regular") {
-		var source = rowData[i].LEFT_OBJECT
-		var target = rowData[i].RIGHT_OBJECT
+	if (rowData[i].{$series->getDirectionDataColumn()->getDataColumnName()} == "regular") {
+		var source = rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}
+		var target = rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}
 	} else {
-		var source = rowData[i].RIGHT_OBJECT
-		var target = rowData[i].LEFT_OBJECT
+		var source = rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}
+		var target = rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}
 	}
 	link = {
-		id: rowData[i].UID,
-		name: rowData[i].RELATION_NAME,
+		id: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
+		name: rowData[i].{$series->getRelationNameDataColumn()->getDataColumnName()},
 		source: source,
 		target: target,
 	}
@@ -1237,6 +1244,9 @@ for (i = 0; i< rowData.length; i++) {
 		data: nodes,
         links: links,
 	}],
+});
+
+console.log('nodes: ', nodes)
 
 JS;
         } else {
@@ -1616,7 +1626,7 @@ JS;
     protected function buildJsChartPropertyLegend() : string
     {
         if ($this->isGraphChart() === true) {
-            return '{show: false}';
+            return '{show: false},';
         }
         $padding = '';
         $widget = $this->getWidget();
