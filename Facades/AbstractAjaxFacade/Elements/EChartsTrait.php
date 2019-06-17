@@ -137,7 +137,7 @@ JS;
         $handlersJs = '';
         $handlersJs = $this->buildJsLegendSelectHandler();
         $handlersJs .= $this->buildJsOnClickHandler();
-        $handlersJs .= $this->buildJsOnDoubleClickHandler();
+        $handlersJs .= $this->buildJsBindToClickHandler();
         return $handlersJs;
     }
     
@@ -233,12 +233,12 @@ JS;
     {
         return <<<JS
             var echart = {$this->buildJsEChartsVar()};
-            var oSelectedRow = {$selection};
+            var oSelected = {$selection};
             if (echart._oldselection === undefined) {
-                echart._oldSelection = oSelectedRow;
+                echart._oldSelection = {$selection};
             } else {
-                if (({$this->buildJsRowCompare('echart._oldSelection', 'oSelectedRow')}) === false) {
-                    echart._oldSelection = oSelectedRow;
+                if (({$this->buildJsRowCompare('echart._oldSelection.data', 'oSelected.data')}) === false) {
+                    echart._oldSelection = {$selection};
                 } else {
                     return;
                 }
@@ -285,11 +285,14 @@ JS;
             {$this->buildJsEChartsVar()}._clickCount = clickCount
             if (clickCount == 1) {
                 setTimeout(function(){
-                    if (clickCount == 1) {                        
-                        // Single click code, or invoke a function
-                        {$this->buildJsSingleClick($params)}
+                    if (clickCount == 1) {
+                        if ({$params}.seriesType == 'graph') {
+                            // do nothing
+                        } else {
+                            {$this->buildJsSingleClick($params)}
+                        }
                     } else {
-                        // Double click code, or invoke a function
+                        // do nothing
                     }
                     clickCount = 0;
                     {$this->buildJsEChartsVar()}._clickCount = clickCount
@@ -419,29 +422,47 @@ JS;
         
         var params = {$params}
         var dataRow = params.data
+        //wenn Chart Typ 'pie' ist
         if (params.seriesType == 'pie') {
-            if ((typeof {$this->buildJsEChartsVar()}._oldSelection != undefined) && ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')}) == true) {
+            // wenn schon eine Pie Abschnitt selektiert war
+            if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+                // wenn der schon selektierte Abschnitt nochmals angeklickt wird
+                if ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection.data', 'dataRow')} == true) {
+                // schon selektierte Abschnitt wird deselektiert
                 {$this->buildJsEChartsVar()}.dispatchAction({
                     type: 'pieUnSelect',
                     seriesIndex: params.seriesIndex,
                     dataIndex: params.dataIndex
                 });
-                {$this->buildJsSelect()}
-            } else {
-                if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+                {$this->buildJsSelect()}                        
+                //wenn anderer Abschnitt als alter Abschnitt selektiert wird
+                } else {
+                    // alter Abschnitt wird deselektiert
                     {$this->buildJsEChartsVar()}.dispatchAction({
                         type: 'pieUnSelect',
                         seriesIndex: params.seriesIndex,
-                        name: {$this->buildJsEChartsVar()}._oldSelection.name
+                        name: {$this->buildJsEChartsVar()}._oldSelection.data.name
                     });
+                    // neuer Abschnitt wird selektiert
+                    {$this->buildJsEChartsVar()}.dispatchAction({
+                        type: 'pieSelect',
+                        seriesIndex: params.seriesIndex,
+                        dataIndex: params.dataIndex
+                    });
+                    {$this->buildJsSelect('params')}
                 }
+            // wenn noch kein Abschnitt selktiert war
+            } else {
+                // neuer Abschnitt wird selektiert
                 {$this->buildJsEChartsVar()}.dispatchAction({
                     type: 'pieSelect',
                     seriesIndex: params.seriesIndex,
                     dataIndex: params.dataIndex
                 });
-                {$this->buildJsSelect('dataRow')}
+                {$this->buildJsSelect('params')}
             }
+
+        // wenn Chart nicht Typ 'pie' ist        
         } else {
             var options = {$this->buildJsEChartsVar()}.getOption();
             var newOptions = {series: []};
@@ -449,28 +470,44 @@ JS;
             options.series.forEach((series) => {
                 newOptions.series.push({markLine: {data: {}}, _show: false});
             });
-            if ((typeof {$this->buildJsEChartsVar()}._oldSelection != undefined) && ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')}) == true) {
-                {$this->buildJsSelect()}
+            // wenn Chart ein Barchart ist
+            if (("_bar" in options.series[params.seriesIndex]) == true) {
+                newOptions.series[params.seriesIndex].markLine.data = [
+                    {
+        				yAxis: dataRow[options.series[params.seriesIndex].encode.y]
+        			}
+                ];
+                newOptions.series[params.seriesIndex].markLine._show = true;
+            // wenn Chart kein Barchart ist
             } else {
-                if (("_bar" in options.series[params.seriesIndex]) == true) {
-                    newOptions.series[params.seriesIndex].markLine.data = [
-                        {
-            				yAxis: dataRow[options.series[params.seriesIndex].encode.y]
-            			}
-                    ];
-                    newOptions.series[params.seriesIndex].markLine._show = true;
-                } else {
-                    newOptions.series[params.seriesIndex].markLine.data = [
-                        {
-            				xAxis: dataRow[options.series[params.seriesIndex].encode.x]
-            			}
-                    ];
-                    newOptions.series[params.seriesIndex].markLine._show = true;
-                }
-                {$this->buildJsSelect('dataRow')}
+                newOptions.series[params.seriesIndex].markLine.data = [
+                    {
+        				xAxis: dataRow[options.series[params.seriesIndex].encode.x]
+        			}
+                ];
+                newOptions.series[params.seriesIndex].markLine._show = true;
             }
-            {$this->buildJsEChartsVar()}.setOption(newOptions);
+            // wenn schon ein Datenpunkt selektiert war
+            if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+                // wenn neue Selektion der alten Selektion entspricht
+                if ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection.data', 'dataRow')} == true) {
+                    {$this->buildJsSelect()}
+                    options.series.forEach((series) => {
+                        newOptions = {series: []}
+                        newOptions.series.push({markLine: {data: {}}, _show: false});
+                    });
+                // wenn neue Selektion nicht der alten Selektion entspricht
+                } else {
+                    {$this->buildJsSelect('params')}
+                }
+            // wenn noch kein Datenpunkt selektiert war
+            } else {
+                {$this->buildJsSelect('params')}
+            }
+        {$this->buildJsEChartsVar()}.setOption(newOptions);
         }
+        
+        
         
 JS;
     }
@@ -482,22 +519,50 @@ JS;
      * 
      * @return string
      */
-    protected function buildJsOnDoubleClickHandler() : string
+    protected function buildJsBindToClickHandler() : string
     {
         $widget = $this->getWidget();
         $output = '';
         
-        // Double click actions. Currently only supports one double click action - the first one in the list of buttons
-        if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[0]) {
-            $output .= <<<JS
-            
-            {$this->buildJsEChartsVar()}.on('dblclick', function(params){
-                {$this->buildJsEChartsVar()}._oldSelection =  params.data
+        if ($this->isGraphChart() === true) {
+            // Double click actions. Currently only supports one double click action - the first one in the list of buttons
+            if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[0]) {
+                $output .= <<<JS
+                
+            {$this->buildJsEChartsVar()}.on('dblclick', {dataType: 'node'}, function(params){
+                {$this->buildJsEChartsVar()}._oldSelection = params
                 {$this->getFacade()->getElement($dblclick_button)->buildJsClickFunction()}
             });
             
 JS;
                 
+            }
+            if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[1]) {
+                $output .= <<<JS
+                
+            {$this->buildJsEChartsVar()}.on('dblclick', {dataType: 'edge'}, function(params){
+                {$this->buildJsEChartsVar()}._oldSelection = params
+                {$this->getFacade()->getElement($dblclick_button)->buildJsClickFunction()}
+            });
+            
+JS;
+                
+            }
+            
+        } else {
+        
+            // Double click actions. Currently only supports one double click action - the first one in the list of buttons
+            if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[0]) {
+                $output .= <<<JS
+                
+                {$this->buildJsEChartsVar()}.on('dblclick', function(params){
+                    {$this->buildJsEChartsVar()}._oldSelection = params
+                    {$this->getFacade()->getElement($dblclick_button)->buildJsClickFunction()}
+                });
+                
+JS;
+                    
+            }
         }
         return $output;
     }
@@ -597,9 +662,27 @@ JS;
         }
         
         if ($series->getColor() !== null) {
-            $color = "lineStyle: { color: '{$series->getColor()}' },";
+            $color = <<<JS
+
+    lineStyle: { color: '{$series->getColor()}' },
+    itemStyle: { color: '{$series->getColor()}' },
+
+JS;
+            
         } else {
             $color = '';
+        }
+        
+        if ($series->isSymbolHidden() === true) {
+            $symbol = "showSymbol: false,";
+        } else {
+            $symbol = '';
+        }
+        
+        if ($series->isStepline() === true) {
+            $step = "step: 'end',";
+        } else {
+            $step = '';
         }
         
         return <<<JS
@@ -608,6 +691,8 @@ JS;
     name: '{$series->getCaption()}',
     _index: {$series->getIndex()},
     type: 'line',
+    {$symbol}
+    {$step}
     encode: {
         x: '{$series->getXDataColumn()->getDataColumnName()}',
         y: '{$series->getYDataColumn()->getDataColumnName()}'
@@ -810,6 +895,13 @@ JS;
         } else {
             $type = $series->getGraphType();
         }
+        
+        if ($series->getColor() !== null) {
+            $color = "{$series->getColor()}";
+            
+        } else {
+            $color = '';
+        }
         return <<<JS
         
 {    
@@ -819,7 +911,7 @@ JS;
 	hoverAnimation: true,
 	animationEasing: 'backOut',
 	layout: '{$type}',
-	edgeSymbol: ['circle', 'none'],
+	edgeSymbol: ['none', 'none'],
 	circular: { 
 		rotateLabel: true,
 	},
@@ -832,8 +924,9 @@ JS;
 	}, 
     roam: true,
     focusNodeAdjacency: true,
-    itemStyle: {
+    itemStyle: {     
         normal: {
+            color: '{$color}',           
             borderColor: '#fff',
             borderWidth: 1,
         }
@@ -1157,7 +1250,7 @@ var links = []
 var node = {}
 var link = {}
 
-for (i = 0; i< rowData.length; i++) {
+for (var i = 0; i < rowData.length; i++) {
 	if (i === 0) {
 		node = {
 			id: rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()},
@@ -1167,7 +1260,8 @@ for (i = 0; i< rowData.length; i++) {
 			x: null,
 			y: null,
 			value: 10,
-			draggable: false
+			draggable: false,
+            _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
 		};
 		nodes.push(node)
 		
@@ -1179,21 +1273,22 @@ for (i = 0; i< rowData.length; i++) {
 			x: null,
 			y: null,
 			value: 10,
-			draggable: false
+			draggable: false,
+            _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
 		};
 		nodes.push(node)
 		
 	} else {
 		var existingNodeLeft = false
 		var existingNodeRight = false
-		for (j = 0; j<nodes.length; j++) {
+		for (var j = 0; j<nodes.length; j++) {
 			if (nodes[j].id == rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}) {				
 				existingNodeRight = true
-                nodes[j].symbolSize += 0.5;
+                nodes[j].symbolSize += 0.5
 			}
 			if (nodes[j].id == rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
 				existingNodeLeft = true
-                nodes[j].symbolSize += 0.5;
+                nodes[j].symbolSize += 0.5
 			}
 		}
 		if (existingNodeLeft === false ) {
@@ -1205,7 +1300,8 @@ for (i = 0; i< rowData.length; i++) {
 				x: null,
 				y: null,
 				value: 10,
-				draggable: false
+				draggable: false,
+                _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
 			};
 			nodes.push(node)
 		}
@@ -1218,7 +1314,8 @@ for (i = 0; i< rowData.length; i++) {
 				x: null,
 				y: null,
 				value: 10,
-				draggable: false
+				draggable: false,
+                _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
 			};
 			nodes.push(node)
 		}
@@ -1245,8 +1342,6 @@ for (i = 0; i< rowData.length; i++) {
         links: links,
 	}],
 });
-
-console.log('nodes: ', nodes)
 
 JS;
         } else {
@@ -1715,9 +1810,11 @@ JS;
         
                 function(){
                     var data = '';
-                    var selectedRow = {$this->buildJsEChartsVar()}._oldSelection;
-                    if (selectedRow && '{$key}' in selectedRow) {
-                        data = selectedRow["{$key}"];
+                    if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+                        var selectedRow = {$this->buildJsEChartsVar()}._oldSelection.data;
+                        if (selectedRow && '{$key}' in selectedRow) {
+                            data = selectedRow["{$key}"];
+                        }
                     }
                 return data;
                 }()
@@ -1741,13 +1838,13 @@ JS;
             // widget: filters, sorters, etc.
             return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
         } else {
-            if ($this->getWidget()->getSeries()[0] instanceof PieChartSeries) {
+            if ($this->isPieChart() === true) {
                 //return "console.log({$this->buildJsEChartsVar()}._oldSelection, {$this->buildJsEChartsVar()}._dataset )";
                 $rows = <<<JS
                 
                     function(){
                         var dataset = {$this->buildJsEChartsVar()}._dataset;
-                        var selectedRow = {$this->buildJsEChartsVar()}._oldSelection;
+                        var selectedRow = {$this->buildJsEChartsVar()}._oldSelection.data;
                         for (var i = 0; i < dataset.length; i++) {
                             if (dataset[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} === selectedRow.name) {
                                 return [dataset[i]]
@@ -1756,8 +1853,33 @@ JS;
                     }()
                     
 JS;
+                
+            } else if ($this->isGraphChart() === true) {
+                //TODO korrektes Datenset zurückliefern
+                $rows = <<<JS
+
+                    function(){
+                        var dataset = {$this->buildJsEChartsVar()}._dataset;
+                        var selection = {$this->buildJsEChartsVar()}._oldSelection
+                        if (selection.dataType === "node") {                        
+                            for (var i = 0; i < dataset.length; i++) {
+                                if (dataset[i].{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()} === selection.data.id) {
+                                    return [dataset[i]]
+                                }
+                            }
+                        } else if (selection.dataType === "edge") {
+                            for (var i = 0; i < dataset.length; i++) {
+                                if (dataset[i].{$this->getWidget()->getSeries()[0]->getRelationDataColumn()->getDataColumnName()} === selection.data.id) {
+                                    return [dataset[i]]
+                                }
+                            }
+                        }
+                    }()
+
+JS;
+            
             } else {
-                $rows = "[{$this->buildJsEChartsVar()}._oldSelection]";
+                $rows = "[{$this->buildJsEChartsVar()}._oldSelection.data]";
             }
         }
         return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($rows ? ", rows: " . $rows : '') . "}";
