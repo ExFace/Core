@@ -3,6 +3,7 @@ namespace exface\Core\Widgets\Parts\Charts;
 
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Widgets\DataColumn;
+use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Widgets\Chart;
 
@@ -454,6 +455,42 @@ class GraphChartSeries extends ChartSeries
     public function getDirectionDataColumn() : DataColumn
     {
         return $this->getDirectionAxis()->getDataColumn();
+    }
+    
+    /**
+     * Returns the color of this series or NULL if no color explicitly defined.
+     *
+     * @return string|NULL
+     */
+    public function getColor() : ?string
+    {
+        if (is_null($this->color)) {
+            $cellWidget = $this->getValueDataColumn()->getCellWidget();
+            if ($cellWidget instanceof iHaveColor) {
+                $this->color = $cellWidget->getColor();
+            }
+        }
+        return $this->color;
+    }
+    
+    /**
+     * Sets a specific color for the series - if not set, facades will use their own color scheme.
+     *
+     * HTML color names are supported by default. Additionally any color selector supported by
+     * the current facade can be used. Most HTML facades will support css colors.
+     *
+     * @link https://www.w3schools.com/colors/colors_groups.asp
+     *
+     * @uxon-property color
+     * @uxon-type string
+     *
+     * @param string $color
+     * @return ChartSeries
+     */
+    public function setColor(string $color) : ChartSeries
+    {
+        $this->color = $color;
+        return $this;
     }
     
     /**
