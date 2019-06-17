@@ -5,10 +5,10 @@ class SplineChartSeries extends LineChartSeries
 {
 
     /**
-     * 
-     * @return float|NULL
+     *  {@inheritDoc}
+     * @see exface\Core\Widgets\Parts\Charts\LineCartSeries::isSmooth
      */
-    public function isSmooth(bool $default = true) : ?bool
+    public function isSmooth(bool $default = true) : bool
     {
         return parent::isSmooth($default);
     }
