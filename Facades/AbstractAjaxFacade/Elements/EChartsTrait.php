@@ -1808,13 +1808,33 @@ JS;
     }
     
     /**
-     * build function thats calles when chart gets resized
+     * build echarts js function that is called when chart gets resized
      *
      * @return string
      */
     protected function buildJsEChartsResize() : string
     {
         return "{$this->buildJsEChartsVar()}.resize()";
+    }
+    
+    /**
+     * build echarts js function that shows loading symbol 
+     *
+     * @return string
+     */
+    protected function buildJsEChartsShowLoading() : string
+    {
+        return "{$this->buildJsEChartsVar()}.showLoading()";
+    }
+    
+    /**
+     * build echarts js function that hides loading symbol
+     *
+     * @return string
+     */
+    protected function buildJsEChartsHideLoading() : string
+    {
+        return "{$this->buildJsEChartsVar()}.hideLoading()";
     }
     
     /**
@@ -1931,9 +1951,11 @@ JS;
     protected function buildJsDataResetter() : string
     {
         return <<<JS
+{$this->buildJsEChartsVar()}.clear();
 var echart = {$this->buildJsEChartsVar()};
-{$this->buildJsEChartsVar()}.setOption({}, true);
+echart._dataset = undefined
 echart._oldSelection = undefined
+echart._clickCount = 0
 
 JS;
 
