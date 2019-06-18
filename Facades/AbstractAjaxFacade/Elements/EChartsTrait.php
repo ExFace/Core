@@ -116,10 +116,12 @@ trait EChartsTrait
         {$this->buildJsSelectFunctionBody('selection')}
     };
     
+    //Create the single click function
     function {$this->buildJsSingleClickFunctionName()}(params) {
         {$this->buildJsSingleClickFunctionBody('params')}
     };
     
+    //create the clicks function to distinguish between single and double click
     function {$this->buildJsClicksFunctionName()}(params) {
         {$this->buildJsClicksFunctionBody('params')}
     };
@@ -232,6 +234,7 @@ JS;
     protected function buildJsSelectFunctionBody(string $selection) : string
     {
         return <<<JS
+
             var echart = {$this->buildJsEChartsVar()};
             var oSelected = {$selection};
             if (echart._oldselection === undefined) {
@@ -422,28 +425,27 @@ JS;
         
         var params = {$params}
         var dataRow = params.data
-        //wenn Chart Typ 'pie' ist
         if (params.seriesType == 'pie') {
-            // wenn schon eine Pie Abschnitt selektiert war
+            // if already a pie part is selected do the following
             if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
-                // wenn der schon selektierte Abschnitt nochmals angeklickt wird
+                // if already slected piepart gets clicked again
                 if ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection.data', 'dataRow')} == true) {
-                // schon selektierte Abschnitt wird deselektiert
-                {$this->buildJsEChartsVar()}.dispatchAction({
-                    type: 'pieUnSelect',
-                    seriesIndex: params.seriesIndex,
-                    dataIndex: params.dataIndex
-                });
-                {$this->buildJsSelect()}                        
-                //wenn anderer Abschnitt als alter Abschnitt selektiert wird
+                    // deselcted the pie part
+                    {$this->buildJsEChartsVar()}.dispatchAction({
+                        type: 'pieUnSelect',
+                        seriesIndex: params.seriesIndex,
+                        dataIndex: params.dataIndex
+                    });
+                    {$this->buildJsSelect()}                        
+                // if different part then already selected part gets clicked
                 } else {
-                    // alter Abschnitt wird deselektiert
+                    // deselect old pie part
                     {$this->buildJsEChartsVar()}.dispatchAction({
                         type: 'pieUnSelect',
                         seriesIndex: params.seriesIndex,
                         name: {$this->buildJsEChartsVar()}._oldSelection.data.name
                     });
-                    // neuer Abschnitt wird selektiert
+                    // select clicked pie part
                     {$this->buildJsEChartsVar()}.dispatchAction({
                         type: 'pieSelect',
                         seriesIndex: params.seriesIndex,
@@ -451,18 +453,16 @@ JS;
                     });
                     {$this->buildJsSelect('params')}
                 }
-            // wenn noch kein Abschnitt selktiert war
+            // if no pie part was selected
             } else {
-                // neuer Abschnitt wird selektiert
+                // select clicked pie part
                 {$this->buildJsEChartsVar()}.dispatchAction({
                     type: 'pieSelect',
                     seriesIndex: params.seriesIndex,
                     dataIndex: params.dataIndex
                 });
                 {$this->buildJsSelect('params')}
-            }
-
-        // wenn Chart nicht Typ 'pie' ist        
+            }        
         } else {
             var options = {$this->buildJsEChartsVar()}.getOption();
             var newOptions = {series: []};
@@ -470,7 +470,7 @@ JS;
             options.series.forEach((series) => {
                 newOptions.series.push({markLine: {data: {}}, _show: false});
             });
-            // wenn Chart ein Barchart ist
+            // if the chart is a barchart
             if (("_bar" in options.series[params.seriesIndex]) == true) {
                 newOptions.series[params.seriesIndex].markLine.data = [
                     {
@@ -478,7 +478,7 @@ JS;
         			}
                 ];
                 newOptions.series[params.seriesIndex].markLine._show = true;
-            // wenn Chart kein Barchart ist
+            // if the chart is not a barchart
             } else {
                 newOptions.series[params.seriesIndex].markLine.data = [
                     {
@@ -487,20 +487,19 @@ JS;
                 ];
                 newOptions.series[params.seriesIndex].markLine._show = true;
             }
-            // wenn schon ein Datenpunkt selektiert war
+            // if there was already a datapoint selected
             if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
-                // wenn neue Selektion der alten Selektion entspricht
+                // if the selected datapoint is the same as the now clicked one
                 if ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection.data', 'dataRow')} == true) {
                     {$this->buildJsSelect()}
                     options.series.forEach((series) => {
                         newOptions = {series: []}
                         newOptions.series.push({markLine: {data: {}}, _show: false});
                     });
-                // wenn neue Selektion nicht der alten Selektion entspricht
                 } else {
                     {$this->buildJsSelect('params')}
                 }
-            // wenn noch kein Datenpunkt selektiert war
+            // if no datapoint was selected yet
             } else {
                 {$this->buildJsSelect('params')}
             }
@@ -525,7 +524,10 @@ JS;
         $output = '';
         
         if ($this->isGraphChart() === true) {
-            // Double click actions. Currently only supports one double click action - the first one in the list of buttons
+            // Double click actions for graph charts
+            // For now the action that is supposed to happen when double clicking on a node needs to be the
+            // first action bound to a double click and the action supposed to happen when double clicking on
+            // an edge/link needs to be the second one bound to a double click
             if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[0]) {
                 $output .= <<<JS
                 
@@ -551,7 +553,8 @@ JS;
             
         } else {
         
-            // Double click actions. Currently only supports one double click action - the first one in the list of buttons
+            // Double click actions for not graph charts
+            // Currently only supports one double click action - the first one in the list of buttons
             if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[0]) {
                 $output .= <<<JS
                 
@@ -591,8 +594,7 @@ JS;
                     throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support bar charts mixed with other chart types!');
                 }
             }
-        }
-        
+        }        
         return <<<JS
         
 {
@@ -883,9 +885,9 @@ JS;
     }
         
     /**
-     * build pie series configuration
+     * build graph series configuration
      *
-     * @param PieChartSeries $series
+     * @param GraphChartSeries $series
      * @return string
      */
     protected function buildJsGraphChart(GraphChartSeries $series) : string
@@ -1214,7 +1216,7 @@ JS;
     }
     
     /**
-     * javascript function body to analyse data and calculate axis/grid offsets and draw the chart
+     * javascript function body to draw chart, iniatlize global variables, show overlay message if data is empty
      *
      * @param string $dataJs
      * @return string
@@ -1232,16 +1234,21 @@ JS;
         return <<<JS
         
     var rowData = $dataJs;
+    // if data is empty or not defined, reset chart and show overlay message
     if (! rowData || rowData.count === 0) {
         {$this->buildJsDataResetter()}
         {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
         return
     }
+    // initialize global variables
     var echart = {$this->buildJsEChartsVar()}
+    echart.resize()
     echart._dataset = rowData
     echart._oldSelection = undefined
     echart._clickCount = 0
+//hide overlay message
 {$this->buildJsMessageOverlayHide()}
+//build and set basic chart config and options 
 {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
 $js
 
@@ -1249,7 +1256,7 @@ JS;
     }
 
     /**
-     * javascript snippet to calculate offsets for axis and grid and draw Charts wit hX and Y axes
+     * javascript snippet to calculate offsets for axis and grid and draw Charts with X and Y axes
      * 
      * @return string
      */
@@ -1257,6 +1264,8 @@ JS;
     {
         $axesOffsetCalc = '';
         $axesJsObjectInit = '';
+        //for each visible axis calculate necessary gap to next axis/chart borders
+        //for X-Axis its based on the AxisIndex, for Y-Axis it's based on the length of the longest data value
         foreach ($this->getWidget()->getAxes() as $axis) {
             if ($axis->isHidden() === true) {
                 continue;
@@ -1264,9 +1273,9 @@ JS;
             
             $xAxisIndex = 0;
             if ($axis->getDimension() === Chart::AXIS_X) {
-                $offset = ++$xAxisIndex . ' * 20 * 2';
+                $gap = ++$xAxisIndex . ' * 20 * 2';
             } else {
-                $offset = 'len * 9';
+                $gap = 'len * 9';
             }
             $axesOffsetCalc .= <<<JS
             
@@ -1276,22 +1285,25 @@ JS;
         } else {
             len = (typeof val === 'string' || val instanceof String ? val.length : val.toString().length);
         }
-        offset = {$offset};
-        if (axes["{$axis->getDataColumn()->getDataColumnName()}"]['offset'] < offset) {
-            axes["{$axis->getDataColumn()->getDataColumnName()}"]['offset'] = offset;
+        gap = {$gap};
+        if (axes["{$axis->getDataColumn()->getDataColumnName()}"]['gap'] < gap) {
+            axes["{$axis->getDataColumn()->getDataColumnName()}"]['gap'] = gap;
         }
         
 JS;
             $postion = mb_strtolower($axis->getPosition());
+            //if the axis has a caption the base gap is based on that length, else it's 0
             if ($axis->getHideCaption() === false) {
-                $offset = strlen($axis->getCaption())*3.5;
+                $baseGap = strlen($axis->getCaption())*3.5;
             } else {
-                $offset = 0;
+                $baseGap = 0;
             }
+            //js snippet to build array containing every visible axis as object with its necessary gap
+            //and other needed parameters
             $axesJsObjectInit .= <<<JS
             
     axes["{$axis->getDataColumn()->getDataColumnName()}"] = {
-        offset: {$offset},
+        gap: {$baseGap},
         dimension: "{$axis->getDimension()}",
         position: "{$postion}",
         index: "{$axis->getIndex()}",
@@ -1303,24 +1315,28 @@ JS;
         
         return <<<JS
     
-    var axes = {};
+    // initalize axis array
+    var axes = [];
     {$axesJsObjectInit}
     
     // Danach
-    var val, offset;
+    var val, gap;
     var len = 0;
+    // for each data row calculate the offset for the axis bound to a data value
     rowData.forEach(function(row){
         {$axesOffsetCalc}
     })
     
     var newOptions = {yAxis: [], xAxis: []};
     var axis;
+    // offsets for the first axis at each position
     var offsets = {
         'top': 0,
         'right': 0,
         'bottom': 0,
         'left': 0
     };
+    // for every visible axis, set the correct offset and that it is visible
     for (var i in axes) {
         axis = axes[i];
         newOptions[axis.dimension + 'Axis'].push({
@@ -1328,13 +1344,14 @@ JS;
             show: true
         });
         
-        if (axis.offset === 0) {
+        if (axis.gap === 0) {
             {$this->buildJsShowMessageError("'{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.ECHARTS.AXIS_NO_DATA')} \"' + axis.name + '\"'")}
         }
-        
-        offsets[axis.position] += axis.offset;
+        // increase the offset for the next axis at the same position by the gap calculated for this axis
+        offsets[axis.position] += axis.gap;
     }
     
+    // the grid margin at each side is the sum of each calculated axis gap for this side + the base margin
     var gridmargin = offsets;
     gridmargin['top'] += {$this->buildJsGridMarginTop()};
     gridmargin['right'] += {$this->buildJsGridMarginRight()};
@@ -1350,7 +1367,6 @@ JS;
         {$this->buildJsEChartsVar()}.setOption({dataset: {source: rowData}})
     } else {
         {$this->buildJsSplitSeries()}
-        
     }
     
 JS;
@@ -1386,7 +1402,7 @@ JS;
     }
     
     /**
-     * javascript snippet to transform data to match data required for graph charts and draw pie chart
+     * javascript snippet to transform data to match data required for graph charts and draw graph chart
      *
      * @return string
      */
@@ -1400,22 +1416,28 @@ JS;
     var node = {}
     var link = {}
     
+    // for each data object add a node that's not already existing to the nodes array
+    // and a link that's not already existing to the links array
     for (var i = 0; i < rowData.length; i++) {    	
 		var existingNodeLeft = false
-		var existingNodeRight = false
-		for (var j = 0; j<nodes.length; j++) {
+        var existingNodeRight = false
+        for (var j = 0; j<nodes.length; j++) {
+            // if the right object already exists at node, increase the symbol size of that node
 			if (nodes[j].id === rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}) {
 				existingNodeRight = true
                 nodes[j].symbolSize += 0.5
 			}
+            // if the left object already exists at node, increase the symbol size of that node
 			if (nodes[j].id === rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
 				existingNodeLeft = true
                 nodes[j].symbolSize += 0.5
 			}
 		}
+        // if the left and right object are the same and not yet existing as node, only add the left object to the nodes
         if (rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()} === rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
             existingNodeRight = true
         }
+        // if the left object is not existing as node yet, add it
 		if (existingNodeLeft === false ) {
 			node = {
 				id: rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()},
@@ -1430,6 +1452,7 @@ JS;
 			};
 			nodes.push(node)
 		}
+        // if the right object is not existing as node yet, add it
 		if (existingNodeRight === false ) {
 			node = {
 				id: rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()},
@@ -1445,19 +1468,23 @@ JS;
 		nodes.push(node)
 		}
 	
-    	if (rowData[i].{$series->getDirectionDataColumn()->getDataColumnName()} == "regular") {
+    	// if relation direction is "regular" left object is source node, right object is target node for that relation
+        if (rowData[i].{$series->getDirectionDataColumn()->getDataColumnName()} == "regular") {
     		var source = rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}
     		var target = rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}
-    	} else {
+    	// else right object is source and left object is target for that relation
+        } else {
     		var source = rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}
     		var target = rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}
     	}
         var existingLink = false;
+        // for every relation check if it's not already existing in links array
         for (var j = 0; j<links.length; j++) {
             if (links[j].id === rowData[i].{$series->getRelationDataColumn()->getDataColumnName()}) {
                 existingLink = true
             }
         }
+        // if relation is not existing yet as link, add it to links array
         if (existingLink === false) {
             link = {
         		id: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
