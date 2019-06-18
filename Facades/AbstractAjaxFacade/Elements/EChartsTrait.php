@@ -1400,79 +1400,51 @@ JS;
     var node = {}
     var link = {}
     
-    for (var i = 0; i < rowData.length; i++) {
-    	if (i === 0) {
-    		node = {
-    			id: rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()},
-    			name: rowData[i].{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
-    			//itemStyle: null,
-    			symbolSize: 10,
-    			x: null,
-    			y: null,
-    			value: 10,
-    			draggable: false,
+    for (var i = 0; i < rowData.length; i++) {    	
+		var existingNodeLeft = false
+		var existingNodeRight = false
+		for (var j = 0; j<nodes.length; j++) {
+			if (nodes[j].id === rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}) {
+				existingNodeRight = true
+                nodes[j].symbolSize += 0.5
+			}
+			if (nodes[j].id === rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
+				existingNodeLeft = true
+                nodes[j].symbolSize += 0.5
+			}
+		}
+        if (rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()} === rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
+            existingNodeRight = true
+        }
+		if (existingNodeLeft === false ) {
+			node = {
+				id: rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()},
+				name: rowData[i].{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
+				itemStyle: null,
+				symbolSize: 10,
+				x: null,
+				y: null,
+				value: 10,
+				draggable: false,
                 _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
-    		};
-    		nodes.push(node)
-    		
-    		node = {
-    			id: rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()},
-    			name: rowData[i].{$series->getRightObjectNameDataColumn()->getDataColumnName()},
-    			//itemStyle: null,
-    			symbolSize: 10,
-    			x: null,
-    			y: null,
-    			value: 10,
-    			draggable: false,
+			};
+			nodes.push(node)
+		}
+		if (existingNodeRight === false ) {
+			node = {
+				id: rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()},
+				name: rowData[i].{$series->getRightObjectNameDataColumn()->getDataColumnName()},
+				itemStyle: null,
+				symbolSize: 10,
+				x: null,
+				y: null,
+				value: 10,
+				draggable: false,
                 _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
-    		};
-    		nodes.push(node)
-    		
-    	} else {
-    		var existingNodeLeft = false
-    		var existingNodeRight = false
-    		for (var j = 0; j<nodes.length; j++) {
-    			if (nodes[j].id === rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}) {
-    				existingNodeRight = true
-                    nodes[j].symbolSize += 0.5
-    			}
-    			if (nodes[j].id === rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
-    				existingNodeLeft = true
-                    nodes[j].symbolSize += 0.5
-    			}
-    		}
-            if (rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()} === rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
-                existingNodeRight = true
-            }
-    		if (existingNodeLeft === false ) {
-    			node = {
-    				id: rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()},
-    				name: rowData[i].{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
-    				itemStyle: null,
-    				symbolSize: 10,
-    				x: null,
-    				y: null,
-    				value: 10,
-    				draggable: false,
-                    _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
-    			};
-    			nodes.push(node)
-    		}
-    		if (existingNodeRight === false ) {
-    			node = {
-    				id: rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()},
-    				name: rowData[i].{$series->getRightObjectNameDataColumn()->getDataColumnName()},
-    				itemStyle: null,
-    				symbolSize: 10,
-    				x: null,
-    				y: null,
-    				value: 10,
-    				draggable: false,
-                    _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
-    			};
-    		nodes.push(node)
-    		}
-    	}
+			};
+		nodes.push(node)
+		}
+	
     	if (rowData[i].{$series->getDirectionDataColumn()->getDataColumnName()} == "regular") {
     		var source = rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}
     		var target = rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}
@@ -1496,6 +1468,7 @@ JS;
         	links.push(link)
         }
     }
+
     {$this->buildJsEChartsVar()}.setOption({
     	series: [{
     		data: nodes,
