@@ -1222,145 +1222,54 @@ JS;
     protected function buildJsRedrawFunctionBody(string $dataJs) : string
     {
         if ($this->isPieChart() === true) {
-            $js = <<<JS
-            
-var arrayLength = rowData.length;
-var chartData = [];
-for (var i = 0; i < arrayLength; i++) {
-	var item = { value: rowData[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} , name: rowData[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} };
-	chartData.push(item);
-}
-
-{$this->buildJsEChartsVar()}.setOption({
-	series: [{
-		data: chartData
-	}],
-	legend: {
-		data: rowData.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
-	}
-})
-
-JS;
+            $js = $this->buildJsRedrawPie();
         } elseif ($this->isGraphChart() === true) {
-            $series = $this->getWidget()->getSeries()[0];
-            $js = <<<JS
-
-var nodes = []
-var links = []
-var node = {}
-var link = {}
-
-for (var i = 0; i < rowData.length; i++) {
-	if (i === 0) {
-		node = {
-			id: rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()},
-			name: rowData[i].{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
-			itemStyle: null,
-			symbolSize: 10,
-			x: null,
-			y: null,
-			value: 10,
-			draggable: false,
-            _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
-		};
-		nodes.push(node)
-		
-		node = {
-			id: rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()},
-			name: rowData[i].{$series->getRightObjectNameDataColumn()->getDataColumnName()},
-			itemStyle: null,
-			symbolSize: 10,
-			x: null,
-			y: null,
-			value: 10,
-			draggable: false,
-            _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
-		};
-		nodes.push(node)
-		
-	} else {
-		var existingNodeLeft = false
-		var existingNodeRight = false
-		for (var j = 0; j<nodes.length; j++) {
-			if (nodes[j].id == rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}) {				
-				existingNodeRight = true
-                nodes[j].symbolSize += 0.5
-			}
-			if (nodes[j].id == rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
-				existingNodeLeft = true
-                nodes[j].symbolSize += 0.5
-			}
-		}
-		if (existingNodeLeft === false ) {
-			node = {
-				id: rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()},
-				name: rowData[i].{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
-				itemStyle: null,
-				symbolSize: 10,
-				x: null,
-				y: null,
-				value: 10,
-				draggable: false,
-                _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
-			};
-			nodes.push(node)
-		}
-		if (existingNodeRight === false ) {
-			node = {
-				id: rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()},
-				name: rowData[i].{$series->getRightObjectNameDataColumn()->getDataColumnName()},
-				itemStyle: null,
-				symbolSize: 10,
-				x: null,
-				y: null,
-				value: 10,
-				draggable: false,
-                _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
-			};
-			nodes.push(node)
-		}
-	}
-	if (rowData[i].{$series->getDirectionDataColumn()->getDataColumnName()} == "regular") {
-		var source = rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}
-		var target = rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}
-	} else {
-		var source = rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}
-		var target = rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}
-	}
-	link = {
-		id: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
-		name: rowData[i].{$series->getRelationNameDataColumn()->getDataColumnName()},
-		source: source,
-		target: target,
-	}
-	links.push(link)
-}
-
-{$this->buildJsEChartsVar()}.setOption({
-	series: [{
-		data: nodes,
-        links: links,
-	}],
-});
+            $js = $this->buildJsRedrawGraph();
+        } else {
+            $js = $this->buildJsRedrawXYChart();
+        }
+        
+        return <<<JS
+        
+    var rowData = $dataJs;
+    if (! rowData || rowData.count === 0) {
+        {$this->buildJsDataResetter()}
+        {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
+        return
+    }
+    var echart = {$this->buildJsEChartsVar()}
+    echart._dataset = rowData
+    echart._oldSelection = undefined
+    echart._clickCount = 0
+{$this->buildJsMessageOverlayHide()}
+{$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
+$js
 
 JS;
-        } else {
+    }
+
+    /**
+     * javascript snippet to calculate offsets for axis and grid and draw Charts wit hX and Y axes
+     * 
+     * @return string
+     */
+    protected function buildJsRedrawXYChart() : string
+    {
+        $axesOffsetCalc = '';
+        $axesJsObjectInit = '';
+        foreach ($this->getWidget()->getAxes() as $axis) {
+            if ($axis->isHidden() === true) {
+                continue;
+            }
             
-            $axesOffsetCalc = '';
-            $axesJsObjectInit = '';
-            foreach ($this->getWidget()->getAxes() as $axis) {
-                if ($axis->isHidden() === true) {
-                    continue;
-                }
-                
-                $xAxisIndex = 0;
-                if ($axis->getDimension() === Chart::AXIS_X) {
-                    $offset = ++$xAxisIndex . ' * 20 * 2';
-                } else {
-                    $offset = 'len * 9';
-                }
-                $axesOffsetCalc .= <<<JS
-                
+            $xAxisIndex = 0;
+            if ($axis->getDimension() === Chart::AXIS_X) {
+                $offset = ++$xAxisIndex . ' * 20 * 2';
+            } else {
+                $offset = 'len * 9';
+            }
+            $axesOffsetCalc .= <<<JS
+            
         val = row['{$axis->getDataColumn()->getDataColumnName()}'];
         if (val === undefined) {
             len = 0;
@@ -1373,14 +1282,14 @@ JS;
         }
         
 JS;
-                $postion = mb_strtolower($axis->getPosition());
-                if ($axis->getHideCaption() === false) {
-                    $offset = strlen($axis->getCaption())*3.5;
-                } else {
-                    $offset = 0;
-                }
-                $axesJsObjectInit .= <<<JS
-                
+            $postion = mb_strtolower($axis->getPosition());
+            if ($axis->getHideCaption() === false) {
+                $offset = strlen($axis->getCaption())*3.5;
+            } else {
+                $offset = 0;
+            }
+            $axesJsObjectInit .= <<<JS
+            
     axes["{$axis->getDataColumn()->getDataColumnName()}"] = {
         offset: {$offset},
         dimension: "{$axis->getDimension()}",
@@ -1390,11 +1299,9 @@ JS;
     };
     
 JS;
-            }
-            
-            $js = <<<JS
-            
-    //var longestString = 0;
+        }
+        
+        return <<<JS
     
     var axes = {};
     {$axesJsObjectInit}
@@ -1435,7 +1342,6 @@ JS;
     gridmargin['left'] += {$this->buildJsGridMarginLeft()};
     
     newOptions.grid = gridmargin;
-    //newOptions.dataset = {source: rowData};
     
     {$this->buildJsEChartsVar()}.setOption(newOptions);
     
@@ -1448,23 +1354,154 @@ JS;
     }
     
 JS;
-        }
-        
+    }
+    
+    /**
+     * javascript snippet to transform data to match data required for pie charts and draw pie chart
+     *
+     * @return string
+     */
+    protected function buildJsRedrawPie() : string
+    {
         return <<<JS
         
-    var rowData = $dataJs;
-    if (! rowData || rowData.count === 0) {
-        {$this->buildJsDataResetter()}
-        {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
-        return
+    var arrayLength = rowData.length;
+    var chartData = [];
+    for (var i = 0; i < arrayLength; i++) {
+        var item = { value: rowData[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} , name: rowData[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} };
+        chartData.push(item);
     }
-    var echart = {$this->buildJsEChartsVar()}
-    echart._dataset = rowData
-    echart._oldSelection = undefined
-    echart._clickCount = 0
-{$this->buildJsMessageOverlayHide()}
-{$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
-$js
+    
+    {$this->buildJsEChartsVar()}.setOption({
+        series: [{
+            data: chartData
+        }],
+        legend: {
+            data: rowData.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
+        }
+    })
+
+JS;
+        
+    }
+    
+    /**
+     * javascript snippet to transform data to match data required for graph charts and draw pie chart
+     *
+     * @return string
+     */
+    protected function buildJsRedrawGraph()
+    {
+        $series = $this->getWidget()->getSeries()[0];
+        return <<<JS
+        
+    var nodes = []
+    var links = []
+    var node = {}
+    var link = {}
+    
+    for (var i = 0; i < rowData.length; i++) {
+    	if (i === 0) {
+    		node = {
+    			id: rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()},
+    			name: rowData[i].{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
+    			//itemStyle: null,
+    			symbolSize: 10,
+    			x: null,
+    			y: null,
+    			value: 10,
+    			draggable: false,
+                _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
+    		};
+    		nodes.push(node)
+    		
+    		node = {
+    			id: rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()},
+    			name: rowData[i].{$series->getRightObjectNameDataColumn()->getDataColumnName()},
+    			//itemStyle: null,
+    			symbolSize: 10,
+    			x: null,
+    			y: null,
+    			value: 10,
+    			draggable: false,
+                _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
+    		};
+    		nodes.push(node)
+    		
+    	} else {
+    		var existingNodeLeft = false
+    		var existingNodeRight = false
+    		for (var j = 0; j<nodes.length; j++) {
+    			if (nodes[j].id === rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}) {
+    				existingNodeRight = true
+                    nodes[j].symbolSize += 0.5
+    			}
+    			if (nodes[j].id === rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
+    				existingNodeLeft = true
+                    nodes[j].symbolSize += 0.5
+    			}
+    		}
+            if (rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()} === rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
+                existingNodeRight = true
+            }
+    		if (existingNodeLeft === false ) {
+    			node = {
+    				id: rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()},
+    				name: rowData[i].{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
+    				itemStyle: null,
+    				symbolSize: 10,
+    				x: null,
+    				y: null,
+    				value: 10,
+    				draggable: false,
+                    _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
+    			};
+    			nodes.push(node)
+    		}
+    		if (existingNodeRight === false ) {
+    			node = {
+    				id: rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()},
+    				name: rowData[i].{$series->getRightObjectNameDataColumn()->getDataColumnName()},
+    				itemStyle: null,
+    				symbolSize: 10,
+    				x: null,
+    				y: null,
+    				value: 10,
+    				draggable: false,
+                    _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
+    			};
+    		nodes.push(node)
+    		}
+    	}
+    	if (rowData[i].{$series->getDirectionDataColumn()->getDataColumnName()} == "regular") {
+    		var source = rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}
+    		var target = rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}
+    	} else {
+    		var source = rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}
+    		var target = rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}
+    	}
+        var existingLink = false;
+        for (var j = 0; j<links.length; j++) {
+            if (links[j].id === rowData[i].{$series->getRelationDataColumn()->getDataColumnName()}) {
+                existingLink = true
+            }
+        }
+        if (existingLink === false) {
+            link = {
+        		id: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
+        		name: rowData[i].{$series->getRelationNameDataColumn()->getDataColumnName()},
+        		source: source,
+        		target: target,
+        	}
+        	links.push(link)
+        }
+    }
+    {$this->buildJsEChartsVar()}.setOption({
+    	series: [{
+    		data: nodes,
+            links: links,
+    	}],
+    });
 
 JS;
     }
