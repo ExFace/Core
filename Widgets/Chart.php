@@ -788,6 +788,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     {
         return 'DataToolbar';
     }
+    
     /**
      * @return string|NULL
      */
