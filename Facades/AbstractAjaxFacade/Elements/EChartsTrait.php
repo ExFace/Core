@@ -237,6 +237,7 @@ JS;
 
             var echart = {$this->buildJsEChartsVar()};
             var oSelected = {$selection};
+            console.log(oSelected.data)
             if (echart._oldselection === undefined) {
                 echart._oldSelection = {$selection};
             } else {
@@ -587,7 +588,10 @@ JS;
             if ($s instanceof GraphChartSeries && count($series) > 1) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support graph charts with multiple series!');
             }
-            $seriesConfig .= $this->buildJsChartSeriesConfig($s);
+            if (($s instanceof LineChartSeries || s instanceof ColumnChartSeries) && count($series) > 1 && $s->getSplitByAttributeAlias() !== null) {
+                throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support split by attribute with multiple series!');
+            }
+            $seriesConfig .= $this->buildJsChartSeriesConfig($s) . ',';
             
             if ($s instanceof BarChartSeries && $s->getIndex() != 0) {
                 if ($series[$s->getIndex() - 1] instanceof BarChartSeries === false) {
@@ -706,7 +710,7 @@ JS;
     {$color}
     {$this->buildJsStack($series)}
     {$this->buildJsMarkLineProperties($series)}
-},
+}
 
 JS;
     }
@@ -755,7 +759,7 @@ JS;
         
 {
 {$this->buildJsColumnBarChartProperties($series)}
-},
+}
 
 JS;
     }
@@ -773,7 +777,7 @@ JS;
 {
 {$this->buildJsColumnBarChartProperties($series)}
     _bar: true
-},
+}
 
 JS;
     }
@@ -839,7 +843,7 @@ JS;
     label: {$label},
     roseType: '{$valueMode}'
     
-},
+}
 
 JS;
     }
@@ -879,7 +883,7 @@ JS;
     animationType: 'scale',
     animationEasing: 'backOut',
     
-},
+}
 
 JS;
     }
@@ -947,7 +951,7 @@ JS;
             width: 10
         }
     }
-},
+}
 
 JS;
     }
@@ -1216,6 +1220,16 @@ JS;
     }
     
     /**
+     * basic offset value that needs to be added for each zoom slider
+     *
+     * @return int
+     */
+    protected function baseZoomOffset() : int
+    {
+        return 40;
+    }
+    
+    /**
      * javascript function body to draw chart, iniatlize global variables, show overlay message if data is empty
      *
      * @param string $dataJs
@@ -1233,24 +1247,23 @@ JS;
         
         return <<<JS
         
-    var rowData = $dataJs;
+    var rowData = $dataJs;    
+    //reset Chart Configuration and variables bound to div before building new one
+    {$this->buildJsDataResetter()}
     // if data is empty or not defined, reset chart and show overlay message
     if (! rowData || rowData.count === 0) {
         {$this->buildJsDataResetter()}
         {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
         return
     }
-    // initialize global variables
-    var echart = {$this->buildJsEChartsVar()}
     echart.resize()
-    echart._dataset = rowData
-    echart._oldSelection = undefined
-    echart._clickCount = 0
-//hide overlay message
-{$this->buildJsMessageOverlayHide()}
-//build and set basic chart config and options 
-{$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
-$js
+    //hide overlay message
+    {$this->buildJsMessageOverlayHide()}
+    //build and set basic chart config and options 
+    {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
+    //build and set dataset,config and options depending on chart type
+    $js
+
 
 JS;
     }
@@ -1359,15 +1372,177 @@ JS;
     gridmargin['left'] += {$this->buildJsGridMarginLeft()};
     
     newOptions.grid = gridmargin;
-    
+
+    if (rowData.length > 15) {
+        var oldOptions = {$this->buildJsEChartsVar()}.getOption()
+        var legendPosition = oldOptions.legend[0].top
+        var bottom = 'auto'
+        if (legendPosition === 'bottom') {
+            bottom = 25
+        }
+        if (("_bar" in oldOptions.series[0]) === true) {
+            var zoom = [
+                {
+                    type: 'slider',
+                    yAxisIndex: 0,
+                    filterMode: 'filter',
+                },
+                {
+                    type: 'inside',
+                    yAxisIndex: 0,
+                    filterMode: 'filter'
+                },
+            ]
+        } else {
+            var zoom = [
+                {
+                    type: 'slider',
+                    xAxisIndex: 0,
+                    filterMode: 'filter',
+                    bottom: bottom
+                },
+                {
+                    type: 'inside',
+                    xAxisIndex: 0,
+                    filterMode: 'filter'
+                },
+            ]
+        }
+        newOptions.dataZoom = zoom
+        gridmargin['bottom'] += {$this->baseZoomOffset()}
+    }    
     {$this->buildJsEChartsVar()}.setOption(newOptions);
     
     var split = "{$this->getWidget()->getSeries()[0]->getSplitByAttributeAlias()}" || undefined
     if (split === undefined) {
+        {$this->buildJsSplitCheck()}
+    } 
+    if (split === undefined) {
         {$this->buildJsEChartsVar()}.setOption({dataset: {source: rowData}})
-    } else {
+    }
+    else {
         {$this->buildJsSplitSeries()}
     }
+    
+    
+JS;
+    }
+       
+    /**
+     * js snippet to check if data should be split
+     * only supports single series
+     * 
+     * @return string
+     */
+    protected function buildJsSplitCheck() : string
+    {
+        $widget = $this->getWidget();
+        if (($widget->getSeries()[0]) instanceof BarChartSeries) {
+            $axisKey = $widget->getAxesY()[0]->getDataColumn()->getDataColumnName();
+        } else {
+            $axisKey = $widget->getAxesX()[0]->getDataColumn()->getDataColumnName();
+        }
+        return <<<JS
+    
+    var keyValues = []
+    var doubleValues = []
+    //compare all X-Axes Key values in each row with each other
+    for (var i = 0; i < rowData.length; i++) {
+        var isDouble = false
+        for (var j = 0; j < keyValues.length; j++) {
+            if (rowData[i].{$axisKey} === keyValues[j]) {
+                isDouble = true
+                break
+            }
+        }
+        // if value not yet appeared, push value into keyValues array
+        if (isDouble === false) {
+            var value = rowData[i].{$axisKey}
+            keyValues.push(value)
+        // if value already appeared
+        } else {
+            var alreadyinDouble = false
+            // if it is already in doubleValues array and therefor not first double
+            for (k = 0; k < doubleValues.length; k++) {
+                if (rowData[i].{$axisKey} === doubleValues[k].{$axisKey}) {
+                    alreadyinDouble = true
+                    break
+                }
+            }
+            // if value is first time a double push whole data row into doubleValues array
+            if (alreadyinDouble === false) {
+                var value = rowData[i]
+                doubleValues.push(value)
+            }
+        }
+    }
+    var dataKeys = Object.keys(rowData[0])
+    // for each object key in dataRow[0] check if value for that key in all objects in doubleValues array are equal
+    // if all values for that key are equal, dataset will be split at that key 
+    for (var j = 0; j < dataKeys.length; j++) {
+        var valueMatch = false
+        for (i = 1; i < doubleValues.length; i++) {
+            if (doubleValues[i-1][dataKeys[j]] === doubleValues[i][dataKeys[j]]) {
+                valueMatch = true
+            } else {
+                valueMatch = false
+                break
+            }
+        }
+        if (valueMatch === true) {
+            split = dataKeys[j]
+            break
+        }
+    }
+    console.log('Split: ',split)
+
+JS;
+        
+    }
+    
+    /**
+    * js snippet to split the dataset and configure series for each dataset part
+    *
+    * @return string
+    */
+    protected function buildJsSplitSeries() : string
+    {
+        //TODO
+        return <<<JS
+    
+    var splitDatasetObject = {};
+        for (var i=0; i < rowData.length; i++) {
+        var p = rowData[i][split];
+        if (!splitDatasetObject[p]) {
+            splitDatasetObject[p] = [];
+        }
+        splitDatasetObject[p].push(rowData[i]);
+    }
+    var splitDatasetArray = Object.keys(splitDatasetObject).map(i => splitDatasetObject[i])
+    var newNames = Object.keys(splitDatasetObject)
+    var baseSeries = {$this->buildJsChartSeriesConfig($this->getWidget()->getSeries()[0])}
+    var currentSeries = JSON.parse(JSON.stringify(baseSeries))
+    
+    currentSeries.name = newNames[0]
+    currentSeries.datasetIndex = 0
+    var newSeriesArray = [currentSeries]
+
+    for (var i = 1; i < newNames.length; i++) {
+        currentSeries = JSON.parse(JSON.stringify(baseSeries))
+        currentSeries.name = newNames[i]
+        currentSeries.datasetIndex = i
+        newSeriesArray.push(currentSeries)
+    }
+    var dataset = [{source: splitDatasetArray[0]}]
+    for (var i = 1; i < newNames.length; i++) {
+        var set = {}
+        set.source = splitDatasetArray[i]
+        dataset.push(set)
+    }
+    var newOptions = {
+        dataset: dataset,
+        series: newSeriesArray }
+    {$this->buildJsEChartsVar()}.setOption(newOptions)
     
 JS;
     }
@@ -1507,29 +1682,6 @@ JS;
     }
     
     /**
-     * function to split the dataset and configure series for each split (not used yet)
-     *
-     * @return string
-     */
-    protected function buildJsSplitSeries() : string
-    {
-        //TODO
-        return <<<JS
-    console.log(split)
-    var grouped = {};
-        for (var i=0; i<rowData.length; i++) {
-        var p = rowData[i][split];
-        console.log(p)
-        if (!grouped[p]) { grouped[p] = []; }
-        grouped[p].push(rowData[i]);
-    }
-    console.log(grouped)
-    
-    
-JS;
-    }
-    
-    /**
      * function to build overlay and show given message
      *
      * @param string $message
@@ -1636,7 +1788,7 @@ JS;
         if ($this->legendHidden() === false && $widget->getLegendPosition() === 'bottom') {
             $margin += 20;
         }
-        $margin += 5+40*$count;
+        $margin += 5+($this->baseZoomOffset())*$count;
         return $margin;
     }
     
@@ -1969,9 +2121,12 @@ JS;
     protected function legendHidden() : bool
     {
         $widget = $this->getWidget();
+        if ($widget->getLegendPosition() !== null) {
+            return false;
+        }
         $firstSeries = $widget->getSeries()[0];
         if (count($widget->getSeries()) == 1 && ($firstSeries instanceof PieChartSeries) === false) {
-            if ($firstSeries->getValueDataColumn() == $firstSeries->getValueAxis()->getDataColumn()){
+            if ($firstSeries->getValueDataColumn() === $firstSeries->getValueAxis()->getDataColumn()){
                 return true;
             } else {
                 return false;
