@@ -1004,9 +1004,9 @@ JS;
     protected function buildJsAxisProperties(ChartAxis $axis, int $nameGapMulti = 1) : string
     {
         if ($axis->getHideCaption() === false) {
-            $name = $axis->getCaption();
+            $caption = $axis->getCaption();            
         } else {
-            $name = '';
+            $caption = '';
         }
         
         if ($axis->hasGrid() === false) {
@@ -1073,7 +1073,7 @@ JS;
         
     {
         id: '{$axis->getIndex()}',
-        name: '{$name}',
+        name: '{$caption}',
         {$nameLocation}
         {$inverse}
         type: '{$axisTypeLower}',
@@ -1118,21 +1118,33 @@ JS;
             } else {
                 $bottom = '';
             }
+            $filterMode = 'empty';
+            if ($this->getWidget()->getSeries()[0] instanceof BarChartSeries) {
+                if ($axis->getDimension() === Chart::AXIS_Y) {
+                    $filterMode = 'filter';
+                }
+            } else {
+                if ($axis->getDimension() === Chart::AXIS_X) {
+                    $filterMode = 'filter';
+                }
+            }
             $zoom = <<<JS
             
         {
             type: 'slider',
             {$axis->getDimension()}AxisIndex: {$axis->getIndex()},
-            filterMode: 'filter',
+            filterMode: '{$filterMode}',
             labelFormatter: function(value, valueStr) {
                 return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'valueStr')}
             },
+            //disables Zoom Label
+            showDetail: false,
             {$bottom}
         },
         {
             type: 'inside',
             {$axis->getDimension()}AxisIndex: {$axis->getIndex()},
-            filterMode: 'filter'
+            filterMode: 'empty'
         },
         
 JS;
@@ -1925,23 +1937,22 @@ JS;
 		type: 'cross'
 	},
     formatter: (params) => {
-            var options = {$this->buildJsEChartsVar()}.getOption();
-            let tooltip = params[0].axisValueLabel + '<br/>';
-            params.forEach(({marker, seriesName, value, seriesIndex, axisIndex}) => {
-                if (("_bar" in options.series[seriesIndex]) == true) {
-                    var data = options.series[seriesIndex].encode.x;
-                    var formatter = options.xAxis[axisIndex].axisLabel.formatter                
-                } else {
-                    var data = options.series[seriesIndex].encode.y;
-                    var formatter = options.yAxis[axisIndex].axisLabel.formatter                
-                }
-                var value = formatter(value[data])
-                tooltip += marker +' ' + seriesName + ': ' + value + '<br/>';
-            });
-            console.log(tooltip)
-            return tooltip;
-            
-        },
+        var options = {$this->buildJsEChartsVar()}.getOption();
+        let tooltip = '<table><thead><tr>' + params[0].axisValueLabel + '</thead></tr><tbody>';
+        params.forEach(({marker, value, seriesIndex, seriesName, axisIndex}) => {
+            if (("_bar" in options.series[seriesIndex]) == true) {
+                var data = options.series[seriesIndex].encode.x;
+                var formatter = options.xAxis[axisIndex].axisLabel.formatter               
+            } else {
+                var data = options.series[seriesIndex].encode.y;
+                var formatter = options.yAxis[axisIndex].axisLabel.formatter                
+            }
+            var value = formatter(value[data])
+            tooltip +='<tr><td>'+ marker + '</td><td>' + seriesName + '</td><td>'+ value + '</td></tr>';
+        });
+        tooltip +='</tbody></table>'
+        return tooltip;        
+    },
 },
 
 JS;
