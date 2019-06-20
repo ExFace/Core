@@ -237,7 +237,6 @@ JS;
 
             var echart = {$this->buildJsEChartsVar()};
             var oSelected = {$selection};
-            console.log(oSelected.data)
             if (echart._oldselection === undefined) {
                 echart._oldSelection = {$selection};
             } else {
@@ -1025,14 +1024,38 @@ JS;
         } else {
             $max = "max: '" . $axis->getMaxValue() . "',";
         }
-        
+        $axisType = $axis->getAxisType();
         if ($axis->getDimension() == Chart::AXIS_X) {
             $nameLocation = "nameLocation: 'center',";
+            if ($axisType === ChartAxis::AXIS_TYPE_CATEGORY) {
+                $rotate = 'rotate: 45,';
+            } else {
+                $rotate = '';
+            }
         } else {
             $nameLocation = '';
         }
         
-        $axisType = mb_strtolower($axis->getAxisType());
+        if ($axisType === ChartAxis::AXIS_TYPE_CATEGORY) {
+            $interval = 'interval: 0';
+            $axisTick = <<<JS
+            
+        axisTick: {
+            alignWithLabel: true,
+        },
+
+JS;
+        } else {
+            $interval = '';
+            $axisTick = '';
+        }
+        $maxInterval = '';
+        /*if ($axisType === ChartAxis::AXIS_TYPE_TIME) {
+            $maxInterval = 'minInterval: 3600 * 1000 * 24*30,';
+        } else {
+            $maxInterval = '';
+        }*/
+        $axisTypeLower = mb_strtolower($axisType);        
         $position = mb_strtolower($axis->getPosition());
         if ($axis->getDimension() == Chart::AXIS_Y) {
             $nameGap = $this->baseAxisNameGap()* $nameGapMulti;
@@ -1046,9 +1069,6 @@ JS;
             $nameGap = $this->baseAxisNameGap() * 1.5;
         }
         
-        
-        
-        
         return <<<JS
         
     {
@@ -1056,7 +1076,7 @@ JS;
         name: '{$name}',
         {$nameLocation}
         {$inverse}
-        type: '{$axisType}',
+        type: '{$axisTypeLower}',
         splitLine: { show: $grid },
         position: '{$position}',
         show: false,
@@ -1064,7 +1084,9 @@ JS;
         axisLabel: {
             formatter: function(a) {
                 return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'a')}
-            }
+            },
+            {$rotate}
+            {$interval}
         },
         axisPointer: {
             label: {
@@ -1073,8 +1095,10 @@ JS;
                 },
             },
         },
+        {$axisTick}
         {$min}
         {$max}
+        {$maxInterval}
     },
     
 JS;
@@ -1086,9 +1110,9 @@ JS;
      * @param ChartAxis $axis
      * @return string
      */
-    protected function buildJsAxisZoom(ChartAxis $axis) : string
+    protected function buildJsAxisZoom(ChartAxis $axis, $forceZoom = false) : string
     {
-        if ($axis->isZoomable() === true) {
+        if ($axis->isZoomable() === true || $forceZoom === true) {
             if ($this->getWidget()->getLegendPosition() === 'bottom') {
                 $bottom = 'bottom: 25';
             } else {
@@ -1100,6 +1124,9 @@ JS;
             type: 'slider',
             {$axis->getDimension()}AxisIndex: {$axis->getIndex()},
             filterMode: 'filter',
+            labelFormatter: function(value, valueStr) {
+                return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'valueStr')}
+            },
             {$bottom}
         },
         {
@@ -1286,9 +1313,15 @@ JS;
             
             $xAxisIndex = 0;
             if ($axis->getDimension() === Chart::AXIS_X) {
-                $gap = ++$xAxisIndex . ' * 20 * 2';
+                //For X Axex that are Category Axis the label will be rotated
+                //therefor gap has to be calculated by length of data values
+                if ($axis->getAxisType() === ChartAxis::AXIS_TYPE_CATEGORY) {
+                    $gap = 'len * 4.8';
+                } else {
+                    $gap = ++$xAxisIndex . ' * 20 * 2 - 15';
+                }
             } else {
-                $gap = 'len * 9';
+                $gap = 'len * 8';
             }
             $axesOffsetCalc .= <<<JS
             
@@ -1306,16 +1339,22 @@ JS;
 JS;
             $postion = mb_strtolower($axis->getPosition());
             //if the axis has a caption the base gap is based on that length, else it's 0
-            if ($axis->getHideCaption() === false) {
-                $baseGap = strlen($axis->getCaption())*3.5;
-            } else {
-                $baseGap = 0;
+            $baseGap = 0;
+            if ($axis->getHideCaption() === false) {                
+                if ($axis->getDimension() === Chart::AXIS_Y) {
+                    $baseGap = strlen($axis->getCaption())*3.5;
+                }                
+                $caption = 'true';
+            } else {                
+                $caption = 'false';
             }
             //js snippet to build array containing every visible axis as object with its necessary gap
             //and other needed parameters
             $axesJsObjectInit .= <<<JS
             
     axes["{$axis->getDataColumn()->getDataColumnName()}"] = {
+        caption: {$caption},
+        category: "{$axis->getAxisType()}",
         gap: {$baseGap},
         dimension: "{$axis->getDimension()}",
         position: "{$postion}",
@@ -1324,6 +1363,17 @@ JS;
     };
     
 JS;
+        }
+        $widget = $this->getWidget();
+        $zoomSet = 'no';
+        if ($widget->getSeries()[0] instanceof BarChartSeries) {
+            if ($widget->getAxesY()[0]->isZoomable() !== null) {
+                $zoomSet = 'yes';
+            }
+        } else {
+            if ($widget->getAxesX()[0]->isZoomable() !== null) {
+                $zoomSet = 'yes';                
+            }
         }
         
         return <<<JS
@@ -1352,16 +1402,36 @@ JS;
     // for every visible axis, set the correct offset and that it is visible
     for (var i in axes) {
         axis = axes[i];
-        newOptions[axis.dimension + 'Axis'].push({
-            offset: offsets[axis.position],
-            show: true
-        });
-        
+        //if the caption for axis is shown the gap for x Axes needs to be
+        // set based on the axis.gap (means the space needed to show axis values)
+        if (axis.caption === true && axis.dimension === 'x' && axis.category === 'CATEGORY') {
+            var nameGap = axis.gap + {$this->baseAxisNameGap()}
+        } else {
+            var nameGap = 0
+        }
+        if (axis.dimension === 'x' && axis.category === 'CATEGORY') {
+            newOptions[axis.dimension + 'Axis'].push({
+                offset: offsets[axis.position],
+                nameGap: nameGap,               
+                show: true
+            });
+        } else {
+            newOptions[axis.dimension + 'Axis'].push({
+                offset: offsets[axis.position],
+                show: true
+            });
+        }
         if (axis.gap === 0) {
             {$this->buildJsShowMessageError("'{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.ECHARTS.AXIS_NO_DATA')} \"' + axis.name + '\"'")}
         }
-        // increase the offset for the next axis at the same position by the gap calculated for this axis
-        offsets[axis.position] += axis.gap;
+        // increase the offset for the next axis at the same position by the gap calculated for this axis        
+        if (nameGap === 0) {
+            offsets[axis.position] += axis.gap
+        } else {
+            offsets[axis.position] += nameGap
+        }
+        
+        
     }
     
     // the grid margin at each side is the sum of each calculated axis gap for this side + the base margin
@@ -1372,44 +1442,21 @@ JS;
     gridmargin['left'] += {$this->buildJsGridMarginLeft()};
     
     newOptions.grid = gridmargin;
-
-    if (rowData.length > 15) {
+    var oldOptions = {$this->buildJsEChartsVar()}.getOption()
+    
+    var zoomSet = "{$zoomSet}"
+    if (rowData.length > 15 && zoomSet === 'no') {
         var oldOptions = {$this->buildJsEChartsVar()}.getOption()
-        var legendPosition = oldOptions.legend[0].top
-        var bottom = 'auto'
-        if (legendPosition === 'bottom') {
-            bottom = 25
+        if (oldOptions.dataZoom.length === 0) {
+            if (("_bar" in oldOptions.series[0]) === true) {
+                var zoom = [{$this->buildJsAxisZoom($widget->getAxesY()[0], true)}]
+                gridmargin['right'] += {$this->baseZoomOffset()}
+            } else {
+                var zoom = [{$this->buildJsAxisZoom($widget->getAxesX()[0], true)}]
+                gridmargin['bottom'] += {$this->baseZoomOffset()}
+            }
+            newOptions.dataZoom = zoom            
         }
-        if (("_bar" in oldOptions.series[0]) === true) {
-            var zoom = [
-                {
-                    type: 'slider',
-                    yAxisIndex: 0,
-                    filterMode: 'filter',
-                },
-                {
-                    type: 'inside',
-                    yAxisIndex: 0,
-                    filterMode: 'filter'
-                },
-            ]
-        } else {
-            var zoom = [
-                {
-                    type: 'slider',
-                    xAxisIndex: 0,
-                    filterMode: 'filter',
-                    bottom: bottom
-                },
-                {
-                    type: 'inside',
-                    xAxisIndex: 0,
-                    filterMode: 'filter'
-                },
-            ]
-        }
-        newOptions.dataZoom = zoom
-        gridmargin['bottom'] += {$this->baseZoomOffset()}
     }    
     {$this->buildJsEChartsVar()}.setOption(newOptions);
     
@@ -1767,7 +1814,7 @@ JS;
         } else {
             $basemargin = 40;
         }
-        $margin = $basemargin + 40*$count;
+        $margin = $basemargin + $this->baseZoomOffset()*$count;
         return  $margin;
     }
     
@@ -1788,7 +1835,7 @@ JS;
         if ($this->legendHidden() === false && $widget->getLegendPosition() === 'bottom') {
             $margin += 20;
         }
-        $margin += 5+($this->baseZoomOffset())*$count;
+        $margin += 15+($this->baseZoomOffset())*$count;
         return $margin;
     }
     
@@ -1877,25 +1924,24 @@ JS;
 	axisPointer: {
 		type: 'cross'
 	},
-    /*formatter: (params) => {
-        //console.log(params)
-        var options = {$this->buildJsEChartsVar()}.getOption();
-        let tooltip = params[0].axisValueLabel + '<br/>';
-        params.forEach(({marker, seriesName, value, seriesIndex}) => {
-            //console.log(options)
-            if (("_bar" in options.series[seriesIndex]) == true) {
-                data = options.series[seriesIndex].encode.x;
-            } else {
-                data = options.series[seriesIndex].encode.y;
-            }
-            //console.log(data);
-            tooltip += marker +' ' + seriesName + ': ' + value[data] + '<br/>';
-        });
-        return tooltip;
-    },*/
-/*formatter: function(params) {
-    console.log(params)
-},*/
+    formatter: (params) => {
+            var options = {$this->buildJsEChartsVar()}.getOption();
+            let tooltip = params[0].axisValueLabel + '<br/>';
+            params.forEach(({marker, seriesName, value, seriesIndex, axisIndex}) => {
+                if (("_bar" in options.series[seriesIndex]) == true) {
+                    var data = options.series[seriesIndex].encode.x;
+                    var formatter = options.xAxis[axisIndex].axisLabel.formatter                
+                } else {
+                    var data = options.series[seriesIndex].encode.y;
+                    var formatter = options.yAxis[axisIndex].axisLabel.formatter                
+                }
+                var value = formatter(value[data])
+                tooltip += marker +' ' + seriesName + ': ' + value + '<br/>';
+            });
+            console.log(tooltip)
+            return tooltip;
+            
+        },
 },
 
 JS;
