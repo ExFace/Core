@@ -299,9 +299,9 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      *
      * @return bool
      */
-    public function isZoomable() : bool
+    public function isZoomable() : ?bool
     {
-        return $this->zoomable ?? false;
+        return $this->zoomable;
     }
     
     /**
