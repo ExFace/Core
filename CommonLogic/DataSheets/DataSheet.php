@@ -670,7 +670,11 @@ class DataSheet implements DataSheetInterface
      */
     public function dataSave(DataTransactionInterface $transaction = null)
     {
-        return $this->dataUpdate(true, $transaction);
+        if ($this->hasUidColumn(false) === true) {
+            return $this->dataUpdate(true, $transaction);
+        } else {
+            return $this->dataCreate(true, $transaction);
+        }
     }
 
     /**
