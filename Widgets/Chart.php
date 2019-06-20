@@ -673,9 +673,11 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     {
         $result = array();
         foreach ($this->getButtons() as $btn) {
-            if ($btn->getBindToMouseAction() == $mouse_action) {
-                $result[] = $btn;
-            }
+            if ($btn instanceof DataButton) {
+                if ($btn->getBindToMouseAction() == $mouse_action) {
+                    $result[] = $btn;
+                }
+            }        
         }
         return $result;
     }
@@ -809,9 +811,9 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      * @param string $legendPosition
      * @return Chart
      */
-    public function setLegendPosition(string $leftRigthTopBottom) : Chart
+    public function setLegendPosition(string $leftRightTopBottom) : Chart
     {
-        $this->legendPosition = $leftRigthTopBottom;
+        $this->legendPosition = $leftRightTopBottom;
         return $this;
     }
 

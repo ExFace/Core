@@ -65,6 +65,8 @@ trait XYChartSeriesTrait
      */
     private $yColumn = null;
     
+    private $split_by_attribute_alias = null;
+    
     /**
      * Returns the color of this series or NULL if no color explicitly defined.
      *
@@ -465,4 +467,28 @@ trait XYChartSeriesTrait
     {
         return $this->getValueColumnDimension() === Chart::AXIS_X ? $this->getXAxis() : $this->getYAxis();
     }
+    
+    /**
+     * Set this attribute when you want to split the dataset into parts and get a series for
+     * each value that attribute has.
+     * For example you want to see the sales of different stores over time, you split the dataset
+     * by the store attribute and will get a chart with different series for each store
+     *
+     * @uxon-property split_by_attribute_alias
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $value
+     * @return ChartSeries
+     */
+    public function setSplitByAttributeAlias(string $value) : ChartSeries
+    {
+        $this->split_by_attribute_alias = $value;
+        return $this;
+    }
+    
+    public function getSplitByAttributeAlias() : ?string
+    {
+        return $this->split_by_attribute_alias;
+    }
+    
 }
