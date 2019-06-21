@@ -971,12 +971,20 @@ JS;
         $xAxesJS = '';
         $yAxesJS = '';
         $zoom = '';
+        $xZoomCount = 0;
+        $yZoomCount = 0;
         foreach ($widget->getAxesX() as $axis) {
             $xAxesJS .= $this->buildJsAxisProperties($axis);
-            $zoom .= $this->buildJsAxisZoom($axis);
+            if ($axis->isZoomable() === true) {
+                $zoom .= $this->buildJsAxisZoom($axis, $xZoomCount);
+                $xZoomCount++;
+            }
         }
         foreach ($widget->getAxesY() as $axis) {
-            $zoom .= $this->buildJsAxisZoom($axis);
+            if ($axis->isZoomable() === true) {
+                $zoom .= $this->buildJsAxisZoom($axis, $yZoomCount);
+                $yZoomCount++;
+            }
             if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false) {
                 $countAxisLeft++;
                 $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisLeft);
@@ -1068,6 +1076,11 @@ JS;
         } else {
             $nameGap = $this->baseAxisNameGap() * 1.5;
         }
+        if ($axis->getIndex() !== 0 && $axis->getDimension() == Chart::AXIS_X) {
+            $onZero = 'axisLine: {onZero: false},';
+        } else {
+            $onZero = '';
+        }
         
         return <<<JS
         
@@ -1096,6 +1109,7 @@ JS;
             },
         },
         {$axisTick}
+        {$onZero}
         {$min}
         {$max}
         {$maxInterval}
@@ -1110,48 +1124,52 @@ JS;
      * @param ChartAxis $axis
      * @return string
      */
-    protected function buildJsAxisZoom(ChartAxis $axis, $forceZoom = false) : string
+    protected function buildJsAxisZoom(ChartAxis $axis, $zoomCount = 0) : string
     {
-        if ($axis->isZoomable() === true || $forceZoom === true) {
-            if ($this->getWidget()->getLegendPosition() === 'bottom') {
-                $bottom = 'bottom: 25';
-            } else {
-                $bottom = '';
-            }
-            $filterMode = 'empty';
-            if ($this->getWidget()->getSeries()[0] instanceof BarChartSeries) {
-                if ($axis->getDimension() === Chart::AXIS_Y) {
-                    $filterMode = 'filter';
-                }
-            } else {
-                if ($axis->getDimension() === Chart::AXIS_X) {
-                    $filterMode = 'filter';
-                }
-            }
-            $zoom = <<<JS
-            
-        {
-            type: 'slider',
-            {$axis->getDimension()}AxisIndex: {$axis->getIndex()},
-            filterMode: '{$filterMode}',
-            labelFormatter: function(value, valueStr) {
-                return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'valueStr')}
-            },
-            //disables Zoom Label
-            showDetail: false,
-            {$bottom}
-        },
-        {
-            type: 'inside',
-            {$axis->getDimension()}AxisIndex: {$axis->getIndex()},
-            filterMode: 'empty'
-        },
+        $offset = 5;
+        $offset += $zoomCount * $this->baseZoomOffset();
         
-JS;
-        } else {
-            $zoom = '';
+        if ($this->getWidget()->getLegendPosition() === 'bottom' && $axis->getDimension() === Chart::AXIS_X) {
+            $offset += 25;
         }
-        return $zoom;
+        if ($axis->getDimension() === Chart::AXIS_X) {
+            $JsOffset = "bottom: {$offset},";
+        } elseif ($axis->getDimension() === Chart::AXIS_Y) {
+            $JsOffset = "right: {$offset},";
+        } else {
+            $JsOffset = '';
+        }
+        $filterMode = 'empty';
+        if ($this->getWidget()->getSeries()[0] instanceof BarChartSeries) {
+            if ($axis->getDimension() === Chart::AXIS_Y) {
+                $filterMode = 'filter';
+            }
+        } else {
+            if ($axis->getDimension() === Chart::AXIS_X) {
+                $filterMode = 'filter';
+            }
+        }
+        return <<<JS
+        
+    {
+        type: 'slider',
+        {$axis->getDimension()}AxisIndex: {$axis->getIndex()},
+        filterMode: '{$filterMode}',
+        labelFormatter: function(value, valueStr) {
+            return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'valueStr')}
+        },
+        //disables Zoom Label
+        showDetail: false,
+        {$JsOffset}
+    },
+    {
+        type: 'inside',
+        {$axis->getDimension()}AxisIndex: {$axis->getIndex()},
+        filterMode: 'empty'
+    },
+    
+JS;
+
     }
     
     /**
@@ -1259,6 +1277,16 @@ JS;
     }
     
     /**
+     * basic offset for legend
+     *
+     * @return int
+     */
+    protected function baseLegendOffset() : int
+    {
+        return 25;
+    }
+    
+    /**
      * basic offset value that needs to be added for each zoom slider
      *
      * @return int
@@ -1295,14 +1323,13 @@ JS;
         {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
         return
     }
-    echart.resize()
     //hide overlay message
     {$this->buildJsMessageOverlayHide()}
     //build and set basic chart config and options 
     {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
     //build and set dataset,config and options depending on chart type
     $js
-
+    echart.resize()
 
 JS;
     }
@@ -1328,7 +1355,7 @@ JS;
                 //For X Axex that are Category Axis the label will be rotated
                 //therefor gap has to be calculated by length of data values
                 if ($axis->getAxisType() === ChartAxis::AXIS_TYPE_CATEGORY) {
-                    $gap = 'len * 4.8';
+                    $gap = 'len * 6';
                 } else {
                     $gap = ++$xAxisIndex . ' * 20 * 2 - 15';
                 }
@@ -1417,14 +1444,14 @@ JS;
         //if the caption for axis is shown the gap for x Axes needs to be
         // set based on the axis.gap (means the space needed to show axis values)
         if (axis.caption === true && axis.dimension === 'x' && axis.category === 'CATEGORY') {
-            var nameGap = axis.gap + {$this->baseAxisNameGap()}
+            var nameGap = 10 + axis.gap + {$this->baseAxisNameGap()}
         } else {
             var nameGap = 0
         }
         if (axis.dimension === 'x' && axis.category === 'CATEGORY') {
             newOptions[axis.dimension + 'Axis'].push({
                 offset: offsets[axis.position],
-                nameGap: nameGap,               
+                nameGap: axis.gap,               
                 show: true
             });
         } else {
@@ -1461,10 +1488,10 @@ JS;
         var oldOptions = {$this->buildJsEChartsVar()}.getOption()
         if (oldOptions.dataZoom.length === 0) {
             if (("_bar" in oldOptions.series[0]) === true) {
-                var zoom = [{$this->buildJsAxisZoom($widget->getAxesY()[0], true)}]
+                var zoom = [{$this->buildJsAxisZoom($widget->getAxesY()[0])}]
                 gridmargin['right'] += {$this->baseZoomOffset()}
             } else {
-                var zoom = [{$this->buildJsAxisZoom($widget->getAxesX()[0], true)}]
+                var zoom = [{$this->buildJsAxisZoom($widget->getAxesX()[0])}]
                 gridmargin['bottom'] += {$this->baseZoomOffset()}
             }
             newOptions.dataZoom = zoom            
@@ -1778,7 +1805,6 @@ JS;
      */
     protected function buildJsGridMarginTop() : int
     {
-        $baseMargin = 20;
         $countAxisLeft = 0;
         $countAxisRight = 0;
         $widget = $this->getWidget();
@@ -1790,7 +1816,7 @@ JS;
             }
         }
         if ($countAxisLeft > 0 || $countAxisRight > 0) {
-            $margin = 10;
+            $margin = 15;
         }
         if ($countAxisLeft >= $countAxisRight) {
             $margin += $this->baseAxisNameGap() * $countAxisLeft;
@@ -1799,9 +1825,9 @@ JS;
         }
         
         if ($this->legendHidden() === false && ($widget->getLegendPosition() === 'top' || $widget->getLegendPosition() === null)) {
-            $margin += 30;
+            $margin += $this->baseLegendOffset();
         }
-        return $baseMargin + $margin;
+        return $margin;
     }
     
     /**
@@ -1821,12 +1847,12 @@ JS;
                 $rightAxis = true;
             }
         }
-        if ($rightAxis === true) {
-            $basemargin = 0;
+        if ($rightAxis === true || $count != 0) {
+            $margin = 0;
         } else {
-            $basemargin = 40;
+            $margin = 40;
         }
-        $margin = $basemargin + $this->baseZoomOffset()*$count;
+        $margin += $this->baseZoomOffset() * $count;
         return  $margin;
     }
     
@@ -1845,9 +1871,9 @@ JS;
             }
         }
         if ($this->legendHidden() === false && $widget->getLegendPosition() === 'bottom') {
-            $margin += 20;
+            $margin += $this->baseLegendOffset();
         }
-        $margin += 15+($this->baseZoomOffset())*$count;
+        $margin += 15 + $this->baseZoomOffset() * $count;
         return $margin;
     }
     
@@ -1913,7 +1939,8 @@ JS;
             
 {
 	trigger: 'item',
-	formatter: "{b} : {c} ({d}%)"
+	formatter: "{b} : {c} ({d}%)",
+    confine: true,
 },
 
 JS;
@@ -1923,7 +1950,8 @@ JS;
 {
 	formatter: function(params) {
 		return params.data.name
-	}
+	},
+    confine: true,
 },
 
 JS;
@@ -1933,25 +1961,44 @@ JS;
             
 {
 	trigger: 'axis',
+    confine: true,
+    enterable: true,
+    extraCssText: 'overflow-y: auto; max-height: 50%',
 	axisPointer: {
 		type: 'cross'
 	},
-    formatter: (params) => {
-        var options = {$this->buildJsEChartsVar()}.getOption();
-        let tooltip = '<table><thead><tr>' + params[0].axisValueLabel + '</thead></tr><tbody>';
-        params.forEach(({marker, value, seriesIndex, seriesName, axisIndex}) => {
+    position: function (point) {
+      //postion directly at cursor
+      return [point[0]+5, point[1]+5];
+    },
+    formatter: function (params) {
+        // params is ordered by value Axis (x Axis normally, y Axis for bar charts)
+        var options = {$this->buildJsEChartsVar()}.getOption();                       
+        // build table with header based on first value axis and it's label
+        let tooltip = '<table><tr><th colspan = "3">' + params[0].axisValueLabel + '</th></tr>';
+        let currentAxis = params[0].axisIndex
+        // for each object in params build a table row
+        params.forEach(({axisIndex, axisValueLabel, marker, value, seriesIndex, seriesName}) => {
+            // get the correct formatter and the data for this object in params array
             if (("_bar" in options.series[seriesIndex]) == true) {
                 var data = options.series[seriesIndex].encode.x;
-                var formatter = options.xAxis[axisIndex].axisLabel.formatter               
+                var Index = options.series[seriesIndex].xAxisIndex
+                var formatter = options.xAxis[Index].axisLabel.formatter               
             } else {
                 var data = options.series[seriesIndex].encode.y;
-                var formatter = options.yAxis[axisIndex].axisLabel.formatter                
+                var Index = options.series[seriesIndex].yAxisIndex
+                var formatter = options.yAxis[Index].axisLabel.formatter                
             }
             var value = formatter(value[data])
+            // if this params object is bound to another axis as the ones before, build a new header with new label
+            if (axisIndex !== currentAxis) {
+                tooltip += '<tr><th colspan = "3">' + axisValueLabel + '</th></tr>'
+                currentAxis = axisIndex
+            }
             tooltip +='<tr><td>'+ marker + '</td><td>' + seriesName + '</td><td>'+ value + '</td></tr>';
         });
         tooltip +='</tbody></table>'
-        return tooltip;        
+        return tooltip;
     },
 },
 
@@ -2105,7 +2152,6 @@ JS;
             return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
         } else {
             if ($this->isPieChart() === true) {
-                //return "console.log({$this->buildJsEChartsVar()}._oldSelection, {$this->buildJsEChartsVar()}._dataset )";
                 $rows = <<<JS
                 
                     function(){
