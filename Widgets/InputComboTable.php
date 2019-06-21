@@ -388,12 +388,14 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         // set it here. In most facades, setting merely the value of the combo well make the facade load the
         // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
         if ($this->getAttribute()->isRelation()) {
-            $text_column_expr = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getTextColumn()->getAttributeAlias());
+            // FIXME use $this->getTextAttributeAlias() here instead? But isn't that alias relative to the table's object?
+            $text_column_expr = RelationPath::relationPathAdd($this->getAttribute()->getAliasWithRelationPath(), $this->getTextColumn()->getAttributeAlias());
             // If the column we would need is not there and it's the label column (which is very probable), it might just be named differently
             // Many DataSheets include relation__LABEL columns but may not inlcude a column with the alias of the label attribute. It's worth
             // trying this trick to prevent additional queries to the data source just to find the text for the combo value!
             if (! $data_sheet->getColumns()->getByExpression($text_column_expr) && $this->getTextColumn()->getAttribute()->isLabelForObject() === true) {
-                $text_column_expr = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS'));
+                // FIXME use $this->getTextAttributeAlias() here instead? But isn't that alias relative to the table's object?
+                $text_column_expr = RelationPath::relationPathAdd($this->getAttribute()->getAliasWithRelationPath(), $this->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS'));
             }
         } elseif ($this->getMetaObject()->isExactly($this->getTable()->getMetaObject())) {
             $text_column_expr = $this->getTextColumn()->getExpression()->toString();
@@ -508,7 +510,8 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             // set it here. In most facades, setting merely the value of the combo will make the facade load the
             // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
             if ($this->getAttribute() && $this->getAttribute()->isRelation()) {
-                $text_column_expr = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getTextColumn()->getAttributeAlias());
+                // FIXME use $this->getTextAttributeAlias() here instead? But isn't that alias relative to the table's object?
+                $text_column_expr = RelationPath::relationPathAdd($this->getAttribute()->getAliasWithRelationPath(), $this->getTextColumn()->getAttributeAlias());
                 // When the text for a combo comes from another data source, reading it in advance
                 // might have a serious performance impact. Since addint the text column to the prefill
                 // is generally optional (see above), it is a good idea to check, if the text column
