@@ -140,6 +140,7 @@ JS;
         $handlersJs = $this->buildJsLegendSelectHandler();
         $handlersJs .= $this->buildJsOnClickHandler();
         $handlersJs .= $this->buildJsBindToClickHandler();
+        $handlersJs .= $this->buildJsOnGraphHoverHandler();
         return $handlersJs;
     }
     
@@ -290,26 +291,19 @@ JS;
                 if ({$this->buildJsEChartsVar()}._oldSelection === undefined || {$this->buildJsEChartsVar()}._oldSelection.data != {$params}.data ) {
                     {$this->buildJsEChartsVar()}._doubleClkSelection = {$params}
                 }
-                if ({$params}.seriesType == 'graph') {
-                    // do nothing
-                } else {
-                    {$this->buildJsSingleClick($params)}
-                }
+                {$this->buildJsSingleClick($params)} 
                 setTimeout(function(){
                     clickCount = 0;
                     {$this->buildJsEChartsVar()}._clickCount = clickCount
                     {$this->buildJsEChartsVar()}._doubleClkSelection = undefined;
                 }, 500);
             } else {
-                if ({$params}.seriesType == 'graph') {
+                if ({$this->buildJsEChartsVar()}._doubleClkSelection != undefined) {
                     // do nothing
-                } else {
-                    if ({$this->buildJsEChartsVar()}._doubleClkSelection != undefined) {
-                        console.log('TEST')
-                    } else {                        
-                        {$this->buildJsSingleClick($params)}
-                    }
+                } else {                        
+                    {$this->buildJsSingleClick($params)}
                 }
+                
             }
             
 JS;
@@ -339,8 +333,35 @@ JS;
         
         {$this->buildJsEChartsVar()}.on('click', function(params){
             {$this->buildJsClicks('params')}
-    });
+        });
     
+JS;
+    }
+            
+    /**
+     * javascript function to handle hover behavior for graph charts
+     * when a node was selected and mouse moves over other nodes or not hovers anything,
+     * the node still stays selected
+     * 
+     * @return string
+     */
+    protected function buildJsOnGraphHoverHandler() : string
+    {
+        return <<<JS
+
+        {$this->buildJsEChartsVar()}.on('unfocusnodeadjacency', function(params){
+            if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+                selection = {$this->buildJsEChartsVar()}._oldSelection
+                if (selection.dataType === "node") {
+                    {$this->buildJsEChartsVar()}.dispatchAction({
+                        type: 'focusNodeAdjacency',
+                        seriesIndex: selection.seriesIndex,
+                        dataIndex: selection.dataIndex
+                    });
+                }
+            }
+        });
+
 JS;
     }
     
@@ -473,6 +494,52 @@ JS;
                 });
                 {$this->buildJsSelect('params')}
             }        
+        } else if (params.seriesType == 'graph') {
+            if (params.dataType === "node") {            
+                // if already a graph node part is selected do the following
+                if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+                    // if already selected graph node gets clicked again
+                    if ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection.data', 'dataRow')} == true) {
+                        // deselected the node
+                        {$this->buildJsEChartsVar()}.dispatchAction({
+                            type: 'unfocusNodeAdjacency',
+                            seriesIndex: params.seriesIndex,
+                        });
+                        {$this->buildJsSelect()}                        
+                    // if different node then already selected node gets clicked
+                    } else {
+                        // deselect old node
+                       {$this->buildJsEChartsVar()}.dispatchAction({
+                            type: 'unfocusNodeAdjacency',
+                            seriesIndex: params.seriesIndex,
+                        });
+                        // select clicked node                        
+                        {$this->buildJsEChartsVar()}.dispatchAction({
+                            type: 'focusNodeAdjacency',
+                            seriesIndex: params.seriesIndex,
+                            dataIndex: params.dataIndex
+                        });
+                        {$this->buildJsSelect('params')}
+                    }
+                // if no node was selected
+                } else {
+                    // select clicked node
+                    {$this->buildJsEChartsVar()}.dispatchAction({
+                        type: 'focusNodeAdjacency',
+                        seriesIndex: params.seriesIndex,
+                        dataIndex: params.dataIndex
+                    });
+                    {$this->buildJsSelect('params')}
+                }
+            } else {
+                if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {                    
+                    {$this->buildJsSelect()}
+                    {$this->buildJsEChartsVar()}.dispatchAction({
+                        type: 'unfocusNodeAdjacency',
+                        seriesIndex: params.seriesIndex,
+                    });
+                }
+            }
         } else {
             var options = {$this->buildJsEChartsVar()}.getOption();
             var newOptions = {series: []};
