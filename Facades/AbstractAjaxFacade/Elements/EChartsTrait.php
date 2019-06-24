@@ -1329,6 +1329,7 @@ JS;
     {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
     //build and set dataset,config and options depending on chart type
     $js
+    echart._dataset = rowData;
     echart.resize()
 
 JS;
@@ -1339,7 +1340,7 @@ JS;
      * 
      * @return string
      */
-    protected function buildJsRedrawXYChart() : string
+    protected function buildJsRedrawXYChart(string $dataJs = 'rowData') : string
     {
         $axesOffsetCalc = '';
         $axesJsObjectInit = '';
@@ -1416,6 +1417,8 @@ JS;
         }
         
         return <<<JS
+
+    
     
     // initalize axis array
     var axes = [];
@@ -1425,7 +1428,7 @@ JS;
     var val, gap;
     var len = 0;
     // for each data row calculate the offset for the axis bound to a data value
-    rowData.forEach(function(row){
+    {$dataJs}.forEach(function(row){
         {$axesOffsetCalc}
     })
     
@@ -1484,7 +1487,7 @@ JS;
     var oldOptions = {$this->buildJsEChartsVar()}.getOption()
     
     var zoomSet = "{$zoomSet}"
-    if (rowData.length > 15 && zoomSet === 'no') {
+    if ({$dataJs}.length > 15 && zoomSet === 'no') {
         var oldOptions = {$this->buildJsEChartsVar()}.getOption()
         if (oldOptions.dataZoom.length === 0) {
             if (("_bar" in oldOptions.series[0]) === true) {
@@ -1504,7 +1507,7 @@ JS;
         {$this->buildJsSplitCheck()}
     } 
     if (split === undefined) {
-        {$this->buildJsEChartsVar()}.setOption({dataset: {source: rowData}})
+        {$this->buildJsEChartsVar()}.setOption({dataset: {source: {$dataJs}}})
     }
     else {
         {$this->buildJsSplitSeries()}
@@ -1520,7 +1523,7 @@ JS;
      * 
      * @return string
      */
-    protected function buildJsSplitCheck() : string
+    protected function buildJsSplitCheck(string $dataJs = 'rowData') : string
     {
         $widget = $this->getWidget();
         if (($widget->getSeries()[0]) instanceof BarChartSeries) {
@@ -1533,36 +1536,36 @@ JS;
     var keyValues = []
     var doubleValues = []
     //compare all X-Axes Key values in each row with each other
-    for (var i = 0; i < rowData.length; i++) {
+    for (var i = 0; i < {$dataJs}.length; i++) {
         var isDouble = false
         for (var j = 0; j < keyValues.length; j++) {
-            if (rowData[i].{$axisKey} === keyValues[j]) {
+            if ({$dataJs}[i].{$axisKey} === keyValues[j]) {
                 isDouble = true
                 break
             }
         }
         // if value not yet appeared, push value into keyValues array
         if (isDouble === false) {
-            var value = rowData[i].{$axisKey}
+            var value = {$dataJs}[i].{$axisKey}
             keyValues.push(value)
         // if value already appeared
         } else {
             var alreadyinDouble = false
             // if it is already in doubleValues array and therefor not first double
             for (k = 0; k < doubleValues.length; k++) {
-                if (rowData[i].{$axisKey} === doubleValues[k].{$axisKey}) {
+                if ({$dataJs}[i].{$axisKey} === doubleValues[k].{$axisKey}) {
                     alreadyinDouble = true
                     break
                 }
             }
             // if value is first time a double push whole data row into doubleValues array
             if (alreadyinDouble === false) {
-                var value = rowData[i]
+                var value = {$dataJs}[i]
                 doubleValues.push(value)
             }
         }
     }
-    var dataKeys = Object.keys(rowData[0])
+    var dataKeys = Object.keys({$dataJs}[0])
     // for each object key in dataRow[0] check if value for that key in all objects in doubleValues array are equal
     // if all values for that key are equal, dataset will be split at that key 
     for (var j = 0; j < dataKeys.length; j++) {
@@ -1591,18 +1594,17 @@ JS;
     *
     * @return string
     */
-    protected function buildJsSplitSeries() : string
+    protected function buildJsSplitSeries(string $dataJs = 'rowData') : string
     {
-        //TODO
         return <<<JS
     
     var splitDatasetObject = {};
-        for (var i=0; i < rowData.length; i++) {
-        var p = rowData[i][split];
+        for (var i=0; i < {$dataJs}.length; i++) {
+        var p = {$dataJs}[i][split];
         if (!splitDatasetObject[p]) {
             splitDatasetObject[p] = [];
         }
-        splitDatasetObject[p].push(rowData[i]);
+        splitDatasetObject[p].push({$dataJs}[i]);
     }
     var splitDatasetArray = Object.keys(splitDatasetObject).map(i => splitDatasetObject[i])
     var newNames = Object.keys(splitDatasetObject)
@@ -1638,14 +1640,14 @@ JS;
      *
      * @return string
      */
-    protected function buildJsRedrawPie() : string
+    protected function buildJsRedrawPie(string $dataJs = 'rowData') : string
     {
         return <<<JS
         
-    var arrayLength = rowData.length;
+    var arrayLength = {$dataJs}.length;
     var chartData = [];
     for (var i = 0; i < arrayLength; i++) {
-        var item = { value: rowData[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} , name: rowData[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} };
+        var item = { value: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} , name: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} };
         chartData.push(item);
     }
     
@@ -1654,7 +1656,7 @@ JS;
             data: chartData
         }],
         legend: {
-            data: rowData.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
+            data: {$dataJs}.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
         }
     })
 
@@ -1667,7 +1669,7 @@ JS;
      *
      * @return string
      */
-    protected function buildJsRedrawGraph()
+    protected function buildJsRedrawGraph(string $dataJs = 'rowData')
     {
         $series = $this->getWidget()->getSeries()[0];
         return <<<JS
@@ -1679,77 +1681,77 @@ JS;
     
     // for each data object add a node that's not already existing to the nodes array
     // and a link that's not already existing to the links array
-    for (var i = 0; i < rowData.length; i++) {    	
+    for (var i = 0; i < {$dataJs}.length; i++) {    	
 		var existingNodeLeft = false
         var existingNodeRight = false
         for (var j = 0; j<nodes.length; j++) {
             // if the right object already exists at node, increase the symbol size of that node
-			if (nodes[j].id === rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}) {
+			if (nodes[j].id === {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()}) {
 				existingNodeRight = true
                 nodes[j].symbolSize += 0.5
 			}
             // if the left object already exists at node, increase the symbol size of that node
-			if (nodes[j].id === rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
+			if (nodes[j].id === {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
 				existingNodeLeft = true
                 nodes[j].symbolSize += 0.5
 			}
 		}
         // if the left and right object are the same and not yet existing as node, only add the left object to the nodes
-        if (rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()} === rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
+        if ({$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()} === {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
             existingNodeRight = true
         }
         // if the left object is not existing as node yet, add it
 		if (existingNodeLeft === false ) {
 			node = {
-				id: rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()},
-				name: rowData[i].{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
+				id: {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()},
+				name: {$dataJs}[i].{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
 				itemStyle: null,
 				symbolSize: 10,
 				x: null,
 				y: null,
 				value: 10,
 				draggable: false,
-                _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
+                _uid: {$dataJs}[i].{$series->getRelationDataColumn()->getDataColumnName()},
 			};
 			nodes.push(node)
 		}
         // if the right object is not existing as node yet, add it
 		if (existingNodeRight === false ) {
 			node = {
-				id: rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()},
-				name: rowData[i].{$series->getRightObjectNameDataColumn()->getDataColumnName()},
+				id: {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()},
+				name: {$dataJs}[i].{$series->getRightObjectNameDataColumn()->getDataColumnName()},
 				itemStyle: null,
 				symbolSize: 10,
 				x: null,
 				y: null,
 				value: 10,
 				draggable: false,
-                _uid: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
+                _uid: {$dataJs}[i].{$series->getRelationDataColumn()->getDataColumnName()},
 			};
 		nodes.push(node)
 		}
 	
     	// if relation direction is "regular" left object is source node, right object is target node for that relation
-        if (rowData[i].{$series->getDirectionDataColumn()->getDataColumnName()} == "regular") {
-    		var source = rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}
-    		var target = rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}
+        if ({$dataJs}[i].{$series->getDirectionDataColumn()->getDataColumnName()} == "regular") {
+    		var source = {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}
+    		var target = {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()}
     	// else right object is source and left object is target for that relation
         } else {
-    		var source = rowData[i].{$series->getRightObjectDataColumn()->getDataColumnName()}
-    		var target = rowData[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}
+    		var source = {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()}
+    		var target = {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}
     	}
         var existingLink = false;
         // for every relation check if it's not already existing in links array
         for (var j = 0; j<links.length; j++) {
-            if (links[j].id === rowData[i].{$series->getRelationDataColumn()->getDataColumnName()}) {
+            if (links[j].id === {$dataJs}[i].{$series->getRelationDataColumn()->getDataColumnName()}) {
                 existingLink = true
             }
         }
         // if relation is not existing yet as link, add it to links array
         if (existingLink === false) {
             link = {
-        		id: rowData[i].{$series->getRelationDataColumn()->getDataColumnName()},
-        		name: rowData[i].{$series->getRelationNameDataColumn()->getDataColumnName()},
+        		id: {$dataJs}[i].{$series->getRelationDataColumn()->getDataColumnName()},
+        		name: {$dataJs}[i].{$series->getRelationNameDataColumn()->getDataColumnName()},
         		source: source,
         		target: target,
         	}
@@ -1975,7 +1977,7 @@ JS;
         // params is ordered by value Axis (x Axis normally, y Axis for bar charts)
         var options = {$this->buildJsEChartsVar()}.getOption();                       
         // build table with header based on first value axis and it's label
-        let tooltip = '<table><tr><th colspan = "3">' + params[0].axisValueLabel + '</th></tr>';
+        let tooltip = '<table class="exf-tooltip-table"><tr><th colspan = "3">' + params[0].axisValueLabel + '</th></tr>';
         let currentAxis = params[0].axisIndex
         // for each object in params build a table row
         params.forEach(({axisIndex, axisValueLabel, marker, value, seriesIndex, seriesName}) => {
