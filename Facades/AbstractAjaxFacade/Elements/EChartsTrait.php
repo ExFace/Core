@@ -286,20 +286,30 @@ JS;
             
             clickCount++;
             {$this->buildJsEChartsVar()}._clickCount = clickCount
-            if (clickCount == 1) {
+            if (clickCount === 1) {
+                if ({$this->buildJsEChartsVar()}._oldSelection === undefined || {$this->buildJsEChartsVar()}._oldSelection.data != {$params}.data ) {
+                    {$this->buildJsEChartsVar()}._doubleClkSelection = {$params}
+                }
+                if ({$params}.seriesType == 'graph') {
+                    // do nothing
+                } else {
+                    {$this->buildJsSingleClick($params)}
+                }
                 setTimeout(function(){
-                    if (clickCount == 1) {
-                        if ({$params}.seriesType == 'graph') {
-                            // do nothing
-                        } else {
-                            {$this->buildJsSingleClick($params)}
-                        }
-                    } else {
-                        // do nothing
-                    }
                     clickCount = 0;
                     {$this->buildJsEChartsVar()}._clickCount = clickCount
+                    {$this->buildJsEChartsVar()}._doubleClkSelection = undefined;
                 }, 500);
+            } else {
+                if ({$params}.seriesType == 'graph') {
+                    // do nothing
+                } else {
+                    if ({$this->buildJsEChartsVar()}._doubleClkSelection != undefined) {
+                        console.log('TEST')
+                    } else {                        
+                        {$this->buildJsSingleClick($params)}
+                    }
+                }
             }
             
 JS;
@@ -791,7 +801,7 @@ JS;
     {
         if ($series->isStacked() === true) {
             if ($series->getStackGroupId() !== null && !empty($series->getStackGroupId())) {
-                $stack = "stack: '{$series->getStackGroupId()},'";
+                $stack = "stack: '{$series->getStackGroupId()}',";
             } else {
                 $stack = "stack: 'defaultstackgroup1',";
             }
@@ -1317,19 +1327,18 @@ JS;
     var rowData = $dataJs;    
     //reset Chart Configuration and variables bound to div before building new one
     {$this->buildJsDataResetter()}
-    // if data is empty or not defined, reset chart and show overlay message
+    // if data is empty or not defined show overlay message
     if (! rowData || rowData.count === 0) {
-        {$this->buildJsDataResetter()}
         {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
         return
     }
+    echart._dataset = rowData;
     //hide overlay message
     {$this->buildJsMessageOverlayHide()}
     //build and set basic chart config and options 
     {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
     //build and set dataset,config and options depending on chart type
     $js
-    echart._dataset = rowData;
     echart.resize()
 
 JS;
@@ -1951,7 +1960,7 @@ JS;
 
 {
 	formatter: function(params) {
-		return params.data.name
+		return params.data.name;
 	},
     confine: true,
 },
@@ -1977,29 +1986,45 @@ JS;
         // params is ordered by value Axis (x Axis normally, y Axis for bar charts)
         var options = {$this->buildJsEChartsVar()}.getOption();                       
         // build table with header based on first value axis and it's label
-        let tooltip = '<table class="exf-tooltip-table"><tr><th colspan = "3">' + params[0].axisValueLabel + '</th></tr>';
-        let currentAxis = params[0].axisIndex
+        var stacked = true;
+        for (i = 0; i < options.series.length; i++) {
+            if (!("stack" in options.series[i])) {
+                stacked = false;
+                break;
+            }
+        }
+        var tooltip = '<table class="exf-tooltip-table"><tr><th align = "left" colspan = "3">' + params[0].axisValueLabel + '</th></tr>';
+        var tooltipPart = '';
+        var currentAxis = params[0].axisIndex;
         // for each object in params build a table row
         params.forEach(({axisIndex, axisValueLabel, marker, value, seriesIndex, seriesName}) => {
             // get the correct formatter and the data for this object in params array
             if (("_bar" in options.series[seriesIndex]) == true) {
                 var data = options.series[seriesIndex].encode.x;
-                var Index = options.series[seriesIndex].xAxisIndex
-                var formatter = options.xAxis[Index].axisLabel.formatter               
+                var Index = options.series[seriesIndex].xAxisIndex;
+                var formatter = options.xAxis[Index].axisLabel.formatter;              
             } else {
                 var data = options.series[seriesIndex].encode.y;
-                var Index = options.series[seriesIndex].yAxisIndex
-                var formatter = options.yAxis[Index].axisLabel.formatter                
+                var Index = options.series[seriesIndex].yAxisIndex;
+                var formatter = options.yAxis[Index].axisLabel.formatter;                
             }
-            var value = formatter(value[data])
+            var value = formatter(value[data]);
             // if this params object is bound to another axis as the ones before, build a new header with new label
-            if (axisIndex !== currentAxis) {
-                tooltip += '<tr><th colspan = "3">' + axisValueLabel + '</th></tr>'
-                currentAxis = axisIndex
-            }
-            tooltip +='<tr><td>'+ marker + '</td><td>' + seriesName + '</td><td>'+ value + '</td></tr>';
+            if (stacked === true) {
+                if (axisIndex !== currentAxis) {
+                    tooltip = tooltip + tooltipPart + '<tr><th colspan = "3">' + axisValueLabel + '</th></tr>';
+                    currentAxis = axisIndex;
+                }
+                tooltipPart ='<tr><td>'+ marker + '</td><td>' + seriesName + '</td><td>'+ value + '</td></tr>' + tooltipPart;
+            } else {
+                if (axisIndex !== currentAxis) {
+                    tooltipPart += '<tr><th align = "left" colspan = "3">' + axisValueLabel + '</th></tr>';
+                    currentAxis = axisIndex;
+                }
+                tooltip += tooltipPart + '<tr><td>'+ marker + '</td><td>' + seriesName + '</td><td>'+ value + '</td></tr>';
+                }
         });
-        tooltip +='</tbody></table>'
+        tooltip += tooltipPart + '</tbody></table>';
         return tooltip;
     },
 },
@@ -2210,9 +2235,10 @@ JS;
         return <<<JS
 {$this->buildJsEChartsVar()}.clear();
 var echart = {$this->buildJsEChartsVar()};
-echart._dataset = undefined
-echart._oldSelection = undefined
-echart._clickCount = 0
+echart._dataset = undefined;
+echart._oldSelection = undefined;
+echart._doubleClkSelection = undefined;
+echart._clickCount = 0;
 
 JS;
 
