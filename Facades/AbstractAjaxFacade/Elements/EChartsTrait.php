@@ -1399,15 +1399,15 @@ JS;
         {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
         return
     }
+    var echart = {$this->buildJsEChartsVar()}
     echart._dataset = rowData;
+    echart.resize()
     //hide overlay message
     {$this->buildJsMessageOverlayHide()}
     //build and set basic chart config and options 
     {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
-    //build and set dataset,config and options depending on chart type
+    //build and set dataset,config and options depending on chart type    
     $js
-    echart.resize()
-
 JS;
     }
 
