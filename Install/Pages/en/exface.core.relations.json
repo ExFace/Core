@@ -33,19 +33,11 @@
         ],
         "columns": [
             {
-                "attribute_alias": "LEFT_OBJECT__NAME"
+                "attribute_alias": "LEFT_OBJECT__LABEL"
             },
             {
                 "attribute_alias": "RELATION_NAME",
                 "caption": "Relation"
-            },
-            {
-                "attribute_alias": "LEFT_OBJECT__APP__ALIAS",
-                "caption": "L. App"
-            },
-            {
-                "attribute_alias": "LEFT_OBJECT__ALIAS",
-                "caption": "L. Object Alias"
             },
             {
                 "attribute_alias": "RELATION_ALIAS_SHORT",
