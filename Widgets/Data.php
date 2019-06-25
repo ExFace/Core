@@ -32,6 +32,7 @@ use exface\Core\Interfaces\Widgets\iHaveQuickSearch;
 use exface\Core\Widgets\Traits\iHaveContextualHelpTrait;
 use exface\Core\Widgets\Traits\iHaveColumnsAndColumnGroupsTrait;
 use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
+use exface\Core\Interfaces\Widgets\iHaveSorters;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -56,6 +57,7 @@ class Data
         iHaveToolbars, 
         iHaveButtons, 
         iHaveFilters, 
+        iHaveSorters,
         iHaveQuickSearch,
         iSupportLazyLoading, 
         iHaveContextualHelp, 
@@ -655,7 +657,7 @@ class Data
      *
      * @return UxonObject[]
      */
-    public function getSorters()
+    public function getSorters() : array
     {
         return $this->sorters;
     }
@@ -683,12 +685,10 @@ class Data
      * @uxon-property sorters
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSorter[]
      * @uxon-template [{"attribute_alias": "", "direction": "asc"}]
-     *
-     * TODO use special sorter widgets here instead of plain uxon objects
      * 
      * @param UxonObject $sorters            
      */
-    public function setSorters(UxonObject $sorters)
+    public function setSorters(UxonObject $sorters) : iHaveSorters
     {
         foreach ($sorters as $uxon){
             $this->addSorter($uxon->getProperty('attribute_alias'), $uxon->getProperty('direction'));
@@ -696,7 +696,7 @@ class Data
         return $this;
     }
     
-    public function addSorter($attribute_alias, $direction)
+    public function addSorter(string $attribute_alias, string $direction) : iHaveSorters
     {
         $this->getConfiguratorWidget()->addSorter($attribute_alias, $direction);
         // TODO move sorters completely to configuration widget!
