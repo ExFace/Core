@@ -77,17 +77,23 @@ class LineChartSeries extends ChartSeries implements StackableChartSeriesInterfa
     
     private $smooth = null;
     
+    private $hide_symbol = null;
+    
+    private $stepline = null;
+    
     /**
-     *
-     * @return float
+     * 'true' when line should be smooth, 'false' when not
+     * 
+     * @param bool $default
+     * @return bool
      */
-    public function isSmooth(bool $default = false) : ?bool
+    public function isSmooth(bool $default = false) : bool
     {
         return $this->smooth ?? $default;
     }
     
     /**
-     * Set to true if you want the series to have a smooth line.
+     * Set to 'true' if you want the series to have a smooth line.
      *
      * @uxon-property smooth
      * @uxon-type boolean
@@ -99,5 +105,56 @@ class LineChartSeries extends ChartSeries implements StackableChartSeriesInterfa
     {
         $this->smooth = $value;
         return $this;
+    }
+    
+    /**
+     * Set 'true' to hide datapoint symbol
+     * @uxon-property hide_symbol
+     * @uxon-type bool
+     * 
+     * @param bool $hide
+     * @return LineChartSeries
+     */
+    public function setHideSymbol (bool $hide) : LineChartSeries
+    {
+        $this->hide_symbol = $hide;
+        return $this;
+    }
+    
+    /**
+     * 'true' when datapoint smybols should be hidden, 'false' when they should be shown
+     * 
+     * @param bool $default
+     * @return bool
+     */
+    public function isSymbolHidden (bool $default = false) : bool
+    {
+        return $this->hide_symbol ?? $default;
+    }   
+    
+    /**
+     * Set to 'true' if you want the series to be a stepline.
+     *
+     * @uxon-property stepline
+     * @uxon-type boolean
+     *
+     * @param bool $value
+     * @return LineChartSeries
+     */
+    public function setStepline(bool $value) : LineChartSeries
+    {
+        $this->stepline = $value;
+        return $this;
+    }
+    
+    /**
+     * 'true' when series should be stepline, 'false' when it shouldn't
+     *
+     * @param bool $default
+     * @return bool
+     */
+    public function isStepline(bool $default = false) : bool
+    {
+        return $this->stepline ?? $default;
     }
 }
