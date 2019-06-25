@@ -664,7 +664,7 @@ JS;
             if ($s instanceof GraphChartSeries && count($series) > 1) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support graph charts with multiple series!');
             }
-            if (($s instanceof LineChartSeries || s instanceof ColumnChartSeries) && count($series) > 1 && $s->getSplitByAttributeAlias() !== null) {
+            if (($s instanceof LineChartSeries || $s instanceof ColumnChartSeries) && count($series) > 1 && $s->getSplitByAttributeAlias() !== null) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support split by attribute with multiple series!');
             }
             $seriesConfig .= $this->buildJsChartSeriesConfig($s) . ',';
