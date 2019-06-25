@@ -134,12 +134,6 @@
             },
             {
                 "action_alias": "exface.Core.ShowAppGitConsoleDialog"
-            },
-            {
-                "action_alias": "exface.Core.ShowWidget",
-                "icon": "arrows-h",
-                "caption": "Graph",
-                "action_page_alias": 768
             }
         ]
     }
