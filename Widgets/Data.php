@@ -21,7 +21,6 @@ use exface\Core\Interfaces\Widgets\iHaveContextualHelp;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
-use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 use exface\Core\Interfaces\Widgets\iHaveHeader;
 use exface\Core\Interfaces\Widgets\iHaveFooter;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
@@ -32,6 +31,7 @@ use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Interfaces\Widgets\iHaveQuickSearch;
 use exface\Core\Widgets\Traits\iHaveContextualHelpTrait;
 use exface\Core\Widgets\Traits\iHaveColumnsAndColumnGroupsTrait;
+use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -74,6 +74,7 @@ class Data
         getLazyLoadingActionAlias as getLazyLoadingActionAliasViaTrait;
     }
     use iHaveContextualHelpTrait;
+    use iHaveConfiguratorTrait;
 
     // properties
     private $paginate = true;
@@ -1062,43 +1063,6 @@ class Data
     public function getToolbarWidgetType()
     {
         return 'DataToolbar';
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::getConfiguratorWidget()
-     * @return DataConfigurator
-     */
-    public function getConfiguratorWidget() : iConfigureWidgets
-    {
-        if ($this->configurator === null) {
-            $this->configurator = WidgetFactory::create($this->getPage(), $this->getConfiguratorWidgetType(), $this);
-        }
-        return $this->configurator;
-    }
-    
-    public function setConfigurator(UxonObject $uxon) : iHaveConfigurator
-    {
-        if ($this->configurator === null) {
-            $this->configurator = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, $this->getConfiguratorWidgetType());
-            $this->configurator->setWidgetConfigured($this);
-        } else {
-            $this->configurator->importUxonObject($uxon);
-        }
-        
-        return $this;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::setConfiguratorWidget()
-     */
-    public function setConfiguratorWidget(iConfigureWidgets $widget) : iHaveConfigurator
-    {
-        $this->configurator = $widget->setWidgetConfigured($this);
-        return $this;
     }
     
     /**
