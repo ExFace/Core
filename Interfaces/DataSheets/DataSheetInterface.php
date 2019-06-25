@@ -11,14 +11,35 @@ use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\CommonLogic\DataSheets\DataSheetList;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 
+/**
+ * Internal data respresentation - a row-based table with filters, sorters, aggregators, etc.
+ * 
+ * Structure:
+ * 
+ * rowIdx |Column1|Column2|Column3|
+ *      0 | value | value | value | \
+ *      1 | value | value | value | > data rows: each one is an assoc array(column=>value)
+ *      2 | value | value | value | /
+ *      3 | total | total | total | \
+ *      4 | total | total | total | / total rows: each one is an assoc array(column=>value)
+ *
+ * Rows are numbered sequentially. Inserting a row at a certain position will shift row numbers
+ * starting from that position. 
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCanBeConvertedToUxon
 {
 
     /**
-     * Adds an array of rows to the data sheet.
+     * Appends an array of rows to the data sheet.
+     * 
      * Each row must be an assotiative array [ column_id => value ].
-     * Missing columns will be automatically created. If $merge_uid_dublicates is TRUE, given rows with UIDs
-     * already present in the sheet, will overwrite old rows instead of being added at the end of the sheet.
+     * 
+     * Missing columns will be automatically created if $auto_add_columns is not set to FALSE. If 
+     * $merge_uid_dublicates is TRUE, given rows with UIDs already present in the sheet, will overwrite 
+     * old rows instead of being added at the end of the sheet.
      *
      * @see import_rows() for an easy way of adding rows from another data sheet
      *     
@@ -30,15 +51,23 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
 
     /**
      * Adds a new row to the data sheet.
+     * 
      * The row must be a non-empty assotiative array [ column_id => value ].
-     * Missing columns will be automatically created. If $merge_uid_dublicates is TRUE, given rows with UIDs
-     * already present in the sheet, will overwrite old rows instead of being added at the end of the sheet.
+     * 
+     * Missing columns will be automatically created if $auto_add_columns is not set to FALSE. If 
+     * $merge_uid_dublicates is TRUE, given rows with UIDs already present in the sheet, will overwrite 
+     * old rows instead of being added at the end of the sheet.
+     * 
+     * NOTE: Rows are numbered sequentially. Inserting a row at a certain position will shift row numbers
+     * starting from that position. Row numbers, that are out of the sequence will be ignored: e.g. if
+     * you try to add a row at position 2 to an empty sheet, it will be added at position 0, becase 2 is 
+     * not a valid sequential position in this case.
      *
      * @param array $row            
      * @param boolean $merge_uid_dublicates            
      * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
      */
-    public function addRow(array $row, bool $merge_uid_dublicates = false, bool $auto_add_columns = true) : DataSheetInterface;
+    public function addRow(array $row, bool $merge_uid_dublicates = false, bool $auto_add_columns = true, int $position = null) : DataSheetInterface;
 
     /**
      * Makes this data sheet LEFT OUTER JOIN the other data sheet ON $this.$left_key_column = $data_sheet.$right_key_column
