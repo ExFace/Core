@@ -52,6 +52,23 @@ JS;
                 	enableSort: false,
                     autocomplete: {
                         applyTo: ['value'],
+                        filter: function (token, match, config) {
+					     	// remove leading space in token if not the only character
+						    if (  token.length > 1 
+						     	&& ( token.search(/^\s[^\s]/i) > -1 )
+						    ) {
+					    		token = token.substr(1, token.length - 1);
+					    	}
+							
+					    	// remove spaces in token if preceeded by double underscores
+				            if (  token.length > 3  && token.search(/\_\_\s/i) ) {
+                                token = token.substr(0, token.length - 1);
+                            } else if (!token.replace(/\s/g, '').length) {
+					            // return true if token consists of whitespace characters only
+								return true;
+					        } 
+					        return match.indexOf(token) > -1;
+					    },
                         getOptions: function (text, path, input, editor) {
                             return new Promise(function (resolve, reject) {
                       		    var pathBase = path.length <= 1 ? '' : JSON.stringify(path.slice(-1));
