@@ -65,6 +65,10 @@ trait XYChartSeriesTrait
      */
     private $yColumn = null;
     
+    /**
+     * 
+     * @var string
+     */
     private $split_by_attribute_alias = null;
     
     /**
@@ -486,6 +490,10 @@ trait XYChartSeriesTrait
         return $this;
     }
     
+    /**
+     * 
+     * @return string|NULL
+     */
     public function getSplitByAttributeAlias() : ?string
     {
         return $this->split_by_attribute_alias;

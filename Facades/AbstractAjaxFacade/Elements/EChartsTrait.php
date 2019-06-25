@@ -21,6 +21,7 @@ use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
 use exface\Core\Widgets\Parts\Charts\AreaChartSeries;
 use exface\Core\Exceptions\Facades\FacadeOutputError;
 use exface\Core\Widgets\Parts\Charts\Traits\XYChartSeriesTrait;
+use exface\Core\Widgets\Parts\Charts\GraphChartSeries;
 
 /**
  *
@@ -115,10 +116,12 @@ trait EChartsTrait
         {$this->buildJsSelectFunctionBody('selection')}
     };
     
+    //Create the single click function
     function {$this->buildJsSingleClickFunctionName()}(params) {
         {$this->buildJsSingleClickFunctionBody('params')}
     };
     
+    //create the clicks function to distinguish between single and double click
     function {$this->buildJsClicksFunctionName()}(params) {
         {$this->buildJsClicksFunctionBody('params')}
     };
@@ -136,7 +139,8 @@ JS;
         $handlersJs = '';
         $handlersJs = $this->buildJsLegendSelectHandler();
         $handlersJs .= $this->buildJsOnClickHandler();
-        $handlersJs .= $this->buildJsOnDoubleClickHandler();
+        $handlersJs .= $this->buildJsBindToClickHandler();
+        $handlersJs .= $this->buildJsOnGraphHoverHandler();
         return $handlersJs;
     }
     
@@ -231,13 +235,14 @@ JS;
     protected function buildJsSelectFunctionBody(string $selection) : string
     {
         return <<<JS
+
             var echart = {$this->buildJsEChartsVar()};
-            var oSelectedRow = {$selection};
+            var oSelected = {$selection};
             if (echart._oldselection === undefined) {
-                echart._oldSelection = oSelectedRow;
+                echart._oldSelection = {$selection};
             } else {
-                if (({$this->buildJsRowCompare('echart._oldSelection', 'oSelectedRow')}) === false) {
-                    echart._oldSelection = oSelectedRow;
+                if (({$this->buildJsRowCompare('echart._oldSelection.data', 'oSelected.data')}) === false) {
+                    echart._oldSelection = {$selection};
                 } else {
                     return;
                 }
@@ -282,17 +287,23 @@ JS;
             
             clickCount++;
             {$this->buildJsEChartsVar()}._clickCount = clickCount
-            if (clickCount == 1) {
+            if (clickCount === 1) {
+                if ({$this->buildJsEChartsVar()}._oldSelection === undefined || {$this->buildJsEChartsVar()}._oldSelection.data != {$params}.data ) {
+                    {$this->buildJsEChartsVar()}._doubleClkSelection = {$params}
+                }
+                {$this->buildJsSingleClick($params)} 
                 setTimeout(function(){
-                    if (clickCount == 1) {                        
-                        // Single click code, or invoke a function
-                        {$this->buildJsSingleClick($params)}
-                    } else {
-                        // Double click code, or invoke a function
-                    }
                     clickCount = 0;
                     {$this->buildJsEChartsVar()}._clickCount = clickCount
+                    {$this->buildJsEChartsVar()}._doubleClkSelection = undefined;
                 }, 500);
+            } else {
+                if ({$this->buildJsEChartsVar()}._doubleClkSelection != undefined) {
+                    // do nothing
+                } else {                        
+                    {$this->buildJsSingleClick($params)}
+                }
+                
             }
             
 JS;
@@ -322,8 +333,35 @@ JS;
         
         {$this->buildJsEChartsVar()}.on('click', function(params){
             {$this->buildJsClicks('params')}
-    });
+        });
     
+JS;
+    }
+            
+    /**
+     * javascript function to handle hover behavior for graph charts
+     * when a node was selected and mouse moves over other nodes or not hovers anything,
+     * the node still stays selected
+     * 
+     * @return string
+     */
+    protected function buildJsOnGraphHoverHandler() : string
+    {
+        return <<<JS
+
+        {$this->buildJsEChartsVar()}.on('unfocusnodeadjacency', function(params){
+            if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+                selection = {$this->buildJsEChartsVar()}._oldSelection
+                if (selection.dataType === "node") {
+                    {$this->buildJsEChartsVar()}.dispatchAction({
+                        type: 'focusNodeAdjacency',
+                        seriesIndex: selection.seriesIndex,
+                        dataIndex: selection.dataIndex
+                    });
+                }
+            }
+        });
+
 JS;
     }
     
@@ -419,27 +457,88 @@ JS;
         var params = {$params}
         var dataRow = params.data
         if (params.seriesType == 'pie') {
-            if ((typeof {$this->buildJsEChartsVar()}._oldSelection != undefined) && ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')}) == true) {
-                {$this->buildJsEChartsVar()}.dispatchAction({
-                    type: 'pieUnSelect',
-                    seriesIndex: params.seriesIndex,
-                    dataIndex: params.dataIndex
-                });
-                {$this->buildJsSelect()}
-            } else {
-                if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+            // if already a pie part is selected do the following
+            if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+                // if already slected piepart gets clicked again
+                if ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection.data', 'dataRow')} == true) {
+                    // deselcted the pie part
                     {$this->buildJsEChartsVar()}.dispatchAction({
                         type: 'pieUnSelect',
                         seriesIndex: params.seriesIndex,
-                        name: {$this->buildJsEChartsVar()}._oldSelection.name
+                        dataIndex: params.dataIndex
                     });
+                    {$this->buildJsSelect()}                        
+                // if different part then already selected part gets clicked
+                } else {
+                    // deselect old pie part
+                    {$this->buildJsEChartsVar()}.dispatchAction({
+                        type: 'pieUnSelect',
+                        seriesIndex: params.seriesIndex,
+                        name: {$this->buildJsEChartsVar()}._oldSelection.data.name
+                    });
+                    // select clicked pie part
+                    {$this->buildJsEChartsVar()}.dispatchAction({
+                        type: 'pieSelect',
+                        seriesIndex: params.seriesIndex,
+                        dataIndex: params.dataIndex
+                    });
+                    {$this->buildJsSelect('params')}
                 }
+            // if no pie part was selected
+            } else {
+                // select clicked pie part
                 {$this->buildJsEChartsVar()}.dispatchAction({
                     type: 'pieSelect',
                     seriesIndex: params.seriesIndex,
                     dataIndex: params.dataIndex
                 });
-                {$this->buildJsSelect('dataRow')}
+                {$this->buildJsSelect('params')}
+            }        
+        } else if (params.seriesType == 'graph') {
+            if (params.dataType === "node") {            
+                // if already a graph node part is selected do the following
+                if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+                    // if already selected graph node gets clicked again
+                    if ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection.data', 'dataRow')} == true) {
+                        // deselected the node
+                        {$this->buildJsEChartsVar()}.dispatchAction({
+                            type: 'unfocusNodeAdjacency',
+                            seriesIndex: params.seriesIndex,
+                        });
+                        {$this->buildJsSelect()}                        
+                    // if different node then already selected node gets clicked
+                    } else {
+                        // deselect old node
+                       {$this->buildJsEChartsVar()}.dispatchAction({
+                            type: 'unfocusNodeAdjacency',
+                            seriesIndex: params.seriesIndex,
+                        });
+                        // select clicked node                        
+                        {$this->buildJsEChartsVar()}.dispatchAction({
+                            type: 'focusNodeAdjacency',
+                            seriesIndex: params.seriesIndex,
+                            dataIndex: params.dataIndex
+                        });
+                        {$this->buildJsSelect('params')}
+                    }
+                // if no node was selected
+                } else {
+                    // select clicked node
+                    {$this->buildJsEChartsVar()}.dispatchAction({
+                        type: 'focusNodeAdjacency',
+                        seriesIndex: params.seriesIndex,
+                        dataIndex: params.dataIndex
+                    });
+                    {$this->buildJsSelect('params')}
+                }
+            } else {
+                if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {                    
+                    {$this->buildJsSelect()}
+                    {$this->buildJsEChartsVar()}.dispatchAction({
+                        type: 'unfocusNodeAdjacency',
+                        seriesIndex: params.seriesIndex,
+                    });
+                }
             }
         } else {
             var options = {$this->buildJsEChartsVar()}.getOption();
@@ -448,28 +547,43 @@ JS;
             options.series.forEach((series) => {
                 newOptions.series.push({markLine: {data: {}}, _show: false});
             });
-            if ((typeof {$this->buildJsEChartsVar()}._oldSelection != undefined) && ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')}) == true) {
-                {$this->buildJsSelect()}
+            // if the chart is a barchart
+            if (("_bar" in options.series[params.seriesIndex]) == true) {
+                newOptions.series[params.seriesIndex].markLine.data = [
+                    {
+        				yAxis: dataRow[options.series[params.seriesIndex].encode.y]
+        			}
+                ];
+                newOptions.series[params.seriesIndex].markLine._show = true;
+            // if the chart is not a barchart
             } else {
-                if (("_bar" in options.series[params.seriesIndex]) == true) {
-                    newOptions.series[params.seriesIndex].markLine.data = [
-                        {
-            				yAxis: dataRow[options.series[params.seriesIndex].encode.y]
-            			}
-                    ];
-                    newOptions.series[params.seriesIndex].markLine._show = true;
-                } else {
-                    newOptions.series[params.seriesIndex].markLine.data = [
-                        {
-            				xAxis: dataRow[options.series[params.seriesIndex].encode.x]
-            			}
-                    ];
-                    newOptions.series[params.seriesIndex].markLine._show = true;
-                }
-                {$this->buildJsSelect('dataRow')}
+                newOptions.series[params.seriesIndex].markLine.data = [
+                    {
+        				xAxis: dataRow[options.series[params.seriesIndex].encode.x]
+        			}
+                ];
+                newOptions.series[params.seriesIndex].markLine._show = true;
             }
-            {$this->buildJsEChartsVar()}.setOption(newOptions);
+            // if there was already a datapoint selected
+            if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+                // if the selected datapoint is the same as the now clicked one
+                if ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection.data', 'dataRow')} == true) {
+                    {$this->buildJsSelect()}
+                    options.series.forEach((series) => {
+                        newOptions = {series: []}
+                        newOptions.series.push({markLine: {data: {}}, _show: false});
+                    });
+                } else {
+                    {$this->buildJsSelect('params')}
+                }
+            // if no datapoint was selected yet
+            } else {
+                {$this->buildJsSelect('params')}
+            }
+        {$this->buildJsEChartsVar()}.setOption(newOptions);
         }
+        
+        
         
 JS;
     }
@@ -481,22 +595,54 @@ JS;
      * 
      * @return string
      */
-    protected function buildJsOnDoubleClickHandler() : string
+    protected function buildJsBindToClickHandler() : string
     {
         $widget = $this->getWidget();
         $output = '';
         
-        // Double click actions. Currently only supports one double click action - the first one in the list of buttons
-        if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[0]) {
-            $output .= <<<JS
-            
-            {$this->buildJsEChartsVar()}.on('dblclick', function(params){
-                {$this->buildJsEChartsVar()}._oldSelection =  params.data
+        if ($this->isGraphChart() === true) {
+            // Double click actions for graph charts
+            // For now the action that is supposed to happen when double clicking on a node needs to be the
+            // first action bound to a double click and the action supposed to happen when double clicking on
+            // an edge/link needs to be the second one bound to a double click
+            if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[0]) {
+                $output .= <<<JS
+                
+            {$this->buildJsEChartsVar()}.on('dblclick', {dataType: 'node'}, function(params){
+                {$this->buildJsEChartsVar()}._oldSelection = params
                 {$this->getFacade()->getElement($dblclick_button)->buildJsClickFunction()}
             });
             
 JS;
                 
+            }
+            if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[1]) {
+                $output .= <<<JS
+                
+            {$this->buildJsEChartsVar()}.on('dblclick', {dataType: 'edge'}, function(params){
+                {$this->buildJsEChartsVar()}._oldSelection = params
+                {$this->getFacade()->getElement($dblclick_button)->buildJsClickFunction()}
+            });
+            
+JS;
+                
+            }
+            
+        } else {
+        
+            // Double click actions for not graph charts
+            // Currently only supports one double click action - the first one in the list of buttons
+            if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[0]) {
+                $output .= <<<JS
+                
+                {$this->buildJsEChartsVar()}.on('dblclick', function(params){
+                    {$this->buildJsEChartsVar()}._oldSelection = params
+                    {$this->getFacade()->getElement($dblclick_button)->buildJsClickFunction()}
+                });
+                
+JS;
+                    
+            }
         }
         return $output;
     }
@@ -515,15 +661,20 @@ JS;
             if ($s instanceof PieChartSeries && count($series) > 1) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support pie charts with multiple series!');
             }
-            $seriesConfig .= $this->buildJsChartSeriesConfig($s);
+            if ($s instanceof GraphChartSeries && count($series) > 1) {
+                throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support graph charts with multiple series!');
+            }
+            if (($s instanceof LineChartSeries || s instanceof ColumnChartSeries) && count($series) > 1 && $s->getSplitByAttributeAlias() !== null) {
+                throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support split by attribute with multiple series!');
+            }
+            $seriesConfig .= $this->buildJsChartSeriesConfig($s) . ',';
             
             if ($s instanceof BarChartSeries && $s->getIndex() != 0) {
                 if ($series[$s->getIndex() - 1] instanceof BarChartSeries === false) {
                     throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support bar charts mixed with other chart types!');
                 }
             }
-        }
-        
+        }        
         return <<<JS
         
 {
@@ -559,7 +710,8 @@ JS;
                 return $this->buildJsPieChart($series);
             case $series instanceof PieChartSeries:
                 return $this->buildJsPieChart($series);
-                
+            case $series instanceof GraphChartSeries:
+                return $this->buildJsGraphChart($series);                
         }
     }
     
@@ -592,9 +744,27 @@ JS;
         }
         
         if ($series->getColor() !== null) {
-            $color = "lineStyle: { color: '{$series->getColor()}' },";
+            $color = <<<JS
+
+    lineStyle: { color: '{$series->getColor()}' },
+    itemStyle: { color: '{$series->getColor()}' },
+
+JS;
+            
         } else {
             $color = '';
+        }
+        
+        if ($series->isSymbolHidden() === true) {
+            $symbol = "showSymbol: false,";
+        } else {
+            $symbol = '';
+        }
+        
+        if ($series->isStepline() === true) {
+            $step = "step: 'end',";
+        } else {
+            $step = '';
         }
         
         return <<<JS
@@ -603,6 +773,8 @@ JS;
     name: '{$series->getCaption()}',
     _index: {$series->getIndex()},
     type: 'line',
+    {$symbol}
+    {$step}
     encode: {
         x: '{$series->getXDataColumn()->getDataColumnName()}',
         y: '{$series->getYDataColumn()->getDataColumnName()}'
@@ -614,7 +786,7 @@ JS;
     {$color}
     {$this->buildJsStack($series)}
     {$this->buildJsMarkLineProperties($series)}
-},
+}
 
 JS;
     }
@@ -663,7 +835,7 @@ JS;
         
 {
 {$this->buildJsColumnBarChartProperties($series)}
-},
+}
 
 JS;
     }
@@ -681,7 +853,7 @@ JS;
 {
 {$this->buildJsColumnBarChartProperties($series)}
     _bar: true
-},
+}
 
 JS;
     }
@@ -696,7 +868,7 @@ JS;
     {
         if ($series->isStacked() === true) {
             if ($series->getStackGroupId() !== null && !empty($series->getStackGroupId())) {
-                $stack = "stack: '{$series->getStackGroupId()},'";
+                $stack = "stack: '{$series->getStackGroupId()}',";
             } else {
                 $stack = "stack: 'defaultstackgroup1',";
             }
@@ -747,7 +919,7 @@ JS;
     label: {$label},
     roseType: '{$valueMode}'
     
-},
+}
 
 JS;
     }
@@ -787,7 +959,75 @@ JS;
     animationType: 'scale',
     animationEasing: 'backOut',
     
-},
+}
+
+JS;
+    }
+        
+    /**
+     * build graph series configuration
+     *
+     * @param GraphChartSeries $series
+     * @return string
+     */
+    protected function buildJsGraphChart(GraphChartSeries $series) : string
+    {        
+        if ($series->getGraphType() === null) {
+            $type = 'circular';
+        } else {
+            $type = $series->getGraphType();
+        }
+        
+        if ($series->getColor() !== null) {
+            $color = "{$series->getColor()}";
+            
+        } else {
+            $color = '';
+        }
+        return <<<JS
+        
+{    
+	height: '50%',
+	name: 'Graph',
+    type: 'graph',
+	hoverAnimation: true,
+	animationEasing: 'backOut',
+	layout: '{$type}',
+	edgeSymbol: ['none', 'none'],
+	circular: { 
+		rotateLabel: true,
+	},
+	force: {
+		initLayout: 'circular',
+		gravity: 0.1,
+		repulsion: 100,
+		edgeLength: 120,
+		layoutAnimation: false,
+	}, 
+    roam: true,
+    focusNodeAdjacency: true,
+    itemStyle: {     
+        normal: {
+            color: '{$color}',           
+            borderColor: '#fff',
+            borderWidth: 1,
+        }
+    },
+    label: {
+        position: 'right',
+        formatter: '{b}',
+		show: true
+    },
+    lineStyle: {
+        color: 'source',
+        curveness: 0.2
+    },
+    emphasis: {
+        lineStyle: {
+            width: 10
+        }
+    }
+}
 
 JS;
     }
@@ -799,7 +1039,7 @@ JS;
      */
     protected function buildJsAxes() : string
     {
-        if ($this->isPieChartSeries() === true) {
+        if ($this->isPieChart() === true || $this->isGraphChart() === true) {
             return '';
         }
         $countAxisRight = 0;
@@ -808,12 +1048,20 @@ JS;
         $xAxesJS = '';
         $yAxesJS = '';
         $zoom = '';
+        $xZoomCount = 0;
+        $yZoomCount = 0;
         foreach ($widget->getAxesX() as $axis) {
             $xAxesJS .= $this->buildJsAxisProperties($axis);
-            $zoom .= $this->buildJsAxisZoom($axis);
+            if ($axis->isZoomable() === true) {
+                $zoom .= $this->buildJsAxisZoom($axis, $xZoomCount);
+                $xZoomCount++;
+            }
         }
         foreach ($widget->getAxesY() as $axis) {
-            $zoom .= $this->buildJsAxisZoom($axis);
+            if ($axis->isZoomable() === true) {
+                $zoom .= $this->buildJsAxisZoom($axis, $yZoomCount);
+                $yZoomCount++;
+            }
             if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false) {
                 $countAxisLeft++;
                 $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisLeft);
@@ -841,9 +1089,9 @@ JS;
     protected function buildJsAxisProperties(ChartAxis $axis, int $nameGapMulti = 1) : string
     {
         if ($axis->getHideCaption() === false) {
-            $name = $axis->getCaption();
+            $caption = $axis->getCaption();            
         } else {
-            $name = '';
+            $caption = '';
         }
         
         if ($axis->hasGrid() === false) {
@@ -861,14 +1109,38 @@ JS;
         } else {
             $max = "max: '" . $axis->getMaxValue() . "',";
         }
-        
+        $axisType = $axis->getAxisType();
         if ($axis->getDimension() == Chart::AXIS_X) {
             $nameLocation = "nameLocation: 'center',";
+            if ($axisType === ChartAxis::AXIS_TYPE_CATEGORY) {
+                $rotate = 'rotate: 45,';
+            } else {
+                $rotate = '';
+            }
         } else {
             $nameLocation = '';
         }
         
-        $axisType = mb_strtolower($axis->getAxisType());
+        if ($axisType === ChartAxis::AXIS_TYPE_CATEGORY) {
+            $interval = 'interval: 0';
+            $axisTick = <<<JS
+            
+        axisTick: {
+            alignWithLabel: true,
+        },
+
+JS;
+        } else {
+            $interval = '';
+            $axisTick = '';
+        }
+        $maxInterval = '';
+        /*if ($axisType === ChartAxis::AXIS_TYPE_TIME) {
+            $maxInterval = 'minInterval: 3600 * 1000 * 24*30,';
+        } else {
+            $maxInterval = '';
+        }*/
+        $axisTypeLower = mb_strtolower($axisType);        
         $position = mb_strtolower($axis->getPosition());
         if ($axis->getDimension() == Chart::AXIS_Y) {
             $nameGap = $this->baseAxisNameGap()* $nameGapMulti;
@@ -881,18 +1153,20 @@ JS;
         } else {
             $nameGap = $this->baseAxisNameGap() * 1.5;
         }
-        
-        
-        
+        if ($axis->getIndex() !== 0 && $axis->getDimension() == Chart::AXIS_X) {
+            $onZero = 'axisLine: {onZero: false},';
+        } else {
+            $onZero = '';
+        }
         
         return <<<JS
         
     {
         id: '{$axis->getIndex()}',
-        name: '{$name}',
+        name: '{$caption}',
         {$nameLocation}
         {$inverse}
-        type: '{$axisType}',
+        type: '{$axisTypeLower}',
         splitLine: { show: $grid },
         position: '{$position}',
         show: false,
@@ -900,7 +1174,9 @@ JS;
         axisLabel: {
             formatter: function(a) {
                 return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'a')}
-            }
+            },
+            {$rotate}
+            {$interval}
         },
         axisPointer: {
             label: {
@@ -909,8 +1185,11 @@ JS;
                 },
             },
         },
+        {$axisTick}
+        {$onZero}
         {$min}
         {$max}
+        {$maxInterval}
     },
     
 JS;
@@ -922,33 +1201,52 @@ JS;
      * @param ChartAxis $axis
      * @return string
      */
-    protected function buildJsAxisZoom(ChartAxis $axis) : string
+    protected function buildJsAxisZoom(ChartAxis $axis, $zoomCount = 0) : string
     {
-        if ($axis->isZoomable() === true) {
-            if ($this->getWidget()->getLegendPosition() === 'bottom') {
-                $bottom = 'bottom: 25';
-            } else {
-                $bottom = '';
-            }
-            $zoom = <<<JS
-            
-        {
-            type: 'slider',
-            {$axis->getDimension()}AxisIndex: {$axis->getIndex()},
-            filterMode: 'filter',
-            {$bottom}
-        },
-        {
-            type: 'inside',
-            {$axis->getDimension()}AxisIndex: {$axis->getIndex()},
-            filterMode: 'filter'
-        },
+        $offset = 5;
+        $offset += $zoomCount * $this->baseZoomOffset();
         
-JS;
-        } else {
-            $zoom = '';
+        if ($this->getWidget()->getLegendPosition() === 'bottom' && $axis->getDimension() === Chart::AXIS_X) {
+            $offset += 25;
         }
-        return $zoom;
+        if ($axis->getDimension() === Chart::AXIS_X) {
+            $JsOffset = "bottom: {$offset},";
+        } elseif ($axis->getDimension() === Chart::AXIS_Y) {
+            $JsOffset = "right: {$offset},";
+        } else {
+            $JsOffset = '';
+        }
+        $filterMode = 'empty';
+        if ($this->getWidget()->getSeries()[0] instanceof BarChartSeries) {
+            if ($axis->getDimension() === Chart::AXIS_Y) {
+                $filterMode = 'filter';
+            }
+        } else {
+            if ($axis->getDimension() === Chart::AXIS_X) {
+                $filterMode = 'filter';
+            }
+        }
+        return <<<JS
+        
+    {
+        type: 'slider',
+        {$axis->getDimension()}AxisIndex: {$axis->getIndex()},
+        filterMode: '{$filterMode}',
+        labelFormatter: function(value, valueStr) {
+            return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'valueStr')}
+        },
+        //disables Zoom Label
+        showDetail: false,
+        {$JsOffset}
+    },
+    {
+        type: 'inside',
+        {$axis->getDimension()}AxisIndex: {$axis->getIndex()},
+        filterMode: 'empty'
+    },
+    
+JS;
+
     }
     
     /**
@@ -1056,71 +1354,124 @@ JS;
     }
     
     /**
-     * javascript function body to analyse data and calculate axis/grid offsets and draw the chart
+     * basic offset for legend
+     *
+     * @return int
+     */
+    protected function baseLegendOffset() : int
+    {
+        return 25;
+    }
+    
+    /**
+     * basic offset value that needs to be added for each zoom slider
+     *
+     * @return int
+     */
+    protected function baseZoomOffset() : int
+    {
+        return 40;
+    }
+    
+    /**
+     * javascript function body to draw chart, iniatlize global variables, show overlay message if data is empty
      *
      * @param string $dataJs
      * @return string
      */
     protected function buildJsRedrawFunctionBody(string $dataJs) : string
     {
-        if ($this->isPieChartSeries() === true) {
-            $js = <<<JS
-            
-var arrayLength = rowData.length;
-var chartData = [];
-for (var i = 0; i < arrayLength; i++) {
-	var item = { value: rowData[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} , name: rowData[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} };
-	chartData.push(item);
-}
-
-{$this->buildJsEChartsVar()}.setOption({
-	series: [{
-		data: chartData
-	}],
-	legend: {
-		data: rowData.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
-	}
-})
-JS;
+        if ($this->isPieChart() === true) {
+            $js = $this->buildJsRedrawPie();
+        } elseif ($this->isGraphChart() === true) {
+            $js = $this->buildJsRedrawGraph();
         } else {
+            $js = $this->buildJsRedrawXYChart();
+        }
+        
+        return <<<JS
+        
+    var rowData = $dataJs;    
+    //reset Chart Configuration and variables bound to div before building new one
+    {$this->buildJsDataResetter()}
+    // if data is empty or not defined show overlay message
+    if (! rowData || rowData.count === 0) {
+        {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
+        return
+    }
+    var echart = {$this->buildJsEChartsVar()}
+    echart._dataset = rowData;
+    echart.resize()
+    //hide overlay message
+    {$this->buildJsMessageOverlayHide()}
+    //build and set basic chart config and options 
+    {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
+    //build and set dataset,config and options depending on chart type    
+    $js
+JS;
+    }
+
+    /**
+     * javascript snippet to calculate offsets for axis and grid and draw Charts with X and Y axes
+     * 
+     * @return string
+     */
+    protected function buildJsRedrawXYChart(string $dataJs = 'rowData') : string
+    {
+        $axesOffsetCalc = '';
+        $axesJsObjectInit = '';
+        //for each visible axis calculate necessary gap to next axis/chart borders
+        //for X-Axis its based on the AxisIndex, for Y-Axis it's based on the length of the longest data value
+        foreach ($this->getWidget()->getAxes() as $axis) {
+            if ($axis->isHidden() === true) {
+                continue;
+            }
             
-            $axesOffsetCalc = '';
-            $axesJsObjectInit = '';
-            foreach ($this->getWidget()->getAxes() as $axis) {
-                if ($axis->isHidden() === true) {
-                    continue;
-                }
-                
-                $xAxisIndex = 0;
-                if ($axis->getDimension() === Chart::AXIS_X) {
-                    $offset = ++$xAxisIndex . ' * 20 * 2';
+            $xAxisIndex = 0;
+            if ($axis->getDimension() === Chart::AXIS_X) {
+                //For X Axex that are Category Axis the label will be rotated
+                //therefor gap has to be calculated by length of data values
+                if ($axis->getAxisType() === ChartAxis::AXIS_TYPE_CATEGORY) {
+                    $gap = 'len * 6';
                 } else {
-                    $offset = 'len * 9';
+                    $gap = ++$xAxisIndex . ' * 20 * 2 - 15';
                 }
-                $axesOffsetCalc .= <<<JS
-                
+            } else {
+                $gap = 'len * 8';
+            }
+            $axesOffsetCalc .= <<<JS
+            
         val = row['{$axis->getDataColumn()->getDataColumnName()}'];
         if (val === undefined) {
             len = 0;
         } else {
             len = (typeof val === 'string' || val instanceof String ? val.length : val.toString().length);
         }
-        offset = {$offset};
-        if (axes["{$axis->getDataColumn()->getDataColumnName()}"]['offset'] < offset) {
-            axes["{$axis->getDataColumn()->getDataColumnName()}"]['offset'] = offset;
+        gap = {$gap};
+        if (axes["{$axis->getDataColumn()->getDataColumnName()}"]['gap'] < gap) {
+            axes["{$axis->getDataColumn()->getDataColumnName()}"]['gap'] = gap;
         }
         
 JS;
-                $postion = mb_strtolower($axis->getPosition());
-                if ($axis->getHideCaption() === false) {
-                    $offset = strlen($axis->getCaption())*3.5;
-                } else {
-                    $offset = 0;
-                }
-                $axesJsObjectInit .= <<<JS
-                
+            $postion = mb_strtolower($axis->getPosition());
+            //if the axis has a caption the base gap is based on that length, else it's 0
+            $baseGap = 0;
+            if ($axis->getHideCaption() === false) {                
+                if ($axis->getDimension() === Chart::AXIS_Y) {
+                    $baseGap = strlen($axis->getCaption())*3.5;
+                }                
+                $caption = 'true';
+            } else {                
+                $caption = 'false';
+            }
+            //js snippet to build array containing every visible axis as object with its necessary gap
+            //and other needed parameters
+            $axesJsObjectInit .= <<<JS
+            
     axes["{$axis->getDataColumn()->getDataColumnName()}"] = {
-        offset: {$offset},
+        caption: {$caption},
+        category: "{$axis->getAxisType()}",
+        gap: {$baseGap},
         dimension: "{$axis->getDimension()}",
         position: "{$postion}",
         index: "{$axis->getIndex()}",
@@ -1128,44 +1479,80 @@ JS;
     };
     
 JS;
+        }
+        $widget = $this->getWidget();
+        $zoomSet = 'no';
+        if ($widget->getSeries()[0] instanceof BarChartSeries) {
+            if ($widget->getAxesY()[0]->isZoomable() !== null) {
+                $zoomSet = 'yes';
             }
-            
-            $js = <<<JS
-            
-    //var longestString = 0;
+        } else {
+            if ($widget->getAxesX()[0]->isZoomable() !== null) {
+                $zoomSet = 'yes';                
+            }
+        }
+        
+        return <<<JS
+
     
-    var axes = {};
+    
+    // initalize axis array
+    var axes = [];
     {$axesJsObjectInit}
     
     // Danach
-    var val, offset;
+    var val, gap;
     var len = 0;
-    rowData.forEach(function(row){
+    // for each data row calculate the offset for the axis bound to a data value
+    {$dataJs}.forEach(function(row){
         {$axesOffsetCalc}
     })
     
     var newOptions = {yAxis: [], xAxis: []};
     var axis;
+    // offsets for the first axis at each position
     var offsets = {
         'top': 0,
         'right': 0,
         'bottom': 0,
         'left': 0
     };
+    // for every visible axis, set the correct offset and that it is visible
     for (var i in axes) {
         axis = axes[i];
-        newOptions[axis.dimension + 'Axis'].push({
-            offset: offsets[axis.position],
-            show: true
-        });
-        
-        if (axis.offset === 0) {
+        //if the caption for axis is shown the gap for x Axes needs to be
+        // set based on the axis.gap (means the space needed to show axis values)
+        if (axis.caption === true && axis.dimension === 'x' && axis.category === 'CATEGORY') {
+            var nameGap = 10 + axis.gap + {$this->baseAxisNameGap()}
+        } else {
+            var nameGap = 0
+        }
+        if (axis.dimension === 'x' && axis.category === 'CATEGORY') {
+            newOptions[axis.dimension + 'Axis'].push({
+                offset: offsets[axis.position],
+                nameGap: axis.gap,               
+                show: true
+            });
+        } else {
+            newOptions[axis.dimension + 'Axis'].push({
+                offset: offsets[axis.position],
+                show: true
+            });
+        }
+        if (axis.gap === 0) {
             {$this->buildJsShowMessageError("'{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.ECHARTS.AXIS_NO_DATA')} \"' + axis.name + '\"'")}
         }
+        // increase the offset for the next axis at the same position by the gap calculated for this axis        
+        if (nameGap === 0) {
+            offsets[axis.position] += axis.gap
+        } else {
+            offsets[axis.position] += nameGap
+        }
         
-        offsets[axis.position] += axis.offset;
+        
     }
     
+    // the grid margin at each side is the sum of each calculated axis gap for this side + the base margin
     var gridmargin = offsets;
     gridmargin['top'] += {$this->buildJsGridMarginTop()};
     gridmargin['right'] += {$this->buildJsGridMarginRight()};
@@ -1173,60 +1560,288 @@ JS;
     gridmargin['left'] += {$this->buildJsGridMarginLeft()};
     
     newOptions.grid = gridmargin;
-    //newOptions.dataset = {source: rowData};
+    var oldOptions = {$this->buildJsEChartsVar()}.getOption()
     
+    var zoomSet = "{$zoomSet}"
+    if ({$dataJs}.length > 15 && zoomSet === 'no') {
+        var oldOptions = {$this->buildJsEChartsVar()}.getOption()
+        if (oldOptions.dataZoom.length === 0) {
+            if (("_bar" in oldOptions.series[0]) === true) {
+                var zoom = [{$this->buildJsAxisZoom($widget->getAxesY()[0])}]
+                gridmargin['right'] += {$this->baseZoomOffset()}
+            } else {
+                var zoom = [{$this->buildJsAxisZoom($widget->getAxesX()[0])}]
+                gridmargin['bottom'] += {$this->baseZoomOffset()}
+            }
+            newOptions.dataZoom = zoom            
+        }
+    }    
     {$this->buildJsEChartsVar()}.setOption(newOptions);
     
     var split = "{$this->getWidget()->getSeries()[0]->getSplitByAttributeAlias()}" || undefined
     if (split === undefined) {
-        {$this->buildJsEChartsVar()}.setOption({dataset: {source: rowData}})
-    } else {
+        {$this->buildJsSplitCheck()}
+    } 
+    if (split === undefined) {
+        {$this->buildJsEChartsVar()}.setOption({dataset: {source: {$dataJs}}})
+    }
+    else {
         {$this->buildJsSplitSeries()}
+    }
+    
+    
+JS;
+    }
+       
+    /**
+     * js snippet to check if data should be split
+     * only supports single series
+     * 
+     * @return string
+     */
+    protected function buildJsSplitCheck(string $dataJs = 'rowData') : string
+    {
+        $widget = $this->getWidget();
+        if (($widget->getSeries()[0]) instanceof BarChartSeries) {
+            $axisKey = $widget->getAxesY()[0]->getDataColumn()->getDataColumnName();
+        } else {
+            $axisKey = $widget->getAxesX()[0]->getDataColumn()->getDataColumnName();
+        }
+        return <<<JS
+    
+    var keyValues = []
+    var doubleValues = []
+    //compare all X-Axes Key values in each row with each other
+    for (var i = 0; i < {$dataJs}.length; i++) {
+        var isDouble = false
+        for (var j = 0; j < keyValues.length; j++) {
+            if ({$dataJs}[i].{$axisKey} === keyValues[j]) {
+                isDouble = true
+                break
+            }
+        }
+        // if value not yet appeared, push value into keyValues array
+        if (isDouble === false) {
+            var value = {$dataJs}[i].{$axisKey}
+            keyValues.push(value)
+        // if value already appeared
+        } else {
+            var alreadyinDouble = false
+            // if it is already in doubleValues array and therefor not first double
+            for (k = 0; k < doubleValues.length; k++) {
+                if ({$dataJs}[i].{$axisKey} === doubleValues[k].{$axisKey}) {
+                    alreadyinDouble = true
+                    break
+                }
+            }
+            // if value is first time a double push whole data row into doubleValues array
+            if (alreadyinDouble === false) {
+                var value = {$dataJs}[i]
+                doubleValues.push(value)
+            }
+        }
+    }
+    var dataKeys = Object.keys({$dataJs}[0])
+    // for each object key in dataRow[0] check if value for that key in all objects in doubleValues array are equal
+    // if all values for that key are equal, dataset will be split at that key 
+    for (var j = 0; j < dataKeys.length; j++) {
+        var valueMatch = false
+        for (i = 1; i < doubleValues.length; i++) {
+            if (doubleValues[i-1][dataKeys[j]] === doubleValues[i][dataKeys[j]]) {
+                valueMatch = true
+            } else {
+                valueMatch = false
+                break
+            }
+        }
+        if (valueMatch === true) {
+            split = dataKeys[j]
+            break
+        }
+    }
+    console.log('Split: ',split)
+
+JS;
         
     }
     
-JS;
-        }
-        
+    /**
+    * js snippet to split the dataset and configure series for each dataset part
+    *
+    * @return string
+    */
+    protected function buildJsSplitSeries(string $dataJs = 'rowData') : string
+    {
         return <<<JS
-        
-    var rowData = $dataJs;
-    if (! rowData || rowData.count === 0) {
-        {$this->buildJsDataResetter()}
-        {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
-        return
+    
+    var splitDatasetObject = {};
+        for (var i=0; i < {$dataJs}.length; i++) {
+        var p = {$dataJs}[i][split];
+        if (!splitDatasetObject[p]) {
+            splitDatasetObject[p] = [];
+        }
+        splitDatasetObject[p].push({$dataJs}[i]);
     }
-    var echart = {$this->buildJsEChartsVar()}
-    echart._dataset = rowData
-    echart._oldSelection = undefined
-    echart._clickCount = 0
-{$this->buildJsMessageOverlayHide()}
-{$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
-$js
+    var splitDatasetArray = Object.keys(splitDatasetObject).map(i => splitDatasetObject[i])
+    var newNames = Object.keys(splitDatasetObject)
+    var baseSeries = {$this->buildJsChartSeriesConfig($this->getWidget()->getSeries()[0])}
+    var currentSeries = JSON.parse(JSON.stringify(baseSeries))
+    
+    currentSeries.name = newNames[0]
+    currentSeries.datasetIndex = 0
+    var newSeriesArray = [currentSeries]
 
+    for (var i = 1; i < newNames.length; i++) {
+        currentSeries = JSON.parse(JSON.stringify(baseSeries))
+        currentSeries.name = newNames[i]
+        currentSeries.datasetIndex = i
+        newSeriesArray.push(currentSeries)
+    }
+    var dataset = [{source: splitDatasetArray[0]}]
+    for (var i = 1; i < newNames.length; i++) {
+        var set = {}
+        set.source = splitDatasetArray[i]
+        dataset.push(set)
+    }
+    var newOptions = {
+        dataset: dataset,
+        series: newSeriesArray }
+    {$this->buildJsEChartsVar()}.setOption(newOptions)
+    
 JS;
     }
     
     /**
-     * function to split the dataset and configure series for each split (not used yet)
+     * javascript snippet to transform data to match data required for pie charts and draw pie chart
      *
      * @return string
      */
-    protected function buildJsSplitSeries() : string
+    protected function buildJsRedrawPie(string $dataJs = 'rowData') : string
     {
-        //TODO
         return <<<JS
-    console.log(split)
-    var grouped = {};
-        for (var i=0; i<rowData.length; i++) {
-        var p = rowData[i][split];
-        console.log(p)
-        if (!grouped[p]) { grouped[p] = []; }
-        grouped[p].push(rowData[i]);
+        
+    var arrayLength = {$dataJs}.length;
+    var chartData = [];
+    for (var i = 0; i < arrayLength; i++) {
+        var item = { value: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} , name: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} };
+        chartData.push(item);
     }
-    console.log(grouped)
     
+    {$this->buildJsEChartsVar()}.setOption({
+        series: [{
+            data: chartData
+        }],
+        legend: {
+            data: {$dataJs}.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
+        }
+    })
+
+JS;
+        
+    }
     
+    /**
+     * javascript snippet to transform data to match data required for graph charts and draw graph chart
+     *
+     * @return string
+     */
+    protected function buildJsRedrawGraph(string $dataJs = 'rowData')
+    {
+        $series = $this->getWidget()->getSeries()[0];
+        return <<<JS
+        
+    var nodes = []
+    var links = []
+    var node = {}
+    var link = {}
+    
+    // for each data object add a node that's not already existing to the nodes array
+    // and a link that's not already existing to the links array
+    for (var i = 0; i < {$dataJs}.length; i++) {    	
+		var existingNodeLeft = false
+        var existingNodeRight = false
+        for (var j = 0; j<nodes.length; j++) {
+            // if the right object already exists at node, increase the symbol size of that node
+			if (nodes[j].id === {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()}) {
+				existingNodeRight = true
+                nodes[j].symbolSize += 0.5
+			}
+            // if the left object already exists at node, increase the symbol size of that node
+			if (nodes[j].id === {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
+				existingNodeLeft = true
+                nodes[j].symbolSize += 0.5
+			}
+		}
+        // if the left and right object are the same and not yet existing as node, only add the left object to the nodes
+        if ({$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()} === {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
+            existingNodeRight = true
+        }
+        // if the left object is not existing as node yet, add it
+		if (existingNodeLeft === false ) {
+			node = {
+				id: {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()},
+				name: {$dataJs}[i].{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
+				itemStyle: null,
+				symbolSize: 10,
+				x: null,
+				y: null,
+				value: 10,
+				draggable: false,
+                _uid: {$dataJs}[i].{$series->getRelationDataColumn()->getDataColumnName()},
+			};
+			nodes.push(node)
+		}
+        // if the right object is not existing as node yet, add it
+		if (existingNodeRight === false ) {
+			node = {
+				id: {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()},
+				name: {$dataJs}[i].{$series->getRightObjectNameDataColumn()->getDataColumnName()},
+				itemStyle: null,
+				symbolSize: 10,
+				x: null,
+				y: null,
+				value: 10,
+				draggable: false,
+                _uid: {$dataJs}[i].{$series->getRelationDataColumn()->getDataColumnName()},
+			};
+		nodes.push(node)
+		}
+	
+    	// if relation direction is "regular" left object is source node, right object is target node for that relation
+        if ({$dataJs}[i].{$series->getDirectionDataColumn()->getDataColumnName()} == "regular") {
+    		var source = {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}
+    		var target = {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()}
+    	// else right object is source and left object is target for that relation
+        } else {
+    		var source = {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()}
+    		var target = {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}
+    	}
+        var existingLink = false;
+        // for every relation check if it's not already existing in links array
+        for (var j = 0; j<links.length; j++) {
+            if (links[j].id === {$dataJs}[i].{$series->getRelationDataColumn()->getDataColumnName()}) {
+                existingLink = true
+            }
+        }
+        // if relation is not existing yet as link, add it to links array
+        if (existingLink === false) {
+            link = {
+        		id: {$dataJs}[i].{$series->getRelationDataColumn()->getDataColumnName()},
+        		name: {$dataJs}[i].{$series->getRelationNameDataColumn()->getDataColumnName()},
+        		source: source,
+        		target: target,
+        	}
+        	links.push(link)
+        }
+    }
+
+    {$this->buildJsEChartsVar()}.setOption({
+    	series: [{
+    		data: nodes,
+            links: links,
+    	}],
+    });
+
 JS;
     }
     
@@ -1268,7 +1883,6 @@ JS;
      */
     protected function buildJsGridMarginTop() : int
     {
-        $baseMargin = 20;
         $countAxisLeft = 0;
         $countAxisRight = 0;
         $widget = $this->getWidget();
@@ -1280,7 +1894,7 @@ JS;
             }
         }
         if ($countAxisLeft > 0 || $countAxisRight > 0) {
-            $margin = 10;
+            $margin = 15;
         }
         if ($countAxisLeft >= $countAxisRight) {
             $margin += $this->baseAxisNameGap() * $countAxisLeft;
@@ -1289,9 +1903,9 @@ JS;
         }
         
         if ($this->legendHidden() === false && ($widget->getLegendPosition() === 'top' || $widget->getLegendPosition() === null)) {
-            $margin += 30;
+            $margin += $this->baseLegendOffset();
         }
-        return $baseMargin + $margin;
+        return $margin;
     }
     
     /**
@@ -1311,12 +1925,12 @@ JS;
                 $rightAxis = true;
             }
         }
-        if ($rightAxis === true) {
-            $basemargin = 0;
+        if ($rightAxis === true || $count != 0) {
+            $margin = 0;
         } else {
-            $basemargin = 40;
+            $margin = 40;
         }
-        $margin = $basemargin + 40*$count;
+        $margin += $this->baseZoomOffset() * $count;
         return  $margin;
     }
     
@@ -1335,9 +1949,9 @@ JS;
             }
         }
         if ($this->legendHidden() === false && $widget->getLegendPosition() === 'bottom') {
-            $margin += 20;
+            $margin += $this->baseLegendOffset();
         }
-        $margin += 5+40*$count;
+        $margin += 15 + $this->baseZoomOffset() * $count;
         return $margin;
     }
     
@@ -1364,13 +1978,27 @@ JS;
     }
     
     /**
-     * function to check if series is a pie series
+     * function to check if graph is a graph series
      *
      * @return bool
      */
-    protected function isPieChartSeries() : bool
+    protected function isPieChart() : bool
     {
         if ($this->getWidget()->getSeries()[0] instanceof PieChartSeries || $this->getWidget()->getSeries()[0] instanceof DonutChartSeries) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    /**
+     * function to check if chart is a graph chart
+     *
+     * @return bool
+     */
+    protected function isGraphChart() : bool
+    {
+        if ($this->getWidget()->getSeries()[0] instanceof GraphChartSeries) {
             return true;
         } else {
             return false;
@@ -1384,42 +2012,88 @@ JS;
      */
     protected function buildJsChartPropertyTooltip() : string
     {
-        if ($this->isPieChartSeries() === true) {
+        if ($this->isPieChart() === true) {
             return <<<JS
             
 {
 	trigger: 'item',
-	formatter: "{b} : {c} ({d}%)"
+	formatter: "{b} : {c} ({d}%)",
+    confine: true,
 },
 
 JS;
+        } elseif ($this->isGraphChart() === true) {
+            return <<<JS
+
+{
+	formatter: function(params) {
+		return params.data.name;
+	},
+    confine: true,
+},
+
+JS;
+            
         } else {
             return <<<JS
             
 {
 	trigger: 'axis',
+    confine: true,
+    enterable: true,
+    extraCssText: 'overflow-y: auto; max-height: 50%',
 	axisPointer: {
 		type: 'cross'
 	},
-    /*formatter: (params) => {
-        //console.log(params)
-        var options = {$this->buildJsEChartsVar()}.getOption();
-        let tooltip = params[0].axisValueLabel + '<br/>';
-        params.forEach(({marker, seriesName, value, seriesIndex}) => {
-            //console.log(options)
-            if (("_bar" in options.series[seriesIndex]) == true) {
-                data = options.series[seriesIndex].encode.x;
-            } else {
-                data = options.series[seriesIndex].encode.y;
+    position: function (point) {
+      //postion directly at cursor
+      return [point[0]+5, point[1]+5];
+    },
+    formatter: function (params) {
+        // params is ordered by value Axis (x Axis normally, y Axis for bar charts)
+        var options = {$this->buildJsEChartsVar()}.getOption();                       
+        // build table with header based on first value axis and it's label
+        var stacked = true;
+        for (i = 0; i < options.series.length; i++) {
+            if (!("stack" in options.series[i])) {
+                stacked = false;
+                break;
             }
-            //console.log(data);
-            tooltip += marker +' ' + seriesName + ': ' + value[data] + '<br/>';
+        }
+        var tooltip = '<table class="exf-tooltip-table"><tr><th align = "left" colspan = "3">' + params[0].axisValueLabel + '</th></tr>';
+        var tooltipPart = '';
+        var currentAxis = params[0].axisIndex;
+        // for each object in params build a table row
+        params.forEach(({axisIndex, axisValueLabel, marker, value, seriesIndex, seriesName}) => {
+            // get the correct formatter and the data for this object in params array
+            if (("_bar" in options.series[seriesIndex]) == true) {
+                var data = options.series[seriesIndex].encode.x;
+                var Index = options.series[seriesIndex].xAxisIndex;
+                var formatter = options.xAxis[Index].axisLabel.formatter;              
+            } else {
+                var data = options.series[seriesIndex].encode.y;
+                var Index = options.series[seriesIndex].yAxisIndex;
+                var formatter = options.yAxis[Index].axisLabel.formatter;                
+            }
+            var value = formatter(value[data]);
+            // if this params object is bound to another axis as the ones before, build a new header with new label
+            if (stacked === true) {
+                if (axisIndex !== currentAxis) {
+                    tooltip = tooltip + tooltipPart + '<tr><th colspan = "3">' + axisValueLabel + '</th></tr>';
+                    currentAxis = axisIndex;
+                }
+                tooltipPart ='<tr><td>'+ marker + '</td><td>' + seriesName + '</td><td>'+ value + '</td></tr>' + tooltipPart;
+            } else {
+                if (axisIndex !== currentAxis) {
+                    tooltipPart += '<tr><th align = "left" colspan = "3">' + axisValueLabel + '</th></tr>';
+                    currentAxis = axisIndex;
+                }
+                tooltip += tooltipPart + '<tr><td>'+ marker + '</td><td>' + seriesName + '</td><td>'+ value + '</td></tr>';
+                }
         });
+        tooltip += tooltipPart + '</tbody></table>';
         return tooltip;
-    },*/
-/*formatter: function(params) {
-    console.log(params)
-},*/
+    },
 },
 
 JS;
@@ -1433,6 +2107,9 @@ JS;
      */
     protected function buildJsChartPropertyLegend() : string
     {
+        if ($this->isGraphChart() === true) {
+            return '{show: false},';
+        }
         $padding = '';
         $widget = $this->getWidget();
         $firstSeries = $widget->getSeries()[0];
@@ -1481,13 +2158,33 @@ JS;
     }
     
     /**
-     * build function thats calles when chart gets resized
+     * build echarts js function that is called when chart gets resized
      *
      * @return string
      */
     protected function buildJsEChartsResize() : string
     {
         return "{$this->buildJsEChartsVar()}.resize()";
+    }
+    
+    /**
+     * build echarts js function that shows loading symbol 
+     *
+     * @return string
+     */
+    protected function buildJsEChartsShowLoading() : string
+    {
+        return "{$this->buildJsEChartsVar()}.showLoading()";
+    }
+    
+    /**
+     * build echarts js function that hides loading symbol
+     *
+     * @return string
+     */
+    protected function buildJsEChartsHideLoading() : string
+    {
+        return "{$this->buildJsEChartsVar()}.hideLoading()";
     }
     
     /**
@@ -1520,9 +2217,11 @@ JS;
         
                 function(){
                     var data = '';
-                    var selectedRow = {$this->buildJsEChartsVar()}._oldSelection;
-                    if (selectedRow && '{$key}' in selectedRow) {
-                        data = selectedRow["{$key}"];
+                    if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+                        var selectedRow = {$this->buildJsEChartsVar()}._oldSelection.data;
+                        if (selectedRow && '{$key}' in selectedRow) {
+                            data = selectedRow["{$key}"];
+                        }
                     }
                 return data;
                 }()
@@ -1546,13 +2245,12 @@ JS;
             // widget: filters, sorters, etc.
             return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
         } else {
-            if ($this->getWidget()->getSeries()[0] instanceof PieChartSeries) {
-                //return "console.log({$this->buildJsEChartsVar()}._oldSelection, {$this->buildJsEChartsVar()}._dataset )";
+            if ($this->isPieChart() === true) {
                 $rows = <<<JS
                 
                     function(){
                         var dataset = {$this->buildJsEChartsVar()}._dataset;
-                        var selectedRow = {$this->buildJsEChartsVar()}._oldSelection;
+                        var selectedRow = {$this->buildJsEChartsVar()}._oldSelection.data;
                         for (var i = 0; i < dataset.length; i++) {
                             if (dataset[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} === selectedRow.name) {
                                 return [dataset[i]]
@@ -1561,8 +2259,33 @@ JS;
                     }()
                     
 JS;
+                
+            } else if ($this->isGraphChart() === true) {
+                //TODO korrektes Datenset zurückliefern
+                $rows = <<<JS
+
+                    function(){
+                        var dataset = {$this->buildJsEChartsVar()}._dataset;
+                        var selection = {$this->buildJsEChartsVar()}._oldSelection
+                        if (selection.dataType === "node") {                        
+                            for (var i = 0; i < dataset.length; i++) {
+                                if (dataset[i].{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()} === selection.data.id) {
+                                    return [dataset[i]]
+                                }
+                            }
+                        } else if (selection.dataType === "edge") {
+                            for (var i = 0; i < dataset.length; i++) {
+                                if (dataset[i].{$this->getWidget()->getSeries()[0]->getRelationDataColumn()->getDataColumnName()} === selection.data.id) {
+                                    return [dataset[i]]
+                                }
+                            }
+                        }
+                    }()
+
+JS;
+            
             } else {
-                $rows = "[{$this->buildJsEChartsVar()}._oldSelection]";
+                $rows = "[{$this->buildJsEChartsVar()}._oldSelection.data]";
             }
         }
         return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($rows ? ", rows: " . $rows : '') . "}";
@@ -1577,9 +2300,12 @@ JS;
     protected function buildJsDataResetter() : string
     {
         return <<<JS
+{$this->buildJsEChartsVar()}.clear();
 var echart = {$this->buildJsEChartsVar()};
-{$this->buildJsEChartsVar()}.setOption({}, true);
-echart._oldSelection = undefined
+echart._dataset = undefined;
+echart._oldSelection = undefined;
+echart._doubleClkSelection = undefined;
+echart._clickCount = 0;
 
 JS;
 
@@ -1593,9 +2319,12 @@ JS;
     protected function legendHidden() : bool
     {
         $widget = $this->getWidget();
+        if ($widget->getLegendPosition() !== null) {
+            return false;
+        }
         $firstSeries = $widget->getSeries()[0];
         if (count($widget->getSeries()) == 1 && ($firstSeries instanceof PieChartSeries) === false) {
-            if ($firstSeries->getValueDataColumn() == $firstSeries->getValueAxis()->getDataColumn()){
+            if ($firstSeries->getValueDataColumn() === $firstSeries->getValueAxis()->getDataColumn()){
                 return true;
             } else {
                 return false;

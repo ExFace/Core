@@ -4,7 +4,6 @@ namespace exface\Core\Widgets\Parts\Charts;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Widgets\iShowData;
-use exface\Core\CommonLogic\UxonObject;
 
 /**
  * Pie chart using a meta attribute for values and another one for labels.
