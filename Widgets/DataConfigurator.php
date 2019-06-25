@@ -465,5 +465,19 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         }
         return parent::getWidgets($filter_callback);
     }
+    
+    /**
+     * Returns the data widget, that this configurator is bound to.
+     * 
+     * This is similar to getWidgetConfigured(), but the latter may also return other widget types
+     * (e.g. those using data like charts or diagrams), whild getDataWidget() allways returns the
+     * data widget itself.
+     * 
+     * @return Data
+     */
+    public function getDataWidget() : Data
+    {
+        return $this->getWidgetConfigured();
+    }
 }
 ?>

@@ -34,7 +34,15 @@ use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
  * @author Andrej Kabachnik
  *        
  */
-class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButtons, iHaveHeader, iHaveFooter, iHaveConfigurator, iSupportLazyLoading, iFillEntireContainer
+class Chart extends AbstractWidget implements 
+    iUseData, 
+    iHaveToolbars, 
+    iHaveButtons, 
+    iHaveHeader, 
+    iHaveFooter, 
+    iHaveConfigurator, 
+    iSupportLazyLoading, 
+    iFillEntireContainer
 {
     use iHaveButtonsAndToolbarsTrait;
     use iSupportLazyLoadingTrait;
