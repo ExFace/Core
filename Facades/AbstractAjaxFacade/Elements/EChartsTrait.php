@@ -140,7 +140,9 @@ JS;
         $handlersJs = $this->buildJsLegendSelectHandler();
         $handlersJs .= $this->buildJsOnClickHandler();
         $handlersJs .= $this->buildJsBindToClickHandler();
-        $handlersJs .= $this->buildJsOnGraphHoverHandler();
+        if ($this->isGraphChart() === true) {
+            $handlersJs .= $this->buildJsOnGraphHoverHandler();
+        }
         return $handlersJs;
     }
     
@@ -252,6 +254,59 @@ JS;
             
 JS;
     }
+            
+            
+    /**
+     * returns the data row from the initial dataset for a selection on a graph
+     * 
+     * @param string $selection
+     * @return string
+     */
+    protected function buildJsGetSelectedRowFunction(string $selection) : string
+    {
+        if ($this->isPieChart() === true) {
+            return <<<JS
+            
+                    function(){
+                        var dataset = {$this->buildJsEChartsVar()}._dataset;
+                        var selectedRow = {$selection};
+                        for (var i = 0; i < dataset.length; i++) {
+                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} === selectedRow.name) {
+                                return dataset[i];
+                            }
+                        }
+                        return '';
+                    }()
+                    
+JS;
+            
+        } else if ($this->isGraphChart() === true) {
+            return <<<JS
+            
+                    function(){
+                        var dataset = {$this->buildJsEChartsVar()}._dataset;
+                        var selection = {$selection};
+                        // searches first if a left object UID matches the data.id
+                        for (var i = 0; i < dataset.length; i++) {
+                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()} === selection.id) {
+                                return dataset[i];
+                            }
+                        }/*
+                        // if no node matches, then searches if a relation UID matches the data.id
+                        for (var i = 0; i < dataset.length; i++) {
+                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getRelationDataColumn()->getDataColumnName()} === selection.id) {
+                                return dataset[i];
+                            }
+                        }*/
+                        return '';
+                    }()
+                    
+JS;
+            
+        } else {
+            return "{$selection}";
+        }
+    }
     
     /**
      * 
@@ -285,12 +340,13 @@ JS;
         return <<<JS
 
             var clickCount = {$this->buildJsEChartsVar()}._clickCount;
+            var selected = {$this->buildJsGetSelectedRowFunction('params.data')};
             
             clickCount++;
             {$this->buildJsEChartsVar()}._clickCount = clickCount;
             if (clickCount === 1) {
-                if ({$this->buildJsEChartsVar()}._oldSelection === undefined || {$this->buildJsEChartsVar()}._oldSelection != {$params}.data ) {
-                    {$this->buildJsEChartsVar()}._doubleClkSelection = {$params}.data;
+                if ({$this->buildJsEChartsVar()}._oldSelection === undefined || {$this->buildJsEChartsVar()}._oldSelection != selected ) {
+                    {$this->buildJsEChartsVar()}._doubleClkSelection = selected;
                 }
                 {$this->buildJsSingleClick($params)} 
                 setTimeout(function(){
@@ -355,30 +411,20 @@ JS;
                 
                 var selection = {$this->buildJsEChartsVar()}._oldSelection
                 var options = {$this->buildJsEChartsVar()}.getOption();
-                if ("source" in selection) {
-                    var links = options.series[0].links
-                    var index = function(){
-                        for (var i = 0; i < links.length; i++) {
-                            if (links[i].id === selection.id) {
-                                return i
-                            }
+                var nodes = options.series[0].data
+                var index = function(){
+                    for (var i = 0; i < nodes.length; i++) {
+                        if (nodes[i].id === selection.{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()}) {
+                            return i
                         }
-                    }()
-                } else {
-                    var nodes = options.series[0].data
-                    var index = function(){
-                        for (var i = 0; i < nodes.length; i++) {
-                            if (nodes[i].id === selection.id) {
-                                return i
-                            }
-                        }                    
-                    }()
-                    {$this->buildJsEChartsVar()}.dispatchAction({
-                        type: 'focusNodeAdjacency',
-                        seriesIndex: 0,
-                        dataIndex: index
-                    });                    
-                }                
+                    }                    
+                }()
+                {$this->buildJsEChartsVar()}.dispatchAction({
+                    type: 'focusNodeAdjacency',
+                    seriesIndex: 0,
+                    dataIndex: index
+                });                    
+                
             }
         });
 
@@ -472,40 +518,30 @@ JS;
      */
     protected function buildJsSingleClickFunctionBody(string $params) : string
     {
-        return <<<JS
-        
+        if ($this->isPieChart() === true) {
+            return <<<JS
+            
         var params = {$params}
-        var dataRow = params.data
-        if (params.seriesType == 'pie') {
-            // if already a pie part is selected do the following
-            if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
-                // if already slected piepart gets clicked again
-                if ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')} == true) {
-                    // deselect the pie part
-                    {$this->buildJsEChartsVar()}.dispatchAction({
-                        type: 'pieUnSelect',
-                        seriesIndex: params.seriesIndex,
-                        dataIndex: params.dataIndex
-                    });
-                    {$this->buildJsSelect()}                        
-                // if different part then already selected part gets clicked
-                } else {
-                    // deselect old pie part
-                    {$this->buildJsEChartsVar()}.dispatchAction({
-                        type: 'pieUnSelect',
-                        seriesIndex: params.seriesIndex,
-                        name: {$this->buildJsEChartsVar()}._oldSelection.data.name
-                    });
-                    // select clicked pie part
-                    {$this->buildJsEChartsVar()}.dispatchAction({
-                        type: 'pieSelect',
-                        seriesIndex: params.seriesIndex,
-                        dataIndex: params.dataIndex
-                    });
-                    {$this->buildJsSelect('dataRow')}
-                }
-            // if no pie part was selected
+        var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};
+        // if already a pie part is selected do the following
+        if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+            // if already slected piepart gets clicked again
+            if ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')} == true) {
+                // deselect the pie part
+                {$this->buildJsEChartsVar()}.dispatchAction({
+                    type: 'pieUnSelect',
+                    seriesIndex: params.seriesIndex,
+                    dataIndex: params.dataIndex
+                });
+                {$this->buildJsSelect()}
+            // if different part then already selected part gets clicked
             } else {
+                // deselect old pie part
+                {$this->buildJsEChartsVar()}.dispatchAction({
+                    type: 'pieUnSelect',
+                    seriesIndex: params.seriesIndex,
+                    name: {$this->buildJsEChartsVar()}._oldSelection.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
+                });
                 // select clicked pie part
                 {$this->buildJsEChartsVar()}.dispatchAction({
                     type: 'pieSelect',
@@ -513,38 +549,43 @@ JS;
                     dataIndex: params.dataIndex
                 });
                 {$this->buildJsSelect('dataRow')}
-            }        
-        } else if (params.seriesType == 'graph') {
-            console.log(params)
-            if (params.dataType === "node") {            
-                // if already a graph node part is selected do the following
-                if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
-                    // if already selected graph node gets clicked again
-                    if ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')} == true) {
-                        // deselected the node
-                        {$this->buildJsEChartsVar()}.dispatchAction({
-                            type: 'unfocusNodeAdjacency',
-                            seriesIndex: params.seriesIndex,
-                        });
-                        {$this->buildJsSelect()}                        
-                    // if different node then already selected node gets clicked
-                    } else {
-                        // deselect old node
-                       {$this->buildJsEChartsVar()}.dispatchAction({
-                            type: 'unfocusNodeAdjacency',
-                            seriesIndex: params.seriesIndex,
-                        });
-                        // select clicked node                        
-                        {$this->buildJsEChartsVar()}.dispatchAction({
-                            type: 'focusNodeAdjacency',
-                            seriesIndex: params.seriesIndex,
-                            dataIndex: params.dataIndex
-                        });
-                        {$this->buildJsSelect('dataRow')}
-                    }
-                // if no node was selected
+            }
+        // if no pie part was selected
+        } else {
+            // select clicked pie part
+            {$this->buildJsEChartsVar()}.dispatchAction({
+                type: 'pieSelect',
+                seriesIndex: params.seriesIndex,
+                dataIndex: params.dataIndex
+            });
+            {$this->buildJsSelect('dataRow')}
+        }
+
+JS;
+                
+        } elseif ($this->isGraphChart() === true) {            
+            return <<<JS
+
+        if (params.dataType === "node") { 
+            var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};          
+            // if already a graph node part is selected do the following
+            if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+                // if already selected graph node gets clicked again
+                if ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')} == true) {
+                    // deselected the node
+                    {$this->buildJsEChartsVar()}.dispatchAction({
+                        type: 'unfocusNodeAdjacency',
+                        seriesIndex: params.seriesIndex,
+                    });
+                    {$this->buildJsSelect()}                        
+                // if different node then already selected node gets clicked
                 } else {
-                    // select clicked node
+                    // deselect old node
+                   {$this->buildJsEChartsVar()}.dispatchAction({
+                        type: 'unfocusNodeAdjacency',
+                        seriesIndex: params.seriesIndex,
+                    });
+                    // select clicked node                        
                     {$this->buildJsEChartsVar()}.dispatchAction({
                         type: 'focusNodeAdjacency',
                         seriesIndex: params.seriesIndex,
@@ -552,61 +593,76 @@ JS;
                     });
                     {$this->buildJsSelect('dataRow')}
                 }
+            // if no node was selected
             } else {
-                if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {                    
-                    {$this->buildJsSelect()}
-                    {$this->buildJsEChartsVar()}.dispatchAction({
-                        type: 'unfocusNodeAdjacency',
-                        seriesIndex: params.seriesIndex,
-                    });
-                }
+                // select clicked node
+                {$this->buildJsEChartsVar()}.dispatchAction({
+                    type: 'focusNodeAdjacency',
+                    seriesIndex: params.seriesIndex,
+                    dataIndex: params.dataIndex
+                });
+                {$this->buildJsSelect('dataRow')}
             }
         } else {
-            var options = {$this->buildJsEChartsVar()}.getOption();
-            var newOptions = {series: []};
-            var sameValue = false;
-            options.series.forEach((series) => {
-                newOptions.series.push({markLine: {data: {}}, _show: false});
-            });
-            // if the chart is a barchart
-            if (("_bar" in options.series[params.seriesIndex]) == true) {
-                newOptions.series[params.seriesIndex].markLine.data = [
-                    {
-        				yAxis: dataRow[options.series[params.seriesIndex].encode.y]
-        			}
-                ];
-                newOptions.series[params.seriesIndex].markLine._show = true;
-            // if the chart is not a barchart
-            } else {
-                newOptions.series[params.seriesIndex].markLine.data = [
-                    {
-        				xAxis: dataRow[options.series[params.seriesIndex].encode.x]
-        			}
-                ];
-                newOptions.series[params.seriesIndex].markLine._show = true;
+            if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {                    
+                {$this->buildJsSelect()}
+                {$this->buildJsEChartsVar()}.dispatchAction({
+                    type: 'unfocusNodeAdjacency',
+                    seriesIndex: params.seriesIndex,
+                });
             }
-            // if there was already a datapoint selected
-            if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
-                // if the selected datapoint is the same as the now clicked one
-                if ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')} == true) {
-                    {$this->buildJsSelect()}
-                    options.series.forEach((series) => {
-                        newOptions = {series: []}
-                        newOptions.series.push({markLine: {data: {}}, _show: false});
-                    });
-                } else {
-                    {$this->buildJsSelect('dataRow')}
-                }
-            // if no datapoint was selected yet
+        }
+
+JS;
+                
+        } else {
+            return <<<JS
+
+        var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};
+        var options = {$this->buildJsEChartsVar()}.getOption();
+        var newOptions = {series: []};
+        var sameValue = false;
+        options.series.forEach((series) => {
+            newOptions.series.push({markLine: {data: {}}, _show: false});
+        });
+        // if the chart is a barchart
+        if (("_bar" in options.series[params.seriesIndex]) == true) {
+            newOptions.series[params.seriesIndex].markLine.data = [
+                {
+    				yAxis: dataRow[options.series[params.seriesIndex].encode.y]
+    			}
+            ];
+            newOptions.series[params.seriesIndex].markLine._show = true;
+        // if the chart is not a barchart
+        } else {
+            newOptions.series[params.seriesIndex].markLine.data = [
+                {
+    				xAxis: dataRow[options.series[params.seriesIndex].encode.x]
+    			}
+            ];
+            newOptions.series[params.seriesIndex].markLine._show = true;
+        }
+        // if there was already a datapoint selected
+        if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+            // if the selected datapoint is the same as the now clicked one
+            if ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')} == true) {
+                {$this->buildJsSelect()}
+                options.series.forEach((series) => {
+                    newOptions = {series: []}
+                    newOptions.series.push({markLine: {data: {}}, _show: false});
+                });
             } else {
                 {$this->buildJsSelect('dataRow')}
             }
-        {$this->buildJsEChartsVar()}.setOption(newOptions);
+        // if no datapoint was selected yet
+        } else {
+            {$this->buildJsSelect('dataRow')}
         }
-        
-        
-        
+        {$this->buildJsEChartsVar()}.setOption(newOptions);
+    
 JS;
+        
+        }
     }
     
     /**
@@ -629,7 +685,7 @@ JS;
                 
             {$this->buildJsEChartsVar()}.on('dblclick', function(params){
                 if (params.dataType === 'node') {
-                    {$this->buildJsEChartsVar()}._oldSelection = params.data;
+                    {$this->buildJsEChartsVar()}._oldSelection = {$this->buildJsGetSelectedRowFunction('params.data')};
                     {$this->getFacade()->getElement($dblclick_button)->buildJsClickFunction()}
                 }
             });
@@ -655,7 +711,7 @@ JS;
             {$this->buildJsEChartsVar()}.on('contextmenu', function(params){
                 console.log(params);
                 if (params.dataType === 'node') {
-                    {$this->buildJsEChartsVar()}._oldSelection = params.data;
+                    {$this->buildJsEChartsVar()}._oldSelection = {$this->buildJsGetSelectedRowFunction('params.data')};
                     {$this->getFacade()->getElement($rightclick_button)->buildJsClickFunction()}
                     params.event.event.preventDefault();
                 }
@@ -669,7 +725,7 @@ JS;
                 
             {$this->buildJsEChartsVar()}.on('click', function(params){
                 if (params.dataType === 'node') {
-                    {$this->buildJsEChartsVar()}._oldSelection = params.data;
+                    {$this->buildJsEChartsVar()}._oldSelection = {$this->buildJsGetSelectedRowFunction('params.data')};
                     {$this->getFacade()->getElement($leftclick_button)->buildJsClickFunction()}
                 }
             });
@@ -685,7 +741,7 @@ JS;
                 $output .= <<<JS
                 
                 {$this->buildJsEChartsVar()}.on('dblclick', function(params){
-                    {$this->buildJsEChartsVar()}._oldSelection = params.data;
+                    {$this->buildJsEChartsVar()}._oldSelection = {$this->buildJsGetSelectedRowFunction('params.data')};
                     {$this->getFacade()->getElement($dblclick_button)->buildJsClickFunction()}
                 });
                 
@@ -697,7 +753,7 @@ JS;
                 $output .= <<<JS
                 
                 {$this->buildJsEChartsVar()}.on('click', function(params){
-                    {$this->buildJsEChartsVar()}._oldSelection = params.data;
+                    {$this->buildJsEChartsVar()}._oldSelection = {$this->buildJsGetSelectedRowFunction('params.data')};
                     {$this->getFacade()->getElement($leftclick_button)->buildJsClickFunction()}
                 });
                 
@@ -709,7 +765,7 @@ JS;
                 $output .= <<<JS
                 
                 {$this->buildJsEChartsVar()}.on('contextmenu', function(params){
-                    {$this->buildJsEChartsVar()}._oldSelection = params.data;
+                    {$this->buildJsEChartsVar()}._oldSelection = {$this->buildJsGetSelectedRowFunction('params.data')};
                     {$this->getFacade()->getElement($rightclick_button)->buildJsClickFunction()}
                     params.event.event.preventDefault();
                 });
@@ -1456,43 +1512,38 @@ JS;
      */
     protected function buildJsRedrawFunctionBody(string $dataJs) : string
     {
-        if ($this->isPieChart() === true) {
-            $js = $this->buildJsRedrawPie();
-        } elseif ($this->isGraphChart() === true) {
-            $js = $this->buildJsRedrawGraph();
-        } else {
-            $js = $this->buildJsRedrawXYChart();
-        }
-        
         if ($this->getWidget()->getData()->hasUidColumn()) {
-            $reselectRow = 'selectByUid';
             $uidField =  $this->getWidget()->getData()->getUidColumn()->getDataColumnName();
         } else {
-            $reselectRow = 'selectByRow';
             $uidField = 'undefined';
         }
-        
-        
+        if ($this->isPieChart() === true) {
+            $js = $this->buildJsRedrawPie($uidField);
+        } elseif ($this->isGraphChart() === true) {
+            $js = $this->buildJsRedrawGraph($uidField);
+        } else {
+            $js = $this->buildJsRedrawXYChart($uidField);
+        }       
         
         return <<<JS
         
-    var rowData = $dataJs;    
+    var rowData = $dataJs;
     //reset Chart Configuration and variables bound to div before building new one
     {$this->buildJsDataResetter()}
     // if data is empty or not defined show overlay message
     if (! rowData || rowData.count === 0) {
         {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
-        return
+        return;
     }
     var echart = {$this->buildJsEChartsVar()}
-    echart._dataset = rowData;
-    echart.resize()
+    echart.resize();
     //hide overlay message
     {$this->buildJsMessageOverlayHide()}
     //build and set basic chart config and options 
     {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
     //build and set dataset,config and options depending on chart type    
     $js
+    echart._dataset = rowData;
 JS;
     }
 
@@ -1501,7 +1552,7 @@ JS;
      * 
      * @return string
      */
-    protected function buildJsRedrawXYChart(string $dataJs = 'rowData') : string
+    protected function buildJsRedrawXYChart(string $uidField, string $dataJs = 'rowData') : string
     {
         $axesOffsetCalc = '';
         $axesJsObjectInit = '';
@@ -1801,12 +1852,13 @@ JS;
      *
      * @return string
      */
-    protected function buildJsRedrawPie(string $dataJs = 'rowData') : string
+    protected function buildJsRedrawPie(string $uidField, string $dataJs = 'rowData') : string
     {
         return <<<JS
         
     var arrayLength = {$dataJs}.length;
     var chartData = [];
+    var uidField = "{$uidField}";
     for (var i = 0; i < arrayLength; i++) {
         var item = { value: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} , name: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} };
         chartData.push(item);
@@ -1820,6 +1872,34 @@ JS;
             data: {$dataJs}.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
         }
     })
+    /*if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+        var dataset = {$this->buildJsEChartsVar()}._dataset;
+        var selection = {$this->buildJsEChartsVar()}._oldSelection;
+        if (uidField != undefined) {            
+            var selectedRow = function(){
+                            for (var i = 0; i < dataset.length; i++) {
+                                if (dataset[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} === selection.name) {
+                                    return [dataset[i]]
+                                }
+                            }
+                        }();
+            var newSelection = function(){
+                for (var i = 0; i < rowData.length; i++) {
+                    if (rowData[i].uidField === selectedRow.uidField) {
+                        return rowData[i];
+                    }
+                }
+            }();
+            {$this->buildJsEChartsVar()}.dispatchAction({
+                type: 'pieSelect',
+                seriesIndex: params.seriesIndex,
+                dataIndex: params.dataIndex
+            });
+            
+        }
+        
+    
+    }*/
 
 JS;
         
@@ -1830,82 +1910,74 @@ JS;
      *
      * @return string
      */
-    protected function buildJsRedrawGraph(string $dataJs = 'rowData')
+    protected function buildJsRedrawGraph(string $uidField, string $dataJs = 'rowData')
     {
         $series = $this->getWidget()->getSeries()[0];
         return <<<JS
         
-    var nodes = []
-    var links = []
-    var node = {}
-    var link = {}
+    var nodes = [];
+    var links = [];
+    var node = {};
+    var link = {};
     
     // for each data object add a node that's not already existing to the nodes array
     // and a link that's not already existing to the links array
     for (var i = 0; i < {$dataJs}.length; i++) {    	
-		var existingNodeLeft = false
-        var existingNodeRight = false
+		var existingNodeLeft = false;
+        var existingNodeRight = false;
         for (var j = 0; j<nodes.length; j++) {
             // if the right object already exists at node, increase the symbol size of that node
 			if (nodes[j].id === {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()}) {
-				existingNodeRight = true
-                nodes[j].symbolSize += 0.5
+				existingNodeRight = true;
+                nodes[j].symbolSize += 0.5;
+                nodes[j].value += 0.5;
 			}
             // if the left object already exists at node, increase the symbol size of that node
 			if (nodes[j].id === {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
-				existingNodeLeft = true
-                nodes[j].symbolSize += 0.5
+				existingNodeLeft = true;
+                nodes[j].symbolSize += 0.5;
+                nodes[j].value += 0.5;
 			}
 		}
         // if the left and right object are the same and not yet existing as node, only add the left object to the nodes
         if ({$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()} === {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
-            existingNodeRight = true
+            existingNodeRight = true;
         }
         // if the left object is not existing as node yet, add it
 		if (existingNodeLeft === false ) {
 			node = {
 				id: {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()},
 				name: {$dataJs}[i].{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
-				itemStyle: null,
-				symbolSize: 10,
-				x: null,
-				y: null,
+                symbolSize: 10,
 				value: 10,
-				//draggable: false,
-                _uid: {$dataJs}[i].{$series->getRelationDataColumn()->getDataColumnName()},
 			};
-			nodes.push(node)
+			nodes.push(node);
 		}
         // if the right object is not existing as node yet, add it
 		if (existingNodeRight === false ) {
 			node = {
 				id: {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()},
 				name: {$dataJs}[i].{$series->getRightObjectNameDataColumn()->getDataColumnName()},
-				itemStyle: null,
 				symbolSize: 10,
-				x: null,
-				y: null,
 				value: 10,
-				//draggable: false,
-                _uid: {$dataJs}[i].{$series->getRelationDataColumn()->getDataColumnName()},
 			};
-		nodes.push(node)
+		nodes.push(node);
 		}
 	
     	// if relation direction is "regular" left object is source node, right object is target node for that relation
         if ({$dataJs}[i].{$series->getDirectionDataColumn()->getDataColumnName()} == "regular") {
-    		var source = {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}
-    		var target = {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()}
+    		var source = {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()};
+    		var target = {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()};
     	// else right object is source and left object is target for that relation
         } else {
-    		var source = {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()}
-    		var target = {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}
+    		var source = {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()};
+    		var target = {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()};
     	}
         var existingLink = false;
         // for every relation check if it's not already existing in links array
         for (var j = 0; j<links.length; j++) {
             if (links[j].id === {$dataJs}[i].{$series->getRelationDataColumn()->getDataColumnName()}) {
-                existingLink = true
+                existingLink = true;
             }
         }
         // if relation is not existing yet as link, add it to links array
@@ -1915,8 +1987,8 @@ JS;
         		name: {$dataJs}[i].{$series->getRelationNameDataColumn()->getDataColumnName()},
         		source: source,
         		target: target,
-        	}
-        	links.push(link)
+        	};
+        	links.push(link);
         }
     }
 
@@ -1926,7 +1998,7 @@ JS;
             links: links,
     	}],
     });
-    console.log('nodes: ',nodes)
+    console.log('nodes: ',nodes);
 
 JS;
     }
@@ -2331,7 +2403,7 @@ JS;
             // widget: filters, sorters, etc.
             return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
         } else {
-            if ($this->isPieChart() === true) {
+            /*if ($this->isPieChart() === true) {
                 $rows = <<<JS
                 
                     function(){
@@ -2358,20 +2430,21 @@ JS;
                             if (dataset[i].{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()} === selection.id) {
                                 return [dataset[i]]
                             }
-                        }/*
+                        }
                         // if no node matches, then searches if a relation UID matches the data.id
                         for (var i = 0; i < dataset.length; i++) {
                             if (dataset[i].{$this->getWidget()->getSeries()[0]->getRelationDataColumn()->getDataColumnName()} === selection.id) {
                                 return [dataset[i]]
                             }
-                        }*/
+                        }
                     }()
 
 JS;
             
             } else {
                 $rows = "[{$this->buildJsEChartsVar()}._oldSelection]";
-            }
+            }*/
+            $rows = "[{$this->buildJsEChartsVar()}._oldSelection]";
         }
         return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($rows ? ", rows: " . $rows : '') . "}";
     }
