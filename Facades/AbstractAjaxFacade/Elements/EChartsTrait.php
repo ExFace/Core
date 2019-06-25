@@ -238,6 +238,7 @@ JS;
 
             var echart = {$this->buildJsEChartsVar()};
             var oSelected = {$selection};
+            console.log('SelectioN: ',oSelected)
             if (echart._oldselection === undefined) {
                 echart._oldSelection = {$selection};
             } else {
@@ -354,7 +355,6 @@ JS;
                 
                 var selection = {$this->buildJsEChartsVar()}._oldSelection
                 var options = {$this->buildJsEChartsVar()}.getOption();
-                console.log(selection)
                 if ("source" in selection) {
                     var links = options.series[0].links
                     var index = function(){
@@ -622,22 +622,22 @@ JS;
         $output = '';
         
         if ($this->isGraphChart() === true) {
-            // Double click actions for graph charts
-            // For now the action that is supposed to happen when double clicking on a node needs to be the
-            // first action bound to a double click and the action supposed to happen when double clicking on
-            // an edge/link needs to be the second one bound to a double click
+            // click actions for graph charts
+            // for now you can only call an action when clicking on a node
             if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[0]) {
                 $output .= <<<JS
                 
-            {$this->buildJsEChartsVar()}.on('dblclick', {dataType: 'node'}, function(params){
-                {$this->buildJsEChartsVar()}._oldSelection = params.data
-                {$this->getFacade()->getElement($dblclick_button)->buildJsClickFunction()}
+            {$this->buildJsEChartsVar()}.on('dblclick', function(params){
+                if (params.dataType === 'node') {
+                    {$this->buildJsEChartsVar()}._oldSelection = params.data;
+                    {$this->getFacade()->getElement($dblclick_button)->buildJsClickFunction()}
+                }
             });
             
 JS;
                 
             }
-            if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[1]) {
+            /*if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[1]) {
                 $output .= <<<JS
                 
             {$this->buildJsEChartsVar()}.on('dblclick', {dataType: 'edge'}, function(params){
@@ -647,6 +647,34 @@ JS;
             
 JS;
                 
+            }*/
+            
+            if ($rightclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_RIGHT_CLICK)[0]) {
+                $output .= <<<JS
+                
+            {$this->buildJsEChartsVar()}.on('contextmenu', function(params){
+                console.log(params);
+                if (params.dataType === 'node') {
+                    {$this->buildJsEChartsVar()}._oldSelection = params.data;
+                    {$this->getFacade()->getElement($rightclick_button)->buildJsClickFunction()}
+                    params.event.event.preventDefault();
+                }
+            });
+
+JS;
+            }
+
+            if ($leftclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_LEFT_CLICK)[0]) {
+                $output .= <<<JS
+                
+            {$this->buildJsEChartsVar()}.on('click', function(params){
+                if (params.dataType === 'node') {
+                    {$this->buildJsEChartsVar()}._oldSelection = params.data;
+                    {$this->getFacade()->getElement($leftclick_button)->buildJsClickFunction()}
+                }
+            });
+
+JS;
             }
             
         } else {
@@ -657,8 +685,33 @@ JS;
                 $output .= <<<JS
                 
                 {$this->buildJsEChartsVar()}.on('dblclick', function(params){
-                    {$this->buildJsEChartsVar()}._oldSelection = params.data
+                    {$this->buildJsEChartsVar()}._oldSelection = params.data;
                     {$this->getFacade()->getElement($dblclick_button)->buildJsClickFunction()}
+                });
+                
+JS;
+                    
+            }
+                    
+            if ($leftclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_LEFT_CLICK)[0]) {
+                $output .= <<<JS
+                
+                {$this->buildJsEChartsVar()}.on('click', function(params){
+                    {$this->buildJsEChartsVar()}._oldSelection = params.data;
+                    {$this->getFacade()->getElement($leftclick_button)->buildJsClickFunction()}
+                });
+                
+JS;
+                    
+            }
+                    
+            if ($rightclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_RIGHT_CLICK)[0]) {
+                $output .= <<<JS
+                
+                {$this->buildJsEChartsVar()}.on('contextmenu', function(params){
+                    {$this->buildJsEChartsVar()}._oldSelection = params.data;
+                    {$this->getFacade()->getElement($rightclick_button)->buildJsClickFunction()}
+                    params.event.event.preventDefault();
                 });
                 
 JS;
@@ -1045,7 +1098,7 @@ JS;
     },
     emphasis: {
         lineStyle: {
-            width: 10
+            width: 3
         }
     },
     draggable: false,
@@ -1418,6 +1471,8 @@ JS;
             $reselectRow = 'selectByRow';
             $uidField = 'undefined';
         }
+        
+        
         
         return <<<JS
         
@@ -2303,13 +2358,13 @@ JS;
                             if (dataset[i].{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()} === selection.id) {
                                 return [dataset[i]]
                             }
-                        }
+                        }/*
                         // if no node matches, then searches if a relation UID matches the data.id
                         for (var i = 0; i < dataset.length; i++) {
                             if (dataset[i].{$this->getWidget()->getSeries()[0]->getRelationDataColumn()->getDataColumnName()} === selection.id) {
                                 return [dataset[i]]
                             }
-                        }
+                        }*/
                     }()
 
 JS;
