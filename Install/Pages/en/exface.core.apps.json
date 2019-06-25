@@ -97,6 +97,9 @@
                 }
             },
             {
+                "action_alias": "exface.Core.ShowAppRelationGraph"
+            },
+            {
                 "action_alias": "axenox.PackageManager.ExportAppModel"
             },
             {
