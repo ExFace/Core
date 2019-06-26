@@ -1505,7 +1505,7 @@ JS;
     // Danach
     var val, gap;
     var len = 0;
-    var canvasCtxt = $('#{$this->getId()} canvas').get(0).getContext('2d');
+    // var canvasCtxt = $('#{$this->getId()} canvas').get(0).getContext('2d');
     // for each data row calculate the offset for the axis bound to a data value
     {$dataJs}.forEach(function(row){
         {$axesOffsetCalc}
