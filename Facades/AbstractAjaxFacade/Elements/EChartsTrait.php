@@ -1437,12 +1437,13 @@ JS;
                     $gap = ++$xAxisIndex . ' * 20 * 2 - 15';
                 }
             } else {
-                $gap = 'len * 8';
+                $gap = 'len * (8 - Math.floor(len / 16))';
+                //$gap = 'canvasCtxt.measureText(val).width + 12';
             }
             $axesOffsetCalc .= <<<JS
             
         val = row['{$axis->getDataColumn()->getDataColumnName()}'];
-        if (val === undefined) {
+        if (val === undefined || val === null) {
             len = 0;
         } else {
             val = {$this->buildJsLabelFormatter($axis->getDataColumn(), 'val')}
@@ -1504,6 +1505,7 @@ JS;
     // Danach
     var val, gap;
     var len = 0;
+    var canvasCtxt = $('#{$this->getId()} canvas').get(0).getContext('2d');
     // for each data row calculate the offset for the axis bound to a data value
     {$dataJs}.forEach(function(row){
         {$axesOffsetCalc}
