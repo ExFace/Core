@@ -75,8 +75,16 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      */
     public function getDataColumn() : DataColumn
     {
-        if ($this->data_column === null && $this->data_column_id !== null) {
-            $this->data_column = $this->getChart()->getData()->getColumn($this->data_column_id);
+        if ($this->data_column === null) {
+            if ($this->data_column_id !== null) {
+                if ($col = $this->getChart()->getData()->getColumn($this->data_column_id)) {
+                    $this->data_column = $col;
+                } else {
+                    throw new WidgetConfigurationError($this->getChart(), 'Cannot create ' . $this->getDimension() . '-axis: no data column found with id "' . $this->data_column_id . '"!', '769139J');
+                }
+            } else {
+                throw new WidgetConfigurationError($this->getChart(), 'Cannot create ' . $this->getDimension() . '-axis: either specify a data_column_id or an attribute_alias!', '769139J');
+            }
         }
         return $this->data_column;
     }
