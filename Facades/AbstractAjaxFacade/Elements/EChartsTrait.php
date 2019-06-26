@@ -3,9 +3,11 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
+use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Interfaces\Widgets\iDisplayValue;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Chart;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Widgets\Parts\Charts\BarChartSeries;
@@ -22,6 +24,7 @@ use exface\Core\Widgets\Parts\Charts\AreaChartSeries;
 use exface\Core\Exceptions\Facades\FacadeOutputError;
 use exface\Core\Widgets\Parts\Charts\Traits\XYChartSeriesTrait;
 use exface\Core\Widgets\Parts\Charts\GraphChartSeries;
+use exface\Core\Widgets\DataButton;
 
 /**
  *
@@ -31,6 +34,8 @@ use exface\Core\Widgets\Parts\Charts\GraphChartSeries;
  */
 trait EChartsTrait
 {
+    private $chartTypeButtonGroup = null;
+    
     /**
      * 
      * @return string
@@ -92,6 +97,51 @@ trait EChartsTrait
         return $includes;
     }
     
+    protected function addChartButtons() : void
+    {
+        $buttonTemplate = new UxonObject([
+            'widget_type' => 'DataButton',
+            'action' => [
+                'alias' => 'exface.Core.CustomFacadeScript',
+                'script' => ''
+            ],
+            'align' => 'right',
+            'hide_caption' => true
+        ]);
+        
+        $widget = $this->getWidget();
+        // Add header collapse button to the toolbar
+        $tb = $widget->getToolbarMain();
+        /*$chartTypeBtnGroup = $tb->createButtonGroup();
+        $this->chartTypeButtonGroup = $chartTypeBtnGroup;
+        $tb->addButtonGroup($chartTypeBtnGroup, $tb->getButtonGroupIndex($tb->getButtonGroupForSearchActions()));
+        */
+        /* @var \exface\Core\Widgets\Button $menu */
+        $menu = WidgetFactory::createFromUxonInParent($widget, new UxonObject([
+            'widget_type' => 'MenuButton',
+            'caption' => 'Chart Type',
+        ]));
+        $tb->getButtonGroupForSearchActions()->addButton($menu, 1);
+        if ($this->isGraphChart() === true) {
+            $buttonUxon = $buttonTemplate->copy();
+            $buttonUxon->setProperty('caption', 'Circle');            
+            $buttonUxon->setProperty('icon', 'circle-o');
+            $button = WidgetFactory::createFromUxon($widget->getPage(), $buttonUxon, $menu);
+            $button->getAction()->setScript($this->buildJsChangeToCircleGraph($button));
+            //$chartTypeBtnGroup->addButton($button,1);
+            $menu->addButton($button);
+            
+            $buttonUxon = $buttonTemplate->copy();
+            $buttonUxon->setProperty('caption', 'Network');
+            $buttonUxon->setProperty('icon', 'share-alt');
+            $button = WidgetFactory::createFromUxon($widget->getPage(), $buttonUxon, $menu);
+            $button->getAction()->setScript($this->buildJsChangeToNetworkGraph($button));
+            //$chartTypeBtnGroup->addButton($button,1);
+            $menu->addButton($button);
+        }
+        return;
+    }
+    
     /**
      * Build the javascript function
      *
@@ -99,7 +149,7 @@ trait EChartsTrait
      */
     protected function buildJsFunctions() : string
     {
-        return <<<JS
+        $output = <<<JS
         
     // Create the load function to fetch the data via AJAX or from another widget
     function {$this->buildJsDataLoadFunctionName()}() {
@@ -125,8 +175,14 @@ trait EChartsTrait
     function {$this->buildJsClicksFunctionName()}(params) {
         {$this->buildJsClicksFunctionBody('params')}
     };
-    
+
 JS;
+        
+        
+            
+        
+        
+        return $output;
     }
     
     /**
@@ -144,6 +200,64 @@ JS;
             $handlersJs .= $this->buildJsOnGraphHoverHandler();
         }
         return $handlersJs;
+    }
+    
+    /**
+     * js script for to change grapt to a circle graph
+     * 
+     * @param DataButton $button
+     * @return string
+     */
+    protected function buildJsChangeToCircleGraph(DataButton $button) : string
+    {
+        return <<<JS
+
+            var echart = {$this->buildJsEChartsVar()};
+            var options= {};
+            options.series = {
+                layout: 'circular',
+                lineStyle: {
+                    curveness: 0.2
+                },
+            };
+            echart.setOption(options);
+            echart.resize();
+
+JS;
+    }
+            
+    /**
+     * js script for to change grapt to a network graph
+     *
+     * @param DataButton $button
+     * @return string
+     */
+    protected function buildJsChangeToNetworkGraph(DataButton $button) : string
+    {
+        //TODO Chart zoom, damit nodes und edged connected (Bug, sind verschoben) 
+        return <<<JS
+        
+            var echart = {$this->buildJsEChartsVar()};
+            var options = {};
+            /*options.series = {$this->buildJsGraphChart($this->getWidget()->getSeries()[0])};*/
+            options.series = {
+                layout: 'force',
+                lineStyle: {
+                    curveness: 0
+                },
+            };
+            
+            echart.setOption(options);
+            echart.resize();
+/*
+            var elm = document.getElementById('{$this->getId()}').getElementsByTagName('canvas')[0];
+            console.log(elm)
+            var evt = document.createEvent("MouseEvents");
+            evt.initEvent('mousewheel', true, true);
+            evt.wheelDelta = 120;
+            elm.dispatchEvent(evt);*/
+            
+JS;
     }
     
     /**
@@ -627,7 +741,7 @@ JS;
         var options = echart.getOption();
         var newOptions = {series: []};
         options.series.forEach((series) => {
-            newOptions.series.push({markLine: {data: {}}, _show: false});
+            newOptions.series.push({markLine: {data: {}, _show: false}});
         });
         // if the chart is a barchart
         if (("_bar" in options.series[params.seriesIndex]) == true) {
@@ -1154,7 +1268,7 @@ JS;
     },
     lineStyle: {
         color: 'source',
-        curveness: 0.2
+        //curveness: 0.2
     },
     emphasis: {
         lineStyle: {
@@ -1718,7 +1832,11 @@ JS;
         if (nameGap === 0) {
             offsets[axis.position] += axis.gap
         } else {
-            offsets[axis.position] += nameGap
+            if (i < axes.length) {
+                offsets[axis.position] += nameGap
+            } else {
+                offsets[axis.position] += axis.gap
+            }
         }
         
         
@@ -2091,6 +2209,7 @@ JS;
         $countAxisLeft = 0;
         $countAxisRight = 0;
         $widget = $this->getWidget();
+        $margin = 25;
         foreach ($this->getWidget()->getAxesY() as $axis) {
             if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false && $axis->getHideCaption() === false ) {
                 $countAxisLeft++;
@@ -2450,47 +2569,6 @@ JS;
             // widget: filters, sorters, etc.
             return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
         } else {
-            /*if ($this->isPieChart() === true) {
-                $rows = <<<JS
-                
-                    function(){
-                        var dataset = {$this->buildJsEChartsVar()}._dataset;
-                        var selectedRow = {$this->buildJsEChartsVar()}._oldSelection;
-                        for (var i = 0; i < dataset.length; i++) {
-                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} === selectedRow.name) {
-                                return [dataset[i]]
-                            }
-                        }
-                    }()
-                    
-JS;
-                
-            } else if ($this->isGraphChart() === true) {
-                //TODO korrektes Datenset zurückliefern
-                $rows = <<<JS
-
-                    function(){
-                        var dataset = {$this->buildJsEChartsVar()}._dataset;
-                        var selection = {$this->buildJsEChartsVar()}._oldSelection
-                        // searches first if a left object UID matches the data.id
-                        for (var i = 0; i < dataset.length; i++) {
-                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()} === selection.id) {
-                                return [dataset[i]]
-                            }
-                        }
-                        // if no node matches, then searches if a relation UID matches the data.id
-                        for (var i = 0; i < dataset.length; i++) {
-                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getRelationDataColumn()->getDataColumnName()} === selection.id) {
-                                return [dataset[i]]
-                            }
-                        }
-                    }()
-
-JS;
-            
-            } else {
-                $rows = "[{$this->buildJsEChartsVar()}._oldSelection]";
-            }*/
             $rows = "[{$this->buildJsEChartsVar()}._oldSelection]";
         }
         return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($rows ? ", rows: " . $rows : '') . "}";
