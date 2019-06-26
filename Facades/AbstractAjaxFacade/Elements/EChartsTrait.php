@@ -407,8 +407,7 @@ JS;
         return <<<JS
 
         {$this->buildJsEChartsVar()}.on('unfocusnodeadjacency', function(params){
-            if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
-                
+            if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {                
                 var selection = {$this->buildJsEChartsVar()}._oldSelection
                 var options = {$this->buildJsEChartsVar()}.getOption();
                 var nodes = options.series[0].data
@@ -419,12 +418,7 @@ JS;
                         }
                     }                    
                 }()
-                {$this->buildJsEChartsVar()}.dispatchAction({
-                    type: 'focusNodeAdjacency',
-                    seriesIndex: 0,
-                    dataIndex: index
-                });                    
-                
+                {$this->buildJsCallEChartsAction('echart', 'focusNodeAdjacency', '0', 'index')}
             }
         });
 
@@ -505,11 +499,49 @@ JS;
         return $this->buildJsFunctionPrefix() . 'singleClick';
     }
     
+   /**
+    * 
+    * @param string $params
+    * @return string
+    */
     protected function buildJsSingleClick(string $params = '') : string
     {
         return $this->buildJsSingleClickFunctionName() . '(' . $params . ')';
     }
     
+    /**
+     * javascript snippet to call an echarts action
+     * 
+     * @param string $chart
+     * @param string $type
+     * @param string $seriesIndexJs
+     * @param string $dataIndexJs
+     * @param string $nameJs
+     * @return string
+     */
+    protected function buildJsCallEChartsAction(string $chart, string $type, string $seriesIndexJs, string $dataIndexJs = null, string $nameJs = null) : string
+    {
+        if ($dataIndexJs != null) {
+            $dataIndex = "dataIndex: {$dataIndexJs},";
+        } else {
+            $dataIndex = '';
+        }
+        if ($nameJs != null) {
+            $name = "name: {$nameJs},";
+        } else {
+            $name = '';
+        }
+        return <<<JS
+        
+    {$chart}.dispatchAction({
+        type: '{$type}',
+        seriesIndex: {$seriesIndexJs},
+        {$dataIndex}
+        {$name}
+    });
+
+JS;
+    }
     /**
      * Javascript function body for function that handles a single click on a chart
      * 
@@ -521,43 +553,29 @@ JS;
         if ($this->isPieChart() === true) {
             return <<<JS
             
-        var params = {$params}
+        var params = {$params};
         var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};
+        var echart = {$this->buildJsEChartsVar()};
         // if already a pie part is selected do the following
-        if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+        if (echart._oldSelection != undefined) {
             // if already slected piepart gets clicked again
-            if ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')} == true) {
+            if ({$this->buildJsRowCompare('echart._oldSelection', 'dataRow')} == true) {
                 // deselect the pie part
-                {$this->buildJsEChartsVar()}.dispatchAction({
-                    type: 'pieUnSelect',
-                    seriesIndex: params.seriesIndex,
-                    dataIndex: params.dataIndex
-                });
+                {$this->buildJsCallEChartsAction('echart', 'pieUnSelect', 'params.seriesIndex', 'params.dataIndex')}
                 {$this->buildJsSelect()}
             // if different part then already selected part gets clicked
             } else {
                 // deselect old pie part
-                {$this->buildJsEChartsVar()}.dispatchAction({
-                    type: 'pieUnSelect',
-                    seriesIndex: params.seriesIndex,
-                    name: {$this->buildJsEChartsVar()}._oldSelection.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
-                });
+                var name = echart._oldSelection.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
+                {$this->buildJsCallEChartsAction('echart', 'pieUnSelect', 'params.seriesIndex', null, 'name')}
                 // select clicked pie part
-                {$this->buildJsEChartsVar()}.dispatchAction({
-                    type: 'pieSelect',
-                    seriesIndex: params.seriesIndex,
-                    dataIndex: params.dataIndex
-                });
+                {$this->buildJsCallEChartsAction('echart', 'pieSelect', 'params.seriesIndex', 'params.dataIndex')}
                 {$this->buildJsSelect('dataRow')}
             }
         // if no pie part was selected
         } else {
             // select clicked pie part
-            {$this->buildJsEChartsVar()}.dispatchAction({
-                type: 'pieSelect',
-                seriesIndex: params.seriesIndex,
-                dataIndex: params.dataIndex
-            });
+            {$this->buildJsCallEChartsAction('echart', 'pieSelect', 'params.seriesIndex', 'params.dataIndex')}
             {$this->buildJsSelect('dataRow')}
         }
 
@@ -566,50 +584,34 @@ JS;
         } elseif ($this->isGraphChart() === true) {            
             return <<<JS
 
-        if (params.dataType === "node") { 
-            var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};          
+        var echart = {$this->buildJsEChartsVar()};
+        var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')}; 
+        if (params.dataType === "node") {          
             // if already a graph node part is selected do the following
-            if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+            if (echart._oldSelection != undefined) {
                 // if already selected graph node gets clicked again
-                if ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')} == true) {
+                if ({$this->buildJsRowCompare('echart._oldSelection', 'dataRow')} == true) {
                     // deselected the node
-                    {$this->buildJsEChartsVar()}.dispatchAction({
-                        type: 'unfocusNodeAdjacency',
-                        seriesIndex: params.seriesIndex,
-                    });
+                    {$this->buildJsCallEChartsAction('echart', 'unfocusNodeAdjacency', 'params.seriesIndex')}
                     {$this->buildJsSelect()}                        
                 // if different node then already selected node gets clicked
                 } else {
                     // deselect old node
-                   {$this->buildJsEChartsVar()}.dispatchAction({
-                        type: 'unfocusNodeAdjacency',
-                        seriesIndex: params.seriesIndex,
-                    });
-                    // select clicked node                        
-                    {$this->buildJsEChartsVar()}.dispatchAction({
-                        type: 'focusNodeAdjacency',
-                        seriesIndex: params.seriesIndex,
-                        dataIndex: params.dataIndex
-                    });
+                    {$this->buildJsCallEChartsAction('echart', 'unfocusNodeAdjacency', 'params.seriesIndex')}
+                    // select clicked node 
+                    {$this->buildJsCallEChartsAction('echart', 'focusNodeAdjacency', 'params.seriesIndex', 'params.dataIndex')}                       
                     {$this->buildJsSelect('dataRow')}
                 }
             // if no node was selected
             } else {
                 // select clicked node
-                {$this->buildJsEChartsVar()}.dispatchAction({
-                    type: 'focusNodeAdjacency',
-                    seriesIndex: params.seriesIndex,
-                    dataIndex: params.dataIndex
-                });
+                {$this->buildJsCallEChartsAction('echart', 'focusNodeAdjacency', 'params.seriesIndex', 'params.dataIndex')}
                 {$this->buildJsSelect('dataRow')}
             }
         } else {
-            if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {                    
+            if (echart._oldSelection != undefined) {
+                {$this->buildJsCallEChartsAction('echart', 'unfocusNodeAdjacency', 'params.seriesIndex')}
                 {$this->buildJsSelect()}
-                {$this->buildJsEChartsVar()}.dispatchAction({
-                    type: 'unfocusNodeAdjacency',
-                    seriesIndex: params.seriesIndex,
-                });
             }
         }
 
@@ -617,9 +619,9 @@ JS;
                 
         } else {
             return <<<JS
-
+        var echart = {$this->buildJsEChartsVar()};
         var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};
-        var options = {$this->buildJsEChartsVar()}.getOption();
+        var options = echart.getOption();
         var newOptions = {series: []};
         var sameValue = false;
         options.series.forEach((series) => {
@@ -643,9 +645,9 @@ JS;
             newOptions.series[params.seriesIndex].markLine._show = true;
         }
         // if there was already a datapoint selected
-        if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
+        if (echart._oldSelection != undefined) {
             // if the selected datapoint is the same as the now clicked one
-            if ({$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'dataRow')} == true) {
+            if ({$this->buildJsRowCompare('echart._oldSelection', 'dataRow')} == true) {
                 {$this->buildJsSelect()}
                 options.series.forEach((series) => {
                     newOptions = {series: []}
@@ -658,7 +660,7 @@ JS;
         } else {
             {$this->buildJsSelect('dataRow')}
         }
-        {$this->buildJsEChartsVar()}.setOption(newOptions);
+        echart.setOption(newOptions);
     
 JS;
         
