@@ -38,9 +38,11 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
  * - metamodel:relation
  * - metamodel:action
  * - metamodel:page
+ * - metamodel:data_source
  * - metamodel:comparator
  * - metamodel:connection
  * - metamodel:formula
+ * - metamodel:expression
  * - metamodel:widget_link
  * - metamodel:event
  * - metamodel:data_source
@@ -108,6 +110,7 @@ class UxonSchema implements UxonSchemaInterface
     }
     
     /**
+     * Recursively returning property content valu
      * 
      * {@inheritdoc}
      * @see UxonSchemaInterface::getPropertyValueRecursive()
@@ -133,7 +136,7 @@ class UxonSchema implements UxonSchemaInterface
     }
     
     /**
-     * 
+     *
      * {@inheritdoc}
      * @see UxonSchemaInterface::getProperties()
      */
@@ -168,6 +171,7 @@ class UxonSchema implements UxonSchemaInterface
     }
     
     /**
+     * Returning properties sheet
      * 
      * @param string $prototypeClass
      * @return DataSheetInterface
@@ -209,6 +213,7 @@ class UxonSchema implements UxonSchemaInterface
     }
 
     /**
+     * Returning filename of definition for a given prototype class name
      * 
      * @param string $prototypeClass
      * @return string
@@ -278,6 +283,12 @@ class UxonSchema implements UxonSchemaInterface
             case strcasecmp($firstType, 'boolean') === 0:
                 $options = ['true', 'false'];
                 break;
+            case strcasecmp($firstType, 'metamodel:data_source') === 0:
+                $options = $this->getMetamodelDataSourceAliases($search);
+                break;
+            case strcasecmp($firstType, 'metamodel:connection') === 0:
+                $options = $this->getMetamodelConnectionAliases($search);
+                break;
             case strcasecmp($firstType, 'metamodel:widget') === 0:
                 $options = $this->getMetamodelWidgetTypes();
                 break;
@@ -286,6 +297,9 @@ class UxonSchema implements UxonSchemaInterface
                 break;
             case strcasecmp($firstType, 'metamodel:action') === 0:
                 $options = $this->getMetamodelActionAliases($search);
+                break;
+            case strcasecmp($firstType, 'metamodel:formula') === 0:
+                $options = $this->getMetamodelFormulaAliases($search);
                 break;
             case strcasecmp($firstType, 'metamodel:page') === 0:
                 $options = $this->getMetamodelPageAliases($search);
@@ -308,11 +322,18 @@ class UxonSchema implements UxonSchemaInterface
                 break;
             case strcasecmp($firstType, 'metamodel:expression') === 0:
                 try {
+                   
+                    // Formula: directly determine existing aliases without metaobject
+                    if (substr($search, 0, 1) === '=') {
+                        $firstType = 'metamodel:formula';
+                        $options = $this->getMetamodelFormulaExpressions($search);
+                        brk;
+                    } 
+                    
                     $object = $this->getMetaObject($uxon, $path, $rootObject);
                     $ex = ExpressionFactory::createFromString($this->getWorkbench(), $search, $object);
-                    if ($ex->isFormula() === true) {
-                        // TODO
-                    } elseif ($ex->isReference() === true) {
+                   
+                    if ($ex->isReference() === true) {
                         // TODO
                     } elseif ($ex->isNumber()) {
                         // Do nothing - a number is simply a number
@@ -322,6 +343,7 @@ class UxonSchema implements UxonSchemaInterface
                     }
                 } catch (MetaObjectNotFoundError $e) {
                     $options = [];
+    
                 }
                 break;
             
@@ -345,6 +367,7 @@ class UxonSchema implements UxonSchemaInterface
     }
     
     /**
+     * Returning metamodel object aliases
      * 
      * @param string $search
      * @return string[]
@@ -376,6 +399,7 @@ class UxonSchema implements UxonSchemaInterface
     }
     
     /**
+     * Returning metamodel attribute aliases
      * 
      * @param MetaObjectInterface $object
      * @param string $search
@@ -423,6 +447,13 @@ class UxonSchema implements UxonSchemaInterface
         return $values;
     }
     
+    /**
+     * Returning metamodel relation aliases
+     * 
+     * @param MetaObjectInterface $object
+     * @param string $search
+     * @return array
+     */
     protected function getMetamodelRelationAliases(MetaObjectInterface $object, string $search = null) : array
     {
         $attrAliases = $this->getMetamodelAttributeAliases($object, $search);
@@ -437,6 +468,7 @@ class UxonSchema implements UxonSchemaInterface
     }
     
     /**
+     * Returning metamodel widget types
      *
      * @return string[]
      */
@@ -457,6 +489,7 @@ class UxonSchema implements UxonSchemaInterface
     }
     
     /**
+     * Returning metamodel action aliases
      *
      * @return string[]
      */
@@ -492,6 +525,60 @@ class UxonSchema implements UxonSchemaInterface
     }
     
     /**
+     * Returning formula aliases: e.g. ['exface.Core.Concatenate', 'Concatenate', 'my.App.MyFormula']
+     * 
+     * @return string[]
+     */
+    protected function getMetamodelFormulaAliases() : array
+    {
+        
+        if ($cache = $this->getCache('', 'formulaAliases')) {
+             return $cache;
+        }
+        
+        $options = [];
+        $dot = AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
+        
+        // Prototypes
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.FORMULA');
+        $ds->getColumns()->addMultiple(['NAME', 'PATH_RELATIVE']);
+        $ds->dataRead();
+        foreach ($ds->getRows() as $row) {
+            $namespace = str_replace(['/Formulas', '/'], ['', $dot], $row['PATH_RELATIVE']);
+            $options[] = $namespace . $dot . $row['NAME'];
+            if (strcasecmp($namespace, 'exface.Core') === 0) {
+                $options[] = $row['NAME'];
+            }
+        }
+       sort($options);
+      
+       $this->setCache('', 'formulaAliases', $options);
+        
+        return $options;
+    }
+    
+    
+    /**
+     * Returning formula expression stubs: e.g. ['=exface.Core.Concatenate(', '=Concatenate(', '=my.App.MyFormula(']
+     * 
+     * @return string[]
+     */
+    protected function getMetamodelFormulaExpressions(string $search = null) : array
+    {  
+
+       $expressions = []; 
+        
+       foreach ($this->getMetamodelFormulaAliases($search) as $key => $opt) {
+           $expressions[$key] = '=' . $opt . '(';
+       }
+       
+       return $expressions;
+    }
+    
+    
+    
+    /**
+     * Returning metamodel page aliases
      * 
      * @return string[]
      */
@@ -502,8 +589,37 @@ class UxonSchema implements UxonSchemaInterface
         $ds->dataRead();
         return $ds->getColumns()->get('ALIAS')->getValues(false);
     }
+   
+    /**
+     * Returning metamodel data source aliases
+     *
+     * @return string[]
+     */
+    protected function getMetamodelDataSourceAliases() : array
+    {
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.DATASRC');
+        $ds->getColumns()->addFromExpression('ALIAS');
+        $ds->dataRead();
+        return $ds->getColumns()->get('ALIAS')->getValues(false);
+    }
     
     /**
+     *
+     * Returning metamodel connection aliases
+     *
+     * @return string[]
+     */
+    protected function getMetamodelConnectionAliases() : array
+    {
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.CONNECTION');
+        $ds->getColumns()->addFromExpression('ALIAS');
+        $ds->dataRead();
+        return $ds->getColumns()->get('ALIAS')->getValues(false);
+    }
+    
+    /**
+     * 
+     * Returning metamodel comparators
      * 
      * @return string[]
      */
@@ -514,6 +630,8 @@ class UxonSchema implements UxonSchemaInterface
     
     /**
      * 
+     * Returning true, if property has type enumeration
+     * 
      * @param string $type
      * @return bool
      */
@@ -523,6 +641,8 @@ class UxonSchema implements UxonSchemaInterface
     }
     
     /**
+     * 
+     * Returns true, if given prototype class name is an existing class
      * 
      * @param string $prototypeClass
      * @return bool
