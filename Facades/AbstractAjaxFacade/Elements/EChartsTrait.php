@@ -240,7 +240,6 @@ JS;
 
             var echart = {$this->buildJsEChartsVar()};
             var oSelected = {$selection};
-            console.log('SelectioN: ',oSelected)
             if (echart._oldselection === undefined) {
                 echart._oldSelection = {$selection};
             } else {
@@ -407,9 +406,10 @@ JS;
         return <<<JS
 
         {$this->buildJsEChartsVar()}.on('unfocusnodeadjacency', function(params){
-            if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {                
-                var selection = {$this->buildJsEChartsVar()}._oldSelection
-                var options = {$this->buildJsEChartsVar()}.getOption();
+            var echart = {$this->buildJsEChartsVar()};
+            if (echart._oldSelection != undefined) {
+                var selection = echart._oldSelection
+                var options = echart.getOption();
                 var nodes = options.series[0].data
                 var index = function(){
                     for (var i = 0; i < nodes.length; i++) {
@@ -584,7 +584,9 @@ JS;
         } elseif ($this->isGraphChart() === true) {            
             return <<<JS
 
+        
         var echart = {$this->buildJsEChartsVar()};
+        var params = {$params};
         var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')}; 
         if (params.dataType === "node") {          
             // if already a graph node part is selected do the following
@@ -620,10 +622,10 @@ JS;
         } else {
             return <<<JS
         var echart = {$this->buildJsEChartsVar()};
+        var params = {$params};
         var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};
         var options = echart.getOption();
         var newOptions = {series: []};
-        var sameValue = false;
         options.series.forEach((series) => {
             newOptions.series.push({markLine: {data: {}}, _show: false});
         });
@@ -649,8 +651,9 @@ JS;
             // if the selected datapoint is the same as the now clicked one
             if ({$this->buildJsRowCompare('echart._oldSelection', 'dataRow')} == true) {
                 {$this->buildJsSelect()}
-                options.series.forEach((series) => {
-                    newOptions = {series: []}
+                console.log('ich bin hier')
+                newOptions = {series: []}
+                options.series.forEach((series) => {                    
                     newOptions.series.push({markLine: {data: {}}, _show: false});
                 });
             } else {
@@ -711,7 +714,6 @@ JS;
                 $output .= <<<JS
                 
             {$this->buildJsEChartsVar()}.on('contextmenu', function(params){
-                console.log(params);
                 if (params.dataType === 'node') {
                     {$this->buildJsEChartsVar()}._oldSelection = {$this->buildJsGetSelectedRowFunction('params.data')};
                     {$this->getFacade()->getElement($rightclick_button)->buildJsClickFunction()}
@@ -1516,36 +1518,68 @@ JS;
     {
         if ($this->getWidget()->getData()->hasUidColumn()) {
             $uidField =  $this->getWidget()->getData()->getUidColumn()->getDataColumnName();
-        } else {
-            $uidField = 'undefined';
         }
         if ($this->isPieChart() === true) {
-            $js = $this->buildJsRedrawPie($uidField);
+            $js = $this->buildJsRedrawPie('newSelection');
         } elseif ($this->isGraphChart() === true) {
-            $js = $this->buildJsRedrawGraph($uidField);
+            $js = $this->buildJsRedrawGraph('newSelection');
         } else {
-            $js = $this->buildJsRedrawXYChart($uidField);
+            $js = $this->buildJsRedrawXYChart('newSelection', 'seriesIndex');
         }       
         
         return <<<JS
         
     var rowData = $dataJs;
+    var echart = {$this->buildJsEChartsVar()}
+    var newSelection = undefined;
+    var uidField = '{$uidField}' || undefined ;
+    if (echart._oldSelection != undefined) {
+        if (uidField != undefined) {
+            newSelection = function (){
+                for (var i = 0; i < rowData.length; i++) {
+                    if (rowData[i][uidField] === echart._oldSelection[uidField]) {
+                        return rowData[i];
+                    }
+                }
+                return undefined
+            }();
+        } else {
+            newSelection = function (){
+                for (var i = 0; i < rowData.length; i++) {
+                    if ({$this->buildJsRowCompare('rowData[i]', 'echart._oldSelection')}) {
+                        return rowData[i];
+                    }
+                }
+                return undefined
+            }();
+        }
+    }
+    var options = echart.getOption();
+    var seriesIndex = undefined
+    if (options != undefined) {
+        for(var i = 0; i < options.series.length; i++) {
+            if ('markLine' in options.series[i]) {
+                if (options.series[i].markLine._show === true) {
+                    seriesIndex = i;
+                }
+            }
+        }
+    }
     //reset Chart Configuration and variables bound to div before building new one
     {$this->buildJsDataResetter()}
     // if data is empty or not defined show overlay message
-    if (! rowData || rowData.count === 0) {
+    if (! rowData || rowData.length === 0) {
         {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
         return;
     }
-    var echart = {$this->buildJsEChartsVar()}
     echart.resize();
+    echart._dataset = rowData;
     //hide overlay message
     {$this->buildJsMessageOverlayHide()}
     //build and set basic chart config and options 
     {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
     //build and set dataset,config and options depending on chart type    
     $js
-    echart._dataset = rowData;
 JS;
     }
 
@@ -1554,7 +1588,7 @@ JS;
      * 
      * @return string
      */
-    protected function buildJsRedrawXYChart(string $uidField, string $dataJs = 'rowData') : string
+    protected function buildJsRedrawXYChart(string $selection = 'undefined', string $series = 'undefined', string $dataJs = 'rowData') : string
     {
         $axesOffsetCalc = '';
         $axesJsObjectInit = '';
@@ -1726,6 +1760,17 @@ JS;
     else {
         {$this->buildJsSplitSeries()}
     }
+
+    var selection = {$selection};
+    if (selection != undefined) {
+        if ({$series} != undefined) {
+            var params = {seriesIndex: seriesIndex};
+        } else {
+            var params = {seriesIndex: 0};
+        }
+        params.data = selection;
+        {$this->buildJsSingleClick('params')}
+    }
     
     
 JS;
@@ -1820,26 +1865,27 @@ JS;
         }
         splitDatasetObject[p].push({$dataJs}[i]);
     }
-    var splitDatasetArray = Object.keys(splitDatasetObject).map(i => splitDatasetObject[i])
-    var newNames = Object.keys(splitDatasetObject)
+    var splitDatasetArray = Object.keys(splitDatasetObject).map(i => splitDatasetObject[i]);
+    var newNames = Object.keys(splitDatasetObject);
     var baseSeries = {$this->buildJsChartSeriesConfig($this->getWidget()->getSeries()[0])}
-    var currentSeries = JSON.parse(JSON.stringify(baseSeries))
+    var currentSeries = JSON.parse(JSON.stringify(baseSeries));
     
-    currentSeries.name = newNames[0]
-    currentSeries.datasetIndex = 0
-    var newSeriesArray = [currentSeries]
+    currentSeries.name = newNames[0];
+    currentSeries.datasetIndex = 0;
+    var newSeriesArray = [currentSeries];
 
     for (var i = 1; i < newNames.length; i++) {
-        currentSeries = JSON.parse(JSON.stringify(baseSeries))
-        currentSeries.name = newNames[i]
-        currentSeries.datasetIndex = i
-        newSeriesArray.push(currentSeries)
+        currentSeries = JSON.parse(JSON.stringify(baseSeries));
+        currentSeries.name = newNames[i];
+        currentSeries.datasetIndex = i;
+        currentSeries.markLine = baseSeries.markLine;
+        newSeriesArray.push(currentSeries);
     }
     var dataset = [{source: splitDatasetArray[0]}]
     for (var i = 1; i < newNames.length; i++) {
-        var set = {}
-        set.source = splitDatasetArray[i]
-        dataset.push(set)
+        var set = {};
+        set.source = splitDatasetArray[i];
+        dataset.push(set);
     }
     var newOptions = {
         dataset: dataset,
@@ -1854,13 +1900,12 @@ JS;
      *
      * @return string
      */
-    protected function buildJsRedrawPie(string $uidField, string $dataJs = 'rowData') : string
+    protected function buildJsRedrawPie(string $selection = 'undefined', string $dataJs = 'rowData') : string
     {
         return <<<JS
         
     var arrayLength = {$dataJs}.length;
     var chartData = [];
-    var uidField = "{$uidField}";
     for (var i = 0; i < arrayLength; i++) {
         var item = { value: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} , name: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} };
         chartData.push(item);
@@ -1874,34 +1919,20 @@ JS;
             data: {$dataJs}.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
         }
     })
-    /*if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
-        var dataset = {$this->buildJsEChartsVar()}._dataset;
-        var selection = {$this->buildJsEChartsVar()}._oldSelection;
-        if (uidField != undefined) {            
-            var selectedRow = function(){
-                            for (var i = 0; i < dataset.length; i++) {
-                                if (dataset[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} === selection.name) {
-                                    return [dataset[i]]
-                                }
-                            }
-                        }();
-            var newSelection = function(){
-                for (var i = 0; i < rowData.length; i++) {
-                    if (rowData[i].uidField === selectedRow.uidField) {
-                        return rowData[i];
-                    }
+    var selection = {$selection};
+    if (selection != undefined) {
+        var index = function(){
+            for (var i = 0; i < chartData.length; i++) {
+                if (chartData[i].name === selection.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}) {
+                    return i
                 }
-            }();
-            {$this->buildJsEChartsVar()}.dispatchAction({
-                type: 'pieSelect',
-                seriesIndex: params.seriesIndex,
-                dataIndex: params.dataIndex
-            });
-            
-        }
-        
+            }                    
+        }()
+        var params = {seriesIndex: 0, dataIndex: index};
+        params.data = {name: chartData[index].name};
+        {$this->buildJsSingleClick('params')}
+    }
     
-    }*/
 
 JS;
         
@@ -1912,7 +1943,7 @@ JS;
      *
      * @return string
      */
-    protected function buildJsRedrawGraph(string $uidField, string $dataJs = 'rowData')
+    protected function buildJsRedrawGraph(string $selection = 'undefined', string $dataJs = 'rowData')
     {
         $series = $this->getWidget()->getSeries()[0];
         return <<<JS
@@ -1993,14 +2024,28 @@ JS;
         	links.push(link);
         }
     }
-
-    {$this->buildJsEChartsVar()}.setOption({
+    var echart = {$this->buildJsEChartsVar()};
+    echart.setOption({
     	series: [{
     		data: nodes,
             links: links,
     	}],
     });
-    console.log('nodes: ',nodes);
+    var selection = {$selection};
+    if (selection != undefined) {
+        var index = function(){
+            for (var i = 0; i < nodes.length; i++) {
+                if (nodes[i].id === selection.{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()}) {
+                    return i
+                }
+            }                    
+        }()
+        var params = {seriesIndex: 0, dataIndex: index, dataType: 'node'};
+        params.data = {id: nodes[index].id}; 
+        {$this->buildJsSingleClick('params')}
+        //echart._oldSelection = selection;
+    }
+
 
 JS;
     }
