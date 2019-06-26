@@ -24,6 +24,8 @@ use exface\Core\Widgets\Parts\Charts\ChartSeries;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 
 /**
  * A Chart widget draws a chart with upto two axis and any number of series.
@@ -298,8 +300,14 @@ class Chart extends AbstractWidget implements
     {
         if ($this->data === null) {
             if ($link = $this->getDataWidgetLink()) {
-                $this->data = $link->getTargetWidget();
-                $this->setConfiguratorWidget($this->data->getConfiguratorWidget());
+                try {
+                    $this->data = $link->getTargetWidget();
+                    // TODO #chart-configurator - see method setConfiguratorWidget() below.
+                    $this->setConfiguratorWidget($this->data->getConfiguratorWidget());
+                } catch (\Throwable $e) {
+                    $this->data = null;
+                    throw new WidgetConfigurationError($this, 'Error instantiating chart widget data. ' . $e->getMessage(), null, $e);
+                }
             } else {
                 $this->data = WidgetFactory::createFromUxonInParent($this, new UxonObject(['columns_auto_add_default_display_attributes' => false]), 'Data');
                 $this->data->setConfiguratorWidget($this->getConfiguratorWidget());
@@ -888,6 +896,25 @@ class Chart extends AbstractWidget implements
     public function setEmptyText($value)
     {
         $this->empty_text = $this->evaluatePropertyExpression($value);
+        return $this;
+    }
+    
+    /**
+     * TODO #chart-configurator make sure, only a ChartConfigurator can be used for charts!
+     * This is tricky because a chart with a data link must have the same configurator, as
+     * the linked data, so that they are update simultaniously. It relly MUST be the same
+     * widget. However, if the linked data widget was already instantiated, it already has
+     * a DataConfigurator, which now needs to get transformed into a chart configurator. This
+     * transformation is basically the TODO. Since a ChartConfigurator also is a DataConfigurator,
+     * it should be possible to use it back in the data widget. Of course, if there will be 
+     * more DataConfigurators (e.g. the already existing DataTableConfigurator), it might be
+     * better to make the ChartConfigurator wrap a DataConfigurator - to be discussed!
+     *  
+     * @see \exface\Core\Widgets\Traits\iHaveConfiguratorTrait::setConfiguratorWidget()
+     */
+    public function setConfiguratorWidget(iConfigureWidgets $widget) : iHaveConfigurator
+    {
+        $this->configurator = $widget;
         return $this;
     }
 }
