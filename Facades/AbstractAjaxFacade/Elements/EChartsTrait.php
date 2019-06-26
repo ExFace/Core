@@ -1395,7 +1395,7 @@ JS;
     //reset Chart Configuration and variables bound to div before building new one
     {$this->buildJsDataResetter()}
     // if data is empty or not defined show overlay message
-    if (! rowData || rowData.count === 0) {
+    if (! rowData || rowData.length === 0) {
         {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
         return
     }
@@ -1539,7 +1539,7 @@ JS;
                 show: true
             });
         }
-        if (axis.gap === 0) {
+        if (axis.gap === 0 && {$dataJs}.length > 0) {   
             {$this->buildJsShowMessageError("'{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.ECHARTS.AXIS_NO_DATA')} \"' + axis.name + '\"'")}
         }
         // increase the offset for the next axis at the same position by the gap calculated for this axis        
@@ -1641,7 +1641,7 @@ JS;
             }
         }
     }
-    var dataKeys = Object.keys({$dataJs}[0])
+    var dataKeys = {$dataJs}.length === 0 ? [] : Object.keys({$dataJs}[0]);
     // for each object key in dataRow[0] check if value for that key in all objects in doubleValues array are equal
     // if all values for that key are equal, dataset will be split at that key 
     for (var j = 0; j < dataKeys.length; j++) {
