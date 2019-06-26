@@ -1445,6 +1445,7 @@ JS;
         if (val === undefined) {
             len = 0;
         } else {
+            val = {$this->buildJsLabelFormatter($axis->getDataColumn(), 'val')}
             len = (typeof val === 'string' || val instanceof String ? val.length : val.toString().length);
         }
         gap = {$gap};
