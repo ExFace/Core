@@ -110,7 +110,6 @@ trait EChartsTrait
         ]);
         
         $widget = $this->getWidget();
-        // Add header collapse button to the toolbar
         $tb = $widget->getToolbarMain();
         /*$chartTypeBtnGroup = $tb->createButtonGroup();
         $this->chartTypeButtonGroup = $chartTypeBtnGroup;
@@ -765,7 +764,6 @@ JS;
             // if the selected datapoint is the same as the now clicked one
             if ({$this->buildJsRowCompare('echart._oldSelection', 'dataRow')} == true) {
                 {$this->buildJsSelect()}
-                console.log('ich bin hier')
                 newOptions = {series: []}
                 options.series.forEach((series) => {                    
                     newOptions.series.push({markLine: {data: {}}, _show: false});
