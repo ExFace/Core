@@ -2394,7 +2394,7 @@ JS;
 
 {
 	formatter: function(params) {
-		return params.data.name;
+		return params.data.name + " - " + params.data.id;
 	},
     confine: true,
 },
