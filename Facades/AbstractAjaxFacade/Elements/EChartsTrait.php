@@ -118,7 +118,10 @@ trait EChartsTrait
         /* @var \exface\Core\Widgets\Button $menu */
         $menu = WidgetFactory::createFromUxonInParent($widget, new UxonObject([
             'widget_type' => 'MenuButton',
-            'caption' => 'Chart Type',
+            'icon' => 'line-chart',
+            'hide_caption' => true,
+            'caption' => 'Chart type',
+            'hint' => 'Change chart type'
         ]));
         $tb->getButtonGroupForSearchActions()->addButton($menu, 1);
         if ($this->isGraphChart() === true) {
@@ -233,12 +236,15 @@ JS;
      */
     protected function buildJsChangeToNetworkGraph(DataButton $button) : string
     {
+        // only works when the initial graph was a network graph
         //TODO Chart zoom, damit nodes und edged connected (Bug, sind verschoben) 
         return <<<JS
         
             var echart = {$this->buildJsEChartsVar()};
             var options = {};
             /*options.series = {$this->buildJsGraphChart($this->getWidget()->getSeries()[0])};*/
+            {$this->buildJsRefresh()}
+            /*
             options.series = {
                 layout: 'force',
                 lineStyle: {
@@ -247,14 +253,15 @@ JS;
             };
             
             echart.setOption(options);
-            echart.resize();
-/*
+            */
+            /*
             var elm = document.getElementById('{$this->getId()}').getElementsByTagName('canvas')[0];
             console.log(elm)
             var evt = document.createEvent("MouseEvents");
             evt.initEvent('mousewheel', true, true);
             evt.wheelDelta = 120;
-            elm.dispatchEvent(evt);*/
+            elm.dispatchEvent(evt);
+            */
             
 JS;
     }
@@ -1218,10 +1225,12 @@ JS;
      */
     protected function buildJsGraphChart(GraphChartSeries $series) : string
     {        
-        if ($series->getGraphType() === null) {
+        if ($series->getGraphType() === GraphChartSeries::GRAPH_TYPE_NETWORK) {
+            $type = 'force';
+            $curveness = '';
+        } elseif ($series->getGraphType() === GraphChartSeries::GRAPH_TYPE_CIRCLE)  {
             $type = 'circular';
-        } else {
-            $type = $series->getGraphType();
+            $curveness = 'curveness: 0.2,';
         }
         
         if ($series->getColor() !== null) {
@@ -1266,7 +1275,7 @@ JS;
     },
     lineStyle: {
         color: 'source',
-        //curveness: 0.2
+        {$curveness}
     },
     emphasis: {
         lineStyle: {
@@ -1357,6 +1366,7 @@ JS;
             $max = "max: '" . $axis->getMaxValue() . "',";
         }
         $axisType = $axis->getAxisType();
+        
         if ($axis->getDimension() == Chart::AXIS_X) {
             $nameLocation = "nameLocation: 'center',";
             if ($axisType === ChartAxis::AXIS_TYPE_CATEGORY) {
@@ -1422,7 +1432,7 @@ JS;
             formatter: function(a) {
                 return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'a')}
             },
-            {$rotate}
+            /*{$rotate}*/
             {$interval}
         },
         axisPointer: {
@@ -1715,11 +1725,13 @@ JS;
             if ($axis->getDimension() === Chart::AXIS_X) {
                 //For X Axex that are Category Axis the label will be rotated
                 //therefor gap has to be calculated by length of data values
+                /*
                 if ($axis->getAxisType() === ChartAxis::AXIS_TYPE_CATEGORY) {
                     $gap = 'len * 6';
                 } else {
                     $gap = ++$xAxisIndex . ' * 20 * 2 - 15';
-                }
+                }*/
+                $gap = ++$xAxisIndex . ' * 20 * 2 - 15';
             } else {
                 $gap = 'len * 8';
             }
@@ -1806,12 +1818,12 @@ JS;
         axis = axes[i];
         //if the caption for axis is shown the gap for x Axes needs to be
         // set based on the axis.gap (means the space needed to show axis values)
-        if (axis.caption === true && axis.dimension === 'x' && axis.category === 'CATEGORY') {
+        /*if (axis.caption === true && axis.dimension === 'x' && axis.category === 'CATEGORY') {
             var nameGap = 10 + axis.gap + {$this->baseAxisNameGap()}
         } else {
             var nameGap = 0
-        }
-        if (axis.dimension === 'x' && axis.category === 'CATEGORY') {
+        }*/
+        /*if (axis.dimension === 'x' && axis.category === 'CATEGORY') {
             newOptions[axis.dimension + 'Axis'].push({
                 offset: offsets[axis.position],
                 nameGap: axis.gap,               
@@ -1822,12 +1834,16 @@ JS;
                 offset: offsets[axis.position],
                 show: true
             });
-        }
+        }*/
+        newOptions[axis.dimension + 'Axis'].push({
+            offset: offsets[axis.position],
+            show: true
+        });
         if (axis.gap === 0) {
             {$this->buildJsShowMessageError("'{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.ECHARTS.AXIS_NO_DATA')} \"' + axis.name + '\"'")}
         }
         // increase the offset for the next axis at the same position by the gap calculated for this axis        
-        if (nameGap === 0) {
+        /*if (nameGap === 0) {
             offsets[axis.position] += axis.gap
         } else {
             if (i < axes.length) {
@@ -1835,7 +1851,9 @@ JS;
             } else {
                 offsets[axis.position] += axis.gap
             }
-        }
+        }*/
+
+        offsets[axis.position] += axis.gap
         
         
     }
@@ -2078,14 +2096,14 @@ JS;
             // if the right object already exists at node, increase the symbol size of that node
 			if (nodes[j].id === {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()}) {
 				existingNodeRight = true;
-                nodes[j].symbolSize += 0.5;
-                nodes[j].value += 0.5;
+                nodes[j].symbolSize += 1;
+                nodes[j].value += 1;
 			}
             // if the left object already exists at node, increase the symbol size of that node
 			if (nodes[j].id === {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
 				existingNodeLeft = true;
-                nodes[j].symbolSize += 0.5;
-                nodes[j].value += 0.5;
+                nodes[j].symbolSize += 1;
+                nodes[j].value += 1;
 			}
 		}
         // if the left and right object are the same and not yet existing as node, only add the left object to the nodes
