@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets\Parts\Charts;
 
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Interfaces\Widgets\iShowData;
@@ -42,23 +43,42 @@ class GraphChartSeries extends ChartSeries
     private $direction_axis = null;
     
     private $graph_type = null;
+    
+    const GRAPH_TYPE_NETWORK = 'NETWORK';
+    
+    const GRAPH_TYPE_CIRCLE = 'CIRCLE';
 
-    //TODO Attribute alias für benötigte Daten Spalten (right Object, left Object, relation)
+    
     /**
+     * set the graph type, default is network
+     * 
      * @uxon-property graph_type
-     * @uxon-type string [circular, force]
+     * @uxon-type string [network, circle]
      * 
      * @param string $type
      * @return GraphChartSeries
      */
     public function setGraphType(string $type) : GraphChartSeries
     {
-        $this->graph_type = $type;
+        $type = mb_strtoupper($type);
+        if (defined(__CLASS__ . '::GRAPH_TYPE_' . $type)) {
+            $this->graph_type = $type;
+        } else {
+            throw new WidgetPropertyInvalidValueError($this->getChart(), 'Invalid graph type "' . $type . '". Only NETWORK or CIRCLE allowed!', '6T90UV9');
+        }
         return $this;
     }
     
-    public function getGraphType() : ?string
+    /**
+     * get the graph type, if no type was set, graphy type is network
+     * 
+     * @return string
+     */
+    public function getGraphType() : string
     {
+        if ($this->graph_type === null) {
+            return GraphChartSeries::GRAPH_TYPE_NETWORK;
+        }
         return $this->graph_type;
     }
     
