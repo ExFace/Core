@@ -250,7 +250,6 @@ JS;
             */
             /*
             var elm = document.getElementById('{$this->getId()}').getElementsByTagName('canvas')[0];
-            console.log(elm)
             var evt = document.createEvent("MouseEvents");
             evt.initEvent('mousewheel', true, true);
             evt.wheelDelta = 120;
@@ -1328,6 +1327,26 @@ dataZoom: [$zoom],
 
 JS;
     }
+        
+    /**
+     * font family for axis labels
+     * 
+     * @return string
+     */
+    protected function baseAxisLabelFont() : string
+    {
+        return 'sans-serif';
+    }
+    
+    /**
+     * font size for axis labels
+     * 
+     * @return string
+     */
+    protected function baseAxisLabelFontSize() : string
+    {
+        return 12;
+    }
     
     /**
      * build axis properties
@@ -1363,13 +1382,14 @@ JS;
         
         if ($axis->getDimension() == Chart::AXIS_X) {
             $nameLocation = "nameLocation: 'center',";
-            if ($axisType === ChartAxis::AXIS_TYPE_CATEGORY) {
-                $rotate = 'rotate: 45,';
-            } else {
-                $rotate = '';
-            }
         } else {
             $nameLocation = '';
+        }
+        
+        if ($axis->hasRotatedLabel() === true) {
+            $rotate = 'rotate: 45,';
+        } else {
+            $rotate = '';
         }
         
         if ($axisType === ChartAxis::AXIS_TYPE_CATEGORY) {
@@ -1423,10 +1443,12 @@ JS;
         show: false,
         nameGap: {$nameGap},
         axisLabel: {
+            fontFamily: '{$this->baseAxisLabelFont()}',
+            fontSize: {$this->baseAxisLabelFontSize()},
             formatter: function(a) {
                 return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'a')}
             },
-            /*{$rotate}*/
+            {$rotate}
             {$interval}
         },
         axisPointer: {
@@ -1601,7 +1623,7 @@ JS;
      */
     protected function baseAxisNameGap() : int
     {
-        return 15;
+        return 18;
     }
     
     /**
@@ -1717,18 +1739,16 @@ JS;
             
             $xAxisIndex = 0;
             if ($axis->getDimension() === Chart::AXIS_X) {
-                //For X Axex that are Category Axis the label will be rotated
-                //therefor gap has to be calculated by length of data values
-                /*
-                if ($axis->getAxisType() === ChartAxis::AXIS_TYPE_CATEGORY) {
-                    $gap = 'len * 6';
-                } else {
-                    $gap = ++$xAxisIndex . ' * 20 * 2 - 15';
-                }*/
                 $gap = ++$xAxisIndex . ' * 20 * 2 - 15';
+                //for axes that have rotated label gap has to be calculated differently                
+                if ($axis->hasRotatedLabel() === true) {
+                    //rotation is 45 degress, therefore the gap should be the square root of
+                    //2 times the square of the text length
+                    $gap = 'canvasCtxt.measureText(val).width / Math.sqrt(2) + 15';
+                }           
             } else {
-                $gap = 'len * (8 - Math.floor(len / 16))';
-                //$gap = 'canvasCtxt.measureText(val).width + 12';
+                //$gap = 'len * (8 - Math.floor(len / 16))';
+                $gap = 'canvasCtxt.measureText(val).width + 10';
             }
             $axesOffsetCalc .= <<<JS
             
@@ -1756,6 +1776,11 @@ JS;
             } else {                
                 $caption = 'false';
             }
+            if ($axis->hasRotatedLabel() === true) {
+                $rotated = 'true';
+            } else {
+                $rotated = 'false';
+            }
             //js snippet to build array containing every visible axis as object with its necessary gap
             //and other needed parameters
             $axesJsObjectInit .= <<<JS
@@ -1768,6 +1793,7 @@ JS;
         position: "{$postion}",
         index: "{$axis->getIndex()}",
         name: "{$axis->getDataColumn()->getDataColumnName()}",
+        rotation : {$rotated},
     };
     
 JS;
@@ -1795,7 +1821,13 @@ JS;
     // Danach
     var val, gap;
     var len = 0;
-    // var canvasCtxt = $('#{$this->getId()} canvas').get(0).getContext('2d');
+
+    var canvasCtxt = $('#{$this->getId()} canvas').get(0).getContext('2d');
+    var options = {$this->buildJsEChartsVar()}.getOption();
+    var font = "{$this->baseAxisLabelFontSize()}" + "px " + "{$this->baseAxisLabelFont()}"
+    canvasCtxt.font = font;
+
+
     // for each data row calculate the offset for the axis bound to a data value
     {$dataJs}.forEach(function(row){
         {$axesOffsetCalc}
@@ -1813,44 +1845,39 @@ JS;
     // for every visible axis, set the correct offset and that it is visible
     for (var i in axes) {
         axis = axes[i];
+        if (axis.gap === 0 && {$dataJs}.length > 0) {   
+            {$this->buildJsShowMessageError("'{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.ECHARTS.AXIS_NO_DATA')} \"' + axis.name + '\"'")}
+        }
         //if the caption for axis is shown the gap for x Axes needs to be
         // set based on the axis.gap (means the space needed to show axis values)
-        /*if (axis.caption === true && axis.dimension === 'x' && axis.category === 'CATEGORY') {
-            var nameGap = 10 + axis.gap + {$this->baseAxisNameGap()}
-        } else {
-            var nameGap = 0
-        }*/
-        /*if (axis.dimension === 'x' && axis.category === 'CATEGORY') {
+        if (axis.rotation === true && axis.caption === true) { 
+            var nameGap = axis.gap + {$this->baseAxisNameGap()};
             newOptions[axis.dimension + 'Axis'].push({
                 offset: offsets[axis.position],
                 nameGap: axis.gap,               
                 show: true
             });
+            offsets[axis.position] += nameGap;
         } else {
             newOptions[axis.dimension + 'Axis'].push({
-                offset: offsets[axis.position],
+                offset: offsets[axis.position],               
                 show: true
             });
-        }*/
-        newOptions[axis.dimension + 'Axis'].push({
-            offset: offsets[axis.position],
-            show: true
-        });
-        if (axis.gap === 0 && {$dataJs}.length > 0) {   
-            {$this->buildJsShowMessageError("'{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.ECHARTS.AXIS_NO_DATA')} \"' + axis.name + '\"'")}
+            if (axis.caption === true) {
+                offsets[axis.position] += axis.gap + {$this->baseAxisNameGap()};
+            } else {
+                offsets[axis.position] += axis.gap;
+            }
         }
+        
         // increase the offset for the next axis at the same position by the gap calculated for this axis        
         /*if (nameGap === 0) {
-            offsets[axis.position] += axis.gap
+            offsets[axis.position] += axis.gap;
         } else {
-            if (i < axes.length) {
-                offsets[axis.position] += nameGap
-            } else {
-                offsets[axis.position] += axis.gap
-            }
-        }*/
+            offsets[axis.position] += nameGap;
+        }
 
-        offsets[axis.position] += axis.gap
+        offsets[axis.position] += axis.gap*/
         
         
     }
@@ -2279,6 +2306,7 @@ JS;
     protected function buildJsGridMarginBottom() : int
     {
         $count = 0;
+        $margin = 0;
         $widget = $this->getWidget();
         foreach ($widget->getAxesX() as $axis) {
             if ($axis->isZoomable() === true) {
@@ -2288,7 +2316,7 @@ JS;
         if ($this->legendHidden() === false && $widget->getLegendPosition() === 'bottom') {
             $margin += $this->baseLegendOffset();
         }
-        $margin += 15 + $this->baseZoomOffset() * $count;
+        $margin += $this->baseZoomOffset() * $count;
         return $margin;
     }
     
@@ -2428,7 +2456,11 @@ JS;
                 tooltip += tooltipPart + '<tr><td>'+ marker + '</td><td>' + seriesName + '</td><td>'+ value + '</td></tr>';
                 }
         });
-        tooltip += tooltipPart + '</tbody></table>';
+        if (stacked === true) {
+            tooltip += tooltipPart + '</tbody></table>';
+        } else {
+            tooltip += '</tbody></table>';
+        }        
         return tooltip;
     },
 },
