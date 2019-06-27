@@ -51,15 +51,9 @@ use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\DataTypes\RelationCardinalityDataType;
 
 /**
- * Internal data respresentation object in exface.
- * Similar to an Excel-table:
- *   |Column1|Column2|Column3|
- * 1 | value | value | value | \
- * 2 | value | value | value | > data rows: each one is an array(column=>value)
- * 3 | value | value | value | /
- * 4 | total | total | total | \
- * 5 | total | total | total | / total rows: each one is an array(column=>value)
- *
+ * Default implementation of DataSheetInterface
+ * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface
+ * 
  * @author Andrej Kabachnik
  *        
  */
@@ -670,7 +664,11 @@ class DataSheet implements DataSheetInterface
      */
     public function dataSave(DataTransactionInterface $transaction = null)
     {
-        return $this->dataUpdate(true, $transaction);
+        if ($this->hasUidColumn(false) === true) {
+            return $this->dataUpdate(true, $transaction);
+        } else {
+            return $this->dataCreate(true, $transaction);
+        }
     }
 
     /**

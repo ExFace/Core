@@ -45,7 +45,7 @@ abstract class ChartSeries extends AbstractChartPart implements iHaveCaption
     
     /**
      * @uxon-property type
-     * @uxon-type [line, spline, area, pie, donut, bar, column, rose, graph, stepline]
+     * @uxon-type [line,spline,area,pie,donut,bar,column,rose,graph,stepline]
      * @uxon-required true
      * 
      * @param string $value

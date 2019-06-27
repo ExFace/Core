@@ -151,7 +151,7 @@ trait EChartsTrait
      */
     protected function buildJsFunctions() : string
     {
-        $output = <<<JS
+        return <<<JS
         
     // Create the load function to fetch the data via AJAX or from another widget
     function {$this->buildJsDataLoadFunctionName()}() {
@@ -177,14 +177,8 @@ trait EChartsTrait
     function {$this->buildJsClicksFunctionName()}(params) {
         {$this->buildJsClicksFunctionBody('params')}
     };
-
+    
 JS;
-        
-        
-            
-        
-        
-        return $output;
     }
     
     /**
@@ -917,7 +911,7 @@ JS;
             if ($s instanceof GraphChartSeries && count($series) > 1) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support graph charts with multiple series!');
             }
-            if (($s instanceof LineChartSeries || s instanceof ColumnChartSeries) && count($series) > 1 && $s->getSplitByAttributeAlias() !== null) {
+            if (($s instanceof LineChartSeries || $s instanceof ColumnChartSeries) && count($series) > 1 && $s->getSplitByAttributeAlias() !== null) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support split by attribute with multiple series!');
             }
             $seriesConfig .= $this->buildJsChartSeriesConfig($s) . ',';
@@ -1733,14 +1727,16 @@ JS;
                 }*/
                 $gap = ++$xAxisIndex . ' * 20 * 2 - 15';
             } else {
-                $gap = 'len * 8';
+                $gap = 'len * (8 - Math.floor(len / 16))';
+                //$gap = 'canvasCtxt.measureText(val).width + 12';
             }
             $axesOffsetCalc .= <<<JS
             
         val = row['{$axis->getDataColumn()->getDataColumnName()}'];
-        if (val === undefined) {
+        if (val === undefined || val === null) {
             len = 0;
         } else {
+            val = {$this->buildJsLabelFormatter($axis->getDataColumn(), 'val')}
             len = (typeof val === 'string' || val instanceof String ? val.length : val.toString().length);
         }
         gap = {$gap};
@@ -1799,6 +1795,7 @@ JS;
     // Danach
     var val, gap;
     var len = 0;
+    // var canvasCtxt = $('#{$this->getId()} canvas').get(0).getContext('2d');
     // for each data row calculate the offset for the axis bound to a data value
     {$dataJs}.forEach(function(row){
         {$axesOffsetCalc}
@@ -1839,7 +1836,7 @@ JS;
             offset: offsets[axis.position],
             show: true
         });
-        if (axis.gap === 0) {
+        if (axis.gap === 0 && {$dataJs}.length > 0) {   
             {$this->buildJsShowMessageError("'{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.ECHARTS.AXIS_NO_DATA')} \"' + axis.name + '\"'")}
         }
         // increase the offset for the next axis at the same position by the gap calculated for this axis        
@@ -1958,7 +1955,7 @@ JS;
             }
         }
     }
-    var dataKeys = Object.keys({$dataJs}[0])
+    var dataKeys = {$dataJs}.length === 0 ? [] : Object.keys({$dataJs}[0]);
     // for each object key in dataRow[0] check if value for that key in all objects in doubleValues array are equal
     // if all values for that key are equal, dataset will be split at that key 
     for (var j = 0; j < dataKeys.length; j++) {

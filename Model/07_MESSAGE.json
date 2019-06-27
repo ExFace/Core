@@ -2038,6 +2038,20 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2019-06-26 10:14:43",
+            "MODIFIED_ON": "2019-06-26 10:14:43",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e997fb37e6d1a08fb40205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "769139J",
+            "TITLE": "Invalid chart axis configuration",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
