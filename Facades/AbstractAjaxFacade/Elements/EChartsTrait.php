@@ -73,7 +73,7 @@ trait EChartsTrait
      */
     protected function buildHtmlChart($style = 'height:100%; min-height: 100px; overflow: hidden;') : string
     {
-        return '<div id="' . $this->getId() . '" style="' . $style . '"></div>';
+        return '<div id="' . $this->getId() . '_echarts" style="' . $style . '"></div>';
     }
     
     /**
@@ -249,7 +249,7 @@ JS;
             echart.setOption(options);
             */
             /*
-            var elm = document.getElementById('{$this->getId()}').getElementsByTagName('canvas')[0];
+            var elm = document.getElementById('{$this->buildJsEChartsDivVar()}').getElementsByTagName('canvas')[0];
             var evt = document.createEvent("MouseEvents");
             evt.initEvent('mousewheel', true, true);
             evt.wheelDelta = 120;
@@ -316,7 +316,7 @@ JS;
     {
         return <<<JS
         
-    var {$this->buildJsEChartsVar()} = echarts.init(document.getElementById('{$this->getId()}'), '{$theme}');
+    var {$this->buildJsEChartsVar()} = echarts.init(document.getElementById('{$this->buildJsEChartsDivVar()}'), '{$theme}');
     
 JS;
     }
@@ -452,6 +452,7 @@ JS;
         return <<<JS
 
             var clickCount = {$this->buildJsEChartsVar()}._clickCount;
+            var params = {$params};
             var selected = {$this->buildJsGetSelectedRowFunction('params.data')};
             
             clickCount++;
@@ -501,6 +502,7 @@ JS;
         return <<<JS
         
         {$this->buildJsEChartsVar()}.on('click', function(params){
+            console.log(params)
             {$this->buildJsClicks('params')}
         });
     
@@ -1822,7 +1824,7 @@ JS;
     var val, gap;
     var len = 0;
 
-    var canvasCtxt = $('#{$this->getId()} canvas').get(0).getContext('2d');
+    var canvasCtxt = $('#{$this->buildJsEChartsDivVar()} canvas').get(0).getContext('2d');
     var options = {$this->buildJsEChartsVar()}.getOption();
     var font = "{$this->baseAxisLabelFontSize()}" + "px " + "{$this->baseAxisLabelFont()}"
     canvasCtxt.font = font;
@@ -2517,13 +2519,23 @@ JS;
     }
     
     /**
+     * build the id for the chart div element
+     * 
+     * @return string
+     */
+    protected function buildJsEChartsDivVar() : string
+    {
+        return "{$this->getId()}_echarts";
+    }
+    
+    /**
      * build the chart element id
      *
      * @return string
      */
     protected function buildJsEChartsVar() : string
     {
-        return "chart_{$this->getId()}";
+        return "chart_{$this->buildJsEChartsDivVar()}";
     }
     
     /**
