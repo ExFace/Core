@@ -15,7 +15,6 @@ use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
-use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\Parts\Charts\ChartAxis;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
@@ -24,6 +23,9 @@ use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Widgets\Parts\Charts\ChartSeries;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 
 /**
  * A Chart widget draws a chart with upto two axis and any number of series.
@@ -34,10 +36,19 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
  * @author Andrej Kabachnik
  *        
  */
-class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButtons, iHaveHeader, iHaveFooter, iHaveConfigurator, iSupportLazyLoading, iFillEntireContainer
+class Chart extends AbstractWidget implements 
+    iUseData, 
+    iHaveToolbars, 
+    iHaveButtons, 
+    iHaveHeader, 
+    iHaveFooter, 
+    iHaveConfigurator, 
+    iSupportLazyLoading, 
+    iFillEntireContainer
 {
     use iHaveButtonsAndToolbarsTrait;
     use iSupportLazyLoadingTrait;
+    use iHaveConfiguratorTrait;
 
     const AXIS_X = 'x';
 
@@ -289,10 +300,19 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     {
         if ($this->data === null) {
             if ($link = $this->getDataWidgetLink()) {
-                $this->data = $link->getTargetWidget();
+                try {
+                    $this->data = $link->getTargetWidget();
+                    // TODO #chart-configurator - see method setConfiguratorWidget() below.
+                    $this->setConfiguratorWidget($this->data->getConfiguratorWidget());
+                } catch (\Throwable $e) {
+                    $this->data = null;
+                    throw new WidgetConfigurationError($this, 'Error instantiating chart widget data. ' . $e->getMessage(), null, $e);
+                }
             } else {
                 $this->data = WidgetFactory::createFromUxonInParent($this, new UxonObject(['columns_auto_add_default_display_attributes' => false]), 'Data');
+                $this->data->setConfiguratorWidget($this->getConfiguratorWidget());
             }
+            
             if ($this->dataPrepared === false) {
                 $this->prepareDataWidget($this->data);
                 $this->dataPrepared = true;
@@ -374,9 +394,10 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      */
     public function setData(UxonObject $uxon_object)
     {
-        $data = $this->getPage()->createWidget('Data', $this);
+        $data = WidgetFactory::create($this->getPage(), 'Data', $this);
         $data->setColumnsAutoAddDefaultDisplayAttributes(false);
         $data->setMetaObject($this->getMetaObject());
+        $data->setConfiguratorWidget($this->getConfiguratorWidget());
         $data->importUxonObject($uxon_object);
         // Do not add action automatically as the internal data toolbar will
         // not be shown anyway. The Chart has it's own toolbars.
@@ -750,30 +771,6 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     {
         return null;
     }
-    /**
-     * 
-     */
-    public function getConfiguratorWidget() : iConfigureWidgets
-    {
-        return $this->getData()->getConfiguratorWidget();
-    }
-    
-    public function setConfigurator(UxonObject $uxon) : iHaveConfigurator
-    {
-        $this->getData()->setConfigurator($uxon);
-        
-        return $this;
-    }
-    
-    /**
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::setConfiguratorWidget()
-     */
-    public function setConfiguratorWidget(iConfigureWidgets $widget) : iHaveConfigurator
-    {
-        $this->getData()->setConfiguratorWidget($widget);
-        return $this;
-    }
     
     /**
      * {@inheritDoc}
@@ -899,6 +896,25 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     public function setEmptyText($value)
     {
         $this->empty_text = $this->evaluatePropertyExpression($value);
+        return $this;
+    }
+    
+    /**
+     * TODO #chart-configurator make sure, only a ChartConfigurator can be used for charts!
+     * This is tricky because a chart with a data link must have the same configurator, as
+     * the linked data, so that they are update simultaniously. It relly MUST be the same
+     * widget. However, if the linked data widget was already instantiated, it already has
+     * a DataConfigurator, which now needs to get transformed into a chart configurator. This
+     * transformation is basically the TODO. Since a ChartConfigurator also is a DataConfigurator,
+     * it should be possible to use it back in the data widget. Of course, if there will be 
+     * more DataConfigurators (e.g. the already existing DataTableConfigurator), it might be
+     * better to make the ChartConfigurator wrap a DataConfigurator - to be discussed!
+     *  
+     * @see \exface\Core\Widgets\Traits\iHaveConfiguratorTrait::setConfiguratorWidget()
+     */
+    public function setConfiguratorWidget(iConfigureWidgets $widget) : iHaveConfigurator
+    {
+        $this->configurator = $widget;
         return $this;
     }
 }

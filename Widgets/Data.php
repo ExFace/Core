@@ -21,7 +21,6 @@ use exface\Core\Interfaces\Widgets\iHaveContextualHelp;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
-use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 use exface\Core\Interfaces\Widgets\iHaveHeader;
 use exface\Core\Interfaces\Widgets\iHaveFooter;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
@@ -32,6 +31,8 @@ use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Interfaces\Widgets\iHaveQuickSearch;
 use exface\Core\Widgets\Traits\iHaveContextualHelpTrait;
 use exface\Core\Widgets\Traits\iHaveColumnsAndColumnGroupsTrait;
+use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
+use exface\Core\Interfaces\Widgets\iHaveSorters;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -56,6 +57,7 @@ class Data
         iHaveToolbars, 
         iHaveButtons, 
         iHaveFilters, 
+        iHaveSorters,
         iHaveQuickSearch,
         iSupportLazyLoading, 
         iHaveContextualHelp, 
@@ -74,6 +76,7 @@ class Data
         getLazyLoadingActionAlias as getLazyLoadingActionAliasViaTrait;
     }
     use iHaveContextualHelpTrait;
+    use iHaveConfiguratorTrait;
 
     // properties
     private $paginate = true;
@@ -654,7 +657,7 @@ class Data
      *
      * @return UxonObject[]
      */
-    public function getSorters()
+    public function getSorters() : array
     {
         return $this->sorters;
     }
@@ -682,12 +685,10 @@ class Data
      * @uxon-property sorters
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSorter[]
      * @uxon-template [{"attribute_alias": "", "direction": "asc"}]
-     *
-     * TODO use special sorter widgets here instead of plain uxon objects
      * 
      * @param UxonObject $sorters            
      */
-    public function setSorters(UxonObject $sorters)
+    public function setSorters(UxonObject $sorters) : iHaveSorters
     {
         foreach ($sorters as $uxon){
             $this->addSorter($uxon->getProperty('attribute_alias'), $uxon->getProperty('direction'));
@@ -695,7 +696,7 @@ class Data
         return $this;
     }
     
-    public function addSorter($attribute_alias, $direction)
+    public function addSorter(string $attribute_alias, string $direction) : iHaveSorters
     {
         $this->getConfiguratorWidget()->addSorter($attribute_alias, $direction);
         // TODO move sorters completely to configuration widget!
@@ -1062,43 +1063,6 @@ class Data
     public function getToolbarWidgetType()
     {
         return 'DataToolbar';
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::getConfiguratorWidget()
-     * @return DataConfigurator
-     */
-    public function getConfiguratorWidget() : iConfigureWidgets
-    {
-        if ($this->configurator === null) {
-            $this->configurator = WidgetFactory::create($this->getPage(), $this->getConfiguratorWidgetType(), $this);
-        }
-        return $this->configurator;
-    }
-    
-    public function setConfigurator(UxonObject $uxon) : iHaveConfigurator
-    {
-        if ($this->configurator === null) {
-            $this->configurator = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, $this->getConfiguratorWidgetType());
-            $this->configurator->setWidgetConfigured($this);
-        } else {
-            $this->configurator->importUxonObject($uxon);
-        }
-        
-        return $this;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::setConfiguratorWidget()
-     */
-    public function setConfiguratorWidget(iConfigureWidgets $widget) : iHaveConfigurator
-    {
-        $this->configurator = $widget->setWidgetConfigured($this);
-        return $this;
     }
     
     /**
