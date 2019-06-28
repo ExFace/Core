@@ -1700,7 +1700,7 @@ JS;
     {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
     //build and set dataset,config and options depending on chart type    
     $js
-    {$this->buildJsEChartsResize()}
+
 JS;
     }
 
