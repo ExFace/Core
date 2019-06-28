@@ -38,7 +38,6 @@ trait iHaveConfiguratorTrait
     {
         if ($this->configurator === null) {
             $this->configurator = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, $this->getConfiguratorWidgetType());
-            $this->configurator->setWidgetConfigured($this);
         } else {
             $this->configurator->importUxonObject($uxon);
         }
