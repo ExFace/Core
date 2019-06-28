@@ -48,7 +48,9 @@ class Chart extends AbstractWidget implements
 {
     use iHaveButtonsAndToolbarsTrait;
     use iSupportLazyLoadingTrait;
-    use iHaveConfiguratorTrait;
+    use iHaveConfiguratorTrait {
+        setConfiguratorWidget as setConfiguratorWidgetViaTrait;
+    }
 
     const AXIS_X = 'x';
 
@@ -302,15 +304,12 @@ class Chart extends AbstractWidget implements
             if ($link = $this->getDataWidgetLink()) {
                 try {
                     $this->data = $link->getTargetWidget();
-                    // TODO #chart-configurator - see method setConfiguratorWidget() below.
-                    $this->setConfiguratorWidget($this->data->getConfiguratorWidget());
                 } catch (\Throwable $e) {
                     $this->data = null;
                     throw new WidgetConfigurationError($this, 'Error instantiating chart widget data. ' . $e->getMessage(), null, $e);
                 }
             } else {
                 $this->data = WidgetFactory::createFromUxonInParent($this, new UxonObject(['columns_auto_add_default_display_attributes' => false]), 'Data');
-                $this->data->setConfiguratorWidget($this->getConfiguratorWidget());
             }
             
             if ($this->dataPrepared === false) {
@@ -397,7 +396,6 @@ class Chart extends AbstractWidget implements
         $data = WidgetFactory::create($this->getPage(), 'Data', $this);
         $data->setColumnsAutoAddDefaultDisplayAttributes(false);
         $data->setMetaObject($this->getMetaObject());
-        $data->setConfiguratorWidget($this->getConfiguratorWidget());
         $data->importUxonObject($uxon_object);
         // Do not add action automatically as the internal data toolbar will
         // not be shown anyway. The Chart has it's own toolbars.
@@ -914,7 +912,12 @@ class Chart extends AbstractWidget implements
      */
     public function setConfiguratorWidget(iConfigureWidgets $widget) : iHaveConfigurator
     {
-        $this->configurator = $widget;
-        return $this;
+        if (! $widget instanceof ChartConfigurator && $widget instanceof DataConfigurator) {
+            $configurator = WidgetFactory::create($this->getPage(), $this->getConfiguratorWidgetType(), $this);
+            $configurator->setDataConfigurator($widget);
+        } else {
+            $configurator = $widget;
+        }
+        return $this->setConfiguratorWidgetViaTrait($configurator);
     }
 }

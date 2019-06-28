@@ -698,8 +698,8 @@ class Data
     
     public function addSorter(string $attribute_alias, string $direction) : iHaveSorters
     {
-        $this->getConfiguratorWidget()->addSorter($attribute_alias, $direction);
         // TODO move sorters completely to configuration widget!
+        // $this->getConfiguratorWidget()->addSorter($attribute_alias, $direction);
         $sorter = new UxonObject();
         $sorter->setProperty('attribute_alias', $attribute_alias);
         $sorter->setProperty('direction', $direction);
