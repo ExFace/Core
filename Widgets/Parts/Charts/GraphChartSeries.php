@@ -44,6 +44,10 @@ class GraphChartSeries extends ChartSeries
     
     private $graph_type = null;
     
+    private $category_attribute_alias = null;
+    
+    private $category_axis = null;
+    
     const GRAPH_TYPE_NETWORK = 'NETWORK';
     
     const GRAPH_TYPE_CIRCLE = 'CIRCLE';
@@ -135,6 +139,16 @@ class GraphChartSeries extends ChartSeries
     public function getValueDataColumn() : DataColumn
     {
         return $this->getLeftObjectAxis()->getDataColumn();
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Charts\ChartSeries::getValueAxis()
+     */
+    public function getValueAxis() : ChartAxis
+    {
+        return $this->getLeftObjectAxis();
     }
     
     /**
@@ -478,6 +492,70 @@ class GraphChartSeries extends ChartSeries
     }
     
     /**
+     * get the attribute alias for category
+     *
+     * @return MetaAttributeInterface
+     */
+    public function getCategoryAttribute() : MetaAttributeInterface
+    {
+        return $this->getMetaObject()->getAttribute($this->category_attribute_alias);
+    }
+    
+    /**
+     * Attribute alias for category (relative to the meta object of the chart series).
+     *
+     * @uxon-property category_attribute_alias
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $aliasRelativeToSeriesObject
+     * @return GraphChartSeries
+     */
+    public function setCategoryAttributeAlias(string $aliasRelativeToSeriesObject) : GraphChartSeries
+    {
+        $this->category_attribute_alias = $aliasRelativeToSeriesObject;
+        return $this;
+    }
+    
+    /**
+     * get the axis for the category
+     *
+     * @return ChartAxis
+     */
+    public function getCategoryAxis() : ChartAxis
+    {
+        if ($this->category_axis === null) {
+            $axes = $this->getChart()->findAxesByAttribute($this->getCategoryAttribute());
+            if (empty($axes)) {
+                $axis = $this->getChart()->createAxisFromExpression($this->category_attribute_alias);
+                $this->getChart()->addAxisY($axis);
+            } else {
+                $axis = $axes[0];
+            }
+            $this->category_axis = $axis;
+        }
+        return $this->category_axis;
+    }
+    
+    /**
+     * get Data Column for category
+     *
+     * @return DataColumn
+     */
+    public function getCategoryDataColumn() : DataColumn
+    {
+        return $this->getCategoryAxis()->getDataColumn();
+    }
+    
+    public function hasCategories() : bool
+    {
+        if ($this->category_attribute_alias === null) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+    
+    /**
      * Returns the color of this series or NULL if no color explicitly defined.
      *
      * @return string|NULL
@@ -527,6 +605,9 @@ class GraphChartSeries extends ChartSeries
         $this->getRelationAxis();
         $this->getRelationNameAxis();
         $this->getDirectionAxis();
+        if ($this->hasCategories() === true) {
+            $this->getCategoryAxis();
+        }
         return $this;
     }
 }
