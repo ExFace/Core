@@ -12,6 +12,32 @@ use exface\Core\Factories\WidgetFactory;
  */
 class Tiles extends WidgetGrid
 {    
+    private $centerContent = null;
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getCenterContent(bool $default = false) : bool
+    {
+        return $this->centerContent ?? $default;
+    }
+    
+    /**
+     * Set to TRUE to place the content in the middle of the scree or FALSE for regular positioning.
+     * 
+     * @uxon-property center_content
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return Tiles
+     */
+    public function setCenterContent(bool $value) : Tiles
+    {
+        $this->centerContent = $value;
+        return $this;
+    }
+    
     /**
      * 
      * @param callable $filter
