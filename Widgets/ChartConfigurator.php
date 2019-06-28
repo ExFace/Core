@@ -7,7 +7,15 @@ use exface\Core\CommonLogic\UxonObject;
  * A configurator widget for charts with filters, sorters and chart-specific options.
  * 
  * The `ChartConfigurator` is built on-top of the configurator for the data widget of
- * the `Chart`.
+ * the `Chart`. This is important as a chart can use an external data widget via
+ * `data_widget_link`, which would have it's own configurator depending on the type
+ * of that widget (e.g. a `DataTableConfigurator` if it's a table). Whatever is set
+ * in the configurator of the data widget also has effect on the chart and vice versa.
+ * 
+ * Technically this is achievend by using the `DataConfigurator` within the `ChartConfigurator`:
+ * operations like getting or setting filters are simply forwarded to the `DataConfigurator`,
+ * regardless of whether it belongs to the internal (invisible) data or a real data widget
+ * somewhere outside the chart.
  * 
  * @author Andrej Kabachnik
  * 
@@ -142,5 +150,15 @@ class ChartConfigurator extends DataConfigurator
     {
         $this->getDataConfigurator()->setLazyLoading($value);
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\DataConfigurator::getWidgets()
+     */
+    public function getWidgets(callable $filter_callback = null)
+    {
+        return array_merge($this->getDataConfigurator()->getWidgets($filter_callback), parent::getWidgets($filter_callback));
     }
 }
