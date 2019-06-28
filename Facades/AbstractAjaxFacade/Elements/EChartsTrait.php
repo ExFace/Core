@@ -1804,10 +1804,8 @@ JS;
     // Danach
     var val, gap;
     var len = 0;
-    var chartDivId = {$this->buildJsEChartsVar()}.getDom().id;
-    var canvasCtxt = $('#'+ chartDivId + ' canvas').get(0).getContext('2d');
-    var font = "{$this->baseAxisLabelFontSize()}" + "px " + "{$this->baseAxisLabelFont()}"
-    canvasCtxt.font = font;
+    var canvasCtxt = $('<canvas>').get(0).getContext('2d');
+    canvasCtxt.font = "{$this->baseAxisLabelFontSize()}" + "px " + "{$this->baseAxisLabelFont()}";
 
 
     // for each data row calculate the offset for the axis bound to a data value
