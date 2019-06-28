@@ -2086,12 +2086,42 @@ JS;
     protected function buildJsRedrawGraph(string $selection = 'undefined', string $dataJs = 'rowData')
     {
         $series = $this->getWidget()->getSeries()[0];
+        
+        if ($series->hasCategories() === true) {
+            $categories = <<<JS
+
+        var existingCategory = false;
+        var categoriesIndex = undefined;
+        for (var j = 0; j<categories.length; j++) {
+            if (categories[j].name === {$dataJs}[i].{$series->getCategoryDataColumn()->getDataColumnName()}) {
+                existingCategory = true;
+                categoriesIndex = j;
+            }
+        }
+        if (existingCategory === true) {
+            var nodeCategory = categoriesIndex;
+        } else {
+            categories.push({name: {$dataJs}[i].{$series->getCategoryDataColumn()->getDataColumnName()} });
+            var nodeCategory = categories.length-1;
+        }
+JS;
+               
+        } else {
+            $categories = <<<JS
+        if (categories.length === 0) {
+            categories.push({name: 'Nodes'});
+        }
+        var nodeCategory = categories.length-1;
+
+JS;
+        }
         return <<<JS
         
     var nodes = [];
     var links = [];
     var node = {};
     var link = {};
+    var categories = [];
     
     // for each data object add a node that's not already existing to the nodes array
     // and a link that's not already existing to the links array
@@ -2116,6 +2146,10 @@ JS;
         if ({$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()} === {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
             existingNodeRight = true;
         }
+
+        //build categories array and set category for the node
+        {$categories}        
+        
         // if the left object is not existing as node yet, add it
 		if (existingNodeLeft === false ) {
 			node = {
@@ -2123,6 +2157,7 @@ JS;
 				name: {$dataJs}[i].{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
                 symbolSize: 10,
 				value: 10,
+                category: nodeCategory,
 			};
 			nodes.push(node);
 		}
@@ -2133,6 +2168,7 @@ JS;
 				name: {$dataJs}[i].{$series->getRightObjectNameDataColumn()->getDataColumnName()},
 				symbolSize: 10,
 				value: 10,
+                category: nodeCategory,
 			};
 		nodes.push(node);
 		}
@@ -2165,6 +2201,7 @@ JS;
     	series: [{
     		data: nodes,
             links: links,
+            categories: categories,
     	}],
     });
     var selection = {$selection};
@@ -2370,7 +2407,7 @@ JS;
 
 {
 	formatter: function(params) {
-		return params.data.name + " - " + params.data.id;
+		return params.data.name
 	},
     confine: true,
 },
@@ -2454,14 +2491,11 @@ JS;
      */
     protected function buildJsChartPropertyLegend() : string
     {
-        if ($this->isGraphChart() === true) {
-            return '{show: false},';
-        }
         $padding = '';
         $widget = $this->getWidget();
         $firstSeries = $widget->getSeries()[0];
         $position = $widget->getLegendPosition();
-        if ($position === null && $firstSeries instanceof PieChartSeries) {
+        if ($position === null && ( $firstSeries instanceof PieChartSeries || $firstSeries instanceof GraphChartSeries)) {
             $positionJs = "show: false";
         } elseif ($position == 'top' ) {
             $positionJs = "top: 'top',";
@@ -2629,7 +2663,7 @@ JS;
             return false;
         }
         $firstSeries = $widget->getSeries()[0];
-        if (count($widget->getSeries()) == 1 && ($firstSeries instanceof PieChartSeries) === false) {
+        if (count($widget->getSeries()) == 1 && (($firstSeries instanceof PieChartSeries) === false || $firstSeries instanceof GraphChartSeries === false)) {
             if ($firstSeries->getValueDataColumn() === $firstSeries->getValueAxis()->getDataColumn()){
                 return true;
             } else {
