@@ -52,6 +52,8 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     private $zoomable = null;
     
     private $grid = null;
+    
+    private $rotate_labels = false;
 
     const POSITION_TOP = 'TOP';
 
@@ -199,6 +201,35 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
             throw new WidgetPropertyInvalidValueError($this->getChart(), 'Invalid axis position "' . $value . '". Only TOP, RIGHT, BOTTOM or LEFT allowed!', '6TA2Y6A');
         }
         return $this;
+    }
+    
+    /**
+     * Set this parameter if you want the axis label be rotated. Only works for x-axes.
+     * 
+     * @uxon-property rotate_labels
+     * @uxon-type bool
+     *
+     * 
+     * @param boolean $bool
+     * @return ChartAxis
+     */
+    public function setRotateLabels(bool $bool) : ChartAxis
+    {
+        $this->rotate_labels = $bool;
+        return $this;
+    }
+    
+    /**
+     * returns TRUE when the labels need to be rotated, always false for y-axis
+     * 
+     * @return bool
+     */
+    public function hasRotatedLabel() : bool
+    {
+        if ($this->getDimension() === Chart::AXIS_Y) {
+            return false;
+        }
+        return $this->rotate_labels;
     }
 
     /**
