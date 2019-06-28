@@ -9,10 +9,8 @@ use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
-use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 
 /**
  * The configurator for data widgets contains tabs for filters and sorters.
@@ -310,12 +308,6 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         // TODO reenable the tab once it has content
         $tab->setDisabled(true);
         return $tab;
-    }
-    
-    public function addSorter($attribute_alias, $direction)
-    {
-        $this->getSorterTab();
-        return $this;
     }
     
     /**
