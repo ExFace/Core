@@ -66,14 +66,14 @@ trait EChartsTrait
     }
     
     /**
-     * Function to build the div element forthe chart
+     * Function to build the div element for the chart
      *
      * @param string $style
      * @return string
      */
     protected function buildHtmlChart($style = 'height:100%; min-height: 100px; overflow: hidden;') : string
     {
-        return '<div id="' . $this->getId() . '_echarts" style="' . $style . '"></div>';
+        return '<div id="' . $this->getId() . '" style="' . $style . '"></div>';
     }
     
     /**
@@ -235,26 +235,8 @@ JS;
         return <<<JS
         
             var echart = {$this->buildJsEChartsVar()};
-            var options = {};
-            /*options.series = {$this->buildJsGraphChart($this->getWidget()->getSeries()[0])};*/
-            {$this->buildJsRefresh()}
-            /*
-            options.series = {
-                layout: 'force',
-                lineStyle: {
-                    curveness: 0
-                },
-            };
-            
-            echart.setOption(options);
-            */
-            /*
-            var elm = document.getElementById('{$this->buildJsEChartsDivVar()}').getElementsByTagName('canvas')[0];
-            var evt = document.createEvent("MouseEvents");
-            evt.initEvent('mousewheel', true, true);
-            evt.wheelDelta = 120;
-            elm.dispatchEvent(evt);
-            */
+            var options = {};            
+            {$this->buildJsRefresh()}            
             
 JS;
     }
@@ -316,7 +298,7 @@ JS;
     {
         return <<<JS
         
-    var {$this->buildJsEChartsVar()} = echarts.init(document.getElementById('{$this->buildJsEChartsDivVar()}'), '{$theme}');
+    var {$this->buildJsEChartsVar()} = echarts.init(document.getElementById('{$this->getId()}'), '{$theme}');
     
 JS;
     }
@@ -502,7 +484,6 @@ JS;
         return <<<JS
         
         {$this->buildJsEChartsVar()}.on('click', function(params){
-            console.log(params)
             {$this->buildJsClicks('params')}
         });
     
@@ -532,7 +513,7 @@ JS;
                             return i
                         }
                     }                    
-                }()
+                }();
                 {$this->buildJsCallEChartsAction('echart', 'focusNodeAdjacency', '0', 'index')}
             }
         });
@@ -1712,7 +1693,6 @@ JS;
         {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
         return;
     }
-    echart.resize();
     echart._dataset = rowData;
     //hide overlay message
     {$this->buildJsMessageOverlayHide()}
@@ -1720,6 +1700,7 @@ JS;
     {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
     //build and set dataset,config and options depending on chart type    
     $js
+    {$this->buildJsEChartsResize()}
 JS;
     }
 
@@ -1823,9 +1804,8 @@ JS;
     // Danach
     var val, gap;
     var len = 0;
-
-    var canvasCtxt = $('#{$this->buildJsEChartsDivVar()} canvas').get(0).getContext('2d');
-    var options = {$this->buildJsEChartsVar()}.getOption();
+    var chartDivId = {$this->buildJsEChartsVar()}.getDom().id;
+    var canvasCtxt = $('#'+ chartDivId + ' canvas').get(0).getContext('2d');
     var font = "{$this->baseAxisLabelFontSize()}" + "px " + "{$this->baseAxisLabelFont()}"
     canvasCtxt.font = font;
 
@@ -2156,16 +2136,12 @@ JS;
 			};
 		nodes.push(node);
 		}
-	
+        // we only check relations in regular direction	to data, so arrows are always in the right direction in the graph
     	// if relation direction is "regular" left object is source node, right object is target node for that relation
         if ({$dataJs}[i].{$series->getDirectionDataColumn()->getDataColumnName()} == "regular") {
     		var source = {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()};
     		var target = {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()};
-    	// else right object is source and left object is target for that relation
-        } else {
-    		var source = {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()};
-    		var target = {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()};
-    	}
+        }
         var existingLink = false;
         // for every relation check if it's not already existing in links array
         for (var j = 0; j<links.length; j++) {
@@ -2519,23 +2495,13 @@ JS;
     }
     
     /**
-     * build the id for the chart div element
-     * 
-     * @return string
-     */
-    protected function buildJsEChartsDivVar() : string
-    {
-        return "{$this->getId()}_echarts";
-    }
-    
-    /**
      * build the chart element id
      *
      * @return string
      */
     protected function buildJsEChartsVar() : string
     {
-        return "chart_{$this->buildJsEChartsDivVar()}";
+        return "chart_{$this->getId()}";
     }
     
     /**
