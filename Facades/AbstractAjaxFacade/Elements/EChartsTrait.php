@@ -66,7 +66,7 @@ trait EChartsTrait
     }
     
     /**
-     * Function to build the div element forthe chart
+     * Function to build the div element for the chart
      *
      * @param string $style
      * @return string
@@ -235,27 +235,8 @@ JS;
         return <<<JS
         
             var echart = {$this->buildJsEChartsVar()};
-            var options = {};
-            /*options.series = {$this->buildJsGraphChart($this->getWidget()->getSeries()[0])};*/
-            {$this->buildJsRefresh()}
-            /*
-            options.series = {
-                layout: 'force',
-                lineStyle: {
-                    curveness: 0
-                },
-            };
-            
-            echart.setOption(options);
-            */
-            /*
-            var elm = document.getElementById('{$this->getId()}').getElementsByTagName('canvas')[0];
-            console.log(elm)
-            var evt = document.createEvent("MouseEvents");
-            evt.initEvent('mousewheel', true, true);
-            evt.wheelDelta = 120;
-            elm.dispatchEvent(evt);
-            */
+            var options = {};            
+            {$this->buildJsRefresh()}            
             
 JS;
     }
@@ -453,6 +434,7 @@ JS;
         return <<<JS
 
             var clickCount = {$this->buildJsEChartsVar()}._clickCount;
+            var params = {$params};
             var selected = {$this->buildJsGetSelectedRowFunction('params.data')};
             
             clickCount++;
@@ -531,7 +513,7 @@ JS;
                             return i
                         }
                     }                    
-                }()
+                }();
                 {$this->buildJsCallEChartsAction('echart', 'focusNodeAdjacency', '0', 'index')}
             }
         });
@@ -1328,6 +1310,26 @@ dataZoom: [$zoom],
 
 JS;
     }
+        
+    /**
+     * font family for axis labels
+     * 
+     * @return string
+     */
+    protected function baseAxisLabelFont() : string
+    {
+        return 'sans-serif';
+    }
+    
+    /**
+     * font size for axis labels
+     * 
+     * @return string
+     */
+    protected function baseAxisLabelFontSize() : string
+    {
+        return 12;
+    }
     
     /**
      * build axis properties
@@ -1363,13 +1365,14 @@ JS;
         
         if ($axis->getDimension() == Chart::AXIS_X) {
             $nameLocation = "nameLocation: 'center',";
-            if ($axisType === ChartAxis::AXIS_TYPE_CATEGORY) {
-                $rotate = 'rotate: 45,';
-            } else {
-                $rotate = '';
-            }
         } else {
             $nameLocation = '';
+        }
+        
+        if ($axis->hasRotatedLabel() === true) {
+            $rotate = 'rotate: 45,';
+        } else {
+            $rotate = '';
         }
         
         if ($axisType === ChartAxis::AXIS_TYPE_CATEGORY) {
@@ -1423,10 +1426,12 @@ JS;
         show: false,
         nameGap: {$nameGap},
         axisLabel: {
+            fontFamily: '{$this->baseAxisLabelFont()}',
+            fontSize: {$this->baseAxisLabelFontSize()},
             formatter: function(a) {
                 return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'a')}
             },
-            /*{$rotate}*/
+            {$rotate}
             {$interval}
         },
         axisPointer: {
@@ -1601,7 +1606,7 @@ JS;
      */
     protected function baseAxisNameGap() : int
     {
-        return 15;
+        return 18;
     }
     
     /**
@@ -1688,7 +1693,6 @@ JS;
         {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
         return;
     }
-    echart.resize();
     echart._dataset = rowData;
     //hide overlay message
     {$this->buildJsMessageOverlayHide()}
@@ -1696,6 +1700,7 @@ JS;
     {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
     //build and set dataset,config and options depending on chart type    
     $js
+    {$this->buildJsEChartsResize()}
 JS;
     }
 
@@ -1717,18 +1722,16 @@ JS;
             
             $xAxisIndex = 0;
             if ($axis->getDimension() === Chart::AXIS_X) {
-                //For X Axex that are Category Axis the label will be rotated
-                //therefor gap has to be calculated by length of data values
-                /*
-                if ($axis->getAxisType() === ChartAxis::AXIS_TYPE_CATEGORY) {
-                    $gap = 'len * 6';
-                } else {
-                    $gap = ++$xAxisIndex . ' * 20 * 2 - 15';
-                }*/
                 $gap = ++$xAxisIndex . ' * 20 * 2 - 15';
+                //for axes that have rotated label gap has to be calculated differently                
+                if ($axis->hasRotatedLabel() === true) {
+                    //rotation is 45 degress, therefore the gap should be the square root of
+                    //2 times the square of the text length
+                    $gap = 'canvasCtxt.measureText(val).width / Math.sqrt(2) + 15';
+                }           
             } else {
-                $gap = 'len * (8 - Math.floor(len / 16))';
-                //$gap = 'canvasCtxt.measureText(val).width + 12';
+                //$gap = 'len * (8 - Math.floor(len / 16))';
+                $gap = 'canvasCtxt.measureText(val).width + 10';
             }
             $axesOffsetCalc .= <<<JS
             
@@ -1756,6 +1759,11 @@ JS;
             } else {                
                 $caption = 'false';
             }
+            if ($axis->hasRotatedLabel() === true) {
+                $rotated = 'true';
+            } else {
+                $rotated = 'false';
+            }
             //js snippet to build array containing every visible axis as object with its necessary gap
             //and other needed parameters
             $axesJsObjectInit .= <<<JS
@@ -1768,6 +1776,7 @@ JS;
         position: "{$postion}",
         index: "{$axis->getIndex()}",
         name: "{$axis->getDataColumn()->getDataColumnName()}",
+        rotation : {$rotated},
     };
     
 JS;
@@ -1795,7 +1804,12 @@ JS;
     // Danach
     var val, gap;
     var len = 0;
-    // var canvasCtxt = $('#{$this->getId()} canvas').get(0).getContext('2d');
+    var chartDivId = {$this->buildJsEChartsVar()}.getDom().id;
+    var canvasCtxt = $('#'+ chartDivId + ' canvas').get(0).getContext('2d');
+    var font = "{$this->baseAxisLabelFontSize()}" + "px " + "{$this->baseAxisLabelFont()}"
+    canvasCtxt.font = font;
+
+
     // for each data row calculate the offset for the axis bound to a data value
     {$dataJs}.forEach(function(row){
         {$axesOffsetCalc}
@@ -1813,44 +1827,39 @@ JS;
     // for every visible axis, set the correct offset and that it is visible
     for (var i in axes) {
         axis = axes[i];
+        if (axis.gap === 0 && {$dataJs}.length > 0) {   
+            {$this->buildJsShowMessageError("'{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.ECHARTS.AXIS_NO_DATA')} \"' + axis.name + '\"'")}
+        }
         //if the caption for axis is shown the gap for x Axes needs to be
         // set based on the axis.gap (means the space needed to show axis values)
-        /*if (axis.caption === true && axis.dimension === 'x' && axis.category === 'CATEGORY') {
-            var nameGap = 10 + axis.gap + {$this->baseAxisNameGap()}
-        } else {
-            var nameGap = 0
-        }*/
-        /*if (axis.dimension === 'x' && axis.category === 'CATEGORY') {
+        if (axis.rotation === true && axis.caption === true) { 
+            var nameGap = axis.gap + {$this->baseAxisNameGap()};
             newOptions[axis.dimension + 'Axis'].push({
                 offset: offsets[axis.position],
                 nameGap: axis.gap,               
                 show: true
             });
+            offsets[axis.position] += nameGap;
         } else {
             newOptions[axis.dimension + 'Axis'].push({
-                offset: offsets[axis.position],
+                offset: offsets[axis.position],               
                 show: true
             });
-        }*/
-        newOptions[axis.dimension + 'Axis'].push({
-            offset: offsets[axis.position],
-            show: true
-        });
-        if (axis.gap === 0 && {$dataJs}.length > 0) {   
-            {$this->buildJsShowMessageError("'{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.ECHARTS.AXIS_NO_DATA')} \"' + axis.name + '\"'")}
+            if (axis.caption === true) {
+                offsets[axis.position] += axis.gap + {$this->baseAxisNameGap()};
+            } else {
+                offsets[axis.position] += axis.gap;
+            }
         }
+        
         // increase the offset for the next axis at the same position by the gap calculated for this axis        
         /*if (nameGap === 0) {
-            offsets[axis.position] += axis.gap
+            offsets[axis.position] += axis.gap;
         } else {
-            if (i < axes.length) {
-                offsets[axis.position] += nameGap
-            } else {
-                offsets[axis.position] += axis.gap
-            }
-        }*/
+            offsets[axis.position] += nameGap;
+        }
 
-        offsets[axis.position] += axis.gap
+        offsets[axis.position] += axis.gap*/
         
         
     }
@@ -2077,12 +2086,42 @@ JS;
     protected function buildJsRedrawGraph(string $selection = 'undefined', string $dataJs = 'rowData')
     {
         $series = $this->getWidget()->getSeries()[0];
+        
+        if ($series->hasCategories() === true) {
+            $categories = <<<JS
+
+        var existingCategory = false;
+        var categoriesIndex = undefined;
+        for (var j = 0; j<categories.length; j++) {
+            if (categories[j].name === {$dataJs}[i].{$series->getCategoryDataColumn()->getDataColumnName()}) {
+                existingCategory = true;
+                categoriesIndex = j;
+            }
+        }
+        if (existingCategory === true) {
+            var nodeCategory = categoriesIndex;
+        } else {
+            categories.push({name: {$dataJs}[i].{$series->getCategoryDataColumn()->getDataColumnName()} });
+            var nodeCategory = categories.length-1;
+        }
+JS;
+               
+        } else {
+            $categories = <<<JS
+        if (categories.length === 0) {
+            categories.push({name: 'Nodes'});
+        }
+        var nodeCategory = categories.length-1;
+
+JS;
+        }
         return <<<JS
         
     var nodes = [];
     var links = [];
     var node = {};
     var link = {};
+    var categories = [];
     
     // for each data object add a node that's not already existing to the nodes array
     // and a link that's not already existing to the links array
@@ -2107,6 +2146,10 @@ JS;
         if ({$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()} === {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
             existingNodeRight = true;
         }
+
+        //build categories array and set category for the node
+        {$categories}        
+        
         // if the left object is not existing as node yet, add it
 		if (existingNodeLeft === false ) {
 			node = {
@@ -2114,6 +2157,7 @@ JS;
 				name: {$dataJs}[i].{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
                 symbolSize: 10,
 				value: 10,
+                category: nodeCategory,
 			};
 			nodes.push(node);
 		}
@@ -2124,19 +2168,16 @@ JS;
 				name: {$dataJs}[i].{$series->getRightObjectNameDataColumn()->getDataColumnName()},
 				symbolSize: 10,
 				value: 10,
+                category: nodeCategory,
 			};
 		nodes.push(node);
 		}
-	
+        // we only check relations in regular direction	to data, so arrows are always in the right direction in the graph
     	// if relation direction is "regular" left object is source node, right object is target node for that relation
         if ({$dataJs}[i].{$series->getDirectionDataColumn()->getDataColumnName()} == "regular") {
     		var source = {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()};
     		var target = {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()};
-    	// else right object is source and left object is target for that relation
-        } else {
-    		var source = {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()};
-    		var target = {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()};
-    	}
+        }
         var existingLink = false;
         // for every relation check if it's not already existing in links array
         for (var j = 0; j<links.length; j++) {
@@ -2160,6 +2201,7 @@ JS;
     	series: [{
     		data: nodes,
             links: links,
+            categories: categories,
     	}],
     });
     var selection = {$selection};
@@ -2279,6 +2321,7 @@ JS;
     protected function buildJsGridMarginBottom() : int
     {
         $count = 0;
+        $margin = 0;
         $widget = $this->getWidget();
         foreach ($widget->getAxesX() as $axis) {
             if ($axis->isZoomable() === true) {
@@ -2288,7 +2331,7 @@ JS;
         if ($this->legendHidden() === false && $widget->getLegendPosition() === 'bottom') {
             $margin += $this->baseLegendOffset();
         }
-        $margin += 15 + $this->baseZoomOffset() * $count;
+        $margin += $this->baseZoomOffset() * $count;
         return $margin;
     }
     
@@ -2364,7 +2407,7 @@ JS;
 
 {
 	formatter: function(params) {
-		return params.data.name;
+		return params.data.name
 	},
     confine: true,
 },
@@ -2428,7 +2471,11 @@ JS;
                 tooltip += tooltipPart + '<tr><td>'+ marker + '</td><td>' + seriesName + '</td><td>'+ value + '</td></tr>';
                 }
         });
-        tooltip += tooltipPart + '</tbody></table>';
+        if (stacked === true) {
+            tooltip += tooltipPart + '</tbody></table>';
+        } else {
+            tooltip += '</tbody></table>';
+        }        
         return tooltip;
     },
 },
@@ -2444,14 +2491,11 @@ JS;
      */
     protected function buildJsChartPropertyLegend() : string
     {
-        if ($this->isGraphChart() === true) {
-            return '{show: false},';
-        }
         $padding = '';
         $widget = $this->getWidget();
         $firstSeries = $widget->getSeries()[0];
         $position = $widget->getLegendPosition();
-        if ($position === null && $firstSeries instanceof PieChartSeries) {
+        if ($position === null && ( $firstSeries instanceof PieChartSeries || $firstSeries instanceof GraphChartSeries)) {
             $positionJs = "show: false";
         } elseif ($position == 'top' ) {
             $positionJs = "top: 'top',";
@@ -2619,7 +2663,7 @@ JS;
             return false;
         }
         $firstSeries = $widget->getSeries()[0];
-        if (count($widget->getSeries()) == 1 && ($firstSeries instanceof PieChartSeries) === false) {
+        if (count($widget->getSeries()) == 1 && (($firstSeries instanceof PieChartSeries) === false || $firstSeries instanceof GraphChartSeries === false)) {
             if ($firstSeries->getValueDataColumn() === $firstSeries->getValueAxis()->getDataColumn()){
                 return true;
             } else {
