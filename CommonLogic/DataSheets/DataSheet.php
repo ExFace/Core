@@ -324,11 +324,12 @@ class DataSheet implements DataSheetInterface
      */
     public function getCellValue($column_name, $row_number)
     {
-        $data_row_cnt = $this->countRows();
-        if ($row_number >= $data_row_cnt) {
-            return $this->totals_rows[$row_number - $data_row_cnt][$column_name];
+        if ($row = $this->rows[$row_number]) {
+            return $row[$column_name];
+        } elseif ($row_number >= $this->countRows()) {
+            return $this->totals_rows[$row_number - $this->countRows()][$column_name];
         }
-        return $this->rows[$row_number][$column_name];
+        return null;
     }
 
     /**
