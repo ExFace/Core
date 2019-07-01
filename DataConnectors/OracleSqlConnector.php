@@ -34,6 +34,10 @@ class OracleSqlConnector extends AbstractSqlConnector
      */
     protected function performConnect()
     {
+        if (function_exists('oci_connect') === false) {
+            throw new DataConnectionFailedError($this, 'PHP function "oci_connect" not available!', '76BK02Z');
+        }
+        
         $e = null;
         try {
             $conn = oci_connect($this->getUser(), $this->getPassword(), $this->getHost() . ':' . $this->getPort() . '/' . $this->getSid(), $this->getCharacterSet());
