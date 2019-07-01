@@ -31,17 +31,4 @@ trait JqueryInputTrait
         
         return '<input type="' . $type . '" ' . $props . ' />';
     }
-    
-    /**
-     *
-     * {@inheritdoc}
-     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsValidator()
-     */
-    public function buildJsValidator()
-    {
-        if ($this->getWidget()->isRequired()) {
-            return '(' . $this->buildJsValueGetter() . ' === "" ? false : true)';
-        }
-        return 'true';
-    }
 }
