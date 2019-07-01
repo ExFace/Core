@@ -2622,7 +2622,7 @@ JS;
             // widget: filters, sorters, etc.
             return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
         } else {
-            $rows = "[{$this->buildJsEChartsVar()}._oldSelection]";
+            $rows = "({$this->buildJsEChartsVar()}._oldSelection ? [{$this->buildJsEChartsVar()}._oldSelection] : [])";
         }
         return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($rows ? ", rows: " . $rows : '') . "}";
     }
