@@ -61,20 +61,21 @@ trait JqueryButtonTrait {
     protected function buildJsRequestDataCollector(ActionInterface $action, AbstractJqueryElement $input_element)
     {
         if (! is_null($action->getInputRowsMin()) || ! is_null($action->getInputRowsMax())) {
+            $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
             if ($action->getInputRowsMin() === $action->getInputRowsMax()) {
-                $js_check_input_rows = "if (requestData.rows.length < " . $action->getInputRowsMin() . " || requestData.rows.length > " . $action->getInputRowsMax() . ") {" . $this->buildJsShowMessageError('"' . $this->translate("MESSAGE.SELECT_EXACTLY_X_ROWS", array(
+                $js_check_input_rows = "if (requestData.rows.length < " . $action->getInputRowsMin() . " || requestData.rows.length > " . $action->getInputRowsMax() . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_EXACTLY_X_ROWS", array(
                     '%number%' => $action->getInputRowsMax()
                 ), $action->getInputRowsMax()) . '"') . " return false;}";
             } elseif (is_null($action->getInputRowsMax())) {
-                $js_check_input_rows = "if (requestData.rows.length < " . $action->getInputRowsMin() . ") {" . $this->buildJsShowMessageError('"' . $this->translate("MESSAGE.SELECT_AT_LEAST_X_ROWS", array(
+                $js_check_input_rows = "if (requestData.rows.length < " . $action->getInputRowsMin() . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_AT_LEAST_X_ROWS", array(
                     '%number%' => $action->getInputRowsMin()
                 ), $action->getInputRowsMin()) . '"') . " return false;}";
             } elseif (is_null($action->getInputRowsMin())) {
-                $js_check_input_rows = "if (requestData.rows.length > " . $action->getInputRowsMax() . ") {" . $this->buildJsShowMessageError('"' . $this->translate("MESSAGE.SELECT_AT_MOST_X_ROWS", array(
+                $js_check_input_rows = "if (requestData.rows.length > " . $action->getInputRowsMax() . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_AT_MOST_X_ROWS", array(
                     '%number%' => $action->getInputRowsMax()
                 ), $action->getInputRowsMax()) . '"') . " return false;}";
             } else {
-                $js_check_input_rows = "if (requestData.rows.length < " . $action->getInputRowsMin() . " || requestData.rows.length > " . $action->getInputRowsMax() . ") {" . $this->buildJsShowMessageError('"' . $this->translate("MESSAGE.SELECT_X_TO_Y_ROWS", array(
+                $js_check_input_rows = "if (requestData.rows.length < " . $action->getInputRowsMin() . " || requestData.rows.length > " . $action->getInputRowsMax() . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_X_TO_Y_ROWS", array(
                     '%min%' => $action->getInputRowsMin(),
                     '%max%' => $action->getInputRowsMax()
                 )) . '"') . " return false;}";

@@ -178,6 +178,11 @@
     "MESSAGE.TYPES.SUCCESS": "Success",
     "MESSAGE.TYPES.HINT": "Hint",
     
+    "MESSAGE.SELECT_EXACTLY_X_ROWS": "Please select exactly %number% element!|Please select exactly %number% elements!",
+	"MESSAGE.SELECT_AT_MOST_X_ROWS": "Please select at most %number% element!|Please select at most %number% elements!",
+	"MESSAGE.SELECT_AT_LEAST_X_ROWS": "Please select at least %number% element!|Please select at least %number% elements!",
+	"MESSAGE.SELECT_X_TO_Y_ROWS": "Please select %min% to %max% elements first!",
+	
     "PAGE.APPS.REPAIR": "Repair",
     "PAGE.ATTRIBUTES.OPEN_OBJECT": "Open Object",
     "PAGE.ATTRIBUTE_EDITOR.DATA_ADDRESS": "Data Address",
