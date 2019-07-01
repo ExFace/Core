@@ -2052,6 +2052,34 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2019-07-01 07:58:17",
+            "MODIFIED_ON": "2019-07-01 08:07:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e99bd5fc2ebbf5a5eae4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "76BJXFH",
+            "TITLE": "Cannot connect to Micrsoft SQL Server",
+            "DESCRIPTION": "Connecting to Microsoft SQL Server via SQL requires:\n\n- The PHP extension \"sqlsrv\" being enabled (downloadable it from [GitHub](https:\/\/github.com\/Microsoft\/msphpsql\/releases))\n- The Microsoft ODBC driver matching the version of your server installed (downloadable from [Microsoft](https:\/\/docs.microsoft.com\/de-de\/sql\/connect\/odbc\/download-odbc-driver-for-sql-server))",
+            "HINT": "Please contact the server administrator!",
+            "TYPE": "ERROR",
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2019-07-01 08:04:01",
+            "MODIFIED_ON": "2019-07-01 08:04:01",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e99bd6c913e1e3a5eae4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "76BK02Z",
+            "TITLE": "Cannot connect to Oracle SQL",
+            "DESCRIPTION": "Connecting to Oracle SQL requires:\n\n- The **oci8** PHP extension matching your database version (e.g. oci8_12c)\n- The corresponding Version of the Oracle InstantClient accessible via command line (e.g. registered in the PATH on Windows).",
+            "HINT": "Please contact the server administrator!",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

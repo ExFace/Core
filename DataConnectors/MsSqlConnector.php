@@ -39,6 +39,10 @@ class MsSqlConnector extends AbstractSqlConnector
             $connectInfo["PWD"] = $this->getPWD();
         }
         
+        if (function_exists('sqlsrv_connect') === false) {
+            throw new DataConnectionFailedError($this, 'PHP function "sqlsrv_connect" not available!', '76BJXFH');
+        }
+        
         if (! $conn = sqlsrv_connect($this->getServerName() . ($this->getPort() ? ', ' . $this->getPort() : ''), $connectInfo)) {
             throw new DataConnectionFailedError($this, "Failed to create the database connection! " . $this->getLastError());
         } else {
