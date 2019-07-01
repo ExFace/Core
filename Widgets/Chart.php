@@ -116,6 +116,8 @@ class Chart extends AbstractWidget implements
      */
     public function getChildren() : \Iterator
     {
+        yield $this->getConfiguratorWidget();
+        
         if (! $this->getDataWidgetLink()) {
             yield $this->getData();
         }
