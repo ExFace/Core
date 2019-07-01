@@ -1686,15 +1686,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlGroupBy(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $select_from = null)
     {
         $output = '';
-        if ($this->checkForSqlStatement($qpart->getAttribute()->getDataAddress())) {
+        if ($this->checkForSubselect($qpart->getAttribute()->getDataAddress()) === true) {
             // Seems like SQL statements are not supported in the GROUP BY clause in general
             throw new QueryBuilderException('Cannot use the attribute "' . $qpart->getAttribute()->getAliasWithRelationPath() . '" for aggregation in an SQL data source, because it\'s data address is defined via custom SQL statement');
         } else {
             // If it's not a custom SQL statement, it must be a column, so we need to prefix it with the table alias
-            if (is_null($select_from)) {
+            if ($select_from === null) {
                 $select_from = $qpart->getAttribute()->getRelationPath()->toString() ? $qpart->getAttribute()->getRelationPath()->toString() : $this->getMainObject()->getAlias();
             }
-            $output = ($select_from ? $this->getShortAlias($select_from . $this->getQueryId()) . $this->getAliasDelim() : '') . $qpart->getAttribute()->getDataAddress();
+            if ($select_from) {
+                $select_from = $this->getShortAlias($select_from . $this->getQueryId());
+            }
+            $output = $this->buildSqlSelect($qpart, $select_from, null, '', false, false);
         }
         return $output;
     }
@@ -1743,7 +1746,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     }
 
     /**
-     * Checks, if the given string is complex SQL-statement (in contrast to simple column references).
+     * Returns TRUE if the given string is complex SQL-statement (= not a simple column references)
+     * and FALSE otherwise.
+     * 
      * It is important to know this, because you cannot write to statements etc.
      *
      * @param string $string            
@@ -1751,9 +1756,21 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function checkForSqlStatement($string)
     {
-        if (strpos($string, '(') !== false && strpos($string, ')') !== false)
-            return true;
-        return false;
+        return strpos($string, '(') !== false && strpos($string, ')') !== false;
+    }
+    
+    /**
+     * Returns TRUE if the given SQL contains a SELECT statement and FALSE otherwise.
+     * 
+     * This does NOT check, if it's a valid select - but merely looks for the SELECT
+     * keyword.
+     * 
+     * @param string $string
+     * @return bool
+     */
+    protected function checkForSubselect(string $string) : bool
+    {
+        return stripos($string, 'SELECT ') !== false;
     }
 
     protected function addBinaryColumn($full_alias)
