@@ -176,6 +176,11 @@
     "MESSAGE.TYPES.SUCCESS": "Erfolg",
     "MESSAGE.TYPES.HINT": "Tip",
     
+    "MESSAGE.SELECT_EXACTLY_X_ROWS": "Bitte genau %number% Datensatz auswählen!|Bitte genau %number% Datensätze auswählen!",
+	"MESSAGE.SELECT_AT_MOST_X_ROWS": "Bitte maximal %number% Datensatz auswählen!|Bitte maximal %number% Datensätze auswählen!",
+	"MESSAGE.SELECT_AT_LEAST_X_ROWS": "Bitte mindestens %number% Datensatz auswählen!|Bitte mindestens %number% Datensätze auswählen!",
+	"MESSAGE.SELECT_X_TO_Y_ROWS": "Bitte %min% bis %max% Datensätze auswählen!",
+	
     "PAGE.APPS.REPAIR": "Reparieren",
     "PAGE.ATTRIBUTES.OPEN_OBJECT": "Objekt öffnen",
     "PAGE.ATTRIBUTE_EDITOR.DATA_ADDRESS": "Datenadresse",
