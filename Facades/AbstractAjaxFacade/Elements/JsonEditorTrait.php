@@ -12,6 +12,7 @@ use exface\Core\Widgets\InputUxon;
  */
 trait JsonEditorTrait
 {
+    use JqueryInputValidationTrait;
     
     /**
      *
@@ -236,17 +237,6 @@ JS;
         $includes[] = '<link href="exface/vendor/npm-asset/jsoneditor/dist/jsoneditor.min.css" rel="stylesheet">';
         $includes[] = '<script type="text/javascript" src="exface/vendor/npm-asset/jsoneditor/dist/jsoneditor.min.js"></script>';
         return $includes;
-    }
-    
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsValidator()
-     */
-    public function buildJsValidator()
-    {
-        return 'true';
     }
     
     protected function buildJsRootPrototypeGetter() : string
