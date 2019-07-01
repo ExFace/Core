@@ -378,12 +378,8 @@ class UxonSchema implements UxonSchemaInterface
         $ds->getColumns()->addMultiple(['ALIAS', 'APP__ALIAS']);
         if ($search !== null) {
             $parts = explode('.', $search);
-            if (count($parts) === 1) {
-                return [];
-            } else {
-                $alias = $parts[2];
-                $ds->addFilterFromString('APP__ALIAS', $parts[0] . '.' . $parts[1]);
-            }
+            $alias = $parts[2];
+            $ds->addFilterFromString('APP__ALIAS', $parts[0] . ($parts[1] !== null ? '.' . $parts[1] : ''));
             $ds->addFilterFromString('ALIAS', $alias);
         }
         $ds->dataRead();
