@@ -30,10 +30,7 @@ trait JsonEditorTrait
             var {$this->getId()}_JSONeditor = new JSONEditor(
                 document.getElementById("{$this->getId()}"), 
                 {
-                    onError: function (err) {
-    				    {$this->buildJsShowMessageError('err.toString()')};
-    				},
-				    {$this->buildJsEditorOptions()}
+                    {$this->buildJsEditorOptions()}
 			    },
                 {$this->getWidget()->getValue()}
             );
@@ -49,6 +46,7 @@ JS;
             $uxonEditorOptions = <<<JS
 
                     name: "{$this->getWidget()->getSchema()}",
+                    
                     enableTransform: false,
                 	enableSort: false,
                     autocomplete: {
@@ -82,19 +80,39 @@ JS;
                        		   } else {
                                     editor._autosuggestPending = true;
                                     var uxon = JSON.stringify(editor.get());
-                                    return {$this->buildJsFunctionPrefix()}_fetchAutosuggest(text, path, input, uxon, resolve, reject)
-                           			.then(json => {
-                   				         if (json !== undefined) {
-                           					editor._autosuggestPending = false;
-                           					editor._autosuggestLastPath = pathBase;
-                           					editor._autosuggestLastResult = json;
-                           				}
-                       			    });
+                                    return {$this->buildJsFunctionPrefix()}_fetchAutosuggest(text, path, input, uxon)
+                                    .then(json => {                                          
+                                        editor._autosuggestPending = false;
+                                        if (json === undefined) {
+                                            reject();
+                                        }
+                                        
+                                        // Cache response data
+                                        editor._autosuggestLastPath = pathBase;
+                                        editor._autosuggestLastResult = json;
+                                        
+                                        // If there are values for the autosuggest, call resolve()
+                                        if (json.values !== undefined ){
+                                            json.values.sort();
+                                            resolve(json.values);
+                                        }
+                                        
+                                        // return response data for further processing
+                                        return json;
+                                    })
+                                   .catch((err) => { 
+                                        editor._autosuggestPending = false;
+                                        console.warn('Autosuggest failed. ', err);
+                                   });
                		           }
+                            })
+                            .catch((err) => {
+                                editor._autosuggestPending = false;
+                                console.warn("Autosuggest failed while getting options - ignored.", err);
+                                return Promise.resolve([]);
                             });
                         }
                     }
-                	
 
 JS;
         } else {
@@ -103,7 +121,15 @@ JS;
         
         return <<<JS
 
-                    mode: {$this->buildJsEditorModeDefault()},
+                    onError: function (err) {
+                        try{
+    				        {$this->buildJsShowMessageError('err.toString()')};
+                        }
+                        catch{
+                            console.error('Alert from UXON editor: ', err);
+                        }
+    				},
+				    mode: {$this->buildJsEditorModeDefault()},
     				modes: {$this->buildJsEditorModes()},
                     {$uxonEditorOptions}
     
@@ -120,7 +146,7 @@ JS;
         
         return <<<JS
 
-    function {$this->buildJsFunctionPrefix()}_fetchAutosuggest(text, path, input, uxon, resolve, reject) {
+    function {$this->buildJsFunctionPrefix()}_fetchAutosuggest(text, path, input, uxon) {
         var formData = new URLSearchParams({
     		action: 'exface.Core.UxonAutosuggest',
     		text: text,
@@ -140,9 +166,19 @@ JS;
     		},
     		body: formData, // body data type must match "Content-Type" header
     	})
-    	.then(response => response.json())
-    	.then(json => {resolve(json.values); return json;})
-    	.catch(response => {reject();});
+      	.then(response => {
+            if (
+                response
+                && response.ok 
+                && response.status === 200 
+                && response.headers 
+                && ((response.headers.get('content-type') || '') === "application/json")
+            ) {
+                return response.json();
+            } else {
+                return Promise.reject({message: "Failed read JSON from fetch: Malformed response!", response: response});
+            }
+        });
     }
 
     function {$this->buildJsFunctionPrefix()}_getNodeFromTarget(target) {
