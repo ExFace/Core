@@ -14,7 +14,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 /**
  * Displays the widgets value as a progress bar with a floating label text.
  * 
- * The progress bar can be configured by setting `min`/`max` values, a `color_map`
+ * The progress bar can be configured by setting `min`/`max` values, a `color_scale`
  * and a `text_map` to add a text to the value. By default, a percentual scale
  * (from 0 to 100) will be assumed.
  *
@@ -90,16 +90,16 @@ class ProgressBar extends Display implements iCanBeAligned
      *
      * @return array
      */
-    public function getColorMap() : array
+    public function getColorScale() : array
     {
-        return $this->colorMap ?? static::getColorMapDefault($this->getMin(), $this->getMax());
+        return $this->colorMap ?? static::getColorScaleDefault($this->getMin(), $this->getMax());
     }
     
     /**
      * 
      * @return bool
      */
-    public function hasColorMap() : bool
+    public function hasColorScale() : bool
     {
         return $this->colorMap !== null;
     }
@@ -128,7 +128,7 @@ class ProgressBar extends Display implements iCanBeAligned
      * @param UxonObject $value
      * @return ProgressBar
      */
-    public function setColorMap(UxonObject $value) : ProgressBar
+    public function setColorScale(UxonObject $value) : ProgressBar
     {
         $this->colorMap = $value->toArray();
         ksort($this->colorMap);
@@ -139,7 +139,7 @@ class ProgressBar extends Display implements iCanBeAligned
      *
      * @return array
      */
-    public function getTextMap() : array
+    public function getTextScale() : array
     {
         return $this->textMap ?? [];
     }
@@ -151,14 +151,14 @@ class ProgressBar extends Display implements iCanBeAligned
      */
     public function getText(string $value) : ?string
     {
-        return static::findText($value, $this->getTextMap());
+        return static::findText($value, $this->getTextScale());
     }
     
     /**
      * 
      * @return bool
      */
-    public function hasTextMap() : bool
+    public function hasTextScale() : bool
     {
         return $this->textMap !== null;
     }
@@ -183,7 +183,7 @@ class ProgressBar extends Display implements iCanBeAligned
      * @param UxonObject $value
      * @return ProgressBar
      */
-    public function setTextMap(UxonObject $value) : ProgressBar
+    public function setTextScale(UxonObject $value) : ProgressBar
     {
         $this->textMap = $value->toArray();
         return $this;
@@ -197,7 +197,7 @@ class ProgressBar extends Display implements iCanBeAligned
      */
     public function getColor(float $value) : string
     {
-        return static::findColor($value, $this->getColorMap());
+        return static::findColor($value, $this->getColorScale());
     }
     
     /**
@@ -218,7 +218,7 @@ class ProgressBar extends Display implements iCanBeAligned
     public static function findColor($value, array $colorMap = null) : string
     {
         if ($colorMap === null || $value === null) {
-            $colorMap = static::getColorMapDefault();
+            $colorMap = static::getColorScaleDefault();
         }
         
         ksort($colorMap);
@@ -260,7 +260,7 @@ class ProgressBar extends Display implements iCanBeAligned
      * @param bool $invert
      * @return array
      */
-    public static function getColorMapDefault(float $min = 0, float $max = 100, bool $invert = false) : array
+    public static function getColorScaleDefault(float $min = 0, float $max = 100, bool $invert = false) : array
     {
         $range = $max - $min;
         $m = $range / 100;
@@ -293,7 +293,7 @@ class ProgressBar extends Display implements iCanBeAligned
             return $this->getAlignViaTrait();
         }
         
-        if ($this->hasTextMap() === false && ($this->getValueDataType() instanceof NumberDataType)) {
+        if ($this->hasTextScale() === false && ($this->getValueDataType() instanceof NumberDataType)) {
             return EXF_ALIGN_OPPOSITE;
         }
         
