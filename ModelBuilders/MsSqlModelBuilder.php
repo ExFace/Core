@@ -76,7 +76,34 @@ class MSSqlModelBuilder extends AbstractSqlModelBuilder
      */
     protected function findObjectTables(string $mask = null) : array
     {
-        throw new NotImplementedError('Generating meta objects from DB schema not yet available: create objects manually and then import attributes.');
+        if ($mask) {
+            $mask = mb_strtolower($mask);
+            $parts = explode('.', $mask);
+            if (count($parts) === 2) {
+                $filter = "LOWER(table_schema) LIKE '" . $parts[0] . "'";
+                if ($parts[1] !== null && $parts[1] !== '' && $parts[1] !== '%') {
+                    $filter .= " AND LOWER(table_name) LIKE '" . $parts[1] . "'";
+                }
+            } else {
+                $filter = "LOWER(table_name) LIKE '{$mask}'";
+            }
+        }
+        if ($filter) {
+            $filter = ' WHERE ' . $filter;
+        }
+        
+        $sql = "SELECT 
+                table_name AS NAME, 
+                CONCAT(table_schema, '.', table_name) AS DATA_ADDRESS, 
+                table_name AS ALIAS, 
+                (CASE table_type WHEN 'VIEW' THEN 0 ELSE 1 END) AS WRITABLE_FLAG
+            FROM INFORMATION_SCHEMA.TABLES {$filter}";
+        $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
+        foreach ($rows as $nr => $row) {
+            $rows[$nr]['NAME'] = $this->generateLabel($row['NAME']);
+            $rows[$nr]['ALIAS'] = $this->generateAlias($row['ALIAS']);
+        }
+        return $rows;
     }
 }
 ?>
