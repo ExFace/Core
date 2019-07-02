@@ -46,7 +46,6 @@ JS;
             $uxonEditorOptions = <<<JS
 
                     name: "{$this->getWidget()->getSchema()}",
-                    
                     enableTransform: false,
                 	enableSort: false,
                     autocomplete: {
@@ -126,7 +125,7 @@ JS;
     				        {$this->buildJsShowMessageError('err.toString()')};
                         }
                         catch{
-                            console.error('Alert from UXON editor: ', err);
+                            console.error('Failed to show JSON Editor error: ', err);
                         }
     				},
 				    mode: {$this->buildJsEditorModeDefault()},
