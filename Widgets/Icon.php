@@ -40,7 +40,7 @@ use exface\Core\DataTypes\NumberEnumDataType;
  * {
  *  "widget_type": "Icon",
  *  "attribute_alias": "battery_percentage",
- *  "icon_map": {
+ *  "icon_scale": {
  *      0: "battery-empty",
  *      25: "battery-quater",
  *      50: "battery-half",
@@ -194,6 +194,11 @@ class Icon extends Display implements iHaveColor
         return $this->getValue();
     }
     
+    public function isIconStatic() : bool
+    {
+        return $this->isBoundToAttribute() === false;
+    }
+    
     /**
      * The name of the icon to be displayed.
      * 
@@ -269,7 +274,7 @@ class Icon extends Display implements iHaveColor
      * {
      *  "widget_type": "Icon",
      *  "attribute_alias": "battery_percentage",
-     *  "icon_map": {
+     *  "icon_scale": {
      *      0: "battery-empty",
      *      25: "battery-quater",
      *      50: "battery-half",

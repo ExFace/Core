@@ -60,12 +60,12 @@ HTML;
         // The color map is presented as an array of arrays in JS because an object does not
         // retain the order of keys, which is crucial in this case.
         $colorMapJs = '';
-        foreach ($widget->getColorMap() as $val => $color) {
+        foreach ($widget->getColorScale() as $val => $color) {
             $colorMapJs .= '[' . $val . ',  "' . $color . '"],';
         }
         $colorMapJs = rtrim($colorMapJs, ",");
         
-        $textMapJs = json_encode($widget->getTextMap());
+        $textMapJs = json_encode($widget->getTextScale());
         $tpl = json_encode($this->buildHtmlProgressBar('exfph-val', 'exfph-text', 'exfph-progress', 'exfph-color'));
         return <<<JS
 function() {

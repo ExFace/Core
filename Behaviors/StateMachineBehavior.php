@@ -815,7 +815,7 @@ class StateMachineBehavior extends AbstractBehavior
             return '';
         }
         
-        $colorMap = ProgressBar::getColorMapDefault($min, $max);
+        $colorMap = ProgressBar::getColorScaleDefault($min, $max);
         return ProgressBar::findColor($state, $colorMap);
     }    
     
