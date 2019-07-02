@@ -91,8 +91,7 @@ JS;
                                         editor._autosuggestLastResult = json;
                                         
                                         // If there are values for the autosuggest, call resolve()
-                                        if (json.values !== undefined ){
-                                            json.values.sort();
+                                        if (json.values !== undefined ) {
                                             resolve(json.values);
                                         }
                                         
