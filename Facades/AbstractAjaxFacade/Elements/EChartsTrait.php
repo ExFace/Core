@@ -1947,7 +1947,7 @@ JS;
         } else {
             var alreadyinDouble = false
             // if it is already in doubleValues array and therefor not first double
-            for (k = 0; k < doubleValues.length; k++) {
+            for (var k = 0; k < doubleValues.length; k++) {
                 if ({$dataJs}[i].{$axisKey} === doubleValues[k].{$axisKey}) {
                     alreadyinDouble = true
                     break
