@@ -3,6 +3,10 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iDisplayValue;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Widgets\iHaveColor;
+use exface\Core\Interfaces\Widgets\iHaveColorScale;
+use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * The Display is the basic widget to show formatted values.
@@ -21,8 +25,10 @@ use exface\Core\DataTypes\BooleanDataType;
  * @author Andrej Kabachnik
  *        
  */
-class Display extends Value implements iDisplayValue
+class Display extends Value implements iDisplayValue, iHaveColor, iHaveColorScale
 {
+    use iHaveColorScaleTrait;
+    
     /**
      * 
      * @var bool
@@ -34,6 +40,12 @@ class Display extends Value implements iDisplayValue
      * @var bool
      */
     private $hideIfEmpty = false;
+    
+    /**
+     * 
+     * @var string
+     */
+    private $color = null;
     
     /**
      * 
@@ -84,6 +96,62 @@ class Display extends Value implements iDisplayValue
     {
         $this->hideIfEmpty = BooleanDataType::cast($trueOrFalse);
         return $this;
+    }
+    
+    /**
+     * Returns the color of the text or NULL if no color explicitly defined.
+     *
+     * {@inheritdoc}
+     * @see iHaveColor::getColor()
+     */
+    public function getColor($value = null) : ?string
+    {
+        if ($value !== null) {
+            return static::findColor($value, $this->getColorScale());
+        }
+        
+        if ($this->hasColorScale() && $this->color === null) {
+            return static::findColor($value);
+        }
+        
+        return $this->color;
+    }
+    
+    /**
+     * Sets a static color for the content - if not set, facades will use their own color scheme.
+     *
+     * HTML color names are supported by default. Additionally any color selector supported by
+     * the current facade can be used. Most HTML facades will support css colors.
+     *
+     * @link https://www.w3schools.com/colors/colors_groups.asp
+     *
+     * @uxon-property color
+     * @uxon-type color|string
+     *
+     * {@inheritdoc}
+     * @see iHaveColor::setColor()
+     */
+    public function setColor($color)
+    {
+        $this->color = $color;
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Widgets\AbstractWidget::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        if (! is_null($this->color)) {
+            $uxon->setProperty('color', $this->color);
+        }
+        if ($this->hasColorScale() === true) {
+            $uxon->setProperty('color_scale', new UxonObject($this->getColorScale()));
+        }
+        return $uxon;
     }
 }
 ?>

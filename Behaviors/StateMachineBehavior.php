@@ -227,8 +227,8 @@ class StateMachineBehavior extends AbstractBehavior
                 'align' => EXF_ALIGN_DEFAULT,
                 'min' => $min,
                 'max' => $max,
-                'textMap' => new UxonObject($texts),
-                'colorMap' => new UxonObject($colorMap)
+                'text_scale' => new UxonObject($texts),
+                'color_scale' => new UxonObject($colorMap)
             ]);
             $this->getStateAttribute()->setDefaultDisplayUxon($uxon);
         }

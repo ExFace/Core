@@ -10,6 +10,8 @@ use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
+use exface\Core\Interfaces\Widgets\iHaveColorScale;
 
 /**
  * Displays the widgets value as a progress bar with a floating label text.
@@ -21,16 +23,15 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
  * @author Andrej Kabachnik
  *        
  */
-class ProgressBar extends Display implements iCanBeAligned
+class ProgressBar extends Display implements iCanBeAligned, iHaveColorScale
 {
+    use iHaveColorScaleTrait;
     use iCanBeAlignedTrait {
         getAlign as getAlignViaTrait;
     }
     private $min = 0;
     
     private $max = 100;
-    
-    private $colorMap = null;
     
     private $textMap = null;
     
@@ -90,55 +91,6 @@ class ProgressBar extends Display implements iCanBeAligned
      *
      * @return array
      */
-    public function getColorScale() : array
-    {
-        return $this->colorMap ?? static::getColorScaleDefault($this->getMin(), $this->getMax());
-    }
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function hasColorScale() : bool
-    {
-        return $this->colorMap !== null;
-    }
-    
-    /**
-     * Specify a custom color scale for the progress bar.
-     * 
-     * The color map must be an object with values as keys and CSS color codes as values.
-     * The color code will be applied to all values between it's value and the previous
-     * one. In the below example, all values <= 10 will be yellow, values > 10 and <= 90
-     * will be colored green and values between > 90 will be gray.
-     * 
-     * ```
-     * {
-     *  "10": "yellow",
-     *  "90": "green",
-     *  "100" : "gray"
-     * }
-     * 
-     * ```
-     * 
-     * @uxon-property override_attribute_data_type
-     * @uxon-type object
-     * @uxon-template {"10": "yellow", "90": "green", "100" : "gray"}
-     * 
-     * @param UxonObject $value
-     * @return ProgressBar
-     */
-    public function setColorScale(UxonObject $value) : ProgressBar
-    {
-        $this->colorMap = $value->toArray();
-        ksort($this->colorMap);
-        return $this;
-    }
-    
-    /**
-     *
-     * @return array
-     */
     public function getTextScale() : array
     {
         return $this->textMap ?? [];
@@ -187,48 +139,6 @@ class ProgressBar extends Display implements iCanBeAligned
     {
         $this->textMap = $value->toArray();
         return $this;
-    }
-    
-    /**
-     * Returns the CSS color code for the given value
-     * 
-     * @param float $value
-     * @return string
-     */
-    public function getColor(float $value) : string
-    {
-        return static::findColor($value, $this->getColorScale());
-    }
-    
-    /**
-     * Returns the color for the specified value from the given color map
-     * 
-     * The color map must be an array with numeric keys with the following structure
-     * 
-     * [
-     *  key1 => color_for_values_less_or_equal_to_key1,
-     *  key2 => color_for_values_greater_than_key1_but_less_or_equal_to_key2,
-     *  ...
-     * ]
-     * 
-     * @param float $value
-     * @param array $colorMap
-     * @return string
-     */
-    public static function findColor($value, array $colorMap = null) : string
-    {
-        if ($colorMap === null || $value === null) {
-            $colorMap = static::getColorScaleDefault();
-        }
-        
-        ksort($colorMap);
-        foreach ($colorMap as $max => $color) {
-            if ($value <= $max) {
-                return $color;
-            }
-        }
-        
-        return $color;
     }
     
     /**

@@ -230,7 +230,7 @@ class Tile extends Button implements iHaveColor
      * 
      * @return string
      */
-    public function getColor()
+    public function getColor() : ?string
     {
         return $this->color;
     }

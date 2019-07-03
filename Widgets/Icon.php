@@ -1,12 +1,9 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
-use exface\Core\Factories\DataTypeFactory;
-use exface\Core\DataTypes\NumberEnumDataType;
 
 /**
  * This widget shows an icon - either a static one or derived from an attribute's value.
@@ -66,15 +63,13 @@ use exface\Core\DataTypes\NumberEnumDataType;
  * @author Andrej Kabachnik
  *        
  */
-class Icon extends Display implements iHaveColor
-{
+class Icon extends Display
+{    
     private $iconSize = null;
     
     private $iconPosition = EXF_ALIGN_LEFT;
     
-    private $iconsMap = null;
-
-    private $color = null;
+    private $iconsScale = null;
     
     private $valueWidget = null;
     
@@ -131,10 +126,9 @@ class Icon extends Display implements iHaveColor
     }
     
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Widgets\AbstractWidget::exportUxonObject()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Display::exportUxonObject()
      */
     public function exportUxonObject()
     {
@@ -148,41 +142,7 @@ class Icon extends Display implements iHaveColor
         if (! is_null($this->icon)) {
             $uxon->setProperty('icon', $this->icon);
         }
-        if (! is_null($this->color)) {
-            $uxon->setProperty('color', $this->color);
-        }
         return $uxon;
-    }
-    
-    /**
-     * Returns the color of the text or NULL if no color explicitly defined.
-     * 
-     * {@inheritdoc}
-     * @see iHaveColor::getColor()
-     */
-    public function getColor()
-    {
-        return $this->color;
-    }
-    
-    /**
-     * Sets a specific color for the text - if not set, facades will use their own color scheme.
-     *
-     * HTML color names are supported by default. Additionally any color selector supported by
-     * the current facade can be used. Most HTML facades will support css colors.
-     *
-     * @link https://www.w3schools.com/colors/colors_groups.asp
-     *
-     * @uxon-property color
-     * @uxon-type color|string
-     *
-     * {@inheritdoc}
-     * @see iHaveColor::setColor()
-     */
-    public function setColor($color)
-    {
-        $this->color = $color;
-        return $this;
     }
     
     /**
@@ -260,9 +220,9 @@ class Icon extends Display implements iHaveColor
      *
      * @return array
      */
-    public function getIconsMap() : array
+    public function getIconScale() : array
     {
-        return $this->iconsMap;
+        return $this->iconsScale;
     }
     
     /**
@@ -284,17 +244,16 @@ class Icon extends Display implements iHaveColor
      * 
      * ```
      * 
-     * @uxon-property icons_map
+     * @uxon-property icon_scale
      * @uxon-type array
      * @uxon-template {"0": "battery-empty", "50": "battery-half", "100": "battery-full"}
      * 
      * @param UxonObject $valueIconPairs
      * @return Icon
      */
-    public function setIconsMap(UxonObject $valueIconPairs) : Icon
+    public function setIconScale(UxonObject $valueIconPairs) : Icon
     {
-        $this->iconsMap = $valueIconPairs->toArray();
+        $this->iconsScale = $valueIconPairs->toArray();
         return $this;
-    }
-    
+    }    
 }
