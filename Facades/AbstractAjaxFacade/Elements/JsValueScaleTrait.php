@@ -36,11 +36,12 @@ function() {
 
     var sv = [];
     for (var i in scale) {
-        sv = colorMap[i];
+        sv = scale[i];
         if (numVal <= sv[0]) {
             return sv[1];
         }
     }
+    return sv[1];
 }()
 
 JS;
