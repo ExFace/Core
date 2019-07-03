@@ -65,7 +65,7 @@ class ColorIndicator extends Display implements iHaveColor
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveColor::getColor()
      */
-    public function getColor()
+    public function getColor($value = null) : ?string
     {
         // TODO determine color by evaluating conditions with the current value
     }

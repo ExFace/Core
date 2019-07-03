@@ -20,6 +20,12 @@ abstract class Colors
     // No-color-color to tell a facade that something is transparent
     const NONE = null;
     
+    // Semantic colors
+    const SEMANTIC_ERROR = '~ERROR';
+    const SEMANTIC_WARNING = '~WARNING';
+    const SEMANTIC_INFO = '~INFO';
+    const SEMANTIC_OK = '~OK';
+    
     // Pink Colors
     const PINK = 'Pink';
     const PINK_LIGHTPINK = 'LightPink';
@@ -180,6 +186,10 @@ abstract class Colors
      * @return boolean
      */
     public static function isDark($color) {
+        if ($color === self::SEMANTIC_ERROR) {
+            return true;
+        }
+        
         try {
             $hex = static::toHex($color);
         } catch (\Throwable $e) {
@@ -377,5 +387,16 @@ abstract class Colors
         } else {
             throw new \UnexpectedValueException('Cannot convert ' . $color . ' to HEX color code!');
         }
+    }
+    
+    /**
+     * Returns TRUE if the give color is a semantic color (i.e. starts with ~)
+     * 
+     * @param string $value
+     * @return bool
+     */
+    public static function isSemantic(string $value) : bool
+    {
+        return substr($value, 0, 1) === '~';
     }
 }

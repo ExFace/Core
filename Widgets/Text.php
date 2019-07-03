@@ -11,7 +11,7 @@ use exface\Core\Interfaces\Widgets\iHaveColor;
  * @author Andrej Kabachnik
  *        
  */
-class Text extends Display implements iShowText, iHaveColor
+class Text extends Display implements iShowText
 {
     use iCanBeAlignedTrait {
         getAlign as getAlignDefault;
@@ -20,8 +20,6 @@ class Text extends Display implements iShowText, iHaveColor
     private $size = null;
 
     private $style = null;
-    
-    private $color = null;
 
     public function getText()
     {
@@ -114,37 +112,6 @@ class Text extends Display implements iShowText, iHaveColor
             $uxon->setProperty('align', $this->align);
         }
         return $uxon;
-    }
-    
-    /**
-     * Returns the color of the text or NULL if no color explicitly defined.
-     * 
-     * {@inheritdoc}
-     * @see iHaveColor::getColor()
-     */
-    public function getColor()
-    {
-        return $this->color;
-    }
-    
-    /**
-     * Sets a specific color for the text - if not set, facades will use their own color scheme.
-     *
-     * HTML color names are supported by default. Additionally any color selector supported by
-     * the current facade can be used. Most HTML facades will support css colors.
-     *
-     * @link https://www.w3schools.com/colors/colors_groups.asp
-     *
-     * @uxon-property color
-     * @uxon-type color|string
-     *
-     * {@inheritdoc}
-     * @see iHaveColor::setColor()
-     */
-    public function setColor($color)
-    {
-        $this->color = $color;
-        return $this;
     }
 }
 ?>

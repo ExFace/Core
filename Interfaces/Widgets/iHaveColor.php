@@ -16,7 +16,7 @@ interface iHaveColor extends WidgetInterface
      * 
      * @return string|null
      */
-    public function getColor();
+    public function getColor() : ?string;
 
     /**
      * Sets a specific color for the widget - if not set, facades will use their own color scheme.
