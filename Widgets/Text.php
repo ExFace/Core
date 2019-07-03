@@ -3,7 +3,6 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iShowText;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
-use exface\Core\Interfaces\Widgets\iHaveColor;
 
 /**
  * The text widget simply shows text with an optional title (created from the caption of the widget).

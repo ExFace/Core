@@ -43,21 +43,23 @@ trait iHaveColorScaleTrait
      *
      * The color map must be an object with values as keys and CSS color codes as values.
      * The color code will be applied to all values between it's value and the previous
-     * one. In the below example, all values <= 10 will be yellow, values > 10 and <= 90
-     * will be colored green and values between > 90 will be gray.
+     * one. In the below example, all values <= 10 will be red, values > 10 and <= 20
+     * will be colored yellow, those > 20 and <= 99 will have no special color and values 
+     * starting with 100 (actually > 99) will be green.
      *
      * ```
      * {
-     *  "10": "yellow",
-     *  "90": "green",
-     *  "100" : "gray"
+     *  "10": "red",
+     *  "20": "yellow",
+     *  "99" : "",
+     *  "100": "green"
      * }
      *
      * ```
      *
-     * @uxon-property override_attribute_data_type
+     * @uxon-property color_scale
      * @uxon-type color[]
-     * @uxon-template {"10": "yellow", "90": "green", "100" : "gray"}
+     * @uxon-template {"10": "red", "20": "yellow", "99": "", "100": "green"}
      *
      * @param UxonObject $value
      * @return iHaveColorScale
