@@ -5,6 +5,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 
 /**
  * A Split consists of multiple panels aligned vertically or horizontally.
@@ -23,7 +24,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * @author Andrej Kabachnik
  *        
  */
-class Split extends Container
+class Split extends Container implements iFillEntireContainer
 {
     const ORIENTATION_HORIZONTAL = 'horizontal';
     const ORIENTATION_VERTICAL = 'vertical';
@@ -164,5 +165,11 @@ class Split extends Container
     public function isSideBySide() : bool
     {
         return $this->getOrientation() === self::ORIENTATION_HORIZONTAL;
+    }
+    
+    
+    public function getAlternativeContainerForOrphanedSiblings()
+    {
+        return $this->getWidgetFirst();
     }
 }
