@@ -2093,4 +2093,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         return '/* ' . str_replace(['/*', '*/'], '', $text) . ' */';
     }
+    
+    /**
+     * Returns TRUE if the query will only return a single line because of aggregation:
+     * i.d. all SELECTs have group functions and there is no explicit GROUB BY.
+     * 
+     * @return bool
+     */
+    protected function isAggregatedToSingleRow() : bool
+    {
+        if (empty($this->getAggregations()) === false) {
+            return false;
+        }
+        
+        foreach ($this->getAttributes() as $qpart) {
+            if (! $qpart->getAggregator()) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
 }
