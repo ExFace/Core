@@ -1003,7 +1003,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if (!$if_comp || is_null($if_val)) {
                     throw new QueryBuilderException('Invalid argument for COUNT_IF aggregator: "' . $cond . '"!', '6WXNHMN');
                 }
-                $output = "SUM(" . $this->buildSqlWhereComparator($sql,  $if_comp, $if_val, $qpart->getAttribute()->getDataType()). ")";
+                $output = "SUM(CASE WHEN " . $this->buildSqlWhereComparator($sql,  $if_comp, $if_val, $qpart->getAttribute()->getDataType()). " THEN 1 ELSE 0 END)";
                 break;
             default:
                 break;
