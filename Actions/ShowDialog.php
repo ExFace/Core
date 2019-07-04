@@ -229,6 +229,13 @@ class ShowDialog extends ShowWidget implements iShowDialog
     }
 
     /**
+     * Set to TRUE or FALSE to force the dialog to be maximized (or not).
+     * 
+     * If not set explicitly, it will be up to the default facade behavior, how the dialog
+     * is opened.
+     * 
+     * @uxon-property maximize
+     * @uxon-type boolean
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowDialog::setMaximize()
