@@ -56,7 +56,7 @@ trait JqueryDataConfiguratorTrait
      * @param boolean $unrendered
      * @return string
      */
-    public function buildJsDataGetter(ActionInterface $action = null, $unrendered = false)
+    public function buildJsDataGetter(ActionInterface $action = null, bool $unrendered = false)
     {
         $widget = $this->getWidget();
         $filters = [];

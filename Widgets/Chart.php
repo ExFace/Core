@@ -650,7 +650,6 @@ class Chart extends AbstractWidget implements
      * the chart will get the correct data anyway.
      * 
      * {@inheritdoc}
-     *              
      * @see \exface\Core\Widgets\Data::prefill()
      */
     protected function doPrefill(DataSheetInterface $data_sheet)
@@ -663,10 +662,9 @@ class Chart extends AbstractWidget implements
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Widgets\Abstract\exface\Core\Widget\:prepare_data_sheet_to_prefill()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToPrefill()
      */
     public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
     {
@@ -674,10 +672,9 @@ class Chart extends AbstractWidget implements
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Widgets\Abstract\exface\Core\Widget\:prepare_data_sheet_to_read()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToRead()
      */
     public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
     {
