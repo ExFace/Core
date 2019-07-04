@@ -80,7 +80,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $group_by = $group_by ? ' GROUP BY ' . substr($group_by, 2) : '';
         
         // If there is a limit in the query, ensure there is an ORDER BY even if no sorters given.
-        if (empty($this->getSorters()) < 1 && $this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
+        if (empty($this->getSorters()) === true && $this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
             if ($this->getMainObject()->hasUidAttribute()) {
                 // If no order is specified, sort sort over the UID of the meta object
                 $order_by .= ', ' . ($group_by ? 'EXFCOREQ' . $this->getAliasDelim() : '') . $this->getMainObject()->getUidAttribute()->getDataAddress() . ' DESC';
