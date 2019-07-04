@@ -80,12 +80,12 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $group_by = $group_by ? ' GROUP BY ' . substr($group_by, 2) : '';
         
         // If there is a limit in the query, ensure there is an ORDER BY even if no sorters given.
-        if (sizeof($this->getSorters()) < 1 && $this->getLimit() > 0) {
-            // If no order is specified, sort sort over the UID of the meta object
+        if (empty($this->getSorters()) < 1 && $this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
             if ($this->getMainObject()->hasUidAttribute()) {
+                // If no order is specified, sort sort over the UID of the meta object
                 $order_by .= ', ' . ($group_by ? 'EXFCOREQ' . $this->getAliasDelim() : '') . $this->getMainObject()->getUidAttribute()->getDataAddress() . ' DESC';
-            } // If the object has no UID, sort over the first column in the query, which is not an SQL statement itself
-else {
+            } else {
+                // If the object has no UID, sort over the first column in the query, which is not an SQL statement itself
                 foreach ($this->getAttributes() as $qpart) {
                     if (! $this->checkForSqlStatement($qpart->getDataAddress())) {
                         $order_by .= ', ' . $qpart->getColumnKey() . ' DESC';
@@ -100,6 +100,7 @@ else {
         foreach ($this->getAttributes() as $qpart) {
             $qpartAttr = $qpart->getAttribute();
             $skipped = false;
+            
             // First see, if the attribute has some kind of special data type (e.g. binary)
             if ($qpartAttr->getDataAddressProperty('SQL_DATA_TYPE') == 'binary') {
                 $this->addBinaryColumn($qpart->getAlias());
@@ -173,7 +174,7 @@ else {
         
         $distinct = $this->getSelectDistinct() ? 'DISTINCT ' : '';
         
-        if ($this->getLimit() > 0) {
+        if ($this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
             // Increase limit by one to check if there are more rows (see AbstractSqlBuilder::read())
             $limit = ' OFFSET ' . $this->getOffset() . ' ROWS FETCH NEXT ' . ($this->getLimit()+1) . ' ROWS ONLY';
         }
