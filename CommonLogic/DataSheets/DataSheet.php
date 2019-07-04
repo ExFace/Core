@@ -78,6 +78,8 @@ class DataSheet implements DataSheetInterface
     private $subsheets = array();
 
     private $aggregation_columns = null;
+    
+    private $aggregateAll = null;
 
     private $rows_on_page = null;
 
@@ -373,7 +375,7 @@ class DataSheet implements DataSheetInterface
      * @param DataColumnInterface $col            
      * @param \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder $query            
      */
-    protected function getDataForColumn(DataColumnInterface $col, QueryBuilderInterface $query)
+    protected function dataReadAddColumnToQuery(DataColumnInterface $col, QueryBuilderInterface $query)
     {
         $sheetObject = $this->getMetaObject();
         // add the required attributes
@@ -495,7 +497,7 @@ class DataSheet implements DataSheetInterface
                 foreach ($col->getFormatter()->getRequiredAttributes() as $req) {
                     if (! $this->getColumn($req)) {
                         $column = $this->getColumns()->addFromExpression($req, '', true);
-                        $this->getDataForColumn($column, $query);
+                        $this->dataReadAddColumnToQuery($column, $query);
                     }
                 }
             }
@@ -524,7 +526,7 @@ class DataSheet implements DataSheetInterface
         if (is_null($offset))
             $offset = $this->getRowsOffset();
         
-        $query = $this->initReadQueryBuilder($thisObject);
+        $query = $this->dataReadInitQueryBuilder($thisObject);
         
         // set sorting
         $sorters = $this->hasSorters() ? $this->getSorters() : $thisObject->getDefaultSorters();
@@ -602,7 +604,7 @@ class DataSheet implements DataSheetInterface
         return $result->getAffectedRowsCounter();
     }
     
-    protected function initReadQueryBuilder(MetaObjectInterface $object) : QueryBuilderInterface
+    protected function dataReadInitQueryBuilder(MetaObjectInterface $object) : QueryBuilderInterface
     {
         if ($object->isReadable() === false) {
             throw new DataSheetReadError($this, 'Cannot read data for object ' . $object->getAliasWithNamespace() . ': object is marked as not readable in model!', '73H79S1');
@@ -612,25 +614,30 @@ class DataSheet implements DataSheetInterface
         $query = QueryBuilderFactory::createForObject($object);
         
         foreach ($this->getColumns() as $col) {
-            $this->getDataForColumn($col, $query);
+            $this->dataReadAddColumnToQuery($col, $query);
             foreach ($col->getTotals()->getAll() as $row => $total) {
                 $query->addTotal($col->getAttributeAlias(), $total->getAggregator(), $row);
             }
         }
         
-        // Ensure, the columns with system attributes are always in the select
+        // Ensure, the columns with system attributes are always in the select if a row represents a
+        // single UID. Adding system attributes does not make sense for aggregated rows as it is 
+        // unclear, how they should be aggregated.
+        //
         // FIXME With growing numbers of behaviors and system attributes, this becomes a pain, as more and more possibly
         // aggregated columns are added automatically - even if the sheet is only meant for reading. Maybe we should let
         // the code creating the sheet add the system columns. The behaviors will prduce errors if this does not happen anyway.
-        foreach ($object->getAttributes()->getSystem()->getAll() as $attr) {
-            if (! $this->getColumns()->getByAttribute($attr)) {
-                // Check if the system attribute has a default aggregator if the data sheet is being aggregated
-                if ($this->hasAggregations() && $attr->getDefaultAggregateFunction()) {
-                    $col = $this->getColumns()->addFromExpression($attr->getAlias() . DataAggregation::AGGREGATION_SEPARATOR . $attr->getDefaultAggregateFunction());
-                } else {
-                    $col = $this->getColumns()->addFromAttribute($attr);
+        if ($this->hasAggregateAll() === false) {
+            foreach ($object->getAttributes()->getSystem()->getAll() as $attr) {
+                if (! $this->getColumns()->getByAttribute($attr)) {
+                    // Check if the system attribute has a default aggregator if the data sheet is being aggregated
+                    if ($this->hasAggregations() && $attr->getDefaultAggregateFunction()) {
+                        $col = $this->getColumns()->addFromExpression($attr->getAlias() . DataAggregation::AGGREGATION_SEPARATOR . $attr->getDefaultAggregateFunction());
+                    } else {
+                        $col = $this->getColumns()->addFromAttribute($attr);
+                    }
+                    $this->dataReadAddColumnToQuery($col, $query);
                 }
-                $this->getDataForColumn($col, $query);
             }
         }
         
@@ -2018,7 +2025,7 @@ class DataSheet implements DataSheetInterface
      */
     public function dataCount() : int
     {
-        $query = $this->initReadQueryBuilder($this->getMetaObject());
+        $query = $this->dataReadInitQueryBuilder($this->getMetaObject());
         
         try {
             $result = $query->count($this->getMetaObject()->getDataConnection());
@@ -2135,4 +2142,28 @@ class DataSheet implements DataSheetInterface
     {
         return null;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::hasAggregateAll()
+     */
+    public function hasAggregateAll() : bool
+    {
+        if ($this->aggregateAll === null) {
+            if ($this->hasAggregations() === true) {
+                return false;
+            }
+            
+            foreach ($this->getColumns() as $col) {
+                if ($col->hasAggregator() === false) {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+        return $this->aggregateAll;
+    }
+    
 }

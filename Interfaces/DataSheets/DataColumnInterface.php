@@ -4,8 +4,6 @@ namespace exface\Core\Interfaces\DataSheets;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Interfaces\DataSheets\DataColumnTotalsListInterface;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Model\ExpressionInterface;
@@ -347,4 +345,18 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @return bool
      */
     public function isStatic() : bool;
+    
+    /**
+     * Returns the aggregator defined for this column or NULL if it is not aggregated
+     * 
+     * @return AggregatorInterface|NULL
+     */
+    public function getAggregator() : ?AggregatorInterface;
+    
+    /**
+     * Returns TRUE if an aggregator is defined for this column (i.e. attribute_alias:SUM)
+     * 
+     * @return bool
+     */
+    public function hasAggregator() : bool;
 }

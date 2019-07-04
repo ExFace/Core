@@ -601,6 +601,16 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return DataSheetInterface
      */
     public function sort(DataSorterListInterface $sorters) : DataSheetInterface;
+    
+    /**
+     * Returns TRUE if the data will be aggregated to a single line when loading.
+     * 
+     * This is the case, if all columns have an aggregator - even if there are
+     * no aggregators explicitly defined for the sheet.
+     * 
+     * @return bool
+     */
+    public function hasAggregateAll() : bool;
 }
 
 ?>

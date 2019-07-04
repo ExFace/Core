@@ -874,4 +874,27 @@ class DataColumn implements DataColumnInterface
     {
         return null;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::getAggregator()
+     */
+    public function getAggregator() : ?AggregatorInterface
+    {
+        if ($this->isAttribute() === true && $aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $this->getAttributeAlias())) {
+            return $aggr;
+        }
+        return null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::hasAggregator()
+     */
+    public function hasAggregator() : bool
+    {
+        return $this->getAggregator() !== null;
+    }
 }

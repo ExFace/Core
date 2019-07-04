@@ -86,6 +86,8 @@ class Data
     private $paginator = null;
 
     private $aggregate_by_attribute_alias = null;
+    
+    private $aggregate_all = null;
 
     /** @var DataToolbar[] */
     private $toolbars = array();
@@ -737,7 +739,7 @@ class Data
     /**
      * Returns aliases of attributes used to aggregate data
      *
-     * @return array
+     * @return string[]
      */
     public function getAggregations()
     {
@@ -756,6 +758,46 @@ class Data
     public function hasAggregations()
     {
         return empty($this->getAggregations()) === FALSE;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function hasAggregateAll() : bool
+    {
+        if ($this->aggregate_all === null) {
+            if ($this->hasAggregations() === true) {
+                return false;
+            } 
+            
+            foreach ($this->getColumns() as $col) {
+                if ($col->hasAggregator() === false) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return $this->aggregate_all;
+    }
+    
+    /**
+     * Set to TRUE to aggregate all columns to a single line.
+     * 
+     * If a column does not have an aggregator, the default aggregator of the attribute
+     * will be used.
+     * 
+     * @uxon-property aggregate_all
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return Data
+     */
+    public function setAggregateAll(bool $value) : Data
+    {
+        $this->aggregate_all = $value;
+        return $this;
     }
 
     /**
