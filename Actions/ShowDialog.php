@@ -244,5 +244,39 @@ class ShowDialog extends ShowWidget implements iShowDialog
     {
         $this->maximize = BooleanDataType::cast($true_or_false);
     }
+    
+    /**
+     * By default, the content of a dialog get's a separate id_space to avoid conflicting
+     * ids on a page with multiple dialogs. If this behavior is not intended, just set
+     * an id_space in the root of the widget-UXON explicitly.
+     * 
+     * @see \exface\Core\Actions\ShowWidget::getWidgetUxon()
+     */
+    protected function getWidgetUxon()
+    {
+        if ($uxon = parent::getWidgetUxon()) {
+            if ($uxon->isEmpty() === false && $uxon->hasProperty('id_space') === false) {
+                $uxon = $this->addIdSpaceToWidgetUxon(parent::getWidgetUxon());
+            }
+        }
+        return $uxon;
+    }
+    
+    /**
+     * This method automatically adds an id_space to the given UXON, so that all widgets within
+     * are created in an isolated id space and widget links inside the dialog still work even if 
+     * multiple dialogs with the same ids are located in the same page (e.g. if multiple actions
+     * inherit the same widget or use the default editor of the same object).
+     * 
+     * @param UxonObject $uxon
+     * @return UxonObject
+     */
+    protected function addIdSpaceToWidgetUxon(UxonObject $uxon) : UxonObject
+    {
+        if ($this->getWidgetDefinedIn()) {
+            $uxon->setProperty('id_space', $this->getWidgetDefinedIn()->getId());
+        }
+        return $uxon;
+    }
 }
 ?>
