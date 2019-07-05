@@ -6,6 +6,7 @@ use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
+use exface\Core\Exceptions\QueryBuilderException;
 
 /**
  * A query builder for Microsoft SQL.
@@ -168,6 +169,8 @@ class MsSqlBuilder extends AbstractSqlBuilder
             // A sorter can only be used, if there is no GROUP BY, or the sorted attribute has unique values within the group
             if (! $this->getAggregations() || in_array($qpart->getAttribute()->getAliasWithRelationPath(), $group_safe_attribute_aliases)) {
                 $order_by .= ', ' . $this->buildSqlOrderBy($qpart);
+            } else {
+                throw new QueryBuilderException('Cannot sort over "' . $qpart->getAttribute()->getName() . '" (' . $qpart->getAttribute()->getAliasWithRelationPath() . '): it is not aggregated over and SQL Server requires all sorting columns to be used in aggregation when grouping - concider adding the attribute to aggregate_by_attribute_alias!');
             }
         }
         $order_by = $order_by ? ' ORDER BY ' . substr($order_by, 2) : '';
