@@ -8,8 +8,10 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
+use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 
 /**
  * The KPI widget shows a numeric value with a unit and a scale - especially usefull in dashboards.
@@ -39,6 +41,8 @@ class KPI extends Display implements iUseData
     private $unit = null;
     
     private $scale = null;
+    
+    private $usePreifllData = false;
     
     /**
      *
@@ -86,6 +90,14 @@ class KPI extends Display implements iUseData
                 }
             } else {
                 $this->data = WidgetFactory::createFromUxonInParent($this, new UxonObject(['columns_auto_add_default_display_attributes' => false]), 'Data');
+            }
+            
+            // Add data column for the attribute_alias of the KPI
+            if ($this->isBoundToAttribute() && ! $this->getData()->getColumnByAttributeAlias($this->getAttributeAlias())) {
+                $this->data->addColumn($this->data->createColumnFromUxon(new UxonObject([
+                    "attribute_alias" => $this->getAttributeAlias(),
+                    "hidden" => true
+                ])));
             }
         }
         
@@ -204,7 +216,7 @@ class KPI extends Display implements iUseData
      */
     public function hasData() : bool
     {
-        return $this->data !== null || $this->data_widget_link !== null;
+        return ! $this->getUsePrefillData();
     }
     
     /**
@@ -263,6 +275,41 @@ class KPI extends Display implements iUseData
     public function setScale(int $value) : KPI
     {
         $this->scale = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getUsePrefillData() : bool
+    {
+        return $this->usePreifllData;
+    }
+    
+    /**
+     * Set to TRUE to get the value from the input or prefill data like a regular Display widget.
+     * 
+     * By default, the `KPI` uses it's own `data` or a `data_widget_linke` to load it's values. This
+     * makes it possible to load any data - regardless of what the rest of the UI shows. On the other
+     * hand, it produces extra queries to the data source. Setting `use_prefill_data` to `TRUE` will
+     * make the `KPI` behave just like any other `Display` widget: it will try to get it's values from
+     * the input or prefill data of it's parent, but would still look as a `KPI`. 
+     * 
+     * Use this feature, if you just want certain (important) values to look different, than the other
+     * `Display` widget in a `Form` or a `Panel`. In particular, if you do not need the power of the
+     * `data` configuration in the `KPI`.
+     * 
+     * @uxon-property use_prefill_data
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return KPI
+     */
+    public function setUsePrefillData(bool $value) : KPI
+    {
+        $this->usePreifllData = $value;
         return $this;
     }
 }
