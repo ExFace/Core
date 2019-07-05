@@ -2155,6 +2155,10 @@ class DataSheet implements DataSheetInterface
                 return false;
             }
             
+            if ($this->getColumns()->isEmpty()) {
+                return false;
+            }
+            
             foreach ($this->getColumns() as $col) {
                 if ($col->hasAggregator() === false) {
                     return false;
