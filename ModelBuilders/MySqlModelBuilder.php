@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataConnectors\MySqlConnector;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * 
@@ -42,8 +43,13 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
                 'SHORT_DESCRIPTION' => ($col['Comment'] ? $col['Comment'] : '')
             ];
             
+            $addrProps = new UxonObject();
             if (stripos($col['Type'], 'binary') !== false) {
-                $row['DATA_ADDRESS_PROPS'] = ['SQL_DATA_TYPE' => 'binary'];
+               $addrProps->setProperty('SQL_DATA_TYPE', 'binary');
+            }
+            // Add mor data address properties here, if neccessary
+            if ($addrProps->isEmpty() === false) {
+                $row['DATA_ADDRESS_PROPS'] = $addrProps->toJson();
             }
                 
             $rows[] = $row;
