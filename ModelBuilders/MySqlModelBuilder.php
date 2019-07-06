@@ -32,7 +32,7 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
         $columns_array = $meta_object->getDataConnection()->runSql($columns_sql)->getResultArray();
         $rows = array();
         foreach ($columns_array as $col) {
-            $rows[] = array(
+            $row = [
                 'NAME' => $this->generateLabel($col['Field'], $col['Comment']),
                 'ALIAS' => $col['Field'],
                 'DATATYPE' => $this->getDataTypeId($this->guessDataType($meta_object, $col['Type'])),
@@ -40,8 +40,15 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
                 'OBJECT' => $meta_object->getId(),
                 'REQUIREDFLAG' => ($col['Null'] == 'NO' ? 1 : 0),
                 'SHORT_DESCRIPTION' => ($col['Comment'] ? $col['Comment'] : '')
-            );
+            ];
+            
+            if (stripos($col['Type'], 'binary') !== false) {
+                $row['DATA_ADDRESS_PROPS'] = ['SQL_DATA_TYPE' => 'binary'];
+            }
+                
+            $rows[] = $row;
         }
+        
         return $rows;
     }
 
