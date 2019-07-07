@@ -1753,12 +1753,10 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRow()
      */
-    public function removeRow(int $row_number, bool $reindex = false) : DataSheetInterface
+    public function removeRow(int $row_number) : DataSheetInterface
     {
         unset($this->rows[$row_number]);
-        if ($reindex === true) {
-            $this->rows = array_values($this->rows);
-        }
+        $this->rows = array_values($this->rows);
         return $this;
     }
 
@@ -1774,7 +1772,16 @@ class DataSheet implements DataSheetInterface
         if (! $this->getUidColumn()) {
             return $this;
         }
-        foreach ($this->getUidColumn()->findRowsByValue($uid) as $row_number) {
+        
+        // Find all rows matching the UID and remove them starting with the
+        // row with the highest number. This is important as removing a row
+        // will reindex the $this->rows, changing the indexes of subsequent
+        // rows. Removing higher row numbers first will leave lower row indexes
+        // untouched, so the initially calculated numbers array will remain
+        // valid.
+        $rowNumbers = $this->getUidColumn()->findRowsByValue($uid);
+        $rowNumbers = rsort($rowNumbers);
+        foreach ($rowNumbers as $row_number) {
             $this->removeRow($row_number);
         }
         return $this;
