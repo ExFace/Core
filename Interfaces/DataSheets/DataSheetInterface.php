@@ -24,7 +24,8 @@ use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
  *      4 | total | total | total | / total rows: each one is an assoc array(column=>value)
  *
  * Rows are numbered sequentially. Inserting a row at a certain position will shift row numbers
- * starting from that position. 
+ * starting from that position. Similarly, removing a row, will also reindex all rows following
+ * it!
  * 
  * @author Andrej Kabachnik
  *
@@ -436,15 +437,34 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function removeRows();
 
     /**
-     * Removes a single row of the data sheet
+     * Removes a single row of the data sheet.
+     * 
+     * NOTE: remaining rows will get reindexed: e.g. if you remove row 2 from 4,
+     * the remaining rows will have the indexs 0, 1, 2 and not 0, 2, 3!
+     * 
+     * This important when removing multiple rows by traversing a precalculated 
+     * array with row indexes. If a row with a lower index is removed first,
+     * all the rows with higher numbers will get reindexed an the precalculated
+     * row number will not match anymore. To avoid this, start with higher
+     * row indexes:
+     * 
+     * ```
+     *  $rowsNumbers = getRowsToRemove($dataSheet);
+     *  rsort($rowNumbers); // Remove higher row number first!!!
+     *  foreach ($rowNumbers as $r) {
+     *      $dataSheet->removeRow($r);
+     *  }
+     * ```
      *
      * @param integer $row_number            
      * @return DataSheetInterface
      */
-    public function removeRow(int $row_number, bool $reindex = false) : DataSheetInterface;
+    public function removeRow(int $row_number) : DataSheetInterface;
 
     /**
-     * Removes all rows with the given value in the UID column
+     * Removes all rows with the given value in the UID column.
+     * 
+     * NOTE: this will reindex remaining rows in the data sheet!
      *
      * @param string $instance_uid
      * @return DataSheetInterface
@@ -453,6 +473,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
 
     /**
      * Removes all rows from the specified column.
+     * 
      * If it is the only column in the row, the entire row will be removed.
      *
      * @param string $column_name            
