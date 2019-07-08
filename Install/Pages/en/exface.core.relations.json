@@ -22,7 +22,7 @@
                 "attribute_alias": "LEFT_OBJECT"
             },
             {
-                "attribute_alias": "RIGHT_OBJECT"
+                "attribute_alias": "RIGHT_OBJECT__LABEL"
             },
             {
                 "attribute_alias": "RELATION_ALIAS_SHORT"
