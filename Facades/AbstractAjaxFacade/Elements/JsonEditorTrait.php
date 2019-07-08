@@ -43,76 +43,7 @@ JS;
     {
         $widget = $this->getWidget();
         if (($widget instanceof InputUxon) && $widget->getAutosuggest() === true) {
-            $uxonEditorOptions = <<<JS
-
-                    name: "{$this->getWidget()->getSchema()}",
-                    enableTransform: false,
-                	enableSort: false,
-                    autocomplete: {
-                        applyTo: ['value'],
-                        filter: function (token, match, config) {
-					     	// remove leading space in token if not the only character
-						    if (  token.length > 1 
-						     	&& ( token.search(/^\s[^\s]/i) > -1 )
-						    ) {
-					    		token = token.substr(1, token.length - 1);
-					    	}
-							
-					    	// remove spaces in token if preceeded by double underscores
-				            if (  token.length > 3  && token.search(/\_\_\s/i) ) {
-                                token = token.substr(0, token.length - 1);
-                            } else if (!token.replace(/\s/g, '').length) {
-					            // return true if token consists of whitespace characters only
-								return true;
-					        } 
-					        return match.indexOf(token) > -1;
-					    },
-                        getOptions: function (text, path, input, editor) {
-                            return new Promise(function (resolve, reject) {
-                      		    var pathBase = path.length <= 1 ? '' : JSON.stringify(path.slice(-1));
-                      		    if (editor._autosuggestPending === true) {
-                                    if (editor._autosuggestLastResult && editor._autosuggestLastPath == pathBase) {
-                                        resolve(editor._autosuggestLastResult.values);
-                                    } else {
-                                        reject();
-                                    }
-                       		   } else {
-                                    editor._autosuggestPending = true;
-                                    var uxon = JSON.stringify(editor.get());
-                                    return {$this->buildJsFunctionPrefix()}_fetchAutosuggest(text, path, input, uxon)
-                                    .then(json => {                                          
-                                        editor._autosuggestPending = false;
-                                        if (json === undefined) {
-                                            reject();
-                                        }
-                                        
-                                        // Cache response data
-                                        editor._autosuggestLastPath = pathBase;
-                                        editor._autosuggestLastResult = json;
-                                        
-                                        // If there are values for the autosuggest, call resolve()
-                                        if (json.values !== undefined ) {
-                                            resolve(json.values);
-                                        }
-                                        
-                                        // return response data for further processing
-                                        return json;
-                                    })
-                                   .catch((err) => { 
-                                        editor._autosuggestPending = false;
-                                        console.warn('Autosuggest failed. ', err);
-                                   });
-               		           }
-                            })
-                            .catch((err) => {
-                                editor._autosuggestPending = false;
-                                console.warn("Autosuggest failed while getting options - ignored.", err);
-                                return Promise.resolve([]);
-                            });
-                        }
-                    }
-
-JS;
+            $uxonEditorOptions = self::buildJsUxonEditorOptions($this->getWidget()->getSchema(), $this->buildJsFunctionPrefix() . '_fetchAutosuggest');
         } else {
             $uxonEditorOptions = '';
         }
@@ -134,6 +65,80 @@ JS;
 
 JS;
     }
+    
+    public static function buildJsUxonEditorOptions(string $uxonSchema, string $fetchAutosuggestFunctionName) : string
+    {
+        return <<<JS
+        
+                    name: "{$uxonSchema}",
+                    enableTransform: false,
+                	enableSort: false,
+                    autocomplete: {
+                        applyTo: ['value'],
+                        filter: function (token, match, config) {
+					     	// remove leading space in token if not the only character
+						    if (  token.length > 1
+						     	&& ( token.search(/^\s[^\s]/i) > -1 )
+						    ) {
+					    		token = token.substr(1, token.length - 1);
+					    	}
+					    	
+					    	// remove spaces in token if preceeded by double underscores
+				            if (  token.length > 3  && token.search(/\_\_\s/i) ) {
+                                token = token.substr(0, token.length - 1);
+                            } else if (!token.replace(/\s/g, '').length) {
+					            // return true if token consists of whitespace characters only
+								return true;
+					        }
+					        return match.indexOf(token) > -1;
+					    },
+                        getOptions: function (text, path, input, editor) {
+                            return new Promise(function (resolve, reject) {
+                      		    var pathBase = path.length <= 1 ? '' : JSON.stringify(path.slice(-1));
+                      		    if (editor._autosuggestPending === true) {
+                                    if (editor._autosuggestLastResult && editor._autosuggestLastPath == pathBase) {
+                                        resolve(editor._autosuggestLastResult.values);
+                                    } else {
+                                        reject();
+                                    }
+                       		   } else {
+                                    editor._autosuggestPending = true;
+                                    var uxon = JSON.stringify(editor.get());
+                                    return {$fetchAutosuggestFunctionName}(text, path, input, uxon)
+                                    .then(json => {
+                                        editor._autosuggestPending = false;
+                                        if (json === undefined) {
+                                            reject();
+                                        }
+                                        
+                                        // Cache response data
+                                        editor._autosuggestLastPath = pathBase;
+                                        editor._autosuggestLastResult = json;
+                                        
+                                        // If there are values for the autosuggest, call resolve()
+                                        if (json.values !== undefined ) {
+                                            resolve(json.values);
+                                        }
+                                        
+                                        // return response data for further processing
+                                        return json;
+                                    })
+                                   .catch((err) => {
+                                        editor._autosuggestPending = false;
+                                        console.warn('Autosuggest failed. ', err);
+                                   });
+               		           }
+                            })
+                            .catch((err) => {
+                                editor._autosuggestPending = false;
+                                console.warn("Autosuggest failed while getting options - ignored.", err);
+                                return Promise.resolve([]);
+                            });
+                        }
+                    }
+                    
+JS;
+    }
                     
     protected function buildJsAutosuggestFunction() : string
     {
@@ -142,20 +147,37 @@ JS;
             return '';
         }
         
-        return <<<JS
+        return self::buildJsUxonAutosuggestFunctions(
+            $this->buildJsFunctionPrefix() . '_fetchAutosuggest',
+            $widget->getSchema(),
+            $this->buildJsRootPrototypeGetter(),
+            $this->buildJsRootObjectGetter(),
+            $this->getAjaxUrl()
+        ) . <<<JS
+        
+    $(function() {
+    	$(document).on('blur', '#{$this->getId()} div.jsoneditor-field[contenteditable="true"]', {jsonEditor: {$this->getId()}_JSONeditor}, {$this->buildJsFunctionPrefix()}_fetchAutosuggest_onBlur);
+    });
 
-    function {$this->buildJsFunctionPrefix()}_fetchAutosuggest(text, path, input, uxon) {
+JS;
+    }
+    
+    public static function buildJsUxonAutosuggestFunctions(string $funcName, string $uxonSchema, string $rootPrototype, string $rootObject, string $ajaxUrl) : string
+    {
+        return <<<JS
+        
+    function {$funcName}(text, path, input, uxon) {
         var formData = new URLSearchParams({
     		action: 'exface.Core.UxonAutosuggest',
     		text: text,
     		path: JSON.stringify(path),
     		input: input,
-    		schema: '{$widget->getSchema()}',
-            prototype: {$this->buildJsRootPrototypeGetter()},
-            object: {$this->buildJsRootObjectGetter()},
+    		schema: '{$uxonSchema}',
+            prototype: {$rootPrototype},
+            object: {$rootObject},
     		uxon: uxon
     	});
-    	return fetch('{$this->getAjaxUrl()}', {
+    	return fetch('{$ajaxUrl}', {
     		method: "POST",
     		mode: "cors",
     		cache: "no-cache",
@@ -167,9 +189,9 @@ JS;
       	.then(response => {
             if (
                 response
-                && response.ok 
-                && response.status === 200 
-                && response.headers 
+                && response.ok
+                && response.status === 200
+                && response.headers
                 && ((response.headers.get('content-type') || '') === "application/json")
             ) {
                 return response.json();
@@ -178,19 +200,19 @@ JS;
             }
         });
     }
-
-    function {$this->buildJsFunctionPrefix()}_getNodeFromTarget(target) {
+    
+    function {$funcName}_getNodeFromTarget(target) {
 	   while (target) {
     	    if (target.node) {
     	       return target.node;
     	    }
     	    target = target.parentNode;
        }
-    
+       
 	   return undefined;
     }
-  
-    function {$this->buildJsFunctionPrefix()}_focusFirstChildValue(node) {
+    
+    function {$funcName}_focusFirstChildValue(node) {
     	var child, found;
     	for (var i in node.childs) {
     		child = node.childs[i];
@@ -198,7 +220,7 @@ JS;
     			child.focus(child.getField() ? 'value' : 'field');
                 return child;
     		} else {
-    			found = {$this->buildJsFunctionPrefix()}_focusFirstChildValue(child);
+    			found = {$funcName}_focusFirstChildValue(child);
                 if (found) {
                     return found;
                 }
@@ -207,29 +229,29 @@ JS;
     	return false;
     }
 
-    $(function() {
-    	$(document).on('blur', '#{$this->getId()} div.jsoneditor-field[contenteditable="true"]', function() {
-            var editor = {$this->getId()}_JSONeditor;
-    		var node = {$this->buildJsFunctionPrefix()}_getNodeFromTarget(this);
-    		if (node.getValue() !== '') {
-    			return;
-    		}
-    		var path = node.getPath();
-    		var prop = path[path.length-1];
-    		if (editor._autosuggestLastResult && editor._autosuggestLastResult.templates) {
-    			var tpl = editor._autosuggestLastResult.templates[prop];
-    			if (tpl) {
-    				var val = JSON.parse(tpl);
-    				node.setValue(val, (Array.isArray(val) ? 'array' : 'object'));
-    				node.expand(true);
-    				{$this->buildJsFunctionPrefix()}_focusFirstChildValue(node);
-    			}
-    		} 
-    	});
-    });
-
+    function {$funcName}_onBlur(event) {
+        var editor = event.data.jsonEditor;
+		var node = {$funcName}_getNodeFromTarget(this);
+		if (node.getValue() !== '') {
+			return;
+		}
+		var path = node.getPath();
+		var prop = path[path.length-1];
+		if (editor._autosuggestLastResult && editor._autosuggestLastResult.templates) {
+			var tpl = editor._autosuggestLastResult.templates[prop];
+			if (tpl) {
+				var val = JSON.parse(tpl);
+				node.setValue(val, (Array.isArray(val) ? 'array' : 'object'));
+				node.expand(true);
+				{$funcName}_focusFirstChildValue(node);
+			}
+		}
+	}
+    
 JS;
     }
+    
+    
     
     /**
      *
