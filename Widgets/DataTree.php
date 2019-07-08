@@ -138,7 +138,7 @@ class DataTree extends DataTable
                 }
             }
         }
-        return $this->parent_id_attribute_alias;
+        return $this->tree_parent_id_attribute_alias;
     }
     
     /**
@@ -196,7 +196,7 @@ class DataTree extends DataTable
      */
     public function setTreeParentIdAttributeAlias($value) : DataTree
     {
-        $this->parent_id_attribute_alias = $value;
+        $this->tree_parent_id_attribute_alias = $value;
         return $this;
     }
 
