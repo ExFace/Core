@@ -252,7 +252,7 @@ JS;
      * {@inheritdoc}
      * @see AbstractJqueryElement::buildJsDataSetter()
      */
-    public function buildJsDataSetter(string $jsData)
+    public function buildJsDataSetter(string $jsData) : string
     {
         // The '!' in front of the IFFE is required because it would not get executed stand alone
         // resulting in a "SyntaxError: Function statements require a function name" instead.
