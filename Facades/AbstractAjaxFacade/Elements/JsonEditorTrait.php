@@ -4,7 +4,25 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 use exface\Core\Widgets\InputUxon;
 
 /**
- *
+ * This trait helps use the JsonEditor library to create InputJson and InputUxon widgets.
+ * 
+ * ## How to use
+ * 
+ * Include the following dependencies in composer.json of the app, where the trait is used:
+ * 
+ * ```
+ *	"npm-asset/jsoneditor" : "^6.1",
+ *	"npm-asset/picomodal" : "^3.0.0",
+ * ```
+ * 
+ * Add pathes to the dependencies to the configuration of the facade:
+ * 
+ * ```
+ *  "LIBS.JSONEDITOR.JS": "npm-asset/jsoneditor/dist/jsoneditor.min.js",
+ *  "LIBS.JSONEDITOR.CSS": "npm-asset/jsoneditor/dist/jsoneditor.min.css",
+ *  "LIBS.JSONEDITOR.PICOMODAL": "npm-asset/picomodal/src/picoModal.js",
+ * ```
+ * 
  * @method InputJson getWidget()
  *        
  * @author Andrej Kabachnik
@@ -26,6 +44,7 @@ trait JsonEditorTrait
     
     protected function buildJsJsonEditor()
     {
+       
         return <<<JS
             var {$this->getId()}_JSONeditor = new JSONEditor(
                 document.getElementById("{$this->getId()}"), 
@@ -36,6 +55,8 @@ trait JsonEditorTrait
             );
             {$this->getId()}_JSONeditor.expandAll();
             $('#{$this->getId()}').parents('.exf-input').children('label').css('vertical-align', 'top');
+            {$this->buildJsEditorAddHelpButton()}
+            
 JS;
     }
     
@@ -43,7 +64,7 @@ JS;
     {
         $widget = $this->getWidget();
         if (($widget instanceof InputUxon) && $widget->getAutosuggest() === true) {
-            $uxonEditorOptions = self::buildJsUxonEditorOptions($this->getWidget()->getSchema(), $this->buildJsFunctionPrefix() . '_fetchAutosuggest');
+            $uxonEditorOptions = $this::buildJsUxonEditorOptions($this->getWidget()->getSchema(), $this->buildJsFunctionPrefix() . '_fetchAutosuggest');
         } else {
             $uxonEditorOptions = '';
         }
@@ -147,7 +168,7 @@ JS;
             return '';
         }
         
-        return self::buildJsUxonAutosuggestFunctions(
+        return $this::buildJsUxonAutosuggestFunctions(
             $this->buildJsFunctionPrefix() . '_fetchAutosuggest',
             $widget->getSchema(),
             $this->buildJsRootPrototypeGetter(),
@@ -162,6 +183,15 @@ JS;
 JS;
     }
     
+    /**
+     * 
+     * @param string $funcName
+     * @param string $uxonSchema
+     * @param string $rootPrototype
+     * @param string $rootObject
+     * @param string $ajaxUrl
+     * @return string
+     */
     public static function buildJsUxonAutosuggestFunctions(string $funcName, string $uxonSchema, string $rootPrototype, string $rootObject, string $ajaxUrl) : string
     {
         return <<<JS
@@ -201,6 +231,32 @@ JS;
         });
     }
     
+    function openModal( parent, title, contentHTML, focus = false, cssClass = '', onAfterCreate ) {
+    
+          if (! onAfterCreate) {
+              onAfterCreate = function(modal) {
+                  
+              };
+          }
+        var contentStr = '<label class="pico-modal-contents">' + 
+                         '<div class="pico-modal-header">' + title + '</div>' + contentHTML;
+       
+        picoModal({
+            parent: (parent)? parent: document.body,
+            title: title,
+            content: contentStr,
+            overlayClass: 'jsoneditor-modal-overlay',
+            modalClass: 'jsoneditor-modal ' + cssClass,
+            focus: focus
+        })
+        .afterCreate(onAfterCreate)
+        .afterClose(function (modal) { 
+            modal.destroy(); 
+        })
+        .show();
+        
+    }
+
     function {$funcName}_getNodeFromTarget(target) {
 	   while (target) {
     	    if (target.node) {
@@ -247,11 +303,20 @@ JS;
 			}
 		}
 	}
+
+    function {$funcName}_addHelpButton($, editorId, url, title) {
+        console.log('#' + editorId + ' .jsoneditor-menu .jsoneditor-search');
+        var helpBtn = $('<button type="button" title="' + title+ '" style="background: transparent;"><i class="fa fa-question-circle-o" style="font-size: 22px"></i></button>');
+        $('#' + editorId + ' .jsoneditor-menu .jsoneditor-search').before(helpBtn);
+        var helpBtnContent = '<iframe src="' + url + '"></iframe>';
+        helpBtn.click(function() {
+            return openModal(window.document.body, title , helpBtnContent, false, 'jsoneditor-modal-nopadding jsoneditor-modal-maximized' );
+        });
+
+    }
     
 JS;
     }
-    
-    
     
     /**
      *
@@ -290,9 +355,36 @@ JS;
     public function buildHtmlHeadTags()
     {
         $includes = parent::buildHtmlHeadTags();
-        $includes[] = '<link href="exface/vendor/npm-asset/jsoneditor/dist/jsoneditor.min.css" rel="stylesheet">';
-        $includes[] = '<script type="text/javascript" src="exface/vendor/npm-asset/jsoneditor/dist/jsoneditor.min.js"></script>';
+        $facade = $this->getFacade();        
+        $includes[] = '<link href="' . $facade->buildUrlToSource('LIBS.JSONEDITOR.CSS') . '" rel="stylesheet">';
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.JSONEDITOR.JS') . '"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.JSONEDITOR.PICOMODAL') . '"></script>';
+        
+        $includes[] = '<style type="text/css">' . $this::buildCssModalStyles() . '</style>';
+        
         return $includes;
+    }
+    
+    public static function buildCssModalStyles() : string
+    {
+        return <<<CSS
+  
+    .jsoneditor-modal.jsoneditor-modal-maximized {
+        width: 100% !important;
+        height: 95%;
+    }
+  
+    .jsoneditor-modal.jsoneditor-modal-nopadding {
+        padding: 30px 0 0 0 !important;
+    }
+
+    .jsoneditor-modal.jsoneditor-modal-nopadding iframe {
+        width: calc(100% - 16px) !important;
+        height: calc(100% - 12px)!important;
+        border: 0;
+        padding: 5px 0 0 15px;
+    }
+CSS;
     }
     
     protected function buildJsRootPrototypeGetter() : string
@@ -327,5 +419,19 @@ JS;
             }
         }
         return '""';
+    }
+    
+    protected function buildJsEditorAddHelpButton() : string
+    {
+        return <<<JS
+
+            {$this->buildJsFunctionPrefix()}_fetchAutosuggest_addHelpButton(
+                $,
+                "{$this->getId()}",
+                "http://localhost/exface/exface/api/docs/exface/Core/Docs/Creating_UIs/UXON/Introduction_to_the_UXON_editor.md",
+                "Help" 
+            );
+
+JS;
     }
 }
