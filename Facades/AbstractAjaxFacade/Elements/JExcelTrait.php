@@ -24,7 +24,7 @@ use exface\Core\DataTypes\BooleanDataType;
  * ```
  * {
  *  "require": {
- *      "paulhodel/jexcel" : "^2.1.0"
+ *      "npm-asset/jexcel" : "^3.2.0"
  *  }
  * }
  * 
@@ -35,13 +35,10 @@ use exface\Core\DataTypes\BooleanDataType;
  * inlcude file!
  * 
  * ```
- *  "LIBS.JEXCEL.JS": "paulhodel/jexcel/dist/js/jquery.jexcel.js",
- *  "LIBS.JEXCEL.JS_DROPDOWN": "paulhodel/jexcel/dist/js/jquery.jdropdown.js",
- *  "LIBS.JEXCEL.JS_FORMULAS": "paulhodel/jexcel/dist/js/jexcel-formula.min.js",
- *  "LIBS.JEXCEL.JS_CALENDAR": "paulhodel/jexcel/dist/js/jquery.jcalendar.js",
- *  "LIBS.JEXCEL.CSS": "paulhodel/jexcel/dist/css/jquery.jexcel.css",
- *	"LIBS.JEXCEL.CSS_DROPDOWN": "paulhodel/jexcel/dist/css/jquery.jdropdown.css",
- *	"LIBS.JEXCEL.CSS_CALENDAR": "paulhodel/jexcel/dist/css/jquery.jcalendar.css",
+ *  "LIBS.JEXCEL.JS": "npm-asset/jexcel/dist/jexcel.min.js",
+ *  "LIBS.JEXCEL.JS_JSUITES": "npm-asset/jsuites/dist/jsuites.js",
+ *  "LIBS.JEXCEL.CSS": "npm-asset/jexcel/dist/jexcel.min.css",
+ *	"LIBS.JEXCEL.CSS_JSUITES": "npm-asset/jsuites/dist/jsuites.css",
  *	
  * ```
  * 
@@ -62,9 +59,9 @@ trait JExcelTrait
         $facade = $this->getFacade();
         return [
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.JEXCEL.JS') . '"></script>',
-            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.JEXCEL.JS_DROPDOWN') . '"></script>',
+            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.JEXCEL.JS_JSUITES') . '"></script>',
             '<link href="' . $facade->buildUrlToSource('LIBS.JEXCEL.CSS') . '" rel="stylesheet" media="screen">',
-            '<link href="' . $facade->buildUrlToSource('LIBS.JEXCEL.CSS_DROPDOWN') . '" rel="stylesheet" media="screen">'
+            '<link href="' . $facade->buildUrlToSource('LIBS.JEXCEL.CSS_JSUITES') . '" rel="stylesheet" media="screen">'
         ];
         
     }
@@ -85,10 +82,19 @@ JS;
      */
     protected function buildJsJExcelInit() : string
     {
+        $colNames = [];
+        foreach ($this->getWidget()->getColumns() as $col) {
+            $colNames[$col->getCaption()] = $col->getDataColumnName();
+        }
+        $colNamesJson = json_encode($colNames);
+        
         return <<<JS
 
-    $('#{$this->getId()}').jexcel({
-        data: [],
+    $('#{$this->getId()}')
+    .data('_exfColumnNames', {$colNamesJson})
+    .jexcel({
+        data: [ [] ],
+        allowRenameColumn: false,
         {$this->buildJsJExcelColumns()}
         {$this->buildJsJExcelMinSpareRows()}
     });
@@ -103,26 +109,12 @@ JS;
     protected function buildJsJExcelColumns() : string
     {
         $columns = [];
-        $colHeaders = [];
-        $colWidths = [];
         foreach ($this->getWidget()->getColumns() as $col) {
-            $colHeaders[] = $col->getDataColumnName();
             $columns[] = $this->buildJsJExcelColumn($col);
-            $width = $col->getWidth();
-            if ($width->isFacadeSpecific() === true) {
-                if (StringDataType::endsWith($width->getValue(), 'px') === true) {
-                    $colWidths[] = str_replace('px', '', $width->getValue());
-                } else {
-                    $colWidths[] = '80';
-                }
-            } else {
-                $colWidths[] = '80';
-            }
         }
             
-        return "colHeaders: " . json_encode($colHeaders) . ",
-        columns: [ " . implode(',', $columns) . " ],
-        colWidths: " . json_encode($colWidths) . ",";
+        return "
+        columns: [ " . implode(',', $columns) . " ],";
     }
     
     /**
@@ -133,34 +125,61 @@ JS;
     protected function buildJsJExcelColumn(DataColumn $col) : string
     {
         $cellWidget = $col->getCellWidget();
-        $js = '';
+        $options = '';
         switch (true) {
             case $col->isHidden() === true:
             case $cellWidget instanceof InputHidden:
-                $js = "type: 'hidden',";
+                $type = "hidden";
                 break;
             case $cellWidget instanceof InputNumber:
             case $cellWidget instanceof Display && $cellWidget->getValueDataType() instanceof NumberDataType:
-                $js = "type: 'numeric',";
+                $type = "numeric";
                 break;
             case $cellWidget instanceof InputCheckBox:
             case $cellWidget instanceof Display && $cellWidget->getValueDataType() instanceof BooleanDataType:
-                $js = "type: 'checkbox',";
+                $type = "checkbox";
                 break;
             case $cellWidget instanceof InputCombo:
-                return $this->buildJsJExcelColumnAutocomplete($cellWidget);
+                $type = 'autocomplete';
+                $options .= $this->buildJsJExcelColumnDropdownOptions($cellWidget);
+                break;
             default:
-                $js = "type: 'text',";
+                $type = "text";
         }
         
         if ($col->isEditable() === false) {
-            $js .= 'readOnly: true,';
+            $options .= 'readOnly: true,';
         }
+        
+        $width = $col->getWidth();
+        if ($width->isFacadeSpecific() === true) {
+            if (StringDataType::endsWith($width->getValue(), 'px') === true) {
+                $widthJs = str_replace('px', '', $width->getValue());
+            } else {
+                $widthJs = '80';
+            }
+        } else {
+            $widthJs= '80';
+        }
+        
+        if ($widthJs) {
+            $js .= "width: {$widthJs},";
+        }
+        
+        return <<<JS
+
+            {
+                title: "{$col->getCaption()}",
+                type: "{$type}",
+                width: {$widthJs},
+                {$options}
+            }
+JS;
         
         return '{' . rtrim($js, ","). '}';
     }
         
-    protected function buildJsJExcelColumnAutocomplete(InputSelect $cellWidget) : string
+    protected function buildJsJExcelColumnDropdownOptions(InputSelect $cellWidget) : string
     {
         if ($cellWidget->isBoundToAttribute() === false) {
             throw new FacadeLogicError('TODO');
@@ -193,15 +212,7 @@ JS;
             $srcJson = '[]';
         }
         
-        
-        return <<<JS
-
-            { 
-                type: 'autocomplete',
-                source: {$srcJson}
-            }
-
-JS;
+        return "source: {$srcJson},";
     }
         
     protected function getMinSpareRows() : int
@@ -218,6 +229,11 @@ JS;
         return 'minSpareRows: ' .  $this->getMinSpareRows() . ',';
     }
         
+    /**
+     *
+     * {@inheritdoc}
+     * @see AbstractJqueryElement::buildJsDataGetter()
+     */
     public function buildJsDataGetter(ActionInterface $action = null)
     {
         $data = "$('#{$this->getId()}').jexcel('getData', false)";
@@ -225,24 +241,58 @@ JS;
         
     {
         oId: '{$this->getWidget()->getMetaObject()->getId()}',
-        rows: {$this->buildJsDataFromArray($data)}
+        rows: {$this->buildJsConvertArrayToData($data)}
     }
     
 JS;
     }
+     
+    /**
+     * 
+     * {@inheritdoc}
+     * @see AbstractJqueryElement::buildJsDataSetter()
+     */
+    public function buildJsDataSetter(string $jsData)
+    {
+        // The '!' in front of the IFFE is required because it would not get executed stand alone
+        // resulting in a "SyntaxError: Function statements require a function name" instead.
+        return <<<JS
+!function() {    
+    var oData = {$jsData};    
+    var aData = [];
+    if (oData !== undefined && Array.isArray(oData.rows)) {
+        aData = {$this->buildJsConvertDataToArray('response.rows')}
+    }
+    if (aData.length > 0) {
+        $('#{$this->getId()}').jexcel('setData', aData);
+    }
+}()
+
+JS;
+    }
         
-    protected function buildJsDataFromArray(string $dataJs) : string
+    protected function buildJsConvertArrayToData(string $arrayOfArraysJs) : string
     {
         return <<<JS
-
 function() {
-    var aDataArray = {$dataJs};
+    var aDataArray = {$arrayOfArraysJs};
     var aData = [];
     var jExcel = $('#{$this->getId()}');
+    var oColNames = jExcel.data('_exfColumnNames');
     aDataArray.forEach(function(aRow, i){
         var oRow = {};
+        var sHeaderName;
+        var sColName;
         aRow.forEach(function(val, iColIdx){
-            oRow[jExcel.jexcel('getHeader', iColIdx)] = val;
+            try {
+                sHeaderName = jExcel.jexcel('getHeader', iColIdx);
+            } catch (e) {
+                sHeaderName = '';
+            }
+            sColName = oColNames[sHeaderName];
+            if (sColName) {
+                oRow[sColName] = val;
+            }
         });
         aData.push(oRow);
     });
@@ -251,6 +301,55 @@ function() {
         aData.pop();
     }
 
+    return aData;
+}()
+
+JS;
+    }
+    
+    protected function buildJsConvertDataToArray(string $arrayOfObjectsJs) : string
+    {
+        return <<<JS
+        
+function() {
+    var aDataRows = {$arrayOfObjectsJs};
+    var aData = [];
+    var jExcel = $('#{$this->getId()}');
+    var oColNames = jExcel.data('_exfColumnNames');
+    var aColHeaders = jExcel.jexcel('getHeaders').split(',');
+    var oColIdxCache = {};
+    aDataRows.forEach(function(oRow, i){
+        var oRowIndexed = {};
+        var aRow = [];
+        var sHeaderName, iColIdx, iLastIdx;
+        for (var sColName in oRow) {
+            iColIdx = oColIdxCache[sColName];
+            if (iColIdx !== undefined) {
+                oRowIndexed[iColIdx] = oRow[sColName];
+            }
+
+            sHeaderName = Object.keys(oColNames).find(key => oColNames[key] === sColName);
+            if (! sHeaderName) continue;
+            iColIdx = aColHeaders.indexOf(sHeaderName);
+            if (iColIdx >= 0) {
+                oRowIndexed[iColIdx] = oRow[sColName];
+                oColIdxCache[sColName] = iColIdx;
+            }
+        }
+        
+        iLastIdx = -1;
+        Object.keys(oRowIndexed).sort().forEach(function(iIdx) {
+            while (iIdx > iLastIdx + 1) {
+                aRow.push(null);
+                iLastIdx++;
+            }
+            aRow.push(oRowIndexed[iIdx]);
+            iLastIdx++;
+        });
+        
+        aData.push(aRow);
+    });
+    
     return aData;
 }()
 
