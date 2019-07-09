@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 use exface\Core\Widgets\Container;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Widgets\iShowDataColumn;
 
 abstract class AbstractJqueryElement implements WorkbenchDependantInterface
 {
@@ -563,6 +564,49 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
             $alias = $this->getWidget()->getMetaObject()->getAliasWithNamespace();
         }
         return "{oId: '" . $this->getWidget()->getMetaObject()->getId() . "', rows: [{'" . $alias . "': " . $this->buildJsValueGetter() . "}]}";
+    }
+    
+    /**
+     * Returns a JS snippet, that can set data given in the same structure as the data getter would produce.
+     * 
+     * This is basically the opposite of buildJsDataGetter(). The input must be valid JS code representing 
+     * or returning a JS data sheet.
+     * 
+     * For example, this code will extract data from a table and put it into a container:
+     * $container->buildJsDataSetter($table->buildJsDataGetter())
+     * 
+     * @param string $jsData
+     * @return string
+     */
+    public function buildJsDataSetter(string $jsData) : string
+    {
+        $widget = $this->getWidget();
+        if ($widget instanceof iShowSingleAttribute && $widget instanceof iShowDataColumn && $widget->isBoundToAttribute()) {
+            $colName = $this->getWidget()->getDataColumnName();
+            // The '!' in front of the IFFE is required because it would not get executed stand alone
+            // resulting in a "SyntaxError: Function statements require a function name" instead.
+            return <<<JS
+!function() {    
+    var oData = {$jsData};    
+    if (oData !== undefined && Array.isArray(oData.rows) && oData.rows.length > 0) {
+        var val;
+        if (oData.rows.length === 1) {
+           val = oData.rows[0]['{$colName}'];
+        } else if (odata.rows.length > 1) {
+            var vals = [];
+            oData.rows.forEach(function(oRow) {
+                vals.push(oRow['{$colName}']);
+            });
+            val = vals.join('{$widget->getAttribute()->getValueListDelimiter()}'};
+        }
+        {$this->buildJsValueSetter('val')};
+    }
+}()
+
+JS;
+        } 
+        $class = get_class($this);
+        return "console.warn('No data setter implemented for {$class}!')";
     }
 
     /**
