@@ -305,7 +305,6 @@ JS;
 	}
 
     function {$funcName}_addHelpButton($, editorId, url, title) {
-        console.log('#' + editorId + ' .jsoneditor-menu .jsoneditor-search');
         var helpBtn = $('<button type="button" title="' + title+ '" style="background: transparent;"><i class="fa fa-question-circle-o" style="font-size: 22px"></i></button>');
         $('#' + editorId + ' .jsoneditor-menu .jsoneditor-search').before(helpBtn);
         var helpBtnContent = '<iframe src="' + url + '"></iframe>';
