@@ -149,10 +149,10 @@ trait JqueryContainerTrait {
      * For example, this code will extract data from a table and put it into a container:
      * $container->buildJsDataSetter($table->buildJsDataGetter())
      * 
-     * @param string $jsInput
+     * @param string $jsData
      * @return string
      */
-    public function buildJsDataSetter(string $jsInput) : string
+    public function buildJsDataSetter(string $jsData) : string
     {
         $setters = '';
         foreach ($this->getWidget()->getWidgets() as $child) {
@@ -169,7 +169,7 @@ JS;
         return <<<JS
 
         function() {
-            var data = {$jsInput};
+            var data = {$jsData};
             var row = data.rows[0];
             if (! row || row.length === 0) {
                 return;
