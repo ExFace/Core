@@ -2,6 +2,9 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\InputUxon;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Factories\FacadeFactory;
+use exface\Core\Facades\DocsFacade;
 
 /**
  * This trait helps use the JsonEditor library to create InputJson and InputUxon widgets.
@@ -24,6 +27,7 @@ use exface\Core\Widgets\InputUxon;
  * ```
  * 
  * @method InputJson getWidget()
+ * @method WorkbenchInterface getWorkbench()
  *        
  * @author Andrej Kabachnik
  *        
@@ -64,7 +68,7 @@ JS;
     {
         $widget = $this->getWidget();
         if (($widget instanceof InputUxon) && $widget->getAutosuggest() === true) {
-            $uxonEditorOptions = $this::buildJsUxonEditorOptions($this->getWidget()->getSchema(), $this->buildJsFunctionPrefix() . '_fetchAutosuggest');
+            $uxonEditorOptions = $this::buildJsUxonEditorOptions($this->getWidget()->getSchema(), static::buildJsFunctionNameFetchAutosuggest($this->buildJsFunctionPrefix()));
         } else {
             $uxonEditorOptions = '';
         }
@@ -87,6 +91,13 @@ JS;
 JS;
     }
     
+    /**
+     * Building the options for UXON editor including filter function and error handler
+     * 
+     * @param string $uxonSchema
+     * @param string $fetchAutosuggestFunctionName
+     * @return string
+     */
     public static function buildJsUxonEditorOptions(string $uxonSchema, string $fetchAutosuggestFunctionName) : string
     {
         return <<<JS
@@ -169,7 +180,7 @@ JS;
         }
         
         return $this::buildJsUxonAutosuggestFunctions(
-            $this->buildJsFunctionPrefix() . '_fetchAutosuggest',
+            $this->buildJsFunctionPrefix(),
             $widget->getSchema(),
             $this->buildJsRootPrototypeGetter(),
             $this->buildJsRootObjectGetter(),
@@ -177,7 +188,7 @@ JS;
         ) . <<<JS
         
     $(function() {
-    	$(document).on('blur', '#{$this->getId()} div.jsoneditor-field[contenteditable="true"]', {jsonEditor: {$this->getId()}_JSONeditor}, {$this->buildJsFunctionPrefix()}_fetchAutosuggest_onBlur);
+    	$(document).on('blur', '#{$this->getId()} div.jsoneditor-field[contenteditable="true"]', {jsonEditor: {$this->getId()}_JSONeditor}, {$this->buildJsFunctionPrefix()}_onBlur);
     });
 
 JS;
@@ -185,18 +196,22 @@ JS;
     
     /**
      * 
-     * @param string $funcName
+     * @param string $funcPrefix
      * @param string $uxonSchema
      * @param string $rootPrototype
      * @param string $rootObject
      * @param string $ajaxUrl
      * @return string
      */
-    public static function buildJsUxonAutosuggestFunctions(string $funcName, string $uxonSchema, string $rootPrototype, string $rootObject, string $ajaxUrl) : string
+    public static function buildJsUxonAutosuggestFunctions(string $funcPrefix, string $uxonSchema, string $rootPrototype, string $rootObject, string $ajaxUrl) : string
     {
+        $addHelpButtonFunction = static::buildJsFunctionNameAddHelpButton($funcPrefix);
+        $onBlurFunctionName = static::buildJsFunctionNameOnBlur($funcPrefix);
+        $fetchAutosuggestFunctionName = static::buildJsFunctionNameFetchAutosuggest($funcPrefix);
+        
         return <<<JS
         
-    function {$funcName}(text, path, input, uxon) {
+    function {$fetchAutosuggestFunctionName}(text, path, input, uxon) {
         var formData = new URLSearchParams({
     		action: 'exface.Core.UxonAutosuggest',
     		text: text,
@@ -231,7 +246,7 @@ JS;
         });
     }
     
-    function openModal( parent, title, contentHTML, focus = false, cssClass = '', onAfterCreate ) {
+    function openModal(title, contentHTML, focus = false, cssClass = '', onAfterCreate ) {
     
           if (! onAfterCreate) {
               onAfterCreate = function(modal) {
@@ -242,11 +257,11 @@ JS;
                          '<div class="pico-modal-header">' + title + '</div>' + contentHTML;
        
         picoModal({
-            parent: (parent)? parent: document.body,
+            parent: window.document.body,
             title: title,
             content: contentStr,
             overlayClass: 'jsoneditor-modal-overlay',
-            modalClass: 'jsoneditor-modal ' + cssClass,
+            modalClass: 'jsoneditor-modal uxoneditor-modal ' + cssClass,
             focus: focus
         })
         .afterCreate(onAfterCreate)
@@ -257,7 +272,7 @@ JS;
         
     }
 
-    function {$funcName}_getNodeFromTarget(target) {
+    function {$funcPrefix}_getNodeFromTarget(target) {
 	   while (target) {
     	    if (target.node) {
     	       return target.node;
@@ -268,7 +283,7 @@ JS;
 	   return undefined;
     }
     
-    function {$funcName}_focusFirstChildValue(node) {
+    function {$funcPrefix}_focusFirstChildValue(node) {
     	var child, found;
     	for (var i in node.childs) {
     		child = node.childs[i];
@@ -276,7 +291,7 @@ JS;
     			child.focus(child.getField() ? 'value' : 'field');
                 return child;
     		} else {
-    			found = {$funcName}_focusFirstChildValue(child);
+    			found = {$funcPrefix}_focusFirstChildValue(child);
                 if (found) {
                     return found;
                 }
@@ -285,9 +300,9 @@ JS;
     	return false;
     }
 
-    function {$funcName}_onBlur(event) {
+    function {$onBlurFunctionName}(event) {
         var editor = event.data.jsonEditor;
-		var node = {$funcName}_getNodeFromTarget(this);
+		var node = {$funcPrefix}_getNodeFromTarget(this);
 		if (node.getValue() !== '') {
 			return;
 		}
@@ -299,17 +314,17 @@ JS;
 				var val = JSON.parse(tpl);
 				node.setValue(val, (Array.isArray(val) ? 'array' : 'object'));
 				node.expand(true);
-				{$funcName}_focusFirstChildValue(node);
+				{$funcPrefix}_focusFirstChildValue(node);
 			}
 		}
 	}
 
-    function {$funcName}_addHelpButton($, editorId, url, title) {
+    function {$addHelpButtonFunction}($, editorId, url, title) {
         var helpBtn = $('<button type="button" title="' + title+ '" style="background: transparent;"><i class="fa fa-question-circle-o" style="font-size: 22px"></i></button>');
         $('#' + editorId + ' .jsoneditor-menu .jsoneditor-search').before(helpBtn);
         var helpBtnContent = '<iframe src="' + url + '"></iframe>';
         helpBtn.click(function() {
-            return openModal(window.document.body, title , helpBtnContent, false, 'jsoneditor-modal-nopadding jsoneditor-modal-maximized' );
+            return openModal(title , helpBtnContent, false, 'jsoneditor-modal-nopadding jsoneditor-modal-maximized' );
         });
 
     }
@@ -420,17 +435,72 @@ CSS;
         return '""';
     }
     
+    /**
+     * Returns javascript code for adding UXON editor help on top toolbar.
+     * Both the function call and help content URL are constructed from given 
+     * 
+     * @return string
+     */
     protected function buildJsEditorAddHelpButton() : string
     {
+        $addHelpButtonFunction = $this::buildJsFunctionNameAddHelpButton($this->buildJsFunctionPrefix());
+        /* @var \exface\Core\Facades\DocsFacade $docsFacade */
+        $docsFacade = FacadeFactory::createFromAnything(DocsFacade::class, $this->getWorkbench());
+        $url = $docsFacade->buildUrlToFacade() . '/exface/Core/Docs/Creating_UIs/UXON/Introduction_to_the_UXON_editor.md';
         return <<<JS
 
-            {$this->buildJsFunctionPrefix()}_fetchAutosuggest_addHelpButton(
+            {$addHelpButtonFunction}(
                 $,
                 "{$this->getId()}",
-                "http://localhost/exface/exface/api/docs/exface/Core/Docs/Creating_UIs/UXON/Introduction_to_the_UXON_editor.md",
+                "{$url}",
                 "Help" 
             );
 
 JS;
+    }
+    
+    /**
+     * Returns the name of the JS function to add a help button to the top toolbar
+     * 
+     * The function is defined in buildJsUxonAutosuggestFunctions()
+     * 
+     * @see buildJsUxonAutosuggestFunctions()
+     * 
+     * @param string $funcPrefix
+     * @return string
+     */
+    public static function buildJsFunctionNameAddHelpButton(string $funcPrefix) : string
+    {
+        return $funcPrefix . '_addHelpButton';
+    }
+    
+    /**
+     * Returns the name of the JS function to call when an editor field is left (triggers inserting the UXON template)
+     *
+     * The function is defined in buildJsUxonAutosuggestFunctions()
+     *
+     * @see buildJsUxonAutosuggestFunctions()
+     *
+     * @param string $funcPrefix
+     * @return string
+     */
+    public static function buildJsFunctionNameOnBlur(string $funcPrefix) : string
+    {
+        return $funcPrefix . '_onBlur';
+    }
+    
+    /**
+     * Returns the name of the JS function to fetch autosuggest data from the server
+     *
+     * The function is defined in buildJsUxonAutosuggestFunctions()
+     *
+     * @see buildJsUxonAutosuggestFunctions()
+     *
+     * @param string $funcPrefix
+     * @return string
+     */
+    public static function buildJsFunctionNameFetchAutosuggest(string $funcPrefix) : string
+    {
+        return $funcPrefix . '_fetchAutosuggest';
     }
 }
