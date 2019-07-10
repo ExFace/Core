@@ -614,6 +614,9 @@ class DataSheet implements DataSheetInterface
         $query = QueryBuilderFactory::createForObject($object);
         
         foreach ($this->getColumns() as $col) {
+            if ($col->getExpressionObj()->isMetaAttribute() === true && $col->getAttribute()->isReadable() === false) {
+                continue;
+            }
             $this->dataReadAddColumnToQuery($col, $query);
             foreach ($col->getTotals()->getAll() as $row => $total) {
                 $query->addTotal($col->getAttributeAlias(), $total->getAggregator(), $row);
