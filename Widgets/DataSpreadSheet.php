@@ -1,30 +1,56 @@
 <?php
 namespace exface\Core\Widgets;
 
-class DataSpreadSheet extends DataMatrixOld
+use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Widgets\Traits\EditableTableTrait;
+
+/**
+ * An Excel-like table with editable cells.
+ * 
+ * THe spreadsheet is very handy for editing multiple rows of data. Depending on the facade used,
+ * it will have Excel-like features like autofill, formulas, etc.
+ * 
+ *  An editor widget can be defined for every column. If no editor is explicitly defined, the default
+ * editor for the attribute will be used - similarly to a DataTable with editable columns.
+ * 
+ * In contrast to a `DataTable`, it does not offer row grouping, row details, etc. - it's focus
+ * is comfortable editing of flat tabular data. Also, the `DataSpreadSheet` has different default
+ * settings:
+ * 
+ * - `editable` is `true` by default
+ * - `paginate` is `false` by default 
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput
 {
-
-    private $formulas_enabled = true;
-
-    public function getFormulasEnabled()
+    use EditableTableTrait;
+    
+    protected function init()
     {
-        return $this->formulas_enabled;
+        parent::init();
+        $this->setPaginate(false);
+        $this->setEditable(true);
     }
-
-    /**
-     * Set to FALSE to disable excel-like formulas.
-     * 
-     * @uxon-property formulas_enabled
-     * @uxon-type boolean
-     * @uxon-defualt true
-     * 
-     * @param boolean|string $value
-     * @return \exface\Core\Widgets\DataSpreadSheet
-     */
-    public function setFormulasEnabled($value)
+    
+    public function getWidth()
     {
-        $this->formulas_enabled = $value;
-        return $this;
+        if (parent::getWidth()->isUndefined()) {
+            $this->setWidth('max');
+        }
+        return parent::getWidth();
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
+     */
+    public function getAlternativeContainerForOrphanedSiblings()
+    {
+        return null;
     }
 }
-?>
