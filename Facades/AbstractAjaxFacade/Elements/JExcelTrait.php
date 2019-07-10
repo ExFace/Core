@@ -2,7 +2,6 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\DataColumn;
-use exface\Core\Widgets\DataImporter;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\InputSelect;
 use exface\Core\Widgets\InputCombo;
@@ -48,8 +47,7 @@ use exface\Core\DataTypes\BooleanDataType;
  *
  */
 trait JExcelTrait 
-{
-    
+{    
     /**
      * 
      * @return string[]
@@ -134,6 +132,7 @@ JS;
             case $cellWidget instanceof InputNumber:
             case $cellWidget instanceof Display && $cellWidget->getValueDataType() instanceof NumberDataType:
                 $type = "numeric";
+                $align = EXF_ALIGN_RIGHT;
                 break;
             case $cellWidget instanceof InputCheckBox:
             case $cellWidget instanceof Display && $cellWidget->getValueDataType() instanceof BooleanDataType:
@@ -141,6 +140,7 @@ JS;
                 break;
             case $cellWidget instanceof InputCombo:
                 $type = 'autocomplete';
+                $align = EXF_ALIGN_LEFT;
                 $options .= $this->buildJsJExcelColumnDropdownOptions($cellWidget);
                 break;
             default:
@@ -156,15 +156,17 @@ JS;
             if (StringDataType::endsWith($width->getValue(), 'px') === true) {
                 $widthJs = str_replace('px', '', $width->getValue());
             } else {
-                $widthJs = '80';
+                $widthJs = '100';
             }
         } else {
-            $widthJs= '80';
+            $widthJs= '100';
         }
         
         if ($widthJs) {
             $js .= "width: {$widthJs},";
         }
+        
+        $align = $align ? 'align: "' . $align . '",' : '';
         
         return <<<JS
 
@@ -172,6 +174,7 @@ JS;
                 title: "{$col->getCaption()}",
                 type: "{$type}",
                 width: {$widthJs},
+                {$align}
                 {$options}
             }
 JS;
@@ -236,12 +239,44 @@ JS;
      */
     public function buildJsDataGetter(ActionInterface $action = null)
     {
+        $widget = $this->getWidget();
         $data = "$('#{$this->getId()}').jexcel('getData', false)";
+        $rows = $this->buildJsConvertArrayToData($data);
+            
+        if ($widget->isEditable() && ! $action->getMetaObject()->is($widget->getMetaObject()) === true) {
+            // If the data is intended for another object, make it a nested data sheet
+            if ($relPath = $widget->getObjectRelationPathFromParent()) {
+                $relAlias = $relPath->toString();
+            } else {
+                if ($relPath = $widget->getObjectRelationPathToParent()) {
+                    $relAlias = $relPath->reverse()->toString();
+                } else {
+                    $relation = $action->getMetaObject()->findRelation($widget->getMetaObject(), true);
+                    $relAlias = $relation->getAlias();
+                }
+            }
+            return <<<JS
+                
+    {
+        oId: '{$action->getMetaObject()->getId()}',
+        rows: [
+            {
+                '{$relAlias}': {
+                    oId: '{$widget->getMetaObject()->getId()}',
+                    rows: {$rows}
+                }
+            }
+        ]
+    }
+    
+JS;
+        }
+        
         return <<<JS
         
     {
         oId: '{$this->getWidget()->getMetaObject()->getId()}',
-        rows: {$this->buildJsConvertArrayToData($data)}
+        rows: {$rows}
     }
     
 JS;
@@ -261,7 +296,7 @@ JS;
     var oData = {$jsData};    
     var aData = [];
     if (oData !== undefined && Array.isArray(oData.rows)) {
-        aData = {$this->buildJsConvertDataToArray('response.rows')}
+        aData = {$this->buildJsConvertDataToArray('oData.rows')}
     }
     if (aData.length > 0) {
         $('#{$this->getId()}').jexcel('setData', aData);
@@ -354,6 +389,12 @@ function() {
 }()
 
 JS;
+    }
+    
+    
+    public function buildJsDataResetter() : string
+    {
+        return "$('#{$this->getId()}').jexcel('setData', [ [] ])";
     }
     
 }
