@@ -558,12 +558,16 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
      */
     public function buildJsDataGetter(ActionInterface $action = null)
     {
-        if ($this->getWidget() instanceof iShowSingleAttribute) {
-            $alias = $this->getWidget()->getAttributeAlias();
+        $widget = $this->getWidget();
+        if ($widget instanceof iShowSingleAttribute) {
+            $alias = $widget->getAttributeAlias();
+            if (! $alias && $widget instanceof iShowDataColumn) {
+                $alias = $widget->getDataColumnName();
+            }
         } else {
-            $alias = $this->getWidget()->getMetaObject()->getAliasWithNamespace();
+            $alias = $widget->getMetaObject()->getAliasWithNamespace();
         }
-        return "{oId: '" . $this->getWidget()->getMetaObject()->getId() . "', rows: [{'" . $alias . "': " . $this->buildJsValueGetter() . "}]}";
+        return "{oId: '" . $widget->getMetaObject()->getId() . "', rows: [{'" . $alias . "': " . $this->buildJsValueGetter() . "}]}";
     }
     
     /**
