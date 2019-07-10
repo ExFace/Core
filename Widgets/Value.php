@@ -100,10 +100,12 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
          *  }
          * } else
          */
-         
-        $prefillExpr = $this->getPrefillExpression($data_sheet, $this->getAttributeAlias());
-        if ($prefillExpr !== null) {
-            $data_sheet->getColumns()->addFromExpression($prefillExpr);
+        
+        if ($this->isBoundToAttribute() === true) {
+            $prefillExpr = $this->getPrefillExpression($data_sheet, $this->getAttributeAlias());
+            if ($prefillExpr !== null) {
+                $data_sheet->getColumns()->addFromExpression($prefillExpr);
+            }
         }
         
         return $data_sheet;
