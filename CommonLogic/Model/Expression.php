@@ -36,6 +36,7 @@ class Expression implements ExpressionInterface
     const TYPE_STRING = 'string';
     const TYPE_NUMBER = 'number';
     const TYPE_REFERENCE = 'reference';
+    const TYPE_UNKNOWN = 'unknown';
     
     private $attributes = null;
 
@@ -111,6 +112,7 @@ class Expression implements ExpressionInterface
                 }
             }
         } else {
+            // Finally, if it's neither a quoted string, nor a number nor does it start with "=", it must be an attribute alias.
             try {
                 if (! $this->getMetaObject() || ($this->getMetaObject() && $this->getMetaObject()->hasAttribute($expression))) {
                     $isAttributeAlias = true;
@@ -120,7 +122,6 @@ class Expression implements ExpressionInterface
             } catch (MetaRelationResolverExceptionInterface $ea) {
                 $isAttributeAlias = false;
             }
-            // Finally, if it's neither a quoted string, nor a number nor does it start with "=", it must be an attribute alias.
             if ($isAttributeAlias) {
                 $this->attribute_alias = $expression;
                 $this->type = self::TYPE_ATTRIBUTE;
@@ -129,7 +130,7 @@ class Expression implements ExpressionInterface
                 // when setting widget values (just about in every prefill).
                 // FIXME If the prefill value happens to be the same as an attribute or relation path, this is going to produce 
                 // strange behavior!
-                $this->type = self::TYPE_STRING;
+                $this->type = self::TYPE_UNKNOWN;
                 $this->value = $str === false ? '' : $str;
             }
         }
