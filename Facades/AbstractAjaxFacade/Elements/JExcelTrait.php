@@ -14,6 +14,9 @@ use exface\Core\Widgets\InputCheckBox;
 use exface\Core\Widgets\Display;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Widgets\DataSpreadSheet;
+use exface\Core\Widgets\Data;
+use exface\Core\Widgets\DataImporter;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -41,13 +44,52 @@ use exface\Core\DataTypes\BooleanDataType;
  *	
  * ```
  * 
- * @method DataImporter getWidget()
+ * @method Data getWidget()
  * 
  * @author Andrej Kabachnik
  *
  */
 trait JExcelTrait 
-{    
+{
+    protected function registerReferencesAtLinkedElements()
+    {
+        $widget = $this->getWidget();
+        
+        if ($widget instanceof DataSpreadSheet) {
+            $this->registerReferencesAtLinkedElementsForSpreadSheet($widget);
+        }
+    }
+    
+    protected function registerReferencesAtLinkedElementsForSpreadSheet(DataSpreadSheet $widget)
+    {
+        if ($widget->hasDefaultRow() === true) {
+            foreach ($widget->getDefaultRow() as $columnName => $expr) {
+                if ($expr->isReference() === true) {
+                    $link = $expr->getWidgetLink($this->getWidget());
+                    $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
+                    if ($linked_element) {
+                        $script = <<<JS
+                        
+    !function(){
+        var jqExcel = $('#{$this->getId()}');
+        var aData = jqExcel.jexcel('getData');
+        if (aData.length > {$this->getMinSpareRows()} + 1) {
+            return;
+        }
+        
+        var oFirstRow = {$this->buildJsDataGetter()}.rows[0] || {};
+        oFirstRow["{$columnName}"] = {$linked_element->buildJsValueGetter($link->getTargetColumnId())};
+        {$this->buildJsDataSetter('{rows: [oFirstRow]}')};
+    }();
+    
+JS;
+                        $linked_element->addOnChangeScript($script);
+                    }
+                }
+            }
+        }
+    }
+    
     /**
      * 
      * @return string[]
@@ -243,7 +285,7 @@ JS;
         $data = "$('#{$this->getId()}').jexcel('getData', false)";
         $rows = $this->buildJsConvertArrayToData($data);
             
-        if ($widget->isEditable() && ! $action->getMetaObject()->is($widget->getMetaObject()) === true) {
+        if ($widget->isEditable() && $action && ! $action->getMetaObject()->is($widget->getMetaObject()) === true) {
             // If the data is intended for another object, make it a nested data sheet
             if ($relPath = $widget->getObjectRelationPathFromParent()) {
                 $relAlias = $relPath->toString();

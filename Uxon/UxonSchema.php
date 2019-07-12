@@ -258,8 +258,6 @@ class UxonSchema implements UxonSchemaInterface
      */
     public function getValidValues(UxonObject $uxon, array $path, string $search = null, string $rootPrototypeClass = null, MetaObjectInterface $rootObject = null) : array
     {
-        $options = [];
-        
         $prop = mb_strtolower(end($path));
         if (true === is_numeric($prop)) {
             // If we are in an array, use the data from the parent property (= the array)
@@ -276,42 +274,50 @@ class UxonSchema implements UxonSchemaInterface
             $firstType = trim($propertyTypes[0]);
         }
         
+        $object = $this->getMetaObject($uxon, $path, $rootObject);
+        
+        return $this->getValidValuesForType($firstType, $search, $object);
+    }
+    
+    protected function getValidValuesForType(string $type, string $search, MetaObjectInterface $object) : array
+    {
+        $options = [];
+        
         switch (true) {
-            case $this->isPropertyTypeEnum($firstType) === true:
-                $options = explode(',', trim($firstType, "[]"));
+            case $this->isPropertyTypeEnum($type) === true:
+                $options = explode(',', trim($type, "[]"));
                 break;
-            case strcasecmp($firstType, 'boolean') === 0:
+            case strcasecmp($type, 'boolean') === 0:
                 $options = ['true', 'false'];
                 break;
-            case strcasecmp($firstType, 'metamodel:data_source') === 0:
+            case strcasecmp($type, 'metamodel:data_source') === 0:
                 $options = $this->getMetamodelDataSourceAliases($search);
                 break;
-            case strcasecmp($firstType, 'metamodel:connection') === 0:
+            case strcasecmp($type, 'metamodel:connection') === 0:
                 $options = $this->getMetamodelConnectionAliases($search);
                 break;
-            case strcasecmp($firstType, 'metamodel:widget') === 0:
+            case strcasecmp($type, 'metamodel:widget') === 0:
                 $options = $this->getMetamodelWidgetTypes();
                 break;
-            case strcasecmp($firstType, 'metamodel:object') === 0:
+            case strcasecmp($type, 'metamodel:object') === 0:
                 $options = $this->getMetamodelObjectAliases($search);
                 break;
-            case strcasecmp($firstType, 'metamodel:action') === 0:
+            case strcasecmp($type, 'metamodel:action') === 0:
                 $options = $this->getMetamodelActionAliases($search);
                 break;
-            case strcasecmp($firstType, 'metamodel:formula') === 0:
+            case strcasecmp($type, 'metamodel:formula') === 0:
                 $options = $this->getMetamodelFormulaAliases($search);
                 break;
-            case strcasecmp($firstType, 'metamodel:page') === 0:
+            case strcasecmp($type, 'metamodel:page') === 0:
                 $options = $this->getMetamodelPageAliases($search);
                 break;
-            case strcasecmp($firstType, 'metamodel:comparator') === 0:
+            case strcasecmp($type, 'metamodel:comparator') === 0:
                 $options = $this->getMetamodelComparators($search);
                 break;
-            case strcasecmp($firstType, 'metamodel:attribute') === 0:
-            case strcasecmp($firstType, 'metamodel:relation') === 0:
+            case strcasecmp($type, 'metamodel:attribute') === 0:
+            case strcasecmp($type, 'metamodel:relation') === 0:
                 try {
-                    $object = $this->getMetaObject($uxon, $path, $rootObject);
-                    if (strcasecmp($firstType, 'metamodel:attribute') === 0) {
+                    if (strcasecmp($type, 'metamodel:attribute') === 0) {
                         $options = $this->getMetamodelAttributeAliases($object, $search);
                     } else {
                         $options = $this->getMetamodelRelationAliases($object, $search);
@@ -320,19 +326,18 @@ class UxonSchema implements UxonSchemaInterface
                     $options = [];
                 }
                 break;
-            case strcasecmp($firstType, 'metamodel:expression') === 0:
+            case strcasecmp($type, 'metamodel:expression') === 0:
                 try {
-                   
+                    
                     // Formula: directly determine existing aliases without metaobject
                     if (substr($search, 0, 1) === '=') {
-                        $firstType = 'metamodel:formula';
+                        $type = 'metamodel:formula';
                         $options = $this->getMetamodelFormulaExpressions($search);
                         brk;
-                    } 
+                    }
                     
-                    $object = $this->getMetaObject($uxon, $path, $rootObject);
                     $ex = ExpressionFactory::createFromString($this->getWorkbench(), $search, $object);
-                   
+                    
                     if ($ex->isReference() === true) {
                         // TODO
                     } elseif ($ex->isNumber()) {
@@ -343,11 +348,19 @@ class UxonSchema implements UxonSchemaInterface
                     }
                 } catch (MetaObjectNotFoundError $e) {
                     $options = [];
-    
+                    
                 }
                 break;
-            
-        } 
+            case $this->isPropertyTypeObject($type) === true:
+                list ($keyType, $valType) = explode('=>', trim($type, "{}"));
+                $keyType = trim($keyType);
+                $valType = trim($valType);
+                if (! $valType) {
+                    $valType = $keyType;
+                }
+                $options = $valType ? $this->getValidValuesForType($valType, $search, $object) : [];
+                break;
+        }
         
         return $options;
     }
@@ -625,7 +638,6 @@ class UxonSchema implements UxonSchemaInterface
     }
     
     /**
-     * 
      * Returning true, if property has type enumeration
      * 
      * @param string $type
@@ -634,6 +646,19 @@ class UxonSchema implements UxonSchemaInterface
     protected function isPropertyTypeEnum(string $type) : bool
     {
         return substr($type, 0, 1) === '[' && substr($type, -1) === ']';
+    }
+    
+    /**
+     * Returning true, if property has type object
+     * 
+     * E.g. for {} or {string => metamodel:attribute}, etc.
+     *
+     * @param string $type
+     * @return bool
+     */
+    protected function isPropertyTypeObject(string $type) : bool
+    {
+        return substr($type, 0, 1) === '{' && substr($type, -1) === '}';
     }
     
     /**

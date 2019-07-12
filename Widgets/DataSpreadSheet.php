@@ -4,6 +4,10 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Widgets\Traits\EditableTableTrait;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * An Excel-like table with editable cells.
@@ -27,6 +31,8 @@ use exface\Core\Widgets\Traits\EditableTableTrait;
 class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput
 {
     use EditableTableTrait;
+    
+    private $defaultRow = null;
     
     protected function init()
     {
@@ -52,5 +58,60 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput
     public function getAlternativeContainerForOrphanedSiblings()
     {
         return null;
+    }
+    
+    /**
+     *
+     * @return array
+     */
+    public function getDefaultRow() : array
+    {
+        foreach ($this->defaultRow as $alias => $expr) {
+            if (! $expr instanceof ExpressionInterface) {
+                $col = $this->getColumnByAttributeAlias($alias);
+                if (! $col) {
+                    throw new WidgetConfigurationError('Cannot use "' . $expr . '" as key in the default row of ' . $this->getWidgetType() . ': it does not match the attribute_alias of any existing column!');
+                }
+                $expression = ExpressionFactory::createForObject($this->getMetaObject(), $expr);
+                $this->defaultRow[$col->getDataColumnName()] = $expression;
+            }
+        }
+        return $this->defaultRow;
+    }
+    
+    /**
+     * Make empty spreadsheets autocreate a first row from given column values.
+     * 
+     * This property takes key-value-pairs as a UXON object with `attribute_alias`
+     * of the column to fill for keys and expressions for values: formulas, widget 
+     * links, numbers, quoted strings or other attribute aliases.
+     * 
+     * Here is an example for a spreadsheet over an object with `date` and 'qty'
+     * among it's attributes.
+     * 
+     * ```
+     * "default_row": {
+     *  "date": "=NOW()",
+     *  "qty": 1 
+     * }
+     * 
+     * ```
+     * 
+     * @uxon-property default_row
+     * @uxon-type {metamodel:attribute => metamodel:expression}
+     * @uxon-template {"// attribute alias": "// =formula, another attribute alias, number or quoted string"}
+     * 
+     * @param array $uxon
+     * @return DataSpreadSheet
+     */
+    public function setDefaultRow(UxonObject $uxon) : DataSpreadSheet
+    {
+        $this->defaultRow = $uxon->toArray();
+        return $this;
+    }
+    
+    public function hasDefaultRow() : bool
+    {
+        return $this->defaultRow !== null;
     }
 }
