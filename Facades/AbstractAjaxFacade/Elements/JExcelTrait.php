@@ -73,7 +73,7 @@ trait JExcelTrait
     !function(){
         var jqExcel = $('#{$this->getId()}');
         var aData = jqExcel.jexcel('getData');
-        if (aData.length > {$this->getMinSpareRows()} + 1) {
+        if (aData.length > {$this->getMinSpareRows()}) {
             return;
         }
         
