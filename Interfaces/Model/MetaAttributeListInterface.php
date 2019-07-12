@@ -20,11 +20,20 @@ interface MetaAttributeListInterface extends EntityListInterface
      *
      * @return ModelInterface
      */
-    public function getModel();
+    public function getModel() : ModelInterface;
     
-    public function getMetaObject();
+    /**
+     * 
+     * @return MetaObjectInterface
+     */
+    public function getMetaObject() : MetaObjectInterface;
     
-    public function setMetaObject(MetaObjectInterface $meta_object);
+    /**
+     * 
+     * @param MetaObjectInterface $meta_object
+     * @return MetaAttributeInterface
+     */
+    public function setMetaObject(MetaObjectInterface $meta_object) : MetaAttributeListInterface;
     
     /**
      * Returns the attribute matching the given UID or FALSE if no such attribute is found
@@ -39,14 +48,14 @@ interface MetaAttributeListInterface extends EntityListInterface
      *
      * @return MetaAttributeListInterface|MetaAttributeInterface[]
      */
-    function getRequired();
+    public function getRequired();
     
     /**
      * Returns system attributes.
      *
      * @return MetaAttributeListInterface|MetaAttributeInterface[]
      */
-    public function getSystem();
+    public function getSystem() : MetaAttributeListInterface;
     
     /**
      * Returns a list with all attributes, marked for the default display of the object sorted by default_display_order
@@ -55,23 +64,23 @@ interface MetaAttributeListInterface extends EntityListInterface
      *
      * @return MetaAttributeListInterface|MetaAttributeInterface[]
      */
-    public function getDefaultDisplayList();
+    public function getDefaultDisplayList() : MetaAttributeListInterface;
     
     /**
      * 
-     * @return MetaAttributeInterface
+     * @return MetaAttributeListInterface|MetaAttributeInterface[]
      */
     public function getWritable() : MetaAttributeListInterface;
     
     /**
      * 
-     * @return MetaAttributeInterface
+     * @return MetaAttributeListInterface|MetaAttributeInterface[]
      */
     public function getReadable() : MetaAttributeListInterface;
     
     /**
      * 
-     * @return MetaAttributeInterface
+     * @return MetaAttributeListInterface|MetaAttributeInterface[]
      */
     public function getEditable() : MetaAttributeListInterface;
 }
