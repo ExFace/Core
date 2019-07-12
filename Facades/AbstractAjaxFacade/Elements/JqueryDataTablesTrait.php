@@ -503,7 +503,7 @@ JS;
         foreach ($widget->getColumns() as $nr => $col) {
             $columns[] = $this->buildJsColumnDef($col);
             $nr = $nr + $column_number_offset;
-            if ($col->getFooter()) {
+            if ($col->hasFooter()) {
                 $footer_callback .= <<<JS
 	            // Total over all pages
 	            var data;

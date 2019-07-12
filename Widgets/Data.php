@@ -33,6 +33,7 @@ use exface\Core\Widgets\Traits\iHaveContextualHelpTrait;
 use exface\Core\Widgets\Traits\iHaveColumnsAndColumnGroupsTrait;
 use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Interfaces\Widgets\iHaveSorters;
+use exface\Core\Widgets\Parts\DataFooter;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -145,13 +146,13 @@ class Data
                 // Only add columns, that actually have content. The other columns exist only in the widget
                 // TODO This check will get more complicated, once the content can be specified not only via attribute_alias
                 // but also with properties like formula, etc.
-                if (! $col->getAttributeAlias())
+                if (! $col->getAttributeAlias()) {
                     continue;
+                }
                 $data_column = $data_sheet->getColumns()->addFromExpression($col->getAttributeAlias(), $col->getDataColumnName(), $col->isHidden());
                 // Add a total to the data sheet, if the column has a footer
-                // TODO wouldn't it be better to use the column id here?
-                if ($col->hasFooter()) {
-                    $total = DataColumnTotalsFactory::createFromString($data_column, $col->getFooter());
+                if ($col->hasFooter() === true && $col->getFooter()->hasAggregator() === true) {
+                    $total = DataColumnTotalsFactory::createFromString($data_column, $col->getFooter()->getAggregator()->exportString());
                     $data_column->getTotals()->add($total);
                 }
             }
@@ -1316,5 +1317,15 @@ class Data
     {
         $this->quickSearchWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Input');
         return $this;
+    }
+    
+    /**
+     * Returns the PHP class name of the footer widget part to be used.
+     *
+     * @return string
+     */
+    public function getFooterWidgetPartClass() : string
+    {
+        return '\\' . DataFooter::class;
     }
 }
