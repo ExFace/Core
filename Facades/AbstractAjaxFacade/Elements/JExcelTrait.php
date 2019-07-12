@@ -17,6 +17,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Widgets\DataSpreadSheet;
 use exface\Core\Widgets\Data;
 use exface\Core\Widgets\DataImporter;
+use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -85,6 +86,11 @@ trait JExcelTrait
 JS;
                         $linked_element->addOnChangeScript($script);
                     }
+                } else {
+                    // TODO add support for other attributes and static values in default_row.
+                    // Probably need to mark the row as default_row, so that linked values from above
+                    // can be set even if the first row exists.
+                    throw new FacadeUnsupportedWidgetPropertyWarning('Cannot use "' . $expr->toString() . '" in default_row property of ' . $this->getWidget()->getWidgetType() . ': only widget links currently supported!');
                 }
             }
         }
