@@ -15,6 +15,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
 
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
@@ -46,8 +47,10 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
  * - metamodel:widget_link
  * - metamodel:event
  * - metamodel:data_source
+ * - metamodel:aggregator
  * - uxon:path - where path is a JSONpath relative to the current field
  * - [val1,val2] - enumeration of commma-separated values (in square brackets)
+ * - {keyType => valueType} - object with typed keys and values
  * 
  * There are dedicated schema-classes for some UXON schemas:
  * 
@@ -359,6 +362,9 @@ class UxonSchema implements UxonSchemaInterface
                     $valType = $keyType;
                 }
                 $options = $valType ? $this->getValidValuesForType($valType, $search, $object) : [];
+                break;
+            case strcasecmp($type, 'metamodel:aggregator') === 0:
+                $options = AggregatorFunctionsDataType::getKeysStatic();
                 break;
         }
         
