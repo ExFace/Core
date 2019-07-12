@@ -8,6 +8,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Widgets\Parts\DataSpreadSheetFooter;
 
 /**
  * An Excel-like table with editable cells.
@@ -113,5 +114,15 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput
     public function hasDefaultRow() : bool
     {
         return $this->defaultRow !== null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::getFooterWidgetPartClass()
+     */
+    public function getFooterWidgetPartClass() : string
+    {
+        return '\\' . DataSpreadSheetFooter::class;
     }
 }

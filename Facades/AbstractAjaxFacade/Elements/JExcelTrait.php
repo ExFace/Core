@@ -18,6 +18,8 @@ use exface\Core\Widgets\DataSpreadSheet;
 use exface\Core\Widgets\Data;
 use exface\Core\Widgets\DataImporter;
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\Parts\DataSpreadSheetFooter;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -63,11 +65,14 @@ trait JExcelTrait
     
     protected function registerReferencesAtLinkedElementsForSpreadSheet(DataSpreadSheet $widget)
     {
+        // Add live refs links for default_row
         if ($widget->hasDefaultRow() === true) {
             foreach ($widget->getDefaultRow() as $columnName => $expr) {
                 if ($expr->isReference() === true) {
                     $link = $expr->getWidgetLink($this->getWidget());
                     $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
+                    // TODO this does not work if another row was accidentally added. It would
+                    // be better if we mark the default_row somehow.
                     if ($linked_element) {
                         $script = <<<JS
                         
@@ -81,6 +86,7 @@ trait JExcelTrait
         var oFirstRow = {$this->buildJsDataGetter()}.rows[0] || {};
         oFirstRow["{$columnName}"] = {$linked_element->buildJsValueGetter($link->getTargetColumnId())};
         {$this->buildJsDataSetter('{rows: [oFirstRow]}')};
+        {$this->buildJsFixedFootersSpread()}
     }();
     
 JS;
@@ -91,6 +97,42 @@ JS;
                     // Probably need to mark the row as default_row, so that linked values from above
                     // can be set even if the first row exists.
                     throw new FacadeUnsupportedWidgetPropertyWarning('Cannot use "' . $expr->toString() . '" in default_row property of ' . $this->getWidget()->getWidgetType() . ': only widget links currently supported!');
+                }
+            }
+        }
+        
+        // add live refs for fixed footer values
+        foreach ($widget->getColumns() as $col) {
+            if ($col->hasFooter() === true) {
+                $footer = $col->getFooter();
+                if ($footer->hasFixedValue() === true) {
+                    $expr = $footer->getFixedValue();
+                    if ($expr->isReference()) {
+                        $link = $expr->getWidgetLink($col);
+                        $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
+                        // FIXME if multiple footers have live refs, each one will remove the value
+                        // of the previous one. Need a better footer-setter here! Maybe something like
+                        // in buildJsFixedFootersOnLoad()
+                        if ($linked_element) {
+                            $script = <<<JS
+                            
+    !function(){
+        var jqExcel = $('#{$this->getId()}');
+        var oData = {
+            footer: [
+                {
+                    {$col->getDataColumnName()}: {$linked_element->buildJsValueGetter($link->getTargetColumnId())}
+                }
+            ]
+        }
+        {$this->buildJsFooterRefresh('oData', 'jqExcel')}
+        {$this->buildJsFixedFootersSpread()}
+    }();
+    
+JS;
+                            $linked_element->addOnChangeScript($script);
+                        }
+                    }
                 }
             }
         }
@@ -141,9 +183,159 @@ JS;
     .jexcel({
         data: [ [] ],
         allowRenameColumn: false,
+        allowInsertColumn: false,
+        allowDeleteColumn: false,
         {$this->buildJsJExcelColumns()}
         {$this->buildJsJExcelMinSpareRows()}
+        onload: function(instance) {
+            var jqSelf = $('#{$this->getId()}');
+            {$this->buildJsFixedFootersOnLoad('jqSelf')}
+        },
+        updateTable: function(instance, cell, col, row, value, label, cellName) {
+            {$this->buildJsOnUpdateTableRowColors()} 
+        },
+        onchange: function(instance, cell, col, row, value) {
+            {$this->buildJsFixedFootersSpread('instance', 'col')}
+        }
     });
+
+JS;
+    }
+        
+    protected function buildJsOnUpdateTableRowColors() : string
+    {
+        // TODO striped?
+        return '';
+    }
+    
+    protected function buildJsFixedFootersOnLoad(string $jqSelfJs) : string
+    {
+        $js = <<<JS
+
+            var jqFooter = {$this->buildJsFooterGetter($jqSelfJs)};
+
+JS;
+        foreach ($this->getWidget()->getColumns() as $colIdx => $col) {
+            if ($col->hasFooter() === false) {
+                continue;
+            }
+            
+            $footer = $col->getFooter();
+            if ($footer->hasFixedValue() === false) {
+                continue;
+            }
+            
+            $expr = $footer->getFixedValue();
+            if ($expr->isReference()) {
+                $link = $expr->getWidgetLink($col);
+                $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
+                if ($linked_element) {
+                    $js .= <<<JS
+                    
+             jqFooter.find('td[data-x="{$colIdx}"]').text({$linked_element->buildJsValueGetter($link->getTargetColumnId())});
+    
+JS;
+                }
+            }
+        }
+        return $js;
+    }
+    
+    
+    protected function buildJsFixedFootersSpread() : string
+    {
+        $js = '';
+        foreach ($this->getWidget()->getColumns() as $idx => $col) {
+            if ($col->hasFooter() === false) {
+                continue;
+            }
+            
+            $footer = $col->getFooter();
+            if ($footer->hasFixedValue() === false) {
+                continue;
+            }
+            
+            if ($col->getDataType() instanceof NumberDataType) {
+                $precision = $col->getDataType()->getPrecisionMax();
+                if ($precision !== null) {
+                    $toFixedJs = '.toFixed(' . $precision . ')';
+                }
+            }
+            
+            switch ($footer->getFixedValueSpread()) {
+                case DataSpreadSheetFooter::SPREAD_TO_FIRST_ONLY:
+                    $spreadJS = <<<JS
+
+                        if (fDif != 0) {
+                            aData[0][$idx] = (Number(aData[0][$idx]) + fDif){$toFixedJs};
+                            jqSelf.jexcel('setData', aData);
+                        }
+
+JS;
+                    break;
+                default:
+                    throw new FacadeUnsupportedWidgetPropertyWarning('Spreading fixed totals via "' . $footer->getFixedValueSpread() . '" not yet supported!');
+            }
+            
+            // IDEA this will probably not work if we allow column dragging because $idx has only the initial state...
+            $js .= <<<JS
+                    !function() {
+                        var jqSelf = $('#{$this->getId()}');
+                        var aData = jqSelf.jexcel('getData');
+
+                        if (aData.length <= {$this->getMinSpareRows()}) return;
+    
+                        var fTotal = Number(jqSelf.find('thead.footer td[data-x="' + $idx + '"]').text());
+                        var fSum = 0;
+                        var fDif = 0;
+                        aData.forEach(function(aRow) {
+                            fSum += Number(aRow[$idx]);
+                        });
+                        fDif = fTotal - fSum;
+                        $spreadJS
+                    }()
+
+JS;
+        }
+        return $js;
+    }
+    
+    protected function buildJsFooterRefresh(string $dataJs, string $jqSelfJs) : string
+    {
+        if ($this->hasFooter() === false) {
+            return '';
+        }
+        return <<<JS
+
+            !function(){
+                if ($dataJs.footer === undefined || Array.isArray($dataJs.footer) === false || $dataJs.footer.length === 0) return;
+                var aFooterRows = {$this->buildJsConvertDataToArray($dataJs . '.footer')};
+                var jqFooter = {$this->buildJsFooterGetter($jqSelfJs)};
+                aFooterRows[0].forEach(function(val, iColIdx) {
+                    if (val !== undefined && val !== null) {
+                        jqFooter.find('td[data-x="' + iColIdx + '"]').text(val);
+                    }
+                });
+            }()
+
+JS;
+    }
+        
+    protected function buildJsFooterGetter(string $jqSelfJs) : string
+    {
+        return <<<JS
+
+            function(){
+                var jqFooter = {$jqSelfJs}.find('table.jexcel thead.footer').first();
+                if (jqFooter.length === 0) {
+                    jqFooter = {$jqSelfJs}.find('table.jexcel thead').first().clone();
+                    jqFooter.addClass('footer');
+                    jqFooter.find('td').empty();
+                    jqFooter.find('td:first-of-type').html('&nbsp;');
+                    $jqSelfJs.find('table.jexcel').append(jqFooter);
+                }
+                return jqFooter;
+            }()
 
 JS;
     }
@@ -264,6 +456,16 @@ JS;
         }
         
         return "source: {$srcJson},";
+    }
+    
+    protected function hasFooter() : bool
+    {
+        foreach ($this->getWidget()->getColumns() as $col) {
+            if ($col->hasFooter() === true) {
+                return true;
+            }
+        }
+        return false;
     }
         
     protected function getMinSpareRows() : int
@@ -444,5 +646,4 @@ JS;
     {
         return "$('#{$this->getId()}').jexcel('setData', [ [] ])";
     }
-    
 }
