@@ -179,5 +179,14 @@ JS;
 
 JS;
     }
+            
+    public function buildJsDestroy() : string
+    {
+        $output = '';
+        foreach ($this->getWidget()->getChildren() as $subw) {
+            $output .= $this->getFacade()->getElement($subw)->buildJsDestroy() . "\n";
+        }
+        return $output;
+    }
 }
 ?>
