@@ -195,9 +195,14 @@ JS;
             {$this->buildJsOnUpdateTableRowColors()} 
         },
         onchange: function(instance, cell, col, row, value) {
-            {$this->buildJsFixedFootersSpread('instance', 'col')}
+            {$this->buildJsFixedFootersSpread()}
+        },
+        ondeleterow: function(instance) {
+            {$this->buildJsFixedFootersSpread()}
         }
     });
+    // Move contex menu to body to fix positioning errors when there is a parent with position:relative
+    $('#{$this->getId()} .jexcel_contextmenu').detach().addClass('exf-partof-{$this->getId()}').appendTo($('body'));
 
 JS;
     }
@@ -241,8 +246,22 @@ JS;
         return $js;
     }
     
+    protected function buildJsFixedFootersSpreadFunctionName() : string
+    {
+        return $this->buildJsFunctionPrefix() . 'fixedFootersSpread';
+    }
     
     protected function buildJsFixedFootersSpread() : string
+    {
+        return $this->buildJsFixedFootersSpreadFunctionName() . '()';
+    }
+    
+    protected function buildJsFixedFootersSpreadFunction() : string
+    {
+        return 'function ' . $this->buildJsFixedFootersSpreadFunctionName() . '() {' . $this->buildJsFixedFootersSpreadFunctionBody() . '}';
+    }
+    
+    protected function buildJsFixedFootersSpreadFunctionBody() : string
     {
         $js = '';
         foreach ($this->getWidget()->getColumns() as $idx => $col) {
@@ -267,7 +286,11 @@ JS;
                     $spreadJS = <<<JS
 
                         if (fDif != 0) {
-                            aData[0][$idx] = (Number(aData[0][$idx]) + fDif){$toFixedJs};
+                            var sFirstVal = Number(aData[0][$idx]);
+                            if (isNaN(sFirstVal)) {
+                                sFirstVal = 0;
+                            }
+                            aData[0][$idx] = (sFirstVal + fDif){$toFixedJs};
                             jqSelf.jexcel('setData', aData);
                         }
 
@@ -279,25 +302,33 @@ JS;
             
             // IDEA this will probably not work if we allow column dragging because $idx has only the initial state...
             $js .= <<<JS
-                    !function() {
+                        
+                        var fTotal = Number({$this->buildJsFooterValueGetterByColumnIndex('jqSelf', $idx)});
+                        var fSum = 0;
+                        var fDif = 0;
+                        aData.forEach(function(aRow) {
+                            fSum += aRow[$idx] == 'NaN' ? 0 : Number(aRow[$idx]);
+                        });
+                        fDif = fTotal - fSum;
+                        $spreadJS
+
+JS;
+        }
+        return <<<JS
+
                         var jqSelf = $('#{$this->getId()}');
                         var aData = jqSelf.jexcel('getData');
 
                         if (aData.length <= {$this->getMinSpareRows()}) return;
-    
-                        var fTotal = Number(jqSelf.find('thead.footer td[data-x="' + $idx + '"]').text());
-                        var fSum = 0;
-                        var fDif = 0;
-                        aData.forEach(function(aRow) {
-                            fSum += Number(aRow[$idx]);
-                        });
-                        fDif = fTotal - fSum;
-                        $spreadJS
-                    }()
+                        
+                        $js
 
 JS;
-        }
-        return $js;
+    }
+        
+    protected function buildJsFooterValueGetterByColumnIndex(string $jqSelfJs, string $idxJs) : string
+    {
+        return $jqSelfJs . ".find('thead.footer td[data-x=\"' + {$idxJs} + '\"]').text()";
     }
     
     protected function buildJsFooterRefresh(string $dataJs, string $jqSelfJs) : string
@@ -490,8 +521,7 @@ JS;
     public function buildJsDataGetter(ActionInterface $action = null)
     {
         $widget = $this->getWidget();
-        $data = "$('#{$this->getId()}').jexcel('getData', false)";
-        $rows = $this->buildJsConvertArrayToData($data);
+        $rows = $this->buildJsConvertArrayToData("$('#{$this->getId()}').jexcel('getData', false)");
             
         if ($widget->isEditable() && $action && ! $action->getMetaObject()->is($widget->getMetaObject()) === true) {
             // If the data is intended for another object, make it a nested data sheet
@@ -505,8 +535,7 @@ JS;
                     $relAlias = $relation->getAlias();
                 }
             }
-            return <<<JS
-                
+            $data = <<<JS
     {
         oId: '{$action->getMetaObject()->getId()}',
         rows: [
@@ -520,16 +549,18 @@ JS;
     }
     
 JS;
-        }
+        } else {
         
-        return <<<JS
-        
+            $data = <<<JS
     {
         oId: '{$this->getWidget()->getMetaObject()->getId()}',
         rows: {$rows}
     }
     
 JS;
+        }
+            
+        return "function(){ {$this->buildJsFixedFootersSpread()}; return {$data} }()";
     }
      
     /**
@@ -645,5 +676,14 @@ JS;
     public function buildJsDataResetter() : string
     {
         return "$('#{$this->getId()}').jexcel('setData', [ [] ])";
+    }
+    
+    protected function buildJsFunctionsForJExcel() : string
+    {
+        return <<<JS
+
+    {$this->buildJsFixedFootersSpreadFunction()}
+
+JS;
     }
 }
