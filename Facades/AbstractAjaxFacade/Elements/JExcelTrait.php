@@ -656,7 +656,7 @@ function() {
         }
         
         iLastIdx = -1;
-        Object.keys(oRowIndexed).sort().forEach(function(iIdx) {
+        Object.keys(oRowIndexed).sort(function(a, b){return a-b}).forEach(function(iIdx) {
             while (iIdx > iLastIdx + 1) {
                 aRow.push(null);
                 iLastIdx++;
