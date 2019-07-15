@@ -201,6 +201,7 @@ JS;
             {$this->buildJsFixedFootersSpread()}
         }
     });
+    $('#{$this->getId()} colgroup col').attr('width','');
     // Move contex menu to body to fix positioning errors when there is a parent with position:relative
     $('#{$this->getId()} .jexcel_contextmenu').detach().addClass('exf-partof-{$this->getId()}').appendTo($('body'));
 
@@ -418,6 +419,7 @@ JS;
                 break;
             default:
                 $type = "text";
+                $align = EXF_ALIGN_LEFT;
         }
         
         if ($col->isEditable() === false) {
@@ -428,15 +430,11 @@ JS;
         if ($width->isFacadeSpecific() === true) {
             if (StringDataType::endsWith($width->getValue(), 'px') === true) {
                 $widthJs = str_replace('px', '', $width->getValue());
-            } else {
-                $widthJs = '100';
             }
-        } else {
-            $widthJs= '100';
         }
         
         if ($widthJs) {
-            $js .= "width: {$widthJs},";
+            $widthJs = "width: {$widthJs},";
         }
         
         $align = $align ? 'align: "' . $align . '",' : '';
@@ -446,13 +444,11 @@ JS;
             {
                 title: "{$col->getCaption()}",
                 type: "{$type}",
-                width: {$widthJs},
+                {$widthJs}
                 {$align}
                 {$options}
             }
 JS;
-        
-        return '{' . rtrim($js, ","). '}';
     }
         
     protected function buildJsJExcelColumnDropdownOptions(InputSelect $cellWidget) : string
