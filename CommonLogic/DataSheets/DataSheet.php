@@ -49,6 +49,7 @@ use exface\Core\Events\DataSheet\OnReplaceDataEvent;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\DataTypes\RelationCardinalityDataType;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * Default implementation of DataSheetInterface
@@ -707,20 +708,42 @@ class DataSheet implements DataSheetInterface
         // Check if the data source already contains rows with matching UIDs
         // TODO do not update rows, that were created here. Currently they are created and immediately updated afterwards.
         if ($create_if_uid_not_found) {
-            if ($this->getUidColumn()) {
+            if ($uidCol = $this->getUidColumn()) {
+                // Find rows, that do not have a UID value
+                $emptyUidRows = $uidCol->findRowsByValue('');
                 // Create another data sheet selecting those UIDs currently present in the data source
                 $uid_check_ds = DataSheetFactory::createFromObject($this->getMetaObject());
-                $uid_column = $this->getUidColumn()->copy();
-                $uid_check_ds->getColumns()->add($uid_column);
-                $uid_check_ds->addFilterFromColumnValues($this->getUidColumn());
+                $uid_check_ds->getColumns()->add($uidCol->copy());
+                $uid_check_ds->addFilterFromColumnValues($uidCol);
                 $uid_check_ds->dataRead();
-                $missing_uids = $this->getUidColumn()->diffValues($uid_check_ds->getUidColumn());
-                if (! empty($missing_uids)) {
+                $missing_uids = $uidCol->diffValues($uid_check_ds->getUidColumn());
+                // Filter away empty UID values, because we already have the in $emptyUidRows
+                $missing_uids = array_filter($missing_uids);
+                if (! empty($missing_uids) || ! empty($emptyUidRows)) {
+                    // Create a separated data sheet for the new rows
                     $create_ds = $this->copy()->removeRows();
+                    // For non-empty missing UIDs just add the entire row
                     foreach ($missing_uids as $missing_uid) {
-                        $create_ds->addRow($this->getRowByColumnValue($this->getUidColumn()->getName(), $missing_uid));
+                        $create_ds->addRow($this->getRowByColumnValue($uidCol->getName(), $missing_uid));
+                    }
+                    // For rows with empty UIDs we will need to remember the row number of
+                    // each row, so we can update it with the created UID once we've received
+                    // them back from the data source.
+                    $emptyUidRowsInCreateSheet = [];
+                    foreach ($emptyUidRows as $newRowNr) {
+                        // Since we may alread have rows in the $create_ds, that have non-empty
+                        // UIDs, we need get the exact number of the inserted row (not just
+                        // count them starting with 0) - that is the next row number since rows
+                        // are allways numbered sequentially.
+                        $emptyUidRowsInCreateSheet[] = $create_ds->countRows();
+                        $create_ds->addRow($this->getRow($newRowNr));
                     }
                     $counter += $create_ds->dataCreate(false, $transaction);
+                    // Now update the UID column of the original sheet with values from the create-sheet
+                    // on all rows, that previously did not have a UID value.
+                    foreach ($emptyUidRowsInCreateSheet as $i => $r) {
+                        $uidCol->setValue($emptyUidRows[$i], $create_ds->getUidColumn()->getCellValue($r));
+                    }
                 }
             } else {
                 throw new DataSheetWriteError($this, 'Creating rows from an update statement without a UID-column not supported yet!', '6T5VBHF');
@@ -793,16 +816,37 @@ class DataSheet implements DataSheetInterface
                 // Skip read-only attributes unless it is the UID column (which will be used as a filter later on)
                 continue;
             } elseif ($column->getDataType()->is(DataSheetDataType::class)) {
-                // Update nested sheets
-                foreach ($column->getValues(false) as $sheetArr) {
+                // Update nested sheets - i.e. replace all rows in the data source, that are related to
+                // the each row of the main sheet with the nested rows here.
+                foreach ($column->getValues(false) as $rowNr => $sheetArr) {
                     if (! $sheetArr) {
                         continue;
                     }
                     
                     $nestedSheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $sheetArr);
-                    if ($nestedSheet->isEmpty() === false) {
-                        $nestedSheet->dataUpdate($create_if_uid_not_found, $transaction);
+                    if ($nestedSheet->isEmpty() === true) {
+                        continue;
                     }
+                    
+                    // Use the dataReplaceByFilters() method to do the replacement. This requires, that
+                    // there is a filter over the relation to the main sheet and that every nested row
+                    // has a value in the foreign-key column of that relation. The latter is actually
+                    // only required if we are going to create new rows, but at this point, we don't know,
+                    // if this is going to be neccessary. On the other hand, adding a key-column to every
+                    // row also makes sure, they all really do belong the main sheet's row.
+                    $relPathToNestedSheet = RelationPathFactory::createFromString($this->getMetaObject(), $column->getAttributeAlias());
+                    $relPathFromNestedSheet = $relPathToNestedSheet->reverse();
+                    $relThisSheetKeyCol = $this->getColumns()->getByAttribute($relPathFromNestedSheet->getRelationLast()->getRightKeyAttribute());
+                    $relThisKeyVal = $relThisSheetKeyCol->getCellValue($rowNr);
+                    if (! $relThisSheetKeyCol || $relThisKeyVal === '' || $relThisKeyVal === mull) {
+                        throw new DataSheetWriteError($this, 'Cannot update nested data - missing key value in main data sheet!');
+                    }
+                    $nestedSheet->addFilterFromString($relPathFromNestedSheet->toString(), $relThisKeyVal, ComparatorDataType::EQUALS);
+                    if (! $relNestedSheetCol = $nestedSheet->getColumns()->getByExpression($relPathFromNestedSheet->toString())) {
+                        $relNestedSheetCol = $nestedSheet->getColumns()->addFromExpression($relPathFromNestedSheet->toString());
+                    }
+                    $relNestedSheetCol->setValues($relThisKeyVal);
+                    $nestedSheet->dataReplaceByFilters($transaction);
                 }
                 continue;                
             } elseif (! $column->getAttribute()) {
@@ -1107,6 +1151,9 @@ class DataSheet implements DataSheetInterface
                     $nestedRel = $this->getMetaObject()->getRelation($columnName);
                     if ($nestedRel->getCardinality()->__toString() !== RelationCardinalityDataType::ONE_TO_N) {
                         throw new DataSheetRuntimeError($this, 'Cannot create nested data for "' . $this->getMetaObject()->getName() . '" (' . $nestedRel->getRightObject()->getAliasWithNamespace() . ') within "' . $this->getMetaObject()->getRightObject()->getName() . '": only one-to-many relations allowed!');
+                    }
+                    if ($update_if_uid_found === false && $nestedSheet->hasUidColumn() === true) {
+                        $nestedSheet->getUidColumn()->setValueOnAllRows('');
                     }
                     $nestedFKeyAttr = $nestedRel->getRightKeyAttribute();
                     $nestedFKeyCol = $nestedSheet->getColumns()->addFromAttribute($nestedFKeyAttr);
