@@ -10,12 +10,18 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
-use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 use exface\Core\Widgets\Container;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 
-abstract class AbstractJqueryElement implements WorkbenchDependantInterface
+/**
+ * Implementation for the AjaxFacadeElementInterface based on jQuery.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+abstract class AbstractJqueryElement implements WorkbenchDependantInterface, AjaxFacadeElementInterface
 {
 
     private $exf_widget = null;
@@ -75,7 +81,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     {}
 
     /**
-     * Returns the complete JS code needed for the element
+     * 
      */
     abstract public function buildJs();
 
@@ -224,16 +230,6 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
             $headers['Subrequest-ID'] = $subrequest_id;
         }
         return $headers;
-    }
-
-    /**
-     * Changes the default URL for AJAX requests by this element (relative to site root)
-     *
-     * @param string $value            
-     */
-    public function setAjaxUrl($value)
-    {
-        $this->ajax_url = $value;
     }
 
     /**
@@ -874,6 +870,24 @@ JS;
     {
         $widget = $this->getWidget();
         return $widget->hasParent() && ($widget->getParent() instanceof Container) && $widget->getParent()->countWidgetsVisible() > 1 ? true : false;
+    }
+    
+    /**
+     * Returns a JS snippet to destroy this element: i.e. remove from dom, unregister listeners, etc.
+     * 
+     * Call this method when a dialog gets closed or similar occasions to ensure no garbage remains.
+     * 
+     * Override this method to add cleanup-logic to your control - e.g. if you need to remove some
+     * dom-elements, etc.
+     * 
+     * Make your container elements automatically destroy their children when the container gets destroyed.
+     * The JqueryContainerTrait does this automatically.
+     * 
+     * @return string
+     */
+    public function buildJsDestroy() : string
+    {
+        return '';
     }
 }
 ?>
