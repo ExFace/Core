@@ -215,31 +215,33 @@ JS;
     
     protected function buildJsFixedFootersOnLoad(string $jqSelfJs) : string
     {
-        $js = <<<JS
+        $js = '';
+        if ($this->hasFooter() === true) {
+            $js = <<<JS
 
             var jqFooter = {$this->buildJsFooterGetter($jqSelfJs)};
-
 JS;
-        foreach ($this->getWidget()->getColumns() as $colIdx => $col) {
-            if ($col->hasFooter() === false) {
-                continue;
-            }
-            
-            $footer = $col->getFooter();
-            if ($footer->hasFixedValue() === false) {
-                continue;
-            }
-            
-            $expr = $footer->getFixedValue();
-            if ($expr->isReference()) {
-                $link = $expr->getWidgetLink($col);
-                $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
-                if ($linked_element) {
-                    $js .= <<<JS
+            foreach ($this->getWidget()->getColumns() as $colIdx => $col) {
+                if ($col->hasFooter() === false) {
+                    continue;
+                }
+                
+                $footer = $col->getFooter();
+                if ($footer->hasFixedValue() === false) {
+                    continue;
+                }
+                
+                $expr = $footer->getFixedValue();
+                    if ($expr->isReference()) {
+                        $link = $expr->getWidgetLink($col);
+                        $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
+                        if ($linked_element) {
+                            $js .= <<<JS
                     
              jqFooter.find('td[data-x="{$colIdx}"]').text({$linked_element->buildJsValueGetter($link->getTargetColumnId())});
     
 JS;
+                    }
                 }
             }
         }
@@ -685,5 +687,14 @@ JS;
     {$this->buildJsFixedFootersSpreadFunction()}
 
 JS;
+    }
+    
+    /**
+     * 
+     * @see AbstractJqueryElement::buildJsDestroy()
+     */
+    public function buildJsDestroy() : string
+    {
+        return "jexcel.destroy(document.getElementById('{$this->getId()}'), true); $('.exf-partof-{$this->getId()}').remove();";
     }
 }
