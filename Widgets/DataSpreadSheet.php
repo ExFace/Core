@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\Parts\DataSpreadSheetFooter;
+use exface\Core\Widgets\Traits\DataTableTrait;
 
 /**
  * An Excel-like table with editable cells.
@@ -32,8 +33,13 @@ use exface\Core\Widgets\Parts\DataSpreadSheetFooter;
 class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput
 {
     use EditableTableTrait;
+    use DataTableTrait;
     
     private $defaultRow = null;
+    
+    private $allowToAddRows = null;
+    
+    private $allowToDeleteRows = null;
     
     protected function init()
     {
@@ -124,5 +130,57 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput
     public function getFooterWidgetPartClass() : string
     {
         return '\\' . DataSpreadSheetFooter::class;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getAllowToAddRows() : bool
+    {
+        return $this->allowToAddRows ?? $this->isEditable();
+    }
+    
+    /**
+     * Set to FALSE to disable adding new rows.
+     * 
+     * @uxon-property allow_to_add_rows
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return DataSpreadSheet
+     */
+    public function setAllowToAddRows(bool $value) : DataSpreadSheet
+    {
+        $this->allowToAddRows = $value;
+        return $this;
+    }
+    
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getAllowToDeleteRows() : bool
+    {
+        return $this->allowToDeleteRows ?? $this->isEditable();
+    }
+    
+    /**
+     *
+     * Set to FALSE to disable deleting rows.
+     * 
+     * @uxon-property allow_to_delete_rows
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return DataSpreadSheet
+     */
+    public function setAllowToDeleteRows(bool $value) : DataSpreadSheet
+    {
+        $this->allowToDeleteRows = $value;
+        return $this;
     }
 }
