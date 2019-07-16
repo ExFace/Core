@@ -170,11 +170,10 @@ JS;
      */
     protected function buildJsJExcelInit() : string
     {
-        $colNames = [];
-        foreach ($this->getWidget()->getColumns() as $col) {
-            $colNames[$col->getCaption()] = $col->getDataColumnName();
-        }
-        $colNamesJson = json_encode($colNames);
+        $colNamesJson = json_encode($this->makeUniqueColumnNames());
+        $allowInsertRow = $this->getWidget()->getAllowToAddRows() ? 'true' : 'false';
+        $allowDeleteRow = $this->getWidget()->getAllowToDeleteRows() ? 'true' : 'false';
+        $wordWrap = $this->getWidget()->getNowrap() ? 'false' : 'true';
         
         return <<<JS
 
@@ -185,6 +184,9 @@ JS;
         allowRenameColumn: false,
         allowInsertColumn: false,
         allowDeleteColumn: false,
+        allowInsertRow: $allowInsertRow,
+        allowDeleteRow: $allowDeleteRow,
+        wordWrap: $wordWrap,
         {$this->buildJsJExcelColumns()}
         {$this->buildJsJExcelMinSpareRows()}
         onload: function(instance) {
@@ -192,7 +194,7 @@ JS;
             {$this->buildJsFixedFootersOnLoad('jqSelf')}
         },
         updateTable: function(instance, cell, col, row, value, label, cellName) {
-            {$this->buildJsOnUpdateTableRowColors()} 
+            {$this->buildJsOnUpdateTableRowColors('row', 'cell')} 
         },
         onchange: function(instance, cell, col, row, value) {
             {$this->buildJsFixedFootersSpread()}
@@ -207,11 +209,66 @@ JS;
 
 JS;
     }
-        
-    protected function buildJsOnUpdateTableRowColors() : string
+          
+    /**
+     * Returns an array with unique column headers as keys and corresponding data column names as values.
+     * 
+     * If the table contains multiple columns with equal headings (captions), they will be made unique
+     * by adding suffixes. If this happens, the caption of the column widget will be changed, so the suffix
+     * becomes visible for all subsequent processes. The data column name remains unchanged!
+     * 
+     * @return string[]
+     */
+    protected function makeUniqueColumnNames() : array
     {
-        // TODO striped?
+        $colNames = [];
+        foreach ($this->getWidget()->getColumns() as $col) {
+            // Add a hidden indicator to hidden column captions, so they do not interfere
+            // with visible columns. This is important because a user would not understand
+            // why his column keeps gettin a sequence-number even if there are no visible
+            // naming conflicts.
+            if ($col->isHidden() === true) {
+                $col->setCaption($col->getCaption() . ' (hidden)');
+            }
+            
+            // Now see if there already was a column with the same name as the current one.
+            // If so, check if the name with the next sequential number is still vailable
+            // and either use that number or perform the check with the next number, and
+            // so on.
+            $cap = $col->getCaption();
+            $capCount = 1;
+            while (array_key_exists($cap . ($capCount > 1 ? ' (' . $capCount . ')' : ''), $colNames)) {
+                $capCount++;
+            }
+            if ($capCount > 1) {
+                $col->setCaption($col->getCaption() . ' (' . $capCount . ')');
+            }
+            
+            // Build a mapping from caption to data column name, so it can be used in data getters/setters
+            // later on.
+            $colNames[$col->getCaption()] = $col->getDataColumnName();
+        }
+        return $colNames;
+    }
+        
+    protected function buildJsOnUpdateTableRowColors(string $rowNrJs, string $cellNodeJs) : string
+    {
+        if ($this->getWidget()->getStriped() === true) {
+            return <<<JS
+
+            // Odd row colours
+            if ($rowNrJs % 2) {
+                $cellNodeJs.parentNode.classList.add('{$this->buildCssClassForStripedRows()}');
+            }
+
+JS;
+        }
         return '';
+    }
+    
+    protected function buildCssClassForStripedRows() : string
+    {
+        return 'datagrid-row-alt';
     }
     
     protected function buildJsFixedFootersOnLoad(string $jqSelfJs) : string
@@ -405,14 +462,16 @@ JS;
                 break;
             case $cellWidget instanceof InputNumber:
             case $cellWidget instanceof Display && $cellWidget->getValueDataType() instanceof NumberDataType:
-                $type = "numeric";
+                if ($cellWidget->getValueDataType()->getBase() === 10) {
+                    $type = "numeric";
+                }
                 $align = EXF_ALIGN_RIGHT;
                 break;
             case $cellWidget instanceof InputCheckBox:
             case $cellWidget instanceof Display && $cellWidget->getValueDataType() instanceof BooleanDataType:
                 $type = "checkbox";
                 break;
-            case $cellWidget instanceof InputCombo:
+            case $cellWidget instanceof InputSelect:
                 $type = 'autocomplete';
                 $align = EXF_ALIGN_LEFT;
                 $options .= $this->buildJsJExcelColumnDropdownOptions($cellWidget);
@@ -457,7 +516,7 @@ JS;
             throw new FacadeLogicError('TODO');
         }
         
-        if ($cellWidget->getLazyLoading() === false) {
+        if (! ($cellWidget instanceof InputCombo) || $cellWidget->getLazyLoading() === false) {
             if ($cellWidget->getAttribute()->isRelation()) {
                 $rel = $cellWidget->getAttribute()->getRelation();
                 
@@ -474,14 +533,17 @@ JS;
                 foreach ($srcSheet->getRows() as $row) {
                     $srcData[] = ['id' => $row[$srcIdName], 'name' => $row[$srcLabelName]];
                 }
-                $srcJson = json_encode($srcData);
             } else {
-                // TODO non-lazy distinct value list
-                $srcJson = '[]';
+                $srcData = [];
+                foreach ($cellWidget->getSelectableOptions() as $key => $val) {
+                    $srcData[] = ['id' => $key, 'name' => $val];
+                }                
             }
+            $srcJson = json_encode($srcData);
         } else {
             // TODO lazy loading
-            $srcJson = '[]';
+            throw new FacadeUnsupportedWidgetPropertyWarning('Lazy loading not yet supported for combo-cells in JExcel');
+            
         }
         
         return "source: {$srcJson},";
@@ -499,7 +561,7 @@ JS;
         
     protected function getMinSpareRows() : int
     {
-        return 1;
+        return $this->getWidget()->getAllowToAddRows() === true ? 1 : 0;
     }
      
     /**
@@ -614,7 +676,6 @@ function() {
     for (var i = 0; i < {$this->getMinSpareRows()}; i++) {
         aData.pop();
     }
-
     return aData;
 }()
 
