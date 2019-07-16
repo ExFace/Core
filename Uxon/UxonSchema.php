@@ -277,12 +277,14 @@ class UxonSchema implements UxonSchemaInterface
             $firstType = trim($propertyTypes[0]);
         }
         
-        $object = $this->getMetaObject($uxon, $path, $rootObject);
+        if ($prop !== 'object_alias') {
+            $object = $this->getMetaObject($uxon, $path, $rootObject);
+        }
         
         return $this->getValidValuesForType($firstType, $search, $object);
     }
     
-    protected function getValidValuesForType(string $type, string $search, MetaObjectInterface $object) : array
+    protected function getValidValuesForType(string $type, string $search, MetaObjectInterface $object = null) : array
     {
         $options = [];
         
@@ -318,7 +320,7 @@ class UxonSchema implements UxonSchemaInterface
                 $options = $this->getMetamodelComparators($search);
                 break;
             case strcasecmp($type, 'metamodel:attribute') === 0:
-            case strcasecmp($type, 'metamodel:relation') === 0:
+            case strcasecmp($type, 'metamodel:relation') === 0 && $object !== null:
                 try {
                     if (strcasecmp($type, 'metamodel:attribute') === 0) {
                         $options = $this->getMetamodelAttributeAliases($object, $search);
@@ -345,13 +347,14 @@ class UxonSchema implements UxonSchemaInterface
                         // TODO
                     } elseif ($ex->isNumber()) {
                         // Do nothing - a number is simply a number
-                    } else {
+                    } elseif ($object !== null) {
                         // If the expression is neither of the above, try to interpret it as an attribute
                         $options = $this->getMetamodelAttributeAliases($object, $search);
+                    } else {
+                        $options = [];
                     }
                 } catch (MetaObjectNotFoundError $e) {
                     $options = [];
-                    
                 }
                 break;
             case $this->isPropertyTypeObject($type) === true:
