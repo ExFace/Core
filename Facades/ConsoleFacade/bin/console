@@ -2,7 +2,7 @@
 <?php
 // application.php
 
-require __DIR__.'/../vendor/autoload.php';
+require __DIR__.'/../../../../../autoload.php';
 
 use exface\Core\Facades\ConsoleFacade\ConsoleFacade;
 use exface\Core\CommonLogic\Workbench;
