@@ -1,20 +1,31 @@
 <?php
 namespace exface\Core\Facades\ConsoleFacade;
 
-use Symfony\Component\Console\CommandLoader\CommandLoaderInterface;
 use exface\Core\Exceptions\Facades\FacadeRoutingError;
-use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\ActionFactory;
+use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Facades\ConsoleFacade\Interfaces\FacadeCommandLoaderInterface;
 
-class CommandLoader implements CommandLoaderInterface
+/**
+ * A command loader for Symfony Console, that creates commands from actions listed
+ * under FACADES.CONSOLE.ACTION_COMMANDS_ALLOWED in the core config.
+ * 
+ * The command loader wraps actions as native Symfony commands using the
+ * SymfonyCommandAdapter.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+class CommandLoader implements FacadeCommandLoaderInterface
 {
-    private $workbench = null;
+    private $facade = null;
     
     private $cliActions = null;
     
-    public function __construct(WorkbenchInterface $workbench)
+    public function __construct(FacadeInterface $facade)
     {
-        $this->workbench = $workbench;    
+        $this->facade = $facade;    
     }
     
     public function get($name)
@@ -25,8 +36,8 @@ class CommandLoader implements CommandLoaderInterface
             throw new FacadeRoutingError('Command "' . $name . '" not found!');
         }
         try {
-            $action = ActionFactory::createFromString($this->workbench, $commands[$name]);
-            $command = new SymfonyCommandAdapter($action);
+            $action = ActionFactory::createFromString($this->getWorkbench(), $commands[$name]);
+            $command = new SymfonyCommandAdapter($this, $action);
         } catch (\Throwable $e) {
             $command = new ErrorPlaceholderCommand($e, '** Could not load', $name);
         }
@@ -44,17 +55,43 @@ class CommandLoader implements CommandLoaderInterface
         return array_keys($this->getCommandActionMap());
     }
     
+    public function getFacade() : FacadeInterface
+    {
+        return $this->facade;
+    }
+    
     protected function getCommandActionMap() : array
     {
         if ($this->cliActions === null) {
             $this->cliActions = [];
-            foreach ($this->workbench->getConfig()->getOption('FACADES.CONSOLE.ACTION_COMMANDS_ALLOWED') as $alias => $enabled) {
+            foreach ($this->getWorkbench()->getConfig()->getOption('FACADES.CONSOLE.ACTION_COMMANDS_ALLOWED') as $alias => $enabled) {
                 if ($enabled === false) {
                     continue;
                 }
-                $this->cliActions[ConsoleFacade::convertAliasToCommandName($alias)] = $alias;
+                $this->cliActions[$this->getCommandNameFromAlias($alias)] = $alias;
             }
         }
         return $this->cliActions;
+    }
+    
+    /**
+     * 
+     * @return WorkbenchInterface
+     */
+    protected function getWorkbench() : WorkbenchInterface
+    {
+        return $this->facade->getWorkbench();
+    }
+    
+    public function getCommandNameFromAlias(string $alias) : string
+    {
+        $pos = strrpos($alias, '.');
+        
+        if($pos !== false)
+        {
+            $alias = substr_replace($alias, ':', $pos, 1);
+        }
+        
+        return mb_strtolower($alias);
     }
 }

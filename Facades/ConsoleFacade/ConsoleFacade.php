@@ -8,7 +8,6 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\CommonLogic\Traits\AliasTrait;
 use Symfony\Component\Console\Application;
-use exface\Core\Interfaces\Actions\ActionInterface;
 
 /**
  * Command line interface facade based on Symfony Console
@@ -31,7 +30,7 @@ class ConsoleFacade extends Application implements FacadeInterface
         parent::__construct('ExFace Console');
         $this->exface = $selector->getWorkbench();
         $this->selector = $selector;
-        $this->setCommandLoader(new CommandLoader($selector->getWorkbench()));
+        $this->setCommandLoader(new CommandLoader($this));
     }
 
     /**
@@ -92,17 +91,5 @@ class ConsoleFacade extends Application implements FacadeInterface
     public function getConfig() : ConfigurationInterface
     {
         return $this->getApp()->getConfig();
-    }
-    
-    public static function convertAliasToCommandName(string $alias) : string
-    {
-        $pos = strrpos($alias, '.');
-        
-        if($pos !== false)
-        {
-            $alias = substr_replace($alias, ':', $pos, 1);
-        }
-        
-        return mb_strtolower($alias);
     }
 }
