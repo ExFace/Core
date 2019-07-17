@@ -22,6 +22,9 @@
 	"ACTION.SHOWOBJECTEDITDIALOG.NO_EDITABLE_ATTRIBUTES": "No editable attributes found!",
 	"ACTION.SHOWOBJECTEDITDIALOG.DATA_SOURCE_NOT_WRITABLE": "Editing prohibited by data source settings!",
 	
+	"ACTION.CLEARCACHE.NAME": "Clear Cache",
+	"ACTION.CLEARCACHE.RESULT": "Cache cleared!",
+	
 	"ACTION.DOWNLOADZIPPEDFOLDER.NAME": "Download ZIP",
 	
 	"ACTION.EXPORTCSV.NAME": "Export CSV",

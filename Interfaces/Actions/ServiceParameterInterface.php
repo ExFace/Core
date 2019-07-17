@@ -35,7 +35,7 @@ interface ServiceParameterInterface extends  iCanBeConvertedToUxon, WorkbenchDep
     
     public function isEmpty() : bool;
     
-    public function getAction() : iCallService;
+    public function getAction() : ActionInterface;
     
     public function isValidValue($val) : bool;
     
@@ -47,11 +47,20 @@ interface ServiceParameterInterface extends  iCanBeConvertedToUxon, WorkbenchDep
      */
     public function parseValue($val) : string;
     
-    public function getDefaultValue() : string;
+    /**
+     * 
+     * @return mixed
+     */
+    public function getDefaultValue();
     
     public function hasDefaultValue() : bool;
     
-    public function setDefaultValue(string $string) : ServiceParameterInterface;
+    /**
+     * 
+     * @param mixed $string
+     * @return ServiceParameterInterface
+     */
+    public function setDefaultValue($string) : ServiceParameterInterface;
     
     /**
      *
@@ -77,4 +86,17 @@ interface ServiceParameterInterface extends  iCanBeConvertedToUxon, WorkbenchDep
      * @return string|NULL
      */
     public function getCustomProperty(string $name) : ?string;
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getDescription() : string;
+    
+    /**
+     * 
+     * @param string $value
+     * @return ServiceParameterInterface
+     */
+    public function setDescription(string $value) : ServiceParameterInterface; 
 }
