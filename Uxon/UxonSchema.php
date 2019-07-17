@@ -277,14 +277,16 @@ class UxonSchema implements UxonSchemaInterface
             $firstType = trim($propertyTypes[0]);
         }
         
-        if ($prop !== 'object_alias') {
+        try {
             $object = $this->getMetaObject($uxon, $path, $rootObject);
+        } catch (MetaObjectNotFoundError $e) {
+            // TODO better error handling to tell apart invalid object alias and no object alias.
         }
         
         return $this->getValidValuesForType($firstType, $search, $object);
     }
     
-    protected function getValidValuesForType(string $type, string $search, MetaObjectInterface $object = null) : array
+    protected function getValidValuesForType(string $type, string $search = null, MetaObjectInterface $object = null) : array
     {
         $options = [];
         
