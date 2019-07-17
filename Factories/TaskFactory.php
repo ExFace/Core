@@ -11,6 +11,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\CommonLogic\Tasks\HttpTask;
 use exface\Core\Interfaces\Tasks\HttpTaskInterface;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
+use exface\Core\CommonLogic\Tasks\CliTask;
+use exface\Core\Interfaces\Tasks\CliTaskInterface;
 
 /**
  * Creates all kinds of tasks. 
@@ -58,6 +60,22 @@ class TaskFactory extends AbstractStaticFactory
     public static function createHttpTask(FacadeInterface $facade, ServerRequestInterface $request) : HttpTaskInterface
     {
         return new HttpTask($facade->getWorkbench(), $facade, $request);
+    }
+    
+    /**
+     * Creates a taks for command line facades.
+     * 
+     * @param FacadeInterface $facade
+     * @param ServerRequestInterface $request
+     * @return HttpTaskInterface
+     */
+    public static function createCliTask(FacadeInterface $facade, $actionSelector, array $arguments, array $options) : CliTaskInterface
+    {
+        $task = new CliTask($facade->getWorkbench(), $facade);
+        $task->setActionSelector($actionSelector);
+        $task->setCliArguments($arguments);
+        $task->setCliOptions($options);
+        return $task;
     }
 }
 ?>
