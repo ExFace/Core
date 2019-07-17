@@ -65,6 +65,6 @@
 		]
 	},
 	"bin" : [
-		"Facades/ConsoleFacade/bin"
+		"Facades/ConsoleFacade/bin/console"
 	]
 }
