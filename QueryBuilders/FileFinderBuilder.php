@@ -53,7 +53,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
         }
         
         if (! is_null($filename) && $filename !== '') {
-            $query->getFinder()->name($filename);
+            $query->getFinder()->name($filename)->depth(0);
         }
         $query->addFolder($path_relative);
         
