@@ -6,6 +6,8 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Factories\ResultFactory;
+use exface\Core\Interfaces\Actions\iCanBeCalledFromCLI;
+use exface\Core\CommonLogic\Actions\ServiceParameter;
 
 /**
  * Clears the entire cache of the workbench.
@@ -15,7 +17,7 @@ use exface\Core\Factories\ResultFactory;
  * @author Andrej Kabachnik
  *
  */
-class ClearCache extends AbstractAction
+class ClearCache extends AbstractAction implements iCanBeCalledFromCLI
 {
     /**
      * 
@@ -25,6 +27,27 @@ class ClearCache extends AbstractAction
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction): ResultInterface
     {
         $this->getWorkbench()->getCache()->clear();
-        return ResultFactory::createMessageResult($task, 'Cache cleard');
+        return ResultFactory::createMessageResult($task, $this->translate('RESULT'));
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iCanBeCalledFromCLI::getCliArguments()
+     */
+    public function getCliArguments(): array
+    {
+        return [];
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iCanBeCalledFromCLI::getCliOptions()
+     */
+    public function getCliOptions(): array
+    {
+        return [];
+    }
+
 }

@@ -3,6 +3,10 @@
 	
 	"METAMODEL.OBJECT_LABEL_ALIAS": "LABEL",
 	
+	"FACADES.CONSOLE.ACTION_COMMANDS_ALLOWED": {
+		"exface.Core.ClearCache" : true
+	},
+	
 	"FACADES.DEFAULT_UI_FACADE": "exface.JEasyUIFacade.JEasyUIFacade",
 	"FACADES.AJAX.HEADERS.ACCESS_CONTROL" : {
 		"Access-Control-Allow-Origin": "",
