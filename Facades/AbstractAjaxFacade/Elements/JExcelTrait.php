@@ -170,10 +170,11 @@ JS;
      */
     protected function buildJsJExcelInit() : string
     {
+        $widget = $this->getWidget();
         $colNamesJson = json_encode($this->makeUniqueColumnNames());
-        $allowInsertRow = $this->getWidget()->getAllowToAddRows() ? 'true' : 'false';
-        $allowDeleteRow = $this->getWidget()->getAllowToDeleteRows() ? 'true' : 'false';
-        $wordWrap = $this->getWidget()->getNowrap() ? 'false' : 'true';
+        $allowInsertRow = $this->getAllowAddRows() ? 'true' : 'false';
+        $allowDeleteRow = $this->getAllowDeleteRows() ? 'true' : 'false';
+        $wordWrap = $widget->getNowrap() ? 'false' : 'true';
         
         return <<<JS
 
@@ -561,7 +562,19 @@ JS;
         
     protected function getMinSpareRows() : int
     {
-        return $this->getWidget()->getAllowToAddRows() === true ? 1 : 0;
+        return $this->getAllowAddRows() === true ? 1 : 0;
+    }
+    
+    protected function getAllowAddRows() : bool
+    {
+        $widget = $this->getWidget();
+        return ($widget instanceof DataImporter) || ($widget instanceof DataSpreadSheet && $widget->getAllowToAddRows());
+    }
+    
+    protected function getAllowDeleteRows() : bool
+    {
+        $widget = $this->getWidget();
+        return ($widget instanceof DataImporter) || ($widget instanceof DataSpreadSheet && $widget->getAllowToDeleteRows());
     }
      
     /**

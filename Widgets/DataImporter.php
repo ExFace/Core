@@ -17,6 +17,7 @@ use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Widgets\Traits\DataTableTrait;
 
 /**
  * The DataImporter allows users to quickly create data by copy-pasting tabels from Excel-compatible editors.
@@ -111,6 +112,8 @@ class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGr
     use iHaveColumnsAndColumnGroupsTrait;
     
     use iHaveButtonsAndToolbarsTrait;
+    
+    use DataTableTrait;
     
     private $empty_text = null;
     
