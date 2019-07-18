@@ -7,7 +7,6 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Actions\iCanBeCalledFromCLI;
-use exface\Core\CommonLogic\Actions\ServiceParameter;
 
 /**
  * Clears the entire cache of the workbench.

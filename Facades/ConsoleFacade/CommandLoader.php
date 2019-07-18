@@ -6,13 +6,21 @@ use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Facades\ConsoleFacade\Interfaces\FacadeCommandLoaderInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\Actions\iCanBeCalledFromCLI;
+use exface\Core\Exceptions\Facades\FacadeLogicError;
 
 /**
- * A command loader for Symfony Console, that creates commands from actions listed
- * under FACADES.CONSOLE.ACTION_COMMANDS_ALLOWED in the core config.
+ * A command loader for Symfony Console, that creates commands from actions implementing
+ * the iCanBeCalledFromCLI interface.
  * 
- * The command loader wraps actions as native Symfony commands using the
- * SymfonyCommandAdapter.
+ * Command names are derived from action aliases: e.g. the action `exface.Core.ClearCache` 
+ * is made available via the command `exface.Core:ClearCache`. Command names are case
+ * insensitive as long as they remain unambiguous.
+ * 
+ * To make the actions work with Symfony Console, they are wrapped as native Symfony commands 
+ * using the SymfonyCommandAdapter.
  * 
  * @author Andrej Kabachnik
  *
@@ -29,25 +37,45 @@ class CommandLoader implements FacadeCommandLoaderInterface
     }
     
     public function get($name)
-    {
-        $name = mb_strtolower(trim($name));
-        $commands = $this->getCommandActionMap();
-        if ($commands[$name] === null) {
-            throw new FacadeRoutingError('Command "' . $name . '" not found!');
-        }
+    {        
         try {
-            $action = ActionFactory::createFromString($this->getWorkbench(), $commands[$name]);
+            $action = ActionFactory::createFromString($this->getWorkbench(), $this->getAliasFromCommandName($name));
             $command = new SymfonyCommandAdapter($this, $action);
         } catch (\Throwable $e) {
             $command = new ErrorPlaceholderCommand($e, '** Could not load', $name);
         }
         return $command;
     }
+    
+    protected function getAliasFromCommandName(string $command) : string
+    {
+        $commands = $this->getCommandActionMap();
+        $found = null;
+        
+        foreach ($commands as $name => $alias) {
+            if (strcasecmp($command, $name) === 0) {
+                if ($found === null) {
+                    $found = $alias;
+                } else {
+                    throw new FacadeRoutingError('Ambiguous command "' . $command . "!'");
+                }
+            }
+        }
+        
+        if ($found === null) {
+            throw new FacadeRoutingError('Command "' . $command . '" not found!');
+        }
+        return $found;
+    }
 
     public function has($name)
     {
-        $name = mb_strtolower(trim($name));
-        return $this->getCommandActionMap()[$name] !== null;
+        try {
+            $this->getAliasFromCommandName($name);
+            return true;
+        } catch (FacadeRoutingError $e) {
+            return false;
+        }
     }
 
     public function getNames()
@@ -64,10 +92,32 @@ class CommandLoader implements FacadeCommandLoaderInterface
     {
         if ($this->cliActions === null) {
             $this->cliActions = [];
-            foreach ($this->getWorkbench()->getConfig()->getOption('FACADES.CONSOLE.ACTION_COMMANDS_ALLOWED') as $alias => $enabled) {
+            /*foreach ($this->getWorkbench()->getConfig()->getOption('FACADES.CONSOLE.ACTION_COMMANDS_ALLOWED') as $alias => $enabled) {
                 if ($enabled === false) {
                     continue;
                 }
+                $this->cliActions[$this->getCommandNameFromAlias($alias)] = $alias;
+            }*/
+            
+            $dot = AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
+            
+            // Prototypes
+            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.ACTION');
+            $ds->getColumns()->addMultiple(['NAME', 'PATH_RELATIVE', 'PATHNAME_RELATIVE']);
+            $ds->dataRead();
+            foreach ($ds->getRows() as $row) {
+                try {
+                    $class = '\\' . substr(str_replace('/', '\\', $row['PATHNAME_RELATIVE']), 0, -4);
+                    if (is_a($class, '\\' . iCanBeCalledFromCLI::class, true) === false) {
+                        continue;
+                    }
+                } catch (\Throwable $e) {
+                    $err = new FacadeLogicError('Cannot check action "' . $row['PATHNAME_RELATIVE'] . "' for compatibility with ConsoleFacade: " . $e->getMessage(), null, $e);
+                    $this->getWorkbench()->getLogger()->logException($err);
+                    continue;
+                }
+                $namespace = str_replace(['/Actions', '/'], ['', $dot], $row['PATH_RELATIVE']);
+                $alias = $namespace . $dot . $row['NAME'];
                 $this->cliActions[$this->getCommandNameFromAlias($alias)] = $alias;
             }
         }
@@ -92,6 +142,6 @@ class CommandLoader implements FacadeCommandLoaderInterface
             $alias = substr_replace($alias, ':', $pos, 1);
         }
         
-        return mb_strtolower($alias);
+        return $alias;
     }
 }
