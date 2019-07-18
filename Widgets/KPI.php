@@ -54,6 +54,11 @@ class KPI extends Display implements iUseData
         return $this->data_widget_link;
     }
     
+    public function hasDataWidgetLink() : bool
+    {
+        return $this->data_widget_link !== null;
+    }
+    
     /**
      * If a valid link to another data widget is specified, it's data will be used instead of the data property of the KPI itself.
      *
@@ -94,10 +99,14 @@ class KPI extends Display implements iUseData
             
             // Add data column for the attribute_alias of the KPI
             if ($this->isBoundToAttribute() && ! $this->getData()->getColumnByAttributeAlias($this->getAttributeAlias())) {
-                $this->data->addColumn($this->data->createColumnFromUxon(new UxonObject([
-                    "attribute_alias" => $this->getAttributeAlias(),
-                    "hidden" => true
-                ])));
+                if ($this->hasDataWidgetLink() === false) {
+                    $this->data->addColumn($this->data->createColumnFromUxon(new UxonObject([
+                        "attribute_alias" => $this->getAttributeAlias(),
+                        "hidden" => true
+                    ])));
+                } else {
+                    throw new WidgetConfigurationError($this, 'Cannot use linked data for ' . $this->getWidgetType() . ': the required column "' . $this->getAttributeAlias() . '" is not there!', '76JXZG9');
+                }
             }
         }
         
