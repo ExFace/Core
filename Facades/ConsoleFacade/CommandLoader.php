@@ -52,11 +52,14 @@ class CommandLoader implements FacadeCommandLoaderInterface
         $commands = $this->getCommandActionMap();
         $found = null;
         
+        list ($cspace, $cname) = explode(':', $command);
         foreach ($commands as $name => $alias) {
-            if (strcasecmp($command, $name) === 0) {
+            list($namespace, $name) = explode(':', $name);
+            if (stripos($namespace, $cspace) !== false && stripos($name, $cname) === 0) {
                 if ($found === null) {
                     $found = $alias;
                 } else {
+                    var_dump('non-unique', $command);
                     throw new FacadeRoutingError('Ambiguous command "' . $command . "!'");
                 }
             }
@@ -70,6 +73,7 @@ class CommandLoader implements FacadeCommandLoaderInterface
 
     public function has($name)
     {
+        return true;
         try {
             $this->getAliasFromCommandName($name);
             return true;
@@ -92,16 +96,9 @@ class CommandLoader implements FacadeCommandLoaderInterface
     {
         if ($this->cliActions === null) {
             $this->cliActions = [];
-            /*foreach ($this->getWorkbench()->getConfig()->getOption('FACADES.CONSOLE.ACTION_COMMANDS_ALLOWED') as $alias => $enabled) {
-                if ($enabled === false) {
-                    continue;
-                }
-                $this->cliActions[$this->getCommandNameFromAlias($alias)] = $alias;
-            }*/
-            
             $dot = AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
             
-            // Prototypes
+            // Load Prototypes
             $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.ACTION');
             $ds->getColumns()->addMultiple(['NAME', 'PATH_RELATIVE', 'PATHNAME_RELATIVE']);
             $ds->dataRead();
@@ -120,6 +117,8 @@ class CommandLoader implements FacadeCommandLoaderInterface
                 $alias = $namespace . $dot . $row['NAME'];
                 $this->cliActions[$this->getCommandNameFromAlias($alias)] = $alias;
             }
+            
+            // TODO load model action for command-prototypes
         }
         return $this->cliActions;
     }

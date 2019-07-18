@@ -32,6 +32,12 @@ use Symfony\Component\Console\Application;
  * `exface.Core:ClearCache`. Command names are case insensitive as long 
  * as they remain unambiguous.
  * 
+ * You can use a short syntax for command names by typing only the beginning
+ * of the action alias (after the `:`) - it will work as long as what you
+ * typed only matches a single command. This is similar to typing file and
+ * directory names. The short syntax currently does not work for namespaces
+ * (the part before `:`).
+ * 
  * Any action implementing the `iCanBeCalledFromCLI` interface is
  * automatically made available through the `ConsoleFacade`.
  * 
@@ -39,6 +45,9 @@ use Symfony\Component\Console\Application;
  * 
  * ```
  * vendor/bin/console exface.core:ClearCache
+ * vendor/bin/console exface.core:clear
+ * vendor/bin/console exface.packagemanager.InstallApp
+ * vendor/bin/console exface.packagemanager.install
  * 
  * ```
  * 
