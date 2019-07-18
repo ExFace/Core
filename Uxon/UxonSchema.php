@@ -32,6 +32,7 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
  * - icon
  * - color
  * - uri
+ * - metamodel:app
  * - metamodel:expression
  * - metamodel:object
  * - metamodel:attribute
