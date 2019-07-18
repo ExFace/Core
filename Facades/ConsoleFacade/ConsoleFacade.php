@@ -10,7 +10,37 @@ use exface\Core\CommonLogic\Traits\AliasTrait;
 use Symfony\Component\Console\Application;
 
 /**
- * Command line interface facade based on Symfony Console
+ * Command line interface facade based on Symfony Console.
+ * 
+ * To see all commands available in your installation, type the
+ * following in a terminal (Windows CMD, PowerShell, Linux Bash, etc.):
+ * 
+ * ```
+ * vendor/bin/console
+ * 
+ * ```
+ * 
+ * For detailed information about the use of a command, type 
+ * 
+ * ```
+ * vendor/bin/console <command-name> -h
+ * 
+ * ``` 
+ * 
+ * Command names are derived from action aliases: e.g. the action 
+ * `exface.Core.ClearCache` corresponds to the command 
+ * `exface.Core:ClearCache`. Command names are case insensitive as long 
+ * as they remain unambiguous.
+ * 
+ * Any action implementing the `iCanBeCalledFromCLI` interface is
+ * automatically made available through the `ConsoleFacade`.
+ * 
+ * ## Examples
+ * 
+ * ```
+ * vendor/bin/console exface.core:ClearCache
+ * 
+ * ```
  * 
  * @author Andrej Kabachnik
  *
