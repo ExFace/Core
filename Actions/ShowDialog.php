@@ -256,7 +256,9 @@ class ShowDialog extends ShowWidget implements iShowDialog
     {
         if ($uxon = parent::getWidgetUxon()) {
             if ($uxon->isEmpty() === false && $uxon->hasProperty('id_space') === false) {
-                $uxon = $this->addIdSpaceToWidgetUxon(parent::getWidgetUxon());
+                // FIXME this causes errors if a dialog is defined directly in the button and has widget-links
+                // within the dialog. But why? 
+                // $uxon = $this->addIdSpaceToWidgetUxon($uxon);
             }
         }
         return $uxon;
