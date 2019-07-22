@@ -4,7 +4,16 @@ namespace exface\Core\Widgets\Traits;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
+use exface\Core\Interfaces\Model\UiPageInterface;
 
+/**
+ * This trait helps getting the input widget for action triggers.
+ * 
+ * @author Andrej Kabachnik
+ * 
+ * @method UiPageInterface getPage()
+ *
+ */
 trait iUseInputWidgetTrait {
     
     private $input_widget_id = null;
@@ -31,9 +40,15 @@ trait iUseInputWidgetTrait {
      */
     public function getInputWidget()
     {
-        if (is_null($this->input_widget)) {
+        if ($this->input_widget === null) {
             if ($this->input_widget_id) {
-                $this->input_widget = $this->getPage()->getWidget($this->input_widget_id);
+                $page = $this->getPage();
+                if (strpos($this->input_widget, $page->getWidgetIdSpaceSeparator()) === false && $idSpace = $this->getIdSpace()) {
+                    $widgetId = $idSpace . $page->getWidgetIdSpaceSeparator() . $this->input_widget_id;
+                } else {
+                    $widgetId = $this->input_widget_id;
+                }
+                $this->input_widget = $this->getPage()->getWidget($widgetId);
             } elseif ($this->getParent()) {
                 $parent = $this->getParent();
                 while (!(($parent instanceof iHaveButtons) || ($parent instanceof iUseInputWidget)) && ! is_null($parent->getParent())) {
@@ -79,7 +94,7 @@ trait iUseInputWidgetTrait {
      * Sets the id of the widget to be used to fetch input data for the action performed by this button.
      *
      * @uxon-property input_widget_id
-     * @uxon-type string
+     * @uxon-type uxon:$..id
      *
      * @param string $value
      */
