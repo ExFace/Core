@@ -463,8 +463,11 @@ JS;
                 break;
             case $cellWidget instanceof InputNumber:
             case $cellWidget instanceof Display && $cellWidget->getValueDataType() instanceof NumberDataType:
-                if ($cellWidget->getValueDataType()->getBase() === 10) {
+                $numberType = $cellWidget->getValueDataType();
+                if ($numberType->getBase() === 10) {
                     $type = "numeric";
+                    $decimal = $numberType->getDecimalSeparator();
+                    //$options .= "mask: '{$this->buildMaskNumeric($numberType, $decimal)}',decimal:'{$decimal}',";
                 }
                 $align = EXF_ALIGN_RIGHT;
                 break;
@@ -766,5 +769,30 @@ JS;
     public function buildJsDestroy() : string
     {
         return "jexcel.destroy(document.getElementById('{$this->getId()}'), true); $('.exf-partof-{$this->getId()}').remove();";
+    }
+    
+    protected function buildMaskNumeric(NumberDataType $dataType, string $decimalSeparator = null) : string
+    {
+        if ($dataType->getPrecisionMax() === 0) {
+            return '0';
+        }
+        
+        if ($dataType->getPrecisionMin() === null && $dataType->getPrecisionMax() === null) {
+            return '';
+        }
+        
+        if ($decimalSeparator === null) {
+            $decimalSeparator = $dataType->getDecimalSeparator();
+        }
+        
+        $format = '#.##' . $decimalSeparator;
+        $minPrecision = $dataType->getPrecisionMin();
+        $maxPrecision = $dataType->getPrecisionMax();
+        for ($i = 1; $i <= $maxPrecision; $i++) {
+            $ph = $minPrecision !== null && $i <= $minPrecision ? '0' : '#';
+            $format .= $ph;
+        }
+        
+        return $format;
     }
 }
