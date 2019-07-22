@@ -341,7 +341,15 @@ class NumberDataType extends AbstractDataType
         $this->groupSeparator = $groupSeparator;
         return $this;
     }
-
-
+    
+    /**
+     * Returns the decimal separator for the current locale.
+     * 
+     * @return string
+     */
+    public function getDecimalSeparator() : string
+    {
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.NUMBER.DECIMAL_SEPARATOR');
+    }
 }
 ?>
