@@ -14,8 +14,11 @@ use exface\Core\Facades\DocsFacade;
  * Include the following dependencies in composer.json of the app, where the trait is used:
  * 
  * ```
+ * require: {
  *	"npm-asset/jsoneditor" : "^6.1",
- *	"npm-asset/picomodal" : "^3.0.0",
+ *	"npm-asset/picomodal" : "^3.0.0"
+ * }
+ * 
  * ```
  * 
  * Add pathes to the dependencies to the configuration of the facade:
@@ -68,7 +71,7 @@ JS;
     {
         $widget = $this->getWidget();
         if (($widget instanceof InputUxon) && $widget->getAutosuggest() === true) {
-            $uxonEditorOptions = $this::buildJsUxonEditorOptions($this->getWidget()->getSchema(), static::buildJsFunctionNameFetchAutosuggest($this->buildJsFunctionPrefix()));
+            $uxonEditorOptions = $this::buildJsUxonEditorOptions($this->getWidget()->getSchema(), $this->buildJsFunctionPrefix());
         } else {
             $uxonEditorOptions = '';
         }
@@ -98,7 +101,7 @@ JS;
      * @param string $fetchAutosuggestFunctionName
      * @return string
      */
-    public static function buildJsUxonEditorOptions(string $uxonSchema, string $fetchAutosuggestFunctionName) : string
+    public static function buildJsUxonEditorOptions(string $uxonSchema, string $funcPrefix) : string
     {
         return <<<JS
         
@@ -129,14 +132,14 @@ JS;
                       		    var pathBase = path.length <= 1 ? '' : JSON.stringify(path.slice(-1));
                       		    if (editor._autosuggestPending === true) {
                                     if (editor._autosuggestLastResult && editor._autosuggestLastPath == pathBase) {
-                                        resolve(editor._autosuggestLastResult.values);
+                                        resolve({$funcPrefix}_filterAutosuggest(editor._autosuggestLastResult.values, text));
                                     } else {
                                         reject();
                                     }
                        		   } else {
                                     editor._autosuggestPending = true;
                                     var uxon = JSON.stringify(editor.get());
-                                    return {$fetchAutosuggestFunctionName}(text, path, input, uxon)
+                                    return {$funcPrefix}_fetchAutosuggest(text, path, input, uxon)
                                     .then(json => {
                                         editor._autosuggestPending = false;
                                         if (json === undefined) {
@@ -149,7 +152,7 @@ JS;
                                         
                                         // If there are values for the autosuggest, call resolve()
                                         if (json.values !== undefined ) {
-                                            resolve(json.values);
+                                            resolve({$funcPrefix}_filterAutosuggest(json.values, text));
                                         }
                                         
                                         // return response data for further processing
@@ -207,11 +210,10 @@ JS;
     {
         $addHelpButtonFunction = static::buildJsFunctionNameAddHelpButton($funcPrefix);
         $onBlurFunctionName = static::buildJsFunctionNameOnBlur($funcPrefix);
-        $fetchAutosuggestFunctionName = static::buildJsFunctionNameFetchAutosuggest($funcPrefix);
         
         return <<<JS
         
-    function {$fetchAutosuggestFunctionName}(text, path, input, uxon) {
+    function {$funcPrefix}_fetchAutosuggest(text, path, input, uxon) {
         var formData = new URLSearchParams({
     		action: 'exface.Core.UxonAutosuggest',
     		text: text,
@@ -245,8 +247,37 @@ JS;
             }
         });
     }
+
+    function {$funcPrefix}_filterAutosuggest(aSuggestions, sSearch) {
+        if (Array.isArray(aSuggestions) === false) {
+            return aSuggestions;
+        }
+
+        var aFiltered = [[],[],[]];
+        var aResult = [];
+        var iLen = aSuggestions.length;
+        aSuggestions.forEach(sVal => {
+            sValLower = sVal.toLowerCase();
+            switch (true) {
+                case sValLower.startsWith(sSearch):
+                    aFiltered[0].push(sVal);
+                    break;
+                case sValLower.indexOf('.' + sSearch) > -1:
+                    aFiltered[1].push(sVal);
+                    break;
+                default: 
+                    aFiltered[2].push(sVal);
+            }
+        });
+        
+        aFiltered.forEach(aPart => {
+            aResult = aResult.concat(aPart);
+        });
+        
+        return aResult;
+    }
     
-    function openModal(title, contentHTML, focus = false, cssClass = '', onAfterCreate ) {
+    function {$funcPrefix}_openModal(title, contentHTML, focus = false, cssClass = '', onAfterCreate ) {
     
           if (! onAfterCreate) {
               onAfterCreate = function(modal) {
@@ -324,7 +355,7 @@ JS;
         $('#' + editorId + ' .jsoneditor-menu .jsoneditor-search').before(helpBtn);
         var helpBtnContent = '<iframe src="' + url + '"></iframe>';
         helpBtn.click(function() {
-            return openModal(title , helpBtnContent, false, 'jsoneditor-modal-nopadding jsoneditor-modal-maximized' );
+            return {$funcPrefix}_openModal(title , helpBtnContent, false, 'jsoneditor-modal-nopadding jsoneditor-modal-maximized' );
         });
 
     }
@@ -487,20 +518,5 @@ JS;
     public static function buildJsFunctionNameOnBlur(string $funcPrefix) : string
     {
         return $funcPrefix . '_onBlur';
-    }
-    
-    /**
-     * Returns the name of the JS function to fetch autosuggest data from the server
-     *
-     * The function is defined in buildJsUxonAutosuggestFunctions()
-     *
-     * @see buildJsUxonAutosuggestFunctions()
-     *
-     * @param string $funcPrefix
-     * @return string
-     */
-    public static function buildJsFunctionNameFetchAutosuggest(string $funcPrefix) : string
-    {
-        return $funcPrefix . '_fetchAutosuggest';
     }
 }
