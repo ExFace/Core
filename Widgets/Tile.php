@@ -20,8 +20,17 @@ use exface\Core\Interfaces\Widgets\iHaveColor;
  * must be defined for actions, that require input, as the tile will mostly be used 
  * stand-alone and not within a form or data widget.
  * 
+ * Tiles degrade to regular buttons if used in menus or toolbars unless the corresponding widget
+ * supports tiles explicitly. In this case, display widgets will simply be ignored.
+ *
+ * ## Examples
+ * 
+ * ### Tile with a navigation-action and a counter
+ * 
  * Example of a counter tile that will show the number of order in "pending" state
- * and will navigate to a detail page when clicked.
+ * and will navigate to a detail page when clicked. The `KPI` widget will automatically
+ * create a data sheet and count rows with pending state. Depending on the facade
+ * used, the KPI data will even be loaded asynchronously.
  * 
  * ```
  * {
@@ -30,6 +39,7 @@ use exface\Core\Interfaces\Widgets\iHaveColor;
  *  "title": "Orders",
  *  "subtitle": "To approve",
  *  "display_widget": {
+ *      "wiget_type: "KPI",
  *      "attribute_alias": "STATE:COUNT_IF(= 'pending')"
  *  },
  *  "action": {
@@ -40,34 +50,56 @@ use exface\Core\Interfaces\Widgets\iHaveColor;
  * 
  * ```
  * 
- * Example of a similar tile, but linked to a data widget. The DisplayTotal 
- * widget used for the tile is linked with the main widget of the target page 
- * of the GoTo-action and displays the COUNT of it's ORDER_NO column. This ensures, 
- * that the information in the tile allways corresponds to the initial state of the
- * widget the tile will show when clicked - regardless of the exact filters,
- * aggregations or other configuration of that widget.
- *  
+ * ### Multiple tiles sharing data for content widgets
+ * 
+ * If you have multiple tiles, showing different figures for the same set of objects
+ * (e.g. counters for different states of the orders above), you can make them load
+ * their data with a single request by linking all KPIs together. 
+ * 
+ * In the following example, the KPI widget in the first `Tile` has a custom `data`
+ * configuration, that includes a column for the next `Tile`. This `data` has an `id`,
+ * which is used in the `data_widget_link` property of the `KPI` in the next `Tile`.
+ * If the facade used supports bundling server requests, there will be only one read
+ * request made for both tiles, which should result in significantly improved performance.
+ * 
  * ```
  * {
  *  "widget_type": "Tile",
  *  "object_alias": "my.App.ORDER",
- *  "title": "Orders",
- *  "subtitle": "To approve",
+ *  "title": "Pending"
  *  "display_widget": {
- *      "widget_type": "DisplayTotal",
- *      "data_link": "my.App.orders-for-approval",
- *      "attribute_alias": "ORDER_NO",
- *      "aggregator": "COUNT"
- *  },
- *  "action": {
- *      "alias": "exface.Core.GoToPage",
- *      "page_alias": "my.App.orders-for-approval",
+ *      "wiget_type: "KPI",
+ *      "attribute_alias": "STATE:COUNT_IF(= 'pending')"
+ *      "data": {
+ *          "id": "order_state_data",
+ *          "columns": [
+ *              {
+ *                  "attribute_alias": "STATE:COUNT_IF(= 'pending')"
+ *              },
+ *              {
+ *                  "attribute_alias": "STATE:COUNT_IF(= 'approved')"
+ *              }
+ *          ]
+ *      }
+ *  }
+ * },
+ * {
+ *  "widget_type": "Tile",
+ *  "object_alias": "my.App.ORDER",
+ *  "title": "Pending"
+ *  "display_widget": {
+ *      "wiget_type: "KPI",
+ *      "data_widget_link": "order_state_data",
+ *      "attribute_alias": "STATE:COUNT_IF(= 'approved')"
  *  }
  * }
  * 
  * ```
  * 
- * Example of a navigation tile with preset filters and not display widget:
+ * ### Predefined filters for navigation actions
+ * 
+ * A common use for `Tiles` is linking into a more complex data widget with a predefined set of
+ * filters. Here is how this can be done. Of course, such a tile can have content widgets too.
  * 
  * ```
  * {
@@ -103,9 +135,6 @@ use exface\Core\Interfaces\Widgets\iHaveColor;
  * 
  * ```
  *  
- * Tiles degrade to regular buttons if used in menus or toolbars unless the corresponding widget
- * supports tiles explicitly. In this case, display widgets will simply be ignored.
- *
  * @author Andrej Kabachnik
  *        
  */
@@ -248,7 +277,5 @@ class Tile extends Button implements iHaveColor
     {
         $this->color = $color;
         return $this;
-    }
-    
+    } 
 }
-?>
