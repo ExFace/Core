@@ -6,7 +6,6 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Interfaces\Actions\iCallService;
 use exface\Core\Interfaces\Actions\ServiceParameterInterface;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
@@ -16,6 +15,8 @@ class ServiceParameter implements ServiceParameterInterface
     use ImportUxonObjectTrait;
     
     private $name = null;
+    
+    private $description = '';
     
     private $required = false;
     
@@ -31,10 +32,12 @@ class ServiceParameter implements ServiceParameterInterface
     
     private $dataSourceProperties = null;
     
-    public function __construct(ActionInterface $action, UxonObject $uxon)
+    public function __construct(ActionInterface $action, UxonObject $uxon = null)
     {
         $this->action = $action;
-        $this->importUxonObject($uxon);
+        if ($uxon !== null) {
+            $this->importUxonObject($uxon);
+        }
     }
     
     /**
@@ -161,7 +164,7 @@ class ServiceParameter implements ServiceParameterInterface
         return $this;
     }
     
-    public function getAction() : iCallService
+    public function getAction() : ActionInterface
     {
         return $this->action;
     }
@@ -200,7 +203,7 @@ class ServiceParameter implements ServiceParameterInterface
         return $this->getDataType()->parse($val);
     }
     
-    public function getDefaultValue() : string
+    public function getDefaultValue()
     {
         return $this->defaultValue;
     }
@@ -219,7 +222,7 @@ class ServiceParameter implements ServiceParameterInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ServiceParameterInterface::setDefaultValue()
      */
-    public function setDefaultValue(string $string) : ServiceParameterInterface
+    public function setDefaultValue($string) : ServiceParameterInterface
     {
         $this->defaultValue = $string;
         return $this;
@@ -263,4 +266,24 @@ class ServiceParameter implements ServiceParameterInterface
         return $this->getCustomProperties()->getProperty($name);
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ServiceParameterInterface::getDescription()
+     */
+    public function getDescription() : string
+    {
+        return $this->description;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ServiceParameterInterface::setDescription()
+     */
+    public function setDescription(string $value) : ServiceParameterInterface
+    {
+        $this->description = $value;
+        return $this;
+    }
 }

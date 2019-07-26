@@ -517,12 +517,21 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade
         $body = '';
         
         if ($this->isShowingErrorDetails() === true) {
+            // If details needed, render a widget
             $body = $this->buildHtmlFromError($request, $exception, $page);
             $headers['Content-Type'] = ['text/html;charset=utf-8'];
         } else {
-            $body = $this->encodeData($this->buildResponseError($exception));
-            $headers['Content-Type'] = ['application/json;charset=utf-8'];
+            if ($request->getAttribute($this->getRequestAttributeForAction()) === 'exface.Core.ShowWidget') {
+                // If we were rendering a widget, return HTML even for non-detail cases
+                $body = $this->buildHtmlFromError($request, $exception, $page);
+                $headers['Content-Type'] = ['text/html;charset=utf-8'];
+            } else {
+                // Otherwise render error data, so the JS can interpret it.
+                $body = $this->encodeData($this->buildResponseDataError($exception));
+                $headers['Content-Type'] = ['application/json;charset=utf-8'];
+            }
         }
+        
         
         $this->getWorkbench()->getLogger()->logException($exception);
         
@@ -589,7 +598,7 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade
      * @param \Throwable $exception
      * @return mixed
      */
-    protected function buildResponseError(\Throwable $exception)
+    protected function buildResponseDataError(\Throwable $exception)
     {
         $error = [
             'code' => $exception->getCode(),

@@ -85,13 +85,11 @@ class ShowObjectInfoDialog extends ShowDialog
     {
         $object = $this->getMetaObject();
         $editors = [];
-        $cnt = 0;
         
         $objectWritable = $this->isObjectWritable();
         
         /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
         foreach ($object->getAttributes() as $attr) {
-            $cnt ++;
             // Ignore hidden attributes if they are not system attributes
             if ($attr->isHidden())
                 continue;
@@ -185,7 +183,7 @@ class ShowObjectInfoDialog extends ShowDialog
             // other information, that would enable us to build better editors (with tabs, etc.)
             $dialog->addWidgets($this->createWidgetsForAttributes($dialog));
             
-            if ($dialog->countWidgets() < $this->getShowSmallDialogIfLessAttributesThen()) {
+            if ($dialog->countWidgetsVisible() < $this->getShowSmallDialogIfLessAttributesThen()) {
                 $dialog->setColumnsInGrid(1);
             }
         }

@@ -85,6 +85,11 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
                 $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert) {
                     return $invert XOR $attr->getDefaultDisplayOrder() > 0;
                 });
+                // If no attributes are marked with a default display position, include the label
+                // if there is one
+                if ($attributeList->isEmpty() === true && $attributeList->getMetaObject()->hasLabelAttribute() === true) {
+                    $attributeList->add($attributeList->getMetaObject()->getLabelAttribute());
+                }
                 $attributeList->sort(function(MetaAttributeInterface $a, MetaAttributeInterface $b) {
                     return intval($a->getDefaultDisplayOrder()) - intval($b->getDefaultDisplayOrder());
                 });

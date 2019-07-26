@@ -221,7 +221,7 @@ class GenericTask implements TaskInterface
      */
     public function getMetaObject(): MetaObjectInterface
     {
-        if (is_null($this->object)){
+        if ($this->object === null){
             if (! is_null($this->objectSelector)){
                 $this->object = $this->getWorkbench()->model()->getObject($this->objectSelector);
             } elseif ($this->hasInputData()) {
@@ -296,9 +296,21 @@ class GenericTask implements TaskInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Tasks\TaskInterface::hasMetaObject()
      */
-    public function hasMetaObject(): bool
+    public function hasMetaObject(bool $checkAllTaskParams = false): bool
     {
-        return is_null($this->objectSelector) && is_null($this->object) ? false : true;
+        if ($this->objectSelector === null && $this->object === null){
+            if ($checkAllTaskParams === false) { 
+                return false;
+            } else {
+                try {
+                    $this->getMetaObject();
+                    return true;
+                } catch (\Throwable $e) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
     
     /**

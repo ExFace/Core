@@ -598,6 +598,16 @@ class UiPage implements UiPageInterface
             throw new UiPageNotPartOfAppError('The page "' . $this->getAliasWithNamespace() . '" is not part of any app!');
         }
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::hasApp()
+     */
+    public function hasApp() : bool
+    {
+        return $this->appSelector !== null;
+    }
 
     /**
      * 
@@ -1223,6 +1233,14 @@ class UiPage implements UiPageInterface
         }
         if ($this->getContents() != $page->getContents() && ! in_array('contents', $ignore_properties)) {
             return false;
+        }
+        if (! in_array('app', $ignore_properties)) {
+            if ($this->hasApp() !== $page->hasApp()) {
+                return false;
+            }
+            if ($this->hasApp() && $page->hasApp() && $this->getApp() !== $page->getApp()) {
+                return false;
+            }
         }
         
         return true;

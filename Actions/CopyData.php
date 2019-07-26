@@ -17,6 +17,7 @@ use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\DataTypes\DataSheetDataType;
 
 /**
  * Copies all input objects in the input data including dependent objects defined via copy_related_objects.
@@ -115,6 +116,12 @@ class CopyData extends SaveData implements iCreateData
             if ($col === $inputSheet->getUidColumn()) {
                 continue;
             }
+            // Keep subsheets - they are regular values even if their columns do
+            // not point to direct attributes of the main sheet's object.
+            if ($col->getDataType() instanceof DataSheetDataType) {
+                continue;
+            }
+            
             if (! $col->isAttribute()) {
                 $inputSheet->getColumns()->remove($col);
             } elseif ($col->getAttribute()->isRelated()) {
@@ -139,6 +146,16 @@ class CopyData extends SaveData implements iCreateData
                 $currentData->getColumns()->addFromAttribute($attr);
             }
         }
+        // Don't read columns with subsheets because they do not represent any editable
+        // attributes and reading them here would just cause extra overhead. If there are
+        // relations, that need to be copied along with the main object, this is going
+        // to be done later in the code.
+        foreach ($currentData->getColumns() as $currentCol) {
+            if ($currentCol->getDataType() instanceof DataSheetDataType) {
+                $currentData->getColumns()->remove($currentCol);
+            }
+        }
+        // Read the data source, if our data is not fresh enough
         if ($currentData->isFresh() === false) {
             $currentData->addFilterFromColumnValues($currentData->getUidColumn());
             $currentData->dataRead();
@@ -177,6 +194,14 @@ class CopyData extends SaveData implements iCreateData
             foreach ($relationsToCopy as $rel) {
                 if ($rel->isReverseRelation() === false) {
                     throw new ActionRuntimeError($this, 'Cannot copy related object for relation ' . $rel->getAliasWithModifier() . ': only reverse relations currently supported!');    
+                }
+                
+                // If the main sheet has a subsheet for this relation, don't do anything special - the subsheet
+                // is what the use wanted or at least saw, so we should not modify this data in any way!
+                if ($existingCol = $inputSheet->getColumns()->getByExpression($rel->getAlias())) {
+                    if ($existingCol->getDataType() instanceof DataSheetDataType) {
+                        continue;
+                    }
                 }
                 
                 $relRev = $rel->reverse();

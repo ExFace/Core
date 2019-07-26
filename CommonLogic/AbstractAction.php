@@ -32,6 +32,7 @@ use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 use exface\Core\Uxon\ActionSchema;
+use exface\Core\Exceptions\Actions\ActionInputMissingError;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -924,6 +925,7 @@ abstract class AbstractAction implements ActionInterface
      * to call this method only once!
      * 
      * @param TaskInterface $task
+     * @throws ActionInputMissingError if neither input data nor object-binding found in task or the action itself
      * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
      */
     protected function getInputDataSheet(TaskInterface $task) : DataSheetInterface
@@ -939,9 +941,11 @@ abstract class AbstractAction implements ActionInterface
         } elseif ($this->hasInputDataPreset()) {
             // If the task has no data, use the preset data
             $sheet = $this->getInputDataPreset();
-        } else {
+        } elseif ($task->hasMetaObject(true)) {
             // If there is neither task nor preset data, create a new data sheet
             $sheet = DataSheetFactory::createFromObject($task->getMetaObject());    
+        } else {
+            throw new ActionInputMissingError($this, 'No input data found for action "' . $this->getAliasWithNamespace() . '"!');
         }
         
         // Apply the input mappers

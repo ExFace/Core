@@ -1,32 +1,31 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
-use exface\Core\Factories\ExpressionFactory;
-use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Widgets\iShowDataColumn;
-use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
-use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
-use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\CommonLogic\WidgetDimension;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\PriceDataType;
-use exface\Core\DataTypes\DateDataType;
-use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\Interfaces\Model\AggregatorInterface;
-use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\SortingDirectionsDataType;
-use exface\Core\Interfaces\Model\ExpressionInterface;
-use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\Interfaces\Widgets\iHaveValue;
-use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\Interfaces\Widgets\iCanBeAligned;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Factories\DataTypeFactory;
-use exface\Core\CommonLogic\WidgetDimension;
+use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Factories\WidgetDimensionFactory;
-use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\Interfaces\Widgets\iCanBeAligned;
+use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Widgets\Traits\AttributeCaptionTrait;
+use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
+use exface\Core\Widgets\Parts\DataFooter;
+use exface\Core\Interfaces\Widgets\iHaveValue;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -57,7 +56,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 
     private $sortable = true;
 
-    private $footer = false;
+    private $footer = null;
     
     private $widthMax = null;
 
@@ -78,14 +77,6 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $cell_styler_script = null;
 
     private $data_column_name = null;
-
-    public function hasFooter()
-    {
-        if (! empty($this->footer))
-            return true;
-        else
-            return false;
-    }
 
     public function getAttributeAlias()
     {
@@ -149,19 +140,44 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      *
      * @return string
      */
-    public function getFooter()
+    public function getFooter() : DataFooter
     {
+        if ($this->footer !== null && ! $this->footer instanceof DataFooter) {
+            if ($this->getDataWidget() instanceof Data) {
+                $footerClass = $this->getDataWidget()->getFooterWidgetPartClass();
+            } else {
+                $footerClass = '\\' . DataFooter::class;
+            }
+            if (is_string($this->footer) === true) {
+                $this->footer = new $footerClass($this, new UxonObject([
+                    'aggregator' => $this->footer
+                ]));
+            } elseif ($this->footer instanceof UxonObject) {
+                $this->footer = new $footerClass($this, $this->footer);
+            }
+        }
         return $this->footer;
+    }
+    
+    public function hasFooter() : bool
+    {
+        return $this->footer !== null;
     }
 
     /**
      * Makes the column display summary information in the footer.
-     * The value can be SUM, AVG, MIN, MAX, COUNT, COUNT_DISTINCT, LIST and LIST_DISTINCT.
+     * 
+     * The value can be either 
+     * - an aggregator name: SUM, AVG, MIN, MAX, COUNT, COUNT_DISTINCT, LIST or LIST_DISTINCT
+     * - or a detailed configuration object like {"aggregator": "SUM"}
+     * 
+     * Depending on the data widget, the configuration of the footer may take
+     * different options. Refer to the documentation of the data widget!
      *
      * @uxon-property footer
-     * @uxon-type [SUM,AVG,MIN,MAX,COUNT,COUNT_DISTINCT,LIST,LIST_DISTINCT]
+     * @uxon-type metamodel:aggregator|\exface\Core\Widgets\Parts\DataFooter
      *
-     * @param string $value            
+     * @param UxonObject|string $value            
      * @return DataColumn
      */
     public function setFooter($value)

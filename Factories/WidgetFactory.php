@@ -67,6 +67,7 @@ abstract class WidgetFactory extends AbstractStaticFactory
      */
     public static function createFromUxon(UiPageInterface $page, UxonObject $uxon_object, WidgetInterface $parent_widget = null, $fallback_widget_type = null, bool $readonly = false)
     {
+        $widget_type = null;
         
         // If the widget is supposed to be extended from another one, merge the uxon descriptions before doing anything else
         if ($uxon_object->hasProperty('extend_widget')) {
@@ -80,7 +81,13 @@ abstract class WidgetFactory extends AbstractStaticFactory
         }
         
         // See, if the widget type is specified in UXON directly
-        $widget_type = $uxon_object->getProperty('widget_type');
+        if ($uxon_object->hasProperty('widget_type')) {
+            $widget_type = $uxon_object->getProperty('widget_type');
+            if (! $widget_type) {
+                throw new UxonParserError($uxon_object, 'Empty widget_type field in UXON!');
+            }
+        }
+        
         // If not, try to determine it from default widgets
         // IDEA Perhaps, it will be handy to have this logic as a separate method. Not sure though, what it should accept and return...
         if (! $widget_type) {
@@ -92,7 +99,11 @@ abstract class WidgetFactory extends AbstractStaticFactory
             } else {
                 // First of all, we need to figure out, which object the widget is representing
                 if ($uxon_object->hasProperty('object_alias')) {
-                    $obj = $page->getWorkbench()->model()->getObject($uxon_object->getProperty('object_alias'));
+                    $objAlias = $uxon_object->getProperty('object_alias');
+                    if (! $objAlias) {
+                        throw new UxonParserError($uxon_object, 'Empty object_alias field in UXON!');
+                    }
+                    $obj = $page->getWorkbench()->model()->getObject($objAlias);
                 } elseif ($parent_widget) {
                     $obj = $parent_widget->getMetaObject();
                 } else {

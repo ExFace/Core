@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\AppInstallers\AbstractAppInstaller;
 use exface\Core\CommonLogic\Model\App;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * This installer registeres routes for it's HTTP facade in the system's
@@ -27,11 +28,18 @@ class HttpFacadeInstaller extends AbstractAppInstaller
         try {
             $config = $this->getWorkbench()->getConfig();
             $routes = $config->getOption('FACADES.ROUTES');
+            if (! $routes instanceof UxonObject) {
+                throw new InstallerRuntimeError($this, 'Invalid routing configuration detected!');
+            }
             $before = $routes->toJson();
             foreach ($this->getFacade()->getUrlRoutePatterns() as $pattern) {
                 $routes->setProperty($pattern, $this->getFacade()->getAliasWithNamespace());
             }      
-            $config->setOption('FACADES.ROUTES', $routes, App::CONFIG_SCOPE_SYSTEM);
+            if ($routes->isEmpty() === false) {
+                $config->setOption('FACADES.ROUTES', $routes, App::CONFIG_SCOPE_SYSTEM);
+            } else {
+                return 'Failed to setupt HTTP facade routing: empty result!';
+            }
         } catch (\Throwable $e) {
             throw new InstallerRuntimeError($this, 'Failed to setup HTTP facade routing!', null, $e);
         }

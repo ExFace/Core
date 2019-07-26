@@ -11,6 +11,8 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Parts\DataRowGrouper;
+use exface\Core\Widgets\Traits\EditableTableTrait;
+use exface\Core\Widgets\Traits\DataTableTrait;
 
 /**
  * Renders data as a table with filters, columns, and toolbars.
@@ -93,6 +95,8 @@ use exface\Core\Widgets\Parts\DataRowGrouper;
  */
 class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelect, iHaveContextMenu, iTakeInput
 {
+    use DataTableTrait;
+    use EditableTableTrait;
 
     private $show_filter_row = null;
 
@@ -101,10 +105,6 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     private $multi_select = false;
 
     private $multi_select_all_selected = false;
-
-    private $striped = true;
-
-    private $nowrap = true;
 
     private $auto_row_height = true;
 
@@ -119,12 +119,6 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     private $header_sort_multiple = false;
 
     private $context_menu = null;
-    
-    private $required = false;
-    
-    private $readOnly = false;
-    
-    private $displayOnly = false;
 
     function hasRowDetails()
     {
@@ -391,49 +385,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
         $this->show_row_numbers = $value;
         return $this;
     }
-
-    public function getNowrap()
-    {
-        return $this->nowrap;
-    }
-
-    /**
-     * Set to FALSE to enable text wrapping in all columns.
-     *
-     * @uxon-property nowrap
-     * @uxon-type boolean
-     * @uxon-default true
-     *
-     * @param boolean $value            
-     * @return \exface\Core\Widgets\DataTable
-     */
-    public function setNowrap($value)
-    {
-        $this->nowrap = BooleanDataType::cast($value);
-        return $this;
-    }
-
-    public function getStriped()
-    {
-        return $this->striped;
-    }
-
-    /**
-     * Set to TRUE to make the rows background color alternate.
-     *
-     * @uxon-property striped
-     * @uxon-type boolean
-     * @uxon-default true
-     *
-     * @param boolean $value            
-     * @return \exface\Core\Widgets\DataTable
-     */
-    public function setStriped($value)
-    {
-        $this->striped = BooleanDataType::cast($value);
-        return $this;
-    }
-
+    
     /**
      *
      * @return boolean
@@ -488,52 +440,6 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     public function getAlternativeContainerForOrphanedSiblings()
     {
         return null;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveValues::getValues()
-     */
-    public function getValues()
-    {
-        // TODO set selected table rows programmatically
-        /*
-         * if ($this->getValue()){
-         * return explode(EXF_LIST_SEPARATOR, $this->getValue());
-         * }
-         */
-        return array();
-    }
-    
-    public function getValueWithDefaults()
-    {
-        // TODO return the UID of programmatically selected row
-        return null;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveValues::setValues()
-     */
-    public function setValues($expression_or_delimited_list)
-    {
-        // TODO set selected table rows programmatically
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveValues::setValuesFromArray()
-     */
-    public function setValuesFromArray(array $values)
-    {
-        $this->setValue(implode($this->getUidColumn()->getAttribute()->getValueListDelimiter(), $values));
-        return $this;
     }
 
     /**
@@ -617,103 +523,6 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     public function getConfiguratorWidgetType() : string
     {
         return 'DataTableConfigurator';
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueDataType()
-     */
-    public function getValueDataType()
-    {
-        return $this->getUidColumn()->getDataType();
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveValue::hasValue()
-     */
-    public function hasValue()
-    {
-        return is_null($this->getValue()) ? false : true;
-    }
-    
-    /**
-     * Set to TRUE to force the user to fill all required fields of at least one row.
-     * 
-     * @uxon-property required
-     * @uxon-type boolean
-     * @uxon-default false
-     * 
-     * @see \exface\Core\Interfaces\Widgets\iCanBeRequired::setRequired()
-     */
-    public function setRequired($value)
-    {
-        $this->required = BooleanDataType::cast($value);
-        return $this;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iCanBeRequired::isRequired()
-     */
-    public function isRequired()
-    {
-        return $this->required;
-    }
-
-    /**
-     * If set to TRUE, the table remains fully interactive, but it's data will be ignored by actions.
-     * 
-     * @uxon-property display_only
-     * @uxon-type boolean
-     * @uxon-default false
-     * 
-     * @see \exface\Core\Interfaces\Widgets\iTakeInput::setDisplayOnly()
-     */
-    public function setDisplayOnly($true_or_false) : iTakeInput
-    {
-        $this->displayOnly = BooleanDataType::cast($true_or_false);
-        return $this;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iTakeInput::isDisplayOnly()
-     */
-    public function isDisplayOnly() : bool
-    {
-        if ($this->isReadonly() === true) {
-            return true;
-        }
-        return $this->displayOnly;
-    }
-
-    /**
-     * In a DataTable readonly is the opposite of editable, so there is no point in an
-     * extra uxon-property here.
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iTakeInput::setReadonly()
-     */
-    public function setReadonly($true_or_false) : WidgetInterface
-    {
-        $this->setEditable(! BooleanDataType::cast($true_or_false));
-        return $this;
-    }
-
-    /**
-     * A DataTable is readonly as long as it is not editable.
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iTakeInput::isReadonly()
-     */
-    public function isReadonly() : bool
-    {
-        return $this->isEditable() === false;
     }
     
     /**
