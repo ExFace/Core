@@ -251,6 +251,8 @@
 	"WIDGET.TEXT.STYLE_ITALIC": "Italic",
 	"WIDGET.TEXT.STYLE_STRIKETHROUGH": "Strike-through",
 	
+	"WIDGET.UXONEDITOR.HELP": "Help",
+	
 	"WIDGET.INPUT.EMPTY_TEXT": "",
 	
 	"ERROR.ECHARTS.AXIS_NO_DATA": "No data received for axis",

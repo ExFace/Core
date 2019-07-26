@@ -484,7 +484,7 @@ CSS;
                 $,
                 "{$this->getId()}",
                 "{$url}",
-                "Help" 
+                "{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.UXONEDITOR.HELP')}" 
             );
 
 JS;
