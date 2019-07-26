@@ -249,6 +249,8 @@
 	"WIDGET.TEXT.STYLE_ITALIC": "Kursiv",
 	"WIDGET.TEXT.STYLE_STRIKETHROUGH": "Durchgestrichen",
 
+	"WIDGET.UXONEDITOR.HELP": "Hilfe",
+	
 	"WIDGET.INPUT.EMPTY_TEXT": "",
 	
 	"ERROR.ECHARTS.AXIS_NO_DATA": "Keine Daten erhalten für Achse",
