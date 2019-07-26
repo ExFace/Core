@@ -26,7 +26,7 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::init()
      */
-    function init()
+    protected function init()
     {
         $this->setIcon(Icons::CHECK);
         $this->setInputRowsMin(0);

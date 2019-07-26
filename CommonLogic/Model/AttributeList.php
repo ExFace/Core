@@ -6,6 +6,7 @@ use exface\Core\Factories\AttributeListFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaAttributeListInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\ModelInterface;
 
 /**
  *
@@ -36,7 +37,7 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
      * {@inheritdoc}
      * @see MetaAttributeListInterface::getModel()
      */
-    public function getModel()
+    public function getModel() : ModelInterface
     {
         return $this->getMetaObject()->getModel();
     }
@@ -46,7 +47,7 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
      * {@inheritdoc}
      * @see MetaAttributeListInterface::getMetaObject()
      */
-    public function getMetaObject()
+    public function getMetaObject() : MetaObjectInterface
     {
         return $this->getParent();
     }
@@ -56,7 +57,7 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
      * {@inheritdoc}
      * @see MetaAttributeListInterface::setMetaObject()
      */
-    public function setMetaObject(MetaObjectInterface $meta_object)
+    public function setMetaObject(MetaObjectInterface $meta_object) : MetaAttributeListInterface
     {
         return $this->setParent($meta_object);
     }
@@ -81,7 +82,7 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
      * {@inheritdoc}
      * @see MetaAttributeListInterface::getRequired()
      */
-    public function getRequired()
+    public function getRequired() : MetaAttributeListInterface
     {
         return $this->filter(function(MetaAttributeInterface $attr) {
             return $attr->isRequired();
@@ -129,7 +130,7 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
      * {@inheritdoc}
      * @see MetaAttributeListInterface::getSystem()
      */
-    public function getSystem()
+    public function getSystem() : MetaAttributeListInterface
     {
         return $this->filter(function(MetaAttributeInterface $attr) {
             return $attr->isSystem();
@@ -141,7 +142,7 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
      * {@inheritdoc}
      * @see MetaAttributeListInterface::getDefaultDisplayList()
      */
-    public function getDefaultDisplayList()
+    public function getDefaultDisplayList() : MetaAttributeListInterface
     {
         $object = $this->getMetaObject();
         $defs = AttributeListFactory::createForObject($object);

@@ -130,10 +130,17 @@ interface TaskInterface extends WorkbenchDependantInterface
     public function setMetaObjectSelector($selectorOrString) : TaskInterface;
     
     /**
+     * Returns TRUE if the task relates to a specific meta object and FALSE otherwise.
      * 
+     * By default, only explicit object assignment is checked (i.e. task parameters
+     * specifying an object), however if $checkAllTaskParams is TRUE, also other parameters
+     * like input data, calling widget are take into account. In many cases, these
+     * parameters will indirectly specify the object of the task.
+     * 
+     * @param bool $checkAllTaskParams
      * @return bool
      */
-    public function hasMetaObject() : bool;
+    public function hasMetaObject(bool $checkAllTaskParams = false) : bool;
     
     /**
      * 

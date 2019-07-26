@@ -1,0 +1,15 @@
+#!/usr/bin/env php
+<?php
+// application.php
+
+require __DIR__.'/../../../../../autoload.php';
+
+use exface\Core\Facades\ConsoleFacade\ConsoleFacade;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\Factories\FacadeFactory;
+
+$workbench = Workbench::startNewInstance();
+
+$application = FacadeFactory::createFromAnything(ConsoleFacade::class, $workbench);
+
+$application->run();

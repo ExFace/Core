@@ -4,6 +4,7 @@ The UI consists of a hierarchy of pages, each containing widgets. You can descri
 
 ## Quick links
 - [Getting started with the UXON language](UXON/index.md)
+- [Using the UXON editor](UXON/Introduction_to_the_UXON_editor.md) - autosuggest, keyboard shortcuts
 - [Creating a simple DataTable](Data_Tables/creating_basic_datatables.md)
 - [Creating an editor-dialog for an object](Forms_and_inputs/Editor-dialogs_for_objects.md)
 

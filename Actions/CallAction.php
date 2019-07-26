@@ -2,6 +2,7 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\AbstractAction;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iRunFacadeScript;
@@ -138,9 +139,9 @@ class CallAction extends AbstractAction
         ), $arguments);
     }
 
-    public function setInputDataSheet($data_sheet_or_uxon)
+    public function setInputDataSheet(UxonObject $uxon) : ActionInterface
     {
-        return $this->getAction()->setInputDataSheet($data_sheet_or_uxon);
+        return $this->getAction()->setInputDataSheet($uxon);
     }
 
     public function getInputDataSheet(TaskInterface $task) : DataSheetInterface

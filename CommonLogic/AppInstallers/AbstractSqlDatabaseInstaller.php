@@ -495,7 +495,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
                 $migstr = $src;
             } elseif ($up == FALSE){
                 $migstr = '';
-                $this->getWorkbench()->getLogger()->error('SQL Script hat kein Down-Script! '); 
+                $this->getWorkbench()->getLogger()->warning('SQL migration has now down-script! '); 
             }                       
         }
         else{

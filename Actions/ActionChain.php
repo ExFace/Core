@@ -177,7 +177,7 @@ class ActionChain extends AbstractAction
 
     public function getName()
     {
-        if (! parent::hasName()) {
+        if (! parent::hasName() && empty($this->getActions()) === false) {
             return $this->getActions()->getFirst()->getName();
         }
         return parent::getName();

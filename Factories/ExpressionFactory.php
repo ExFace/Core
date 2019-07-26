@@ -22,14 +22,14 @@ abstract class ExpressionFactory
      * @param MetaObjectInterface $object            
      * @return ExpressionInterface
      */
-    public static function createFromString(Workbench $exface, $string, $meta_object = null) : ExpressionInterface
+    public static function createFromString(Workbench $exface, $string, $meta_object = null, $treatUnquotedAsString = false) : ExpressionInterface
     {
         // IDEA cache expressions within the workbench instead of a static cache?
         
-        $objId = $meta_object === null ? 'null' : $meta_object->getId();
+        $objId = $meta_object === null ? 'null' : $meta_object->getId()  . '-' . $treatUnquotedAsString;
         
         if (! isset(self::$cache[$string]) || ! isset(self::$cache[$string][$objId])) {
-            $expr = new Expression($exface, $string, $meta_object);
+            $expr = new Expression($exface, $string, $meta_object, $treatUnquotedAsString);
             self::$cache[$string][$objId] = $expr;
         } else {
             $expr = self::$cache[$string][$objId];

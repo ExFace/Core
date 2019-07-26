@@ -36,6 +36,7 @@ class Expression implements ExpressionInterface
     const TYPE_STRING = 'string';
     const TYPE_NUMBER = 'number';
     const TYPE_REFERENCE = 'reference';
+    const TYPE_UNKNOWN = 'unknown';
     
     private $attributes = null;
 
@@ -63,11 +64,11 @@ class Expression implements ExpressionInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::__constuct()
      */
-    function __construct(\exface\Core\CommonLogic\Workbench $exface, $string, MetaObjectInterface $meta_object = null)
+    function __construct(\exface\Core\CommonLogic\Workbench $exface, $string, MetaObjectInterface $meta_object = null, $treatUnquotedAsString = false)
     {
         $this->exface = $exface;
         $this->meta_object = $meta_object;
-        $this->parse($string);
+        $this->parse($string, $treatUnquotedAsString);
         $this->originalString = $string;
     }
 
@@ -76,7 +77,7 @@ class Expression implements ExpressionInterface
      *
      * @param string $expression
      */
-    protected function parse($expression)
+    protected function parse($expression, $treatUnquotedAsString = false)
     {
         $expression = trim($expression);
         // see, what type of expression it is. Depending on the type, the evaluate() method will give different results.
@@ -111,6 +112,7 @@ class Expression implements ExpressionInterface
                 }
             }
         } else {
+            // Finally, if it's neither a quoted string, nor a number nor does it start with "=", it must be an attribute alias.
             try {
                 if (! $this->getMetaObject() || ($this->getMetaObject() && $this->getMetaObject()->hasAttribute($expression))) {
                     $isAttributeAlias = true;
@@ -120,7 +122,6 @@ class Expression implements ExpressionInterface
             } catch (MetaRelationResolverExceptionInterface $ea) {
                 $isAttributeAlias = false;
             }
-            // Finally, if it's neither a quoted string, nor a number nor does it start with "=", it must be an attribute alias.
             if ($isAttributeAlias) {
                 $this->attribute_alias = $expression;
                 $this->type = self::TYPE_ATTRIBUTE;
@@ -129,7 +130,16 @@ class Expression implements ExpressionInterface
                 // when setting widget values (just about in every prefill).
                 // FIXME If the prefill value happens to be the same as an attribute or relation path, this is going to produce 
                 // strange behavior!
-                $this->type = self::TYPE_STRING;
+                // FIXME #expression-syntax depending on where the expression comes from, an unquoted string, that is not
+                // a valid attribute alias may represent different things. If this expression comes from deserializing a data
+                // sheet, it might just be some column id used to add a faked column. If it comes from a widget's setValue()
+                // it is surely a string value - see AbstractWidget::setValue(). This is really a mess, that should be cleaned
+                // up! There is a lot of testing neede, though.
+                if ($treatUnquotedAsString === true) {
+                    $this->type = self::TYPE_STRING;
+                } else {
+                    $this->type = self::TYPE_UNKNOWN;
+                }
                 $this->value = $str === false ? '' : $str;
             }
         }
@@ -209,6 +219,7 @@ class Expression implements ExpressionInterface
     protected function parseQuotedString($expression)
     {
         if ($this::detectQuotedString($expression)) {
+            // FIXME #expression-syntax need to unescape the quotes inside the string somehow here.
             return trim($expression, '"\'');
         } else {
             return false;

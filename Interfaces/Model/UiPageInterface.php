@@ -138,6 +138,13 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return AppInterface
      */
     public function getApp();
+    
+    /**
+     * Returns TRUE if the page is part of an app and FALSE if it is not assigned to any app.
+     * 
+     * @return bool
+     */
+    public function hasApp() : bool;
 
     /**
      * Returns FALSE if the page should not be updated automatically when its

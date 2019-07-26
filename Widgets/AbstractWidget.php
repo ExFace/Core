@@ -604,7 +604,7 @@ abstract class AbstractWidget implements WidgetInterface
      * Explicitly sets the value of the widget
      *
      * @uxon-property value
-     * @uxon-type model:expression
+     * @uxon-type string|model:formula
      *
      * TODO Move to iHaveValue-Widgets or trait
      *
@@ -615,7 +615,18 @@ abstract class AbstractWidget implements WidgetInterface
         if ($expression_or_string instanceof expression) {
             $this->value = $expression_or_string;
         } else {
-            $this->value = ExpressionFactory::createFromString($this->getWorkbench(), $expression_or_string, $this->getMetaObject());
+            // FIXME #expression-syntax Handling of value-expressions seems really buggy. On the one hand, 
+            // passing a string value should result in the widget showing this exact value - no matter if
+            // it included quotes or not. On the other hand, a non-quoted string would result in an Expression
+            // of UNKNOWN type, which is not static, thus widgets would not show anything unless prefilled. If
+            // we add quotes to signal, that this is a static string, they will show up in the widget even
+            // if the user did not want them. For example, many doPrefill() methods would just result in
+            // setValue($prefillValue) - no quotes, no checks for data type, althoug this clearly is a static
+            // value. Finally, if the user sets the value in UXON, the general expression syntax suggests to use 
+            // quotes for strings, but these would show up in the UI. 
+            // Here is a temporary solution for the problem: tell the ExpressionFactory to treat unquoted strings
+            // as strings in this case explicitly.
+            $this->value = ExpressionFactory::createFromString($this->getWorkbench(), $expression_or_string, $this->getMetaObject(), true);
         }
         return $this;
     }

@@ -2242,7 +2242,7 @@ JS;
     protected function buildJsMessageOverlayHide() : string
     {
         return <<<JS
-if ($(".exf-chart-message")[0]) {
+if ($(".exf-chart-message").length > 0) {
     $(".exf-chart-message").remove();
 }
 

@@ -22,6 +22,9 @@
 	"ACTION.SHOWOBJECTEDITDIALOG.NO_EDITABLE_ATTRIBUTES": "Keine editierbaren Attribute gefunden!",
 	"ACTION.SHOWOBJECTEDITDIALOG.DATA_SOURCE_NOT_WRITABLE": "Kein Schreibzugriff auf Datenquelle erlaubt!",
 
+	"ACTION.CLEARCACHE.NAME": "Cache leeren",
+	"ACTION.CLEARCACHE.RESULT": "Cache geleert!",
+	
 	"ACTION.DOWNLOADZIPPEDFOLDER.NAME": "Download ZIP",
 	
 	"ACTION.EXPORTCSV.NAME": "CSV exportieren",

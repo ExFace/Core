@@ -104,10 +104,11 @@ class StringDataType extends AbstractDataType
      */
     public static function startsWith($haystack, $needle, $case_sensitive = true)
     {
+        $substr = substr($haystack, 0, strlen($needle));
         if ($case_sensitive) {
-            return substr($haystack, 0, strlen($needle)) === $needle;
+            return $substr === $needle;
         } else {
-            return substr(mb_strtoupper($haystack), 0, strlen(mb_strtoupper($needle))) === mb_strtoupper($needle);
+            return strcasecmp($substr, $needle) === 0;
         }
     }
     
