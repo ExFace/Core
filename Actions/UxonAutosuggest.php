@@ -88,6 +88,8 @@ class UxonAutosuggest extends AbstractAction
             if (StringDataType::endsWith($rootPrototypeSelector, '.php', false)) {
                 $rootPrototypeClass = str_replace("/", "\\", substr($rootPrototypeSelector, 0, -4));
                 $rootPrototypeClass = "\\" . ltrim($rootPrototypeClass, "\\");
+            } elseif (! $rootPrototypeSelector || $rootObjectSelector === 'null' || $rootObjectSelector === 'undefined') {
+                $rootPrototypeClass = null;
             } else {
                 $rootPrototypeClass = $rootPrototypeSelector;
             }
@@ -138,11 +140,7 @@ class UxonAutosuggest extends AbstractAction
     
     protected function suggestPropertyNames(UxonSchema $schema, UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
     {
-        if ($rootPrototypeClass === null) {
-            $prototypeClass = $schema->getPrototypeClass($uxon, $path);
-        } else {
-            $prototypeClass = $schema->getPrototypeClass($uxon, $path, $rootPrototypeClass);
-        }
+        $prototypeClass = $schema->getPrototypeClass($uxon, $path, $rootPrototypeClass);
         return [
             'values' => $schema->getProperties($prototypeClass),
             'templates' => $schema->getPropertiesTemplates($prototypeClass)

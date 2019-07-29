@@ -253,6 +253,7 @@ JS;
             return aSuggestions;
         }
 
+        sSearch = sSearch.toLowerCase();
         var aFiltered = [[],[],[]];
         var aResult = [];
         var iLen = aSuggestions.length;

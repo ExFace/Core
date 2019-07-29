@@ -5,6 +5,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Selectors\WidgetSelector;
 use exface\Core\Factories\UiPageFactory;
+use exface\Core\Widgets\AbstractWidget;
 
 /**
  * UXON-schema class for widgets.
@@ -21,9 +22,9 @@ class WidgetSchema extends UxonSchema
      * {@inheritDoc}
      * @see \exface\Core\Uxon\UxonSchema::getPrototypeClass()
      */
-    public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass = '\exface\Core\Widgets\AbstractWidget') : string
+    public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : string
     {
-        $name = $rootPrototypeClass;
+        $name = $rootPrototypeClass ?? $this->getDefaultPrototypeClass();
         
         foreach ($uxon as $key => $value) {
             if (strcasecmp($key, 'widget_type') === 0) {
@@ -57,5 +58,10 @@ class WidgetSchema extends UxonSchema
     protected function getPrototypeClassFromWidgetType(string $widgetType) : string
     {
         return WidgetFactory::getWidgetClassFromType($widgetType);
+    }
+    
+    protected function getDefaultPrototypeClass() : string
+    {
+        return '\\' . AbstractWidget::class;
     }
 }

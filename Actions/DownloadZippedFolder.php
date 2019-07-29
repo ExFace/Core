@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * This action packs all files of a given folder into a ZIP archive lets the user download it.
@@ -91,7 +92,14 @@ class DownloadZippedFolder extends AbstractAction
     protected function createZip(TaskInterface $task) : ArchiveManager
     {
         $folderPath = $this->getFolderPathAbsolute($task);
-        $zip = new ArchiveManager($this->getWorkbench(), $this->getZipPathAbsolute($folderPath));
+        if (empty(StringDataType::findPlaceholders($folderPath)) === false) {
+            $folderPath = StringDataType::replacePlaceholders($folderPath, $this->getInputDataSheet($task)->getRow(0));
+        }
+        $zipPath = $this->getZipPathAbsolute($folderPath);
+        if (empty(StringDataType::findPlaceholders($zipPath)) === false) {
+            $zipPath = StringDataType::replacePlaceholders($zipPath, $this->getInputDataSheet($task)->getRow(0));
+        }
+        $zip = new ArchiveManager($this->getWorkbench(), $zipPath);
         $zip->addFolder($folderPath);
         $zip->close();
         return $zip;
@@ -120,6 +128,8 @@ class DownloadZippedFolder extends AbstractAction
     
     /**
      * Defines a custom path and filename for the created zip file.
+     * 
+     * The path may include placeholders with names of input data columns.
      * 
      * If not set, the ZIP file will be saved in the cache folder.
      * 
@@ -154,13 +164,14 @@ class DownloadZippedFolder extends AbstractAction
             $inputData = $this->getInputDataSheet($task);
             $path = $inputData->getColumns()->getByAttribute($inputData->getMetaObject()->getAttribute($this->getFolderPathAttributeAlias()))->getCellValue(0);
         }
-        return $this->makeAbsolutePath($path);
+        return $this->makeAbsolutePath($path ?? '');
     }
     
     /**
      * Sets a static path to the folder to zip and download.
      * 
      * The path can be either static or relative to the installation folder of the plattform.
+     * It also may include placeholders with names of input data columns.
      * 
      * @uxon-property folder_path
      * @uxon-type string

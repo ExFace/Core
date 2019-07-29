@@ -94,8 +94,14 @@ class DateDataType extends AbstractDataType
         return false;
     }
     
-    public static function formatDate(\DateTime $date){
+    public static function formatDate(\DateTime $date) : string
+    {
         return $date->format('Y-m-d');
+    }
+    
+    public static function now() : string
+    {
+        return static::formatDate((new \DateTime()));
     }
     
     /**

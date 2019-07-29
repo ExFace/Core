@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Uxon;
 
+use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+
 /**
  * UXON-schema class for meta object behaviors.
  * 
@@ -10,5 +12,14 @@ namespace exface\Core\Uxon;
  *
  */
 class BehaviorSchema extends UxonSchema
-{    
+{
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Uxon\UxonSchema::getDefaultPrototypeClass()
+     */
+    protected function getDefaultPrototypeClass() : string
+    {
+        return '\\' . AbstractBehavior::class;
+    }
 }
