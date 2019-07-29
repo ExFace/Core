@@ -86,7 +86,7 @@ class UxonAutosuggest extends AbstractAction
             if (StringDataType::endsWith($rootPrototypeSelector, '.php', false)) {
                 $rootPrototypeClass = str_replace("/", "\\", substr($rootPrototypeSelector, 0, -4));
                 $rootPrototypeClass = "\\" . ltrim($rootPrototypeClass, "\\");
-            } elseif($rootObjectSelector === 'null' || ! $rootPrototypeSelector) {
+            } elseif (! $rootPrototypeSelector || $rootObjectSelector === 'null' || $rootObjectSelector === 'undefined') {
                 $rootPrototypeClass = null;
             } else {
                 $rootPrototypeClass = $rootPrototypeSelector;
