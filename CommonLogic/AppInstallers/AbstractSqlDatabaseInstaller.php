@@ -315,8 +315,10 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
-     * Function to set the migration table name.
-     * Default: '_migration'
+     * Changes the migration table name to a custom value (default is '_migrations').
+     * 
+     * NOTE: you MUST use a custom table name if you have multiple installers operating 
+     * on the same database!
      * 
      * @param string $migrations_table_name
      * @return AbstractSqlDatabaseInstaller
