@@ -4,6 +4,7 @@ namespace exface\Core\Uxon;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\AbstractAction;
 
 /**
  * UXON-schema class for actions.
@@ -20,9 +21,9 @@ class ActionSchema extends UxonSchema
      * {@inheritDoc}
      * @see \exface\Core\Uxon\UxonSchema::getPrototypeClass()
      */
-    public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass = '\exface\Core\CommonLogic\AbstractAction') : string
+    public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : string
     {
-        $name = $rootPrototypeClass;
+        $name = $rootPrototypeClass ?? $this->getDefaultPrototypeClass();
         
         foreach ($uxon as $key => $value) {
             if (strcasecmp($key, 'alias') === 0) {
@@ -56,5 +57,10 @@ class ActionSchema extends UxonSchema
             return '\exface\Core\CommonLogic\AbstractAction';
         }
         return get_class($action);
+    }
+    
+    protected function getDefaultPrototypeClass() : string
+    {
+        return '\\' . AbstractAction::class;
     }
 }

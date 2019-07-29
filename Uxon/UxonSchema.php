@@ -88,8 +88,10 @@ class UxonSchema implements UxonSchemaInterface
      * {@inheritdoc}
      * @see UxonSchemaInterface::getPrototypeClass()
      */
-    public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass) : string
+    public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : string
     {
+        $rootPrototypeClass = $rootPrototypeClass ?? $this->getDefaultPrototypeClass();
+        
         if (count($path) > 1) {
             $prop = array_shift($path);
             
@@ -111,6 +113,11 @@ class UxonSchema implements UxonSchemaInterface
         }
         
         return $rootPrototypeClass;
+    }
+    
+    protected function getDefaultPrototypeClass() : string
+    {
+        return '';
     }
     
     /**
@@ -267,13 +274,13 @@ class UxonSchema implements UxonSchemaInterface
             // If we are in an array, use the data from the parent property (= the array)
             // for every item within the array.
             $prop = mb_strtolower($path[(count($path)-2)]);
-            $prototypeClass = $rootPrototypeClass !== null ? $this->getPrototypeClass($uxon, $path, $rootPrototypeClass) : $this->getPrototypeClass($uxon, $path);
+            $prototypeClass = $this->getPrototypeClass($uxon, $path, $rootPrototypeClass);
             $propertyTypes = $this->getPropertyTypes($prototypeClass, $prop);
             $firstType = trim($propertyTypes[0]);
             $firstType = rtrim($firstType, "[]");
         } else {
             // In all other cases, try to find something for the top-most property in the path
-            $prototypeClass = $rootPrototypeClass !== null ? $this->getPrototypeClass($uxon, $path, $rootPrototypeClass) : $this->getPrototypeClass($uxon, $path);
+            $prototypeClass = $this->getPrototypeClass($uxon, $path, $rootPrototypeClass);
             $propertyTypes = $this->getPropertyTypes($prototypeClass, $prop);
             $firstType = trim($propertyTypes[0]);
         }

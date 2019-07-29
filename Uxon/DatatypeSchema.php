@@ -4,6 +4,7 @@ namespace exface\Core\Uxon;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 
 /**
  * UXON-schema class for data types.
@@ -20,9 +21,9 @@ class DatatypeSchema extends UxonSchema
      * {@inheritDoc}
      * @see \exface\Core\Uxon\UxonSchema::getPrototypeClass()
      */
-    public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass = '\exface\Core\CommonLogic\DataTypes\AbstractDataType') : string
+    public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : string
     {
-        $name = $rootPrototypeClass;
+        $name = $rootPrototypeClass ?? $this->getDefaultPrototypeClass();
         
         foreach ($uxon as $key => $value) {
             if (strcasecmp($key, 'alias') === 0) {
@@ -56,5 +57,10 @@ class DatatypeSchema extends UxonSchema
             return '\exface\Core\CommonLogic\AbstractAction';
         }
         return get_class($instance);
+    }
+    
+    protected function getDefaultPrototypeClass() : string
+    {
+        return '\\' . AbstractDataType::class;
     }
 }
