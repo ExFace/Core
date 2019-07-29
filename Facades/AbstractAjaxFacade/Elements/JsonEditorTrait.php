@@ -475,6 +475,9 @@ CSS;
      */
     protected function buildJsEditorAddHelpButton() : string
     {
+        if (! $this->getWidget() instanceof InputUxon) {
+            return '';
+        }
         $addHelpButtonFunction = $this::buildJsFunctionNameAddHelpButton($this->buildJsFunctionPrefix());
         /* @var \exface\Core\Facades\DocsFacade $docsFacade */
         $docsFacade = FacadeFactory::createFromAnything(DocsFacade::class, $this->getWorkbench());
