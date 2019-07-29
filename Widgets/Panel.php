@@ -32,7 +32,9 @@ class Panel extends WidgetGrid implements iSupportLazyLoading, iHaveIcon, iAmCol
     use WidgetLayoutTrait;
     use iAmCollapsibleTrait;
     use iHaveIconTrait;
-    use iSupportLazyLoadingTrait;
+    use iSupportLazyLoadingTrait {
+        getLazyLoading as getLazyLoadingViaTrait;
+    }
     
     /**
      *
@@ -57,5 +59,14 @@ class Panel extends WidgetGrid implements iSupportLazyLoading, iHaveIcon, iAmCol
     public function getAlternativeContainerForOrphanedSiblings()
     {
         return $this;
+    }
+    
+    /**
+     * {@inheritdoc}
+     * @see iSupportLazyLoadingTrait::getLazyLoading()
+     */
+    public function getLazyLoading($default = false) : bool
+    {
+        return $this->getLazyLoadingViaTrait($default);
     }
 }

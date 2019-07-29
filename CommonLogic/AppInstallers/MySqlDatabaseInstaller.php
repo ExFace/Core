@@ -188,7 +188,7 @@ SQL;
      */
     protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration
     {
-        if ($migration->getIsUp() == FALSE) {
+        if ($migration->isUp() == FALSE) {
             throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' already down!');
         }
         $this->ensureMigrationsTableExists($connection);
