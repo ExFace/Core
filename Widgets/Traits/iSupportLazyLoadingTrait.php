@@ -173,6 +173,9 @@ trait iSupportLazyLoadingTrait {
      */
     public function getAction()
     {
+        if ($this->getLazyLoading() === false) {
+            return null;
+        }
         return $this->getLazyLoadingAction();
     }
     
