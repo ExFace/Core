@@ -23,7 +23,7 @@ class ChartSeriesUxonSchema extends UxonSchema
      * {@inheritDoc}
      * @see \exface\Core\Uxon\UxonSchema::getPrototypeClass()
      */
-    public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass = '\exface\Core\Widgets\AbstractWidget') : string
+    public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : string
     {
         $name = $rootPrototypeClass;
         
@@ -42,5 +42,15 @@ class ChartSeriesUxonSchema extends UxonSchema
         }
         
         return $name;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Uxon\UxonSchema::getDefaultPrototypeClass()
+     */
+    protected function getDefaultPrototypeClass() : string
+    {
+        return '\\' . ChartSeries::class;
     }
 }

@@ -11,10 +11,10 @@ interface UxonSchemaInterface extends WorkbenchDependantInterface
      *
      * @param UxonObject $uxon
      * @param array $path
-     * @param string $rootPrototypeClass
+     * @param string|NULL $rootPrototypeClass
      * @return string
      */
-    public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass) : string;
+    public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : string;
     
     /**
      * Returns the value of an inheritable property from the point of view of the end of the given path.
