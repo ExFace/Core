@@ -154,7 +154,7 @@ class DownloadZippedFolder extends AbstractAction
             $inputData = $this->getInputDataSheet($task);
             $path = $inputData->getColumns()->getByAttribute($inputData->getMetaObject()->getAttribute($this->getFolderPathAttributeAlias()))->getCellValue(0);
         }
-        return $this->makeAbsolutePath($path);
+        return $this->makeAbsolutePath($path ?? '');
     }
     
     /**
