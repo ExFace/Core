@@ -2491,7 +2491,7 @@ JS;
         $widget = $this->getWidget();
         $firstSeries = $widget->getSeries()[0];
         $position = $widget->getLegendPosition();
-        if ($position === null && ( $firstSeries instanceof PieChartSeries || $firstSeries instanceof GraphChartSeries)) {
+        if ($this->legendHidden() === true) {
             $positionJs = "show: false";
         } elseif ($position == 'top' ) {
             $positionJs = "top: 'top',";
@@ -2657,6 +2657,9 @@ JS;
         $widget = $this->getWidget();
         if ($widget->getLegendPosition() !== null) {
             return false;
+        }
+        if ($widget->isLegendHidden() === true) {
+            return true;
         }
         $firstSeries = $widget->getSeries()[0];
         if (count($widget->getSeries()) == 1 && (($firstSeries instanceof PieChartSeries) === false || $firstSeries instanceof GraphChartSeries === false)) {
