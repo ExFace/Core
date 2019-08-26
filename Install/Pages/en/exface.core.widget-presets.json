@@ -1,64 +1,78 @@
 {
-    "id": "0xb9d24bcaa23e11e9ae46106530e7aff7",
-    "alias_with_namespace": "exface.core.widget-presets",
-    "menu_parent_page_alias": "exface.core.metamodel",
-    "menu_index": "8",
-    "menu_visible": true,
-    "name": "Widget Presets",
-    "description": "",
-    "intro": "",
-    "replaces_page_alias": null,
-    "contents": {
-        "widget_type": "DataTable",
-        "object_alias": "exface.Core.WIDGET_PRESET",
-        "filters": [
-            {
-                "attribute_alias": "NAME"
-            },
-            {
-                "attribute_alias": "APP"
-            },
-            {
-                "attribute_alias": "WIDGET"
-            }
-        ],
-        "columns": [
-            {
-                "attribute_alias": "NAME"
-            },
-            {
-                "attribute_alias": "APP__LABEL"
-            },
-            {
-                "attribute_alias": "WIDGET__LABEL"
-            },
-            {
-                "attribute_alias": "DESCRIPTION"
-            },
-            {
-                "attribute_alias": "CREATED_ON"
-            }
-        ],
-        "sorters": [
-            {
-                "attribute_alias": "CREATED_ON",
-                "direction": "desc"
-            }
-        ],
-        "buttons": [
-            {
-                "action_alias": "exface.Core.ShowObjectCreateDialog"
-            },
-            {
-                "action_alias": "exface.Core.ShowObjectEditDialog",
-                "bind_to_double_click": true
-            },
-            {
-                "action_alias": "exface.Core.ShowObjectCopyDialog"
-            },
-            {
-                "action_alias": "exface.Core.DeleteObject"
-            }
-        ]
-    }
+	"id": "0xb9d24bcaa23e11e9ae46106530e7aff7",
+	"alias_with_namespace": "exface.core.widget-presets",
+	"menu_parent_page_alias": "exface.core.metamodel",
+	"menu_index": "8",
+	"menu_visible": true,
+	"name": "Widget Presets",
+	"description": "",
+	"intro": "",
+	"replaces_page_alias": null,
+	"contents": {
+		"widget_type": "DataTable",
+		"object_alias": "exface.Core.WIDGET_PRESET",
+		"filters": [
+			{
+				"attribute_alias": "NAME"
+			},
+			{
+				"attribute_alias": "APP"
+			},
+			{
+				"attribute_alias": "WIDGET"
+			},
+			{
+				"attribute_alias": "WRAP_FLAG"
+			}
+		],
+		"columns": [
+			{
+				"attribute_alias": "NAME"
+			},
+			{
+				"attribute_alias": "APP__LABEL"
+			},
+			{
+				"attribute_alias": "WIDGET__LABEL"
+			},
+			{
+				"attribute_alias": "DESCRIPTION"
+			},
+			{
+				"attribute_alias": "CREATED_ON"
+			},
+			{
+				"attribute_alias": "UXON",
+				"hidden": true
+			},
+			{
+				"attribute_alias": "WRAP_FLAG"
+			},
+			{
+				"hidden": true,
+				"attribute_alias": "WRAP_PATH"
+			}
+		],
+		"sorters": [
+			{
+				"attribute_alias": "WIDGET",
+				"direction": "desc"
+			}
+		],
+		"buttons": [
+			{
+				"action_alias": "exface.Core.ShowObjectCreateDialog"
+			},
+			{
+				"action_alias": "exface.Core.ShowObjectEditDialog",
+				"bind_to_double_click": true
+			},
+			{
+				"action_alias": "exface.Core.ShowObjectCopyDialog"
+			},
+			{
+				"action_alias": "exface.Core.DeleteObject"
+			}
+		]
+	}
 }

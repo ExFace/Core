@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2019-07-09 11:35:26",
-            "MODIFIED_ON": "2019-07-09 11:57:31",
+            "MODIFIED_ON": "2019-07-22 11:39:18",
             "CREATED_BY_USER": "0x11e9876d60774992bb32106530e7aff7",
             "MODIFIED_BY_USER": "0x11e9876d60774992bb32106530e7aff7",
             "UID": "0x11e9a23da60d78a6949f106530e7aff7",
@@ -96,7 +96,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Form\",\"widgets\":[{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"WIDGET\"},{\"attribute_alias\":\"DESCRIPTION\",\"width\":2},{\"attribute_alias\":\"UXON\",\"width\":2,\"height\":20,\"hide_caption\":true}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Form\",\"widgets\":[{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"WIDGET\"},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Use as wrapper\",\"widgets\":[{\"attribute_alias\":\"WRAP_FLAG\",\"id\":\"wrap_flag\",\"disabled\":false,\"widget_type\":\"InputCheckBox\",\"display_only\":true},{\"attribute_alias\":\"WRAP_PATH\",\"widget_type\":\"Input\",\"disable_condition\":{\"widget_link\":\"wrap_flag\",\"comparator\":\"==\",\"value\":0}}]},{\"attribute_alias\":\"DESCRIPTION\",\"width\":1},{\"attribute_alias\":\"UXON\",\"width\":2,\"height\":20,\"hide_caption\":true}]}",
             "ALIAS": "WIDGET_PRESET",
             "DATA_ADDRESS": "exf_widget_preset"
         }

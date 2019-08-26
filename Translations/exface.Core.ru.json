@@ -168,6 +168,8 @@
 	"WIDGET.TEXT.STYLE_ITALIC": "Italic",
 	"WIDGET.TEXT.STYLE_STRIKETHROUGH": "Strike-through",
 	
+	"WIDGET.EDITOR.HELP":  "помощь",
+	"WIDGET.EDITOR.PRESET_HINT": "Нажмите здесь, чтобы использовать предложения!",
 	"WIDGET.INPUT.EMPTY_TEXT": "",
 	
 	"ERROR.CAPTION": "Error",
