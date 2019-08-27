@@ -77,7 +77,7 @@ trait JExcelTrait
                         $script = <<<JS
                         
     !function(){
-        var jqExcel = $('#{$this->getId()}');
+        var jqExcel = {$this->buildJsJqueryElement()};
         var aData = jqExcel.jexcel('getData');
         if (aData.length > {$this->getMinSpareRows()}) {
             return;
@@ -117,7 +117,7 @@ JS;
                             $script = <<<JS
                             
     !function(){
-        var jqExcel = $('#{$this->getId()}');
+        var jqExcel = {$this->buildJsJqueryElement()};
         var oData = {
             footer: [
                 {
@@ -154,6 +154,14 @@ JS;
         
     }
     
+    /**
+     * Returns the jQuery element for jExcel - e.g. $('#element_id') in most cases.
+     * @return string
+     */
+    protected function buildJsJqueryElement() : string
+    {
+        return "$('#{$this->getId()}')";
+    }
     
     protected function buildHtmlJExcel() : string
     {
@@ -178,7 +186,7 @@ JS;
         
         return <<<JS
 
-    $('#{$this->getId()}')
+    {$this->buildJsJqueryElement()}
     .data('_exfColumnNames', {$colNamesJson})
     .jexcel({
         data: [ [] ],
@@ -191,7 +199,7 @@ JS;
         {$this->buildJsJExcelColumns()}
         {$this->buildJsJExcelMinSpareRows()}
         onload: function(instance) {
-            var jqSelf = $('#{$this->getId()}');
+            var jqSelf = {$this->buildJsJqueryElement()};
             {$this->buildJsFixedFootersOnLoad('jqSelf')}
         },
         updateTable: function(instance, cell, col, row, value, label, cellName) {
@@ -377,7 +385,7 @@ JS;
         }
         return <<<JS
 
-                        var jqSelf = $('#{$this->getId()}');
+                        var jqSelf = {$this->buildJsJqueryElement()};
                         var aData = jqSelf.jexcel('getData');
 
                         if (aData.length <= {$this->getMinSpareRows()}) return;
@@ -597,7 +605,7 @@ JS;
     public function buildJsDataGetter(ActionInterface $action = null)
     {
         $widget = $this->getWidget();
-        $rows = $this->buildJsConvertArrayToData("$('#{$this->getId()}').jexcel('getData', false)");
+        $rows = $this->buildJsConvertArrayToData("{$this->buildJsJqueryElement()}.jexcel('getData', false)");
             
         if ($widget->isEditable() && $action && ! $action->getMetaObject()->is($widget->getMetaObject()) === true) {
             // If the data is intended for another object, make it a nested data sheet
@@ -656,7 +664,7 @@ JS;
         aData = {$this->buildJsConvertDataToArray('oData.rows')}
     }
     if (aData.length > 0) {
-        $('#{$this->getId()}').jexcel('setData', aData);
+        {$this->buildJsJqueryElement()}.jexcel('setData', aData);
     }
 }()
 
@@ -669,7 +677,7 @@ JS;
 function() {
     var aDataArray = {$arrayOfArraysJs};
     var aData = [];
-    var jExcel = $('#{$this->getId()}');
+    var jExcel = {$this->buildJsJqueryElement()};
     var oColNames = jExcel.data('_exfColumnNames');
     aDataArray.forEach(function(aRow, i){
         var oRow = {};
@@ -705,7 +713,7 @@ JS;
 function() {
     var aDataRows = {$arrayOfObjectsJs};
     var aData = [];
-    var jExcel = $('#{$this->getId()}');
+    var jExcel = {$this->buildJsJqueryElement()};
     var oColNames = jExcel.data('_exfColumnNames');
     var aColHeaders = jExcel.jexcel('getHeaders').split(',');
     var oColIdxCache = {};
@@ -750,7 +758,7 @@ JS;
     
     public function buildJsDataResetter() : string
     {
-        return "$('#{$this->getId()}').jexcel('setData', [ [] ])";
+        return "{$this->buildJsJqueryElement()}.jexcel('setData', [ [] ])";
     }
     
     protected function buildJsFunctionsForJExcel() : string
