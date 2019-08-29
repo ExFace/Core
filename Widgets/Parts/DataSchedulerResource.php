@@ -66,7 +66,7 @@ class DataSchedulerResource implements WidgetPartInterface
      * visible data column.
      * 
      * @uxon-property title
-     * @uxon-type expression
+     * @uxon-type metamodel:expression
      * 
      * @param string $value
      * @return DataSchedulerResource
@@ -117,7 +117,7 @@ class DataSchedulerResource implements WidgetPartInterface
      * visible data column.
      *
      * @uxon-property subtitle
-     * @uxon-type expression
+     * @uxon-type metamodel:expression
      *
      * @param string $value
      * @return DataSchedulerResource

@@ -71,6 +71,10 @@ class DataCalendarItem implements WidgetPartInterface
     }
     
     /**
+     * Start time for every item: attribute alias or formula
+     * 
+     * @uxon-property start_time
+     * @uxon-type metamodel:attribute|metamodel:formula
      * 
      * @param string $value
      * @return DataCalendarItem
@@ -97,6 +101,10 @@ class DataCalendarItem implements WidgetPartInterface
     }
     
     /**
+     * End time for every item: attribute alias or formula
+     * 
+     * @uxon-property end_time
+     * @uxon-type metamodel:attribute|metamodel:formula
      * 
      * @param string $value
      * @return DataCalendarItem
@@ -160,7 +168,7 @@ class DataCalendarItem implements WidgetPartInterface
      * visible data column.
      * 
      * @uxon-property title
-     * @uxon-type expression
+     * @uxon-type metamodel:expression
      * 
      * @param string $value
      * @return DataCalendarItem
@@ -211,7 +219,7 @@ class DataCalendarItem implements WidgetPartInterface
      * visible data column.
      *
      * @uxon-property subtitle
-     * @uxon-type expression
+     * @uxon-type metamodel:expression
      *
      * @param string $value
      * @return DataCalendarItem
