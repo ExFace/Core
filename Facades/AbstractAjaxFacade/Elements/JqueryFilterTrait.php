@@ -15,11 +15,25 @@ trait JqueryFilterTrait {
     public function buildJsConditionGetter($valueJs = null)
     {
         $widget = $this->getWidget();
+        if ($widget->hasCustomConditionGroup() === true) {
+            return '';
+        }
         if ($widget->isDisplayOnly() === true) {
             return '';
         }
         $value = is_null($valueJs) ? $this->buildJsValueGetter() : $valueJs;
         return '{expression: "' . $widget->getAttributeAlias() . '", comparator: ' . $this->buildJsComparatorGetter() . ', value: ' . $value . ', object_alias: "' . $widget->getMetaObject()->getAliasWithNamespace() . '"}';
+    }
+    
+    public function buildJsCustomConditionGroup($valueJs = null) : string
+    {
+        $widget = $this->getWidget();
+        if ($widget->hasCustomConditionGroup() === false) {
+            return '';
+        }
+        
+        $jsonWithValuePlaceholder = $widget->getCustomConditionGroup()->exportUxonObject()->toJson(false);
+        return str_replace('"[#value#]"', $valueJs ?? $this->buildJsValueGetter(), $jsonWithValuePlaceholder);
     }
     
     public function buildJsComparatorGetter()

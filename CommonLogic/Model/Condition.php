@@ -352,7 +352,10 @@ class Condition implements ConditionInterface
         } elseif ($uxon_object->hasProperty('attribute_alias')) {
             $expression = $uxon_object->getProperty('attribute_alias');
         }
-        $this->setExpression($this->exface->model()->parseExpression($expression, $this->exface->model()->getObject($uxon_object->getProperty('object_alias'))));
+        if (! $objAlias = $uxon_object->getProperty('object_alias')) {
+            throw new UxonParserError($uxon_object, 'Invalid UXON condition syntax: Missing object alias!');
+        }
+        $this->setExpression($this->exface->model()->parseExpression($expression, $this->exface->model()->getObject($objAlias)));
         if ($uxon_object->hasProperty('comparator') && $comp = $uxon_object->getProperty('comparator')) {
             $this->setComparator($comp);
         }
