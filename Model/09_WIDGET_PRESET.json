@@ -1,0 +1,88 @@
+{
+    "object_alias": "exface.Core.WIDGET_PRESET",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "DESCRIPTION",
+            "attribute_alias": "DESCRIPTION"
+        },
+        {
+            "name": "WIDGET",
+            "attribute_alias": "WIDGET"
+        },
+        {
+            "name": "UXON",
+            "attribute_alias": "UXON"
+        },
+        {
+            "name": "WRAP_PATH",
+            "attribute_alias": "WRAP_PATH"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2019-07-11 15:11:07",
+            "MODIFIED_ON": "2019-07-29 13:36:34",
+            "CREATED_BY_USER": "0x11e9876d60774992bb32106530e7aff7",
+            "MODIFIED_BY_USER": "0x11e9876d60774992bb32106530e7aff7",
+            "UID": "0x11e9a3ee1c889204b6f7106530e7aff7",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Split Top-Bottom",
+            "DESCRIPTION": "",
+            "WIDGET": "exface\/Core\/Widgets\/SplitVertical.php",
+            "UXON": "{\"object_alias\":\"\",\"widget_type\":\"SplitVertical\",\"panels\":[{\"caption\":\"\",\"height\":\"50%\",\"widgets\":[{\"\":\"\"}]},{\"caption\":\"\",\"widgets\":[{\"\":\"\"}]}]}",
+            "WRAP_PATH": "$.panels[0].widgets[0]"
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.WIDGET_PRESET"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

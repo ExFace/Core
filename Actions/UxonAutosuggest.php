@@ -15,6 +15,7 @@ use exface\Core\Uxon\BehaviorSchema;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Factories\DataSheetFactory;
 
 /**
  * Returns autosuggest values for provided UXON objects.
@@ -63,6 +64,7 @@ class UxonAutosuggest extends AbstractAction
     
     const TYPE_FIELD = 'field';
     const TYPE_VALUE = 'value';
+    const TYPE_PRESET = 'preset';
     
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
@@ -110,11 +112,33 @@ class UxonAutosuggest extends AbstractAction
         
         if (strcasecmp($type, self::TYPE_FIELD) === 0) {
             $options = $this->suggestPropertyNames($schema, $uxon, $path, $rootPrototypeClass);
-        } else {
+        } elseif (strcasecmp($type, self::TYPE_PRESET) === 0) {
+            $options = $this->suggestPresets($schema, $uxon, $path, $rootPrototypeClass);
+        } else{
             $options = $this->suggestPropertyValues($schema, $uxon, $path, $currentText, $rootPrototypeClass, $rootObject);
         }
         
         return ResultFactory::createJSONResult($task, $options);
+    }
+    
+    protected function suggestPresets(UxonSchema $schema, UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
+    {
+        $presets = [];
+        
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.WIDGET_PRESET');
+        $ds->getColumns()->addMultiple(['UID','NAME', 'WIDGET__LABEL', 'DESCRIPTION', 'WIDGET', 'UXON' , 'WRAP_PATH', 'WRAP_FLAG']);
+        $ds->dataRead();
+        
+        $class = $schema->getPrototypeClass($uxon, $path, $rootPrototypeClass);
+        
+        foreach ($ds->getRows() as $row) {
+            if ($row['WIDGET'] )
+                // TODO: Leerer Editor, oberste Knoten => class ist abstract widget => keine Filterung 
+                // Class Plus Wrapper-Presets (ausser AbstractWidget) 
+            $presets[] = $row;
+        }
+        
+        return $presets;
     }
     
     protected function suggestPropertyNames(UxonSchema $schema, UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array

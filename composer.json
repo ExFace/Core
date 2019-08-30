@@ -64,8 +64,5 @@
             "/Translations/",
             "/Model/"
         ]
-    },
-    "bin": [
-        "Facades/ConsoleFacade/bin/console"
-    ]
+    }
 }
