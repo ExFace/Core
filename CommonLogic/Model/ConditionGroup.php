@@ -32,6 +32,11 @@ class ConditionGroup implements ConditionGroupInterface
     // Properties NOT to be dublicated on copy()
     private $exface = NULL;
 
+    /**
+     * 
+     * @param \exface\Core\CommonLogic\Workbench $exface
+     * @param string $operator
+     */
     function __construct(\exface\Core\CommonLogic\Workbench $exface, string $operator = EXF_LOGICAL_AND)
     {
         $this->exface = $exface;
@@ -149,9 +154,13 @@ class ConditionGroup implements ConditionGroupInterface
     }
 
     /**
-     * Sets the logical operator of the group.
+     * Logical operator of the group: AND, OR, etc.
+     * 
      * Operators are defined by the EXF_LOGICAL_xxx constants.
-     *
+     * 
+     * @uxon-property operator
+     * @uxon-type [AND,OR]
+     * 
      * @param string $value
      * @return ConditionGroupInterface            
      */
@@ -374,6 +383,40 @@ class ConditionGroup implements ConditionGroupInterface
      */
     public function toConditionGroup(): ConditionGroupInterface
     {
+        return $this;
+    }
+    
+    /**
+     * An array of conditions (comparison predicates) for this group.
+     * 
+     * @uxon-property conditions
+     * @uxon-type \exface\Core\CommonLogic\Model\Condition[]
+     * 
+     * @param array $conditions
+     * @return ConditionGroupInterface
+     */
+    protected function addConditions(array $conditions) : ConditionGroupInterface
+    {
+        foreach ($conditions as $cond) {
+            $this->addCondition($cond);
+        }
+        return $this;
+    }
+    
+    /**
+     * An array of further condition groups to be included in addition to regular conditions.
+     * 
+     * @uxon-property nested_groups
+     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup[]
+     * 
+     * @param array $conditionGroups
+     * @return ConditionGroupInterface
+     */
+    protected function addNestedGroups(array $conditionGroups) : ConditionGroupInterface
+    {
+        foreach ($conditionGroups as $group) {
+            $this->addNestedGroup($group);
+        }
         return $this;
     }
 }

@@ -14,6 +14,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\Factories\ConditionGroupFactory;
 
 /**
  * A filter is a wrapper widget, which typically consist of one or more input widgets.
@@ -37,6 +39,8 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
     private $required = null;
     
     private $apply_on_change = false;
+    
+    private $customConditionGroup = null;
 
     /**
      * Returns the widget used to interact with the filter (typically some kind of input widget)
@@ -521,5 +525,116 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
         $this->getInputWidget()->setDisplayOnly($true_or_false);
         return $this;
     }
-
+    
+    /**
+     * 
+     * @return boolean
+     */
+    public function hasCustomConditionGroup() {
+        return $this->customConditionGroup !== null;
+    }
+    
+    /**
+     *
+     * @return ConditionGroupInterface
+     */
+    public function getCustomConditionGroup() : ConditionGroupInterface
+    {
+        return $this->customConditionGroup;
+    }
+    
+    /**
+     * 
+     * @param ConditionGroupInterface $group
+     * @return Filter
+     */
+    public function setCustomConditionGroup(ConditionGroupInterface $group) : Filter
+    {
+        $this->customConditionGroup = $group;
+        return $this;
+    }
+    
+    /**
+     * A custom condition group to apply instead of simply comparing attribute_alias to value.
+     * 
+     * The condition group can include any conditions or even nested groups. The value of the filter
+     * widget can be used in the conditions by setting their `value` to the placeholder `[#value#]`.
+     * Static values can be used too!
+     * 
+     * Filters with custom `condition_group` can be easily mixed with simple filters. In the resulting
+     * condition group, the latter will yield conditions and the former will produce nested condition
+     * groups.
+     * 
+     * ## Examples
+     * 
+     * ### Looking for a value in multiple attributes
+     * 
+     * ```
+     * {
+     *   "caption": "Search",
+     *   "condition_group": {
+     *     "operator": "OR",
+     *     "conditions": [
+     *       {
+     *         "expression": "attr1",
+     *         "comparator": "=",
+     *         "value": "[#value#]"
+     *       },
+     *       {
+     *         "expression": "attr2",
+     *         "comparator": "=",
+     *         "value": "[#value#]"
+     *       }
+     *     ]
+     *   }
+     * }
+     * 
+     * ```
+     * 
+     * ### Static conditions
+     * 
+     * This filter will search in the attribute `attr1` of items, that have `visible_flag` set to `1`.
+     * 
+     * ```
+     * {
+     *   "caption": "Search",
+     *   "condition_group": {
+     *     "operator": "OR",
+     *     "conditions": [
+     *       {
+     *         "expression": "attr1",
+     *         "comparator": "=",
+     *         "value": "[#value#]"
+     *       },
+     *       {
+     *         "expression": "visible_flag",
+     *         "comparator": "==",
+     *         "value": "1"
+     *       }
+     *     ]
+     *   }
+     * }
+     * 
+     * ```
+     * 
+     * @uxon-property condition_group
+     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
+     * @uxon-template {"operator": "OR", "conditions": [{"expression": "", "value": "[#value#]", "comparator": "="}]}
+     * 
+     * @param UxonObject $uxon
+     * @return Filter
+     */
+    public function setConditionGroup(UxonObject $uxon) : Filter
+    {
+        if ($uxon->hasProperty('conditions') === true) {
+            $objAlias = $this->getMetaObject()->getAliasWithNamespace();
+            $enrichedConditions = [];
+            foreach ($uxon->getProperty('conditions')->toArray() as $cond) {
+                $cond['object_alias'] = $cond['object_alias'] ?? $objAlias;
+                $enrichedConditions[] = $cond;
+            }
+            $uxon->setProperty('conditions', new UxonObject($enrichedConditions));
+        }
+        return $this->setCustomConditionGroup(ConditionGroupFactory::createFromUxon($this->getWorkbench(), $uxon));
+    }
 }
