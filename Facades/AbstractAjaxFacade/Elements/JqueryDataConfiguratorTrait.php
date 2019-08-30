@@ -60,25 +60,42 @@ trait JqueryDataConfiguratorTrait
     {
         $widget = $this->getWidget();
         $filters = [];
+        $nestedGroups = [];
+        
         if (! $unrendered) {
             foreach ($widget->getFilters() as $filter) {
-                $filters[] = $this->getFacade()->getElement($filter)->buildJsConditionGetter();
+                $filterElement = $this->getFacade()->getElement($filter);
+                if ($filter->hasCustomConditionGroup() === true) {
+                    $nestedGroups[] = $filterElement->buildJsCustomConditionGroup();
+                } else {
+                    $filters[] = $filterElement->buildJsConditionGetter();
+                }
             }
         } else {
             foreach ($widget->getFilters() as $filter) {
+                $filterElement = $this->getFacade()->getElement($filter);
                 if ($link = $filter->getValueWidgetLink()) {
                     $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
                     $filter_value = $linked_element->buildJsValueGetter($link->getTargetColumnId());
                 } else {
                     $filter_value = '"' . $filter->getValue() . '"';
                 }
-                $filters[] = $this->getFacade()->getElement($filter)->buildJsConditionGetter($filter_value);
+                
+                if ($filter->hasCustomConditionGroup() === true) {
+                    $nestedGroups[] = $filterElement->buildJsCustomConditionGroup($filter_value);
+                } else {
+                    $filters[] = $filterElement->buildJsConditionGetter($filter_value);
+                }
             }
         }
         // Remove empty values
         $filters = array_filter($filters);
         
-        $filter_group = ! empty($filters) ? '{operator: "AND", conditions: [' . implode(', ', $filters) . ']}' : '';
+        if (empty($filters) === false  || empty($nestedGroups) === false) {
+            $filter_group = '{operator: "AND", conditions: [' . implode(', ', $filters) . '], nested_groups: [' . implode(', ', $nestedGroups) . ']}';
+        } else {
+            $filter_group = '';
+        }
         return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($filter_group !== '' ? ", filters: " . $filter_group : "") . "}";
     }
     

@@ -159,7 +159,7 @@ class InputSelect extends Input implements iSupportMultiSelect
     public function getSelectableOptions()
     {
         // If there are no selectable options set explicitly, try to determine them from the meta model. Otherwise the select box would be empty.
-        if (empty($this->selectable_options) && $this->getAttribute()) {
+        if (empty($this->selectable_options) && $this->isBoundToAttribute()) {
             $data_type = $this->getAttribute()->getDataType();
             if ($data_type instanceof BooleanDataType) {
                 $this->setSelectableOptions(array(
@@ -197,7 +197,7 @@ class InputSelect extends Input implements iSupportMultiSelect
             $generic_options[''] = $this->translate('WIDGET.SELECT_NONE');
         }
         // Select empty option if based on an attribute that is not required
-        if ($this->getAttribute() && ! $this->getAttribute()->isRequired() && ! $this->isRequired()){
+        if ($this->isBoundToAttribute() && ! $this->getAttribute()->isRequired() && ! $this->isRequired()){
             $generic_options[EXF_LOGICAL_NULL] = $this->translate('WIDGET.SELECT_EMPTY');
         }
         return $generic_options;

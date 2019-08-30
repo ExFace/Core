@@ -34,7 +34,8 @@ trait AttributeCaptionTrait
     {
         $caption = parent::getCaption();
         if ($caption === null || $caption === '') {
-            if ($attr = $this->getAttribute()) {
+            if ($this->isBoundToAttribute() === true) {
+                $attr = $this->getAttribute();
                 if ($this->hasAggregator()) {
                     $aggr = ' (' . $this->getAggregator()->getFunction()->getLabelOfValue() . ')';
                 }
