@@ -148,31 +148,33 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         }
         
         // a filter can only be applied, if the attribute alias is specified and the attribute exists
-        if ($attribute_alias === null || $attribute_alias === '') {
+        if ($attribute_alias !== null && $attribute_alias !== '') {
+            try {
+                $attr = $this->getMetaObject()->getAttribute($attribute_alias);
+            } catch (MetaAttributeNotFoundError $e) {
+                throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $attribute_alias . '" in widget "' . $this->getId() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
+            }
+            
+            // determine the input widget for the filter
+            // Try to extend the default editor widget, by also keep the original UXON of the filter: see below, why.
+            $editorUxon = $attr->getDefaultEditorUxon()->copy();
+            if ($uxon_object) {
+                $editorUxon = $editorUxon->extend($uxon_object);
+                $userUxon = $uxon_object;
+            } else {
+                $userUxon = new UxonObject();
+            }
+            // Set a special caption for filters on relations, which is derived from the relation itself
+            // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
+            if (! $editorUxon->hasProperty('caption') && $attr->isRelation()) {
+                $editorUxon->setProperty('caption', $this->getMetaObject()->getRelation($attribute_alias)->getName());
+            }
+        } elseif ($uxon_object !== null && $uxon_object->hasProperty('condition_group') === true) {
+            $userUxon = new UxonObject();
+            $editorUxon = $uxon_object;
+        } else {
             throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for an empty attribute alias in widget "' . $this->getId() . '"!', '6T91AR9');
         }
-        
-        try {
-            $attr = $this->getMetaObject()->getAttribute($attribute_alias);
-        } catch (MetaAttributeNotFoundError $e) {
-            throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $attribute_alias . '" in widget "' . $this->getId() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
-        }
-        
-        // determine the input widget for the filter
-        // Try to extend the default editor widget, by also keep the original UXON of the filter: see below, why.
-        $editorUxon = $attr->getDefaultEditorUxon()->copy();
-        if ($uxon_object) {
-            $editorUxon = $editorUxon->extend($uxon_object);
-            $userUxon = $uxon_object;
-        } else {
-            $userUxon = new UxonObject();
-        }
-        // Set a special caption for filters on relations, which is derived from the relation itself
-        // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
-        if (! $editorUxon->hasProperty('caption') && $attr->isRelation()) {
-            $editorUxon->setProperty('caption', $this->getMetaObject()->getRelation($attribute_alias)->getName());
-        }
-        $page = $this->getPage();
         
         // Set properties of the filter explicitly while passing everything else to it's input widget.
         // TODO move this to the filter's importUxonObject() method.
@@ -186,6 +188,11 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
             $editorUxon->unsetProperty('apply_on_change');
             $userUxon->unsetProperty('apply_on_change');
         } 
+        if ($editorUxon->hasProperty('condition_group')) {
+            $customConditionGroupUxon = $editorUxon->getProperty('condition_group');
+            $editorUxon->unsetProperty('condition_group');
+            $userUxon->unsetProperty('condition_group');
+        }
         if ($uxon_object !== null && $uxon_object->hasProperty('required')) {
             // A filter is only required, if a user explicitly marked it as required in the filter's UXON
             $required = $uxon_object->getProperty('required');
@@ -198,8 +205,12 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         if (isset($apply_on_change)){
             $filter->setApplyOnChange($apply_on_change);
         }
+        if ($customConditionGroupUxon !== null) {
+            $filter->setConditionGroup($customConditionGroupUxon);
+        }
         
         // Create the input widget
+        $page = $this->getPage();
         // If the merged UXON from the default editor and the filter does not work,
         // create a widget from the explicitly defined filter UXON. This can happen
         // if the default editor presumes a widget type, that is not compatible with
@@ -396,6 +407,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     {
         $result = array();
         foreach ($this->getFilters() as $filter_widget) {
+            if ($filter_widget->isBoundToAttribute() === false) {
+                continue;
+            }
+            
             $filter_object = $this->getMetaObject()->getAttribute($filter_widget->getAttributeAlias())->getObject();
             if ($object->is($filter_object)) {
                 $result[] = $filter_widget;

@@ -133,12 +133,6 @@ class InputComboTable extends InputCombo implements iCanPreloadData
 
     protected function initTable()
     {
-        // This will only work if there is an attribute_alias specified
-        if (! $this->getAttributeAlias()) {
-            throw new WidgetConfigurationError($this, 'Cannot create a DataTable for a InputComboTable before an attribute_alias for the Comobo is specified!', '6T91QQ8');
-            return false;
-        }
-        
         // Create a table widget and set those options, that may be overridden by the user in the UXON description of the Combo
         /* @var $table \exface\Core\Widgets\DataTable */
         $table = $this->getPage()->createWidget('DataTable', $this);
