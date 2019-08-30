@@ -73,6 +73,9 @@
                 "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.BEHAVIORS')"
             },
             {
+                "attribute_alias": "HAS_DEFAULT_EDITOR"
+            },
+            {
                 "attribute_alias": "UID"
             },
             {
