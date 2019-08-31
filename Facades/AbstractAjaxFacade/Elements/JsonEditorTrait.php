@@ -82,6 +82,10 @@ JS;
      */
     protected function buildJsEditorAddHelpButton() : string
     {
+        if (! $this->getWidget() instanceof InputUxon) {
+            return '';
+        }
+        
         $addHelpButtonFunction = $this::buildJsFunctionNameAddHelpButton($this->buildJsFunctionPrefix());
         /* @var \exface\Core\Facades\DocsFacade $docsFacade */
         $docsFacade = FacadeFactory::createFromAnything(DocsFacade::class, $this->getWorkbench());
@@ -1190,27 +1194,6 @@ JS;
      */
     public static function buildJsFunctionNameAddPresetHint(string $funcPrefix) : string {
         return $funcPrefix . '_addPresetHint';
-    }
-
-    protected function buildJsEditorAddHelpButton() : string
-    {
-        if (! $this->getWidget() instanceof InputUxon) {
-            return '';
-        }
-        $addHelpButtonFunction = $this::buildJsFunctionNameAddHelpButton($this->buildJsFunctionPrefix());
-        /* @var \exface\Core\Facades\DocsFacade $docsFacade */
-        $docsFacade = FacadeFactory::createFromAnything(DocsFacade::class, $this->getWorkbench());
-        $url = $docsFacade->buildUrlToFacade() . '/exface/Core/Docs/Creating_UIs/UXON/Introduction_to_the_UXON_editor.md';
-        return <<<JS
-
-            {$addHelpButtonFunction}(
-                $,
-                "{$this->getId()}",
-                "{$url}",
-                "Help" 
-            );
-
-JS;
     }
     
     /**
