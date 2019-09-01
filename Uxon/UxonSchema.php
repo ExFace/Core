@@ -16,6 +16,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\DataTypes\UxonSchemaNameDataType;
 
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
@@ -738,5 +739,10 @@ class UxonSchema implements UxonSchemaInterface
     public function getParentSchema() : UxonSchemaInterface
     {
         return $this->parentSchema;
+    }
+    
+    public static function getSchemaName() : string
+    {
+        return UxonSchemaNameDataType::GENERIC;
     }
 }

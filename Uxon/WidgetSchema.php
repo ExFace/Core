@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Selectors\WidgetSelector;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Widgets\AbstractWidget;
+use exface\Core\DataTypes\UxonSchemaNameDataType;
 
 /**
  * UXON-schema class for widgets.
@@ -17,6 +18,12 @@ use exface\Core\Widgets\AbstractWidget;
  */
 class WidgetSchema extends UxonSchema
 {
+    
+    public static function getSchemaName() : string
+    {
+        return UxonSchemaNameDataType::WIDGET;
+    }
+    
     /**
      * 
      * {@inheritDoc}

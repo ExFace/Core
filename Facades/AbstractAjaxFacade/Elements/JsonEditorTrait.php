@@ -724,7 +724,8 @@ CSS;
                 );
             });
         }
-         function {$addPresetHint}() {
+
+        function {$addPresetHint}() {
             var presetHint = $(
                '<i id="presetHint" class="fa fa-magic preset-hint-pulse" title="{$uxonEditorTerms['PRESET_HINT']}" style="color: #0062fd; font-size: 17px; padding: 4px;' +
                ' padding-right: 5px; position: absolute; margin: 10px;"><a style="margin-left: 5px; width:100%;">{$uxonEditorTerms['PRESET_HINT']}</a></i>'
@@ -966,14 +967,14 @@ CSS;
             
             $.ajax( {
                 type: 'POST',
-                url: 'http://localhost/exface/exface//api/jeasyui',
+                url: '{$ajaxUrl}',
                 dataType: 'json',
                 data: {
                     action: 'exface.Core.UxonAutosuggest',
                     path: JSON.stringify(path),
                     input: 'preset',
-                    schema: 'widget',
-                    prototype: "",
+                    schema: '{$uxonSchema}',
+                    prototype: {$rootPrototype},
                     object: $("#DataTable_DataToolbar_ButtonGroup_DataButton02_object_uid").val(),
                     uxon: node.editor.getText()
                 }, // data
@@ -990,7 +991,7 @@ CSS;
                 var length = aPresetData.length;
                 for(var i = 0; i < length; i++){
                     row = aPresetData[i];
-                    if (lastOption['text'] === row['WIDGET__LABEL']) {
+                    if (lastOption['text'] === row['PROTOTYPE__LABEL']) {
                          lastOption['children'].push({
                              text: row['NAME'],
                              value: row['UID']
@@ -1000,7 +1001,7 @@ CSS;
                             aPresetOptions.push(lastOption);
                          }
                          lastOption = {
-                             text: row['WIDGET__LABEL'],
+                             text: row['PROTOTYPE__LABEL'],
                              children: [
                                  {
                                      text: row['NAME'],

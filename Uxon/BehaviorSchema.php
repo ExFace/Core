@@ -2,6 +2,7 @@
 namespace exface\Core\Uxon;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\DataTypes\UxonSchemaNameDataType;
 
 /**
  * UXON-schema class for meta object behaviors.
@@ -13,6 +14,11 @@ use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
  */
 class BehaviorSchema extends UxonSchema
 {
+    public static function getSchemaName() : string
+    {
+        return UxonSchemaNameDataType::BEHAVIOR;
+    }
+    
     /**
      * 
      * {@inheritDoc}

@@ -5,6 +5,7 @@ use exface\Core\Factories\SelectorFactory;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
+use exface\Core\DataTypes\UxonSchemaNameDataType;
 
 /**
  * UXON-schema class for data types.
@@ -16,6 +17,12 @@ use exface\Core\CommonLogic\DataTypes\AbstractDataType;
  */
 class DatatypeSchema extends UxonSchema
 {
+    
+    public static function getSchemaName() : string
+    {
+        return UxonSchemaNameDataType::DATATYPE;
+    }
+    
     /**
      * 
      * {@inheritDoc}
