@@ -5,6 +5,7 @@ use exface\Core\Factories\SelectorFactory;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\AbstractAction;
+use exface\Core\DataTypes\UxonSchemaNameDataType;
 
 /**
  * UXON-schema class for actions.
@@ -16,6 +17,11 @@ use exface\Core\CommonLogic\AbstractAction;
  */
 class ActionSchema extends UxonSchema
 {
+    public static function getSchemaName() : string
+    {
+        return UxonSchemaNameDataType::ACTION;
+    }
+    
     /**
      * 
      * {@inheritDoc}

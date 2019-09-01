@@ -1,0 +1,117 @@
+{
+    "id": "0xb9d24bcaa23e11e9ae46106530e7aff7",
+    "alias_with_namespace": "exface.core.uxon-presets",
+    "menu_parent_page_alias": "exface.core.metamodel",
+    "menu_index": "8",
+    "menu_visible": true,
+    "name": "UXON Presets",
+    "description": "",
+    "intro": "",
+    "replaces_page_alias": null,
+    "contents": {
+        "widget_type": "Tabs",
+        "object_alias": "exface.Core.UXON_PRESET",
+        "tabs": [
+            {
+                "caption": "Widgets",
+                "widgets": [
+                    {
+                        "widget_type": "DataTable",
+                        "id": "table_widget_presets",
+                        "object_alias": "exface.Core.WIDGET_PRESET",
+                        "filters": [
+                            {
+                                "attribute_alias": "NAME"
+                            },
+                            {
+                                "attribute_alias": "APP"
+                            },
+                            {
+                                "attribute_alias": "PROTOTYPE"
+                            },
+                            {
+                                "attribute_alias": "WRAP_FLAG"
+                            }
+                        ],
+                        "columns": [
+                            {
+                                "attribute_alias": "NAME"
+                            },
+                            {
+                                "attribute_alias": "APP__LABEL"
+                            },
+                            {
+                                "attribute_alias": "PROTOTYPE__LABEL"
+                            },
+                            {
+                                "attribute_alias": "DESCRIPTION"
+                            },
+                            {
+                                "attribute_alias": "CREATED_ON"
+                            },
+                            {
+                                "attribute_alias": "UXON",
+                                "hidden": true
+                            },
+                            {
+                                "attribute_alias": "WRAP_FLAG"
+                            },
+                            {
+                                "hidden": true,
+                                "attribute_alias": "WRAP_PATH"
+                            }
+                        ],
+                        "sorters": [
+                            {
+                                "attribute_alias": "PROTOTYPE",
+                                "direction": "desc"
+                            }
+                        ],
+                        "buttons": [
+                            {
+                                "action_alias": "exface.Core.ShowObjectCreateDialog"
+                            },
+                            {
+                                "action_alias": "exface.Core.ShowObjectEditDialog",
+                                "bind_to_double_click": true
+                            },
+                            {
+                                "action_alias": "exface.Core.ShowObjectCopyDialog"
+                            },
+                            {
+                                "action_alias": "exface.Core.DeleteObject"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "caption": "Actions",
+                "widgets": [
+                    {
+                        "extend_widget": "table_widget_presets",
+                        "object_alias": "exface.Core.ACTION_PRESET"
+                    }
+                ]
+            },
+            {
+                "caption": "Data Types",
+                "widgets": [
+                    {
+                        "extend_widget": "table_widget_presets",
+                        "object_alias": "exface.Core.DATATYPE_PRESET"
+                    }
+                ]
+            },
+            {
+                "caption": "Behaviors",
+                "widgets": [
+                    {
+                        "extend_widget": "table_widget_presets",
+                        "object_alias": "exface.Core.BEHAVIOR_PRESET"
+                    }
+                ]
+            }
+        ]
+    }
+}

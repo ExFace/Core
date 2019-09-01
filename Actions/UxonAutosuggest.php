@@ -125,16 +125,16 @@ class UxonAutosuggest extends AbstractAction
     {
         $presets = [];
         
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.WIDGET_PRESET');
-        $ds->getColumns()->addMultiple(['UID','NAME', 'WIDGET__LABEL', 'DESCRIPTION', 'WIDGET', 'UXON' , 'WRAP_PATH', 'WRAP_FLAG']);
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.' . strtoupper($schema::getSchemaName()) . '_PRESET');
+        $ds->getColumns()->addMultiple(['UID','NAME', 'PROTOTYPE__LABEL', 'DESCRIPTION', 'PROTOTYPE', 'UXON' , 'WRAP_PATH', 'WRAP_FLAG']);
+        $ds->addFilterFromString('UXON_SCHEMA', $schema::getSchemaName());
         $ds->dataRead();
         
         $class = $schema->getPrototypeClass($uxon, $path, $rootPrototypeClass);
         
         foreach ($ds->getRows() as $row) {
-            if ($row['WIDGET'] )
-                // TODO: Leerer Editor, oberste Knoten => class ist abstract widget => keine Filterung 
-                // Class Plus Wrapper-Presets (ausser AbstractWidget) 
+            // TODO: Leerer Editor, oberste Knoten => class ist abstract widget => keine Filterung 
+            // Class Plus Wrapper-Presets (ausser AbstractWidget) 
             $presets[] = $row;
         }
         

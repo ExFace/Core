@@ -5,7 +5,13 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 interface UxonSchemaInterface extends WorkbenchDependantInterface
-{    
+{   
+    /**
+     * Returns the name of the schema: widget, action, datatype, etc.
+     * @return string
+     */
+    public static function getSchemaName() : string;
+    
     /**
      * Returns the prototype class for a given path.
      *
