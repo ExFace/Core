@@ -81,6 +81,8 @@ JS;
     
     protected static function buildJsPresetHintShow(string $uxonEditorId) : string
     {
+        // TODO this only works if the preset hint is present. When switching editor modes, it gets removed,
+        // so it would be better to remove/add the hint instead of hiding/showing it.
         return "$('#{$uxonEditorId} .uxoneditor-preset-hint').show()";
     }
     
@@ -170,18 +172,23 @@ JS;
      */
     protected function buildJsOnModeChangeFunction($uxonEditorId, $funcPrefix) : string
     {
+        if (! $this->getWidget() instanceof InputUxon) {
+            return '';
+        }
+        
         return <<<JS
         
-        function(oldMode,newMode){
-/*             let rootNodeJSON =  {$funcPrefix}_getRootNodeValue();
-            var presetHint = $('#presetHint');
-            if (newMode !== oldMode && newMode === "tree" && rootNodeJSON !== null && JSON.stringify(rootNodeJSON) === "{}"){
-                $("#{$uxonEditorId} .jsoneditor-tree-inner").after(presetHint);
-                presetHint.hide();
-                presetHint.fadeIn(700)
-            } */
-            presetHintActive = false;
+        function(newMode, oldMode){
+            if (newMode === 'tree') {
+                var json = {$uxonEditorId}_JSONeditor.get();
+                if (json && json.constructor === Object && Object.keys(json).length === 0) {
+                    {$this::buildJsPresetHintShow($uxonEditorId)}
+                    return;
+                }
+            }
+            {$this::buildJsPresetHintHide($uxonEditorId)}
         }    
+
 JS;
     }
     
@@ -590,7 +597,6 @@ CSS;
         var wrapData = {};
         var nodeIsWrappingTarget = false;
         var hasArrayContext = false;
-        var presetHintActive = true;
         
         function {$funcPrefix}_fetchAutosuggest(text, path, input, uxon){
             var formData = new URLSearchParams({
@@ -793,11 +799,11 @@ CSS;
             var presetsContent =
                 '<label class="pico-modal-contents">' +
                 '<div class="jsoneditor-jmespath-label">{$uxonEditorTerms['WIDGET_PRESETS']}</div>' +
-                '<div class="jsoneditor-jmespath-block" style="position: relative">' +
-                '   <div id="presetSpinnerWrapper" class="spinner-wrapper">' +
-                '       <div id="presetSpinner" class="spinner"></div>' +
+                '<div class="jsoneditor-jmespath-block uxoneditor-preset-selector" style="position: relative">' +
+                '   <div class="spinner-wrapper">' +
+                '       <div class="spinner"></div>' +
                 '   </div>' +
-                '  <select class="jsoneditor-jmespath-select-fields" id="uxonPresets"></select>' +
+                '   <select class="jsoneditor-jmespath-select-fields"></select>' +
                 '</div>' +
                 '<div class="jsoneditor-jmespath-block">' +
                 '   <textarea id="uxonPresetDescription" ' +
@@ -807,7 +813,7 @@ CSS;
                 '</div>' +
                 '<div class="jsoneditor-jmespath-label">{$uxonEditorTerms['PRESET_PREVIEW']} </div>' +
                 '<div class="jsoneditor-jmespath-block" style="height: calc(100% - 18px - 104px - 28px - 18px - 26px - 45px - 35px - 42px)">' +
-                '  <div id="uxonPresetPreview" style="height: 100%"> </div>' +
+                '  <div class="uxoneditor-preset-preview" style="height: 100%"> </div>' +
                 '</div>' +
                 '<div class="jsoneditor-jmespath-label">{$uxonEditorTerms['USE_PRESET_AT']} </div>' +
                 '<div class="jsoneditor-jmespath-block jsoneditor-modal-actions">' +
@@ -816,11 +822,11 @@ CSS;
                 '      readonly> ' +
                 '   </input>' +
                 '   <div class="action-buttons">' +
-                '       <input class="uxoneditor-input" type="submit" id="presetReplace" value="{$uxonEditorTerms['REPLACE']}" autofocus class="action-button" />' +
-                '       <input class="uxoneditor-input" type="submit" id="presetPrepend" value="{$uxonEditorTerms['PREPEND']}" class="action-button"/>' +
-                '       <input class="uxoneditor-input" type="submit" id="presetAppend"  value="{$uxonEditorTerms['APPEND']}"  class="action-button"/>' +
-                '       <input class="uxoneditor-input" type="submit" id="presetWrap"    value="{$uxonEditorTerms['WRAP']}"    class="action-button"/>' +
-                '       <input class="uxoneditor-input" type="submit" id="presetCancel"  value="{$uxonEditorTerms['CANCEL']}"  class="action-button"/>' +
+                '       <input class="uxoneditor-input action-button uxoneditor-preset-replace" autofocus disabled type="submit" value="{$uxonEditorTerms['REPLACE']}"/>' +
+                '       <input class="uxoneditor-input action-button uxoneditor-preset-prepend" disabled type="submit" value="{$uxonEditorTerms['PREPEND']}"/>' +
+                '       <input class="uxoneditor-input action-button uxoneditor-preset-append" disabled type="submit" value="{$uxonEditorTerms['APPEND']}" />' +
+                '       <input class="uxoneditor-input action-button uxoneditor-preset-wrap" disabled type="submit" value="{$uxonEditorTerms['WRAP']}"   />' +
+                '       <input class="uxoneditor-input action-button uxoneditor-preset-cancel" type="submit" value="{$uxonEditorTerms['CANCEL']}" />' +
                 '   </div>' +
                 '</div>';
             return presetsContent;
@@ -886,10 +892,6 @@ CSS;
             oShowPathElem.title = oNode.editor.options.name + (aPath.length > 0 ? ' > ' : '') + aPath.join(' > ');
         }
         
-        function {$funcPrefix}_setDisabledFlag(id,disabledFlag){
-            document.getElementById(id).disabled = disabledFlag;
-        }
-        
         function {$funcPrefix}_insertIntoArray(aTargetArray, iPosition, oObject){
             return aTargetArray.splice(iPosition, 0, oObject);
         }
@@ -916,7 +918,7 @@ CSS;
         function {$funcPrefix}_loadPresets(modal, node){
         
             var oPreviewEditor = new JSONEditor(
-                modal.modalElem().querySelector("#uxonPresetPreview"),
+                modal.modalElem().querySelector(".uxoneditor-preset-preview"),
                 {
                     mode: 'view',
                     mainMenuBar: false,
@@ -939,16 +941,9 @@ CSS;
             else {
                 nodeIsWrappingTarget = false;
             }
-                hasArrayContext = (node.parent !== null && node.parent.childs)? true : false;
-                
-            $( document ).ready(function() {
-                // disable Buttons until preset was selected;
-                {$funcPrefix}_setDisabledFlag("presetReplace", true);
-                {$funcPrefix}_setDisabledFlag("presetAppend", true);
-                {$funcPrefix}_setDisabledFlag("presetPrepend", true);
-                {$funcPrefix}_setDisabledFlag("presetWrap", true);
-            });
             
+            hasArrayContext = (node.parent !== null && node.parent.childs)? true : false;
+           
             oPresetPathElem.value = {$funcPrefix}_convertToJsonPath(path);
             oPresetPathElem.title = node.editor.options.name + (path.length > 0 ? ' > ' : '') + path.join(' > ');
             
@@ -962,7 +957,6 @@ CSS;
                     input: 'preset',
                     schema: {$uxonSchema},
                     prototype: {$rootPrototype},
-                    object: $("#DataTable_DataToolbar_ButtonGroup_DataButton02_object_uid").val(),
                     uxon: node.editor.getText()
                 }, // data
                 
@@ -999,7 +993,7 @@ CSS;
                      }
                 }
                 aPresetOptions.push(lastOption);
-                var oPresetSelector = elem.querySelector('#uxonPresets');
+                var oPresetSelector = modal.modalElem().querySelector('.uxoneditor-preset-selector select');
                 var oSelectrPresets = new Selectr(
                     oPresetSelector,
                     {   clearable: true,
@@ -1009,7 +1003,7 @@ CSS;
                     }
                 ); // new Selectr()
                 
-                $('#presetSpinnerWrapper').remove();
+                modal.modalElem().querySelector('.uxoneditor-preset-selector .spinner-wrapper').remove();
                 oSelectrPresets.on('selectr.select', function(option) {
                     var uid = option.value;
                     var oPresetWrapBtn = document.getElementById("presetWrap");
@@ -1022,24 +1016,23 @@ CSS;
                             
                             document.getElementById('uxonPresetDescription').value = oRow['DESCRIPTION'];
                             oPreviewEditor.expandAll(true);
-                            {$funcPrefix}_setDisabledFlag("presetReplace", false);
+                            modal.modalElem().querySelector(".uxoneditor-preset-replace").disabled = false;
                             
                             // Check if clicked editor node is object and preset is a wrapper
                             if ( oRow.WRAP_FLAG === "1" && nodeIsWrappingTarget ) {
-                                {$funcPrefix}_setDisabledFlag("presetWrap", false);
+                                modal.modalElem().querySelector(".uxoneditor-preset-wrap").disabled = false;
                                 wrapData = oRow;
+                            } else {
+                                modal.modalElem().querySelector(".uxoneditor-preset-wrap").disabled = true;
                             }
-                            else {
-                                {$funcPrefix}_setDisabledFlag("presetWrap", true);
-                            }
-                            {$funcPrefix}_setDisabledFlag("presetReplace", false);
+                            modal.modalElem().querySelector(".uxoneditor-preset-replace").disabled = false;
                             
                             if(hasArrayContext) {
-                               {$funcPrefix}_setDisabledFlag("presetPrepend", false);
-                               {$funcPrefix}_setDisabledFlag("presetAppend", false);
+                                modal.modalElem().querySelector(".uxoneditor-preset-prepend").disabled = false;
+                                modal.modalElem().querySelector(".uxoneditor-preset-append").disabled = false;
                             } else{
-                               {$funcPrefix}_setDisabledFlag("presetPrepend", true);
-                               {$funcPrefix}_setDisabledFlag("presetAppend", true);
+                                modal.modalElem().querySelector(".uxoneditor-preset-prepend").disabled = true;
+                                modal.modalElem().querySelector(".uxoneditor-preset-append").disabled = true;
                             }
                             return;
                         }
@@ -1056,7 +1049,6 @@ CSS;
                oNode.expand(true);
                {$funcPrefix}_focusFirstChildValue(oNode);
                {$presetHintHide}
-               presetHintActive = false;
                oModal.close();
                
             }; // var
@@ -1068,23 +1060,23 @@ CSS;
                 {$funcPrefix}_replaceNodeValue(node.editor, oParentNode, aJsonParentNode, oModal);
             };
             
-            var presetReplace = $("#presetReplace");
-            presetReplace.click( function() {
+            var presetReplace = modal.modalElem().querySelector(".uxoneditor-preset-replace");
+            presetReplace.onclick = function() {
                 {$funcPrefix}_replaceNodeValue(node.editor, node, oPreviewEditor.get(), modal);
-            });
+            };
             
-            var presetPrepend = $("#presetPrepend");
-            presetPrepend.click( function(){
+            var presetPrepend = modal.modalElem().querySelector(".uxoneditor-preset-prepend");
+            presetPrepend.onclick = function(){
                 {$funcPrefix}_insertAtPosition(node.parent, node.getIndex(), oPreviewEditor.get(), modal);
-            });
+            };
             
-            var presetAppend = $("#presetAppend");
-            presetAppend.click(function(){
+            var presetAppend = modal.modalElem().querySelector(".uxoneditor-preset-append");
+            presetAppend.onclick = function(){
                 {$funcPrefix}_insertAtPosition(node.parent, node.getIndex()+1, oPreviewEditor.get(), modal);
-            });
+            };
             
-            var presetWrap = $("#presetWrap");
-            presetWrap.click( function(){
+            var presetWrap = modal.modalElem().querySelector(".uxoneditor-preset-wrap");
+            presetWrap.onclick = function(){
                var jsonPath = wrapData['WRAP_PATH'];
                var oWrapTargetNode = oPreviewEditor.node.findNodeByPath({$funcPrefix}_convertToArrayPath(jsonPath));
                if (oWrapTargetNode === undefined){
@@ -1095,14 +1087,14 @@ CSS;
               var val = node.getValue();
               oWrapTargetNode.setValue(val, (Array.isArray(val) ? 'array' : 'object'));
               {$funcPrefix}_replaceNodeValue(node.editor, node, oPreviewEditor.get(), modal);
-            });
+            };
             
-            var presetCancel = $("#presetCancel");
-            presetCancel.click( function() {
+            var presetCancel = modal.modalElem().querySelector(".uxoneditor-preset-cancel");
+            presetCancel.onclick = function() {
                 node.expand(true);
                 {$funcPrefix}_focusFirstChildValue(node);
                 modal.close();
-            });
+            };
         }
     
 JS;
