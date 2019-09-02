@@ -5,6 +5,8 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\DataTypes\UxonSchemaNameDataType;
+use exface\Core\CommonLogic\Model\Expression;
 
 /**
  * A UXON editor with autosuggest, facades and validation.
@@ -20,16 +22,22 @@ class InputUxon extends InputJson
     
     private $rootObjectSelector = null;
     
+    private $schemaExpression = null;
+    
     /**
-     * Specifies the UXON schema: widget, action, datatype, behavior, etc.
+     * Specifies the UXON schema - either as string (widget, action, etc.) or via widget link.
      * 
      * @uxon-property schema
-     * @uxon-type [widget,action,behavior,datatype]
+     * @uxon-type [generic,widget,action,behavior,datatype]|metamodel:widget_link
      * 
      * @see \exface\Core\Widgets\InputJson::setSchema()
      */
     public function setSchema(string $value) : InputJson
     {
+        if (Expression::detectFormula($value) === true) {
+            $this->schemaExpression = ExpressionFactory::createForObject($this->getMetaObject(), $value);
+            return $this;
+        }
         return parent::setSchema($value);
     }
     
@@ -41,7 +49,22 @@ class InputUxon extends InputJson
      */
     public function getSchema() : ?string
     {
-        return parent::getSchema() ?? 'uxon';
+        return parent::getSchema() ?? UxonSchemaNameDataType::GENERIC;
+    }
+    
+    /**
+     * Returns the expression to get the UXON schema.
+     * 
+     * In contrast got getSchema(), the expression may also be a widget link if the schema is
+     * determined dynamically. In this case, getSchema() would return the initial schema (typically
+     * "generic") and with the helf of getSchemaExpression(), a facade could build a schema getter
+     * to retrieve the actual schema dynamically.
+     * 
+     * @return ExpressionInterface
+     */
+    public function getSchemaExpression() : ExpressionInterface
+    {
+        return $this->schemaExpression ?? ExpressionFactory::createForObject($this->getMetaObject(), "'{$this->getSchema()}'");
     }
     
     /**

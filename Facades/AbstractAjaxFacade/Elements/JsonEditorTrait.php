@@ -62,7 +62,7 @@ trait JsonEditorTrait
      *
      * @return string
      */
-    protected function buildJsEditorPresetHint() : string
+    protected function buildJsPresetHint() : string
     {
         $funcPrefix = $this->buildJsFunctionPrefix();
         $addPresetHint = static::buildJsFunctionNameAddPresetHint($funcPrefix);
@@ -72,6 +72,16 @@ trait JsonEditorTrait
                  {$addPresetHint}();   
 JS;
         
+    }
+                 
+    protected static function buildJsPresetHintHide(string $uxonEditorId) : string
+    {
+        return "$('#{$uxonEditorId} .uxoneditor-preset-hint').hide()";
+    }
+    
+    protected static function buildJsPresetHintShow(string $uxonEditorId) : string
+    {
+        return "$('#{$uxonEditorId} .uxoneditor-preset-hint').show()";
     }
     
     /**
@@ -123,7 +133,7 @@ JS;
         
                     {$this->buildJsEditorAddHelpButton()}
         			$('#{$uxonEditorId}').parents('.exf-input').children('label').css('vertical-align', 'top');
-        			{$this->buildJsEditorPresetHint()}
+        			{$this->buildJsPresetHint()}
         
 JS;
     }
@@ -158,7 +168,7 @@ JS;
      *
      * @return string
      */
-    protected function buildJsEditorOnModeChange($uxonEditorId, $funcPrefix) : string
+    protected function buildJsOnModeChangeFunction($uxonEditorId, $funcPrefix) : string
     {
         return <<<JS
         
@@ -183,7 +193,7 @@ JS;
         
         $funcPrefix = $this->buildJsFunctionPrefix();
         $uxonEditorId = $this->getId();
-        $uxonSchema = $widget->getSchema();
+        $uxonSchema = $this->buildJsSchemaGetter();
         $workbench = $this->getWorkbench();
         
         if (($widget instanceof InputUxon) && $widget->getAutosuggest() === true) {
@@ -194,16 +204,34 @@ JS;
         
 	return <<<JS
 
-    onError: {$this->buildJsEditorOnErrorFunction()},
+    onError: {$this->buildJsOnErrorFunction()},
     mode: {$this->buildJsEditorModeDefault($isWidgetDisabled)},
     modes: {$this->buildJsEditorModes($isWidgetDisabled)},
-    onModeChange : {$this->buildJsEditorOnModeChange($uxonEditorId, $funcPrefix)},
+    onModeChange: {$this->buildJsOnModeChangeFunction($uxonEditorId, $funcPrefix)},
+    onChangeJSON: {$this->buildJsOnChangeFunction($uxonEditorId, $funcPrefix)},
     {$uxonEditorOptions}
 
 JS;
     }
     
-    protected function buildJsEditorOnErrorFunction() : string
+    protected function buildJsOnChangeFunction() : string
+    {
+        // TODO add getOnChangeScript() somewhere here. 
+        $fn = '';
+        if ($this->getWidget() instanceof InputUxon) {
+            $fn .= <<<JS
+        if (json && json.constructor === Object && Object.keys(json).length === 0) {
+            {$this::buildJsPresetHintShow($this->getId())}
+        } else {
+            {$this::buildJsPresetHintHide($this->getId())}
+        }
+
+JS;
+        }
+        return "function(json) { $fn }";
+    }
+    
+    protected function buildJsOnErrorFunction() : string
     {
     
         $workbench = $this->getWorkbench();
@@ -239,7 +267,7 @@ JS;
         ];
         
         return <<<JS
-                    name: "{$uxonSchema}",
+                    name: ({$uxonSchema} === 'generic' ? 'UXON' : {$uxonSchema}),
                     enableTransform: false,
                     enableSort: false,
                     history: true,
@@ -370,24 +398,6 @@ JS;
     {
         return <<<CSS
         
-                    html{
-                        color: -internal-root-color;
-                    }
-                    body{
-                        display: block;
-                        margin: 8px;
-                    }
-                    element.style{
-                        overflow: hidden;
-                    }
-                    p {
-                        width: 500px;
-                        min-width: 60%;
-                        font-family: "DejaVu Sans", sans-serif;
-                    }
-                    #{$uxonEditorId} {
-                       height: 500px;
-                    }
                     .jsoneditor-modal .jsoneditor table td {
                         padding: 0;
                         margin-top: 5px !important;
@@ -478,7 +488,7 @@ JS;
                     @-webkit-keyframes spin {
                         to { -webkit-transform: rotate(360deg); }
                     }
-                    .preset-hint-pulse { /* ===== Preset hint styles and keyframes ===== */
+                    .xpreset-hint-pulse { /* ===== Preset hint styles and keyframes ===== */
                         display: block;
                         width: 195px;
                         height: 22px;
@@ -491,7 +501,7 @@ JS;
                         animation-iteration-count: 2;
                         transition: background-color ease-in 50ms;
                     }
-                    .preset-hint-pulse:hover {
+                    .xpreset-hint-pulse:hover {
                         transition: background-color ease-in 50ms;
                         background-color: #ffffab;
                         animation-play-state: paused;
@@ -501,6 +511,19 @@ JS;
                         40% { -webkit-box-shadow: 0 0 0 2px rgba(17,  203,  70,  0.8); }
                         100% { -webkit-box-shadow: 0 0 0 0   rgba(204, 169,  44,    0); }
                     }
+
+                    .uxoneditor-preset-hint {
+                        font-size: initial;
+                        padding: 4px;
+                        margin: 10px;
+                        width: calc(100% - 20px);
+                        text-align: center;
+                        position: absolute;
+                        top: 50%;
+                    }
+                    .uxoneditor-preset-hint a {color: #ccc; text-decoration: none;}
+                    .uxoneditor-preset-hint a:hover {color: #000;}
+                    .uxoneditor-preset-hint i {display: block; font-size: 400%; margin-bottom: 15px;}
                     
 CSS;
     }
@@ -566,6 +589,7 @@ CSS;
             $addHelpButtonFunction = static::buildJsFunctionNameAddHelpButton($funcPrefix);
             $addPresetHint = static::buildJsFunctionNameAddPresetHint($funcPrefix);
             $onBlurFunctionName = static::buildJsFunctionNameOnBlur($funcPrefix);
+            $presetHintHide = static::buildJsPresetHintHide($uxonEditorId);
             $uxonEditorTerms = [
                 'HELP' => static::translateJsUxonEditorTerm($workbench, 'HELP'),
                 'JSON_PATH' => static::translateJsUxonEditorTerm($workbench, 'JSON_PATH'),
@@ -582,7 +606,7 @@ CSS;
                 'ERROR.MALFORMED_RESPONSE' => static::translateJsUxonEditorTerm($workbench, 'ERROR.MALFORMED_RESPONSE')
             ];
             
-        return <<<JS
+            return <<<JS
                 
         var wrapData = {};
         var nodeIsWrappingTarget = false;
@@ -595,7 +619,7 @@ CSS;
         		text: text,
         		path: JSON.stringify(path),
         		input: input,
-        		schema: '{$uxonSchema}',
+        		schema: {$uxonSchema},
                 prototype: {$rootPrototype},
                 object: {$rootObject},
         		uxon: uxon
@@ -727,37 +751,21 @@ CSS;
 
         function {$addPresetHint}() {
             var presetHint = $(
-               '<i id="presetHint" class="fa fa-magic preset-hint-pulse" title="{$uxonEditorTerms['PRESET_HINT']}" style="color: #0062fd; font-size: 17px; padding: 4px;' +
-               ' padding-right: 5px; position: absolute; margin: 10px;"><a style="margin-left: 5px; width:100%;">{$uxonEditorTerms['PRESET_HINT']}</a></i>'
+                '<div class="uxoneditor-preset-hint">' +
+                '   <a href="javascript:;">' + 
+                '       <i class="fa fa-magic preset-hint-pulse" title="{$uxonEditorTerms['PRESET_HINT']}"></i>' + 
+                '       {$uxonEditorTerms['PRESET_HINT']}' + 
+                '   </a>' + 
+                '</div>'
             );
         
             $("#{$uxonEditorId} .jsoneditor-tree-inner").after(presetHint);
-        
-            $("#{$uxonEditorId}").hover(
-                function(event){
-                    let rootNodeVal = {$funcPrefix}_getRootNodeValue();
-                    if ( JSON.stringify(rootNodeVal) === "{}" && !presetHintActive ){
-                          presetHintActive = true;
-                          $("#presetHint").fadeIn(700);
-                    }
-                }
-            );
             
-            presetHint.click( function(){
+            $("#{$uxonEditorId} .uxoneditor-preset-hint a").click( function(){
                 var rootNode = {$funcPrefix}_getNodeFromTarget(
                     $(".jsoneditor-tree tr:first-of-type td:last-of-type .jsoneditor-readonly").get()[0]
                 );
                 return {$funcPrefix}_openPresetsModal(rootNode);
-            });
-            
-            presetHint.hover( function(){
-                $("#presetHint").removeClass("preset-hint-pulse");
-                $("#presetHint").css("background-color", "#ffffab");
-            });
-            
-            
-            presetHint.mouseleave( function(e){
-                $("#presetHint").css("background-color", "transparent");
             });
         }
         
@@ -973,7 +981,7 @@ CSS;
                     action: 'exface.Core.UxonAutosuggest',
                     path: JSON.stringify(path),
                     input: 'preset',
-                    schema: '{$uxonSchema}',
+                    schema: {$uxonSchema},
                     prototype: {$rootPrototype},
                     object: $("#DataTable_DataToolbar_ButtonGroup_DataButton02_object_uid").val(),
                     uxon: node.editor.getText()
@@ -1016,8 +1024,8 @@ CSS;
                 var oSelectrPresets = new Selectr(
                     oPresetSelector,
                     {   clearable: true,
-                        defaultSelected: true,
-                        placeholder: 'select fields...',
+                        defaultSelected: false,
+                        placeholder: 'Select a preset...',
                         data: aPresetOptions
                     }
                 ); // new Selectr()
@@ -1064,12 +1072,11 @@ CSS;
                 return [];
             } ); // fail
             
-            var {$funcPrefix}_replaceNodeValue = function(oEditor, oNode, sJson, oModal)
-            {  oNode.update(sJson);
+            var {$funcPrefix}_replaceNodeValue = function(oEditor, oNode, sJson, oModal){  
+               oNode.update(sJson);
                oNode.expand(true);
                {$funcPrefix}_focusFirstChildValue(oNode);
-               $("#presetHint").hide();
-               
+               {$presetHintHide}
                presetHintActive = false;
                oModal.close();
                
@@ -1139,6 +1146,21 @@ JS;
         return '""';
     }
     
+    protected function buildJsSchemaGetter() : string
+    {
+        $widget = $this->getWidget();
+        if ($widget instanceof InputUxon) {
+            $expr = $widget->getSchemaExpression();
+            if ($expr->isString() === true) {
+                return '"' . trim($expr->toString(), "'\"") . '"';
+            } elseif ($expr->isReference() === true) {
+                $link = $expr->getWidgetLink($widget);
+                return $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetColumnId());
+            }
+        }
+        return '""';
+    }
+    
     protected function buildJsRootObjectGetter() : string
     {
         $widget = $this->getWidget();
@@ -1167,7 +1189,7 @@ JS;
         
         return $this::buildJsUxonEditorFunctions(
             $funcPrefix,
-            $widget->getSchema(),
+            $this->buildJsSchemaGetter(),
             $this->buildJsRootPrototypeGetter(),
             $this->buildJsRootObjectGetter(),
             $this->getAjaxUrl(),
