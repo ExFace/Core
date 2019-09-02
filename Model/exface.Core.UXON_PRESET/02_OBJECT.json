@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2019-07-09 11:35:26",
-            "MODIFIED_ON": "2019-09-01 18:55:00",
+            "MODIFIED_ON": "2019-09-02 06:51:22",
             "CREATED_BY_USER": "0x11e9876d60774992bb32106530e7aff7",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9a23da60d78a6949f106530e7aff7",
@@ -96,7 +96,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Form\",\"widgets\":[{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"PROTOTYPE\"},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Use as wrapper\",\"widgets\":[{\"attribute_alias\":\"WRAP_FLAG\",\"id\":\"wrap_flag\",\"disabled\":false,\"widget_type\":\"InputCheckBox\",\"display_only\":true},{\"attribute_alias\":\"WRAP_PATH\",\"widget_type\":\"Input\",\"disable_condition\":{\"widget_link\":\"wrap_flag\",\"comparator\":\"==\",\"value\":0}}]},{\"attribute_alias\":\"DESCRIPTION\",\"width\":1},{\"attribute_alias\":\"UXON\",\"width\":2,\"height\":20,\"hide_caption\":true}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Form\",\"widgets\":[{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"PROTOTYPE\",\"id\":\"input_uxon_prototype\"},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Use as wrapper\",\"widgets\":[{\"attribute_alias\":\"WRAP_FLAG\",\"id\":\"wrap_flag\",\"disabled\":false,\"widget_type\":\"InputCheckBox\",\"display_only\":true},{\"attribute_alias\":\"WRAP_PATH\",\"widget_type\":\"Input\",\"disable_condition\":{\"widget_link\":\"wrap_flag\",\"comparator\":\"==\",\"value\":0}}]},{\"attribute_alias\":\"DESCRIPTION\",\"width\":1},{\"attribute_alias\":\"UXON\",\"widget_type\":\"InputHidden\"},{\"attribute_alias\":\"UXON\",\"width\":2,\"height\":20,\"hide_caption\":true,\"widget_type\":\"InputUxon\",\"root_prototype\":\"=input_uxon_prototype\"}]}",
             "ALIAS": "UXON_PRESET",
             "DATA_ADDRESS": "exf_uxon_preset"
         }
