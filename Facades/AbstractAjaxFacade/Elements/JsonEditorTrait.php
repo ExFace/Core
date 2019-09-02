@@ -423,6 +423,8 @@ JS;
                         text-shadow: 2px;
                     
                     }
+
+                    .jsoneditor-modal .pico-modal-contents {height: 100%; width: 100%;}
                                         
                     .jsoneditor-modal .uxoneditor-input,
                     .spinner-wrapper { 
@@ -487,29 +489,6 @@ JS;
                     }
                     @-webkit-keyframes spin {
                         to { -webkit-transform: rotate(360deg); }
-                    }
-                    .xpreset-hint-pulse { /* ===== Preset hint styles and keyframes ===== */
-                        display: block;
-                        width: 195px;
-                        height: 22px;
-                        border-radius: 0.2%;
-                        background: transparent;
-                        cursor: pointer;
-                        box-shadow: 0 0 0 rgba(255,255,171, 0.8);
-                        animation: pulse 4s 2;
-                        animation-delay: 1s;
-                        animation-iteration-count: 2;
-                        transition: background-color ease-in 50ms;
-                    }
-                    .xpreset-hint-pulse:hover {
-                        transition: background-color ease-in 50ms;
-                        background-color: #ffffab;
-                        animation-play-state: paused;
-                    }
-                    @-webkit-keyframes pulse {
-                        0% { -webkit-box-shadow: 0 0 0 0   rgba(17,   50,  70,  0.2); }
-                        40% { -webkit-box-shadow: 0 0 0 2px rgba(17,  203,  70,  0.8); }
-                        100% { -webkit-box-shadow: 0 0 0 0   rgba(204, 169,  44,    0); }
                     }
 
                     .uxoneditor-preset-hint {
