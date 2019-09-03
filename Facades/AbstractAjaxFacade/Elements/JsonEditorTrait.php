@@ -216,11 +216,11 @@ JS;
         
         $funcPrefix = $this->buildJsFunctionPrefix();
         $uxonEditorId = $this->getId();
-        $uxonSchema = $this->buildJsSchemaGetter();
+        $uxonSchemaJs = $this->buildJsSchemaGetter();
         $workbench = $this->getWorkbench();
         
         if (($widget instanceof InputUxon) && $widget->getAutosuggest() === true) {
-            $uxonEditorOptions = $this::buildJsUxonEditorOptions($uxonSchema, $funcPrefix, $workbench);
+            $uxonEditorOptions = $this::buildJsUxonEditorOptions("'{$uxonEditorId}'", $uxonSchemaJs, $funcPrefix, $workbench);
         } else {
             $uxonEditorOptions = '';
         }
@@ -242,7 +242,7 @@ JS;
         // TODO add getOnChangeScript() somewhere here. 
         $fn = '';
         if ($this->getWidget() instanceof InputUxon) {
-            $fn .= $this->buildJsPresetHintTrigger($this->getId(), 'json');
+            $fn .= $this->buildJsPresetHintTrigger("'{$this->getId()}'", 'json');
         }
         return "function(json) { $fn }";
     }
@@ -272,7 +272,7 @@ JS;
      * @param string $funcPrefix
      * @return string
      */
-    public static function buildJsUxonEditorOptions(string $uxonSchema, string $funcPrefix, Workbench $workbench) : string
+    public static function buildJsUxonEditorOptions(string $editorIdJs, string $uxonSchema, string $funcPrefix, Workbench $workbench) : string
     {   
         $uxonEditorTerms = [
             'JSON_PATH' => static::translateJsUxonEditorTerm($workbench, "CONTEXT_MENU.JSON_PATH.TITLE"),
@@ -352,8 +352,9 @@ JS;
                         },
                         onCreateMenu : function (items, node){
                             var path = node.path;
-                            var rootNode = {$funcPrefix}_getNodeFromTarget( $('.jsoneditor-tree tr:first-of-type td:last-of-type .jsoneditor-readonly').get()[0]);
+                            var rootNode = {$funcPrefix}_getNodeFromTarget( $('#' + {$editorIdJs} + ' .jsoneditor-tree tr:first-of-type td:last-of-type .jsoneditor-readonly').get()[0]);
                             var menuNode = path.length > 0 ? rootNode.findNodeByPath(node.path) : rootNode;
+                            console.log(node, path, menuNode, rootNode);
                             var val = menuNode.getValue();
                             var presetsMenuBtnActive = false;
                             
