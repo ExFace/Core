@@ -354,7 +354,7 @@ JS;
                             var path = node.path;
                             var rootNode = {$funcPrefix}_getNodeFromTarget( $('#' + {$editorIdJs} + ' .jsoneditor-tree tr:first-of-type td:last-of-type .jsoneditor-readonly').get()[0]);
                             var menuNode = path.length > 0 ? rootNode.findNodeByPath(node.path) : rootNode;
-                            console.log(node, path, menuNode, rootNode);
+                            
                             var val = menuNode.getValue();
                             var presetsMenuBtnActive = false;
                             
@@ -760,7 +760,7 @@ CSS;
                 '   </a>' + 
                 '</div>'
             );
-            console.log(editorId, $("#" + editorId + " .jsoneditor-tree-inner"));
+            
             $("#" + editorId + " .jsoneditor-tree-inner").after(presetHint);
             
             $("#" + editorId + " .uxoneditor-preset-hint a").click( function(){
