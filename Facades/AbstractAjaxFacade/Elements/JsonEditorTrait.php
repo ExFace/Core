@@ -440,9 +440,11 @@ JS;
                     
                     }
 
-                    .jsoneditor-modal .pico-modal-contents {height: 100%; width: 100%;}
+                    .jsoneditor-modal 
+                    .pico-modal-contents {height: 100%; width: 100%;}
                                         
-                    .jsoneditor-modal .uxoneditor-input,
+                    .jsoneditor-modal 
+                    .uxoneditor-input, 
                     .spinner-wrapper { 
                         font-family: "dejavu sans mono", "droid sans mono", consolas,
 							monaco, "lucida console", "courier new", courier, monospace,
@@ -479,6 +481,8 @@ JS;
                     .jsoneditor-modal .action-buttons {
                         float: right;
                     }
+
+                    .jsoneditor-modal table.jsoneditor-values {width: initial;}
 
                     .jsoneditor-no-menuicon .jsoneditor-icon {display: none;}
                     .jsoneditor-no-menuicon .jsoneditor-text {padding-left: 4px !important;}
