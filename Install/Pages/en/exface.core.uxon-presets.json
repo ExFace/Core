@@ -19,6 +19,10 @@
                         "widget_type": "DataTable",
                         "id": "table_widget_presets",
                         "object_alias": "exface.Core.WIDGET_PRESET",
+                        "row_grouper": {
+                            "group_by_attribute_alias": "PROTOTYPE__LABEL",
+                            "hide_caption": true
+                        },
                         "filters": [
                             {
                                 "attribute_alias": "NAME"
