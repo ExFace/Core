@@ -523,7 +523,7 @@ JS;
                         width: calc(100% - 20px);
                         text-align: center;
                         position: absolute;
-                        top: 50%;
+                        top: calc(40% - 50px);
                     }
                     .uxoneditor-preset-hint a {color: #ccc; text-decoration: none;}
                     .uxoneditor-preset-hint a:hover {color: #1a1a1a;}
