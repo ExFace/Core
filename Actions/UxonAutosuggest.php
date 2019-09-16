@@ -16,6 +16,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
  * Returns autosuggest values for provided UXON objects.
@@ -128,6 +129,9 @@ class UxonAutosuggest extends AbstractAction
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.' . strtoupper($schema::getSchemaName()) . '_PRESET');
         $ds->getColumns()->addMultiple(['UID','NAME', 'PROTOTYPE__LABEL', 'DESCRIPTION', 'PROTOTYPE', 'UXON' , 'WRAP_PATH', 'WRAP_FLAG']);
         $ds->addFilterFromString('UXON_SCHEMA', $schema::getSchemaName());
+        $ds->getSorters()
+            ->addFromString('PROTOTYPE', SortingDirectionsDataType::ASC)
+            ->addFromString('NAME', SortingDirectionsDataType::ASC);
         $ds->dataRead();
         
         $class = $schema->getPrototypeClass($uxon, $path, $rootPrototypeClass);
