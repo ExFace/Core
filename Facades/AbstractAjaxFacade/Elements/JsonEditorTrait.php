@@ -5,9 +5,7 @@ use exface\Core\Widgets\InputUxon;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Facades\DocsFacade;
-use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\CommonLogic\Workbench;
-use Symfony\Component\Translation\Translator;
 
 /**
  * This trait helps use the JsonEditor library to create InputJson and InputUxon widgets.
@@ -18,7 +16,7 @@ use Symfony\Component\Translation\Translator;
  * 
  * ```
  * require: {
- *	"npm-asset/jsoneditor" : "^6.1",
+ *	"npm-asset/jsoneditor" : "^6.1||^7.0",
  *	"npm-asset/picomodal" : "^3.0.0",
  *	"npm-asset/mobius1-selectr" : "^2.4.12"
  * }
