@@ -274,6 +274,48 @@
             "UXON": "{\"object_alias\":\"\",\"widget_type\":\"SplitVertical\",\"panels\":[{\"caption\":\"\",\"height\":\"33%\",\"widgets\":[{\"\":\"\"}]},{\"caption\":\"\",\"widgets\":[{\"\":\"\"}]},{\"caption\":\"\",\"height\":\"33%\",\"widgets\":[{\"\":\"\"}]}]}",
             "WRAP_PATH": "$.panels[0].widgets[0]",
             "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2019-09-16 13:58:24",
+            "MODIFIED_ON": "2019-09-16 13:58:24",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e9d889ae4f5723ad7fe4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Reuse\/extend a page",
+            "DESCRIPTION": "Places the main widget of a page inside another widget or another page",
+            "PROTOTYPE": "",
+            "UXON": "{\"extend_widget\":{\"page_alias\":\"\"}}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2019-09-16 14:03:13",
+            "MODIFIED_ON": "2019-09-16 14:03:13",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e9d88a5a8524a2ad7fe4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Centered KPI-Tiles",
+            "DESCRIPTION": "Several tiles in the middle of the screen. This can be a good starting point for a set of dashboards, where each tile navigates to a dashboard.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Tiles.php",
+            "UXON": "{\"widget_type\":\"Tiles\",\"object_alias\":\"\",\"center_content\":true,\"widgets\":[{\"widget_type\":\"Tile\",\"title\":\"\",\"subtitle\":\"\",\"action\":{\"alias\":\"exface.Core.GoToPage\",\"page_alias\":\"\"},\"display_widget\":{\"widget_type\":\"KPI\"}},{\"widget_type\":\"Tile\",\"title\":\"\",\"subtitle\":\"\",\"action\":{\"alias\":\"exface.Core.GoToPage\",\"page_alias\":\"\"},\"display_widget\":{\"widget_type\":\"KPI\"}}]}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2019-09-16 14:08:11",
+            "MODIFIED_ON": "2019-09-16 14:19:59",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e9d88b0c200e3ead7fe4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Custom tile menu",
+            "DESCRIPTION": "Navigation menu with manually defined tiles. In contrast to NavTiles, each tile can have separate action, icon, etc.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Tiles.php",
+            "UXON": "{\"widget_type\":\"Tiles\",\"object_alias\":\"\",\"tiles\":[{\"icon\":\"\",\"show_icon\":true,\"action\":{\"alias\":\"\"}},{\"caption\":\"\",\"subtitle\":\"\",\"icon\":\"\",\"show_icon\":true,\"action\":{\"alias\":\"\"}}]}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
         }
     ],
     "totals_rows": [],
