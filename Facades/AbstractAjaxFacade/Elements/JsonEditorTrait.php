@@ -546,8 +546,6 @@ CSS;
         return $includes; 
 	}
     
-
-    
    /**
     * Returns translation for a specific UXON editor term using core app's translator.
     * Add new terms by maintaining "exface.Core.(en|de|ru).json" using prefix 'WIDGET.UXONEDITOR.'.
@@ -594,6 +592,7 @@ CSS;
             $uxonEditorTerms = [
                 'HELP' => static::translateJsUxonEditorTerm($workbench, 'HELP'),
                 'JSON_PATH' => static::translateJsUxonEditorTerm($workbench, 'JSON_PATH'),
+                'PRESET_GROUP_GENERAL' => static::translateJsUxonEditorTerm($workbench, 'PRESET_GROUP_GENERAL'),
                 'USE_PRESET_AT' => static::translateJsUxonEditorTerm($workbench, 'WIDGET_PRESETS.LABEL.USE_PRESET_AT'),
                 'PRESET_PREVIEW' => static::translateJsUxonEditorTerm($workbench, 'WIDGET_PRESETS.PRESET_PREVIEW'),
                 'WIDGET_PRESETS' => static::translateJsUxonEditorTerm($workbench, 'WIDGET_PRESETS.TITLE'),
@@ -987,6 +986,9 @@ CSS;
                 var length = aPresetData.length;
                 for(var i = 0; i < length; i++){
                     row = aPresetData[i];
+                    if (! row['PROTOTYPE__LABEL']) {
+                       row['PROTOTYPE__LABEL'] = "{$uxonEditorTerms['PRESET_GROUP_GENERAL']}";
+                    }
                     if (lastOption['text'] === row['PROTOTYPE__LABEL']) {
                          lastOption['children'].push({
                              text: row['NAME'],
