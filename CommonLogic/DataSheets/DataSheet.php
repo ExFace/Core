@@ -1145,7 +1145,7 @@ class DataSheet implements DataSheetInterface
                 }
                 
                 foreach ($rowNestedSheets as $columnName => $nestedSheet) {
-                    if ($nestedSheet === null) {
+                    if ($nestedSheet === null || $nestedSheet->isEmpty() === true) {
                         continue;
                     }
                     $nestedRel = $this->getMetaObject()->getRelation($columnName);
