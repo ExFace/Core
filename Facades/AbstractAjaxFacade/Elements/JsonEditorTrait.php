@@ -272,13 +272,7 @@ JS;
      */
     public static function buildJsUxonEditorOptions(string $editorIdJs, string $uxonSchema, string $funcPrefix, Workbench $workbench) : string
     {   
-        $uxonEditorTerms = [
-            'JSON_PATH' => static::translateJsUxonEditorTerm($workbench, "CONTEXT_MENU.JSON_PATH.TITLE"),
-            'PRESETS'   => static::translateJsUxonEditorTerm($workbench, "CONTEXT_MENU.PRESETS"),
-            'ERROR.AUTOSUGGEST_FAILED' => static::translateJsUxonEditorTerm($workbench, "ERROR.AUTOSUGGEST_FAILED.GENERAL"),
-            'ERROR.GETTING_OPTIONS' => static::translateJsUxonEditorTerm($workbench, "ERROR.AUTOSUGGEST_FAILED.GETTING_OPTIONS"),
-            'ERROR.PRESETS_NOT_AVAILABLE' => static::translateJsUxonEditorTerm($workbench, "ERROR.PRESETS_NOT_AVAILABLE")
-        ];
+        $trans = static::getTranslations($workbench);
         
         return <<<JS
                     name: ({$uxonSchema} === 'generic' ? 'UXON' : {$uxonSchema}),
@@ -337,13 +331,13 @@ JS;
                                         })
                                        .catch((err) => { 
                                             editor._autosuggestPending = false;
-                                            console.warn("{$uxonEditorTerms['ERROR.AUTOSUGGEST_FAILED']}", err);
+                                            console.warn("{$trans['ERROR.AUTOSUGGEST_FAILED']}", err);
                                        });
                     	           }
                                 })
                                 .catch((err) => {
                                     editor._autosuggestPending = false;
-                                    console.warn("{$uxonEditorTerms['ERROR.GETTING_OPTIONS']}", err);
+                                    console.warn("{$trans['ERROR.GETTING_OPTIONS']}", err);
                                     return Promise.resolve([]);
                                 });
                             }
@@ -354,39 +348,39 @@ JS;
                             var menuNode = path.length > 0 ? rootNode.findNodeByPath(node.path) : rootNode;
                             
                             var val = menuNode.getValue();
-                            var presetsMenuBtnActive = false;
-                            
-                            /* ist objekt oder wert === leer */ 
                             var menuNodeType = {$funcPrefix}_getNodeType(menuNode);
-                            if ( menuNodeType === "object" || menuNode.getValue( ) === "" || menuNodeType === "root" ) {
-                                presetsMenuBtnActive = true;
-                            };
-                                  // Menü aktiv
-                            if(!presetsMenuBtnActive) {
-                                items.unshift(
-                                    {
-                                        text : "<i class=\"fa fa-magic\"></i>{$uxonEditorTerms['PRESETS']}",   // the text for the menu item
-                                        title : "{$uxonEditorTerms['PRESETS']}",  // the HTML title attribute
-                                        className : "jsoneditor-no-menuicon deactivate-button" ,     // the css class name(s) for the menu item
-                                        click : function(){ console.warn("{$uxonEditorTerms['ERROR.PRESETS_NOT_AVAILABLE']}"); }
-                                    }
-                                );
-                            } else{
+                            
+                            // Add preset button if applicable
+                            // ist objekt oder wert === leer                            
+                            if(menuNodeType === "object" || menuNodeType === "root") {
                                 items.unshift(
                                 {
-                                    text : "<i class=\"fa fa-magic\"></i>{$uxonEditorTerms['PRESETS']}",   // the text for the menu item
-                                    title : "{$uxonEditorTerms['PRESETS']}",  // the HTML title attribute
+                                    text : "<i class=\"fa fa-magic\"></i>{$trans['PRESETS.TITLE']}",   // the text for the menu item
+                                    title : "{$trans['PRESETS.TITLE']}",  // the HTML title attribute
                                     className : "jsoneditor-no-menuicon jsoneditor-type-object active-button", // the css class name(s) for the menu item
                                     click: function(){ 
                                         return {$funcPrefix}_openPresetsModal(menuNode); 
                                     }
                                 });
                             }
+
+                            // Add details button if applicable
+                            if(menuNodeType === "object" || menuNodeType === "root") {
+                                items.unshift(
+                                {
+                                    text : "<i class=\"fa fa-th-list\"></i>{$trans['DETAILS.TITLE']}",   // the text for the menu item
+                                    title : "{$trans['DETAILS.TITLE']}",  // the HTML title attribute
+                                    className : "jsoneditor-no-menuicon jsoneditor-type-object active-button", // the css class name(s) for the menu item
+                                    click: function(){ 
+                                        return {$funcPrefix}_openDetailsModal(menuNode); 
+                                    }
+                                });
+                            }
                             
-                            // Always add menu item for copying current path
+                            // Add menu item for copying current JSON path always
                         	items.push({
-                                text: "{$uxonEditorTerms['JSON_PATH']}",   // the text for the menu item
-                                title: "{$uxonEditorTerms['JSON_PATH']}",  // the HTML title attribute
+                                text: "{$trans['JSON_PATH']}",   // the text for the menu item
+                                title: "{$trans['JSON_PATH']}",  // the HTML title attribute
                                 className: "jsoneditor-type-object active-button" ,     // the css class name(s) for the menu item
                                 click : function() { 
                                     return {$funcPrefix}_openJsonPathViewModal(menuNode); 
@@ -442,8 +436,7 @@ JS;
                     .jsoneditor-modal 
                     .pico-modal-contents {height: 100%; width: 100%;}
                                         
-                    .jsoneditor-modal 
-                    .uxoneditor-input, 
+                    .jsoneditor-modal .uxoneditor-input, 
                     .spinner-wrapper { 
                         font-family: "dejavu sans mono", "droid sans mono", consolas,
 							monaco, "lucida console", "courier new", courier, monospace,
@@ -526,6 +519,11 @@ JS;
                     .uxoneditor-preset-hint a {color: #ccc; text-decoration: none;}
                     .uxoneditor-preset-hint a:hover {color: #1a1a1a;}
                     .uxoneditor-preset-hint i {display: block; font-size: 400%; margin-bottom: 15px;}
+
+                    .uxoneditor-checkbox {-webkit-appearance: checkbox; -moz-appearance: checkbox;}
+                    .uxoneditor-details-table {margin-bottom: 20px}
+                    .uxoneditor-details-table th {font-weight: bold !important; padding: 3px !important; border-bottom: 1px solid #3883fa}
+                    .uxoneditor-details-table td {padding: 3px !important;}
                     
 CSS;
     }
@@ -564,6 +562,19 @@ CSS;
         return $translator->translate(trim('WIDGET.UXONEDITOR.' . $message_id), null, null);
     }
     
+    protected static function getTranslations(WorkbenchInterface $workbench, string $prefix = 'WIDGET.UXONEDITOR') : array
+    {
+        $translator = $workbench->getCoreApp()->getTranslator();
+        $trans = [];
+        $prefixLen = strlen($prefix);
+        foreach ($translator->getDictionary() as $key => $text) {
+            if (substr($key, 0, $prefixLen) === $prefix) {
+                $trans[substr($key, $prefixLen+1)] = $text;
+            }
+        }
+        return $trans;
+    }
+    
     /**
      *
      * @param string $funcPrefix
@@ -589,22 +600,7 @@ CSS;
             $addPresetHint = static::buildJsFunctionNameAddPresetHint($funcPrefix);
             $onBlurFunctionName = static::buildJsFunctionNameOnBlur($funcPrefix);
             $presetHintHide = static::buildJsPresetHintHide($uxonEditorIdJs);
-            $uxonEditorTerms = [
-                'HELP' => static::translateJsUxonEditorTerm($workbench, 'HELP'),
-                'JSON_PATH' => static::translateJsUxonEditorTerm($workbench, 'JSON_PATH'),
-                'PRESET_GROUP_GENERAL' => static::translateJsUxonEditorTerm($workbench, 'PRESET_GROUP_GENERAL'),
-                'USE_PRESET_AT' => static::translateJsUxonEditorTerm($workbench, 'WIDGET_PRESETS.LABEL.USE_PRESET_AT'),
-                'PRESET_PREVIEW' => static::translateJsUxonEditorTerm($workbench, 'WIDGET_PRESETS.PRESET_PREVIEW'),
-                'WIDGET_PRESETS' => static::translateJsUxonEditorTerm($workbench, 'WIDGET_PRESETS.TITLE'),
-                'REPLACE' => static::translateJsUxonEditorTerm($workbench, 'WIDGET_PRESETS.ACTION.REPLACE'),
-                'PREPEND' => static::translateJsUxonEditorTerm($workbench, 'WIDGET_PRESETS.ACTION.PREPEND'),
-                'APPEND' => static::translateJsUxonEditorTerm($workbench, 'WIDGET_PRESETS.ACTION.APPEND'),
-                'WRAP' => static::translateJsUxonEditorTerm($workbench, 'WIDGET_PRESETS.ACTION.WRAP'),
-                'CANCEL' => static::translateJsUxonEditorTerm($workbench, 'WIDGET_PRESETS.ACTION.CANCEL'),
-                'PRESET_HINT' => static::translateJsUxonEditorTerm($workbench, 'PRESET_HINT'),
-                'ERROR.SERVER_ERROR' => static::translateJsUxonEditorTerm($workbench, 'ERROR.SERVER_ERROR'),
-                'ERROR.MALFORMED_RESPONSE' => static::translateJsUxonEditorTerm($workbench, 'ERROR.MALFORMED_RESPONSE')
-            ];
+            $trans = static::getTranslations($workbench);
             
             return <<<JS
                 
@@ -644,7 +640,7 @@ CSS;
                 ) {
                     return response.json();
                 } else {
-                    return Promise.reject({message: "{$uxonEditorTerms['ERROR.MALFORMED_RESPONSE']}", response: response});
+                    return Promise.reject({message: "{$trans['ERROR.MALFORMED_RESPONSE']}", response: response});
                 }
             });
         }
@@ -661,11 +657,10 @@ CSS;
                 };
             }
             var contentStr = 
-                '<label class="pico-modal-contents">' +
-                '<div class="pico-modal-header">' + 
-                title +
-                '</div>' + 
-                contentHTML;
+                '<div class="pico-modal-contents">' +
+                '   <div class="pico-modal-header">' + title + '</div>' + 
+                    contentHTML +
+                '</div>';
             
             picoModal({
                 parent: window.document.body,
@@ -694,15 +689,18 @@ CSS;
            return undefined;
         }
         
-        function {$funcPrefix}_focusFirstChildValue(node){
+        function {$funcPrefix}_focusFirstChildValue(node, onlyEmptyValues){
+            if (onlyEmptyValues === undefined) {
+                onlyEmptyValues = false;
+            }
         	var child, found;
         	for (var i in node.childs) {
         		child = node.childs[i];
-        		if (child.type === 'string' || child.type === 'auto') {
+        		if ((child.type === 'string' || child.type === 'auto') && (onlyEmptyValues === false || child.getValue() === undefined || child.getValue() === '')) {
         			child.focus(child.getField() ? 'value' : 'field');
                     return child;
         		} else {
-        			found = {$funcPrefix}_focusFirstChildValue(child);
+        			found = {$funcPrefix}_focusFirstChildValue(child, onlyEmptyValues);
                     if (found) {
                         return found;
                     }
@@ -731,7 +729,7 @@ CSS;
         }
           function {$addHelpButtonFunction}($, editorId, url, title) {
             var helpBtn = $(
-                '<button type="button" title="{$uxonEditorTerms['HELP']}" style="background: transparent;"><i ' +
+                '<button type="button" title="{$trans['HELP']}" style="background: transparent;"><i ' +
                 'class="fa fa-question-circle-o" style="font-size: 22px"></i></button>'
             );
            
@@ -752,8 +750,8 @@ CSS;
             var presetHint = $(
                 '<div class="uxoneditor-preset-hint">' +
                 '   <a href="javascript:;">' + 
-                '       <i class="fa fa-magic preset-hint-pulse" title="{$uxonEditorTerms['PRESET_HINT']}"></i>' + 
-                '       {$uxonEditorTerms['PRESET_HINT']}' + 
+                '       <i class="fa fa-magic preset-hint-pulse" title="{$trans['PRESETS.HINT']}"></i>' + 
+                '       {$trans['PRESETS.HINT']}' + 
                 '   </a>' + 
                 '</div>'
             );
@@ -770,7 +768,6 @@ CSS;
         
         function {$funcPrefix}_getJsonPathViewContent(){
             var jsonPathViewContent =
-                '<label class="pico-modal-contents">' +
                 '<div>' +
                 '   <textarea id="jsonPathView" ' +
                 '      class="preset-path uxoneditor-input"' +
@@ -808,43 +805,7 @@ CSS;
             
             return aResult;
         }
-        
-        function {$funcPrefix}_getPresetsBtnContent(node){
-            var presetsContent =
-                '<label class="pico-modal-contents">' +
-                '<div class="jsoneditor-jmespath-label">{$uxonEditorTerms['WIDGET_PRESETS']}</div>' +
-                '<div class="jsoneditor-jmespath-block uxoneditor-preset-selector" style="position: relative">' +
-                '   <div class="spinner-wrapper">' +
-                '       <div class="spinner"></div>' +
-                '   </div>' +
-                '   <select class="jsoneditor-jmespath-select-fields"></select>' +
-                '</div>' +
-                '<div class="jsoneditor-jmespath-block">' +
-                '   <textarea id="uxonPresetDescription" ' +
-                '      class="uxoneditor-input" style="height: 60px;"' +
-                '      readonly> ' +
-                '   </textarea>' +
-                '</div>' +
-                '<div class="jsoneditor-jmespath-label">{$uxonEditorTerms['PRESET_PREVIEW']} </div>' +
-                '<div class="jsoneditor-jmespath-block" style="height: calc(100% - 18px - 104px - 28px - 18px - 26px - 45px - 35px - 42px)">' +
-                '  <div class="uxoneditor-preset-preview" style="height: 100%"> </div>' +
-                '</div>' +
-                '<div class="jsoneditor-jmespath-label">{$uxonEditorTerms['USE_PRESET_AT']} </div>' +
-                '<div class="jsoneditor-jmespath-block jsoneditor-modal-actions">' +
-                '   <input class="uxoneditor-input" id="uxonPresetPath" ' +
-                '      style="width: calc(100% - 455px); margin-right: 4px;"' +
-                '      readonly> ' +
-                '   </input>' +
-                '   <div class="action-buttons">' +
-                '       <input class="uxoneditor-input action-button uxoneditor-preset-replace" autofocus disabled type="submit" value="{$uxonEditorTerms['REPLACE']}"/>' +
-                '       <input class="uxoneditor-input action-button uxoneditor-preset-prepend" disabled type="submit" value="{$uxonEditorTerms['PREPEND']}"/>' +
-                '       <input class="uxoneditor-input action-button uxoneditor-preset-append" disabled type="submit" value="{$uxonEditorTerms['APPEND']}" />' +
-                '       <input class="uxoneditor-input action-button uxoneditor-preset-wrap" disabled type="submit" value="{$uxonEditorTerms['WRAP']}"   />' +
-                '       <input class="uxoneditor-input action-button uxoneditor-preset-cancel" type="submit" value="{$uxonEditorTerms['CANCEL']}" />' +
-                '   </div>' +
-                '</div>';
-            return presetsContent;
-        }
+
         function {$funcPrefix}_convertToJsonPath(aPath){
             let str = '$';
             aPath.forEach(function(crumb) {
@@ -874,7 +835,7 @@ CSS;
         
         function {$funcPrefix}_openJsonPathViewModal(node) {
             return {$funcPrefix}_openModal(
-                "{$uxonEditorTerms['JSON_PATH']}",
+                "{$trans['JSON_PATH']}",
                 {$funcPrefix}_getJsonPathViewContent(),
                 false,
                 "jsoneditor-modal jsonPathView",
@@ -885,14 +846,25 @@ CSS;
         }
         
         function {$funcPrefix}_openPresetsModal(node){
-            // show preset window as modal
             return {$funcPrefix}_openModal(
-                "{$uxonEditorTerms['WIDGET_PRESETS']}",
+                "{$trans['PRESETS.TITLE']}",
                 {$funcPrefix}_getPresetsBtnContent(),
                 false,
                 'jsoneditor-modal jsoneditor-modal-maximized',
                 function(modal) {
                     return {$funcPrefix}_loadPresets(modal, node);
+                }
+            );
+        }
+
+        function {$funcPrefix}_openDetailsModal(node){
+            return {$funcPrefix}_openModal(
+                "{$trans['WIDGET_DETAILS']}",
+                {$funcPrefix}_getDetailsBtnContent(),
+                false,
+                'jsoneditor-modal jsoneditor-modal-maximized',
+                function(modal) {
+                    return {$funcPrefix}_loadDetails(modal, node);
                 }
             );
         }
@@ -928,6 +900,45 @@ CSS;
                default      : return 'undefined';
            }
         }
+
+        function {$funcPrefix}_autoWidth(element){
+            var jqEl = $(element);
+            setTimeout(function(){
+                var fSiblingsWidth = 0;
+                var fParentWidth = jqEl.parent().width();
+                jqEl.siblings().each(function(){
+                    fSiblingsWidth += $(this).outerWidth(true);     
+                });
+                jqEl.css('width', 'calc(100% - ' + (fSiblingsWidth + 10) + 'px)');
+            }, 0);
+        }
+        
+        function {$funcPrefix}_getPresetsBtnContent(node){
+            return  '   <div class="jsoneditor-jmespath-block uxoneditor-preset-selector" style="position: relative">' +
+                    '      <div class="spinner-wrapper">' +
+                    '          <div class="spinner"></div>' +
+                    '      </div>' +
+                    '      <select class="jsoneditor-jmespath-select-fields"></select>' +
+                    '   </div>' +
+                    '   <div class="jsoneditor-jmespath-block">' +
+                    '      <textarea id="uxonPresetDescription" class="uxoneditor-input" style="height: 90px;" readonly></textarea>' +
+                    '   </div>' +
+                    '   <div class="jsoneditor-jmespath-label">{$trans['PRESETS.PREVIEW']} </div>' +
+                    '   <div class="jsoneditor-jmespath-block" style="height: calc(100% - 35px - 10px - 90px - 10px - 18px - 25px - 18px - 25px - 35px - 4px)">' +
+                    '     <div class="uxoneditor-preset-preview" style="height: 100%"> </div>' +
+                    '   </div>' +
+                    '   <div class="jsoneditor-jmespath-label">{$trans['PRESETS.USE_PRESET_AT']} </div>' +
+                    '   <div class="jsoneditor-jmespath-block jsoneditor-modal-actions">' +
+                    '       <input class="uxoneditor-input" id="uxonPresetPath" style="margin-right: 4px;" readonly></input>' +
+                    '       <div class="action-buttons">' +
+                    '         <input class="uxoneditor-input uxoneditor-preset-replace" autofocus disabled type="submit" value="{$trans['PRESETS.BUTTON_REPLACE']}"/>' +
+                    '         <input class="uxoneditor-input uxoneditor-preset-prepend" disabled type="submit" value="{$trans['PRESETS.BUTTON_PREPEND']}"/>' +
+                    '         <input class="uxoneditor-input uxoneditor-preset-append" disabled type="submit" value="{$trans['PRESETS.BUTTON_APPEND']}" />' +
+                    '         <input class="uxoneditor-input uxoneditor-preset-wrap" disabled type="submit" value="{$trans['PRESETS.BUTTON_WRAP']}"   />' +
+                    '         <input class="uxoneditor-input uxoneditor-preset-cancel" type="submit" value="{$trans['BUTTON_CANCEL']}" />' +
+                    '       </div>' +
+                    '   </div>';
+        }
         
         function {$funcPrefix}_loadPresets(modal, node){
         
@@ -943,7 +954,6 @@ CSS;
             // get node path tree
             node.editor.expandAll(false);
             
-            var oPresetPathElem = document.getElementById('uxonPresetPath');
             var path = node.getPath();
             var nodeType = {$funcPrefix}_getNodeType(node);
             var parentNodeType = {$funcPrefix}_getNodeType(node.parent);
@@ -958,6 +968,8 @@ CSS;
             
             hasArrayContext = (node.parent !== null && node.parent.childs)? true : false;
            
+            var oPresetPathElem = document.getElementById('uxonPresetPath');
+            {$funcPrefix}_autoWidth(oPresetPathElem);
             oPresetPathElem.value = {$funcPrefix}_convertToJsonPath(path);
             oPresetPathElem.title = node.editor.options.name + (path.length > 0 ? ' > ' : '') + path.join(' > ');
             
@@ -987,7 +999,7 @@ CSS;
                 for(var i = 0; i < length; i++){
                     row = aPresetData[i];
                     if (! row['PROTOTYPE__LABEL']) {
-                       row['PROTOTYPE__LABEL'] = "{$uxonEditorTerms['PRESET_GROUP_GENERAL']}";
+                       row['PROTOTYPE__LABEL'] = "{$trans['PRESET_GROUP_GENERAL']}";
                     }
                     if (lastOption['text'] === row['PROTOTYPE__LABEL']) {
                          lastOption['children'].push({
@@ -1019,6 +1031,7 @@ CSS;
                         data: aPresetOptions
                     }
                 ); // new Selectr()
+                oSelectrPresets.open();
                 
                 modal.modalElem().querySelector('.uxoneditor-preset-selector .spinner-wrapper').remove();
                 oSelectrPresets.on('selectr.select', function(option) {
@@ -1057,14 +1070,14 @@ CSS;
                 }); // on selectr.select
             }) // done
             .fail( function (jqXHR, textStatus, errorThrown) {
-                console.warn("{$uxonEditorTerms['ERROR.SERVER_ERROR']}", jqXHR);
+                console.warn("{$trans['ERROR.SERVER_ERROR']}", jqXHR);
                 return [];
             } ); // fail
             
             var {$funcPrefix}_replaceNodeValue = function(oEditor, oNode, sJson, oModal){  
                oNode.update(sJson);
                oNode.expand(true);
-               {$funcPrefix}_focusFirstChildValue(oNode);
+               {$funcPrefix}_focusFirstChildValue(oNode, true);
                {$presetHintHide}
                oModal.close();
                
@@ -1108,8 +1121,129 @@ CSS;
             
             var presetCancel = modal.modalElem().querySelector(".uxoneditor-preset-cancel");
             presetCancel.onclick = function() {
+                modal.close();
+            };
+        }        
+
+        function {$funcPrefix}_getDetailsBtnContent(node){
+            return  '   <table class="uxoneditor-details-table">' +
+                    '       <thead>' +
+                    '           <tr>' +
+                    '               <th style="text-align: center"><i class="fa fa-eye"></i></th>' +
+                    '               <th>{$trans['DETAILS.PROPERTY']}</th>' +
+                    '               <th>{$trans['DETAILS.VALUE']}</th>' +
+                    '               <th>{$trans['DETAILS.DEFAULT']}</th>' +
+                    '               <th>{$trans['DETAILS.DESCRIPTION']}</th>' +
+                    '               <th>{$trans['DETAILS.REQUIRED']}</th>' +
+                    '           </tr>' +
+                    '       </thead>' +
+                    '       <tbody>' +
+                    '       </tbody>' +
+                    '   </table>' +
+                    '   <div style="width: calc(100% - 20px); padding: 0 0 20px 0; text-align: center;">' +
+                    '       <div class="spinner" style="width: 32px; height: 32px"></div>' +
+                    '   </div>' +
+                    '   <div class="jsoneditor-jmespath-block jsoneditor-modal-actions">' +
+                    '      <input class="uxoneditor-input" id="uxonPresetPath" style="margin-right: 4px;" readonly></input>' +
+                    '      <div class="action-buttons">' +
+                    '          <input class="uxoneditor-input uxoneditor-btn-ok" autofocus type="submit" value="{$trans['BUTTON_OK']}"/>' +
+                    '          <input class="uxoneditor-input uxoneditor-btn-cancel" type="submit" value="{$trans['BUTTON_CANCEL']}" />' +
+                    '      </div>' +
+                    '   </div>';
+        }
+
+        function {$funcPrefix}_loadDetails(modal, node){
+            
+            var path = node.getPath();
+            
+            var oPresetPathElem = document.getElementById('uxonPresetPath');
+            {$funcPrefix}_autoWidth(oPresetPathElem);
+            oPresetPathElem.value = {$funcPrefix}_convertToJsonPath(path);
+            oPresetPathElem.title = node.editor.options.name + (path.length > 0 ? ' > ' : '') + path.join(' > ');
+            
+            var jqTableBody = $(modal.modalElem().querySelector('.uxoneditor-details-table > tbody'));
+            $.ajax( {
+                type: 'POST',
+                url: '{$ajaxUrl}',
+                dataType: 'json',
+                data: {
+                    action: 'exface.Core.UxonAutosuggest',
+                    path: JSON.stringify(path),
+                    input: 'details',
+                    schema: {$uxonSchema},
+                    prototype: {$rootPrototype},
+                    uxon: node.editor.getText()
+                }, // data
+                
+            }) // ajax POST request
+            .done(function(oResponse, sTextStatus, jqXHR) {
+                var aData = oResponse.properties || [];
+                var oCurrentValues = [];
+                var val, sVal, oFieldData, iPos = 0;
+
+                modal.modalElem().querySelector('.pico-modal-header').innerHTML = oResponse.prototype_schema.charAt(0).toUpperCase() + oResponse.prototype_schema.slice(1) + ' "' + oResponse.alias + '"';
+                modal.modalElem().querySelector('.spinner').parentNode.style.display = 'none';
+                
+                node.childs.forEach(function(oChildNode){
+                    if (oCurrentValues[oChildNode.getField()] !== undefined) return;
+
+                    val = oChildNode.getValue();
+                    if (Array.isArray(val) === true) {
+                        sVal = '[' + val.length + ' {$trans['DETAILS.VALUE_ARRAY_ITEMS']}]';
+                    } else if (typeof val === 'object') {
+                        sVal = '{{$trans['DETAILS.VALUE_OBJECT']}}'
+                    } else {
+                        sVal = val;
+                    }
+                    oCurrentValues[oChildNode.getField()] = sVal;
+                    
+                    // Make explicitly set properties appear at the top of the list
+                    // in the same order as in the editor.
+                    aData.forEach(function(oRow, i){
+                        if (oRow['PROPERTY'] == oChildNode.getField()) {
+                            aData.splice(iPos, 0, aData.splice(i, 1)[0]);
+                            return;
+                        }
+                    });
+                    iPos++;             
+                });
+                
+                var iLength = aData.length;
+                for(var i = 0; i < iLength; i++){
+                    oRow = aData[i];
+                    jqTableBody.append($(
+                        '<tr>' + 
+                        '   <td style="text-align: center"><input class="uxoneditor-checkbox" type="checkbox" name="' + oRow['PROPERTY'] + '" ' + (oCurrentValues[oRow['PROPERTY']] !== undefined ? 'checked ' : '') + '></input></td>' + 
+                        '   <td>' + oRow['PROPERTY'] + '</td>' + 
+                        '   <td style="font-style: italic;">' + (oCurrentValues[oRow['PROPERTY']] || '') + '</td>' + 
+                        '   <td>' + (oRow['DEFAULT'] || '') + '</td>' + 
+                        '   <td>' + (oRow['TITLE'] || '') + '</td>' + 
+                        '   <td style="text-align: center;">' + (oRow['REQUIRED'] ? '<i class="fa fa-check" aria-hidden="true"></i>' : '') + '</td>' +
+                        '</tr>' 
+                    ));
+                }
+            }) // done
+            .fail( function (jqXHR, textStatus, errorThrown) {
+                console.warn("{$trans['ERROR.SERVER_ERROR']}", jqXHR);
+                return [];
+            } ); // fail
+            
+            modal.modalElem().querySelector(".uxoneditor-btn-ok").onclick = function() {
+                var oContentOld = node.getValue(), oContentNew = {};
+                jqTableBody.find('.uxoneditor-checkbox:checked').each(function(){
+                    if (oContentOld[this.name] === undefined) {
+                        oContentNew[this.name] = '';
+                    } else {
+                        oContentNew[this.name] = oContentOld[this.name];
+                    }
+                });
+                node.setValue(oContentNew);
                 node.expand(true);
-                {$funcPrefix}_focusFirstChildValue(node);
+                {$funcPrefix}_focusFirstChildValue(node, true);
+                modal.close();
+            };
+
+            modal.modalElem().querySelector(".uxoneditor-btn-cancel").onclick = function() {
                 modal.close();
             };
         }

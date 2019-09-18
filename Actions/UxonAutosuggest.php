@@ -66,6 +66,7 @@ class UxonAutosuggest extends AbstractAction
     const TYPE_FIELD = 'field';
     const TYPE_VALUE = 'value';
     const TYPE_PRESET = 'preset';
+    const TYPE_DETAILS = 'details';
     
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
@@ -111,17 +112,31 @@ class UxonAutosuggest extends AbstractAction
                 break;
         }
         
-        if (strcasecmp($type, self::TYPE_FIELD) === 0) {
-            $options = $this->suggestPropertyNames($schema, $uxon, $path, $rootPrototypeClass);
-        } elseif (strcasecmp($type, self::TYPE_PRESET) === 0) {
-            $options = $this->suggestPresets($schema, $uxon, $path, $rootPrototypeClass);
-        } else{
-            $options = $this->suggestPropertyValues($schema, $uxon, $path, $currentText, $rootPrototypeClass, $rootObject);
+        switch (true) {
+            case strcasecmp($type, self::TYPE_FIELD) === 0:
+                $options = $this->suggestPropertyNames($schema, $uxon, $path, $rootPrototypeClass);
+                break;
+            case strcasecmp($type, self::TYPE_PRESET) === 0:
+                $options = $this->suggestPresets($schema, $uxon, $path, $rootPrototypeClass);
+                break;
+            case strcasecmp($type, self::TYPE_DETAILS) === 0:
+                $options = $this->suggestDetails($schema, $uxon, $path, $rootPrototypeClass);
+                break;
+            default:
+                $options = $this->suggestPropertyValues($schema, $uxon, $path, $currentText, $rootPrototypeClass, $rootObject);
+                break;
         }
-        
         return ResultFactory::createJSONResult($task, $options);
     }
-    
+
+    /**
+     * 
+     * @param UxonSchema $schema
+     * @param UxonObject $uxon
+     * @param array $path
+     * @param string $rootPrototypeClass
+     * @return array
+     */
     protected function suggestPresets(UxonSchema $schema, UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
     {
         $presets = [];
@@ -145,6 +160,62 @@ class UxonAutosuggest extends AbstractAction
         return $presets;
     }
     
+    /**
+     * 
+     * @param UxonSchema $schema
+     * @param UxonObject $uxon
+     * @param array $path
+     * @param string $rootPrototypeClass
+     * @return array
+     */
+    protected function suggestDetails(UxonSchema $schema, UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
+    {
+        $rows = [];
+        if (empty($path) === false) {
+            $path[] = '';
+        }
+        $prototypeClass = $schema->getPrototypeClass($uxon, $path, $rootPrototypeClass);
+        $prototypeSchemaClass = $prototypeClass::getUxonSchemaClass();
+        $filepathRelative = $schema->getFilenameForEntity($prototypeClass);
+        
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_PROPERTY_ANNOTATION');
+        $ds->getColumns()->addMultiple([
+            'PROPERTY', 
+            'TYPE', 
+            'TEMPLATE', 
+            'DEFAULT', 
+            'TITLE', 
+            'REQUIRED'
+            
+        ]);
+        $ds->addFilterFromString('FILE', $filepathRelative);
+        $ds->getSorters()->addFromString('PROPERTY', SortingDirectionsDataType::ASC);
+        
+        try {
+            $ds->dataRead();
+        } catch (\Throwable $e) {
+            // TODO
+        }
+        $rows = $ds->getRows();
+        
+        // TODO transform enum-types to arrays
+        
+        return [
+            'alias' => StringDataType::substringAfter($prototypeClass, '\\', '', false, true),
+            'prototype' => $prototypeClass,
+            'prototype_schema' => $prototypeSchemaClass::getSchemaName(),
+            'properties' => $rows
+        ];
+    }
+    
+    /**
+     * 
+     * @param UxonSchema $schema
+     * @param UxonObject $uxon
+     * @param array $path
+     * @param string $rootPrototypeClass
+     * @return array
+     */
     protected function suggestPropertyNames(UxonSchema $schema, UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
     {
         $prototypeClass = $schema->getPrototypeClass($uxon, $path, $rootPrototypeClass);
