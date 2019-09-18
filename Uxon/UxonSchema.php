@@ -230,7 +230,7 @@ class UxonSchema implements UxonSchemaInterface
      * @param string $prototypeClass
      * @return string
      */
-    protected function getFilenameForEntity(string $prototypeClass) : string
+    public function getFilenameForEntity(string $prototypeClass) : string
     {
         $path = str_replace('\\', '/', $prototypeClass);
         return ltrim($path, "/") . '.php';
