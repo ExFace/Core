@@ -95,7 +95,7 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
         
         // Check if force filtering is enabled
         if (count($this->getFilters()->getFiltersAndNestedGroups()) < 1) {
-            return false;
+            throw new QueryBuilderException('Cannot use query builder PhpAnnotationReader without filters: no files to read!');
         }
         
         $query = $data_connection->query($this->buildQuery());
