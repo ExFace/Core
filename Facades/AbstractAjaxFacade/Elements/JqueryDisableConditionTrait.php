@@ -4,6 +4,19 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 use exface\Core\Factories\WidgetLinkFactory;
 
 /**
+ * This trait includes JS-generator methods to make an control disabled on certain conditions.
+ * 
+ * Use this trait in a facade element representing a widget, that support disable_condition.
+ * 
+ * How to use:
+ * 
+ * 1) Call registerDisableConditionAtLinkedElement() in the init() method of your element to
+ * make sure, it is called _before_ the onChange handler of the linked widget is rendered.
+ * 2) Call buildJsDisableConditionInitializer() in the buildJs() method of your element _after_
+ * the element itself is initialized. This method will call the JS disabler if your element
+ * needs to be disabled initially.
+ * 3) Make sure, the methods buildJsEnabler() and buildJsDisabler produce code suitable for
+ * your element. These methods are likely to be inherited, so doublechek ther return values.
  * 
  * @method iHaveValue getWidget()
  * 
@@ -20,7 +33,7 @@ trait JqueryDisableConditionTrait {
      *
      * @return string
      */
-    public function buildJsDisableCondition()
+    protected function buildJsDisableCondition()
     {
         $output = '';
         $widget = $this->getWidget();
@@ -64,7 +77,7 @@ JS;
      *
      * @return string
      */
-    public function buildJsDisableConditionInitializer()
+    protected function buildJsDisableConditionInitializer()
     {
         $output = '';
         $widget = $this->getWidget();
@@ -121,7 +134,7 @@ JS;
      * @return
      *
      */
-    public function getDisableConditionFacadeElement()
+    protected function getDisableConditionFacadeElement()
     {
         $linked_element = null;
         $widget = $this->getWidget();
@@ -132,4 +145,3 @@ JS;
         return $linked_element;
     }
 }
-?>
