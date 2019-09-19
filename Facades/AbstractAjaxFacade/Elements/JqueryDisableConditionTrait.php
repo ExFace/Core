@@ -99,7 +99,7 @@ JS;
                 }
             }
         }
-        return $output;
+        return "setTimeout(function(){ $output }, 0);";
     }
 
     /**
