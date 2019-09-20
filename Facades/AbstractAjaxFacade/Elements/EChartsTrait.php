@@ -1465,7 +1465,8 @@ JS;
         }
         if ($axis->getDimension() === Chart::AXIS_X) {
             $JsOffset = "bottom: {$offset},";
-        } elseif ($axis->getDimension() === Chart::AXIS_Y) {
+        } elseif ($axis->getDimension() === Chart::AXIS_Y) {            
+            $offset += 25;
             $JsOffset = "right: {$offset},";
         } else {
             $JsOffset = '';
@@ -2300,7 +2301,7 @@ JS;
                 $rightAxis = true;
             }
         }
-        if ($rightAxis === true || $count != 0) {
+        if ($rightAxis === true) {
             $margin = 0;
         } else {
             $margin = 40;
