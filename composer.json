@@ -47,6 +47,9 @@
         "npm-asset/workbox-sw": "^3.0.0",
         "npm-asset/dexie": "^2.0.4"
     },
+    "bin": [
+        "Facades/ConsoleFacade/bin/action"
+    ],
     "extra": {
         "app": {
             "app_uid": "0x31000000000000000000000000000000",
