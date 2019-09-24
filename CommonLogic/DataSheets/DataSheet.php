@@ -860,46 +860,50 @@ class DataSheet implements DataSheetInterface
             
             // Use the UID column as a filter to make sure, only these rows are affected
             if ($column->getAttribute()->getAliasWithRelationPath() == $this->getMetaObject()->getUidAttributeAlias()) {
-                $query->addFilterFromString($this->getMetaObject()->getUidAttributeAlias(), implode($this->getMetaObject()->getUidAttribute()->getValueListDelimiter(), array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
+                $uidAttr = $this->getMetaObject()->getUidAttribute();
+                $query->addFilterFromString($uidAttr->getAlias(), implode($uidAttr->getValueListDelimiter(), array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
+                // Do not update the UID attribute if it is neither editable nor required
+                if ($uidAttr->isEditable() === false && $uidAttr->isRequired() === false) {
+                    continue;
+                }
+            }
+            
+            // Add all other columns to values
+            // First check, if the attribute belongs to a related object
+            if ($rel_path = $column->getAttribute()->getRelationPath()->toString()) {
+                if ($this->getMetaObject()->getRelation($rel_path)->isForwardRelation()) {
+                    $uid_column_alias = $rel_path;
+                } else {
+                    // $uid_column = $this->getColumn($this->getMetaObject()->getRelation($rel_path)->getLeftKeyAttribute()->getAliasWithRelationPath());
+                    throw new DataSheetWriteError($this, 'Updating attributes from reverse relations ("' . $column->getExpressionObj()->toString() . '") is not supported yet!', '6T5V4HW');
+                }
             } else {
-                // Add all other columns to values
-                
-                // First check, if the attribute belongs to a related object
-                if ($rel_path = $column->getAttribute()->getRelationPath()->toString()) {
-                    if ($this->getMetaObject()->getRelation($rel_path)->isForwardRelation()) {
-                        $uid_column_alias = $rel_path;
-                    } else {
-                        // $uid_column = $this->getColumn($this->getMetaObject()->getRelation($rel_path)->getLeftKeyAttribute()->getAliasWithRelationPath());
-                        throw new DataSheetWriteError($this, 'Updating attributes from reverse relations ("' . $column->getExpressionObj()->toString() . '") is not supported yet!', '6T5V4HW');
-                    }
-                } else {
-                    $uid_column_alias = $this->getMetaObject()->getUidAttributeAlias();
+                $uid_column_alias = $this->getMetaObject()->getUidAttributeAlias();
+            }
+            
+            // If it is a direct attribute, add it to the query
+            if ($this->getUidColumn()) {
+                // If the data sheet has separate values per row (identified by the UID column), add all the values to the query.
+                // In this case, each object will get its own value. However, we need to ensure, that there are UIDs for each value,
+                // even if the value belongs to a related object. If there is no appropriate UID column for updated related object,
+                // the UID values must be fetched from the data source using an identical data sheet, but having only the required uid column.
+                // Since the new data sheet is cloned, it will have exactly the same filters, order, etc. so we can be sure to fetch only those
+                // UIDs, that should have been in the original sheet. Additionally we need to add a filter over the values of the original UID
+                // column, in case the user had explicitly selected some of the rows of the original data set.
+                if (! $uid_column = $this->getColumn($uid_column_alias)) {
+                    $uid_data_sheet = $this->copy();
+                    $uid_data_sheet->getColumns()->removeAll();
+                    $uid_data_sheet->getColumns()->addFromExpression($this->getMetaObject()->getUidAttributeAlias());
+                    $uid_data_sheet->getColumns()->addFromExpression($uid_column_alias);
+                    $uid_data_sheet->addFilterFromString($this->getMetaObject()->getUidAttributeAlias(), implode($this->getUidColumn()->getValues(), $this->getUidColumn()->getAttribute()->getValueListDelimiter()), EXF_COMPARATOR_IN);
+                    $uid_data_sheet->dataRead();
+                    $uid_column = $uid_data_sheet->getColumn($uid_column_alias);
                 }
-                
-                // If it is a direct attribute, add it to the query
-                if ($this->getUidColumn()) {
-                    // If the data sheet has separate values per row (identified by the UID column), add all the values to the query.
-                    // In this case, each object will get its own value. However, we need to ensure, that there are UIDs for each value,
-                    // even if the value belongs to a related object. If there is no appropriate UID column for updated related object,
-                    // the UID values must be fetched from the data source using an identical data sheet, but having only the required uid column.
-                    // Since the new data sheet is cloned, it will have exactly the same filters, order, etc. so we can be sure to fetch only those
-                    // UIDs, that should have been in the original sheet. Additionally we need to add a filter over the values of the original UID
-                    // column, in case the user had explicitly selected some of the rows of the original data set.
-                    if (! $uid_column = $this->getColumn($uid_column_alias)) {
-                        $uid_data_sheet = $this->copy();
-                        $uid_data_sheet->getColumns()->removeAll();
-                        $uid_data_sheet->getColumns()->addFromExpression($this->getMetaObject()->getUidAttributeAlias());
-                        $uid_data_sheet->getColumns()->addFromExpression($uid_column_alias);
-                        $uid_data_sheet->addFilterFromString($this->getMetaObject()->getUidAttributeAlias(), implode($this->getUidColumn()->getValues(), $this->getUidColumn()->getAttribute()->getValueListDelimiter()), EXF_COMPARATOR_IN);
-                        $uid_data_sheet->dataRead();
-                        $uid_column = $uid_data_sheet->getColumn($uid_column_alias);
-                    }
-                    $query->addValues($column->getExpressionObj()->toString(), $column->getValues(false), $uid_column->getValues(false));
-                } else {
-                    // If there is only one value for the entire data sheet (no UIDs gived), add it to the query as a single column value.
-                    // In this case all object matching the filter will get updated by this value
-                    $query->addValue($column->getExpressionObj()->toString(), $column->getValues(false)[0]);
-                }
+                $query->addValues($column->getExpressionObj()->toString(), $column->getValues(false), $uid_column->getValues(false));
+            } else {
+                // If there is only one value for the entire data sheet (no UIDs gived), add it to the query as a single column value.
+                // In this case all object matching the filter will get updated by this value
+                $query->addValue($column->getExpressionObj()->toString(), $column->getValues(false)[0]);
             }
         }
         
