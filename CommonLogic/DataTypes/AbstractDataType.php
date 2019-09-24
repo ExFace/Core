@@ -243,6 +243,14 @@ abstract class AbstractDataType implements DataTypeInterface
         return $this->alias === null ? $this->getAliasFromSelector() : $this->alias;
     }
     
+    /**
+     * 
+     * 
+     * @uxon-property alias
+     * @uxon-type metamodel:datatype
+     * 
+     * @param string $string
+     */
     public function setAlias($string)
     {
         $this->alias = $string;
