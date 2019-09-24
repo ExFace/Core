@@ -44,6 +44,7 @@ use exface\Core\DataTypes\UxonSchemaNameDataType;
  * - metamodel:data_source
  * - metamodel:comparator
  * - metamodel:connection
+ * - metamodel:datatype
  * - metamodel:formula
  * - metamodel:expression
  * - metamodel:widget_link
