@@ -555,18 +555,8 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
         if (! is_array($row_array)) {
             return $row_array;
         }
-        // Apply filters
-        $row_filter = new RowDataArrayFilter();
-        foreach ($this->getFilters()->getFilters() as $qpart) {
-            // Do not filter if the attribute to filter over is unfilterable
-            if ($qpart->getAttribute() && ! $qpart->getAttribute()->isFilterable())
-                continue;
-            // Do not filter if already filtered (remotely)
-            if (! $qpart->getApplyAfterReading() || ! $qpart->getCompareValue())
-                continue;
-            $row_filter->addAnd($qpart->getAlias(), $qpart->getCompareValue(), $qpart->getComparator(), $qpart->getValueListDelimiter());
-        }
-        return $row_filter->filter($row_array);
+        
+        return $this->getFilters()->applyTo($row_array, true);
     }
 
     /**
