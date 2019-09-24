@@ -299,5 +299,81 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
         }
         return $this;
     }
+    
+    /**
+     * Returns TRUE if at least one filter or nested group needs to be applied after reading.
+     * 
+     * @return bool
+     */
+    public function getApplyAfterReading() : bool
+    {
+        foreach ($this->getFiltersAndNestedGroups() as $filterOrGroup) {
+            if ($filterOrGroup->getApplyAfterReading() === true) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Filters the given array of data rows by applying the filters defined for this query where
+     * $query_part_filter->getApplyAfterReading() is TRUE.
+     * Returns the resulting array, that
+     * now only contains rows matching the filters
+     *
+     * @param array $row_array
+     * @return array
+     */
+    public function applyTo(array $row_array, bool $onlyIfApplyAfterReading = true) : array
+    {
+        $op = $this->getOperator();
+        
+        // Apply filters (conditions)
+        $row_filter = new RowDataArrayFilter();
+        foreach ($this->getFilters() as $qpart) {
+            // Do not filter if the attribute to filter over is unfilterable
+            if ($qpart->getAttribute() && ! $qpart->getAttribute()->isFilterable()) {
+                continue;
+            }
+            // Do not filter if already filtered (remotely)
+            if (($onlyIfApplyAfterReading === true && $qpart->getApplyAfterReading() === false) || ! $qpart->getCompareValue()) {
+                continue;
+            }
+            switch ($op) {
+                case EXF_LOGICAL_AND:
+                    $row_filter->addAnd($qpart->getAlias(), $qpart->getCompareValue(), $qpart->getComparator(), $qpart->getValueListDelimiter());
+                    break;
+                case EXF_LOGICAL_OR:
+                    $row_filter->addOr($qpart->getAlias(), $qpart->getCompareValue(), $qpart->getComparator(), $qpart->getValueListDelimiter());
+                    break;
+                case EXF_LOGICAL_XOR:
+                    $row_filter->addXor($qpart->getAlias(), $qpart->getCompareValue(), $qpart->getComparator(), $qpart->getValueListDelimiter());
+                    break;
+            }
+        }
+        
+        $result_rows = $row_filter->filter($row_array);
+        
+        
+        // Apply filter groups
+        foreach ($this->getNestedGroups() as $qpart) {            
+            switch ($op) {
+                case EXF_LOGICAL_AND:
+                    $result_rows = $qpart->applyTo($result_rows, $onlyIfApplyAfterReading);
+                    break;
+                case EXF_LOGICAL_OR:
+                    $result_rows = array_replace($result_rows, $qpart->applyTo($row_array, $onlyIfApplyAfterReading));
+                    break;
+                case EXF_LOGICAL_XOR:
+                    $or_rows = $qpart->applyTo($row_array, $onlyIfApplyAfterReading);
+                    $union_array = array_merge($result_rows, $or_rows);
+                    $intersect_array = array_intersect($result_rows, $or_rows);
+                    $result_rows = array_diff($union_array, $intersect_array);
+                    break;
+            }
+        }
+        
+        return $result_rows;
+    }
 }
 ?>
