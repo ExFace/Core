@@ -34,11 +34,17 @@ class InputUxon extends InputJson
      */
     public function setSchema(string $value) : InputJson
     {
-        if (Expression::detectFormula($value) === true) {
+        if (substr($value, 0, 1) === '=') {
+            $expr = ExpressionFactory::createForObject($this->getMetaObject(), $value);
+            if (! $expr->isReference()) {
+                throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $value . '" for property "schema" of widget ' . $this->getWidgetType() . ': expecting an object selector string or a widget link!');
+            }
             $this->schemaExpression = ExpressionFactory::createForObject($this->getMetaObject(), $value);
-            return $this;
+        } else {
+            parent::setSchema($value);
         }
-        return parent::setSchema($value);
+        
+        return $this;
     }
     
     /**
@@ -119,7 +125,7 @@ class InputUxon extends InputJson
     public function setRootPrototype(string $value) : InputUxon
     {
         $expr = ExpressionFactory::createForObject($this->getMetaObject(), $value);
-        if (! $expr->isConstant() && ! $expr->isReference()) {
+        if (substr($value, 0, 1) === '=' && ! $expr->isReference()) {
             throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $value . '" for property root_prototype of widget ' . $this->getWidgetType() . ': expecting an object selector string or a widget link!');
         }
         $this->prototype = $expr;
@@ -150,7 +156,7 @@ class InputUxon extends InputJson
     public function setRootObject(string $value) : InputUxon
     {
         $expr = ExpressionFactory::createForObject($this->getMetaObject(), $value);
-        if (! $expr->isConstant() && ! $expr->isReference()) {
+        if (substr($value, 0, 1) === '=' && ! $expr->isReference()) {
             throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $value . '" for property root_object of widget ' . $this->getWidgetType() . ': expecting an object selector string or a widget link!');
         }
         $this->rootObjectSelector = $expr;
