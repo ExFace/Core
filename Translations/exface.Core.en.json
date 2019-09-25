@@ -1,6 +1,9 @@
 {
 	"ACTION.AUTOSUGGEST.NAME": "Autosuggest",
 	
+	"ACTION.CALLWEBSERVICE.NAME": "Webservice",
+	"ACTION.CALLWEBSERVICE.DONE": "Fertig!",
+	
 	"ACTION.CREATEDATA.RESULT": "%number% item created.|%number% items created.",
 	"ACTION.CREATEDATA.NAME": "Create",
 	"ACTION.COPYDATA.RESULT": "Copied %number% object|Copied %number% objects",
