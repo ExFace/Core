@@ -16,14 +16,14 @@ use Symfony\Component\Console\Application;
  * following in a terminal (Windows CMD, PowerShell, Linux Bash, etc.):
  * 
  * ```
- * vendor/bin/console
+ * vendor/bin/action
  * 
  * ```
  * 
  * For detailed information about the use of a command, type 
  * 
  * ```
- * vendor/bin/console <command-name> -h
+ * vendor/bin/action <command-name> -h
  * 
  * ``` 
  * 
@@ -44,10 +44,10 @@ use Symfony\Component\Console\Application;
  * ## Examples
  * 
  * ```
- * vendor/bin/console exface.core:ClearCache
- * vendor/bin/console exface.core:clear
- * vendor/bin/console exface.packagemanager.InstallApp
- * vendor/bin/console exface.packagemanager.install
+ * vendor/bin/action exface.core:ClearCache
+ * vendor/bin/action exface.core:clear
+ * vendor/bin/action exface.packagemanager.InstallApp
+ * vendor/bin/action exface.packagemanager.install
  * 
  * ```
  * 
