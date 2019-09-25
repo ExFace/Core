@@ -45,7 +45,8 @@
                                 "attribute_alias": "PROTOTYPE__LABEL"
                             },
                             {
-                                "attribute_alias": "DESCRIPTION"
+                                "attribute_alias": "DESCRIPTION",
+                                "width_max": "800px"
                             },
                             {
                                 "attribute_alias": "WRAP_FLAG"
