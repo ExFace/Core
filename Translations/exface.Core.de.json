@@ -1,9 +1,6 @@
 {
 	"ACTION.AUTOSUGGEST.NAME": "Autosuggest",
 
-	"ACTION.CALLWEBSERVICE.NAME": "Call Webservice",
-	"ACTION.CALLWEBSERVICE.DONE": "Done!",
-	
 	"ACTION.CREATEDATA.RESULT": "%number% Objekt erstellt.|%number% Objekte erstellt.",
 	"ACTION.CREATEDATA.NAME": "Speichern",
 	"ACTION.COPYDATA.NAME": "Daten duplizieren",
