@@ -206,6 +206,7 @@ class UxonSchema implements UxonSchemaInterface
         try {
             $ds->dataRead();
         } catch (\Throwable $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
             // TODO
         }
         $this->prototypePropCache[$prototypeClass] = $ds;
@@ -291,6 +292,10 @@ class UxonSchema implements UxonSchemaInterface
             $object = $this->getMetaObject($uxon, $path, $rootObject);
         } catch (MetaObjectNotFoundError $e) {
             // TODO better error handling to tell apart invalid object alias and no object alias.
+            if ($rootObject !== null) {
+                $this->getWorkbench()->getLogger()->logException($e);
+            }
+            $object = null;
         }
         
         return $this->getValidValuesForType($firstType, $search, $object);
