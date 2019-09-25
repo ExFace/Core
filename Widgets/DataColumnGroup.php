@@ -93,14 +93,22 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      * 
      * The column is not automatically added to the column group - use addColumn() explicitly!
      * 
-     * For relations the column will automatically show the label of the related object
+     * For relations the column will automatically show the label of the related object.
      *
      * @see iHaveColumns::createColumnFromAttribute
      */
     function createColumnFromAttribute(MetaAttributeInterface $attribute, string $caption = null, bool $hidden = null) : DataColumn
     {
-        if ($attribute->isRelation()) {
-            $attribute = $this->getMetaObject()->getAttribute(RelationPath::relationPathAdd($attribute->getAlias(), $this->getMetaObject()->getRelatedObject($attribute->getAlias())->getLabelAttributeAlias()));
+        // If the attribute is a relation and the related object has a label attribute, automatically use this LABEL
+        // instead of the relation key to make it better understandable for humans.
+        if ($attribute->isRelation() === true) {
+            $relatedObj = $this->getMetaObject()->getRelatedObject($attribute->getAlias());
+            if ($relatedObj->hasLabelAttribute() === true) {
+                // It is important to append __LABEL to the relation path (and not the actual alias of the
+                // label attribute) to make the column show the relation name as caption and not the attribute's
+                // name. This is also what a human designer would typically do.
+                $attribute = $this->getMetaObject()->getAttribute(RelationPath::relationPathAdd($attribute->getAlias(), $this->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS')));
+            }
         }
         
         $c = $this->getPage()->createWidget($this->getColumnDefaultWidgetType(), $this);
