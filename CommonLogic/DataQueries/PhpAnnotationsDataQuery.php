@@ -52,7 +52,7 @@ class PhpAnnotationsDataQuery extends FileContentsDataQuery
      * @throws \InvalidArgumentException
      * @return string
      */
-    protected static function getClassFromFile($absolute_path)
+    protected static function getClassFromFile($absolute_path, int $bufferSize = 512)
     {
         if (! file_exists($absolute_path) && ! is_dir($absolute_path)) {
             throw new \InvalidArgumentException('Cannot get class from file "' . $absolute_path . '" - file not found!');
@@ -65,13 +65,14 @@ class PhpAnnotationsDataQuery extends FileContentsDataQuery
             if (feof($fp))
                 break;
             
-            $buffer .= fread($fp, 512);
+            $buffer .= fread($fp, $bufferSize);
             try {
                 $tokens = @token_get_all($buffer);
             } catch (\ErrorException $e) {
                 // Ignore errors of the tokenizer. Most of the errors will result from partial reading, when the read portion
                 // of the code does not make sense to the tokenizer (e.g. unclosed comments, etc.)
             }
+            $tokensCount = count($tokens);
             
             if (strpos($buffer, '{') === false)
                 continue;
@@ -88,7 +89,10 @@ class PhpAnnotationsDataQuery extends FileContentsDataQuery
                 }
                 
                 if ($tokens[$i][0] === T_CLASS) {
-                    for ($j = $i + 1; $j < count($tokens); $j ++) {
+                    for ($j = $i + 1; $j < $tokensCount; $j ++) {
+                        if ($i+2 === $tokensCount-1) {
+                            return static::getClassFromFile($absolute_path, $bufferSize*2);
+                        }
                         $class = trim($tokens[$i + 2][1]);
                         break;
                     }
