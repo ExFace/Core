@@ -60,7 +60,7 @@ class ActionSchema extends UxonSchema
             $selector = SelectorFactory::createActionSelector($this->getWorkbench(), $selectorString);
             $action = ActionFactory::create($selector);
         } catch (\Throwable $e) {
-            return '\exface\Core\CommonLogic\AbstractAction';
+            return $this->getDefaultPrototypeClass();
         }
         return get_class($action);
     }

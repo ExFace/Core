@@ -196,7 +196,7 @@ class MsSqlConnector extends AbstractSqlConnector
     }
 
     /**
-     * Sets the user id for the connection (same as "user")
+     * SQL Server user id (same as "user")
      *
      * @uxon-property UID
      * @uxon-type string
@@ -216,7 +216,7 @@ class MsSqlConnector extends AbstractSqlConnector
     }
 
     /**
-     * Sets the password for the connection (same as "password")
+     * The password for the connection (same as "password")
      *
      * @uxon-property PWD
      * @uxon-type string
@@ -255,6 +255,15 @@ class MsSqlConnector extends AbstractSqlConnector
         return $this->DataBase;
     }
 
+    /**
+     * The database to connect to
+     * 
+     * @uxon-property database
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return \exface\Core\DataConnectors\MsSqlConnector
+     */
     public function setDatabase($value)
     {
         $this->DataBase = $value;

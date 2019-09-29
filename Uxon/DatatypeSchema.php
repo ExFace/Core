@@ -61,7 +61,7 @@ class DatatypeSchema extends UxonSchema
             $selector = SelectorFactory::createDataTypeSelector($this->getWorkbench(), $selectorString);
             $instance = DataTypeFactory::create($selector);
         } catch (\Throwable $e) {
-            return '\exface\Core\CommonLogic\AbstractAction';
+            return $this->getDefaultPrototypeClass();
         }
         return get_class($instance);
     }
