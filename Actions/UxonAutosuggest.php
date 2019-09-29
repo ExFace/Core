@@ -17,6 +17,7 @@ use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Uxon\ConnectionSchema;
 
 /**
  * Returns autosuggest values for provided UXON objects.
@@ -54,6 +55,7 @@ class UxonAutosuggest extends AbstractAction
     const SCHEMA_ACTION = 'action';
     const SCHEMA_BEHAVIOR = 'behavior';
     const SCHEMA_DATATYPE = 'datatype';
+    const SCHEMA_CONNECTION = 'connection';
     
     const PARAM_TEXT = 'text';
     const PARAM_PATH = 'path';
@@ -110,6 +112,12 @@ class UxonAutosuggest extends AbstractAction
                 break;
             case self::SCHEMA_BEHAVIOR:
                 $schema = new BehaviorSchema($this->getWorkbench());
+                break;
+            case self::SCHEMA_CONNECTION    :
+                $schema = new ConnectionSchema($this->getWorkbench());
+                break;
+            default:
+                $schema = new UxonSchema($this->getWorkbench());
                 break;
         }
         
@@ -176,7 +184,7 @@ class UxonAutosuggest extends AbstractAction
             $path[] = '';
         }
         $prototypeClass = $schema->getPrototypeClass($uxon, $path, $rootPrototypeClass);
-        $prototypeSchemaClass = $prototypeClass::getUxonSchemaClass();
+        $prototypeSchemaClass = $prototypeClass::getUxonSchemaClass() ?? '\\' . UxonSchema::class;
         $filepathRelative = $schema->getFilenameForEntity($prototypeClass);
         
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_PROPERTY_ANNOTATION');

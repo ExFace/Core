@@ -132,6 +132,21 @@ JS;
     protected function buildJsJsonEditor() : string
     {
         $uxonEditorId = $this->getId();
+        
+        if ($this->getWidget() instanceof InputUxon) {
+            $uxonInitScripts = <<<JS
+
+                    {$this->buildJsEditorAddHelpButton()}
+        			{$this->buildJsPresetHint("'{$uxonEditorId}'")}
+                    setTimeout(function(){
+                        var json = {$uxonEditorId}_JSONeditor.get();
+                        {$this::buildJsPresetHintTrigger("'{$uxonEditorId}'", 'json')}
+                    }, 0);
+
+JS;
+        } else {
+            $uxonInitScripts = '';
+        }
        
         return <<<JS
                    var {$uxonEditorId}_JSONeditor = new JSONEditor(
@@ -144,15 +159,9 @@ JS;
                     );
         
                     {$uxonEditorId}_JSONeditor.expandAll();
-        
-                    {$this->buildJsEditorAddHelpButton()}
-        			$('#{$uxonEditorId}').parents('.exf-input').children('label').css('vertical-align', 'top');
-        			{$this->buildJsPresetHint("'{$uxonEditorId}'")}
-                    
-                    setTimeout(function(){
-                        var json = {$uxonEditorId}_JSONeditor.get();
-                        {$this::buildJsPresetHintTrigger("'{$uxonEditorId}'", 'json')}
-                    }, 0);
+                    $('#{$uxonEditorId}').parents('.exf-input').children('label').css('vertical-align', 'top');
+                    {$uxonInitScripts}
+        			
         
 JS;
     }
@@ -190,17 +199,23 @@ JS;
     protected function buildJsOnModeChangeFunction($uxonEditorId, $funcPrefix) : string
     {
         if (! $this->getWidget() instanceof InputUxon) {
-            return '';
-        }
-        
-        return <<<JS
-        
-        function(newMode, oldMode){
+            $script = '';
+        } else {
+            $script = <<<JS
+
             if (newMode === 'tree') {
                 var json = {$uxonEditorId}_JSONeditor.get();
                 {$this::buildJsPresetHintTrigger($uxonEditorId, 'json')}
             }
             {$this::buildJsPresetHintHide($uxonEditorId)}
+
+JS;
+        }
+        
+        return <<<JS
+        
+        function(newMode, oldMode){
+            $script
         }    
 
 JS;

@@ -25,6 +25,7 @@ class UxonSchemaNameDataType extends StringDataType implements EnumDataTypeInter
     const ACTION = "action";
     const DATATYPE = "datatype";
     const BEHAVIOR = "behavior";
+    const CONNECTION = "connection";
     
     /**
      * 

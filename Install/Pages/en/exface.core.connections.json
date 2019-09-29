@@ -20,7 +20,9 @@
             },
             {
                 "attribute_alias": "CONFIG",
-                "widget_type": "Input"
+                "widget_type": "Input",
+                "height": 1,
+                "width": 1
             },
             {
                 "attribute_alias": "CONNECTOR"

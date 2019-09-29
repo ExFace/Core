@@ -17,6 +17,7 @@ use exface\Core\Events\DataConnection\OnQueryEvent;
 use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Traits\MetaModelPrototypeTrait;
+use exface\Core\Uxon\ConnectionSchema;
 
 abstract class AbstractDataConnector implements DataConnectionInterface
 {
@@ -328,5 +329,15 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     {
         $this->readonly = $trueOrFalse;
         return $this;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return ConnectionSchema::class;
     }
 }

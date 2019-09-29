@@ -108,6 +108,15 @@
                         "object_alias": "exface.Core.BEHAVIOR_PRESET"
                     }
                 ]
+            },
+            {
+                "caption": "Connections",
+                "widgets": [
+                    {
+                        "extend_widget": "table_widget_presets",
+                        "object_alias": "exface.Core.CONNECTION_PRESET"
+                    }
+                ]
             }
         ]
     }
