@@ -199,6 +199,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
      *
      * @uxon-property character_set
      * @uxon-type string
+     * @uxon-default utf8
      *
      * @param string $value            
      * @return AbstractSqlConnector
