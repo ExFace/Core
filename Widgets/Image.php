@@ -91,7 +91,7 @@ class Image extends Display implements iShowImage, iCanBeAligned, iCanUseProxyFa
      * but will tell widgets and other components to use this base automatically.
      *
      * @uxon-property base_url
-     * @uxon-type url
+     * @uxon-type uri
      *
      * @param string $value
      * @return UrlDataType

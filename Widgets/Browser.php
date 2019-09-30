@@ -32,7 +32,7 @@ class Browser extends AbstractWidget implements iFillEntireContainer
      * The placeholder `[#api#]` will be replaced by the API-URL of the current installation.
      * 
      * @uxon-propery url
-     * @uxon-type url
+     * @uxon-type uri
      * 
      * @param string $url
      * @return Browser
@@ -61,7 +61,7 @@ class Browser extends AbstractWidget implements iFillEntireContainer
      * The placeholder `[#api#]` will be replaced by the API-URL of the current installation.
      * 
      * @uxon-property url_base
-     * @uxon-type url
+     * @uxon-type uri
      * 
      * @param string $url
      * @return Browser
