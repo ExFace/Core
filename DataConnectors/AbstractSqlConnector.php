@@ -45,7 +45,12 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
     }
 
     /**
-     *
+     * Set to TRUE to perform a commit after every statement.
+     * 
+     * @uxon-property autocommit
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
      * @param boolean $value            
      */
     public function setAutocommit($value)
@@ -106,7 +111,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
     }
 
     /**
-     * Sets the user name to be used in this connection
+     * The user name to be used in this connection
      *
      * @uxon-property user
      * @uxon-type string
@@ -126,10 +131,10 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
     }
 
     /**
-     * Sets the password to be used in this connection
+     * Password to be used in this connection
      *
      * @uxon-property password
-     * @uxon-type string
+     * @uxon-type password
      *
      * @param string $value            
      * @return AbstractSqlConnector
@@ -146,7 +151,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
     }
 
     /**
-     * Sets the host name or IP address to be used in this connection
+     * Host name or IP address to be used in this connection
      *
      * @uxon-property host
      * @uxon-type string
@@ -166,7 +171,9 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
     }
 
     /**
-     * Sets the port to be used in this connection
+     * The port number to be used in this connection
+     * 
+     * If not set, the default port of the database is used automatically.
      *
      * @uxon-property port
      * @uxon-type number
@@ -186,7 +193,9 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
     }
 
     /**
-     * Sets the character set to be used in this connection
+     * Character set to be used in this connection.
+     * 
+     * Possible values depend on the database used - refer to it's documentation for more information.
      *
      * @uxon-property character_set
      * @uxon-type string
@@ -229,7 +238,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
     /**
      * Regular expression for the model builder to find relations (foreign keys) automatically.
      * 
-     * Refert to the documentation of the specific model builder for details!
+     * Refet to the documentation of the specific model builder for details!
      * 
      * @uxon-property relation_matcher
      * @uxon-type string

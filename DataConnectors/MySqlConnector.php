@@ -221,7 +221,7 @@ class MySqlConnector extends AbstractSqlConnector
     }
 
     /**
-     * Sets the database name to be used in this connection
+     * The database name to connect to (same as "database")
      *
      * @uxon-property dbase
      * @uxon-type string
@@ -243,9 +243,6 @@ class MySqlConnector extends AbstractSqlConnector
     /**
      * Sets the connection method to be used in this connection
      *
-     * @uxon-property connection_method
-     * @uxon-type string
-     *
      * @param string $value            
      * @return MySqlConnector
      */
@@ -261,7 +258,7 @@ class MySqlConnector extends AbstractSqlConnector
     }
 
     /**
-     * Sets the character set to be used in this connection (same as "character_set")
+     * The character set to be used in this connection (same as "character_set")
      *
      * @uxon-property charset
      * @uxon-type string
@@ -285,6 +282,7 @@ class MySqlConnector extends AbstractSqlConnector
      *
      * @uxon-property use_persistant_connection
      * @uxon-type boolean
+     * @uxon-default false
      *
      * @see set_character_set()
      * @param boolean $value            

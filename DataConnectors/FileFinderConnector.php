@@ -112,7 +112,8 @@ class FileFinderConnector extends TransparentConnector
     }
 
     /**
-     * Sets the base path for the connection.
+     * The base path for relative paths in data addresses.
+     * 
      * If a base path is defined, all data addresses will be resolved relative to that path.
      *
      * @uxon-property base_path
@@ -142,6 +143,7 @@ class FileFinderConnector extends TransparentConnector
 
     /**
      * Set to TRUE to use the current vendor folder as base path.
+     * 
      * All data addresses in this conneciton will then be resolved relative to the vendor folder.
      *
      * @uxon-property base_path
