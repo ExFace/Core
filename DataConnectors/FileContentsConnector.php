@@ -70,7 +70,8 @@ class FileContentsConnector extends TransparentConnector
     }
 
     /**
-     * Sets the base path for the connection.
+     * The base path for relative paths in data addresses.
+     * 
      * If a base path is defined, all data addresses will be resolved relative to that path.
      *
      * @uxon-property base_path

@@ -219,7 +219,7 @@ class MsSqlConnector extends AbstractSqlConnector
      * The password for the connection (same as "password")
      *
      * @uxon-property PWD
-     * @uxon-type string
+     * @uxon-type password
      *
      * @see set_password()
      * @param string $value            
@@ -236,7 +236,7 @@ class MsSqlConnector extends AbstractSqlConnector
     }
 
     /**
-     * Sets the server name for the connection (same as "host")
+     * The server name for the connection (same as "host")
      *
      * @uxon-property serverName
      * @uxon-type string
