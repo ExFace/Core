@@ -9,6 +9,10 @@
 - [Web services](https://github.com/exface/UrlDataConnector/blob/master/Docs/index.md)
 - Source code
 
+## Access permissions and user-specific settings
+
+You can override any data connection settings on user-level by creating [credential sets](Data_connection_credentials_and_user-specific_settings.md) and assigning them to users.
+
 ## Modelling actions
 
 TODO
