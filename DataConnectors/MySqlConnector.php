@@ -20,7 +20,7 @@ class MySqlConnector extends AbstractSqlConnector
 
     private $dbase = null;
 
-    private $connection_method = null;
+    private $connection_method = 'SET CHARACTER SET';
 
     private $use_persistant_connection = false;
 
@@ -235,14 +235,17 @@ class MySqlConnector extends AbstractSqlConnector
         return $this;
     }
 
-    public function getConnectionMethod()
+    /**
+     * 
+     * @return string
+     */
+    private function getConnectionMethod()
     {
         return $this->connection_method;
     }
 
     /**
-     * Sets the connection method to be used in this connection
-     *
+     * @deprecated use setCharsetTranslation() instead.
      * @param string $value            
      * @return MySqlConnector
      */
@@ -251,10 +254,49 @@ class MySqlConnector extends AbstractSqlConnector
         $this->connection_method = $value;
         return $this;
     }
+    
+    /**
+     *
+     * @return bool
+     */
+    protected function getCharsetTranslation() : bool
+    {
+        return $this->connection_method === 'SET_NAMES';
+    }
+    
+    /**
+     * Forces the connection to translate character sets to the one specified in `charset`.
+     * 
+     * Technically this works by using `SET NAMES` instead of `SET CHARACTER SET` when
+     * initializing the connection.
+     * 
+     * `SET NAMES` forces the connection charset to whatever you specify, which will translate 
+     * characters between charsets, but that process is lossy. Instead, you should make sure 
+     * your database container is set the same as your intended character set. `SET CHARACTER SET` 
+     * actually uses the value of the database container to set the connection charset, 
+     * regardless of what character set you specify for connection to use. If you ensure that the 
+     * database container has the proper charset for the data your are storing in the actual 
+     * tables, and that your `charset` setting in the connection either matches this, or another 
+     * charset you want to translate the data to/from when talking to the DB (though the latter 
+     * is not recommended), this should work flawlessly.
+     * 
+     * @uxon-property charset_translation
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return MySqlConnector
+     */
+    public function setCharsetTranslation(bool $value) : MySqlConnector
+    {
+        $this->connection_method = ($value === true ? 'SET NAMES' : 'SET CHARACTER SET');
+        return $this;
+    }
+    
 
     public function getCharset()
     {
-        return $this->getCharacterSet();
+        return $this->getCharacterSet() ?? 'utf8';
     }
 
     /**
