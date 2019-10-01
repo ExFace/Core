@@ -87,7 +87,7 @@
         },
         {
             "CREATED_ON": "2016-11-22 10:26:30",
-            "MODIFIED_ON": "2017-05-04 11:20:28",
+            "MODIFIED_ON": "2019-10-01 07:58:38",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6b09e2002641f8943e4b318306b9a",
@@ -97,8 +97,8 @@
             "READABLE_FLAG": "1",
             "WRITABLE_FLAG": "1",
             "BASE_OBJECT": "0x11e6afd8efb4743f8943e4b318306b9a",
-            "LABEL": "System Folders",
-            "ALIAS": "SYSTEM_FOLDERS"
+            "LABEL": "Local Folders",
+            "ALIAS": "LOCAL_FOLDERS"
         },
         {
             "CREATED_ON": "2016-12-06 15:19:26",
