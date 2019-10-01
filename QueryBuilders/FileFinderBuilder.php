@@ -2,7 +2,6 @@
 namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
-use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\DataQueries\FileFinderDataQuery;
 use Symfony\Component\Finder\SplFileInfo;
@@ -15,9 +14,57 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\QueryBuilderException;
 
 /**
- *
+ * Lists files and folders using Symfony Finder Component.
+ * 
+ * Object instances are files and folders. Attributes are file properties
+ * including the content. Since all files have the same types of properties, 
+ * there is a generic meta object `exface.Core.FILE` that already contains all
+ * the attriutes - see details below. Extend this object for convenience.
+ * 
+ * There are also built-in data sources for files in the current installation
+ * ("Local Folders") and files in the vendor folder ("Local Vendor Folders").
+ * They provide the `FILE` object as base object. See core object `TRANLATIONS`
+ * for usage example.
+ * 
+ * ## Data Addresses
+ * 
+ * ### Objects
+ * 
+ * Objects are files and folders. Object data addresses are file system paths 
+ * with forward slashes (/) as directory separators. Wildcards are supported:
+ * e.g. `folder/* /subfolder/*.json` or `folder/*`.
+ * 
+ * Placeholders can be used in object addresses. This will result in required
+ * filters, similary to URL builders in the UrlDataConnector. For example,
+ * `myfolder/[#FOLDER_NAME#]/*` will mean, that a filter for the folder name
+ * is required and  
+ * 
+ * ### Attributes 
+ * 
+ * Attributes are file properties. The following data addresses are available:
+ * 
+ * - `name` - file/folder name with extension
+ * - `folder_name` - name of the containing folder
+ * - `path_relative` - folder path relative to the base path of the connector
+ * - `pathname_absolute` - absolute file path including extension 
+ * - `pathname_relative` - file path including extension relative to the base path 
+ * of the connector
+ * - `mtime` - last modification time
+ * - `ctime` - creation time
+ * - Any getter-methods of the class `SplFileInfo` can be called by using the method 
+ * name withoug the get-prefix as data address: e.g. `extension` for `SplFileInfo::getExtension()`
+ * 
+ * ## Built-in FILE-object
+ * 
+ * The core app contains the meta object `exface.Core.FILE` to use with this query builder.
+ * 
+ * **NOTE**: the UID-attribute of the `FILE` object is it's relative pathname. The UID is
+ * unique within the base path of the data connection.
+ * 
  * @author Andrej Kabachnik
  *        
  */
@@ -127,8 +174,17 @@ class FileFinderBuilder extends AbstractQueryBuilder
     
     protected function buildPathPatternFromFilterGroup(QueryPartFilterGroup $qpart, FileFinderDataQuery $query) : ?string
     {
+        // See if the data address has placeholders
+        $addr = $this->getMainObject()->getDataAddress();
+        $addrPhs = StringDataType::findPlaceholders($addr);
+        $addrPhsValues = [];
         // Look for filters, that can be processed by the connector itself
         foreach ($this->getFilters()->getFilters() as $qpart) {
+            if (in_array($qpart->getAlias(), $addrPhs) === true && $qpart->getComparator() === EXF_COMPARATOR_EQUALS) {
+                $addrPhsValues[$qpart->getAlias()] = $qpart->getCompareValue();
+                continue;
+            }
+            
             if ($qpart->getAttribute()->is($this->getMainObject()->getUidAttribute())) {
                 switch ($qpart->getComparator()) {
                     case EXF_COMPARATOR_IS:
@@ -151,6 +207,14 @@ class FileFinderBuilder extends AbstractQueryBuilder
                 $qpart->setApplyAfterReading(true);
                 $query->setFullScanRequired(true);
             }
+        }
+        
+        if (! empty($addrPhs)) {
+            if ($path_pattern !== null && $path_pattern !== '') {
+                throw new QueryBuilderException('Cannot use filters over relative path (' . $path_pattern . ') and a relative path with placeholders (' . $addr . ') in FileFinderBuilder at the same time!');
+            }
+            
+            $path_pattern = StringDataType::replacePlaceholders($addr, $addrPhsValues);
         }
         
         return $path_pattern;
@@ -329,13 +393,17 @@ class FileFinderBuilder extends AbstractQueryBuilder
         $base_path = $query->getBasePath() ? $query->getBasePath() . '/' : '';
         $path = Filemanager::pathNormalize($file->getPath());
         $pathname = Filemanager::pathNormalize($file->getPathname());
+        $pathname_relative = $base_path ? str_replace($base_path, '', $pathname) : $pathname;
+        $folder_name = StringDataType::substringAfter(rtrim($path, "/"), '/', '', false, true);
         
         $file_data = array(
             'name' => $file->getExtension() ? str_replace('.' . $file->getExtension(), '', $file->getFilename()) : $file->getFilename(),
             'path_relative' => $base_path ? str_replace($base_path, '', $path) : $path,
             'pathname_absolute' => $file->getRealPath(),
-            'pathname_relative' => $base_path ? str_replace($base_path, '', $pathname) : $pathname,
-            'mtime' => TimestampDataType::cast('@' . $file->getMTime())
+            'pathname_relative' => $pathname_relative,
+            'mtime' => TimestampDataType::cast('@' . $file->getMTime()),
+            'ctime' => TimestampDataType::cast('@' . $file->getCTime()),
+            'folder_name' => $folder_name
         );
         
         return $file_data;
