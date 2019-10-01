@@ -8,11 +8,33 @@ use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Exceptions\Model\ConditionIncompleteError;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
- * A ColorIndicator will change it's color depending on conditons specified in it's configuration.
+ * A ColorIndicator will change it's color depending the value of it's attribute.
  * 
- * Colors are defined as a set of conditions like this:
+ * Colors can either be defined as a simple color scale (like in most display
+ * widgets) or via conditional expressions.
+ * 
+ * ## Examples
+ * 
+ * ### Simple color scale
+ * 
+ * ```
+ * {
+ *  "widget_type": "ColorIndicator",
+ *  "color_scale": {
+ *      "0": "red",
+ *      "50": "yellow",
+ *      "100": "green"
+ *  }
+ * }
+ * 
+ * ```
+ * 
+ * ### Conditions based on own value
+ * 
+ * ```
  * {
  *  "widget_type": "ColorIndicator",
  *  "color_conditions": {
@@ -23,15 +45,20 @@ use exface\Core\Factories\ExpressionFactory;
  *  }
  * }
  * 
+ * ```
+ * 
  * In this case, the conditions will be evaluated against the current value of the widget - so
  * the right sight of the condition may be ommitted. Note, that multiple conditions can result 
  * in the same color. In the above example negative values will be colored red as well as empty 
  * values.
  * 
- * Using a widget link on the right side of the condition will make the condition dynamic. This
+ * ### Conditions based on widget links
+ * 
+ * Using a widget link on the left side of the condition will make the condition dynamic. This
  * is usefull to compare multiple widgets: e.g. two columns in a DataTable like in the following
  * example:
  * 
+ * ```
  * {
  *  "widget_type": "ColorIndicator",
  *  "color_conditions": {
@@ -41,9 +68,11 @@ use exface\Core\Factories\ExpressionFactory;
  *  }
  * }
  * 
- * Last but not least, it is possible to use the value of another widget for comparison: i.e.
+ * ```
+ * 
+ * Of course, it is possible to use the value of another widget for comparison: i.e.
  * become red if widget X hax a value of Y or if the value of widget X is less than that of
- * widget Y.
+ * widget Y. Just replace the `self` in the above example by the id of the other widget.
  * 
  * @author Andrej Kabachnik
  *
@@ -60,6 +89,8 @@ class ColorIndicator extends Display implements iHaveColor
     
     private $fill = true;
     
+    private $colorOnly = null;
+    
     /**
      * 
      * {@inheritDoc}
@@ -71,8 +102,11 @@ class ColorIndicator extends Display implements iHaveColor
     }
 
     /**
+     * Use this fixed color
      * 
-     * {@inheritDoc}
+     * @uxon-property color
+     * @uxon-type color
+     * 
      * @see \exface\Core\Interfaces\Widgets\iHaveColor::setColor()
      */
     public function setColor($color)
@@ -103,11 +137,26 @@ class ColorIndicator extends Display implements iHaveColor
                 $this->colorConditionsColors[] = $color;
             }
         }
+        
+        if (empty($this->colorConditions) === false && $this->hasColorScale() === true) {
+            throw new WidgetConfigurationError($this, 'Cannot use color_conditions and color_scale at the same time in widget ' . $this->getWidgetType() . '!');
+        }
+        
         return $this->colorConditions;
+    }
+    
+    /**
+     * Returns TRUE if color conditions are defined and false otherwise.
+     * 
+     * @return bool
+     */
+    public function hasColorConditions() : bool
+    {
+        return empty($this->getColorConditions()) === false;
     }
 
     /**
-     * Defines the set of colors and corresponding conditions.
+     * A set of colors and corresponding conditions.
      * 
      * This property accepts an object with condition strings on the left side
      * and corresponding colors on the right.
@@ -125,6 +174,7 @@ class ColorIndicator extends Display implements iHaveColor
      * 
      * @uxon-property color_conditions
      * @uxon-type object
+     * @uxon-template {"< 0": "red", "== 0": "yellow", "> 0": "green", "": "red"}
      * 
      * @param UxonObject $uxon
      * @return ColorIndicator
@@ -154,10 +204,11 @@ class ColorIndicator extends Display implements iHaveColor
     }
 
     /**
-     * Set to TRUE to only color the value of the widget instead of filling it with color.
+     * Set to FALSE to only color the value of the widget instead of filling it with color.
      * 
      * @uxon-property fill
      * @uxon-type boolean
+     * @uxon-default true
      * 
      * @param boolean $trueOrFalse
      * @return ColorIndicator
@@ -168,6 +219,30 @@ class ColorIndicator extends Display implements iHaveColor
         return $this;
     }
 
-
+    /**
+     * 
+     * @param bool $default
+     * @return bool
+     */
+    public function getColorOnly(bool $default = false) : bool
+    {
+        return $this->colorOnly ?? $default;
+    }
     
+    /**
+     * Set to TRUE/FALSE to display only the color or to color the value respecitvely.
+     * 
+     * The default depends on the facade used.
+     * 
+     * @uxon-property color_only
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return ColorIndicator
+     */
+    public function setColorOnly(bool $value) : ColorIndicator
+    {
+        $this->colorOnly = $value;
+        return $this;
+    }    
 }

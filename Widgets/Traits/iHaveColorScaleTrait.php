@@ -78,7 +78,7 @@ trait iHaveColorScaleTrait
      */
     public function getColor($value = null) : ?string
     {
-        return static::findColor($value, $this->getColorScale());
+        return static::findColor($value, $this->getColorScale(), $this->isColorScaleRangeBased());
     }
     
     /**
@@ -86,16 +86,24 @@ trait iHaveColorScaleTrait
      * {@inheritdoc}
      * @see iHaveColorScale::findColor()
      */
-    public static function findColor($value, array $colorMap = null) : string
+    public static function findColor($value, array $colorMap = null, bool $isRangeScale = true) : string
     {
         if ($colorMap === null || $value === null) {
             $colorMap = static::getColorScaleDefault();
         }
         
-        ksort($colorMap);
-        foreach ($colorMap as $max => $color) {
-            if ($value <= $max) {
-                return $color;
+        if ($isRangeScale === true) {
+            ksort($colorMap);
+            foreach ($colorMap as $max => $color) {
+                if ($value <= $max) {
+                    return $color;
+                }
+            }
+        } else {
+            foreach ($colorMap as $scaleVal => $color) {
+                if (strcasecmp($value, $scaleVal)) {
+                    return $color;
+                }
             }
         }
         
