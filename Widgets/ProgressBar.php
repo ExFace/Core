@@ -23,9 +23,8 @@ use exface\Core\Interfaces\Widgets\iHaveColorScale;
  * @author Andrej Kabachnik
  *        
  */
-class ProgressBar extends Display implements iCanBeAligned, iHaveColorScale
+class ProgressBar extends Display implements iCanBeAligned
 {
-    use iHaveColorScaleTrait;
     use iCanBeAlignedTrait {
         getAlign as getAlignViaTrait;
     }

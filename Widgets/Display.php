@@ -7,6 +7,8 @@ use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Interfaces\Widgets\iHaveColorScale;
 use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\DateDataType;
 
 /**
  * The Display is the basic widget to show formatted values.
@@ -152,6 +154,23 @@ class Display extends Value implements iDisplayValue, iHaveColor, iHaveColorScal
             $uxon->setProperty('color_scale', new UxonObject($this->getColorScale()));
         }
         return $uxon;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColorScale::isColorScaleRangeBased()
+     */
+    public function isColorScaleRangeBased() : bool
+    {
+        $dataType = $this->getValueDataType();
+        switch (true) {
+            case $dataType instanceof NumberDataType:
+            case $dataType instanceof DateDataType:
+                return true;
+        }
+        
+        return false;
     }
 }
 ?>
