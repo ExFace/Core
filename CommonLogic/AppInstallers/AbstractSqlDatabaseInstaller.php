@@ -309,7 +309,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * 
      * @return string
      */
-    protected function getMigrationsTableName() : string
+    public function getMigrationsTableName() : string
     {
         return $this->sql_migrations_table;
     }
