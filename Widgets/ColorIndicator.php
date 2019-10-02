@@ -162,6 +162,8 @@ class ColorIndicator extends Display implements iHaveColor
      * and corresponding colors on the right.
      * 
      * Example:
+     * 
+     * ```
      * {
      *  "widget_type": "ColorIndicator",
      *  "color_conditions": {
@@ -171,6 +173,8 @@ class ColorIndicator extends Display implements iHaveColor
      *      "": "red"
      *  }
      * }
+     * 
+     * ```
      * 
      * @uxon-property color_conditions
      * @uxon-type object
