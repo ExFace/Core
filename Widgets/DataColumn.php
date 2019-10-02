@@ -514,8 +514,23 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     }
 
     /**
+     * Set the name of the data column explicitly - only needed for non-attribute columns.
      * 
-     * {@inheritDoc}
+     * Internally all data is stored in excel-like sheets, where every column has a unique name.
+     * These data sheets are passed around between widgets, actions, data sources, etc. 
+     * 
+     * If a data sheet represents a meta object, it's columns are attributes. Column names are
+     * simply attribute aliases in most cases: this is why specifying `attribute_alias` is mostly
+     * enough for a column in a data-wiget.
+     * 
+     * However, there are also cases, when the desired value does not represent an attribute: for
+     * example, if you need to show/edit some action-parameter or display a calculated value.
+     * If that value still needs to be handled by the server, a `data_column_name` must be set
+     * explicitly, since there is no `attribute_alias`.
+     * 
+     * @uxon-property data_column_name
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\Widgets\iShowDataColumn::setDataColumnName()
      */
     public function setDataColumnName($value)
