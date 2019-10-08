@@ -522,12 +522,20 @@ class DataSheet implements DataSheetInterface
         // IDEA Enable incremental reading by distinguishing between reading the same page an reading a new page
         $this->removeRows();
         
-        if (is_null($limit))
+        if (is_null($limit)) {
             $limit = $this->getRowsLimit();
-        if (is_null($offset))
+        }
+        if (is_null($offset)) {
             $offset = $this->getRowsOffset();
+        }
         
-        $query = $this->dataReadInitQueryBuilder($thisObject);
+        try {
+            $query = $this->dataReadInitQueryBuilder($thisObject);
+        } catch (DataSheetReadError $dsre) {
+            throw $dsre;  
+        } catch (\Throwable $e) {
+            throw new DataSheetReadError($this, 'Cannot initialize query builder for object "' . $thisObject->getName() . '" (' . $thisObject->getAliasWithNamespace() . ')!', null, $e);
+        }
         
         // set sorting
         $sorters = $this->hasSorters() ? $this->getSorters() : $thisObject->getDefaultSorters();
@@ -2086,7 +2094,13 @@ class DataSheet implements DataSheetInterface
      */
     public function dataCount() : int
     {
-        $query = $this->dataReadInitQueryBuilder($this->getMetaObject());
+        try {
+            $query = $this->dataReadInitQueryBuilder($this->getMetaObject());
+        } catch (DataSheetReadError $dsre) {
+            throw $dsre;
+        } catch (\Throwable $e) {
+            throw new DataSheetReadError($this, 'Cannot initialize query builder for object "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . ')!', null, $e);
+        }
         
         try {
             $result = $query->count($this->getMetaObject()->getDataConnection());
