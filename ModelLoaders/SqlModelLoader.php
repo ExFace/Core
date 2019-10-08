@@ -51,6 +51,7 @@ use exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller;
 use exface\Core\DataConnectors\MySqlConnector;
 use exface\Core\Events\Installer\OnInstallEvent;
 use exface\Core\DataTypes\UUIDDataType;
+use exface\Core\Exceptions\DataSources\DataSourceNotFoundError;
 
 /**
  * 
@@ -447,16 +448,23 @@ class SqlModelLoader implements ModelLoaderInterface
         return $attr;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadDataSource()
+     */
     public function loadDataSource(DataSourceSelectorInterface $selector, DataConnectionSelectorInterface $connectionSelector = null) : DataSourceInterface
     {
         $exface = $selector->getWorkbench();
         
         if ($connectionSelector !== null) {
-            // See if a (hex-)ID is given or an alias. The latter will need to be wrapped in qotes!
+            // Join data source and connection on alias or UID depending on the type of connection selector
+            // Note, that the alias needs to be wrapped in quotes and the UID does not!
             if (false === $connectionSelector->isUid()) {
-                $data_connection_id_or_alias = '"' . $connectionSelector->toString() . '"';
+                $join_on = 'dc.alias = "' . $connectionSelector->toString() . '"';
+            } else {
+                $join_on = 'dc.oid = ' . $connectionSelector->toString();
             }
-            $join_on = "(dc.oid = " . $data_connection_id_or_alias . " OR dc.alias = " . $data_connection_id_or_alias . ")";
         } else {
             $join_on = 'IF (ds.custom_connection_oid IS NOT NULL, ds.custom_connection_oid, ds.default_connection_oid) = dc.oid';
         }
@@ -497,9 +505,9 @@ class SqlModelLoader implements ModelLoaderInterface
         $query = $this->getDataConnection()->runSql($sql);
         $ds = $query->getResultArray();
         if (count($ds) > 1) {
-            throw new RangeException('Multiple user credentials found for data connection "' . $data_connection_id_or_alias . '" and user "' . $user_name . '"!', '6T4R8UM');
+            throw new RangeException('Multiple user credentials found for data source "' . $ds[0]['data_connection_alias'] . '" and user "' . $user_name . '"!', '6T4R8UM');
         } elseif (count($ds) != 1) {
-            throw new RangeException('Cannot find data connection "' . $data_connection_id_or_alias . '"!', '6T4R97R');
+            throw new DataSourceNotFoundError('Cannot find data source "' . $selector->toString() . '" in metamodel!', '6T4R97R');
         }
         $ds = $ds[0];
         
