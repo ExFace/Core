@@ -23,6 +23,7 @@ use exface\Core\Factories\SelectorFactory;
 use exface\Core\Interfaces\CmsConnectorInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Events\Widget\OnRemoveEvent;
+use exface\Core\Exceptions\UiPage\UiPageLoadingError;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -593,7 +594,11 @@ class UiPage implements UiPageInterface
     public function getApp()
     {
         if (! is_null($this->appSelector)) {
-            return $this->getWorkbench()->getApp($this->appSelector);
+            try {
+                return $this->getWorkbench()->getApp($this->appSelector);
+            } catch (\Throwable $e) {
+                throw new UiPageLoadingError('Cannot load app "' . $this->appSelector->__toString() . '" for page "' . $this->getAliasWithNamespace() . '"!', null, $e);
+            }
         } else {
             throw new UiPageNotPartOfAppError('The page "' . $this->getAliasWithNamespace() . '" is not part of any app!');
         }
