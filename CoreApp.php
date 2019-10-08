@@ -21,7 +21,24 @@ class CoreApp extends App
     private $config_loaded = false;
     
     private $system_config = null;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\App::getUid()
+     */
+    public function getUid()
+    {
+        // Hardcode the UID of the core app, because some installers might attempt to use it
+        // before the model is fully functional on first time installing.
+        return '0x31000000000000000000000000000000';
+    }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\App::getInstaller()
+     */
     public function getInstaller(InstallerInterface $injected_installer = null)
     {
         $installer = parent::getInstaller($injected_installer);
