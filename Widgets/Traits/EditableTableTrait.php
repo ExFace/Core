@@ -4,6 +4,7 @@ namespace exface\Core\Widgets\Traits;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iHaveValues;
 
 /**
  * 
@@ -25,7 +26,7 @@ trait EditableTableTrait
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveValues::getValues()
      */
-    public function getValues()
+    public function getValues() : array
     {
         // TODO set selected table rows programmatically
         /*
@@ -48,7 +49,7 @@ trait EditableTableTrait
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveValues::setValues()
      */
-    public function setValues($expression_or_delimited_list)
+    public function setValues($expressionOrArrayOrDelimitedString) : iHaveValues
     {
         // TODO set selected table rows programmatically
     }
@@ -59,7 +60,7 @@ trait EditableTableTrait
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveValues::setValuesFromArray()
      */
-    public function setValuesFromArray(array $values)
+    public function setValuesFromArray(array $values) : iHaveValues
     {
         $this->setValue(implode($this->getUidColumn()->getAttribute()->getValueListDelimiter(), $values));
         return $this;

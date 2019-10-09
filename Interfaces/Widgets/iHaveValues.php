@@ -10,17 +10,17 @@ interface iHaveValues extends iHaveValue
      *
      * @return array
      */
-    public function getValues();
+    public function getValues() : array;
 
     /**
      *
-     * @param ExpressionInterface|string $expression_or_delimited_list            
+     * @param ExpressionInterface|array|string $expression_or_delimited_list            
      */
-    public function setValues($expression_or_delimited_list);
+    public function setValues($expressionOrArrayOrDelimitedString) : iHaveValues;
 
     /**
      *
      * @param array $values            
      */
-    public function setValuesFromArray(array $values);
+    public function setValuesFromArray(array $values) : iHaveValues;
 }

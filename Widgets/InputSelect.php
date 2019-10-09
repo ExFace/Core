@@ -18,6 +18,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
+use exface\Core\Interfaces\Widgets\iHaveValues;
 
 /**
  * A dropdown menu to select from.
@@ -471,7 +472,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveValues::getValues()
      */
-    public function getValues()
+    public function getValues() : array
     {
         if ($this->getValue()) {
             // Split the value by value delimiter, but only if the raw value does not match
@@ -487,19 +488,29 @@ class InputSelect extends Input implements iSupportMultiSelect
     }
 
     /**
-     * Defines multiple current values for the select via comma-separated list.
-     * To be used instead of "value" if "multi-select" is TRUE.
+     * Initial values for multi-select widgets via array or delimited list.
+     * 
+     * This only works if `multi_select` = `true`! In this case, the `value` 
+     * property can be used to set a single value or a string list delimited by
+     * `multi_select_value_delimiter` (comma by default), while the `values` 
+     * property accepts an array of expressions, which is more convenient in
+     * many cases.
      *
      * @uxon-property values
-     * @uxon-type string
+     * @uxon-type array
+     * @uxon-template [""]
      *
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveValues::setValues()
      */
-    public function setValues($expression_or_delimited_list)
+    public function setValues($expressionOrArrayOrDelimitedString) : iHaveValues
     {
-        $this->setValue($expression_or_delimited_list);
+        if (is_array($expressionOrArrayOrDelimitedString) === true) {
+            $this->setValuesFromArray($expressionOrArrayOrDelimitedString);
+        } else {
+            $this->setValue($expressionOrArrayOrDelimitedString);
+        }
         return $this;
     }
 
@@ -508,7 +519,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValues::setValuesFromArray()
      */
-    public function setValuesFromArray(array $values)
+    public function setValuesFromArray(array $values) : iHaveValues
     {
         if ($this->getMultiSelect()) {
             $this->setValue(implode($this->getMultiSelectValueDelimiter(), $values));
