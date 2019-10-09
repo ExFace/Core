@@ -19,6 +19,9 @@
             {
                 "attribute_alias": "MODIFIED_ON",
                 "comparator": "<="
+            },
+            {
+                "attribute_alias": "UID"
             }
         ],
         "sorters": [
