@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2019-03-24 16:00:15",
+            "MODIFIED_ON": "2019-10-14 09:10:49",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31353000000000000000000000000000",
@@ -96,7 +96,7 @@
             "SHORT_DESCRIPTION": "Custom datam connection configurations for users: user specific passwords, API keys, user ids or other data connection settings. Each set of credentials can be used for multiple connections.",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"width\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"USER\"},{\"attribute_alias\":\"DATA_CONNECTOR_CONFIG\"}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS')\",\"widgets\":[{\"attribute_alias\":\"NAME\",\"width\":\"max\"},{\"attribute_alias\":\"USER\",\"width\":\"max\"},{\"attribute_alias\":\"DATA_CONNECTOR_CONFIG\",\"widget_type\":\"InputUxon\",\"height\":16,\"schema\":\"connection\"}]},{\"caption\":\"=TRANSLATE('exface.Core', 'GLOBAL.MODEL.CONNECTIONS')\",\"widgets\":[{\"widget_type\":\"DataTableResponsive\",\"object_alias\":\"exface.Core.DATA_CONNECTION_CREDENTIALS\",\"filters\":[{\"attribute_alias\":\"USER_CREDENTIALS\",\"widget_type\":\"InputHidden\",\"required\":true}],\"columns\":[{\"attribute_alias\":\"DATA_CONNECTION__LABEL\"},{\"attribute_alias\":\"DATA_CONNECTION__ALIAS\"},{\"attribute_alias\":\"DATA_CONNECTION__APP__LABEL\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.DeleteObject\"}]}]}]}]}",
             "ALIAS": "USER_CREDENTIALS",
             "DATA_ADDRESS": "exf_user_credentials"
         }
