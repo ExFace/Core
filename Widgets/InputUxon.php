@@ -28,7 +28,7 @@ class InputUxon extends InputJson
      * Specifies the UXON schema - either as string (widget, action, etc.) or via widget link.
      * 
      * @uxon-property schema
-     * @uxon-type [generic,widget,action,behavior,datatype]|metamodel:widget_link
+     * @uxon-type [generic,widget,action,behavior,datatype,connection]|metamodel:widget_link
      * 
      * @see \exface\Core\Widgets\InputJson::setSchema()
      */
