@@ -6,6 +6,11 @@ use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Events\Installer\OnInstallEvent;
+use exface\Core\Interfaces\Selectors\DataSourceSelectorInterface;
+use exface\Core\CommonLogic\Selectors\DataSourceSelector;
+use exface\Core\Exceptions\Installers\InstallerRuntimeError;
+use exface\Core\Factories\DataSourceFactory;
+use exface\Core\Exceptions\DataSources\DataSourceHasNoConnectionError;
 
 /**
  * This creates and manages SQL databases and performs SQL updates.
@@ -15,6 +20,22 @@ use exface\Core\Events\Installer\OnInstallEvent;
  * the meta model and the code. This installer takes care of migrating the schema
  * by performing SQL scripts stored in a special folder within the app (by
  * default "install/Sql/%Database_Version").
+ * 
+ * ## Configuration
+ * 
+ * By default, this installer offers the following configuration options to control
+ * it's behavior on a specific installation. These options can be added to the config
+ * of the app being installed.
+ * 
+ * - `INSTALLER.SQLDATABASEINSTALLER.DISABLED` - set to TRUE to disable this installer
+ * completely (e.g. if you wish to manage the database manually).
+ * - `INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS` - array of migration names to
+ * skip for this specific installation.
+ * 
+ * If an app contains multiple SQL-installers, the config option namespace may be changed
+ * when instantiatiating the installer via setConfigOptionNamePrefix(), so that each 
+ * installer can be configured separately. If not done so, each option will affect
+ * all SQL-installers. 
  *
  * ## How to add an SqlDatabaseInstaller to your app:
  * 
@@ -23,14 +44,13 @@ use exface\Core\Events\Installer\OnInstallEvent;
  * and add that Installer to the getInstaller() method of your app similar to as follows:
  *
  
- // ...receding installers here...
+ // ...preceding installers here...
         
         $schema_installer = new MySqlDatabaseInstaller($this->getSelector());
-        $dataSource = DataSourceFactory::createFromModel($this->getWorkbench(), %SourceUid%);
         $schema_installer
+            ->setDataSourceSelector('uid_of_target_data_source')
             ->setFoldersWithMigrations(['InitDB','Migrations', 'DemoData'])
-            ->setFoldersWithStaticSql(['Views'])
-            ->setDataConnection($dataSource->getConnection());
+            ->setFoldersWithStaticSql(['Views']);
         $installer->addInstaller($schema_installer);
  
  // ...subsequent installers here...
@@ -52,11 +72,16 @@ use exface\Core\Events\Installer\OnInstallEvent;
  */
 abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
 {
+    const CONFIG_OPTION_SKIP_MIGRATIONS = 'SKIP_MIGRATIONS';
+    const CONFIG_OPTION_DISABLED = 'DISABLED';
+    
     private $sql_folder_name = 'Sql';
         
     private $sql_uninstall_folder_name = 'uninstall';
     
     private $data_connection = null;
+    
+    private $dataSourceSelector = null;
     
     private $sql_migration_folders = [];
     
@@ -64,7 +89,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     
     private $sql_migrations_table = '_migrations';
     
-    private $sql_migrations_to_skip_config_option = 'INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS';
+    private $configOptionNamePrefix = 'INSTALLER.SQLDATABASEINSTALLER.';
     
     /**
      *
@@ -73,6 +98,10 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      */
     public function install($source_absolute_path) : string
     {
+        if ($this->isDisabled() === true) {
+            return 'SQL installer disabled';
+        }
+        
         $result = '';
         $result .= $this->ensureDatabaseExists($this->getDataConnection());
         $result .= $this->installMigrations($source_absolute_path);
@@ -200,11 +229,29 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      */
     public function getDataConnection() : SqlDataConnectorInterface
     {
+        if ($this->data_connection === null) {
+            try {
+                $sourceSelector = $this->getDataSourceSelector();
+            } catch (\Throwable $e) {
+                throw new InstallerRuntimeError($this, 'Invalid configuration of the SQL installer in app "' . $this->getSelectorInstalling()->toString() . '": neither a data connection nor a valid data source selector were provided!');
+            }
+            $dataSource = DataSourceFactory::createFromModel($this->getWorkbench(), $sourceSelector);
+            try {
+                $this->data_connection = $dataSource->getConnection();
+            } catch (DataSourceHasNoConnectionError $e) {
+                throw new InstallerRuntimeError($this, 'Cannot install SQL DB for app "' . $this->getSelectorInstalling()->toString() . '": please provide a valid connection for data source "' . $dataSource->getName() . '" and reinstall/repair the app.', '77UP8Q4', $e);
+            }
+        }
         return $this->data_connection;
     }
     
     /**
-     * Set Data Connection
+     * Set the connection to the SQL database explicitly instead of setDataSourceSelector().
+     * 
+     * Setting an explicit data source can be usefull if that data source is being reused
+     * and you are sure, that it is instantiated already when the installer is initialized.
+     * This is basically only the case for built-in core connections or those not needing any
+     * configuration like the local file system.
      * 
      * @param SqlDataConnectorInterface $value
      * @return AbstractSqlDatabaseInstaller
@@ -216,30 +263,39 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
-     * Returns the configuration key used to store the file names of
-     * migrations in the app, that this installer should skip during installation.
+     * Returns the value of a configuration option - one of the CONFIG_OPTION_xxx constants.
      * 
-     * Default: 'INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS'
+     * This method automatically uses the config option prefix (namespace) of this
+     * installer.
      * 
+     * @param string $name
      * @return string
      */
-    protected function getSqlMigrationsToSkipConfigOption() : string
+    protected function getConfigOption(string $name) : ?string
     {
-        return $this->sql_migrations_to_skip_config_option;
+        $config = $this->getApp()->getConfig();
+        $option = $this->configOptionNamePrefix . $name;
+        if ($config->hasOption($option)) {
+            return $config->getOption($option);
+        } else {
+            return null;
+        }
     }
     
     /**
-     * Changes the name of the configuration key to be used to get the file names
-     * for the migrations that should be skipped during installation.
-     *  
-     * Default: 'INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS'
+     * Changes the prefix of the configuration keys for this installer.
+     * 
+     * The default is `INSTALLER.SQLDATABASEINSTALLER.`
+     * 
+     * This is usefull if you have multiple SQL installers in a single app and wish
+     * to configure them separately.
      *
      * @param string $value
      * @return AbstractSqlDatabaseInstaller
      */
-    public function setSqlMigrationsToSkipConfigOption(string $value)
+    public function setConfigOptionNamePrefix(string $value)
     {
-        $this->sql_migrations_to_skip_config_option = $value;
+        $this->configOptionNamePrefix = $value;
         return $this;
     }
     
@@ -252,7 +308,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     protected function getSqlMigrationsToSkip() : array
     {
         try {
-            $migrations_to_skip = $this->getApp()->getConfig()->getOption($this->getSqlMigrationsToSkipConfigOption());
+            $migrations_to_skip = $this->getConfigOption(static::CONFIG_OPTION_SKIP_MIGRATIONS);
             $migrations_to_skip_array = $migrations_to_skip->toArray(); 
         } catch (ConfigOptionNotFoundError $e){
             $migrations_to_skip_array = [];
@@ -664,6 +720,47 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     protected function getInstallerApp()
     {
         return $this->getWorkbench()->getCoreApp();
-    }    
+    }  
+    
+    /**
+     * Returns TRUE if this installer was disabled in the configuration of the installed app.
+     * 
+     * @return bool
+     */
+    protected function isDisabled() : bool
+    {
+        return $this->getConfigOption(static::CONFIG_OPTION_DISABLED) ?? false;
+    }
+    
+    /**
+     *
+     * @return DataSourceSelectorInterface
+     */
+    protected function getDataSourceSelector() : DataSourceSelectorInterface
+    {
+        return $this->dataSourceSelector;
+    }
+    
+    /**
+     * The connection of this data source will be used to perform installer operations.
+     * 
+     * Alternatively to passing the data source selector, you can also set the
+     * desired connection directly via setDataConnection(). The latter is advantageous
+     * if you definitely know, that the data source was already instantiated and
+     * has a valid connection at the time of instantiating the installer. This is
+     * basically only the case for built-in core connections or those not needing any
+     * configuration like the local file system.
+     * 
+     * @param string|DataSourceSelectorInterface $value
+     * @return AbstractSqlDatabaseInstaller
+     */
+    public function setDataSourceSelector($value) : AbstractSqlDatabaseInstaller
+    {
+        if (! $value instanceof DataSourceSelectorInterface) {
+            $value = new DataSourceSelector($this->getWorkbench(), $value);
+        }
+        $this->dataSourceSelector = $value;
+        return $this;
+    }
 }
 ?>

@@ -5,6 +5,7 @@ use exface\Core\Interfaces\DataSources\DataSourceInterface;
 use exface\Core\CommonLogic\Model\Model;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\Exceptions\DataSources\DataSourceHasNoConnectionError;
 
 class DataSource implements DataSourceInterface
 {
@@ -61,6 +62,9 @@ class DataSource implements DataSourceInterface
      */
     public function getConnection() : DataConnectionInterface
     {
+        if ($this->connection === null) {
+            throw new DataSourceHasNoConnectionError($this, 'Data connection not found for data source ' . $this->getName() . '!');
+        }
         return $this->connection;
     }
     
