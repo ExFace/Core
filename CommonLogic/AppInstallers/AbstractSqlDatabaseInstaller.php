@@ -11,6 +11,7 @@ use exface\Core\CommonLogic\Selectors\DataSourceSelector;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use exface\Core\Factories\DataSourceFactory;
 use exface\Core\Exceptions\DataSources\DataSourceHasNoConnectionError;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * This creates and manages SQL databases and performs SQL updates.
@@ -307,13 +308,12 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      */
     protected function getSqlMigrationsToSkip() : array
     {
-        try {
-            $migrations_to_skip = $this->getConfigOption(static::CONFIG_OPTION_SKIP_MIGRATIONS);
-            $migrations_to_skip_array = $migrations_to_skip->toArray(); 
-        } catch (ConfigOptionNotFoundError $e){
-            $migrations_to_skip_array = [];
-        }        
-        return $migrations_to_skip_array;
+        $uxon = $this->getConfigOption(static::CONFIG_OPTION_SKIP_MIGRATIONS);
+        if ($uxon instanceof UxonObject) {
+            return $uxon->toArray();
+        } else {
+            return [];
+        }
     }
     
     
