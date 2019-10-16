@@ -2094,6 +2094,20 @@
             "HINT": "Make sure, the data widget, that is used a linked data in other widgets has all the required columns for all linked widgets.",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2019-10-16 12:56:17",
+            "MODIFIED_ON": "2019-10-16 12:56:17",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e9f01445e8948cbacde4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "77UP8Q4",
+            "TITLE": "No valid data connection for SQL installer",
+            "DESCRIPTION": "",
+            "HINT": "Please add a connection to the model of the data source below and reinstall\/repair the app.",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

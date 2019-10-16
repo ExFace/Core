@@ -598,7 +598,7 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade
      * @param \Throwable $exception
      * @return mixed
      */
-    protected function buildResponseDataError(\Throwable $exception)
+    public function buildResponseDataError(\Throwable $exception)
     {
         $error = [
             'code' => $exception->getCode(),
