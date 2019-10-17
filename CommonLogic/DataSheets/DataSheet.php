@@ -560,7 +560,7 @@ class DataSheet implements DataSheetInterface
         try {
             $result = $query->read($thisObject->getDataConnection());
         } catch (\Throwable $e) {
-            throw new DataSheetReadError($this, $e->getMessage(), ($e instanceof ExceptionInterface ? $e->getAlias() : null), $e);
+            throw new DataSheetReadError($this, $e->getMessage(), null, $e);
         }
         
         $this->addRows($result->getResultRows());
@@ -924,7 +924,7 @@ class DataSheet implements DataSheetInterface
         } catch (\Throwable $e) {
             $transaction->rollback();
             $commit = false;
-            throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), ($e instanceof ExceptionInterface ? $e->getAlias() : null), $e);
+            throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), null, $e);
         }
         
         if ($commit && ! $transaction->isRolledBack()) {
@@ -1137,7 +1137,7 @@ class DataSheet implements DataSheetInterface
         } catch (\Throwable $e) {
             $transaction->rollback();
             $commit = false;
-            throw new DataSheetWriteError($this, $e->getMessage(), ($e instanceof ExceptionInterface ? $e->getAlias() : null), $e);
+            throw new DataSheetWriteError($this, $e->getMessage(), null, $e);
         }
         
         // Create data for the nested sheets
@@ -1269,7 +1269,7 @@ class DataSheet implements DataSheetInterface
             $affected_rows += $result->getAffectedRowsCounter();
         } catch (\Throwable $e) {
             $transaction->rollback();
-            throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), ($e instanceof ExceptionInterface ? $e->getAlias() : null), $e);
+            throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), null, $e);
         }
         
         if ($commit && ! $transaction->isRolledBack()) {
@@ -2105,7 +2105,7 @@ class DataSheet implements DataSheetInterface
         try {
             $result = $query->count($this->getMetaObject()->getDataConnection());
         } catch (\Throwable $e) {
-            throw new DataSheetReadError($this, $e->getMessage(), ($e instanceof ExceptionInterface ? $e->getAlias() : null), $e);
+            throw new DataSheetReadError($this, $e->getMessage(), null, $e);
         }
         
         $this->setCounterForRowsInDataSource($result->getAllRowsCounter());

@@ -213,16 +213,20 @@ trait ExceptionTrait {
         return $debug_widget;
     }
 
-    protected function getMessageModelData(Workbench $exface, $error_code)
+    public function getMessageModelData(Workbench $exface, $error_code)
     {
         if ($this->messageData === null) {
-            $ds = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.MESSAGE');
-            $ds->getColumns()->addMultiple(['TITLE', 'HINT', 'DESCRIPTION', 'TYPE']);
-            if ($error_code) {
-                $ds->addFilterFromString('CODE', $error_code);
-                $ds->dataRead();
+            if ($this->getPrevious() && $this->getPrevious() instanceof ExceptionInterface){
+                $this->messageData = $this->getPrevious()->getMessageModelData($exface, $error_code);
+            } else {
+                $ds = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.MESSAGE');
+                $ds->getColumns()->addMultiple(['TITLE', 'HINT', 'DESCRIPTION', 'TYPE']);
+                if ($error_code) {
+                    $ds->addFilterFromString('CODE', $error_code);
+                    $ds->dataRead();
+                }
+                $this->messageData = $ds;
             }
-            $this->messageData = $ds;
         }
         return $this->messageData;
     }
@@ -276,10 +280,10 @@ trait ExceptionTrait {
     public function getAlias()
     {
         if (is_null($this->alias)){
-            if ($alias = $this->getDefaultAlias()) {
+            if ($this->getPrevious() && $this->getPrevious() instanceof ExceptionInterface && $alias = $this->getPrevious()->getAlias()){
                 return $alias;
-            } elseif ($this->getPrevious() && $this->getPrevious() instanceof ExceptionInterface && $alias = $this->getPrevious()->getAlias()){
-                return $alias;
+            } elseif ($this->getDefaultAlias() !== null) {
+                return $this->getDefaultAlias();
             }
         }
         return $this->alias;
