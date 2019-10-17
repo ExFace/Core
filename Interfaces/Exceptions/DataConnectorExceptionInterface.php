@@ -3,7 +3,7 @@ namespace exface\Core\Interfaces\Exceptions;
 
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 
-interface DataConnectorExceptionInterface extends DataSourceExceptionInterface
+interface DataConnectorExceptionInterface
 {
 
     /**
