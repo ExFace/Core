@@ -165,7 +165,7 @@
     "rows": [
         {
             "CREATED_ON": "2019-09-01 19:37:38",
-            "MODIFIED_ON": "2019-09-01 19:38:15",
+            "MODIFIED_ON": "2019-10-18 08:27:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9ccefe5c6433bad7fe4b318306b9a",
@@ -195,7 +195,7 @@
             "HIDDENFLAG": "0",
             "EDITABLEFLAG": "1",
             "REQUIREDFLAG": "0",
-            "RELATED_OBJ": "0x32360000000000000000000000000000",
+            "RELATED_OBJ": "0x11e796d66279d4a3b6e3e4b318306b9a",
             "SORTERPOS": null,
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
