@@ -286,6 +286,10 @@
 	"WIDGET.UXONEDITOR.ERROR.SHOWING_ERROR": "Error could not be displayed interactively: ",
 	
 	"WIDGET.INPUT.EMPTY_TEXT": "",
+	"WIDGET.INPUT.VALIDATION_REQUIRED": "Cannot be empty!",
+	"WIDGET.INPUT.VALIDATION_MUST": "Must",
+	"WIDGET.INPUT.VALIDATION_LENGTH_CONDITION": "have %condition% characters",
+	"WIDGET.INPUT.VALIDATION_AND": "and",
 	
 	"ERROR.ECHARTS.AXIS_NO_DATA": "No data received for axis",
 	

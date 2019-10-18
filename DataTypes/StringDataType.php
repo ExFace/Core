@@ -149,8 +149,8 @@ class StringDataType extends AbstractDataType
         
         // validate length
         $length = mb_strlen($value);
-        if ($this->getLengtMin() > 0 && $length < $this->getLengtMin()){
-            throw $this->createValidationError('The lenght of the string "' . $value . '" (' . $length . ') is less, than the minimum length required for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengtMin() . ')!');
+        if ($this->getLengthMin() > 0 && $length < $this->getLengthMin()){
+            throw $this->createValidationError('The lenght of the string "' . $value . '" (' . $length . ') is less, than the minimum length required for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengthMin() . ')!');
         }
         if ($this->getLengthMax() && $length > $this->getLengthMax()){
             $value = substr($value, 0, $this->getLengthMax());
@@ -184,7 +184,7 @@ class StringDataType extends AbstractDataType
     /**
      * @return integer
      */
-    public function getLengtMin()
+    public function getLengthMin()
     {
         return $this->lengthin;
     }
