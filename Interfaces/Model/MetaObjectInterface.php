@@ -102,7 +102,7 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      *
      * @return MetaAttributeInterface
      */
-    public function getAttribute($alias);
+    public function getAttribute(string $alias) : MetaAttributeInterface;
     
     /**
      * Returns TRUE if the object has an attribute matching the given alias and FALSE otherwise.
