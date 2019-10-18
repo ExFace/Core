@@ -540,6 +540,20 @@
             "UXON": "{\"widget_type\":\"Dialog\",\"object_alias\":\"\",\"width\":1,\"columns_in_grid\":1,\"height\":\"auto\",\"maximized\":false,\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}],\"buttons\":[{\"action_alias\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2019-10-18 08:25:33",
+            "MODIFIED_ON": "2019-10-18 08:27:57",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e9f180c6af8759bacde4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "String with min\/max length",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/StringDataType.php",
+            "UXON": "{\"length_min\":\"\",\"length_max\":\"\"}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "datatype"
         }
     ],
     "totals_rows": [],
