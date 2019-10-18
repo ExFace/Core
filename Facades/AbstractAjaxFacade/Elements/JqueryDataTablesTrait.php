@@ -302,7 +302,11 @@ JS;
         }
         
         $column_name = $column_widget->getDataColumnName();
-        $delimiter = $column_widget->getAttribute()->getValueListDelimiter();
+        if ($column_widget->isBoundToAttribute()) {
+            $delimiter = $column_widget->getAttribute()->getValueListDelimiter();
+        } else {
+            $delimiter = EXF_LIST_SEPARATOR;
+        }
         return "{$output}.pluck('{$column_name}').join('{$delimiter}')";
     }
     
