@@ -90,6 +90,22 @@
             "APP": "0x31000000000000000000000000000000",
             "USE_IN_OBJECT_BASKET_FLAG": "0",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2019-10-21 14:49:29",
+            "MODIFIED_ON": "2019-10-21 16:01:09",
+            "CREATED_BY_USER": "0x11e9ea7fa76e99698f24847beb3e34e8",
+            "MODIFIED_BY_USER": "0x11e9ea7fa76e99698f24847beb3e34e8",
+            "UID": "0x11e9f40138c8fa1c9132847beb3e34e8",
+            "OBJECT": "0x35370000000000000000000000000000",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "ALIAS": "ShowAppRepairConsole",
+            "NAME": "Repair",
+            "SHORT_DESCRIPTION": "",
+            "CONFIG_UXON": "{\"prefill_with_input_data\":true,\"input_rows_min\":1,\"icon\":\"wrench\",\"widget\":{\"widgets\":[{\"disabled\":true,\"widget_type\":\"Console\",\"command_placeholder_value_list_delimiter\":\",\",\"start_commands\":[\"action axenox.PackageManager:InstallApp [#ALIAS#]\"],\"working_directory_path\":\"vendor\\\/bin\"}]}}",
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
