@@ -8,7 +8,7 @@ interface InstallerInterface extends WorkbenchDependantInterface
      * 
      * @triggers \exface\Core\Interfaces\Events\InstallerEventInterface
      * 
-     * @return string
+     * @return string|string[]|\Traversable
      */
     public function install($source_absolute_path);
 
@@ -16,7 +16,7 @@ interface InstallerInterface extends WorkbenchDependantInterface
      * 
      * @triggers \exface\Core\Interfaces\Events\InstallerEventInterface
      * 
-     * @return string
+     * @return string|string[]|\Traversable
      */
     public function backup($absolute_path);
 
@@ -24,7 +24,7 @@ interface InstallerInterface extends WorkbenchDependantInterface
      * 
      * @triggers \exface\Core\Interfaces\Events\InstallerEventInterface
      * 
-     * @return string
+     * @return string|string[]|\Traversable
      */
     public function uninstall();
 }

@@ -97,20 +97,20 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\InstallerInterface::install()
      */
-    public function install($source_absolute_path) : string
+    public function install($source_absolute_path) : \Traversable
     {
+        $indent = '  ';
         if ($this->isDisabled() === true) {
-            return 'SQL installer disabled';
+            yield $indent . 'SQL installer disabled';
+        } else {
+            yield $indent . 'SQL installer:';
         }
         
-        $result = '';
-        $result .= $this->ensureDatabaseExists($this->getDataConnection());
-        $result .= $this->installMigrations($source_absolute_path);
-        $result .= ' Static SQL: ' . $this->installStaticSql($source_absolute_path);
+        yield $this->installDatabase($this->getDataConnection(), $indent.$indent);
+        yield $this->installMigrations($source_absolute_path, $indent.$indent);
+        yield $this->installStaticSql($source_absolute_path, $indent.$indent);
         
         $this->getWorkbench()->eventManager()->dispatch(new OnInstallEvent($this));
-        
-        return $result;
     }
     
     /**
@@ -118,9 +118,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param string $source_absolute_path
      * @return string
      */
-    protected function installStaticSql(string $source_absolute_path) : string
+    protected function installStaticSql(string $source_absolute_path, string $indent = '') : string
     {
-        return $this->runSqlFromFilesInFolder($source_absolute_path, $this->getFoldersWithStaticSql());
+        return $indent . $this->runSqlFromFilesInFolder($source_absolute_path, $this->getFoldersWithStaticSql());
     }
     
     /**
@@ -128,7 +128,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param string $source_absolute_path
      * @return string
      */
-    protected function installMigrations(string $source_absolute_path) : string
+    protected function installMigrations(string $source_absolute_path, string $indent = '') : string
     {
         $migrationsInApp = $this->getMigrationsFromApp($source_absolute_path);
         $migrationsInDB = $this->getMigrationsFromDb($this->getDataConnection());
@@ -145,12 +145,12 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         }
         
         if ($migratedDown === 0 && $migratedUp === 0) {
-            $message = ' not needed';
+            $message = 'not needed';
         } else {
             $message = ($migratedUp > 0 ? ' ' . $migratedUp . ' UP' : '') . ($migratedDown > 0 ? ' ' . $migratedDown . ' DOWN' : '');
         }
         
-        return ' SQL migrations:' . $message;
+        return $indent . 'SQL migrations: ' . $message;
     }
     
     /**
@@ -182,12 +182,12 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param SqlDataConnectorInterface
      * @return string
      */
-    abstract protected function ensureDatabaseExists(SqlDataConnectorInterface $connection) : string;
+    abstract protected function installDatabase(SqlDataConnectorInterface $connection, string $indent = '') : string;
     
     /**
-     *Returns foldername containing subfolders for SQL Database Types.
+     * Returns foldername containing subfolders for SQL Database Types.
      *
-     *Default: 'Sql'
+     * Default: 'Sql'
      *
      * @return string
      */
@@ -454,7 +454,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     protected function runSqlFromFilesInFolder(string $source_absolute_path, array $folders) : string
     {
         $files = $this->getFiles($source_absolute_path, $folders);
-        $result = ' No SQL Files found!';
+        $result = '';
         foreach ($files as $file){
             $sql = file_get_contents($file);
             $sql = $this->stripComments($sql);
@@ -462,13 +462,13 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
             try {
                 $this->runSqlMultiStatementScript($connection, $sql);
                 $this->getWorkbench()->getLogger()->debug('SQL script ' . $file . ' executed successfully ');
-                $result = ' Static Sql files: Performing SQL succeded ';
+                $result .= 'done.';
             } catch (\Throwable $e) {
                 $this->getWorkbench()->getLogger()->logException($e);
-                $result = ' Static Sql files: Performing SQL failed ';
+                $result .= 'failed.';
             }
         }
-        return $result;
+        return 'Static SQL: ' . ($result === '' ? 'not needed' : $result);
     }
        
     /**
