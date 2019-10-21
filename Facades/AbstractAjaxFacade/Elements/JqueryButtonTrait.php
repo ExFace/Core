@@ -8,6 +8,7 @@ use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Actions\GoToPage;
 use exface\Core\Actions\RefreshWidget;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Actions\iRunFacadeScript;
 
 trait JqueryButtonTrait {
     
@@ -349,6 +350,28 @@ JS;
     public function buildJsOnSuccessScript() : string
     {
         return implode("\n\n", array_unique($this->onSuccessJs));
+    }
+    
+    /**
+     * Returns an array of head tags required for iRunCustomTemplateScript actions, that yield JavaScript.
+     * 
+     * @return string[]
+     */
+    protected function buildHtmlHeadTagsForCustomScriptIncludes() : array
+    {
+        $tags = [];
+        if ($action = $this->getAction()) {
+            // Actions with facade scripts may contain some helper functions or global variables.
+            // Print the here first.
+            if ($action instanceof iRunFacadeScript) {
+                if (mb_strtolower($action->getScriptLanguage()) === 'javascript' ) {
+                    foreach ($action->getIncludes($this->getFacade()) as $path) {
+                        $tags[] = '<script src="' . $path . '"></script>';
+                    }
+                }
+            }
+        }
+        return $tags;
     }
 }
 ?>
