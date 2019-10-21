@@ -9,6 +9,7 @@ use exface\Core\Factories\TaskFactory;
 use exface\Core\Interfaces\Actions\iCanBeCalledFromCLI;
 use Symfony\Component\Console\Input\InputArgument;
 use exface\Core\Facades\ConsoleFacade\Interfaces\FacadeCommandLoaderInterface;
+use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
 
 /**
  * Wraps any action in a native Symfony command.
@@ -65,7 +66,13 @@ class SymfonyCommandAdapter extends Command
     {
         $task = TaskFactory::createCliTask($this->commandLoader->getFacade(), $this->action->getSelector(), $input->getArguments(), $input->getOptions());
         $result = $this->getWorkbench()->handle($task);
-        $output->writeln($result->getMessage());
+        if ($result instanceof ResultMessageStreamInterface) {
+            foreach ($result->getMessageStreamGenerator() as $msg) {
+                $output->writeln($msg);
+            }
+        } else {
+            $output->writeln($result->getMessage());
+        }
     }
     
     public function getWorkbench()
