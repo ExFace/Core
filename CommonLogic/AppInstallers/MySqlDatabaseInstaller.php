@@ -38,9 +38,9 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::ensureDbExists()
      */
-    protected function ensureDatabaseExists(SqlDataConnectorInterface $connection) : string
+    protected function installDatabase(SqlDataConnectorInterface $connection, string $indent = '') : string
     {        
-        $msg = ' Database already exists ';
+        $msg = '';
         try {
             $connection->connect();
         } catch (DataConnectionFailedError $e) {
@@ -56,13 +56,13 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
                     $connection->runSql($database_use);
                     $connection->disconnect();
                     $connection->setDbase($dbName);
-                    $msg = ' Database ' . $dbName . ' created! ';
+                    $msg = 'Database ' . $dbName . ' created! ';
                 }
             } else {
                 throw $e;
             }
         }
-        return $msg;
+        return $indent . $msg;
     }
     
     /**

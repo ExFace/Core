@@ -18,19 +18,18 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\InstallerInterface::install()
      */
     public final function install($source_absolute_path)
     {
-        $result = '';
-        
         foreach ($this->getInstallers() as $installer) {
             $res = $installer->install($source_absolute_path);
-            $result .= rtrim($res, " .\n\r") . '. ';
+            if ($res instanceof \Traversable) {
+                yield from $res;
+            } else {
+                yield rtrim($res, " .\n\r");
+            }
         }
-        
-        return $result;
     }
 
     /**
