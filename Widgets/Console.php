@@ -7,6 +7,9 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\CommonLogic\DataSheets\DataSheet;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Shows a command line terminal.
@@ -78,6 +81,8 @@ class Console extends AbstractWidget
     private $workingDirectorySubfolder = null;
     
     private $workingDirectoyAttributeAlias = '';
+    
+    private $commandPlaceholderValueListDelimiter = EXF_LIST_SEPARATOR;
     
     /**
      * Returns Array of regular expressions with allowed commands
@@ -215,7 +220,14 @@ class Console extends AbstractWidget
         $commands = $uxon->toArray();
         $this->startCommands = $commands;
         foreach ($commands as $command) {
-            $this->allowedCommands[] = '/' . preg_quote($command, '/') . '/';
+            $rule = '/' . preg_quote($command, '/') . '/';
+            $phs = [];
+            foreach(StringDataType::findPlaceholders($command) as $ph) {
+                $phs[$ph] = '.*';
+                $rule = str_replace('\\[#'.$ph.'#\\]', '[#'.$ph.'#]', $rule);
+            }
+            $rule = StringDataType::replacePlaceholders($rule, $phs);
+            $this->allowedCommands[] = $rule;
         }
         return $this;
     }
@@ -393,5 +405,52 @@ class Console extends AbstractWidget
     {
         $this->workingDirectoryAttributeAlias = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::doPrefill()
+     */
+    protected function doPrefill(DataSheetInterface $dataSheet)
+    {
+        $phs = [];
+        $cmds = $this->getStartCommands();
+        foreach ($cmds as $nr => $cmd) {
+            $phs = StringDataType::findPlaceholders($cmd);
+            $phvals = [];
+            foreach ($phs as $ph) {
+                if ($col = $dataSheet->getColumns()->get($ph)) {
+                    $phvals[$ph] = implode($this->getCommandPlaceholderValueListDelimiter(), $col->getValues(false));
+                }
+            }
+            $cmds[$nr] = StringDataType::replacePlaceholders($cmd, $phvals);
+        }
+        $this->setStartCommands(new UxonObject($cmds));
+    }
+    
+    /**
+     * Change delimiter used to concatennate placeholder values if input has multiple rows.
+     * 
+     * @uxon-property command_placeholder_value_list_delimiter
+     * @uxon-type string
+     * @uxon-default ,
+     * 
+     * @param string $string
+     * @return Console
+     */
+    public function setCommandPlaceholderValueListDelimiter(string $string) : Console
+    {
+        $this->commandPlaceholderValueListDelimiter = $string;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return string
+     */
+    protected function getCommandPlaceholderValueListDelimiter() : string
+    {
+        return $this->commandPlaceholderValueListDelimiter;
     }
 }
