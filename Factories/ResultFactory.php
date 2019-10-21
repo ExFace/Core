@@ -20,6 +20,8 @@ use exface\Core\CommonLogic\Tasks\ResultUri;
 use GuzzleHttp\Psr7\Uri;
 use exface\Core\CommonLogic\Tasks\ResultEmpty;
 use exface\Core\CommonLogic\Tasks\ResultJSON;
+use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
+use exface\Core\CommonLogic\Tasks\ResultMessageStream;
 
 /**
  * Creates all kinds of task results. 
@@ -147,6 +149,19 @@ class ResultFactory extends AbstractStaticFactory
             $uri = new Uri($uriOrString);
         }
         $result->setUri($uri);
+        return $result;
+    }
+    
+    /**
+     * 
+     * @param TaskInterface $task
+     * @param \Iterator $generator
+     * @return ResultMessageStreamInterface
+     */
+    public static function createMessageStreamResult(TaskInterface $task, $generator) : ResultMessageStreamInterface
+    {
+        $result = new ResultMessageStream($task);
+        $result->setGeneratorCallable($generator);
         return $result;
     }
 }

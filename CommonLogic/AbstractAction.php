@@ -297,20 +297,8 @@ abstract class AbstractAction implements ActionInterface
         // Call the action's logic
         $result = $this->perform($task, $transaction);
         
-        $this->getWorkbench()->eventManager()->dispatch(new OnActionPerformedEvent($this, $result, $transaction));
-        
-        // Register the action in the action context of the window. Since it is passed by reference, we can
-        // safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers
-        // the possibility to access the current action and it's current state
-        // FIXME re-enable action context: maybe make it work with events?
-        // $this->getApp()->getWorkbench()->getContext()->getScopeWindow()->getActionContext()->addAction($this);
-        
-        // Commit the transaction if autocommit is on and the action COULD have modified data
-        // We cannot rely on $result->isDataModified() at this point as it is not allways possible to determine
-        // it within the action (some data source simply do give relieable feedback).
-        if ($this->getAutocommit() && ($this instanceof iModifyData)) {
-            $transaction->commit();
-        }
+        // Do finalizing stuff like dispatching the OnAfterActionEvent, autocommit, etc.
+        $this->performAfter($result, $transaction);
         
         return $result;
     }
@@ -406,6 +394,40 @@ abstract class AbstractAction implements ActionInterface
      * @return void
      */
     protected abstract function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface;
+    
+    /**
+     * A convenience-method, that contains all the things to be performed immediately after the 
+     * result was otained from the action.
+     * 
+     * Do not override this method unless you really need to. If you do, make sure to perform
+     * the things below or provide suitable replacements.
+     * 
+     * @param ResultInterface $result
+     * @param DataTransactionInterface $transaction
+     * 
+     * @triggers \exface\Core\Events\Action\OnActionPerformedEvent
+     * 
+     * @return ActionInterface
+     */
+    protected function performAfter(ResultInterface $result, DataTransactionInterface $transaction) : ActionInterface
+    {
+        $this->getWorkbench()->eventManager()->dispatch(new OnActionPerformedEvent($this, $result, $transaction));
+        
+        // Register the action in the action context of the window. Since it is passed by reference, we can
+        // safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers
+        // the possibility to access the current action and it's current state
+        // FIXME re-enable action context: maybe make it work with events?
+        // $this->getApp()->getWorkbench()->getContext()->getScopeWindow()->getActionContext()->addAction($this);
+        
+        // Commit the transaction if autocommit is on and the action COULD have modified data
+        // We cannot rely on $result->isDataModified() at this point as it is not allways possible to determine
+        // it within the action (some data source simply do give relieable feedback).
+        if ($this->getAutocommit() && ($this instanceof iModifyData)) {
+            $transaction->commit();
+        }
+        
+        return $this;
+    }
 
     /**
      *
