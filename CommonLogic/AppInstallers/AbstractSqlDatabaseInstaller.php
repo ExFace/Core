@@ -101,14 +101,14 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     {
         $indent = '  ';
         if ($this->isDisabled() === true) {
-            yield $indent . 'SQL installer disabled';
+            yield $indent . 'SQL installer disabled' . PHP_EOL;
         } else {
-            yield $indent . 'SQL installer:';
+            yield $indent . 'SQL installer:' . PHP_EOL;
         }
         
-        yield $this->installDatabase($this->getDataConnection(), $indent.$indent);
-        yield $this->installMigrations($source_absolute_path, $indent.$indent);
-        yield $this->installStaticSql($source_absolute_path, $indent.$indent);
+        yield $this->installDatabase($this->getDataConnection(), $indent.$indent) . PHP_EOL;
+        yield $this->installMigrations($source_absolute_path, $indent.$indent) . PHP_EOL;
+        yield $this->installStaticSql($source_absolute_path, $indent.$indent) . PHP_EOL;
         
         $this->getWorkbench()->eventManager()->dispatch(new OnInstallEvent($this));
     }

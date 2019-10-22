@@ -27,7 +27,7 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
             if ($res instanceof \Traversable) {
                 yield from $res;
             } else {
-                yield rtrim($res, " .\n\r");
+                yield rtrim($res, " .\n\r") . PHP_EOL;
             }
         }
     }
