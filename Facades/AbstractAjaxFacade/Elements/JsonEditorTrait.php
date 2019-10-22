@@ -1144,6 +1144,7 @@ CSS;
             return  '   <table class="uxoneditor-details-table">' +
                     '       <thead>' +
                     '           <tr>' +
+                    '               <th> </th>' +
                     '               <th style="text-align: center"><i class="fa fa-eye"></i></th>' +
                     '               <th>{$trans['DETAILS.PROPERTY']}</th>' +
                     '               <th>{$trans['DETAILS.VALUE']}</th>' +
@@ -1228,13 +1229,17 @@ CSS;
                     oRow = aData[i];
                     jqTableBody.append($(
                         '<tr>' + 
-                        '   <td style="text-align: center"><input class="uxoneditor-checkbox" type="checkbox" name="' + oRow['PROPERTY'] + '" ' + (oCurrentValues[oRow['PROPERTY']] !== undefined ? 'checked ' : '') + '></input></td>' + 
+                        '    <td style="text-align: center"><input class="uxoneditor-checkbox" type="checkbox" name="' + oRow['PROPERTY'] + '" ' + (oCurrentValues[oRow['PROPERTY']] !== undefined ? 'checked ' : '') + '></input></td>' + 
                         '   <td>' + oRow['PROPERTY'] + '</td>' + 
                         '   <td style="font-style: italic;">' + (oCurrentValues[oRow['PROPERTY']] || '') + '</td>' + 
                         '   <td>' + (oRow['DEFAULT'] || '') + '</td>' + 
                         '   <td>' + (oRow['TITLE'] || '') + '</td>' + 
                         '   <td style="text-align: center;">' + (oRow['REQUIRED'] ? '<i class="fa fa-check" aria-hidden="true"></i>' : '') + '</td>' +
-                        '</tr>' 
+                        '   <td><button onclick = {($(this).closest("tr").next("tr")).style.display = "true"}><i class="fa fa-plus"></button></td>' +
+                        '</tr>' + 
+                        '<tr style="display: none;">' + 
+                        '   <td colspan="7"> HALLO!! </td>' +
+                        '</tr>'
                     ));
                 }
             }) // done
