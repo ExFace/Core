@@ -208,7 +208,17 @@ class UxonAutosuggest extends AbstractAction
         } catch (\Throwable $e) {
             // TODO
         }
+        
         $rows = $ds->getRows();
+        
+        foreach ($rows as &$propertyRow){
+            try{
+                $propertyRow['DESCRIPTION'] = Markdown::convertMarkdownToHtml($propertyRow['DESCRIPTION']);
+            } catch (\Throwable $e) {
+                // No problem :)
+            }
+        
+        }
         
         // Get class annotations
         $dsClass = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_ENTITY_ANNOTATION');
