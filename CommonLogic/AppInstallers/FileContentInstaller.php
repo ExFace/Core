@@ -56,11 +56,15 @@ class FileContentInstaller extends AbstractAppInstaller
         return pathinfo($this->getFilePathAbsolute(), PATHINFO_BASENAME);
     }
     
-    public function backup($absolute_path)
-    {}
+    public function backup(string $absolute_path) : \Iterator
+    {
+        return new \EmptyIterator();
+    }
 
-    public function uninstall()
-    {}
+    public function uninstall() : \Iterator
+    {
+        return new \EmptyIterator();
+    }
 
     /**
      * Creates new file with given name by either copying file template, or if no templateis given,
@@ -71,12 +75,13 @@ class FileContentInstaller extends AbstractAppInstaller
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\InstallerInterface::install()
      */
-    public function install($source_absolute_path)
+    public function install(string $source_absolute_path) : \Iterator
     {
-        $output = "\nGenerating file " . $this->getFileName() . ": ";
+        $indent = $this->getOutputIndentation();
+        yield $indent . "File " . $this->getFileName() . ": ";
         
         if (file_exists($this->getFilePathAbsolute()) === false) {
-            $output .= $this->createFile($source_absolute_path) . ', ';
+            yield $indent.$indent.$this->createFile($source_absolute_path) . ', ';
         }
         
         $fileContent = file_get_contents($this->getFilePathAbsolute());
@@ -102,7 +107,7 @@ class FileContentInstaller extends AbstractAppInstaller
         }
         file_put_contents($this->getFilePathAbsolute(), $fileContent);
         
-        return $output . ' made ' . $changesCnt . ' changes.';
+        yield ' made ' . $changesCnt . ' changes.' . PHP_EOL;
     }
 
     /**

@@ -18,17 +18,16 @@ class CoreInstaller extends AbstractAppInstaller
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\InstallerInterface::install()
      */
-    public function install($source_absolute_path)
+    public function install(string $source_absolute_path) : \Iterator
     {
+        $indent = $this->getOutputIndentation();
         // Install model DB
         $modelLoaderInstaller = $this->getWorkbench()->model()->getModelLoader()->getInstaller();
-        $result = $modelLoaderInstaller->install($this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $modelLoaderInstaller->getSelectorInstalling()->getFolderRelativePath());
+        yield from $modelLoaderInstaller->install($this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $modelLoaderInstaller->getSelectorInstalling()->getFolderRelativePath());
         
         // Add required files to root folder
-        $result .= $this->createApiPhp($source_absolute_path);
-        $result .= $this->removeLegacyFiles($source_absolute_path);
-        
-        return $result;
+        yield $indent . $this->createApiPhp($source_absolute_path);
+        yield $indent . $this->removeLegacyFiles($source_absolute_path);
     }
 
     /**
@@ -37,7 +36,7 @@ class CoreInstaller extends AbstractAppInstaller
      *
      * @see \exface\Core\Interfaces\InstallerInterface::uninstall()
      */
-    public function uninstall()
+    public function uninstall() : \Iterator
     {
         return 'Uninstall not implemented for installer "' . $this->getSelectorInstalling()->getAliasWithNamespace() . '"!';
     }
@@ -48,7 +47,7 @@ class CoreInstaller extends AbstractAppInstaller
      *
      * @see \exface\Core\Interfaces\InstallerInterface::backup()
      */
-    public function backup($destination_absolute_path)
+    public function backup(string $destination_absolute_path) : \Iterator
     {
         return 'Backup not implemented for' . $this->getSelectorInstalling()->getAliasWithNamespace() . '!';
     }

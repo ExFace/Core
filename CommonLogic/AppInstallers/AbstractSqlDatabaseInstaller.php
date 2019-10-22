@@ -97,18 +97,24 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\InstallerInterface::install()
      */
-    public function install($source_absolute_path) : \Traversable
+    public function install(string $source_absolute_path) : \Iterator
     {
-        $indent = '  ';
+        $indent = $this->getOutputIndentation();
         if ($this->isDisabled() === true) {
             yield $indent . 'SQL installer disabled' . PHP_EOL;
         } else {
             yield $indent . 'SQL installer:' . PHP_EOL;
         }
         
-        yield $this->installDatabase($this->getDataConnection(), $indent.$indent) . PHP_EOL;
-        yield $this->installMigrations($source_absolute_path, $indent.$indent) . PHP_EOL;
-        yield $this->installStaticSql($source_absolute_path, $indent.$indent) . PHP_EOL;
+        if ($res = $this->installDatabase($this->getDataConnection(), $indent.$indent)) {
+            yield $res . PHP_EOL;
+        }
+        if ($res = $this->installMigrations($source_absolute_path, $indent.$indent)) {
+            yield $res . PHP_EOL;
+        }
+        if ($res = $this->installStaticSql($source_absolute_path, $indent.$indent)) {
+            yield $res . PHP_EOL;
+        }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnInstallEvent($this));
     }
@@ -159,7 +165,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      *
      * @see \exface\Core\Interfaces\InstallerInterface::uninstall()
      */
-    public function uninstall() : string
+    public function uninstall() : \Iterator
     {
         return 'Automatic uninstaller not implemented for' . $this->getSelectorInstalling()->getAliasWithNamespace() . '!';
     }
@@ -170,7 +176,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      *
      * @see \exface\Core\Interfaces\InstallerInterface::backup()
      */
-    public function backup($destination_absolute_path) : string
+    public function backup(string $destination_absolute_path) : \Iterator
     {
         return 'SQL Backup not implemented for installer "' . $this->getSelectorInstalling()->getAliasWithNamespace() . '"!';
     }

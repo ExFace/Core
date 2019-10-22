@@ -20,15 +20,11 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\InstallerInterface::install()
      */
-    public final function install($source_absolute_path)
+    public final function install(string $source_absolute_path) : \Iterator
     {
         foreach ($this->getInstallers() as $installer) {
             $res = $installer->install($source_absolute_path);
-            if ($res instanceof \Traversable) {
-                yield from $res;
-            } else {
-                yield rtrim($res, " .\n\r") . PHP_EOL;
-            }
+            yield from $res;
         }
     }
 
@@ -43,25 +39,23 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\InstallerInterface::backup()
      */
-    public final function backup($destination_absolute_path)
+    public final function backup(string $destination_absolute_path) : \Iterator
     {
         $fm = $this->getWorkbench()->filemanager();
         $appSelector = $this->getSelectorInstalling();
         $appPath = $fm->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $appSelector->getFolderRelativePath();
-        $result = '';
         $this->getWorkbench()->filemanager()->pathConstruct($destination_absolute_path);
         $fm->copyDir($appPath, $destination_absolute_path);
         
         foreach ($this->getInstallers() as $installer) {
-            $result .= $installer->backup($destination_absolute_path);
+            yield from $installer->backup($destination_absolute_path);
         }
-        
-        $result .= '';
-        return $result;
     }
 
-    public final function uninstall()
-    {}
+    public final function uninstall() : \Iterator
+    {
+        return new \EmptyIterator();
+    }
 
     public function addInstaller(InstallerInterface $installer, $insert_at_beinning = false)
     {

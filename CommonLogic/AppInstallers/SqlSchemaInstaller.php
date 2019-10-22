@@ -65,9 +65,9 @@ class SqlSchemaInstaller extends AbstractAppInstaller
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\InstallerInterface::install()
      */
-    public function install($source_absolute_path)
+    public function install(string $source_absolute_path) : \Iterator
     {
-        return $this->update($source_absolute_path);
+        yield from $this->update($source_absolute_path);
     }
 
     /**
@@ -78,7 +78,7 @@ class SqlSchemaInstaller extends AbstractAppInstaller
      */
     public function update($source_absolute_path)
     {
-        return $this->performModelSourceUpdate($source_absolute_path);
+        yield $this->performModelSourceUpdate($source_absolute_path);
     }
 
     /**
@@ -87,7 +87,7 @@ class SqlSchemaInstaller extends AbstractAppInstaller
      *
      * @see \exface\Core\Interfaces\InstallerInterface::uninstall()
      */
-    public function uninstall()
+    public function uninstall() : \Iterator
     {
         return 'Automatic uninstaller not implemented for' . $this->getSelectorInstalling()->getAliasWithNamespace() . '!';
     }
@@ -98,7 +98,7 @@ class SqlSchemaInstaller extends AbstractAppInstaller
      *
      * @see \exface\Core\Interfaces\InstallerInterface::backup()
      */
-    public function backup($destination_absolute_path)
+    public function backup(string $destination_absolute_path) : \Iterator
     {
         return 'SQL Backup not implemented for installer "' . $this->getSelectorInstalling()->getAliasWithNamespace() . '"!';
     }
