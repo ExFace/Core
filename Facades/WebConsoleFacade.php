@@ -15,6 +15,8 @@ use exface\Core\Widgets\Console;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Filemanager;
+use exface\Core\Facades\ConsoleFacade\ConsoleFacade;
+use exface\Core\Factories\FacadeFactory;
 
 /***
  * This is the Facade for Console Widgets
@@ -96,35 +98,42 @@ class WebConsoleFacade extends AbstractHttpFacade
         }
            
         // Process command
-        if ($command == 'cd' && StringDataType::substringAfter($cmd, ' ') != false){
-            $newDir = StringDataType::substringAfter($cmd, ' ');
-            if (Filemanager::pathIsAbsolute($newDir)) {
-                throw new RuntimeException('Absolute Path syntax ' . $newDir .'  not allowed! Use relative paths!');
-            }
-            chdir($newDir);
-            $stream = stream_for('');
-        } elseif ($command === 'test') {
-            $generator = function ($bytes) {
-                for ($i = 0; $i < $bytes; $i++) {
-                    sleep(1);
-                    yield '.'.$i.'.';
+        switch (true) {
+            case ($command == 'cd' && StringDataType::substringAfter($cmd, ' ') != false):
+                $newDir = StringDataType::substringAfter($cmd, ' ');
+                if (Filemanager::pathIsAbsolute($newDir)) {
+                    throw new RuntimeException('Absolute Path syntax ' . $newDir .'  not allowed! Use relative paths!');
                 }
-            };
-            
-            $stream = new IteratorStream($generator(10));
-        } else {
-            // FIXME for some reason merging with etenv() makes git push/pull freeze...
-            //$envVars = array_merge(getenv(), $widget->getEnvironmentVars());
-            $envVars = $widget->getEnvironmentVars();
-            $process = Process::fromShellCommandline($cmd, null, $envVars, null, $widget->getCommandTimeout());
-            $process->start();
-            $generator = function ($process) {
-                foreach ($process as $output) {
-                    yield $output;
-                }
-            };
-            
-            $stream = new IteratorStream($generator($process));
+                chdir($newDir);
+                $stream = stream_for('');
+                break;
+            case $command === 'test': 
+                $generator = function ($bytes) {
+                    for ($i = 0; $i < $bytes; $i++) {
+                        sleep(1);
+                        yield '.'.$i.'.';
+                    }
+                };
+                $stream = new IteratorStream($generator(10));
+                break;
+            case $this->isCliAction($command, $cwd) === true:
+                /* @var $console \exface\Core\Facades\ConsoleFacade\ConsoleFacade */
+                $console = FacadeFactory::createFromString(ConsoleFacade::class, $this->getWorkbench());
+                $stream = new IteratorStream($console->getOutputGenerator($cmd));
+                break;
+            default:
+                // FIXME for some reason merging with etenv() makes git push/pull freeze...
+                //$envVars = array_merge(getenv(), $widget->getEnvironmentVars());
+                $envVars = $widget->getEnvironmentVars();
+                $process = Process::fromShellCommandline($cmd, null, $envVars, null, $widget->getCommandTimeout());
+                $process->start();
+                $generator = function ($process) {
+                    foreach ($process as $output) {
+                        yield $output;
+                    }
+                };
+                
+                $stream = new IteratorStream($generator($process));
         }
         
         try {
@@ -134,7 +143,8 @@ class WebConsoleFacade extends AbstractHttpFacade
         }
         
         $headers = [
-            'X-CWD' => StringDataType::substringAfter(getcwd(), $this->getRootDirectory() . DIRECTORY_SEPARATOR)
+            'X-CWD' => StringDataType::substringAfter(getcwd(), $this->getRootDirectory() . DIRECTORY_SEPARATOR),
+            'Content-Type' => 'text/plain-stream'
         ];
         
         $response = new Response(200, $headers, $stream);
@@ -209,5 +219,10 @@ class WebConsoleFacade extends AbstractHttpFacade
     protected function getRootDirectory() : string
     {
         return $this->getWorkbench()->filemanager()->getPathToBaseFolder();
+    }
+    
+    protected function isCliAction(string $command, string $workingDir) : bool
+    {
+        return strcasecmp($command, 'action') === 0 && strcasecmp($workingDir, 'vendor/bin') === 0;
     }
 }
