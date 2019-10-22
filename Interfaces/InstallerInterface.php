@@ -8,24 +8,24 @@ interface InstallerInterface extends WorkbenchDependantInterface
      * 
      * @triggers \exface\Core\Interfaces\Events\InstallerEventInterface
      * 
-     * @return string|string[]|\Traversable
+     * @return \Iterator
      */
-    public function install($source_absolute_path);
+    public function install(string $source_absolute_path) : \Iterator;
 
     /**
      * 
      * @triggers \exface\Core\Interfaces\Events\InstallerEventInterface
      * 
-     * @return string|string[]|\Traversable
+     * @return \Iterator
      */
-    public function backup($absolute_path);
+    public function backup(string $absolute_path) : \Iterator;
 
     /**
      * 
      * @triggers \exface\Core\Interfaces\Events\InstallerEventInterface
      * 
-     * @return string|string[]|\Traversable
+     * @return \Iterator
      */
-    public function uninstall();
+    public function uninstall() : \Iterator;
 }
 ?>

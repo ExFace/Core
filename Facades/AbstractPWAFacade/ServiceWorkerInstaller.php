@@ -73,14 +73,15 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\InstallerInterface::install()
      */
-    public function install($source_absolute_path)
+    public function install(string $source_absolute_path) : \Iterator
     {
+        $indent = $this->getOutputIndentation();
         if ($this->isDisabled()) {
             $config = $this->uninstallConfig($this->getApp());
         } else {
             $config = $this->installConfig($this->getApp(), $this->getServiceWorkerBuilder());
         }
-        return $this->buildServiceWorker($config, $this->getWorkbench()->getCMS());
+        yield $indent . $this->buildServiceWorker($config, $this->getWorkbench()->getCMS()) . PHP_EOL;
     }
     
     protected function buildServiceWorker(ConfigurationInterface $config, CmsConnectorInterface $cms) : string
@@ -99,10 +100,10 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
         
         try {
             $path = $cms->setServiceWorker($builder->buildJsLogic(), $builder->buildJsImports());
-            $result = 'Generated ServiceWorker "' . $path . '"';
+            $result = 'ServiceWorker "' . $path . '" generated.';
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
-            $result = 'Failed to generate ServiceWorker "' . $path . '": ' . $e->getMessage();
+            $result = 'ERROR: Failed to generate ServiceWorker "' . $path . '": ' . $e->getMessage();
         }
         
         return $result;
@@ -114,7 +115,7 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
      *
      * @see \exface\Core\Interfaces\InstallerInterface::uninstall()
      */
-    public function uninstall()
+    public function uninstall() : \Iterator
     {
         $this->uninstallConfig($this->getApp());        
         return 'ServiceWorker configuration removed';
@@ -126,7 +127,7 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
      *
      * @see \exface\Core\Interfaces\InstallerInterface::backup()
      */
-    public function backup($destination_absolute_path)
+    public function backup(string $destination_absolute_path) : \Iterator
     {
         return '';
     }

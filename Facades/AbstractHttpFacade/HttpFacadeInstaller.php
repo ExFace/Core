@@ -23,8 +23,10 @@ class HttpFacadeInstaller extends AbstractAppInstaller
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\InstallerInterface::install()
      */
-    public function install($source_absolute_path)
+    public function install(string $source_absolute_path) : \Iterator
     {
+        $indent = $this->getOutputIndentation();
+        $result = $indent . 'Facade routing for ' . $this->getFacade()->getAliasWithNamespace() . '...';
         try {
             $config = $this->getWorkbench()->getConfig();
             $routes = $config->getOption('FACADES.ROUTES');
@@ -38,16 +40,16 @@ class HttpFacadeInstaller extends AbstractAppInstaller
             if ($routes->isEmpty() === false) {
                 $config->setOption('FACADES.ROUTES', $routes, App::CONFIG_SCOPE_SYSTEM);
             } else {
-                return 'Failed to setupt HTTP facade routing: empty result!';
+                yield 'failed: empty result!' . PHP_EOL;
             }
         } catch (\Throwable $e) {
             throw new InstallerRuntimeError($this, 'Failed to setup HTTP facade routing!', null, $e);
         }
         
-        if ($routes->toJson() === $before) {
-            return 'HTTP facade routing already up to date';    
+        if ($routes->toJson() !== $before) {
+            yield $result . ' updated' . PHP_EOL;
         } else {
-            return 'Updated HTTP facade routing configuration';
+            yield $result . ' verified' . PHP_EOL; 
         }
     }
 
@@ -57,7 +59,7 @@ class HttpFacadeInstaller extends AbstractAppInstaller
      *
      * @see \exface\Core\Interfaces\InstallerInterface::uninstall()
      */
-    public function uninstall()
+    public function uninstall() : \Iterator
     {
         try {
             $config = $this->getWorkbench()->getConfig();
@@ -69,7 +71,7 @@ class HttpFacadeInstaller extends AbstractAppInstaller
         } catch (\Throwable $e) {
             throw new InstallerRuntimeError($this, 'Failed to uninstall HTTP facade routes!', null, $e);
         }
-        return 'Facade URL routes uninstalled.';
+        yield 'Facade URL routes uninstalled for ' . $this->getFacade()->getAliasWithNamespace();
     }
 
     /**
@@ -77,7 +79,7 @@ class HttpFacadeInstaller extends AbstractAppInstaller
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\InstallerInterface::backup()
      */
-    public function backup($destination_absolute_path)
+    public function backup(string $destination_absolute_path) : \Iterator
     {
         return 'Backup not implemented for installer "' . $this->getSelectorInstalling()->getAliasWithNamespace() . '"!';
     }

@@ -14,6 +14,8 @@ abstract class AbstractAppInstaller extends AbstractSelectorInstaller implements
     private $app = null;
 
     private $install_folder_name = 'Install';
+    
+    private $outputIndent = '  ';
 
     /**
      * 
@@ -61,4 +63,25 @@ abstract class AbstractAppInstaller extends AbstractSelectorInstaller implements
         $this->install_folder_name = $path_relative_to_app_folder;
         return $this;
     }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getOutputIndentation() : string
+    {
+        return $this->outputIndent;
+    }
+    
+    /**
+     * 
+     * @param string $value
+     * @return AbstractAppInstaller
+     */
+    public function setOutputIndentation(string $value) : AbstractAppInstaller
+    {
+        $this->outputIndent = $value;
+        return $this;
+    }
+    
 }
