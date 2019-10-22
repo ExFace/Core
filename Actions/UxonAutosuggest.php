@@ -18,6 +18,8 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Uxon\ConnectionSchema;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Widgets\Markdown;
 
 /**
  * Returns autosuggest values for provided UXON objects.
@@ -194,10 +196,11 @@ class UxonAutosuggest extends AbstractAction
             'TEMPLATE', 
             'DEFAULT', 
             'TITLE', 
-            'REQUIRED'
+            'REQUIRED',
+            'DESCRIPTION'
             
         ]);
-        $ds->addFilterFromString('FILE', $filepathRelative);
+        $ds->addFilterFromString('FILE', $filepathRelative, ComparatorDataType::EQUALS);
         $ds->getSorters()->addFromString('PROPERTY', SortingDirectionsDataType::ASC);
         
         try {
@@ -207,13 +210,34 @@ class UxonAutosuggest extends AbstractAction
         }
         $rows = $ds->getRows();
         
+        // Get class annotations
+        $dsClass = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_ENTITY_ANNOTATION');
+        $dsClass->getColumns()->addMultiple([
+            'CLASSNAME',
+            'TITLE',
+            'DESCRIPTION'
+        ]);
+        $dsClass->addFilterFromString('FILE', $filepathRelative);
+        try {
+            $dsClass->dataRead();
+        } catch (\Throwable $e) {
+            // TODO
+        }
+        $classInfo = $dsClass->getRow(0);
+        try {
+            $classInfo['DESCRIPTION'] = Markdown::convertMarkdownToHtml($classInfo['DESCRIPTION']);
+        } catch (\Throwable $e) {
+            // No problem :)
+        }
+        
         // TODO transform enum-types to arrays
         
         return [
-            'alias' => StringDataType::substringAfter($prototypeClass, '\\', '', false, true),
+            'alias' => $classInfo['CLASSNAME'] ? $classInfo['CLASSNAME'] : StringDataType::substringAfter($prototypeClass, '\\', '', false, true),
             'prototype' => $prototypeClass,
             'prototype_schema' => $prototypeSchemaClass::getSchemaName(),
-            'properties' => $rows
+            'properties' => $rows,
+            'description' => $classInfo['DESCRIPTION']
         ];
     }
     
