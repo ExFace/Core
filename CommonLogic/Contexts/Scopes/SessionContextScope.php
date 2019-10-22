@@ -99,7 +99,12 @@ class SessionContextScope extends AbstractContextScope
         }
         
         // var_dump($_SESSION);
-        $this->sessionOpen();
+        try {
+            $this->sessionOpen();
+        } catch (\Throwable $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
+            return $this;
+        }
         
         foreach ($this->getContextsLoaded() as $context) {
             $uxon = $context->exportUxonObject();
