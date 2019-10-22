@@ -167,7 +167,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      */
     public function uninstall() : \Iterator
     {
-        return 'Automatic uninstaller not implemented for' . $this->getSelectorInstalling()->getAliasWithNamespace() . '!';
+        yield 'Automatic uninstaller not implemented for' . $this->getSelectorInstalling()->toString() . '!';
     }
     
     /**
@@ -178,7 +178,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      */
     public function backup(string $destination_absolute_path) : \Iterator
     {
-        return 'SQL Backup not implemented for installer "' . $this->getSelectorInstalling()->getAliasWithNamespace() . '"!';
+        yield 'SQL Backup not implemented for installer "' . $this->getSelectorInstalling()->toString() . '"!';
     }
     
     /**
