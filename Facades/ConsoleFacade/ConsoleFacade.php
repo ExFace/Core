@@ -8,6 +8,12 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\CommonLogic\Traits\AliasTrait;
 use Symfony\Component\Console\Application;
+use exface\Core\Interfaces\Tasks\CliTaskInterface;
+use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
+use Symfony\Component\Console\Input\StringInput;
+use exface\Core\DataTypes\StringDataType;
+use Symfony\Component\Console\Input\InputArgument;
+use exface\Core\Factories\TaskFactory;
 
 /**
  * Command line interface facade based on Symfony Console.
@@ -130,5 +136,39 @@ class ConsoleFacade extends Application implements FacadeInterface
     public function getConfig() : ConfigurationInterface
     {
         return $this->getApp()->getConfig();
+    }
+    
+    /**
+     * Returns a generator, that yields the output of the comand.
+     * 
+     * @param CliTaskInterface $task
+     * @return \Generator
+     */
+    public function getOutputGenerator(string $cliCommand) : \Generator
+    {
+        $cliCommand = StringDataType::substringAfter($cliCommand, 'action ', '');
+        $input = new StringInput($cliCommand);
+        $commandName = $this->getCommandName($input);
+        $command = $this->find($commandName);
+        $definition = $command->getDefinition();
+        // Strange merging-line taken from Syfmony's Application class
+        $definition->setArguments(array_merge(
+            [
+                'command' => new InputArgument('command', InputArgument::OPTIONAL, $command->getDescription(), $command->getName()),
+            ],
+            $definition->getArguments()
+        ));
+        $input->bind($definition);
+        
+        $args = $input->getArguments();
+        //array_shift($args);
+        $opts = $input->getOptions();
+        $task = TaskFactory::createCliTask($this, $command->getAction()->getSelector(), $args, $opts);
+        $result = $this->getWorkbench()->handle($task);
+        if ($result instanceof ResultMessageStreamInterface) {
+            yield from $result->getMessageStreamGenerator();
+        } else {
+            yield $result->getMessage();
+        }
     }
 }

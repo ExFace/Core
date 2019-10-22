@@ -68,7 +68,7 @@ class SymfonyCommandAdapter extends Command
         $result = $this->getWorkbench()->handle($task);
         if ($result instanceof ResultMessageStreamInterface) {
             foreach ($result->getMessageStreamGenerator() as $msg) {
-                $output->writeln($msg);
+                $output->write($msg);
             }
         } else {
             $output->writeln($result->getMessage());
@@ -78,5 +78,14 @@ class SymfonyCommandAdapter extends Command
     public function getWorkbench()
     {
         return $this->action->getWorkbench();
+    }
+    
+    /**
+     * 
+     * @return ActionInterface
+     */
+    public function getAction() : ActionInterface
+    {
+        return $this->action;
     }
 }

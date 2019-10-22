@@ -76,7 +76,7 @@ class HttpRequestHandler implements RequestHandlerInterface
             }
         }
         $stream = $response->getBody();
-        $chunk = $stream instanceof IteratorStream ? 1 : 1024 * 8;
+        $chunk = $stream instanceof IteratorStream || $response->getHeader('Content-Type')[0] === 'text/plain-stream' ? 1 : 1024 * 8;
         if ($stream->isSeekable()) {
             $stream->rewind();
         }

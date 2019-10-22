@@ -8,7 +8,6 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\CommonLogic\DataSheets\DataSheet;
 use exface\Core\DataTypes\StringDataType;
 
 /**
