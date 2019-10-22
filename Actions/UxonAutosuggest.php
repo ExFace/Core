@@ -211,9 +211,12 @@ class UxonAutosuggest extends AbstractAction
         
         $rows = $ds->getRows();
         
+        
+        //convert markdown to html, remove <a> tags 
         foreach ($rows as &$propertyRow){
             try{
                 $propertyRow['DESCRIPTION'] = Markdown::convertMarkdownToHtml($propertyRow['DESCRIPTION']);
+                $propertyRow['DESCRIPTION'] = preg_replace("(</?a[^>]*\>)i", "", $propertyRow['DESCRIPTION']);
             } catch (\Throwable $e) {
                 // No problem :)
             }
