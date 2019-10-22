@@ -117,7 +117,7 @@
                 "icon": "wrench",
                 "buttons": [
                     {
-                        "action_alias": "axenox.PackageManager.InstallApp",
+                        "action_alias": "exface.Core.ShowAppRepairConsole",
                         "caption": "=TRANSLATE('exface.Core', 'PAGE.APPS.REPAIR')"
                     },
                     {
