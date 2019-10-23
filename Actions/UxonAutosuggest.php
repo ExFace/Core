@@ -239,6 +239,7 @@ class UxonAutosuggest extends AbstractAction
         $classInfo = $dsClass->getRow(0);
         try {
             $classInfo['DESCRIPTION'] = Markdown::convertMarkdownToHtml($classInfo['DESCRIPTION']);
+            $classInfo['DESCRIPTION'] = preg_replace("(</?a[^>]*\>)i", "", $classInfo['DESCRIPTION']);
         } catch (\Throwable $e) {
             // No problem :)
         }
@@ -250,6 +251,7 @@ class UxonAutosuggest extends AbstractAction
             'prototype' => $prototypeClass,
             'prototype_schema' => $prototypeSchemaClass::getSchemaName(),
             'properties' => $rows,
+            'title' => $classInfo['TITLE'],
             'description' => $classInfo['DESCRIPTION']
         ];
     }
