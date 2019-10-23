@@ -1224,9 +1224,19 @@ CSS;
                     iPos++;             
                 });
                 
+                var sBtnRowDetails = "";
                 var iLength = aData.length;
                 for(var i = 0; i < iLength; i++){
                     oRow = aData[i];
+            
+                    if(oRow['DESCRIPTION'] == ""){
+                        sBtnRowDetails = '   <td></td>';
+                    } else {
+                        sBtnRowDetails =        '   <td><a href="javascript:;" class="btn-row-description"><i class="fa fa-info-circle" aria-hidden="true"></i></a></td>';
+                    }             
+
+
+
                     jqTableBody.append($(
                         '<tr>' + 
                         '   <td style="text-align: center"><input class="uxoneditor-checkbox" type="checkbox" name="' + oRow['PROPERTY'] + '" ' + (oCurrentValues[oRow['PROPERTY']] !== undefined ? 'checked ' : '') + '></input></td>' + 
@@ -1235,13 +1245,17 @@ CSS;
                         '   <td>' + (oRow['DEFAULT'] || '') + '</td>' + 
                         '   <td>' + (oRow['TITLE'] || '') + '</td>' + 
                         '   <td style="text-align: center;">' + (oRow['REQUIRED'] ? '<i class="fa fa-check" aria-hidden="true"></i>' : '') + '</td>' +
-                        '   <td><a href="javascript:;" class="btn-row-details"><i class="fa fa-info-circle" aria-hidden="true"></i></a></td>' +
+                        sBtnRowDetails + 
                         '</tr>' + 
                         '<tr style="display: none;">' + 
-                        '   <td colspan="7">' + oRow['DESCRIPTION'] + ' </td>' +
+                        '   <td></td>' +
+                        '   <td colspan="5" class="row-description">' + oRow['DESCRIPTION'] + ' </td>' +
+                        '   <td></td>' +
                         '</tr>'
                     ));
                 }
+
+              
             }) // done
             .fail( function (jqXHR, textStatus, errorThrown) {
                 console.warn("{$trans['ERROR.SERVER_ERROR']}", jqXHR);
@@ -1267,8 +1281,8 @@ CSS;
                 modal.close();
             };
 
-            jqTableBody.on('click', '.btn-row-details', function(oEvent){
-				$(oEvent.target).closest('tr').next("tr").toggle();
+            jqTableBody.on('click', '.btn-row-description', function(oEvent){
+                $(oEvent.target).closest('tr').next("tr").toggle();
 			});
 
         }
