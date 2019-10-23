@@ -1141,7 +1141,12 @@ CSS;
         }        
 
         function {$funcPrefix}_getDetailsBtnContent(node){
-            return  '   <table class="uxoneditor-details-table">' +
+// here
+
+            return  '   <div style="top: 0px">' +
+                    '       <label class="uxoneditor-object-details-title"><label>' +
+                    '   </div>' + 
+                    '   <table class="uxoneditor-details-table">' +
                     '       <thead>' +
                     '           <tr>' +
                     '               <th style="text-align: center"><i class="fa fa-eye"></i></th>' +
@@ -1165,6 +1170,9 @@ CSS;
                     '          <input class="uxoneditor-input uxoneditor-btn-ok" autofocus type="submit" value="{$trans['BUTTON_OK']}"/>' +
                     '          <input class="uxoneditor-input uxoneditor-btn-cancel" type="submit" value="{$trans['BUTTON_CANCEL']}" />' +
                     '      </div>' +
+                    '   </div>' +
+                    '   <div style="margin-bottom: 10px">' +
+                    '   <label class="uxoneditor-object-details-description"><label>' +
                     '   </div>';
         }
 
@@ -1194,6 +1202,8 @@ CSS;
             }) // ajax POST request
             .done(function(oResponse, sTextStatus, jqXHR) {
                 var aData = oResponse.properties || [];
+                var sObjectTitle = oResponse.title;
+                var sObjectDescription = oResponse.description;
                 var oCurrentValues = [];
                 var val, sVal, oFieldData, iPos = 0;
 
@@ -1224,6 +1234,10 @@ CSS;
                     iPos++;             
                 });
                 
+                $('.uxoneditor-object-details-title').append(sObjectTitle);
+                $('.uxoneditor-object-details-description').append(sObjectDescription);
+                            
+
                 var sBtnRowDetails = "";
                 var iLength = aData.length;
                 for(var i = 0; i < iLength; i++){
