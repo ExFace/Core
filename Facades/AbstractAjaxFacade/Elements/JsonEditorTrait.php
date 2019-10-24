@@ -264,19 +264,10 @@ JS;
     }
     
     protected function buildJsOnErrorFunction() : string
-    {
-    
-        $workbench = $this->getWorkbench();
-        $errorShowingError = static::translateJsUxonEditorTerm($workbench, 'ERROR.SHOW_ERROR');
-        
+    {        
     return <<<JS
                         function (err) {
-                            try{
-                                {$this->buildJsShowMessageError('err.toString()')};
-                            }
-                            catch{
-                                console.error("{$errorShowingError}", err);
-                            }
+                            {$this->buildJsShowMessageError('err.toString()')};
                         }
 JS;
     }
