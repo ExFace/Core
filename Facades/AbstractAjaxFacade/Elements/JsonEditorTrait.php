@@ -20,6 +20,7 @@ use exface\Core\CommonLogic\Workbench;
  *	"npm-asset/picomodal" : "^3.0.0",
  *	"npm-asset/mobius1-selectr" : "^2.4.12"
  * }
+ * 
  * ```
  * 
  * Add paths to the dependencies to the configuration of the facade:
@@ -30,6 +31,7 @@ use exface\Core\CommonLogic\Workbench;
  *  "LIBS.JSONEDITOR.PICOMODAL": "npm-asset/picomodal/src/picoModal.js",
  *  "LIBS.JSONEDITOR.SELECTR.JS": "npm-asset/mobius1-selectr/src/selectr.js",
  *  "LIBS.JSONEDITOR.SELECTR.CSS": "npm-asset/mobius1-selectr/src/selectr.css",
+ *  
  * ```
  * 
  * @method InputJson getWidget()
@@ -131,9 +133,10 @@ JS;
     
     protected function buildJsJsonEditor() : string
     {
+        $widget = $this->getWidget();
         $uxonEditorId = $this->getId();
         
-        if ($this->getWidget() instanceof InputUxon) {
+        if ($widget instanceof InputUxon) {
             $uxonInitScripts = <<<JS
 
                     {$this->buildJsEditorAddHelpButton()}
@@ -155,7 +158,7 @@ JS;
                             {$this->buildJsEditorOptions()}
                         },
         
-                        {$this->getWidget()->getValue()}
+                        {$this->getValueWithDefaults()}
                     );
         
                     {$uxonEditorId}_JSONeditor.expandAll();
