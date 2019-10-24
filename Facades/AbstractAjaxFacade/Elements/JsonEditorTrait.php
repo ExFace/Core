@@ -539,6 +539,38 @@ JS;
                     .uxoneditor-details-table {margin-bottom: 20px}
                     .uxoneditor-details-table th {font-weight: bold !important; padding: 3px !important; border-bottom: 1px solid #3883fa}
                     .uxoneditor-details-table td {padding: 3px !important;}
+                    .uxoneditor-details-table p {margin: 0.3em 0 0.7em 0;}
+                    .uxoneditor-details-table code {
+                        padding: 0.2em 0.4em;
+                        margin: 0;
+                        font-size: 85%;
+                        background-color: rgba(27,31,35,0.05);
+                        border-radius: 3px;
+                    }
+                    .uxoneditor-details-table pre {
+                        padding: 16px;
+                        overflow: auto;
+                        font-size: 85%;
+                        line-height: 1.45;
+                        background-color: #f6f8fa;
+                        border-radius: 3px;
+                    }
+                    .uxoneditor-details-table pre code {
+                        display: inline;
+                        max-width: auto;
+                        padding: 0;
+                        margin: 0;
+                        overflow: visible;
+                        line-height: inherit;
+                        word-wrap: normal;
+                        background-color: transparent;
+                        border: 0;
+                    }
+
+    
+                    .uxoneditor-object-details-title {margin: 0.3em 0 0.7em 0;}
+                    .uxoneditor-object-details-description {margin: 0.3em 0 0.7em 0;}
+                    
                     
 CSS;
     }
@@ -1143,9 +1175,8 @@ CSS;
         function {$funcPrefix}_getDetailsBtnContent(node){
 // here
 
-            return  '   <div style="top: 0px">' +
-                    '       <label class="uxoneditor-object-details-title"><label>' +
-                    '   </div>' + 
+            return  '   <p class="uxoneditor-object-details-title" style="display:none"></p>' + 
+                    '   <div class="uxoneditor-object-details-description" style="display:none"></div>' +
                     '   <table class="uxoneditor-details-table">' +
                     '       <thead>' +
                     '           <tr>' +
@@ -1170,9 +1201,6 @@ CSS;
                     '          <input class="uxoneditor-input uxoneditor-btn-ok" autofocus type="submit" value="{$trans['BUTTON_OK']}"/>' +
                     '          <input class="uxoneditor-input uxoneditor-btn-cancel" type="submit" value="{$trans['BUTTON_CANCEL']}" />' +
                     '      </div>' +
-                    '   </div>' +
-                    '   <div style="margin-bottom: 10px">' +
-                    '   <label class="uxoneditor-object-details-description"><label>' +
                     '   </div>';
         }
 
@@ -1234,9 +1262,22 @@ CSS;
                     iPos++;             
                 });
                 
-                $('.uxoneditor-object-details-title').append(sObjectTitle);
-                $('.uxoneditor-object-details-description').append(sObjectDescription);
-                            
+                
+                var sMoreLink;
+                if (sObjectTitle){        
+                    $('.uxoneditor-object-details-title').append(sObjectTitle);
+                    $('.uxoneditor-object-details-title').toggle();
+                }
+
+                if (sObjectDescription){
+                    $('.uxoneditor-object-details-title').append(' <a class="uxoneditor-button-show-more" href="javascript:;">[{$trans['DETAILS.SHOW_MORE']}]</a>');
+                    $('.uxoneditor-object-details-description').append(sObjectDescription);
+                    $('.uxoneditor-button-show-more').on('click', function(oEvent){
+                        $('.uxoneditor-object-details-description').toggle();
+        			});
+                }
+
+
 
                 var sBtnRowDetails = "";
                 var iLength = aData.length;
