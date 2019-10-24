@@ -101,9 +101,13 @@ class SessionContextScope extends AbstractContextScope
         // var_dump($_SESSION);
         try {
             $this->sessionOpen();
-        } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logException($e);
-            return $this;
+        } catch (\ErrorException $e) {
+            if ($e->getSeverity() === E_WARNING) {
+                $this->getWorkbench()->getLogger()->logException($e);
+                return $this;
+            } else {
+                return $this;
+            }
         }
         
         foreach ($this->getContextsLoaded() as $context) {
