@@ -214,13 +214,7 @@ class UxonAutosuggest extends AbstractAction
         
         //convert markdown to html, remove <a> tags 
         foreach ($rows as &$propertyRow){
-            try{
-                $propertyRow['DESCRIPTION'] = Markdown::convertMarkdownToHtml($propertyRow['DESCRIPTION']);
-                $propertyRow['DESCRIPTION'] = preg_replace("(</?a[^>]*\>)i", "", $propertyRow['DESCRIPTION']);
-            } catch (\Throwable $e) {
-                // No problem :)
-            }
-        
+            $propertyRow['DESCRIPTION'] = $this->buildHtmlFromMarkdown($propertyRow['DESCRIPTION']);
         }
         
         // Get class annotations
@@ -237,12 +231,7 @@ class UxonAutosuggest extends AbstractAction
             // TODO
         }
         $classInfo = $dsClass->getRow(0);
-        try {
-            $classInfo['DESCRIPTION'] = Markdown::convertMarkdownToHtml($classInfo['DESCRIPTION']);
-            $classInfo['DESCRIPTION'] = preg_replace("(</?a[^>]*\>)i", "", $classInfo['DESCRIPTION']);
-        } catch (\Throwable $e) {
-            // No problem :)
-        }
+        $classInfo['DESCRIPTION'] = $this->buildHtmlFromMarkdown($classInfo['DESCRIPTION']);
         
         // TODO transform enum-types to arrays
         
@@ -276,5 +265,18 @@ class UxonAutosuggest extends AbstractAction
     protected function suggestPropertyValues(UxonSchema $schema, UxonObject $uxon, array $path, string $valueText, string $rootPrototypeClass = null, MetaObjectInterface $rootObject = null) : array
     {
         return ['values' => $schema->getValidValues($uxon, $path, $valueText, $rootPrototypeClass, $rootObject)];
+    }
+    
+    protected function buildHtmlFromMarkdown(string $markdown) : string 
+    {
+        try{
+            $html = Markdown::convertMarkdownToHtml($markdown);
+            $html = preg_replace("(</?a[^>]*\>)i", "", $html);
+            return $html;
+        } catch (\Throwable $e) {
+            return $markdown;
+        }
+        
+        
     }
 }
