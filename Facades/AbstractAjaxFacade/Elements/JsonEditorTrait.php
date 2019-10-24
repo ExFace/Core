@@ -539,6 +539,38 @@ JS;
                     .uxoneditor-details-table {margin-bottom: 20px}
                     .uxoneditor-details-table th {font-weight: bold !important; padding: 3px !important; border-bottom: 1px solid #3883fa}
                     .uxoneditor-details-table td {padding: 3px !important;}
+                    .uxoneditor-details-table p {margin: 0.3em 0 0.7em 0;}
+                    .uxoneditor-details-table code {
+                        padding: 0.2em 0.4em;
+                        margin: 0;
+                        font-size: 85%;
+                        background-color: rgba(27,31,35,0.05);
+                        border-radius: 3px;
+                    }
+                    .uxoneditor-details-table pre {
+                        padding: 16px;
+                        overflow: auto;
+                        font-size: 85%;
+                        line-height: 1.45;
+                        background-color: #f6f8fa;
+                        border-radius: 3px;
+                    }
+                    .uxoneditor-details-table pre code {
+                        display: inline;
+                        max-width: auto;
+                        padding: 0;
+                        margin: 0;
+                        overflow: visible;
+                        line-height: inherit;
+                        word-wrap: normal;
+                        background-color: transparent;
+                        border: 0;
+                    }
+
+    
+                    .uxoneditor-object-details-title {margin: 0.3em 0 0.7em 0;}
+                    .uxoneditor-object-details-description {margin: 0.3em 0 0.7em 0;}
+                    
                     
 CSS;
     }
@@ -1141,7 +1173,11 @@ CSS;
         }        
 
         function {$funcPrefix}_getDetailsBtnContent(node){
-            return  '   <table class="uxoneditor-details-table">' +
+// here
+
+            return  '   <p class="uxoneditor-object-details-title" style="display:none"></p>' + 
+                    '   <div class="uxoneditor-object-details-description" style="display:none"></div>' +
+                    '   <table class="uxoneditor-details-table">' +
                     '       <thead>' +
                     '           <tr>' +
                     '               <th style="text-align: center"><i class="fa fa-eye"></i></th>' +
@@ -1150,6 +1186,7 @@ CSS;
                     '               <th>{$trans['DETAILS.DEFAULT']}</th>' +
                     '               <th>{$trans['DETAILS.DESCRIPTION']}</th>' +
                     '               <th>{$trans['DETAILS.REQUIRED']}</th>' +
+                    '               <th> </th>' +
                     '           </tr>' +
                     '       </thead>' +
                     '       <tbody>' +
@@ -1193,6 +1230,8 @@ CSS;
             }) // ajax POST request
             .done(function(oResponse, sTextStatus, jqXHR) {
                 var aData = oResponse.properties || [];
+                var sObjectTitle = oResponse.title;
+                var sObjectDescription = oResponse.description;
                 var oCurrentValues = [];
                 var val, sVal, oFieldData, iPos = 0;
 
@@ -1223,9 +1262,36 @@ CSS;
                     iPos++;             
                 });
                 
+                
+                var sMoreLink;
+                if (sObjectTitle){        
+                    $('.uxoneditor-object-details-title').append(sObjectTitle);
+                    $('.uxoneditor-object-details-title').toggle();
+                }
+
+                if (sObjectDescription){
+                    $('.uxoneditor-object-details-title').append(' <a class="uxoneditor-button-show-more" href="javascript:;">[{$trans['DETAILS.SHOW_MORE']}]</a>');
+                    $('.uxoneditor-object-details-description').append(sObjectDescription);
+                    $('.uxoneditor-button-show-more').on('click', function(oEvent){
+                        $('.uxoneditor-object-details-description').toggle();
+        			});
+                }
+
+
+
+                var sBtnRowDetails = "";
                 var iLength = aData.length;
                 for(var i = 0; i < iLength; i++){
                     oRow = aData[i];
+            
+                    if(oRow['DESCRIPTION'] == ""){
+                        sBtnRowDetails = '   <td></td>';
+                    } else {
+                        sBtnRowDetails =        '   <td><a href="javascript:;" class="btn-row-description"><i class="fa fa-info-circle" aria-hidden="true"></i></a></td>';
+                    }             
+
+
+
                     jqTableBody.append($(
                         '<tr>' + 
                         '   <td style="text-align: center"><input class="uxoneditor-checkbox" type="checkbox" name="' + oRow['PROPERTY'] + '" ' + (oCurrentValues[oRow['PROPERTY']] !== undefined ? 'checked ' : '') + '></input></td>' + 
@@ -1234,9 +1300,17 @@ CSS;
                         '   <td>' + (oRow['DEFAULT'] || '') + '</td>' + 
                         '   <td>' + (oRow['TITLE'] || '') + '</td>' + 
                         '   <td style="text-align: center;">' + (oRow['REQUIRED'] ? '<i class="fa fa-check" aria-hidden="true"></i>' : '') + '</td>' +
-                        '</tr>' 
+                        sBtnRowDetails + 
+                        '</tr>' + 
+                        '<tr style="display: none;">' + 
+                        '   <td></td>' +
+                        '   <td colspan="5" class="row-description">' + oRow['DESCRIPTION'] + ' </td>' +
+                        '   <td></td>' +
+                        '</tr>'
                     ));
                 }
+
+              
             }) // done
             .fail( function (jqXHR, textStatus, errorThrown) {
                 console.warn("{$trans['ERROR.SERVER_ERROR']}", jqXHR);
@@ -1261,7 +1335,15 @@ CSS;
             modal.modalElem().querySelector(".uxoneditor-btn-cancel").onclick = function() {
                 modal.close();
             };
+
+            jqTableBody.on('click', '.btn-row-description', function(oEvent){
+                $(oEvent.target).closest('tr').next("tr").toggle();
+			});
+
         }
+
+
+	
     
 JS;
     }

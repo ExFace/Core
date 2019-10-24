@@ -18,6 +18,8 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Uxon\ConnectionSchema;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Widgets\Markdown;
 
 /**
  * Returns autosuggest values for provided UXON objects.
@@ -194,10 +196,11 @@ class UxonAutosuggest extends AbstractAction
             'TEMPLATE', 
             'DEFAULT', 
             'TITLE', 
-            'REQUIRED'
+            'REQUIRED',
+            'DESCRIPTION'
             
         ]);
-        $ds->addFilterFromString('FILE', $filepathRelative);
+        $ds->addFilterFromString('FILE', $filepathRelative, ComparatorDataType::EQUALS);
         $ds->getSorters()->addFromString('PROPERTY', SortingDirectionsDataType::ASC);
         
         try {
@@ -205,15 +208,40 @@ class UxonAutosuggest extends AbstractAction
         } catch (\Throwable $e) {
             // TODO
         }
+        
         $rows = $ds->getRows();
+        
+        
+        //convert markdown to html, remove <a> tags 
+        foreach ($rows as &$propertyRow){
+            $propertyRow['DESCRIPTION'] = $this->buildHtmlFromMarkdown($propertyRow['DESCRIPTION']);
+        }
+        
+        // Get class annotations
+        $dsClass = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_ENTITY_ANNOTATION');
+        $dsClass->getColumns()->addMultiple([
+            'CLASSNAME',
+            'TITLE',
+            'DESCRIPTION'
+        ]);
+        $dsClass->addFilterFromString('FILE', $filepathRelative);
+        try {
+            $dsClass->dataRead();
+        } catch (\Throwable $e) {
+            // TODO
+        }
+        $classInfo = $dsClass->getRow(0);
+        $classInfo['DESCRIPTION'] = $this->buildHtmlFromMarkdown($classInfo['DESCRIPTION']);
         
         // TODO transform enum-types to arrays
         
         return [
-            'alias' => StringDataType::substringAfter($prototypeClass, '\\', '', false, true),
+            'alias' => $classInfo['CLASSNAME'] ? $classInfo['CLASSNAME'] : StringDataType::substringAfter($prototypeClass, '\\', '', false, true),
             'prototype' => $prototypeClass,
             'prototype_schema' => $prototypeSchemaClass::getSchemaName(),
-            'properties' => $rows
+            'properties' => $rows,
+            'title' => $classInfo['TITLE'],
+            'description' => $classInfo['DESCRIPTION']
         ];
     }
     
@@ -237,5 +265,26 @@ class UxonAutosuggest extends AbstractAction
     protected function suggestPropertyValues(UxonSchema $schema, UxonObject $uxon, array $path, string $valueText, string $rootPrototypeClass = null, MetaObjectInterface $rootObject = null) : array
     {
         return ['values' => $schema->getValidValues($uxon, $path, $valueText, $rootPrototypeClass, $rootObject)];
+    }
+    
+    
+    /**
+     * Converts markdown into html, removing all <a> tags. 
+     * On failure it just returns the markdown string instead.
+     * 
+     * @param string $markdown
+     * @return string
+     */
+    protected function buildHtmlFromMarkdown(string $markdown) : string 
+    {
+        try{
+            $html = Markdown::convertMarkdownToHtml($markdown);
+            $html = preg_replace("(</?a[^>]*\>)i", "", $html);
+            return $html;
+        } catch (\Throwable $e) {
+            return $markdown;
+        }
+        
+        
     }
 }
