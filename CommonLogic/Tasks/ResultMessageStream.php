@@ -9,7 +9,7 @@ use exface\Core\Exceptions\LogicException;
  * 
  * This type of task result makes it possible to stream output of long-running actions to different
  * facades. The action simply incapsulates it's output logic in a generator callable and passes this 
- * callable to `setMessageStreamGeneratorFunction()`. The facade, that will stream the output will
+ * callable to `setMessageStreamGenerator()`. The facade, that will stream the output will
  * then iterate over the generator and process it's output bit-by-bit.
  * 
  * IMPORTANT: keep in mind, that the logic within the generator will be performed much later than
@@ -56,9 +56,9 @@ class ResultMessageStream extends ResultMessage implements ResultMessageStreamIn
     /**
      * 
      * {@inheritdoc}
-     * @see ResultMessageStreamInterface::setMessageStreamGeneratorFunction()
+     * @see ResultMessageStreamInterface::setMessageStreamGenerator()
      */
-    public function setMessageStreamGeneratorFunction(callable $closure) : ResultMessageStreamInterface
+    public function setMessageStreamGenerator(callable $closure) : ResultMessageStreamInterface
     {
         $this->generatorCallable = $closure;
         return $this;

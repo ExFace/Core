@@ -40,7 +40,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
  *          }
  *          sleep(1);
  *      }
- *      $result->setMessageStreamGeneratorFunction($generator);
+ *      $result->setMessageStreamGenerator($generator);
  *      
  *      // IMPORTANT: don't forget to trigger the postprocessing!!!
  *      $this->performAfterDeferred();

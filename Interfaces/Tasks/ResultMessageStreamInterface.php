@@ -25,5 +25,5 @@ interface ResultMessageStreamInterface extends ResultInterface
      * @param callable $generator
      * @return ResultMessageStreamInterface
      */
-    public function setMessageStreamGeneratorFunction(callable $generator) : ResultMessageStreamInterface;
+    public function setMessageStreamGenerator(callable $generator) : ResultMessageStreamInterface;
 }
