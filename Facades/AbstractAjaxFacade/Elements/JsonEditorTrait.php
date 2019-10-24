@@ -411,7 +411,20 @@ JS;
         return 'function(){var text = ' . $this->getId() . '_JSONeditor.getText(); if (text === "{}" || text === "[]") { return ""; } else { return text;}}';
     }
     
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsValueGetter()
+     */
+    public function buildJsValueSetter($value) : string
+    {
+        return $this->getId() . '_JSONeditor.setText(' . $value . ')';
+    }
     
+    /**
+     * 
+     * @return string
+     */
     public static function buildCssModalStyles() : string
     {
         return <<<CSS
