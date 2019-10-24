@@ -267,6 +267,14 @@ class UxonAutosuggest extends AbstractAction
         return ['values' => $schema->getValidValues($uxon, $path, $valueText, $rootPrototypeClass, $rootObject)];
     }
     
+    
+    /**
+     * Converts markdown into html, removing all <a> tags. 
+     * On failure it just returns the markdown string instead.
+     * 
+     * @param string $markdown
+     * @return string
+     */
     protected function buildHtmlFromMarkdown(string $markdown) : string 
     {
         try{
