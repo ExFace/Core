@@ -529,12 +529,12 @@
         },
         {
             "CREATED_ON": "2019-10-02 09:05:10",
-            "MODIFIED_ON": "2019-10-02 09:05:55",
+            "MODIFIED_ON": "2019-10-24 10:17:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e4f3b8943b99bacde4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Simple small dialog",
+            "NAME": "Small dialog",
             "DESCRIPTION": "A small dialog with only two input inputs in a single column. Setting maximized=false, height=auto, etc. explicitly forces alle facades to behave the same instead of using their dialog-defaults.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
             "UXON": "{\"widget_type\":\"Dialog\",\"object_alias\":\"\",\"width\":1,\"columns_in_grid\":1,\"height\":\"auto\",\"maximized\":false,\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}],\"buttons\":[{\"action_alias\":\"\"}]}",
@@ -554,6 +554,20 @@
             "UXON": "{\"length_min\":\"\",\"length_max\":\"\"}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "datatype"
+        },
+        {
+            "CREATED_ON": "2019-10-24 10:17:49",
+            "MODIFIED_ON": "2019-10-24 10:18:14",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e9f6477e587f6fb2ce0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Simple empty dialog",
+            "DESCRIPTION": "A simple empty dialog with placeholders for widgets and buttons",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
+            "UXON": "{\"widget_type\":\"Dialog\",\"object_alias\":\"\",\"widgets\":[{\"\":\"\"}],\"buttons\":[{\"\":\"\"}]}",
+            "WRAP_PATH": "$.widgets[0]",
+            "UXON_SCHEMA": "widget"
         }
     ],
     "totals_rows": [],
