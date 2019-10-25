@@ -51,6 +51,12 @@ class Display extends Value implements iDisplayValue, iHaveColor, iHaveColorScal
     
     /**
      * 
+     * @var bool
+     */
+    private $multiValueListDelimiter = null;
+    
+    /**
+     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iDisplayValue::getDisableFormatting()
      */
@@ -171,6 +177,40 @@ class Display extends Value implements iDisplayValue, iHaveColor, iHaveColorScal
         }
         
         return false;
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getMultiValueListDelimiter() : string
+    {
+        if ($this->multiValueListDelimiter === null){
+            if ($this->isBoundToAttribute() === true){
+                $this->multiValueListDelimiter = $this->getAttribute()->getValueListDelimiter();
+            } else {
+                $this->multiValueListDelimiter = EXF_LIST_SEPARATOR;
+            }
+        }
+        return $this->multiValueListDelimiter;
+    }
+    
+    /**
+     * Sets the delimiter to be used to list multiple values.
+     *
+     * Default: value list delimiter from the value attribute or "," if no value attribute defined.
+     *
+     * @uxon-property multi_value_list_delimiter
+     * @uxon-type string
+     * @uxon-default ,
+     *
+     * @param string $value
+     * @return \exface\Core\Widgets\InputSelect
+     */
+    public function setMultiValueListDelimiter(string $value) : Value
+    {
+        $this->multiValueListDelimiter = $value;
+        return $this;
     }
 }
 ?>
