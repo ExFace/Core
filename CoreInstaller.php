@@ -66,9 +66,9 @@ require_once('vendor/exface/Core/index.php');
 PHP;
             try {
                 file_put_contents($file, $content);
-                $result .= "\nGenerated default api.php file in plattform root.";
+                $result .= "Generated default api.php file in plattform root." . PHP_EOL;
             } catch (\Exception $e) {
-                $result .= "\nFailed to copy default api.php file: " . $e->getMessage() . ' in ' . $e->getFile() . ' at ' . $e->getLine() . '.';
+                $result .= "Failed to copy default api.php file: " . $e->getMessage() . ' in ' . $e->getFile() . ' at ' . $e->getLine() . '.' . PHP_EOL;
             }
         }
         
@@ -86,7 +86,7 @@ PHP;
                 try {
                     unlink($filepath);
                 } catch (\Throwable $e) {
-                    return "\n" . 'Could not remove legacy file "' . $filepath . '" - please delete the file manually!';
+                    return 'Could not remove legacy file "' . $filepath . '" - please delete the file manually!' . PHP_EOL;
                 }
             }
         }
