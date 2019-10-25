@@ -1193,7 +1193,9 @@ class Data
     }
     
     /**
-     * Overrides the text shown if autoload_data is set to FALSE.
+     * Overrides the text shown if autoload_data is set to FALSE or required filters are missing.
+     * 
+     * Use `=TRANSLATE()` to make the text translatable.
      * 
      * @uxon-property autoload_disabled_hint
      * @uxon-type string|metamodel:formula
