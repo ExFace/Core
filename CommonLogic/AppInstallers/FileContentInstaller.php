@@ -124,16 +124,16 @@ class FileContentInstaller extends AbstractAppInstaller
         if ($this->getFileTemplatePathAbsolute($source_absolute_path) !== null) {
             try {
                 $this->getWorkbench()->filemanager()->copy($this->getFileTemplatePathAbsolute($source_absolute_path), $file);
-                $result .= "\ncreated from template";
+                $result .= "created from template";
             } catch (\Exception $e) {
-                $result .= "\nFailed to create file: " . $e->getMessage() . ' in ' . $e->getFile() . ' at ' . $e->getLine();
+                $result .= "failed to create file: " . $e->getMessage() . ' in ' . $e->getFile() . ' at ' . $e->getLine();
             }
         } else {
             file_put_contents($file, '');
-            $result .= "\ncreated empty";
+            $result .= "created empty";
         }
         
-        return $result;
+        return ' ' . $result;
     }
     
     /**
