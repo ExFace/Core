@@ -111,6 +111,7 @@ class Model implements ModelInterface
         }
         
         // If the given identifier looks like a UUID, try using it as object id. If this fails, try using it as alias anyway.
+        $object = null;
         if ($selector->isUid()) {
             try {
                 $object = $this->getObjectById($selector->toString());
