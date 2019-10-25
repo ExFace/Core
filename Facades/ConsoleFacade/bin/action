@@ -8,6 +8,8 @@ use exface\Core\Facades\ConsoleFacade\ConsoleFacade;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Factories\FacadeFactory;
 
+error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
+
 $workbench = Workbench::startNewInstance();
 
 $application = FacadeFactory::createFromAnything(ConsoleFacade::class, $workbench);
