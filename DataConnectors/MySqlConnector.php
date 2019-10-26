@@ -154,7 +154,19 @@ class MySqlConnector extends AbstractSqlConnector
     public function getAffectedRowsCount(SqlDataQuery $query)
     {
         try {
-            return mysqli_affected_rows($this->getCurrentConnection());
+            $cnt = mysqli_affected_rows($this->getCurrentConnection());
+            // mysqli_affected_rows() can return -1 in case of an error accoring to the docs. It seems,
+            // though, that this happens sometimes in DELETE statements even if they were successfull.
+            // Thus, we do a check for an error description to be sure and simply assume 0 rows affected
+            // if there was no error.
+            if ($cnt < 0) {
+                if ($err = $this->getLastError()) {
+                    throw new DataQueryFailedError($query, "Cannot count affected rows in SQL query: " . $err, '6T2TCL6');
+                } else {
+                    return null;
+                }
+            }
+            return $cnt;
         } catch (\mysqli_sql_exception $e) {
             throw new DataQueryFailedError($query, "Cannot count affected rows in SQL query: " . $e->getMessage(), '6T2TCL6', $e);
         }

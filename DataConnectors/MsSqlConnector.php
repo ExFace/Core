@@ -102,7 +102,20 @@ class MsSqlConnector extends AbstractSqlConnector
 
     function getAffectedRowsCount(SqlDataQuery $query)
     {
-        return sqlsrv_rows_affected($this->getCurrentConnection());
+        $cnt = sqlsrv_rows_affected($this->getCurrentConnection());
+        // sqlsrv_rows_affected() can return FALSE in case of an error accoring to the docs and -1
+        // if no counting was possible.
+        switch (true) {
+            case $cnt === false: 
+                if ($err = $this->getLastError()) {
+                    throw new DataQueryFailedError($query, "Cannot count affected rows in SQL query: " . $err, '6T2TCL6');
+                } else {
+                    return null;
+                }
+            case $cnt === -1:
+                return null;
+        }
+        return $cnt;
     }
 
     protected function getLastError()

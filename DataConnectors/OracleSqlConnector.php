@@ -153,7 +153,15 @@ class OracleSqlConnector extends AbstractSqlConnector
     function getAffectedRowsCount(SqlDataQuery $query)
     {
         try {
-            return oci_num_rows($query->getResultResource());
+            $cnt = oci_num_rows($query->getResultResource());
+            if ($cnt === false) {
+                if ($err = $this->getLastError()) {
+                    throw new DataQueryFailedError($query, "Cannot count affected rows in SQL query: " . $err, '6T2TCL6');
+                } else {
+                    return null;
+                }
+            }
+            return $cnt;
         } catch (\Throwable $e) {
             throw new DataQueryFailedError($query, 'Failed to fetch the number of rows affected by the query: ' . $this->getLastError(), null, $e);
         }
