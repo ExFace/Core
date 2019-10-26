@@ -206,7 +206,10 @@ JS;
             {$this->buildJsOnUpdateTableRowColors('row', 'cell')} 
         },
         onchange: function(instance, cell, col, row, value) {
-            {$this->buildJsFixedFootersSpread()}
+            // setTimeout ensures, the minSpareRows are always added before the spread logic runs
+            setTimeout(function(){
+                {$this->buildJsFixedFootersSpread()}
+            }, 0);
         },
         ondeleterow: function(instance) {
             {$this->buildJsFixedFootersSpread()}
@@ -386,7 +389,7 @@ JS;
         return <<<JS
 
                         var jqSelf = {$this->buildJsJqueryElement()};
-                        var aData = jqSelf.jexcel('getData');
+                        var aData = jqSelf.jexcel('getData');console.log(aData);
 
                         if (aData.length <= {$this->getMinSpareRows()}) return;
                         
