@@ -255,16 +255,19 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function dataUpdate(bool $create_if_uid_not_found = false, DataTransactionInterface $transaction = null) : int;
 
     /**
-     * Replaces all rows matching current filters with data contained in this data sheet returning the number of rows changed in the data source.
-     * Rows with matching UIDs are updated, new rows are created and those missing in the current data sheet will get deleted in the data source,
-     * unless $delete_missing_rows is set to FALSE.
+     * Replaces all rows matching current filters with data contained in this data sheet returning the number 
+     * of rows changed in the data source.
+     * 
+     * Rows with matching UIDs are updated, new rows are created and those missing in the current data sheet 
+     * will get deleted in the data source, unless $delete_missing_rows is set to FALSE.
      *
-     * The update operation will perform an update on all records matching the UIDs in the data sheet - regardless of the filter.
-     * Thus, if replacing all attributes of an object, all attributes in the data sheet will get updated - even if they belong to another
-     * object in the data source (so the probably will get attached to the object we are replacing for). Set $update_by_uid_ignoring_filters
-     * to FALSE to use the filters in the update operation too. In the above example, this would mean that attributes, that currently belong
-     * to the other object will remain untouched.
-     *
+     * By default, the update operation will perform an update on all records matching the UIDs in this data sheet
+     * - regardless of the filter. Thus, if replacing all attributes of an object, all attributes in the sheet 
+     * will get updated - even if they currently belong to another object in the data source (thus they will get 
+     * attached to the object we are replacing for). Set $update_by_uid_ignoring_filters to FALSE to use the filters 
+     * in the update operation too. In the above example, this would mean that attributes, that currently belong to 
+     * other objects will remain untouched although they are present in this sheet.
+     * 
      * If no transaction is given, a new transaction will be created an committed at the end of this method
      *
      * @param DataTransactionInterface $transaction            
@@ -482,7 +485,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function removeRowsForColumn($column_name);
 
     /**
-     * Returns TRUE if the data sheet currently does not have any data and FALSE otherwise.
+     * Returns TRUE if the sheet currently does not have data (= no rows) and FALSE otherwise.
      *
      * @return boolean
      */

@@ -832,16 +832,16 @@ class DataSheet implements DataSheetInterface
                     }
                     
                     $nestedSheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $sheetArr);
-                    if ($nestedSheet->isEmpty() === true) {
-                        continue;
-                    }
                     
-                    // Use the dataReplaceByFilters() method to do the replacement. This requires, that
-                    // there is a filter over the relation to the main sheet and that every nested row
-                    // has a value in the foreign-key column of that relation. The latter is actually
-                    // only required if we are going to create new rows, but at this point, we don't know,
-                    // if this is going to be neccessary. On the other hand, adding a key-column to every
-                    // row also makes sure, they all really do belong the main sheet's row.
+                    // Use the dataReplaceByFilters() method to do the replacement. This will ensure, that
+                    // removed rows will be deleted from the data source - ultimately removing all rows
+                    // if the new nested sheet is empty.
+                    // Using dataReplaceByFilters() requires, that there is a filter over the relation to 
+                    // the main sheet and that every nested row has a value in the foreign-key column of 
+                    // that relation. The latter is actually only required if we are going to create new 
+                    // rows, but at this point, we don't know, if this is going to be neccessary. On the 
+                    // other hand, adding a key-column to every row also makes sure, they all really do belong 
+                    // the main sheet's row.
                     $relPathToNestedSheet = RelationPathFactory::createFromString($this->getMetaObject(), $column->getAttributeAlias());
                     $relPathFromNestedSheet = $relPathToNestedSheet->reverse();
                     $relThisSheetKeyCol = $this->getColumns()->getByAttribute($relPathFromNestedSheet->getRelationLast()->getRightKeyAttribute());
@@ -854,7 +854,7 @@ class DataSheet implements DataSheetInterface
                         $relNestedSheetCol = $nestedSheet->getColumns()->addFromExpression($relPathFromNestedSheet->toString());
                     }
                     $relNestedSheetCol->setValues($relThisKeyVal);
-                    $nestedSheet->dataReplaceByFilters($transaction);
+                    $nestedSheet->dataReplaceByFilters($transaction, true, false);
                 }
                 continue;                
             } elseif (! $column->getAttribute()) {
@@ -963,10 +963,20 @@ class DataSheet implements DataSheetInterface
         $deleteCnt = 0;
         $updateCnt = 0;
         if ($delete_redundant_rows) {
-            if ($this->getFilters()->isEmpty()) {
+            
+            // Can't delete if not filters set, as there is no way to diff sheet and data source.
+            if ($this->getFilters()->isEmpty() === true) {
                 throw new DataSheetWriteError($this, 'Cannot delete redundant rows while replacing data if no filter are defined! This would delete ALL data for the object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T5V4TS');
             }
-            if ($this->getUidColumn()) {
+            
+            // If thee sheet is empty, we simply need to delete everything matching the filter
+            // - that's it, no need to do anything else.
+            if ($this->isEmpty() === true) {
+                return $this->dataDelete($transaction);
+            } 
+            
+            // No we know, the sheet has filters and rows, so let's proceed with diffing.
+            if ($this->hasUidColumn() === true) {
                 $redundant_rows_ds = $this->copy();
                 $redundant_rows_ds->getColumns()->removeAll();
                 $uid_column = $this->getUidColumn()->copy();
@@ -981,14 +991,14 @@ class DataSheet implements DataSheetInterface
                     $deleteCnt += $delete_ds->dataDelete($transaction);
                 }
             } else {
-                throw new DataSheetWriteError($this, 'Cannot delete redundant rows while replacing data for "' . $this->getMetaObject()->getAliasWithNamespace() . '" if no UID column is present in the data sheet', '6T5V5EB');
+                throw new DataSheetWriteError($this, 'Cannot delete redundant rows while replacing data for "' . $this->getMetaObject()->getAliasWithNamespace() . '": data sheet has no UID, so there is no way to compare it\' rows to the data source reliably.', '6T5V5EB');
             }
         }
         
         // If we need to update records by UID and we have a non-empty UID column, we need to remove all filters to make sure the update
         // runs via UID only. Thus, the update is being performed on a copy of the sheet, which does not have any filters. In all other
         // cases, the update should be performed on the original data sheet itself.
-        if ($update_by_uid_ignoring_filters && $this->getUidColumn() && ! $this->getUidColumn()->isEmpty()) {
+        if ($update_by_uid_ignoring_filters === true && $this->hasUidColumn(true) === true) {
             $update_ds = $this->copy();
             $update_ds->getFilters()->removeAll();
         } else {
@@ -1224,8 +1234,8 @@ class DataSheet implements DataSheetInterface
         }
         // set filters
         $query->setFiltersConditionGroup($this->getFilters());
-        if ($this->getUidColumn()) {
-            if ($uids = $this->getUidColumn()->getValues(false)) {
+        if ($uidCol = $this->getUidColumn()) {
+            if ($uids = $uidCol->getValues(false)) {
                 $query->addFilterCondition(ConditionFactory::createFromExpression($this->exface, $this->getUidColumn()->getExpressionObj(), implode($this->getUidColumn()->getAttribute()->getValueListDelimiter(), $uids), EXF_COMPARATOR_IN));
             }
         }
@@ -1863,11 +1873,7 @@ class DataSheet implements DataSheetInterface
      */
     public function isEmpty() : bool
     {
-        if (empty($this->rows)) {
-            return true;
-        } else {
-            return false;
-        }
+        return empty($this->rows) === true;
     }
 
     /**
@@ -1877,10 +1883,7 @@ class DataSheet implements DataSheetInterface
      */
     public function isBlank() : bool
     {
-        if ($this->isUnfiltered() && $this->isEmpty()) {
-            return true;
-        }
-        return false;
+        return ($this->isUnfiltered() === true && $this->isEmpty() === true);
     }
 
     /**
