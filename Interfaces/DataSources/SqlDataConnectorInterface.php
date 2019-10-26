@@ -29,9 +29,10 @@ interface SqlDataConnectorInterface extends DataConnectionInterface
     public function getInsertId(SqlDataQuery $query);
 
     /**
-     *
+     * Returns the number of rows affected by the query or NULL if counting was not possible.
+     * 
      * @param SqlDataQuery $query            
-     * @return integer
+     * @return int|NULL
      */
     public function getAffectedRowsCount(SqlDataQuery $query);
 
