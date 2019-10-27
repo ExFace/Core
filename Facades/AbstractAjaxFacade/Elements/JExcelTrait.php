@@ -215,9 +215,10 @@ JS;
             {$this->buildJsFixedFootersSpread()}
         }
     });
-    $('#{$this->getId()} colgroup col').attr('width','');
+    
+    {$this->buildJsJqueryElement()}.find('colgroup col').attr('width','');
     // Move contex menu to body to fix positioning errors when there is a parent with position:relative
-    $('#{$this->getId()} .jexcel_contextmenu').detach().addClass('exf-partof-{$this->getId()}').appendTo($('body'));
+    {$this->buildJsJqueryElement()}.find('.jexcel_contextmenu').detach().addClass('exf-partof-{$this->getId()}').appendTo($('body'));
 
 JS;
     }
@@ -779,7 +780,7 @@ JS;
      */
     public function buildJsDestroy() : string
     {
-        return "jexcel.destroy(document.getElementById('{$this->getId()}'), true); $('.exf-partof-{$this->getId()}').remove();";
+        return "jexcel.destroy({$this->buildJsJqueryElement()}[0], true); $('.exf-partof-{$this->getId()}').remove();";
     }
     
     protected function buildMaskNumeric(NumberDataType $dataType, string $decimalSeparator = null) : string
@@ -805,5 +806,28 @@ JS;
         }
         
         return $format;
+    }
+    
+    /**
+     * // Remove 'use strict'; from all JS files loaded via jQuery.ajax because otherwise they
+     * won't be able to create global variables, which will prevent many vanilla-js libs
+     * from working (e.g. jExcel)
+     * 
+     * @return string
+     */
+    protected function buildJsFixJqueryImportUseStrict() : string
+    {
+        return <<<JS
+
+$.ajaxSetup({
+    dataFilter: function(data, type) {
+        if (type === 'script') {
+            data = data.replace(/['"]use strict['"];/, '');
+        }
+        return data;
+    }
+});
+
+JS;
     }
 }
