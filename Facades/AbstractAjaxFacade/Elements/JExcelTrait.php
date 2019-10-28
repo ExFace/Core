@@ -390,7 +390,7 @@ JS;
         return <<<JS
 
                         var jqSelf = {$this->buildJsJqueryElement()};
-                        var aData = jqSelf.jexcel('getData');console.log(aData);
+                        var aData = jqSelf.jexcel('getData');
 
                         if (aData.length <= {$this->getMinSpareRows()}) return;
                         
@@ -809,7 +809,7 @@ JS;
     }
     
     /**
-     * // Remove 'use strict'; from all JS files loaded via jQuery.ajax because otherwise they
+     * Remove 'use strict'; from all JS files loaded via jQuery.ajax because otherwise they
      * won't be able to create global variables, which will prevent many vanilla-js libs
      * from working (e.g. jExcel)
      * 
