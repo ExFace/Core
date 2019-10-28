@@ -201,7 +201,7 @@ class SessionContextScope extends AbstractContextScope
             // To prevent this, we simply catch any exception and check if the session is really open afterwards - if not,
             // a meaningfull exception is thrown.
             try {
-                session_start();
+                @session_start();
             } catch (\Throwable $e) {
                 if (! $this->sessionIsOpen()) {
                     throw new RuntimeException('Opening the session for the session context scope failed: ' . $e->getMessage(), null, $e);
