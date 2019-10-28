@@ -482,12 +482,12 @@ class App implements AppInterface
      */
     public function getLanguages() : array
     {
-        $langs = [];
+        $langs = [$this->getLanguageDefault()];
         foreach (glob($this->getTranslationsFolder() . "*.json") as $path) {
             $filename = pathinfo($path, PATHINFO_FILENAME);
             $langs[] = StringDataType::substringAfter($filename, '.', false, false, true);
         }
-        return $langs;
+        return array_unique($langs);
     }
     
     protected function getAppModelDataSheet()
