@@ -154,7 +154,7 @@ class ConsoleFacade extends Application implements FacadeInterface
         // Strange merging-line taken from Syfmony's Application class
         $definition->setArguments(array_merge(
             [
-                'command' => new InputArgument('command', InputArgument::OPTIONAL, $command->getDescription(), $command->getName()),
+                'command' => new InputArgument('command', InputArgument::REQUIRED, $command->getDescription()),
             ],
             $definition->getArguments()
         ));
