@@ -822,7 +822,10 @@ JS;
 $.ajaxSetup({
     dataFilter: function(data, type) {
         if (type === 'script') {
-            data = data.replace(/['"]use strict['"];/, '');
+        	var regEx = /['"]use strict['"];/;
+        	if (regEx.test(data.substring(0, 100)) === true) {
+            	data = data.replace(regEx, '');
+        	}
         }
         return data;
     }
