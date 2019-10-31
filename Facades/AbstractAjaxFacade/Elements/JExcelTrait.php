@@ -216,11 +216,21 @@ JS;
         }
     });
     
-    {$this->buildJsJqueryElement()}.find('colgroup col').attr('width','');
-    // Move contex menu to body to fix positioning errors when there is a parent with position:relative
-    {$this->buildJsJqueryElement()}.find('.jexcel_contextmenu').detach().addClass('exf-partof-{$this->getId()}').appendTo($('body'));
+    {$this->buildJsFixAutoColumnWidth()}
+    {$this->buildJsFixContextMenuPosition()}
 
 JS;
+    }
+    
+    protected function buildJsFixAutoColumnWidth() : string
+    {
+        return "{$this->buildJsJqueryElement()}.find('colgroup col').attr('width','');";
+    }
+    
+    protected function buildJsFixContextMenuPosition() : string
+    {
+        // Move contex menu to body to fix positioning errors when there is a parent with position:relative
+        return "{$this->buildJsJqueryElement()}.find('.jexcel_contextmenu').detach().addClass('exf-partof-{$this->getId()}').appendTo($('body'));";
     }
           
     /**
