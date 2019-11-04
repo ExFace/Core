@@ -46,5 +46,8 @@ class ModelBuilderRuntimeError extends RuntimeException {
     }
 
     
-    
+    public function getDefaultAlias()
+    {
+        return '784JYW8';
+    }
 }
