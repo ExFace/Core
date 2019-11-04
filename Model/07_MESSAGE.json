@@ -2108,6 +2108,20 @@
             "HINT": "Please add a connection to the model of the data source below and reinstall\/repair the app.",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2019-11-04 16:39:51",
+            "MODIFIED_ON": "2019-11-04 16:39:51",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e9ff217fc946cab7580205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "784JYW8",
+            "TITLE": "Error generating model from data source",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
