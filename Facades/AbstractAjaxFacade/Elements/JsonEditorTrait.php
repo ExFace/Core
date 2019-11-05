@@ -150,7 +150,7 @@ JS;
         } else {
             $uxonInitScripts = '';
         }
-       
+        
         return <<<JS
                    var {$uxonEditorId}_JSONeditor = new JSONEditor(
                         document.getElementById("{$uxonEditorId}"),
@@ -158,7 +158,7 @@ JS;
                             {$this->buildJsEditorOptions()}
                         },
         
-                        {$this->getValueWithDefaults()}
+                        {$this->getWidget()->getValueWithDefaults()}
                     );
         
                     {$uxonEditorId}_JSONeditor.expandAll();
