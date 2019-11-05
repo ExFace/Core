@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Actions\iCanBeCalledFromCLI;
 use Symfony\Component\Console\Input\InputArgument;
 use exface\Core\Facades\ConsoleFacade\Interfaces\FacadeCommandLoaderInterface;
 use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
+use Symfony\Component\Console\Input\InputOption;
 
 /**
  * Wraps any action in a native Symfony command.
@@ -57,7 +58,13 @@ class SymfonyCommandAdapter extends Command
                 $this->addArgument($param->getName(), $mode, $param->getDescription(), $param->getDefaultValue());
             }
             foreach ($this->action->getCliOptions() as $param) {
-                $this->addOption($param->getName(), null, null, $param->getDescription(), $param->getDefaultValue());
+                /* @var $param \exface\Core\Interfaces\Actions\ServiceParameterInterface */
+                if ($param->hasDefaultValue() === true) {
+                    $mode = InputOption::VALUE_OPTIONAL;
+                } else {
+                    $mode = InputOption::VALUE_REQUIRED;
+                }
+                $this->addOption($param->getName(), null, $mode, $param->getDescription(), $param->getDefaultValue());
             }
         }
     }
