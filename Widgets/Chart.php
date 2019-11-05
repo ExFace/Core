@@ -56,6 +56,8 @@ class Chart extends AbstractWidget implements
 
     const AXIS_Y = 'y';
     
+    private $autoload_disabled_hint = null;
+    
     /**
      * @var ChartAxis[]
      */
@@ -918,5 +920,35 @@ class Chart extends AbstractWidget implements
             $configurator = $widget;
         }
         return $this->setConfiguratorWidgetViaTrait($configurator);
+    }
+    
+    /**
+     * Returns a text which can be displayed if initial loading is prevented.
+     *
+     * @return string
+     */
+    public function getAutoloadDisabledHint()
+    {
+        if ($this->autoload_disabled_hint === null) {
+            return $this->translate('WIDGET.DATA.NOT_LOADED');
+        }
+        return $this->autoload_disabled_hint;
+    }
+    
+    /**
+     * Overrides the text shown if autoload_data is set to FALSE or required filters are missing.
+     *
+     * Use `=TRANSLATE()` to make the text translatable.
+     *
+     * @uxon-property autoload_disabled_hint
+     * @uxon-type string|metamodel:formula
+     *
+     * @param string $text
+     * @return Data
+     */
+    public function setAutoloadDisabledHint(string $text) : Chart
+    {
+        $this->autoload_disabled_hint = $this->evaluatePropertyExpression($text);
+        return $this;
     }
 }
