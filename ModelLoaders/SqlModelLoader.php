@@ -586,7 +586,7 @@ class SqlModelLoader implements ModelLoaderInterface
     public function loadDataConnection(DataConnectionSelectorInterface $selector) : DataConnectionInterface
     {
         foreach ($this->connections_loaded as $conn) {
-            if ($conn->getSelector()->toString() === $selector->toString()) {
+            if ($conn->getSelector() && $conn->getSelector()->toString() === $selector->toString()) {
                 return $conn;
             }
         }
