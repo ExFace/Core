@@ -578,7 +578,7 @@ class App implements AppInterface
                 }
                 
                 $stringParts = explode(FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR, $string);
-                if (strcasecmp($stringParts[0], $this->getVendor()) === 0 || strcasecmp($stringParts[1], $this->getAlias()) === 0) {
+                if (strcasecmp($stringParts[0], $this->getVendor()) === 0 && strcasecmp($stringParts[1], $this->getAlias()) === 0) {
                     $stringParts[0] = $this->getVendor();
                     $stringParts[1] = $this->getAlias();
                     $string = implode(FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR, $stringParts);
