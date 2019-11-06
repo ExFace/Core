@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use Psr\Container\ContainerInterface;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Exceptions\AppComponentNotFoundError;
+use exface\Core\Interfaces\Selectors\PrototypeSelectorInterface;
 
 /**
  * An app bundle code, model and all kinds of configuration needed for a meaningfull application.
@@ -210,5 +211,13 @@ interface AppInterface extends WorkbenchDependantInterface, AliasInterface, Task
      * @return TranslationInterface
      */
     public function getTranslator(string $locale = null) : TranslationInterface;
+    
+    /**
+     * Returns the PHP class name for the given selector (without leading backslash!).
+     * 
+     * @param PrototypeSelectorInterface $selector
+     * @return string
+     */
+    public function getPrototypeClass(PrototypeSelectorInterface $selector) : string;
 }
 ?>

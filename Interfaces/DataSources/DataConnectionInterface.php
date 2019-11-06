@@ -136,7 +136,7 @@ interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInte
     
     /**
      * 
-     * @return DataConnectionSelectorInterface
+     * @return DataConnectionSelectorInterface|NULL
      */
     public function getSelector() : ?DataConnectionSelectorInterface;
     
