@@ -559,7 +559,12 @@ class App implements AppInterface
         return $action->handle($task);
     }
     
-    protected function getPrototypeClass(PrototypeSelectorInterface $selector) : string
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppInterface::getPrototypeClass()
+     */
+    public function getPrototypeClass(PrototypeSelectorInterface $selector) : string
     {
         $string = $selector->toString();
         switch (true) {
@@ -571,6 +576,17 @@ class App implements AppInterface
                 if (StringDataType::startsWith($string, $vendorFolder)) {
                     $string = substr($string, strlen($vendorFolder));
                 }
+                
+                $stringParts = explode(FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR, $string);
+                if (strcasecmp($stringParts[0], $this->getVendor()) === 0 || strcasecmp($stringParts[1], $this->getAlias()) === 0) {
+                    $stringParts[0] = $this->getVendor();
+                    $stringParts[1] = $this->getAlias();
+                    $string = implode(FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR, $stringParts);
+                } else {
+                    $app = $this->getWorkbench()->getApp($selector->getPrototypeAppSelector());
+                    return $app->getPrototypeClass($selector);
+                }
+                
                 $ext = '.' . FileSelectorInterface::PHP_FILE_EXTENSION;
                 $string = substr($string, 0, (-1*strlen($ext)));
                 $string = str_replace(FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR, ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR, $string);
