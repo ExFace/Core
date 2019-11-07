@@ -568,6 +568,34 @@
             "UXON": "{\"widget_type\":\"Dialog\",\"object_alias\":\"\",\"widgets\":[{\"\":\"\"}],\"buttons\":[{\"\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2019-11-06 15:44:24",
+            "MODIFIED_ON": "2019-11-06 15:44:24",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea00ac099a5d5fb7580205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Console for a single command",
+            "DESCRIPTION": "A Console that executes a command when loaded and does not permit to enter any other commands - good to display the output of a preconfigured command or action.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Console.php",
+            "UXON": "{\"disabled\":true,\"widget_type\":\"Console\",\"start_commands\":[\"\"],\"working_directory_path\":\"\"}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2019-11-07 12:47:26",
+            "MODIFIED_ON": "2019-11-07 12:47:26",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea015c76097f72b7580205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Console output dialog for CLI command",
+            "DESCRIPTION": "Opens a readonly console window and executes a command",
+            "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "UXON": "{\"icon\":\"fa fa-terminal\",\"widget\":{\"widgets\":[{\"disabled\":true,\"widget_type\":\"Console\",\"start_commands\":[\"\"],\"working_directory_path\":\"\"}]}}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action"
         }
     ],
     "totals_rows": [],
