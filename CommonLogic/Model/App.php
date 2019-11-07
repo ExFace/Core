@@ -44,6 +44,8 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 use exface\Core\Contexts\DataContext;
 use exface\Core\Interfaces\Selectors\WidgetSelectorInterface;
+use exface\Core\DataTypes\PhpFilePathDataType;
+use exface\Core\DataTypes\FilePathDataType;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -569,30 +571,41 @@ class App implements AppInterface
         $string = $selector->toString();
         switch (true) {
             case $selector->isClassname():
+                // If the selector is a class name already, do nothing.
                 return $string;
             case $selector->isFilepath():
+                // If the selector is a path, we need to get the class from the file.
                 $string = Filemanager::pathNormalize($string, FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR);
                 $vendorFolder = Filemanager::pathNormalize($this->getWorkbench()->filemanager()->getPathToVendorFolder());
+                
                 if (StringDataType::startsWith($string, $vendorFolder)) {
-                    $string = substr($string, strlen($vendorFolder));
-                }
-                
-                $stringParts = explode(FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR, $string);
-                if (strcasecmp($stringParts[0], $this->getVendor()) === 0 && strcasecmp($stringParts[1], $this->getAlias()) === 0) {
-                    $stringParts[0] = $this->getVendor();
-                    $stringParts[1] = $this->getAlias();
-                    $string = implode(FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR, $stringParts);
+                    $relPath = substr($string, strlen($vendorFolder));
+                    $absPath = $string;
                 } else {
-                    $app = $this->getWorkbench()->getApp($selector->getPrototypeAppSelector());
-                    return $app->getPrototypeClass($selector);
+                    $relPath = $string;
+                    $absPath = FilePathDataType::join([$vendorFolder, $relPath]);
                 }
                 
-                $ext = '.' . FileSelectorInterface::PHP_FILE_EXTENSION;
-                $string = substr($string, 0, (-1*strlen($ext)));
-                $string = str_replace(FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR, ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR, $string);
-                return $string;
+                // We can be sure, the class name is the file name exactly
+                $className = FilePathDataType::findFileName($relPath);
+                // The namespace can be different, than the file path, so get it 
+                // directly from the path. Of course, we could fetch the entire class
+                // name from the file, but this is way slower because it requires
+                // tokenizing.
+                $namespace = PhpFilePathDataType::findNamespaceOfFile($absPath);
+                $class = $namespace . '\\' . $className;
+                
+                return $class;
             case ($selector instanceof AliasSelectorInterface) && $selector->isAlias():
+                // If the selector is an alias, we should see, if it matches this app.
+                // If not, we delegate resolving to the app, it belongs too because
+                // that app could potentially have a different resolver algorithm.
                 $appAlias = $selector->getAppAlias();
+                if (strcasecmp($appAlias, $this->getAliasWithNamespace()) !== 0) {
+                    return $this->getWorkbench()->getApp($appAlias)->getPrototypeClass($selector);
+                } else {
+                    $appAlias = $this->getAliasWithNamespace();
+                }
                 $componentAlias = substr($string, (strlen($appAlias)+1));
                 $subfolder = $this->getPrototypeClasssSubfolder($selector);
                 $classSuffix = $this->getPrototypeClassSuffix($selector);

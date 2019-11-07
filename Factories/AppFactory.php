@@ -99,7 +99,7 @@ abstract class AppFactory extends AbstractSelectableComponentFactory
                 return $string;
             case $selector->isFilepath():
                 $string = Filemanager::pathNormalize($string, FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR);
-                $vendorFolder = Filemanager::pathNormalize($this->getWorkbench()->filemanager()->getPathToVendorFolder());
+                $vendorFolder = Filemanager::pathNormalize($selector->getWorkbench()->filemanager()->getPathToVendorFolder());
                 if (StringDataType::startsWith($string, $vendorFolder)) {
                     $string = substr($string, strlen($vendorFolder));
                 }

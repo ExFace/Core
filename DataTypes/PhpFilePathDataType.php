@@ -98,47 +98,23 @@ class PhpFilePathDataType extends FilePathDataType
      * @throws \InvalidArgumentException
      * @return string|NULL
      */
-    public static function findNamespaceOfFile(string $absolute_path, int $bufferSize = 128) : ?string
+    public static function findNamespaceOfFile(string $absolute_path) : ?string
     {
         if (! file_exists($absolute_path) && ! is_dir($absolute_path)) {
             throw new \InvalidArgumentException('Cannot get class from file "' . $absolute_path . '" - file not found!');
             return null;
         }
-        $fp = fopen($absolute_path, 'r');
-        $namespace = $buffer = '';
-        $i = 0;
-        while (! $namespace) {
-            if (feof($fp)) {
-                break;
-            }
-            
-            $buffer .= fread($fp, $bufferSize);
-            try {
-                $tokens = @token_get_all($buffer);
-            } catch (\ErrorException $e) {
-                // Ignore errors of the tokenizer. Most of the errors will result from partial reading, when the read portion
-                // of the code does not make sense to the tokenizer (e.g. unclosed comments, etc.)
-            }
-            
-            if (strpos($buffer, '{') === false) {
-                continue;
-            }
-            
-            for (; $i < count($tokens); $i ++) {
-                if ($tokens[$i][0] === T_NAMESPACE) {
-                    for ($j = $i + 1; $j < count($tokens); $j ++) {
-                        if ($tokens[$j][0] === T_STRING) {
-                            $namespace .= '\\' . $tokens[$j][1];
-                        } else if ($tokens[$j] === '{' || $tokens[$j] === ';') {
-                            break;
-                        }
-                    }
+        $ns = NULL;
+        $handle = fopen($absolute_path, "r");
+        if ($handle) {
+            while (($line = fgets($handle)) !== false) {
+                if (strpos($line, 'namespace') === 0) {
+                    $ns = rtrim(trim(substr($line, 9)), ';');
+                    break;
                 }
             }
+            fclose($handle);
         }
-        if (! $namespace) {
-            return null;
-        }
-        return $namespace;
+        return $ns;
     }
 }
