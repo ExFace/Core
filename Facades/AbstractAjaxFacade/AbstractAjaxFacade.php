@@ -158,15 +158,41 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade
         if ($includeCommonLibs) {
             $result .= implode("\n", $this->buildHtmlHeadCommonIncludes());
         }
-        try {
-            $instance = $this->getElement($widget);
-            $result .= implode("\n", array_unique($instance->buildHtmlHeadTags()));
-        } catch (ErrorExceptionInterface $e) {
-            // TODO Is there a way to display errors in the header nicely?
-            // Maybe print the exception in plain text within a comment and add JavaScript to display a warning?
-            $this->getWorkbench()->getLogger()->logException($e);
-        }
+        $instance = $this->getElement($widget);
+        $result .= implode("\n", array_unique($instance->buildHtmlHeadTags()));
         return $result;
+    }
+    
+    /**
+     * Renders a HTML tag for the <head> to represent the given error.
+     * 
+     * By default, this produces an alert with error details. If a facade is capable to display
+     * a nicer message even if an error occurred when rendering the page head, this method can
+     * be overridden to render that nicer message.
+     * 
+     * @param \Throwable $e
+     * @return string
+     */
+    protected function buildHtmlHeadError(\Throwable $e) : string
+    {
+        if ($e instanceof ExceptionInterface) {
+            $logHint = '. See log ID ' . $e->getId();
+        } else {
+            $logHint = '';
+        }
+        
+        $file = addslashes($e->getFile());
+        $msg = addslashes($e->getMessage());
+        
+        return <<<HTML
+
+<script type="text/javascript">
+    (function(){
+        alert("Error rendering HTML headers{$logHint}:\\n\\n{$msg}\\n\\nIn file {$file} on line {$e->getLine()}.");
+    })();
+</script>
+
+HTML;
     }
 
     /**
@@ -516,7 +542,11 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade
         $headers = [];
         $body = '';
         
-        if ($this->isShowingErrorDetails() === true) {
+        $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
+        if ($mode === static::MODE_HEAD) {
+            $headers['Content-Type'] = ['text/html;charset=utf-8'];
+            $body = $this->buildHtmlHeadError($exception);
+        } elseif ($this->isShowingErrorDetails() === true) {
             // If details needed, render a widget
             $body = $this->buildHtmlFromError($request, $exception, $page);
             $headers['Content-Type'] = ['text/html;charset=utf-8'];
