@@ -10,6 +10,8 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Actions\iCanBeCalledFromCLI;
 use exface\Core\Exceptions\Facades\FacadeLogicError;
+use exface\Core\Factories\SelectorFactory;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * A command loader for Symfony Console, that creates commands from actions implementing
@@ -96,7 +98,6 @@ class CommandLoader implements FacadeCommandLoaderInterface
     {
         if ($this->cliActions === null) {
             $this->cliActions = [];
-            $dot = AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
             
             // Load Prototypes
             $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.ACTION');
@@ -104,7 +105,8 @@ class CommandLoader implements FacadeCommandLoaderInterface
             $ds->dataRead();
             foreach ($ds->getRows() as $row) {
                 try {
-                    $class = '\\' . substr(str_replace('/', '\\', $row['PATHNAME_RELATIVE']), 0, -4);
+                    $selector = SelectorFactory::createActionSelector($this->getWorkbench(), $row['PATHNAME_RELATIVE']);
+                    $class = $this->getWorkbench()->getCoreApp()->getPrototypeClass($selector);
                     if (is_a($class, '\\' . iCanBeCalledFromCLI::class, true) === false) {
                         continue;
                     }
@@ -113,7 +115,9 @@ class CommandLoader implements FacadeCommandLoaderInterface
                     $this->getWorkbench()->getLogger()->logException($err);
                     continue;
                 }
-                $namespace = str_replace(['/Actions', '/'], ['', $dot], $row['PATH_RELATIVE']);
+                
+                $dot = AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
+                $namespace = str_replace(['\\Actions', '\\'], ['', $dot], StringDataType::substringBefore($class, '\\', '', false, true));
                 $alias = $namespace . $dot . $row['NAME'];
                 $this->cliActions[$this->getCommandNameFromAlias($alias)] = $alias;
             }
