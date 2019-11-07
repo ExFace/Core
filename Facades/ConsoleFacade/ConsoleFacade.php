@@ -14,6 +14,7 @@ use Symfony\Component\Console\Input\StringInput;
 use exface\Core\DataTypes\StringDataType;
 use Symfony\Component\Console\Input\InputArgument;
 use exface\Core\Factories\TaskFactory;
+use Symfony\Component\Console\Output\BufferedOutput;
 
 /**
  * Command line interface facade based on Symfony Console.
@@ -149,26 +150,39 @@ class ConsoleFacade extends Application implements FacadeInterface
         $cliCommand = StringDataType::substringAfter($cliCommand, 'action ', '');
         $input = new StringInput($cliCommand);
         $commandName = $this->getCommandName($input);
-        $command = $this->find($commandName);
-        $definition = $command->getDefinition();
-        // Strange merging-line taken from Syfmony's Application class
-        $definition->setArguments(array_merge(
-            [
-                'command' => new InputArgument('command', InputArgument::REQUIRED, $command->getDescription()),
-            ],
-            $definition->getArguments()
-        ));
-        $input->bind($definition);
+        if ($commandName) {
+            $command = $this->find($commandName);
+        }
         
-        $args = $input->getArguments();
-        //array_shift($args);
-        $opts = $input->getOptions();
-        $task = TaskFactory::createCliTask($this, $command->getAction()->getSelector(), $args, $opts);
-        $result = $this->getWorkbench()->handle($task);
-        if ($result instanceof ResultMessageStreamInterface) {
-            yield from $result->getMessageStreamGenerator();
+        // If a real action is called, get it's result with pure PHP.
+        // Otherwise leave handling to Symfony Console, which would actually perform the command
+        // on the command line. This fallback ensures, that things like"action help" still work!
+        if ($command instanceof SymfonyCommandAdapter) {
+            $definition = $command->getDefinition();
+            // Strange merging-line taken from Syfmony's Application class
+            $definition->setArguments(array_merge(
+                [
+                    'command' => new InputArgument('command', InputArgument::REQUIRED, $command->getDescription()),
+                ],
+                $definition->getArguments()
+                ));
+            $input->bind($definition);
+            
+            $args = $input->getArguments();
+            $opts = $input->getOptions();
+            
+            $task = TaskFactory::createCliTask($this, $command->getAction()->getSelector(), $args, $opts);
+            $result = $this->getWorkbench()->handle($task);
+            if ($result instanceof ResultMessageStreamInterface) {
+                yield from $result->getMessageStreamGenerator();
+            } else {
+                yield $result->getMessage();
+            }
         } else {
-            yield $result->getMessage();
+            $this->setAutoExit(false);
+            $output = new BufferedOutput();
+            $this->run($input, $output);
+            yield $output->fetch();
         }
     }
 }
