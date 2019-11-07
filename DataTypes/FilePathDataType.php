@@ -152,4 +152,13 @@ class FilePathDataType extends StringDataType
     {
         return Path::getExtension($path);
     }
+    
+    public static function findFileName(string $path, bool $includeExtension = false) : string
+    {
+        if ($includeExtension === false) {
+            return pathinfo($path, PATHINFO_FILENAME);
+        } else {
+            return pathinfo($path, PATHINFO_BASENAME);
+        }
+    }
 }
