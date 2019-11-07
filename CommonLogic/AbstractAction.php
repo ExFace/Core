@@ -940,6 +940,25 @@ abstract class AbstractAction implements ActionInterface
     }
     
     /**
+     * Returns TRUE if an input DataSheet can be determined for this action and FALSE otherwise.
+     * 
+     * This is basically a shortcut for a try-catch block on getInputDataSheet().
+     * 
+     * @see getInputDataSheet()
+     * @param TaskInterface $task
+     * @return bool
+     */
+    protected function hasInputData(TaskInterface $task) : bool
+    {
+        try {
+            $this->getInputDataSheet($task);
+        } catch (ActionInputMissingError $e) {
+            return false;
+        }
+        return true;
+    }
+    
+    /**
      * Gets the input data by merging the preset data with the task data and applying
      * appropriate input mappers.
      * 
@@ -978,6 +997,22 @@ abstract class AbstractAction implements ActionInterface
             }
         }
         
+        return $this->validateInputData($sheet);
+    }
+    
+    /**
+     * Throws exceptions if the input data does not meet the action's criteria.
+     * 
+     * Override and extend this method to add your own validation criteria other than those
+     * built into `AbstractAction` (e.g. `input_rows_min/max`, 'input_object_alias', etc.)
+     * 
+     * @param DataSheetInterface $sheet
+     * @throws ActionInputError
+     * @throws ActionInputInvalidObjectError
+     * @return DataSheetInterface
+     */
+    protected function validateInputData(DataSheetInterface $sheet) : DataSheetInterface
+    {
         // Check if, there are restrictions on input data.
         if ($sheet->countRows() < $this->getInputRowsMin()) {
             throw new ActionInputError($this, 'Too few rows of input data for action ' . $this->getAliasWithNamespace() . ': need at least' . $this->getInputRowsMin() . ', received ' . $sheet->countRows() . ' instead.');
