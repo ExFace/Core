@@ -7,6 +7,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iHaveColor;
+use exface\Core\Widgets\Traits\iHaveColorTrait;
 
 /**
  * A Tile is basically a big fancy button, that can display additional information (KPIs, etc.).
@@ -140,11 +141,11 @@ use exface\Core\Interfaces\Widgets\iHaveColor;
  */
 class Tile extends Button implements iHaveColor
 {
+    use iHaveColorTrait;
+    
     private $subtitle = null;
     
     private $displayWidget = null;
-    
-    private $color = null;
     
     /**
      * Returns the title of the tile or NULL if no title was set.
@@ -254,28 +255,4 @@ class Tile extends Button implements iHaveColor
         }
         return true;
     }
-    
-    /**
-     * 
-     * @return string
-     */
-    public function getColor() : ?string
-    {
-        return $this->color;
-    }
-
-    /**
-     * Changes the color of the tile to any HTML color value (or other facade-specific value)
-     * 
-     * @uxon-property color
-     * @uxon-type color|string
-     * 
-     * @param string $color
-     * @return \exface\Core\Widgets\Tile
-     */
-    public function setColor($color)
-    {
-        $this->color = $color;
-        return $this;
-    } 
 }
