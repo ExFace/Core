@@ -202,7 +202,8 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         }
         
         // Prefill with input data if not turned off
-        if ($this->getPrefillWithInputData() && $input_data = $this->getInputDataSheet($task)) {
+        if ($this->getPrefillWithInputData() === true && ($task->hasInputData() === true || $this->hasInputDataPreset() === true)) {
+            $input_data = $this->getInputDataSheet($task);
             if (! $data_sheet || $data_sheet->isEmpty()) {
                 $data_sheet = $input_data->copy();
             } else {
