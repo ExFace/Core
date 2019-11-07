@@ -17,6 +17,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Facades\ConsoleFacade\ConsoleFacade;
 use exface\Core\Factories\FacadeFactory;
+use exface\Core\DataTypes\FilePathDataType;
 
 /***
  * This is the Facade for Console Widgets
@@ -223,6 +224,6 @@ class WebConsoleFacade extends AbstractHttpFacade
     
     protected function isCliAction(string $command, string $workingDir) : bool
     {
-        return strcasecmp($command, 'action') === 0 && strcasecmp($workingDir, 'vendor/bin') === 0;
+        return strcasecmp($command, 'action') === 0 && strcasecmp(FilePathDataType::normalize($workingDir, '/'), 'vendor/bin') === 0;
     }
 }
