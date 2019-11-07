@@ -17,6 +17,12 @@ interface iHaveDefaultValue extends iTakeInput
      * @return ExpressionInterface
      */
     public function getDefaultValueExpression();
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasDefaultValue() : bool;
 
     /**
      *

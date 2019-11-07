@@ -290,5 +290,16 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
         }
         return $value;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveDefaultValue::hasDefaultValue()
+     */
+    public function hasDefaultValue() : bool
+    {
+        $def = $this->getDefaultValue();
+        return $def !== null && $def !== '';
+    }
 }
 ?>
