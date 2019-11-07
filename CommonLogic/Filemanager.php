@@ -3,8 +3,8 @@ namespace exface\Core\CommonLogic;
 
 use Symfony\Component\Filesystem\Filesystem;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
-use Webmozart\PathUtil\Path;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
+use exface\Core\DataTypes\FilePathDataType;
 
 class Filemanager extends Filesystem implements WorkbenchDependantInterface
 {
@@ -299,11 +299,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
      */
     public static function pathNormalize($path, $directory_separator = '/')
     {
-        $path = Path::canonicalize($path);
-        if ($directory_separator !== '/') {
-            $path = str_replace('/', $directory_separator, $path);
-        }
-        return $path;
+        return FilePathDataType::normalize($path, $directory_separator);
     }
 
     /**
@@ -317,7 +313,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
         if (is_null($path) || $path == '') {
             return false;
         }
-        return Path::isAbsolute($path);
+        return FilePathDataType::isAbsolute($path);
     }
 
     /**
@@ -328,7 +324,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
      */
     public static function pathJoin(array $paths)
     {
-        return Path::join($paths);
+        return FilePathDataType::join($paths);
     }
 
     /**
@@ -339,7 +335,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
      */
     public static function pathGetCommonBase(array $paths)
     {
-        return Path::getLongestCommonBasePath($paths);
+        return FilePathDataType::findCommonBase($paths);
     }
 
     /**

@@ -594,6 +594,36 @@
             "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputUxon\",\"width\":\"2\",\"height\":\"6\"}",
             "ALIAS": "UxonDataConnection",
             "SHORT_DESCRIPTION": "User Experience Object Notation (JSON schema) for data connection definition"
+        },
+        {
+            "CREATED_ON": "2019-11-07 11:19:29",
+            "MODIFIED_ON": "2019-11-07 11:19:29",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea01502d3497c5b7580205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "File Path",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/FilePathDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": null,
+            "ALIAS": "FilePath",
+            "SHORT_DESCRIPTION": "File and folder paths (agnostic to file system)"
+        },
+        {
+            "CREATED_ON": "2019-11-07 11:20:11",
+            "MODIFIED_ON": "2019-11-07 11:20:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea0150468cbe73b7580205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "PHP File Path",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/PhpFilePathDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": null,
+            "ALIAS": "PhpFilePath",
+            "SHORT_DESCRIPTION": "Path to PHP files"
         }
     ],
     "totals_rows": [],
