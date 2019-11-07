@@ -15,6 +15,8 @@ use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Widgets\Traits\iUseInputWidgetTrait;
 use exface\Core\Interfaces\Widgets\iDefineAction;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
+use exface\Core\Interfaces\Widgets\iHaveColor;
+use exface\Core\Widgets\Traits\iHaveColorTrait;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -24,7 +26,7 @@ use exface\Core\Widgets\Traits\iHaveIconTrait;
  * @author Andrej Kabachnik
  *        
  */
-class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefineAction, iUseInputWidget, iCanBeAligned
+class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAction, iDefineAction, iUseInputWidget, iCanBeAligned
 {
     use iCanBeAlignedTrait;
     
@@ -33,6 +35,8 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
     use iHaveIconTrait {
         getIcon as getIconViaTrait;
     }
+    
+    use iHaveColorTrait;
     
     private $action_alias = null;
 

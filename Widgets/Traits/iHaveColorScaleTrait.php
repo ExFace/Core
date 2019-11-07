@@ -1,11 +1,7 @@
 <?php
 namespace exface\Core\Widgets\Traits;
 
-use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Widgets\iConfigureWidgets;
-use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Interfaces\Widgets\iHaveColorScale;
 
 /**
