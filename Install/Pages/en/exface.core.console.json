@@ -1,0 +1,22 @@
+{
+    "id": "0x6179ab4000ac11ea8fb10205857feb80",
+    "alias_with_namespace": "exface.core.console",
+    "menu_parent_page_alias": "exface.core.administration",
+    "menu_index": "10",
+    "menu_visible": true,
+    "name": "Console",
+    "description": "",
+    "intro": "",
+    "replaces_page_alias": null,
+    "contents": {
+        "widget_type": "Console",
+        "object_alias": "exface.Core.ACTION",
+        "allowed_commands": [
+            "\/action.*\/"
+        ],
+        "start_commands": [
+            "action"
+        ],
+        "working_directory_path": "vendor\/bin"
+    }
+}
