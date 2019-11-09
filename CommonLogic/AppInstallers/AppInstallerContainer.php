@@ -54,7 +54,9 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
 
     public final function uninstall() : \Iterator
     {
-        return new \EmptyIterator();
+        foreach ($this->getInstallers() as $installer) {
+            yield from $installer->uninstall();
+        }
     }
 
     public function addInstaller(InstallerInterface $installer, $insert_at_beinning = false)
