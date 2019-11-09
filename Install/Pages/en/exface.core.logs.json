@@ -10,6 +10,7 @@
     "replaces_page_alias": null,
     "contents": {
         "widget_type": "SplitHorizontal",
+        "object_alias": "exface.Core.LOG",
         "panels": [
             {
                 "caption": "System Log",
@@ -17,7 +18,6 @@
                 "widgets": [
                     {
                         "widget_type": "DataTable",
-                        "object_alias": "exface.Core.LOG",
                         "filters": [
                             {
                                 "attribute_alias": "NAME"
