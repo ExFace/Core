@@ -3,6 +3,8 @@ namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\Interfaces\EntityListInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  *
@@ -87,6 +89,17 @@ interface DataColumnListInterface extends EntityListInterface
      * @return DataColumnListInterface
      */
     public function addFromSystemAttributes() : DataColumnListInterface;
+    
+    /**
+     * Add an array of columns.
+     * 
+     * The array can contain DataColumns, expressions or a mixture of those
+     *
+     * @param string[]|ExpressionInterface[]|DataColumnInterface[] $columns
+     * @param MetaRelationPathInterface $relPathString
+     * @return DataColumnListInterface
+     */
+    public function addMultiple(array $columns, MetaRelationPathInterface $relationPath = null) : DataColumnListInterface;
 
     /**
      * Removes the given entity from the list
