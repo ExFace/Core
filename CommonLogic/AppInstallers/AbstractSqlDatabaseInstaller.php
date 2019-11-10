@@ -102,6 +102,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         $indent = $this->getOutputIndentation();
         if ($this->isDisabled() === true) {
             yield $indent . 'SQL installer disabled' . PHP_EOL;
+            return;
         } else {
             yield $indent . 'SQL installer:' . PHP_EOL;
         }
