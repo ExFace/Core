@@ -117,7 +117,7 @@
                 "icon": "wrench",
                 "buttons": [
                     {
-                        "action_alias": "exface.Core.ShowAppRepairConsole",
+                        "action_alias": "axenox.PackageManager.ShowAppRepairConsole",
                         "caption": "=TRANSLATE('exface.Core', 'PAGE.APPS.REPAIR')"
                     },
                     {
@@ -132,11 +132,13 @@
                 "action_alias": "axenox.PackageManager.BackupApp"
             },
             {
-                "action_alias": "axenox.PackageManager.InstallAppFromVendorFolder",
-                "caption": "=TRANSLATE('axenox.PackageManager', 'ACTION.INSTALLAPP.NAME')"
+                "action_alias": "axenox.PackageManager.ShowAppUninstallConsole"
             },
             {
                 "action_alias": "exface.Core.ShowAppGitConsoleDialog"
+            },
+            {
+                "action_alias": "axenox.PackageManager.InstallAppFromVendorFolder"
             }
         ]
     }
