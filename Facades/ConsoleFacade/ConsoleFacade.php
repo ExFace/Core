@@ -73,7 +73,7 @@ class ConsoleFacade extends Application implements FacadeInterface
 
     public final function __construct(FacadeSelectorInterface $selector)
     {
-        parent::__construct('ExFace Console');
+        parent::__construct('Action Console');
         $this->exface = $selector->getWorkbench();
         $this->selector = $selector;
         $this->setCommandLoader(new CommandLoader($this));
