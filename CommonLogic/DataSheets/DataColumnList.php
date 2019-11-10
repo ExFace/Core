@@ -79,12 +79,9 @@ class DataColumnList extends EntityList implements DataColumnListInterface
     }
 
     /**
-     * Add an array of columns.
-     * The array can contain DataColumns, expressions or a mixture of those
-     *
-     * @param array $columns            
-     * @param string $relPathString            
-     * @return DataColumnListInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::addMultiple()
      */
     public function addMultiple(array $columns, MetaRelationPathInterface $relationPath = null) : DataColumnListInterface
     {
