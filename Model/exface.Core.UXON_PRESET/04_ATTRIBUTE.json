@@ -165,9 +165,9 @@
     "rows": [
         {
             "CREATED_ON": "2019-07-09 11:36:07",
-            "MODIFIED_ON": "2019-07-09 11:40:13",
+            "MODIFIED_ON": "2019-11-10 07:00:38",
             "CREATED_BY_USER": "0x11e9876d60774992bb32106530e7aff7",
-            "MODIFIED_BY_USER": "0x11e9876d60774992bb32106530e7aff7",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9a23dbe82ded6949f106530e7aff7",
             "SORTABLEFLAG": "1",
             "FILTERABLEFLAG": "1",
@@ -182,7 +182,7 @@
             "DELETE_WITH_RELATED_OBJECT": "1",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "NAME": "App",
+            "NAME": "Is part of app",
             "RELATION_CARDINALITY": "",
             "ALIAS": "APP",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
