@@ -375,7 +375,7 @@
         },
         {
             "CREATED_ON": "2016-03-30 01:00:39",
-            "MODIFIED_ON": "2019-02-05 20:52:41",
+            "MODIFIED_ON": "2019-11-10 07:01:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e5f601f03357ca89840050568905af",
@@ -392,7 +392,7 @@
             "DELETE_WITH_RELATED_OBJECT": "1",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "NAME": "App",
+            "NAME": "Is part of app",
             "RELATION_CARDINALITY": "",
             "ALIAS": "APP",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
