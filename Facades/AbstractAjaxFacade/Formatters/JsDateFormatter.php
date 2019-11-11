@@ -131,11 +131,20 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
         var match = null;
         var dateParsed = false;
         var dateValid = false;
+        var time;
+
+        // hh:mm:ss , Thh:mm:ss
+        if (!dateParsed && (match = /[T ](\d{2}:\d{2}:\d{2})/.exec(date)) != null) {
+            time = match[1];
+        } else if (!dateParsed && (match = / (\d{2}:\d{2})/.exec(date)) != null) {
+        // hh:mm
+            time = match[1];
+        }
         
         // dd.MM.yyyy, dd-MM-yyyy, dd/MM/yyyy, d.M.yyyy, d-M-yyyy, d/M/yyyy
         if (!dateParsed && (match = /(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})/.exec(date)) != null) {
             var yyyy = Number(match[3]);
-            var MM = Number(match[2]) - 1;
+            var MM = Number(match[2]);
             var dd = Number(match[1]);
             dateParsed = true;
             dateValid = Date.validateYear(yyyy) && Date.validateMonth(MM) && Date.validateDay(dd, yyyy, MM);
@@ -143,7 +152,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
         // yyyy.MM.dd, yyyy-MM-dd, yyyy/MM/dd, yyyy.M.d, yyyy-M-d, yyyy/M/d
         if (!dateParsed && (match = /(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/.exec(date)) != null) {
             var yyyy = Number(match[1]);
-            var MM = Number(match[2]) - 1;
+            var MM = Number(match[2]);
             var dd = Number(match[3]);
             dateParsed = true;
             dateValid = Date.validateYear(yyyy) && Date.validateMonth(MM) && Date.validateDay(dd, yyyy, MM);
@@ -151,7 +160,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
         // dd.MM.yy, dd-MM-yy, dd/MM/yy, d.M.yy, d-M-yy, d/M/yy
         if (!dateParsed && (match = /(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2})/.exec(date)) != null) {
             var yyyy = 2000 + Number(match[3]);
-            var MM = Number(match[2]) - 1;
+            var MM = Number(match[2]);
             var dd = Number(match[1]);
             dateParsed = true;
             dateValid = Date.validateYear(yyyy) && Date.validateMonth(MM) && Date.validateDay(dd, yyyy, MM);
@@ -159,7 +168,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
         // yy.MM.dd, yy-MM-dd, yy/MM/dd, yy.M.d, yy-M-d, yy/M/d
         if (!dateParsed && (match = /(\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})/.exec(date)) != null) {
             var yyyy = 2000 + Number(match[1]);
-            var MM = Number(match[2]) - 1;
+            var MM = Number(match[2]);
             var dd = Number(match[3]);
             dateParsed = true;
             dateValid = Date.validateYear(yyyy) && Date.validateMonth(MM) && Date.validateDay(dd, yyyy, MM);
@@ -167,7 +176,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
         // dd.MM, dd-MM, dd/MM, d.M, d-M, d/M
         if (!dateParsed && (match = /(\d{1,2})[.\-/](\d{1,2})/.exec(date)) != null) {
             var yyyy = (new Date()).getFullYear();
-            var MM = Number(match[2]) - 1;
+            var MM = Number(match[2]);
             var dd = Number(match[1]);
             dateParsed = true;
             dateValid = Date.validateYear(yyyy) && Date.validateMonth(MM) && Date.validateDay(dd, yyyy, MM);
@@ -175,7 +184,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
         // ddMMyyyy
         if (!dateParsed && (match = /^(\d{2})(\d{2})(\d{4})$/.exec(date)) != null) {
             var yyyy = Number(match[3]);
-            var MM = Number(match[2]) - 1;
+            var MM = Number(match[2]);
             var dd = Number(match[1]);
             dateParsed = true;
             dateValid = Date.validateYear(yyyy) && Date.validateMonth(MM) && Date.validateDay(dd, yyyy, MM);
@@ -183,7 +192,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
         // ddMMyy
         if (!dateParsed && (match = /^(\d{2})(\d{2})(\d{2})$/.exec(date)) != null) {
             var yyyy = 2000 + Number(match[3]);
-            var MM = Number(match[2]) - 1;
+            var MM = Number(match[2]);
             var dd = Number(match[1]);
             dateParsed = true;
             dateValid = Date.validateYear(yyyy) && Date.validateMonth(MM) && Date.validateDay(dd, yyyy, MM);
@@ -191,7 +200,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
         // ddMM
         if (!dateParsed && (match = /^(\d{2})(\d{2})$/.exec(date)) != null) {
             var yyyy = (new Date()).getFullYear();
-            var MM = Number(match[2]) - 1;
+            var MM = Number(match[2]);
             var dd = Number(match[1]);
             dateParsed = true;
             dateValid = Date.validateYear(yyyy) && Date.validateMonth(MM) && Date.validateDay(dd, yyyy, MM);
@@ -199,7 +208,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
         
         // Ausgabe des geparsten Wertes
         if (dateParsed && dateValid) {
-            return new Date(yyyy, MM, dd);
+            return new Date(yyyy + '-' + MM + '-' + dd + (time !== undefined ? ' ' + time : ''));
         }
         
         // (+/-)? ... (T/D/W/M/J/Y)?
