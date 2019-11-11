@@ -389,5 +389,18 @@ class StringDataType extends AbstractDataType
         }
         return $substr;
     }
+    
+    /**
+     * Returns the given string in UTF-8 encoding.
+     * 
+     * If no $originalEncoding is provided, mb_detect_encoding() will be used to attemt to detect it.
+     * 
+     * @param string $string
+     * @param string $originalEncoding
+     * @return string
+     */
+    public static function encodeUTF8(string $string, string $originalEncoding = null) {
+        return mb_convert_encoding($string, 'UTF-8', ($originalEncoding ?? mb_detect_encoding($string)));
+    }
 }
 ?>
