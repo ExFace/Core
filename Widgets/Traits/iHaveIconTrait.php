@@ -34,6 +34,11 @@ trait iHaveIconTrait {
     public function setIcon(string $value) : iHaveIcon
     {
         $this->icon = $value;
+        // If show_icon is not set explicitly, set it to true when specifying an icon.
+        // Indeed, if the user specifies and icon, it is expected to be show, isn't it?
+        if ($this->showIcon === null) {
+            $this->showIcon = true;
+        }
         return $this;
     }    
     
