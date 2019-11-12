@@ -17,6 +17,7 @@ use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\UxonSchemaNameDataType;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
@@ -752,8 +753,41 @@ class UxonSchema implements UxonSchemaInterface
         return $this->parentSchema;
     }
     
+    /**
+     *
+     * {@inheritdoc}
+     * @see UxonSchemaInterface::getSchemaName()
+     */
     public static function getSchemaName() : string
     {
         return UxonSchemaNameDataType::GENERIC;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UxonSchemaInterface::getPresets()
+     */
+    public function getPresets(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
+    {
+        $presets = [];
+        
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.' . strtoupper($this::getSchemaName()) . '_PRESET');
+        $ds->getColumns()->addMultiple(['UID','NAME', 'PROTOTYPE__LABEL', 'DESCRIPTION', 'PROTOTYPE', 'UXON' , 'WRAP_PATH', 'WRAP_FLAG']);
+        $ds->addFilterFromString('UXON_SCHEMA', $this::getSchemaName());
+        $ds->getSorters()
+        ->addFromString('PROTOTYPE', SortingDirectionsDataType::ASC)
+        ->addFromString('NAME', SortingDirectionsDataType::ASC);
+        $ds->dataRead();
+        
+        $class = $this->getPrototypeClass($uxon, $path, $rootPrototypeClass);
+        
+        foreach ($ds->getRows() as $row) {
+            // TODO: Leerer Editor, oberste Knoten => class ist abstract widget => keine Filterung
+            // Class Plus Wrapper-Presets (ausser AbstractWidget)
+            $presets[] = $row;
+        }
+        
+        return $presets;
     }
 }
