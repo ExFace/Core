@@ -418,7 +418,7 @@ JS;
      */
     public function buildJsValueSetter($value) : string
     {
-        return $this->getId() . '_JSONeditor.setText(' . $value . ')';
+        return "(function(){var val = $value; if (val === undefined || val === null || val === '') {val = '{}'} {$this->getId()}_JSONeditor.setText(val); {$this->getId()}_JSONeditor.expandAll()})()";
     }
     
     /**
