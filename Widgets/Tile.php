@@ -139,10 +139,8 @@ use exface\Core\Widgets\Traits\iHaveColorTrait;
  * @author Andrej Kabachnik
  *        
  */
-class Tile extends Button implements iHaveColor
+class Tile extends Button
 {
-    use iHaveColorTrait;
-    
     private $subtitle = null;
     
     private $displayWidget = null;
