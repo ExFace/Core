@@ -20,6 +20,7 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Uxon\ConnectionSchema;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Widgets\Markdown;
+use exface\Core\Interfaces\UxonSchemaInterface;
 
 /**
  * Returns autosuggest values for provided UXON objects.
@@ -115,11 +116,15 @@ class UxonAutosuggest extends AbstractAction
             case self::SCHEMA_BEHAVIOR:
                 $schema = new BehaviorSchema($this->getWorkbench());
                 break;
-            case self::SCHEMA_CONNECTION    :
+            case self::SCHEMA_CONNECTION:
                 $schema = new ConnectionSchema($this->getWorkbench());
                 break;
             default:
-                $schema = new UxonSchema($this->getWorkbench());
+                if (substr($schema, 0, 1) === '\\' && class_exists($schema)) {
+                    $schema = new $schema($this->getWorkbench());
+                } else {
+                    $schema = new UxonSchema($this->getWorkbench());
+                }
                 break;
         }
         
@@ -142,44 +147,26 @@ class UxonAutosuggest extends AbstractAction
 
     /**
      * 
-     * @param UxonSchema $schema
+     * @param UxonSchemaInterface $schema
      * @param UxonObject $uxon
      * @param array $path
      * @param string $rootPrototypeClass
      * @return array
      */
-    protected function suggestPresets(UxonSchema $schema, UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
+    protected function suggestPresets(UxonSchemaInterface $schema, UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
     {
-        $presets = [];
-        
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.' . strtoupper($schema::getSchemaName()) . '_PRESET');
-        $ds->getColumns()->addMultiple(['UID','NAME', 'PROTOTYPE__LABEL', 'DESCRIPTION', 'PROTOTYPE', 'UXON' , 'WRAP_PATH', 'WRAP_FLAG']);
-        $ds->addFilterFromString('UXON_SCHEMA', $schema::getSchemaName());
-        $ds->getSorters()
-            ->addFromString('PROTOTYPE', SortingDirectionsDataType::ASC)
-            ->addFromString('NAME', SortingDirectionsDataType::ASC);
-        $ds->dataRead();
-        
-        $class = $schema->getPrototypeClass($uxon, $path, $rootPrototypeClass);
-        
-        foreach ($ds->getRows() as $row) {
-            // TODO: Leerer Editor, oberste Knoten => class ist abstract widget => keine Filterung 
-            // Class Plus Wrapper-Presets (ausser AbstractWidget) 
-            $presets[] = $row;
-        }
-        
-        return $presets;
+        return $schema->getPresets($uxon, $path, $rootPrototypeClass);
     }
     
     /**
      * 
-     * @param UxonSchema $schema
+     * @param UxonSchemaInterface $schema
      * @param UxonObject $uxon
      * @param array $path
      * @param string $rootPrototypeClass
      * @return array
      */
-    protected function suggestDetails(UxonSchema $schema, UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
+    protected function suggestDetails(UxonSchemaInterface $schema, UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
     {
         $rows = [];
         if (empty($path) === false) {
@@ -247,13 +234,13 @@ class UxonAutosuggest extends AbstractAction
     
     /**
      * 
-     * @param UxonSchema $schema
+     * @param UxonSchemaInterface $schema
      * @param UxonObject $uxon
      * @param array $path
      * @param string $rootPrototypeClass
      * @return array
      */
-    protected function suggestPropertyNames(UxonSchema $schema, UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
+    protected function suggestPropertyNames(UxonSchemaInterface $schema, UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
     {
         $prototypeClass = $schema->getPrototypeClass($uxon, $path, $rootPrototypeClass);
         return [
@@ -262,7 +249,7 @@ class UxonAutosuggest extends AbstractAction
         ];
     }
     
-    protected function suggestPropertyValues(UxonSchema $schema, UxonObject $uxon, array $path, string $valueText, string $rootPrototypeClass = null, MetaObjectInterface $rootObject = null) : array
+    protected function suggestPropertyValues(UxonSchemaInterface $schema, UxonObject $uxon, array $path, string $valueText, string $rootPrototypeClass = null, MetaObjectInterface $rootObject = null) : array
     {
         return ['values' => $schema->getValidValues($uxon, $path, $valueText, $rootPrototypeClass, $rootObject)];
     }
