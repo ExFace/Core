@@ -148,11 +148,26 @@ class FilePathDataType extends StringDataType
         return Path::getLongestCommonBasePath($paths);
     }
     
-    public static function findExtension($path) : ?string
+    /**
+     * Returns the file extension from the given path: e.g. my/folder/file.txt => .txt
+     * 
+     * @param string $path
+     * @return string|NULL
+     */
+    public static function findExtension(string $path) : ?string
     {
         return Path::getExtension($path);
     }
     
+    /**
+     * Returns the file name from the given path: e.g. my/folder/file.txt => file
+     * 
+     * Set $includeExtension to true to get file.txt in the above example.
+     * 
+     * @param string $path
+     * @param bool $includeExtension
+     * @return string
+     */
     public static function findFileName(string $path, bool $includeExtension = false) : string
     {
         if ($includeExtension === false) {
@@ -160,5 +175,16 @@ class FilePathDataType extends StringDataType
         } else {
             return pathinfo($path, PATHINFO_BASENAME);
         }
+    }
+    
+    /**
+     * Returns the folder path from the given path: e.g. my/folder/file.txt => my/folder
+     * 
+     * @param string $path
+     * @return string
+     */
+    public static function findFolderPath(string $path) : string
+    {
+       return pathinfo($path, PATHINFO_DIRNAME); 
     }
 }
