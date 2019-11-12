@@ -97,4 +97,26 @@ interface UxonSchemaInterface extends WorkbenchDependantInterface
      * @return UxonSchemaInterface
      */
     public function getParentSchema() : UxonSchemaInterface;
+    
+    /**
+     * Returns an array with preset data for this schema.
+     * 
+     * Each element of the array must have the following structure:
+     * [
+     *  DESCRIPTION: ""
+     *  MODIFIED_ON: ""
+     *  NAME: "" // Required!!!
+     *  PROTOTYPE: ""
+     *  UID: "" // Required!
+     *  UXON: "{}"
+     *  WRAP_FLAG: "0"
+     *  WRAP_PATH: ""
+     * ]
+     * 
+     * @param UxonObject $uxon
+     * @param array $path
+     * @param string $rootPrototypeClass
+     * @return array
+     */
+    public function getPresets(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array;
 }
