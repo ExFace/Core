@@ -334,9 +334,9 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
             if ($this instanceof iUsePrefillData && $this->hasPrefillDataPreset()) {
                 $sheet = $this->getPrefillDataPreset($task)->importRows($sheet);
             }
-        } elseif ($this->hasInputDataPreset()) {
+        } elseif ($this->hasPrefillDataPreset()) {
             // If the task has no data, use the preset data
-            $sheet = $this->getInputDataPreset();
+            $sheet = $this->getPrefillDataPreset();
         } else {
             // If there is neither task nor preset data, create a new data sheet
             $sheet = DataSheetFactory::createFromObject($task->getMetaObject());
@@ -351,8 +351,9 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * Note, the prefill data will be ignored if prefill_with_prefill_data is
      * set to FALSE!
      * 
-     * @uxon-property input_data_sheet
+     * @uxon-property prefill_data_sheet
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
+     * @uxon-template {"object_alias": "", "rows": [{"": ""}]}
      * 
      * @see iUsePrefillData::setPrefillDataSheet()
      */
