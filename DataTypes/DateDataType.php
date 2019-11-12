@@ -7,6 +7,8 @@ use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 
 class DateDataType extends AbstractDataType
 {
+    const TIMESTAMP_MIN_VALUE = 100000;
+    
     public static function cast($string)
     {
         $string = trim($string);
@@ -19,7 +21,7 @@ class DateDataType extends AbstractDataType
         // If a timestamp is passed (seconds since epoche), it must not be interpreted as
         // a relative date - therefore prefix really large numbers with an @, which will
         // mark it as a timestamp for the \DateTime consturctor.
-        if (is_numeric($string) && intval($string) > 100000) {
+        if (is_numeric($string) && intval($string) >= self::TIMESTAMP_MIN_VALUE) {
             $string = '@' . $string;
         }
         
@@ -29,6 +31,11 @@ class DateDataType extends AbstractDataType
         
         if ($short = static::parseShortDate($string)){
             return $short;
+        }
+        
+        // Numeric values, that are neither relative nor short dates, must be invalid!
+        if (is_numeric($string) && intval($string) < self::TIMESTAMP_MIN_VALUE) {
+            throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1');
         }
         
         try {
@@ -64,6 +71,11 @@ class DateDataType extends AbstractDataType
         if (preg_match('/^([\+-]?[0-9]+)([dDmMwWyY]?)$/', $string, $matches)){
             $period = $matches[2];
             $quantifier = intval($matches[1]);
+            // If the quatifier is zero, but the match is not, it must be some invalid numeric string
+            // like '0000' - this is not a valid relative date!!!
+            if ($quantifier === 0 && $matches[1] !== 0 && $matches[1] !== '0') {
+                return false;
+            }
             $interval_spec = 'P' . abs($quantifier);
             switch (strtoupper($period)){
                 case $day_period:
