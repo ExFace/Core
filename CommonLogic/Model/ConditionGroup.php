@@ -268,7 +268,8 @@ class ConditionGroup implements ConditionGroupInterface
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        $this->setOperator($uxon->getProperty('operator'));
+        
+        $this->setOperator($uxon->getProperty('operator') ?? EXF_LOGICAL_AND);
         if ($uxon->hasProperty('conditions')) {
             foreach ($uxon->getProperty('conditions') as $cond) {
                 $this->addCondition(ConditionFactory::createFromUxon($this->exface, $cond));
