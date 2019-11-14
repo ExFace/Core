@@ -355,7 +355,7 @@ JS;
                             var path = node.path;
                             var rootNode = {$funcPrefix}_getNodeFromTarget( $('#' + {$editorIdJs} + ' .jsoneditor-tree tr:first-of-type td:last-of-type .jsoneditor-readonly').get()[0]);
                             var menuNode = path.length > 0 ? rootNode.findNodeByPath(node.path) : rootNode;
-                            
+
                             var val = menuNode.getValue();
                             var menuNodeType = {$funcPrefix}_getNodeType(menuNode);
                             
@@ -657,10 +657,6 @@ CSS;
             $trans = static::getTranslations($workbench);
             
             return <<<JS
-                
-        var wrapData = {};
-        var nodeIsWrappingTarget = false;
-        var hasArrayContext = false;
         
         function {$funcPrefix}_fetchAutosuggest(text, path, input, uxon){
             var formData = new URLSearchParams({
@@ -814,7 +810,7 @@ CSS;
             
             $("#" + editorId + " .uxoneditor-preset-hint a").click( function(){
                 var rootNode = {$funcPrefix}_getNodeFromTarget(
-                    $(".jsoneditor-tree tr:first-of-type td:last-of-type .jsoneditor-readonly").get()[0]
+                    $("#" + editorId + " .jsoneditor-tree tr:first-of-type td:last-of-type .jsoneditor-readonly").get()[0]
                 );
                 return {$funcPrefix}_openPresetsModal(rootNode);
             });
@@ -1011,6 +1007,8 @@ CSS;
             var path = node.getPath();
             var nodeType = {$funcPrefix}_getNodeType(node);
             var parentNodeType = {$funcPrefix}_getNodeType(node.parent);
+            var nodeIsWrappingTarget;
+            var wrapData = {};
             
             // Wrap button enabled if node type is object
             if ( nodeType === 'object' || nodeType === 'root' ) {
@@ -1020,7 +1018,7 @@ CSS;
                 nodeIsWrappingTarget = false;
             }
             
-            hasArrayContext = (node.parent !== null && node.parent.childs)? true : false;
+            var hasArrayContext = (node.parent !== null && node.parent.childs)? true : false;
            
             var oPresetPathElem = document.getElementById('uxonPresetPath');
             {$funcPrefix}_autoWidth(oPresetPathElem);
@@ -1128,7 +1126,7 @@ CSS;
                 return [];
             } ); // fail
             
-            var {$funcPrefix}_replaceNodeValue = function(oEditor, oNode, sJson, oModal){  
+            var {$funcPrefix}_replaceNodeValue = function(oNode, sJson, oModal){  
                oNode.update(sJson);
                oNode.expand(true);
                {$funcPrefix}_focusFirstChildValue(oNode, true);
@@ -1141,12 +1139,12 @@ CSS;
             {
                 var aJsonParentNode = oParentNode.getValue();
                 aJsonParentNode.splice(iTargetPosition, 0, sJsonPreset);
-                {$funcPrefix}_replaceNodeValue(node.editor, oParentNode, aJsonParentNode, oModal);
+                {$funcPrefix}_replaceNodeValue(oParentNode, aJsonParentNode, oModal);
             };
             
             var presetReplace = modal.modalElem().querySelector(".uxoneditor-preset-replace");
             presetReplace.onclick = function() {
-                {$funcPrefix}_replaceNodeValue(node.editor, node, oPreviewEditor.get(), modal);
+                {$funcPrefix}_replaceNodeValue(node, oPreviewEditor.get(), modal);
             };
             
             var presetPrepend = modal.modalElem().querySelector(".uxoneditor-preset-prepend");
@@ -1170,7 +1168,7 @@ CSS;
                
               var val = node.getValue();
               oWrapTargetNode.setValue(val, (Array.isArray(val) ? 'array' : 'object'));
-              {$funcPrefix}_replaceNodeValue(node.editor, node, oPreviewEditor.get(), modal);
+              {$funcPrefix}_replaceNodeValue(nnode, oPreviewEditor.get(), modal);
             };
             
             var presetCancel = modal.modalElem().querySelector(".uxoneditor-preset-cancel");
