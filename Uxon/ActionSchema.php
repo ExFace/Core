@@ -69,4 +69,14 @@ class ActionSchema extends UxonSchema
     {
         return '\\' . AbstractAction::class;
     }
+    
+    protected function isPrototypeMatch($prototypeClass, $selectorString) : bool
+    {
+        $selector = SelectorFactory::createActionSelector($this->getWorkbench(), $selectorString);
+        $class = $this->getWorkbench()->getCoreApp()->getPrototypeClass($selector);
+        if (is_a($class, $prototypeClass, true) === false) {
+            return false;
+        }
+        return true;
+    }
 }

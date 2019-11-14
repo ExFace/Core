@@ -18,6 +18,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\UxonSchemaNameDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Factories\SelectorFactory;
 
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
@@ -781,13 +782,23 @@ class UxonSchema implements UxonSchemaInterface
         $ds->dataRead();
         
         $class = $this->getPrototypeClass($uxon, $path, $rootPrototypeClass);
-        
         foreach ($ds->getRows() as $row) {
             // TODO: Leerer Editor, oberste Knoten => class ist abstract widget => keine Filterung
             // Class Plus Wrapper-Presets (ausser AbstractWidget)
-            $presets[] = $row;
+            try {
+            if ($this->isPrototypeMatch($class, $row['PROTOTYPE'])) {
+                $presets[] = $row;
+            }
+            } catch(\Throwable $e) {
+                $presets[] = $row;
+            }
         }
         
         return $presets;
+    }
+    
+    protected function isPrototypeMatch($prototypeClass, $selectorString) : bool
+    {
+        return true;
     }
 }
