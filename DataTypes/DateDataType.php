@@ -9,6 +9,8 @@ class DateDataType extends AbstractDataType
 {
     const TIMESTAMP_MIN_VALUE = 100000;
     
+    const DATE_FORMAT_INTERNAL = 'Y-m-d';
+    
     public static function cast($string)
     {
         $string = trim($string);
@@ -108,7 +110,7 @@ class DateDataType extends AbstractDataType
     
     public static function formatDate(\DateTime $date) : string
     {
-        return $date->format('Y-m-d');
+        return $date->format(self::DATE_FORMAT_INTERNAL);
     }
     
     public static function now() : string
@@ -124,6 +126,16 @@ class DateDataType extends AbstractDataType
     public function getDefaultSortingDirection()
     {
         return SortingDirectionsDataType::DESC($this->getWorkbench());
+    }
+    
+    public function getFormatToParseTo() : string
+    {
+        return self::DATE_FORMAT_INTERNAL;
+    }
+    
+    public function getFormat() : string
+    {
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATE_FORMAT');
     }
 }
 ?>

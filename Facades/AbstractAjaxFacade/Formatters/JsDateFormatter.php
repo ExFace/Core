@@ -51,7 +51,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatter($jsInput)
     {
-        return "(! {$jsInput} ? {$jsInput} : (isNaN({$jsInput}) ? Date.parse({$jsInput}) : new Date({$jsInput})).toString(\"{$this->getFormat()}\"))";
+        return "moment(! {$jsInput} ? {$jsInput} : (isNaN({$jsInput}) ? exfTools.date.parse({$jsInput}) : new Date({$jsInput}))).formatPHP(\"{$this->getFormat()}\")";
     }
     
     /**
@@ -64,7 +64,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsDateFormatter($jsDateObject)
     {
-        return "{$jsDateObject}.toString(\"{$this->getFormat()}\")";
+        return "moment({$jsDateObject}).format(\"YYYY-MM-DD\")";
     }
     
     /**
@@ -78,7 +78,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsDateStringifier($jsDateObject)
     {
-        return "{$jsDateObject}.toString(\"{$this->buildJsDateFormatInternal()}\")";
+        return "moment({$jsDateObject}).format(\"{$this->buildJsDateFormatInternal()}\")";
     }
     
     /**
@@ -125,146 +125,9 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
         
         
     function {$this->buildJsDateParserFunctionName()}(date) {
-        // date ist ein String und wird zu einem date-Objekt geparst
-        
-        // Variablen initialisieren
-        var match = null;
-        var dateParsed = false;
-        var dateValid = false;
-        var time;
-
-        // hh:mm:ss , Thh:mm:ss
-        if (!dateParsed && (match = /[T ](\d{2}:\d{2}:\d{2})/.exec(date)) != null) {
-            time = match[1];
-        } else if (!dateParsed && (match = / (\d{2}:\d{2})/.exec(date)) != null) {
-        // hh:mm
-            time = match[1];
-        }
-        
-        // dd.MM.yyyy, dd-MM-yyyy, dd/MM/yyyy, d.M.yyyy, d-M-yyyy, d/M/yyyy
-        if (!dateParsed && (match = /(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})/.exec(date)) != null) {
-            var yyyy = Number(match[3]);
-            var MM = Number(match[2]);
-            var dd = Number(match[1]);
-            dateParsed = true;
-            dateValid = Date.validateYear(yyyy) && Date.validateMonth(MM) && Date.validateDay(dd, yyyy, MM);
-        }
-        // yyyy.MM.dd, yyyy-MM-dd, yyyy/MM/dd, yyyy.M.d, yyyy-M-d, yyyy/M/d
-        if (!dateParsed && (match = /(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/.exec(date)) != null) {
-            var yyyy = Number(match[1]);
-            var MM = Number(match[2]);
-            var dd = Number(match[3]);
-            dateParsed = true;
-            dateValid = Date.validateYear(yyyy) && Date.validateMonth(MM) && Date.validateDay(dd, yyyy, MM);
-        }
-        // dd.MM.yy, dd-MM-yy, dd/MM/yy, d.M.yy, d-M-yy, d/M/yy
-        if (!dateParsed && (match = /(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2})/.exec(date)) != null) {
-            var yyyy = 2000 + Number(match[3]);
-            var MM = Number(match[2]);
-            var dd = Number(match[1]);
-            dateParsed = true;
-            dateValid = Date.validateYear(yyyy) && Date.validateMonth(MM) && Date.validateDay(dd, yyyy, MM);
-        }
-        // yy.MM.dd, yy-MM-dd, yy/MM/dd, yy.M.d, yy-M-d, yy/M/d
-        if (!dateParsed && (match = /(\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})/.exec(date)) != null) {
-            var yyyy = 2000 + Number(match[1]);
-            var MM = Number(match[2]);
-            var dd = Number(match[3]);
-            dateParsed = true;
-            dateValid = Date.validateYear(yyyy) && Date.validateMonth(MM) && Date.validateDay(dd, yyyy, MM);
-        }
-        // dd.MM, dd-MM, dd/MM, d.M, d-M, d/M
-        if (!dateParsed && (match = /(\d{1,2})[.\-/](\d{1,2})/.exec(date)) != null) {
-            var yyyy = (new Date()).getFullYear();
-            var MM = Number(match[2]);
-            var dd = Number(match[1]);
-            dateParsed = true;
-            dateValid = Date.validateYear(yyyy) && Date.validateMonth(MM) && Date.validateDay(dd, yyyy, MM);
-        }
-        // ddMMyyyy
-        if (!dateParsed && (match = /^(\d{2})(\d{2})(\d{4})$/.exec(date)) != null) {
-            var yyyy = Number(match[3]);
-            var MM = Number(match[2]);
-            var dd = Number(match[1]);
-            dateParsed = true;
-            dateValid = Date.validateYear(yyyy) && Date.validateMonth(MM) && Date.validateDay(dd, yyyy, MM);
-        }
-        // ddMMyy
-        if (!dateParsed && (match = /^(\d{2})(\d{2})(\d{2})$/.exec(date)) != null) {
-            var yyyy = 2000 + Number(match[3]);
-            var MM = Number(match[2]);
-            var dd = Number(match[1]);
-            dateParsed = true;
-            dateValid = Date.validateYear(yyyy) && Date.validateMonth(MM) && Date.validateDay(dd, yyyy, MM);
-        }
-        // ddMM
-        if (!dateParsed && (match = /^(\d{2})(\d{2})$/.exec(date)) != null) {
-            var yyyy = (new Date()).getFullYear();
-            var MM = Number(match[2]);
-            var dd = Number(match[1]);
-            dateParsed = true;
-            dateValid = Date.validateYear(yyyy) && Date.validateMonth(MM) && Date.validateDay(dd, yyyy, MM);
-        }
-        
-        // Ausgabe des geparsten Wertes
-        if (dateParsed && dateValid) {
-            return new Date(yyyy + '-' + MM + '-' + dd + (time !== undefined ? ' ' + time : ''));
-        }
-        
-        // (+/-)? ... (T/D/W/M/J/Y)?
-        if (!dateParsed && (match = /^([+\-]?\d{1,3})([TtDdWwMmJjYy]?)$/.exec(date)) != null) {
-            var output = Date.today();
-            switch (match[2].toUpperCase()) {
-                case "T":
-                case "D":
-                case "":
-                    output.addDays(Number(match[1]));
-                    break;
-                case "W":
-                    output.addWeeks(Number(match[1]));
-                    break;
-                case "M":
-                    output.addMonths(Number(match[1]));
-                    break;
-                case "J":
-                case "Y":
-                    output.addYears(Number(match[1]));
-            }
-            dateParsed = true;
-            dateValid = true;
-        }
-        // TODAY, HEUTE, NOW, JETZT, YESTERDAY, GESTERN, TOMORROW, MORGEN
-        if (!dateParsed) {
-            switch (date.toUpperCase()) {
-                case "TODAY":
-                case "HEUTE":
-                case "NOW":
-                case "JETZT":
-                    var output = Date.today();
-                    dateParsed = true;
-                    dateValid = true;
-                    break;
-                case "YESTERDAY":
-                case "GESTERN":
-                    var output = Date.today().addDays(-1);
-                    dateParsed = true;
-                    dateValid = true;
-                    break;
-                case "TOMORROW":
-                case "MORGEN":
-                    var output = Date.today().addDays(1);
-                    dateParsed = true;
-                    dateValid = true;
-            }
-        }
-        
-        // Ausgabe des geparsten Wertes
-        if (dateParsed && dateValid) {
-            return output;
-        } else {
-            return null;
-        }
+        return exfTools.date.parse(date);
     }
+
 JS;
     }
     
@@ -288,7 +151,7 @@ JS;
         return <<<JS
 
     function() {
-        var dateObj = {$this->buildJsDateParserFunctionName()}({$jsInput});
+        var dateObj = exfTools.date.parse({$jsInput});
         return (dateObj ? {$this->buildJsDateFormatter('dateObj')} : '');
     }()
 
@@ -313,7 +176,8 @@ JS;
     public function buildHtmlBodyIncludes()
     {
         return [
-            '<script type="text/javascript" src="exface/vendor/npm-asset/datejs/build/production/' . $this->buildDateJsLocaleFilename() . '"></script>',
+            '<script type="text/javascript" src="exface/moment/moment.min.js"></script>',
+            '<script type="text/javascript" src="exface/vendor/exface/Core/Facades/AbstractAjaxFacade/js/exfTools.js"></script>',            
             '<script type="text/javascript">
                 ' . $this->buildJsDateParserFunction() . '
             </script>'
@@ -356,7 +220,7 @@ JS;
     protected function buildJsDateFormatInternal()
     {
         $type = $this->getDataType();
-        return ($type instanceof TimestampDataType) || ($type instanceof DateTimeDataType) ? "yyyy-MM-dd HH:mm:ss" : "yyyy-MM-dd";
+        return ($type instanceof TimestampDataType) || ($type instanceof DateTimeDataType) ? "YYYY-MM-DD HH:mm:ss" : "YYYY-MM-DD";
     }
     
     /**
@@ -370,11 +234,11 @@ JS;
     public function getFormat()
     {
         if (is_null($this->format)) {
-            $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
-            if ($this->getDataType() instanceof TimestampDataType || $this->getDataType() instanceof DateTimeDataType) {
-                $this->format = $translator->translate('LOCALIZATION.DATE.DATETIME_FORMAT_JS');
+            $type = $this->getDataType();
+            if ($type instanceof DateDataType) {
+                return $type->getFormat();
             } else {
-                $this->format = $translator->translate('LOCALIZATION.DATE.DATE_FORMAT_JS');
+                return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT');
             }
         }
         return $this->format;
