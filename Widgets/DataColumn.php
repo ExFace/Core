@@ -54,8 +54,10 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     
     private $attribute_alias = null;
 
-    private $sortable = true;
+    private $sortable = null;
 
+    private $filterable = null;
+    
     private $footer = null;
     
     private $widthMax = null;
@@ -104,35 +106,83 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         $this->attribute_alias = $value;
         return $this;
     }
+    
+    /**
+     *
+     * @return boolean
+     */
+    public function isFilterable() : bool
+    {
+        if ($this->filterable === null) {
+            if ($this->isBoundToAttribute() === true && $this->getExpression()->isMetaAttribute() === true && $attr = $this->getAttribute()) {
+                $this->filterable = $attr->isFilterable();
+            } else {
+                $this->filterable = false;
+            }
+        }
+        return $this->filterable;
+    }
+    
+    /**
+     * Set to TRUE/FALSE to forcibly enable or disable filtering data via this column.
+     *
+     * Depending on the facade used, this property will enable or disable header filters for
+     * this column and also include this column in all sorts of built-in filter constructors,
+     * advanced search, etc.
+     * 
+     * By default, columns that are bound to attributes inherit the sortable setting of
+     * the attribute.
+     * 
+     * NOTE: you can still add filters over the content of this column in the `filters` list
+     * or via custom `configurator` - the `filterable` property only applies to the column
+     * and it's representation in the facade.
+     *
+     * @uxon-property filterable
+     * @uxon-type boolean
+     *
+     * @param bool $trueOrFalse
+     * @return DataColumn
+     */
+    public function setFilterable(bool $trueOrFalse) : DataColumn
+    {
+        $this->filterable = $trueOrFalse;
+        return $this;
+    }
 
     /**
      *
      * @return boolean
      */
-    public function isSortable()
+    public function isSortable() : bool
     {
-        if (is_null($this->sortable)) {
-            if ($attr = $this->getAttribute()) {
+        if ($this->sortable === null) {
+            if ($this->isBoundToAttribute() === true && $this->getExpression()->isMetaAttribute() === true && $attr = $this->getAttribute()) {
                 $this->sortable = $attr->isSortable();
+            } else {
+                $this->sortable = false;
             }
         }
         return $this->sortable;
     }
 
     /**
-     * Set to FALSE to disable sorting data via this column.
+     * Set to TRUE/FALSE to forcibly enable or disable sorting data via this column.
      *
-     * If the column represents a meta attribute, the sortable property of that attribute will be used.
-     *
+     * Depending on the facade used, this property will enable or disable sorting when the
+     * column header is clicked and include this column in all sorts of sorting configurations.
+     * 
+     * By default, columns that are bound to attributes inherit the sortable setting of
+     * the attribute.
+     * 
      * @uxon-property sortable
      * @uxon-type boolean
      *
-     * @param
-     *            boolean
+     * @param bool $trueOrFalse
+     * @return DataColumn
      */
-    public function setSortable($value)
+    public function setSortable(bool $trueOrFalse) : DataColumn
     {
-        $this->sortable = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->sortable = $trueOrFalse;
         return $this;
     }
 
