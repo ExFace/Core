@@ -40,9 +40,9 @@ use exface\Core\Widgets\Parts\DataSpreadSheetFooter;
  * inlcude file!
  * 
  * ```
- *  "LIBS.JEXCEL.JS": "npm-asset/jexcel/dist/jexcel.min.js",
+ *  "LIBS.JEXCEL.JS": "npm-asset/jexcel/dist/jexcel.js",
  *  "LIBS.JEXCEL.JS_JSUITES": "npm-asset/jsuites/dist/jsuites.js",
- *  "LIBS.JEXCEL.CSS": "npm-asset/jexcel/dist/jexcel.min.css",
+ *  "LIBS.JEXCEL.CSS": "npm-asset/jexcel/dist/jexcel.css",
  *	"LIBS.JEXCEL.CSS_JSUITES": "npm-asset/jsuites/dist/jsuites.css",
  *	
  * ```
