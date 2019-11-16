@@ -833,7 +833,7 @@ $.ajaxSetup({
     dataFilter: function(data, type) {
         if (type === 'script') {
         	var regEx = /['"]use strict['"];/;
-        	if (regEx.test(data.substring(0, 100)) === true) {
+        	if (regEx.test(data.substring(0, 500)) === true) {
             	data = data.replace(regEx, '');
         	}
         }
