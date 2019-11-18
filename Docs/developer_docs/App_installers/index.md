@@ -6,6 +6,10 @@ Installers are PHP classes, that implement the `\exface\Core\Interfaces\AppInsta
 
 The core includes a couple of installer classes for common purposes like maintaining SQL databases, registering facades, etc. These installers can be easily used in every app. On the other hand, apps may provide custom and even reusable installers of their own.
 
+## Installers included in the core
+
+- [SqlDatabaseInstaller](sql_database_installer.md)
+
 ## Adding an Installer to an app
 
 To add a custom installer to an app create a PHP file in the app main folder, named like the app without spaces and add 'App' to it. For example for an App named `Demo MES` the PHP installation file needs to be named `DemoMESApp.php`.  
@@ -44,9 +48,5 @@ Example for a custom installer for an App named `Demo MES`:
 	    }
 	}
 	?>
-
-## Core installers
-
-- [SqlDatabaseInstaller](sql_database_installer.md)
 
 

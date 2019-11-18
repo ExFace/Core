@@ -142,7 +142,9 @@ class SqlMigration
      */
     public function equals(SqlMigration $otherMigration) : bool
     {
-        return $this->getMigrationName() === $otherMigration->getMigrationName();
+        $thisFileName = pathinfo($this->getMigrationName(), PATHINFO_FILENAME);
+        $otherFileName = pathinfo($otherMigration->getMigrationName(), PATHINFO_FILENAME);
+        return $thisFileName === $otherFileName;
     }
     
     /**
