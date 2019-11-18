@@ -96,6 +96,26 @@
 		return _m.isValid();		
 	};
 	
+	function _validateTime (hh, mm, ss) {
+		var validHours = false;
+		var validMinute = false;
+		var validSeconds = false;
+		if (hh >= 0 && hh < 24) {
+			validHours = true;
+		}
+		if (mm >= 0 && mm < 60) {
+			validMinute = true;
+		}
+		if (ss >=0 && ss < 60) {
+			validSeconds = true;
+		}
+		if (validHours === true && validMinutes === true && validSeconds == true) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
 	function _buildRegexString (ParseParams = null) {
 		var _string = '';
 		var langObject = _mDateParseDefaultParams.lang;
@@ -129,8 +149,7 @@
 	};
 	
 	return {
-		date: {
-			
+		date: {			
 			parse: function(sDate, ParseParams = null) {
 				console.log("sDate: ",sDate);
 				// date ist ein String und wird zu einem date-Objekt geparst
@@ -218,9 +237,6 @@
 				// Ausgabe des geparsten Wertes
 				if (dateParsed && dateValid) {
 					
-					//output = moment([yyyy, MM, dd, ]);
-					//console.log('parsedDate: ', output.formatPHP("d.m.Y"));
-					//output = output.toDate();
 					output = new Date(yyyy + '-' + MM + '-' + dd + (time !== undefined ? ' ' + time : ''));
 					console.log('parsedDate: ', output);
 					return output;
@@ -232,12 +248,15 @@
 				output = null;
 				if (!dateParsed && (match !== null)) {
 					output = moment();
+					var _key = null;;
 					var _exp = match[2];
 					var _number = Number(match[1]);
 					if (_number !== 0 && _exp === '') {
-						var _key ="day";
+						_key ="day";
+					} else if(_number === 0) {
+						_key = "now";
 					} else {
-						var _key = _findKey(_exp, ParseParams);
+						_key = _findKey(_exp, ParseParams);
 					}				
 					switch (_key) {
 						case "now": break;
@@ -282,13 +301,13 @@
 				
 				// Ausgabe des geparsten Wertes
 				if (dateParsed && output !== null && output.isValid()) {
-					//console.log('parsedDate: ', moment(output).formatPHP("d.m.Y"));
 					console.log(output.toDate());
 					return output.toDate();
 				}
 			
 			return output;
 			},
+			
 			format: function(sDate, sPhpFormat = null) {
 				if (sPhpFormat === null) {
 					sPhpFormat = 'd.m.Y';
@@ -296,10 +315,76 @@
 				var output = moment(sDate).formatPHP(sPhpFormat);
 				return output;
 			},
+			
 			validate: function (sDate) {
 				//return true;
 				return moment(sDate).isValid();
 			}
-		}
+		},
+		time: {
+			parse: function(sTime, ParseParams = null) {
+				// sTime ist ein String und wird zu einem date-Objekt geparst
+		        
+		        // Variablen initialisieren
+		        var match = null;
+		        var timeParsed = false;
+		        var timeValid = false;
+		        var output = null;
+		        
+		        if (!timeParsed && (match = /(\d{1,2}):?(\d{1,2})(:\d{1,2})?$/.exec(date)) != null) {
+		            var hh = Number(match[1]);
+		            var mm = Number(match[2]);
+		            var ss = Number(match[3]);
+		            timeParsed = true;
+		            timeValid = _validateTime (hh, mm, ss) ;
+		        }
+		        
+		        // Ausgabe des geparsten Wertes
+		        if (timeParsed && timeValid) {
+		            output = new Date(null, null, null, hh, mm, ss);
+		        	console.log('parsedDate: ', output);
+		            return output;
+		        }
+		        
+		        // (+/-)? ... (T/D/W/M/J/Y)?
+		        if (!dateParsed && (match = /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(date)) != null) {
+		            output = moment();
+		            switch (match[2].toUpperCase()) {
+		                case "H":
+		                case "":
+		                	output.add(Number(match[1]), 'hours');
+		                    break;
+		                case "M":
+		                	output.add(Number(match[1]), 'minutes');
+		                    break;
+		                case "S":
+		                	output.add(Number(match[1]), 'seconds');
+		                    break;
+		            }
+		            dateParsed = true;
+		            dateValid = true;
+		        }
+		        
+		        // Ausgabe des geparsten Wertes
+		        if (dateParsed && dateValid) {
+		            return output;
+		        } else {
+		            return null;
+		        }
+			},
+			
+			format: function(sTime, sPhpFormat = null) {
+				if (sPhpFormat === null) {
+					sPhpFormat = 'H:i:s';
+				}
+				var output = moment(sTime).formatPHP(sPhpFormat);
+				return output;
+			},
+			
+			validate: function (sDate) {
+				//return true;
+				return moment(sDate).isValid();
+			}
+		}		
 	}
 })));
