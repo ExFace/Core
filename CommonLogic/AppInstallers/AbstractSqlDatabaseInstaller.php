@@ -4,7 +4,6 @@ namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
-use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Events\Installer\OnInstallEvent;
 use exface\Core\Interfaces\Selectors\DataSourceSelectorInterface;
 use exface\Core\CommonLogic\Selectors\DataSourceSelector;
@@ -21,6 +20,20 @@ use exface\Core\CommonLogic\UxonObject;
  * the meta model and the code. This installer takes care of migrating the schema
  * by performing SQL scripts stored in a special folder within the app (by
  * default "install/Sql/%Database_Version").
+ * 
+ * ## How does int work?
+ * 
+ * The installer can basically do the following things:
+ * 
+ * 1. Create a database according to the given data connection (if it does not exist)
+ * 2. Execute migrations, that were not applied to the DB schema yet and take down those,
+ * that were applied, but are not required anymore.
+ * 3. Execute any SQL within files in specified folders - in constrast to migrations,
+ * this SQL will be executed on every install, regardless of whether it was executed
+ * before or not.
+ * 
+ * See documentation > Developers Docs > App Installers > SQL Database Installer for 
+ * detailed instructions.
  * 
  * ## Configuration
  * 
@@ -61,7 +74,6 @@ use exface\Core\CommonLogic\UxonObject;
  
  * 3) Change the setFoldersWithMigrations array and the setFoldersWitStatcSql fitting
  * to your folder structur in Install/Sql/%SqlDbType%/ 
- *
  *
  * ## Transaction handling
  * 
