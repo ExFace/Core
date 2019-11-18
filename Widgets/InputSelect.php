@@ -506,6 +506,10 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function setValues($expressionOrArrayOrDelimitedString) : iHaveValues
     {
+        if ($expressionOrArrayOrDelimitedString instanceof UxonObject) {
+            $expressionOrArrayOrDelimitedString = $expressionOrArrayOrDelimitedString->toArray();
+        }
+        
         if (is_array($expressionOrArrayOrDelimitedString) === true) {
             $this->setValuesFromArray($expressionOrArrayOrDelimitedString);
         } else {

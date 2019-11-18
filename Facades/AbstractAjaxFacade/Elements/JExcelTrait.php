@@ -40,9 +40,9 @@ use exface\Core\Widgets\Parts\DataSpreadSheetFooter;
  * inlcude file!
  * 
  * ```
- *  "LIBS.JEXCEL.JS": "npm-asset/jexcel/dist/jexcel.min.js",
+ *  "LIBS.JEXCEL.JS": "npm-asset/jexcel/dist/jexcel.js",
  *  "LIBS.JEXCEL.JS_JSUITES": "npm-asset/jsuites/dist/jsuites.js",
- *  "LIBS.JEXCEL.CSS": "npm-asset/jexcel/dist/jexcel.min.css",
+ *  "LIBS.JEXCEL.CSS": "npm-asset/jexcel/dist/jexcel.css",
  *	"LIBS.JEXCEL.CSS_JSUITES": "npm-asset/jsuites/dist/jsuites.css",
  *	
  * ```
@@ -833,7 +833,7 @@ $.ajaxSetup({
     dataFilter: function(data, type) {
         if (type === 'script') {
         	var regEx = /['"]use strict['"];/;
-        	if (regEx.test(data.substring(0, 100)) === true) {
+        	if (regEx.test(data.substring(0, 500)) === true) {
             	data = data.replace(regEx, '');
         	}
         }
