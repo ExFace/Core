@@ -51,94 +51,46 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatter($jsInput)
     {
-        return "moment(! {$jsInput} ? {$jsInput} : (isNaN({$jsInput}) ? exfTools.date.parse({$jsInput}) : new Date({$jsInput}))).formatPHP(\"{$this->getFormat()}\")";
+        return "exfTools.date.format((! {$jsInput} ? {$jsInput} : (isNaN({$jsInput}) ? exfTools.date.parse({$jsInput}) : new Date({$jsInput}))), \"{$this->getFormat()}\")";
     }
     
     /**
-     * Returns inline javascript code to format the JS Date object behind the given variable name.
+     * Returns inline javascript code to format the JS Date object behind the given variable name
+     * into the internal used value.
      * 
-     * E.g. buildJsDateFormatter('Date()') would format the current date.
+     * E.g. buildJsFormatDateObjectToInternal('Date()') would format the current date.
      * 
      * @param string $jsDateObject
      * @return string
      */
-    public function buildJsDateFormatter($jsDateObject)
+    public function buildJsFormatDateObjectToInternal($jsDateObject)
     {
-        return "moment({$jsDateObject}).format(\"YYYY-MM-DD\")";
+        return "exfTools.date.format({$jsDateObject}, \"{$this->buildJsDateFormatInternal()}\")";
     }
     
     /**
      * Returns inline javascript code to turn the JS Date object behind the given variable 
-     * name into a normalized date/time string.
+     * name into a formated string.
      *
-     * E.g. buildJsDateFormatter('Date()') would create a JS expression returning something like '2017-01-31'.
      *
      * @param string $jsDateObject
      * @return string
      */
-    public function buildJsDateStringifier($jsDateObject)
+    public function buildJsFormatDateObjectToString($jsDateObject)
     {
-        return "moment({$jsDateObject}).format(\"{$this->buildJsDateFormatInternal()}\")";
+        return "exfTools.date.format({$jsDateObject}, \"{$this->getFormat()}\")";
     }
     
     /**
-     * Returns a javascript function to parse string input into a JS Date object.
-     * 
-     * The function's name is set by buildJsDateParserFunctionName() and it accepts
-     * a single argument - the string to parse.
-     * 
-     * function parseDate(date) {
-     *  ...
-     *  return Date(...);
-     * }
-     * 
+     * Returns inline javascript code to turn the given String to a Date Object
+     *
+     *
+     * @param string $jsString
      * @return string
      */
-    protected function buildJsDateParserFunction()
+    public function buildJsParseStringToDateObject($jsString)
     {
-        // TODO: Muss angepasst werden um auch eingegebene Zeiten zu verarbeiten. Momentan
-        // wird die Zeit ignoriert -> immer 00:00:00.
-        // Vorsicht wenn neben dem Datum auch die Zeit uebergeben werden soll. In welcher
-        // Zeitzone befindet sich der Client und der Server. In welcher Zeitzone erwartet
-        // der Server die uebergebene Zeit? new Date(...) und date.toString arbeiten immer
-        // mit der Zeitzone des Clients. Der Bootstrap Datepicker erwartet die
-        // uebergebenen Dates in der UTC-Zeitzone und gibt auch entsprechende Dates
-        // zurueck. Dates in UTC-Zeit koennen z.B. mit new Date(Date.UTC(yyyy, MM, dd))
-        // erstellt werden.
-        
-        
-        // IDEA: Der Code des Parsers wird noch hier erzeugt und steht nicht an einer
-        // einzelnen Stelle wie z.B. facade.js, da er aus einer Konfiguration erzeugt
-        // werden soll. Diese muesste die regulaeren Ausdruecke, sowie die Zuordnungen
-        // der matches zu dd, MM, yyyy enthalten. Die Schwierigkeit besteht darin auch
-        // Operationen wie 2000 + Number(match[3]) oder (new Date()).getFullYear()
-        // abzubilden (vlt. durch Angabe von Jahrhundert, Jahr getrennt, bzw. currentYear
-        // als Schluesselwort???). Diese Konfiguration koennte dann auch im DateDataType
-        // verwendet werden um entsprechenden PHP-Code zu erzeugen um das Datum zu
-        // parsen.
-        
-        // Auch moeglich: stattdessen Verwendung des DateJs-Parsers
-        // date wird entsprechend CultureInfo geparst, hierfuer muss das entsprechende locale
-        // DateJs eingebunden werden und ein kompatibler Formatter verwendet werden
-        // return Date.parse(date);
-        return <<<JS
-        
-        
-    function {$this->buildJsDateParserFunctionName()}(date) {
-        return exfTools.date.parse(date);
-    }
-
-JS;
-    }
-    
-    /**
-     * Returns the name of the date parser function: "parseDate" by default.
-     * 
-     * @return string
-     */
-    public function buildJsDateParserFunctionName()
-    {
-        return 'parseDate';
+        return "exfTools.date.parse({$jsString})";
     }
     
     /**
@@ -152,7 +104,7 @@ JS;
 
     function() {
         var dateObj = exfTools.date.parse({$jsInput});
-        return (dateObj ? {$this->buildJsDateFormatter('dateObj')} : '');
+        return (dateObj ? {$this->buildJsFormatDateObjectToString('dateObj')} : '');
     }()
 
 JS;
@@ -177,10 +129,7 @@ JS;
     {
         return [
             '<script type="text/javascript" src="exface/moment/moment.min.js"></script>',
-            '<script type="text/javascript" src="exface/vendor/exface/Core/Facades/AbstractAjaxFacade/js/exfTools.js"></script>',            
-            '<script type="text/javascript">
-                ' . $this->buildJsDateParserFunction() . '
-            </script>'
+            '<script type="text/javascript" src="exface/vendor/exface/Core/Facades/AbstractAjaxFacade/js/exfTools.js"></script>'           
         ];
     }
     
@@ -220,7 +169,8 @@ JS;
     protected function buildJsDateFormatInternal()
     {
         $type = $this->getDataType();
-        return ($type instanceof TimestampDataType) || ($type instanceof DateTimeDataType) ? "YYYY-MM-DD HH:mm:ss" : "YYYY-MM-DD";
+        return $type->getFormatToParseTo();
+        //return ($type instanceof TimestampDataType) || ($type instanceof DateTimeDataType) ? "YYYY-MM-DD HH:mm:ss" : "YYYY-MM-DD";
     }
     
     /**
