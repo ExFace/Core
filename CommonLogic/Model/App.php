@@ -135,13 +135,27 @@ class App implements AppInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\AppInterface::getDirectory()
      */
     public function getDirectory()
     {
         if (! $this->directory) {
-            $this->directory = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, DIRECTORY_SEPARATOR, $this->getAliasWithNamespace());
+            $vendorDir = $this->getWorkbench()->filemanager()->getPathToVendorFolder();
+            // Replace dots in the alias by the DIRECTORY_SEPARATOR
+            $dirCaseSensitive = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, DIRECTORY_SEPARATOR, $this->getAliasWithNamespace());
+            // By default, we use composer packages. Since the must be lowercase as of composer 2.0,
+            // we just lowercase the app's alias here.
+            $dir = strtolower($dirCaseSensitive);
+            // However, earlier apps have non-lowercased folder names, so if the folder does
+            // not exist, we check, if the case sensitive path is there. If so, use it. Otherwise
+            // the app was never exported, so we can still assume the lowercased path.
+            if (file_exists($vendorDir . DIRECTORY_SEPARATOR . $dir) === false) {
+                if (file_exists($vendorDir . DIRECTORY_SEPARATOR . $dirCaseSensitive)) {
+                    $this->directory = $dirCaseSensitive;
+                    return $dirCaseSensitive;
+                }
+            }
+            $this->directory = $dir;
         }
         return $this->directory;
     }
