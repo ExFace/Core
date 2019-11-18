@@ -10,7 +10,7 @@ class TimestampDataType extends DateDataType
     
     public function getFormatToParseTo() : string
     {
-        return self::DATE_FORMAT_INTERNAL;
+        return DateTimeDataType::DATETIME_FORMAT_INTERNAL;
     }
     
     public function getFormat() : string
