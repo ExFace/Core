@@ -7,7 +7,7 @@ use exface\Core\DataTypes\TimestampDataType;
 use exface\Core\DataTypes\DateTimeDataType;
 
 /**
- * This formatter generates javascript code to format and parse date/time via the library date.js.
+ * This formatter generates javascript code to format and parse date/time via the library moment.js.
  * 
  * In addition to regular input formats, the following relative values are supported by
  * the parser:
@@ -18,9 +18,9 @@ use exface\Core\DataTypes\DateTimeDataType;
  * - yy.MM.dd, yy-MM-dd, yy/MM/dd, yy.M.d, yy-M-d, yy/M/d (z.B. 32-09-30 fuer den 30.09.2032)
  * - dd.MM, dd-MM, dd/MM, d.M, d-M, d/M (z.B. 30.09 oder 30/9)
  * - ddMMyyyy, ddMMyy, ddMM (z.B. 30092015, 300915 oder 3009)
- * - (+/-)? ... (t/d/w/m/j/y)? (z.B. 0 fuer heute, 1 oder 1d oder +1t fuer morgen, 2w fuer
- *      in 2 Wochen, -5m fuer vor 5 Monaten, +1j oder +1y fuer in 1 Jahr)
- * - today, heute, now, jetzt, yesterday, gestern, tomorrow, morgen
+ * - (+/-)? ... (t/d/w/m/j/y)? (z.B. 0 fuer heute, 1 oder 1d oder d fuer morgen, 2w fuer
+ *      in 2 Wochen, -5m fuer vor 5 Monaten, +1y fuer in 1 Jahr)
+ * - today, now, yesterday, tomorrow
  * 
  * @method DateDataType getDataType()
  * 
@@ -58,7 +58,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      * Returns inline javascript code to format the JS Date object behind the given variable name
      * into the internal used value.
      * 
-     * E.g. buildJsFormatDateObjectToInternal('Date()') would format the current date.
+     * E.g. buildJsFormatDateObjectToInternal('new Date()') would format the current date.
      * 
      * @param string $jsDateObject
      * @return string
@@ -88,7 +88,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      * @param string $jsString
      * @return string
      */
-    public function buildJsParseStringToDateObject($jsString)
+    public function buildJsFormatParserToJsDate($jsString)
     {
         return "exfTools.date.parse({$jsString})";
     }
@@ -128,7 +128,7 @@ JS;
     public function buildHtmlBodyIncludes()
     {
         return [
-            '<script type="text/javascript" src="exface/moment/moment.min.js"></script>',
+            '<script type="text/javascript" src="exface/vendor/npm-asset/moment/min/moment.min.js"></script>',
             '<script type="text/javascript" src="exface/vendor/exface/Core/Facades/AbstractAjaxFacade/js/exfTools.js"></script>'           
         ];
     }
@@ -138,11 +138,11 @@ JS;
      *
      * @return string
      */
-    protected function buildDateJsLocaleFilename()
+    protected function buildMomentJsLocaleFilename()
     {
-        $dateJsBasepath = $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . 'npm-asset' . DIRECTORY_SEPARATOR . 'datejs' . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . 'production' . DIRECTORY_SEPARATOR;
+        $dateJsBasepath = $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . 'npm-asset' . DIRECTORY_SEPARATOR . 'moment' . DIRECTORY_SEPARATOR . 'min' . DIRECTORY_SEPARATOR;
         
-        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        /*$translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         $locale = $translator->getLocale();
         $filename = 'date-' . str_replace("_", "-", $locale) . '.min.js';
         if (file_exists($dateJsBasepath . $filename)) {
@@ -155,9 +155,9 @@ JS;
             if (file_exists($dateJsBasepath . $filename)) {
                 return $filename;
             }
-        }
+        }*/
         
-        return 'date.min.js';
+        return 'moment.min.js';
     }
     
     /**
