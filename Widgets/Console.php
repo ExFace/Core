@@ -9,6 +9,8 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use Symfony\Component\Translation\Tests\StringClass;
 
 /**
  * Shows a command line terminal.
@@ -420,12 +422,31 @@ class Console extends AbstractWidget
             $phvals = [];
             foreach ($phs as $ph) {
                 if ($col = $dataSheet->getColumns()->get($ph)) {
-                    $phvals[$ph] = implode($this->getCommandPlaceholderValueListDelimiter(), $col->getValues(false));
+                    $vals = [];
+                    foreach ($col->getValues(false) as $val) {
+                        $vals[] = $this->escapeCommandPlaceholderValue($val, $col->getDataType());
+                    }
+                    $phvals[$ph] = implode($vals);
                 }
             }
             $cmds[$nr] = StringDataType::replacePlaceholders($cmd, $phvals);
         }
         $this->setStartCommands(new UxonObject($cmds));
+    }
+    
+    /**
+     * 
+     * @param string $value
+     * @param DataTypeInterface $type
+     * @return string
+     */
+    protected function escapeCommandPlaceholderValue(string $value, DataTypeInterface $type) : string
+    {
+        switch (true) {
+            case $type instanceof StringDataType:
+                $string = trim(json_encode($value), "\"");
+        }   
+        return $string;
     }
     
     /**
