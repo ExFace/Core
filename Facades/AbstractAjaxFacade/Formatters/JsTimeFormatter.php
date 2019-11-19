@@ -6,14 +6,14 @@ use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\TimeDataType;
 
 /**
- * This formatter generates javascript code to format and parse time via Date.js library.
+ * This formatter generates javascript code to format and parse time via moment.js library.
  * 
  * @method TimeDataType getDataType()
  * 
  * @author Andrej Kabachnik
  *
  */
-class JsTimeFormatter extends AbstractJsDataTypeFormatter
+class JsTimeFormatter extends JsDateFormatter
 {
     private $format = null;
     
@@ -37,8 +37,7 @@ class JsTimeFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatter($jsInput)
     {
-        //return "(! {$jsInput} ? {$jsInput} : Date.parse({$jsInput}).toString(\"{$this->getFormat()}\"))";
-        return "exfTools.time.format((! {$jsInput} ? {$jsInput} : ? exfTools.time.parse({$jsInput})), \"{$this->getFormat()}\")";
+        return "exfTools.time.format((! {$jsInput} ? {$jsInput} : exfTools.time.parse({$jsInput})), \"{$this->getFormat()}\")";
     }
     
      /**
@@ -75,9 +74,9 @@ class JsTimeFormatter extends AbstractJsDataTypeFormatter
      * @param string $jsString
      * @return string
      */
-    public function buildJsParseStringToDateObject($jsString)
+    public function buildJsFormatParserToJsDate($jsString)
     {
-        return "exfTools.time.parse({$jsString})";
+        return "function(){var sTime = exfTools.time.parse({$jsString}); return sTime ? new Date('1970-01-01 ' + sTime) : null}()";
     }
         
     /**
@@ -87,64 +86,7 @@ class JsTimeFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatParser($jsInput)
     {
-        return <<<JS
-
-    function() {
-        var dateObj = exfTools.time.parse({$jsInput});
-        return (dateObj ? {$this->buildJsFormatDateObjectToString('dateObj')} : '');
-    }()
-
-JS;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildHtmlHeadIncludes()
-     */
-    public function buildHtmlHeadIncludes()
-    {
-        return [];
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildHtmlBodyIncludes()
-     */
-    public function buildHtmlBodyIncludes()
-    {
-        return [
-            '<script type="text/javascript" src="exface/moment/moment.min.js"></script>',
-            '<script type="text/javascript" src="exface/vendor/exface/Core/Facades/AbstractAjaxFacade/js/exfTools.js"></script>'
-        ];
-    }
-    
-    /**
-     * Generates the DateJs filename based on the locale provided by the translator.
-     *
-     * @return string
-     */
-    protected function buildDateJsLocaleFilename()
-    {
-        $dateJsBasepath = $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . 'npm-asset' . DIRECTORY_SEPARATOR . 'datejs' . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . 'production' . DIRECTORY_SEPARATOR;
-        
-        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
-        $locale = $translator->getLocale();
-        $filename = 'date-' . str_replace("_", "-", $locale) . '.min.js';
-        if (file_exists($dateJsBasepath . $filename)) {
-            return $filename;
-        }
-        
-        $fallbackLocales = $translator->getFallbackLocales();
-        foreach ($fallbackLocales as $fallbackLocale) {
-            $filename = 'date-' . str_replace("_", "-", $fallbackLocale) . '.min.js';
-            if (file_exists($dateJsBasepath . $filename)) {
-                return $filename;
-            }
-        }
-        
-        return 'date.min.js';
+        return "(exfTools.time.parse({$jsInput}) || '')";
     }
     
     /**
