@@ -249,7 +249,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
      * @param string $absolutePath
      * @param boolean $removeHiddenFiles
      */
-    public function emptyDir($absolutePath, $removeHiddenFiles = true){
+    public static function emptyDir($absolutePath, $removeHiddenFiles = true){
         $absolutePath = static::pathNormalize($absolutePath, DIRECTORY_SEPARATOR);
         if (substr($absolutePath, -1) !== DIRECTORY_SEPARATOR){
             $absolutePath .= DIRECTORY_SEPARATOR;
