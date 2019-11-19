@@ -101,7 +101,7 @@ class WorkbenchCache implements WorkbenchCacheInterface
         // Empty cache dir
         try {
             $filemanager = $this->workbench->filemanager();
-            $filemanager->emptyDir($filemanager->getPathToCacheFolder());
+            $filemanager::emptyDir($filemanager->getPathToCacheFolder());
         } catch (\Throwable $e){
             $ok = false;
             $this->workbench->getLogger()->logException($e);
