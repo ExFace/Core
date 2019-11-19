@@ -6,6 +6,8 @@ use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsDateFormatter;
 use exface\Core\Widgets\InputDate;
 use exface\Core\Widgets\InputDateTime;
 use exface\Core\Factories\DataTypeFactory;
+use exface\Core\DataTypes\TimeDataType;
+use exface\Core\DataTypes\TimestampDataType;
 
 /**
  *
@@ -40,7 +42,7 @@ trait JqueryInputDateTrait {
             $type = $widget->getValueDataType();
             // Date inputs will only work with dates, so if we don't have a date data type, 
             // we just create a new one for the formatter.
-            if (! $type instanceof DateDataType) {
+            if (! $type instanceof DateDataType && ! $type instanceof TimeDataType && ! $type instanceof TimestampDataType) {
                 $type = DataTypeFactory::createFromPrototype($this->getWorkbench(), DateDataType::class);
             }
             /* @var $formatter \exface\Core\Facades\AbstractAjaxFacade\Formatters\JsDateFormatter */
