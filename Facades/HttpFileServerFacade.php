@@ -6,6 +6,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Facades\AbstractHttpFacade\NotFoundHandler;
+use exface\Core\Facades\AbstractHttpFacade\HttpRequestHandler;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
 
 /**
  * Facade to upload and download files using virtual pathes.
@@ -16,7 +18,7 @@ use exface\Core\Facades\AbstractHttpFacade\NotFoundHandler;
  *
  */
 class HttpFileServerFacade extends AbstractHttpFacade
-{
+{    
     /**
      * 
      * @param WorkbenchInterface $workbench
@@ -45,8 +47,13 @@ class HttpFileServerFacade extends AbstractHttpFacade
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        $handler = new HttpRequestHandler(new NotFoundHandler());
+        
+        // Authenticate users
+        $handler->add(new AuthenticationMiddleware($this->getWorkbench()));
+        
         // TODO need to implement downloading files based on some internal virtual path here!
         // This virtual path should be used by buildUrlForDownload() too.
-        (new NotFoundHandler())->handle($request);
+        $handler->handle($request);
     }
 }

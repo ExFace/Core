@@ -26,6 +26,8 @@
     
     "LOCALE.DEFAULT": "en_US",
     
+    "SECURITY.DISABLE_ANONYMOUS_ACCESS": false,
+    
     "FACADES.ROUTES": {},
     
     "FACADES.ABSTRACTPWAFACADE.WORKBOX_VENDOR_PATH": "npm-asset/workbox-sw/build/workbox-sw.js"

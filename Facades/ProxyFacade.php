@@ -7,6 +7,9 @@ use function GuzzleHttp\Psr7\stream_for;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Response;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
+use exface\Core\Facades\AbstractHttpFacade\HttpRequestHandler;
+use exface\Core\Facades\AbstractHttpFacade\OKHandler;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
 
 /**
  * This facade act's as a proxy: it fetches and passes along data located at the URI in the request parameter "url".
@@ -44,6 +47,16 @@ class ProxyFacade extends AbstractHttpFacade
      */
     public function handle(ServerRequestInterface $request) : ResponseInterface
     {
+        // First run security middleware and see if it retunrs errors. If so,
+        // the request is not good.
+        $handler = new HttpRequestHandler(new OKHandler());
+        $handler->add(new AuthenticationMiddleware($this->getWorkbench()));
+        $responseTpl = $handler->handle($request);
+        if ($responseTpl->getStatusCode() >= 400) {
+            return $responseTpl;
+        }
+        
+        // If the request passes security, request the target URL
         $url = $request->getQueryParams()[url];
         $method = $request->getMethod();
         $requestHeaders = $request->getHeaders();
@@ -53,7 +66,9 @@ class ProxyFacade extends AbstractHttpFacade
         
         $responseHeaders = $result->getHeaders();
         unset($responseHeaders['Transfer-Encoding']);
-        $response = new Response($result->getStatusCode(), $responseHeaders, (string) $result->getBody(), $result->getProtocolVersion(), $result->getReasonPhrase());
+        // Merge haders from the target response and the security middleware in case the
+        // latter added something important.
+        $response = new Response($result->getStatusCode(), array_merge_recursive($responseHeaders, $responseTpl->getHeaders()), (string) $result->getBody(), $result->getProtocolVersion(), $result->getReasonPhrase());
         
         return $response;
     }
