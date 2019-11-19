@@ -459,7 +459,7 @@ JS;
                     .pico-modal-contents {height: 100%; width: 100%;}
                                         
                     .jsoneditor-modal .uxoneditor-input, 
-                    .spinner-wrapper { 
+                    .jsoneditor-modal .spinner-wrapper { 
                         font-family: "dejavu sans mono", "droid sans mono", consolas,
 							monaco, "lucida console", "courier new", courier, monospace,
 							sans-serif;
@@ -469,11 +469,11 @@ JS;
                     }
                     .jsoneditor-modal .uxoneditor-input,
                     .jsoneditor-modal .selectr-selected,
-                    .spinner-wrapper {
+                    .jsoneditor-modal .spinner-wrapper {
                         height: 35px;
                         margin-bottom: 4px;
                     }
-                    .selectr-selected {
+                    .jsoneditor-modal .selectr-selected {
                         line-height: 25px;
                     }
                     .jsoneditor-modal .jsoneditor input {
@@ -502,7 +502,7 @@ JS;
                     .jsoneditor-no-menuicon .jsoneditor-text {padding-left: 4px !important;}
                     .jsoneditor-no-menuicon i {padding: 2px; background-color: #4C4C4C; margin-right: 4px; color: white;}
 
-                    .spinner {
+                    .jsoneditor-modal .spinner {
                         display: inline-block;
                         width: 16px;
                         height: 16px;
@@ -512,7 +512,7 @@ JS;
                         animation: spin 1s ease-in-out infinite;
                         -webkit-animation: spin 1s ease-in-out infinite;
                     }
-                    .spinner-wrapper {
+                    .jsoneditor-modal .spinner-wrapper {
                         position: absolute;
                         width: 100%;
                         background-color: #f5f5f5;
