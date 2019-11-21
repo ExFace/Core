@@ -261,7 +261,7 @@
 					if (number === 0 && exp !== '') {
 						number = 1;
 					}
-					if (key !== null) {
+					if (key === null) {
 						key = _findKey(exp, ParseParams);
 					}
 					switch (key) {
