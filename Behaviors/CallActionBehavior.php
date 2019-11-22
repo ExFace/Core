@@ -20,7 +20,7 @@ use exface\Core\Interfaces\Events\DataTransactionEventInterface;
  * 
  * ```
  * {
- *  "event_alias": "exface.Core.DataSheet.OnUpdate",
+ *  "event_alias": "exface.Core.DataSheet.OnBeforeCreateData",
  *  "action": {
  *      "alias": "..."
  *  }
@@ -76,8 +76,12 @@ class CallActionBehavior extends AbstractBehavior
     }
 
     /**
-     * Sets the event alias upon which the configured action is executed
-     * (e.g. 'DataSheet.CreateData.After').
+     * Alias of the event, that should trigger the action.
+     * 
+     * Technically, any type of event selector will do - e.g. 
+     * - `exface.Core.DataSheet.OnBeforeCreateData`
+     * - `\exface\Core\Events\DataSheet\OnBeforeCreateData`
+     * - OnBeforeCreateData::class (in PHP)
      * 
      * @uxon-property event_alias
      * @uxon-type metamodel:event
