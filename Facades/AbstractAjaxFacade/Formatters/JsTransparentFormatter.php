@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
+use exface\Core\Interfaces\Facades\FacadeInterface;
+
 /**
  * The transparent formatter does not do any formatting, but just returns it's input as is.
  * 
@@ -36,7 +38,7 @@ class JsTransparentFormatter extends AbstractJsDataTypeFormatter
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildHtmlHeadIncludes()
      */
-    public function buildHtmlHeadIncludes()
+    public function buildHtmlHeadIncludes(FacadeInterface $facade) : array
     {
         return [];
     }
@@ -46,7 +48,7 @@ class JsTransparentFormatter extends AbstractJsDataTypeFormatter
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildHtmlBodyIncludes()
      */
-    public function buildHtmlBodyIncludes()
+    public function buildHtmlBodyIncludes(FacadeInterface $facade) : array
     {
         return [];
     }    

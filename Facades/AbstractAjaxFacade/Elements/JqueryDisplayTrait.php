@@ -117,6 +117,6 @@ trait JqueryDisplayTrait {
     
     public function buildHtmlHeadTags()
     {
-        return array_merge(parent::buildHtmlHeadTags(), $this->getFormatter()->buildHtmlBodyIncludes(), $this->getFormatter()->buildHtmlHeadIncludes());
+        return array_merge(parent::buildHtmlHeadTags(), $this->getFormatter()->buildHtmlBodyIncludes($this->getFacade()), $this->getFormatter()->buildHtmlHeadIncludes($this->getFacade()));
     }
 }

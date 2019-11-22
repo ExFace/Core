@@ -89,7 +89,7 @@ trait EChartsTrait
         
         foreach ($this->getWidget()->getData()->getColumns() as $col) {
             $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
-            $includes = array_merge($includes, $formatter->buildHtmlBodyIncludes());
+            $includes = array_merge($includes, $formatter->buildHtmlBodyIncludes($this->getFacade()));
         }
         
         return $includes;

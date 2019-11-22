@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Interfaces;
 
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
 
 /**
  * This interface defines the structure of reusable data type formatters for
@@ -25,18 +26,18 @@ interface JsDataTypeFormatterInterface
      * 
      * Each element of the array must hold exactly one tag including the action opening an closing HTML tags.
      * 
-     * @return array
+     * @return string[]
      */
-    public function buildHtmlHeadIncludes();
+    public function buildHtmlHeadIncludes(FacadeInterface $facade) : array;
     
     /**
      * Returns an array of HTML include tags (<script>, <link>, etc.) to be placed in the <body> section.
      *
      * Each element of the array must hold exactly one tag including the action opening an closing HTML tags.
      *
-     * @return array
+     * @return string[]
      */
-    public function buildHtmlBodyIncludes();
+    public function buildHtmlBodyIncludes(FacadeInterface $facade) : array;
     
     /**
      * Returns inline embeddable javascript code to format the input containing a normalized value.
