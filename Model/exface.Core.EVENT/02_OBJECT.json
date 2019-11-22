@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2018-09-25 11:49:35",
-            "MODIFIED_ON": "2017-06-05 06:05:55",
+            "MODIFIED_ON": "2019-11-22 10:45:56",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e8c0b9147f34ffb73e0205857feb80",
@@ -98,7 +98,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "EVENT",
-            "DATA_ADDRESS": "*\/*\/Events\/*.php"
+            "DATA_ADDRESS": "*\/*\/Events\/*\/On*.php"
         }
     ],
     "totals_rows": [],
