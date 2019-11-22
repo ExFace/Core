@@ -284,7 +284,7 @@ class DataRowGrouper implements WidgetPartInterface, iHaveCaption
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveCaption::getCaption()
      */
-    public function getCaption()
+    public function getCaption() : ?string
     {
         if (! $cap = $this->getCaptionViaTrait()) {
             $cap = $this->getGroupByColumn()->getCaption();

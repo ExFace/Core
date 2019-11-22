@@ -82,7 +82,7 @@ class StateMenuButton extends MenuButton
      *
      * @see \exface\Core\Widgets\Button::getCaption()
      */
-    public function getCaption()
+    public function getCaption() : ?string
     {
         $caption = parent::getCaption();
         if (! $caption && ! $this->getHideCaption()) {

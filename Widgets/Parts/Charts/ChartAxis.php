@@ -255,7 +255,7 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveCaption::getCaption()
      */
-    public function getCaption()
+    public function getCaption() : ?string
     {
         if ($this->getCaptionViaTrait() === null) {
             $this->setCaption($this->getDataColumn()->getCaption());

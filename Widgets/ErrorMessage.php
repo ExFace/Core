@@ -9,7 +9,7 @@ namespace exface\Core\Widgets;
  */
 class ErrorMessage extends DebugMessage
 {
-    public function getCaption()
+    public function getCaption() : ?string
     {
         return $this->translate('ERROR.CAPTION');
     }

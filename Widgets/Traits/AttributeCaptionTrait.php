@@ -30,7 +30,7 @@ trait AttributeCaptionTrait
      * {@inheritdoc}
      * @see \exface\Core\Widgets\AbstractWidget::getCaption()
      */
-    public function getCaption()
+    public function getCaption() : ?string
     {
         $caption = parent::getCaption();
         if ($caption === null || $caption === '') {
