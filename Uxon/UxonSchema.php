@@ -50,7 +50,6 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
  * - metamodel:expression
  * - metamodel:widget_link
  * - metamodel:event
- * - metamodel:data_source
  * - metamodel:aggregator
  * - uxon:path - where path is a JSONpath relative to the current field
  * - [val1,val2] - enumeration of commma-separated values (in square brackets)
@@ -387,8 +386,13 @@ class UxonSchema implements UxonSchemaInterface
             case strcasecmp($type, 'metamodel:aggregator') === 0:
                 $options = AggregatorFunctionsDataType::getKeysStatic();
                 break;
+            case strcasecmp($type, 'metamodel:datatype') === 0:
+                $options = $this->getMetamodelDatatypeAliases();
+                break;
+            case strcasecmp($type, 'metamodel:event') === 0:
+                $options = $this->getMetamodelEventAliases();
+                break;
         }
-        
         return $options;
     }
     
@@ -527,6 +531,65 @@ class UxonSchema implements UxonSchemaInterface
         $this->setCache('', 'widgetTypes', $types);
         
         return $types;
+    }
+    
+    /**
+     * Returning metamodel datatype aliases
+     *
+     * @return string[]
+     */
+    protected function getMetamodelDatatypeAliases() : array
+    {
+        if ($cache = $this->getCache('', 'datatypeAliases')) {
+            return $cache;
+        }
+        
+        $options = [];
+        $dot = AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
+        
+        // TODO something like this. Need to check attribute names
+        /*$ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.DATATYPE');
+        $ds->getColumns()->addMultiple(['ALIAS', 'APP__ALIAS']);
+        $ds->dataRead();
+        foreach ($ds->getRows() as $row) {
+            $options[] = $row['APP__ALIAS'] . $dot . $row['ALIAS'];
+        }
+        sort($options);
+        
+        $this->setCache('', 'datatypeAliases', $options);
+        */
+        
+        return $options;
+    }
+    
+    /**
+     * Returning metamodel datatype aliases
+     *
+     * @return string[]
+     */
+    protected function getMetamodelEventAliases() : array
+    {
+        if ($cache = $this->getCache('', 'eventAliases')) {
+            return $cache;
+        }
+        
+        $options = [];
+        $dot = AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
+        
+        // TODO something like this. Need to check attribute names
+        // See prototypes in getMetamodelActionAliases() for transforming path to alias
+        /*$ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.EVENT');
+         $ds->getColumns()->addMultiple(['NAME', 'PATH_RELATIVE']);
+         $ds->dataRead();
+         foreach ($ds->getRows() as $row) {
+         $options[] = $row['APP__ALIAS'] . $dot . $row['ALIAS'];
+         }
+         sort($options);
+         
+         $this->setCache('', 'eventAliases', $options);
+         */
+        
+        return $options;
     }
     
     /**
