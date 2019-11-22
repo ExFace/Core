@@ -221,7 +221,7 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
      *
      * @see \exface\Core\Widgets\AbstractWidget::getCaption()
      */
-    public function getCaption()
+    public function getCaption() : ?string
     {
         return $this->getInputWidget()->getCaption();
     }

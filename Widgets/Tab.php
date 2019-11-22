@@ -119,7 +119,7 @@ class Tab extends Panel
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::getHideCaption()
      */
-    public function getHideCaption()
+    public function getHideCaption() : ?bool
     {
         if ($this->getParent()->getHideTabsCaptions()){
             return true;
