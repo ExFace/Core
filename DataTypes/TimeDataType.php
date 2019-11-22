@@ -10,6 +10,8 @@ class TimeDataType extends AbstractDataType
     
     private $amPm = false;
     
+    const TIME_FORMAT_INTERNAL = 'H:i:s';
+    
     public static function cast($string)
     {
         $string = trim($string);
@@ -99,7 +101,7 @@ class TimeDataType extends AbstractDataType
     
     public static function formatTime(\DateTime $date)
     {    
-        return $date->format('H:i:s');
+        return $date->format(self::TIME_FORMAT_INTERNAL);
     }
     
     /**
@@ -110,6 +112,16 @@ class TimeDataType extends AbstractDataType
     public function getDefaultSortingDirection()
     {
         return SortingDirectionsDataType::DESC($this->getWorkbench());
+    }
+    
+    public function getFormatToParseTo() : string
+    {
+        return self::TIME_FORMAT_INTERNAL;
+    }
+    
+    public function getFormat() : string
+    {
+        return 'H:i';
     }
     
     /**
