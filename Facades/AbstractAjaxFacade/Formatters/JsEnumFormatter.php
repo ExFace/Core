@@ -3,6 +3,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
 
 /**
  * 
@@ -53,7 +54,7 @@ JS;
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildHtmlHeadIncludes()
      */
-    public function buildHtmlHeadIncludes()
+    public function buildHtmlHeadIncludes(FacadeInterface $facade) : array
     {
         return [];
     }
@@ -63,7 +64,7 @@ JS;
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildHtmlBodyIncludes()
      */
-    public function buildHtmlBodyIncludes()
+    public function buildHtmlBodyIncludes(FacadeInterface $facade) : array
     {
         return [];
     }
