@@ -11,11 +11,13 @@ use Psr\Http\Server\RequestHandlerInterface;
 interface HttpFacadeInterface extends FacadeInterface, RequestHandlerInterface
 {    
     /**
-     * Returns the URL to access the facade: e.g. http://www.exface.com/demo/api/docs.
+     * Returns the URL to access the facade: e.g. http://www.exface.com/demo/api/docs or api/docs
+     * depending on the $relativeToSiteRoot parameter.
      * 
+     * @param bool $relativeToSiteRoot
      * @return string
      */
-    public function buildUrlToFacade() : string;
+    public function buildUrlToFacade(bool $relativeToSiteRoot = false) : string;
     
     /**
      * Returns an array of regular expressions to check if a give route belongs to

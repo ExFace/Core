@@ -215,7 +215,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
      */
     public function getAjaxUrl()
     {
-        return $this->getFacade()->buildUrlToFacade();
+        return $this->getFacade()->buildUrlToFacade(true);
     }
     
     /**
