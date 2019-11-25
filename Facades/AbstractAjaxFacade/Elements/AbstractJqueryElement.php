@@ -520,8 +520,12 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
      */
     public function getWidthMinimum()
     {
-        if (is_null($this->width_minimum)) {
+        if (null === $this->width_minimum) {
             $this->width_minimum = $this->getFacade()->getConfig()->getOption('WIDTH_MINIMUM');
+            $width = $this->getWidget()->getWidth();
+            if ($width->isRelative() === true && $width->isMax() === false) {
+                $this->width_minimum = round($this->width_minimum * $this->getWidget()->getWidth()->getValue(), 0);
+            }
         }
         return $this->width_minimum;
     }
