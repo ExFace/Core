@@ -546,9 +546,8 @@ class UxonSchema implements UxonSchemaInterface
         
         $options = [];
         $dot = AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
-        
-        // TODO something like this. Need to check attribute names
-        /*$ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.DATATYPE');
+
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.DATATYPE');
         $ds->getColumns()->addMultiple(['ALIAS', 'APP__ALIAS']);
         $ds->dataRead();
         foreach ($ds->getRows() as $row) {
@@ -557,8 +556,7 @@ class UxonSchema implements UxonSchemaInterface
         sort($options);
         
         $this->setCache('', 'datatypeAliases', $options);
-        */
-        
+
         return $options;
     }
     
@@ -569,26 +567,26 @@ class UxonSchema implements UxonSchemaInterface
      */
     protected function getMetamodelEventAliases() : array
     {
+
         if ($cache = $this->getCache('', 'eventAliases')) {
             return $cache;
         }
         
         $options = [];
         $dot = AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
+
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.EVENT');
+        $ds->getColumns()->addMultiple(['NAME', 'PATH_RELATIVE']);
+        $ds->dataRead();
+        foreach ($ds->getRows() as $row) {
+            $namespace = str_replace(['/Actions', '/'], ['', $dot], $row['PATH_RELATIVE']);
+            $options[] = $namespace . $dot . $row['NAME'];
+//          $options[] = $row['APP__ALIAS'] . $dot . $row['ALIAS'];
+        }
+        sort($options);
         
-        // TODO something like this. Need to check attribute names
-        // See prototypes in getMetamodelActionAliases() for transforming path to alias
-        /*$ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.EVENT');
-         $ds->getColumns()->addMultiple(['NAME', 'PATH_RELATIVE']);
-         $ds->dataRead();
-         foreach ($ds->getRows() as $row) {
-         $options[] = $row['APP__ALIAS'] . $dot . $row['ALIAS'];
-         }
-         sort($options);
+        $this->setCache('', 'eventAliases', $options);
          
-         $this->setCache('', 'eventAliases', $options);
-         */
-        
         return $options;
     }
     
