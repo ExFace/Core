@@ -11,7 +11,7 @@ class PasswordHashDataType extends StringDataType
 {
     private $hashAlgorithm = null;
     
-    protected static function isHash(string $password) : bool
+    public static function isHash(string $password) : bool
     {
         $nfo = password_get_info($password);
         return $nfo['algo'] !== 0;
