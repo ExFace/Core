@@ -3,7 +3,7 @@ namespace exface\Core\Interfaces\DataSources;
 
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 
-interface SqlDataConnectorInterface extends DataConnectionInterface
+interface SqlDataConnectorInterface extends DataConnectionInterface, TextualQueryConnectorInterface
 {
 
     /**
