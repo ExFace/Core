@@ -13,38 +13,41 @@
         "widget_type": "DataTable",
         "filters": [
             {
-                "attribute_alias": "APP"
+                "attribute_alias": "NAME"
             },
             {
                 "attribute_alias": "ALIAS"
             },
             {
-                "attribute_alias": "NAME"
-            },
-            {
-                "attribute_alias": "MENU_PARENT__ALIAS"
+                "attribute_alias": "MENU_PARENT"
             },
             {
                 "attribute_alias": "CONTENT",
                 "widget_type": "Input",
                 "height": 1
+            },
+            {
+                "attribute_alias": "APP"
             }
         ],
         "columns": [
             {
-                "attribute_alias": "APP__LABEL"
+                "attribute_alias": "NAME"
             },
             {
                 "attribute_alias": "ALIAS"
             },
             {
-                "attribute_alias": "NAME"
+                "attribute_alias": "MENU_PARENT__LABEL"
+            },
+            {
+                "attribute_alias": "MENU_POSITION"
+            },
+            {
+                "attribute_alias": "APP__LABEL"
             },
             {
                 "attribute_alias": "CMS_ID"
-            },
-            {
-                "attribute_alias": "MENU_PARENT__ALIAS"
             },
             {
                 "attribute_alias": "CREATED_ON"
@@ -54,6 +57,16 @@
             },
             {
                 "attribute_alias": "UID"
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "MENU_PARENT",
+                "direction": "asc"
+            },
+            {
+                "attribute_alias": "MENU_POSITION",
+                "direction": "asc"
             }
         ]
     }
