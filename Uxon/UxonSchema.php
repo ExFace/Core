@@ -579,9 +579,8 @@ class UxonSchema implements UxonSchemaInterface
         $ds->getColumns()->addMultiple(['NAME', 'PATH_RELATIVE']);
         $ds->dataRead();
         foreach ($ds->getRows() as $row) {
-            $namespace = str_replace(['/Actions', '/'], ['', $dot], $row['PATH_RELATIVE']);
+            $namespace = str_replace(['/Events', '/'], ['', $dot], $row['PATH_RELATIVE']);
             $options[] = $namespace . $dot . $row['NAME'];
-//          $options[] = $row['APP__ALIAS'] . $dot . $row['ALIAS'];
         }
         sort($options);
         
