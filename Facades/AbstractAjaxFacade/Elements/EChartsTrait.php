@@ -89,7 +89,7 @@ trait EChartsTrait
         
         foreach ($this->getWidget()->getData()->getColumns() as $col) {
             $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
-            $includes = array_merge($includes, $formatter->buildHtmlBodyIncludes());
+            $includes = array_merge($includes, $formatter->buildHtmlBodyIncludes($this->getFacade()));
         }
         
         return $includes;
@@ -1338,7 +1338,7 @@ JS;
      */
     protected function buildJsAxisProperties(ChartAxis $axis, int $nameGapMulti = 1) : string
     {
-        if ($axis->getHideCaption() === false) {
+        if (! $axis->getHideCaption()) {
             $caption = $axis->getCaption();            
         } else {
             $caption = '';
@@ -1749,7 +1749,7 @@ JS;
             $postion = mb_strtolower($axis->getPosition());
             //if the axis has a caption the base gap is based on that length, else it's 0
             $baseGap = 0;
-            if ($axis->getHideCaption() === false) {                
+            if (! $axis->getHideCaption()) {                
                 if ($axis->getDimension() === Chart::AXIS_Y) {
                     $baseGap = strlen($axis->getCaption())*3.5;
                 }                
@@ -2262,9 +2262,9 @@ JS;
         $widget = $this->getWidget();
         $margin = 25;
         foreach ($this->getWidget()->getAxesY() as $axis) {
-            if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false && $axis->getHideCaption() === false ) {
+            if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false && ! $axis->getHideCaption()) {
                 $countAxisLeft++;
-            } elseif ($axis->getPosition() === ChartAxis::POSITION_RIGHT && $axis->isHidden() === false && $axis->getHideCaption() === false) {
+            } elseif ($axis->getPosition() === ChartAxis::POSITION_RIGHT && $axis->isHidden() === false && ! $axis->getHideCaption()) {
                 $countAxisRight++;
             }
         }

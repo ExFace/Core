@@ -14,7 +14,7 @@ trait iHaveCaptionTrait {
     
     use TranslatablePropertyTrait;
     
-    private $hide_caption = false;
+    private $hide_caption = null;
     
     private $caption = null;
     
@@ -27,9 +27,12 @@ trait iHaveCaptionTrait {
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveCaption::setCaption()
      */
-    public function setCaption($caption)
+    public function setCaption($caption) : iHaveCaption
     {
         $this->caption = $this->evaluatePropertyExpression($caption);
+        if ($this->hide_caption === null) {
+            $this->setHideCaption(false);
+        }
         return $this;
     }    
     
@@ -38,7 +41,7 @@ trait iHaveCaptionTrait {
      * {@inheritdoc}
      * @see iHaveCaption::getCaption()
      */
-    function getCaption()
+    public function getCaption() : ?string
     {
         return $this->caption;
     }
@@ -48,13 +51,16 @@ trait iHaveCaptionTrait {
      * {@inheritdoc}
      * @see iHaveCaption::getHideCaption()
      */
-    public function getHideCaption()
+    public function getHideCaption() : ?bool
     {
         return $this->hide_caption;
     }
     
     /**
-     * Set to TRUE to hide the caption of the widget.
+     * Set to TRUE to hide the caption of the widget and to FALSE to force showing it.
+     * 
+     * If not set explicitly, it is upto the widget logic and the facade to decide,
+     * if the caption is to be shown.
      *
      * @uxon-property hide_caption
      * @uxon-type boolean
@@ -64,7 +70,7 @@ trait iHaveCaptionTrait {
      *
      * @see iHaveCaption::setHideCaption()
      */
-    public function setHideCaption($value)
+    public function setHideCaption(bool $value) : iHaveCaption
     {
         $this->hide_caption = $value;
         return $this;

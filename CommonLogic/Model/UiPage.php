@@ -660,7 +660,7 @@ class UiPage implements UiPageInterface
     public function getMenuParentPageAlias()
     {
         if (is_null($this->menuParentPageAlias) && ! is_null($this->menuParentPageSelector)) {
-            $this->menuParentPageAlias = $this->getMenuParentPage()->getAliasWithNamespace();
+            $this->menuParentPageAlias = $this->getMenuParentPage(true)->getAliasWithNamespace();
         }
         return $this->menuParentPageAlias;
     }
@@ -682,9 +682,9 @@ class UiPage implements UiPageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentPage()
      */
-    public function getMenuParentPage()
+    public function getMenuParentPage(bool $ignoreReplacement = false) : ?UiPageInterface
     {
-        return UiPageFactory::createFromCmsPage($this->getCMS(), $this->getMenuParentPageSelector());
+        return UiPageFactory::createFromCmsPage($this->getCMS(), $this->getMenuParentPageSelector(), $ignoreReplacement);
     }
 
     /**

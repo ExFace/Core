@@ -17,6 +17,7 @@ use exface\Core\Interfaces\Widgets\iDefineAction;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Traits\iHaveColorTrait;
+use exface\Core\Interfaces\Widgets\iHaveCaption;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -143,12 +144,6 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     {
         $this->action_alias = $value;
         return $this;
-    }
-
-    public function setCaption($caption)
-    {
-        // TODO get caption automatically from action model once it is created
-        return parent::setCaption($caption);
     }
 
     /**
@@ -280,7 +275,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      *
      * @see \exface\Core\Widgets\AbstractWidget::getCaption()
      */
-    public function getCaption()
+    public function getCaption() : ?string
     {
         $caption = parent::getCaption();
         if (is_null($caption) && $this->getAction()) {

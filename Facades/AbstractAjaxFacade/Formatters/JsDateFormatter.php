@@ -3,8 +3,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\DateDataType;
-use exface\Core\DataTypes\TimestampDataType;
-use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\Interfaces\Facades\FacadeInterface;
 
 /**
  * This formatter generates javascript code to format and parse date/time via the library moment.js.
@@ -21,6 +20,27 @@ use exface\Core\DataTypes\DateTimeDataType;
  * - (+/-)? ... (t/d/w/m/j/y)? (z.B. 0 fuer heute, 1 oder 1d oder d fuer morgen, 2w fuer
  * in 2 Wochen, -5m fuer vor 5 Monaten, +1y fuer in 1 Jahr)
  * - today, now, yesterday, tomorrow
+ * 
+ * NOTE: this formatter requires the javascript libraries exfTools (part of AbstractAjaxFacade) and 
+ * moment.js to be available via `exfTools` and `moment()` respectively! Add moment.js to the
+ * `composer.json` of the facade like this:
+ * 
+ * ```
+ * require: {
+ *      ...
+ * 		"npm-asset/moment" : "^2.24.0"
+ *      ...
+ * }
+ * ```
+ * 
+ * If the authomatic header-include logic of the `AbstractAjaxFacade` is to be used (methods 
+ * `buildHtmlBodyIncludes()` and `buildHtmlHeadIncludes()`), the following configuration options need
+ * to be added to the facade:
+ * 
+ * ```
+ *  "LIBS.MOMENT.JS": "npm-asset/moment/min/moment.min.js",
+ *  "LIBS.EXFTOOLS.JS": "exface/Core/Facades/AbstractAjaxFacade/js/exfTools.js",
+ * ```
  *
  * @method DateDataType getDataType()
  *        
@@ -127,7 +147,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      * {@inheritdoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildHtmlHeadIncludes()
      */
-    public function buildHtmlHeadIncludes()
+    public function buildHtmlHeadIncludes(FacadeInterface $facade) : array
     {
         return [];
     }
@@ -137,11 +157,11 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      * {@inheritdoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildHtmlBodyIncludes()
      */
-    public function buildHtmlBodyIncludes()
+    public function buildHtmlBodyIncludes(FacadeInterface $facade) : array
     {
         return [
-            '<script type="text/javascript" src="exface/vendor/npm-asset/moment/min/moment.min.js"></script>',
-            '<script type="text/javascript" src="exface/vendor/exface/Core/Facades/AbstractAjaxFacade/js/exfTools.js"></script>'
+            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.MOMENT.JS') . '"></script>',
+            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.EXFTOOLS.JS') . '"></script>'
         ];
     }
 

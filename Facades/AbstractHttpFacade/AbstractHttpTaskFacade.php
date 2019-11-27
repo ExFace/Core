@@ -10,6 +10,7 @@ use Psr\Http\Server\MiddlewareInterface;
 use exface\Core\Exceptions\InternalError;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\RequestContextReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\RequestIdNegotiator;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
 
 /**
  * Common base structure for HTTP facades designed to handle tasks.
@@ -96,7 +97,8 @@ abstract class AbstractHttpTaskFacade extends AbstractHttpFacade
     {
         return [
             new RequestIdNegotiator(), // make sure, there is a X-Request-ID header
-            new RequestContextReader($this->getWorkbench()->getContext()) // Pass request data to the request context
+            new RequestContextReader($this->getWorkbench()->getContext()), // Pass request data to the request context
+            new AuthenticationMiddleware($this->getWorkbench())
         ];
     }
     

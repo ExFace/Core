@@ -722,6 +722,48 @@
             "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"aggregate_by_attribute_alias\":[\"\"]},\"series\":[{\"type\":\"pie\",\"value_attribute_alias\":\"\",\"text_attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2019-11-26 13:47:30",
+            "MODIFIED_ON": "2019-11-26 13:47:30",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea1053370d1da69a560205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Call action on event",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/CallActionBehavior.php",
+            "UXON": "{\"event_alias\":\"\",\"action\":{\"alias\":\"\"}}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior"
+        },
+        {
+            "CREATED_ON": "2019-11-26 13:57:41",
+            "MODIFIED_ON": "2019-11-26 13:58:22",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea1054a33963b89a560205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Run custom static SQL",
+            "DESCRIPTION": "Just perform some SQL queries on the current connection of a data source when the action is triggered",
+            "PROTOTYPE": "exface\/Core\/Actions\/CustomDataSourceQuery.php",
+            "UXON": "{\"alias\":\"exface.Core.CustomDataSourceQuery\",\"data_source\":\"my_sql_source_alias\",\"queries\":[\"UPDATE table1 WHERE ...\",\"UPDATE table2 WHERE ...\"]}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action"
+        },
+        {
+            "CREATED_ON": "2019-11-26 14:01:48",
+            "MODIFIED_ON": "2019-11-26 14:14:59",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea105536edfd349a560205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Run custom SQL with placeholders",
+            "DESCRIPTION": "Run custom SQL with placeholders to be filled from input data of the action - i.e. [#ID#] will be replaced by the value in column \"ID\" of the input data. Multiple rows will trigger each query multiple times!",
+            "PROTOTYPE": "exface\/Core\/Actions\/CustomDataSourceQuery.php",
+            "UXON": "{\"alias\":\"exface.Core.CustomDataSourceQuery\",\"data_source\":\"\",\"input_object_alias\":\"\",\"queries\":[\"UPDATE table1 WHERE id = [#ID#]\",\"UPDATE table2 WHERE foreign_key = [#ID#]\"]}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action"
         }
     ],
     "totals_rows": [],

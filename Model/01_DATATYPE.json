@@ -624,6 +624,21 @@
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "PhpFilePath",
             "SHORT_DESCRIPTION": "Path to PHP files"
+        },
+        {
+            "CREATED_ON": "2019-11-19 16:35:17",
+            "MODIFIED_ON": "2019-11-19 16:45:19",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea0aea84bb7da1be19e4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Password Hash",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/PasswordHashDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputPassword\"}",
+            "ALIAS": "PasswordHash",
+            "SHORT_DESCRIPTION": ""
         }
     ],
     "totals_rows": [],

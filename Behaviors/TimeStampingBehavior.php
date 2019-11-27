@@ -80,7 +80,7 @@ class TimeStampingBehavior extends AbstractBehavior
     /**
      * Set to FALSE to disable automatic race condition prevention.
      *
-     * @uxon-property created_on_attribute_alias
+     * @uxon-property check_for_conflicts_on_update
      * @uxon-type bool
      * @uxon-default true
      *

@@ -20,7 +20,7 @@ use exface\Core\Interfaces\Events\DataTransactionEventInterface;
  * 
  * ```
  * {
- *  "event_alias": "exface.Core.DataSheet.OnUpdate",
+ *  "event_alias": "exface.Core.DataSheet.OnBeforeCreateData",
  *  "action": {
  *      "alias": "..."
  *  }
@@ -39,6 +39,8 @@ class CallActionBehavior extends AbstractBehavior
     private $action = null;
     
     private $actionConfig = null;
+    
+    private $priority = null;
 
     /**
      * 
@@ -48,7 +50,7 @@ class CallActionBehavior extends AbstractBehavior
     public function register() : BehaviorInterface
     {
         $handler = [$this, 'callAction'];
-        $this->getWorkbench()->eventManager()->addListener($this->getEventAlias(), $handler);
+        $this->getWorkbench()->eventManager()->addListener($this->getEventAlias(), $handler, $this->getPriority());
         $this->setRegistered(true);
         return $this;
     }
@@ -76,11 +78,16 @@ class CallActionBehavior extends AbstractBehavior
     }
 
     /**
-     * Sets the event alias upon which the configured action is executed
-     * (e.g. 'DataSheet.CreateData.After').
+     * Alias of the event, that should trigger the action.
+     * 
+     * Technically, any type of event selector will do - e.g. 
+     * - `exface.Core.DataSheet.OnBeforeCreateData`
+     * - `\exface\Core\Events\DataSheet\OnBeforeCreateData`
+     * - OnBeforeCreateData::class (in PHP)
      * 
      * @uxon-property event_alias
      * @uxon-type metamodel:event
+     * @uxon-required true
      * 
      * @param string $aliasWithNamespace
      * @return CallActionBehavior
@@ -109,6 +116,7 @@ class CallActionBehavior extends AbstractBehavior
      * @uxon-property action
      * @uxon-type \exface\Core\CommonLogic\AbstractAction
      * @uxon-template {"alias": ""}
+     * @uxon-required true
      * 
      * @param UxonObject|string $action
      * @return BehaviorInterface
@@ -147,5 +155,29 @@ class CallActionBehavior extends AbstractBehavior
                 $action->handle($task);
             }
         }
+    }
+    
+    /**
+     *
+     * @return int|NULL
+     */
+    public function getPriority() : ?int
+    {
+        return $this->priority;
+    }
+    
+    /**
+     * Event handlers with higher priority will be executed first!
+     * 
+     * @uxon-property priority
+     * @uxon-type integer
+     * 
+     * @param int $value
+     * @return CallActionBehavior
+     */
+    public function setPriority(int $value) : CallActionBehavior
+    {
+        $this->priority = $value;
+        return $this;
     }
 }

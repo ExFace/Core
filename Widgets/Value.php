@@ -374,7 +374,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * Changes the data type of the value to one of the 
      *
      * @uxon-property value_data_type
-     * @uxon-type \exface\Core\DataTypes\StringDataType
+     * @uxon-type metamodel:datatype
      * 
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::setDataType()
      */
