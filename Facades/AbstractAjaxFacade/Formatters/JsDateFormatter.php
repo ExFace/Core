@@ -66,7 +66,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      * Returns inline javascript code to format the JS Date object behind the given variable name
      * into the internal used value.
      *
-     * E.g. buildJsFormatDateObjectToInternal('new Date()') would format the current date to a format like '2019-12-31'
+     * E.g. buildJsFormatDateObjectToInternal('new Date()') would format the current date to a format like 2019-12-31
      *
      * @param string $jsDateObject
      * @return string
@@ -80,7 +80,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      * Returns inline javascript code to turn the JS Date object behind the given variable
      * name into a formated string.
      *
-     * e.g. buildJsFormatDateObjectToString('new Date()') -> format like '31.12.2019'
+     * e.g. buildJsFormatDateObjectToString('new Date()') -> format like 31.12.2019
      *
      *
      * @param string $jsDateObject
@@ -145,39 +145,9 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
         ];
     }
 
-    /**
-     * Generates the DateJs filename based on the locale provided by the translator.
-     *
-     * @return string
-     */
-    protected function buildMomentJsLocaleFilename()
-    {
-        $dateJsBasepath = $this->getWorkbench()
-            ->filemanager()
-            ->getPathToVendorFolder() . DIRECTORY_SEPARATOR . 'npm-asset' . DIRECTORY_SEPARATOR . 'moment' . DIRECTORY_SEPARATOR . 'min' . DIRECTORY_SEPARATOR;
-
-        /*
-         * $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
-         * $locale = $translator->getLocale();
-         * $filename = 'date-' . str_replace("_", "-", $locale) . '.min.js';
-         * if (file_exists($dateJsBasepath . $filename)) {
-         * return $filename;
-         * }
-         *
-         * $fallbackLocales = $translator->getFallbackLocales();
-         * foreach ($fallbackLocales as $fallbackLocale) {
-         * $filename = 'date-' . str_replace("_", "-", $fallbackLocale) . '.min.js';
-         * if (file_exists($dateJsBasepath . $filename)) {
-         * return $filename;
-         * }
-         * }
-         */
-
-        return 'moment.min.js';
-    }
 
     /**
-     * Returns the format string for the interna date/time format (e.g.
+     * Returns the format string for the internal date/time format (e.g.
      * 2012-01-31 24:00:00) compatible
      * with the javscript library used for formatting.
      *
@@ -187,7 +157,6 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
     {
         $type = $this->getDataType();
         return $type->getFormatToParseTo();
-        // return ($type instanceof TimestampDataType) || ($type instanceof DateTimeDataType) ? "YYYY-MM-DD HH:mm:ss" : "YYYY-MM-DD";
     }
 
     /**
