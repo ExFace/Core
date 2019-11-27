@@ -660,7 +660,7 @@ class UiPage implements UiPageInterface
     public function getMenuParentPageAlias()
     {
         if (is_null($this->menuParentPageAlias) && ! is_null($this->menuParentPageSelector)) {
-            $this->menuParentPageAlias = $this->getMenuParentPage()->getAliasWithNamespace(true);
+            $this->menuParentPageAlias = $this->getMenuParentPage(true)->getAliasWithNamespace();
         }
         return $this->menuParentPageAlias;
     }
