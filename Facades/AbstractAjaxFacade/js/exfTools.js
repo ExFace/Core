@@ -379,13 +379,16 @@
 				if (sPhpFormat === undefined) {
 					sPhpFormat = 'H:i:s';
 				}
-				var output = moment('1970-01-01 ' + sTime).formatPHP(sPhpFormat);
+				var output = null;
+				if (sTime !== null && sTime !== undefined) {
+					output = moment('1970-01-01 ' + sTime).formatPHP(sPhpFormat);
+				}
 				return output;
 			},
 			
-			validate: function (sDate) {
-				//return true;
-				return moment(sDate).isValid();
+			validate: function (sTime) {
+				return true;
+				//return moment(sDate).isValid();
 			}
 		}		
 	}
