@@ -760,8 +760,8 @@ abstract class AbstractWidget implements WidgetInterface
         if ($ns = $this->getWorkbench()->model()->getNamespaceFromQualifiedAlias($full_or_object_alias)) {
             $this->object_qualified_alias = $full_or_object_alias;
             $this->object_alias = $this->getWorkbench()->model()->getObjectAliasFromQualifiedAlias($full_or_object_alias);
-        }  // ... if the namespace is missing, get it from the app of the parent object
-else {
+        } else {
+            // ... if the namespace is missing, get it from the app of the parent object
             if ($this->getParent()) {
                 $ns = $this->getParent()->getMetaObject()->getNamespace();
             }
@@ -772,9 +772,8 @@ else {
             $this->object_alias = $full_or_object_alias;
             $this->object_qualified_alias = $ns . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->object_alias;
         }
-        // IMPORTANT: unset the meta_object_id of this class, because it may already have been initialized previously and would act as a cache
-        // for the meta object.
-        unset($this->meta_object_id);
+        // IMPORTANT: unset the meta_object of this class, because it may already have been initialized previously.
+        unset($this->meta_object);
         return $this;
     }
 
@@ -843,11 +842,7 @@ else {
      */
     public function isObjectInheritedFromParent()
     {
-        if (is_null($this->object_qualified_alias) && is_null($this->meta_object_id)) {
-            return false;
-        } else {
-            return true;
-        }
+        return null !== $this->object_qualified_alias;
     }
 
     /**

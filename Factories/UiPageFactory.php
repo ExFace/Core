@@ -83,14 +83,18 @@ class UiPageFactory extends AbstractStaticFactory
     /**
      * Creates a page which is obtained from the CMS by the passed alias.
      * 
+     * The parameter $ignoreReplacement allows to get the exact page matching the selector
+     * even if it was replaced by another page.
+     * 
      * @param CmsConnectorFactory $cms
      * @param UiPageSelectorInterface|string $selectorOrString
+     * @param bool $ignoreReplacement
      * 
      * @throws UiPageNotFoundError
      * 
      * @return UiPageInterface
      */
-    public static function createFromCmsPage(CmsConnectorInterface $cms, $selectorOrString) : UiPageInterface
+    public static function createFromCmsPage(CmsConnectorInterface $cms, $selectorOrString, bool $ignoreReplacement = false) : UiPageInterface
     {
         if ($selectorOrString instanceof UiPageSelectorInterface) {
             $selector = $selectorOrString;
@@ -98,7 +102,7 @@ class UiPageFactory extends AbstractStaticFactory
             $selector = SelectorFactory::createPageSelector($cms->getWorkbench(), $selectorOrString);
         }
         
-        return $cms->getPage($selector);
+        return $cms->getPage($selector, $ignoreReplacement);
     }
 
     /**

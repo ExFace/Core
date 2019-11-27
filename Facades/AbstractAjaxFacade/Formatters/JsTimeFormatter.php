@@ -2,11 +2,31 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\TimeDataType;
 
 /**
  * This formatter generates javascript code to format and parse time via moment.js library.
+ * 
+ * NOTE: this formatter requires the javascript libraries exfTools (part of AbstractAjaxFacade) and 
+ * moment.js to be available via `exfTools` and `moment()` respectively! Add moment.js to the
+ * `composer.json` of the facade like this:
+ * 
+ * ```
+ * require: {
+ *      ...
+ * 		"npm-asset/moment" : "^2.24.0"
+ *      ...
+ * }
+ * ```
+ * 
+ * If the authomatic header-include logic of the `AbstractAjaxFacade` is to be used (methods 
+ * `buildHtmlBodyIncludes()` and `buildHtmlHeadIncludes()`), the following configuration options need
+ * to be added to the facade:
+ * 
+ * ```
+ *  "LIBS.MOMENT.JS": "npm-asset/moment/min/moment.min.js",
+ *  "LIBS.EXFTOOLS.JS": "exface/Core/Facades/AbstractAjaxFacade/js/exfTools.js",
+ * ```
  * 
  * @method TimeDataType getDataType()
  * 

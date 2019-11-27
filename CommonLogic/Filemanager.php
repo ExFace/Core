@@ -127,10 +127,13 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
      */
     public function getPathToConfigFolder()
     {
-        if (is_null($this->path_to_config_folder)) {
+        if (null === $this->path_to_config_folder) {
             $this->path_to_config_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_CONFIG;
-            if (! is_dir($this->path_to_config_folder)) {
+            if (false === is_dir($this->path_to_config_folder)) {
                 mkdir($this->path_to_config_folder);
+            }
+            if (false === $this->isDirSecure($this->path_to_config_folder)) {
+                $this->secureDir($this->path_to_config_folder);
             }
         }
         return $this->path_to_config_folder;
@@ -249,7 +252,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
      * @param string $absolutePath
      * @param boolean $removeHiddenFiles
      */
-    public function emptyDir($absolutePath, $removeHiddenFiles = true){
+    public static function emptyDir($absolutePath, $removeHiddenFiles = true){
         $absolutePath = static::pathNormalize($absolutePath, DIRECTORY_SEPARATOR);
         if (substr($absolutePath, -1) !== DIRECTORY_SEPARATOR){
             $absolutePath .= DIRECTORY_SEPARATOR;
@@ -389,6 +392,32 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     {
         copy($source, $destination);
         return;
+    }
+    
+    /**
+     * Returns TRUE if security measures from secureDir() were applied to given path.
+     * 
+     * @param string $pathAbsolute
+     * @return bool
+     */
+    protected function isDirSecure(string $pathAbsolute) : bool
+    {
+        return file_exists($pathAbsolute . DIRECTORY_SEPARATOR . '.htaccess');
+    }
+    
+    /**
+     * Applies security measures to given folder adding .htaccess, etc.
+     * 
+     * @param string $pathAbsolute
+     * @return Filemanager
+     */
+    protected function secureDir(string $pathAbsolute) : Filemanager
+    {
+        $htaccess = <<<HTACCESS
+order deny,allow
+deny from all
+HTACCESS;
+        file_put_contents($pathAbsolute . DIRECTORY_SEPARATOR . '.htaccess', $htaccess);
     }
 }
 ?>

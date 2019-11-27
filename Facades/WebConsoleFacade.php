@@ -18,6 +18,9 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Facades\ConsoleFacade\ConsoleFacade;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
+use exface\Core\Facades\AbstractHttpFacade\HttpRequestHandler;
+use exface\Core\Facades\AbstractHttpFacade\OKHandler;
 
 /***
  * This is the Facade for Console Widgets
@@ -40,6 +43,13 @@ class WebConsoleFacade extends AbstractHttpFacade
             $this->getWorkbench()->start();
         }
         
+        $handler = new HttpRequestHandler(new OKHandler());
+        $handler->add(new AuthenticationMiddleware($this->getWorkbench()));
+        $responseTpl = $handler->handle($request);
+        if ($responseTpl->getStatusCode() >= 400) {
+            return $responseTpl;
+        }
+        
         try {
             $response = $this->performCommand($request);
         } catch (\Throwable $e) {
@@ -48,7 +58,7 @@ class WebConsoleFacade extends AbstractHttpFacade
             } else {
                 $statusCode = 500;
             }
-            $response = new Response($statusCode, [], $this->getWorkbench()->getDebugger()->printException($e));
+            $response = new Response($statusCode, $responseTpl->getHeaders(), $this->getWorkbench()->getDebugger()->printException($e));
         }  
         
         $this->getWorkbench()->stop();
