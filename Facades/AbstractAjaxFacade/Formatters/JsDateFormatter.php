@@ -125,8 +125,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
     }
 
     /**
-     * Returns inline JS code to parse a date string to the internal string format: e.g.
-     * 31.12.2019 -> 2019-12-31.
+     * Returns inline JS code to parse a date string to the internal string format: e.g. 31.12.2019 -> 2019-12-31.
      *
      * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFormatParser()
      */
@@ -139,7 +138,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
                 return (dateObj ? {$this->buildJsFormatDateObjectToString('dateObj')} : '');
             }()
         
-        JS;
+JS;
     }
 
     /**
