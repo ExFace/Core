@@ -418,6 +418,7 @@ order deny,allow
 deny from all
 HTACCESS;
         file_put_contents($pathAbsolute . DIRECTORY_SEPARATOR . '.htaccess', $htaccess);
+        return $this;
     }
 }
 ?>

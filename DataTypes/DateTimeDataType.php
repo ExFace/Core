@@ -12,7 +12,7 @@ class DateTimeDataType extends DateDataType
     
     public function getFormatToParseTo() : string
     {
-        return self::DATE_FORMAT_INTERNAL;
+        return self::DATETIME_FORMAT_INTERNAL;
     }
     
     public function getFormat() : string
