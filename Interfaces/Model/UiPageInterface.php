@@ -163,7 +163,7 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
     public function setUpdateable($true_or_false);
 
     /**
-     * Returns the UID or alias of the parent page.
+     * Returns the alias of the parent page (the actual parent - not a page, that replaces the parent!!!).
      * 
      * @return string
      */
@@ -185,11 +185,18 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
     public function setMenuParentPageSelector($id_or_alias);
 
     /**
-     * Returns the parent ui page or NULL if this page has no parent
+     * Returns the parent page or NULL if this page has no parent.
      * 
+     * If there is page, that replaces the actual parent, that page is returned by
+     * befault. Set $ignoreReplacement to true to get the actual parent.
+     * 
+     * NOTE: getMenuParentPageAlias() always returns the alias of the actual page
+     * in contrast to this method.
+     * 
+     * @param bool $ignoreReplacement
      * @return UiPageInterface|null
      */
-    public function getMenuParentPage();
+    public function getMenuParentPage(bool $ignoreReplacement = false) : ?UiPageInterface;
 
     /**
      * Returns the default menu position of the page in the form 'menuParentPageAlias:menuIndex'.
