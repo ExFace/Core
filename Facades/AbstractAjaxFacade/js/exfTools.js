@@ -155,13 +155,18 @@
 			 */
 			parse: function(sDate, ParseParams) {
 				// date ist ein String und wird zu einem date-Objekt geparst
+				console.log(sDate)
 				
 				// Variablen initialisieren
 				var match = null;
 				var dateParsed = false;
 				var dateValid = false;
-				var time;
-				var output;
+				var time = undefined;
+				var output = null;
+				
+				if (sDate === '') {
+					return output;
+				}
 
 				// hh:mm:ss , Thh:mm:ss
 				if (!dateParsed && (match = /[T ](\d{2}:\d{2}:\d{2})/.exec(sDate)) != null) {
@@ -205,7 +210,7 @@
 				}
 				// dd.MM, dd-MM, dd/MM, d.M, d-M, d/M
 				if (!dateParsed && (match = /(\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
-					var yyyy = (new Date()).getFullYear();
+					var yyyy = moment().year;
 					var MM = Number(match[2]);
 					var dd = Number(match[1]);
 					dateParsed = true;
@@ -229,7 +234,7 @@
 				}
 				// ddMM
 				if (!dateParsed && (match = /^(\d{2})(\d{2})$/.exec(sDate)) != null) {
-					var yyyy = (new Date()).getFullYear();
+					var yyyy = moment().year;
 					var MM = Number(match[2]);
 					var dd = Number(match[1]);
 					dateParsed = true;
@@ -301,16 +306,22 @@
 			 * @return string
 			 */
 			format: function(sDate, sPhpFormat = null) {
+				var output = null;
 				if (sPhpFormat === null) {
 					sPhpFormat = 'd.m.Y';
 				}
-				var output = moment(sDate).formatPHP(sPhpFormat);
+				if (sDate !== null && sDate !== undefined) {
+					output = moment(sDate).formatPHP(sPhpFormat);
+				}
 				return output;
 			},
 			
 			validate: function (sDate) {
 				//return true;
-				return moment(sDate).isValid();
+				if (sDate !== null && sDate !== undefined) {
+					return moment(sDate).isValid();;
+				}
+				return true;
 			}
 		},
 		time: {
