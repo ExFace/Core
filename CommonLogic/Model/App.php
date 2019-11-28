@@ -499,7 +499,7 @@ class App implements AppInterface
     public function getLanguages() : array
     {
         $langs = [$this->getLanguageDefault()];
-        foreach (glob($this->getTranslationsFolder() . "*.json") as $path) {
+        foreach (glob($this->getTranslationsFolder() . DIRECTORY_SEPARATOR . "*.json") as $path) {
             $filename = pathinfo($path, PATHINFO_FILENAME);
             $langs[] = StringDataType::substringAfter($filename, '.', false, false, true);
         }
