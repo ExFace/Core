@@ -639,6 +639,21 @@
             "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputPassword\"}",
             "ALIAS": "PasswordHash",
             "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2019-11-28 20:56:40",
+            "MODIFIED_ON": "2019-11-28 21:46:29",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea12218ced0ceb84aee4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Locale",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/LocaleDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\"}",
+            "ALIAS": "Locale",
+            "SHORT_DESCRIPTION": "All locales currently installed: en, en_US, de, de_DE, etc."
         }
     ],
     "totals_rows": [],
