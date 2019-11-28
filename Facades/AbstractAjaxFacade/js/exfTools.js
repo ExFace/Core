@@ -155,7 +155,7 @@
 			 */
 			parse: function(sDate, ParseParams) {
 				// date ist ein String und wird zu einem date-Objekt geparst
-				console.log(sDate)
+				console.log('sDate', sDate);
 				
 				// Variablen initialisieren
 				var match = null;
@@ -164,7 +164,7 @@
 				var time = undefined;
 				var output = null;
 				
-				if (sDate === '') {
+				if (sDate === '' || sDate === null) {
 					return output;
 				}
 
