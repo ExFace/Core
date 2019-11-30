@@ -83,9 +83,9 @@ class ChartConfigurator extends DataConfigurator
      * {@inheritDoc}
      * @see \exface\Core\Widgets\DataConfigurator::addFilter()
      */
-    public function addFilter(AbstractWidget $filter_widget, $include_in_quick_search = false)
+    public function addFilter(AbstractWidget $filter_widget)
     {
-        $this->getDataConfigurator()->addFilter($filter_widget, $include_in_quick_search);
+        $this->getDataConfigurator()->addFilter($filter_widget);
         return $this;
     }
     
@@ -112,33 +112,11 @@ class ChartConfigurator extends DataConfigurator
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Widgets\DataConfigurator::addQuickSearchFilter()
-     */
-    public function addQuickSearchFilter(Filter $widget) : self
-    {
-        $this->getDataConfigurator()->addQuickSearchFilter($widget);
-        return $this;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\Widgets\DataConfigurator::getQuickSearchFilters()
      */
     public function getQuickSearchFilters()
     {
         return $this->getDataConfigurator()->getQuickSearchFilters();
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\DataConfigurator::setQuickSearchFilters()
-     */
-    public function setQuickSearchFilters(array $filters)
-    {
-        $this->getDataConfigurator()->setQuickSearchFilters($filters);
-        return $this;
     }
     
     /**

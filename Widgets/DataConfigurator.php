@@ -23,11 +23,7 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
  *        
  */
 class DataConfigurator extends WidgetConfigurator implements iHaveFilters
-{
-    
-    /** @var Filter[] */
-    private $quick_search_filters = array();
-    
+{    
     private $filter_tab = null;
     
     private $sorter_tab = null;
@@ -124,113 +120,57 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     public function setFilters(UxonObject $uxon_objects)
     {
         foreach ($uxon_objects as $uxon) {
-            $include_in_quick_search = false;
-            // Add to quick search if required
-            if ($uxon->getProperty('include_in_quick_search') === true) {
-                $include_in_quick_search = true;
-            }
-            $uxon->unsetProperty('include_in_quick_search');
-            
             $filter = $this->createFilterWidget($uxon->getProperty('attribute_alias'), $uxon);
-            $this->addFilter($filter, $include_in_quick_search);
+            $this->addFilter($filter);
         }
         return $this;
     }
     
     public function createFilterWidget($attribute_alias = null, UxonObject $uxon_object = null)
     {
-        if ($attribute_alias === null) {
-            if ($uxon_object->hasProperty('attribute_alias')) {
-                $attribute_alias = $uxon_object->getProperty('attribute_alias');
-            } elseif (($uxon_object->getProperty('input_widget') instanceof UxonObject) && $uxon_object->getProperty('input_widget')->hasProperty('attribute_alias')) {
-                $attribute_alias = $uxon_object->getProperty('input_widget')->getProperty('attribute_alias');
+        if ($uxon_object !== null && $wType = $uxon_object->getProperty('widget_type')) {
+            // If we have a widget type, that is not a filter, it must be a legacy filter widget
+            // where filter properties and input widget properties could be mixed together.
+            // At that time, there was only the default `Filter` widget, so all we need to do
+            // is extract attributes, that the Filter had at that time from the UXON and treat
+            // everything else as input widget properties.
+            if (is_a(WidgetFactory::getWidgetClassFromType($wType), Filter::class) === false) {
+                $inputUxon = $uxon_object->copy();
+                $uxon_object = new UxonObject();
+                // Set properties of the filter explicitly while passing everything else to it's input widget.
+                // TODO move this to the filter's importUxonObject() method.
+                if ($inputUxon->hasProperty('comparator')) {
+                    $comparator = $inputUxon->getProperty('comparator');
+                    $uxon_object->setProperty('comparator', $comparator);
+                    $inputUxon->unsetProperty('comparator');
+                }
+                if ($inputUxon->hasProperty('apply_on_change')) {
+                    $uxon_object->setProperty('apply_on_change', $inputUxon->getProperty('apply_on_change'));
+                    $inputUxon->unsetProperty('apply_on_change');
+                }
+                if ($inputUxon->hasProperty('condition_group')) {
+                    $uxon_object->setProperty('condition_group', $inputUxon->getProperty('condition_group'));
+                    $inputUxon->unsetProperty('condition_group');
+                }
+                if ($uxon_object !== null && $uxon_object->hasProperty('required')) {
+                    // A filter is only required, if a user explicitly marked it as required in the filter's UXON
+                    $uxon_object->setProperty('required', $inputUxon->getProperty('required'));
+                    $inputUxon->unsetProperty('required');
+                } 
+                
+                $uxon_object->setProperty('input_widget', $inputUxon);
             }
         }
         
-        // a filter can only be applied, if the attribute alias is specified and the attribute exists
-        if ($attribute_alias !== null && $attribute_alias !== '') {
-            try {
-                $attr = $this->getMetaObject()->getAttribute($attribute_alias);
-            } catch (MetaAttributeNotFoundError $e) {
-                throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $attribute_alias . '" in widget "' . $this->getId() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
-            }
-            
-            // determine the input widget for the filter
-            // Try to extend the default editor widget, by also keep the original UXON of the filter: see below, why.
-            $editorUxon = $attr->getDefaultEditorUxon()->copy();
-            if ($uxon_object) {
-                $editorUxon = $editorUxon->extend($uxon_object);
-                $userUxon = $uxon_object;
-            } else {
-                $userUxon = new UxonObject();
-            }
-            // Set a special caption for filters on relations, which is derived from the relation itself
-            // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
-            if (! $editorUxon->hasProperty('caption') && $attr->isRelation()) {
-                $editorUxon->setProperty('caption', $this->getMetaObject()->getRelation($attribute_alias)->getName());
-            }
-        } elseif ($uxon_object !== null && $uxon_object->hasProperty('condition_group') === true) {
-            $userUxon = new UxonObject();
-            $editorUxon = $uxon_object;
-        } else {
-            throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for an empty attribute alias in widget "' . $this->getId() . '"!', '6T91AR9');
+        if ($uxon_object === null) {
+            $uxon_object = new UxonObject();
         }
         
-        // Set properties of the filter explicitly while passing everything else to it's input widget.
-        // TODO move this to the filter's importUxonObject() method.
-        if ($editorUxon->hasProperty('comparator')) {
-            $comparator = $editorUxon->getProperty('comparator');
-            $editorUxon->unsetProperty('comparator');
-            $userUxon->unsetProperty('comparator');
-        }
-        if ($editorUxon->hasProperty('apply_on_change')) {
-            $apply_on_change = $editorUxon->getProperty('apply_on_change');
-            $editorUxon->unsetProperty('apply_on_change');
-            $userUxon->unsetProperty('apply_on_change');
-        } 
-        if ($editorUxon->hasProperty('condition_group')) {
-            $customConditionGroupUxon = $editorUxon->getProperty('condition_group');
-            $editorUxon->unsetProperty('condition_group');
-            $userUxon->unsetProperty('condition_group');
-        }
-        if ($uxon_object !== null && $uxon_object->hasProperty('required')) {
-            // A filter is only required, if a user explicitly marked it as required in the filter's UXON
-            $required = $uxon_object->getProperty('required');
-            $editorUxon->unsetProperty('required');
-            $userUxon->unsetProperty('required');
-        } 
-        
-        $filter = $this->getPage()->createWidget('Filter', $this->getFilterTab());
-        $filter->setComparator($comparator);
-        if (isset($apply_on_change)){
-            $filter->setApplyOnChange($apply_on_change);
-        }
-        if ($customConditionGroupUxon !== null) {
-            $filter->setConditionGroup($customConditionGroupUxon);
+        if ($attribute_alias !== null) {
+            $uxon_object->setProperty('attribute_alias', $attribute_alias);
         }
         
-        // Create the input widget
-        $page = $this->getPage();
-        // If the merged UXON from the default editor and the filter does not work,
-        // create a widget from the explicitly defined filter UXON. This can happen
-        // if the default editor presumes a widget type, that is not compatible with
-        // properties, defined for the filter.
-        // TODO this is not a very elegant solution: need a better way, to handle
-        // conflicts between the default editor and the filter definition!
-        try {
-            $inputWidget = WidgetFactory::createFromUxon($page, $editorUxon, $filter);
-        } catch (WidgetPropertyUnknownError $e) {
-            $inputWidget = WidgetFactory::createFromUxon($page, $userUxon, $filter);
-        }
-        
-        $filter->setInputWidget($inputWidget);
-        
-        // Set the required option after instantiation to ensure the input widget gets it too.
-        if (isset($required)) {
-            $filter->setRequired($required);
-        }
-        
-        return $filter;
+        return WidgetFactory::createFromUxonInParent($this, $uxon_object, 'Filter');
     }
     
     /**
@@ -239,10 +179,9 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      * widget. The second parameter (if set to TRUE) will make the filter automatically get used in quick search queries.
      *
      * @param AbstractWidget $filter_widget
-     * @param boolean $include_in_quick_search
      * @see \exface\Core\Interfaces\Widgets\iHaveFilters::addFilter()
      */
-    public function addFilter(AbstractWidget $filter_widget, $include_in_quick_search = false)
+    public function addFilter(AbstractWidget $filter_widget)
     {
         if ($filter_widget instanceof Filter) {
             $filter = $filter_widget;
@@ -254,9 +193,6 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         $this->setLazyLoadingForFilter($filter);
         
         $this->getFilterTab()->addWidget($filter);
-        if ($include_in_quick_search) {
-            $this->addQuickSearchFilter($filter);
-        }
         return $this;
     }
     
@@ -322,35 +258,18 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     }
     
     /**
-     * Registers a filter for the quick search queries.
-     * The filter is passed by reference because it is also contained in the
-     * retular filters.
-     *
-     * @param Filter $widget
-     */
-    public function addQuickSearchFilter(Filter $widget)
-    {
-        $this->quick_search_filters[] = $widget;
-    }
-    
-    /**
      * 
      * @return Filter[]
      */
-    public function getQuickSearchFilters()
+    public function getQuickSearchFilters() : array
     {
-        return $this->quick_search_filters;
-    }
-    
-    /**
-     * Replaces the current set of filters used for quick search queries by the given filter array
-     *
-     * @param Filter[] $filters
-     */
-    public function setQuickSearchFilters(array $filters)
-    {
-        $this->quick_search_filters = $filters;
-        return $this;
+        $filters = [];
+        foreach ($this->getFilters() as $filter){
+            if ($filter->getIncludeInQuickSearch() === true) {
+                $filters[] = $filter;
+            }
+        }
+        return $filters;
     }
     
     /**

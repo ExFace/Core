@@ -6,7 +6,6 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 use exface\Core\Exceptions\UnderflowException;
-use exface\Core\CommonLogic\UxonObject;
 
 interface iContainOtherWidgets extends WidgetInterface
 {
