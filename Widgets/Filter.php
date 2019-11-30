@@ -16,6 +16,12 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Widgets\iCanPreloadData;
+use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * A filter is a wrapper widget, which typically consist of one or more input widgets.
@@ -29,10 +35,14 @@ use exface\Core\Factories\ConditionGroupFactory;
  * @author Andrej Kabachnik
  *        
  */
-class Filter extends Container implements iTakeInput, iShowSingleAttribute
+class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute, iCanPreloadData
 {
 
-    private $widget = null;
+    use iCanPreloadDataTrait;
+    
+    private $inputWidget = null;
+    
+    private $inputWidgetUxon = null;
 
     private $comparator = null;
 
@@ -41,18 +51,104 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
     private $apply_on_change = false;
     
     private $customConditionGroup = null;
+    
+    private $attributeAlias = null;
+    
+    private $includeInQuickSearch = false;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::importUxonObject()
+     */
+    public function importUxonObject(UxonObject $uxon)
+    {
+        if ($uxon->hasProperty('attribute_alias') === true) {
+            $this->setAttributeAlias('attribute_alias', $uxon->hasProperty('attribute_alias'));
+        } elseif (($uxon->getProperty('input_widget') instanceof UxonObject) && $uxon->getProperty('input_widget')->hasProperty('attribute_alias')) {
+            $this->setAttributeAlias('attribute_alias', $uxon->getProperty('input_widget')->getProperty('attribute_alias'));
+        }
+        
+        try {
+            return parent::importUxonObject($uxon);
+        } catch (WidgetPropertyUnknownError $e) {
+            $inputProps = new UxonObject();
+            foreach ($uxon->getPropertiesAll() as $prop => $val) {
+                $setterCamelCased = 'set' . StringDataType::convertCaseUnderscoreToPascal($prop);
+                if (method_exists($this, $setterCamelCased) === false) {
+                    $inputProps->setProperty($prop, $val);
+                    $uxon->unsetProperty($prop);
+                }
+            }
+            
+            if ($inputProps->isEmpty() === false) {
+                $inputUxon = $uxon->getProperty('input_widget') ?? new UxonObject();
+                $inputUxon = $inputUxon->extend($inputProps);
+                $uxon->setProperty('input_widget', $inputUxon);
+            }
+            
+            return parent::importUxonObject($uxon);
+        }
+    }
 
     /**
      * Returns the widget used to interact with the filter (typically some kind of input widget)
      *
-     * @return iTakeInput
+     * @return iTakeInput|iContainOtherWidgets
      */
-    public function getInputWidget()
+    public function getInputWidget() : WidgetInterface
     {
-        if (is_null($this->widget)) {
-            $this->setInputWidget($this->getPage()->createWidget('Input', $this));
+        if ($this->inputWidget === null) {
+            $uxon = $this->inputWidgetUxon ?? new UxonObject();
+            $this->setInputWidget($this->createInputWidget($uxon));
         }
-        return $this->widget;
+        return $this->inputWidget;
+    }
+    
+    protected function createInputWidget(UxonObject $uxon) : WidgetInterface
+    {
+        if ($this->isBoundToAttribute() === true) {
+            try {
+                $attr = $this->getMetaObject()->getAttribute($this->getAttributeAlias());
+            } catch (MetaAttributeNotFoundError $e) {
+                throw new WidgetPropertyInvalidValueError($this->getParent(), 'Cannot create a filter for attribute alias "' . $this->getAttributeAlias() . '" in widget "' . $this->getParent()->getWidgetType() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
+            }
+            
+            // Try to use the default editor UXON of the attribute
+            $defaultEditorUxon = $attr->getDefaultEditorUxon();
+            $defaultEditorUxon = $defaultEditorUxon->extend($uxon);
+            
+            // Set a special caption for filters on relations, which is derived from the relation itself
+            // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
+            if (false === $uxon->hasProperty('caption') && true === $attr->isRelation()) {
+                $uxon->setProperty('caption', $attr->getRelation()->getName());
+            }
+        } elseif ($this->hasCustomConditionGroup() === false) {
+            throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for an empty attribute alias in widget "' . $this->getId() . '"!', '6T91AR9');
+        } 
+        
+        if ($defaultEditorUxon && $defaultEditorUxon->isEmpty() === false) {
+            // If the merged UXON from the default editor and the filter does not work,
+            // create a widget from the explicitly defined filter UXON. This can happen
+            // if the default editor presumes a widget type, that is not compatible with
+            // properties, defined for the filter.
+            // TODO this is not a very elegant solution: need a better way, to handle
+            // conflicts between the default editor and the filter definition!
+            try {
+                $inputWidget = WidgetFactory::createFromUxonInParent($this, $defaultEditorUxon);
+            } catch (WidgetPropertyUnknownError $e) {
+                $inputWidget = null;
+            }
+        }
+        
+        if ($inputWidget === null) {
+            if ($uxon->hasProperty('attribute_alias') === false && $this->isBoundToAttribute() === true) {
+                $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
+            }
+            $inputWidget = WidgetFactory::createFromUxonInParent($this, $uxon, 'Input');
+        }
+        
+        return $inputWidget;
     }
 
     /**
@@ -64,14 +160,21 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
      * @param iTakeInput|UxonObject $widget_or_uxon_object            
      * @return \exface\Core\Widgets\Filter
      */
-    public function setInputWidget($widget_or_uxon_object)
+    public function setInputWidget($widget_or_uxon_object) : Filter
     {
-        $page = $this->getPage();
-        $this->widget = $input = WidgetFactory::createFromAnything($page, $widget_or_uxon_object, $this);
+        if ($widget_or_uxon_object instanceof UxonObject) {
+            // instantiate the widget later - when it is first requested via getInputWidget()
+            $this->inputWidgetUxon = $widget_or_uxon_object;
+            return $this;
+        } elseif ($widget_or_uxon_object instanceof iTakeInput) {
+            $input = $widget_or_uxon_object;
+        } else {
+            throw new UnexpectedValueException('Invalid input_widget for a filter: expecting a UXON description or an instantiated widget, received "' . gettype($widget_or_uxon_object) . '" instead!');
+        }
         
         // Some widgets need to be transformed to be a meaningfull filter
         if ($input->is('InputCheckBox')) {
-            $this->widget = $input->transformIntoSelect();
+            $input = $input->transformIntoSelect();
         }
         
         // Set a default comparator
@@ -82,13 +185,13 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
         }
         
         // If the filter has a specific comparator, that is non-intuitive, add a corresponding suffix to
-        // the caption of the actual widget.
+        // the caption of the input widget.
         switch ($this->getComparator()) {
             case EXF_COMPARATOR_GREATER_THAN:
             case EXF_COMPARATOR_GREATER_THAN_OR_EQUALS:
             case EXF_COMPARATOR_LESS_THAN:
             case EXF_COMPARATOR_LESS_THAN_OR_EQUALS:
-                $input->setCaption($this->getInputWidget()->getCaption() . ' (' . $this->getComparator() . ')');
+                $input->setCaption($input->getCaption() . ' (' . $this->getComparator() . ')');
                 break;
         }
         
@@ -109,8 +212,10 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
         
         // The filter should be enabled all the time, except for the case, when it is diabled explicitly
         if (! parent::isDisabled()) {
-            $this->setDisabled(false);
+            $input->setDisabled(false);
         }
+        
+        $this->inputWidget = $input;
         
         return $this;
     }
@@ -155,6 +260,9 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
      */
     public function getAttributeAlias()
     {
+        if ($this->inputWidget === null && $this->attributeAlias !== null) {
+            return $this->attributeAlias;
+        }
         return $this->getInputWidget()->getAttributeAlias();
     }
 
@@ -170,7 +278,10 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
      */
     public function setAttributeAlias($value)
     {
-        $this->getInputWidget()->setAttributeAlias($value);
+        $this->attributeAlias = $value;
+        if ($this->inputWidget !== null) {
+            $this->getInputWidget()->setAttributeAlias($value);
+        }
         return $this;
     }
 
@@ -185,6 +296,11 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
         return $this->getInputWidget()->getValue();
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueWithDefaults()
+     */
     public function getValueWithDefaults()
     {
         return $this->getInputWidget()->getValueWithDefaults();
@@ -331,6 +447,9 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
         $uxon->setProperty('comparator', $this->getComparator());
         $uxon->setProperty('required', $this->isRequired());
         $uxon->setProperty('input_widget', $this->getInputWidget()->exportUxonObject());
+        if ($this->hasCustomConditionGroup() === true) {
+            $uxon->setProperty('condition_group', $this->getCustomConditionGroup()->exportUxonObject());
+        }
         return $uxon;
     }
     
@@ -375,7 +494,10 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
      */
     public function isBoundToAttribute()
     {
-        return $this->getInputWidget()->isBoundToAttribute();
+        if ($this->inputWidget !== null) {
+            return $this->getInputWidget()->isBoundToAttribute();
+        }
+        return $this->attributeAlias !== null;
     }
 
     /**
@@ -636,5 +758,32 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
             $uxon->setProperty('conditions', new UxonObject($enrichedConditions));
         }
         return $this->setCustomConditionGroup(ConditionGroupFactory::createFromUxon($this->getWorkbench(), $uxon));
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getIncludeInQuickSearch() : bool
+    {
+        return $this->includeInQuickSearch;
+    }
+    
+    /**
+     * Set to TRUE to include this filter as a further OR-condition in quick-search queries for the filtered widget.
+     * 
+     * This only has effect if the filtered widget supports quick search!
+     * 
+     * @uxon-property include_in_quick_search
+     * @uxon-type bool
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return Filter
+     */
+    public function setIncludeInQuickSearch(bool $value) : Filter
+    {
+        $this->includeInQuickSearch = $value;
+        return $this;
     }
 }
