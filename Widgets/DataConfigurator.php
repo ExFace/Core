@@ -134,7 +134,18 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
             // At that time, there was only the default `Filter` widget, so all we need to do
             // is extract attributes, that the Filter had at that time from the UXON and treat
             // everything else as input widget properties.
-            if (is_a(WidgetFactory::getWidgetClassFromType($wType), Filter::class) === false) {
+            $mergedWidget = false;
+            if ($wType = $uxon_object->getProperty('widget_type')) {
+                if (is_a(WidgetFactory::getWidgetClassFromType($wType), Filter::class) === false) {
+                    $mergedWidget = true;
+                }
+            }
+            
+            if ($uxon_object->hasProperty('object_alias') === true) {
+                $mergedWidget = true;
+            }
+            
+            if ($mergedWidget === true) {
                 $inputUxon = $uxon_object->copy();
                 $uxon_object = new UxonObject();
                 // Set properties of the filter explicitly while passing everything else to it's input widget.
