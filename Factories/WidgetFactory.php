@@ -34,7 +34,7 @@ abstract class WidgetFactory extends AbstractStaticFactory
     public static function create(UiPageInterface $page, $widget_type, WidgetInterface $parent_widget = null)
     {
         if (is_null($widget_type)) {
-            throw new UnexpectedValueException('Cannot create widget "' . $widget_type . '": invalid widget type!');
+            throw new UnexpectedValueException('Cannot create widget: widget type could not be deterined!');
         }
         
         /* @var $widget \exface\Core\Widgets\AbstractWidget */
