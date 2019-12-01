@@ -22,6 +22,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * A filter is a wrapper widget, which typically consist of one or more input widgets.
@@ -55,6 +56,37 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     private $attributeAlias = null;
     
     private $includeInQuickSearch = false;
+    
+    private $displayOnly = false;
+    
+    private $emptyText = null;
+    
+    private $readonly = false;
+    
+    private $value = null;
+    
+    /**
+     * Returns TRUE if the input widget was already instantiated.
+     * 
+     * @return bool
+     */
+    protected function isInputWidgetInitialized() : bool
+    {
+        return $this->inputWidget !== null;    
+    }
+    
+    /**
+     * Returns TRUE if there was a custom input widget defined.
+     * 
+     * NOTE: Always returns TRUE if the input widget was already instantiated because then
+     * it is not possible to distinguish a custom widget anymore!
+     * 
+     * @return bool
+     */
+    protected function hasCustomInputWidget() : bool
+    {
+        return $this->isInputWidgetInitialized() === true || $this->inputWidgetUxon !== null;
+    }
     
     /**
      * 
@@ -98,20 +130,27 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     public function getInputWidget() : WidgetInterface
     {
-        if ($this->inputWidget === null) {
+        if ($this->isInputWidgetInitialized() === false) {
             $uxon = $this->inputWidgetUxon ?? new UxonObject();
             $this->setInputWidget($this->createInputWidget($uxon));
         }
         return $this->inputWidget;
     }
     
+    /**
+     * 
+     * 
+     * @param UxonObject $uxon
+     * @throws WidgetPropertyInvalidValueError
+     * @return WidgetInterface
+     */
     protected function createInputWidget(UxonObject $uxon) : WidgetInterface
     {
         if ($this->isBoundToAttribute() === true) {
             try {
                 $attr = $this->getMetaObject()->getAttribute($this->getAttributeAlias());
             } catch (MetaAttributeNotFoundError $e) {
-                throw new WidgetPropertyInvalidValueError($this->getParent(), 'Cannot create a filter for attribute alias "' . $this->getAttributeAlias() . '" in widget "' . $this->getParent()->getWidgetType() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
+                throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $this->getAttributeAlias() . '" in widget "' . $this->getParent()->getWidgetType() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
             }
             
             // Try to use the default editor UXON of the attribute
@@ -211,8 +250,30 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         }
         
         // The filter should be enabled all the time, except for the case, when it is diabled explicitly
-        if (! parent::isDisabled()) {
+        if (true !== parent::isDisabled()) {
             $input->setDisabled(false);
+        }
+        
+        // Simply inherit do_not_prefill
+        $input->setDoNotPrefill(parent::getDoNotPrefill());
+        
+        if ($this->emptyText !== null) {
+            $input->setEmptyText($this->emptyText);
+        }
+        
+        // Pass readonly / display-only properties if applicable
+        if ($input instanceof iTakeInput) {
+            if ($this->displayOnly === true) {
+                $input->setDisplayOnly(true);
+            }
+            if ($this->readonly === true) {
+                $input->setReadonly(true);
+            }
+        }
+        
+        // Pass value if set and applicable
+        if ($this->value !== null && $input instanceof iHaveValue) {
+            $input->setValue($this->value);
         }
         
         $this->inputWidget = $input;
@@ -220,6 +281,11 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         return $this;
     }
     
+    /**
+     * 
+     * @param WidgetInterface $input
+     * @return ComparatorDataType|NULL
+     */
     protected function getDefaultComparator(WidgetInterface $input) : ?ComparatorDataType
     {
         switch (true) {
@@ -260,7 +326,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     public function getAttributeAlias()
     {
-        if ($this->inputWidget === null && $this->attributeAlias !== null) {
+        if ($this->isInputWidgetInitialized() === false && $this->attributeAlias !== null) {
             return $this->attributeAlias;
         }
         return $this->getInputWidget()->getAttributeAlias();
@@ -279,7 +345,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     public function setAttributeAlias($value)
     {
         $this->attributeAlias = $value;
-        if ($this->inputWidget !== null) {
+        if ($this->isInputWidgetInitialized() === true) {
             $this->getInputWidget()->setAttributeAlias($value);
         }
         return $this;
@@ -327,7 +393,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     public function setValue($value)
     {
-        $this->getInputWidget()->setValue($value);
+        if ($this->isInputWidgetInitialized() === true) {
+            $this->getInputWidget()->setValue($value);
+        }
+        $this->value = $value;
         return $this;
     }
 
@@ -418,7 +487,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     {
         $value = BooleanDataType::cast($value);
         $this->required = $value;
-        if ($this->getInputWidget() && $this->getInputWidget() instanceof iCanBeRequired) {
+        if ($this->isInputWidgetInitialized() === true && $this->getInputWidget() instanceof iCanBeRequired) {
             $this->getInputWidget()->setRequired($value);
         }
         return $this;
@@ -435,12 +504,27 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     public function setDisabled($value)
     {
-        if ($this->getInputWidget()) {
+        if ($this->isInputWidgetInitialized() === true) {
             $this->getInputWidget()->setDisabled($value);
         }
         return parent::setDisabled($value);
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::isDisabled()
+     */
+    public function isDisabled()
+    {
+        return parent::isDisabled() || ($this->hasCustomInputWidget() && $this->getInputWidget()->isDisabled());
+    }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::exportUxonObject()
+     */
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
@@ -470,7 +554,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     public function getEmptyText()
     {
-        return $this->getInputWidget()->getEmptyText();
+        if ($this->isInputWidgetInitialized() === true) {
+            return $this->getInputWidget()->getEmptyText();
+        }
+        return $this->emptyText;
     }
     
     /**
@@ -483,7 +570,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     public function setEmptyText($value)
     {
-        $this->getInputWidget()->setEmptyText($value);
+        $this->emptyText = $value;
+        if ($this->isInputWidgetInitialized() === true) {
+            $this->getInputWidget()->setEmptyText($value);
+        }
         return $this;
     }
     
@@ -494,7 +584,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     public function isBoundToAttribute()
     {
-        if ($this->inputWidget !== null) {
+        if ($this->isInputWidgetInitialized() === true) {
             return $this->getInputWidget()->isBoundToAttribute();
         }
         return $this->attributeAlias !== null;
@@ -531,7 +621,9 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     public function setDoNotPrefill($value)
     {
-        $this->getInputWidget()->setDoNotPrefill($value);
+        if ($this->isInputWidgetInitialized() === true) {
+            $this->getInputWidget()->setDoNotPrefill($value);
+        }
         return parent::setDoNotPrefill($value);
     }
     
@@ -542,7 +634,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     public function getDoNotPrefill()
     {
-        return parent::getDoNotPrefill() || $this->getInputWidget()->getDoNotPrefill();
+        return parent::getDoNotPrefill() || ($this->hasCustomInputWidget() === true && $this->getInputWidget()->getDoNotPrefill());
     }
     
     /**
@@ -552,7 +644,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     public function isHidden()
     {
-        return parent::isHidden() || $this->getInputWidget()->isHidden();
+        return parent::isHidden() || ($this->hasCustomInputWidget() === true && $this->getInputWidget()->isHidden());
     }
     
     /**
@@ -589,7 +681,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     public function isDisplayOnly() : bool
     {
-        return $this->getInputWidget()->isDisplayOnly();
+        return $this->displayOnly || ($this->hasCustomInputWidget() === true && $this->getInputWidget()->isDisplayOnly());
     }
 
     /**
@@ -611,7 +703,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     public function setReadonly($true_or_false) : WidgetInterface
     {
-        $this->getInputWidget()->setReadonly($true_or_false);
+        if ($this->isInputWidgetInitialized() === true) {
+            $this->getInputWidget()->setReadonly($true_or_false);
+        }
+        $this->readonly = BooleanDataType::cast($true_or_false);
         return $this;
     }
 
@@ -622,11 +717,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     public function isReadonly() : bool
     {
-        return $this->getInputWidget()->isReadonly();
+        return $this->readonly || ($this->hasCustomInputWidget() === true && $this->getInputWidget()->isReadonly());
     }
 
     /**
-     *
      * Makes the widget display-only if set to TRUE (= interactive, but being ignored by most actions) - FALSE by default.
      * 
      * The following states of input widgets are available:
@@ -644,7 +738,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     public function setDisplayOnly($true_or_false) : iTakeInput
     {
-        $this->getInputWidget()->setDisplayOnly($true_or_false);
+        if ($this->isInputWidgetInitialized() === true) {
+            $this->getInputWidget()->setDisplayOnly($true_or_false);
+        } 
+        $this->displayOnly = BooleanDataType::cast($true_or_false);
         return $this;
     }
     
@@ -785,5 +882,53 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     {
         $this->includeInQuickSearch = $value;
         return $this;
+    }
+    
+    /**
+    *
+    * {@inheritDoc}
+    * @see \exface\Core\Widgets\AbstractWidget::doPrefill()
+    */
+    protected function doPrefill(DataSheetInterface $data_sheet)
+    {
+        foreach ($this->getChildren() as $widget) {
+            $widget->prefill($data_sheet);
+        }
+        
+        return;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToRead()
+     */
+    public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
+    {
+        $data_sheet = parent::prepareDataSheetToRead($data_sheet);
+        
+        foreach ($this->getChildren() as $widget) {
+            $data_sheet = $widget->prepareDataSheetToRead($data_sheet);
+        }
+        
+        return $data_sheet;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToRead()
+     */
+    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
+    {
+        $data_sheet = parent::prepareDataSheetToPrefill($data_sheet);
+        
+        foreach ($this->getChildren() as $widget) {
+            $data_sheet = $widget->prepareDataSheetToPrefill($data_sheet);
+        }
+        
+        return $data_sheet;
     }
 }
