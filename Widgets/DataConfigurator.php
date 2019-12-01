@@ -128,28 +128,30 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     
     public function createFilterWidget($attribute_alias = null, UxonObject $uxon_object = null)
     {
-        if ($uxon_object !== null && $wType = $uxon_object->getProperty('widget_type')) {
-            // If we have a widget type, that is not a filter, it must be a legacy filter widget
-            // where filter properties and input widget properties could be mixed together.
-            // At that time, there was only the default `Filter` widget, so all we need to do
-            // is extract attributes, that the Filter had at that time from the UXON and treat
-            // everything else as input widget properties.
+        if ($uxon_object !== null) {
+            // Legacy filters (before November 2019) allowed to mix filter properties and input 
+            // widget properties within the filter and there was no nested input_widget in UXON.
+            // At that time, there was only the default `Filter`.
             $mergedWidget = false;
+            // If we have a widget type, that is not a filter, it must be a legacy filter widget
             if ($wType = $uxon_object->getProperty('widget_type')) {
                 if (is_a(WidgetFactory::getWidgetClassFromType($wType), Filter::class) === false) {
                     $mergedWidget = true;
                 }
             }
-            
-            if ($uxon_object->hasProperty('object_alias') === true) {
+            // If there is an id, it is very probable, that it's a legacy filter. It is important
+            // to give that id to the input widget and not the filter as live references are
+            // typically intended to point to the input. 
+            if ($uxon_object->hasProperty('id') === true) {
                 $mergedWidget = true;
             }
             
+            // If a merged widget is detected, we need to extract attributes, that the Filter had 
+            // at that time from the UXON and treat everything else as input widget properties
             if ($mergedWidget === true) {
                 $inputUxon = $uxon_object->copy();
                 $uxon_object = new UxonObject();
                 // Set properties of the filter explicitly while passing everything else to it's input widget.
-                // TODO move this to the filter's importUxonObject() method.
                 if ($inputUxon->hasProperty('comparator')) {
                     $comparator = $inputUxon->getProperty('comparator');
                     $uxon_object->setProperty('comparator', $comparator);
