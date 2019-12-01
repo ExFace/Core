@@ -169,7 +169,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             } else {
                 $defaultEditorUxon = $attr->getDefaultEditorUxon()->extend($uxon);
             }
-        } elseif ($this->hasCustomConditionGroup() === false) {
+        } elseif ($this->hasCustomConditionGroup() === false && $this->hasCustomInputWidget() === false) {
             throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for an empty attribute alias in widget "' . $this->getId() . '"!', '6T91AR9');
         } 
         
@@ -233,6 +233,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             if ($defaultComparator = $this->getDefaultComparator($input)) {
                 $this->setComparator($defaultComparator->__toString());
             }
+        }
+        
+        if ($input->getCaption() === null) {
+            $input->setCaption(parent::getCaption());
         }
         
         // If the filter has a specific comparator, that is non-intuitive, add a corresponding suffix to
@@ -344,8 +348,11 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     {
         if ($this->isInputWidgetInitialized() === false && $this->attributeAlias !== null) {
             return $this->attributeAlias;
+        } 
+        if ($this->isInputWidgetInitialized() === true && $this->getInputWidget() instanceof iShowSingleAttribute) {
+            return $this->getInputWidget()->getAttributeAlias();
         }
-        return $this->getInputWidget()->getAttributeAlias();
+        return null;
     }
 
     /**
@@ -710,7 +717,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     public function isDisplayOnly() : bool
     {
-        return $this->displayOnly || ($this->hasCustomInputWidget() === true && $this->getInputWidget()->isDisplayOnly());
+        return $this->displayOnly || ($this->hasCustomInputWidget() === true && $this->getInputWidget() instanceof iTakeInput && $this->getInputWidget()->isDisplayOnly());
     }
 
     /**
@@ -746,7 +753,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     public function isReadonly() : bool
     {
-        return $this->readonly || ($this->hasCustomInputWidget() === true && $this->getInputWidget()->isReadonly());
+        return $this->readonly || ($this->hasCustomInputWidget() === true && $this->getInputWidget() instanceof iTakeInput && $this->getInputWidget()->isReadonly());
     }
 
     /**
