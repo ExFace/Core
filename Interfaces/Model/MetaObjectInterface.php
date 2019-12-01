@@ -88,8 +88,13 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * (e.g. CUSTOMER__CUSTOMER_GROUP for CUSTOMER__CUSTOMER_GROUP__NAME):
      *
      * @see MetaAttributeInterface::getRelationPath()
+     * 
+     * NOTE: the method returns any attribute reachable from this object. This
+     * is convenient, but sometime tricky to understand: e.g. when calling
+     * getAttribute() for a reverse relation, the foreign-key attribute of 
+     * the object, that the relation points to, is returned. 
      *
-     * TODO if a related attribute is request, a copy is created with the first
+     * TODO if a related attribute is requested, a copy is created with the first
      * call of the method and that copy is cached. This means, any changes on the
      * original attribute will not affect the copy anymore. This is dangerous!
      * To change this, we should replace all $attribute->getRelationPath() with
