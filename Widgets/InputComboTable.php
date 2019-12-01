@@ -599,7 +599,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     public function getOptionsObject()
     {
         if (! $this->isOptionsObjectSpecified()) {
-            if ($this->getAttribute()->isRelation()) {
+            if ($this->isBoundToAttribute() === true && $this->getAttribute()->isRelation() === true) {
                 $this->setOptionsObject($this->getMetaObject()->getRelation($this->getAttributeAlias())->getRightObject());
             }
         }
