@@ -114,7 +114,7 @@ class ChartConfigurator extends DataConfigurator
      * {@inheritDoc}
      * @see \exface\Core\Widgets\DataConfigurator::getQuickSearchFilters()
      */
-    public function getQuickSearchFilters()
+    public function getQuickSearchFilters() : array
     {
         return $this->getDataConfigurator()->getQuickSearchFilters();
     }
