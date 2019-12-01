@@ -7,6 +7,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\DataTypes\RelationCardinalityDataType;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * A relation in the metamodel symbolizes a key-based relationship between to objects.
@@ -317,5 +318,11 @@ interface MetaRelationInterface extends WorkbenchDependantInterface
      * @return MetaRelationInterface
      */
     public function setRightObjectToBeCopiedWithLeftObject(bool $value) : MetaRelationInterface;
+    
+    /**
+     * 
+     * @return UxonObject
+     */
+    public function getDefaultEditorUxon() : UxonObject;
    
 }

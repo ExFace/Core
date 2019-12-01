@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Exceptions\Model\MetaRelationAliasAmbiguousError;
 use exface\Core\DataTypes\RelationCardinalityDataType;
+use exface\Core\CommonLogic\UxonObject;
 
 class Relation implements MetaRelationInterface
 {
@@ -487,6 +488,21 @@ class Relation implements MetaRelationInterface
     {
         $this->rightObjectToBeCopiedWithLeftObject = $value;
         return $this;
+    }
+    
+    public function getDefaultEditorUxon() : UxonObject
+    {
+        $relationWidgetType = $this->getWorkbench()->getConfig()->getOption('FACADES.DEFAULT_WIDGET_FOR_RELATIONS');
+        
+        $uxon = new UxonObject([
+            "widget_type" => $relationWidgetType
+        ]);
+        
+        if ($relationWidgetType === 'InputComboTable' && $this->getRightKeyAttribute()->isUidForObject() === false) {
+            $uxon->setProperty("value_attribute_alias", $this->getRightKeyAttribute()->getAliasWithRelationPath());
+        }
+        
+        return $uxon;
     }
 }
 ?>
