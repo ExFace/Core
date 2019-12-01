@@ -23,6 +23,7 @@ use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * A filter is a wrapper widget, which typically consist of one or more input widgets.
@@ -153,14 +154,20 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
                 throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $this->getAttributeAlias() . '" in widget "' . $this->getParent()->getWidgetType() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
             }
             
-            // Try to use the default editor UXON of the attribute
-            $defaultEditorUxon = $attr->getDefaultEditorUxon();
-            $defaultEditorUxon = $defaultEditorUxon->extend($uxon);
-            
             // Set a special caption for filters on relations, which is derived from the relation itself
             // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
             if (false === $uxon->hasProperty('caption') && true === $attr->isRelation()) {
                 $uxon->setProperty('caption', $attr->getRelation()->getName());
+            }
+            
+            // Try to use the default editor UXON of the attribute
+            if ($attr->isRelation() === true && $this->getMetaObject()->getRelation($this->getAttributeAlias())->isReverseRelation() === true) {
+                $defaultEditorUxon = $this->getMetaObject()->getRelation($this->getAttributeAlias())->getDefaultEditorUxon()->extend($uxon);
+                if (! $defaultEditorUxon->hasProperty('attribute_alias')) {
+                    $defaultEditorUxon->setProperty('attribute_alias', $this->getAttributeAlias());
+                }
+            } else {
+                $defaultEditorUxon = $attr->getDefaultEditorUxon()->extend($uxon);
             }
         } elseif ($this->hasCustomConditionGroup() === false) {
             throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for an empty attribute alias in widget "' . $this->getId() . '"!', '6T91AR9');
@@ -194,9 +201,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      * Sets the widget used to interact with the filter (typically some kind of input widget)
      * 
      * @uxon-property input_widget
-     * @uxon-type \exface\Core\Widgets\Input
+     * @uxon-type \exface\Core\Widgets\AbstractWidget
+     * @uxon-template {"widget_type": ""}
      *
-     * @param iTakeInput|UxonObject $widget_or_uxon_object            
+     * @param iTakeInput|iContainOtherWidgets|UxonObject $widget_or_uxon_object            
      * @return \exface\Core\Widgets\Filter
      */
     public function setInputWidget($widget_or_uxon_object) : Filter
@@ -205,8 +213,12 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             // instantiate the widget later - when it is first requested via getInputWidget()
             $this->inputWidgetUxon = $widget_or_uxon_object;
             return $this;
-        } elseif ($widget_or_uxon_object instanceof iTakeInput) {
-            $input = $widget_or_uxon_object;
+        } elseif ($widget_or_uxon_object instanceof WidgetInterface) {
+            if ($widget_or_uxon_object instanceof iTakeInput || $widget_or_uxon_object instanceof iContainOtherWidgets) {
+                $input = $widget_or_uxon_object;
+            } else {
+                throw new WidgetConfigurationError('Cannot use widget "' . $widget_or_uxon_object->getWidgetType() . '" as input widget for a filter: only input widgets and containers supported!');
+            }
         } else {
             throw new UnexpectedValueException('Invalid input_widget for a filter: expecting a UXON description or an instantiated widget, received "' . gettype($widget_or_uxon_object) . '" instead!');
         }
@@ -252,6 +264,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         // The filter should be enabled all the time, except for the case, when it is diabled explicitly
         if (true !== parent::isDisabled()) {
             $input->setDisabled(false);
+        }
+        
+        if ($disableCond = parent::getDisableCondition()) {
+            $input->setDisableCondition($disableCond);
         }
         
         // Simply inherit do_not_prefill
@@ -508,6 +524,19 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             $this->getInputWidget()->setDisabled($value);
         }
         return parent::setDisabled($value);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::setDisableCondition()
+     */
+    public function setDisableCondition($value)
+    {
+        if ($this->isInputWidgetInitialized() === true) {
+            $this->getInputWidget()->setDisableCondition($value);
+        }
+        return parent::setDisableCondition($value);
     }
     
     /**
