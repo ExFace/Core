@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\TimestampDataType;
+
 /**
  * An input-field for dates (without time).
  * 
@@ -41,20 +44,22 @@ class InputDate extends Input
      */
     public function getFormat()
     {
+        if ($this->format === null) {
+            $dataType = $this->getValueDataType();
+            if ($dataType instanceof DateDataType || $dataType instanceof TimestampDataType) {
+                $this->format = $dataType->getFormat();
+            }
+        }
         return $this->format;
     }
 
     /**
-     * Sets the display format for the value.
+     * Display format for the date - see PHP date() formatting.
      * 
-     * Supported input formats are:
+     * Typical formats are:
      * 
-     * - dd.MM.yyyy, dd-MM-yyyy, dd/MM/yyyy, d.M.yyyy, d-M-yyyy, d/M/yyyy (e.g. 30.09.2015 oder 30/9/2015)
-     * - yyyy.MM.dd, yyyy-MM-dd, yyyy/MM/dd, yyyy.M.d, yyyy-M-d, yyyy/M/d (e.g. 2015.09.30 oder 2015/9/30)
-     * - dd.MM.yy, dd-MM-yy, dd/MM/yy, d.M.yy, d-M-yy, d/M/yy (e.g. 30.09.15 oder 30/9/15)
-     * - yy.MM.dd, yy-MM-dd, yy/MM/dd, yy.M.d, yy-M-d, yy/M/d (e.g. 32-09-30 fuer den 30.09.2032)
-     * - dd.MM, dd-MM, dd/MM, d.M, d-M, d/M (e.g. 30.09 oder 30/9)
-     * - ddMMyyyy, ddMMyy, ddMM (e.g. 30092015, 300915 oder 3009)
+     * - d.m.Y -> 31.12.2019
+     * - TODO
      * 
      * @uxon-property format
      * @uxon-type string

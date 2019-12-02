@@ -11,6 +11,8 @@ class DateDataType extends AbstractDataType
     
     const DATE_FORMAT_INTERNAL = 'Y-m-d';
     
+    private $format = null;
+    
     public static function cast($string)
     {
         $string = trim($string);
@@ -135,7 +137,27 @@ class DateDataType extends AbstractDataType
     
     public function getFormat() : string
     {
-        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATE_FORMAT');
+        return $this->format ?? $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATE_FORMAT');
+    }
+    
+    /**
+     * Display format for the date - see PHP date() formatting.
+     *
+     * Typical formats are:
+     *
+     * - d.m.Y -> 31.12.2019
+     * - TODO
+     *
+     * @uxon-property format
+     * @uxon-type string
+     *
+     * @param string $format
+     * @return DateDataType
+     */
+    public function setFormat(string $value) : DateDataType
+    {
+        $this->format = $value;
+        return $this;
     }
 }
 ?>
