@@ -26,13 +26,126 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
- * A filter is a wrapper widget, which typically consist of one or more input widgets.
- * The purpose of filters is to enable the user to
- * input conditions.
- *
- * TODO Add an optional operator menu to the filter. That would be a drowdown populated with suitable comparison operators for the data
- * type of the value widget.
- * IDEA Should one filter also be able to create condition groups? Or should there be a FilterGroup widget?
+ * A filter for data widgets, etc - consists of a logical comparator and an input widget.
+ * 
+ * All you need for a simple filter is the `attribute_alias` to filter over. Such filter will
+ * get the default editor of the attribute as `input_widget` automatically and the logical
+ * comparison operation will be determined from the data type: i.e. the `=` comparator will
+ * be used in most cases.
+ * 
+ * If you need more control over the filter use the `comparator` (e.g. `!=`, `>`, `<`, etc.) and 
+ * `input_widget` properties to override the defaults. Adding a `value` will give the filter a 
+ * default value (see examples below). You can also mark a filter as `required` to prevent 
+ * loading data if it has no value.
+ * 
+ * To create complex filter with multiple conditions, you can specify a custom `condition_group`
+ * with as many conditions on different attributes as you like. Use the `[#value#]` in the
+ * `value` property of a condition to get the current value from the filter's input widget.
+ * 
+ * You can make force the data widget to reload automatically once a filter's value changes
+ * by setting `apply_on_change` to `true` for this filter. This is especially usefull for
+ * filters with values linked to other widgets like those in master-details scenarios.
+ * 
+ * If the filter belongs to a widget, that supports quick search, you can include it in the
+ * quick search conditions by setting `include_in_quick_search` to `true`: the filter will
+ * be used as a further OR-condition when performing a quick search.
+ * 
+ * ## Examples
+ * 
+ * ### Simple filters
+ * 
+ * Providing an `attribute_alias` is enough to start with. Use relation concatennation via `__`
+ * to filter over related attributes.
+ * 
+ * ```
+ *  {
+ *      "attribute_alias": "my_attribute"
+ *  },
+ *  {
+ *      "attribute_alias": "relation_to__my_attribute"
+ *  },
+ *  {
+ *      "attribute_alias": "valid_to",
+ *      "comparator": ">=",
+ *      "value": "now"
+ *  }
+ * 
+ * ```
+ * 
+ * Note the relative date value `now` for the last date filter - giving default values to
+ * date filters in all kinds of logs can greatly improve performance: e.g. show only today's
+ * entries or those of the last two weeks (i.e. `value: >=2w`)!
+ * 
+ * ### Hidden and disabled filters
+ * 
+ * Mark a filter `disabled` to prevent users from changing it's values.
+ * 
+ * Use hidden filters to make the entire data widget operate on a subset of the data: for example 
+ * only showing visible items no matter what other filters are set. Such filters are common for 
+ * dashboards, where you need your tables and chart to only show rows with certain properties.
+ * 
+ * ```
+ *  {
+ *      "attribute_alias": "state",
+ *      "value": "10",
+ *      "disabled": "true"
+ *  },
+ *  {
+ *      "attribute_alias": "visible_flag",
+ *      "value": "1",
+ *      "comparator": "==",
+ *      "input_widget": {
+ *          "widget_type": "InputHidden"
+ *      }
+ *  }
+ * 
+ * ```
+ * 
+ * Using `InputHidden` as `input_widget` makes sure, the user can neither see nor change the value. Use 
+ * `InputHidden` instead of `hidden: true` because the `InputHidden` is a very simple widget and 
+ * generally performs better than hidden default editors. 
+ * 
+ * It is also a good idea to specify a `comparator` for hidden filters to be sure, how the filtering
+ * will behave. 
+ * 
+ * ### Custom input widgets
+ * 
+ * When filtering over date-time attributes you can use `InputDate` widgets for input if filtering for
+ * a specific time does not make much sense. This will simplify the user experience.
+ * 
+ * ```
+ *  {
+ *      "attribute_alias": "start_time",
+ *      "input_widget": {
+ *          "widget_type": "InputDate"
+ *      }
+ *  }
+ * 
+ * ```
+ * 
+ * ### Filter with a custom condition group
+ * 
+ * ```
+ * {
+ *   "caption": "Available titles",
+ *   "condition_group": {
+ *     "operator": "OR",
+ *     "conditions": [
+ *       {
+ *         "expression": "title",
+ *         "comparator": "=",
+ *         "value": "[#value#]"
+ *       },
+ *       {
+ *         "expression": "available_flag",
+ *         "comparator": "==",
+ *         "value": "1"
+ *       }
+ *     ]
+ *   }
+ * }
+ * 
+ * ```
  *
  * @author Andrej Kabachnik
  *        
