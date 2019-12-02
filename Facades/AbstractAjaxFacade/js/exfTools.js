@@ -4,79 +4,170 @@
     global.exfTools = factory(global.moment)
 }(this, (function (moment) { 'use strict';
 	// moment.js + PHP formatter
-	(function (m) {
+	(function(m){
 		/*
 		 * PHP => moment.js
-		 * Will take a php date format and convert it into a JS format for moment
+		 *
 		 * http://www.php.net/manual/en/function.date.php
 		 * http://momentjs.com/docs/#/displaying/format/
 		 */
-		var formatMap = {
-				d: 'DD',
-				D: 'ddd',
-				j: 'D',
-				l: 'dddd',
-				N: 'E',
-				S: function () {
-					return '[' + this.format('Do').replace(/\d*/g, '') + ']';
-				},
-				w: 'd',
-				z: function () {
-					return this.format('DDD') - 1;
-				},
-				W: 'W',
-				F: 'MMMM',
-				m: 'MM',
-				M: 'MMM',
-				n: 'M',
-				t: function () {
-					return this.daysInMonth();
-				},
-				L: function () {
-					return this.isLeapYear() ? 1 : 0;
-				},
-				o: 'GGGG',
-				Y: 'YYYY',
-				y: 'YY',
-				a: 'a',
-				A: 'A',
-				B: function () {
-					var thisUTC = this.clone().utc(),
+		// var formatMap = {
+			// d: 'DD',
+			// D: 'ddd',
+			// j: 'D',
+			// l: 'dddd',
+			// N: 'E',
+			// S: function(){
+				// return '['+this.format('Do').replace(/\dg, '')+']';
+			// },
+			// w: 'd',
+			// z: function(){
+				// return this.format('DDD') - 1;
+			// },
+			// W: 'W',
+			// F: 'MMMM',
+			// m: 'MM',
+			// M: 'MMM',
+			// n: 'M',
+			// t: function(){
+				// return this.daysInMonth();
+			// },
+			// L: function(){
+				// return this.isLeapYear() ? 1 : 0;
+			// },
+			// o: 'GGGG',
+			// Y: 'YYYY',
+			// y: 'YY',
+			// a: 'a',
+			// A: 'A',
+			// B: function(){
+				// var thisUTC = this.clone().utc(),
 					// Shamelessly stolen from http://javascript.about.com/library/blswatch.htm
-						swatch = ((thisUTC.hours() + 1) % 24) + (thisUTC.minutes() / 60) + (thisUTC.seconds() / 3600);
-					return Math.floor(swatch * 1000 / 24);
-				},
-				g: 'h',
-				G: 'H',
-				h: 'hh',
-				H: 'HH',
-				i: 'mm',
-				s: 'ss',
-				u: '[u]', // not sure if moment has this
-				e: '[e]', // moment does not have this
-				I: function () {
-					return this.isDST() ? 1 : 0;
-				},
-				O: 'ZZ',
-				P: 'Z',
-				T: '[T]', // deprecated in moment
-				Z: function () {
-					return parseInt(this.format('ZZ'), 10) * 36;
-				},
-				c: 'YYYY-MM-DD[T]HH:mm:ssZ',
-				r: 'ddd, DD MMM YYYY HH:mm:ss ZZ',
-				U: 'X'
-			},
-			formatEx = /[dDjlNSwzWFmMntLoYyaABgGhHisueIOPTZcrU]/g;
+					// swatch = ((thisUTC.hours()+1) % 24) + (thisUTC.minutes() / 60) + (thisUTC.seconds() / 3600);
+				// return Math.floor(swatch * 1000 / 24);
+			// },
+			// g: 'h',
+			// G: 'H',
+			// h: 'hh',
+			// H: 'HH',
+			// i: 'mm',
+			// s: 'ss',
+			// u: '[u]', // not sure if moment has this
+			// e: '[e]', // moment does not have this
+			// I: function(){
+				// return this.isDST() ? 1 : 0;
+			// },
+			// O: 'ZZ',
+			// P: 'Z',
+			// T: '[T]', // deprecated in moment
+			// Z: function(){
+				// return parseInt(this.format('ZZ'), 10) * 36;
+			// },
+			// c: 'YYYY-MM-DD[T]HH:mm:ssZ',
+			// r: 'ddd, DD MMM YYYY HH:mm:ss ZZ',
+			// U: 'X'
+		// },
+	
+		var formatMap = {
+			A: 'A',      // for the sake of escaping below
+			a: 'a',      // for the sake of escaping below
+			B: '',       // Swatch internet time (.beats), no equivalent
+			c: 'YYYY-MM-DD[T]HH:mm:ssZ', // ISO 8601
+			D: 'ddd',
+			d: 'DD',
+			e: 'zz',     // deprecated since version 1.6.0 of moment.js
+			F: 'MMMM',
+			G: 'H',
+			g: 'h',
+			H: 'HH',
+			h: 'hh',
+			I: '',       // Daylight Saving Time?: moment().isDST();
+			i: 'mm',
+			j: 'D',
+			L: '',       // Leap year?: moment().isLeapYear();
+			l: 'dddd',
+			M: 'MMM',
+			m: 'MM',
+			N: 'E',
+			n: 'M',
+			O: 'ZZ',
+			o: 'YYYY',
+			P: 'Z',
+			r: 'ddd, DD MMM YYYY HH:mm:ss ZZ', // RFC 2822
+			S: '',
+			s: 'ss',
+			T: '',      // deprecated since version 1.6.0 of moment.js
+			t: '',       // days in the month: moment().daysInMonth();
+			U: 'X',
+			u: 'SSSSSS', // microseconds
+			v: 'SSS',    // milliseconds (from PHP 7.0.0)
+			W: 'W',      // for the sake of escaping below
+			w: 'e',
+			Y: 'YYYY',
+			y: 'YY',
+			Z: '',       // time zone offset in minutes: moment().zone();
+			z: 'DDD',
+		},
+		formatEx = /[dDjlNSwzWFmMntLoYyaABgGhHisueIOPTZcrU]/g;
 
-		moment.fn.formatPHP = function (format) {
+		m.fn.formatPHP = function(format){
 			var that = this;
-
-			return this.format(format.replace(formatEx, function (phpStr) {
-				return typeof formatMap[phpStr] === 'function' ? formatMap[phpStr].call(that) : formatMap[phpStr];
+			console.log('momentFormat', format.replace(formatEx, function(phpStr){
+			  return typeof formatMap[phpStr] === 'function' ? formatMap[phpStr].call(that) : formatMap[phpStr];
+			}));
+			return this.format(format.replace(formatEx, function(phpStr){
+			  return typeof formatMap[phpStr] === 'function' ? formatMap[phpStr].call(that) : formatMap[phpStr];
 			}));
 		};
 	}(moment));
+	
+	function phpFormatToLdml (phpFormat) {
+		var formatMap = {
+			a: 'a',
+			A: 'a',
+			B: '',
+			c: 'yyyy-MM-dd[T]HH:mm:ssxxx',
+			d: 'dd',
+			D: 'EEE',
+			e: 'zzzz',
+			F: 'MMMM',
+			G: 'H',
+			g: 'h',			
+			H: 'HH',
+			h: 'hh',
+			I: '',
+			i: 'mm',
+			j: 'd',
+			L: '',
+			l: 'EEEE',
+			M: 'MMM',
+			m: 'MM',
+			N: 'e', //not sure if correct, documentation doesnt state if starts with 0 or 1
+			n: 'M',			
+			O: 'xx',
+			o: 'YYYY',
+			P: 'xxx',
+			r: 'EEE, dd MMM yyyy HH:mm:ss xxx',
+			S: '',
+			s: 'ss',
+			T: '', // deprecated in moment
+			t: '',
+			U: '', //timestamp not documentated, doesnt exist?
+			u: 'SSSSSS',
+			v: 'SSS',
+			W: 'w',
+			w: 'c',
+			Y: 'yyyy',
+			y: 'yy',
+			Z: '',
+			z: 'D',			
+		},
+		formatEx = /[dDjlNSwzWFmMntLoYyaABgGhHisueIOPTZcrU]/g;
+		
+		return phpFormat.replace(formatEx, function (phpStr) {
+			return formatMap[phpStr];
+		});
+	};
 	
 	var _mDateParseDefaultParams = {
 			lang: {
@@ -92,7 +183,7 @@
 	};
 	
 	function _validateDate (yyyy, MM, dd) {
-		var _m = moment([yyyy, MM, dd]); 
+		var _m = moment([yyyy, MM-1, dd]); 
 		return _m.isValid();		
 	};
 	
@@ -149,6 +240,10 @@
 	};
 	
 	return {
+		phpFormatToLdml: function (phpFormat) {
+			return phpFormatToLdml(phpFormat);
+		},
+		
 		date: {
 			/**
 			 * @return Date
@@ -306,22 +401,25 @@
 			 * @return string
 			 */
 			format: function(sDate, sPhpFormat = null) {
-				var output = null;
-				if (sPhpFormat === null) {
-					sPhpFormat = 'd.m.Y';
+				if (sDate !== null && sDate !== undefined && sDate !== '') {
+					if (sPhpFormat === null) {
+						console.log( moment(sDate).format('L'));
+						return moment(sDate).format('L');
+					} else {
+						console.log(moment(sDate).formatPHP(sPhpFormat));
+						return moment(sDate).formatPHP(sPhpFormat);
+					}
 				}
-				if (sDate !== null && sDate !== undefined) {
-					output = moment(sDate).formatPHP(sPhpFormat);
-				}
-				return output;
+				return sDate;
 			},
 			
 			validate: function (sDate) {
-				//return true;
-				if (sDate !== null && sDate !== undefined) {
-					return moment(sDate).isValid();;
-				}
+				
 				return true;
+				/*console.log('Validate', sDate);
+				var test = moment(sDate).isValid();
+				return test;*/		
+				
 			}
 		},
 		time: {
@@ -356,6 +454,7 @@
 		        
 		        // Ausgabe des geparsten Wertes
 		        if (timeParsed && timeValid) {
+		        	console.log(hh + ':' + mm + ':' + ss + (am_pm !== undefined ? ' ' + am_pm : ''));
 		        	return hh + ':' + mm + ':' + ss + (am_pm !== undefined ? ' ' + am_pm : '');
 		        }
 		        
@@ -380,21 +479,22 @@
 		        
 		        // Ausgabe des geparsten Wertes
 		        if (timeParsed && timeValid) {
+		        	console.log(output.format('HH:mm:ss'));
 		            return output.format('HH:mm:ss');
-		        } else {
-		            return null;
 		        }
+		        
+		        return output;
 			},
 			
-			format: function(sTime, sPhpFormat) {
-				if (sPhpFormat === undefined) {
-					sPhpFormat = 'H:i:s';
+			format: function(sTime, sPhpFormat = null) {
+				if (sTime !== null && sTime !== undefined && sTime !== '') {
+					if (sPhpFormat === null) {
+						output = moment('1970-01-01 ' + sTime).format('LTS');
+					} else {
+						output = moment('1970-01-01 ' + sTime).formatPHP(sPhpFormat);
+					}
 				}
-				var output = null;
-				if (sTime !== null && sTime !== undefined) {
-					output = moment('1970-01-01 ' + sTime).formatPHP(sPhpFormat);
-				}
-				return output;
+				return sTime;
 			},
 			
 			validate: function (sTime) {
