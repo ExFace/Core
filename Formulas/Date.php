@@ -16,14 +16,24 @@ class Date extends \exface\Core\CommonLogic\Model\Formula
 
     function formatDate($date, $format = '')
     {
-        if (! $format)
-            $format = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATE_FORMAT');
+        if ($format === 'Y-m-d') {
+            $format = 'yyyy-MM-dd';
+        } elseif ($format === 'Y-m-d H:i:s') {
+            $format = 'yyyy-MM-dd HH:mm:ss';
+        }
+        
         try {
             $date = new \DateTime($date);
         } catch (\Exception $e) {
             return $date;
         }
-        return $date->format($format);
+        
+        $dataType = $this->getDataType();
+        if ($format) {
+            $dataType->setFormat($format);
+        }
+        
+        return $dataType->formatDate($date);
     }
     
     /**

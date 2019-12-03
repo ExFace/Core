@@ -269,7 +269,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                     foreach ($rows as $nr => $row) {
                         $val = $row[$shortAlias];
                         if ($val instanceof \DateTime) {
-                            $val = $type::formatDate($val);
+                            $val = $type::formatDateNormalized($val);
                         }
                         $rows[$nr][$qpart->getColumnKey()] = $val;
                     }

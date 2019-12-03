@@ -79,7 +79,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatter($jsInput)
     {
-        return "exfTools.date.format((! {$jsInput} ? {$jsInput} : (isNaN({$jsInput}) ? exfTools.date.parse({$jsInput}) : new Date({$jsInput}))), \"{$this->getFormat()}\")";
+        return "exfTools.date.format((! {$jsInput} ? {$jsInput} : (isNaN({$jsInput}) ? exfTools.date.parse({$jsInput}, '{$this->getFormat()}') : new Date({$jsInput}))), \"{$this->getFormat()}\")";
     }
 
     /**
@@ -121,7 +121,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatParserToJsDate($jsString)
     {
-        return "exfTools.date.parse({$jsString})";
+        return "exfTools.date.parse({$jsString}, '{$this->getFormat()}')";
     }
 
     /**
@@ -134,7 +134,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
         return <<<JS
         
             function() {
-                var dateObj = exfTools.date.parse({$jsInput});
+                var dateObj = exfTools.date.parse({$jsInput}, '{$this->getFormat()}');
                 return (dateObj ? {$this->buildJsFormatDateObjectToString('dateObj')} : '');
             }()
         
