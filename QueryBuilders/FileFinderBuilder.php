@@ -189,12 +189,12 @@ class FileFinderBuilder extends AbstractQueryBuilder
                 switch ($qpart->getComparator()) {
                     case EXF_COMPARATOR_IS:
                     case EXF_COMPARATOR_EQUALS:
-                        $path_pattern = Filemanager::pathNormalize($qpart->getCompareValue());
+                        $uidPath = Filemanager::pathNormalize($qpart->getCompareValue());
                         break;
                     case EXF_COMPARATOR_IN:
                         $values = explode($qpart->getValueListDelimiter(), $qpart->getCompareValue());
                         if (count($values) === 1) {
-                            $path_pattern = Filemanager::pathNormalize($values[0]);
+                            $uidPath = Filemanager::pathNormalize($values[0]);
                             break;
                         }
                         // No "break;" here to fallback to default if none of the ifs above worked
@@ -209,12 +209,25 @@ class FileFinderBuilder extends AbstractQueryBuilder
             }
         }
         
-        if (! empty($addrPhs)) {
-            if ($path_pattern !== null && $path_pattern !== '') {
-                throw new QueryBuilderException('Cannot use filters over relative path (' . $path_pattern . ') and a relative path with placeholders (' . $addr . ') in FileFinderBuilder at the same time!');
-            }
-            
+        if ($uidPath === '') {
+            $uidPath = null;
+        }
+        
+        // If the data address has placeholders and the filter include both, paths and placeholder
+        // values, there is no way to decide, which path is correct.
+        if (empty($addrPhs) === false && empty($addrPhsValues) === false && $uidPath !== null) {
+            throw new QueryBuilderException('Cannot use filters over relative path (' . $uidPath . ') and a relative path with placeholders (' . $addr . ') in FileFinderBuilder at the same time!');
+        }
+        // If there is no conflict, use the UID paths if available
+        if ($uidPath !== null) {
+            $path_pattern = $uidPath;
+        } elseif (empty($addrPhs) === false) {
+            // Otherwise use the placeholders if there are any (even if no values are provided in
+            // the filters - this will and should cause an error!
             $path_pattern = StringDataType::replacePlaceholders($addr, $addrPhsValues);
+        } else {
+            // If neither UID filters nor placeholders are found - return NULL
+            $path_pattern = null;
         }
         
         return $path_pattern;
@@ -318,7 +331,6 @@ class FileFinderBuilder extends AbstractQueryBuilder
     public function delete(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $deletedFileNr = 0;
-        
         $query = $this->buildQuery();
         if ($files = $data_connection->query($query)->getFinder()) {
             foreach ($files as $file) {
