@@ -189,19 +189,23 @@ abstract class AbstractWidget implements WidgetInterface
         }
         $uxon->setProperty('widget_type', $this->getWidgetType());
         $uxon->setProperty('object_alias', $this->getMetaObject()->getAliasWithNamespace());
-        if (! is_null($this->getCaption())) {
-            $uxon->setProperty('caption', $this->getCaption());
-        }
-        if ($this->isDisabled()) {
+        
+        $this->exportUxonObjectAddCaptionPoperties($uxon);
+        
+        if ($this->disabled !== null) {
             $uxon->setProperty('disabled', $this->isDisabled());
         }
-        if ($this->getHint()) {
+        if ($this->disable_condition !== null) {
+            $uxon->setProperty('disable_condition', $this->getDisableCondition()->exportUxonObject());
+        }
+        
+        if ($this->hint !== null) {
             $uxon->setProperty('hint', $this->getHint());
         }
-        if (! is_null($this->getValue())) {
+        if ($this->getValue() !== null) {
             $uxon->setProperty('value', $this->getValue());
         }
-        if (! is_null($this->getVisibility())) {
+        if ($this->getVisibility() !== null) {
             $uxon->setProperty('visibility', $this->getVisibility());
         }
         if (! $this->getWidth()->isUndefined()) {
