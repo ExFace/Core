@@ -3,6 +3,7 @@ namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
+use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 
 class TimeDataType extends AbstractDataType
 {    
@@ -11,6 +12,8 @@ class TimeDataType extends AbstractDataType
     private $amPm = false;
     
     const TIME_FORMAT_INTERNAL = 'H:i:s';
+    
+    const TIME_ICU_FORMAT_INTERNAL = 'HH:mm:ss';
     
     public static function cast($string)
     {
@@ -40,14 +43,42 @@ class TimeDataType extends AbstractDataType
             // FIXME add message code with descriptions of valid formats
             throw new DataTypeCastingError('Cannot convert "' . $string . '" to a time!', '74BKHZL', $e);
         }
-        return static::formatTime($date);
+        return static::formatTimeNormalized($date);
+    }
+    
+    public function parse($value)
+    {
+        try {
+            return parent::parse($value);
+        } catch (DataTypeValidationError | DataTypeCastingError $e) {
+            $parsed =  $this->getIntlDateFormatter()->parse($value);
+            if ($parsed === false) {
+                throw $e;
+            }
+            return $parsed;
+        }
+    }
+    
+    protected static function createIntlDateFormatter(string $locale, string $format) : \IntlDateFormatter
+    {
+        return new \IntlDateFormatter($locale, NULL, NULL, NULL, NULL, $format);
+    }
+    
+    protected function getIntlDateFormatter() : \IntlDateFormatter
+    {
+        return self::createIntlDateFormatter($this->getLocale(), $this->getFormat());
+    }
+    
+    protected function getLocale() : string
+    {
+        return $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
     }
     /*
     public static function parseShortDate($string)
     {
         $matches = [];
         if (strlen($string) == 4 && is_int($string)){
-            return static::formatDate(new \DateTime($string . '-01-01'));
+            return static::formatDateNormalized(new \DateTime($string . '-01-01'));
         } elseif (preg_match('/^([0-9]{1,2})[\.-]([0-9]{4})$/', $string, $matches)){
             return $matches[2] . '-' . $matches[1] . '-01';
         } elseif (preg_match('/^([0-9]{1,2})[\.-]([0-9]{1,2})[\.-]?$/', $string, $matches)){
@@ -93,15 +124,20 @@ class TimeDataType extends AbstractDataType
             } else {
                 $date->sub($interval);
             }
-            return static::formatDate($date);
+            return static::formatDateNormalized($date);
         }
         return false;
     }
     */
     
-    public static function formatTime(\DateTime $date)
+    public static function formatTimeNormalized(\DateTime $date)
     {    
         return $date->format(self::TIME_FORMAT_INTERNAL);
+    }
+    
+    public function formatTime(\DateTime $date) : string
+    {
+        return $this->getIntlDateFormatter()->format($date);
     }
     
     /**
@@ -116,12 +152,12 @@ class TimeDataType extends AbstractDataType
     
     public function getFormatToParseTo() : string
     {
-        return self::TIME_FORMAT_INTERNAL;
+        return self::TIME_ICU_FORMAT_INTERNAL;
     }
     
     public function getFormat() : string
     {
-        return 'H:i';
+        return 'HH:mm';
     }
     
     /**
@@ -173,4 +209,5 @@ class TimeDataType extends AbstractDataType
         $this->amPm = $value;
         return $this;
     }
+    
 }

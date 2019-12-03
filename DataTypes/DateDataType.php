@@ -4,12 +4,15 @@ namespace exface\Core\DataTypes;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
+use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 
 class DateDataType extends AbstractDataType
 {
     const TIMESTAMP_MIN_VALUE = 100000;
     
     const DATE_FORMAT_INTERNAL = 'Y-m-d';
+    
+    const DATE_ICU_FORMAT_INTERNAL = 'yyyy-MM-dd';
     
     private $format = null;
     
@@ -47,14 +50,42 @@ class DateDataType extends AbstractDataType
         } catch (\Exception $e) {
             throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1', $e);
         }
-        return static::formatDate($date);
+        return static::formatDateNormalized($date);
+    }
+    
+    public function parse($value)
+    {
+        try {
+            return parent::parse($value);
+        } catch (DataTypeValidationError | DataTypeCastingError $e) {
+            $parsed =  $this->getIntlDateFormatter()->parse($value);
+            if ($parsed === false) {
+                throw $e;
+            }
+            return $parsed;
+        }
+    }
+    
+    protected static function createIntlDateFormatter(string $locale, string $format) : \IntlDateFormatter
+    {
+        return new \IntlDateFormatter($locale, NULL, NULL, NULL, NULL, $format);
+    }
+    
+    protected function getIntlDateFormatter() : \IntlDateFormatter
+    {
+        return self::createIntlDateFormatter($this->getLocale(), $this->getFormat());
+    }
+    
+    protected function getLocale() : string
+    {
+        return $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
     }
     
     public static function parseShortDate($string)
     {
         $matches = [];
         if (strlen($string) == 4 && is_int($string)){
-            return static::formatDate(new \DateTime($string . '-01-01'));
+            return static::formatDateNormalized(new \DateTime($string . '-01-01'));
         } elseif (preg_match('/^([0-9]{1,2})[\.-]([0-9]{4})$/', $string, $matches)){
             return $matches[2] . '-' . $matches[1] . '-01';
         } elseif (preg_match('/^([0-9]{1,2})[\.-]([0-9]{1,2})[\.-]?$/', $string, $matches)){
@@ -105,19 +136,24 @@ class DateDataType extends AbstractDataType
             } else {
                 $date->sub($interval);
             }
-            return static::formatDate($date);
+            return static::formatDateNormalized($date);
         }
         return false;
     }
     
-    public static function formatDate(\DateTime $date) : string
+    public static function formatDateNormalized(\DateTime $date) : string
     {
         return $date->format(self::DATE_FORMAT_INTERNAL);
     }
     
+    public function formatDate(\DateTime $date) : string
+    {
+        return $this->getIntlDateFormatter()->format($date);
+    }
+    
     public static function now() : string
     {
-        return static::formatDate((new \DateTime()));
+        return static::formatDateNormalized((new \DateTime()));
     }
     
     /**
@@ -132,7 +168,12 @@ class DateDataType extends AbstractDataType
     
     public function getFormatToParseTo() : string
     {
-        return self::DATE_FORMAT_INTERNAL;
+        return self::DATE_ICU_FORMAT_INTERNAL;
+    }
+    
+    protected function hasCustomFormat() : bool
+    {
+        return $this->format !== null;
     }
     
     public function getFormat() : string
@@ -141,11 +182,11 @@ class DateDataType extends AbstractDataType
     }
     
     /**
-     * Display format for the date - see PHP date() formatting.
+     * Display format for the date - see ICU formatting: http://userguide.icu-project.org/formatparse/datetime
      *
      * Typical formats are:
      *
-     * - d.m.Y -> 31.12.2019
+     * - dd.MM.yyyy -> 31.12.2019
      * - TODO
      *
      * @uxon-property format

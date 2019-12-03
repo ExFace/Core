@@ -47,12 +47,12 @@ class InputTime extends Input
      */
     public function getFormat() : string
     {
-        $format = $this->getAmPm() ? 'h:i' : 'H:i';
+        $format = $this->getAmPm() ? 'hh:mm' : 'HH:mm';
         if ($this->getShowSeconds() === true) {
-            $format .= ':s';
+            $format .= ':ss';
         }
         if ($this->getAmPm() === true) {
-            $format .= ' A';
+            $format .= ' a';
         }
         return $format;
     }

@@ -2,6 +2,8 @@
 namespace exface\Core\Formulas;
 
 use exface\Core\CommonLogic\Model\Formula;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\Factories\DataTypeFactory;
 
 class Adddays extends Formula
 {
@@ -10,12 +12,13 @@ class Adddays extends Formula
     {
         if (! $date)
             return;
-        if (! $format)
-            $format = $this->getWorkbench()->getConfig()->getOption('LOCALIZATION.DATE.DATE_FORMAT');
+        
         $date = new \DateTime($date);
         $interval = ($days_to_add < 0 ? 'N' : 'P') . intval($days_to_add) . 'D';
         $date->add(new \DateInterval($interval));
-        return $date->format($format);
+        $dataType = DataTypeFactory::createFromPrototype($this->getWorkbench(), DateDataType::class);
+                
+        return $dataType->formatDate($date);
     }
 }
 ?>
