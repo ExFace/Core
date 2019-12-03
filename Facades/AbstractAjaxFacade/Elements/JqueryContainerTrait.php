@@ -46,7 +46,6 @@ trait JqueryContainerTrait {
         foreach ($this->getWidget()->getWidgets() as $subw) {
             $output .= $this->getFacade()->getElement($subw)->buildJs() . "\n";
         }
-        ;
         return $output;
     }
 
