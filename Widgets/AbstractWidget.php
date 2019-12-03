@@ -1231,7 +1231,7 @@ abstract class AbstractWidget implements WidgetInterface
      */
     public function copy()
     {
-        return WidgetFactory::createFromUxon($this->getPage(), $this->exportUxonObject());
+        return WidgetFactory::createFromUxon($this->getPage(), $this->exportUxonObject(), $this->getParent());
     }
     
     /**
