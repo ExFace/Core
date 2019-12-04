@@ -294,6 +294,24 @@
 					dateParsed = true;
 				}
 				
+				// (+/-)? ... (H/h/M/m/S/s)?
+		        if (!dateParsed && (match = /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(sDate)) != null) {
+		            output = moment();
+		            switch (match[2].toUpperCase()) {
+		                case "H":
+		                case "":
+		                	output.add(Number(match[1]), 'hours');
+		                    break;
+		                case "M":
+		                	output.add(Number(match[1]), 'minutes');
+		                    break;
+		                case "S":
+		                	output.add(Number(match[1]), 'seconds');
+		                    break;
+		            }
+		            dateParsed = true;
+		        }
+				
 				// Ausgabe des geparsten Wertes
 				if (dateParsed && output !== null && output.isValid()) {
 					return output.toDate();
@@ -325,7 +343,7 @@
 			 * 
 			 * @return string
 			 */
-			parse: function(sTime) {
+			parse: function(sTime, timeFormat) {
 				// sTime ist ein String und wird zu einem date-Objekt geparst
 		        
 		        // Variablen initialisieren
@@ -334,7 +352,22 @@
 		        var timeValid = false;
 		        var output = null;
 		        
-		     // HH:mm , HH:mm:ss
+		        if (sTime === '' || sTime === null) {
+					return output;
+				}
+		        
+		        if (timeFormat !== undefined) {
+					output = moment(sTime, _ICUFormatToMoment(timeFormat), true);
+					if (output.isValid()) {
+						if (timeFormat.indexOf('a') !== '-1') {
+							return output.format('hh:mm:ss a');
+						} else {
+							return output.format('HH:mm:ss');
+						}
+					}
+				}
+		        
+		     // HH:mm , HH:mm:ss, HH:mm am/pm, HH:mm:ss am/pm
 		        if (!timeParsed && (match = /(\d{1,2}):?(\d{1,2}):?(\d{1,2})?\040?(pm|am)?$/i.exec(sTime)) != null) {
 		        	var hh, mm, ss, am_pm;
 		            hh = Number(match[1]);
@@ -379,7 +412,8 @@
 		        	var hh = output.hour();
 		        	var mm = output.minute();
 		        	var ss = output.second();
-		        	return  hh + ':' + mm + ':' + ss
+		        	return output.format('HH:mm:ss');
+		        	//return  hh + ':' + mm + ':' + ss
 		        }
 		        
 		        return output;
@@ -396,9 +430,19 @@
 				return sTime;
 			},
 			
+			formatObject: function(dateTime, sICUFormat) {
+				if (dateTime !== null && dateTime !== undefined && dateTime !== '') {
+					if (sICUFormat === undefined) {
+						return moment(dateTime).format('LTS');
+					} else {
+						return moment(dateTime).formatICU(sICUFormat);
+					}
+				}
+				return '';
+			},
+			
 			validate: function (sTime) {
 				return true;
-				//return moment(sDate).isValid();
 			}
 		}		
 	}
