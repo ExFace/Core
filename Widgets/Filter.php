@@ -432,6 +432,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             $input->setWidth($this->width);
         }
         
+        if ($this->height !== null) {
+            $input->setWidth($this->height);
+        }
+        
         return $input;
     }
     
@@ -608,11 +612,11 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
 
     /**
      * 
-     * @return string
+     * @return string|NULL
      */
-    public function getComparator(string $default = ComparatorDataType::EQUALS) : string
+    public function getComparator() : ?string
     {
-        return $this->comparator ?? $default;
+        return $this->comparator;
     }
 
     /**
@@ -1124,8 +1128,9 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     }
     
     /**
-     *
-     * @return string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getWidth()
      */
     public function getWidth()
     {
@@ -1133,9 +1138,20 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     }
     
     /**
-     * 
-     * @param string $value
-     * @return Filter
+     * Sets the width of the widget.
+     * Set to `1` for default widget width in a facade or `max` for maximum width possible.
+     *
+     * The width can be specified either in
+     * - facade-specific relative units (e.g. `width: 2` makes the widget twice as wide
+     * as the default width of a widget in the current facade)
+     * - percent (e.g. `width: 50%` will make the widget take up half the available space)
+     * - any other facade-compatible units (e.g. `width: 200px` will work in CSS-based facades)
+     *
+     * @uxon-property width
+     * @uxon-type string
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\WidgetInterface::setWidth()
      */
     public function setWidth($value)
     {
@@ -1146,4 +1162,39 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         return $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getHeight()
+     */
+    public function getHeight()
+    {
+        return $this->getInputWidget()->getHeight();
+    }
+    
+    /**
+     * Sets the height of the widget.
+     * Set to `1` for default widget height in a facade or `max` for maximum height possible.
+     *
+     * The height can be specified either in
+     * - facade-specific relative units (e.g. `height: 2` makes the widget twice as high
+     * as the default width of a widget in the current facade)
+     * - percent (e.g. `height: 50%` will make the widget take up half the available space)
+     * - any other facade-compatible units (e.g. `height: 200px` will work in CSS-based facades)
+     *
+     * @uxon-property height
+     * @uxon-type string
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\WidgetInterface::setHeight()
+     */
+    public function setHeight($value)
+    {
+        if ($this->isInputWidgetInitialized() === true) {
+            $this->getInputWidget()->setHeight($value);
+        }
+        $this->height = $value;
+        return $this;
+    }
 }
