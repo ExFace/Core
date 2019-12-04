@@ -149,7 +149,6 @@
 			 */
 			parse: function(sDate, dateFormat, ParseParams) {
 				// date ist ein String und wird zu einem date-Objekt geparst
-				console.log('sDate', sDate);
 				
 				// Variablen initialisieren
 				var match = null;
@@ -327,7 +326,6 @@
 			 * @return string
 			 */
 			parse: function(sTime) {
-				console.log('sTime', sTime);
 				// sTime ist ein String und wird zu einem date-Objekt geparst
 		        
 		        // Variablen initialisieren
