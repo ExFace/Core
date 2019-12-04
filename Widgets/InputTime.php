@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\DataTypes\TimeDataType;
+use exface\Core\Factories\DataTypeFactory;
 
 /**
  * An input-field for time-values (without date).
@@ -32,8 +33,7 @@ use exface\Core\DataTypes\TimeDataType;
  * - (+/-)? ... (h/m/s/)? (e.g. 0 => now, 1 or 1h or +1h => in one hour, 45m => in 45 minutes, -15m => 15 minutes ago)
  * 
  * @author Andrej Kabachnik
- *        
- */
+ *         */
 class InputTime extends Input
 {
     private $showSeconds = null;
@@ -42,19 +42,28 @@ class InputTime extends Input
     
     private $stepMinutes = 60;
     
+    private $format = null;
+    
     /**
      * @return string|null
      */
     public function getFormat() : string
     {
-        $format = $this->getAmPm() ? 'hh:mm' : 'HH:mm';
-        if ($this->getShowSeconds() === true) {
-            $format .= ':ss';
+        if ($this->format === null) {
+            $dataType = $this->getValueDataType();
+            if (! $dataType instanceof TimeDataType) {
+                $dataType = DataTypeFactory::createFromPrototype($this->getWorkbench(), TimeDataType::class);
+            }
+            if ($this->showSeconds !== null) {
+                $dataType->setShowSeconds($this->showSeconds);
+            }
+            if ($this->amPm !== null) {
+                $dataType->setAmPm($this->amPm);
+            }
+            $format = $dataType->getFormat();
+            $this->format = $format;
         }
-        if ($this->getAmPm() === true) {
-            $format .= ' a';
-        }
-        return $format;
+        return $this->format;
     }
 
     
@@ -108,6 +117,22 @@ class InputTime extends Input
         }
         return $this->amPm;
     }
+    
+    /**
+     * Display format for the time
+     *
+     * @uxon-property format
+     * @uxon-type string
+     *
+     * @param string $format
+     * @return InputTime
+     */
+    public function setFormat($format)
+    {
+        $this->format = $format;
+        return $this;
+    }
+        
     
     /**
      * Set to TRUE to use the 12-h format with AM/PM.

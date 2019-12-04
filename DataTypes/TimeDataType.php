@@ -15,6 +15,11 @@ class TimeDataType extends AbstractDataType
     
     const TIME_ICU_FORMAT_INTERNAL = 'HH:mm:ss';
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::cast()
+     */
     public static function cast($string)
     {
         $string = trim($string);
@@ -22,20 +27,6 @@ class TimeDataType extends AbstractDataType
         if ($string === '' || $string === null) {
             return $string;
         }
-        
-        /*
-        // Return NULL for casting empty values as an empty string '' actually is not a date!
-        if (static::isEmptyValue($string) === true) {
-            return null;
-        }
-        
-        if ($relative = static::parseRelativeDate($string)){
-            return $relative;
-        }
-        
-        if ($short = static::parseShortDate($string)){
-            return $short;
-        }*/
         
         try {
             $date = new \DateTime($string);
@@ -46,6 +37,11 @@ class TimeDataType extends AbstractDataType
         return static::formatTimeNormalized($date);
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::parse()
+     */
     public function parse($value)
     {
         try {
@@ -59,82 +55,50 @@ class TimeDataType extends AbstractDataType
         }
     }
     
+    /**
+     * 
+     * @param string $locale
+     * @param string $format
+     * @return \IntlDateFormatter
+     */
     protected static function createIntlDateFormatter(string $locale, string $format) : \IntlDateFormatter
     {
         return new \IntlDateFormatter($locale, NULL, NULL, NULL, NULL, $format);
     }
     
+    /**
+     * 
+     * @return \IntlDateFormatter
+     */
     protected function getIntlDateFormatter() : \IntlDateFormatter
     {
         return self::createIntlDateFormatter($this->getLocale(), $this->getFormat());
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function getLocale() : string
     {
         return $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
     }
-    /*
-    public static function parseShortDate($string)
-    {
-        $matches = [];
-        if (strlen($string) == 4 && is_int($string)){
-            return static::formatDateNormalized(new \DateTime($string . '-01-01'));
-        } elseif (preg_match('/^([0-9]{1,2})[\.-]([0-9]{4})$/', $string, $matches)){
-            return $matches[2] . '-' . $matches[1] . '-01';
-        } elseif (preg_match('/^([0-9]{1,2})[\.-]([0-9]{1,2})[\.-]?$/', $string, $matches)){
-            return date("Y") . '-' . $matches[2] . '-' . $matches[1];
-        } else {
-            return false;
-        }
-    }
     
-    public static function parseRelativeDate($string)
-    {
-        $day_period = 'D';
-        $week_period = 'W';
-        $month_period = 'M';
-        $year_period = 'Y';
-        
-        $matches = [];
-        if (preg_match('/^([\+-]?[0-9]+)([dDmMwWyY]?)$/', $string, $matches)){
-            $period = $matches[2];
-            $quantifier = intval($matches[1]);
-            $interval_spec = 'P' . abs($quantifier);
-            switch (strtoupper($period)){
-                case $day_period:
-                case '':
-                    $interval_spec .= 'D';
-                    break;
-                case $week_period:
-                    $interval_spec .= 'W';
-                    break;
-                case $month_period:
-                    $interval_spec .= 'M';
-                    break;
-                case $year_period:
-                    $interval_spec .= 'Y';
-                    break;
-                default:
-                    throw new UnexpectedValueException('Invalid period "' . $period . '" used in relative date "' . $quantifier . $period . '"!', '6W25AB1');
-            }
-            $date = new \DateTime();
-            $interval = new \DateInterval($interval_spec);
-            if ($quantifier > 0){
-                $date->add($interval);
-            } else {
-                $date->sub($interval);
-            }
-            return static::formatDateNormalized($date);
-        }
-        return false;
-    }
-    */
-    
+    /**
+     * 
+     * @param \DateTime $date
+     * @return string
+     */
     public static function formatTimeNormalized(\DateTime $date)
     {    
         return $date->format(self::TIME_FORMAT_INTERNAL);
     }
     
+    /**
+     * 
+     * @param \DateTime $date
+     * @return string
+     */
     public function formatTime(\DateTime $date) : string
     {
         return $this->getIntlDateFormatter()->format($date);
@@ -150,14 +114,39 @@ class TimeDataType extends AbstractDataType
         return SortingDirectionsDataType::DESC($this->getWorkbench());
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function getFormatToParseTo() : string
     {
         return self::TIME_ICU_FORMAT_INTERNAL;
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function getFormat() : string
     {
-        return 'HH:mm';
+        $format = $this->getAmPm() ? 'hh:mm' : 'HH:mm';
+        if ($this->getShowSeconds() === true) {
+            $format .= ':ss';
+        }
+        if ($this->getAmPm() === true) {
+            $format .= ' a';
+        }
+        return $format;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getInputFormatHint()
+     */
+    public function getInputFormatHint() : string
+    {
+        return $this->getApp()->getTranslator()->translate('LOCALIZATION.DATE.TIME_FORMAT_HINT');
     }
     
     /**
