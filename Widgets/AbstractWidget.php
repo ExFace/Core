@@ -584,7 +584,7 @@ abstract class AbstractWidget implements WidgetInterface
     /**
      * TODO Move to iHaveValue-Widgets or trait
      *
-     * @return ExpressionInterface
+     * @return ExpressionInterface|NULL
      */
     public function getValueExpression()
     {
@@ -598,8 +598,9 @@ abstract class AbstractWidget implements WidgetInterface
     public function getValueWidgetLink()
     {
         $link = null;
-        if ($this->getValueExpression() && $this->getValueExpression()->isReference()) {
-            $link = $this->getValueExpression()->getWidgetLink($this);
+        $expr = $this->getValueExpression();
+        if ($expr && $expr->isReference()) {
+            $link = $expr->getWidgetLink($this);
         }
         return $link;
     }
