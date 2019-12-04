@@ -679,13 +679,13 @@ abstract class AbstractWidget implements WidgetInterface
 
     /**
      * Sets the width of the widget.
-     * Set to "1" for default widget width in a facade or "max" for maximum width possible.
+     * Set to `1` for default widget width in a facade or `max` for maximum width possible.
      *
      * The width can be specified either in
-     * - facade-specific relative units (e.g. "width: 2" makes the widget twice as wide
+     * - facade-specific relative units (e.g. `width: 2` makes the widget twice as wide
      * as the default width of a widget in the current facade)
-     * - percent (e.g. "width: 50%" will make the widget take up half the available space)
-     * - any other facade-compatible units (e.g. "width: 200px" will work in CSS-based facades)
+     * - percent (e.g. `width: 50%` will make the widget take up half the available space)
+     * - any other facade-compatible units (e.g. `width: 200px` will work in CSS-based facades)
      *
      * @uxon-property width
      * @uxon-type string
@@ -717,13 +717,13 @@ abstract class AbstractWidget implements WidgetInterface
 
     /**
      * Sets the height of the widget.
-     * Set to "1" for default widget height in a facade or "max" for maximum height possible.
+     * Set to `1` for default widget height in a facade or `max` for maximum height possible.
      *
      * The height can be specified either in
-     * - facade-specific relative units (e.g. "height: 2" makes the widget twice as high
+     * - facade-specific relative units (e.g. `height: 2` makes the widget twice as high
      * as the default width of a widget in the current facade)
-     * - percent (e.g. "height: 50%" will make the widget take up half the available space)
-     * - any other facade-compatible units (e.g. "height: 200px" will work in CSS-based facades)
+     * - percent (e.g. `height: 50%` will make the widget take up half the available space)
+     * - any other facade-compatible units (e.g. `height: 200px` will work in CSS-based facades)
      *
      * @uxon-property height
      * @uxon-type string

@@ -82,7 +82,7 @@ class RangeFilter extends Filter
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Filter::getComparator()
      */
-    public function getComparator(string $default = ComparatorDataType::GREATER_THAN_OR_EQUALS) : string
+    public function getComparator() : ?string
     {
         return $this->getComparatorFrom();
     }
