@@ -2,25 +2,28 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Factories\WidgetFactory;
 
 /**
- * Displays multiple value-widgets in line - e.g. for dimensions (LxWxH), prices (value + currency), etc.
+ * Displays multiple value-widgets in line - e.g. for dimensions (LxWxH), prices (value, currency), etc.
  * 
  * The result looks similar to a single `Value` widget, but instead of showing a single value, it shows
- * multiple side-by-side. Each of the values has less space because the total width of the group is still
+ * multiple values side-by-side. Each of the values has less space because the total width of the group is still
  * the same as for a single-value widget. 
  * 
- * Technically, the `InlineGroup` consists of multiple separate `Value` widgets. By default only the caption
- * of the group is shown and each of the grouped widgets has the same width. You can, however, set the width
- * for the contained widgets explicitly to make some wider than others. Setting `hide_caption` to `false`
- * explicitly will also force the `Value` widget show it's individual caption. This can be used to separate
- * the widgets from each other: e.g. by adding `x` characters between inputs for dimensions - see examples
- * below.
+ * Technically, the `InlineGroup` consists of multiple separate `Display` or `Input` widgets. Only the caption
+ * of the group is displayed - captions for the individual widgets are hidden. However, their hints will still
+ * be visible. 
+ * 
+ * A `separator` can be used to display a character between the grouped widgets: e.g. by adding `x` characters 
+ * between inputs for dimensions - see examples below. Alternatively, you can add `Text` widgets to the group
+ * manually if you need different separators.
  * 
  * Just like many other container widgets, the `InlineGroup` will render it's content as default input widgets 
- * or default display widgets depending on the `readonly` property. This behavior is the same as for for
+ * or default display widgets depending on the `readonly` property. This behavior is the same as for
  * `WidgetGrid`, `WidgetGroup`, etc. Of course, you can also override the `widget_type` of every widget
- * in the group.
+ * in the group by defining it manually.
  * 
  * ## Examples
  * 
@@ -29,19 +32,19 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * The following code will produce a numeric input widget, that looks like this: `Dimensions: |_____| x |_____|`.
  * It has the same width as a stand-alone `Input` widget would have, which makes it easy to position such
  * `InlineGroup`s in forms. The caption "Dimensions" comes from the group and the `x` in-between is the
- * custom caption of the second input-widget.
+ * `separator`.
  * 
  * ```
  * {
  *  "widget_type": "InlineGroup",
  *  "caption": "Dimensions",
+ *  "separator": "x",
  *  "widgets": [
  *      {
  *          "attribute_alias": "LENGTH",
  *      },
  *      {
- *          "attribute_alias": "WIDTH",
- *          "caption": "x"
+ *          "attribute_alias": "WIDTH"
  *      }
  *  ]
  * }
@@ -60,13 +63,13 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  *  "widget_type": "InlineGroup",
  *  "caption": "Dimensions",
  *  "readonly": true,
+ *  "separator": "x",
  *  "widgets": [
  *      {
  *          "attribute_alias": "LENGTH"
  *      },
  *      {
- *          "attribute_alias": "WIDTH",
- *          "caption": "x"
+ *          "attribute_alias": "WIDTH"
  *      }
  *  ]
  * }
@@ -102,6 +105,10 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  */
 class InlineGroup extends Container
 {
+    private $separator = '';
+    
+    private $separatorWidth = '5%';
+    
     /**
      * Array of widgets to be placed in the group: mostly Value widgets, but any other kind is OK too.
      *
@@ -121,14 +128,94 @@ class InlineGroup extends Container
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Container::addWidget()
      */
-    public function addWidget(AbstractWidget $widget, $position = NULL)
+    public function addWidget(AbstractWidget $widget, $position = NULL, $addSeparator = true)
     {
-        if (! $widget instanceof Value) {
+        if (! $widget instanceof Value && ! $widget instanceof Filter) {
             throw new WidgetConfigurationError($this, 'Cannot use widget "' . $widget->getWidgetType() . '" in a ' . $this->getWidgetType() . ': only value-widgets are supported!');
         }
-        if ($widget->getHideCaption() === null) {
-            $widget->setHideCaption(true);
+        $widget->setHideCaption(true);
+        
+        if ($this->getSeparator() !== '' && $addSeparator === true && $this->hasWidgets() === true) {
+            $this->addWidget($this->createSeparatorWidget(), null, false);
         }
+        
         return parent::addWidget($widget, $position);
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    protected function getSeparator() : string
+    {
+        return $this->separator;
+    }
+    
+    /**
+     * Delimiter between the group widgets - e.g. "-" for ranges or "x" for dimensions, etc.
+     * 
+     * @uxon-property separator
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return InlineGroup
+     */
+    public function setSeparator(string $value) : InlineGroup
+    {
+        $this->separator = $value;
+        if ($this->hasWidgets() === true) {
+            $cnt = $this->countWidgets();
+            for ($pos = 1; $pos < $cnt; $cnt += 2) {
+                $this->addWidget($this->createSeparatorWidget(), $pos);
+            }
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return Text
+     */
+    protected function createSeparatorWidget() : Text
+    {
+        return WidgetFactory::createFromUxonInParent($this, $this->getSeparatorWidgetUxon());
+    }
+    
+    /**
+     * 
+     * @return UxonObject
+     */
+    protected function getSeparatorWidgetUxon() : UxonObject
+    {
+        return new UxonObject([
+            "widget_type" => "Text",
+            "text" => $this->getSeparator(),
+            "align" => "center",
+            "width" => $this->getSeparatorWidth()
+        ]);
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    protected function getSeparatorWidth() : string
+    {
+        return $this->separatorWidth;
+    }
+    
+    /**
+     * The width of each separator (defaults to 5%).
+     * 
+     * @uxon-property separator_width
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return InlineGroup
+     */
+    public function setSeparatorWidth(string $value) : InlineGroup
+    {
+        $this->separatorWidth = $value;
+        return $this;
     }
 }
