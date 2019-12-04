@@ -135,7 +135,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
             $mergedWidget = false;
             // If we have a widget type, that is not a filter, it must be a legacy filter widget
             if ($wType = $uxon_object->getProperty('widget_type')) {
-                if (is_a(WidgetFactory::getWidgetClassFromType($wType), Filter::class) === false) {
+                if (is_a(WidgetFactory::getWidgetClassFromType($wType), '\\' . Filter::class, true) === false) {
                     $mergedWidget = true;
                 }
             }
