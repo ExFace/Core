@@ -16,6 +16,11 @@ class DateDataType extends AbstractDataType
     
     private $format = null;
     
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::cast()
+     */
     public static function cast($string)
     {
         $string = trim($string);
@@ -53,6 +58,11 @@ class DateDataType extends AbstractDataType
         return static::formatDateNormalized($date);
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::parse()
+     */
     public function parse($value)
     {
         try {
@@ -66,21 +76,40 @@ class DateDataType extends AbstractDataType
         }
     }
     
+    /**
+     * 
+     * @param string $locale
+     * @param string $format
+     * @return \IntlDateFormatter
+     */
     protected static function createIntlDateFormatter(string $locale, string $format) : \IntlDateFormatter
     {
         return new \IntlDateFormatter($locale, NULL, NULL, NULL, NULL, $format);
     }
     
+    /**
+     * 
+     * @return \IntlDateFormatter
+     */
     protected function getIntlDateFormatter() : \IntlDateFormatter
     {
         return self::createIntlDateFormatter($this->getLocale(), $this->getFormat());
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function getLocale() : string
     {
         return $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
     }
     
+    /**
+     * 
+     * @param unknown $string
+     * @return string|boolean
+     */
     public static function parseShortDate($string)
     {
         $matches = [];
@@ -95,6 +124,12 @@ class DateDataType extends AbstractDataType
         }
     }
     
+    /**
+     * 
+     * @param unknown $string
+     * @throws UnexpectedValueException
+     * @return boolean|string
+     */
     public static function parseRelativeDate($string)
     {
         $day_period = 'D';
@@ -141,16 +176,30 @@ class DateDataType extends AbstractDataType
         return false;
     }
     
+    /**
+     * 
+     * @param \DateTime $date
+     * @return string
+     */
     public static function formatDateNormalized(\DateTime $date) : string
     {
         return $date->format(self::DATE_FORMAT_INTERNAL);
     }
     
+    /**
+     * 
+     * @param \DateTime $date
+     * @return string
+     */
     public function formatDate(\DateTime $date) : string
     {
         return $this->getIntlDateFormatter()->format($date);
     }
     
+    /**
+     * 
+     * @return string
+     */
     public static function now() : string
     {
         return static::formatDateNormalized((new \DateTime()));
@@ -166,19 +215,41 @@ class DateDataType extends AbstractDataType
         return SortingDirectionsDataType::DESC($this->getWorkbench());
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function getFormatToParseTo() : string
     {
         return self::DATE_ICU_FORMAT_INTERNAL;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     protected function hasCustomFormat() : bool
     {
         return $this->format !== null;
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function getFormat() : string
     {
         return $this->format ?? $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATE_FORMAT');
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getInputFormatHint()
+     */
+    public function getInputFormatHint() : string
+    {
+        return $this->getApp()->getTranslator()->translate('LOCALIZATION.DATE.DATE_FORMAT_HINT');
     }
     
     /**
