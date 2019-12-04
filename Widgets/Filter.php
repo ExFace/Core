@@ -179,6 +179,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     
     private $value = null;
     
+    private $width = null;
+    
+    private $height = null;
+    
     /**
      * Returns TRUE if the input widget was already instantiated.
      * 
@@ -210,9 +214,9 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     public function importUxonObject(UxonObject $uxon)
     {
         if ($uxon->hasProperty('attribute_alias') === true) {
-            $this->setAttributeAlias('attribute_alias', $uxon->hasProperty('attribute_alias'));
+            $this->setAttributeAlias($uxon->hasProperty('attribute_alias'));
         } elseif (($uxon->getProperty('input_widget') instanceof UxonObject) && $uxon->getProperty('input_widget')->hasProperty('attribute_alias')) {
-            $this->setAttributeAlias('attribute_alias', $uxon->getProperty('input_widget')->getProperty('attribute_alias'));
+            $this->setAttributeAlias($uxon->getProperty('input_widget')->getProperty('attribute_alias'));
         }
         
         try {
@@ -245,10 +249,19 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     public function getInputWidget() : WidgetInterface
     {
         if ($this->isInputWidgetInitialized() === false) {
-            $uxon = $this->inputWidgetUxon ?? new UxonObject();
+            $uxon = $this->getInputWidgetUxon() ?? new UxonObject();
             $this->setInputWidget($this->createInputWidget($uxon));
         }
         return $this->inputWidget;
+    }
+
+    /**
+     * 
+     * @return UxonObject|NULL
+     */
+    protected function getInputWidgetUxon() : ?UxonObject
+    {
+        return $this->inputWidgetUxon;
     }
     
     /**
@@ -336,37 +349,43 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             throw new UnexpectedValueException('Invalid input_widget for a filter: expecting a UXON description or an instantiated widget, received "' . gettype($widget_or_uxon_object) . '" instead!');
         }
         
+        $this->inputWidget = $this->enhanceInputWidget($input);
+        
+        return $this;
+    }
+
+    /**
+     * 
+     * @param WidgetInterface $input
+     * @return WidgetInterface
+     */
+    protected function enhanceInputWidget(WidgetInterface $input) : WidgetInterface
+    {
         // Some widgets need to be transformed to be a meaningfull filter
         if ($input->is('InputCheckBox')) {
             $input = $input->transformIntoSelect();
         }
         
         // Set a default comparator
-        if (is_null($this->comparator)) {
-            if ($defaultComparator = $this->getDefaultComparator($input)) {
+        $defaultComparator = $this->getDefaultComparator($input);
+        if ($this->comparator === null) {
+            if ($defaultComparator !== null) {
                 $this->setComparator($defaultComparator->__toString());
             }
         }
         
-        if ($input->getCaption() === null) {
+        if (parent::getCaption() !== null) {
             $input->setCaption(parent::getCaption());
         }
         
         // If the filter has a specific comparator, that is non-intuitive, add a corresponding suffix to
         // the caption of the input widget.
-        switch ($this->getComparator()) {
-            case EXF_COMPARATOR_GREATER_THAN:
-            case EXF_COMPARATOR_GREATER_THAN_OR_EQUALS:
-            case EXF_COMPARATOR_LESS_THAN:
-            case EXF_COMPARATOR_LESS_THAN_OR_EQUALS:
-                $input->setCaption($input->getCaption() . ' (' . $this->getComparator() . ')');
-                break;
-        }
+        $input = $this->enhanceInputWidgetWithComparatorHint($input);
         
         // The widgets in the filter should not be required accept for the case if the filter itself is marked
         // as required (see set_required()). This is important because, inputs based on required attributes are
         // marked required by default: this should not be the case for filters, however!
-        if ($input instanceof iCanBeRequired) {
+        if ($input instanceof iCanBeRequired && $this->isRequired() === false) {
             $input->setRequired(false);
         }
         
@@ -409,9 +428,31 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             $input->setValue($this->value);
         }
         
-        $this->inputWidget = $input;
+        if ($this->width !== null) {
+            $input->setWidth($this->width);
+        }
         
-        return $this;
+        return $input;
+    }
+    
+    /**
+     * If the filter has a specific comparator, that is non-intuitive, add a corresponding 
+     * suffix to the caption of the input widget.
+     *  
+     * @param WidgetInterface $input
+     * @return WidgetInterface
+     */
+    protected function enhanceInputWidgetWithComparatorHint(WidgetInterface $input) : WidgetInterface
+    {
+        switch ($this->getComparator()) {
+            case EXF_COMPARATOR_GREATER_THAN:
+            case EXF_COMPARATOR_GREATER_THAN_OR_EQUALS:
+            case EXF_COMPARATOR_LESS_THAN:
+            case EXF_COMPARATOR_LESS_THAN_OR_EQUALS:
+                $input->setCaption($input->getCaption() . ' (' . $this->getComparator() . ')');
+                break;
+        }
+        return $input;
     }
     
     /**
@@ -565,12 +606,13 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         ), $arguments);
     }
 
-    public function getComparator()
+    /**
+     * 
+     * @return string
+     */
+    public function getComparator(string $default = ComparatorDataType::EQUALS) : string
     {
-        // IDEA give the comparator a default value. But make sure, setInputWidget() retains the possibility
-        // to detect, that the comparator is not set and set one based on the input widget (or, perhaps even
-        // better, move that logic here).
-        return $this->comparator;
+        return $this->comparator ?? $default;
     }
 
     /**
@@ -584,7 +626,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      * @throws WidgetPropertyInvalidValueError
      * @return \exface\Core\Widgets\Filter
      */
-    public function setComparator($value)
+    public function setComparator(string $value) : Filter
     {
         if (! $value){
             return $this;
@@ -1080,4 +1122,28 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         
         return $data_sheet;
     }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getWidth()
+    {
+        return $this->getInputWidget()->getWidth();
+    }
+    
+    /**
+     * 
+     * @param string $value
+     * @return Filter
+     */
+    public function setWidth($value)
+    {
+        if ($this->isInputWidgetInitialized() === true) {
+            $this->getInputWidget()->setWidth($value);
+        }
+        $this->width = $value;
+        return $this;
+    }
+    
 }

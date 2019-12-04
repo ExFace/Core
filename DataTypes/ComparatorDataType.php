@@ -17,6 +17,7 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
  * @method ComparatorsDataType LESS_THAN_OR_EQUALS(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType GREATER_THAN(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType GREATER_THAN_OR_EQUALS(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType BETWEEN(\exface\Core\CommonLogic\Workbench $workbench)
  * 
  * @author Andrej Kabachnik
  *
@@ -54,6 +55,8 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
     const GREATER_THAN = '>';
     
     const GREATER_THAN_OR_EQUALS = '>=';
+    
+    const BETWEEN = '..';
     
     /**
      * 
