@@ -63,7 +63,7 @@ class JsTimeFormatter extends JsDateFormatter
      */
     public function buildJsFormatter($jsInput)
     {
-        return "exfTools.time.format((! {$jsInput} ? {$jsInput} : exfTools.time.parse({$jsInput})), \"{$this->getFormat()}\")";
+        return "exfTools.time.format((! {$jsInput} ? {$jsInput} : exfTools.time.parse({$jsInput}, '{$this->getFormat()}')), \"{$this->getFormat()}\")";
     }
     
      /**
@@ -77,7 +77,7 @@ class JsTimeFormatter extends JsDateFormatter
      */
     public function buildJsFormatDateObjectToInternal($jsDateObject)
     {
-        return "exfTools.time.format({$jsDateObject}, \"{$this->buildJsDateFormatInternal()}\")";
+        return "exfTools.time.formatObject({$jsDateObject}, \"{$this->buildJsDateFormatInternal()}\")";
     }
     
      /**
@@ -91,7 +91,7 @@ class JsTimeFormatter extends JsDateFormatter
      */
     public function buildJsFormatDateObjectToString($jsDateObject)
     {
-        return "exfTools.time.format({$jsDateObject}, \"{$this->getFormat()}\")";
+        return "exfTools.time.formatObject({$jsDateObject}, \"{$this->getFormat()}\")";
     }
     
     /**
@@ -104,7 +104,7 @@ class JsTimeFormatter extends JsDateFormatter
      */
     public function buildJsFormatParserToJsDate($jsString)
     {
-        return "function(){var sTime = exfTools.time.parse({$jsString}); return sTime ? new Date('1970-01-01 ' + sTime) : null}()";
+        return "function(){var sTime = exfTools.time.parse({$jsString}, '{$this->getFormat()}'); return sTime ? new Date('1970-01-01 ' + sTime) : null}()";
     }
         
     /**
@@ -116,7 +116,7 @@ class JsTimeFormatter extends JsDateFormatter
      */
     public function buildJsFormatParser($jsInput)
     {
-        return "(exfTools.time.parse({$jsInput}) || '')";
+        return "(exfTools.time.parse({$jsInput}, '{$this->getFormat()}') || '')";
     }
     
     /**
@@ -145,12 +145,6 @@ class JsTimeFormatter extends JsDateFormatter
             $type = $this->getDataType();
             if ($type instanceof TimeDataType) {
                 $this->format = $type->getFormat();
-                if ($type->getShowSeconds() === true) {
-                    $this->format .= ':ss';
-                }
-                if ($type->getAmPm() === true) {
-                    $this->format .= ' a';
-                }
             } else {
                 return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.TIME_FORMAT');
             }
