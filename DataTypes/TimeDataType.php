@@ -69,7 +69,7 @@ class TimeDataType extends AbstractDataType
         return self::createIntlDateFormatter($this->getLocale(), $this->getFormat());
     }
     
-    protected function getLocale() : string
+    public function getLocale() : string
     {
         return $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
     }
