@@ -72,6 +72,11 @@ abstract class AbstractDataType implements DataTypeInterface
     {
         return $this->workbench;
     }
+    
+    public function getInputFormatHint() : string
+    {
+        return '';
+    }
 
     /**
      *

@@ -1055,6 +1055,10 @@ class Data
         if (! $attr->getRelationPath()->isEmpty()) {
             $row['DESCRIPTION'] .= $attr->getObject()->getShortDescription() ? ' ' . rtrim($attr->getObject()->getShortDescription(), ".") . '.' : '';
         }
+        
+        if ($dataTypeHint = $attr->getDataType()->getInputFormatHint()) {
+            $row['DESCRIPTION'] .= ($row['DESCRIPTION'] ? '<br>' : '') . $this->translate('LOCALIZATION.DATATYPE.FORMAT_HINT') . $dataTypeHint;
+        }
         return $row;
     }
 
