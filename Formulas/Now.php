@@ -1,16 +1,28 @@
 <?php
 namespace exface\Core\Formulas;
 
+use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\Factories\DataTypeFactory;
+
 class Now extends \exface\Core\CommonLogic\Model\Formula
 {
 
     function run($format = '')
     {
-        $exface = $this->getWorkbench();
-        if (! $format)
-            $format = $exface->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT');
+        if ($format === 'Y-m-d') {
+            $format = 'yyyy-MM-dd';
+        } elseif ($format === 'Y-m-d H:i:s') {
+            $format = 'yyyy-MM-dd HH:mm:ss';
+        }
+        
         $date = new \DateTime();
-        return $date->format($format);
+        
+        $dataType = DataTypeFactory::createFromPrototype($this->getWorkbench(), DateTimeDataType::class);
+        if ($format) {
+            $dataType->setFormat($format);
+        }
+        
+        return $dataType->formatDate($date);
     }
 }
 ?>
