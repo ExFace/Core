@@ -34,7 +34,7 @@ class DateTimeDataType extends DateDataType
      */
     public function getFormat() : string
     {
-        return $this->hasCustomFormat() ? $this->getFormat() : $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT');
+        return $this->hasCustomFormat() ? parent::getFormat() : $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT');
     }
     
     /**
