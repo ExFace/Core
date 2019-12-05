@@ -385,8 +385,8 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         // The widgets in the filter should not be required accept for the case if the filter itself is marked
         // as required (see set_required()). This is important because, inputs based on required attributes are
         // marked required by default: this should not be the case for filters, however!
-        if ($input instanceof iCanBeRequired && $this->isRequired() === false) {
-            $input->setRequired(false);
+        if ($input instanceof iCanBeRequired) {
+            $input->setRequired($this->required ?? false);
         }
         
         // Filters do not have default values, because they are empty if nothing has been entered. It is important
@@ -650,7 +650,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     public function isRequired()
     {
-        return $this->required ?? false;
+        return $this->required || ($this->hasCustomInputWidget() === true && $this->getInputWidget() instanceof iCanBeRequired && $this->getInputWidget()->isRequired());
     }
 
     /**
