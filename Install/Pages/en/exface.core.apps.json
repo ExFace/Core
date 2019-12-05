@@ -18,7 +18,7 @@
             },
             {
                 "attribute_alias": "MODIFIED_ON",
-                "comparator": "<="
+                "widget_type": "RangeFilter"
             },
             {
                 "attribute_alias": "UID"
