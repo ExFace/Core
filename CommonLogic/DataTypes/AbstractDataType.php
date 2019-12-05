@@ -14,7 +14,6 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Traits\AliasTrait;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Traits\MetaModelPrototypeTrait;
-use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\Uxon\DatatypeSchema;
 
 abstract class AbstractDataType implements DataTypeInterface
@@ -73,6 +72,11 @@ abstract class AbstractDataType implements DataTypeInterface
         return $this->workbench;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getInputFormatHint()
+     */
     public function getInputFormatHint() : string
     {
         return '';
