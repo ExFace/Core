@@ -227,7 +227,8 @@ class TimeStampingBehavior extends AbstractBehavior
         if (empty($conflict_rows) === false) {
             $data_sheet->dataMarkInvalid();
             $reason = '';
-            if ($labelCol = $data_sheet->getColumns()->getByAttribute($data_sheet->getMetaObject()->getLabelAttribute())) {
+            $labelAttr = $data_sheet->getMetaObject()->getLabelAttribute();
+            if ($labelAttr && $labelCol = $data_sheet->getColumns()->getByAttribute($labelAttr)) {
                 foreach ($conflict_rows as $rowNr) {
                     $reason .= ($reason !== '' ? ', ' : '') . '"' . $labelCol->getCellValue($rowNr) . '"';
                 }
