@@ -79,7 +79,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatter($jsInput)
     {
-        return "exfTools.date.format((! {$jsInput} ? {$jsInput} : (isNaN({$jsInput}) ? exfTools.date.parse({$jsInput}) : new Date({$jsInput}))), \"{$this->getFormat()}\")";
+        return "exfTools.date.format((! {$jsInput} ? {$jsInput} : (isNaN({$jsInput}) ? exfTools.date.parse({$jsInput}, '{$this->getFormat()}') : new Date({$jsInput}))), \"{$this->getFormat()}\")";
     }
 
     /**
@@ -121,7 +121,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatParserToJsDate($jsString)
     {
-        return "exfTools.date.parse({$jsString})";
+        return "exfTools.date.parse({$jsString}, '{$this->getFormat()}')";
     }
 
     /**
@@ -132,10 +132,9 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
     public function buildJsFormatParser($jsInput)
     {
         return <<<JS
-        
-            function() {
-                var dateObj = exfTools.date.parse({$jsInput});
-                return (dateObj ? {$this->buildJsFormatDateObjectToString('dateObj')} : '');
+function() {
+                var dateObj = exfTools.date.parse({$jsInput}, '{$this->getFormat()}');
+                return (dateObj ? {$this->buildJsFormatDateObjectToInternal('dateObj')} : '');
             }()
         
 JS;
@@ -158,10 +157,38 @@ JS;
      */
     public function buildHtmlBodyIncludes(FacadeInterface $facade) : array
     {
+        $momentLocaleJs = $this->buildJsMomentLocale($facade);
         return [
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.MOMENT.JS') . '"></script>',
-            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.EXFTOOLS.JS') . '"></script>'
+            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.EXFTOOLS.JS') . '"></script>',
+            $momentLocaleJs
         ];
+    }
+    
+    /**
+     * Generates the moment locale include script based on the session locale
+     *
+     * @return string
+     */
+    protected function buildJsMomentLocale(FacadeInterface $facade) : string
+    {
+        $localesPath = $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $facade->getConfig()->getOption('LIBS.MOMENT.LOCALES');
+        $localesUrl = $facade->buildUrlToSource('LIBS.MOMENT.LOCALES');
+        $fullLocale = $this->getDataType()->getLocale();
+        $locale = str_replace("_", "-", $fullLocale);
+        $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
+        if (file_exists($localesPath. DIRECTORY_SEPARATOR . $locale . '.js')) {
+            $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
+            return "<script type='text/javascript' src='{$url}' charset='UTF-8'></script>";
+        }
+        $locale = substr($fullLocale, 0, strpos($fullLocale, '_'));
+        $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
+        if (file_exists($localesPath. DIRECTORY_SEPARATOR . $locale . '.js')) {
+            $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
+            return "<script type='text/javascript' src='{$url}' charset='UTF-8'></script>";
+        }
+        
+        return '';
     }
 
 

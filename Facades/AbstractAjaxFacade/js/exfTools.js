@@ -3,80 +3,74 @@
     typeof define === 'function' && define.amd ? define(factory(global.moment)) :
     global.exfTools = factory(global.moment)
 }(this, (function (moment) { 'use strict';
-	// moment.js + PHP formatter
-	(function (m) {
-		/*
-		 * PHP => moment.js
-		 * Will take a php date format and convert it into a JS format for moment
-		 * http://www.php.net/manual/en/function.date.php
-		 * http://momentjs.com/docs/#/displaying/format/
-		 */
-		var formatMap = {
-				d: 'DD',
-				D: 'ddd',
-				j: 'D',
-				l: 'dddd',
-				N: 'E',
-				S: function () {
-					return '[' + this.format('Do').replace(/\d*/g, '') + ']';
-				},
-				w: 'd',
-				z: function () {
-					return this.format('DDD') - 1;
-				},
-				W: 'W',
-				F: 'MMMM',
-				m: 'MM',
-				M: 'MMM',
-				n: 'M',
-				t: function () {
-					return this.daysInMonth();
-				},
-				L: function () {
-					return this.isLeapYear() ? 1 : 0;
-				},
-				o: 'GGGG',
-				Y: 'YYYY',
-				y: 'YY',
-				a: 'a',
-				A: 'A',
-				B: function () {
-					var thisUTC = this.clone().utc(),
-					// Shamelessly stolen from http://javascript.about.com/library/blswatch.htm
-						swatch = ((thisUTC.hours() + 1) % 24) + (thisUTC.minutes() / 60) + (thisUTC.seconds() / 3600);
-					return Math.floor(swatch * 1000 / 24);
-				},
-				g: 'h',
-				G: 'H',
-				h: 'hh',
-				H: 'HH',
-				i: 'mm',
-				s: 'ss',
-				u: '[u]', // not sure if moment has this
-				e: '[e]', // moment does not have this
-				I: function () {
-					return this.isDST() ? 1 : 0;
-				},
-				O: 'ZZ',
-				P: 'Z',
-				T: '[T]', // deprecated in moment
-				Z: function () {
-					return parseInt(this.format('ZZ'), 10) * 36;
-				},
-				c: 'YYYY-MM-DD[T]HH:mm:ssZ',
-				r: 'ddd, DD MMM YYYY HH:mm:ss ZZ',
-				U: 'X'
-			},
-			formatEx = /[dDjlNSwzWFmMntLoYyaABgGhHisueIOPTZcrU]/g;
-
-		moment.fn.formatPHP = function (format) {
+	//ICU format to moment format
+	(function(m){
+		m.fn.formatICU = function(format){
 			var that = this;
 
-			return this.format(format.replace(formatEx, function (phpStr) {
-				return typeof formatMap[phpStr] === 'function' ? formatMap[phpStr].call(that) : formatMap[phpStr];
-			}));
+			return this.format(_ICUFormatToMoment (format));
 		};
 	}(moment));
+	
+	function _ICUFormatToMoment (format) {
+		var formatMap = {
+			'yyyy': 'YYYY',
+			'yy': 'YY',
+			'y': 'Y',			
+			'Q': 'Q',
+			'MMMM': 'MMMM',
+			'MMM': 'MMM',
+			'MM': 'MM',
+			'M': 'M',
+			'ww': 'ww',
+			'w': 'w',
+			'dd': 'DD',
+			'd': 'D',
+			'D': 'DDD',
+			'EEEEEE':'dd',
+			'EEEE': 'dddd',
+			'EEE': 'ddd',
+			'EE': 'ddd',
+			'E': 'ddd',
+			'eeeeee': 'dd',
+			'eeee': 'dddd',
+			'eee': 'ddd',
+			'ee': 'E',
+			'e': 'E',
+			'a': 'a',
+			'hh': 'hh',
+			'h': 'h',
+			'HH': 'HH',
+			'H': 'H',
+			'kk': 'kk',
+			'k': 'k',
+			'mm': 'mm',
+			'm': 'm',
+			'ss': 'ss',
+			's': 's',
+			'SSSS': 'SSSS',
+			'SSS': 'SSS',
+			'SS': 'SS',
+			'S': 'S',
+			'xxx': 'Z',	
+			'xx': 'ZZ'	
+		};
+			
+		var RegExpString = '';
+		for (var key in formatMap) {
+			if (!formatMap.hasOwnProperty(key)) continue;
+			RegExpString += key + "|";
+		}
+	
+		var formatEx = new RegExp("(" + RegExpString + ")", "g");
+		
+		return format.replace(formatEx, function(ICUStr){
+			if (formatMap[ICUStr] !== undefined) {
+				return formatMap[ICUStr];
+			}
+			return '';
+		});
+	};
 	
 	var _mDateParseDefaultParams = {
 			lang: {
@@ -92,7 +86,7 @@
 	};
 	
 	function _validateDate (yyyy, MM, dd) {
-		var _m = moment([yyyy, MM, dd]); 
+		var _m = moment([yyyy, MM-1, dd]); 
 		return _m.isValid();		
 	};
 	
@@ -148,14 +142,13 @@
 		return null;
 	};
 	
-	return {
+	return {		
 		date: {
 			/**
 			 * @return Date
 			 */
-			parse: function(sDate, ParseParams) {
+			parse: function(sDate, dateFormat, ParseParams) {
 				// date ist ein String und wird zu einem date-Objekt geparst
-				console.log('sDate', sDate);
 				
 				// Variablen initialisieren
 				var match = null;
@@ -163,6 +156,13 @@
 				var dateValid = false;
 				var time = undefined;
 				var output = null;
+				
+				if (dateFormat !== undefined) {
+					output = moment(sDate, _ICUFormatToMoment(dateFormat), true);
+					if (output.isValid()) {
+						return output.toDate();
+					}
+				}
 				
 				if (sDate === '' || sDate === null) {
 					return output;
@@ -294,6 +294,24 @@
 					dateParsed = true;
 				}
 				
+				// (+/-)? ... (H/h/M/m/S/s)?
+		        if (!dateParsed && (match = /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(sDate)) != null) {
+		            output = moment();
+		            switch (match[2].toUpperCase()) {
+		                case "H":
+		                case "":
+		                	output.add(Number(match[1]), 'hours');
+		                    break;
+		                case "M":
+		                	output.add(Number(match[1]), 'minutes');
+		                    break;
+		                case "S":
+		                	output.add(Number(match[1]), 'seconds');
+		                    break;
+		            }
+		            dateParsed = true;
+		        }
+				
 				// Ausgabe des geparsten Wertes
 				if (dateParsed && output !== null && output.isValid()) {
 					return output.toDate();
@@ -305,23 +323,19 @@
 			/**
 			 * @return string
 			 */
-			format: function(sDate, sPhpFormat = null) {
-				var output = null;
-				if (sPhpFormat === null) {
-					sPhpFormat = 'd.m.Y';
+			format: function(sDate, sICUFormat) {
+				if (sDate !== null && sDate !== undefined && sDate !== '') {
+					if (sICUFormat === undefined) {
+						return moment(sDate).format('L');
+					} else {
+						return moment(sDate).formatICU(sICUFormat);
+					}
 				}
-				if (sDate !== null && sDate !== undefined) {
-					output = moment(sDate).formatPHP(sPhpFormat);
-				}
-				return output;
+				return sDate;
 			},
 			
-			validate: function (sDate) {
-				//return true;
-				if (sDate !== null && sDate !== undefined) {
-					return moment(sDate).isValid();;
-				}
-				return true;
+			validate: function (sDate) {				
+				return true;						
 			}
 		},
 		time: {
@@ -329,7 +343,7 @@
 			 * 
 			 * @return string
 			 */
-			parse: function(sTime) {
+			parse: function(sTime, timeFormat) {
 				// sTime ist ein String und wird zu einem date-Objekt geparst
 		        
 		        // Variablen initialisieren
@@ -338,7 +352,22 @@
 		        var timeValid = false;
 		        var output = null;
 		        
-		     // HH:mm , HH:mm:ss
+		        if (sTime === '' || sTime === null) {
+					return output;
+				}
+		        
+		        if (timeFormat !== undefined) {
+					output = moment(sTime, _ICUFormatToMoment(timeFormat), true);
+					if (output.isValid()) {
+						if (timeFormat.indexOf('a') !== '-1') {
+							return output.format('hh:mm:ss a');
+						} else {
+							return output.format('HH:mm:ss');
+						}
+					}
+				}
+		        
+		     // HH:mm , HH:mm:ss, HH:mm am/pm, HH:mm:ss am/pm
 		        if (!timeParsed && (match = /(\d{1,2}):?(\d{1,2}):?(\d{1,2})?\040?(pm|am)?$/i.exec(sTime)) != null) {
 		        	var hh, mm, ss, am_pm;
 		            hh = Number(match[1]);
@@ -380,26 +409,40 @@
 		        
 		        // Ausgabe des geparsten Wertes
 		        if (timeParsed && timeValid) {
-		            return output.format('HH:mm:ss');
-		        } else {
-		            return null;
+		        	var hh = output.hour();
+		        	var mm = output.minute();
+		        	var ss = output.second();
+		        	return output.format('HH:mm:ss');
+		        	//return  hh + ':' + mm + ':' + ss
 		        }
+		        
+		        return output;
 			},
 			
-			format: function(sTime, sPhpFormat) {
-				if (sPhpFormat === undefined) {
-					sPhpFormat = 'H:i:s';
+			format: function(sTime, sICUFormat) {
+				if (sTime !== null && sTime !== undefined && sTime !== '') {
+					if (sICUFormat === undefined) {
+						return moment('1970-01-01 ' + sTime).format('LTS');
+					} else {
+						return moment('1970-01-01 ' + sTime).formatICU(sICUFormat);
+					}
 				}
-				var output = null;
-				if (sTime !== null && sTime !== undefined) {
-					output = moment('1970-01-01 ' + sTime).formatPHP(sPhpFormat);
+				return sTime;
+			},
+			
+			formatObject: function(dateTime, sICUFormat) {
+				if (dateTime !== null && dateTime !== undefined && dateTime !== '') {
+					if (sICUFormat === undefined) {
+						return moment(dateTime).format('LTS');
+					} else {
+						return moment(dateTime).formatICU(sICUFormat);
+					}
 				}
-				return output;
+				return '';
 			},
 			
 			validate: function (sTime) {
 				return true;
-				//return moment(sDate).isValid();
 			}
 		}		
 	}
