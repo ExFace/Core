@@ -1168,7 +1168,7 @@ CSS;
                
               var val = node.getValue();
               oWrapTargetNode.setValue(val, (Array.isArray(val) ? 'array' : 'object'));
-              {$funcPrefix}_replaceNodeValue(nnode, oPreviewEditor.get(), modal);
+              {$funcPrefix}_replaceNodeValue(node, oPreviewEditor.get(), modal);
             };
             
             var presetCancel = modal.modalElem().querySelector(".uxoneditor-preset-cancel");
