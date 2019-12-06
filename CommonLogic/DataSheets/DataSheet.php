@@ -584,11 +584,15 @@ class DataSheet implements DataSheetInterface
         
         // Look for columns, that need calculation and perform that calculation
         foreach ($this->getColumns() as $name => $col) {
-            if (! $col->getExpressionObj()->isFormula()) {
+            if ($col->getExpressionObj()->isFormula() === true) {
+                $expr = $col->getExpressionObj();
+            } elseif ($col->getFormatter() !== null && $col->getFormatter()->isFormula() === true) {
+                $expr = $col->getFormatter();
+            } else {
                 continue;
             }
             
-            $vals = $col->getExpressionObj()->evaluate($this, $name);
+            $vals = $expr->evaluate($this, $name);
             if (is_array($vals)) {
                 // See if the expression returned more results, than there were rows. If so, it was also performed on
                 // the total rows. In this case, we need to slice them off and pass to set_column_values() separately.
