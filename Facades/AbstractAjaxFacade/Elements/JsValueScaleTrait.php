@@ -45,7 +45,12 @@ function() {
     if (val === undefined || val === '' || val === null) return '';
 
     var scale = [ {$scaleValsJs} ];
-    var numVal = parseFloat(val);
+    var numVal;
+    if (isNaN(val)) {
+        var numVal = parseFloat(val.replace(' ', ''));
+    } else {
+        numVal = val;
+    }
 
     var sv = [];
     for (var i in scale) {
