@@ -14,7 +14,8 @@ use exface\Core\Factories\WidgetFactory;
  * 
  * Technically, the `InlineGroup` consists of multiple separate `Display` or `Input` widgets. Only the caption
  * of the group is displayed - captions for the individual widgets are hidden. However, their hints will still
- * be visible. 
+ * be visible. If the group has no caption of it's own, the caption of the first widget in the group will be
+ * used.
  * 
  * A `separator` can be used to display a character between the grouped widgets: e.g. by adding `x` characters 
  * between inputs for dimensions - see examples below. Alternatively, you can add `Text` widgets to the group
@@ -217,5 +218,18 @@ class InlineGroup extends Container
     {
         $this->separatorWidth = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveCaption::getCaption()
+     */
+    public function getCaption() : ?string
+    {
+        if (parent::getCaption() === null && $this->isEmpty() === false) {
+            return $this->getWidgetFirst()->getCaption();
+        }
+        return parent::getCaption();
     }
 }
