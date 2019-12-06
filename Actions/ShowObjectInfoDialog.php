@@ -153,25 +153,26 @@ class ShowObjectInfoDialog extends ShowDialog
     {
         $dialog = parent::createDialogWidget($page);
         $default_editor_uxon = $dialog->getMetaObject()->getDefaultEditorUxon();
+        $dialog_uxon = $default_editor_uxon->copy();
         
         // If there is a default editor, make sure it gets it's own id space, so widget links inside still work
         // if multiple editors of the same object are located in the same page (e.g. for creating, editing, etc.)
-        $this->addIdSpaceToWidgetUxon($default_editor_uxon);
+        $this->addIdSpaceToWidgetUxon($dialog_uxon);
         
         // If the content is explicitly defined, just add it to the dialog
         if (! is_null($contained_widget)) {
             $dialog->addWidget($contained_widget);
-        } elseif ($default_editor_uxon && ! $default_editor_uxon->isEmpty()) {
+        } elseif ($default_editor_uxon && false === $default_editor_uxon->isEmpty()) {
             // Otherwise try to generate the widget automatically
             // First check, if there is a default editor for an object, and instantiate it if so
             
-            if (! $default_editor_uxon->getProperty('widget_type') || $default_editor_uxon->getProperty('widget_type') == 'Dialog') {
-                $dialog->importUxonObject($default_editor_uxon);
+            if (! $dialog_uxon->getProperty('widget_type') || $dialog_uxon->getProperty('widget_type') == 'Dialog') {
+                $dialog->importUxonObject($dialog_uxon);
                 if ($dialog->isEmpty()) {
                     $dialog->addWidgets($this->createWidgetsForAttributes($dialog));
                 }
             } else {
-                $default_editor = WidgetFactory::createFromUxon($page, $default_editor_uxon, $dialog);
+                $default_editor = WidgetFactory::createFromUxon($page, $dialog_uxon, $dialog);
                 $dialog->addWidget($default_editor);
             }
         } else {
