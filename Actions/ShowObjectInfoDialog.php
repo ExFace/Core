@@ -186,6 +186,7 @@ class ShowObjectInfoDialog extends ShowDialog
             
             if ($dialog->countWidgetsVisible() < $this->getShowSmallDialogIfLessAttributesThen()) {
                 $dialog->setColumnsInGrid(1);
+                $dialog->setMaximized(false);
             }
         }
         
