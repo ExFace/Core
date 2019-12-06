@@ -55,6 +55,9 @@ class ReadPrefill extends ReadData
         // We don't need the total row count for prefills.
         $data_sheet->setAutoCount(false);
         
+        // IDEA are there other ways to load more data, than use UID-filters?
+        $canLoadMoreData = $data_sheet->hasUidColumn(true);
+        
         if ($data_sheet->isEmpty()) {
             return ResultFactory::createDataResult($task, $data_sheet);
         } else {
@@ -71,7 +74,7 @@ class ReadPrefill extends ReadData
         }
         
         // Reed data if it is not fresh
-        if ($data_sheet->isFresh() === false) {
+        if ($canLoadMoreData === true && $data_sheet->isFresh() === false) {
             $affected_rows = $data_sheet->dataRead();
         }
         
