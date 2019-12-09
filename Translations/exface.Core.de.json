@@ -25,6 +25,7 @@
 	"ACTION.CLEARCACHE.NAME": "Cache leeren",
 	"ACTION.CLEARCACHE.RESULT": "Cache geleert!",
 	
+	"ACTION.DOWNLOADFILE.NAME": "Download File",
 	"ACTION.DOWNLOADZIPPEDFOLDER.NAME": "Download ZIP",
 	
 	"ACTION.EXPORTCSV.NAME": "CSV exportieren",
