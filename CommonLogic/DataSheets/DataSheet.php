@@ -112,9 +112,7 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
+     * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::addRows($rows)
      */
     public function addRows(array $rows, bool $merge_uid_dublicates = false, bool $auto_add_columns = true) : DataSheetInterface
@@ -1559,10 +1557,20 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     * Replaces the columns of this data sheet with the given column list not changing anything in the rows!
+     * Replaces the columns of the sheet with the given list of column definitions 
+     * 
+     * @uxon-property columns
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataColumn
+     * @uxon-template [{"attribute_alias": ""}]
+     * 
+     * WARNING: This method replaces the columns of the data sheet without 
+     * changing anything in the rows! This may result in rows data, that does
+     * not belong to any column!
+     * 
      * Use with care! This may cause inconsistensies or unwanted data reads!
-     * TODO This method seams to dangerous.
-     * Need to find out, when columns are actually marked out of date!
+     * 
+     * TODO This method seams to dangerous. Need to find out, when columns are 
+     * actually marked out of date!
      *
      * @param DataColumnList $columns            
      */
@@ -1641,8 +1649,12 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
+     * The main meta object of the sheet
      * 
-     * {@inheritDoc}
+     * @uxon-property object_alias
+     * @uxon-type metamodel:object
+     * @uxon-required true
+     * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getMetaObject()
      */
     public function getMetaObject()
