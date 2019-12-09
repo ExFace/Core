@@ -456,9 +456,11 @@ HTML;
             case $result instanceof ResultFileInterface:
                 $url = HttpFileServerFacade::buildUrlForDownload($this->getWorkbench(), $result->getPathAbsolute());
                 $message = 'Download ready. If it does not start automatically, click <a href="' . $url . '">here</a>.';
+                // Use extra response property "download" here instead of redirect, because if facades
+                // use simple redirects for downloads, this won't work for text-files or unknown mime types
                 $json = [
                     "success" => $message,
-                    "redirect" => $url
+                    "download" => $url
                 ];
                 break;   
                 

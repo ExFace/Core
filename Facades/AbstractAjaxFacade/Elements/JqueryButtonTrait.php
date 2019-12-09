@@ -194,6 +194,15 @@ trait JqueryButtonTrait {
 													window.location.href = response.redirect;
 												}
 	                       					}
+                                            if(response.download){
+                                                // Workaround to force the browser to download even if it is a text file!
+                                                var a = document.createElement('A');
+                                                a.href = response.download;
+                                                a.download = response.download.substr(response.download.lastIndexOf('/') + 1);
+                                                document.body.appendChild(a);
+                                                a.click();
+                                                document.body.removeChild(a);
+	                       					}
 										}
                                         {$this->buildJsOnSuccessScript()}
 				                    } else {

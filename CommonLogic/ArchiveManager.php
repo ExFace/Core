@@ -100,7 +100,7 @@ class ArchiveManager implements WorkbenchDependantInterface
     }
 
     /**
-     *
+     * Returns the absolute path to the ZIP archive
      * @return string
      */
     public function getFilePath()
