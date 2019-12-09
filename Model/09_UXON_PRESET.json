@@ -764,6 +764,48 @@
             "UXON": "{\"alias\":\"exface.Core.CustomDataSourceQuery\",\"data_source\":\"\",\"input_object_alias\":\"\",\"queries\":[\"UPDATE table1 WHERE id = [#ID#]\",\"UPDATE table2 WHERE foreign_key = [#ID#]\"]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action"
+        },
+        {
+            "CREATED_ON": "2019-12-09 13:17:55",
+            "MODIFIED_ON": "2019-12-09 13:18:17",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea1a864d5ddf39b3fd0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Update selected attributes with fixed values or formulas",
+            "DESCRIPTION": "Use `=1` for fixed numeric values, `='string'` for strings and formulas for calculated values.",
+            "PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
+            "UXON": "{\"input_object_alias\":\"\",\"icon\":\"\",\"input_data_sheet\":{\"object_alias\":\"\",\"columns\":[{\"attribute_alias\":\"\",\"formula\":\"=1\"},{\"attribute_alias\":\"\",\"formula\":\"=NOW()\"}]}}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action"
+        },
+        {
+            "CREATED_ON": "2019-12-09 13:19:14",
+            "MODIFIED_ON": "2019-12-09 13:19:14",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea1a867caa8cf4b3fd0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Simple filter",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Filter.php",
+            "UXON": "{\"attribute_alias\":\"\"}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2019-12-09 13:21:19",
+            "MODIFIED_ON": "2019-12-09 13:21:19",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea1a86c7328605b3fd0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "OR-Filter with a custom condition group",
+            "DESCRIPTION": "The placeholder [#value#] will be replaced by the input value of the filter. You can use it in multiple conditions.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Filter.php",
+            "UXON": "{\"caption\":\"\",\"condition_group\":{\"operator\":\"OR\",\"conditions\":[{\"expression\":\"\",\"value\":\"[#value#]\",\"comparator\":\"=\"},{\"expression\":\"\",\"value\":99,\"comparator\":\"==\"}]}}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
         }
     ],
     "totals_rows": [],
