@@ -592,8 +592,11 @@ class DataColumn implements DataColumnInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
+     * Make column values be calculated via formula: e.g. `=NOW()`
+     * 
+     * @uxon-property formula
+     * @uxon-type metamodel:formula
+     * @uxon-template =
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setFormula()
      */
@@ -631,8 +634,10 @@ class DataColumn implements DataColumnInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
+     * Bind the column to an attribute of the meta object
+     * 
+     * @uxon-property attribute_alias
+     * @uxon-type metamodel:attribute
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setAttributeAlias()
      */

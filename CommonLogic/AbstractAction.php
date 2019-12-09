@@ -373,6 +373,7 @@ abstract class AbstractAction implements ActionInterface
      * 
      * @uxon-property input_data_sheet
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
+     * @uxon-template {"object_alias": "", "columns": [{"attribute_alias":"", "formula": "="}]}
      * 
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputDataSheet($uxon)
      */
