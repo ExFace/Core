@@ -5,30 +5,42 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
- * Tabs is a special container widget, that holds one or more Tab widgets allowing the
- * typical tabbed navigation between them.
- * Tabs will typically show the contents of
- * the active tab and a navbar to enable the user to change tabs. The position of that
- * navbar can be determined by the tab_position attribute. Most typical position is "top".
+ * Tabbed container with one or more tabs.
+ * 
+ * The `Tabs` widget constis of nav-strip listing the names of all available tabs (usually at 
+ * the top) and a large display area showing the current tab. 
+ * 
+ * Each tab is a `Tab` widget, that can contain any number of widgets. Every `Tab` should have 
+ * a `caption` and may have an `icon` and a `hint`. These attributes along with `disabled`, `hidden`
+ * etc. control the appearance of the nav-strip. Depending on the facade, the `visibility` property
+ * can be used to emhasize certain tabs..
+ * 
+ * The first tab is visible (active) by default. You can also activate any other tab initially by
+ * setting the `active_tab` property to the sequential number of the slide (starting with 0!).
+ * 
+ * The nav-strip can be positioned explicitly using the `nav_position` property to `top`, `bottom`, 
+ * `left` or `right`. It's appearance can be customized by giving slides captions and/or icons. 
+ * To force an icon-only nav-strip, set `hide_nav_captions` to `true`.
  *
  * @author Andrej Kabachnik
  *        
  */
 class Tabs extends Container implements iFillEntireContainer
 {
-    const TAB_POSITION_TOP = 'top';
+    const NAV_POSITION_TOP = 'top';
     
-    const TAB_POSITION_BOTTOM = 'bottom';
+    const NAV_POSITION_BOTTOM = 'bottom';
     
-    const TAB_POSITION_LEFT = 'left';
+    const NAV_POSITION_LEFT = 'left';
     
-    const TAB_POSITION_RIGHT = 'right';
+    const NAV_POSITION_RIGHT = 'right';
     
-    private $tab_position = null;
+    private $nav_position = null;
     
-    private $tabs_with_icons_only = false;
+    private $tabs_with_icons_only = null;
 
     private $active_tab = 0;
     
@@ -38,7 +50,7 @@ class Tabs extends Container implements iFillEntireContainer
      * @param integer $index
      * @return \exface\Core\Widgets\Tab|null
      */
-    public function getTab($index)
+    public function getTab($index) : ?Tab
     {
         return $this->getTabs()[$index];
     }
@@ -47,7 +59,7 @@ class Tabs extends Container implements iFillEntireContainer
      *
      * @return Tab[]
      */
-    public function getTabs()
+    public function getTabs() : array
     {
         return $this->getWidgets();
     }
@@ -62,12 +74,12 @@ class Tabs extends Container implements iFillEntireContainer
      * 
      * @uxon-property tabs
      * @uxon-type \exface\Core\Widgets\Tab[]|\exface\Core\Widgets\AbstractWidget[]
-     * @uxon-template [{"caption": "", "widgets": [{"widget_type": ""}]}]
+     * @uxon-template [{"caption": "", "widgets": [{"": ""}]}]
      * 
      * @param UxonObject|Tab $widget_or_uxon_array
      * @return Tabs
      */
-    public function setTabs($widget_or_uxon_array)
+    public function setTabs($widget_or_uxon_array) : Tabs
     {
         return $this->setWidgets($widget_or_uxon_array);
     }
@@ -77,7 +89,7 @@ class Tabs extends Container implements iFillEntireContainer
      * 
      * @return boolean
      */
-    public function hasTabs()
+    public function hasTabs() : bool
     {
         return $this->hasWidgets();
     }
@@ -99,33 +111,31 @@ class Tabs extends Container implements iFillEntireContainer
     }
 
     /**
-     *
+     * 
+     * @param string $default
      * @return string
      */
-    public function getTabPosition()
+    public function getNavPosition(string $default = self::NAV_POSITION_TOP) : string
     {
-        if (is_null($this->tab_position)){
-            $this->tab_position = static::TAB_POSITION_TOP;
-        }
-        return $this->tab_position;
+        return $this->nav_position ?? $default;
     }
     
     /**
-     * Explicitly sets the position of the tabs-strip (by default, the facade decides, where to place it).
+     * Explicitly sets the position of the navigation-strip (by default, the facade decides, where to place it).
      * 
-     * @uxon-property tab_position
+     * @uxon-property nav_position
      * @uxon-type [top,bottom,left,right]
      * 
      * @param string $value
      * @throws WidgetPropertyInvalidValueError
      * @return \exface\Core\Widgets\Tabs
      */
-    public function setTabPosition($value)
+    public function setNavPosition(string $value) : Tabs
     {
-        if (! defined('static::TAB_POSITION_' . mb_strtoupper($value))) {
-            throw new WidgetPropertyInvalidValueError($this, 'Invalid tab_position value "' . $value . '": use "top", "bottom", "left" or "right"!');
+        if (! defined('static::NAV_POSITION_' . mb_strtoupper($value))) {
+            throw new WidgetPropertyInvalidValueError($this, 'Invalid nav_position value "' . $value . '": use "top", "bottom", "left" or "right"!');
         }
-        $this->tab_position = constant('static::TAB_POSITION_' . mb_strtoupper($value));
+        $this->nav_position = constant('static::NAV_POSITION_' . mb_strtoupper($value));
         return $this;
     }
 
@@ -200,10 +210,10 @@ class Tabs extends Container implements iFillEntireContainer
     /**
      * Creates a tab and adds
      *
-     * @param AbstractWidget $contents            
-     * @return \exface\Core\Interfaces\WidgetInterface
+     * @param WidgetInterface $contents            
+     * @return Tab
      */
-    public function createTab(AbstractWidget $contents = null)
+    public function createTab(WidgetInterface $contents = null) : Tab
     {
         // Create an empty tab
         $widget = $this->getPage()->createWidget('Tab', $this);
@@ -226,11 +236,11 @@ class Tabs extends Container implements iFillEntireContainer
      *
      * @see add_widget()
      *
-     * @param AbstractWidget $widget            
+     * @param WidgetInterface $widget            
      * @param int $position            
      * @return Tabs
      */
-    public function addTab(AbstractWidget $widget, $position = null)
+    public function addTab(WidgetInterface $widget, int $position = null) : Tabs
     {
         if ($widget instanceof Tab) {
             $tab = $widget;
@@ -248,10 +258,9 @@ class Tabs extends Container implements iFillEntireContainer
 
     /**
      * Returns the number of currently contained tabs
-     *
-     * @return number
+     * @return int
      */
-    public function countTabs()
+    public function countTabs() : int
     {
         return parent::countWidgets();
     }
@@ -259,7 +268,6 @@ class Tabs extends Container implements iFillEntireContainer
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Widgets\Container::addWidget()
      */
     public function addWidget(AbstractWidget $widget, $position = null)
@@ -276,7 +284,7 @@ class Tabs extends Container implements iFillEntireContainer
      *
      * @return Tab
      */
-    protected function getDefaultTab()
+    protected function getDefaultTab() : Tab
     {
         if ($this->countTabs() == 0) {
             $tab = $this->createTab();
@@ -300,29 +308,35 @@ class Tabs extends Container implements iFillEntireContainer
     
     /**
      * 
-     * @return boolean
+     * @param bool $default
+     * @return bool
      */
-    public function getHideTabsCaptions()
+    public function getHideNavCaptions(bool $default = false) : bool
     {
-        return $this->tabs_with_icons_only;
+        return $this->tabs_with_icons_only ?? $default;
     }
     
     /**
      * Set to TRUE to make the tab ribbon show icons only (no captions).
      * 
-     * @uxon-property hide_tabs_captions
+     * @uxon-property hide_nav_captions
      * @uxon-type boolean
      * @uxon-default false 
      * 
      * @param boolean $true_or_false
      * @return \exface\Core\Widgets\Tabs
      */
-    public function setHideTabsCaptions($true_or_false)
+    public function setHideNavCaptions(bool $true_or_false) : Tabs
     {
         $this->tabs_with_icons_only = $true_or_false;
         return $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Container::exportUxonObject()
+     */
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
