@@ -201,7 +201,7 @@ class DownloadZippedFolder extends AbstractAction
      */
     protected function getZipPathDefault(string $srcFolderPath) : string
     {
-        return $this->getWorkbench()->filemanager()->getPathToCacheFolder() . DIRECTORY_SEPARATOR . 'Downloads' . DIRECTORY_SEPARATOR . $this->getZipNameDefault($srcFolderPath);
+        return $this->getWorkbench()->filemanager()->getPathToTempFolder() . DIRECTORY_SEPARATOR . 'Downloads' . DIRECTORY_SEPARATOR . $this->getZipNameDefault($srcFolderPath);
     }
     
     /**

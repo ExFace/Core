@@ -54,7 +54,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
      *
      * @return string
      */
-    public function getPathToBaseFolder()
+    public function getPathToBaseFolder() : string
     {
         return $this->getWorkbench()->getInstallationPath();
     }
@@ -65,7 +65,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
      *
      * @return string
      */
-    public function getPathToVendorFolder()
+    public function getPathToVendorFolder() : string
     {
         return $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_VENDOR;
     }
@@ -76,7 +76,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
      *
      * @return string
      */
-    public function getPathToUserDataFolder()
+    public function getPathToUserDataFolder() : string
     {
         if (is_null($this->path_to_user_data_folder)) {
             /* TODO configurable userdata folder path did not work because Workbench::getConfig() also
@@ -102,7 +102,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
      *
      * @return string
      */
-    public function getPathToCacheFolder()
+    public function getPathToCacheFolder() : string
     {
         if (is_null($this->path_to_cache_folder)) {
             try {
@@ -118,6 +118,16 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
         }
         return $this->path_to_cache_folder;
     }
+    
+    /**
+     * Returns the absolute path to the folder for temporary data (e.g. c:\xampp\htdocs\exface\exface\temp)
+     *
+     * @return string
+     */
+    public function getPathToTempFolder() : string
+    {
+        return $this->getPathToCacheFolder();
+    }
 
     /**
      * Returns the absolute path to the installation specific config folder (e.g.
@@ -125,7 +135,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
      *
      * @return string
      */
-    public function getPathToConfigFolder()
+    public function getPathToConfigFolder() : string
     {
         if (null === $this->path_to_config_folder) {
             $this->path_to_config_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_CONFIG;
@@ -145,7 +155,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
      *
      * @return string
      */
-    public function getPathToTranslationsFolder()
+    public function getPathToTranslationsFolder() : string
     {
         if (is_null($this->path_to_translations_folder)) {
             $this->path_to_translations_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_TRANSLATIONS;
@@ -161,7 +171,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
      *
      * @return string
      */
-    public function getPathToLogFolder()
+    public function getPathToLogFolder() : string
     {
         if (is_null($this->path_to_log_folder)) {
             try {
