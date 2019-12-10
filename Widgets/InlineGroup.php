@@ -110,6 +110,8 @@ class InlineGroup extends Container
     
     private $separatorWidth = '5%';
     
+    private $separatorWidgets = [];
+    
     /**
      * Array of widgets to be placed in the group: mostly Value widgets, but any other kind is OK too.
      *
@@ -137,7 +139,9 @@ class InlineGroup extends Container
         $widget->setHideCaption(true);
         
         if ($this->getSeparator() !== '' && $addSeparator === true && $this->hasWidgets() === true) {
-            $this->addWidget($this->createSeparatorWidget(), null, false);
+            $sep = $this->createSeparatorWidget();
+            $this->separatorWidgets[] = $sep;
+            $this->addWidget($sep, null, false);
         }
         
         return parent::addWidget($widget, $position);
@@ -194,6 +198,15 @@ class InlineGroup extends Container
             "align" => "center",
             "width" => $this->getSeparatorWidth()
         ]);
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    public function getSeparatorWidgets() : array
+    {
+        return $this->separatorWidgets;
     }
     
     /**
