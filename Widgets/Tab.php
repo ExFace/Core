@@ -7,7 +7,7 @@ use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 
 /**
- * A Tab is a special panel to be used within the tabs widget
+ * A Tab is a special panel to be used within tab-containers like Tabs and WidgetCarousel.
  * 
  * @method Tabs getParent()
  *
@@ -121,7 +121,7 @@ class Tab extends Panel
      */
     public function getHideCaption() : ?bool
     {
-        if ($this->getParent()->getHideTabsCaptions()){
+        if (parent::getHideCaption() === null && $this->getParent()->getHideNavCaptions() === true){
             return true;
         }
         return parent::getHideCaption();
