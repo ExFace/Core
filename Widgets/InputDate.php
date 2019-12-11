@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\TimestampDataType;
+use exface\Core\Factories\DataTypeFactory;
 
 /**
  * An input-field for dates (without time).
@@ -40,17 +41,29 @@ class InputDate extends Input
     private $format = null;
     
     /**
-     * @return string|null
+     * @return string
      */
-    public function getFormat()
+    public function getFormat() : string
     {
         if ($this->format === null) {
             $dataType = $this->getValueDataType();
             if ($dataType instanceof DateDataType || $dataType instanceof TimestampDataType) {
                 $this->format = $dataType->getFormat();
+            } else {
+                $this->format = $this->getFormatDefault();
             }
         }
         return $this->format;
+    }
+    
+    /**
+     * Returns the default format of the Date data type.
+     * 
+     * @return string
+     */
+    protected function getFormatDefault() : string
+    {
+        return DataTypeFactory::createFromPrototype($this->getWorkbench(), DateDataType::class)->getFormat();
     }
 
     /**
