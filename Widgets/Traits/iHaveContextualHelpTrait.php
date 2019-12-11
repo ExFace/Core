@@ -7,6 +7,9 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Widgets\DataTable;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * This trait contains common methods to implement the iHaveContextualHelp interface.
@@ -161,5 +164,37 @@ trait iHaveContextualHelpTrait {
     public function getHelpWidget(iContainOtherWidgets $help_container) : iContainOtherWidgets
     {        
         return $help_container;
+    }
+    
+    /**
+     * Returns a row (assotiative array) for a data sheet with exface.Core.USER_HELP_ELEMENT filled with information about
+     * the given attribute.
+     * The inforation is derived from the attributes meta model.
+     *
+     * @param MetaAttributeInterface $attr
+     * @return string[]
+     */
+    protected function getHelpDataRowFromAttribute(MetaAttributeInterface $attr, WidgetInterface $widget = null) : array
+    {
+        $row = [];
+        $descr = $attr->getShortDescription() ? rtrim(trim($attr->getShortDescription()), ".") . '.' : '';
+        
+        
+        if (! $attr->getRelationPath()->isEmpty()) {
+            $descr .= $attr->getObject()->getShortDescription() ? ' ' . rtrim($attr->getObject()->getShortDescription(), ".") . '.' : '';
+        }
+        
+        if ($widget !== null && ($widget instanceof iTakeInput) && $widget->isDisabled() === false) {
+            if ($dataTypeHint = $attr->getDataType()->getInputFormatHint()) {
+                $descr .= ($descr ? "\n\n" : '') . $this->translate('LOCALIZATION.DATATYPE.FORMAT_HINT') . $dataTypeHint;
+            }
+            
+            if ($widget->isRequired() === true) {
+                $descr .= ($descr ? "\n\n" : '') . $this->translate('WIDGET.INPUT.REQUIRED_HINT');
+            }
+        }
+        
+        $row['DESCRIPTION'] = $descr;
+        return $row;
     }
 }

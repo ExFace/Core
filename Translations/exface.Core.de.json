@@ -289,6 +289,7 @@
 	"WIDGET.UXONEDITOR.ERROR.SHOWING_ERROR": "Fehler konnte nicht interaktiv angezeigt werden: ",
 	
 	"WIDGET.INPUT.EMPTY_TEXT": "",
+	"WIDGET.INPUT.REQUIRED_HINT": "Diese Eingabe ist Pflicht!",
 	"WIDGET.INPUT.VALIDATION_REQUIRED": "Darf nicht leer sein!",
 	"WIDGET.INPUT.VALIDATION_MUST": "Muss",
 	"WIDGET.INPUT.VALIDATION_LENGTH_CONDITION": "%condition% Zeichen lang sein",
