@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * The configurator for data widgets contains tabs for filters and sorters.
@@ -342,8 +343,12 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
             if ($filter_widget->isBoundToAttribute() === false) {
                 continue;
             }
-            
-            $filter_object = $this->getMetaObject()->getAttribute($filter_widget->getAttributeAlias())->getObject();
+            try {
+                $filter_attr = $this->getMetaObject()->getAttribute($filter_widget->getAttributeAlias());
+            } catch (MetaAttributeNotFoundError $e) {
+                throw new WidgetConfigurationError($filter_widget, 'Filter attribute "' . $filter_widget->getAttributeAlias() . '" not found for object "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . ')!', null, $e);
+            }
+            $filter_object = $filter_attr->getObject();
             if ($object->is($filter_object)) {
                 $result[] = $filter_widget;
             } elseif ($filter_widget->getAttribute()->isRelation() && $object->is($filter_widget->getAttribute()->getRelation()->getRightObject())) {
