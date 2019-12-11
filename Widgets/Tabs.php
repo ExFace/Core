@@ -185,7 +185,7 @@ class Tabs extends Container implements iFillEntireContainer
             if ($w instanceof UxonObject) {
                 // If we have a UXON or instantiated widget object, use the widget directly
                 $page = $this->getPage();
-                $widget = WidgetFactory::createFromUxon($page, $w, $this, 'Tab');
+                $widget = WidgetFactory::createFromUxon($page, $w, $this, $this->getTabWidgetType());
             } elseif ($w instanceof AbstractWidget){
                 $widget = $w;
             } else {
@@ -193,7 +193,7 @@ class Tabs extends Container implements iFillEntireContainer
                 $widgets[] = $w;
             }
             
-            // If the widget is not a SplitPanel itslef, wrap it in a SplitPanel. Otherwise add it directly to the result.
+            // If the widget is not a Tab itslef, wrap it in a Tab. Otherwise add it directly to the result.
             if (! ($widget instanceof Tab)) {
                 $widgets[] = $this->createTab($widget);
             } else {
@@ -206,6 +206,16 @@ class Tabs extends Container implements iFillEntireContainer
         // them here in order to ensure centralised processing in the container widget.
         return parent::setWidgets($widgets);
     }
+    
+    /**
+     * Returns the widget type to use when creating new tabs.
+     * 
+     * @return string
+     */
+    protected function getTabWidgetType() : string
+    {
+        return 'Tab';
+    }
 
     /**
      * Creates a tab and adds
@@ -216,7 +226,7 @@ class Tabs extends Container implements iFillEntireContainer
     public function createTab(WidgetInterface $contents = null) : Tab
     {
         // Create an empty tab
-        $widget = $this->getPage()->createWidget('Tab', $this);
+        $widget = $this->getPage()->createWidget($this->getTabWidgetType(), $this);
         
         // If any contained widget is specified, add it to the tab an inherit some of it's attributes
         if ($contents) {
