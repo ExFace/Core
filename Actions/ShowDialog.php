@@ -10,6 +10,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Factories\UiPageFactory;
+use exface\Core\Widgets\AbstractWidget;
 
 /**
  * Renders a dialog with any contents specified in the widget-property.
@@ -270,13 +271,44 @@ class ShowDialog extends ShowWidget implements iShowDialog
      * multiple dialogs with the same ids are located in the same page (e.g. if multiple actions
      * inherit the same widget or use the default editor of the same object).
      * 
+     * For example, concider the following dialog widget:
+     * 
+     * ```
+     * {
+     *  "widget_type": "Dialog",
+     *  "widgets": [
+     *      {"widget_type": "DataTable", "id": "my_table"}
+     *  ],
+     *  "buttons": [
+     *      {"input_widget_id": "my_table"}
+     *  ]
+     * }
+     * 
+     * ```
+     * 
+     * Placing the entire dialog in an id space makes sure, the id `my_table` will never conflict
+     * with any other ids on the page. Even if there is another `my_table`, ours only has to be
+     * unique within the id space of the dialog. Using the id of the action's trigger (button)
+     * is simply an easy way to make sure the id space is unique itself.
+     * 
+     * However, just the using the id of the trigger is not enough as it may also have a custom
+     * id space. We need to take that into account too.
+     * 
+     * For example, we could place another button in our dialog, that calls this action again.
+     * The id space of the nested dialog would then be `id_space_of_first_dialog.id_of_trigger_button`,
+     * which is unique again. 
+     * 
      * @param UxonObject $uxon
      * @return UxonObject
      */
     protected function addIdSpaceToWidgetUxon(UxonObject $uxon) : UxonObject
     {
-        if ($this->getWidgetDefinedIn()) {
-            $uxon->setProperty('id_space', $this->getWidgetDefinedIn()->getId());
+        if ($parent = $this->getWidgetDefinedIn()) {
+            $idSpace = $parent->getId();
+            if ($parentSpace = $parent->getIdSpace()) {
+                $idSpace = $parentSpace . $parent->getPage()->getWidgetIdSpaceSeparator() . $idSpace;
+            }
+            $uxon->setProperty('id_space', $idSpace);
         }
         return $uxon;
     }

@@ -407,9 +407,9 @@ class UiPage implements UiPageInterface
      */
     protected function generateId(WidgetInterface $widget)
     {
-        if (! $id = $widget->getId()) {
-            if ($widget->getParent()) {
-                $id = $widget->getParent()->getId() . self::WIDGET_ID_SEPARATOR;
+        if (($id = $widget->getId()) === null) {
+            if ($parent = $widget->getParent()) {
+                $id = $parent->getId() . self::WIDGET_ID_SEPARATOR;
             }
             $id .= $widget->getWidgetType();
         }
