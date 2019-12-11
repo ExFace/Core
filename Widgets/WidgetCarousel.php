@@ -12,7 +12,7 @@ use exface\Core\CommonLogic\UxonObject;
  * 
  * The first slide is visible by default. To see the other slides, the user mus navigate
  * using the nav-strip. You can also make any other slide visible by default by
- * setting the `active_tab` property to the sequential number of the slide (starting with 0!).
+ * setting the `active_slide` property to the sequential number of the slide (starting with 0!).
  * 
  * The nav-strip can be positioned explicitly using the `nav_position` property. It's
  * appearance can be customized by giving slides captions and/or icons. To force an
@@ -93,7 +93,7 @@ class WidgetCarousel extends Tabs
      */
     public function setTabs($widget_or_uxon_array) : Tabs
     {
-        return parent::setTabs($widget_or_uxon_array);
+        return $this->setSlides($widget_or_uxon_array);
     }
     
     /**
@@ -106,8 +106,36 @@ class WidgetCarousel extends Tabs
      * @param UxonObject|Tab $widget_or_uxon_array
      * @return Tabs
      */
-    public function setSlides($widget_or_uxon_array) : Tabs
+    public function setSlides($widget_or_uxon_array) : WidgetCarousel
     {
         return $this->setWidgets($widget_or_uxon_array);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Tabs::setActiveTab()
+     */
+    public function setActiveTab(int $value) : Tabs
+    {
+        return $this->setActiveSlide($value);
+    }
+    
+    
+    
+    /**
+     * Makes the slide with the given index active instead of the first one.
+     *
+     * @uxon-property active_slide
+     * @uxon-type integer
+     * @uxon-default 0
+     *
+     * @param int $value
+     * @return Tabs
+     */
+    public function setActiveSlide(int $value) : WidgetCarousel
+    {
+        parent::setActiveTab($value);
+        return $this;
     }
 }
