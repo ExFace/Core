@@ -290,6 +290,7 @@
 	"WIDGET.UXONEDITOR.ERROR.SHOWING_ERROR": "Error could not be displayed interactively: ",
 	
 	"WIDGET.INPUT.EMPTY_TEXT": "",
+	"WIDGET.INPUT.REQUIRED_HINT": "This field cannot be empty!",
 	"WIDGET.INPUT.VALIDATION_REQUIRED": "Cannot be empty!",
 	"WIDGET.INPUT.VALIDATION_MUST": "Must",
 	"WIDGET.INPUT.VALIDATION_LENGTH_CONDITION": "have %condition% characters",

@@ -34,6 +34,8 @@ use exface\Core\Widgets\Traits\iHaveColumnsAndColumnGroupsTrait;
 use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Interfaces\Widgets\iHaveSorters;
 use exface\Core\Widgets\Parts\DataFooter;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iTakeInput;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -1017,7 +1019,7 @@ class Data
                 'GROUP' => $this->translate('WIDGET.DATA.HELP.FILTERS')
             );
             if ($attr = $filter->getAttribute()) {
-                $row = array_merge($row, $this->getHelpRowFromAttribute($attr));
+                $row = array_merge($row, $this->getHelpDataRowFromAttribute($attr, $filter));
             }
             $data_sheet->addRow($row);
         }
@@ -1028,7 +1030,7 @@ class Data
                 'GROUP' => $this->translate('WIDGET.DATA.HELP.COLUMNS')
             );
             if ($attr = $col->getAttribute()) {
-                $row = array_merge($row, $this->getHelpRowFromAttribute($attr));
+                $row = array_merge($row, $this->getHelpDataRowFromAttribute($attr, $col->getCellWidget()));
             }
             $data_sheet->addRow($row);
         }
@@ -1037,29 +1039,6 @@ class Data
         
         $help_container->addWidget($table);
         return $help_container;
-    }
-
-    /**
-     * Returns a row (assotiative array) for a data sheet with exface.Core.USER_HELP_ELEMENT filled with information about
-     * the given attribute.
-     * The inforation is derived from the attributes meta model.
-     *
-     * @param MetaAttributeInterface $attr            
-     * @return string[]
-     */
-    protected function getHelpRowFromAttribute(MetaAttributeInterface $attr)
-    {
-        $row = array();
-        $row['DESCRIPTION'] = $attr->getShortDescription() ? rtrim(trim($attr->getShortDescription()), ".") . '.' : '';
-        
-        if (! $attr->getRelationPath()->isEmpty()) {
-            $row['DESCRIPTION'] .= $attr->getObject()->getShortDescription() ? ' ' . rtrim($attr->getObject()->getShortDescription(), ".") . '.' : '';
-        }
-        
-        if ($dataTypeHint = $attr->getDataType()->getInputFormatHint()) {
-            $row['DESCRIPTION'] .= ($row['DESCRIPTION'] ? '<br>' : '') . $this->translate('LOCALIZATION.DATATYPE.FORMAT_HINT') . $dataTypeHint;
-        }
-        return $row;
     }
 
     public function exportUxonObject()

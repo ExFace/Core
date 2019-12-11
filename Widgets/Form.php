@@ -14,6 +14,8 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iTakeInput;
 
 /**
  * A Form is a Panel with buttons.
@@ -203,31 +205,12 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
                     'GROUP' => $groupName ?? ''
                 ];
                 if ($widget instanceof iShowSingleAttribute && $attr = $widget->getAttribute()) {
-                    $row = array_merge($row, $this->getHelpRowFromAttribute($attr));
+                    $row = array_merge($row, $this->getHelpDataRowFromAttribute($attr, $widget));
                 }
                 $dataSheet->addRow($row);
             }
         }
         return $dataSheet;
-    }
-    
-    /**
-     * Returns a row (assotiative array) for a data sheet with exface.Core.USER_HELP_ELEMENT filled with information about
-     * the given attribute.
-     * The inforation is derived from the attributes meta model.
-     *
-     * @param MetaAttributeInterface $attr
-     * @return string[]
-     */
-    protected function getHelpRowFromAttribute(MetaAttributeInterface $attr)
-    {
-        $row = array();
-        $row['DESCRIPTION'] = $attr->getShortDescription() ? rtrim(trim($attr->getShortDescription()), ".") . '.' : '';
-        
-        if (! $attr->getRelationPath()->isEmpty()) {
-            $row['DESCRIPTION'] .= $attr->getObject()->getShortDescription() ? ' ' . rtrim($attr->getObject()->getShortDescription(), ".") . '.' : '';
-        }
-        return $row;
     }
     
     /**
