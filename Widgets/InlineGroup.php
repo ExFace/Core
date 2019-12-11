@@ -179,6 +179,15 @@ class InlineGroup extends Container
     
     /**
      * 
+     * @return bool
+     */
+    public function hasSeperator() : bool
+    {
+        return !($this->separator === '');
+    }
+    
+    /**
+     * 
      * @return Text
      */
     protected function createSeparatorWidget() : Text
