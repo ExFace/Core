@@ -26,7 +26,10 @@ use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthTok
  * Each token extractor must have the following signature:
  * 
  * ```
- *  function(Psr\Http\Message\ServerRequestInterface $request) : ?\exface\Core\Interfaces\Security\AuthenticationTokenInterface
+ *  function(
+ *      Psr\Http\Message\ServerRequestInterface $request
+ *      exface\Core\Interfaces\Facades\HttpFacadeInterface $facade
+ *  ) : ?\exface\Core\Interfaces\Security\AuthenticationTokenInterface
  * ```
  * 
  * The middleware provides a built-in extractor via `extractBasicHttpAuthToken()` static method.
@@ -130,7 +133,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
             if (is_callable($extractor) === false) {
                 throw new FacadeLogicError('Invalid token extractor provided for the AuthenticationMiddleware: expecting a callable, received "' . gettype($extractor) . '"!');
             }
-            $token = $extractor($request);
+            $token = $extractor($request, $this->facade);
             if ($token !== null && ! ($token instanceof AuthenticationTokenInterface)) {
                 throw new FacadeLogicError('Cannot use "' . gettype($token) . '" aus authentication token: token extractors are expected to produce instances of the AuthenticationTokenInterface!');
             }
@@ -140,7 +143,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
     }
     
     /**
-     * Token extractor for HTTP basic auth.
+     * Token extractor for HTTP basic auth - produces a UsernamePasswordAuthToken.
      * 
      * Usage:
      * 
@@ -156,14 +159,14 @@ class AuthenticationMiddleware implements MiddlewareInterface
      * @param ServerRequestInterface $request
      * @return PasswordAuthenticationTokenInterface|NULL
      */
-    public static function extractBasicHttpAuthToken(ServerRequestInterface $request) : ?PasswordAuthenticationTokenInterface
+    public static function extractBasicHttpAuthToken(ServerRequestInterface $request, HttpFacadeInterface $facade) : ?UsernamePasswordAuthToken
     {
         $matches = [];
         if (preg_match("/Basic\s+(.*)$/i", $request->getHeaderLine("Authorization"), $matches)) {
             $explodedCredential = explode(":", base64_decode($matches[1]), 2);
             if (count($explodedCredential) == 2) {
                 list($username, $password) = $explodedCredential;
-                return new UsernamePasswordAuthToken($username, $password);
+                return new UsernamePasswordAuthToken($username, $password, $facade);
             }
         }
         return null;
