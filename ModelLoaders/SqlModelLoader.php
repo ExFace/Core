@@ -950,6 +950,7 @@ SQL;
             $user->setFirstName($row['FIRST_NAME']);
             $user->setLastName($row['LAST_NAME']);
             $user->setEmail($row['EMAIL']);
+            $user->setPassword($row['PASSWORD']);
         } else {
             throw new UserNotUniqueError('More than one user exist in the metamodel for username "' . $user->getUsername() . '".');
         }

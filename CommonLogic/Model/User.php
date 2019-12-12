@@ -24,6 +24,8 @@ class User implements UserInterface
     private $uid;
 
     private $username;
+    
+    private $password;
 
     private $firstname;
 
@@ -260,6 +262,10 @@ class User implements UserInterface
             $userSheet->getColumns()->addFromAttribute($userModel->getAttribute('EMAIL'));
             $userSheet->setCellValue('EMAIL', 0, $this->getEmail());
         }
+        if ($pwd = $this->getPassword()) {
+            $userSheet->getColumns()->addFromAttribute($userModel->getAttribute('PASSWORD'));
+            $userSheet->setCellValue('PASSWORD', 0, $pwd);
+        }
         
         return $userSheet;
     }
@@ -304,5 +310,29 @@ class User implements UserInterface
         }
         
         return true;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::getPassword()
+     */
+    public function getPassword() : ?string
+    {
+        if ($this->password === null && $this->modelLoaded === false) {
+            $this->loadData();
+        }
+        return $this->password;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::setPassword()
+     */
+    public function setPassword(string $value) : UserInterface
+    {
+        $this->password = $value;
+        return $this;
     }
 }
