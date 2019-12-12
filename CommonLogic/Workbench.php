@@ -32,6 +32,8 @@ use exface\Core\Exceptions\AppComponentNotFoundError;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Events\Workbench\OnStartEvent;
 use exface\Core\Events\Workbench\OnStopEvent;
+use exface\Core\Interfaces\Security\SecurityManagerInterface;
+use exface\Core\CommonLogic\Security\SecurityManager;
 
 class Workbench implements WorkbenchInterface
 {
@@ -64,6 +66,8 @@ class Workbench implements WorkbenchInterface
     private $installation_path = null;
 
     private $request_params = null;
+    
+    private $security = null;
 
     public function __construct()
     {        
@@ -128,6 +132,8 @@ class Workbench implements WorkbenchInterface
         
         // Load the context
         $this->context = new ContextManager($this);
+        
+        $this->security = new SecurityManager($this);
         
         // Now the workbench is fully loaded and operational
         $this->started = true;
@@ -423,6 +429,16 @@ class Workbench implements WorkbenchInterface
         }
         
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::getSecurity()
+     */
+    public function getSecurity() : SecurityManagerInterface
+    {
+        return $this->security;
     }
     
     public function handle(TaskInterface $task) : ResultInterface
