@@ -470,7 +470,7 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         
         // If there is a user logged in, fetch his specific connctor config (credentials)
-        if ($user_name = $exface->getContext()->getScopeUser()->getUsername()) {
+        if ($user_name = $exface->getSecurity()->getAuthenticatedToken()->getUsername()) {
             $join_user_credentials = ' LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.user_credentials_oid = uc.oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = "' . $user_name . '") ON dcc.data_connection_oid = dc.oid';
             $select_user_credentials = ', uc.data_connector_config AS user_connector_config';
         }
@@ -600,7 +600,7 @@ class SqlModelLoader implements ModelLoaderInterface
         $filter = "(dc.oid = " . $data_connection_id_or_alias . " OR dc.alias = " . $data_connection_id_or_alias . ")";
         
         // If there is a user logged in, fetch his specific connctor config (credentials)
-        if ($user_name = $exface->getContext()->getScopeUser()->getUsername()) {
+        if ($user_name = $exface->getSecurity()->getAuthenticatedToken()->getUsername()) {
             $join_user_credentials = ' LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.user_credentials_oid = uc.oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = "' . $user_name . '") ON dcc.data_connection_oid = dc.oid';
             $select_user_credentials = ', uc.data_connector_config AS user_connector_config';
         }
@@ -950,7 +950,9 @@ SQL;
             $user->setFirstName($row['FIRST_NAME']);
             $user->setLastName($row['LAST_NAME']);
             $user->setEmail($row['EMAIL']);
-            $user->setPassword($row['PASSWORD']);
+            if ($row['PASSWORD'] !== null) {
+                $user->setPassword();
+            }
         } else {
             throw new UserNotUniqueError('More than one user exist in the metamodel for username "' . $user->getUsername() . '".');
         }
