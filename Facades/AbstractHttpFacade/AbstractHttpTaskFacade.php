@@ -98,7 +98,7 @@ abstract class AbstractHttpTaskFacade extends AbstractHttpFacade
         return [
             new RequestIdNegotiator(), // make sure, there is a X-Request-ID header
             new RequestContextReader($this->getWorkbench()->getContext()), // Pass request data to the request context
-            new AuthenticationMiddleware($this->getWorkbench())
+            new AuthenticationMiddleware($this)
         ];
     }
     

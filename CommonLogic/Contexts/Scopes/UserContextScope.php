@@ -22,7 +22,7 @@ class UserContextScope extends AbstractContextScope
 
     public function getUsername()
     {
-        return $this->getWorkbench()->getCMS()->getUserName();
+        return $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->getUsername();
     }
 
     /**
@@ -131,12 +131,8 @@ class UserContextScope extends AbstractContextScope
      */
     public function getUserCurrent()
     {
-        if (! $this->user) {
-            if ($this->getWorkbench()->getCMS()->isUserLoggedIn()) {
-                $this->user = UserFactory::createFromModel($this->getWorkbench(), $this->getWorkbench()->getCMS()->getUserName());
-            } else {
-                $this->user = UserFactory::createAnonymous($this->getWorkbench());
-            }
+        if (null === $this->user) {
+            $this->user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
         }
         return $this->user;
     }

@@ -27,6 +27,9 @@
     "LOCALE.DEFAULT": "en_US",
     
     "SECURITY.DISABLE_ANONYMOUS_ACCESS": false,
+    "SECURITY.AUTHENTICATORS" : [
+    	"\\exface\\ModxCmsConnector\\CommonLogic\\Security\\ModxCmsAuthenticator"
+    ],
     
     "FACADES.ROUTES": {},
     

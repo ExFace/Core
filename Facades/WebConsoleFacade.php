@@ -44,7 +44,7 @@ class WebConsoleFacade extends AbstractHttpFacade
         }
         
         $handler = new HttpRequestHandler(new OKHandler());
-        $handler->add(new AuthenticationMiddleware($this->getWorkbench()));
+        $handler->add(new AuthenticationMiddleware($this));
         $responseTpl = $handler->handle($request);
         if ($responseTpl->getStatusCode() >= 400) {
             return $responseTpl;

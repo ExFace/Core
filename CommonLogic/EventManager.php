@@ -5,6 +5,7 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * The event manager takes care of events in ExFace: registering listeners, dispatching events, etc.
@@ -87,6 +88,11 @@ class EventManager implements EventManagerInterface
     public function getWorkbench()
     {
         return $this->exface;
+    }
+    
+    public function getSymfonyDispatcher() : EventDispatcherInterface
+    {
+        return $this->dispatcher;
     }
 }
 ?>
