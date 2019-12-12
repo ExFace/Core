@@ -15,6 +15,10 @@ interface SecurityManagerInterface extends WorkbenchDependantInterface, Authenti
     /**
      * Returns the currently valid authentication token.
      * 
+     * Use this method to get the username and other authentication-related data 
+     * as it does not produce the overhead of loading the entire user model like
+     * `getAuthenticatedUser()`.
+     * 
      * @return AuthenticationTokenInterface
      */
     public function getAuthenticatedToken() : AuthenticationTokenInterface;
