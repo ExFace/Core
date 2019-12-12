@@ -157,15 +157,15 @@
 				var time = undefined;
 				var output = null;
 				
+				if (sDate === '' || sDate === null) {
+					return output;
+				}
+				
 				if (dateFormat !== undefined) {
 					output = moment(sDate, _ICUFormatToMoment(dateFormat), true);
 					if (output.isValid()) {
 						return output.toDate();
 					}
-				}
-				
-				if (sDate === '' || sDate === null) {
-					return output;
 				}
 
 				// hh:mm:ss , Thh:mm:ss
