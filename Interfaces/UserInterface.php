@@ -28,6 +28,19 @@ interface UserInterface extends WorkbenchDependantInterface
      * @return User
      */
     public function setUsername($username);
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getPassword() : ?string;
+    
+    /**
+     * 
+     * @param string $value
+     * @return UserInterface
+     */
+    public function setPassword(string $value) : UserInterface;
 
     /**
      * Returns the first name of the user.

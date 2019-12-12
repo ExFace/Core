@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\Interfaces\DataSources\DataManagerInterface;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Interfaces\Security\SecurityManagerInterface;
 
 interface WorkbenchInterface extends TaskHandlerInterface
 {
@@ -144,4 +145,11 @@ interface WorkbenchInterface extends TaskHandlerInterface
      * @return WorkbenchCacheInterface
      */
     public function getCache() : WorkbenchCacheInterface;
+    
+    /**
+     * Returns the central security manager responsible for authentication and authorization.
+     * 
+     * @return SecurityManagerInterface
+     */
+    public function getSecurity() : SecurityManagerInterface;
 }

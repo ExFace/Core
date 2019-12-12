@@ -19,7 +19,18 @@ class PasswordHashDataType extends StringDataType
     
     protected function hash(string $password) : string
     {
-        password_hash($password, $this->getHashAlgorithm());
+        return password_hash($password, $this->getHashAlgorithm());
+    }
+    
+    /**
+     * 
+     * @param string $password
+     * @param string $hash
+     * @return bool
+     */
+    public static function verify(string $password, string $hash) : bool
+    {
+        return password_verify($password, $hash);
     }
     
     /**
