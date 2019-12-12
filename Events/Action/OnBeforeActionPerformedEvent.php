@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Events\TaskEventInterface;
 /**
  * Event fired before an action is performed.
  *
- * @event exface.Core.Action.OnBeforeActionPerformedTask
+ * @event exface.Core.Action.OnBeforeActionPerformed
  *
  * @author Andrej Kabachnik
  *        
