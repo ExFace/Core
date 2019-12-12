@@ -17,10 +17,10 @@ class User extends \exface\Core\CommonLogic\Model\Formula
 
     function run($property = null)
     {
-        $user = $this->getWorkbench()->getContext()->getScopeUser()->getUserCurrent();
         if ($property === null || $property === 'user_name') {
-            return $user->getUsername();
+            return $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->getUsername();
         }
+        $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
         switch ($property) {
             case "id":
                 return $user->getUid();

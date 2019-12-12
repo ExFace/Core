@@ -50,7 +50,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
         $handler = new HttpRequestHandler(new NotFoundHandler());
         
         // Authenticate users
-        $handler->add(new AuthenticationMiddleware($this->getWorkbench()));
+        $handler->add(new AuthenticationMiddleware($this));
         
         // TODO need to implement downloading files based on some internal virtual path here!
         // This virtual path should be used by buildUrlForDownload() too.
