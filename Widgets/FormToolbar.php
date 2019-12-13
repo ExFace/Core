@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\Interfaces\Widgets\iHaveButtons;
 
 /**
  * Special toolbar for Form widgets (by default every toolbar in a Form is a FormToolbar).
@@ -75,6 +76,9 @@ class FormToolbar extends Toolbar
      */
     public function getButtonWidgetType()
     {
+        if ($this->getParent() instanceof iHaveButtons) {
+            return $this->getParent()->getButtonWidgetType();
+        }
         return 'Button';
     }
     

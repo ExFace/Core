@@ -103,7 +103,7 @@ trait JqueryToolbarTrait
     {
         return <<<HTML
         
-            <div class="exf-toolbar">
+            <div id="{$this->getId()}" class="exf-toolbar">
                 {$contents}
             </div>
             
