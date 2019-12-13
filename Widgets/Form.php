@@ -38,7 +38,6 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Widgets\Container::getChildren()
      */
     public function getChildren() : \Iterator
@@ -60,7 +59,8 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
         }
     }
     
-    public function getToolbarWidgetType(){
+    public function getToolbarWidgetType()
+    {
         return 'FormToolbar';
     }
     
