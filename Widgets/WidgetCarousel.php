@@ -121,7 +121,15 @@ class WidgetCarousel extends Tabs
         return $this->setActiveSlide($value);
     }
     
-    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Tabs::getTabWidgetType()
+     */
+    protected function getTabWidgetType() : string
+    {
+        return "WidgetCarouselSlide";
+    }
     
     /**
      * Makes the slide with the given index active instead of the first one.
