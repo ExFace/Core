@@ -11,6 +11,44 @@ use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 
 /**
  * A wizard with multiple panels (steps) to be filled out one-after-another.
+ * 
+ * ## Examples
+ * 
+ * ### Simple wizard
+ * 
+ * ### Skipping a step
+ * 
+ * ```
+ * {
+ *  "widget_type": "Wizard",
+ *  "steps": [
+ *      {
+ *          "caption": "Quick Start",
+ *          "widgets": [
+ *              {"attribute_alias": "ATTR1"},
+ *              {"attribute_alias": "ATTR2"}
+ *          ],
+ *          "buttons": [
+ *              {"caption": "Confirm", "go_to_step": 2, "visibility": "promoted"},
+ *              {"caption": "Add Details", "go_to_step": 1}
+ *          ]
+ *      },{
+ *          "caption": "Details",
+ *          "widgets": [
+ *              {"attribute_alias": "ATTR3"},
+ *              {"attribute_alias": "ATTR4"}
+ *          ],
+ *          "buttons": [
+ *              {"caption": "Confirm", "visibility": "promoted"}
+ *          ]
+ *      },{
+ *          "caption": "Confirm"
+ *          "widgets": []
+ *      }
+ *  ]
+ * }
+ * 
+ * ```
  *
  * @author Andrej Kabachnik
  *        
@@ -269,5 +307,15 @@ class Wizard extends Container implements iFillEntireContainer, iHaveToolbars, i
         foreach ($this->getToolbars() as $tb) {
             yield $tb;
         }
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see Form::getButtonWidgetType()
+     */
+    public function getButtonWidgetType()
+    {
+        return 'Button';
     }
 }

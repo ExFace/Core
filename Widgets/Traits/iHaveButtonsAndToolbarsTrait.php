@@ -76,13 +76,13 @@ trait iHaveButtonsAndToolbarsTrait
      * is required. For regular buttons it is advisable to let ExFache choose 
      * the right type.
      * 
-     * All buttons specified here will be added to the main toolbar of the widget.
-     * Refer to the description of the toolbars-property for details.
-     * 
-     * Depending on the align-attribute of each button it will be automatically
+     * All buttons specified here will be added to the main toolbar of the step.
+     * Refer to the description of the `toolbars` property for details.
+     *
+     * Depending on the `align` property of each button it will be automatically
      * added to the first button group left or right in the main toolbar.
      * 
-     * Example:
+     * ## Example:
      * 
      * ```
      *  {
