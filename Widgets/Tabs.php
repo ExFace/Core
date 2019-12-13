@@ -68,7 +68,7 @@ class Tabs extends Container implements iFillEntireContainer
      * Defines an array of widgets as tabs.
      * 
      * Adding widgets to Tabs will automatically produce Tab widgets for each added widget, 
-     * unless it already is a tab or another widget based on it. This way, a short an understandable 
+     * unless it already is a tab or another widget based on it. This way, a short and understandable 
      * notation of tabs is possible: simply add any type of widget to the tabs array and see 
      * them be displayed in tabs.
      * 
@@ -76,7 +76,7 @@ class Tabs extends Container implements iFillEntireContainer
      * @uxon-type \exface\Core\Widgets\Tab[]|\exface\Core\Widgets\AbstractWidget[]
      * @uxon-template [{"caption": "", "widgets": [{"": ""}]}]
      * 
-     * @param UxonObject|Tab $widget_or_uxon_array
+     * @param UxonObject|Tab[] $widget_or_uxon_array
      * @return Tabs
      */
     public function setTabs($widget_or_uxon_array) : Tabs
@@ -218,7 +218,7 @@ class Tabs extends Container implements iFillEntireContainer
     }
 
     /**
-     * Creates a tab and adds
+     * Creates a tab (but does not add it automatically!!!)
      *
      * @param WidgetInterface $contents            
      * @return Tab
