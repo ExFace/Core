@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\Toolbar;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * This is the reference implementation of the Toolbar widget for jQuery facades.
@@ -103,10 +104,23 @@ trait JqueryToolbarTrait
     {
         return <<<HTML
         
-            <div id="{$this->getId()}" class="exf-toolbar">
+            <div id="{$this->getId()}" class="{$this->buildCssElementClass()}">
                 {$contents}
             </div>
             
 HTML;
+    }
+    
+    /**
+     * {@inheritdoc}
+     * @see AbstractJqueryElement::buildCssElementClass()
+     */
+    public function buildCssElementClass()
+    {
+        $class = 'exf-' . str_replace('_', '-', StringDataType::convertCasePascalToUnderscore($this->getWidget()->getWidgetType()));
+        if ($class !== 'exf-toolbar') {
+            $class = 'exf-toolbar ' . $class;
+        }
+        return $class;
     }
 }
