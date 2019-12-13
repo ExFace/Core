@@ -99,14 +99,14 @@ class AuthenticationMiddleware implements MiddlewareInterface
         }
         
         // If the token is still anonymous, check if that is allowed in the configuration!
-        if (true === $authenticatedToken->isAnonymous() && false === $this->isAnonyousAllowed()) {
+        if (true === $authenticatedToken->isAnonymous() && false === $this->isAnonymousAllowed()) {
             return $this->createResponseAccessDenied('Access denied! Please log in first!');
         }
         
         return $handler->handle($request);
     }
     
-    protected function isAnonyousAllowed() : bool
+    protected function isAnonymousAllowed() : bool
     {
         return $this->denyAnonymous === false && $this->workbench->getConfig()->getOption('SECURITY.DISABLE_ANONYMOUS_ACCESS') === false;
     }
