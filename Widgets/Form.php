@@ -16,12 +16,20 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 /**
  * A Form is a Panel with buttons.
  * 
- * Forms and their derivatives provide input data for actions.
+ * Forms and their derivatives provide input data for actions. Each `Form` consits of 
+ * a grid with input widgets and a button toolbar. Optionally secondary `toolbars`
+ * can be added if the facade supports this.
+ * 
+ * It is very easy to add input widgets to a form: just specify the `attribute_alias` for
+ * every widget to insert it's default editor. The input widgets are arranged in a grid
+ * layout. Use `columns_in_grid` to control the number of column in the grid. Nested layout 
+ * widgets like `WidgetGroup`, `WidgetGrid`, `InlineGroup`, can help organize inputs.
  *
- * While having similar purpose as HTML forms, `Form` widgets are not the same! They can be nested, they may include tabs,
- * optional panels with lazy loading, etc. Thus, in most HTML-facades the `Form` widget will not be mapped to an HTML
- * form, but rather to some container element (e.g. `<div>`), while fetching data from the form will need to be custom
- * implemented (i.e. with JavaScript).
+ * Note, that While having similar purpose as HTML forms, `Form` widgets are not the same! 
+ * They can be nested, they may include tabs, optional panels with lazy loading, etc. Thus, 
+ * in most HTML-facades the `Form` widget will not be mapped to an HTML form, but rather 
+ * to some container element (e.g. `<div>`), while fetching data from the form will need 
+ * to be custom implemented (i.e. with JavaScript).
  *
  * @author Andrej Kabachnik
  *        
