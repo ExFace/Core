@@ -6,7 +6,12 @@ use exface\Core\CommonLogic\UxonObject;
 
 trait iHaveButtonsAndToolbarsTrait 
 {
-    use iHaveToolbarsTrait;
+    use iHaveToolbarsTrait {
+        //getToolbars as getToolbarsViaTrait;
+        initMainToolbar as initMainToolbarViaTrait;
+    }
+    
+    private $buttonsPropertyValue = null;
     
     /**
      * {@inheritdoc}
@@ -112,7 +117,11 @@ trait iHaveButtonsAndToolbarsTrait
      */
     public function setButtons($buttons)
     {
-        $this->getToolbarMain()->setButtons($buttons);
+        // Do not instantiate the main toolbar right away, just save the buttons for now and
+        // use them once the toolbars are actually requested - see getToolbars().
+        // This "lazy loading" helps save instantiating buttons in widget implementations
+        // where the toolbars are never shown.
+        $this->buttonsPropertyValue = $buttons;
         return $this;
     }
     
@@ -123,11 +132,16 @@ trait iHaveButtonsAndToolbarsTrait
      */
     public function hasButtons()
     {
+        if (empty($this->toolbars) === true && $this->buttonsPropertyValue === null) {
+            return false;
+        }
+        
         foreach ($this->getToolbars() as $toolbar){
             if ($toolbar->hasButtons()){
                 return true;
             }
         }
+        
         return false;
     }
     
@@ -138,6 +152,10 @@ trait iHaveButtonsAndToolbarsTrait
      */
     public function countButtons(callable $filter_callback = null)
     {
+        if ($this->hasButtons() === false) {
+            return 0;
+        }
+        
         $cnt = 0;
         foreach ($this->getToolbars() as $toolbar){
             $cnt += $toolbar->countButtons($filter_callback);
@@ -163,5 +181,20 @@ trait iHaveButtonsAndToolbarsTrait
     public function createButton(UxonObject $uxon = null)
     {
         return $this->getToolbarMain()->createButton($uxon);
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see iHaveToolbarsTrait::getToolbars()
+     */
+    protected function initMainToolbar()
+    {
+        $tb = $this->initMainToolbarViaTrait();
+        if ($this->buttonsPropertyValue !== null) {
+            $tb->setButtons($this->buttonsPropertyValue);
+            $this->buttonsPropertyValue = null;
+        }
+        return $tb;
     }
 }

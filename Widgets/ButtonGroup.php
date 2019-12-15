@@ -178,5 +178,19 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
             return WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, $this->getButtonWidgetType());
         }
     }
+
+    /**
+     * Reverses the order of the buttons in this group.
+     * 
+     * @return ButtonGroup
+     */
+    public function reverseButtonOrder() : ButtonGroup
+    {
+        $btns = $this->getButtons();
+        $btns = array_reverse($btns);
+        $this->removeWidgets();
+        $this->setButtons($btns);
+        return $this;
+    }
 }
 ?>
