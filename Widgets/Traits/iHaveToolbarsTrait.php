@@ -16,6 +16,9 @@ trait iHaveToolbarsTrait {
      */
     public function getToolbarMain()
     {
+        if (empty($this->toolbars)){
+            return $this->initMainToolbar();
+        }
         return $this->getToolbars()[0];
     }
     
@@ -27,9 +30,24 @@ trait iHaveToolbarsTrait {
     public function getToolbars()
     {
         if (empty($this->toolbars)){
-            $this->addToolbar(WidgetFactory::create($this->getPage(), $this->getToolbarWidgetType(), $this));
+            $this->initMainToolbar();
         }
         return $this->toolbars;
+    }
+    
+    /**
+     * Creates the main toolbar.
+     * 
+     * Override this method to add default buttons, that should appar if no buttons are
+     * specified for the main toolbar expplicitly.
+     * 
+     * @return Toolbar
+     */
+    protected function initMainToolbar() : Toolbar
+    {
+        $tb = WidgetFactory::create($this->getPage(), $this->getToolbarWidgetType(), $this);
+        $this->addToolbar($tb);
+        return $tb;
     }
     
     /**
