@@ -10,11 +10,51 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 
 /**
- * A wizard with multiple panels (steps) to be filled out one-after-another.
+ * A wizard with multiple forms (steps) to be filled out one-after-another.
+ * 
+ * Each step is represented by a `WizardStep` widget and has it's own `buttons`,
+ * that are only visible when this step is active. These buttons are special
+ * `WizardButton`s, that can control the navigation between steps in addition
+ * to calling actions.
+ * 
+ * Beside the step-buttons, the `Wizard` widget itself has it's own `buttons`
+ * that are visible in every step.
  * 
  * ## Examples
  * 
  * ### Simple wizard
+ * 
+ * In the simplest case, all you need to do is give each step a caption and a
+ * set of input widgets. Each step automatically gets navigation-buttons to
+ * switch to the next and/or previous slides. If you need other buttons, add
+ * them explicitly like in "Step 2" below. In this case, however, navigation
+ * buttons need to be added manually.
+ * 
+ * ```
+ * {
+ *  "widget_type": "Wizard",
+ *  "steps": [
+ *      {
+ *          "caption": "Step 1",
+ *          "widgets": [
+ *              {"attribute_alias": "ATTR1"},
+ *              {"attribute_alias": "ATTR2"}
+ *          ]
+ *      },{
+ *          "caption": "Step 2",
+ *          "widgets": [
+ *              {"attribute_alias": "ATTR3"},
+ *              {"attribute_alias": "ATTR4"}
+ *          ],
+ *          buttons: [
+ *              {"action_alias": "exface.Core.CreateData"},
+ *              {"go_to_step": "previous"}
+ *          ]
+ *      }
+ *  ]
+ * }
+ * 
+ * ```
  * 
  * ### Skipping a step
  * 
@@ -24,26 +64,23 @@ use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
  *  "steps": [
  *      {
  *          "caption": "Quick Start",
- *          "widgets": [
- *              {"attribute_alias": "ATTR1"},
- *              {"attribute_alias": "ATTR2"}
- *          ],
+ *          "widgets": [],
  *          "buttons": [
  *              {"caption": "Confirm", "go_to_step": 2, "visibility": "promoted"},
  *              {"caption": "Add Details", "go_to_step": 1}
  *          ]
  *      },{
  *          "caption": "Details",
- *          "widgets": [
- *              {"attribute_alias": "ATTR3"},
- *              {"attribute_alias": "ATTR4"}
- *          ],
+ *          "widgets": [],
  *          "buttons": [
  *              {"caption": "Confirm", "visibility": "promoted"}
  *          ]
  *      },{
  *          "caption": "Confirm"
- *          "widgets": []
+ *          "widgets": [],
+ *          "buttons": [
+ *              {"action_alias": "exface.Core.CreateData"}
+ *          ]
  *      }
  *  ]
  * }
@@ -69,12 +106,13 @@ class Wizard extends Container implements iFillEntireContainer, iHaveToolbars, i
     }
 
     /**
-     *
-     * @return WizardStep[]
+     * 
+     * @param callable $filterCallback
+     * @return array
      */
-    public function getSteps() : array
+    public function getSteps(callable $filterCallback = null) : array
     {
-        return $this->getWidgets();
+        return $this->getWidgets($filterCallback);
     }
     
     /**

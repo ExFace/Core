@@ -295,6 +295,9 @@
 	"WIDGET.INPUT.VALIDATION_LENGTH_CONDITION": "%condition% Zeichen lang sein",
 	"WIDGET.INPUT.VALIDATION_AND": "und",
 	
+	"WIDGET.WIZARD.NEXT_STEP_BUTTON_CAPTION": "Weiter", 
+	"WIDGET.WIZARD.PREV_STEP_BUTTON_CAPTION": "Zurück", 
+	
 	"ERROR.ECHARTS.AXIS_NO_DATA": "Keine Daten erhalten fÃ¼r Achse",
 
 	"ERROR.CAPTION": "Fehler",
