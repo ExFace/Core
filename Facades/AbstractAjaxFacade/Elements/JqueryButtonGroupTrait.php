@@ -132,7 +132,16 @@ trait JqueryButtonGroupTrait
         if ($this->buildCssTextAlignValue($this->getWidget()->getAlign()) == 'right'){
             $style = 'float: right;';
         }
-        return '<div style="' . $style . '" class="exf-btn-group">' . $buttons_html . '</div>';
+        return '<div style="' . $style . '" class="' . $this->buildCssElementClass() . '">' . $buttons_html . '</div>';
+    }
+    
+    /**
+     * 
+     * @see AbstractJqueryElement::buildCssElementClass()
+     */
+    public function buildCssElementClass()
+    {
+        return parent::buildCssElementClass() . ' exf-btn-group';
     }
     
     /**

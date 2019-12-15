@@ -117,10 +117,10 @@ HTML;
      */
     public function buildCssElementClass()
     {
-        $class = 'exf-' . str_replace('_', '-', StringDataType::convertCasePascalToUnderscore($this->getWidget()->getWidgetType()));
+        $class = ' exf-' . str_replace('_', '-', StringDataType::convertCasePascalToUnderscore($this->getWidget()->getWidgetType()));
         if ($class !== 'exf-toolbar') {
-            $class = 'exf-toolbar ' . $class;
+            $class = ' exf-toolbar' . $class;
         }
-        return $class;
+        return parent::buildCssElementClass() . $class;
     }
 }
