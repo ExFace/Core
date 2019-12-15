@@ -60,7 +60,7 @@ class WizardButton extends Button
      * Step number to activate when button is pressed or "none" to stay on this step.
      * 
      * @uxon-property go_to_step
-     * @uxon-type [next,none]|integer
+     * @uxon-type [next,previous,none]|integer
      * @uxon-default next
      * 
      * @param int|string $value
