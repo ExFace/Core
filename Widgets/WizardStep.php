@@ -5,6 +5,7 @@ use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 
 /**
  * A WizardStep is a special form to be used within Wizard widgets.
@@ -33,6 +34,8 @@ use exface\Core\Interfaces\Widgets\iHaveIcon;
 class WizardStep extends Form implements iHaveIcon
 {
     use iHaveIconTrait;
+    
+    use TranslatablePropertyTrait;
     
     /**
      * 
@@ -241,20 +244,22 @@ class WizardStep extends Form implements iHaveIcon
     }
     
     /**
-     * A brief desription of what to do in this step.
+     * A brief desription of what to do in this step (text or static formula).
+     * 
+     * Use formula `=TRANSLATE()` to make the text translatable.
      * 
      * Text lines can be separated by regular line breaks. HTML, Markdown and other markup
      * not supported unless explicitly allowed by a facade.
      * 
      * @uxon-property intro
-     * @uxon-type string
+     * @uxon-type string|metamodel:formula
      * 
      * @param string $value
      * @return WizardStep
      */
     public function setIntro(string $value) : WizardStep
     {
-        $this->intro = $value;
+        $this->intro = $this->evaluatePropertyExpression($value);
         return $this;
     }
     

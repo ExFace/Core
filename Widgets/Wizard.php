@@ -20,6 +20,9 @@ use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
  * Beside the step-buttons, the `Wizard` widget itself has it's own `buttons`
  * that are visible in every step.
  * 
+ * Each `WizardStep` can also have an `intro` text to explain the user, what
+ * to do.
+ * 
  * ## Examples
  * 
  * ### Simple wizard
