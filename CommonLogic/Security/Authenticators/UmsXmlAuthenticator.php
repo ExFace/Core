@@ -8,10 +8,14 @@ use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\CommonLogic\Security\AuthenticationToken\UmsXmlAuthToken;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
+use exface\Core\CommonLogic\Model\User;
+use exface\Core\Factories\UserFactory;
 
 class UmsXmlAuthenticator implements AuthenticatorInterface
 {
     const CHECKWORD = 'AbCdE13579';
+    
+    const USERNAME = 'umsXmlRequests';
     
     private $authenticatedToken = null;
     
@@ -33,11 +37,10 @@ class UmsXmlAuthenticator implements AuthenticatorInterface
      */
     public function authenticate(AuthenticationTokenInterface $token): AuthenticationTokenInterface
     {
-        $test = '';
         try {
-            $xml = $token->getXml();
-            $xmlEncoded = base64_encode(md5(self::CHECKWORD . $xml . self::CHECKWORD));
-            if ($xmlEncoded === $token->getVerifyCode()) {
+            $message = $token->getMessage();
+            $messageEncoded = base64_encode(md5($message . self::CHECKWORD . $message));
+            if ($messageEncoded === $token->getVerifyCode()) {
                 $this->authenticatedToken = $token;
             } else {
                 throw new AuthenticationFailedError('Invalid verifyCode!');
@@ -45,7 +48,12 @@ class UmsXmlAuthenticator implements AuthenticatorInterface
         } catch (AuthenticationFailedError $e) {
             throw new AuthenticationFailedError($e->getMessage(), null, $e);
         }
-        return $token;
+        return new UmsXmlAuthToken($this->getWorkbench(), $token->getVerifyCode(), $message, $token->getFacade(), $this->getUser($token));
+    }
+    
+    private function getUser(UmsXmlAuthToken $token) : User
+    {
+        return UserFactory::createFromModel($this->getWorkbench(), self::USERNAME);
     }
 
     /**
