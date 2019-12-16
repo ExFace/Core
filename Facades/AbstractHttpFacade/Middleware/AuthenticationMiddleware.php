@@ -137,7 +137,9 @@ class AuthenticationMiddleware implements MiddlewareInterface
             if ($token !== null && ! ($token instanceof AuthenticationTokenInterface)) {
                 throw new FacadeLogicError('Cannot use "' . gettype($token) . '" aus authentication token: token extractors are expected to produce instances of the AuthenticationTokenInterface!');
             }
-            $tokens[] = $token;
+            if ($token !== null) {
+                $tokens[] = $token;
+            }
         }
         return $tokens;
     }
