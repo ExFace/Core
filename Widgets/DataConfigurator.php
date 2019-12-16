@@ -237,7 +237,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     protected function createFilterTab()
     {
         $tab = $this->createTab();
-        $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION'));
+        $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION'), false);
         $tab->setIcon(Icons::FILTER);
         return $tab;
     }
@@ -264,7 +264,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     protected function createSorterTab()
     {
         $tab = $this->createTab();
-        $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION'));
+        $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION'), false);
         $tab->setIcon(Icons::SORT);
         // TODO reenable the tab once it has content
         $tab->setDisabled(true);
