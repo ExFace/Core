@@ -7,10 +7,10 @@ use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\UserFactory;
 use exface\Core\Interfaces\Security\PasswordAuthenticationTokenInterface;
+use exface\Core\CommonLogic\Model\User;
 
 class UmsXmlAuthToken implements AuthenticationTokenInterface
 {
-    private $username = 'umsXmlRequests';
     
     private $facade = null;
     
@@ -20,7 +20,7 @@ class UmsXmlAuthToken implements AuthenticationTokenInterface
     
     private $verifyCode = null;
     
-    private $xml = null;
+    private $message = null;
     
     /**
      * 
@@ -28,13 +28,15 @@ class UmsXmlAuthToken implements AuthenticationTokenInterface
      * @param string $verifyCode
      * @param string $xml
      * @param FacadeInterface $facade
+     * @param User $user
      */
-    public function __construct(WorkbenchInterface $workbench, string $verifyCode, string $xml, FacadeInterface $facade = null)
+    public function __construct(WorkbenchInterface $workbench, string $verifyCode, string $message, FacadeInterface $facade = null, User $user = null)
     {
         $this->facade = $facade;
         $this->workbench = $workbench;
         $this->verifyCode = $verifyCode;
-        $this->xml = $xml;
+        $this->message = $message;
+        $this->user = $user;
     }
 
     /**
@@ -45,7 +47,7 @@ class UmsXmlAuthToken implements AuthenticationTokenInterface
     public function getUser(): UserInterface
     {
         if ($this->user === null) {
-            $this->user = UserFactory::createFromModel($this->getWorkbench(), $this->getUsername());
+            return UserFactory::createAnonymous($this->getWorkbench());
         }
         return $this->user;
     }
@@ -59,9 +61,9 @@ class UmsXmlAuthToken implements AuthenticationTokenInterface
         return $this->verifyCode;
     }
     
-    public function getXml() : string
+    public function getMessage() : string
     {
-        return $this->xml;
+        return $this->message;
     }
 
     /**
@@ -81,7 +83,7 @@ class UmsXmlAuthToken implements AuthenticationTokenInterface
      */
     public function getUsername() : ?string
     {
-        return $this->username;
+        return $this->getUser()->getUsername();
     }
 
     protected function getWorkbench() : WorkbenchInterface
@@ -96,6 +98,6 @@ class UmsXmlAuthToken implements AuthenticationTokenInterface
      */
     public function isAnonymous() : bool
     {
-        return false;
+        return $this->getUser()->isUserAnonymous();
     }
 }
