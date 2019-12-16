@@ -99,14 +99,14 @@ class AuthenticationMiddleware implements MiddlewareInterface
         }
         
         // If the token is still anonymous, check if that is allowed in the configuration!
-        if (true === $authenticatedToken->isAnonymous() && false === $this->isAnonyousAllowed()) {
+        if (true === $authenticatedToken->isAnonymous() && false === $this->isAnonymousAllowed()) {
             return $this->createResponseAccessDenied('Access denied! Please log in first!');
         }
         
         return $handler->handle($request);
     }
     
-    protected function isAnonyousAllowed() : bool
+    protected function isAnonymousAllowed() : bool
     {
         return $this->denyAnonymous === false && $this->workbench->getConfig()->getOption('SECURITY.DISABLE_ANONYMOUS_ACCESS') === false;
     }
@@ -137,7 +137,9 @@ class AuthenticationMiddleware implements MiddlewareInterface
             if ($token !== null && ! ($token instanceof AuthenticationTokenInterface)) {
                 throw new FacadeLogicError('Cannot use "' . gettype($token) . '" aus authentication token: token extractors are expected to produce instances of the AuthenticationTokenInterface!');
             }
-            $tokens[] = $token;
+            if ($token !== null) {
+                $tokens[] = $token;
+            }
         }
         return $tokens;
     }

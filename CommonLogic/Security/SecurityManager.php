@@ -45,13 +45,7 @@ class SecurityManager implements SecurityManagerInterface
      * @see \exface\Core\Interfaces\Security\SecurityManagerInterface::authenticate()
      */
     public function authenticate(AuthenticationTokenInterface $token): AuthenticationTokenInterface
-    {
-        if ($token->isAnonymous() === true) {
-            // FIXME check if anonymous access is disabled in config!
-            $this->storeAuthenticatedToken($token);
-            return $token;
-        }
-        
+    {      
         $err = new AuthenticationFailedError('Authentication failed!');
         foreach ($this->getAuthenticators() as $authenticator) {
             if ($authenticator->isSupported($token) === false) {
@@ -64,6 +58,11 @@ class SecurityManager implements SecurityManagerInterface
             } catch (AuthenticationException $e) {
                 $err->addAuthenticatorError($authenticator, new AuthenticationFailedError($e->getMessage(), null, $e));
             }
+        }
+        
+        if ($token->isAnonymous() === true) {
+            $this->storeAuthenticatedToken($token);
+            return $token;
         }
         
         throw $err;
