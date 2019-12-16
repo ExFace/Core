@@ -594,7 +594,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
-     * Gets all files in the $folder_path folder and all subfolders
+     * Gets all files in the $folder_path folder and all subfolders, files are sorted ascending by name for each folder
      * returning them in a monodimensional array
      * 
      * @param string $folder
@@ -603,21 +603,19 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     protected function getFilesFromDir(string $folder_path) : array
     {
         $files = [];
-        if ($handle = opendir($folder_path)) {
-            while (false !== ($file = readdir($handle))) {
-                if ($file != "." && $file != "..") {
-                    if(is_dir($folder_path . DIRECTORY_SEPARATOR . $file)) {
-                        $dir2 = $folder_path . DIRECTORY_SEPARATOR . $file;
-                        $files[] = $this->getFilesFromDir($dir2);
-                    } else {
-                        //$files[] = pathinfo($file, PATHINFO_FILENAME);
-                        if (in_array($file,$this->getSqlMigrationsToSkip()) == FALSE){
-                            $files[] = $folder_path . DIRECTORY_SEPARATOR . $file;
-                        }                        
+        $readFiles = scandir($folder_path, SCANDIR_SORT_ASCENDING);
+        foreach ($readFiles as $file) {
+            if ($file != "." && $file != "..") {
+                if (is_dir($folder_path . DIRECTORY_SEPARATOR . $file)) {
+                    $dir2 = $folder_path . DIRECTORY_SEPARATOR . $file;
+                    $files[] = $this->getFilesFromDir($dir2);
+                } else {
+                    //$files[] = pathinfo($file, PATHINFO_FILENAME);
+                    if (in_array($file,$this->getSqlMigrationsToSkip()) == FALSE){
+                        $files[] = $folder_path . DIRECTORY_SEPARATOR . $file;
                     }
                 }
             }
-            closedir($handle);
         }
         return $this->arrayFlat($files);
     }
