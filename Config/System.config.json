@@ -28,8 +28,7 @@
     
     "SECURITY.DISABLE_ANONYMOUS_ACCESS": false,
     "SECURITY.AUTHENTICATORS" : [
-    	"\\exface\\ModxCmsConnector\\CommonLogic\\Security\\ModxCmsAuthenticator",
-    	"\\exface\\Core\\CommonLogic\\Security\\Authenticators\\UmsXmlAuthenticator"
+    	"\\exface\\ModxCmsConnector\\CommonLogic\\Security\\ModxCmsAuthenticator"
     ],
     
     "FACADES.ROUTES": {},
