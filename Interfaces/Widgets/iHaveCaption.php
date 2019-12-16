@@ -11,12 +11,21 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 interface iHaveCaption
 {
     /**
-     * Sets the widget caption/title
+     * Sets the widget caption/title.
+     * 
+     * By default, setting a caption explicitly will force the widget to show it
+     * (same as setHideCaption(false)). This is important for captions specified
+     * in UXON - indeed, if the user sets a caption he or she will expect it to show.
+     * 
+     * When setting the caption programmatically, this behavior can be explicitly
+     * controlled using the optional $forceCaptionVisible parameter.
      *
      * @param string|ExpressionInterface $caption
+     * @param bool $forceCaptionVisible
+     * 
      * @return iHaveCaption
      */
-    public function setCaption($caption) : iHaveCaption; 
+    public function setCaption($caption, bool $forceCaptionVisible = true) : iHaveCaption; 
     
     /**
      *

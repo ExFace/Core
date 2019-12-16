@@ -28,10 +28,10 @@ trait iHaveCaptionTrait {
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveCaption::setCaption()
      */
-    public function setCaption($caption) : iHaveCaption
+    public function setCaption($caption, bool $forceCaptionVisible = true) : iHaveCaption
     {
         $this->caption = $this->evaluatePropertyExpression($caption);
-        if ($this->hide_caption === null) {
+        if ($this->hide_caption === null && $forceCaptionVisible === true) {
             $this->setHideCaption(false);
         }
         return $this;
