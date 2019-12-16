@@ -127,5 +127,14 @@ class Tab extends Panel
         return parent::getHideCaption();
     }
 
+    /**
+     * Returns the Tabs container where this tab belongs to.
+     * 
+     * @return Tabs
+     */
+    public function getTabs() : Tabs
+    {
+        return $this->getParent();
+    }
 }
 ?>
