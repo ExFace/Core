@@ -1,5 +1,13 @@
 # SQL Database Installer
 
+- [Initializing the installer](SQL_Database_Installer.md#init)
+- [Folder structure recommendations](SQL_Database_Installer.md#folders)
+- [Migration files: syntax, name conventions, etc.](SQL_Database_Installer.md#migrations)
+- [Configuration options](SQL_Database_Installer.md#config)
+- [Skipping migrations](SQL_Database_Installer.md#skipping)
+- [Installing demo data](SQL_Database_Installer.md#demodata)
+- [Transaction handling](SQL_Database_Installer.md#transactions)
+
 The SQL Database Installer is able to create databases and handle database migrations written in SQL. It works by running SQL scripts in from specific folders. 
 
 Technically, the installer performs the following operations:
@@ -14,7 +22,9 @@ To handle migrations the installer creates a special migration log table in the 
 
 The installer runs first all scripts in the migration folder(s) and then all scripts in the static folder(s).
 
-## Initializing the installer
+There is also a possibility to provide demo data with the help of a special migration folder - see chapter "Demo data" below.
+
+## <a name="init"></a>Initializing the installer
 
 Add something like this to the `getInstaller()` method of your app class:
 
@@ -41,31 +51,32 @@ To set the DataConnection the installer should use, use the method `setDataConne
 
 By default the migrations table will be named `_migrations`. You can set the name for the migrations table by using the method `setMigrationsTableName();`.
 
-## Folder structure
+## <a name="folders"></a>Folder structure
 
 It is recommended to use the following folder structure `%app%\install\Sql\%SqlDbType%\` in your app folders to save the sql files. For example for MySQL the folder structure would be `%app%\install\Sql\MySQL\`.
 
 In addition it is recommended to have the following subfolders in `%SqlDbType%` folder:
-- InitDb - for the initial database structure sql files
+
+- `InitDb` - for the initial database structure sql files
 	- 01_tables.sql
 	- 02_init_data.sql
-- DemoData - for Demo Data sql files you want to fill the database with
-- Migrations - for migration sql files containing UP and DOWN parts
+- `DemoData` - for filling the database with demo data - see corresponding chapter below
+- `Migrations` - for migration sql files containing UP and DOWN parts
 	- 0.1 - Using version numbers for subfolders helps keep an overview
 		- 20191130_1148_01_NEW_feature.sql
 		- 20191130_1455_01_NEW_other_feature.sql
 	- 0.2
 		- 20191218_0822_01_FIX_feature.sql
-- Views - views are typical static SQL - they can be recreated every time
+- `Views` - views are typical static SQL - they can be recreated every time
 	- 001_view1.sql
 	- 002_view2.sql
-- Procedures, etc. - for sql files containing scripts that need to be run at every installation
+- `Procedures`, etc. - for sql files containing scripts that need to be run at every installation
 	
 The installer will go through any subfolders in alphabetical order, therefore it is important that migration files are in the correct order and folders.
 
 **NOTE**: The installer uses only the file names as identifiers for migrations, not the subfolder names. Each migration file MUST have a name unique within the app. This allows restructuring the folders without complications!
 
-## Migration files
+## <a name="migrations"></a>Migration files
 
 It is recommended to name the migration sql files as follows `DATE_TIME_INDEX_INFO.sql` where:
 
@@ -92,7 +103,7 @@ ALTER TABLE tablename
 	DROP columnname4;
 ```
 
-## Configuration options
+## <a name="config"></a>Configuration options
 
 By default, this installer offers the following configuration options to control it's behavior on a specific installation. These options can be added to the config of the app being installed.
 
@@ -102,7 +113,7 @@ By default, this installer offers the following configuration options to control
 If an app contains multiple SQL-installers, the config option namespace may be changed when instantiatiating the installer via setConfigOptionNamePrefix(), so that each installer can be configured separately. If not done so, each option will affect
 all SQL-installers. 
 		
-## Skipping Migrations
+## <a name="skipping"></a>Skipping Migrations
 
 There are two options to skip migrations during installation or roll back already performed and still applied migrations.
 
@@ -116,15 +127,25 @@ Example for two migration files that should be skipped/rolled back:
 ```
 {
   "INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS": [
-    "20190101_120000_01_NEW_column3_and_column4.sql",
-    "20190102_130000_02_NEW_column5_and_column6.sql"
+    "20190101_1200_01_NEW_column3_and_column4.sql",
+    "20190102_1300_02_NEW_column5_and_column6.sql"
   ]	
 }	
 ```
 
 It is possible to change the option name by calling the method `setSqlMigrationsToSkipConfigOption`. 
 
-## Transaction handling
+## <a name="demodata"></a>Installing demo data
+
+Sometimes it is usefull to provide demo data for an application, so the user does not start with a blank screen. Since the demo data only needs to be imported once, it's just a set of migrations from the point of view of the installer. 
+
+If you want to put the demo data into a separate folder (which is generally a good idea), create a `DemoData` folder and register it as a migration folder in the installer (see above). Use the general migration naming conventions for demo data too to be able to add changes easily.
+
+**IMPORTANT**: Keep in mind, that the migrations from the `DemoData` folder will be executed after ALL structural migration are applied. This means, that the demo data SQL MUST be compatible to the schema produced by the latest migration! Otherwise installing the demo data on a fresh DB will not work. 
+
+Technically, this implies, that if a structural migration affects the demo data, all demo files must be updated. Do not rename them in this case! Just update the SQL inside. The changes are only needed for those installations, that do not have the affected part of demo data. Those, that had alreade received that demo data will get handled by structural migrations anyway.
+
+## <a name="transactions"></a>Transaction handling
 
 Transaction handling is different depending on the concrete installer implementation.
 
