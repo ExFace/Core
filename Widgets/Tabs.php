@@ -140,10 +140,11 @@ class Tabs extends Container implements iFillEntireContainer
     }
 
     /**
-     *
-     * @return number
+     * Returns the index of the initally active tab (starting with 0).
+     * 
+     * @return int
      */
-    public function getActiveTab() : int
+    public function getActiveTabIndex() : int
     {
         return $this->active_tab;
     }
