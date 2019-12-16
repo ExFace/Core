@@ -10,6 +10,7 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\CommonLogic\Model\User;
 use exface\Core\Factories\UserFactory;
+use exface\Core\Exceptions\UserNotFoundError;
 
 class UmsXmlAuthenticator implements AuthenticatorInterface
 {
@@ -48,12 +49,21 @@ class UmsXmlAuthenticator implements AuthenticatorInterface
         } catch (AuthenticationFailedError $e) {
             throw new AuthenticationFailedError($e->getMessage(), null, $e);
         }
-        return new UmsXmlAuthToken($this->getWorkbench(), $token->getVerifyCode(), $message, $token->getFacade(), $this->getUser($token));
+        try {
+            $tokenWithUser = new UmsXmlAuthToken($this->getWorkbench(), $token->getVerifyCode(), $message, $token->getFacade(), $this->getUser($token));
+            return $tokenWithUser;
+        } catch (\Exception $e) {
+            throw new AuthenticationFailedError($e->getMessage(), null, $e);
+        }
     }
     
     private function getUser(UmsXmlAuthToken $token) : User
     {
-        return UserFactory::createFromModel($this->getWorkbench(), self::USERNAME);
+        $user =  UserFactory::createFromModel($this->getWorkbench(), self::USERNAME);
+        if ($user->hasModel() === false) {
+            throw new UserNotFoundError("{$this->getName()} - Authentification failed: Please create user '{$user->getUsername()}'");
+        }
+        return $user;
     }
 
     /**
