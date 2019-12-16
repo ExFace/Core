@@ -135,7 +135,7 @@ class UserContextScope extends AbstractContextScope
         $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
         // Check if the user has changed since the last access to the user scope.
         // This is not allowed as this would result in multiple users sharing the same scope!
-        if ($this->user !== null && $this->user->isUserAnonymous() === false && $this->user !== $user) {
+        if ($this->user !== null && $this->user->isUserAnonymous() === false && $this->user->getUsername() !== $user->getUsername()) {
             throw new SecurityException('Authenticated user changed after the user context scope was initialized!');
         }
         // Save the current user for further checks

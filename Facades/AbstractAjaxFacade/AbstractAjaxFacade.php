@@ -577,7 +577,12 @@ HTML;
      */
     protected function isShowingErrorDetails() : bool
     {
-        return $this->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY') && $this->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAdmin();
+        try {
+            return $this->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY') && $this->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAdmin();
+        } catch (\Throwable $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
+            return false;
+        }
     }
     
     /**
