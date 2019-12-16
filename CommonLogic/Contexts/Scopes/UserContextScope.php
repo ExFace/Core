@@ -5,15 +5,16 @@ use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Model\User;
 use exface\Core\Factories\UserFactory;
+use exface\Core\Exceptions\SecurityException;
 
 class UserContextScope extends AbstractContextScope
 {
 
     const CONTEXTS_FILENAME_IN_USER_DATA = '.contexts.json';
 
-    private $user = null;
-
     private $user_context_file_contents = null;
+    
+    private $user = null;
 
     public function getScopeId()
     {
@@ -131,10 +132,17 @@ class UserContextScope extends AbstractContextScope
      */
     public function getUserCurrent()
     {
-        if (null === $this->user) {
-            $this->user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
+        $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
+        // Check if the user has changed since the last access to the user scope.
+        // This is not allowed as this would result in multiple users sharing the same scope!
+        if ($this->user !== null && $this->user->isAnonymous() === false && $this->user !== $user) {
+            throw new SecurityException('Authenticated user changed after the user context scope was initialized!');
         }
-        return $this->user;
+        // Save the current user for further checks
+        if ($this->user === null) {
+            $this->user = $user;
+        }
+        return $user;
     }
 }
 ?>
