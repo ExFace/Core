@@ -7,7 +7,6 @@ use exface\Core\CommonLogic\UxonObject;
 trait iHaveButtonsAndToolbarsTrait 
 {
     use iHaveToolbarsTrait {
-        //getToolbars as getToolbarsViaTrait;
         initMainToolbar as initMainToolbarViaTrait;
     }
     
@@ -117,11 +116,15 @@ trait iHaveButtonsAndToolbarsTrait
      */
     public function setButtons($buttons)
     {
-        // Do not instantiate the main toolbar right away, just save the buttons for now and
-        // use them once the toolbars are actually requested - see getToolbars().
-        // This "lazy loading" helps save instantiating buttons in widget implementations
-        // where the toolbars are never shown.
-        $this->buttonsPropertyValue = $buttons;
+        if ($this->hasToolbars() === false) {
+            // Do not instantiate the main toolbar right away, just save the buttons for now and
+            // use them once the toolbars are actually requested - see getToolbars().
+            // This "lazy loading" helps save instantiating buttons in widget implementations
+            // where the toolbars are never shown.
+            $this->buttonsPropertyValue = $buttons;
+        } else {
+            $this->getToolbarMain()->setButtons($buttons);
+        }
         return $this;
     }
     

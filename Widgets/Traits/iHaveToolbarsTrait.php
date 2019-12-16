@@ -16,7 +16,7 @@ trait iHaveToolbarsTrait {
      */
     public function getToolbarMain()
     {
-        if (empty($this->toolbars)){
+        if ($this->hasToolbars() === false){
             return $this->initMainToolbar();
         }
         return $this->getToolbars()[0];
@@ -29,10 +29,20 @@ trait iHaveToolbarsTrait {
      */
     public function getToolbars()
     {
-        if (empty($this->toolbars)){
+        if ($this->hasToolbars() === false){
             $this->initMainToolbar();
         }
         return $this->toolbars;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveToolbars::hasToolbars()
+     */
+    public function hasToolbars() : bool
+    {
+        return empty($this->toolbars) === false;
     }
     
     /**
