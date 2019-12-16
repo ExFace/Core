@@ -14,6 +14,12 @@ interface iHaveToolbars extends WidgetInterface
     
     /**
      * 
+     * @return bool
+     */
+    public function hasToolbars() : bool;
+    
+    /**
+     * 
      * @param Toolbar[]|UxonObject $widget_or_uxon_objects
      * @return iHaveToolbars
      */
