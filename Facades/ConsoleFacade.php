@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Facades\ConsoleFacade;
+namespace exface\Core\Facades;
 
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\CommonLogic\Workbench;
@@ -15,6 +15,11 @@ use exface\Core\DataTypes\StringDataType;
 use Symfony\Component\Console\Input\InputArgument;
 use exface\Core\Factories\TaskFactory;
 use Symfony\Component\Console\Output\BufferedOutput;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\Uxon\FacadeSchema;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Facades\ConsoleFacade\CommandLoader;
+use exface\Core\Facades\ConsoleFacade\SymfonyCommandAdapter;
 
 /**
  * Command line interface facade based on Symfony Console.
@@ -64,6 +69,8 @@ use Symfony\Component\Console\Output\BufferedOutput;
 class ConsoleFacade extends Application implements FacadeInterface
 {
     use AliasTrait;
+    
+    use ImportUxonObjectTrait;
 
     private $exface = null;
 
@@ -184,5 +191,24 @@ class ConsoleFacade extends Application implements FacadeInterface
             $this->run($input, $output);
             yield $output->fetch();
         }
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        return new UxonObject();
+    }
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return FacadeSchema::class;
     }
 }

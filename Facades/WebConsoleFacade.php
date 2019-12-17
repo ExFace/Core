@@ -15,7 +15,7 @@ use exface\Core\Widgets\Console;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Filemanager;
-use exface\Core\Facades\ConsoleFacade\ConsoleFacade;
+use exface\Core\Facades\ConsoleFacade;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
@@ -128,7 +128,7 @@ class WebConsoleFacade extends AbstractHttpFacade
                 $stream = new IteratorStream($generator(10));
                 break;
             case $this->isCliAction($command, $cwd) === true:
-                /* @var $console \exface\Core\Facades\ConsoleFacade\ConsoleFacade */
+                /* @var $console \exface\Core\Facades\ConsoleFacade */
                 $console = FacadeFactory::createFromString(ConsoleFacade::class, $this->getWorkbench());
                 $stream = new IteratorStream($console->getOutputGenerator($cmd));
                 break;

@@ -4,7 +4,7 @@
 
 require __DIR__.'/../../../../../autoload.php';
 
-use exface\Core\Facades\ConsoleFacade\ConsoleFacade;
+use exface\Core\Facades\ConsoleFacade;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Factories\FacadeFactory;
 
