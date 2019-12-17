@@ -2,7 +2,7 @@
     "id": "0xb38cface203a11ea8c920205857feb80",
     "alias_with_namespace": "exface.core.facades",
     "menu_parent_page_alias": "exface.core.documentation",
-    "menu_index": "9",
+    "menu_index": "10",
     "menu_visible": true,
     "name": "Facades",
     "description": "Browse available facades and their properties",
