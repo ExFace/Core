@@ -7,8 +7,9 @@ use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
 
-interface FacadeInterface extends WorkbenchDependantInterface, AliasInterface
+interface FacadeInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeConvertedToUxon
 {
     /**
      * Returns TRUE if this facade matches the given facade alias and false otherwise (case insensitive!)

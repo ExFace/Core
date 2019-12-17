@@ -1,0 +1,37 @@
+{
+    "id": "0xb38cface203a11ea8c920205857feb80",
+    "alias_with_namespace": "exface.core.facades",
+    "menu_parent_page_alias": "exface.core.documentation",
+    "menu_index": "9",
+    "menu_visible": true,
+    "name": "Facades",
+    "description": "Browse available facades and their properties",
+    "intro": "",
+    "replaces_page_alias": null,
+    "contents": {
+        "object_alias": "exface.Core.FACADE",
+        "widget_type": "DataTable",
+        "filters": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "PATHNAME_RELATIVE"
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "PATHNAME_RELATIVE"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectInfoDialog",
+                "bind_to_double_click": true
+            }
+        ]
+    }
+}

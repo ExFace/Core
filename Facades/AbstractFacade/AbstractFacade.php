@@ -7,10 +7,15 @@ use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\CommonLogic\Traits\AliasTrait;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Uxon\FacadeSchema;
 
 abstract class AbstractFacade implements FacadeInterface
 {
     use AliasTrait;
+    
+    use ImportUxonObjectTrait;
 
     private $exface = null;
 
@@ -86,6 +91,25 @@ abstract class AbstractFacade implements FacadeInterface
     public function getConfig() : ConfigurationInterface
     {
         return $this->getApp()->getConfig();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        return new UxonObject();
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return FacadeSchema::class;
     }
 }
 ?>
