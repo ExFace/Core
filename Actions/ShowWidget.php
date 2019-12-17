@@ -235,7 +235,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         }
         
         // See if the widget requires any other columns to be prefilled. If so, add them and check if data needs to be read.
-        if ($data_sheet && $data_sheet->countRows() > 0 && $data_sheet->getUidColumn()) {
+        if ($data_sheet && $data_sheet->countRows() > 0 && $data_sheet->hasUidColumn(true)) {
             $data_sheet = $widget->prepareDataSheetToPrefill($data_sheet);
             if (! $data_sheet->isFresh()) {
                 $data_sheet->addFilterFromColumnValues($data_sheet->getUidColumn());
