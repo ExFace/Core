@@ -81,24 +81,24 @@
     "rows": [
         {
             "CREATED_ON": "2018-05-29 07:48:36",
-            "MODIFIED_ON": "2019-11-26 09:43:15",
+            "MODIFIED_ON": "2019-12-16 20:47:33",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e86314af5caf7f971b0205857feb80",
             "READABLE_FLAG": "1",
-            "WRITABLE_FLAG": "0",
+            "WRITABLE_FLAG": "1",
             "COMMENTS": "",
             "DOCS": "",
             "NAME": "Page",
             "INHERIT_DATA_SOURCE_BASE_OBJECT": "1",
-            "DATA_SOURCE": "0x11e7109eb7d53d24beb2e4b318306b9a",
+            "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "PAGE",
-            "DATA_ADDRESS": "modx_site_content"
+            "DATA_ADDRESS": "exf_page"
         }
     ],
     "totals_rows": [],
