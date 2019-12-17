@@ -654,6 +654,21 @@
             "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\"}",
             "ALIAS": "Locale",
             "SHORT_DESCRIPTION": "All locales currently installed: en, en_US, de, de_DE, etc."
+        },
+        {
+            "CREATED_ON": "2019-12-17 09:14:53",
+            "MODIFIED_ON": "2019-12-17 09:14:53",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea20adab7769cbaa030205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "UXON Facade",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/UxonDataType.php",
+            "CONFIG_UXON": "{\"schema\":\"facade\"}",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputUxon\",\"width\":\"2\",\"height\":\"6\"}",
+            "ALIAS": "UxonFacade",
+            "SHORT_DESCRIPTION": "User Experience Object Notation (JSON schema) for facade configuration"
         }
     ],
     "totals_rows": [],

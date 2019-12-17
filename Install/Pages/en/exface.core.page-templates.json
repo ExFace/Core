@@ -1,0 +1,66 @@
+{
+    "id": "0xb108669020a211ea8d5600a0c6000009",
+    "alias_with_namespace": "exface.core.page-templates",
+    "menu_parent_page_alias": "exface.core.pages",
+    "menu_index": "1",
+    "menu_visible": true,
+    "name": "Page Templates",
+    "description": "",
+    "intro": "",
+    "replaces_page_alias": null,
+    "contents": {
+        "widget_type": "DataTable",
+        "object_alias": "exface.Core.PAGE_TEMPLATE",
+        "paginate": false,
+        "filters": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "APP"
+            },
+            {
+                "attribute_alias": "FACADE"
+            }
+        ],
+        "row_grouper": {
+            "group_by_attribute_alias": "FACADE__LABEL"
+        },
+        "columns": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "FACADE__LABEL"
+            },
+            {
+                "attribute_alias": "DESCRIPTION"
+            },
+            {
+                "attribute_alias": "APP__LABEL"
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "NAME",
+                "direction": "asc"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectCreateDialog"
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectCopyDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject",
+                "visibility": "optional"
+            }
+        ]
+    }
+}
