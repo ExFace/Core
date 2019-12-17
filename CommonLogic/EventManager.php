@@ -43,10 +43,9 @@ class EventManager implements EventManagerInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Events\EventManagerInterface::dispatch()
      */
-    public function dispatch(EventInterface $event) : EventManagerInterface
+    public function dispatch(EventInterface $event) : EventInterface
     {
-        $this->dispatcher->dispatch($event::getEventName(), $event);
-        return $this;
+        return $this->dispatcher->dispatch($event::getEventName(), $event);
     }
 
     /**

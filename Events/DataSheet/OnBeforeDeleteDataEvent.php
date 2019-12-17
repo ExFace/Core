@@ -11,5 +11,27 @@ namespace exface\Core\Events\DataSheet;
  */
 class OnBeforeDeleteDataEvent extends AbstractDataSheetEvent
 {
+    private $preventDelete = false;
     
+    /**
+     * Prevents the default delete operation.
+     *
+     * Use this if the event handler actually deletes the data.
+     *
+     * @return OnBeforeDeleteDataEvent
+     */
+    public function preventDelete() : OnBeforeDeleteDataEvent
+    {
+        $this->preventDelete = true;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isPreventDelete() : bool
+    {
+        return $this->preventDelete;
+    }
 }

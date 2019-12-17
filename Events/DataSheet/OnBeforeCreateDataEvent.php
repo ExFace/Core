@@ -11,5 +11,27 @@ namespace exface\Core\Events\DataSheet;
  */
 class OnBeforeCreateDataEvent extends AbstractDataSheetEvent
 {
+    private $preventCreate = false;
     
+    /**
+     * Prevents the default create operation.
+     *
+     * Use this if the event handler fills the data sheet.
+     *
+     * @return OnBeforeCreateDataEvent
+     */
+    public function preventCreate() : OnBeforeCreateDataEvent
+    {
+        $this->preventCreate = true;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isPreventCreate() : bool
+    {
+        return $this->preventCreate;
+    }
 }

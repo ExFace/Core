@@ -17,6 +17,8 @@ class OnBeforeReadDataEvent extends AbstractEvent implements DataSheetEventInter
 {
     private $dataSheet = null;
     
+    private $preventRead = false;
+    
     /**
      *
      * @param DataSheetInterface $dataSheet
@@ -44,5 +46,27 @@ class OnBeforeReadDataEvent extends AbstractEvent implements DataSheetEventInter
     public function getWorkbench()
     {
         return $this->dataSheet->getWorkbench();
+    }
+    
+    /**
+     * Prevents the default read operation.
+     * 
+     * Use this if the event handler fills the data sheet.
+     * 
+     * @return OnBeforeReadDataEvent
+     */
+    public function preventRead() : OnBeforeReadDataEvent
+    {
+        $this->preventRead = true;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isPreventRead() : bool
+    {
+        return $this->preventRead;
     }
 }
