@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\Filter;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  *
@@ -22,6 +23,9 @@ trait JqueryFilterTrait {
             return '';
         }
         $value = is_null($valueJs) ? $this->buildJsValueGetter() : $valueJs;
+        if ($widget->getAttributeAlias() === '' || $widget->getAttributeAlias() === null) {
+            throw new WidgetConfigurationError($widget, 'Invalid filter configuration for filter "' . $widget->getCaption() . '": missing expression (e.g. attribute_alias)!');
+        }
         return '{expression: "' . $widget->getAttributeAlias() . '", comparator: ' . $this->buildJsComparatorGetter() . ', value: ' . $value . ', object_alias: "' . $widget->getMetaObject()->getAliasWithNamespace() . '"}';
     }
     
