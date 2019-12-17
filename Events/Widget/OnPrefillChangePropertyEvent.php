@@ -7,17 +7,21 @@ use exface\Core\Interfaces\DataSheets\DataPointerInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 
 /**
- * Event fired after a prefill changes the value of a widget property.
+ * Event fired after prefill data was applied to a widget property.
  * 
- * In contranst to `exface.Core.Widget.OnPrefill` this event is only fired when a property
- * of the widget actually changes. It contains a data pointer to the value, that is being set
- * and also a copy of the previous value of the property, that is being overwritten.
+ * In contranst to `exface.Core.Widget.OnPrefill` this event is only fired when the prefill data 
+ * actually affects a property - i.e. the prefill contains a column, that the property can use. 
+ * The event contains a data pointer to the value, that was used for the prefill.
  * 
  * This event will be fired for every property changed by a prefill: e.g. if a prefill changes the
- * value and the text of an InputSelect, there will be two events fired with the respective
- * values for each of the properties. On the other hand, there will be no `OnPrefillChangeProperty` 
- * event fired if the prefill does not change anything in the widget - while `OnPrefill` will be 
- * still fired to indicate, that the widget received prefill data.
+ * `value` and the `text` of an `InputSelect`, there will be two events fired with the respective
+ * values and property names for each of the properties. The events will be fired regardless of
+ * wether the property's value actually changed. As for now, there is no way to determine, if the
+ * widget had another value prefiously than the one from the prefill data.
+ * 
+ * On the other hand, there will be no `OnPrefillChangeProperty` event fired if the prefill cannot
+ * be applied to the widget (e.g. wrong object) - while `OnPrefill` will be still fired to indicate, 
+ * that the widget received prefill data.
  * 
  * @event exface.Core.Widget.OnPrefillChangeProperty
  *
@@ -44,7 +48,7 @@ class OnPrefillChangePropertyEvent extends AbstractWidgetEvent implements DataSh
     }
     
     /**
-     * Returns a data pointer to the new value, that the property is getting.
+     * Returns a data pointer to the new value, that the property received.
      * 
      * @return DataPointerInterface
      */
