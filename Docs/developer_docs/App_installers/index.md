@@ -8,7 +8,8 @@ The core includes a couple of installer classes for common purposes like maintai
 
 ## Installers included in the core
 
-- [SqlDatabaseInstaller](sql_database_installer.md)
+- [SqlDatabaseInstaller](sql_database_installer.md) - create and update SQL databases, perform migrations, etc.
+- [HttpFacadeInstaller](HTTP_facade_installer.md) - automatically configure routing for an HTTP facade.
 
 ## Adding an Installer to an app
 

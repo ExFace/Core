@@ -11,6 +11,21 @@ use exface\Core\CommonLogic\UxonObject;
  * This installer registeres routes for it's HTTP facade in the system's
  * facade routing configuration (System.config.json > FACADES.ROUTES).
  * 
+ * ## Initializing the installer
+ * 
+ * Add something like this to the `getInstaller()` method of your app class:
+ * 
+ * ```
+ * ...preceding installers here...
+ *        
+ * $facadeInstaller = new HttpFacadeInstaller($this->getSelector());
+ * $facadeInstaller->setFacade(FacadeFactory::createFromString(YourFacade::class, $this->getWorkbench()));
+ * $installer->addInstaller($facadeInstaller);
+ * 
+ * ...subsequent installers here...
+ * 
+ * ```
+ * 
  * @author Andrej Kabachnik
  *        
  */
