@@ -27,6 +27,8 @@ class WizardButton extends Button
      */
     private $goToStep = null;
     
+    private $validateCurrentStep = null;
+    
     /**
      *
      * @return int|NULL
@@ -136,4 +138,39 @@ class WizardButton extends Button
         }
         return $caption;
     }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getValidateCurrentStep() : bool
+    {
+        if ($this->validateCurrentStep === null) {
+            if ($this->getGoToStepIndex() < $this->getWizardStep()->getStepIndex()) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+        return $this->validateCurrentStep;
+    }
+    
+    /**
+     * Set to FALSE to disable form validation when this button is pressed - e.g. for a skip-button.
+     * 
+     * By default, the step's form is validated by every button except those,
+     * that navigate to a previous step.
+     * 
+     * @uxon-property validate_current_step
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return WizardButton
+     */
+    public function setValidateCurrentStep(bool $value) : WizardButton
+    {
+        $this->validateCurrentStep = $value;
+        return $this;
+    }
+    
 }
