@@ -27,6 +27,8 @@ class SymfonyAuthenticator implements AuthenticatorInterface
 {
     private $authenticatedToken = null;
     
+    private $authenticatedSymfonyToken = null;
+    
     private $symfonyAuthManager = null;
     
     private $workbench = null;
@@ -48,8 +50,10 @@ class SymfonyAuthenticator implements AuthenticatorInterface
     public function authenticate(AuthenticationTokenInterface $token): AuthenticationTokenInterface
     {
         try {
-            $this->getSymfonyAuthManager()->authenticate($this->createSymfonyAuthToken($token));
-            $this->storeAuthenticatedToken($token);
+            $symfonyToken = $this->createSymfonyAuthToken($token);
+            $symfonyAuthenticatedToken = $this->getSymfonyAuthManager()->authenticate($symfonyToken);
+            $this->authenticatedToken = $token;
+            $this->authenticatedSymfonyToken = $symfonyAuthenticatedToken;
         } catch (AuthenticationException $e) {
             throw new AuthenticationFailedError($e->getMessage(), null, $e);
         }
@@ -73,16 +77,7 @@ class SymfonyAuthenticator implements AuthenticatorInterface
      */
     public function getName() : string
     {
-        return 'Default Authentication';
-    }
-    
-    protected function storeAuthenticatedToken(AuthenticationTokenInterface $token) : SecurityManagerInterface
-    {
-        if ($token->getUsername() !== $this->getAuthenticatedToken()->getUsername() && $this->getAuthenticatedToken()->isAnonymous() === false) {
-            throw new RuntimeException('User changed!');
-        }
-        $this->authenticatedToken = $token;
-        return $this;
+        return 'Symfony Authentication';
     }
     
     /**
@@ -142,15 +137,15 @@ class SymfonyAuthenticator implements AuthenticatorInterface
         switch (true) {
             case $token instanceof PasswordAuthenticationTokenInterface:
                 return new UsernamePasswordToken(
-                $token->getUsername(),
+                new SymfonyUserWrapper($token->getUser()),
                 $token->getPassword(),
-                'workbench'
+                'secured_area'
                     );
             case $token instanceof PreAuthenticatedTokenInterface:
                 return new PreAuthenticatedToken(
-                $token->getUsername(),
+                new SymfonyUserWrapper($token->getUser()),
                 '',
-                'workbench'
+                'secured_area'
                     );
         }
         return new AnonymousToken(
