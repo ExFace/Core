@@ -42,9 +42,9 @@ class SymfonyUserProvider implements UserProviderInterface
      *
      * @throws UsernameNotFoundException:: if the user is not found
      */
-    public function loadUserByUsername(string $username)
+    public function loadUserByUsername($username)
     {
-        return UserFactory::createFromModel($this->getWorkbench(), $username);
+        return new SymfonyUserWrapper(UserFactory::createFromModel($this->getWorkbench(), $username));
     }
     
     /**
@@ -62,7 +62,8 @@ class SymfonyUserProvider implements UserProviderInterface
      */
     public function refreshUser(UserInterface $user)
     {
-        
+        //TODO
+        return $user;      
     }
     
     /**
@@ -70,7 +71,7 @@ class SymfonyUserProvider implements UserProviderInterface
      *
      * @return bool
      */
-    public function supportsClass(string $class)
+    public function supportsClass($class)
     {
         return true;
     }
