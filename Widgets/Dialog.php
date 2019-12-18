@@ -109,9 +109,24 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
         return $this->close_button;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Form::getToolbarWidgetType()
+     */
     public function getToolbarWidgetType()
     {
         return 'DialogToolbar';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Form::getButtonWidgetType()
+     */
+    public function getButtonWidgetType()
+    {
+        return 'DialogButton';
     }
 
     /**
