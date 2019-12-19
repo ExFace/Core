@@ -27,7 +27,8 @@ class UiPageFactory extends AbstractStaticFactory
         $page = null;
         if (! $selector->isEmpty()) {
             try {
-                $page = $cms->getPage($selector);
+                $page = self::createFromModel($cms->getWorkbench(), $selector);
+                // $page = $cms->getPage($selector);
             } catch (UiPageNotFoundError $e) {
                 // do nothing
             }
@@ -75,9 +76,20 @@ class UiPageFactory extends AbstractStaticFactory
      */
     public static function createFromString(UiPageSelectorInterface $selector, string $contents) : UiPageInterface
     {
-        $page = static::createBlank($selector);
+        $page = static::createBlank($selector->getWorkbench(), $selector);
         $page->setContents($contents);
         return $page;
+    }
+    
+    public static function createFromModel(WorkbenchInterface $workbench, $selectorOrString, bool $ignoreReplacement = false) : UiPageInterface
+    {
+        if ($selectorOrString instanceof UiPageSelectorInterface) {
+            $selector = $selectorOrString;
+        } else {
+            $selector = SelectorFactory::createPageSelector($workbench, $selectorOrString);
+        }
+        
+        return $workbench->model()->getModelLoader()->loadPage($selector, $ignoreReplacement);
     }
 
     /**
@@ -101,19 +113,8 @@ class UiPageFactory extends AbstractStaticFactory
         } else {
             $selector = SelectorFactory::createPageSelector($cms->getWorkbench(), $selectorOrString);
         }
-        
+        return self::createFromModel($cms->getWorkbench(), $selector);
         return $cms->getPage($selector, $ignoreReplacement);
-    }
-
-    /**
-     * Creates a page which is obtained from the current CMS page.
-     * 
-     * @param CmsConnectorInterface $cms
-     * @return UiPageInterface
-     */
-    public static function createFromCmsPageCurrent(CmsConnectorInterface $cms) : UiPageInterface
-    {
-        return $cms->getPageCurrent();
     }
 
     /**
