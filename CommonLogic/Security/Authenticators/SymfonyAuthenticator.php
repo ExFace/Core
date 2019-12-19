@@ -122,7 +122,7 @@ class SymfonyAuthenticator implements AuthenticatorInterface
             $encoderFactory
             );
     }
-    
+        
     /**
      * 
      * {@inheritDoc}
@@ -137,13 +137,13 @@ class SymfonyAuthenticator implements AuthenticatorInterface
         switch (true) {
             case $token instanceof PasswordAuthenticationTokenInterface:
                 return new UsernamePasswordToken(
-                new SymfonyUserWrapper($token->getUser()),
+                $token->getUsername(),
                 $token->getPassword(),
                 'secured_area'
                     );
             case $token instanceof PreAuthenticatedTokenInterface:
                 return new PreAuthenticatedToken(
-                new SymfonyUserWrapper($token->getUser()),
+                $token->getUsername(),
                 '',
                 'secured_area'
                     );
