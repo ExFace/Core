@@ -41,7 +41,7 @@ class SymfonyNativePasswordEncoder implements PasswordEncoderInterface, SelfSalt
     /**
      * {@inheritdoc}
      */
-    public function encodePassword(string $raw, ?string $salt): string
+    public function encodePassword($raw, $salt): string
     {
         if (\strlen($raw) > self::MAX_PASSWORD_LENGTH || ((string) PASSWORD_BCRYPT === $this->algo && 72 < \strlen($raw))) {
             throw new BadCredentialsException('Invalid password.');
@@ -52,7 +52,7 @@ class SymfonyNativePasswordEncoder implements PasswordEncoderInterface, SelfSalt
     /**
      * {@inheritdoc}
      */
-    public function isPasswordValid(string $encoded, string $raw, ?string $salt): bool
+    public function isPasswordValid($encoded, $raw, $salt): bool
     {
         if (\strlen($raw) > self::MAX_PASSWORD_LENGTH) {
             return false;
