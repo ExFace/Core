@@ -45,6 +45,11 @@ class DataColumnToFilterMapping extends DataColumnMapping implements DataColumnT
     }
 
     /**
+     * Use this comparator in the resulting filter.
+     * 
+     * @uxon-property comparator
+     * @uxon-type metamodel:comparator
+     * 
      * @param string $comparator
      * @return DataColumnToFilterMapping
      */

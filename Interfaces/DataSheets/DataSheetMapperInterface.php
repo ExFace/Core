@@ -62,11 +62,6 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
     public function getMappings();
     
     /**
-     * @return DataColumnToFilterMappingInterface[]
-     */
-    public function getColumnToFilterMappings();
-    
-    /**
      * @return DataColumnMappingInterface[]
      */
     public function getColumnToColumnMappings();
@@ -80,6 +75,18 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
     
     /**
      *
+     * @param DataColumnMappingInterface $map
+     * @return DataSheetMapperInterface
+     */
+    public function addColumnToColumnMapping(DataColumnMappingInterface $map);
+    
+    /**
+     * @return DataColumnToFilterMappingInterface[]
+     */
+    public function getColumnToFilterMappings();
+    
+    /**
+     *
      * @param UxonObject
      * @return DataSheetMapperInterface
      */
@@ -90,14 +97,26 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
      * @param DataColumnMappingInterface $map
      * @return DataSheetMapperInterface
      */
-    public function addColumnToColumnMapping(DataColumnMappingInterface $map);
+    public function addColumnToFilterMapping(DataColumnToFilterMappingInterface $map);
+    
+    /**
+     * @return DataFilterToColumnMappingInterface[]
+     */
+    public function getFilterToColumnMappings();
+    
+    /**
+     *
+     * @param UxonObject
+     * @return DataSheetMapperInterface
+     */
+    public function setFilterToColumnMappings(UxonObject $uxon);
     
     /**
      *
      * @param DataColumnMappingInterface $map
      * @return DataSheetMapperInterface
      */
-    public function addColumnToFilterMapping(DataColumnToFilterMappingInterface $map);
+    public function addFilterToColumnMapping(DataFilterToColumnMappingInterface $map);
     
     /**
      * Creates all types of mappings, that can be derived from expressions: mappings for columns, filters, sorters, aggregators, etc.
