@@ -14,6 +14,7 @@ use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\DataColumnFactory;
 use exface\Core\Interfaces\DataSheets\DataColumnToFilterMappingInterface;
+use exface\Core\Interfaces\DataSheets\DataFilterToColumnMappingInterface;
 
 /**
  * Maps data from one data sheet to another using mappers for columns, filters, sorters, etc.
@@ -36,6 +37,8 @@ class DataSheetMapper implements DataSheetMapperInterface {
     private $columnMappings = [];
     
     private $columnFilterMappings = [];
+    
+    private $filterColumnMappings = [];
     
     private $inheritColumns = null;
     
@@ -264,6 +267,56 @@ class DataSheetMapper implements DataSheetMapperInterface {
         return $this->columnFilterMappings;
     }
     
+    /**
+     * Creates columns from the values of filters
+     *
+     * @uxon-property filter_to_column_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataFilterToColumnMapping[]
+     * @uxon-template [{"from": "", "from_comparator": "", "to": "", "to_single_row": false}]
+     *
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setFilterToColumnMappings()
+     */
+    public function setFilterToColumnMappings(UxonObject $uxon)
+    {
+        foreach ($uxon as $instance){
+            $map = $this->createFilterToColumnMapping($instance);
+            $this->addFilterToColumnMapping($map);
+        }
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::addColumnToFilterMapping()
+     */
+    public function addFilterToColumnMapping(DataFilterToColumnMappingInterface $map) {
+        $this->filterColumnMappings[] = $map;
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::getColumnToFilterMappings()
+     */
+    public function getFilterToColumnMappings()
+    {
+        return $this->filterColumnMappings;
+    }
+    
+    /**
+     * @return DataColumnToFilterMapping
+     */
+    protected function createFilterToColumnMapping(UxonObject $uxon = null)
+    {
+        $mapping = new DataFilterToColumnMapping($this);
+        if (!is_null($uxon)){
+            $mapping->importUxonObject($uxon);
+        }
+        return $mapping;
+    }
+    
    /**
     * 
     * {@inheritDoc}
@@ -272,9 +325,10 @@ class DataSheetMapper implements DataSheetMapperInterface {
     public function getMappings()
     {
         return array_merge(
-                $this->getColumnToColumnMappings(),
-                $this->getColumnToFilterMappings()
-            );
+            $this->getColumnToColumnMappings(),
+            $this->getColumnToFilterMappings(),
+            $this->getFilterToColumnMappings()
+        );
     }
     
     /**
