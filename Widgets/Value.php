@@ -21,6 +21,7 @@ use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Widgets\Traits\AttributeCaptionTrait;
 use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
  * The Value widget simply shows a raw (unformatted) value.
@@ -264,7 +265,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
             if (count($col->getValues(false)) > 1 && $this->getAggregator()) {
                 // TODO #OnPrefillChangeProperty
                 $valuePointer = DataPointerFactory::createFromColumn($col);
-                $value = \exface\Core\CommonLogic\DataSheets\DataColumn::aggregateValues($col->getValues(false), $this->getAggregator());
+                $value = DataColumn::aggregateValues($col->getValues(false), $this->getAggregator());
             } else {
                 $valuePointer = DataPointerFactory::createFromColumn($col, 0);
                 $value = $valuePointer->getValue();

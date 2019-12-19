@@ -832,7 +832,7 @@ CSS;
                 return aSuggestions;
             }
            sSearch = sSearch.toLowerCase();
-            var aFiltered = [[],[],[]];
+            var aFiltered = [ [],[],[] ];
             var aResult = [];
             var iLen = aSuggestions.length;
             aSuggestions.forEach(sVal => {

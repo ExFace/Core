@@ -73,6 +73,16 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
     }
     
     /**
+     *
+     * {@inheritDoc}
+     * @see iHaveButtonsAndToolbarsTrait::getButtonWidgetType()
+     */
+    public function getButtonWidgetType()
+    {
+        return 'Button';
+    }
+    
+    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iShowMessageList::getMessageList()

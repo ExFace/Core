@@ -402,8 +402,7 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
     public function setNamespace($value);
     
     /**
-     * Returns the UXON description of the default editor widget for instances of this object.
-     * This can be specified in the meta model
+     * Returns a copy of the UXON description object for a default editor widget for instances of this object.
      *
      * @return UxonObject
      */

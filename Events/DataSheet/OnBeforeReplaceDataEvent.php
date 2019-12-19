@@ -11,5 +11,27 @@ namespace exface\Core\Events\DataSheet;
  */
 class OnBeforeReplaceDataEvent extends AbstractDataSheetEvent
 {
+    private $preventReplace = false;
     
+    /**
+     * Prevents the default replace operation.
+     *
+     * Use this if the event handler fills the data sheet.
+     *
+     * @return OnBeforeReplaceDataEvent
+     */
+    public function preventReplace() : OnBeforeReplaceDataEvent
+    {
+        $this->preventReplace = true;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isPreventReplace() : bool
+    {
+        return $this->preventReplace;
+    }
 }

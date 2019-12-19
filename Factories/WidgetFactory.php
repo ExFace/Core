@@ -11,6 +11,11 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Selectors\WidgetSelector;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Interfaces\Widgets\iCanBeRequired;
+use exface\Core\Interfaces\Widgets\iCanBeDisabled;
+use exface\Core\DataTypes\MessageTypeDataType;
 
 /**
  * 
@@ -173,7 +178,15 @@ abstract class WidgetFactory extends AbstractStaticFactory
         return false;
     }
 
-    public static function getWidgetClassFromType($widget_type)
+    /**
+     * Returns the qualified class name for the given widget type.
+     * 
+     * E.g. `\exface\Core\Widgets\DataTable` for `DataTable`.
+     * 
+     * @param string $widget_type
+     * @return string
+     */
+    public static function getWidgetClassFromType(string $widget_type) : string
     {
         return '\\exface\\Core\\Widgets\\' . ucfirst($widget_type);
     }
@@ -206,6 +219,132 @@ abstract class WidgetFactory extends AbstractStaticFactory
     public static function createFromUxonInParent(WidgetInterface $parent, UxonObject $uxon, string $fallbackWidgetType = null) : WidgetInterface
     {
         return static::createFromUxon($parent->getPage(), $uxon, $parent, $fallbackWidgetType);
+    }
+    
+    /**
+     * Creates the default editor-widget for the given attribute alias of an object.
+     * 
+     * @param MetaObjectInterface $obj
+     * @param string $attribute_alias
+     * @param WidgetInterface $parent_widget
+     * @return WidgetInterface
+     */
+    public static function createDefaultEditorForAttributeAlias(MetaObjectInterface $obj, string $attributeAlias, WidgetInterface $parentWidget) : WidgetInterface
+    {
+        $attr = $obj->getAttribute($attributeAlias);
+        $widget = self::createFromUxonInParent($parentWidget, $attr->getDefaultEditorUxon());
+        $widget->setAttributeAlias($attributeAlias);
+        $widget->setCaption($attr->getName());
+        $widget->setHint($attr->getHint());
+        return $widget;
+    }
+    
+    /**
+     * Creates the default display-widget for the given attribute alias of an object.
+     *
+     * @param MetaObjectInterface $obj
+     * @param string $attribute_alias
+     * @param WidgetInterface $parent_widget
+     * @return WidgetInterface
+     */
+    public static function createDefaultDisplayForAttributeAlias(MetaObjectInterface $obj, string $attributeAlias, WidgetInterface $parentWidget) : WidgetInterface
+    {
+        $attr = $obj->getAttribute($attributeAlias);
+        $widget = self::createFromUxonInParent($parentWidget, $attr->getDefaultDisplayUxon());
+        $widget->setAttributeAlias($attributeAlias);
+        $widget->setCaption($attr->getName());
+        $widget->setHint($attr->getHint());
+        return $widget;
+    }
+    
+    /**
+     * Turns the provided container widget into the default editor for the given meta object.
+     * 
+     * @param MetaObjectInterface $object
+     * @param iContainOtherWidgets $container
+     * @return WidgetInterface
+     */
+    public static function createDefaultEditorForObject(MetaObjectInterface $object, iContainOtherWidgets $container) : WidgetInterface
+    {
+        $default_editor_uxon = $object->getDefaultEditorUxon();
+        if ($default_editor_uxon && false === $default_editor_uxon->isEmpty()) {
+            // Otherwise try to generate the widget automatically
+            // First check, if there is a default editor for an object, and instantiate it if so
+            $default_editor_type = $default_editor_uxon->getProperty('widget_type');
+            if (! $default_editor_type || is_a($container, self::getWidgetClassFromType($default_editor_type)) === true) {
+                $container->importUxonObject($default_editor_uxon);
+                if ($container->isEmpty()) {
+                    $container->addWidgets(self::createDefaultEditorsForObjectAttributes($object, $container));
+                }
+            } elseif ($container->is('Dialog') === false && $default_editor_uxon->hasProperty('widgets') === true) {
+                $container->setWidgets($default_editor_uxon->getProperty('widgets'));
+            } else {
+                $default_editor = self::createFromUxonInParent($container, $default_editor_uxon);
+                $container->addWidget($default_editor);
+            }
+        } else {
+            // Lastly, try to generate a usefull editor from the meta model
+            $container->addWidgets(self::createDefaultEditorsForObjectAttributes($object, $container));
+        }
+        
+        return $container;
+    }
+    
+    
+    
+    /**
+     * Create default editors for all editable attributes of the object.
+     * 
+     * @param MetaObjectInterface $object
+     * @param iContainOtherWidgets $parent_widget
+     * @param bool $onlyEditableAttributes
+     * @return WidgetInterface[]
+     */
+    public static function createDefaultEditorsForObjectAttributes(MetaObjectInterface $object, iContainOtherWidgets $parent_widget, bool $onlyEditableAttributes = true) : array
+    {
+        $editors = [];
+        
+        $objectWritable = $object->isWritable();
+        
+        /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
+        foreach ($object->getAttributes() as $attr) {
+            // Ignore hidden attributes if they are not system attributes
+            if ($attr->isHidden()) {
+                continue;
+            }
+            // Ignore not editable attributes if this feature is not explicitly disabled
+            if (! $attr->isEditable() && $onlyEditableAttributes) {
+                continue;
+            }
+            // Ignore attributes with fixed values
+            if ($attr->getFixedValue()) {
+                continue;
+            }
+            // Create the widget
+            $ed = self::createDefaultEditorForAttributeAlias($object, $attr->getAlias(), $parent_widget);
+            if ($ed instanceof iCanBeRequired) {
+                $ed->setRequired($attr->isRequired());
+            }
+            if ($ed instanceof iCanBeDisabled) {
+                $ed->setDisabled(($attr->isEditable() ? false : true));
+            }
+            
+            if (false === $objectWritable) {
+                $ed->setDisabled(true);
+            }
+            
+            $editors[] = $ed;
+        }
+        
+        ksort($editors);
+        
+        if (empty($editors) === true){
+            $editors[] = WidgetFactory::create($parent_widget->getPage(), 'Message', $parent_widget)
+            ->setType(MessageTypeDataType::WARNING)
+            ->setText($object->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.SHOWOBJECTEDITDIALOG.NO_EDITABLE_ATTRIBUTES'));
+        }
+        
+        return $editors;
     }
 }
 ?>

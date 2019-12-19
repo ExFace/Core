@@ -128,7 +128,7 @@ class WizardStep extends Form implements iHaveIcon
      *
      * @uxon-property buttons
      * @uxon-type \exface\Core\Widgets\WizardButton[]
-     * @uxon-template [{"action_alias": ""}]
+     * @uxon-template [{"go_to_step": "previous", "icon": "chevron-left"}, {"go_to_step": "next", "icon": "chevron-right", "visibility": "promoted"}]
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
      */
