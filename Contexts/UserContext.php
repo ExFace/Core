@@ -43,10 +43,12 @@ class UserContext extends AbstractContext
         $uxon = null;
         
         if ($user->isUserAnonymous() === false){
+            $icon = Icons::SIGN_OUT;
             $uxon = <<<UXON
 
 {
   "widget_type": "Form",
+  "height": "100%",
   "object_alias": "exface.Core.USER",
   "widgets": [
     {
@@ -55,28 +57,30 @@ class UserContext extends AbstractContext
         "width": "100%"
     },
     {
-        "readonly": true,
+        "widget_type": "Display",
         "attribute_alias": "USERNAME",
         "width": "100%"
     },
     {
-        "readonly": true,
+        "widget_type": "Display",
         "attribute_alias": "FIRST_NAME",
         "width": "100%"
     },
     {
-        "readonly": true,
+        "widget_type": "Display",
         "attribute_alias": "LAST_NAME",
         "width": "100%"
     }
   ],
   "buttons": [
     {
-      "action": {
-        "alias": "exface.Core.GoToUrl",
-        "url": "http://localhost/exface/login.html?webloginmode=lo"
-      },
-      "caption": "Logout"
+        "action": {
+            "alias": "exface.Core.GoToUrl",
+            "url": "http://localhost/exface/login.html?webloginmode=lo"
+        },
+        "caption": "Logout",
+        "icon": "{$icon}",
+        "align": "left"
     }
   ]
 }
@@ -84,6 +88,7 @@ class UserContext extends AbstractContext
 UXON;
             
         } else {
+            $icon = Icons::SIGN_IN;
             $uxon = <<<UXON
 
 {
@@ -98,11 +103,12 @@ UXON;
   ],
   "buttons": [
     {
-      "action": {
-        "alias": "exface.Core.GoToUrl",
-        "url": "http://localhost/exface/login.html"
-      },
-      "caption": "Login"
+        "action": {
+            "alias": "exface.Core.GoToUrl",
+            "url": "http://localhost/exface/login.html"
+        },
+        "caption": "Login",
+        "icon": "{$icon}"
     }
   ]
 }
@@ -140,8 +146,8 @@ UXON;
         return $container;
     }
     
-    public function getName(){
+    public function getName()
+    {
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.USER.NAME');
     }
 }
-?>
