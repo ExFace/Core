@@ -512,7 +512,10 @@ class DataSheet implements DataSheetInterface
      */
     public function dataRead(int $limit = null, int $offset = null) : int
     {
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeReadDataEvent($this));
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeReadDataEvent($this));
+        if ($eventBefore->isPreventRead() === true) {
+            return 0;
+        }
         
         $thisObject = $this->getMetaObject();
         
@@ -766,7 +769,10 @@ class DataSheet implements DataSheetInterface
         }
         
         // Now the actual updating starts
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($this, $transaction));
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($this, $transaction));
+        if ($eventBefore->isPreventUpdate() === true) {
+            return 0;
+        }
         
         // Add columns with fixed values to the data sheet
         $processed_relations = array();
@@ -960,7 +966,10 @@ class DataSheet implements DataSheetInterface
             $commit = false;
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeReplaceDataEvent($this, $transaction));
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeReplaceDataEvent($this, $transaction));
+        if ($eventBefore->isPreventReplace() === true) {
+            return 0;
+        }
         
         $deleteCnt = 0;
         $updateCnt = 0;
@@ -1037,7 +1046,10 @@ class DataSheet implements DataSheetInterface
             $commit = false;
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeCreateDataEvent($this, $transaction));
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeCreateDataEvent($this, $transaction));
+        if ($eventBefore->isPreventCreate() === true) {
+            return 0;
+        }
         
         // Create a query
         $query = QueryBuilderFactory::createForObject($this->getMetaObject());
@@ -1225,7 +1237,10 @@ class DataSheet implements DataSheetInterface
             $commit = false;
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeDeleteDataEvent($this, $transaction));
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeDeleteDataEvent($this, $transaction));
+        if ($eventBefore->isPreventDelete() === true) {
+            return 0;
+        }
         
         $affected_rows = 0;
         // create new query for the main object

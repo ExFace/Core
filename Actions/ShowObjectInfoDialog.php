@@ -6,12 +6,9 @@ use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\Interfaces\Widgets\iCanBeRequired;
-use exface\Core\Interfaces\Widgets\iCanBeDisabled;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\DataTypes\MessageTypeDataType;
 
 /**
  * This action will show a dialog displaying the default editor of a meta object in read-only mode.
@@ -83,47 +80,7 @@ class ShowObjectInfoDialog extends ShowDialog
      */
     protected function createWidgetsForAttributes(AbstractWidget $parent_widget)
     {
-        $object = $this->getMetaObject();
-        $editors = [];
-        
-        $objectWritable = $this->isObjectWritable();
-        
-        /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
-        foreach ($object->getAttributes() as $attr) {
-            // Ignore hidden attributes if they are not system attributes
-            if ($attr->isHidden())
-                continue;
-            // Ignore not editable attributes if this feature is not explicitly disabled
-            if (! $attr->isEditable() && $this->getShowOnlyEditableAttributes())
-                continue;
-            // Ignore attributes with fixed values
-            if ($attr->getFixedValue())
-                continue;
-            // Create the widget
-            $ed = $this->createWidgetFromAttribute($this->getMetaObject(), $attr->getAlias(), $parent_widget);
-            if ($ed instanceof iCanBeRequired) {
-                $ed->setRequired($attr->isRequired());
-            }
-            if ($ed instanceof iCanBeDisabled) {
-                $ed->setDisabled(($attr->isEditable() ? false : true));
-            }
-            
-            if (! $objectWritable) {
-                $ed->setDisabled(true);
-            }
-            
-            $editors[] = $ed;
-        }
-        
-        if (count($editors) == 0){
-            $editors[] = WidgetFactory::create($parent_widget->getPage(), 'Message', $parent_widget)
-            ->setType(MessageTypeDataType::WARNING)
-            ->setText($this->getApp()->getTranslator()->translate('ACTION.SHOWOBJECTEDITDIALOG.NO_EDITABLE_ATTRIBUTES'));
-        }
-        
-        ksort($editors);
-        
-        return $editors;
+        return WidgetFactory::createDefaultEditorsForObjectAttributes($this->getMetaObject(), $parent_widget, $this->getShowOnlyEditableAttributes());
     }
 
     /**
@@ -135,13 +92,7 @@ class ShowObjectInfoDialog extends ShowDialog
      */
     protected function createWidgetFromAttribute(MetaObjectInterface $obj, $attribute_alias, WidgetInterface $parent_widget) : WidgetInterface
     {
-        $attr = $obj->getAttribute($attribute_alias);
-        $page = $this->getWidgetDefinedIn()->getPage();
-        $widget = WidgetFactory::createFromUxon($page, $attr->getDefaultEditorUxon(), $parent_widget);
-        $widget->setAttributeAlias($attribute_alias);
-        $widget->setCaption($attr->getName());
-        $widget->setHint($attr->getHint());
-        return $widget;
+        return WidgetFactory::createDefaultEditorForAttributeAlias($obj, $attribute_alias, $parent_widget);
     }
 
     /**
@@ -153,7 +104,7 @@ class ShowObjectInfoDialog extends ShowDialog
     {
         $dialog = parent::createDialogWidget($page);
         $default_editor_uxon = $dialog->getMetaObject()->getDefaultEditorUxon();
-        $dialog_uxon = $default_editor_uxon->copy();
+        $dialog_uxon = $default_editor_uxon;
         
         // If there is a default editor, make sure it gets it's own id space, so widget links inside still work
         // if multiple editors of the same object are located in the same page (e.g. for creating, editing, etc.)
@@ -165,8 +116,8 @@ class ShowObjectInfoDialog extends ShowDialog
         } elseif ($default_editor_uxon && false === $default_editor_uxon->isEmpty()) {
             // Otherwise try to generate the widget automatically
             // First check, if there is a default editor for an object, and instantiate it if so
-            
-            if (! $dialog_uxon->getProperty('widget_type') || $dialog_uxon->getProperty('widget_type') == 'Dialog') {
+            $default_editor_type = $default_editor_uxon->getProperty('widget_type');
+            if (! $default_editor_type || is_a($dialog, WidgetFactory::getWidgetClassFromType($default_editor_type)) === true) {
                 $dialog->importUxonObject($dialog_uxon);
                 if ($dialog->isEmpty()) {
                     $dialog->addWidgets($this->createWidgetsForAttributes($dialog));
@@ -177,9 +128,6 @@ class ShowObjectInfoDialog extends ShowDialog
             }
         } else {
             // Lastly, try to generate a usefull editor from the meta model
-            
-            // If there is no editor defined, create one: Add a panel to the dialog and generate editors for all attributes
-            // of the object in that panel.
             // IDEA A separate method "create_object_editor" would probably be handy, once we have attribute groups and
             // other information, that would enable us to build better editors (with tabs, etc.)
             $dialog->addWidgets($this->createWidgetsForAttributes($dialog));

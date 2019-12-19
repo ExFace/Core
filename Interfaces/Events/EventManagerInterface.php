@@ -25,13 +25,17 @@ interface EventManagerInterface extends WorkbenchDependantInterface
     public function addListener($eventName, $listener_callable, $priority = null) : EventManagerInterface;
 
     /**
-     * Dispatches an event
+     * Dispatches an event and returns it (eventually updated during handling).
+     * 
+     * Depending on the event type handlers have the option to pass information back
+     * to the event trigger by storing it in the event - similarly to javascript's
+     * preventDefault() method.
      *
      * @param string $eventName            
      * @param EventInterface $event            
      * @return EventManagerInterface
      */
-    public function dispatch(EventInterface $event) : EventManagerInterface;
+    public function dispatch(EventInterface $event) : EventInterface;
 
     /**
      * Detaches the given listener from the specified event name

@@ -320,6 +320,9 @@ interface MetaRelationInterface extends WorkbenchDependantInterface
     public function setRightObjectToBeCopiedWithLeftObject(bool $value) : MetaRelationInterface;
     
     /**
+     * Returns a copy of the UXON description object for a default editor for the relation.
+     * 
+     * Similar to MetaAttributeInterface::getDefaultEditorUxon()
      * 
      * @return UxonObject
      */

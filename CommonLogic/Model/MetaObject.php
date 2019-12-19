@@ -999,10 +999,9 @@ class MetaObject implements MetaObjectInterface
     }
 
     /**
-     * Returns the UXON description of the default editor widget for instances of this object.
-     * This can be specified in the meta model
-     *
-     * @return UxonObject
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getDefaultEditorUxon()
      */
     public function getDefaultEditorUxon()
     {
@@ -1011,7 +1010,7 @@ class MetaObject implements MetaObjectInterface
         } elseif (! ($this->default_editor_uxon instanceof UxonObject)) {
             $this->default_editor_uxon = UxonObject::fromJson($this->default_editor_uxon);
         }
-        return $this->default_editor_uxon;
+        return $this->default_editor_uxon->copy();
     }
 
     /**

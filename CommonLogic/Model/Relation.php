@@ -490,6 +490,11 @@ class Relation implements MetaRelationInterface
         return $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getDefaultEditorUxon()
+     */
     public function getDefaultEditorUxon() : UxonObject
     {
         $relationWidgetType = $this->getWorkbench()->getConfig()->getOption('FACADES.DEFAULT_WIDGET_FOR_RELATIONS');
