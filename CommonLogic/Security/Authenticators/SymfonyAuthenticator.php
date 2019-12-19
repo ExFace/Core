@@ -22,6 +22,9 @@ use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Interfaces\WorkbenchInterface;
+use Symfony\Component\Security\Core\Authentication\Provider\LdapBindAuthenticationProvider;
+use Symfony\Component\Ldap\Ldap;
+use Symfony\Component\Ldap\Adapter\ExtLdap\Adapter;
 
 class SymfonyAuthenticator implements AuthenticatorInterface
 {
@@ -104,11 +107,11 @@ class SymfonyAuthenticator implements AuthenticatorInterface
     protected function getSymfonyAuthProviders() : array
     {
         return [
-            $this->getSymfonyDaoAuthenticationProvier()
+            $this->getSymfonyDaoAuthenticationProvider()
         ];
     }
     
-    protected function getSymfonyDaoAuthenticationProvier() : DaoAuthenticationProvider
+    protected function getSymfonyDaoAuthenticationProvider() : DaoAuthenticationProvider
     {
         $userProvider = new SymfonyUserProvider($this->getWorkbench());
         $userChecker = new UserChecker();
@@ -137,13 +140,13 @@ class SymfonyAuthenticator implements AuthenticatorInterface
         switch (true) {
             case $token instanceof PasswordAuthenticationTokenInterface:
                 return new UsernamePasswordToken(
-                new SymfonyUserWrapper($token->getUser()),
+                $token->getUsername(),
                 $token->getPassword(),
                 'secured_area'
                     );
             case $token instanceof PreAuthenticatedTokenInterface:
                 return new PreAuthenticatedToken(
-                new SymfonyUserWrapper($token->getUser()),
+                $token->getUsername(),
                 '',
                 'secured_area'
                     );
