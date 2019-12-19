@@ -52,6 +52,11 @@ use exface\Core\DataConnectors\MySqlConnector;
 use exface\Core\Events\Installer\OnInstallEvent;
 use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Exceptions\DataSources\DataSourceNotFoundError;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Factories\UiPageFactory;
+use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
+use exface\Core\Factories\SelectorFactory;
 
 /**
  * 
@@ -993,6 +998,50 @@ SQL;
     { 
         $user->exportDataSheet()->dataDelete();
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadPage()
+     */
+    public function loadPage(UiPageSelectorInterface $selector, bool $ignoreReplacements = false) : UiPageInterface
+    {
+        if ($selector->isAlias()) {
+            $where = "p.alias = '" . $selector->toString() . "'";
+            $err = 'alias ' . $selector->toString();
+        } elseif ($selector->isUid()) {
+            $where = "p.oid = " . $selector->toString();
+            $err = 'UID ' . $selector->toString();
+        } else {
+            throw new UiPageNotFoundError('Unsupported page selector ' . $selector->toString() . '!');
+        }
+        
+        $query = $this->getDataConnection()->runSql("SELECT p.* FROM exf_page p WHERE " . $where);
+        $row = $query->getResultArray()[0];
+        if (empty($row) === true) {
+            throw new UiPageNotFoundError('UI Page with ' . $err . ' not found!');
+        }
+        
+        $uiPage = UiPageFactory::createBlank($this->getWorkbench(), $row['alias']);
+        $uiPage->setId($row['oid']);
+        if ($row['app_oid']) {
+            $uiPage->setApp(SelectorFactory::createAppSelector($this->getWorkbench(), $row['app_oid']));
+        }
+        $uiPage->setName($row['name']);
+        $uiPage->setDescription($row['description']);
+        $uiPage->setIntro($row['intro']);
+        $uiPage->setMenuIndex($row['menu_index']);
+        $uiPage->setMenuVisible(! $row['menu_visible']);
+        if ($row['parent_oid']) {
+            $uiPage->setMenuParentPageSelector($row['parent_oid']);
+        }
+        $uiPage->setUpdateable($row['auto_update_disabled'] ? false : true);
+        $uiPage->setReplacesPageAlias($row['replace_page_alias']);
+        $uiPage->setMenuDefaultPosition($row['default_menu_position']);
+        $uiPage->setContents($row['content']);
+        
+        return $uiPage;
     }
 }
 

@@ -22,6 +22,8 @@ use exface\Core\Exceptions\UserNotFoundError;
 use exface\Core\Exceptions\UserNotUniqueError;
 use exface\Core\Interfaces\Selectors\DataSourceSelectorInterface;
 use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 
 interface ModelLoaderInterface
 {
@@ -80,6 +82,13 @@ interface ModelLoaderInterface
      * @return MetaRelationInterface
      */
     public function loadRelation(MetaObjectInterface $object, $relation_alias);
+    
+    /**
+     * 
+     * @param UiPageSelectorInterface $selector
+     * @return UiPageInterface
+     */
+    public function loadPage(UiPageSelectorInterface $selector, bool $ignoreReplacements = false) : UiPageInterface;
 
     /**
      * Loads the models for the data source and the corresponding connection and returns the resulting instances.
