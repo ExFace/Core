@@ -142,6 +142,20 @@
 		return null;
 	};
 	
+	function _dataRowsCompare(row1, row2) {
+		var rows1 = Array.isArray(row1) === true ? row1 : [row1]; 
+		var rows2 = Array.isArray(row2) === true ? row2 : [row2]; 
+		rows1.forEach(function(r1, idx){
+			var r2 = rows2[idx];
+			for (var i in r1) {
+				if (r1[i] !== r2[i]) {
+					return false;
+				}
+			} 
+		});
+		return true;
+	}
+	
 	return {		
 		date: {
 			/**
@@ -444,6 +458,11 @@
 			validate: function (sTime) {
 				return true;
 			}
-		}		
+		},
+		data: {
+			compareRows: function(row1, row2) {
+				return _dataRowsCompare(row1, row2);
+			}
+		}
 	}
 })));
