@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Model\ConditionInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\DataSheets\DataFilterToColumnMappingInterface;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
 
 /**
  * Maps all filters matching the given expression from one sheet to a column of another sheet.
@@ -33,10 +34,13 @@ class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterT
         $fromExpr = $this->getFromExpression();
         $toExpr = $this->getToExpression();
         
-        $conditions = $this->findFilterConditions($fromSheet, $fromExpr);
+        $conditions = $this->findFilterConditions($fromSheet->getFilters(), $fromExpr, $this->getFromComparator());
         $values = [];
         foreach ($conditions as $cond) {
             /* @var $cond \exface\Core\Interfaces\Model\ConditionInterface */
+            if ($cond->getValue() === '' || $cond->getValue() === null) {
+                continue;
+            }
             if ($cond->getComparator() === ComparatorDataType::IN) {
                 if (is_array($cond->getValue()) === true) {
                     $condVals = $cond->getValue();
@@ -53,6 +57,8 @@ class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterT
         if (empty($values) === true) {
             return $toSheet;
         }
+        
+        $values = array_unique($values);
         
         if ($this->getToSingleRow() === true) {
             if ($this->getToSingleRowSeparator() !== null) {
@@ -77,11 +83,12 @@ class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterT
      * @param string $comparator
      * @return ConditionInterface[]
      */
-    protected function findFilterConditions(DataSheetInterface $fromSheet, ExpressionInterface $fromExpression, string $comparator = null) : array
+    protected function findFilterConditions(ConditionGroupInterface $fromConditionGroup, ExpressionInterface $fromExpression, string $comparator = null) : array
     {
         $exprString = $fromExpression->toString();
         $result = [];
-        foreach ($fromSheet->getFilters()->getConditions() as $condition) {
+        
+        foreach ($fromConditionGroup->getConditions() as $condition) {
             $ccomp = $condition->getComparator();
             if (strcasecmp($condition->getExpression()->toString(), $exprString) === 0) {
                 if ($comparator === $ccomp
@@ -91,13 +98,17 @@ class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterT
             }
         }
         
+        foreach ($fromConditionGroup->getNestedGroups() as $group) {
+            $result = array_merge($result, $this->findFilterConditions($group, $fromExpression, $comparator));
+        }
+        
         return $result;
     }
     
     /**
-     * @return string $comparator
+     * @return string|NULL $comparator
      */
-    protected function getFromComparator()
+    protected function getFromComparator() : ?string
     {
         return is_null($this->comparator) ? EXF_COMPARATOR_IS : $this->comparator;
     }
@@ -111,7 +122,7 @@ class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterT
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataFilterToColumnMappingInterface::setFromComparator()
      */
-    public function setFromComparator($comparator)
+    public function setFromComparator(string $comparator) : DataFilterToColumnMappingInterface
     {
         $this->comparator = $comparator;
         return $this;
