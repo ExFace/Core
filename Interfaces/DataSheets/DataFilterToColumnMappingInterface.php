@@ -9,7 +9,12 @@ namespace exface\Core\Interfaces\DataSheets;
  */
 interface DataFilterToColumnMappingInterface extends DataColumnMappingInterface
 {
-    public function setFromComparator(string $string);
+    /**
+     * 
+     * @param string $string
+     * @return DataFilterToColumnMappingInterface
+     */
+    public function setFromComparator(string $string) : DataFilterToColumnMappingInterface;
     
     /**
      *
