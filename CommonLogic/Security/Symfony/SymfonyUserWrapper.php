@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Security\Symfony;
 
 use Symfony\Component\Security\Core\User\UserInterface;
+use exface\Core\Exceptions\UserNotFoundError;
 
 class SymfonyUserWrapper implements UserInterface
 {
@@ -45,7 +46,12 @@ class SymfonyUserWrapper implements UserInterface
      */
     public function getPassword()
     {
-        $this->userModel->getPassword();
+        try {
+            $password = $this->userModel->getPassword();
+        } catch (UserNotFoundError $e) {
+            return null;
+        }
+        return $password;
     }
     /**
      * Returns the salt that was originally used to encode the password.
@@ -56,7 +62,12 @@ class SymfonyUserWrapper implements UserInterface
      */
     public function getSalt()
     {
-        $this->userModel->getUid();
+        try {
+            $salt = $this->userModel->getUid();
+        } catch (UserNotFoundError $e) {
+            return null;
+        }
+        return $salt;
     }
     
     /**

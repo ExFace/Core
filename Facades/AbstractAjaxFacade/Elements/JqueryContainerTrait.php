@@ -16,33 +16,34 @@ trait JqueryContainerTrait {
 
     public function buildHtmlForChildren()
     {
+        $output = '';
         foreach ($this->getWidget()->getChildren() as $subw) {
             $output .= $this->getFacade()->getElement($subw)->buildHtml() . "\n";
-        }
-        
+        }        
         return $output;
     }
 
     public function buildJsForChildren()
     {
+        $output = '';
         foreach ($this->getWidget()->getChildren() as $subw) {
             $output .= $this->getFacade()->getElement($subw)->buildJs() . "\n";
         }
-        ;
         return $output;
     }
 
     public function buildHtmlForWidgets()
     {
+        $output = '';
         foreach ($this->getWidget()->getWidgets() as $subw) {
             $output .= $this->getFacade()->getElement($subw)->buildHtml() . "\n";
         }
-        ;
         return $output;
     }
 
     public function buildJsForWidgets()
     {
+        $output = '';
         foreach ($this->getWidget()->getWidgets() as $subw) {
             $output .= $this->getFacade()->getElement($subw)->buildJs() . "\n";
         }
