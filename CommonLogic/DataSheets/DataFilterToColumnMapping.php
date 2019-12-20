@@ -11,6 +11,21 @@ use exface\Core\Interfaces\Model\ConditionGroupInterface;
 /**
  * Maps all filters matching the given expression from one sheet to a column of another sheet.
  * 
+ * This mapping searches all filter conditions of the input data sheet for those, where the
+ * right side matches the from-expression and puts their values into a (new) column of the
+ * to-sheet, that is created via the to-expression.
+ * 
+ * By setting the mapping-properties `to_single_row` and `to_single_row_separator` you can
+ * make all values concatennated into a single value, that will be put in the first row of
+ * the to-sheet.
+ * 
+ * By default, all filter conditions (even those in nested condition groups) are used as
+ * source for the mapping. However, if `from_comparator` is provided, only those filters
+ * matching this comparator will be used.
+ * 
+ * Multi-select filters yield multiple values resulting in multiple rows in the to-sheet
+ * unless `to_single_row` is set to `true`.
+ * 
  * @see DataColumnMappingInterface
  * 
  * @author Andrej Kabachnik
@@ -91,8 +106,7 @@ class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterT
         foreach ($fromConditionGroup->getConditions() as $condition) {
             $ccomp = $condition->getComparator();
             if (strcasecmp($condition->getExpression()->toString(), $exprString) === 0) {
-                if ($comparator === $ccomp
-                    || (($comparator === null || $comparator === '') && ($ccomp === ComparatorDataType::EQUALS || $ccomp === ComparatorDataType::IS || $ccomp === ComparatorDataType::IN))) {
+                if ($comparator === $ccomp || ($comparator === null || $comparator === '')) {
                     $result[] = $condition;
                 }
             }
@@ -164,6 +178,8 @@ class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterT
     
     /**
      * A separator to concatenate all values into a single row in the resulting column.
+     * 
+     * If set, `to_single_row` is automatically assumed to be `true`.
      * 
      * @uxon-property to_single_row_separator
      * @uxon-type string
