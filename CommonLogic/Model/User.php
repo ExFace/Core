@@ -290,6 +290,7 @@ class User implements UserInterface
      */
     public function isUserAnonymous()
     {
+        $this->anonymous = ($this->username === null);
         return $this->anonymous;
     }
     
