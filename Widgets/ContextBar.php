@@ -8,6 +8,7 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Contexts\UserContext;
 
 /**
  * The context bar shows information about the current context of the workbench.
@@ -92,6 +93,8 @@ class ContextBar extends Toolbar
      * @return ContextBar
      */
     public function setContexts(UxonObject $context_uxon_objects){
+        $userContextInitialized = false;
+        $contextManager = $this->getWorkbench()->getContext();
         foreach ($context_uxon_objects as $uxon){
             $visibility = strtolower($uxon->getProperty('visibility'));
             if ($visibility == ContextInterface::CONTEXT_BAR_DISABED){
@@ -113,7 +116,7 @@ class ContextBar extends Toolbar
             }
             
             try {
-                $context = $this->getWorkbench()->getContext()->getScope($uxon->getProperty('context_scope'))->getContext($uxon->getProperty('context_alias'));
+                $context = $contextManager->getScope($uxon->getProperty('context_scope'))->getContext($uxon->getProperty('context_alias'));
                 $uxon->unsetProperty('context_scope');
                 $uxon->unsetProperty('context_alias');
                 
@@ -123,6 +126,10 @@ class ContextBar extends Toolbar
                 // like ObjectBasketContext, ActionContext, etc. use non-standard
                 // UXON Objects.
                 // $context->importUxonObject($uxon);
+                
+                if ($context instanceof UserContext) {
+                    $userContextInitialized = true;
+                }
                 
                 $btn = $this->createButtonForContext($context);
                 
@@ -151,6 +158,12 @@ class ContextBar extends Toolbar
                 $this->getWorkbench()->getLogger()->logException($e);
             }
         }
+        
+        if ($userContextInitialized === false) {
+            $userContext = $contextManager->getScopeUser()->getContext('exface.Core.UserContext');
+            $this->addButton($this->createButtonForContext($userContext), 0);
+        }
+        
         return $this;
     }
     
