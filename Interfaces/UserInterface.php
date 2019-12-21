@@ -132,4 +132,10 @@ interface UserInterface extends WorkbenchDependantInterface
      * @return bool
      */
     public function hasModel() : bool;
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getInitials() : string;
 }

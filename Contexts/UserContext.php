@@ -7,10 +7,15 @@ use exface\Core\Widgets\Container;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Contexts\ContextInterface;
-use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\DataTypes\LocaleDataType;
+use exface\Core\Factories\DataTypeFactory;
+use exface\Core\Interfaces\Contexts\ContextScopeInterface;
+use exface\Core\Exceptions\Contexts\ContextRuntimeError;
 
 /**
- * The UserContext shows the logged in User or a message that the user is not logged in and provides a Login or Logout button.
+ * The UserContext shows the logged in User and some user-related controls like a logout button.
+ * 
+ * The `UserContext` can only be used within the user context scope.
  *
  * @author Ralf Mulansky
  *        
@@ -18,15 +23,25 @@ use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 class UserContext extends AbstractContext
 {
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getIcon()
+     */
     public function getIcon()
     {
         $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
         if ($user->isUserAnonymous() === true) {
             return Icons::USER_SECRET;
         }
-        return Icons::USER;
+        return Icons::USER_CIRCLE_O;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getVisibility()
+     */
     public function getVisibility()
     {
         return ContextInterface::CONTEXT_BAR_SHOW_ALLWAYS;
@@ -42,112 +57,148 @@ class UserContext extends AbstractContext
         $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
         $uxon = null;
         
+        $language = DataTypeFactory::createFromPrototype($this->getWorkbench(), LocaleDataType::class)->getLabelOfValue($user->getLocale());
         if ($user->isUserAnonymous() === false){
             $icon = Icons::SIGN_OUT;
-            $uxon = <<<UXON
-
-{
-  "widget_type": "Form",
-  "height": "100%",
-  "object_alias": "exface.Core.USER",
-  "widgets": [
-    {
-        "widget_type": "Message",
-        "value": "You are logged in.",
-        "width": "100%"
-    },
-    {
-        "widget_type": "Display",
-        "attribute_alias": "USERNAME",
-        "width": "100%"
-    },
-    {
-        "widget_type": "Display",
-        "attribute_alias": "FIRST_NAME",
-        "width": "100%"
-    },
-    {
-        "widget_type": "Display",
-        "attribute_alias": "LAST_NAME",
-        "width": "100%"
-    }
-  ],
-  "buttons": [
-    {
-        "action": {
-            "alias": "exface.Core.GoToUrl",
-            "url": "http://localhost/exface/login.html?webloginmode=lo"
-        },
-        "caption": "Logout",
-        "icon": "{$icon}",
-        "align": "left"
-    }
-  ]
-}
-
-UXON;
+            $uxon = [
+              "widget_type" => "Form",
+              "height" => "100%",
+              "object_alias" => "exface.Core.USER",
+              "widgets" => [
+                [
+                    "widget_type" => "Message",
+                    "value" => "You are logged in.",
+                    "width" => "100%"
+                ],
+                [
+                    "widget_type" => "Display",
+                    "attribute_alias" => "USERNAME",
+                    "width" => "100%",
+                    "value" => $user->getUsername()
+                ],
+                [
+                    "widget_type" => "Display",
+                    "attribute_alias" => "FIRST_NAME",
+                    "width" => "100%",
+                    "value" => $user->getFirstName()
+                ],
+                [
+                    "widget_type" => "Display",
+                    "attribute_alias" => "LAST_NAME",
+                    "width" => "100%",
+                    "value" => $user->getLastName()
+                ],
+                [
+                    "widget_type" => "Display",
+                    "caption" => "Language",
+                    "attribute_alias" => "LOCALE",
+                    "width" => "100%",
+                    "value" => $user->getLocale()
+                ]
+              ],
+              "buttons" => [
+                [
+                    "action" => [
+                        "alias" => "exface.Core.GoToUrl",
+                        "url" => "http://localhost/exface/login.html?webloginmode=lo"
+                    ],
+                    "caption" => "Logout",
+                    "icon" => $icon,
+                    "align" => "left"
+                ]
+              ]
+            ];
             
         } else {
             $icon = Icons::SIGN_IN;
-            $uxon = <<<UXON
-
-{
-  "widget_type": "Form",
-  "object_alias": "exface.Core.USER",
-  "widgets": [
-    {
-      "widget_type": "Message",
-      "value": "You are not logged in. Please Login!",
-        "width": "100%"
-    }
-  ],
-  "buttons": [
-    {
-        "action": {
-            "alias": "exface.Core.GoToUrl",
-            "url": "http://localhost/exface/login.html"
-        },
-        "caption": "Login",
-        "icon": "{$icon}"
-    }
-  ]
-}
-
-UXON;
+            $uxon = [
+              "widget_type" => "Form",
+              "object_alias" => "exface.Core.USER",
+              "widgets" => [
+                    [
+                        "widget_type" => "Message",
+                        "value" => "You are not logged in. Please Login!",
+                        "width" => "100%"
+                    ],[
+                        "widget_type" => "Display",
+                        "caption" => "Language",
+                        "attribute_alias" => "LOCALE",
+                        "width" => "100%",
+                        "value" => $user->getLocale()
+                    ]
+              ],
+              "buttons" => [
+                [
+                    "action" => [
+                        "alias" => "exface.Core.GoToUrl",
+                        "url" => "http://localhost/exface/login.html"
+                    ],
+                    "caption" => "Login",
+                    "icon" => $icon
+                ]
+              ]
+            ];
         }
         
         $uxon_object = UxonObject::fromAnything($uxon);
-        $form = WidgetFactory::createFromUxon($container->getPage(), $uxon_object);
-        
-        if ($user->isUserAnonymous() === false) {
-            $children = $form->getChildren();
-            foreach ($children as $child) {
-                if (! $child instanceof iShowSingleAttribute){
-                    continue;
-                }
-                $attribute_alias = $child->getAttributeAlias();
-                switch ($attribute_alias) {
-                    case 'USERNAME':
-                        $child->setValue($user->getUsername());
-                        break;
-                    case 'FIRST_NAME':
-                        $child->setValue($user->getFirstName());
-                        break;
-                    case 'LAST_NAME':
-                        $child->setValue($user->getLastName());
-                        break;
-                }
-            }
-        }
-       
+        $form = WidgetFactory::createFromUxon($container->getPage(), $uxon_object);      
         
         $container->addWidget($form);
         
         return $container;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getName()
+     */
     public function getName()
     {
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.USER.NAME');
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getIndicator()
+     */
+    public function getIndicator()
+    {
+        return $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getInitials();
+    }
+    
+    /**
+     * The user context resides in the user scope.
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Contexts\ObjectBasketContext::getDefaultScope()
+     */
+    public function getDefaultScope()
+    {
+        return $this->getWorkbench()->getContext()->getScopeUser();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getScope()
+     */
+    public function getScope()
+    {
+        return $this->getDefaultScope();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::setScope()
+     */
+    public function setScope(ContextScopeInterface $context_scope)
+    {
+        if ($context_scope != $this->getDefaultScope()){
+            throw new ContextRuntimeError($this, 'Cannot use context scope "' . $context_scope->getName() . '" for context "' . $this->getAliasWithNamespace() . '": only user context scope allowed!');
+        }
+        return parent::setScope($context_scope);
     }
 }

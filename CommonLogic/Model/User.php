@@ -336,4 +336,17 @@ class User implements UserInterface
         $this->password = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::getInitials()
+     */
+    public function getInitials() : string
+    {
+        if ($this->isUserAnonymous() === true) {
+            return 'Guest';
+        }
+        return mb_substr($this->getFirstName(), 0, 1) . '.' . mb_substr($this->getLastName(), 0, 1) . '.';
+    }
 }
