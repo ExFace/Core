@@ -114,9 +114,10 @@ class ShowObjectInfoDialog extends ShowDialog
         if (! is_null($contained_widget)) {
             $dialog->addWidget($contained_widget);
         } elseif ($default_editor_uxon && false === $default_editor_uxon->isEmpty()) {
-            // Otherwise try to generate the widget automatically
-            // First check, if there is a default editor for an object, and instantiate it if so
+            // Otherwise check, if there is a default editor for an object, and instantiate it if so
             $default_editor_type = $default_editor_uxon->getProperty('widget_type');
+            // If the default editor has no widget_type or it is "Dialog" or an extension of it,
+            // apply all UXON properties directly to the tidalog.
             if (! $default_editor_type || is_a(WidgetFactory::getWidgetClassFromType($default_editor_type), '\\'.get_class($dialog), true) === true) {
                 $dialog->importUxonObject($dialog_uxon);
                 if ($dialog->isEmpty()) {
