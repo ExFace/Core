@@ -402,8 +402,8 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             $input->setDisabled(false);
         }
         
-        if ($disableCond = parent::getDisableCondition()) {
-            $input->setDisableCondition($disableCond);
+        if ($disableCond = parent::getDisabledIf()) {
+            $input->setDisabledIf($disableCond->exportUxonObject());
         }
         
         // Simply inherit do_not_prefill

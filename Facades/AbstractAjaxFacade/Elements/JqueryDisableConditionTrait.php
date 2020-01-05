@@ -1,7 +1,11 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
-use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Interfaces\Widgets\iCanBeDisabled;
+use exface\Core\Exceptions\Facades\FacadeRuntimeError;
+use exface\Core\Widgets\Parts\ConditionalProperty;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * This trait includes JS-generator methods to make an control disabled on certain conditions.
@@ -18,101 +22,126 @@ use exface\Core\Factories\WidgetLinkFactory;
  * 3) Make sure, the methods buildJsEnabler() and buildJsDisabler produce code suitable for
  * your element. These methods are likely to be inherited, so doublechek ther return values.
  * 
- * @method iHaveValue getWidget()
+ * @method iCanBeDisabled getWidget()
  * 
  * @author Andrej Kabachnik
  *
  */
 trait JqueryDisableConditionTrait {
-
+    
+    protected function buildJsConditionalPropertyIf(ConditionalProperty $conditionalProperty) : string
+    {
+        $jsConditions = [];
+        foreach ($conditionalProperty->getConditions() as $condition) {
+            $leftJs = $this->buildJsConditionalPropertyValue($condition->getValueLeftExpression(), $conditionalProperty);
+            $rightJs = $this->buildJsConditionalPropertyValue($condition->getValueRightExpression(), $conditionalProperty);
+            
+            switch ($condition->getComparator()) {
+                case EXF_COMPARATOR_IS_NOT: // !=
+                case EXF_COMPARATOR_EQUALS: // ==
+                case EXF_COMPARATOR_EQUALS_NOT: // !==
+                case EXF_COMPARATOR_LESS_THAN: // <
+                case EXF_COMPARATOR_LESS_THAN_OR_EQUALS: // <=
+                case EXF_COMPARATOR_GREATER_THAN: // >
+                case EXF_COMPARATOR_GREATER_THAN_OR_EQUALS: // >=
+                    // Man muesste eigentlich schauen ob ein bestimmter Wert vorhanden ist: buildJsValueGetter(link->getTargetColumnId()).
+                    // Da nach einem Prefill dann aber normalerweise ein leerer Wert zurueckkommt, wird beim initialisieren
+                    // momentan einfach geschaut ob irgendein Wert vorhanden ist.
+                    $jsConditions[] = "$leftJs {$condition->getComparator()} $rightJs";
+                    break;
+                case EXF_COMPARATOR_IN: // [
+                case EXF_COMPARATOR_NOT_IN: // ![
+                case EXF_COMPARATOR_IS: // =
+                default:
+                    // TODO fuer diese Comparatoren muss noch der JavaScript generiert werden
+            }
+        }
+        
+        switch ($conditionalProperty->getOperator()) {
+            case EXF_LOGICAL_AND: $op = ' && '; break;
+            case EXF_LOGICAL_OR: $op = ' || '; break;
+            default:
+                throw new FacadeRuntimeError('Unsupported logical operator for conditional property "' . $conditionalProperty->getPropertyName() . '" in widget "' . $this->getWidget()->getWidgetType() . ' with id "' . $this->getWidget()->getId() . '"');
+        }
+        
+        return implode($op, $jsConditions);
+    }
+    
     /**
-     * Returns a JavaScript-snippet, which is registered in the onChange-Script of the
-     * element linked by the disable condition.
-     * Based on the condition and the value
-     * of the linked widget, it enables and disables the current widget.
-     *
+     * 
+     * @param ExpressionInterface $expr
+     * @param ConditionalProperty $conditionalProperty
+     * @throws WidgetConfigurationError
      * @return string
      */
-    protected function buildJsDisableCondition()
+    private function buildJsConditionalPropertyValue(ExpressionInterface $expr, ConditionalProperty $conditionalProperty) : string
     {
-        $output = '';
+        switch (true) {
+            case $expr->isReference() === true:
+                $link = $expr->getWidgetLink($conditionalProperty->getWidget());
+                if ($linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
+                    $valueJs = $linked_element->buildJsValueGetter($link->getTargetColumnId());
+                }
+                break;
+            case $expr->isFormula() === false && $expr->isMetaAttribute() === false:
+                $valueJs = "'" . str_replace('"', '\"', $expr->toString()) . "'";
+                break;
+            default:
+                throw new WidgetConfigurationError($conditionalProperty->getWidget(), 'Cannot use expression "' . $expr->toString() . '" in the conditional widget property "' . $conditionalProperty->getPropertyName() . '": only scalar values and widget links supported!');
+        }
+        
+        return $valueJs;
+    }
+    
+    /**
+    * Returns a JavaScript-snippet, which is registered in the onChange-Script of the
+    * element linked by the disable condition.
+    * Based on the condition and the value
+    * of the linked widget, it enables and disables the current widget.
+    *
+    * @return string
+    */
+    protected function buildJsDisableCondition() : string
+    {
         $widget = $this->getWidget();
-        if (($condition = $widget->getDisableCondition()) && $condition->getProperty('widget_link')) {
-            $link = WidgetLinkFactory::createFromWidget($widget, $condition->getProperty('widget_link'));
-            $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
-            if ($linked_element) {
-                switch ($condition->getProperty('comparator')) {
-                    case EXF_COMPARATOR_IS_NOT: // !=
-                    case EXF_COMPARATOR_EQUALS: // ==
-                    case EXF_COMPARATOR_EQUALS_NOT: // !==
-                    case EXF_COMPARATOR_LESS_THAN: // <
-                    case EXF_COMPARATOR_LESS_THAN_OR_EQUALS: // <=
-                    case EXF_COMPARATOR_GREATER_THAN: // >
-                    case EXF_COMPARATOR_GREATER_THAN_OR_EQUALS: // >=
-                        $enable_widget_script = $widget->isDisabled() ? '' : $this->buildJsEnabler() . ';';
-                        
-                        $output = <<<JS
-
-						if ({$linked_element->buildJsValueGetter($link->getTargetColumnId())} {$condition->getProperty('comparator')} "{$condition->getProperty('value')}") {
+        
+        if (($conditionalProperty = $widget->getDisabledIf()) === null) {
+            return '';
+        }
+        
+        $enable_widget_script = $widget->isDisabled() ? '' : $this->buildJsEnabler() . ';';
+        
+        return <<<JS
+        
+						if ({$this->buildJsConditionalPropertyIf($conditionalProperty)}) {
 							{$this->buildJsDisabler()};
 						} else {
 							{$enable_widget_script}
 						}
+						
 JS;
-                        break;
-                    case EXF_COMPARATOR_IN: // [
-                    case EXF_COMPARATOR_NOT_IN: // ![
-                    case EXF_COMPARATOR_IS: // =
-                    default:
-                    // TODO fuer diese Comparatoren muss noch der JavaScript generiert werden
-                }
-            }
-        }
-        return $output;
     }
-
+    
     /**
      * Returns a JavaScript-snippet, which initializes the disabled-state of elements
      * with a disabled condition.
      *
      * @return string
      */
-    protected function buildJsDisableConditionInitializer()
+    protected function buildJsDisableConditionInitializer() : string
     {
-        $output = '';
-        $widget = $this->getWidget();
-        /* @var $condition \exface\Core\CommonLogic\UxonObject */
-        if (($condition = $widget->getDisableCondition()) && $condition->hasProperty('widget_link')) {
-            $link = WidgetLinkFactory::createFromWidget($widget, $condition->getProperty('widget_link'));
-            $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
-            if ($linked_element) {
-                switch ($condition->getProperty('comparator')) {
-                    case EXF_COMPARATOR_IS_NOT: // !=
-                    case EXF_COMPARATOR_EQUALS: // ==
-                    case EXF_COMPARATOR_EQUALS_NOT: // !==
-                    case EXF_COMPARATOR_LESS_THAN: // <
-                    case EXF_COMPARATOR_LESS_THAN_OR_EQUALS: // <=
-                    case EXF_COMPARATOR_GREATER_THAN: // >
-                    case EXF_COMPARATOR_GREATER_THAN_OR_EQUALS: // >=
-                        $output .= <<<JS
-
-						// Man muesste eigentlich schauen ob ein bestimmter Wert vorhanden ist: buildJsValueGetter(link->getTargetColumnId()).
-						// Da nach einem Prefill dann aber normalerweise ein leerer Wert zurueckkommt, wird beim initialisieren
-						// momentan einfach geschaut ob irgendein Wert vorhanden ist.
-						if ({$linked_element->buildJsValueGetter()} {$condition->getProperty('comparator')} "{$condition->getProperty('value')}") {
-							{$this->buildJsDisabler()};
-						}
-JS;
-                        break;
-                    case EXF_COMPARATOR_IN: // [
-                    case EXF_COMPARATOR_NOT_IN: // ![
-                    case EXF_COMPARATOR_IS: // =
-                    default:
-                    // TODO fuer diese Comparatoren muss noch der JavaScript generiert werden
-                }
-            }
+        if (($conditionalProperty = $this->getWidget()->getDisabledIf()) === null) {
+            return '';
         }
-        return "setTimeout(function(){ $output }, 0);";
+        
+        return <<<JS
+        
+                        setTimeout(function(){
+                            if ({$this->buildJsConditionalPropertyIf($conditionalProperty)}) {
+    							{$this->buildJsDisabler()};
+    						}
+                        }, 0);
+JS;
     }
 
     /**
@@ -122,26 +151,23 @@ JS;
      */
     protected function registerDisableConditionAtLinkedElement()
     {
-        if ($linked_element = $this->getDisableConditionFacadeElement()) {
-            $linked_element->addOnChangeScript($this->buildJsDisableCondition());
+        if (($conditionalProperty = $this->getWidget()->getDisabledIf()) === null) {
+            return;
+        }
+        foreach ($conditionalProperty->getConditions() as $condition) {
+            if ($condition->getValueLeftExpression()->isReference() === true) {
+                $link = $condition->getValueLeftExpression()->getWidgetLink($condition->getWidget());
+                if ($linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
+                    $linked_element->addOnChangeScript($this->buildJsDisableCondition());
+                }
+            }
+            if ($condition->getValueRightExpression()->isReference() === true) {
+                $link = $condition->getValueRightExpression()->getWidgetLink($condition->getWidget());
+                if ($linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
+                    $linked_element->addOnChangeScript($this->buildJsDisableCondition());
+                }
+            }
         }
         return $this;
-    }
-
-    /**
-     * Returns the widget which is linked by the disable condition.
-     *
-     * @return
-     *
-     */
-    protected function getDisableConditionFacadeElement()
-    {
-        $linked_element = null;
-        $widget = $this->getWidget();
-        if (($condition = $widget->getDisableCondition()) && $condition->hasProperty('widget_link')) {
-            $link = WidgetLinkFactory::createFromWidget($widget, $condition->getProperty('widget_link'));
-            $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
-        }
-        return $linked_element;
     }
 }
