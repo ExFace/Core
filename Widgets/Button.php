@@ -18,6 +18,7 @@ use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Traits\iHaveColorTrait;
 use exface\Core\Interfaces\Widgets\iHaveCaption;
+use exface\Core\Interfaces\Widgets\iCanBeDisabled;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -27,7 +28,7 @@ use exface\Core\Interfaces\Widgets\iHaveCaption;
  * @author Andrej Kabachnik
  *        
  */
-class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAction, iDefineAction, iUseInputWidget, iCanBeAligned
+class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAction, iDefineAction, iUseInputWidget, iCanBeAligned, iCanBeDisabled
 {
     use iCanBeAlignedTrait;
     
