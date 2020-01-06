@@ -684,7 +684,10 @@ class UiPage implements UiPageInterface
      */
     public function getMenuParentPage(bool $ignoreReplacement = false) : ?UiPageInterface
     {
-        return UiPageFactory::createFromCmsPage($this->getCMS(), $this->getMenuParentPageSelector(), $ignoreReplacement);
+        if ($this->getMenuParentPageSelector() !== null) {
+            return UiPageFactory::createFromCmsPage($this->getCMS(), $this->getMenuParentPageSelector(), $ignoreReplacement);
+        }
+        return null;
     }
 
     /**
