@@ -119,7 +119,7 @@ class UiPageTree
     
     protected function loadTree() : UiPageTree
     {
-        if ($this->hasExpandPathToPage() && $this->expandPathOnly === false) {
+        if ($this->hasExpandPathToPage()) {
             $this->rootNodes = $this->buildParentMenuNodes($this->getExpandPathToPage());
         } else {
             if (empty($this->rootPages)) {
@@ -174,20 +174,38 @@ class UiPageTree
         $pageSelector = $page->getSelector();        
         //get all data for child pages from currentPage
         $dataSheet = $this->getMenuDataSheet($pageSelector);
-        foreach ($dataSheet->getRows() as $row) {
-            $node = new UiPageTreeNode($pageSelector, $row['ALIAS'], $row['NAME'], $row['CMS_ID']);
-            $node->setDescription($row['DESCRIPTION']);
-            $node->setIntro($row['INTRO']);
-            if ($childPageId && $childPageId === $row['CMS_ID'] && $childNodes !== null) {
-                foreach ($childNodes as $child) {                    
-                    $child->setParentNode($node);
-                    $node->addChildNode($child);
+        if ($this->expandPathOnly) {
+            foreach ($dataSheet->getRows() as $row) {
+                if ($childPageId && $childPageId === $row['CMS_ID']) {
+                    $node = new UiPageTreeNode($pageSelector, $row['ALIAS'], $row['NAME'], $row['CMS_ID']);
+                    $node->setDescription($row['DESCRIPTION']);
+                    $node->setIntro($row['INTRO']);
+                    $node->setInPath(true);
+                    if ($childNodes !== null) {
+                        foreach ($childNodes as $child) {
+                            $child->setParentNode($node);
+                            $node->addChildNode($child);
+                        }
+                    }
+                    $menuNodes[] = $node;
                 }
             }
-            if ($childPageId === $row['CMS_ID']) {
-                $node->setInPath(true);
+        } else {
+            foreach ($dataSheet->getRows() as $row) {
+                $node = new UiPageTreeNode($pageSelector, $row['ALIAS'], $row['NAME'], $row['CMS_ID']);
+                $node->setDescription($row['DESCRIPTION']);
+                $node->setIntro($row['INTRO']);
+                if ($childPageId && $childPageId === $row['CMS_ID']) {
+                    $node->setInPath(true);
+                    if ($childNodes !== null) {
+                        foreach ($childNodes as $child) {                    
+                            $child->setParentNode($node);
+                            $node->addChildNode($child);
+                        }
+                    }
+                }
+                $menuNodes[] = $node;
             }
-            $menuNodes[] = $node;
         }
         $pageCmsId = $this->getWorkbench()->getCMS()->getPageIdInCms($page);        
         //if page has a menu parent page continue building menu by going one level up
