@@ -182,7 +182,7 @@ class UiPageTree
         }
         $pageId = $page->getId();        
         //if page has a menu parent page continue building menu by going one level up
-        if ($page->getMenuParentPage() !== null) {
+        if ($page->getMenuParentPage() !== null && !in_array($page, $this->rootPages)) {
             $parentPage = $page->getMenuParentPage();
             $menuNodes = $this->buildParentMenuNodes($parentPage, $pageId, $menuNodes);
         }
