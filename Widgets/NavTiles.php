@@ -9,6 +9,8 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\CommonLogic\Model\UiPageTreeNode;
+use exface\Core\Factories\UiPageTreeFactory;
 
 /**
  * NavTiles show a hierarchical navigational tile menu starting from a given parent page.
@@ -100,7 +102,10 @@ class NavTiles extends WidgetGrid
     {
         if ($this->tilesBuilt === false) {
             $pageSheet = $this->getMenuDataSheet($this->getRootPageSelector());
-            $this->createTileGroup($pageSheet, $this->getWorkbench()->getCMS()->getPage($this->getRootPageSelector())->getName(), $this->getDepth());
+            $tree = UiPageTreeFactory::createFromRootPage($this->getWorkbench(), $this->getWorkbench()->getCMS()->getPage($this->getRootPageSelector()), $this->getDepth());
+            $nodes = $tree->getRootNodes();
+            //$this->createTileGroup($pageSheet, $this->getWorkbench()->getCMS()->getPage($this->getRootPageSelector())->getName(), $this->getDepth());
+            $this->createTileGroupFromNodes($nodes, $this->getWorkbench()->getCMS()->getPage($this->getRootPageSelector())->getName());
             
             $this->tilesBuilt = true;
             
@@ -141,6 +146,34 @@ class NavTiles extends WidgetGrid
     }
     
     /**
+     *
+     * @param UiPageTreeNode[] $nodes
+     * @param string $caption
+     * @param int $depth
+     * @param Tile $upperLevelTile
+     * @return Tiles
+     */
+    protected function createTileGroupFromNodes(array $nodes, string $caption, Tile $upperLevelTile = null) : Tiles
+    {
+        $tiles = WidgetFactory::create($this->getPage(), 'Tiles', $this);
+        $tiles->setCaption($caption);
+        $this->addWidget($tiles);
+        
+        foreach ($nodes as $node) {
+            $tile = $this->createTileFromTreeNode($node, $tiles);
+            $tiles->addWidget($tile);
+            if ($upperLevelTile !== null) {
+                $this->parentTileIds[$tile->getId()] = $upperLevelTile;
+            }
+            if ($node->hasChildNodes()) {
+                $this->createTileGroupFromNodes($node->getChildNodes(), $caption . ' > ' . $node->getName(), $tile);
+            }
+        }
+        
+        return $tiles;
+    }
+    
+    /**
      * 
      * @param array $row
      * @param iContainOtherWidgets $container
@@ -158,6 +191,23 @@ class NavTiles extends WidgetGrid
         $tile->setAction(new UxonObject([
             'alias' => 'exface.Core.GoToPage',
             'page_alias' => $row['ALIAS']
+            
+        ]));
+        return $tile;
+    }
+    
+    protected function createTileFromTreeNode(UiPageTreeNode $node, iContainOtherWidgets $container) : Tile
+    {
+        /* @var $tile \exface\Core\Widgets\Tile */
+        $tile = WidgetFactory::create($container->getPage(), 'Tile', $container);
+        $tile->setTitle($node->getName());
+        $tile->setSubtitle($node->getDescription());
+        $tile->setWidth('0.5');
+        $hint = $node->hasIntro() ? $node->getIntro() : $node->getDescription();
+        $tile->setHint($node->getName() . ($hint ? ":\n" . $hint : ''));
+        $tile->setAction(new UxonObject([
+            'alias' => 'exface.Core.GoToPage',
+            'page_alias' => $node->getPageSelector()
             
         ]));
         return $tile;
