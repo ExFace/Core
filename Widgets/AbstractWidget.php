@@ -1251,6 +1251,10 @@ abstract class AbstractWidget implements WidgetInterface
         return $this;
     }
 
+    /**
+     * 
+     * @return ConditionalProperty|NULL
+     */
     public function getDisabledIf() : ?ConditionalProperty
     {
         if ($this->disabled_if === null) {

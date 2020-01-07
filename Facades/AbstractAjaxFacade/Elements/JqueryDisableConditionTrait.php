@@ -10,7 +10,11 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 /**
  * This trait includes JS-generator methods to make an control disabled on certain conditions.
  * 
- * Use this trait in a facade element representing a widget, that support disable_condition.
+ * NOTE: this is just a wrapper for the JsConditionalPropertyTrait for backwards-compatibility.
+ * Do not copy it for other conditional properties! Instead, use the JsConditionalPropertyTrait
+ * directly - see implementation of `required_if` properties for an example.
+ * 
+ * Use this trait in a facade element representing a widget, that support `disabled_if` property.
  * 
  * How to use:
  * 
@@ -27,71 +31,10 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * @author Andrej Kabachnik
  *
  */
-trait JqueryDisableConditionTrait {
+trait JqueryDisableConditionTrait 
+{
     
-    protected function buildJsConditionalPropertyIf(ConditionalProperty $conditionalProperty) : string
-    {
-        $jsConditions = [];
-        foreach ($conditionalProperty->getConditions() as $condition) {
-            $leftJs = $this->buildJsConditionalPropertyValue($condition->getValueLeftExpression(), $conditionalProperty);
-            $rightJs = $this->buildJsConditionalPropertyValue($condition->getValueRightExpression(), $conditionalProperty);
-            
-            switch ($condition->getComparator()) {
-                case EXF_COMPARATOR_IS_NOT: // !=
-                case EXF_COMPARATOR_EQUALS: // ==
-                case EXF_COMPARATOR_EQUALS_NOT: // !==
-                case EXF_COMPARATOR_LESS_THAN: // <
-                case EXF_COMPARATOR_LESS_THAN_OR_EQUALS: // <=
-                case EXF_COMPARATOR_GREATER_THAN: // >
-                case EXF_COMPARATOR_GREATER_THAN_OR_EQUALS: // >=
-                    // Man muesste eigentlich schauen ob ein bestimmter Wert vorhanden ist: buildJsValueGetter(link->getTargetColumnId()).
-                    // Da nach einem Prefill dann aber normalerweise ein leerer Wert zurueckkommt, wird beim initialisieren
-                    // momentan einfach geschaut ob irgendein Wert vorhanden ist.
-                    $jsConditions[] = "$leftJs {$condition->getComparator()} $rightJs";
-                    break;
-                case EXF_COMPARATOR_IN: // [
-                case EXF_COMPARATOR_NOT_IN: // ![
-                case EXF_COMPARATOR_IS: // =
-                default:
-                    // TODO fuer diese Comparatoren muss noch der JavaScript generiert werden
-            }
-        }
-        
-        switch ($conditionalProperty->getOperator()) {
-            case EXF_LOGICAL_AND: $op = ' && '; break;
-            case EXF_LOGICAL_OR: $op = ' || '; break;
-            default:
-                throw new FacadeRuntimeError('Unsupported logical operator for conditional property "' . $conditionalProperty->getPropertyName() . '" in widget "' . $this->getWidget()->getWidgetType() . ' with id "' . $this->getWidget()->getId() . '"');
-        }
-        
-        return implode($op, $jsConditions);
-    }
-    
-    /**
-     * 
-     * @param ExpressionInterface $expr
-     * @param ConditionalProperty $conditionalProperty
-     * @throws WidgetConfigurationError
-     * @return string
-     */
-    private function buildJsConditionalPropertyValue(ExpressionInterface $expr, ConditionalProperty $conditionalProperty) : string
-    {
-        switch (true) {
-            case $expr->isReference() === true:
-                $link = $expr->getWidgetLink($conditionalProperty->getWidget());
-                if ($linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
-                    $valueJs = $linked_element->buildJsValueGetter($link->getTargetColumnId());
-                }
-                break;
-            case $expr->isFormula() === false && $expr->isMetaAttribute() === false:
-                $valueJs = "'" . str_replace('"', '\"', $expr->toString()) . "'";
-                break;
-            default:
-                throw new WidgetConfigurationError($conditionalProperty->getWidget(), 'Cannot use expression "' . $expr->toString() . '" in the conditional widget property "' . $conditionalProperty->getPropertyName() . '": only scalar values and widget links supported!');
-        }
-        
-        return $valueJs;
-    }
+    use JsConditionalPropertyTrait;
     
     /**
     * Returns a JavaScript-snippet, which is registered in the onChange-Script of the
@@ -111,15 +54,7 @@ trait JqueryDisableConditionTrait {
         
         $enable_widget_script = $widget->isDisabled() ? '' : $this->buildJsEnabler() . ';';
         
-        return <<<JS
-        
-						if ({$this->buildJsConditionalPropertyIf($conditionalProperty)}) {
-							{$this->buildJsDisabler()};
-						} else {
-							{$enable_widget_script}
-						}
-						
-JS;
+        return $this->buildJsConditionalProperty($conditionalProperty, $this->buildJsDisabler(), $enable_widget_script);
     }
     
     /**
@@ -147,27 +82,16 @@ JS;
     /**
      * Registers an onChange-Skript on the element linked by the disable condition.
      *
-     * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\JqueryLiveReferenceTrait
+     * @return AbstractJqueryElement
      */
-    protected function registerDisableConditionAtLinkedElement()
+    protected function registerDisableConditionAtLinkedElement() : AbstractJqueryElement
     {
         if (($conditionalProperty = $this->getWidget()->getDisabledIf()) === null) {
-            return;
+            return $this;
         }
-        foreach ($conditionalProperty->getConditions() as $condition) {
-            if ($condition->getValueLeftExpression()->isReference() === true) {
-                $link = $condition->getValueLeftExpression()->getWidgetLink($condition->getWidget());
-                if ($linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
-                    $linked_element->addOnChangeScript($this->buildJsDisableCondition());
-                }
-            }
-            if ($condition->getValueRightExpression()->isReference() === true) {
-                $link = $condition->getValueRightExpression()->getWidgetLink($condition->getWidget());
-                if ($linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
-                    $linked_element->addOnChangeScript($this->buildJsDisableCondition());
-                }
-            }
-        }
+        
+        $this->registerConditionalPropertyUpdaterOnLinkedElements($conditionalProperty, $this->buildJsDisabler(), $this->getWidget()->isDisabled() ? '' : $this->buildJsEnabler() . ';');
+        
         return $this;
     }
 }
