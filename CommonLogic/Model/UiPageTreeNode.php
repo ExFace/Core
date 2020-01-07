@@ -29,6 +29,8 @@ class UiPageTreeNode
     
     private $expanded = null;
     
+    private $inPath = false;
+    
     
     
     public function __construct(UiPageSelectorInterface $pageSelector, string $pageAlias, string $name, string $cmsId, UiPageTreeNode $parentNode = null)
@@ -55,7 +57,7 @@ class UiPageTreeNode
     
     public function getCmsId() : string
     {
-        $this->cmsId;   
+        return $this->cmsId;   
     }
     
     public function setParentNode(UiPageTreeNode $parentNode) : UiPageTreeNode
@@ -153,6 +155,17 @@ class UiPageTreeNode
             return $this->expanded;
         }
         return $this->hasChildNodes();
+    }
+    
+    public function setInPath (bool $trueOrFalse) : UiPageTreeNode
+    {
+        $this->inPath = $trueOrFalse;
+        return $this;
+    }
+    
+    public function isInPath() : bool
+    {        
+        return $this->inPath;
     }
     
     public function isPage(UiPageInterface $page) : bool

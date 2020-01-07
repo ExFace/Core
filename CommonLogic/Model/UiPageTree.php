@@ -8,7 +8,6 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Factories\SelectorFactory;
-use exface\Core\CommonLogic\Selectors\UiPageSelector;
 
 class UiPageTree
 {
@@ -162,6 +161,13 @@ class UiPageTree
         return $ds;
     }
     
+    /**
+     * 
+     * @param UiPageInterface $page
+     * @param string $childPageId
+     * @param UiPageTreeNode[] $childNodes
+     * @return UiPageTreeNode[]
+     */
     protected function buildParentMenuNodes(UiPageInterface $page, string $childPageId = null, array $childNodes = []) : array
     {
         $menuNodes = [];
@@ -172,24 +178,34 @@ class UiPageTree
             $node = new UiPageTreeNode($pageSelector, $row['ALIAS'], $row['NAME'], $row['CMS_ID']);
             $node->setDescription($row['DESCRIPTION']);
             $node->setIntro($row['INTRO']);
-            if ($childPageId && $childPageId === $row['UID'] && $childNodes !== null) {
-                foreach ($childNodes as $child) {
+            if ($childPageId && $childPageId === $row['CMS_ID'] && $childNodes !== null) {
+                foreach ($childNodes as $child) {                    
                     $child->setParentNode($node);
                     $node->addChildNode($child);
                 }
             }
+            if ($childPageId === $row['CMS_ID']) {
+                $node->setInPath(true);
+            }
             $menuNodes[] = $node;
         }
-        $pageId = $page->getId();        
+        $pageCmsId = $this->getWorkbench()->getCMS()->getPageIdInCms($page);        
         //if page has a menu parent page continue building menu by going one level up
         if ($page->getMenuParentPage() !== null && !in_array($page, $this->rootPages)) {
             $parentPage = $page->getMenuParentPage();
-            $menuNodes = $this->buildParentMenuNodes($parentPage, $pageId, $menuNodes);
+            $menuNodes = $this->buildParentMenuNodes($parentPage, $pageCmsId, $menuNodes);
         }
         return $menuNodes;
     }
     
-    protected function buildChildMenuNodes(int $level, UiPageSelectorInterface $pageSelector, UiPageTreeNode $parentNode = null)
+    /**
+     * 
+     * @param int $level
+     * @param UiPageSelectorInterface $pageSelector
+     * @param UiPageTreeNode $parentNode
+     * @return UiPageTreeNode[]
+     */
+    protected function buildChildMenuNodes(int $level, UiPageSelectorInterface $pageSelector, UiPageTreeNode $parentNode = null) : array
     {
         $menuNodes = [];
         if ($parentNode !== null) {
