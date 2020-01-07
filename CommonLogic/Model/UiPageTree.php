@@ -7,6 +7,8 @@ use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\Factories\SelectorFactory;
+use exface\Core\CommonLogic\Selectors\UiPageSelector;
 
 class UiPageTree
 {
@@ -39,7 +41,7 @@ class UiPageTree
     
     /**
      * 
-     * @return UiPageTreeNode
+     * @return UiPageTreeNode[]
      */
     public function getRootNodes() : array
     {
@@ -120,6 +122,19 @@ class UiPageTree
     {
         if ($this->hasExpandPathToPage() && $this->expandPathOnly === false) {
             $this->rootNodes = $this->buildParentMenuNodes($this->getExpandPathToPage());
+        } else {
+            if (empty($this->rootPages)) {
+                $pageSelector = SelectorFactory::createPageSelector($this->getWorkbench(), '1');
+                $this->rootNodes = $this->buildChildMenuNodes(1, $pageSelector);
+            } else {
+                foreach ($this->rootPages as $rootPage) {
+                    $pageSelector = $rootPage->getSelector();
+                    $nodes = $this->buildChildMenuNodes(1, $pageSelector);
+                    foreach ($nodes as $node) {
+                        $this->rootNodes[] = $node;
+                    }
+                }
+            }
         }
         return $this;
     }
@@ -155,6 +170,8 @@ class UiPageTree
         $dataSheet = $this->getMenuDataSheet($pageSelector);
         foreach ($dataSheet->getRows() as $row) {
             $node = new UiPageTreeNode($pageSelector, $row['ALIAS'], $row['NAME'], $row['CMS_ID']);
+            $node->setDescription($row['DESCRIPTION']);
+            $node->setIntro($row['INTRO']);
             if ($childPageId && $childPageId === $row['UID'] && $childNodes !== null) {
                 foreach ($childNodes as $child) {
                     $child->setParentNode($node);
@@ -168,6 +185,32 @@ class UiPageTree
         if ($page->getMenuParentPage() !== null) {
             $parentPage = $page->getMenuParentPage();
             $menuNodes = $this->buildParentMenuNodes($parentPage, $pageId, $menuNodes);
+        }
+        return $menuNodes;
+    }
+    
+    protected function buildChildMenuNodes(int $level, UiPageSelectorInterface $pageSelector, UiPageTreeNode $parentNode = null)
+    {
+        $menuNodes = [];
+        if ($parentNode !== null) {
+            $pageSelector = $parentNode->getPageSelector();
+        }
+        $dataSheet = $this->getMenuDataSheet($pageSelector);
+        foreach ($dataSheet->getRows() as $row) {
+            $childPageSelector = SelectorFactory::createPageSelector($this->getWorkbench(), $row['CMS_ID']);
+            $node = new UiPageTreeNode($childPageSelector, $row['ALIAS'], $row['NAME'], $row['CMS_ID']);
+            $node->setDescription($row['DESCRIPTION']);
+            $node->setIntro($row['INTRO']);
+            if ($parentNode) {
+                $node->setParentNode($parentNode);
+            }
+            $menuNodes[] = $node;
+            if ($this->depth === null || $level < $this->depth) {
+                $childNodes = $this->buildChildMenuNodes($level + 1, $childPageSelector, $node);
+                foreach ($childNodes as $childNode) {
+                    $node->addChildNode($childNode);
+                }
+            }
         }
         return $menuNodes;
     }
