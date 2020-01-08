@@ -177,10 +177,9 @@ class UiPageTree
         if ($this->expandPathOnly) {
             foreach ($dataSheet->getRows() as $row) {
                 if ($childPageId && $childPageId === $row['CMS_ID']) {
-                    $node = new UiPageTreeNode($pageSelector, $row['ALIAS'], $row['NAME'], $row['CMS_ID']);
+                    $node = new UiPageTreeNode($this->getWorkbench(), $row['ALIAS'], $row['NAME'], $row['CMS_ID']);
                     $node->setDescription($row['DESCRIPTION']);
                     $node->setIntro($row['INTRO']);
-                    $node->setInPath(true);
                     if ($childNodes !== null) {
                         foreach ($childNodes as $child) {
                             $child->setParentNode($node);
@@ -192,11 +191,10 @@ class UiPageTree
             }
         } else {
             foreach ($dataSheet->getRows() as $row) {
-                $node = new UiPageTreeNode($pageSelector, $row['ALIAS'], $row['NAME'], $row['CMS_ID']);
+                $node = new UiPageTreeNode($this->getWorkbench(), $row['ALIAS'], $row['NAME'], $row['CMS_ID']);
                 $node->setDescription($row['DESCRIPTION']);
                 $node->setIntro($row['INTRO']);
                 if ($childPageId && $childPageId === $row['CMS_ID']) {
-                    $node->setInPath(true);
                     if ($childNodes !== null) {
                         foreach ($childNodes as $child) {                    
                             $child->setParentNode($node);
@@ -232,7 +230,7 @@ class UiPageTree
         $dataSheet = $this->getMenuDataSheet($pageSelector);
         foreach ($dataSheet->getRows() as $row) {
             $childPageSelector = SelectorFactory::createPageSelector($this->getWorkbench(), $row['CMS_ID']);
-            $node = new UiPageTreeNode($childPageSelector, $row['ALIAS'], $row['NAME'], $row['CMS_ID']);
+            $node = new UiPageTreeNode($this->getWorkbench(), $row['ALIAS'], $row['NAME'], $row['CMS_ID']);
             $node->setDescription($row['DESCRIPTION']);
             $node->setIntro($row['INTRO']);
             if ($parentNode) {
