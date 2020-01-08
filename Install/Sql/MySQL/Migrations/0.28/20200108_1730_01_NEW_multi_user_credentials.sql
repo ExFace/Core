@@ -43,4 +43,5 @@ ALTER TABLE `exf_data_connection_credentials`
 	
 ALTER TABLE `exf_user_credentials`
 	ADD COLUMN `data_connector_config` TEXT NULL DEFAULT NULL AFTER `user_oid`,
+	ADD COLUMN `name` VARCHAR(128) NOT NULL AFTER `user_oid`,
 	DROP COLUMN `data_connection_credentials_oid`;
