@@ -15,6 +15,8 @@
 	"ACTION.DELETEOBJECT.RESULT": "%number% Objekt gelöscht.|%number% Objekte gelöscht.",
 	"ACTION.DELETEOBJECT.NAME": "Löschen",
 
+	"ACTION.SHOWLOGINDIALOG.NAME": "Anmelden",
+	
 	"ACTION.SHOWOBJECTCOPYDIALOG.NAME": "Duplizieren",
 
 	"ACTION.SHOWOBJECTEDITDIALOG.SAVE_BUTTON": "Speichern",
@@ -42,6 +44,9 @@
 
 	"ACTION.FAVORITESADD.NAME": "In die Favoriten",
     "ACTION.FAVORITESADD.RESULT": "%number% Objekt zu Favoriten hinzugefügt.|%number% Objekte zu Favoriten hinzugefügt.",
+    
+    "ACTION.LOGIN.NAME": "Anmelden",
+    "ACTION.LOGIN.RESULT": "Anmeldung erfolgreich!",
     
     "ACTION.GENERATEMODELFROMDATASOURCE.NAME": "Modell generieren",
 	"ACTION.GENERATEMODELFROMDATASOURCE.RESULT_FOR_OBJECT": "%created_counter% Attribut(e) für %object_counter% Objekt(e) erstellt. %skipped_counter% Attribut(e) als Dublikate ignoriert!",
@@ -227,6 +232,8 @@
     "PAGE.DOCS.READ": "Lesen",
     "PAGE.ATTRIBUTES.DISPLAY_ORDER": "Anzeige-Pos.",
     "PAGE.TABS.GENERAL": "Allgemein",
+    
+    "SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED": "Diese Verbindung benötigt bzw. unterstützt keine Nutzer-Anmeldung.",
     
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",

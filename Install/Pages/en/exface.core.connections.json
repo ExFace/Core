@@ -72,6 +72,19 @@
                 "action_alias": "exface.Core.ShowObjectCopyDialog"
             },
             {
+                "action": {
+                    "alias": "exface.Core.ShowLoginDialog",
+                    "input_mapper": {
+                        "column_to_column_mappings": [
+                            {
+                                "from": "UID",
+                                "to": "CONNECTION"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
                 "action_alias": "exface.Core.DeleteObject"
             }
         ]

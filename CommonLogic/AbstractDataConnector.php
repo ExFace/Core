@@ -18,6 +18,15 @@ use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Traits\MetaModelPrototypeTrait;
 use exface\Core\Uxon\ConnectionSchema;
+use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
+use exface\Core\Exceptions\Security\AuthenticationFailedError;
+use exface\Core\Interfaces\UserInterface;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Exceptions\RuntimeException;
 
 abstract class AbstractDataConnector implements DataConnectionInterface
 {
@@ -339,5 +348,92 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     public static function getUxonSchemaClass() : ?string
     {
         return ConnectionSchema::class;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::authenticate()
+     */
+    public function authenticate(AuthenticationTokenInterface $token, bool $updateUserCredentials = true) : AuthenticationTokenInterface
+    {
+        try {
+            $this->performConnect();
+            return $token;
+        } catch (DataConnectionFailedError $e) {
+            throw new AuthenticationFailedError('Authentication failed!', null, $e);
+        }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::createLoginWidget()
+     */
+    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    {
+        $container->addWidget(WidgetFactory::createFromUxonInParent($container, new UxonObject([
+            'widget_type' => 'Message',
+            'type' => 'info',
+            'text' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED')
+        ])));
+        return $container;
+    }
+    
+    /**
+     * Updates the user-specific connector config in the users's credential set for this connection.
+     * 
+     * NOTE: this only works for authenticated users as anonymous users can't have credential sets!
+     * 
+     * @param UserInterface $user
+     * @param UxonObject $uxon
+     * 
+     * @throws RuntimeException
+     * 
+     * @return AbstractDataConnector
+     */
+    protected function updateUserCredentials(UserInterface $user, UxonObject $uxon) : AbstractDataConnector
+    {
+        if ($user->isUserAnonymous() === true || $this->hasModel() === false || $uxon->isEmpty() === true) {
+            return $this;
+        }
+        
+        $credData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_CREDENTIALS');
+        $credData->getColumns()->addMultiple(['DATA_CONNECTOR_CONFIG']);
+        $credData->addFilterFromString('USER', $user->getUid(), ComparatorDataType::EQUALS);
+        $credData->addFilterFromString('DATA_CONNECTION_CREDENTIALS__DATA_CONNECTION', $this->getId());
+        $credData->dataRead();
+        
+        switch ($credData->countRows()) {
+            case 1:
+                $oldUxon = UxonObject::fromJson($credData->getCellValue('DATA_CONNECTOR_CONFIG', 0));
+                $newUxon = $oldUxon->extend($uxon);
+                $credData->setCellValue('DATA_CONNECTOR_CONFIG', 0, $newUxon->toJson());
+                break;
+            case 0:
+                $transaction = $this->getWorkbench()->data()->startTransaction();
+                
+                $credData->addRow([
+                    'NAME' => $this->getName(),
+                    'DATA_CONNECTOR_CONFIG' => $uxon->toJson(),
+                    'USER' => $user->getUid()
+                ]);
+                $credData->dataCreate(false, $transaction);
+                
+                $credConData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.DATA_CONNECTION_CREDENTIALS');
+                $credConData->addRow([
+                    'DATA_CONNECTION' => $this->getId(),
+                    'USER_CREDENTIALS' => $credData->getUidColumn()->getCellValue(0)
+                ]);
+                $credConData->dataCreate(false, $transaction);
+                
+                $transaction->commit();
+                
+                break;
+            default:
+                throw new RuntimeException('Cannot save user credentials: multiple credential sets found for user "' . $user->getUsername() . '" and data connection "' . $this->getAliasWithNamespace() . '"!');
+        }
+        
+        return $this;
     }
 }

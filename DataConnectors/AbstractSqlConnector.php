@@ -6,6 +6,13 @@ use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
+use exface\Core\Exceptions\Security\AuthenticationFailedError;
+use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthToken;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
  *
@@ -263,5 +270,61 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
         return $this;
     }
     
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::authenticate()
+     */
+    public function authenticate(AuthenticationTokenInterface $token, bool $updateUserCredentials = true) : AuthenticationTokenInterface
+    {
+        if (! $token instanceof UsernamePasswordAuthToken) {
+            throw new InvalidArgumentException('Invalid token class "' . get_class($token) . '" for authentication via data connection "' . $this->getAliasWithNamespace() . '" - only "UsernamePasswordAuthToken" and derivatives supported!');
+        }
+            
+        try {
+            $prevConnection = $this->getCurrentConnection();
+            $prevUsername = $this->getUser();
+            $prevPassword = $this->getPassword();
+            
+            $this->setUser($token->getUsername());
+            $this->setPassword($token->getPassword());
+            $this->performConnect();
+            
+            $this->setUser($prevUsername);
+            $this->setPassword($prevPassword);
+            if ($prevConnection !== null) {
+                $this->setCurrentConnection($prevConnection);
+            }
+        } catch (DataConnectionFailedError $e) {
+            throw new AuthenticationFailedError('Authentication failed! ' . $e->getMessage(), null, $e);
+        }
+        
+        if ($updateUserCredentials === true) {
+            $this->updateUserCredentials($this->getWorkbench()->getSecurity()->getAuthenticatedUser(), new UxonObject([
+                'user' => $token->getUsername(),
+                'password' => $token->getPassword()
+            ]));
+        }
+        
+        return $token;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::createLoginWidget()
+     */
+    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    {
+        $container->setWidgets(new UxonObject([
+            [
+                'attribute_alias' => 'USERNAME',
+                'required' => true
+            ],[
+                'attribute_alias' => 'PASSWORD'
+            ]
+        ]));
+        return $container;
+    }
 }
 ?>
