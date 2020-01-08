@@ -6,9 +6,13 @@ use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Factories\SelectorFactory;
 
 class UiPageTreeNode
 {
+    private $exface = null;
+    
     private $tree = null;
     
     private $name = null;
@@ -25,17 +29,13 @@ class UiPageTreeNode
     
     private $cmsId = null;
     
-    private $pageAlias = null;
-    
-    private $expanded = null;
-    
-    private $inPath = false;
+    private $pageAlias = null;    
     
     
-    
-    public function __construct(UiPageSelectorInterface $pageSelector, string $pageAlias, string $name, string $cmsId, UiPageTreeNode $parentNode = null)
+    public function __construct(WorkbenchInterface $exface, string $pageAlias, string $name, string $cmsId, UiPageTreeNode $parentNode = null)
     {
-        $this->pageSelector = $pageSelector;
+        $this->exface = $exface;
+        $this->pageSelector = SelectorFactory::createPageSelector($exface, $pageAlias);
         $this->pageAlias = $pageAlias;
         $this->name = $name;
         $this->cmsId = $cmsId;
@@ -43,6 +43,16 @@ class UiPageTreeNode
             $this->parentNode = $parentNode;
         }
         
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
+     */
+    public function getWorkbench()
+    {
+        return $this->exface;
     }
     
     public function getName() : string
@@ -144,69 +154,24 @@ class UiPageTreeNode
         return $this;
     }
     
-    public function setExpanded (bool $trueOrFalse) : UiPageTreeNode
-    {
-        $this->expanded = $trueOrFalse;
-    }
-    
-    public function isExpanded() : bool
-    {
-        if ($this->expanded !== null) {
-            return $this->expanded;
-        }
-        return $this->hasChildNodes();
-    }
-    
-    public function setInPath (bool $trueOrFalse) : UiPageTreeNode
-    {
-        $this->inPath = $trueOrFalse;
-        return $this;
-    }
-    
-    public function isInPath() : bool
-    {        
-        return $this->inPath;
-    }
-    
     public function isPage(UiPageInterface $page) : bool
     {
         return $page->is($this->getPageSelector());
     }
     
-    public function isPageParent(UiPageInterface $page) : bool
+    public function isParentOf(UiPageInterface $page) : bool
     {
-        $selector = $this->getPageSelector();
         if ($page->getMenuParentPage() === null) {
             return false;
         }
-        switch (true) {
-            case $selector->isAlias(): return $page->getMenuParentPage()->getAliasWithNamespace() === $selector->toString();
-            case $selector->isUid(): return $page->getMenuParentPage()->getId() === $selector->toString();
-            case $selector->isCmsId():
-                $pageSelector = $page->getMenuParentPage()->getSelector();
-                $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PAGE');
-                $ds->getColumns()->addMultiple(['CMS_ID']);
-                if ($pageSelector->isAlias()) {
-                    $alias = 'ALIAS';
-                } elseif ($pageSelector->isUid()) {
-                    $alias = 'UID';
-                } elseif ($pageSelector->isCmsId()) {
-                    $alias = 'CMS_ID';
-                }
-                
-                $ds->addFilterFromString($alias, $pageSelector->toString(), '==');
-                $ds->dataRead();
-                $row = $ds->getRow(0);
-                $pageCmsId = $row['CMS_ID'];
-                return $pageCmsId === $this->getCmsId();
-        }
+        return $page->getMenuParentPage()->is($this->getPageSelector());        
     }
     
-    public function isPageAncestor(UiPageInterface $page) : bool
+    public function isAncestorOf(UiPageInterface $page) : bool
     {
         $checkPage = $page;
         while ($checkPage->getMenuParentPage() !== null) {
-            if ($this->isPageParent($checkPage)) {
+            if ($this->isParentOf($checkPage)) {
                 return true;
             }
             $checkPage = $checkPage->getMenuParentPage();            
