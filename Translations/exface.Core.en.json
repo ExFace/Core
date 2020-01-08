@@ -15,6 +15,8 @@
 	"ACTION.DELETEOBJECT.RESULT": "%number% item deleted.|%number% items deleted.",
 	"ACTION.DELETEOBJECT.NAME": "Delete",
 	
+	"ACTION.SHOWLOGINDIALOG.NAME": "Login",
+	
 	"ACTION.SHOWOBJECTCOPYDIALOG.NAME": "Copy",
 	
 	"ACTION.SHOWOBJECTEDITDIALOG.SAVE_BUTTON": "Save",
@@ -43,7 +45,10 @@
 	"ACTION.FAVORITESADD.NAME": "Add to favorites",
     "ACTION.FAVORITESADD.RESULT": "%number% objects added to favorites.",
     
-	"ACTION.GENERATEMODELFROMDATASOURCE.NAME": "Generate Model",
+	"ACTION.LOGIN.NAME": "Sign in",
+    "ACTION.LOGIN.RESULT": "Authenticated successfully!",
+    
+    "ACTION.GENERATEMODELFROMDATASOURCE.NAME": "Generate Model",
 	"ACTION.GENERATEMODELFROMDATASOURCE.RESULT_FOR_OBJECT": "Created %created_counter% attribute(s) for %object_counter% object(s). %skipped_counter% attributes skipped as duplicates!",
 	
 	"ACTION.GOBACK.NAME": "Back",
@@ -229,7 +234,9 @@
     "PAGE.ATTRIBUTES.DISPLAY_ORDER": "Disp. Pos.",
     "PAGE.TABS.GENERAL": "General",
     
-    "WIDGET.SELECT_ALL": "All",
+    "SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED": "This connection does not require/support user authentication.",
+    
+	"WIDGET.SELECT_ALL": "All",
 	"WIDGET.SELECT_YES": "Yes",
 	"WIDGET.SELECT_NO": "No",
 	"WIDGET.SELECT_NONE": "-",
