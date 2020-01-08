@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2019-03-23 07:18:16",
+            "MODIFIED_ON": "2020-01-08 18:19:47",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31343500000000000000000000000000",
@@ -89,14 +89,14 @@
             "WRITABLE_FLAG": "1",
             "COMMENTS": "",
             "DOCS": "",
-            "NAME": "Connection Credentials",
+            "NAME": "Credential Set",
             "INHERIT_DATA_SOURCE_BASE_OBJECT": "1",
             "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "User specific credential configuration for data connections",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"width\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"DATA_CONNECTION\"},{\"attribute_alias\":\"USER_CREDENTIALS\"}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS')\",\"widgets\":[{\"attribute_alias\":\"UID\",\"widget_type\":\"InputHidden\",\"id\":\"uid_field\"},{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"CREATED_BY_USER__USERNAME\",\"widget_type\":\"Input\",\"readonly\":true},{\"attribute_alias\":\"DATA_CONNECTION\"},{\"attribute_alias\":\"PRIVATE\"},{\"attribute_alias\":\"DATA_CONNECTOR_CONFIG\",\"widget_type\":\"InputUxon\",\"height\":16,\"schema\":\"connection\"}]},{\"caption\":\"=TRANSLATE('exface.Core', 'GLOBAL.MODEL.USERS')\",\"widgets\":[{\"widget_type\":\"DataTableResponsive\",\"object_alias\":\"exface.Core.USER_CREDENTIALS\",\"filters\":[{\"attribute_alias\":\"DATA_CONNECTION_CREDENTIALS\",\"widget_type\":\"InputHidden\",\"required\":true}],\"columns\":[{\"attribute_alias\":\"USER__USERNAME\"},{\"attribute_alias\":\"USER__FIRST_NAME\"},{\"attribute_alias\":\"USER__LAST_NAME\"},{\"attribute_alias\":\"USER__EMAIL\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\",\"disabled_if\":{\"operator\":\"AND\",\"conditions\":[{\"value_left\":\"=uid_field\",\"comparator\":\"==\",\"value_right\":\"\"}]}},{\"action_alias\":\"exface.Core.DeleteObject\"}]}]}]}]}",
             "ALIAS": "DATA_CONNECTION_CREDENTIALS",
             "DATA_ADDRESS": "exf_data_connection_credentials"
         }

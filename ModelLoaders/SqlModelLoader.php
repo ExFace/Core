@@ -471,8 +471,8 @@ class SqlModelLoader implements ModelLoaderInterface
         
         // If there is a user logged in, fetch his specific connctor config (credentials)
         if ($user_name = $exface->getSecurity()->getAuthenticatedToken()->getUsername()) {
-            $join_user_credentials = ' LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.user_credentials_oid = uc.oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = "' . $user_name . '") ON dcc.data_connection_oid = dc.oid';
-            $select_user_credentials = ', uc.data_connector_config AS user_connector_config';
+            $join_user_credentials = ' LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.oid = uc.data_connection_credentials_oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = "' . $user_name . '") ON dcc.data_connection_oid = dc.oid';
+            $select_user_credentials = ', dcc.data_connector_config AS user_connector_config';
         }
         
         if ($selector->isUid() === true) {
