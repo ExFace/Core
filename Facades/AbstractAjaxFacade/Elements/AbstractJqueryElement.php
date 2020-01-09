@@ -601,7 +601,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
             oData.rows.forEach(function(oRow) {
                 vals.push(oRow['{$colName}']);
             });
-            val = vals.join('{$widget->getAttribute()->getValueListDelimiter()}'};
+            val = vals.join('{$widget->getAttribute()->getValueListDelimiter()}');
         }
         {$this->buildJsValueSetter('val')};
     }
