@@ -6,7 +6,7 @@ ALTER TABLE `exf_data_connection_credentials`
 	ADD COLUMN `private` TINYINT(1) NOT NULL DEFAULT 1 AFTER `data_connector_config`;
 	
 ALTER TABLE `exf_user_credentials`
-	ADD COLUMN `data_connection_credentials_oid` BINARY(16) NOT NULL AFTER `user_oid`;
+	ADD COLUMN `data_connection_credentials_oid` BINARY(16) NULL AFTER `user_oid`;
 	
 UPDATE exf_data_connection_credentials dc 
 	SET dc.data_connector_config = (
@@ -14,12 +14,14 @@ UPDATE exf_data_connection_credentials dc
 				uc.data_connector_config 
 			FROM exf_user_credentials uc 
 			WHERE dc.user_credentials_oid = uc.oid
+        	LIMIT 1
 		),
 		dc.name = (
 			SELECT 
 				uc.name 
 			FROM exf_user_credentials uc 
 			WHERE dc.user_credentials_oid = uc.oid
+            LIMIT 1
 		);
 
 UPDATE exf_user_credentials uc 
@@ -28,11 +30,13 @@ UPDATE exf_user_credentials uc
 				dc.oid 
 			FROM exf_data_connection_credentials dc
 			WHERE dc.user_credentials_oid = uc.oid 
+        	LIMIT 1
 		);
 
 ALTER TABLE `exf_user_credentials`
 	DROP COLUMN `data_connector_config`,
-	DROP COLUMN `name`;
+	DROP COLUMN `name`
+	CHANGE COLUMN `data_connection_credentials_oid` `data_connection_credentials_oid` BINARY(16) NOT NULL AFTER `user_oid`;
 	
 ALTER TABLE `exf_data_connection_credentials`
 	DROP COLUMN `user_credentials_oid`;
