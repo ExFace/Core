@@ -104,7 +104,7 @@ trait iSupportLazyLoadingTrait {
             if ($uxon->isEmpty() || false === $uxon->hasProperty('alias')) {
                 throw new WidgetPropertyNotSetError($this, 'Lazy loading action not configured for widget ' . $this->getWidgetType() . '!');
             }
-            $this->lazy_loading_action = ActionFactory::createFromUxon($this->getWorkbench(), $this->getLazyLoadingActionUxon(), $this);
+            $this->lazy_loading_action = ActionFactory::createFromUxon($this->getWorkbench(), $uxon, $this);
         } 
         return $this->lazy_loading_action;
     }
