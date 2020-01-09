@@ -45,8 +45,10 @@
 	"ACTION.FAVORITESADD.NAME": "Add to favorites",
     "ACTION.FAVORITESADD.RESULT": "%number% objects added to favorites.",
     
-	"ACTION.LOGIN.NAME": "Sign in",
+	"ACTION.LOGIN.NAME": "Login",
     "ACTION.LOGIN.RESULT": "Authenticated successfully!",
+    
+    "ACTION.LOGOUT.NAME": "Logout",
     
     "ACTION.GENERATEMODELFROMDATASOURCE.NAME": "Generate Model",
 	"ACTION.GENERATEMODELFROMDATASOURCE.RESULT_FOR_OBJECT": "Created %created_counter% attribute(s) for %object_counter% object(s). %skipped_counter% attributes skipped as duplicates!",
