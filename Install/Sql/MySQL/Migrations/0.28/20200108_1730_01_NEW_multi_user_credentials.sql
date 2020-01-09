@@ -35,7 +35,7 @@ UPDATE exf_user_credentials uc
 
 ALTER TABLE `exf_user_credentials`
 	DROP COLUMN `data_connector_config`,
-	DROP COLUMN `name`
+	DROP COLUMN `name`,
 	CHANGE COLUMN `data_connection_credentials_oid` `data_connection_credentials_oid` BINARY(16) NOT NULL AFTER `user_oid`;
 	
 ALTER TABLE `exf_data_connection_credentials`
