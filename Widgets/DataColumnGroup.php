@@ -42,6 +42,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     public function addColumn(DataColumn $column, int $position = NULL) : iHaveColumns
     {
         $column->setMetaObject($this->getMetaObject());
+        $column->setParent($this);
         if ($column->isEditable()) {
             $parent = $this->getParent();
             if ($parent instanceof iShowData) {
@@ -396,7 +397,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      * 
      * @return \exface\Core\Widgets\Data
      */
-    public function getDataWidget()
+    public function getDataWidget() : iShowData
     {
         return $this->getParent();
     }
