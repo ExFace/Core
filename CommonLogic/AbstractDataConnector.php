@@ -398,10 +398,10 @@ abstract class AbstractDataConnector implements DataConnectionInterface
             return $this;
         }
         
-        $credData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_CREDENTIALS');
-        $credData->getColumns()->addMultiple(['DATA_CONNECTOR_CONFIG']);
-        $credData->addFilterFromString('USER', $user->getUid(), ComparatorDataType::EQUALS);
-        $credData->addFilterFromString('DATA_CONNECTION_CREDENTIALS__DATA_CONNECTION', $this->getId());
+        $credData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.DATA_CONNECTION_CREDENTIALS');
+        $credData->getColumns()->addMultiple(['NAME', 'DATA_CONNECTION', 'DATA_CONNECTOR_CONFIG', 'PRIVATE']);
+        $credData->addFilterFromString('USER_CREDENTIALS__USER', $user->getUid(), ComparatorDataType::EQUALS);
+        $credData->addFilterFromString('DATA_CONNECTION', $this->getId());
         $credData->dataRead();
         
         switch ($credData->countRows()) {
@@ -416,16 +416,17 @@ abstract class AbstractDataConnector implements DataConnectionInterface
                 $credData->addRow([
                     'NAME' => $this->getName(),
                     'DATA_CONNECTOR_CONFIG' => $uxon->toJson(),
-                    'USER' => $user->getUid()
+                    'DATA_CONNECTION' => $this->getId(),
+                    'PRIVATE' => '1'
                 ]);
                 $credData->dataCreate(false, $transaction);
                 
-                $credConData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.DATA_CONNECTION_CREDENTIALS');
-                $credConData->addRow([
-                    'DATA_CONNECTION' => $this->getId(),
-                    'USER_CREDENTIALS' => $credData->getUidColumn()->getCellValue(0)
+                $credUserData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_CREDENTIALS');
+                $credUserData->addRow([
+                    'USER' => $user->getId(),
+                    'DATA_CONNECTION_CREDENTIALS' => $credData->getUidColumn()->getCellValue(0)
                 ]);
-                $credConData->dataCreate(false, $transaction);
+                $credUserData->dataCreate(false, $transaction);
                 
                 $transaction->commit();
                 
