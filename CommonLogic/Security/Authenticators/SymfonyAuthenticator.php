@@ -22,10 +22,15 @@ use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Interfaces\WorkbenchInterface;
+use Symfony\Component\Security\Core\Authentication\Provider\LdapBindAuthenticationProvider;
+use Symfony\Component\Ldap\Ldap;
+use Symfony\Component\Ldap\Adapter\ExtLdap\Adapter;
 
 class SymfonyAuthenticator implements AuthenticatorInterface
 {
     private $authenticatedToken = null;
+    
+    private $authenticatedSymfonyToken = null;
     
     private $symfonyAuthManager = null;
     
@@ -48,8 +53,10 @@ class SymfonyAuthenticator implements AuthenticatorInterface
     public function authenticate(AuthenticationTokenInterface $token): AuthenticationTokenInterface
     {
         try {
-            $this->getSymfonyAuthManager()->authenticate($this->createSymfonyAuthToken($token));
-            $this->storeAuthenticatedToken($token);
+            $symfonyToken = $this->createSymfonyAuthToken($token);
+            $symfonyAuthenticatedToken = $this->getSymfonyAuthManager()->authenticate($symfonyToken);
+            $this->authenticatedToken = $token;
+            $this->authenticatedSymfonyToken = $symfonyAuthenticatedToken;
         } catch (AuthenticationException $e) {
             throw new AuthenticationFailedError($e->getMessage(), null, $e);
         }
@@ -73,16 +80,7 @@ class SymfonyAuthenticator implements AuthenticatorInterface
      */
     public function getName() : string
     {
-        return 'Default Authentication';
-    }
-    
-    protected function storeAuthenticatedToken(AuthenticationTokenInterface $token) : SecurityManagerInterface
-    {
-        if ($token->getUsername() !== $this->getAuthenticatedToken()->getUsername() && $this->getAuthenticatedToken()->isAnonymous() === false) {
-            throw new RuntimeException('User changed!');
-        }
-        $this->authenticatedToken = $token;
-        return $this;
+        return 'Symfony Authentication';
     }
     
     /**
@@ -109,11 +107,11 @@ class SymfonyAuthenticator implements AuthenticatorInterface
     protected function getSymfonyAuthProviders() : array
     {
         return [
-            $this->getSymfonyDaoAuthenticationProvier()
+            $this->getSymfonyDaoAuthenticationProvider()
         ];
     }
     
-    protected function getSymfonyDaoAuthenticationProvier() : DaoAuthenticationProvider
+    protected function getSymfonyDaoAuthenticationProvider() : DaoAuthenticationProvider
     {
         $userProvider = new SymfonyUserProvider($this->getWorkbench());
         $userChecker = new UserChecker();
@@ -144,13 +142,13 @@ class SymfonyAuthenticator implements AuthenticatorInterface
                 return new UsernamePasswordToken(
                 $token->getUsername(),
                 $token->getPassword(),
-                'workbench'
+                'secured_area'
                     );
             case $token instanceof PreAuthenticatedTokenInterface:
                 return new PreAuthenticatedToken(
                 $token->getUsername(),
                 '',
-                'workbench'
+                'secured_area'
                     );
         }
         return new AnonymousToken(

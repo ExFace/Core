@@ -35,8 +35,8 @@ class LocaleDataType extends StringDataType implements EnumDataTypeInterface
     public function getLabels()
     {
         if ($this->locales === null) {
-            $this->locales = [];
             $currentLocale = $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
+            $this->locales = [$currentLocale => $this->getLabelOfValue($currentLocale, $currentLocale)];
             foreach ($this->getWorkbench()->getCoreApp()->getLanguages() as $locale) {
                 $this->locales[$locale] = $this->getLabelOfValue($locale, $currentLocale);
             }

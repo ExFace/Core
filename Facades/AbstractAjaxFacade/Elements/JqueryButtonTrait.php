@@ -9,7 +9,17 @@ use exface\Core\Actions\GoToPage;
 use exface\Core\Actions\RefreshWidget;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Actions\iRunFacadeScript;
+use exface\Core\Actions\SendToWidget;
+use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 
+/**
+ * 
+ * @method Button getWidget()
+ * @method AbstractAjaxFacade getFacade()
+ * 
+ * @author tmc
+ *
+ */
 trait JqueryButtonTrait {
     
     private $onSuccessJs = [];
@@ -59,6 +69,13 @@ trait JqueryButtonTrait {
         return $output;
     }
 
+    /**
+     * Produces the JS variable `requestData` containing the input data for the action
+     * 
+     * @param ActionInterface $action
+     * @param AbstractJqueryElement $input_element
+     * @return string
+     */
     protected function buildJsRequestDataCollector(ActionInterface $action, AbstractJqueryElement $input_element)
     {
         if (! is_null($action->getInputRowsMin()) || ! is_null($action->getInputRowsMax())) {
@@ -140,7 +157,9 @@ trait JqueryButtonTrait {
             $output = $this->buildJsClickShowWidget($action, $input_element);
         } elseif ($action instanceof GoBack) {
             $output = $this->buildJsClickGoBack($action, $input_element);
-        } else {
+        } elseif ($action instanceof SendToWidget) {
+            $output = $this->buildJsClickSendToWidget($action, $input_element);
+        } else{
             $output = $this->buildJsClickCallServerAction($action, $input_element);
         }
         
@@ -381,6 +400,23 @@ JS;
             }
         }
         return $tags;
+    }
+    
+    protected function buildJsClickSendToWidget(SendToWidget $action, AbstractJqueryElement $input_element)
+    {
+        $widget = $this->getWidget();
+        $targetElement = $this->getFacade()->getElementByWidgetId($action->getTargetWidgetId(), $this->getWidget()->getPage());
+        
+        return <<<JS
+
+                        {$this->buildJsRequestDataCollector($action, $input_element)}
+						if ({$input_element->buildJsValidator()}) {
+                            {$targetElement->buildJsDataSetter('requestData')}
+                            {$this->buildJsCloseDialog($widget, $input_element)}
+                            {$this->buildJsInputRefresh($widget, $input_element)}
+                        }
+
+JS;
     }
 }
 ?>

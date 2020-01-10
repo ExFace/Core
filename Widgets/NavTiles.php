@@ -129,7 +129,6 @@ class NavTiles extends WidgetGrid
                 $this->parentTileIds[$tile->getId()] = $upperLevelTile;
             }
             if ($depth > 1) {
-                // #cms remove $row['CMS_ID']
                 $parentPageSelector = new UiPageSelector($this->getWorkbench(), $row['CMS_ID'] ?? $row['UID']);
                 $childrenSheet = $this->getMenuDataSheet($parentPageSelector);
                 if ($childrenSheet->isEmpty() === false) {

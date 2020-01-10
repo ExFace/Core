@@ -4,6 +4,10 @@ namespace exface\Core\Actions;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Widgets\Dialog;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 
 /**
  * Open a dialog to perform an advanced search for values for a specified input widget.
@@ -55,6 +59,7 @@ class ShowLookupDialog extends ShowDialog
     {
         parent::init();
         $this->setPrefillWithInputData(false);
+        $this->setIcon(Icons::SEARCH);
         
         if ($this->getWidgetDefinedIn() && $this->getWidgetDefinedIn()->is('DialogButton')) {
             $this->getWidgetDefinedIn()->setCloseDialogAfterActionSucceeds(false);
@@ -71,27 +76,35 @@ class ShowLookupDialog extends ShowDialog
         $dialog = parent::enhanceDialogWidget($dialog);
         $page = $this->getWidgetDefinedIn()->getPage();
         
+        /* @var $data_table \exface\Core\Widgets\DataTable */
         if ($dialog->isEmpty()) {
             $data_table = WidgetFactory::create($page, 'DataTable', $dialog);
             $data_table->setMetaObject($this->getMetaObject());
+            if ($this->getWidgetDefinedIn()->getParent()->getMultiselect() === true){
+                $data_table->setMultiSelect(true);
+            }
             $dialog->addWidget($data_table);
         } else {
             $data_table = reset($dialog->getWidgets());
         }
         
+        if ($data_table->getMetaObject()->hasLabelAttribute() === true) {
+            $labelAlias = $data_table->getMetaObject()->getLabelAttributeAlias();
+            if (! $data_table->getColumnByAttributeAlias($labelAlias) && ! $data_table->getColumnByDataColumnName($this->getWorkbench()->getConfig()->getOption("METAMODEL.OBJECT_LABEL_ALIAS"))) {
+                $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getLabelAttribute()));
+            }
+        }
+        
         // @var $save_button \exface\Core\Widgets\Button
-        $save_button = $dialog->createButton();
-        $save_button->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.SHOWLOOKUPDIALOG.SAVE_BUTTON"));
-        $save_button->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED);
-        
-        // @var $save_action \exface\Core\Actions\CustomFacadeScript
-        $save_action = ActionFactory::createFromString($this->getWorkbench(), 'exface.Core.CustomFacadeScript', $save_button);
-        $source_element = $this->getFacade()->getElement($data_table);
-        $target_element = $this->getFacade()->getElementByWidgetId($this->getTargetWidgetId(), $page);
-        $save_action_script = $target_element->buildJsValueSetter($source_element->buildJsValueGetter());
-        $save_action->setScript($save_action_script);
-        
-        $save_button->setAction($save_action);
+        $save_button = $dialog->createButton(new UxonObject([
+            'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.SHOWLOOKUPDIALOG.SAVE_BUTTON"),
+            'visibility' => WidgetVisibilityDataType::PROMOTED,
+            'input_widget_id' => $data_table->getId(),
+            'action' => [
+                'alias' => 'exface.Core.SendToWidget',
+                'target_widget_id' => $this->getTargetWidgetId()
+            ]
+        ]));
         $dialog->addButton($save_button);
         
         return $dialog;
