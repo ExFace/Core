@@ -42,7 +42,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
     {
         /* @var $dialog \exface\Core\Widgets\Dialog */
         $parent_widget = $this->getWidgetDefinedIn();
-        $dialog = WidgetFactory::create($page, 'Dialog', $parent_widget);
+        $dialog = WidgetFactory::create($page, $this->getDialogWidgetType(), $parent_widget);
         $dialog->setMetaObject($this->getMetaObject());
         
         if ($contained_widget) {
@@ -56,6 +56,11 @@ class ShowDialog extends ShowWidget implements iShowDialog
         }
         
         return $dialog;
+    }
+    
+    protected function getDialogWidgetType() : string
+    {
+        return 'Dialog';
     }
 
     /**
