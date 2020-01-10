@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Model\MetaModelPrototypeInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
+use exface\Core\Interfaces\UserInterface;
 
 interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeConvertedToUxon, MetaModelPrototypeInterface
 {
@@ -107,7 +108,7 @@ interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInte
      * @param AuthenticationTokenInterface $token
      * @return AuthenticationTokenInterface
      */
-    public function authenticate(AuthenticationTokenInterface $token, bool $updateUserCredentials = true) : AuthenticationTokenInterface;
+    public function authenticate(AuthenticationTokenInterface $token, bool $updateUserCredentials = true, UserInterface $credentialsOwner = null) : AuthenticationTokenInterface;
     
     /**
      * Populates the given container with inputs required to perform authentication via this connector.

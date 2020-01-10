@@ -72,13 +72,14 @@
                 "action_alias": "exface.Core.ShowObjectCopyDialog"
             },
             {
+                "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_CONNECTIONS.ADD_CREDENTIALS')",
                 "action": {
-                    "alias": "exface.Core.ShowLoginDialog",
+                    "alias": "exface.Core.CreateCredentialsDialog",
                     "input_mapper": {
                         "column_to_column_mappings": [
                             {
                                 "from": "UID",
-                                "to": "CONNECTION"
+                                "to": "DATA_CONNECTION"
                             }
                         ]
                     }

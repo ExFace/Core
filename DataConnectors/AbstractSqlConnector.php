@@ -13,6 +13,7 @@ use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthToken;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\UserInterface;
 
 /**
  *
@@ -275,7 +276,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::authenticate()
      */
-    public function authenticate(AuthenticationTokenInterface $token, bool $updateUserCredentials = true) : AuthenticationTokenInterface
+    public function authenticate(AuthenticationTokenInterface $token, bool $updateUserCredentials = true, UserInterface $credentialsOwner = null) : AuthenticationTokenInterface
     {
         if (! $token instanceof UsernamePasswordAuthToken) {
             throw new InvalidArgumentException('Invalid token class "' . get_class($token) . '" for authentication via data connection "' . $this->getAliasWithNamespace() . '" - only "UsernamePasswordAuthToken" and derivatives supported!');
@@ -300,10 +301,13 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
         }
         
         if ($updateUserCredentials === true) {
-            $this->updateUserCredentials($this->getWorkbench()->getSecurity()->getAuthenticatedUser(), new UxonObject([
+            $user = $credentialsOwner ?? $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
+            $uxon = new UxonObject([
                 'user' => $token->getUsername(),
                 'password' => $token->getPassword()
-            ]));
+            ]);
+            $credentialSetName = $this->getName() . ' - ' . ($token->getUsername() ? $token->getUsername() : 'no username');
+            $this->updateUserCredentials($user, $uxon, $credentialSetName);
         }
         
         return $token;

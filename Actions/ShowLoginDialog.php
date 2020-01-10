@@ -50,11 +50,34 @@ class ShowLoginDialog extends ShowDialog
         if ($connectionSelector = $inputData->getCellValue('CONNECTION', 0)) {
             $dataConnection = DataConnectionFactory::createFromModel($this->getWorkbench(), $connectionSelector);
             $dataConnection->createLoginWidget($dialog);
-            $dialog->addWidget(WidgetFactory::createFromUxonInParent($dialog, new UxonObject([
+            $dialog
+            ->addWidget(WidgetFactory::createFromUxonInParent($dialog, new UxonObject([
                 'widget_type' => 'InputHidden',
                 'attribute_alias' => 'CONNECTION',
                 'value' => $dataConnection->getId()
+            ])))
+            ->addWidget(WidgetFactory::createFromUxonInParent($dialog, new UxonObject([
+                'attribute_alias' => 'CONNECTION__LABEL',
+                'readonly' => true,
+                'value' => $dataConnection->getName()
             ])));
+            
+            if ($saveFlag = $inputData->getCellValue('CONNECTION_SAVE', 0)) {
+                $dialog
+                ->addWidget(WidgetFactory::createFromUxonInParent($dialog, new UxonObject([
+                    'attribute_alias' => 'CONNECTION_SAVE',
+                    'value' => $saveFlag
+                ])));
+            }
+            
+            if ($userId = $inputData->getCellValue('CONNECTION_SAVE_FOR_USER', 0)) {
+                $dialog
+                ->addWidget(WidgetFactory::createFromUxonInParent($dialog, new UxonObject([
+                    'widget_type' => 'InputHidden',
+                    'attribute_alias' => 'CONNECTION_SAVE_FOR_USER',
+                    'value' => $userId
+                ])));
+            }
         } else {
             $dialog
             ->addWidget(WidgetFactory::createFromUxonInParent($dialog, new UxonObject([
