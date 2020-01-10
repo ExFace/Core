@@ -17,6 +17,9 @@ use exface\Core\Factories\QueryBuilderFactory;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
 
 /**
  * An InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
@@ -118,7 +121,8 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     public function getRelation()
     {
         if ($this->getAttribute()->isRelation()) {
-            return $this->getMetaObject()->getRelation($this->getAttributeAlias());
+            $relAlias = DataAggregation::stripAggregator($this->getAttributeAlias());
+            return $this->getMetaObject()->getRelation($relAlias);
         } else {
             return false;
         }
@@ -608,7 +612,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     {
         if (! $this->isOptionsObjectSpecified()) {
             if ($this->isBoundToAttribute() === true && $this->getAttribute()->isRelation() === true) {
-                $this->setOptionsObject($this->getMetaObject()->getRelation($this->getAttributeAlias())->getRightObject());
+                $this->setOptionsObject($this->getRelation()->getRightObject());
             }
         }
         return parent::getOptionsObject();
