@@ -52,6 +52,9 @@ use exface\Core\DataConnectors\MySqlConnector;
 use exface\Core\Events\Installer\OnInstallEvent;
 use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Exceptions\DataSources\DataSourceNotFoundError;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Selectors\UserSelectorInterface;
+use exface\Core\Factories\UserFactory;
 
 /**
  * 
@@ -933,20 +936,58 @@ SQL;
         return $this->selector->getWorkbench();
     }
     
-    public function loadUserData(UserInterface $user) : UserInterface
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadUser()
+     */
+    public function loadUser(UserSelectorInterface $selector) : UserInterface
     {
-        $userModel = $this->getWorkbench()->model()->getObject('exface.Core.USER');
-        $userSheet = DataSheetFactory::createFromObject($userModel);
-        foreach ($userModel->getAttributes() as $attr) {
-            $userSheet->getColumns()->addFromAttribute($attr);
+        $userMetaObj = $this->getWorkbench()->model()->getObject('exface.Core.USER');
+        $userData = DataSheetFactory::createFromObject($userMetaObj);
+        foreach ($userMetaObj->getAttributes() as $attr) {
+            $userData->getColumns()->addFromAttribute($attr);
         }
-        $userSheet->getFilters()->addConditionsFromString($userModel, 'USERNAME', $user->getUsername(), EXF_COMPARATOR_EQUALS);
-        $userSheet->dataRead();
+        if ($selector->isUid() === true) {
+            $userData->getFilters()->addConditionsFromString($userMetaObj, 'UID', $selector->toString(), EXF_COMPARATOR_EQUALS);
+        } else {
+            $userData->getFilters()->addConditionsFromString($userMetaObj, 'USERNAME', $selector->toString(), EXF_COMPARATOR_EQUALS);
+        }
+        $userData->dataRead();
         
-        if ($userSheet->countRows() == 0) {
+        if ($userData->countRows() === 0) {
+            throw new UserNotFoundError('No user with ' . ($selector->isUid() ? 'UID' : 'username') . ' "' . $selector->toString() . '" found!');
+        }
+        
+        if ($userData->countRows() > 1) {
+            throw new UserNotUniqueError('Multiple users with ' . ($selector->isUid() ? 'UID' : 'username') . ' "' . $selector->toString() . '" found!');
+        }
+        
+        $user = UserFactory::createFromModel($this->getWorkbench(), $userData->getCellValue('USERNAME', 0));
+        // load the user right away, because we already have all data - it just needst to be loaded into
+        // the user object.
+        return $this->loadUserData($user, $userData);
+    }
+    
+    public function loadUserData(UserInterface $user, DataSheetInterface $userData = null) : UserInterface
+    {
+        $userMetaObj = $this->getWorkbench()->model()->getObject('exface.Core.USER');
+        if ($userData === null) {
+            $userData = DataSheetFactory::createFromObject($userMetaObj);
+            $userData->getFilters()->addConditionsFromString($userMetaObj, 'USERNAME', $user->getUsername(), EXF_COMPARATOR_EQUALS);
+        }
+        
+        foreach ($userMetaObj->getAttributes() as $attr) {
+            $userData->getColumns()->addFromAttribute($attr);
+        }
+        if ($userData->isFresh() === false) {
+            $userData->dataRead();
+        }
+        
+        if ($userData->countRows() == 0) {
             throw new UserNotFoundError('No user "' . $user->getUsername() . '" exists in the metamodel.');
-        } elseif ($userSheet->countRows() == 1) {
-            $row = $userSheet->getRow(0);
+        } elseif ($userData->countRows() == 1) {
+            $row = $userData->getRow(0);
             $user->setUid($row['UID']);
             $user->setLocale($row['LOCALE']);
             $user->setFirstName($row['FIRST_NAME']);
@@ -958,6 +999,7 @@ SQL;
         } else {
             throw new UserNotUniqueError('More than one user exist in the metamodel for username "' . $user->getUsername() . '".');
         }
+        
         return $user;
     }
     
