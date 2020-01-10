@@ -33,7 +33,7 @@
                "context_alias": "exface.Core.DebugContext",
                "visibility": "show_allways",
                "restrict_only_admins": true
-           }
+           }           
 	   ]
 	},
 	

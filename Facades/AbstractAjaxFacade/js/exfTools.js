@@ -152,7 +152,7 @@
 					return false;
 				}
 			} 
-		}
+		});
 		return true;
 	}
 	
@@ -460,7 +460,9 @@
 			}
 		},
 		data: {
-			compareRows: _dataRowsCompare
+			compareRows: function(row1, row2) {
+				return _dataRowsCompare(row1, row2);
+			}
 		}
 	}
 })));

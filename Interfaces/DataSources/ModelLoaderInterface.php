@@ -24,6 +24,7 @@ use exface\Core\Interfaces\Selectors\DataSourceSelectorInterface;
 use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 
 interface ModelLoaderInterface
 {
@@ -157,6 +158,7 @@ interface ModelLoaderInterface
      */
     public function getInstaller();
     
+    public function loadUser(UserSelectorInterface $selector) : UserInterface;
     
     /**
      * 

@@ -14,6 +14,12 @@ use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Factories\QueryBuilderFactory;
+use exface\Core\Factories\ActionFactory;
+use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
+use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
 
 /**
  * An InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
@@ -101,6 +107,10 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     private $data_table = null;
 
     private $table_uxon = null;
+    
+    private $lookupActionUxon = null;
+    
+    private $lookupButton = null;
 
     /**
      * Returns the relation, this widget represents or FALSE if the widget stands for a direct attribute.
@@ -111,7 +121,8 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     public function getRelation()
     {
         if ($this->getAttribute()->isRelation()) {
-            return $this->getMetaObject()->getRelation($this->getAttributeAlias());
+            $relAlias = DataAggregation::stripAggregator($this->getAttributeAlias());
+            return $this->getMetaObject()->getRelation($relAlias);
         } else {
             return false;
         }
@@ -547,6 +558,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     public function getChildren() : \Iterator
     {
         yield $this->getTable();
+        yield $this->getLookupButton();
     }
 
     public function getMaxSuggestions()
@@ -600,7 +612,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     {
         if (! $this->isOptionsObjectSpecified()) {
             if ($this->isBoundToAttribute() === true && $this->getAttribute()->isRelation() === true) {
-                $this->setOptionsObject($this->getMetaObject()->getRelation($this->getAttributeAlias())->getRightObject());
+                $this->setOptionsObject($this->getRelation()->getRightObject());
             }
         }
         return parent::getOptionsObject();
@@ -720,6 +732,73 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     {
         return $this->getTable()->getPreloader();
     }
+    
+    /**
+     * 
+     * @throws WidgetPropertyNotSetError
+     * @return ActionInterface
+     */
+    public function getLookupAction() : ActionInterface
+    {
+        return $this->getLookupButton()->getAction();
+    }
+    
+    /**
+     * The action to open an advanced search dialog.
+     *
+     * @uxon-property lookup_action
+     * @uxon-type \exface\Core\CommonLogic\AbstractAction
+     * @uxon-template {"alias": "exface.Core.ShowLookupDialog"}
+     *
+     * @param UxonObject $uxon
+     * @throws WidgetLogicError
+     * @return InputComboTable
+     */
+    public function setLookupAction(UxonObject $uxon) : InputComboTable
+    {
+        if ($this->lookupButton !== null) {
+            throw new WidgetLogicError($this, 'Cannot set lookup_action for ' . $this->getWidgetType() . ': the action has been already instantiated!');
+        }
+        $this->lookupActionUxon = $uxon;
+        return $this;
+    }
 
+    /**
+     * 
+     * @return UxonObject
+     */
+    protected function getLookupActionUxon() : UxonObject
+    {
+        if ($this->lookupActionUxon !== null) {
+            $uxon = $this->lookupActionUxon;
+        } else {
+            $uxon = new UxonObject([
+                'alias' => 'exface.Core.ShowLookupDialog'
+            ]);
+        }
+        
+        if ($uxon->hasProperty('target_widget_id') ===  false) {
+            $uxon->setProperty('target_widget_id', $this->getId());
+        }
+        
+        return $uxon;
+    }
+    
+    /**
+     * 
+     * @return Button
+     */
+    public function getLookupButton() : Button
+    {
+        if ($this->lookupButton === null) {
+            $btn = WidgetFactory::createFromUxonInParent($this, new UxonObject([
+                'widget_type' => 'Button',
+                'object_alias' => $this->getTable()->getMetaObject()->getAliasWithNamespace(),
+                'action' => $this->getLookupActionUxon()
+            ]));
+            $this->lookupButton = $btn;
+        }
+        return $this->lookupButton;
+    }
 }
 ?>
