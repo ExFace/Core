@@ -10,6 +10,8 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthToken;
 use exface\Core\Factories\ResultFactory;
+use exface\Core\Factories\UserFactory;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * Performs an authentication attempt using the supplied login data.
@@ -39,7 +41,13 @@ class Login extends AbstractAction
         $token = $this->getAuthToken($task);
         if ($connectionSelector = $inputData->getCellValue('CONNECTION', 0)) {
             $dataConnection = DataConnectionFactory::createFromModel($this->getWorkbench(), $connectionSelector);
-            $dataConnection->authenticate($token);
+            $saveCred = $inputData->getCellValue('CONNECTION_SAVE', 0);
+            $saveCred = $saveCred === null ? true : BooleanDataType::cast($saveCred);
+            if ($saveForUserId = $inputData->getCellValue('CONNECTION_SAVE_FOR_USER', 0)) {
+                $dataConnection->authenticate($token, $saveCred, UserFactory::createFromUsernameOrUid($this->getWorkbench(), $saveForUserId));
+            } else {
+                $dataConnection->authenticate($token, $saveCred);
+            }
         } else {
             $this->getWorkbench()->getSecurity()->authenticate($token);
         }
