@@ -8,6 +8,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Interfaces\Widgets\iUseInputWidget;
 
 /**
  * Open a dialog to perform an advanced search for values for a specified input widget.
@@ -49,6 +51,8 @@ class ShowLookupDialog extends ShowDialog
 {
 
     private $target_widget_id = null;
+    
+    private $multi_select = null;
 
     /**
      * 
@@ -65,6 +69,11 @@ class ShowLookupDialog extends ShowDialog
             $this->getWidgetDefinedIn()->setCloseDialogAfterActionSucceeds(false);
         }
     }
+    
+    protected function getDialogWidgetType() : string
+    {
+        return 'DataLookupDialog';
+    }
 
     /**
      * 
@@ -74,19 +83,13 @@ class ShowLookupDialog extends ShowDialog
     protected function enhanceDialogWidget(Dialog $dialog)
     {
         $dialog = parent::enhanceDialogWidget($dialog);
-        $page = $this->getWidgetDefinedIn()->getPage();
+        
+        if ($this->getMultiSelect() !== null) {
+            $dialog->setMultiSelect($this->getMultiSelect());
+        }
         
         /* @var $data_table \exface\Core\Widgets\DataTable */
-        if ($dialog->isEmpty()) {
-            $data_table = WidgetFactory::create($page, 'DataTable', $dialog);
-            $data_table->setMetaObject($this->getMetaObject());
-            if ($this->getWidgetDefinedIn()->getParent()->getMultiselect() === true){
-                $data_table->setMultiSelect(true);
-            }
-            $dialog->addWidget($data_table);
-        } else {
-            $data_table = reset($dialog->getWidgets());
-        }
+        $data_table = $dialog->getDataWidget();
         
         if ($data_table->getMetaObject()->hasLabelAttribute() === true) {
             $labelAlias = $data_table->getMetaObject()->getLabelAttributeAlias();
@@ -132,6 +135,17 @@ class ShowLookupDialog extends ShowDialog
     {
         $this->target_widget_id = $value;
         return $this;
+    }
+    
+    public function setMultiSelect(bool $trueOrFalse) : ShowLookupDialog
+    {
+        $this->multi_select = $trueOrFalse;
+        return $this;
+    }
+    
+    protected function getMultiSelect() : ?bool
+    {
+        return $this->multi_select;
     }
 }
 
