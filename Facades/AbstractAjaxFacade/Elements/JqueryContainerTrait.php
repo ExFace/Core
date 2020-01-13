@@ -203,7 +203,7 @@ JS;
     {
         $output = '';
         foreach ($this->getWidget()->getChildren() as $subw) {
-            $output .= $this->getFacade()->getElement($subw)->buildJsResetter() . "\n";
+            $output .= $this->getFacade()->getElement($subw)->buildJsResetter() . ";\n";
         }
         return $output;
     }
