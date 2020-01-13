@@ -327,4 +327,15 @@ interface AjaxFacadeElementInterface
      */
     public function buildJsDestroy() : string;
     
+    /**
+     * Returns a JS snippet to reset the widget to it's original state.
+     * 
+     * E.g. an `Input` should get it's default value back, a `Form` (or container in general) shoud reset 
+     * all it's children, a data widget should get reset to it's original sorting/filtering configuration
+     * (tha same should happen if it's configurator is reset).
+     * 
+     * @return string
+     */
+    public function buildJsResetter() : string;
+    
 }

@@ -6,7 +6,7 @@ use exface\Core\Interfaces\Actions\iRefreshInputWidget;
 use exface\Core\CommonLogic\Constants\Icons;
 
 /**
- * This action refreshes the data in it's input widget - e.g. a DataTable.
+ * This action refreshes the data in it's input widget - e.g. a DataTable, a Form, etc.
  * 
  * @author Andrej Kabachnik
  *
