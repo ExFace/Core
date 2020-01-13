@@ -124,4 +124,14 @@ JS;
     {
         return $this->getWidget()->getFilters();
     }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see JqueryContainerTrait::buildJsResetter()
+     */
+    public function buildJsResetter() : string
+    {
+        return parent::buildJsResetter() . $this->getFacade()->getElement($this->getWidget()->getDataWidget())->buildJsRefresh();
+    }
 }
