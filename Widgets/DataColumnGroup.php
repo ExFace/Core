@@ -396,7 +396,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     
     /**
      * 
-     * @return \exface\Core\Widgets\Data
+     * @return iHaveColumnGroups
      */
     public function getDataWidget() : iHaveColumnGroups
     {
