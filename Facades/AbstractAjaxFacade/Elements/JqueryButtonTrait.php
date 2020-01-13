@@ -11,6 +11,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Actions\iRunFacadeScript;
 use exface\Core\Actions\SendToWidget;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
+use exface\Core\Widgets\Parts\ConditionalProperty;
 
 /**
  * 
@@ -21,6 +22,8 @@ use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
  *
  */
 trait JqueryButtonTrait {
+    
+    use JqueryDisableConditionTrait;
     
     private $onSuccessJs = [];
 
@@ -103,10 +106,24 @@ trait JqueryButtonTrait {
             $js_check_input_rows = '';
         }
         
-        $js_requestData = "
-					var requestData = " . $input_element->buildJsDataGetter($action) . ";
-					" . $js_check_input_rows;
-        return $js_requestData;
+        if (($conditionalProperty = $this->getWidget()->getDisabledIf()) !== null) {
+            $js_check_button_state = <<<JS
+            
+                    if ({$this->buildJsConditionalPropertyIf($conditionalProperty)}) {
+                        return false;
+                    }
+
+JS;
+        } else {
+            $js_check_button_state = $this->getWidget()->isDisabled() === true ? 'return false;' : '';
+        }
+        
+        return <<<JS
+					var requestData = {$input_element->buildJsDataGetter($action)};
+					$js_check_input_rows
+                    $js_check_button_state
+
+JS;
     }
 
     /**
