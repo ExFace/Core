@@ -65,7 +65,12 @@ class Tiles extends WidgetGrid
     {
         return $this->setWidgets($uxon);
     }
-    
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\WidgetGrid::setWidgets()
+     */
     public function setWidgets($widget_or_uxon_array)
     {
         $widgets = array();
