@@ -39,7 +39,7 @@ trait JqueryAlignmentTrait {
      * @param string $value
      * @return self
      */
-    public function setDefaultAlignment(string $value) : iCanBeAligned
+    public function setDefaultAlignment(string $value) : self
     {
         $this->defaultAlign = $value;
         return $this;
