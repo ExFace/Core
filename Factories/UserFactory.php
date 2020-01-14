@@ -5,6 +5,10 @@ use exface\Core\CommonLogic\Model\User;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\Exceptions\UserNotFoundError;
+use exface\Core\Interfaces\Selectors\SelectorInterface;
+use exface\Core\Interfaces\Selectors\UserSelectorInterface;
+use exface\Core\CommonLogic\Selectors\UserSelector;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * Factory class to create Users.
@@ -14,7 +18,6 @@ use exface\Core\Exceptions\UserNotFoundError;
  */
 class UserFactory extends AbstractStaticFactory
 {
-
     /**
      * Creates a user from the passed parameters.
      * 
@@ -34,6 +37,30 @@ class UserFactory extends AbstractStaticFactory
         $user->setLocale($locale);
         $user->setEmail($email);
         return $user;
+    }
+    
+    /**
+     * 
+     * @param UserSelectorInterface $selector
+     * @return UserInterface
+     */
+    public static function createFromSelector(UserSelectorInterface $selector) : UserInterface
+    {
+        if ($selector->isUsername() === true) {
+            return static::createFromModel($selector->getWorkbench(), $selector->toString());
+        }
+        return $selector->getWorkbench()->model()->getModelLoader()->loadUser($selector);
+    }
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param string $selectorString
+     * @return UserInterface
+     */
+    public function createFromUsernameOrUid(WorkbenchInterface $workbench, string $selectorString) : UserInterface
+    {
+        return static::createFromSelector(new UserSelector($workbench, $selectorString));
     }
 
     /**

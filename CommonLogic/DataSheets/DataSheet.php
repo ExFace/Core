@@ -1883,7 +1883,7 @@ class DataSheet implements DataSheetInterface
         // untouched, so the initially calculated numbers array will remain
         // valid.
         $rowNumbers = $this->getUidColumn()->findRowsByValue($uid);
-        $rowNumbers = rsort($rowNumbers);
+        rsort($rowNumbers);
         foreach ($rowNumbers as $row_number) {
             $this->removeRow($row_number);
         }

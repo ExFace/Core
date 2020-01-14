@@ -22,6 +22,7 @@ use exface\Core\Exceptions\UserNotFoundError;
 use exface\Core\Exceptions\UserNotUniqueError;
 use exface\Core\Interfaces\Selectors\DataSourceSelectorInterface;
 use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
+use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 
 interface ModelLoaderInterface
 {
@@ -148,6 +149,7 @@ interface ModelLoaderInterface
      */
     public function getInstaller();
     
+    public function loadUser(UserSelectorInterface $selector) : UserInterface;
     
     /**
      * 

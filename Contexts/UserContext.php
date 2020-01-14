@@ -64,6 +64,7 @@ class UserContext extends AbstractContext
               "widget_type" => "Form",
               "height" => "100%",
               "object_alias" => "exface.Core.USER",
+              "columns_in_grid" => "1",
               "widgets" => [
                 [
                     "widget_type" => "Message",
@@ -100,9 +101,9 @@ class UserContext extends AbstractContext
                 [
                     "action" => [
                         "alias" => "exface.Core.GoToUrl",
-                        "url" => "http://localhost/exface/login.html?webloginmode=lo"
+                        "url" => $this->getWorkbench()->getCMS()->buildUrlToSiteRoot() . "/login.html?webloginmode=lo"
                     ],
-                    "caption" => "Logout",
+                    "caption" => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.LOGOUT.NAME'),
                     "icon" => $icon,
                     "align" => "left"
                 ]
@@ -131,9 +132,9 @@ class UserContext extends AbstractContext
                 [
                     "action" => [
                         "alias" => "exface.Core.GoToUrl",
-                        "url" => "http://localhost/exface/login.html"
+                        "url" => $this->getWorkbench()->getCMS()->buildUrlToSiteRoot() . "/login.html"
                     ],
-                    "caption" => "Login",
+                    "caption" => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.LOGOUT.NAME'),
                     "icon" => $icon
                 ]
               ]

@@ -10,6 +10,10 @@ use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\Interfaces\Selectors\DataConnectorSelectorInterface;
 use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
 use exface\Core\Interfaces\Model\MetaModelPrototypeInterface;
+use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Exceptions\Security\AuthenticationFailedError;
+use exface\Core\Interfaces\UserInterface;
 
 interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeConvertedToUxon, MetaModelPrototypeInterface
 {
@@ -94,6 +98,29 @@ interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInte
      * @return DataQueryInterface
      */
     public function query(DataQueryInterface $query) : DataQueryInterface;
+    
+    /**
+     * Authenticates a given token against the data source store updating the current
+     * user's credentials if needed.
+     * 
+     * @throws AuthenticationFailedError
+     * 
+     * @param AuthenticationTokenInterface $token
+     * @return AuthenticationTokenInterface
+     */
+    public function authenticate(AuthenticationTokenInterface $token, bool $updateUserCredentials = true, UserInterface $credentialsOwner = null) : AuthenticationTokenInterface;
+    
+    /**
+     * Populates the given container with inputs required to perform authentication via this connector.
+     * 
+     * In many cases, this method will simply add input-widgets for username and password.
+     * However, some connection may add a secondary authentication factor or even use a 
+     * `Browser` widget to display a remote login-page (e.g. for OAuth-authentication).
+     * 
+     * @param iContainOtherWidgets $container
+     * @return iContainOtherWidgets
+     */
+    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets;
 
     /**
      * Starts a new transaction in the data source.

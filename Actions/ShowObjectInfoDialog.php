@@ -104,7 +104,7 @@ class ShowObjectInfoDialog extends ShowDialog
     {
         $dialog = parent::createDialogWidget($page);
         $default_editor_uxon = $dialog->getMetaObject()->getDefaultEditorUxon();
-        $dialog_uxon = $default_editor_uxon;
+        $dialog_uxon = $default_editor_uxon->copy();
         
         // If there is a default editor, make sure it gets it's own id space, so widget links inside still work
         // if multiple editors of the same object are located in the same page (e.g. for creating, editing, etc.)

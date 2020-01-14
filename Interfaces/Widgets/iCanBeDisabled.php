@@ -2,6 +2,8 @@
 namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\Parts\ConditionalProperty;
 
 interface iCanBeDisabled extends WidgetInterface
 {
@@ -23,4 +25,17 @@ interface iCanBeDisabled extends WidgetInterface
      * @return WidgetInterface
      */
     public function setDisabled($true_or_false);
+    
+    /**
+     * 
+     * @param UxonObject $uxon
+     * @return WidgetInterface
+     */
+    public function setDisabledIf(UxonObject $uxon) : WidgetInterface;
+    
+    /**
+     * 
+     * @return ConditionalProperty|NULL
+     */
+    public function getDisabledIf() : ?ConditionalProperty;
 }

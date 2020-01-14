@@ -6,9 +6,14 @@ use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use function GuzzleHttp\json_encode;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Database AppInstaller for Apps with MySQL Database.
+ * 
+ * ## Encoding
+ * 
+ * This installer currently requires SQL files to be encoded as UTF8!!!
  * 
  * ## Transaction handling
  * 
@@ -92,7 +97,7 @@ CREATE TABLE IF NOT EXISTS `{$this->getMigrationsTableName()}` (
 `down_script` longtext NOT NULL,
 `down_result` longtext NULL,
 PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 SQL;
                 $this->runSqlMultiStatementScript($connection, $migrations_table_create);
@@ -157,9 +162,9 @@ INSERT INTO {$this->getMigrationsTableName()}
     )
     VALUES (
         "{$this->escapeSqlStringValue($migration_name)}", 
-        "{$this->escapeSqlStringValue($up_script)}", 
+        "{$this->escapeSqlStringValue(StringDataType::encodeUTF8($up_script))}", 
         "{$this->escapeSqlStringValue($up_result_string)}", 
-        "{$this->escapeSqlStringValue($down_script)}"
+        "{$this->escapeSqlStringValue(StringDataType::encodeUTF8($down_script))}"
     );
 
 SQL;
