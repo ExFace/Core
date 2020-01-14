@@ -6,8 +6,8 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Factories\SelectorFactory;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 class UiPageTree
 {
@@ -23,7 +23,7 @@ class UiPageTree
     
     private $expandPathOnly = false;
     
-    public function __construct(Workbench $exface)
+    public function __construct(WorkbenchInterface $exface)
     {
         $this->exface = $exface;
     }
