@@ -848,6 +848,48 @@
             "UXON": "{\"widget_type\":\"InlineGroup\",\"caption\":\"\",\"separator\":\"x\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2020-01-14 10:54:12",
+            "MODIFIED_ON": "2020-01-14 10:54:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea36bc24652a25b32f0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Line chart",
+            "DESCRIPTION": "Simple line chart with filters and sorters",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
+            "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}]},\"series\":[{\"type\":\"line\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2020-01-14 10:54:40",
+            "MODIFIED_ON": "2020-01-14 10:54:40",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea36bc35720aa3b32f0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Area chart",
+            "DESCRIPTION": "Simple area chart with filters and sorters",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
+            "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}]},\"series\":[{\"type\":\"area\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2020-01-14 10:55:12",
+            "MODIFIED_ON": "2020-01-14 10:55:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea36bc4843e2cfb32f0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Smoothed line chart",
+            "DESCRIPTION": "Smoothed line chart (spline) with filters and sorters",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
+            "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}]},\"series\":[{\"type\":\"spline\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
         }
     ],
     "totals_rows": [],
