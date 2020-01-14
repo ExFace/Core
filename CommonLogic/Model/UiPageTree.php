@@ -227,8 +227,8 @@ class UiPageTree
         //if expandPathOnly is `true` only add the node that has `childPageId` as Id.
         if ($this->expandPathOnly) {
             foreach ($dataSheet->getRows() as $row) {
-                if ($childPageId && $childPageId === $row['CMS_ID']) {
-                    $node = new UiPageTreeNode($this->getWorkbench(), $row['ALIAS'], $row['NAME'], $row['CMS_ID']);
+                if ($childPageId && $childPageId === $row['CMS_ID'] ?? $row['UID']) {
+                    $node = new UiPageTreeNode($this->getWorkbench(), $row['ALIAS'], $row['NAME'], $row['CMS_ID'] ?? $row['UID']);
                     $node->setDescription($row['DESCRIPTION']);
                     $node->setIntro($row['INTRO']);
                     //if child node array is not empty set the node as parent node for all given child nodes and the given child nodes to the node as children
@@ -245,7 +245,7 @@ class UiPageTree
             //if expandPathOnly is `false|null` add all nodes that are on the same level as the page with the Id `childPageId`
         } else {
             foreach ($dataSheet->getRows() as $row) {
-                $node = new UiPageTreeNode($this->getWorkbench(), $row['ALIAS'], $row['NAME'], $row['CMS_ID']);
+                $node = new UiPageTreeNode($this->getWorkbench(), $row['ALIAS'], $row['NAME'], $row['CMS_ID'] ?? $row['UID']);
                 $node->setDescription($row['DESCRIPTION']);
                 $node->setIntro($row['INTRO']);
                 // when the id of the node is the same as the given `childPageId` set it as parent for all given `childNodes` and add them as child of the node
@@ -285,8 +285,8 @@ class UiPageTree
         }
         $dataSheet = $this->getMenuDataSheet($pageSelector);
         foreach ($dataSheet->getRows() as $row) {
-            $childPageSelector = SelectorFactory::createPageSelector($this->getWorkbench(), $row['CMS_ID']);
-            $node = new UiPageTreeNode($this->getWorkbench(), $row['ALIAS'], $row['NAME'], $row['CMS_ID']);
+            $childPageSelector = SelectorFactory::createPageSelector($this->getWorkbench(), $row['CMS_ID'] ?? $row['UID']);
+            $node = new UiPageTreeNode($this->getWorkbench(), $row['ALIAS'], $row['NAME'], $row['CMS_ID'] ?? $row['UID']);
             $node->setDescription($row['DESCRIPTION']);
             $node->setIntro($row['INTRO']);
             if ($parentNode) {
