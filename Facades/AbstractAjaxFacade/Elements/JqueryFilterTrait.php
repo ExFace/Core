@@ -116,5 +116,14 @@ trait JqueryFilterTrait {
     {
         return $this->getInputElement()->buildJsValidationError();
     }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see AbstractJqueryElement::buildJsResetter()
+     */
+    public function buildJsResetter() : string
+    {
+        return $this->getInputElement()->buildJsResetter();
+    }
 }
-?>

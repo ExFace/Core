@@ -253,7 +253,7 @@ class DebugContext extends AbstractContext
         ->setIncludeObjectBasketActions(false);
         
         // Add the filename column (the UID column is always there)
-        $data_list->addColumn(WidgetFactory::create($container->getPage(), 'DataColumn', $data_list)->setAttributeAlias('NAME'));
+        $data_list->addColumn($data_list->createColumnFromAttribute($data_list->getMetaObject()->getAttribute('NAME')));
         
         // Add the START button
         /* @var $button \exface\Core\Widgets\Button */

@@ -15,6 +15,8 @@
 	"ACTION.DELETEOBJECT.RESULT": "%number% Objekt gelöscht.|%number% Objekte gelöscht.",
 	"ACTION.DELETEOBJECT.NAME": "Löschen",
 
+	"ACTION.SHOWLOGINDIALOG.NAME": "Anmelden",
+	
 	"ACTION.SHOWOBJECTCOPYDIALOG.NAME": "Duplizieren",
 
 	"ACTION.SHOWOBJECTEDITDIALOG.SAVE_BUTTON": "Speichern",
@@ -42,6 +44,11 @@
 
 	"ACTION.FAVORITESADD.NAME": "In die Favoriten",
     "ACTION.FAVORITESADD.RESULT": "%number% Objekt zu Favoriten hinzugefügt.|%number% Objekte zu Favoriten hinzugefügt.",
+    
+    "ACTION.LOGIN.NAME": "Anmelden",
+    "ACTION.LOGIN.RESULT": "Anmeldung erfolgreich!",
+    
+    "ACTION.LOGOUT.NAME": "Abmelden",
     
     "ACTION.GENERATEMODELFROMDATASOURCE.NAME": "Modell generieren",
 	"ACTION.GENERATEMODELFROMDATASOURCE.RESULT_FOR_OBJECT": "%created_counter% Attribut(e) für %object_counter% Objekt(e) erstellt. %skipped_counter% Attribut(e) als Dublikate ignoriert!",
@@ -80,6 +87,7 @@
     "ACTION.READDATA.NAME": "Suchen",
     "ACTION.READDATA.SEARCH": "Suchen",
     "ACTION.REFRESHWIDGET.NAME": "Aktualisieren",
+	"ACTION.RESETWIDGET.NAME": "Zurücksetzen",
 
 	"ACTION.SAVEDATA.RESULT": "%number% Objekt gespeichert.|%number% Objekte gespeichert.",
 	"ACTION.SAVEDATA.NAME": "Speichern",
@@ -152,6 +160,7 @@
     "GLOBAL.MODEL.RELATION_CARDINALITY.ONE_TO_N": "1-zu-N",
     "GLOBAL.MODEL.RELATION_CARDINALITY.N_TO_ONE": "N-zu-1",
     "GLOBAL.MODEL.RELATION_CARDINALITY.N_TO_M": "N-zu-M",
+    "GLOBAL.MODEL.USERS": "Nutzer",
     "GLOBAL.MODEL.UID": "UID",
     "GLOBAL.MODEL.LABEL": "Label",
     
@@ -210,6 +219,7 @@
     "PAGE.OBJECT_EDITOR.DATA_SOURCE_BASE_OBJECT": "Basisobjekt der Datenquelle",
     "PAGE.OBJECT_EDITOR.QUICK_EDIT_ATTRIBUTES": "Quick-Edit",
     "PAGE.OBJECT_EDITOR.QUICK_EDIT_ATTRIBUTES_HINT": "Tabellarischer Editor für alle Attribute gleichzeitig",
+    "PAGE.DATA_CONNECTIONS.ADD_CREDENTIALS": "Credentials hinzufügen",
     "PAGE.DATA_SOURCES.BASE_OBJECT": "Basisobjekt",
     "PAGE.DATA_SOURCES.CONNECTION_READONLY": "Verbindung nur lesend",
     "PAGE.DATA_SOURCE_EDITOR.DEFAULTS": "Standard-Konfiguration",
@@ -223,10 +233,14 @@
     "PAGE.USERS.CREDENTIALS": "Zugangsdaten",
     "PAGE.USERS.USER_DATA": "Nutzer",
     "PAGE.USERS.PERSONAL_DATA": "Person",
-    "PAGE.USERS.ADD_CONNECTION_TO_CREDENTIALS": "Verbindung hinzufügen",
+    "PAGE.USERS.CREDENTIALS_ADD_CONNECTION": "Verbindung hinzufügen",
+    "PAGE.USERS.CREDENTIALS_UPDATE": "Zugangsdaten aktualisieren",
+    "PAGE.USERS.CREDENTIALS_TEST": "Zugang testen",
     "PAGE.DOCS.READ": "Lesen",
     "PAGE.ATTRIBUTES.DISPLAY_ORDER": "Anzeige-Pos.",
     "PAGE.TABS.GENERAL": "Allgemein",
+    
+    "SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED": "Diese Verbindung benötigt bzw. unterstützt keine Nutzer-Anmeldung.",
     
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",

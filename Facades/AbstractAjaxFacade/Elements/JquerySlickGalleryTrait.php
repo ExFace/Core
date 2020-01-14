@@ -17,6 +17,16 @@ use exface\Core\Widgets\Imagegallery;
  * 
  * ```
  * 
+ * If your facade is based on the `AbstractAjaxFacade`, add these configuration options
+ * to the facade config file. Make sure, each config option points to an existing
+ * inlcude file!
+ * 
+ * ```
+ *  "LIBS.SLICK.SLICK_JS": "npm-asset/slick-carousel/slick/slick.min.js",
+ *  "LIBS.SLICK.SLICK_CSS": "npm-asset/slick-carousel/slick/slick.css",
+ *	
+ * ```
+ * 
  * For the horizontal slider to work automatically with images of different
  * diemnsions, add the following code to the facade's CSS. This makes sure,
  * the image height allways fits the height of the element.
@@ -144,8 +154,10 @@ JS;
     protected function buildHtmlHeadSliderIncludes()
     {
         $includes = [];
-        $includes[] = '<script type="text/javascript" src="exface/vendor/npm-asset/slick-carousel/slick/slick.min.js"></script>';
-        $includes[] = '<link rel="stylesheet" type="text/css" href="exface/vendor/npm-asset/slick-carousel/slick/slick.css">';
+        $facade = $this->getFacade();
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.SLICK.SLICK_JS') . '"></script>';
+        $includes[] = '<link rel="stylesheet" type="text/css" href="' . $facade->buildUrlToSource('LIBS.SLICK.SLICK_CSS') . '">';
+        
         return $includes;
     }
     

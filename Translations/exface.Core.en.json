@@ -15,6 +15,8 @@
 	"ACTION.DELETEOBJECT.RESULT": "%number% item deleted.|%number% items deleted.",
 	"ACTION.DELETEOBJECT.NAME": "Delete",
 	
+	"ACTION.SHOWLOGINDIALOG.NAME": "Login",
+	
 	"ACTION.SHOWOBJECTCOPYDIALOG.NAME": "Copy",
 	
 	"ACTION.SHOWOBJECTEDITDIALOG.SAVE_BUTTON": "Save",
@@ -43,7 +45,12 @@
 	"ACTION.FAVORITESADD.NAME": "Add to favorites",
     "ACTION.FAVORITESADD.RESULT": "%number% objects added to favorites.",
     
-	"ACTION.GENERATEMODELFROMDATASOURCE.NAME": "Generate Model",
+	"ACTION.LOGIN.NAME": "Login",
+    "ACTION.LOGIN.RESULT": "Authenticated successfully!",
+    
+    "ACTION.LOGOUT.NAME": "Logout",
+    
+    "ACTION.GENERATEMODELFROMDATASOURCE.NAME": "Generate Model",
 	"ACTION.GENERATEMODELFROMDATASOURCE.RESULT_FOR_OBJECT": "Created %created_counter% attribute(s) for %object_counter% object(s). %skipped_counter% attributes skipped as duplicates!",
 	
 	"ACTION.GOBACK.NAME": "Back",
@@ -80,6 +87,7 @@
     "ACTION.READDATA.NAME": "Search",
     "ACTION.READDATA.SEARCH": "Search",
     "ACTION.REFRESHWIDGET.NAME": "Refresh",
+	"ACTION.RESETWIDGET.NAME": "Reset",
 	
 	"ACTION.SAVEDATA.RESULT": "%number% item created or updated.|%number% items created or updated.",
 	"ACTION.SAVEDATA.NAME": "Save",
@@ -153,6 +161,7 @@
     "GLOBAL.MODEL.RELATION_CARDINALITY.ONE_TO_N": "1-to-N",
     "GLOBAL.MODEL.RELATION_CARDINALITY.N_TO_ONE": "N-to-1",
     "GLOBAL.MODEL.RELATION_CARDINALITY.N_TO_M": "N-to-M",
+    "GLOBAL.MODEL.USERS": "Users",
     "GLOBAL.MODEL.UID": "UID",
     "GLOBAL.MODEL.LABEL": "Label",
     
@@ -211,6 +220,7 @@
     "PAGE.OBJECT_EDITOR.DATA_SOURCE_BASE_OBJECT": "Base Object of Data Source",
     "PAGE.OBJECT_EDITOR.QUICK_EDIT_ATTRIBUTES": "Quick-Edit",
     "PAGE.OBJECT_EDITOR.QUICK_EDIT_ATTRIBUTES_HINT": "Tabular editor for all attributes",
+    "PAGE.DATA_CONNECTIONS.ADD_CREDENTIALS": "Add Credentials",
     "PAGE.DATA_SOURCES.BASE_OBJECT": "Base object",
     "PAGE.DATA_SOURCES.CONNECTION_READONLY": "Connection readonly",
     "PAGE.DATA_SOURCE_EDITOR.DEFAULTS": "Defaults",
@@ -222,14 +232,18 @@
     "PAGE.DATA_TYPES.USED": "Used",
     "PAGE.DATA_TYPES.USED_HINT": "Number of attributes, that use this data type",
     "PAGE.USERS.CREDENTIALS": "Credentials",
+    "PAGE.USERS.CREDENTIALS_ADD_CONNECTION": "Add connection",
+    "PAGE.USERS.CREDENTIALS_UPDATE": "Update credentials",
     "PAGE.USERS.USER_DATA": "User Data",
     "PAGE.USERS.PERSONAL_DATA": "Personal Data",
-    "PAGE.USERS.ADD_CONNECTION_TO_CREDENTIALS": "Add Connection",
+    "PAGE.USERS.CREDENTIALS_TEST": "Test Access",
     "PAGE.DOCS.READ": "Read",
     "PAGE.ATTRIBUTES.DISPLAY_ORDER": "Disp. Pos.",
     "PAGE.TABS.GENERAL": "General",
     
-    "WIDGET.SELECT_ALL": "All",
+    "SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED": "This connection does not require/support user authentication.",
+    
+	"WIDGET.SELECT_ALL": "All",
 	"WIDGET.SELECT_YES": "Yes",
 	"WIDGET.SELECT_NO": "No",
 	"WIDGET.SELECT_NONE": "-",
