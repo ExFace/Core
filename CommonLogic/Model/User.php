@@ -294,6 +294,16 @@ class User implements UserInterface
         return $this->anonymous;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::is()
+     */
+    public function is(UserInterface $otheruser) : bool
+    {
+        return $this->getUsername() === $otheruser->getUsername();
+    }
+    
     public function hasModel() : bool
     {
         if ($this->modelLoader === null) {

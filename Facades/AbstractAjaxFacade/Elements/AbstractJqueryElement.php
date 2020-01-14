@@ -14,6 +14,7 @@ use exface\Core\Widgets\Container;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
+use exface\Core\Interfaces\Widgets\iTakeInput;
 
 /**
  * Implementation for the AjaxFacadeElementInterface based on jQuery.
@@ -892,6 +893,31 @@ JS;
     public function buildJsDestroy() : string
     {
         return '';
+    }
+    
+    /**
+     * The default resetter will use the value-setter to empty the element or restore the initial
+     * value for iHaveValue-widgets. This will reset most elements into the state as they were
+     * rendered initially.
+     * 
+     * Override this method adjust the functionality for specific facade elements.
+     * 
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface::buildJsResetter()
+     */
+    public function buildJsResetter() : string
+    {
+        $widget = $this->getWidget();
+        
+        if ($widget instanceof iTakeInput) {
+            if ($widget->getValueWidgetLink() !== null) {
+                return '';
+            }
+            $initialValueJs = '"' . $widget->getValueWithDefaults() . '"';   
+        } else {
+            $initialValueJs = '""';
+        }
+        
+        return $this->buildJsValueSetter($initialValueJs);
     }
 }
 ?>

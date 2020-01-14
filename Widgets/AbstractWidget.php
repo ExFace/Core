@@ -33,6 +33,7 @@ use exface\Core\Widgets\Traits\iHaveCaptionTrait;
 use exface\Core\Uxon\WidgetSchema;
 use exface\Core\Widgets\Traits\iHaveVisibilityTrait;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Widgets\Parts\ConditionalProperty;
 
 /**
  * Basic ExFace widget
@@ -92,8 +93,8 @@ abstract class AbstractWidget implements WidgetInterface
     private $do_not_prefill = false;
 
     private $id_space = null;
-
-    private $disable_condition = null;
+    
+    private $disabled_if = null;
 
     private $parentByType = [];
 
@@ -194,8 +195,8 @@ abstract class AbstractWidget implements WidgetInterface
         if ($this->disabled !== null) {
             $uxon->setProperty('disabled', $this->isDisabled());
         }
-        if ($this->disable_condition !== null) {
-            $uxon->setProperty('disable_condition', $this->getDisableCondition()->exportUxonObject());
+        if ($this->disabled_if !== null) {
+            $uxon->setProperty('disabled_if', $this->getDisabledIf()->exportUxonObject());
         }
         
         if ($this->hint !== null) {
@@ -1160,17 +1161,8 @@ abstract class AbstractWidget implements WidgetInterface
     }
 
     /**
-     *
-     * @return \exface\Core\Interfaces\iCanBeConvertedToUxon|\exface\Core\CommonLogic\Model\Condition
-     */
-    public function getDisableCondition()
-    {
-        return $this->disable_condition;
-    }
-
-    /**
-     * Sets a condition to disable the widget.
-     *
+     * @deprecated use setDisabledIf() instead!
+     * 
      * E.g.:
      * 
      * ```json
@@ -1186,19 +1178,96 @@ abstract class AbstractWidget implements WidgetInterface
      * widget consumer is not empty. Can be usefully combined with a value-reference
      * to the same widget and column.
      *
-     * @uxon-property disable_condition
-     * @uxon-type object
-     * @uxon-template {"widget_link": "", "comparator": "", "value": ""}
-     *
      * @param UxonObject $value            
      * @return \exface\Core\Widgets\AbstractWidget
      */
     public function setDisableCondition($value)
     {
-        $this->disable_condition = $value;
+        return $this->setDisabledIf($value);
+    }
+    
+    /**
+     * Sets a condition to disable the widget.
+     *
+     * Examples
+     * 
+     * Disable an `Input` if checkbox not checked:
+     *
+     * ```json
+     *  "widget_type": "Input"
+     *  "disabled_if": {
+     *      "value_left": "id_of_checkbox",
+     *      "comparator": "!=",
+     *      "value_right": "1"
+     *  }
+     *
+     * ```
+     * 
+     * Disable a `Button` if selected table row does not have required data:
+     *
+     * ```json
+     *  "widget_type": "Button",
+     *  "caption": "Call",
+     *  "disabled_if": {
+     *      "value_left": "id_of_table!PHONE_NUMBER",
+     *      "comparator": "==",
+     *      "value_right": ""
+     *  }
+     *
+     * ```
+     * 
+     * Disable a `Button` on a complex AND-condition
+     * 
+     * ```json
+     *  "widget_type": "Button",
+     *  "caption": "Call",
+     *  "disabled_if": {
+     *      "operator": "AND",
+     *      "conditions": [
+     *          {
+     *              "value_left": "id_of_table!PHONE_NUMBER",
+     *              "comparator": "==",
+     *              "value_right": ""
+     *          },{
+     *              "value_left": "id_of_table!ALLOW_PHONE_CALLS",
+     *              "comparator": "==",
+     *              "value_right": "1"
+     *          }
+     *      ]
+     *  }
+     *
+     * ```
+     *
+     * @uxon-property disabled_if
+     * @uxon-type \exface\Core\Widgets\Parts\ConditionalProperty
+     * @uxon-template {"operator": "AND", "conditions": [{"value_left": "", "comparator": "", "value_right": ""}]}
+     *
+     * @param UxonObject $value
+     * @return \exface\Core\Widgets\AbstractWidget
+     */
+    public function setDisabledIf(UxonObject $uxon) : WidgetInterface
+    {
+        $this->disabled_if = $uxon;
         return $this;
     }
 
+    /**
+     * 
+     * @return ConditionalProperty|NULL
+     */
+    public function getDisabledIf() : ?ConditionalProperty
+    {
+        if ($this->disabled_if === null) {
+            return null;
+        }
+        
+        if (! ($this->disabled_if instanceof ConditionalProperty)) {
+            $this->disabled_if = new ConditionalProperty($this, 'disabled_if', $this->disabled_if);
+        }
+        
+        return $this->disabled_if;
+    }
+    
     /**
      * Returns the closest parent widget which implements the passed class or interface.
      * 

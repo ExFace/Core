@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Interfaces\Widgets\iHaveColumnGroups;
 
 
 /**
@@ -42,6 +43,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     public function addColumn(DataColumn $column, int $position = NULL) : iHaveColumns
     {
         $column->setMetaObject($this->getMetaObject());
+        $column->setParent($this);
         if ($column->isEditable()) {
             $parent = $this->getParent();
             if ($parent instanceof iShowData) {
@@ -394,9 +396,9 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     
     /**
      * 
-     * @return \exface\Core\Widgets\Data
+     * @return iHaveColumnGroups
      */
-    public function getDataWidget()
+    public function getDataWidget() : iHaveColumnGroups
     {
         return $this->getParent();
     }

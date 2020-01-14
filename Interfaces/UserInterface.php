@@ -127,6 +127,13 @@ interface UserInterface extends WorkbenchDependantInterface
     public function isUserAnonymous();
     
     /**
+     * 
+     * @param UserInterface $otherUser
+     * @return bool
+     */
+    public function is(UserInterface $otherUser) : bool;
+    
+    /**
      * Returns TRUE if the user has a model and, thus, may have a credential storage, etc.
      * 
      * @return bool

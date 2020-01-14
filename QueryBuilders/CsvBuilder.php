@@ -69,7 +69,7 @@ class CsvBuilder extends FileContentsBuilder
         // pagination
         if ($readerFiltering === false) {
             // Increase offset if there is a header row and another time to find out if more rows are there
-            $offset = ($hasHeaderRow === true ? $this->getOffset() + 1 : $this->getOffset()) + 1;
+            $offset = ($hasHeaderRow === true ? $this->getOffset() + 1 : $this->getOffset());
             $filtered->setOffset($offset);
             $filtered->setLimit($this->getLimit()+1);
         }
@@ -90,7 +90,7 @@ class CsvBuilder extends FileContentsBuilder
         $result_rows = [];
         $hasMoreRows = false;
         try {
-            //$result_rows = iterator_to_array($resultIterator);
+            $result_rows_test = iterator_to_array($resultIterator);
             foreach ($this->getAttributes() as $qpart) {
                 $colKey = $qpart->getColumnKey();
                 $rowKey = $qpart->getDataAddress();
@@ -173,7 +173,11 @@ class CsvBuilder extends FileContentsBuilder
     
     protected function hasHeaderRow() : bool
     {
-        return BooleanDataType::cast($this->getMainObject()->getDataAddressProperty('HAS_HEADER_ROW') ? $this->getMainObject()->getDataAddressProperty('HAS_HEADER_ROW') : 0);
+        if ($this->getMainObject()->getDataAddressProperty('HAS_HEADER_ROW') === null) {
+            return false;
+        } else {
+            return BooleanDataType::cast($this->getMainObject()->getDataAddressProperty('HAS_HEADER_ROW'));
+        }
     }
 
     /**
@@ -186,7 +190,7 @@ class CsvBuilder extends FileContentsBuilder
         $query = $data_connection->query($this->buildQuery());
         $this->prepareFilters($query);
         $rowCount = $this->getRowCount($query->getPathAbsolute(), $this->getDelimiter(), $this->getEnclosure());
-        if ($this->hasHeaderRow()) {
+        if ($this->hasHeaderRow() === true) {
             $rowCount = max(0, $rowCount - 1);
         }
         
