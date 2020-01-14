@@ -9,20 +9,53 @@ use exface\Core\Actions\GoToPage;
 use exface\Core\Actions\RefreshWidget;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Actions\iRunFacadeScript;
+use exface\Core\Actions\SendToWidget;
+use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
+use exface\Core\Widgets\Parts\ConditionalProperty;
+use exface\Core\Actions\ResetWidget;
 
+/**
+ * 
+ * @method Button getWidget()
+ * @method AbstractAjaxFacade getFacade()
+ * 
+ * @author tmc
+ *
+ */
 trait JqueryButtonTrait {
+    
+    use JqueryDisableConditionTrait;
     
     private $onSuccessJs = [];
 
     protected function buildJsInputRefresh(Button $widget, $input_element)
     {
-        $js = ($widget->getRefreshInput() && $input_element->buildJsRefresh() ? $input_element->buildJsRefresh(true) . ";" : "");
+        $js = '';
+        
+        // Reset the input if needed (before refreshing!!!)
+        $js .= $this->buildJsInputReset($widget, $input_element);
+        
+        // Refresh the input if needed
+        if ($widget->getRefreshInput() === true && $refreshJs = $input_element->buildJsRefresh()) {
+            $js .= $refreshJs . ';';
+        }
+        
+        // Refresh the linked widget if needed
         if ($link = $widget->getRefreshWidgetLink()) {
             if ($widget->getPage()->is($link->getTargetPageAlias()) && $linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
                 $js .= "\n" . $linked_element->buildJsRefresh(true);
             }
         }
+        
         return $js;
+    }
+    
+    protected function buildJsInputReset(button $widget, $input_element) : string
+    {
+        if ($widget->getResetInput() === true && $resetJs = $input_element->buildJsResetter()) {
+            return $resetJs . ';';
+        }
+        return '';
     }
 
     public function buildJsClickFunctionName()
@@ -59,6 +92,13 @@ trait JqueryButtonTrait {
         return $output;
     }
 
+    /**
+     * Produces the JS variable `requestData` containing the input data for the action
+     * 
+     * @param ActionInterface $action
+     * @param AbstractJqueryElement $input_element
+     * @return string
+     */
     protected function buildJsRequestDataCollector(ActionInterface $action, AbstractJqueryElement $input_element)
     {
         if (! is_null($action->getInputRowsMin()) || ! is_null($action->getInputRowsMax())) {
@@ -86,10 +126,25 @@ trait JqueryButtonTrait {
             $js_check_input_rows = '';
         }
         
-        $js_requestData = "
-					var requestData = " . $input_element->buildJsDataGetter($action) . ";
-					" . $js_check_input_rows;
-        return $js_requestData;
+        if (($conditionalProperty = $this->getWidget()->getDisabledIf()) !== null) {
+            $js_check_button_state = <<<JS
+            
+                    if ({$this->buildJsConditionalPropertyIf($conditionalProperty)}) {
+                        return false;
+                    }
+
+JS;
+        } else {
+            $js_check_button_state = $this->getWidget()->isDisabled() === true ? 'return false;' : '';
+        }
+        
+        return <<<JS
+
+                    $js_check_button_state
+					var requestData = {$input_element->buildJsDataGetter($action)};
+					$js_check_input_rows
+
+JS;
     }
 
     /**
@@ -140,6 +195,10 @@ trait JqueryButtonTrait {
             $output = $this->buildJsClickShowWidget($action, $input_element);
         } elseif ($action instanceof GoBack) {
             $output = $this->buildJsClickGoBack($action, $input_element);
+        } elseif ($action instanceof SendToWidget) {
+            $output = $this->buildJsClickSendToWidget($action, $input_element);
+        } elseif ($action instanceof ResetWidget) {
+            $output = $this->buildJsInputReset($widget, $input_element);
         } else {
             $output = $this->buildJsClickCallServerAction($action, $input_element);
         }
@@ -381,6 +440,30 @@ JS;
             }
         }
         return $tags;
+    }
+    
+    /**
+     * Passes the result of the data-getter of the input widget to the data-setter of the target widget
+     * 
+     * @param SendToWidget $action
+     * @param AbstractJqueryElement $input_element
+     * @return string
+     */
+    protected function buildJsClickSendToWidget(SendToWidget $action, AbstractJqueryElement $input_element)
+    {
+        $widget = $this->getWidget();
+        $targetElement = $this->getFacade()->getElementByWidgetId($action->getTargetWidgetId(), $this->getWidget()->getPage());
+        
+        return <<<JS
+
+                        {$this->buildJsRequestDataCollector($action, $input_element)}
+						if ({$input_element->buildJsValidator()}) {
+                            {$targetElement->buildJsDataSetter('requestData')}
+                            {$this->buildJsCloseDialog($widget, $input_element)}
+                            {$this->buildJsInputRefresh($widget, $input_element)}
+                        }
+
+JS;
     }
 }
 ?>

@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Interfaces\Widgets\iCanBeAligned;
+
 trait JqueryAlignmentTrait {
     
     private $defaultAlign = null;

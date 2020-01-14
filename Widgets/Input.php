@@ -6,6 +6,9 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Widgets\iHaveDefaultValue;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Widgets\Parts\ConditionalProperty;
+use exface\Core\Interfaces\Widgets\iCanBeRequired;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * A generic input field: single line accepting any set of characters.
@@ -16,6 +19,8 @@ use exface\Core\Interfaces\WidgetInterface;
 class Input extends Value implements iTakeInput, iHaveDefaultValue
 {
     private $required = null;
+    
+    private $requiredIf = null;
 
     private $readonly = false;
 
@@ -62,6 +67,51 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
         $this->required = BooleanDataType::cast($value);
         return $this;
     }
+    
+    /**
+     *
+     * @return ConditionalProperty|NULL
+     */
+    public function getRequiredIf(): ?ConditionalProperty
+    {
+        if ($this->requiredIf === null) {
+            return null;
+        }
+        
+        if (! ($this->requiredIf instanceof ConditionalProperty)) {
+            $this->requiredIf = new ConditionalProperty($this, 'required_if', $this->requiredIf);
+        }
+        
+        return $this->requiredIf;
+    }
+    
+    /**
+     * Sets a condition to make the widget required.
+     *
+     * E.g. make an `Input` required if a checkbox is checked:
+     *
+     * ```json
+     *  "widget_type": "Input"
+     *  "required_if": {
+     *      "value_left": "id_of_checkbox",
+     *      "comparator": "==",
+     *      "value_right": "1"
+     *  }
+     *
+     * ```
+     *
+     * @uxon-property required_if
+     * @uxon-type \exface\Core\Widgets\Parts\ConditionalProperty
+     * @uxon-template {"operator": "AND", "conditions": [{"value_left": "", "comparator": "", "value_right": ""}]}
+     *
+     * @param UxonObject $value
+     * @return \exface\Core\Widgets\AbstractWidget
+     */
+    public function setRequiredIf(UxonObject $uxon): iCanBeRequired
+    {
+        $this->requiredIf = $uxon;
+        return $this;
+    }    
 
     /**
      * Input widgets are disabled if the displayed attribute is not editable or if the widget was explicitly disabled.

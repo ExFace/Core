@@ -1486,7 +1486,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             case EXF_COMPARATOR_LESS_THAN:
             case EXF_COMPARATOR_GREATER_THAN_OR_EQUALS:
             case EXF_COMPARATOR_LESS_THAN_OR_EQUALS:
-                $output = $subject . " " . $comparator . " " . $this->prepareWhereValue($value, $data_type, $sql_data_type);
+                if ($data_type instanceof StringDataType || $data_type instanceof DateDataType) {
+                    $value = "'" . $this->prepareWhereValue($value, $data_type, $sql_data_type) . "'";
+                } else {
+                    $value = $this->prepareWhereValue($value, $data_type, $sql_data_type);
+                }
+                $output = $subject . " " . $comparator . " " . $value;
                 break;
             case EXF_COMPARATOR_IS_NOT:
                 $output = 'UPPER(' . $subject . ") NOT LIKE '%" . $this->prepareWhereValue(strtoupper($value), $data_type) . "%'";
