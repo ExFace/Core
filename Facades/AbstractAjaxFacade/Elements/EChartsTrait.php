@@ -2659,7 +2659,7 @@ JS;
         if ($widget->getLegendPosition() !== null) {
             return false;
         }
-        if ($widget->isLegendHidden() === true) {
+        if ($widget->getHideLegend() === true) {
             return true;
         }
         $firstSeries = $widget->getSeries()[0];
