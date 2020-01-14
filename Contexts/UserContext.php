@@ -134,7 +134,7 @@ class UserContext extends AbstractContext
                         "alias" => "exface.Core.GoToUrl",
                         "url" => $this->getWorkbench()->getCMS()->buildUrlToSiteRoot() . "/login.html"
                     ],
-                    "caption" => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.LOGOUT.NAME'),
+                    "caption" => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.LOGIN.NAME'),
                     "icon" => $icon
                 ]
               ]
