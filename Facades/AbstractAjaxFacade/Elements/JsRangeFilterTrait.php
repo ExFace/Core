@@ -67,5 +67,19 @@ trait JsRangeFilterTrait
         }
         return implode(',', $conditions);
     }
-
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see AbstractJqueryElement::buildJsResetter()
+     */
+    public function buildJsResetter() : string
+    {
+        $facade = $this->getFacade();
+        $js = '';
+        foreach ($this->getWidgetInlineGroup()->getWidgets() as $w) {
+            $js .= $facade->getElement($w)->buildJsResetter() . ';';
+        }
+        return $js;
+    }
 }
