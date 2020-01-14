@@ -306,7 +306,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
                 'user' => $token->getUsername(),
                 'password' => $token->getPassword()
             ]);
-            $credentialSetName = $this->getName() . ' - ' . ($token->getUsername() ? $token->getUsername() : 'no username');
+            $credentialSetName = ($token->getUsername() ? $token->getUsername() : 'no username') . ' - ' . $this->getName();
             $this->updateUserCredentials($user, $uxon, $credentialSetName);
         }
         
