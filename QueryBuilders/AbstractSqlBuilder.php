@@ -1637,7 +1637,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 
             } else {
                 // If we are dealing with a regular relation, build a subquery to select primary keys from joined tables and match them to the foreign key of the main table
-                $relq->addFilter($qpart->rebase($relq, $start_rel->getAlias()));
+                $relq->addFilter($qpart->rebase($relq, $start_rel->getAliasWithModifier()));
                 $relq->addAttribute($start_rel->getRightKeyAttribute()->getAlias());
                 $junction_qpart = new QueryPartSelect($start_rel->getLeftKeyAttribute()->getAlias(), $this, $start_rel->getLeftKeyAttribute()->getAliasWithRelationPath());
                 $junction = $this->buildSqlSelect($junction_qpart, null, null, '');
