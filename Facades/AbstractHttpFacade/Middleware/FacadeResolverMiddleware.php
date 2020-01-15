@@ -13,6 +13,11 @@ use exface\Core\Exceptions\Facades\FacadeIncompatibleError;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Factories\FacadeFactory;
 use GuzzleHttp\Psr7\Response;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Factories\UiPageFactory;
+use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 
 /**
  * This PSR-15 middleware will look for a facade responsible for the given request
@@ -30,7 +35,11 @@ use GuzzleHttp\Psr7\Response;
  */
 class FacadeResolverMiddleware implements MiddlewareInterface
 {
+    const REQUEST_ATTRIBUTE_PAGE = 'uipage';
+    
     private $workbench = null;
+    
+    private $pageAttributeAlias = null;
     
     /**
      * 
@@ -49,10 +58,23 @@ class FacadeResolverMiddleware implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         try {
-            $facade = $this->getFacadeForUri($request->getUri());
-        } catch (FacadeRoutingError $e) {
-            $this->workbench->getLogger()->logException($e);
-            return new Response(500, [], $e->getMessage());
+            $facade = $this->getFacadeFromUri($request->getUri());
+        } catch (FacadeRoutingError $eRouter) {
+            $this->workbench->start();
+            try {
+                $page = $this->getPageFromUri($request->getUri());
+                $facade = $page->getFacade();
+                $request = $request
+                ->withAttribute($facade->getRequestAttributeForAction(), 'exface.Core.ShowWidget')
+                ->withAttribute($facade->getRequestAttributeForPage(), $page->getSelector()->__toString());
+                if ($facade instanceof AbstractAjaxFacade) {
+                    $request = $request
+                    ->withAttribute($facade->getRequestAttributeForRenderingMode(), AbstractAjaxFacade::MODE_PAGE);
+                }
+            } catch (FacadeRoutingError $ePage) {
+                $this->workbench->getLogger()->logException($eRouter)->logException($ePage);
+                return new Response(500, [], $eRouter->getMessage());
+            }
         }
         
         if (! ($facade instanceof RequestHandlerInterface)) {
@@ -62,13 +84,28 @@ class FacadeResolverMiddleware implements MiddlewareInterface
         return $facade->handle($request);
     }
     
+    protected function getPageFromUri(UriInterface $uri) : UiPageInterface
+    {
+        // If not, see if the URL matches a page alias
+        // Get the last part of the path in the URI
+        $aliasFromUrl = StringDataType::substringAfter($uri->getPath(), '/', '', false, true);
+        // Remove the file extension
+        $aliasFromUrl = StringDataType::substringBefore($aliasFromUrl, '.', $aliasFromUrl, false, true);
+        
+        try {
+            return UiPageFactory::createFromModel($this->workbench, $aliasFromUrl);
+        } catch (UiPageNotFoundError $e) {            
+            throw new FacadeRoutingError('No route can be found for URL "' . $uri->getPath() . '" - please check system configuration option FACADES.ROUTES or reinstall your facade!', null, $e);
+        }
+    }
+    
     /**
      * 
      * @param UriInterface $uri
      * @throws FacadeRoutingError
      * @return HttpFacadeInterface
      */
-    protected function getFacadeForUri(UriInterface $uri) : HttpFacadeInterface
+    protected function getFacadeFromUri(UriInterface $uri) : HttpFacadeInterface
     {
         $url = $uri->getPath() . '?' . $uri->getQuery();
         $routes = $this->workbench->getConfig()->getOption('FACADES.ROUTES');
