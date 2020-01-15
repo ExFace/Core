@@ -1439,10 +1439,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         continue;
                     }
                     // Normalize non-empty values
-                    $val = $this->prepareWhereValue($val, $data_type, $sql_data_type);
-                    if ($data_type instanceof StringDataType) {
-                        $values[$nr] = "'" . $val . "'";
-                    }
+                    $values[$nr] = $this->prepareWhereValue($val, $data_type, $sql_data_type);
                 }
                 $value = '(' . (! empty($values) ? implode(',', $values) : 'NULL') . ')' . ($value ? ' OR ' . $value : '');
             }
@@ -1473,11 +1470,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $output = "(" . $subject . " NOT IN " . $value . ")";
                 break; // The braces are needed if there is a OR IS NULL addition (see above)
             case EXF_COMPARATOR_EQUALS:
-                if ($data_type instanceof StringDataType || $data_type instanceof DateDataType) {
-                    $output = $subject . " = '" . $this->prepareWhereValue($value, $data_type, $sql_data_type) . "'";
-                } else {
-                    $output = $subject . " = " . $this->prepareWhereValue($value, $data_type, $sql_data_type);
-                }
+                $output = $subject . " = " . $this->prepareWhereValue($value, $data_type, $sql_data_type);
                 break;
             case EXF_COMPARATOR_EQUALS_NOT:
                 $output = $subject . " != " . $this->prepareWhereValue($value, $data_type, $sql_data_type);
@@ -1489,11 +1482,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $output = $subject . " " . $comparator . " " . $this->prepareWhereValue($value, $data_type, $sql_data_type);
                 break;
             case EXF_COMPARATOR_IS_NOT:
-                $output = 'UPPER(' . $subject . ") NOT LIKE '%" . $this->prepareWhereValue(strtoupper($value), $data_type) . "%'";
+                $output = 'UPPER(' . $subject . ") NOT LIKE '%" . $this->escapeString(strtoupper($value)) . "%'";
                 break;
             case EXF_COMPARATOR_IS:
             default:
-                $output = 'UPPER(' . $subject . ") LIKE '%" . $this->prepareWhereValue(strtoupper($value), $data_type) . "%'";
+                $output = 'UPPER(' . $subject . ") LIKE '%" . $this->escapeString(strtoupper($value)) . "%'";
         }
         return $output;
     }
@@ -1501,12 +1494,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function prepareWhereValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
         // IDEA some data type specific procession here
-        if ($data_type instanceof BooleanDataType) {
-            $output = $value ? 1 : 0;
-        } elseif (strcasecmp($value, EXF_LOGICAL_NULL) === 0) {
-            return EXF_LOGICAL_NULL;
-        } else {
-            $output = $this->escapeString($value);
+        switch (true) {
+            case $data_type instanceof BooleanDataType:
+                $output = $value ? 1 : 0;
+                break;
+            case strcasecmp($value, EXF_LOGICAL_NULL) === 0:
+                return EXF_LOGICAL_NULL;
+            case $data_type instanceof StringDataType:
+            case $data_type instanceof DateDataType:
+                $output = "'" . $this->escapeString($value) . "'";
+                break;
+            default:
+                $output = $this->escapeString($value);
         }
         return $output;
     }
@@ -1638,7 +1637,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 
             } else {
                 // If we are dealing with a regular relation, build a subquery to select primary keys from joined tables and match them to the foreign key of the main table
-                $relq->addFilter($qpart->rebase($relq, $start_rel->getAlias()));
+                $relq->addFilter($qpart->rebase($relq, $start_rel->getAliasWithModifier()));
                 $relq->addAttribute($start_rel->getRightKeyAttribute()->getAlias());
                 $junction_qpart = new QueryPartSelect($start_rel->getLeftKeyAttribute()->getAlias(), $this, $start_rel->getLeftKeyAttribute()->getAliasWithRelationPath());
                 $junction = $this->buildSqlSelect($junction_qpart, null, null, '');

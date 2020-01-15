@@ -471,9 +471,10 @@ class UxonSchema implements UxonSchemaInterface
             }
         }
         // Reverse relations are not attributes, so we need to add them here manually
-        foreach ($object->getRelations(RelationTypeDataType::REVERSE) as $rel) {
+        foreach ($object->getRelations() as $rel) {
             $values[] = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $rel->getAliasWithModifier() . RelationPath::RELATION_SEPARATOR;
         }
+        $values = array_unique($values);
         
         // Sort attributes and reverse relations alphabetically.
         sort($values);

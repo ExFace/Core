@@ -1465,7 +1465,8 @@ JS;
         }
         if ($axis->getDimension() === Chart::AXIS_X) {
             $JsOffset = "bottom: {$offset},";
-        } elseif ($axis->getDimension() === Chart::AXIS_Y) {
+        } elseif ($axis->getDimension() === Chart::AXIS_Y) {            
+            $offset += 25;
             $JsOffset = "right: {$offset},";
         } else {
             $JsOffset = '';
@@ -2300,7 +2301,7 @@ JS;
                 $rightAxis = true;
             }
         }
-        if ($rightAxis === true || $count != 0) {
+        if ($rightAxis === true) {
             $margin = 0;
         } else {
             $margin = 40;
@@ -2491,7 +2492,7 @@ JS;
         $widget = $this->getWidget();
         $firstSeries = $widget->getSeries()[0];
         $position = $widget->getLegendPosition();
-        if ($position === null && ( $firstSeries instanceof PieChartSeries || $firstSeries instanceof GraphChartSeries)) {
+        if ($this->legendHidden() === true) {
             $positionJs = "show: false";
         } elseif ($position == 'top' ) {
             $positionJs = "top: 'top',";
@@ -2657,6 +2658,9 @@ JS;
         $widget = $this->getWidget();
         if ($widget->getLegendPosition() !== null) {
             return false;
+        }
+        if ($widget->getHideLegend() === true) {
+            return true;
         }
         $firstSeries = $widget->getSeries()[0];
         if (count($widget->getSeries()) == 1 && (($firstSeries instanceof PieChartSeries) === false || $firstSeries instanceof GraphChartSeries === false)) {

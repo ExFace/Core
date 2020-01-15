@@ -27,7 +27,7 @@ use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Widgets\Parts\DataFooter;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
-use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Interfaces\Widgets\iHaveColumns;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -666,9 +666,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     
     /**
      * 
-     * @return \exface\Core\Widgets\Data
+     * @return iHaveColumns
      */
-    public function getDataWidget() : iShowData
+    public function getDataWidget() : iHaveColumns
     {
         $parent = $this->getParent();
         if ($parent instanceof DataColumnGroup) {

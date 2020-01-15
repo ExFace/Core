@@ -19,6 +19,7 @@ use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Traits\iHaveColorTrait;
 use exface\Core\Interfaces\Widgets\iHaveCaption;
 use exface\Core\Interfaces\Widgets\iCanBeDisabled;
+use exface\Core\Interfaces\Actions\iResetWidgets;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -57,6 +58,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     private $refresh_input = true;
 
     private $refresh_widget_link = null;
+    
+    private $resetInputWidget = null;
 
     public function getAction()
     {
@@ -340,5 +343,35 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     public function getHint()
     {
         return parent::getHint() ? parent::getHint() : $this->getCaption();
-    }    
+    } 
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getResetInput() : bool
+    {
+        if ($this->resetInputWidget === null) {
+            if ($this->hasAction() === true && $this->getAction() instanceof iResetWidgets) {
+                return true;
+            }
+        }
+        return $this->resetInputWidget ?? false;
+    }
+    
+    /**
+     * Set to TRUE to reset the input widget to it's original state after the action of the button is performed.
+     * 
+     * @uxon-property reset_input
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return Button
+     */
+    public function setResetInput(bool $value) : Button
+    {
+        $this->resetInputWidget = $value;
+        return $this;
+    }
 }

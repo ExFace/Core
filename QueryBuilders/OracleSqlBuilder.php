@@ -275,7 +275,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     $first_rel = false;
                     if (! empty($rels)) {
                         $first_rel = reset($rels);
-                        $first_rel_qpart = $this->addAttribute($first_rel->getAlias());
+                        $first_rel_qpart = $this->addAttribute($first_rel->getAliasWithModifier());
                         // IDEA this does not support relations based on custom sql. Perhaps this needs to change
                         $select .= ', ' . $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                     }

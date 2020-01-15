@@ -846,6 +846,34 @@ class Chart extends AbstractWidget implements
         return $this;
     }
     
+    /**
+     * returns true if legend should be hidden
+     *
+     * @return bool
+     */
+    public function getHideLegend() : bool
+    {
+        if ($this->legendHidden === null) {
+            return false;
+        }
+        return $this->legendHidden;
+    }
+    
+    /**
+     * Configuration to hide the legend
+     *
+     * @uxon-property hide_legend
+     * @uxon-type bool
+     * @uxon-default false
+     *
+     * @param bool $hidden
+     * @return Chart
+     */
+    public function setHideLegend(bool $hidden) : Chart
+    {
+        $this->legendHidden = $hidden;
+        return $this;
+    }    
     
     /**
      *

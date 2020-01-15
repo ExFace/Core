@@ -270,6 +270,8 @@ class SqlModelLoader implements ModelLoaderInterface
                     // TODO Check if get_alias_with_relation_path() really will cause loops inevitably. If not, remove the explicit key
                     // here.
                     $object->getAttributes()->add($attr, $attr->getAlias());
+                } else {
+                    $attr = null;
                 }
                 
                 // If the attribute is a relation, save it for later processing. We can't create relations here right away because we need to
@@ -347,7 +349,7 @@ class SqlModelLoader implements ModelLoaderInterface
                     if ($row['copy_with_related_object'] == 1) {
                         $rel->setRightObjectToBeCopiedWithLeftObject(true);
                     }
-                } elseif ($attr) {
+                } elseif ($attr !== null) {
                     // At this point, we know, it is a direct relation. This can only happen if the object has a corresponding direct
                     // attribute. This is why the elseif($attr) is there.
                     
@@ -375,7 +377,7 @@ class SqlModelLoader implements ModelLoaderInterface
                     }
                 }
                 
-                if ($rel) {
+                if ($rel !== null) {
                     $object->addRelation($rel);
                 }
             }

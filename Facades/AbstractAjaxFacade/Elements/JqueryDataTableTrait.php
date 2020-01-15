@@ -67,4 +67,17 @@ trait JqueryDataTableTrait {
     {
         return $this->editors;
     }
+    
+    protected abstract function buildJsDataResetter() : string;
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see AbstractJqueryElement
+     */
+    public function buildJsResetter() : string
+    {
+        $configuratorElement = $this->getFacade()->getElement($this->getWidget()->getConfiguratorWidget());
+        return $this->buildJsDataResetter() . $configuratorElement->buildJsResetter();
+    }
 }
