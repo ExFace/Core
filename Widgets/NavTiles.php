@@ -9,6 +9,8 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\CommonLogic\Model\UiPageTreeNode;
+use exface\Core\Factories\UiPageTreeFactory;
 
 /**
  * NavTiles show a hierarchical navigational tile menu starting from a given parent page.
@@ -99,41 +101,38 @@ class NavTiles extends WidgetGrid
     public function getWidgets(callable $filter = null)
     {
         if ($this->tilesBuilt === false) {
-            $pageSheet = $this->getMenuDataSheet($this->getRootPageSelector());
-            $this->createTileGroup($pageSheet, $this->getWorkbench()->getCMS()->getPage($this->getRootPageSelector())->getName(), $this->getDepth());
+            $tree = UiPageTreeFactory::createFromRootPage($this->getWorkbench(), $this->getWorkbench()->getCMS()->getPage($this->getRootPageSelector()), $this->getDepth());
+            $nodes = $tree->getRootNodes();
+            $this->createTileGroupFromNodes($nodes, $this->getWorkbench()->getCMS()->getPage($this->getRootPageSelector())->getName());
             
             $this->tilesBuilt = true;
             
         }
         return parent::getWidgets();
-    }
-    
+    }    
+        
     /**
-     * 
-     * @param DataSheetInterface $pageSheet
+     *
+     * @param UiPageTreeNode[] $nodes
      * @param string $caption
      * @param int $depth
      * @param Tile $upperLevelTile
      * @return Tiles
      */
-    protected function createTileGroup(DataSheetInterface $pageSheet, string $caption, int $depth, Tile $upperLevelTile = null) : Tiles
+    protected function createTileGroupFromNodes(array $nodes, string $caption, Tile $upperLevelTile = null) : Tiles
     {
         $tiles = WidgetFactory::create($this->getPage(), 'Tiles', $this);
         $tiles->setCaption($caption);
         $this->addWidget($tiles);
         
-        foreach ($pageSheet->getRows() as $row) {
-            $tile = $this->createTileFromPageDataRow($row, $tiles);
+        foreach ($nodes as $node) {
+            $tile = $this->createTileFromTreeNode($node, $tiles);
             $tiles->addWidget($tile);
             if ($upperLevelTile !== null) {
                 $this->parentTileIds[$tile->getId()] = $upperLevelTile;
             }
-            if ($depth > 1) {
-                $parentPageSelector = new UiPageSelector($this->getWorkbench(), $row['CMS_ID'] ?? $row['UID']);
-                $childrenSheet = $this->getMenuDataSheet($parentPageSelector);
-                if ($childrenSheet->isEmpty() === false) {
-                    $this->createTileGroup($childrenSheet, $caption . ' > ' . $row['NAME'], ($depth-1), $tile);
-                }
+            if ($node->hasChildNodes()) {
+                $this->createTileGroupFromNodes($node->getChildNodes(), $caption . ' > ' . $node->getName(), $tile);
             }
         }
         
@@ -142,54 +141,25 @@ class NavTiles extends WidgetGrid
     
     /**
      * 
-     * @param array $row
+     * @param UiPageTreeNode $node
      * @param iContainOtherWidgets $container
      * @return Tile
      */
-    protected function createTileFromPageDataRow(array $row, iContainOtherWidgets $container) : Tile
+    protected function createTileFromTreeNode(UiPageTreeNode $node, iContainOtherWidgets $container) : Tile
     {
         /* @var $tile \exface\Core\Widgets\Tile */
         $tile = WidgetFactory::create($container->getPage(), 'Tile', $container);
-        $tile->setTitle($row['NAME']);
-        $tile->setSubtitle($row['DESCRIPTION']);
+        $tile->setTitle($node->getName());
+        $tile->setSubtitle($node->getDescription());
         $tile->setWidth('0.5');
-        $hint = $row['INTRO'] ? $row['INTRO'] : $row['DESCRIPTION'];
-        $tile->setHint($row['NAME'] . ($hint ? ":\n" . $hint : ''));
+        $hint = $node->hasIntro() ? $node->getIntro() : $node->getDescription();
+        $tile->setHint($node->getName() . ($hint ? ":\n" . $hint : ''));
         $tile->setAction(new UxonObject([
             'alias' => 'exface.Core.GoToPage',
-            'page_alias' => $row['ALIAS']
+            'page_alias' => $node->getPageSelector()
             
         ]));
         return $tile;
-    }
-    
-    /**
-     * 
-     * @param UiPageSelectorInterface $parentPageSelector
-     * @throws WidgetConfigurationError
-     * @return DataSheetInterface
-     */
-    protected function getMenuDataSheet(UiPageSelectorInterface $parentPageSelector) : DataSheetInterface
-    {
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PAGE');
-        $ds->getColumns()->addMultiple(['NAME', 'DESCRIPTION', 'INTRO', 'ALIAS']);
-        $ds->getSorters()->addFromString('MENU_POSITION');
-        
-        if ($parentPageSelector->isAlias()) {
-            $parentAlias = 'MENU_PARENT__ALIAS';
-        } elseif ($parentPageSelector->isUid()) {
-            $parentAlias = 'MENU_PARENT__UID';
-        } elseif ($parentPageSelector->isCmsId()) {
-            $parentAlias = 'MENU_PARENT';
-        } else {
-            throw new WidgetConfigurationError($this, 'Invalid page selector "' . $parentPageSelector->toString() . '" in widget ' . $this->getWidgetType() . '"!');
-        }
-        
-        $ds->addFilterFromString($parentAlias, $parentPageSelector->toString(), '==');
-        $ds->addFilterFromString('MENU_VISIBLE', 1, '==');
-        
-        $ds->dataRead();
-        return $ds;
     }
     
     /**

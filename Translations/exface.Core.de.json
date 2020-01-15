@@ -87,6 +87,7 @@
     "ACTION.READDATA.NAME": "Suchen",
     "ACTION.READDATA.SEARCH": "Suchen",
     "ACTION.REFRESHWIDGET.NAME": "Aktualisieren",
+	"ACTION.RESETWIDGET.NAME": "Zurücksetzen",
 
 	"ACTION.SAVEDATA.RESULT": "%number% Objekt gespeichert.|%number% Objekte gespeichert.",
 	"ACTION.SAVEDATA.NAME": "Speichern",

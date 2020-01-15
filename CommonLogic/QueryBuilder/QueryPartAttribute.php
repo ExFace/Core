@@ -46,8 +46,8 @@ class QueryPartAttribute extends QueryPart
         } else {            
             $last_alias = '';
             foreach ($this->getAttribute()->getRelationPath()->getRelations() as $rel) {
-                $rels[$last_alias . $rel->getAlias()] = $rel;
-                $last_alias .= $rel->getAlias() . RelationPath::getRelationSeparator();
+                $rels[$last_alias . $rel->getAliasWithModifier()] = $rel;
+                $last_alias .= $rel->getAliasWithModifier() . RelationPath::getRelationSeparator();
             }
             $this->used_relations = $rels;
         }

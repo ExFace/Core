@@ -50,6 +50,7 @@ use exface\Core\Factories\RelationPathFactory;
 use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\DataTypes\RelationCardinalityDataType;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\DataTypes\RelationDataType;
 
 /**
  * Default implementation of DataSheetInterface
@@ -1326,8 +1327,23 @@ class DataSheet implements DataSheetInterface
         // Check if there are dependent objects, that require cascading deletes
         // This is the case, if the deleted object has reverse relations (1-to-many), where the relation is marked
         // with the "Delete with related object" flag.
+        $thisObj = $this->getMetaObject();
         /* @var $rel \exface\Core\Interfaces\Model\MetaRelationInterface */
-        foreach ($this->getMetaObject()->getRelations(RelationTypeDataType::REVERSE) as $rel) {
+        foreach ($thisObj->getRelations() as $rel) {
+            if ($rel->getCardinality() == RelationCardinalityDataType::N_TO_ONE) {
+                continue;
+            }
+            if ($rel->getCardinality() == RelationCardinalityDataType::ONE_TO_ONE) {
+                // for 1-to-1 relaitons it is important, for which object the relation was defined.
+                if ($rel->getRightKeyAttribute()->isRelation() === true && $rel->getRightKeyAttribute()->getRelation()->reverse() === $rel) {
+                    // If the 1-to-1 relation actually belongs to the right object, we need
+                    // to see if that object must be deleted (just like with 1-to-n relations)
+                    // TODO #1-to-1-relations
+                    continue;
+                } else {
+                    continue;
+                }
+            }
             // Skip objects, that are not writable
             if ($rel->getRightObject()->isWritable() === false) {
                 continue;

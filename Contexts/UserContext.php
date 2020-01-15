@@ -57,7 +57,7 @@ class UserContext extends AbstractContext
         $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
         $uxon = null;
         
-        $language = DataTypeFactory::createFromPrototype($this->getWorkbench(), LocaleDataType::class)->getLabelOfValue($user->getLocale());
+        //when user is logged in, build context with user details and logout button
         if ($user->isUserAnonymous() === false){
             $icon = Icons::SIGN_OUT;
             $uxon = [
@@ -109,7 +109,7 @@ class UserContext extends AbstractContext
                 ]
               ]
             ];
-            
+        // when user is not logged in, build context with login button and message that user is not logged in    
         } else {
             $icon = Icons::SIGN_IN;
             $uxon = [
@@ -134,7 +134,7 @@ class UserContext extends AbstractContext
                         "alias" => "exface.Core.GoToUrl",
                         "url" => $this->getWorkbench()->getCMS()->buildUrlToSiteRoot() . "/login.html"
                     ],
-                    "caption" => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.LOGOUT.NAME'),
+                    "caption" => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.LOGIN.NAME'),
                     "icon" => $icon
                 ]
               ]

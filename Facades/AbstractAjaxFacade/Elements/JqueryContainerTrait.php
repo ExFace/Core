@@ -179,7 +179,12 @@ JS;
 
 JS;
     }
-            
+         
+    /**
+     * Destroying a container means destroying all children.
+     * 
+     * @see AbstractJqueryElement::buildJsDestroy()
+     */
     public function buildJsDestroy() : string
     {
         $output = '';
@@ -188,5 +193,18 @@ JS;
         }
         return $output;
     }
+    
+    /**
+     * Resetting a container means resetting all children.
+     * 
+     * @see AbstractJqueryElement::buildJsDestroy()
+     */
+    public function buildJsResetter() : string
+    {
+        $output = '';
+        foreach ($this->getWidget()->getChildren() as $subw) {
+            $output .= $this->getFacade()->getElement($subw)->buildJsResetter() . ";\n";
+        }
+        return $output;
+    }
 }
-?>

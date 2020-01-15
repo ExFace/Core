@@ -21,7 +21,6 @@ use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Widgets\Traits\AttributeCaptionTrait;
 use exface\Core\CommonLogic\Model\Expression;
-use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
  * The Value widget simply shows a raw (unformatted) value.
@@ -201,7 +200,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                  }
                  // If we found a relation to use, add the attribute prefixed with it's relation path to the data sheet
                  if ($direct_rel) {
-                     $rel_path = RelationPath::relationPathAdd($rel->getAlias(), $attribute->getAlias());
+                     $rel_path = RelationPath::relationPathAdd($rel->getAliasWithModifier(), $attribute->getAlias());
                      if ($prefill_object->hasAttribute($rel_path)) {
                          return $prefill_object->getAttribute($rel_path)->getAliasWithRelationPath();
                      }
@@ -265,7 +264,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
             if (count($col->getValues(false)) > 1 && $this->getAggregator()) {
                 // TODO #OnPrefillChangeProperty
                 $valuePointer = DataPointerFactory::createFromColumn($col);
-                $value = DataColumn::aggregateValues($col->getValues(false), $this->getAggregator());
+                $value = \exface\Core\CommonLogic\DataSheets\DataColumn::aggregateValues($col->getValues(false), $this->getAggregator());
             } else {
                 $valuePointer = DataPointerFactory::createFromColumn($col, 0);
                 $value = $valuePointer->getValue();

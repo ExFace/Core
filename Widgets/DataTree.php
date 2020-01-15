@@ -133,7 +133,7 @@ class DataTree extends DataTable
                     if ($found_one === true) {
                         throw new WidgetConfigurationError($this, 'More than one recursive relations found for the treeGrid "' . $this->getId() . '". Please specify "tree_parent_id_attribute_alias" in the description of the widget!', '6T91BRG');
                     }
-                    $this->setTreeParentIdAttributeAlias($rel->getAlias());
+                    $this->setTreeParentIdAttributeAlias($rel->getAliasWithModifier());
                     $found_one = true;
                 }
             }
