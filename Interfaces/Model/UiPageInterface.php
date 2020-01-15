@@ -12,6 +12,8 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 
 /**
  * A page represents on screen of the UI and is basically the model for a web page in most cases.
@@ -453,6 +455,17 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return UiPageInterface
      */
     public function setApp(AppSelectorInterface $selector) : UiPageInterface;
+    
+    /**
+     * 
+     * @return FacadeInterface
+     */
+    public function getFacade() : FacadeInterface;
+    
+    /**
+     *
+     * @param FacadeSelectorInterface|string $value
+     * @return UiPageInterface
+     */
+    public function setFacadeSelector($selectorOrString) : UiPageInterface;
 }
-
-?>

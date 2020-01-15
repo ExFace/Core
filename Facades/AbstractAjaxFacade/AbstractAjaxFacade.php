@@ -44,6 +44,7 @@ use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsTimeFormatter;
 use exface\Core\Interfaces\Widgets\CustomWidgetInterface;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpTaskFacade;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\FacadeResolverMiddleware;
 
 /**
  * 
@@ -54,6 +55,7 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade
 {
     const MODE_HEAD = 'HEAD';
     const MODE_BODY = 'BODY';
+    const MODE_PAGE = 'PAGE';
     const MODE_FULL = '';
 
     private $elements = [];
@@ -413,7 +415,7 @@ HTML;
             $this->requestIdCache[$cacheKey] = $result;
         }
         
-        $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
+        $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode());
         
         /* @var $headers array [header_name => array_of_values] */
         $headers = [];
@@ -446,6 +448,9 @@ HTML;
                         break;
                     case static::MODE_BODY:
                         $body = $this->buildHtmlBody($widget);
+                        break;
+                    case static::MODE_PAGE:
+                        $body = $this->buildHtmlPage($widget);
                         break;
                     case static::MODE_FULL:
                     default:
@@ -608,6 +613,9 @@ HTML;
                 case static::MODE_BODY:
                     $body = $this->buildHtmlBody($debug_widget);
                     break;
+                case static::MODE_PAGE:
+                    $body = $this->buildHtmlPage($debug_widget);
+                    break;
                 case static::MODE_FULL:
                 default:
                     $body = $this->buildHtmlHead($debug_widget) . "\n" . $this->buildHtmlBody($debug_widget);
@@ -734,5 +742,7 @@ HTML;
     {
         return $this->getConfig()->getOption('DEFAULT_AJAX_URL');
     }
+    
+    protected abstract function buildHtmlPage(WidgetInterface $widget) : string;
 }
 ?>

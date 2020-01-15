@@ -1063,7 +1063,18 @@ SQL;
             throw new UiPageNotFoundError('Unsupported page selector ' . $selector->toString() . '!');
         }
         
-        $query = $this->getDataConnection()->runSql("SELECT p.* FROM exf_page p WHERE " . $where);
+        $query = $this->getDataConnection()->runSql("
+            SELECT 
+                p.*,
+                {$this->buildSqlUuidSelector('p.oid')} as oid,
+                {$this->buildSqlUuidSelector('p.page_template_oid')} as page_template_oid,
+                pt.facade_filepath, 
+                pt.facade_uxon
+            FROM exf_page p 
+                LEFT JOIN exf_page_template pt ON p.page_template_oid = pt.oid
+            WHERE " . $where
+            
+        );
         $row = $query->getResultArray()[0];
         if (empty($row) === true) {
             throw new UiPageNotFoundError('UI Page with ' . $err . ' not found!');
@@ -1086,6 +1097,10 @@ SQL;
         $uiPage->setReplacesPageAlias($row['replace_page_alias']);
         $uiPage->setMenuDefaultPosition($row['default_menu_position']);
         $uiPage->setContents($row['content']);
+        $uiPage->setFacadeSelector($row['facade_filepath']);
+        if ($row['facade_uxon']) {
+            $uiPage->setFacadeConfig(new UxonObject($row['facade_uxon']));
+        }
         
         return $uiPage;
     }

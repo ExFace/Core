@@ -29,7 +29,9 @@ class UiPageSelector extends AbstractSelector implements UiPageSelectorInterface
             $this->isUid = false;
         } else {
             if (! $this->isUid()) {
-                $this->isCmsId = $this->getWorkbench()->getCMS()->isCmsPageId($this->toString()) ? true : false;
+                if ($cms = $this->getWorkbench()->getCMS()) {
+                    $this->isCmsId = $cms->isCmsPageId($this->toString()) ? true : false;
+                }
                 $this->isAlias = ! $this->isCmsId;
             } else {
                 $this->isAlias = false;

@@ -24,6 +24,10 @@ use exface\Core\Interfaces\CmsConnectorInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Events\Widget\OnRemoveEvent;
 use exface\Core\Exceptions\UiPage\UiPageLoadingError;
+use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
+use exface\Core\Factories\FacadeFactory;
+use exface\Core\CommonLogic\Selectors\FacadeSelector;
+use exface\Core\Exceptions\LogicException;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -49,6 +53,10 @@ class UiPage implements UiPageInterface
 
     private $widgets = array();
 
+    private $facadeSelector = null;
+    
+    private $facadeUxon = null;
+    
     private $facade = null;
 
     private $cms = null;
@@ -438,30 +446,6 @@ class UiPage implements UiPageInterface
             return $this->sanitizeId($string);
         }
         return $string;
-    }
-
-    /**
-     *
-     * @return \exface\Core\Interfaces\Facades\FacadeInterface
-     */
-    public function getFacade()
-    {
-        if (is_null($this->facade)) {
-            // FIXME need a method to get the facade from the CMS page here somehow. It should probably become a method of the CMS-connector
-            // The mapping between CMS-facades and ExFace-facades needs to move to a config variable of the CMS-connector app!
-        }
-        return $this->facade;
-    }
-
-    /**
-     *
-     * @param FacadeInterface $facade            
-     * @return \exface\Core\CommonLogic\Model\UiPage
-     */
-    protected function setFacade(FacadeInterface $facade)
-    {
-        $this->facade = $facade;
-        return $this;
     }
 
     /**
@@ -1299,6 +1283,41 @@ class UiPage implements UiPageInterface
     {
         return $this->cms;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getFacade()
+     */
+    public function getFacade() : FacadeInterface
+    {
+        if ($this->facade === null) {
+            $this->facade = FacadeFactory::createFromAnything($this->facadeSelector, $this->getWorkbench());
+            if ($this->facadeUxon !== null) {
+                $this->facade->importUxonObject($this->facadeUxon);
+            }
+        }
+        return $this->facade;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setFacadeSelector()
+     */
+    public function setFacadeSelector($selectorOrString) : UiPageInterface
+    {
+        $this->facadeSelector = $selectorOrString;
+        $this->facade = null;
+        return $this;
+    }
+    
+    public function setFacadeConfig(UxonObject $uxon) : UiPageInterface
+    {
+        $this->facadeUxon = $uxon;
+        if ($this->facade !== null) {
+            throw new LogicException('Cannot modify facade configuration for a page after the facade had been loaded!');
+        }
+        return $this;
+    }
 }
-
-?>
