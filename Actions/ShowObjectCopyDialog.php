@@ -83,7 +83,7 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
         $aliases = $this->copyRelatedObjects;
         foreach ($this->getMetaObject()->getRelations() as $rel) {
             if ($rel->isRightObjectToBeCopiedWithLeftObject()) {
-                $aliases[] = $rel->getAlias();
+                $aliases[] = $rel->getAliasWithModifier();
             }
         }
         return array_unique($aliases);

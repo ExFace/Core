@@ -281,10 +281,11 @@ class Relation implements MetaRelationInterface
         if ($this->isForwardRelation()) {
             // If it is a regular relation, it will be a reverse one from the point of view of the related object. That is identified by the
             // alias of the object it leads to (in our case, the current object)
+            // TODO #1-to-1-relations
             $reverse = $this->getRightObject()->getRelation($this->getLeftObject()->getAlias(), $this->getAlias());
-        } elseif ($this->isReverseRelation() || $this->isOneToOneRelation()) {
-            // If it is a reverse relation, it will be a regular one from the point of view of the related object. That is identified by its alias.
-            // TODO Will it also work for one-to-one relations?
+        } elseif ($this->isReverseRelation()) {
+            // If it is a reverse relation, it will be a regular one from the point of view of the related object. 
+            // That is identified by its alias.
             $reverse = $this->getRightKeyAttribute()->getRelation();
         } else {
             throw new RuntimeException('Cannot reverse relation "' . $this->toString() . '" of meta object "' . $this->getLeftObject()->getAliasWithNamespace() . '": invalid relation type!');
@@ -398,7 +399,7 @@ class Relation implements MetaRelationInterface
         }
         
         try {
-            if ($this->getLeftObject()->getRelation($this->getAlias()) !== $this) {
+            if ($this->getLeftObject()->getRelation($this->getAlias())->isExactly($this) === false) {
                 return true;
             }
         } catch (MetaRelationAliasAmbiguousError $e) {

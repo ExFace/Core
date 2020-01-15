@@ -198,7 +198,7 @@ class CopyData extends SaveData implements iCreateData
                 
                 // If the main sheet has a subsheet for this relation, don't do anything special - the subsheet
                 // is what the use wanted or at least saw, so we should not modify this data in any way!
-                if ($existingCol = $inputSheet->getColumns()->getByExpression($rel->getAlias())) {
+                if ($existingCol = $inputSheet->getColumns()->getByExpression($rel->getAliasWithModifier())) {
                     if ($existingCol->getDataType() instanceof DataSheetDataType) {
                         continue;
                     }
@@ -277,7 +277,7 @@ class CopyData extends SaveData implements iCreateData
         $aliases = $this->copyRelatedObjects;
         foreach ($this->getMetaObject()->getRelations() as $rel) {
             if ($rel->isRightObjectToBeCopiedWithLeftObject()) {
-                $aliases[] = $rel->getAlias(); 
+                $aliases[] = $rel->getAliasWithModifier(); 
             }
         }
         return array_unique($aliases);

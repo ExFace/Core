@@ -28,6 +28,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Model\MetaObjectHasNoDataSourceError;
 use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Exceptions\Model\MetaRelationAliasAmbiguousError;
+use exface\Core\DataTypes\RelationCardinalityDataType;
 
 /**
  * Default implementation of the MetaObjectInterface
@@ -163,8 +164,9 @@ class MetaObject implements MetaObjectInterface
             // Check, if a foreign key is specified in the alias (e.g. ADDRESS->COMPANY[SHIPPING_ADDRESS])
             // If so, extract it and call get_relation() again using the separated alias and foreign_key_alias
             if ($start = strpos($alias, '[')) {
-                if (! $end = strpos($alias, ']'))
+                if (! $end = strpos($alias, ']')) {
                     throw new MetaRelationNotFoundError($this, 'Missing "]" in relation alias "' . $alias . '"', '6T91HJK');
+                }
                 $modifier = substr($alias, $start + 1, $end - $start - 1);
                 $alias = substr($alias, 0, $start);
                 return $this->getRelation($alias, $modifier);
@@ -322,7 +324,7 @@ class MetaObject implements MetaObjectInterface
             // At this point only two possibilities are left: it's either a reverse relation or an error
             if ($this->hasRelation($alias)) {
                 $rev_rel = $this->getRelation($alias);
-                if ($rev_rel->isReverseRelation()) {
+                if ($rev_rel->isReverseRelation() || ($rev_rel->getCardinality() == RelationCardinalityDataType::ONE_TO_ONE)) {
                     try {
                         $rel_attr = $rev_rel->getRightObject()->getAttribute($rev_rel->getRightKeyAttribute()->getAlias());
                         $attr = $rel_attr->copy();
