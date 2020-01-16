@@ -1067,6 +1067,7 @@ SQL;
             SELECT 
                 p.*,
                 {$this->buildSqlUuidSelector('p.oid')} as oid,
+                {$this->buildSqlUuidSelector('p.parent_oid')} as parent_oid,
                 {$this->buildSqlUuidSelector('p.page_template_oid')} as page_template_oid,
                 pt.facade_filepath, 
                 pt.facade_uxon

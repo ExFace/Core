@@ -677,6 +677,11 @@ HTML;
         return 'filter_';
     }
     
+    protected function buildUrlToVendorFile(string $pathInVendorFolder) : string
+    {
+        return 'vendor/' . $pathInVendorFolder;
+    }
+    
     /**
      * 
      * @param string $configOption
@@ -688,7 +693,7 @@ HTML;
         if (StringDataType::startsWith($path, 'https:', false) || StringDataType::startsWith($path, 'http:', false)) {
             return $path;
         } else {
-            return $this->getWorkbench()->getCMS()->buildUrlToInclude($path);
+            return $this->buildUrlToVendorFile($path);
         }
     }
     

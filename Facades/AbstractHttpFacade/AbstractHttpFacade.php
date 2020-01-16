@@ -19,6 +19,12 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
     
     private $urlAbsolute = null;
     
+    public function buildUrlToSite() : string
+    {
+        // TODO #nocms
+        return '';
+    }
+    
     /**
      *
      * {@inheritDoc}
@@ -30,9 +36,8 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
             if (! $this->getWorkbench()->isStarted()) {
                 $this->getWorkbench()->start();
             }
-            $cms = $this->getWorkbench()->getCMS();
-            $this->urlAbsolute = $cms->buildUrlToRouter() . '/' .  $this->getUrlRouteDefault();
-            $this->urlRelative = ltrim(StringDataType::substringAfter($this->urlAbsolute, $cms->buildUrlToSiteRoot(), null) ?? $this->urlAbsolute, "/");
+            $this->urlAbsolute = $this->buildUrlToSite() . $this->getUrlRouteDefault();
+            $this->urlRelative = ltrim($this->getUrlRouteDefault(), "/");
         }
         return $relativeToSiteRoot === true ? $this->urlRelative : $this->urlAbsolute;
     }
