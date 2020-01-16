@@ -443,14 +443,33 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
         } elseif ($dimension->isFacadeSpecific() || $dimension->isPercentual()) {
             $width = $dimension->getValue();
         } else {
-            $width = ($this->getWidthRelativeUnit() * $this->getWidthDefault()) . 'px';
+            $width = $this->buildCssWidthDefaultValue();
         }
         return $width;
     }
+    
+    /**
+     * Alias for getWidth() make it appear among the buildCssXXX methods.
+     *
+     * @return string
+     */
+    protected function buildCssWidth() : string
+    {
+        return $this->getWidth();
+    }
+    
+    /**
+     * Returns the default CSS width for this element (e.g. 100%).
+     * 
+     * @return string
+     */
+    protected function buildCssWidthDefaultValue() : string
+    {
+        return ($this->getWidthRelativeUnit() * $this->getWidthDefault()) . 'px';
+    }
 
     /**
-     * Returns the height of the element in CSS notation (e.g.
-     * 100px)
+     * Returns the height of the element in CSS notation (e.g. 100px)
      *
      * @return string
      */
@@ -465,6 +484,16 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
             $height = $this->buildCssHeightDefaultValue();
         }
         return $height;
+    }
+    
+    /**
+     * Alias for getHeight() make it appear among the buildCssXXX methods.
+     * 
+     * @return string
+     */
+    protected function buildCssHeight() : string
+    {
+        return $this->getHeight();
     }
     
     /**
