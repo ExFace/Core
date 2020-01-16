@@ -6,6 +6,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\FlagTreeFolderDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\DataTypes\ComparatorDataType;
 
 class DataTree extends DataTable
 {
@@ -222,9 +223,9 @@ class DataTree extends DataTable
 
     public function getTreeRootUid()
     {
-        // TODO need a method to determine the root node of a tree somehow. Perhaps query for a record with parent = null?
-        if (! $this->tree_root_uid) {
-            $this->tree_root_uid = 1;
+        if ($this->tree_root_uid) {
+            // TODO need a method to determine the root node of a tree somehow. Perhaps query for a record with parent = null?
+            //$this->tree_root_uid = 1;
         }
         return $this->tree_root_uid;
     }
@@ -261,6 +262,10 @@ class DataTree extends DataTable
             $data_sheet->getColumns()->addFromExpression($this->getTreeFolderFlagAttributeAlias());
         }
         $data_sheet->getColumns()->addFromExpression($this->getTreeParentIdAttributeAlias());
+        
+        if ($this->getTreeRootUid() !== null && $data_sheet->getFilters()->isEmpty(true) === true && $this->getMetaObject()->is($data_sheet->getMetaObject())) {
+            $data_sheet->addFilterFromString($this->getTreeParentIdAttributeAlias(), $this->getTreeRootUid(), ComparatorDataType::EQUALS);
+        }
         
         return $data_sheet;
     }
