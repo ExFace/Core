@@ -8,6 +8,28 @@ use exface\Core\Interfaces\Widgets\iLayoutWidgets;
  * 
  * In particular, it can be used to determine the number of columns in the grid.
  * 
+ * ## How to use
+ * 
+ * Make sure to include masonry in the dependecies of the facade - e.g. via composer:
+ * 
+ * ```
+ * {
+ *  "require": {
+ *      "bower-asset/masonry" : "^4"
+ *  }
+ * }
+ * 
+ * ```
+ * 
+ * If your facade is based on the `AbstractAjaxFacade`, add these configuration options
+ * to the facade config file. Make sure, each config option points to an existing
+ * inlcude file!
+ * 
+ * ```
+ *  "LIBS.MASONRY": "bower-asset/masonry/dist/masonry.pkgd.min.js",
+	
+ * ```
+ * 
  * @author Andrej Kabachnik
  * 
  * @method iLayoutWidgets getWidget()
@@ -37,7 +59,7 @@ trait JqueryMasonryGridTrait {
     public function buildHtmlHeadTags()
     {
         $includes = parent::buildHtmlHeadTags();
-        $includes[] = '<script type="text/javascript" src="exface/vendor/bower-asset/masonry/dist/masonry.pkgd.min.js"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $this->getFacade()->buildUrlToSource('LIBS.MASONRY') . '"></script>';
         return $includes;
     }
     
