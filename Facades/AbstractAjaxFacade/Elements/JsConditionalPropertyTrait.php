@@ -41,21 +41,32 @@ trait JsConditionalPropertyTrait {
             $rightJs = $this->buildJsConditionalPropertyValue($condition->getValueRightExpression(), $conditionalProperty);
             
             switch ($condition->getComparator()) {
-                case EXF_COMPARATOR_IS_NOT: // !=
                 case EXF_COMPARATOR_EQUALS: // ==
                 case EXF_COMPARATOR_EQUALS_NOT: // !==
                 case EXF_COMPARATOR_LESS_THAN: // <
                 case EXF_COMPARATOR_LESS_THAN_OR_EQUALS: // <=
                 case EXF_COMPARATOR_GREATER_THAN: // >
                 case EXF_COMPARATOR_GREATER_THAN_OR_EQUALS: // >=
-                    // Man muesste eigentlich schauen ob ein bestimmter Wert vorhanden ist: buildJsValueGetter(link->getTargetColumnId()).
-                    // Da nach einem Prefill dann aber normalerweise ein leerer Wert zurueckkommt, wird beim initialisieren
-                    // momentan einfach geschaut ob irgendein Wert vorhanden ist.
                     $jsConditions[] = "$leftJs {$condition->getComparator()} $rightJs";
                     break;
                 case EXF_COMPARATOR_IN: // [
+                    $condition = $this->buildJsConditionalPropertyComparatorIn($leftJs, $rightJs);
+                    $jsConditions[] = $condition;
+                    break;
                 case EXF_COMPARATOR_NOT_IN: // ![
+                    $condition = "!(";
+                    $condition .= $this->buildJsConditionalPropertyComparatorIn($leftJs, $rightJs);
+                    $condition .= ")";
+                    $jsConditions[] = $condition;
+                    break;
                 case EXF_COMPARATOR_IS: // =
+                    $condition = "(new RegExp(($rightJs || '').toString(), 'i')).test(({$leftJs} || '').toString())";
+                    $jsConditions[] = $condition;
+                    break;
+                case EXF_COMPARATOR_IS_NOT: // !=
+                    $condition = "!((new RegExp(($rightJs || '').toString(), 'i')).test(({$leftJs} || '').toString()))";;
+                    $jsConditions[] = $condition;
+                    break;
                 default:
                     // TODO fuer diese Comparatoren muss noch der JavaScript generiert werden
             }
@@ -69,6 +80,33 @@ trait JsConditionalPropertyTrait {
         }
         
         return implode($op, $jsConditions);
+    }
+    
+    /**
+     * Build the javascript function for the EXF_COMPARATOR_IN comparator.
+     * 
+     * @param string $leftJs
+     * @param string $rightJs
+     * @return string
+     */
+    private function buildJsConditionalPropertyComparatorIn (string $leftJs, string $rightJs) : string
+    {
+        $delim = EXF_LIST_SEPARATOR;
+        $comparator = EXF_COMPARATOR_EQUALS;
+        $condition = <<<JS
+
+            function() {
+                var rightValues = (({$rightJs} || '').toString()).split('{$delim}');
+                for (var i = 0; i < rightValues.length; i++) {
+                    if (({$leftJs} || '').toString() {$comparator} rightValues[i].trim()) {
+                        return true;
+                    }
+                }
+                return false;
+            }()
+
+JS;
+        return $condition;
     }
     
     /**
