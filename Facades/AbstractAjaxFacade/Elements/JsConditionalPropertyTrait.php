@@ -6,6 +6,9 @@ use exface\Core\Widgets\Parts\ConditionalProperty;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\Interfaces\Widgets\iHaveColumns;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * This trait includes JS-generator methods support implementation of conditional widget properties.
@@ -41,31 +44,42 @@ trait JsConditionalPropertyTrait {
             $rightJs = $this->buildJsConditionalPropertyValue($condition->getValueRightExpression(), $conditionalProperty);
             
             switch ($condition->getComparator()) {
-                case EXF_COMPARATOR_EQUALS: // ==
-                case EXF_COMPARATOR_EQUALS_NOT: // !==
-                case EXF_COMPARATOR_LESS_THAN: // <
-                case EXF_COMPARATOR_LESS_THAN_OR_EQUALS: // <=
-                case EXF_COMPARATOR_GREATER_THAN: // >
-                case EXF_COMPARATOR_GREATER_THAN_OR_EQUALS: // >=
+                case ComparatorDataType::EQUALS: // ==
+                case ComparatorDataType::EQUALS_NOT: // !==
+                case ComparatorDataType::LESS_THAN: // <
+                case ComparatorDataType::LESS_THAN_OR_EQUALS: // <=
+                case ComparatorDataType::GREATER_THAN: // >
+                case ComparatorDataType::GREATER_THAN_OR_EQUALS: // >=
                     $jsConditions[] = "$leftJs {$condition->getComparator()} $rightJs";
                     break;
-                case EXF_COMPARATOR_IN: // [
-                    $condition = $this->buildJsConditionalPropertyComparatorIn($leftJs, $rightJs);
-                    $jsConditions[] = $condition;
+                case ComparatorDataType::IN: // [
+                case ComparatorDataType::NOT_IN: // ![
+                    $rightExpr = $condition->getValueRightExpression();
+                    $delim = EXF_LIST_SEPARATOR;
+                    if ($rightExpr->isReference() === true) {
+                        $targetWidget = $rightExpr->getWidgetLink()->getTargetWidget();
+                        if (($targetWidget instanceof iShowSingleAttribute) && $targetWidget->isBoundToAttribute()) {
+                            $delim = $targetWidget->getAttribute()->getValueListDelimiter();
+                        } elseif ($targetWidget instanceof iHaveColumns && $colName = $rightExpr->getWidgetLink()->getTargetColumnId()) {
+                            $targetCol = $targetWidget->getColumnByDataColumnName($colName);
+                            if ($targetCol->isBoundToAttribute() === true) {
+                                $delim = $targetCol->getAttribute()->getValueListDelimiter();
+                            }
+                        }
+                    }
+                    $conditionJs = $this->buildJsConditionalPropertyComparatorIn($leftJs, $rightJs, $delim);
+                    if ($condition->getComparator() === ComparatorDataType::NOT_IN) {
+                        $conditionJs = "!(" . $conditionJs . ")";
+                    }
+                    $jsConditions[] = $conditionJs;
                     break;
-                case EXF_COMPARATOR_NOT_IN: // ![
-                    $condition = "!(";
-                    $condition .= $this->buildJsConditionalPropertyComparatorIn($leftJs, $rightJs);
-                    $condition .= ")";
-                    $jsConditions[] = $condition;
+                case ComparatorDataType::IS: // =
+                    $conditionJs = "(new RegExp(($rightJs || '').toString(), 'i')).test(({$leftJs} || '').toString())";
+                    $jsConditions[] = $conditionJs;
                     break;
-                case EXF_COMPARATOR_IS: // =
-                    $condition = "(new RegExp(($rightJs || '').toString(), 'i')).test(({$leftJs} || '').toString())";
-                    $jsConditions[] = $condition;
-                    break;
-                case EXF_COMPARATOR_IS_NOT: // !=
-                    $condition = "!((new RegExp(($rightJs || '').toString(), 'i')).test(({$leftJs} || '').toString()))";;
-                    $jsConditions[] = $condition;
+                case ComparatorDataType::IS_NOT: // !=
+                    $conditionJs = "!((new RegExp(($rightJs || '').toString(), 'i')).test(({$leftJs} || '').toString()))";;
+                    $jsConditions[] = $conditionJs;
                     break;
                 default:
                     // TODO fuer diese Comparatoren muss noch der JavaScript generiert werden
@@ -89,14 +103,13 @@ trait JsConditionalPropertyTrait {
      * @param string $rightJs
      * @return string
      */
-    private function buildJsConditionalPropertyComparatorIn (string $leftJs, string $rightJs) : string
+    private function buildJsConditionalPropertyComparatorIn (string $leftJs, string $rightJs, string $listDelimiter = EXF_LIST_SEPARATOR) : string
     {
-        $delim = EXF_LIST_SEPARATOR;
-        $comparator = EXF_COMPARATOR_EQUALS;
-        $condition = <<<JS
+        $comparator = ComparatorDataType::EQUALS;
+        return <<<JS
 
             function() {
-                var rightValues = (({$rightJs} || '').toString()).split('{$delim}');
+                var rightValues = (({$rightJs} || '').toString()).split('{$listDelimiter}');
                 for (var i = 0; i < rightValues.length; i++) {
                     if (({$leftJs} || '').toString() {$comparator} rightValues[i].trim()) {
                         return true;
@@ -106,7 +119,7 @@ trait JsConditionalPropertyTrait {
             }()
 
 JS;
-        return $condition;
+        
     }
     
     /**
