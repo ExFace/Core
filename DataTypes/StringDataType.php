@@ -269,15 +269,11 @@ class StringDataType extends AbstractDataType
         $search = [];
         $replace = [];
         foreach ($phs as $ph) {
-            if (! isset($placeholders[$ph])) {
-                if ($strict === true) {
-                    throw new RangeException('Missing value for "' . $ph . '"!');
-                } else {
-                    $replace[] = '';
-                }
+            if ($strict === true && isset($placeholders[$ph]) === false) {
+                throw new RangeException('Missing value for "' . $ph . '"!');
             }
             $search[] = '[#' . $ph . '#]';
-            $replace[] = $placeholders[$ph];
+            $replace[] = $placeholders[$ph] ?? '';
         }
         return str_replace($search, $replace, $string);
     }
