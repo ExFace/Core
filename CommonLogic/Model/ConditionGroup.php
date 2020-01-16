@@ -297,13 +297,27 @@ class ConditionGroup implements ConditionGroupInterface
      * {@inheritdoc}
      * @see ConditionalExpressionInterface::isEmpty()
      */
-    public function isEmpty() : bool
+    public function isEmpty(bool $checkValues = false) : bool
     {
-        if (count($this->getConditions()) == 0 && count($this->getNestedGroups()) == 0) {
+        if (empty($this->getConditions()) === true && empty($this->getNestedGroups()) === true) {
             return true;
-        } else {
-            return false;
+        } 
+        
+        if ($checkValues === true) {
+            foreach ($this->getConditions() as $cond) {
+                if ($cond->isEmpty() === false) {
+                    return false;
+                }
+            }
+            foreach ($this->getNestedGroups() as $group) {
+                if ($group->isEmpty(true) === false) {
+                    return false;
+                }
+            }
+            return true;
         }
+        
+        return false;
     }
 
     /**
