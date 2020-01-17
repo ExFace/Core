@@ -1185,7 +1185,8 @@ class DataSheet implements DataSheetInterface
                     if ($nestedSheet === null || $nestedSheet->isEmpty() === true) {
                         continue;
                     }
-                    $nestedRel = $this->getMetaObject()->getRelation($columnName);
+                    $nestedCol = $this->getColumns()->get($columnName);
+                    $nestedRel = $this->getMetaObject()->getRelation($nestedCol->getAttributeAlias());
                     if ($nestedRel->getCardinality()->__toString() !== RelationCardinalityDataType::ONE_TO_N) {
                         throw new DataSheetRuntimeError($this, 'Cannot create nested data for "' . $this->getMetaObject()->getName() . '" (' . $nestedRel->getRightObject()->getAliasWithNamespace() . ') within "' . $this->getMetaObject()->getRightObject()->getName() . '": only one-to-many relations allowed!');
                     }
