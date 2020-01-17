@@ -49,7 +49,7 @@ class RequestContextReader implements MiddlewareInterface
      */
     protected function getSubrequestId(ServerRequestInterface $request) : string
     {
-        return $this->getHeaderValue($request, 'Subrequest-ID');
+        return $this->getHeaderValue($request, 'X-Request-ID-Subrequest');
     }
     
     protected function getHeaderValue(ServerRequestInterface $request, string $headerName) : string

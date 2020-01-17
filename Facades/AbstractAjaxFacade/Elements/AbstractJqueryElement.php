@@ -228,7 +228,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
         $headers = [];
         $subrequest_id = $this->getFacade()->getWorkbench()->getContext()->getScopeRequest()->getSubrequestId();
         if ($subrequest_id) {
-            $headers['Subrequest-ID'] = $subrequest_id;
+            $headers['X-Request-ID-Subrequest'] = $subrequest_id;
         }
         return $headers;
     }
