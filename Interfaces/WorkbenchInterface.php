@@ -152,4 +152,11 @@ interface WorkbenchInterface extends TaskHandlerInterface
      * @return SecurityManagerInterface
      */
     public function getSecurity() : SecurityManagerInterface;
+    
+    /**
+     * Returns the absolute URL of the current workbench (ending with an `/`).
+     * 
+     * @return string
+     */
+    public function getUrl() : string;
 }

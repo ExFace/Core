@@ -47,6 +47,7 @@ use exface\Core\Facades\AbstractHttpFacade\AbstractHttpTaskFacade;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\FacadeResolverMiddleware;
 use Psr\Http\Message\RequestInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Templates\FacadePageTemplateRenderer;
+use exface\Core\CommonLogic\Selectors\UiPageSelector;
 
 /**
  * 
@@ -325,7 +326,14 @@ HTML;
      */
     public function buildUrlToPage($page_or_id_or_alias, $url_params = '')
     {
-        return $this->getWorkbench()->getCMS()->buildUrlToPage($page_or_id_or_alias, $url_params);
+        $selector = new UiPageSelector($this->getWorkbench(), $page_or_id_or_alias);
+        if ($selector->isAlias()) {
+            $url = $selector->toString() . $this->getPageFileExtension();
+        } else {
+            $url = UiPageFactory::createFromModel($this->getWorkbench(), $selector)->getAliasWithNamespace();
+        }
+        $params = ltrim($url_params, "?");
+        return $url . ($params ? '?' . $params : '');
     }
 
     /**
@@ -813,5 +821,13 @@ HTML;
     protected function isRequestFrontend(RequestInterface $request) : bool
     {
         return $this->isRequestAjax($request) === false;
+    }
+    
+    /**
+     * 
+     */
+    protected function getPageFileExtension() : string
+    {
+        return '.html';
     }
 }
