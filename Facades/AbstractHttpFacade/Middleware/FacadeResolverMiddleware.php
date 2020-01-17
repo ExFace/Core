@@ -67,10 +67,6 @@ class FacadeResolverMiddleware implements MiddlewareInterface
                 $request = $request
                 ->withAttribute($facade->getRequestAttributeForAction(), 'exface.Core.ShowWidget')
                 ->withAttribute($facade->getRequestAttributeForPage(), $page->getSelector()->__toString());
-                if ($facade instanceof AbstractAjaxFacade) {
-                    $request = $request
-                    ->withAttribute($facade->getRequestAttributeForRenderingMode(), AbstractAjaxFacade::MODE_PAGE);
-                }
             } catch (FacadeRoutingError $ePage) {
                 $this->workbench->getLogger()->logException($eRouter)->logException($ePage);
                 return new Response(500, [], $eRouter->getMessage());
