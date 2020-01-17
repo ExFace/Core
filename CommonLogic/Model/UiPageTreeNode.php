@@ -27,18 +27,18 @@ class UiPageTreeNode
     
     private $intro = null;
     
-    private $cmsId = null;
+    private $uid = null;
     
     private $pageAlias = null;    
     
     
-    public function __construct(WorkbenchInterface $exface, string $pageAlias, string $name, string $cmsId, UiPageTreeNode $parentNode = null)
+    public function __construct(WorkbenchInterface $exface, string $pageAlias, string $name, string $uid, UiPageTreeNode $parentNode = null)
     {
         $this->exface = $exface;
         $this->pageSelector = SelectorFactory::createPageSelector($exface, $pageAlias);
         $this->pageAlias = $pageAlias;
         $this->name = $name;
-        $this->cmsId = $cmsId;
+        $this->uid = $uid;
         if ($parentNode !== null) {
             $this->parentNode = $parentNode;
         }
@@ -77,9 +77,9 @@ class UiPageTreeNode
      * 
      * @return string
      */
-    public function getCmsId() : string
+    public function getUid() : string
     {
-        return $this->cmsId;   
+        return $this->uid;   
     }
     
     /**
