@@ -101,7 +101,7 @@ class UserContext extends AbstractContext
                 [
                     "action" => [
                         "alias" => "exface.Core.GoToUrl",
-                        "url" => $this->getWorkbench()->getCMS()->buildUrlToSiteRoot() . "/login.html?webloginmode=lo"
+                        "url" => $this->getWorkbench()->getUrl() . "login.html"
                     ],
                     "caption" => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.LOGOUT.NAME'),
                     "icon" => $icon,
@@ -132,7 +132,7 @@ class UserContext extends AbstractContext
                 [
                     "action" => [
                         "alias" => "exface.Core.GoToUrl",
-                        "url" => $this->getWorkbench()->getCMS()->buildUrlToSiteRoot() . "/login.html"
+                        "url" => $this->getWorkbench()->getUrl() . "logout.html"
                     ],
                     "caption" => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.LOGIN.NAME'),
                     "icon" => $icon

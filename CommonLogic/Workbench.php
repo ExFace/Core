@@ -466,5 +466,19 @@ class Workbench implements WorkbenchInterface
         }
         return $this->cache;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::getUrl()
+     */
+    public function getUrl() : string
+    {
+        $url = $this->getConfig()->getOption('BASE_URLS')->toArray()[0];
+        if ($url !== null) {
+            return $url;
+        }
+        
+        return '';
+    }
 }
-?>
