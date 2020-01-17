@@ -195,8 +195,6 @@ class UiPageTree
             $parentAlias = 'MENU_PARENT__ALIAS';
         } elseif ($parentPageSelector->isUid()) {
             $parentAlias = 'MENU_PARENT__UID';
-        } elseif ($parentPageSelector->isCmsId()) {
-            $parentAlias = 'MENU_PARENT';
         } else {
             throw new \ErrorException($this, "Invalid page selector '{$parentPageSelector->toString()}'");
         }
@@ -227,7 +225,7 @@ class UiPageTree
         //if expandPathOnly is `true` only add the node that has `childPageId` as Id.
         if ($this->expandPathOnly) {
             foreach ($dataSheet->getRows() as $row) {
-                if ($childPageId && $childPageId === $row['CMS_ID'] ?? $row['UID']) {
+                if ($childPageId !== null && $childPageId === ($row['CMS_ID'] ?? $row['UID'])) {
                     $node = new UiPageTreeNode($this->getWorkbench(), $row['ALIAS'], $row['NAME'], $row['CMS_ID'] ?? $row['UID']);
                     $node->setDescription($row['DESCRIPTION']);
                     $node->setIntro($row['INTRO']);
@@ -249,7 +247,7 @@ class UiPageTree
                 $node->setDescription($row['DESCRIPTION']);
                 $node->setIntro($row['INTRO']);
                 // when the id of the node is the same as the given `childPageId` set it as parent for all given `childNodes` and add them as child of the node
-                if ($childPageId && $childPageId === $node->getCmsId()) {
+                if ($childPageId && $childPageId === $node->getUid()) {
                     if ($childNodes !== null) {
                         foreach ($childNodes as $child) {                    
                             $child->setParentNode($node);
@@ -260,11 +258,10 @@ class UiPageTree
                 $menuNodes[] = $node;
             }
         }
-        $pageCmsId = $this->getWorkbench()->getCMS()->getPageIdInCms($page);        
         //if page has a menu parent page and if page is not in `rootPages` array continue building menu by going one level up
         if ($page->getMenuParentPage() !== null && !in_array($page, $this->rootPages)) {
             $parentPage = $page->getMenuParentPage();
-            $menuNodes = $this->buildParentMenuNodes($parentPage, $pageCmsId, $menuNodes);
+            $menuNodes = $this->buildParentMenuNodes($parentPage, $page->getId(), $menuNodes);
         }
         return $menuNodes;
     }
