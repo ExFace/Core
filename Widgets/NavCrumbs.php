@@ -3,19 +3,20 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Factories\UiPageTreeFactory;
 use exface\Core\Factories\SelectorFactory;
+use exface\Core\Factories\UiPageFactory;
 
 /**
- * Breadcrumbs show links to all ancestor pages of the current page starting from a given root page or,
+ * NavCrumbs show links to all ancestor pages of the current page starting from a given root page or,
  * if no root page is given, from the default root page.
  * 
- * Breadcrumbs produce a tree menu consisting of nodes. Each node contains its parent node and (if exists) its child node
+ * NavCrumbs produce a tree menu consisting of nodes. Each node contains its parent node and (if exists) its child node
  * that is either an ancestor of the current page, the parent of the current page or the current page itself.
  * 
  * Each menu entry navigates to its inherent page when clicked.
  *  
  * ```
  * {
- *  "widget_type": "Breadcrumbs",
+ *  "widget_type": "NavCrumbs",
  *  "object_alias": "exface.Core.PAGE"
  * }
  * 
@@ -25,12 +26,12 @@ use exface\Core\Factories\SelectorFactory;
  * 
  * The visual representation, as always, depends on the facade.
  * 
- * @method Breadcrumbs getWidget() 
+ * @method NavCrumbs getWidget() 
  *
  * @author Ralf Mulansky
  *        
  */
-class Breadcrumbs extends AbstractWidget
+class NavCrumbs extends AbstractWidget
 {    
     private $rootPage = null;
     
@@ -53,9 +54,9 @@ class Breadcrumbs extends AbstractWidget
      * @param string $pageSelector
      * @return NavMenu
      */
-    public function setRootPageAlias(string $pageSelectorString) : Breadcrumbs
+    public function setRootPageAlias(string $pageSelectorString) : NavCrumbs
     {
-        $this->rootPage = $this->getWorkbench()->getCMS()->getPage(SelectorFactory::createPageSelector($this->getWorkbench(), $pageSelectorString));
+        $this->rootPage = UiPageFactory::createFromModel($this->getWorkbench(), $pageSelectorString);
         return $this;
     }
 }
