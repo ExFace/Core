@@ -45,6 +45,8 @@ use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsTimeFormatter;
 use exface\Core\Interfaces\Widgets\CustomWidgetInterface;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpTaskFacade;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\FacadeResolverMiddleware;
+use Psr\Http\Message\RequestInterface;
+use exface\Core\Facades\AbstractAjaxFacade\Templates\FacadePageTemplateRenderer;
 
 /**
  * 
@@ -53,6 +55,7 @@ use exface\Core\Facades\AbstractHttpFacade\Middleware\FacadeResolverMiddleware;
  */
 abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade
 {
+    // TODO #nocms remove rendering modes completely in favor of isRequestXXX() methods
     const MODE_HEAD = 'HEAD';
     const MODE_BODY = 'BODY';
     const MODE_PAGE = 'PAGE';
@@ -73,6 +76,8 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade
     private $class_namespace = '';
     
     private $data_type_formatters = [];
+    
+    private $pageTemplateFilePath = null;
 
     /**
      *
@@ -442,17 +447,17 @@ HTML;
                 
             case $result instanceof ResultWidgetInterface:
                 $widget = $result->getWidget();
-                switch ($mode) {
-                    case static::MODE_HEAD:
+                switch (true) {
+                    case $mode === static::MODE_HEAD:
                         $body = $this->buildHtmlHead($widget, true);
                         break;
-                    case static::MODE_BODY:
+                    case $mode === static::MODE_BODY:
                         $body = $this->buildHtmlBody($widget);
                         break;
-                    case static::MODE_PAGE:
+                    case $this->isRequestFrontend($request) === true:
                         $body = $this->buildHtmlPage($widget);
                         break;
-                    case static::MODE_FULL:
+                    //case $this->isRequestAjax($request) === true:
                     default:
                         $body = $this->buildHtmlHead($widget) . "\n" . $this->buildHtmlBody($widget);
                 }
@@ -606,17 +611,17 @@ HTML;
         try {
             $debug_widget = $exception->createWidget($page);
             $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
-            switch ($mode) {
-                case static::MODE_HEAD:
+            switch (true) {
+                case $mode === static::MODE_HEAD:
                     $body = $this->buildHtmlHead($debug_widget, true);
                     break;
-                case static::MODE_BODY:
+                case $mode === static::MODE_BODY:
                     $body = $this->buildHtmlBody($debug_widget);
                     break;
-                case static::MODE_PAGE:
+                case $this->isRequestFrontend($request) === true:
                     $body = $this->buildHtmlPage($debug_widget);
                     break;
-                case static::MODE_FULL:
+                // case $this->isRequestAjax($request) === true:
                 default:
                     $body = $this->buildHtmlHead($debug_widget) . "\n" . $this->buildHtmlBody($debug_widget);
             }
@@ -748,6 +753,65 @@ HTML;
         return $this->getConfig()->getOption('DEFAULT_AJAX_URL');
     }
     
-    protected abstract function buildHtmlPage(WidgetInterface $widget) : string;
+    /**
+     * Returns the path to the default template file to render a page (absolute or relative to the vendor folder)
+     * 
+     * @return string
+     */
+    protected abstract function getPageTemplateFilePathDefault() : string;
+    
+    /**
+     *
+     * @return string
+     */
+    protected function getPageTemplateFilePath() : string
+    {
+        if (! $path = $this->pageTemplateFilePath) {
+            return $this->getPageTemplateFilePathDefault();
+        }
+        return $path;
+    }
+    
+    /**
+     * Use a specific template file to render pages.
+     * 
+     * The path can either be absolute or relative to the `vendor` folder.
+     * 
+     * @uxon-property page_template_file_path
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return AbstractAjaxFacade
+     */
+    public function setPageTemplateFilePath(string $value) : AbstractAjaxFacade
+    {
+        $this->pageTemplateFilePath = $value;
+        return $this;
+    }
+    
+    protected function buildHtmlPage(WidgetInterface $widget) : string
+    {
+        $renderer = new FacadePageTemplateRenderer($this, $this->getPageTemplateFilePath(), $widget);
+        return $renderer->render();
+    }
+    
+    /**
+     * Returns TRUE if the given request is an AJAX-request, that came over the API.
+     * 
+     * @return bool
+     */
+    protected function isRequestAjax(RequestInterface $request) : bool
+    {
+        return stripos($request->getUri()->getPath(), 'api/') !== false;
+    }
+    
+    /**
+     * 
+     * @param RequestInterface $request
+     * @return bool
+     */
+    protected function isRequestFrontend(RequestInterface $request) : bool
+    {
+        return $this->isRequestAjax($request) === false;
+    }
 }
-?>
