@@ -80,6 +80,8 @@ class SqlModelLoader implements ModelLoaderInterface
     
     private $installer = null;
     
+    private $pages_loaded = [];
+    
     /**
      * 
      * @param ModelLoaderSelectorInterface $selector
@@ -1054,9 +1056,17 @@ SQL;
     public function loadPage(UiPageSelectorInterface $selector, bool $ignoreReplacements = false) : UiPageInterface
     {
         if ($selector->isAlias()) {
+            foreach ($this->pages_loaded as $uiPage) {
+                if ($uiPage->getAliasWithNamespace() === $selector->toString()) {
+                    return $uiPage;
+                }
+            }
             $where = "p.alias = '" . $selector->toString() . "'";
             $err = 'alias ' . $selector->toString();
         } elseif ($selector->isUid()) {
+            if ($uiPage = $this->pages_loaded[$selector->toString()]) {
+                return $uiPage;
+            }
             $where = "p.oid = " . $selector->toString();
             $err = 'UID ' . $selector->toString();
         } else {
@@ -1102,6 +1112,8 @@ SQL;
         if ($row['facade_uxon']) {
             $uiPage->setFacadeConfig(new UxonObject($row['facade_uxon']));
         }
+        
+        $this->pages_loaded[$uiPage->getId()] = $uiPage;
         
         return $uiPage;
     }
