@@ -619,12 +619,12 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function extract(ConditionalExpressionInterface $condition) : DataSheetInterface;
     
     /**
-     * Sorts the current rows according to the given sorter list.
+     * Sorts the current rows using the sorters defined in the sheet or a given sorter list.
      * 
      * @param DataSorterListInterface $sorters
      * @return DataSheetInterface
      */
-    public function sort(DataSorterListInterface $sorters) : DataSheetInterface;
+    public function sort(DataSorterListInterface $sorters = null) : DataSheetInterface;
     
     /**
      * Returns TRUE if the data will be aggregated to a single line when loading.

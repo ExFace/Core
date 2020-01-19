@@ -2241,10 +2241,14 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::sort()
      */
-    public function sort(DataSorterListInterface $sorters) : DataSheetInterface
+    public function sort(DataSorterListInterface $sorters = null) : DataSheetInterface
     {
         if ($this->isEmpty()) {
             return $this;
+        }
+        
+        if ($sorters === null) {
+            $sorters = $this->getSorters();
         }
         
         $sorter = new RowDataArraySorter();
