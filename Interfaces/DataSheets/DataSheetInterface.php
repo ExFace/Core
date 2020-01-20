@@ -621,10 +621,15 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     /**
      * Sorts the current rows using the sorters defined in the sheet or a given sorter list.
      * 
+     * By default, all values of the sorted columns are normalized before sorting. This is
+     * important for ceratain data types like dates or numbers. This behavior can be explicitly
+     * disabled by passing `$normalizeValues = false` to the method.
+     * 
      * @param DataSorterListInterface $sorters
+     * @param bool $normalizeValues
      * @return DataSheetInterface
      */
-    public function sort(DataSorterListInterface $sorters = null) : DataSheetInterface;
+    public function sort(DataSorterListInterface $sorters = null, bool $normalizeValues = true) : DataSheetInterface;
     
     /**
      * Returns TRUE if the data will be aggregated to a single line when loading.

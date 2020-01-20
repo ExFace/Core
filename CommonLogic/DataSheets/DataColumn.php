@@ -902,4 +902,19 @@ class DataColumn implements DataColumnInterface
     {
         return $this->getAggregator() !== null;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::validateValues()
+     */
+    public function normalizeValues()
+    {
+        $parsedVals = [];
+        foreach ($this->getValues(false) as $val) {
+            $parsedVals[] = $this->getDataType()->parse($val);
+        }
+        $this->setValues($parsedVals);
+        return;
+    }
 }
