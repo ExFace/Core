@@ -32,12 +32,15 @@ UPDATE exf_user_credentials uc
 			WHERE dc.user_credentials_oid = uc.oid 
         	LIMIT 1
 		);
+		
+DELETE FROM exf_user_credentials WHERE data_connection_credentials_oid IS NULL;
 
 ALTER TABLE `exf_user_credentials`
 	DROP COLUMN `data_connector_config`,
 	DROP COLUMN `name`,
 	CHANGE COLUMN `data_connection_credentials_oid` `data_connection_credentials_oid` BINARY(16) NOT NULL AFTER `user_oid`;
 	
+/* If there were unused user credentials - delete them! We can't keep them as we don't know what connection they are meant for. */
 ALTER TABLE `exf_data_connection_credentials`
 	DROP COLUMN `user_credentials_oid`;
 
