@@ -18,15 +18,18 @@ class DataLookupDialog extends Dialog
     public function getWidgets(callable $filter = null)
     {
         if (parent::hasWidgets() === false) {
-            $data_table = WidgetFactory::create($this->getPage(), 'DataTable', $this);
+            /* @var $data_table \exface\Core\Widgets\Data */
+            $data_table = WidgetFactory::create($this->getPage(), 'DataTableResponsive', $this);
             $data_table->setMetaObject($this->getMetaObject());
-            $srcWidget = $this->getParent();
-            if ($this->getMultiSelect() === null && $srcWidget instanceof iUseInputWidget) {
-                $inputWidget = $srcWidget->getInputWidget();
-                if ($inputWidget && ($inputWidget instanceof iSupportMultiSelect)){
-                    $data_table->setMultiSelect($inputWidget->getMultiSelect());
+            $data_table->setMultiSelect($this->getMultiSelect());
+            
+            $dataConfigurator = $data_table->getConfiguratorWidget();
+            foreach($data_table->getColumns() as $col) {
+                if ($col->isHidden() === false && $col->getAttributeAlias()) {
+                    $dataConfigurator->addFilter($dataConfigurator->createFilterWidget($col->getAttributeAlias()));
                 }
             }
+            
             $this->addWidget($data_table);
             
             if ($data_table->getMetaObject()->hasLabelAttribute() === true) {
@@ -46,9 +49,16 @@ class DataLookupDialog extends Dialog
         return $this;
     }
     
-    protected function getMultiSelect() : ?bool
+    public function getMultiSelect() : ?bool
     {
-        return $this->multi_select;
+       $srcWidget = $this->getParent();
+        if ($srcWidget instanceof iUseInputWidget) {
+            $inputWidget = $srcWidget->getInputWidget();
+            if ($inputWidget && ($inputWidget instanceof iSupportMultiSelect)){
+                return $inputWidget->getMultiSelect();
+            }
+        }
+        return null;
     }
     
     public function getDataWidget() : Data
