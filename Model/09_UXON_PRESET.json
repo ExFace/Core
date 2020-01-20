@@ -165,7 +165,7 @@
         },
         {
             "CREATED_ON": "2019-09-04 15:43:09",
-            "MODIFIED_ON": "2019-10-02 09:07:07",
+            "MODIFIED_ON": "2020-01-20 09:20:28",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9cf2a95a0bf9aad7fe4b318306b9a",
@@ -173,7 +173,7 @@
             "NAME": "Editor-Dialog with tabs for child objects",
             "DESCRIPTION": "Tabbed dialog for master-detail object showing a \"General\" tab with an editor for the master object and a \"Details\" tab with a table of details objects. Wrapped content will be placed in the \"General\" tab.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
-            "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"tabs\",\"tabs\":[{\"caption\":\"General\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"caption\":\"Details\",\"widgets\":[{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO DETAIL OBJECT\",\"comparator\":\"==\",\"widget_type\":\"InputHidden\",\"required\":true}],\"columns\":[{\"attribute_alias\":\"\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"visibility\":\"optional\"}]}]}]}]}",
+            "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"tabs\",\"tabs\":[{\"caption\":\"General\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"caption\":\"Details\",\"widgets\":[{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO MASTER OBJECT\",\"comparator\":\"==\",\"widget_type\":\"InputHidden\",\"required\":true}],\"columns\":[{\"attribute_alias\":\"\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"visibility\":\"optional\"}]}]}]}]}",
             "WRAP_PATH": "$.widgets[0].tabs[0].widgets[0]",
             "UXON_SCHEMA": "widget"
         },
@@ -888,6 +888,20 @@
             "DESCRIPTION": "Smoothed line chart (spline) with filters and sorters",
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
             "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}]},\"series\":[{\"type\":\"spline\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2020-01-20 09:20:12",
+            "MODIFIED_ON": "2020-01-20 09:20:53",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea3b65ec22ef96b32f0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Child-object table",
+            "DESCRIPTION": "DataTable showing dependants (detail or child objects) based on an invisible filter",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
+            "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO MASTER OBJECT\",\"comparator\":\"==\",\"widget_type\":\"InputHidden\",\"required\":true}],\"columns\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget"
         }
