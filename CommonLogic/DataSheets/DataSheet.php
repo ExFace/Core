@@ -2241,7 +2241,7 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::sort()
      */
-    public function sort(DataSorterListInterface $sorters = null) : DataSheetInterface
+    public function sort(DataSorterListInterface $sorters = null, bool $normalizeValues = true) : DataSheetInterface
     {
         if ($this->isEmpty()) {
             return $this;
@@ -2256,6 +2256,10 @@ class DataSheet implements DataSheetInterface
             $col = $this->getColumns()->getByAttribute($s->getAttribute());
             if ($col === false) {
                 throw new DataSheetStructureError($this, 'Cannot sort data sheet via ' . $s->getAttributeAlias() . ': no corresponding column found!');
+            }
+            // Values like numbers and dates can only be sorted reliably if they are normalized!
+            if ($normalizeValues === true) {
+                $col->normalizeValues();
             }
             $sorter->addCriteria($col->getName(), $s->getDirection());
         }

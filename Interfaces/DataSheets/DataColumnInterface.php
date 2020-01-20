@@ -8,6 +8,8 @@ use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
+use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 
 interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 {
@@ -359,4 +361,14 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @return bool
      */
     public function hasAggregator() : bool;
+    
+    /**
+     * Replaces all values in the column by their normalized versions according to the column's data type.
+     * 
+     * @throws DataTypeCastingError
+     * @throws DataTypeValidationError
+     * 
+     * @return void
+     */
+    public function normalizeValues();
 }
