@@ -38,16 +38,8 @@ class DeleteObject extends AbstractAction implements iDeleteData
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $input_data = $this->getInputDataSheet($task);
-        $deletedRows = 0;
-        /* @var $data_sheet \exface\Core\Interfaces\DataSheets\DataSheetInterface */
-        $obj = $input_data->getMetaObject();
-        $ds = DataSheetFactory::createFromObject($obj);
-        $uids = $input_data->getUidColumn()->getValues(false);
         
-        if (count($uids) > 0) {
-            $ds->addFilterInFromString($obj->getUidAttributeAlias(), $uids);
-            $deletedRows += $ds->dataDelete($transaction);
-        }
+        $deletedRows = $input_data->dataDelete($transaction);
         
         $result = ResultFactory::createMessageResult($task, $this->translate('RESULT', ['%number%' => $deletedRows], $deletedRows));
         
