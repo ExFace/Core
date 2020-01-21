@@ -51,6 +51,7 @@ use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\DataTypes\RelationCardinalityDataType;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\RelationDataType;
+use exface\Core\Interfaces\Model\ConditionInterface;
 
 /**
  * Default implementation of DataSheetInterface
@@ -1251,11 +1252,15 @@ class DataSheet implements DataSheetInterface
         if ($this->isUnfiltered()) {
             throw new DataSheetWriteError($this, 'Cannot delete all instances of "' . $this->getMetaObject()->getAliasWithNamespace() . '": forbidden operation!', '6T5VCA6');
         }
-        // set filters
+        
+        // Give the query all filters, that exist in the data sheet
         $query->setFiltersConditionGroup($this->getFilters());
+        
+        // Add a UID-filter if we know, which UIDs are to be deleted
+        $uidsToDelete = [];
         if ($uidCol = $this->getUidColumn()) {
-            if ($uids = $uidCol->getValues(false)) {
-                $query->addFilterCondition(ConditionFactory::createFromExpression($this->exface, $this->getUidColumn()->getExpressionObj(), implode($this->getUidColumn()->getAttribute()->getValueListDelimiter(), $uids), EXF_COMPARATOR_IN));
+            if ($uidsToDelete = $uidCol->getValues(false)) {
+                $query->addFilterCondition(ConditionFactory::createFromExpression($this->exface, $this->getUidColumn()->getExpressionObj(), implode($this->getUidColumn()->getAttribute()->getValueListDelimiter(), $uidsToDelete), EXF_COMPARATOR_IN));
             }
         }
         
@@ -1272,13 +1277,20 @@ class DataSheet implements DataSheetInterface
             }
             // If the there can be data, but there are no rows, read the data
             try {
-                if ($ds->dataRead() > 0) {
+                if ($ds->dataRead() > 0) {                    
                     // If the sheet has a filled UID column, better replace all filters
                     // by a simple IN-filter over UIDs. This simplifies the logic in most
                     // query builders a lot! No all data sources can delete filtering over
                     // relations, but most will be able to delete by UID.
                     if ($ds->hasUidColumn(true)) {
-                        $ds->getFilters()->removeAll();
+                        $dsUidCol = $ds->getUidColumn();
+                        // Remove all filters except for those over the UID column
+                        foreach ($ds->getFilters()->getConditions(function(ConditionInterface $cond) use ($dsUidCol) {
+                            return $cond->getExpression()->toString() !== $dsUidCol->getAttributeAlias();
+                        }) as $cond) {
+                            $ds->getFilters()->removeCondition($cond);
+                        }
+                        // Add an IN-filter for the UID column
                         $ds->addFilterFromColumnValues($ds->getUidColumn());
                     }
                     $ds->dataDelete($transaction);
@@ -1357,10 +1369,31 @@ class DataSheet implements DataSheetInterface
                 $ds->setFilters($this->getFilters()->rebase($rel->getAliasWithModifier()));
                 // Additionally add a filter over UIDs in the original query, if it has data with UIDs. This makes sure, the cascading deletes
                 // only affect the loaded rows and nothing "invisible" to the user!
-                if ($this->getUidColumn()) {
-                    $uids = $this->getUidColumn()->getValues(false);
+                if ($thisUidCol = $this->getUidColumn()) {
+                    $uids = $thisUidCol->getValues(false);
                     if (! empty($uids)) {
-                        $ds->addFilterInFromString($this->getUidColumn()->getExpressionObj()->rebase($rel->getAliasWithModifier())->toString(), $uids);
+                        $ds->addFilterInFromString($thisUidCol->getExpressionObj()->rebase($rel->getAliasWithModifier())->toString(), $uids);
+                    }
+                    
+                    // For self-relations some additional filters need to be done on cascading delete sheets!
+                    if ($this->getMetaObject()->isExactly($ds->getMetaObject()) === true) {
+                        // The cascading delete should not attempt to delete the rows already taken care
+                        // of by this sheet - so exclude them by filter! Otherwise we will get infinite 
+                        // recursion!
+                        $ds->addFilterFromString($thisUidCol->getAttributeAlias(), implode(',', $uids), ComparatorDataType::NOT_IN);
+                        // Also keep UID-filters of the main sheet in addition to the rebased filters
+                        // to make sure, that if we have excluding filters (= meaning DO NOT DELETE 
+                        // certain UIDs), the cascading deletes will not delete the corresponding items
+                        // either.
+                        // For example: concider nested categories via PARENT attribute. If we delete
+                        // all with UID!=2, the cascading deletes might kill category 2 too if it is a child
+                        // of any other category being deleted. Adding UID!=2 to the cascading subsheets will 
+                        // ensure, that category 2 survives in any case!
+                        foreach ($this->getFilters()->getConditions(function(ConditionInterface $cond) use ($thisUidCol) {
+                            return $cond->getExpression()->toString() === $thisUidCol->getAttributeAlias();
+                        }) as $cond) {
+                            $ds->getFilters()->addCondition($cond->copy());
+                        }
                     }
                 }
                 $subsheets[] = $ds;

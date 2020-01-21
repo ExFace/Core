@@ -284,96 +284,117 @@ class SqlModelLoader implements ModelLoaderInterface
                 $attr = $data['attr'];
                 $row = $data['row'];
                 
-                // If we have a reverse (1-n) relation if the attribute belongs to another object and that object is not being extended from
-                // Otherwise it's a normal n-1 relation
-                // IDEA What if we also create relations between parent and child objects. The inheriting object should probably get a direct
-                // relation to the parent. Would that be usefull for objects sharing attributes but using different data_addresses?
-                if ($object->getId() != $row['object_oid'] && ! in_array($row['object_oid'], $object->getParentObjectsIds())) {
-                    if ($leftKeyId = $row['related_object_special_key_attribute_oid']) {
-                        $leftKeyAttr = $object->getAttributes()->getByAttributeId($leftKeyId);
-                    } else {
-                        try {
-                            $leftKeyAttr = $object->getUidAttribute();
-                        } catch (MetaObjectHasNoUidAttributeError $e) {
-                            try {
-                                $rightObject = $this->getModel()->getObjectById($row['object_oid']);
-                                $error = 'Broken relation "' . $row['attribute_alias'] . '" from ' . $rightObject->getAliasWithNamespace() . ' to ' . $object->getAliasWithNamespace() . ': ' . $e->getMessage();
-                            } catch (\Throwable $ee) {
-                                throw new MetaModelLoadingFailedError('No relations to default key attribute of object ' . $object->getAliasWithNamespace() . ' possible: ' . $e->getMessage(), '70U52B4', $e);
-                            }
-                            throw new MetaRelationBrokenError($rightObject, $error, '70U52B4', $e);
-                        }
-                    }
-                    
-                    if ($row['rev_relation_alias'] === '' || $row['rev_relation_alias'] === null) {
-                        throw new MetaModelLoadingFailedError('Object with UID "' . $row['object_oid'] . '" does not exist, but is referenced by the attribute "' . $row['attribute_alias'] . '" (UID "' . $row['uid'] . '"). Please repair the model or delete the orphaned attribute!', '70UJ2GV');
-                    }
-                    
-                    switch ($row['relation_cardinality']) {
-                        case 'NM':
-                            $cardinality = RelationCardinalityDataType::N_TO_M($exface);
-                            break;
-                        case '11': 
-                            $cardinality = RelationCardinalityDataType::ONE_TO_ONE($exface);
-                            break;
-                        // case '1N':
-                            // There cannot be an attribute for a 1-to-n relation in the DB because
-                            // this relation would need to be a defined as n-to-1 at it's other end then.
-                        default: 
-                            // An regular n-to-1 relation pointing to our attribute is a reversed one (1-to-n)
-                            // from it's point of view.
-                            $cardinality = RelationCardinalityDataType::ONE_TO_N($exface);
-                    }
-                    
-                    $rel = new Relation(
-                        $exface,
-                        $cardinality,
-                        $row['oid'], // relation id
-                        $row['rev_relation_alias'], // relation alias
-                        $row['attribute_alias'], // relation modifier: the alias of the right key attribute
-                        null, // the name cannot be specified at this point, as it depends on what other reverse relations will exist
-                        $object, // left object
-                        $leftKeyAttr, // left key in the main object
-                        $row['object_oid'], // right object UID
-                        $row['oid'] // right object key attribute id
-                    );
-                    
-                    if ($row['delete_with_related_object'] == 1) {
-                        $rel->setRightObjectToBeDeletedWithLeftObject(true);
-                    }
-                    if ($row['copy_with_related_object'] == 1) {
-                        $rel->setRightObjectToBeCopiedWithLeftObject(true);
-                    }
-                } elseif ($attr !== null) {
-                    // At this point, we know, it is a direct relation. This can only happen if the object has a corresponding direct
-                    // attribute. This is why the elseif($attr) is there.
-                    
-                    // Relation cardinality in the DB is empty if it's a regular n-to-1 relation!
-                    $cardinality = $row['relation_cardinality'] ? RelationCardinalityDataType::fromValue($exface, $row['relation_cardinality']) : RelationCardinalityDataType::N_TO_ONE($exface);
-                    
-                    $rel = new Relation(
-                        $exface,
-                        $cardinality,
-                        $attr->getId(), // relation id
-                        $attr->getAlias(), // relation alias
-                        '', // alias modifier allways empty for direct regular relations
-                        $attr->getName(),
-                        $object, //  left object
-                        $attr, // left key attribute
-                        $row['related_object_oid'], // right object UID
-                        $row['related_object_special_key_attribute_oid'] // related object key attribute (UID will be used if not set)
-                    );
-                    
-                    if ($row['delete_with_related_object'] == 1) {
-                        $rel->setLeftObjectToBeDeletedWithRightObject(true);
-                    }
-                    if ($row['copy_with_related_object'] == 1) {
-                        $rel->setLeftObjectToBeCopiedWithRightObject(true);
-                    }
-                }
+                // If we have a reverse (1-n) relation if the attribute belongs to another object and that
+                // object is not being extended from. Otherwise it's a normal n-1 relation.
+                $thisObjId = $object->getId();
+                $attrObjId = $row['object_oid'];
+                $attrBelongsToOtherObj = ($thisObjId !== $attrObjId && false === in_array($attrObjId, $object->getParentObjectsIds()));
+                $attrIsSelfRelation = ($attrObjId === $row['related_object_oid']);
                 
-                if ($rel !== null) {
-                    $object->addRelation($rel);
+                // IDEA What if we also create relations between parent and inheriting objects. The 
+                // inheriting object should probably get a direct relation to the parent. Would that 
+                // be usefull for objects sharing attributes but using different data_addresses?
+                switch (true) {
+                    // Create reverse-relations for attributes belonging to other objects.
+                    // NOTE: that a self-relation is a reverse-relation and a regular relation at the
+                    // same time, so we add it here as a reverse relation and will add it as 
+                    // a regular relation later on too!
+                    case $attrBelongsToOtherObj === true || $attrIsSelfRelation === true:
+                        if ($leftKeyId = $row['related_object_special_key_attribute_oid']) {
+                            $leftKeyAttr = $object->getAttributes()->getByAttributeId($leftKeyId);
+                        } else {
+                            try {
+                                $leftKeyAttr = $object->getUidAttribute();
+                            } catch (MetaObjectHasNoUidAttributeError $e) {
+                                try {
+                                    $rightObject = $this->getModel()->getObjectById($row['object_oid']);
+                                    $error = 'Broken relation "' . $row['attribute_alias'] . '" from ' . $rightObject->getAliasWithNamespace() . ' to ' . $object->getAliasWithNamespace() . ': ' . $e->getMessage();
+                                } catch (\Throwable $ee) {
+                                    throw new MetaModelLoadingFailedError('No relations to default key attribute of object ' . $object->getAliasWithNamespace() . ' possible: ' . $e->getMessage(), '70U52B4', $e);
+                                }
+                                throw new MetaRelationBrokenError($rightObject, $error, '70U52B4', $e);
+                            }
+                        }
+                        
+                        if ($row['rev_relation_alias'] === '' || $row['rev_relation_alias'] === null) {
+                            throw new MetaModelLoadingFailedError('Object with UID "' . $row['object_oid'] . '" does not exist, but is referenced by the attribute "' . $row['attribute_alias'] . '" (UID "' . $row['uid'] . '"). Please repair the model or delete the orphaned attribute!', '70UJ2GV');
+                        }
+                        
+                        switch ($row['relation_cardinality']) {
+                            case 'NM':
+                                $cardinality = RelationCardinalityDataType::N_TO_M($exface);
+                                break;
+                            case '11': 
+                                $cardinality = RelationCardinalityDataType::ONE_TO_ONE($exface);
+                                break;
+                            // case '1N':
+                                // There cannot be an attribute for a 1-to-n relation in the DB because
+                                // this relation would need to be a defined as n-to-1 at it's other end then.
+                            default: 
+                                // An regular n-to-1 relation pointing to our attribute is a reversed one (1-to-n)
+                                // from it's point of view.
+                                $cardinality = RelationCardinalityDataType::ONE_TO_N($exface);
+                        }
+                        
+                        $rel = new Relation(
+                            $exface,
+                            $cardinality,
+                            $row['oid'], // relation id
+                            $row['rev_relation_alias'], // relation alias
+                            $row['attribute_alias'], // relation modifier: the alias of the right key attribute
+                            null, // the name cannot be specified at this point, as it depends on what other reverse relations will exist
+                            $object, // left object
+                            $leftKeyAttr, // left key in the main object
+                            $row['object_oid'], // right object UID
+                            $row['oid'] // right object key attribute id
+                        );
+                        
+                        if ($row['delete_with_related_object'] == 1) {
+                            $rel->setRightObjectToBeDeletedWithLeftObject(true);
+                        }
+                        if ($row['copy_with_related_object'] == 1) {
+                            $rel->setRightObjectToBeCopiedWithLeftObject(true);
+                        }
+                        
+                        // Add the relation
+                        $object->addRelation($rel);
+                        
+                        // Check if the attribute is a self-relation. If so, do not break here, but
+                        // continue adding a forward relation for it.
+                        if ($attrIsSelfRelation === false) {
+                            break;
+                        }
+                    case $attr !== null && $attrBelongsToOtherObj === false:
+                        // At this point, we know, it is a direct relation. This can only happen if the object has a corresponding direct
+                        // attribute. This is why the elseif($attr) is there.
+                        
+                        // Relation cardinality in the DB is empty if it's a regular n-to-1 relation!
+                        $cardinality = $row['relation_cardinality'] ? RelationCardinalityDataType::fromValue($exface, $row['relation_cardinality']) : RelationCardinalityDataType::N_TO_ONE($exface);
+                        
+                        $rel = new Relation(
+                            $exface,
+                            $cardinality,
+                            $attr->getId(), // relation id
+                            $attr->getAlias(), // relation alias
+                            '', // alias modifier allways empty for direct regular relations
+                            $attr->getName(),
+                            $object, //  left object
+                            $attr, // left key attribute
+                            $row['related_object_oid'], // right object UID
+                            $row['related_object_special_key_attribute_oid'] // related object key attribute (UID will be used if not set)
+                        );
+                        
+                        if ($row['delete_with_related_object'] == 1) {
+                            $rel->setLeftObjectToBeDeletedWithRightObject(true);
+                        }
+                        if ($row['copy_with_related_object'] == 1) {
+                            $rel->setLeftObjectToBeCopiedWithRightObject(true);
+                        }
+                        
+                        // Add the relation
+                        $object->addRelation($rel);
+                        
+                        break;
                 }
             }
         }
