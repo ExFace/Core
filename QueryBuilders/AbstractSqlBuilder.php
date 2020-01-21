@@ -1449,12 +1449,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // and often is significantly faster. Keep in mind thogh, that the null-check will not
                     // be part of the $values array, so need to check for it too.
                     case count($values) === 1 && $valueNullCheck === '':
-                        $value = $values[0];
-                        $comparator = $comparator == ComparatorDataType::IN ? ComparatorDataType::EQUALS : ComparatorDataType::EQUALS_NOT;
+                        $val = $values[0];
+                        if ($comparator == ComparatorDataType::IN) {
+                            return $subject . ' = ' . $val;
+                        } else {
+                            return $subject . ' != ' . $val;
+                        }
                         break;
                     // IN(null) will result in empty $values and a NULL-check, so just use the NULL-check in this case.
                     case empty($values) === true && $valueNullCheck !== '':
-                        $value = $valueNullCheck;
+                        $value = EXF_LOGICAL_NULL;
                         break;
                     // Otherwise create a (...) list and append the NULL-check with an OR if there is one.
                     default: 
