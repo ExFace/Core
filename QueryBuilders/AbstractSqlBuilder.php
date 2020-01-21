@@ -32,6 +32,7 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * A query builder for generic SQL syntax.
@@ -1428,20 +1429,37 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             } else {
                 $values = explode($value_list_delimiter, $value);
                 $value = '';
-                // $values = explode($value_list_delimiter, trim($value, $value_list_delimiter));
+                $valueNullCheck = '';
+                
                 foreach ($values as $nr => $val) {
                     // If there is an empty string among the values or one of the empty-comparators, 
                     // this means that the value may or may not be empty (NULL). NULL is not a valid
                     // value for an IN-statement, though, so we need to append an "OR IS NULL" here.
                     if ($val === '' || $val === EXF_LOGICAL_NULL) {
                         unset($values[$nr]);
-                        $value = $subject . ($comparator == EXF_COMPARATOR_IN ? ' IS NULL' : ' IS NOT NULL');
+                        $valueNullCheck = $subject . ($comparator == EXF_COMPARATOR_IN ? ' IS NULL' : ' IS NOT NULL');
                         continue;
                     }
                     // Normalize non-empty values
                     $values[$nr] = $this->prepareWhereValue($val, $data_type, $sql_data_type);
                 }
-                $value = '(' . (! empty($values) ? implode(',', $values) : 'NULL') . ')' . ($value ? ' OR ' . $value : '');
+                
+                switch (true) {
+                    // If there is only one value, it is better to use = than IN - it is exactly the same
+                    // and often is significantly faster. Keep in mind thogh, that the null-check will not
+                    // be part of the $values array, so need to check for it too.
+                    case count($values) === 1 && $valueNullCheck === '':
+                        $value = $values[0];
+                        $comparator = $comparator == ComparatorDataType::IN ? ComparatorDataType::EQUALS : ComparatorDataType::EQUALS_NOT;
+                        break;
+                    // IN(null) will result in empty $values and a NULL-check, so just use the NULL-check in this case.
+                    case empty($values) === true && $valueNullCheck !== '':
+                        $value = $valueNullCheck;
+                        break;
+                    // Otherwise create a (...) list and append the NULL-check with an OR if there is one.
+                    default: 
+                        $value = '(' . (! empty($values) ? implode(',', $values) : 'NULL') . ')' . ($valueNullCheck ? ' OR ' . $valueNullCheck : '');
+                }
             }
         } catch (DataTypeCastingError $e) {
             // If the data type is incompatible with the value, return a WHERE clause, that is always false.
