@@ -17,6 +17,8 @@ use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Exceptions\UxonParserError;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Factories\ExpressionFactory;
 
 /**
  * A condition is a simple conditional predicate consisting of a (left) expression,
@@ -48,6 +50,14 @@ class Condition implements ConditionInterface
     private $exface = null;
 
     private $expression = null;
+    
+    private $leftExpr = null;
+    
+    private $leftExprRaw = null;
+    
+    private $rightExpr = null;
+    
+    private $rightExprRaw = null;
 
     private $value = null;
     
@@ -56,6 +66,10 @@ class Condition implements ConditionInterface
     private $comparator = null;
 
     private $data_type = null;
+    
+    private $baseObject = null;
+    
+    private $baseObjectSelector = null;
 
     /**
      * @deprecated use ConditionFactory instead!
@@ -72,10 +86,10 @@ class Condition implements ConditionInterface
     {
         $this->exface = $exface;
         if ($leftExpression !== null) {
-            $this->setExpression($leftExpression);
+            $this->setLeftExpression($leftExpression);
         }
         if ($rightExpression !== null) {
-            $this->setValue($rightExpression);
+            $this->setRightExpression($rightExpression);
         }
         if ($comparator !== null) {
             $this->setComparator($comparator);
@@ -90,21 +104,6 @@ class Condition implements ConditionInterface
     public function getExpression() : ExpressionInterface
     {
         return $this->expression;
-    }
-
-    /**
-     * The left side of the condition.
-     * 
-     * @uxon-property attribute_alias
-     * @uxon-type metamodel:attribute
-     * 
-     * @param ExpressionInterface $expression
-     * @return ConditionInterface
-     */
-    protected function setExpression(ExpressionInterface $expression) : ConditionInterface
-    {
-        $this->expression = $expression;
-        return $this;
     }
 
     /**
@@ -160,7 +159,7 @@ class Condition implements ConditionInterface
      */
     protected function guessComparator()
     {
-        if (!$base_object = $this->getExpression()->getMetaObject()){
+        if ($this->hasBaseObject() === false && ! ($base_object = $this->getLeftExpression()->getMetaObject() ?? $this->getRightExpression()->getMetaObject()) ){
             return EXF_COMPARATOR_IS;
         }
         
@@ -342,25 +341,46 @@ class Condition implements ConditionInterface
      *
      * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::importUxonObject()            
      */
-    public function importUxonObject(UxonObject $uxon_object)
+    public function importUxonObject(UxonObject $uxon)
     {
         if (! $this->isEmpty()) {
             throw new LogicException('Cannot import UXON description into a non-empty condition (' . $this->toString() . ')!');
         }
-        if ($uxon_object->hasProperty('expression')) {
-            $expression = $uxon_object->getProperty('expression');
-        } elseif ($uxon_object->hasProperty('attribute_alias')) {
-            $expression = $uxon_object->getProperty('attribute_alias');
+        if ($baseObjAlias = $uxon->getProperty('object_alias')) {
+            $this->setObjectAlias($baseObjAlias);
         }
-        if (! $objAlias = $uxon_object->getProperty('object_alias')) {
-            throw new UxonParserError($uxon_object, 'Invalid UXON condition syntax: Missing object alias!');
+        
+        $leftExpr = $uxon->getProperty('left_expression');
+        if ($uxon->hasProperty('expression') === true) {
+            if ($leftExpr !== null) {
+                throw new UxonParserError($uxon, 'Invalid UXON condition syntax: cannot use properties `left_expression` and `expression` at the same time - use only `left_expression` instead!');
+            } else {
+                $leftExpr = $uxon->getProperty('expression');
+            }
         }
-        $this->setExpression($this->exface->model()->parseExpression($expression, $this->exface->model()->getObject($objAlias)));
-        if ($uxon_object->hasProperty('comparator') && $comp = $uxon_object->getProperty('comparator')) {
+        if ($uxon->hasProperty('attribute_alias') === true) {
+            if ($leftExpr !== null) {
+                throw new UxonParserError($uxon, 'Invalid UXON condition syntax: cannot use properties `left_expression`, `expression` and `attribute_alias` at the same time - use only `left_expression` instead!');
+            } else {
+                $leftExpr = $uxon->getProperty('attribute_alias');
+            }
+        }
+        
+        if ($this->hasBaseObject() === false) {
+            throw new UxonParserError($uxon, 'Invalid UXON condition syntax: Missing object alias!');
+        }
+        $this->setLeftExpression($leftExpr);
+        
+        if ($comp = $uxon->getProperty('comparator')) {
             $this->setComparator($comp);
         }
-        if ($uxon_object->hasProperty('value')){
-            $value = $uxon_object->getProperty('value');
+        
+        $rigthExpr = $uxon->getProperty('right_expression');
+        if ($uxon->hasProperty('value') === true){
+            if ($rigthExpr !== null) {
+                throw new UxonParserError($uxon, 'Invalid UXON condition syntax: cannot use properties `right_expression` and `value` at the same time - use only `right_expression` instead!');
+            }
+            $value = $uxon->getProperty('value');
             if (! is_null($value) && $value !== ''){
                 if ($value instanceof UxonObject) {
                     if (! $comp || $comp === EXF_COMPARATOR_IS) {
@@ -378,11 +398,13 @@ class Condition implements ConditionInterface
                     $value = implode($glue, $value->toArray());
                     
                     if ($comp !== EXF_COMPARATOR_IN && $comp !== EXF_COMPARATOR_NOT_IN) {
-                        throw new UxonParserError($uxon_object, 'Cannot use comparator "' . $comp . '" with a list of values "' . $value . '"!');    
+                        throw new UxonParserError($uxon, 'Cannot use comparator "' . $comp . '" with a list of values "' . $value . '"!');    
                     }
                 }
                 $this->setValue($value);
             }
+        } else {
+            
         }
     }
     
@@ -434,5 +456,85 @@ class Condition implements ConditionInterface
     {
         return ConditionFactory::createFromUxon($this->getWorkbench(), $this->exportUxonObject());
     }
-
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    protected function getBaseObject() : ?MetaObjectInterface
+    {
+        if ($this->baseObject === null && $this->baseObjectSelector !== null) {
+            $this->baseObject = $this->getWorkbench()->model()->getObject($this->baseObjectSelector);
+        }
+        return $this->baseObject;
+    }
+    
+    protected function hasBaseObject() : bool
+    {
+        return $this->baseObject !== null || $this->baseObjectSelector !== null;
+    }
+    
+    /**
+     * All expressions within this condition will be resolved based on this object.
+     *
+     * @uxon-property object_alias
+     * @uxon-type metamodel:object
+     *
+     * @param string $value
+     * @return ConditionGroup
+     */
+    protected function setObjectAlias(string $aliasWithNamespaceOrUid) : ConditionGroup
+    {
+        $this->baseObjectSelector = $aliasWithNamespaceOrUid;
+        $this->baseObject = null;
+        return $this;
+    }
+    
+    protected function setLeftExpression($expressionOrStringOrUxon) : Condition
+    {
+        if ($expressionOrStringOrUxon instanceof ExpressionInterface) {
+            $this->leftExprRaw = $expressionOrStringOrUxon;
+            $this->leftExpr = null;
+        } else {
+            $this->leftExprRaw = null;
+            $this->leftExpr = $expressionOrStringOrUxon;
+        }
+        return $this;
+    }
+    
+    public function getLeftExpression() : ExpressionInterface
+    {
+        if ($this->leftExpr === null) {
+            if ($this->leftExprRaw !== null) {
+                $this->leftExpr = $this->exface->model()->parseExpression($this->leftExprRaw, $this->getBaseObject());
+            } else {
+                $this->leftExpr = ExpressionFactory::createForObject($this->getBaseObject(), '');
+            }
+        }
+        return $this->leftExpr;
+    }
+    
+    protected function setRightExpression($expressionOrStringOrUxon) : Condition
+    {
+        if ($expressionOrStringOrUxon instanceof ExpressionInterface) {
+            $this->rightExprRaw = $expressionOrStringOrUxon;
+            $this->rightExpr = null;
+        } else {
+            $this->rightExprRaw = null;
+            $this->rightExpr = $expressionOrStringOrUxon;
+        }
+        return $this;
+    }
+    
+    public function getRightExpression() : ExpressionInterface
+    {
+        if ($this->rightExpr === null) {
+            if ($this->rightExprRaw !== null) {
+                $this->rightExpr = $this->exface->model()->parseExpression($this->rightExprRaw, $this->getBaseObject());
+            } else {
+                $this->rightExpr = ExpressionFactory::createForObject($this->getBaseObject(), '');
+            }
+        }
+        return $this->rightExpr;
+    }
 }
