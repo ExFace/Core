@@ -7,6 +7,9 @@ use exface\Core\DataTypes\FlagTreeFolderDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\Parts\DataRowReorder;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
 
 class DataTree extends DataTable
 {
@@ -25,6 +28,8 @@ class DataTree extends DataTable
     private $tree_expanded = false;
 
     private $tree_root_uid = null;
+    
+    private $row_reorder = null;
 
     protected function init()
     {
@@ -360,6 +365,61 @@ class DataTree extends DataTable
         }
         
         return $this->getColumn($this->getTreeLeafIdColumnId());
+    }
+    
+    /**
+     * Sets the attribute and direction rows are sorted by in a parent node
+     * 
+     * Example:
+     *
+     * ```json
+     * {
+     *  "widget_type": "DataTree",
+     *  "row_reorder": {
+     *      "order_index_attribute_alias": "MY_ATTRIBUTE",
+     *      "direction": "ASC"
+     *  }
+     * }
+     *
+     * ```
+     *
+     * @uxon-property row_reorder
+     * @uxon-type \exface\Core\Widgets\Parts\DataRowReorder
+     * @uxon-template {"order_index_attribute_alias": "", "direction": "asc"}
+     *
+     * @param UxonObject $uxon
+     * @return DataTable
+     */
+    public function setRowReorder(UxonObject $uxon) : DataTree
+    {
+        $part = new DataRowReorder($this, $uxon);
+        $this->row_reorder = $part;
+        $this->addSorter($part->getOrderIndexAttributeAlias(), $part->getDirection());
+        return $this;
+    }
+    
+    /**
+     * Returns the DataRowReorder widget if row reordering is configured or throws exception.
+     *
+     * @throws WidgetLogicError
+     * @return DataRowReorder
+     */
+    public function getRowReorder() : DataRowReorder
+    {
+        if (is_null($this->row_reorder)) {
+            throw new WidgetLogicError($this, 'Property row_reorder not set prior to grouper initialization!');
+        }
+        return $this->row_reorder;
+    }
+    
+    /**
+     * Returns TRUE if row reordering is enabled for this table and FALSE otherwise.
+     *
+     * @return boolean
+     */
+    public function hasRowGroups()
+    {
+        return $this->row_grouper !== null;
     }
 }
 ?>
