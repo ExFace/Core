@@ -83,7 +83,7 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
      * @param int $row_number
      * @return array|string
      */
-    public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $column_name, $row_number = null);
+    public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, $column_name = null, $row_number = null);
     
     public function getRequiredAttributes();
     

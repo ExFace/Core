@@ -305,19 +305,19 @@ class Expression implements ExpressionInterface
      */
     public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, $column_name = null, $row_number = null)
     {
-        if ($this->isStatic()) {
-            if ($this->isFormula()) {
+        if ($this->isStatic() === true) {
+            if ($this->isFormula() === true) {
                 return $this->getFormula()->evaluate();
             } else {
                 return $this->value;
             }
             
         } else {
-            if (is_null($data_sheet) || is_null($column_name)) {
+            if ($data_sheet === null || $column_name === null) {
                 throw new InvalidArgumentException('In a non-static expression $data_sheet and $column_name are mandatory arguments.');
             }
             
-            if (is_null($row_number)) {
+            if ($row_number === null) {
                 $result = array();
                 $rows_and_totals_count = $data_sheet->countRows() + count($data_sheet->getTotalsRows());
                 for ($r = 0; $r < $rows_and_totals_count; $r ++) {

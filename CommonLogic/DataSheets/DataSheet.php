@@ -105,7 +105,7 @@ class DataSheet implements DataSheetInterface
     {
         $this->exface = $meta_object->getModel()->getWorkbench();
         $this->meta_object = $meta_object;
-        $this->filters = ConditionGroupFactory::createEmpty($this->exface, EXF_LOGICAL_AND);
+        $this->filters = ConditionGroupFactory::createEmpty($this->exface, EXF_LOGICAL_AND, $this->getMetaObject());
         $this->cols = new DataColumnList($this->exface, $this);
         $this->aggregation_columns = new DataAggregationList($this->exface, $this);
         $this->sorters = new DataSorterList($this->exface, $this);
@@ -1862,7 +1862,7 @@ class DataSheet implements DataSheetInterface
         }
         
         if ($uxon->hasProperty('filters')) {
-            $this->setFilters(ConditionGroupFactory::createFromUxon($this->exface, $uxon->getProperty('filters')));
+            $this->setFilters(ConditionGroupFactory::createFromUxon($this->exface, $uxon->getProperty('filters'), $this->getMetaObject()));
         }
         
         if ($uxon->hasProperty('rows_limit')) {
@@ -2247,25 +2247,15 @@ class DataSheet implements DataSheetInterface
     {
         $conditions = $conditionOrGroup->toConditionGroup();
         $ds = $this->copy();
-        $filter = new RowDataArrayFilter();
-        if ($conditions->getOperator() === EXF_LOGICAL_AND) {
-            foreach ($conditions->getConditions() as $condition) {
-                $col = $this->getColumns()->getByExpression($condition->getExpression());
-                if ($col === false) {
-                    throw new RuntimeException('Cannot extract data from data sheet: missing column for extraction filter "' . $condition->toString() . '"!');
-                }
-                $filter->addAnd($col->getName(), $condition->getValue(), $condition->getComparator());
+        
+        $extractedRows = [];
+        foreach ($this->getRows() as $rowNr => $row) {
+            if ($conditions->evaluate($this, $rowNr) === true) {
+                $extractedRows[] = $row;
             }
-            $rows = $filter->filter($this->getRows());
-        } else {
-            throw new RuntimeException('Unsupported condition group operator "' . $conditions->getOperator() . '" for data sheet extraction: only AND currently supported!');
         }
         
-        if ($conditions->countNestedGroups() > 0) {
-            throw new RuntimeException('Cannot extract data from data sheet using a condition group with nested groups: currently not supported!');
-        }
-        
-        $ds->removeRows()->addRows($rows);
+        $ds->removeRows()->addRows($extractedRows);
         return $ds;
     }
     
