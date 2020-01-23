@@ -407,7 +407,7 @@ class DataTree extends DataTable
     public function getRowReorder() : DataRowReorder
     {
         if (is_null($this->row_reorder)) {
-            throw new WidgetLogicError($this, 'Property row_reorder not set prior to grouper initialization!');
+            throw new WidgetLogicError($this, 'Property row_reorder not set prior to reorder initialization!');
         }
         return $this->row_reorder;
     }
