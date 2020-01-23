@@ -5,7 +5,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Widgets\Traits\DataWidgetPartTrait;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\DataSheets\DataSorter;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
  * This widget part is used to reorder rows in a DataTable
@@ -34,7 +34,7 @@ class DataRowReorder implements WidgetPartInterface
     
     private $order_index_attribute_alias;
     
-    private $direction = DataSorter::DIRECTION_ASC;
+    private $direction = SortingDirectionsDataType::ASC;
     
     /**
      *
@@ -51,6 +51,10 @@ class DataRowReorder implements WidgetPartInterface
         return $uxon;
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function getOrderIndexAttributeAlias() : string
     {
         return $this->order_index_attribute_alias;
@@ -78,14 +82,14 @@ class DataRowReorder implements WidgetPartInterface
      *
      * @param string $value
      * @throws UnexpectedValueException
-     * @return \exface\Core\CommonLogic\DataSheets\DataSorter
+     * @return \exface\Core\Widgets\Parts\DataRowReorder
      */
     public function setDirection($value)
     {
-        if (strtoupper($value) == DataSorter::DIRECTION_ASC) {
-            $this->direction = DataSorter::DIRECTION_ASC;
-        } elseif (strtoupper($value) == DataSorter::DIRECTION_DESC) {
-            $this->direction = DataSorter::DIRECTION_DESC;
+        if (strtoupper($value) == SortingDirectionsDataType::ASC) {
+            $this->direction = SortingDirectionsDataType::ASC;
+        } elseif (strtoupper($value) == SortingDirectionsDataType::DESC) {
+            $this->direction = SortingDirectionsDataType::DESC;
         } else {
             throw new UnexpectedValueException('Invalid sort direction "' . $value . '" for a date row reorder only DESC or ASC are allowed!', '6T5V9KS');
         }
