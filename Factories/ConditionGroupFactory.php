@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 abstract class ConditionGroupFactory extends AbstractUxonFactory
 {
@@ -14,16 +15,14 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
      * Returns an empty condition group
      *
      * @param Workbench $exface            
-     * @param string $group_operator            
+     * @param string $group_operator       
+     * @param MetaObjectInterface $baseObject
+     *      
      * @return ConditionGroup
      */
-    public static function createEmpty(Workbench $exface, $group_operator = null) : ConditionGroupInterface
+    public static function createEmpty(Workbench $exface, $group_operator = null, MetaObjectInterface $baseObject = null) : ConditionGroupInterface
     {
-        if ($group_operator === null) {
-            return new ConditionGroup($exface);
-        } else {
-            return new ConditionGroup($exface, $group_operator);
-        }
+        return new ConditionGroup($exface, $group_operator ?? EXF_LOGICAL_AND, $baseObject);
     }
 
     /**
@@ -33,11 +32,13 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
      *
      * @param Workbench $exface            
      * @param array $array_notation            
+     * @param MetaObjectInterface $baseObject
+     * 
      * @return ConditionGroup
      */
-    public static function createFromArray(Workbench $exface, array $array_notation) : ConditionGroupInterface
+    public static function createFromArray(Workbench $exface, array $array_notation, MetaObjectInterface $baseObject = null) : ConditionGroupInterface
     {
-        $group = self::create($exface);
+        $group = self::createEmpty($exface, null, $baseObject);
         // Short notation
         foreach ($array_notation as $nr => $part) {
             if ($nr === 0) {
@@ -64,18 +65,39 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
      *
      * @param Workbench $exface            
      * @param UxonObject|array $uxon_or_array            
+     * @param MetaObjectInterface $baseObject
+     * 
      * @throws UnexpectedValueException
+     * 
      * @return ConditionGroup
      */
-    public static function createFromUxonOrArray(Workbench $exface, $uxon_or_array) : ConditionGroupInterface
+    public static function createFromUxonOrArray(Workbench $exface, $uxon_or_array, MetaObjectInterface $baseObject = null) : ConditionGroupInterface
     {
         if ($uxon_or_array instanceof UxonObject) {
-            return self::createFromUxon($exface, $uxon_or_array);
+            return self::createFromUxon($exface, $uxon_or_array, $baseObject);
         } elseif (is_array($uxon_or_array)) {
-            return self::createFromArray($exface, $uxon_or_array);
+            return self::createFromArray($exface, $uxon_or_array, $baseObject);
         } else {
             throw new UnexpectedValueException('Cannot parse condition "' . print_r($uxon_or_array) . '"!');
         }
+    }
+    
+    /**
+     * Creates a business object from it's UXON description.
+     * If the business object implements iCanBeConvertedToUxon, this method
+     * will work automatically. Otherwise it needs to be overridden in the specific factory.
+     *
+     * @param Workbench $exface
+     * @param UxonObject $uxon
+     * @param MetaObjectInterface $baseObject
+     * 
+     * @return ConditionGroupInterface
+     */
+    public static function createFromUxon(Workbench $exface, UxonObject $uxon, MetaObjectInterface $baseObject = null)
+    {
+        $result = static::createEmpty($exface, null, $baseObject);
+        $result->importUxonObject($uxon);
+        return $result;
     }
 }
 ?>

@@ -10,6 +10,8 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\ConditionInterface;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Default implementation of the ConditionGroupInterface
@@ -31,16 +33,23 @@ class ConditionGroup implements ConditionGroupInterface
 
     // Properties NOT to be dublicated on copy()
     private $exface = NULL;
+    
+    private $baseObject = null;
+    
+    private $baseObjectSelector = null;
 
     /**
      * 
      * @param \exface\Core\CommonLogic\Workbench $exface
      * @param string $operator
      */
-    function __construct(\exface\Core\CommonLogic\Workbench $exface, string $operator = EXF_LOGICAL_AND)
+    function __construct(\exface\Core\CommonLogic\Workbench $exface, string $operator = EXF_LOGICAL_AND, MetaObjectInterface $baseObject = null)
     {
         $this->exface = $exface;
         $this->setOperator($operator);
+        if ($baseObject !== null) {
+            $this->setBaseObject($baseObject);
+        }
     }
 
     /**
@@ -271,12 +280,18 @@ class ConditionGroup implements ConditionGroupInterface
         
         $this->setOperator($uxon->getProperty('operator') ?? EXF_LOGICAL_AND);
         if ($uxon->hasProperty('conditions')) {
-            foreach ($uxon->getProperty('conditions') as $cond) {
-                $this->addCondition(ConditionFactory::createFromUxon($this->exface, $cond));
+            foreach ($uxon->getProperty('conditions') as $group) {
+                if ($group->hasProperty('object_alias') === false && $this->hasBaseObject() === true) {
+                    $group->setProperty('object_alias', $this->getBaseObjectSelector());
+                }
+                $this->addCondition(ConditionFactory::createFromUxon($this->exface, $group));
             }
         }
         if ($uxon->hasProperty('nested_groups')) {
             foreach ($uxon->getProperty('nested_groups') as $group) {
+                if ($group->hasProperty('base_object_alias') === false && $this->hasBaseObject() === true) {
+                    $group->setProperty('base_object_alias', $this->getBaseObjectSelector());
+                }
                 $this->addNestedGroup(ConditionGroupFactory::createFromUxon($this->exface, $group));
             }
         }
@@ -420,5 +435,78 @@ class ConditionGroup implements ConditionGroupInterface
         }
         return $this;
     }
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    public function getBaseObject() : ?MetaObjectInterface
+    {
+        if ($this->baseObject === null && $this->baseObjectSelector !== null) {
+            $this->baseObject = $this->getWorkbench()->model()->getObject($this->baseObjectSelector);
+        }
+        return $this->baseObject;
+    }
+    
+    protected function getBaseObjectSelector() : ?string
+    {
+        return $this->baseObjectSelector ?? ($this->baseObject !== null ? $this->baseObject->getAliasWithNamespace() : null);
+    }
+    
+    /**
+     * All expressions within this condition group will be resolved based on this object.
+     * 
+     * @uxon-property base_object_alias
+     * @uxon-type metamodel:object
+     * 
+     * @param string $value
+     * @return ConditionGroup
+     */
+    protected function setBaseObjectAlias(string $aliasWithNamespaceOrUid) : ConditionGroup
+    {
+        $this->baseObjectSelector = $aliasWithNamespaceOrUid;
+        $this->baseObject = null;
+        return $this;
+    }
+    
+    protected function setBaseObject(MetaObjectInterface $object) : ConditionGroup
+    {
+        $this->baseObject = $object;
+        $this->baseObjectSelector = null;
+        return $this;
+    }
+    
+    public function hasBaseObject() : bool
+    {
+        return $this->baseObject !== null || $this->baseObjectSelector !== null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::evaluate()
+     */
+    public function evaluate(DataSheetInterface $data_sheet = null, int $row_number = null) : bool
+    {
+        $op = $this->getOperator();
+        $results = [];
+        $evals = array_merge($this->getConditions(), $this->getNestedGroups());
+        foreach ($evals as $conditionOrGroup) {
+            $result = $conditionOrGroup->evaluate($data_sheet, $row_number);
+            switch (true) {
+                case $op === EXF_LOGICAL_AND && $result === false: return false;
+                case $op === EXF_LOGICAL_OR && $result === true: return true;
+                default:
+                    $results[] = $result;
+            }
+        }
+        
+        switch ($op) {
+            case EXF_LOGICAL_AND: return in_array(false, $results, true) === false;
+            case EXF_LOGICAL_OR: return false;
+            case EXF_LOGICAL_XOR: count(array_filter(function(bool $val){return $val === true;})) === 1;
+            default: 
+                throw new RuntimeException('Unsupported logical operator "' . $op . '" in condition group "' . $this->toString() . '"!');
+        }
+    }
 }
-?>
