@@ -1246,6 +1246,9 @@ class DataSheet implements DataSheetInterface
         
         $affected_rows = 0;
         
+        // Fire OnBeforeDeleteDataEvent to allow preprocessing and alternative deletetion logic
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeDeleteDataEvent($this, $transaction));
+        
         // create new query for the main object
         $query = QueryBuilderFactory::createForObject($this->getMetaObject());
         
@@ -1259,9 +1262,6 @@ class DataSheet implements DataSheetInterface
                 $query->addFilterCondition(ConditionFactory::createFromExpression($this->exface, $this->getUidColumn()->getExpressionObj(), implode($this->getUidColumn()->getAttribute()->getValueListDelimiter(), $uidsToDelete), EXF_COMPARATOR_IN));
             }
         }
-        
-        // Fire OnBeforeDeleteDataEvent to allow preprocessing and alternative deletetion logic
-        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeDeleteDataEvent($this, $transaction));
         
         if ($eventBefore->isPreventDeleteCascade() === false) {
             // Check if there are dependent object, that require cascading deletes
