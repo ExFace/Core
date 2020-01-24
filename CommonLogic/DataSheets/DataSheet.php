@@ -595,7 +595,7 @@ class DataSheet implements DataSheetInterface
                 continue;
             }
             
-            $vals = $expr->evaluate($this, $name);
+            $vals = $expr->evaluate($this);
             if (is_array($vals)) {
                 // See if the expression returned more results, than there were rows. If so, it was also performed on
                 // the total rows. In this case, we need to slice them off and pass to set_column_values() separately.
