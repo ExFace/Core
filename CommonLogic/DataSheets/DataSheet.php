@@ -50,6 +50,8 @@ use exface\Core\Factories\RelationPathFactory;
 use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\DataTypes\RelationCardinalityDataType;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\DataTypes\RelationDataType;
+use exface\Core\Interfaces\Model\ConditionInterface;
 
 /**
  * Default implementation of DataSheetInterface
@@ -512,11 +514,6 @@ class DataSheet implements DataSheetInterface
      */
     public function dataRead(int $limit = null, int $offset = null) : int
     {
-        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeReadDataEvent($this));
-        if ($eventBefore->isPreventRead() === true) {
-            return 0;
-        }
-        
         $thisObject = $this->getMetaObject();
         
         // Empty the data before reading
@@ -528,6 +525,11 @@ class DataSheet implements DataSheetInterface
         }
         if (is_null($offset)) {
             $offset = $this->getRowsOffset();
+        }
+        
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeReadDataEvent($this, $limit, $offset));
+        if ($eventBefore->isPreventRead() === true) {
+            return 0;
         }
         
         try {
@@ -1184,7 +1186,8 @@ class DataSheet implements DataSheetInterface
                     if ($nestedSheet === null || $nestedSheet->isEmpty() === true) {
                         continue;
                     }
-                    $nestedRel = $this->getMetaObject()->getRelation($columnName);
+                    $nestedCol = $this->getColumns()->get($columnName);
+                    $nestedRel = $this->getMetaObject()->getRelation($nestedCol->getAttributeAlias());
                     if ($nestedRel->getCardinality()->__toString() !== RelationCardinalityDataType::ONE_TO_N) {
                         throw new DataSheetRuntimeError($this, 'Cannot create nested data for "' . $this->getMetaObject()->getName() . '" (' . $nestedRel->getRightObject()->getAliasWithNamespace() . ') within "' . $this->getMetaObject()->getRightObject()->getName() . '": only one-to-many relations allowed!');
                     }
@@ -1237,76 +1240,92 @@ class DataSheet implements DataSheetInterface
             $commit = false;
         }
         
-        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeDeleteDataEvent($this, $transaction));
-        if ($eventBefore->isPreventDelete() === true) {
-            return 0;
-        }
-        
-        $affected_rows = 0;
-        // create new query for the main object
-        $query = QueryBuilderFactory::createForObject($this->getMetaObject());
-        
         if ($this->isUnfiltered()) {
             throw new DataSheetWriteError($this, 'Cannot delete all instances of "' . $this->getMetaObject()->getAliasWithNamespace() . '": forbidden operation!', '6T5VCA6');
         }
-        // set filters
+        
+        $affected_rows = 0;
+        
+        // Fire OnBeforeDeleteDataEvent to allow preprocessing and alternative deletetion logic
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeDeleteDataEvent($this, $transaction));
+        
+        // create new query for the main object
+        $query = QueryBuilderFactory::createForObject($this->getMetaObject());
+        
+        // Give the query all filters, that exist in the data sheet
         $query->setFiltersConditionGroup($this->getFilters());
+        
+        // Add a UID-filter if we know, which UIDs are to be deleted
+        $uidsToDelete = [];
         if ($uidCol = $this->getUidColumn()) {
-            if ($uids = $uidCol->getValues(false)) {
-                $query->addFilterCondition(ConditionFactory::createFromExpression($this->exface, $this->getUidColumn()->getExpressionObj(), implode($this->getUidColumn()->getAttribute()->getValueListDelimiter(), $uids), EXF_COMPARATOR_IN));
+            if ($uidsToDelete = $uidCol->getValues(false)) {
+                $query->addFilterCondition(ConditionFactory::createFromExpression($this->exface, $this->getUidColumn()->getExpressionObj(), implode($this->getUidColumn()->getAttribute()->getValueListDelimiter(), $uidsToDelete), EXF_COMPARATOR_IN));
             }
         }
         
-        // Check if there are dependent object, that require cascading deletes
-        foreach ($this->getSubsheetsForCascadingDelete() as $ds) {
-            // Just perform the delete if there really is some data to delete. This sure means an extra data source connection, but
-            // preventing delete operations on empty data sheets also prevents calculating their cascading deletes, etc. This saves
-            // a lot of iterations and reduces the risc of unwanted deletes due to some unforseeable filter constellations.
-            
-            // First check if the sheet theoretically can have data - that is, if it has UIDs in it's rows or at least some filters
-            // This makes sure, reading data in the next step will not return the entire table, which would then get deleted of course!
-            if ((! $ds->hasUidColumn() || $ds->getUidColumn()->isEmpty()) && $ds->getFilters()->isEmpty()) {
-                continue;
-            }
-            // If the there can be data, but there are no rows, read the data
-            try {
-                if ($ds->dataRead() > 0) {
-                    // If the sheet has a filled UID column, better replace all filters
-                    // by a simple IN-filter over UIDs. This simplifies the logic in most
-                    // query builders a lot! No all data sources can delete filtering over
-                    // relations, but most will be able to delete by UID.
-                    if ($ds->hasUidColumn(true)) {
-                        $ds->getFilters()->removeAll();
-                        $ds->addFilterFromColumnValues($ds->getUidColumn());
-                    }
-                    $ds->dataDelete($transaction);
+        if ($eventBefore->isPreventDeleteCascade() === false) {
+            // Check if there are dependent object, that require cascading deletes
+            foreach ($this->getSubsheetsForCascadingDelete() as $ds) {
+                // Just perform the delete if there really is some data to delete. This sure means an extra data source connection, but
+                // preventing delete operations on empty data sheets also prevents calculating their cascading deletes, etc. This saves
+                // a lot of iterations and reduces the risc of unwanted deletes due to some unforseeable filter constellations.
+                
+                // First check if the sheet theoretically can have data - that is, if it has UIDs in it's rows or at least some filters
+                // This makes sure, reading data in the next step will not return the entire table, which would then get deleted of course!
+                if ((! $ds->hasUidColumn() || $ds->getUidColumn()->isEmpty()) && $ds->getFilters()->isEmpty()) {
+                    continue;
                 }
-            } catch (MetaObjectHasNoDataSourceError $e) {
-                // Just ignore objects without data sources - there is nothing to delete there!
-            } catch (\Throwable $e) {
-                throw new DataSheetDeleteError($ds, 'Cannot delete related data for "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . '). Please remove related "' . $ds->getMetaObject()->getName() . '" (' . $ds->getMetaObject()->getAliasWithNamespace() . ') manually and try again.', '6ZISUAJ', $e);
+                // If the there can be data, but there are no rows, read the data
+                try {
+                    if ($ds->dataRead() > 0) {                    
+                        // If the sheet has a filled UID column, better replace all filters
+                        // by a simple IN-filter over UIDs. This simplifies the logic in most
+                        // query builders a lot! No all data sources can delete filtering over
+                        // relations, but most will be able to delete by UID.
+                        if ($ds->hasUidColumn(true)) {
+                            $dsUidCol = $ds->getUidColumn();
+                            // Remove all filters except for those over the UID column
+                            foreach ($ds->getFilters()->getConditions(function(ConditionInterface $cond) use ($dsUidCol) {
+                                return $cond->getExpression()->toString() !== $dsUidCol->getAttributeAlias();
+                            }) as $cond) {
+                                $ds->getFilters()->removeCondition($cond);
+                            }
+                            // Add an IN-filter for the UID column
+                            $ds->addFilterFromColumnValues($ds->getUidColumn());
+                        }
+                        $ds->dataDelete($transaction);
+                    }
+                } catch (MetaObjectHasNoDataSourceError $e) {
+                    // Just ignore objects without data sources - there is nothing to delete there!
+                } catch (\Throwable $e) {
+                    throw new DataSheetDeleteError($ds, 'Cannot delete related data for "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . '). Please remove related "' . $ds->getMetaObject()->getName() . '" (' . $ds->getMetaObject()->getAliasWithNamespace() . ') manually and try again.', '6ZISUAJ', $e);
+                }
             }
         }
         
-        // run the query
-        $connection = $this->getMetaObject()->getDataConnection();
-        $transaction->addDataConnection($connection);
-        try {
-            $result = $query->delete($connection);
-            $affected_rows += $result->getAffectedRowsCounter();
-        } catch (\Throwable $e) {
-            $transaction->rollback();
-            throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), null, $e);
+        if ($eventBefore->isPreventDelete() === false) {
+            // run the query
+            $connection = $this->getMetaObject()->getDataConnection();
+            $transaction->addDataConnection($connection);
+            try {
+                $result = $query->delete($connection);
+                $affected_rows += $result->getAffectedRowsCounter();
+            } catch (\Throwable $e) {
+                $transaction->rollback();
+                throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), null, $e);
+            }
+            
+            if ($result->getAllRowsCounter() !== null) {
+                $this->setCounterForRowsInDataSource($result->getAllRowsCounter());
+            } elseif ($result->hasMoreRows() === false) {
+                $this->setCounterForRowsInDataSource(0);
+            }
+        } else {
+            $affected_rows = $this->countRows();
         }
         
         if ($commit && ! $transaction->isRolledBack()) {
             $transaction->commit();
-        }
-        
-        if ($result->getAllRowsCounter() !== null) {
-            $this->setCounterForRowsInDataSource($result->getAllRowsCounter());
-        } elseif ($result->hasMoreRows() === false) {
-            $this->setCounterForRowsInDataSource(0);
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnDeleteDataEvent($this, $transaction));
@@ -1326,8 +1345,23 @@ class DataSheet implements DataSheetInterface
         // Check if there are dependent objects, that require cascading deletes
         // This is the case, if the deleted object has reverse relations (1-to-many), where the relation is marked
         // with the "Delete with related object" flag.
+        $thisObj = $this->getMetaObject();
         /* @var $rel \exface\Core\Interfaces\Model\MetaRelationInterface */
-        foreach ($this->getMetaObject()->getRelations(RelationTypeDataType::REVERSE) as $rel) {
+        foreach ($thisObj->getRelations() as $rel) {
+            if ($rel->getCardinality() == RelationCardinalityDataType::N_TO_ONE) {
+                continue;
+            }
+            if ($rel->getCardinality() == RelationCardinalityDataType::ONE_TO_ONE) {
+                // for 1-to-1 relaitons it is important, for which object the relation was defined.
+                if ($rel->getRightKeyAttribute()->isRelation() === true && $rel->getRightKeyAttribute()->getRelation()->reverse() === $rel) {
+                    // If the 1-to-1 relation actually belongs to the right object, we need
+                    // to see if that object must be deleted (just like with 1-to-n relations)
+                    // TODO #1-to-1-relations
+                    continue;
+                } else {
+                    continue;
+                }
+            }
             // Skip objects, that are not writable
             if ($rel->getRightObject()->isWritable() === false) {
                 continue;
@@ -1340,10 +1374,31 @@ class DataSheet implements DataSheetInterface
                 $ds->setFilters($this->getFilters()->rebase($rel->getAliasWithModifier()));
                 // Additionally add a filter over UIDs in the original query, if it has data with UIDs. This makes sure, the cascading deletes
                 // only affect the loaded rows and nothing "invisible" to the user!
-                if ($this->getUidColumn()) {
-                    $uids = $this->getUidColumn()->getValues(false);
+                if ($thisUidCol = $this->getUidColumn()) {
+                    $uids = $thisUidCol->getValues(false);
                     if (! empty($uids)) {
-                        $ds->addFilterInFromString($this->getUidColumn()->getExpressionObj()->rebase($rel->getAliasWithModifier())->toString(), $uids);
+                        $ds->addFilterInFromString($thisUidCol->getExpressionObj()->rebase($rel->getAliasWithModifier())->toString(), $uids);
+                    }
+                    
+                    // For self-relations some additional filters need to be done on cascading delete sheets!
+                    if ($this->getMetaObject()->isExactly($ds->getMetaObject()) === true) {
+                        // The cascading delete should not attempt to delete the rows already taken care
+                        // of by this sheet - so exclude them by filter! Otherwise we will get infinite 
+                        // recursion!
+                        $ds->addFilterFromString($thisUidCol->getAttributeAlias(), implode(',', $uids), ComparatorDataType::NOT_IN);
+                        // Also keep UID-filters of the main sheet in addition to the rebased filters
+                        // to make sure, that if we have excluding filters (= meaning DO NOT DELETE 
+                        // certain UIDs), the cascading deletes will not delete the corresponding items
+                        // either.
+                        // For example: concider nested categories via PARENT attribute. If we delete
+                        // all with UID!=2, the cascading deletes might kill category 2 too if it is a child
+                        // of any other category being deleted. Adding UID!=2 to the cascading subsheets will 
+                        // ensure, that category 2 survives in any case!
+                        foreach ($this->getFilters()->getConditions(function(ConditionInterface $cond) use ($thisUidCol) {
+                            return $cond->getExpression()->toString() === $thisUidCol->getAttributeAlias();
+                        }) as $cond) {
+                            $ds->getFilters()->addCondition($cond->copy());
+                        }
                     }
                 }
                 $subsheets[] = $ds;
@@ -2224,10 +2279,14 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::sort()
      */
-    public function sort(DataSorterListInterface $sorters) : DataSheetInterface
+    public function sort(DataSorterListInterface $sorters = null, bool $normalizeValues = true) : DataSheetInterface
     {
         if ($this->isEmpty()) {
             return $this;
+        }
+        
+        if ($sorters === null) {
+            $sorters = $this->getSorters();
         }
         
         $sorter = new RowDataArraySorter();
@@ -2235,6 +2294,10 @@ class DataSheet implements DataSheetInterface
             $col = $this->getColumns()->getByAttribute($s->getAttribute());
             if ($col === false) {
                 throw new DataSheetStructureError($this, 'Cannot sort data sheet via ' . $s->getAttributeAlias() . ': no corresponding column found!');
+            }
+            // Values like numbers and dates can only be sorted reliably if they are normalized!
+            if ($normalizeValues === true) {
+                $col->normalizeValues();
             }
             $sorter->addCriteria($col->getName(), $s->getDirection());
         }

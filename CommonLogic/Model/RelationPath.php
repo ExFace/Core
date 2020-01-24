@@ -121,7 +121,7 @@ class RelationPath implements MetaRelationPathInterface
     {
         $path = '';
         foreach ($this->getRelations() as $rel) {
-            $path = $path . self::RELATION_SEPARATOR . $rel->getAlias();
+            $path = $path . self::RELATION_SEPARATOR . $rel->getAliasWithModifier();
         }
         $path = trim($path, self::RELATION_SEPARATOR);
         return $path;

@@ -108,7 +108,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
             }
             // if the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
             // otherwise the enrichment joins won't work!
-            if ($group_by && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $has_attributes_with_reverse_relations) {
+            if ($group_by && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $has_attributes_with_reverse_relations && ! $qpart->getAggregator()) {
                 $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                 $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $qpartAttr->getObject()->getUidAttributeAlias());
                 $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
@@ -123,7 +123,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 $first_rel = false;
                 if (! empty($rels)) {
                     $first_rel = reset($rels);
-                    $first_rel_qpart = $this->addAttribute($first_rel->getAlias());
+                    $first_rel_qpart = $this->addAttribute($first_rel->getAliasWithModifier());
                     // IDEA this does not support relations based on custom sql. Perhaps this needs to change
                     $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                 }
