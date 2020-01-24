@@ -514,11 +514,6 @@ class DataSheet implements DataSheetInterface
      */
     public function dataRead(int $limit = null, int $offset = null) : int
     {
-        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeReadDataEvent($this));
-        if ($eventBefore->isPreventRead() === true) {
-            return 0;
-        }
-        
         $thisObject = $this->getMetaObject();
         
         // Empty the data before reading
@@ -530,6 +525,11 @@ class DataSheet implements DataSheetInterface
         }
         if (is_null($offset)) {
             $offset = $this->getRowsOffset();
+        }
+        
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeReadDataEvent($this, $limit, $offset));
+        if ($eventBefore->isPreventRead() === true) {
+            return 0;
         }
         
         try {
@@ -720,9 +720,18 @@ class DataSheet implements DataSheetInterface
             $commit = false;
         }
         
+        // Fire OnBeforeUpdateDataEvent to allow additional checks, manipulations or custom update logic
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($this, $transaction, $create_if_uid_not_found));
+        if ($eventBefore->isPreventUpdate() === true) {
+            if ($commit && ! $transaction->isRolledBack()) {
+                $transaction->commit();
+            }
+            return $this->countRows();
+        }
+        
         // Check if the data source already contains rows with matching UIDs
         // TODO do not update rows, that were created here. Currently they are created and immediately updated afterwards.
-        if ($create_if_uid_not_found) {
+        if ($create_if_uid_not_found === true) {
             if ($uidCol = $this->getUidColumn()) {
                 // Find rows, that do not have a UID value
                 $emptyUidRows = $uidCol->findRowsByValue('');
@@ -770,12 +779,6 @@ class DataSheet implements DataSheetInterface
             return 0;
         }
         
-        // Now the actual updating starts
-        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($this, $transaction));
-        if ($eventBefore->isPreventUpdate() === true) {
-            return 0;
-        }
-        
         // Add columns with fixed values to the data sheet
         $processed_relations = array();
         foreach ($this->getColumns() as $col) {
@@ -819,7 +822,7 @@ class DataSheet implements DataSheetInterface
         // Add filters to the query
         $query->setFiltersConditionGroup($this->getFilters());
         
-        // Add values
+        // Add values to the query
         // At this point, it is important to understand, that there are different types of update data sheets possible:
         // - A "regular" sheet with one row per object identified by the UID column. In this case, that object needs to be updated by values from
         // the corresponding columns
@@ -1048,9 +1051,12 @@ class DataSheet implements DataSheetInterface
             $commit = false;
         }
         
-        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeCreateDataEvent($this, $transaction));
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeCreateDataEvent($this, $transaction, $update_if_uid_found));
         if ($eventBefore->isPreventCreate() === true) {
-            return 0;
+            if ($commit && ! $transaction->isRolledBack()) {
+                $transaction->commit();
+            }
+            return $this->countRows();
         }
         
         // Create a query
@@ -1100,7 +1106,7 @@ class DataSheet implements DataSheetInterface
             }
         }
         
-        // Add values
+        // Add values to the query and/or create subsheets
         $values_found = false;
         foreach ($this->getColumns() as $column) {
             // Skip columns, that do not represent a meta attribute
@@ -1240,18 +1246,17 @@ class DataSheet implements DataSheetInterface
             $commit = false;
         }
         
-        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeDeleteDataEvent($this, $transaction));
-        if ($eventBefore->isPreventDelete() === true) {
-            return 0;
-        }
-        
-        $affected_rows = 0;
-        // create new query for the main object
-        $query = QueryBuilderFactory::createForObject($this->getMetaObject());
-        
         if ($this->isUnfiltered()) {
             throw new DataSheetWriteError($this, 'Cannot delete all instances of "' . $this->getMetaObject()->getAliasWithNamespace() . '": forbidden operation!', '6T5VCA6');
         }
+        
+        $affected_rows = 0;
+        
+        // Fire OnBeforeDeleteDataEvent to allow preprocessing and alternative deletetion logic
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeDeleteDataEvent($this, $transaction));
+        
+        // create new query for the main object
+        $query = QueryBuilderFactory::createForObject($this->getMetaObject());
         
         // Give the query all filters, that exist in the data sheet
         $query->setFiltersConditionGroup($this->getFilters());
@@ -1264,63 +1269,69 @@ class DataSheet implements DataSheetInterface
             }
         }
         
-        // Check if there are dependent object, that require cascading deletes
-        foreach ($this->getSubsheetsForCascadingDelete() as $ds) {
-            // Just perform the delete if there really is some data to delete. This sure means an extra data source connection, but
-            // preventing delete operations on empty data sheets also prevents calculating their cascading deletes, etc. This saves
-            // a lot of iterations and reduces the risc of unwanted deletes due to some unforseeable filter constellations.
-            
-            // First check if the sheet theoretically can have data - that is, if it has UIDs in it's rows or at least some filters
-            // This makes sure, reading data in the next step will not return the entire table, which would then get deleted of course!
-            if ((! $ds->hasUidColumn() || $ds->getUidColumn()->isEmpty()) && $ds->getFilters()->isEmpty()) {
-                continue;
-            }
-            // If the there can be data, but there are no rows, read the data
-            try {
-                if ($ds->dataRead() > 0) {                    
-                    // If the sheet has a filled UID column, better replace all filters
-                    // by a simple IN-filter over UIDs. This simplifies the logic in most
-                    // query builders a lot! No all data sources can delete filtering over
-                    // relations, but most will be able to delete by UID.
-                    if ($ds->hasUidColumn(true)) {
-                        $dsUidCol = $ds->getUidColumn();
-                        // Remove all filters except for those over the UID column
-                        foreach ($ds->getFilters()->getConditions(function(ConditionInterface $cond) use ($dsUidCol) {
-                            return $cond->getExpression()->toString() !== $dsUidCol->getAttributeAlias();
-                        }) as $cond) {
-                            $ds->getFilters()->removeCondition($cond);
-                        }
-                        // Add an IN-filter for the UID column
-                        $ds->addFilterFromColumnValues($ds->getUidColumn());
-                    }
-                    $ds->dataDelete($transaction);
+        if ($eventBefore->isPreventDeleteCascade() === false) {
+            // Check if there are dependent object, that require cascading deletes
+            foreach ($this->getSubsheetsForCascadingDelete() as $ds) {
+                // Just perform the delete if there really is some data to delete. This sure means an extra data source connection, but
+                // preventing delete operations on empty data sheets also prevents calculating their cascading deletes, etc. This saves
+                // a lot of iterations and reduces the risc of unwanted deletes due to some unforseeable filter constellations.
+                
+                // First check if the sheet theoretically can have data - that is, if it has UIDs in it's rows or at least some filters
+                // This makes sure, reading data in the next step will not return the entire table, which would then get deleted of course!
+                if ((! $ds->hasUidColumn() || $ds->getUidColumn()->isEmpty()) && $ds->getFilters()->isEmpty()) {
+                    continue;
                 }
-            } catch (MetaObjectHasNoDataSourceError $e) {
-                // Just ignore objects without data sources - there is nothing to delete there!
-            } catch (\Throwable $e) {
-                throw new DataSheetDeleteError($ds, 'Cannot delete related data for "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . '). Please remove related "' . $ds->getMetaObject()->getName() . '" (' . $ds->getMetaObject()->getAliasWithNamespace() . ') manually and try again.', '6ZISUAJ', $e);
+                // If the there can be data, but there are no rows, read the data
+                try {
+                    if ($ds->dataRead() > 0) {                    
+                        // If the sheet has a filled UID column, better replace all filters
+                        // by a simple IN-filter over UIDs. This simplifies the logic in most
+                        // query builders a lot! No all data sources can delete filtering over
+                        // relations, but most will be able to delete by UID.
+                        if ($ds->hasUidColumn(true)) {
+                            $dsUidCol = $ds->getUidColumn();
+                            // Remove all filters except for those over the UID column
+                            foreach ($ds->getFilters()->getConditions(function(ConditionInterface $cond) use ($dsUidCol) {
+                                return $cond->getExpression()->toString() !== $dsUidCol->getAttributeAlias();
+                            }) as $cond) {
+                                $ds->getFilters()->removeCondition($cond);
+                            }
+                            // Add an IN-filter for the UID column
+                            $ds->addFilterFromColumnValues($ds->getUidColumn());
+                        }
+                        $ds->dataDelete($transaction);
+                    }
+                } catch (MetaObjectHasNoDataSourceError $e) {
+                    // Just ignore objects without data sources - there is nothing to delete there!
+                } catch (\Throwable $e) {
+                    throw new DataSheetDeleteError($ds, 'Cannot delete related data for "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . '). Please remove related "' . $ds->getMetaObject()->getName() . '" (' . $ds->getMetaObject()->getAliasWithNamespace() . ') manually and try again.', '6ZISUAJ', $e);
+                }
             }
         }
         
-        // run the query
-        $connection = $this->getMetaObject()->getDataConnection();
-        $transaction->addDataConnection($connection);
-        try {
-            $result = $query->delete($connection);
-            $affected_rows += $result->getAffectedRowsCounter();
-        } catch (\Throwable $e) {
-            $transaction->rollback();
-            throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), null, $e);
+        if ($eventBefore->isPreventDelete() === false) {
+            // run the query
+            $connection = $this->getMetaObject()->getDataConnection();
+            $transaction->addDataConnection($connection);
+            try {
+                $result = $query->delete($connection);
+                $affected_rows += $result->getAffectedRowsCounter();
+            } catch (\Throwable $e) {
+                $transaction->rollback();
+                throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), null, $e);
+            }
+            
+            if ($result->getAllRowsCounter() !== null) {
+                $this->setCounterForRowsInDataSource($result->getAllRowsCounter());
+            } elseif ($result->hasMoreRows() === false) {
+                $this->setCounterForRowsInDataSource(0);
+            }
+        } else {
+            $affected_rows = $this->countRows();
         }
         
         if ($commit && ! $transaction->isRolledBack()) {
             $transaction->commit();
-        }
-        
-        if ($result->getAllRowsCounter() !== null) {
-            $this->setCounterForRowsInDataSource($result->getAllRowsCounter());
-        } elseif ($result->hasMoreRows() === false) {
-            $this->setCounterForRowsInDataSource(0);
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnDeleteDataEvent($this, $transaction));

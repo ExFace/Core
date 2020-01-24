@@ -8,6 +8,12 @@ use exface\Core\Events\AbstractEvent;
 /**
  * Event fired before a data sheet started reading it's data from the corresponding data sources.
  * 
+ * In addition to the data sheet to read (`$event->getDataSheet()`) the event also gives access
+ * to the pagination arameters of the read operation: `$event->getLimit()` and `$event->getOffset()`.
+ * 
+ * Use `$event->preventRead()` to disable the default reading logic - i.e. performing a read-query
+ * on the data source - and use custom logic to fill the data sheet from `$event->getDataSheet()`.
+ * 
  * @event exface.Core.DataSheet.OnBeforeReadData
  * 
  * @author Andrej Kabachnik
@@ -19,13 +25,19 @@ class OnBeforeReadDataEvent extends AbstractEvent implements DataSheetEventInter
     
     private $preventRead = false;
     
+    private $limit = null;
+    
+    private $offset = 0;
+    
     /**
      *
      * @param DataSheetInterface $dataSheet
      */
-    public function __construct(DataSheetInterface $dataSheet)
+    public function __construct(DataSheetInterface $dataSheet, int $limit = null, int $offset = 0)
     {
         $this->dataSheet = $dataSheet;
+        $this->limit = $limit;
+        $this->offset = $offset;
     }
     
     /**
@@ -68,5 +80,25 @@ class OnBeforeReadDataEvent extends AbstractEvent implements DataSheetEventInter
     public function isPreventRead() : bool
     {
         return $this->preventRead;
+    }
+    
+    /**
+     * Returns the maximum number of data rows to read (NULL by default).
+     * 
+     * @return int|NULL
+     */
+    public function getLimit() : ?int
+    {
+        return $this->limit;
+    }
+    
+    /**
+     * Returns the number of data rows to skip (0 by default).
+     * 
+     * @return int
+     */
+    public function getOffset() : int
+    {
+        return $this->offset;
     }
 }
