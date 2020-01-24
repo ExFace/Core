@@ -17,12 +17,26 @@ use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
 
+/**
+ * This behavior may be used for soft-deletion, i.e. for setting an specific value to an attribute of an object, instead of deleting it.
+ * Therefore this behavior requires two attibutes in order to be used: 
+ *      `$soft_delete_attribute_alias` - as the attribute of the object, in which the deletion is being flagged
+ *      `$soft_delete_value` - as the value a deleted object has in that attribute, when it should be considered deleted.
+ * 
+ * @author tmc
+ *
+ */
 class SoftDeleteBehavior extends AbstractBehavior
 {
     private $soft_delete_attribute_alias = null;
     
     private $soft_delete_value = null;
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
+     */
     public function register() : BehaviorInterface
     {
         $this->getSoftDeleteAttribute()->setSystem(true)->setDefaultAggregateFunction('MAX');
@@ -33,6 +47,13 @@ class SoftDeleteBehavior extends AbstractBehavior
         return $this;
     }
     
+    /**
+     * 
+     * @param OnBeforeDeleteDataEvent $event
+     * @throws DataSheetColumnNotFoundError
+     * @throws DataSheetWriteError
+     * @return void|number
+     */
     public function setFlagOnDelete(OnBeforeDeleteDataEvent $event)
     {
         if ($this->isDisabled())
@@ -52,35 +73,40 @@ class SoftDeleteBehavior extends AbstractBehavior
 
         $affected_rows = 0;
 
-        $updateSheet = $eventData->copy();
+        $updateData = $eventData->copy();
         
-        if ($updateSheet->hasUidColumn()){
-            $uidCol = $updateSheet->getUidColumn();
+        if ($updateData->hasUidColumn()){
+            $uidCol = $updateData->getUidColumn();
         }
         
-        foreach ($updateSheet->getColumns() as $col){
+        // remove all columns, except of the uid-column
+        foreach ($updateData->getColumns() as $col){
             if ($col === $uidCol){
                 continue;
             }
-            $updateSheet->getColumns()->remove($col);
+            $updateData->getColumns()->remove($col);
         }
         
-        $updateSheet->getColumns()->addFromExpression($this->getSoftDeleteAttributeAlias());
+        $updateData->getColumns()->addFromExpression($this->getSoftDeleteAttributeAlias());
 
         try {
+            // first check if metaobject has soft-delete-attribute
             if ($eventData->getMetaObject()->hasAttribute($this->getSoftDeleteAttributeAlias())){
-                $updateSheet->dataRead();
-                if ($deletedCol = $updateSheet->getColumns()->getByExpression($this->getSoftDeleteAttributeAlias())){
+                // add all data, that fits the filters, or else update wont work when a datasheet with no rows, only filters is given. (FIXME?)
+                $updateData->dataRead();
+                // get the relavant column for flagging the object, set value
+                if ($deletedCol = $updateData->getColumns()->getByExpression($this->getSoftDeleteAttributeAlias())){
                     $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
                 }
-                $updatedRows = $updateSheet->dataUpdate(false);
+                // update objects in metamodel
+                $updatedRows = $updateData->dataUpdate(false);
                 $affected_rows += $updatedRows;
             } else {
                 $transaction->rollback();
                 throw new DataSheetColumnNotFoundError($eventData, 'Cannot set "IsDeleted" flag for current object: column "' . $this->getSoftDeleteAttributeAlias() . '" not found in given data sheet!');                
             }
 
-            $eventData->setCounterForRowsInDataSource($updateSheet->countRowsInDataSource());
+            $eventData->setCounterForRowsInDataSource($updateData->countRowsInDataSource());
             
         } catch (\Throwable $e) {
             $transaction->rollback();
