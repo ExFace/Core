@@ -1048,9 +1048,12 @@ class DataSheet implements DataSheetInterface
             $commit = false;
         }
         
-        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeCreateDataEvent($this, $transaction));
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeCreateDataEvent($this, $transaction, $update_if_uid_found));
         if ($eventBefore->isPreventCreate() === true) {
-            return 0;
+            if ($commit && ! $transaction->isRolledBack()) {
+                $transaction->commit();
+            }
+            return $this->countRows();
         }
         
         // Create a query
@@ -1100,7 +1103,7 @@ class DataSheet implements DataSheetInterface
             }
         }
         
-        // Add values
+        // Add values to the query and/or create subsheets
         $values_found = false;
         foreach ($this->getColumns() as $column) {
             // Skip columns, that do not represent a meta attribute
