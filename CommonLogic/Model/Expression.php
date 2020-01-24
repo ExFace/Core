@@ -543,29 +543,47 @@ class Expression implements ExpressionInterface
                 throw new ExpressionRebaseImpossibleError('Cannot rebase expression "' . $this->toString() . '" relative to "' . $relation_path_to_new_base_object . '" - invalid relation path given!', '6TBX1V2');
             }
             
-            if (strpos($this->toString(), $relation_path_to_new_base_object) === 0) {
+            switch (true) {
                 // If the realtion path to the new object is just the beginning of the expression, cut it off, returning whatever is left
                 // $new_expression_string = RelationPath::relaton_path_cut($this->toString(), $relation_path_to_new_base_object);
-                $new_expression_string = ltrim(substr($this->toString(), strlen($relation_path_to_new_base_object)), "_");
-            } elseif (strpos($relation_path_to_new_base_object, $this->toString()) === 0) {
+                case strpos($this->toString(), $relation_path_to_new_base_object) === 0:
+                    $new_expression_string = ltrim(substr($this->toString(), strlen($relation_path_to_new_base_object)), "_");
+                    // Double-check if the remaining string starts with a relation alias modifier. If so, check
+                    // if that modifier matches the modifier of the $rel.
+                    // This can happen for relations with optional modifiers, when the rebase-path has the short
+                    // notation (without modifier) and the expression uses the long notation.
+                    if (substr($new_expression_string, 0, 1) === '[') {
+                        $relModifier = StringDataType::substringBefore($new_expression_string, ']', '', false, false);
+                        $relModifier = trim($relModifier, "[]");
+                        if ($relModifier === $rel->getAliasModifier()) {
+                            $new_expression_string = StringDataType::substringAfter($new_expression_string, ']');
+                            $new_expression_string = ltrim($new_expression_string, "_");
+                            break;
+                        }
+                        // Continue with the next case because this is not our relation!
+                    } else {
+                        break;
+                    }
                 // If the expression is the beginning of the relation path, do it the other way around
                 // $new_expression_string = RelationPath::relaton_path_cut($relation_path_to_new_base_object, $this->toString());
-                $new_expression_string = ltrim(substr($relation_path_to_new_base_object, strlen($this->toString())), "_");
-            } else {
+                case strpos($relation_path_to_new_base_object, $this->toString()) === 0: 
+                    $new_expression_string = ltrim(substr($relation_path_to_new_base_object, strlen($this->toString())), "_");
+                    break;
                 // Otherwise append the expression to the relation path (typically the expression is a direct attribute here an would need
                 // a relation path, if referenced from another object).
-                $new_expression_string = RelationPath::relationPathReverse($relation_path_to_new_base_object, $this->getMetaObject());
-                // Pay attention to reverse relations though: if the expression is the key of the main_object_key of the relation,
-                // we don't need to append it. The related_object_key (foreign key) will suffice. That is, if we need to rebase the reverse
-                // relation POSITION of the the object ORDER relative to that object, we will get ORDER (because POSITION->ORDER ist the
-                // opposite of ORDER<-POSITION). Rebasing POSITION->ORDER->UID from ORDER to POSITION will yield ORDER->UID though because
-                // the UID attribute is explicitly referenced here.
-                // IDEA A bit awqard is rebasing "POSITION->ORDER" from ORDER to POSITION as it will result in ORDER<-POSITION->ORDER, which
-                // is a loop: first we would fetch the order, than it's positions than again all orders of thouse position, which will result in
-                // that one order we fetched in step 1 again. Not sure, if these loops can be prevented somehow...
-                if (! ($rel->isReverseRelation() && $relation_path_to_new_base_object == $rel->getAlias() && ($relation_path_to_new_base_object == $this->toString() || $rel->getRightKeyAttribute()->getAlias() == $this->toString()))) {
-                    $new_expression_string = RelationPath::relationPathAdd($new_expression_string, $this->toString());
-                }
+                default:
+                    $new_expression_string = RelationPath::relationPathReverse($relation_path_to_new_base_object, $this->getMetaObject());
+                    // Pay attention to reverse relations though: if the expression is the key of the main_object_key of the relation,
+                    // we don't need to append it. The related_object_key (foreign key) will suffice. That is, if we need to rebase the reverse
+                    // relation POSITION of the the object ORDER relative to that object, we will get ORDER (because POSITION->ORDER ist the
+                    // opposite of ORDER<-POSITION). Rebasing POSITION->ORDER->UID from ORDER to POSITION will yield ORDER->UID though because
+                    // the UID attribute is explicitly referenced here.
+                    // IDEA A bit awqard is rebasing "POSITION->ORDER" from ORDER to POSITION as it will result in ORDER<-POSITION->ORDER, which
+                    // is a loop: first we would fetch the order, than it's positions than again all orders of thouse position, which will result in
+                    // that one order we fetched in step 1 again. Not sure, if these loops can be prevented somehow...
+                    if (! ($rel->isReverseRelation() && $relation_path_to_new_base_object == $rel->getAliasWithModifier() && ($relation_path_to_new_base_object == $this->toString() || $rel->getRightKeyAttribute()->getAlias() == $this->toString()))) {
+                        $new_expression_string = RelationPath::relationPathAdd($new_expression_string, $this->toString());
+                    }
             }
             // If we end up with an empty expression, this means, that the original expression pointed to the exact relation to
             // the object we rebase to. E.g. if we were rebasing ORDER->CUSTOMER->CUSTOMER_CLASS to CUSTOMER, then the relation path given
