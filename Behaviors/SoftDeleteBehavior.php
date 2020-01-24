@@ -6,13 +6,22 @@ use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
+use exface\Core\Exceptions\Model\MetaObjectHasNoDataSourceError;
+use exface\Core\Factories\ConditionFactory;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Factories\QueryBuilderFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\DataTypes\RelationTypeDataType;
+use exface\Core\Events\DataSheet\OnDeleteDataEvent;
+use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
 
 class SoftDeleteBehavior extends AbstractBehavior
 {
     private $soft_delete_attribute_alias = null;
+    
+    private $soft_delete_value = null;
     
     public function register() : BehaviorInterface
     {
@@ -29,23 +38,65 @@ class SoftDeleteBehavior extends AbstractBehavior
         if ($this->isDisabled())
             return;
             
-        $data_sheet = $event->getDataSheet();
+        $eventData = $event->getDataSheet();
         
         // Do not do anything, if the base object of the data sheet is not the object with the behavior and is not
         // extended from it.
-        if (! $data_sheet->getMetaObject()->isExactly($this->getObject())) {
+        if (! $eventData->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
-        
-        // Check if the updated_on column is present in the sheet 
-        if (! $data_sheet->getColumns()->getByAttribute($this->getSoftDeleteAttribute())){
-            throw new DataSheetColumnNotFoundError($data_sheet, 'Cannot set "IsDeleted" flag for current object: column "' . $this->getSoftDeleteAttributeAlias() . '" not found in given data sheet!');
-        } 
 
         $event->preventDelete();
+
+        $transaction = $event->getTransaction();
+
+        $affected_rows = 0;
+
+        $updateSheet = $eventData->copy();
         
-        $data_sheet->setColumnValues($this->getSoftDeleteAttributeAlias(), true);
-        $data_sheet->dataUpdate(false);
+        if ($updateSheet->hasUidColumn()){
+            $uidCol = $updateSheet->getUidColumn();
+        }
+        
+        foreach ($updateSheet->getColumns() as $col){
+            if ($col === $uidCol){
+                continue;
+            }
+            $updateSheet->getColumns()->remove($col);
+        }
+        
+        $updateSheet->getColumns()->addFromExpression($this->getSoftDeleteAttributeAlias());
+
+        try {
+            if ($eventData->getMetaObject()->hasAttribute($this->getSoftDeleteAttributeAlias())){
+                $updateSheet->dataRead();
+                if ($deletedCol = $updateSheet->getColumns()->getByExpression($this->getSoftDeleteAttributeAlias())){
+                    $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
+                }
+                $updatedRows = $updateSheet->dataUpdate(false);
+                $affected_rows += $updatedRows;
+            } else {
+                $transaction->rollback();
+                throw new DataSheetColumnNotFoundError($eventData, 'Cannot set "IsDeleted" flag for current object: column "' . $this->getSoftDeleteAttributeAlias() . '" not found in given data sheet!');                
+            }
+
+            $eventData->setCounterForRowsInDataSource($updateSheet->countRowsInDataSource());
+            
+        } catch (\Throwable $e) {
+            $transaction->rollback();
+            throw new DataSheetWriteError($eventData, 'Data source error. ' . $e->getMessage(), null, $e);
+        }
+        if ($eventData->isEmpty() === false){
+            if ($deletedCol = $eventData->getColumns()->getByExpression($this->getSoftDeleteAttributeAlias())){
+                $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
+            }
+        }
+                
+//        $this->getWorkbench()->eventManager()->dispatch(new OnDeleteDataEvent($eventData, $transaction));
+        
+        $transaction->commit();
+        
+        return $affected_rows;
         
     }
     
@@ -63,6 +114,7 @@ class SoftDeleteBehavior extends AbstractBehavior
      *
      * @uxon-property soft_delete_attribute_alias
      * @uxon-type metamodel:attribute
+     * @uxon-required true
      *
      * @param string $value
      * @return \exface\Core\Behaviors\SoftDeleteBehavior
@@ -72,12 +124,7 @@ class SoftDeleteBehavior extends AbstractBehavior
         $this->soft_delete_attribute_alias = $value;
         return $this;
     }
-    
-//     public function importUxonObject(UxonObject $uxon, array $skip_property_names = [])
-//     {
         
-//     }
-    
     /**
      * 
      * @return MetaAttributeInterface
@@ -88,20 +135,28 @@ class SoftDeleteBehavior extends AbstractBehavior
     }
     
     /**
-     *
-     * @param DataSheetInterface $originalSheet
-     * @return DataSheetInterface
+     * 
+     * @return string
      */
-    protected function readCurrentData(DataSheetInterface $originalSheet) : DataSheetInterface
+    protected function getSoftDeleteValue() : string
     {
-        $check_sheet = $originalSheet->copy()->removeRows();
-        // Only read current data if there are UIDs or filters in the original sheet!
-        // Otherwise it would read ALL data which is useless.
-        if ($originalSheet->hasUidColumn(true) === true || $originalSheet->getFilters()->isEmpty() === false) {
-            $check_sheet->addFilterFromColumnValues($originalSheet->getUidColumn());
-            $check_sheet->dataRead();
-        }
-        return $check_sheet;
+        return $this->soft_delete_value;
+    }
+    
+    /**
+     * Value, which should be filled into the flag attribute.
+     *
+     * @uxon-property soft_delete_value
+     * @uxon-type string
+     * @uxon-required true
+     * 
+     * @param string $value
+     * @return SoftDeleteBehavior
+     */
+    public function setSoftDeleteValue(string $value) : SoftDeleteBehavior
+    {
+        $this->soft_delete_value = $value;
+        return $this;
     }
     
     /**
@@ -114,6 +169,7 @@ class SoftDeleteBehavior extends AbstractBehavior
     {
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('soft_delete_attribute_alias', $this->getSoftDeleteAttributeAlias());
+        $uxon->setProperty('soft_delete_value', $this->getSoftDeleteValue);
         return $uxon;
     }
 }
