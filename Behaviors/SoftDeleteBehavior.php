@@ -3,17 +3,11 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
-use exface\Core\Exceptions\Model\MetaObjectHasNoDataSourceError;
-use exface\Core\Factories\ConditionFactory;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Factories\QueryBuilderFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
-use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
 
