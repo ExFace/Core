@@ -720,9 +720,18 @@ class DataSheet implements DataSheetInterface
             $commit = false;
         }
         
+        // Fire OnBeforeUpdateDataEvent to allow additional checks, manipulations or custom update logic
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($this, $transaction, $create_if_uid_not_found));
+        if ($eventBefore->isPreventUpdate() === true) {
+            if ($commit && ! $transaction->isRolledBack()) {
+                $transaction->commit();
+            }
+            return $this->countRows();
+        }
+        
         // Check if the data source already contains rows with matching UIDs
         // TODO do not update rows, that were created here. Currently they are created and immediately updated afterwards.
-        if ($create_if_uid_not_found) {
+        if ($create_if_uid_not_found === true) {
             if ($uidCol = $this->getUidColumn()) {
                 // Find rows, that do not have a UID value
                 $emptyUidRows = $uidCol->findRowsByValue('');
@@ -770,12 +779,6 @@ class DataSheet implements DataSheetInterface
             return 0;
         }
         
-        // Now the actual updating starts
-        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($this, $transaction));
-        if ($eventBefore->isPreventUpdate() === true) {
-            return 0;
-        }
-        
         // Add columns with fixed values to the data sheet
         $processed_relations = array();
         foreach ($this->getColumns() as $col) {
@@ -819,7 +822,7 @@ class DataSheet implements DataSheetInterface
         // Add filters to the query
         $query->setFiltersConditionGroup($this->getFilters());
         
-        // Add values
+        // Add values to the query
         // At this point, it is important to understand, that there are different types of update data sheets possible:
         // - A "regular" sheet with one row per object identified by the UID column. In this case, that object needs to be updated by values from
         // the corresponding columns

@@ -22,8 +22,10 @@ class OnBeforeCreateDataEvent extends AbstractDataSheetEvent
     private $updateIfUidExists = null;
     
     /**
-     *
+     * 
      * @param DataSheetInterface $dataSheet
+     * @param DataTransactionInterface $transaction
+     * @param bool $updateIfUidExists
      */
     public function __construct(DataSheetInterface $dataSheet, DataTransactionInterface $transaction, bool $updateIfUidExists = true)
     {
@@ -32,6 +34,7 @@ class OnBeforeCreateDataEvent extends AbstractDataSheetEvent
     }
     
     /**
+     * Returns the value of the update-if-exists-flag used in the operation, that fired the event.
      * 
      * @return bool
      */
