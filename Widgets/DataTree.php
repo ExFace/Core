@@ -377,7 +377,7 @@ class DataTree extends DataTable
      *  "widget_type": "DataTree",
      *  "row_reorder": {
      *      "order_index_attribute_alias": "MY_ATTRIBUTE",
-     *      "direction": "ASC"
+     *      "order_direction": "ASC"
      *  }
      * }
      *
@@ -385,7 +385,7 @@ class DataTree extends DataTable
      *
      * @uxon-property row_reorder
      * @uxon-type \exface\Core\Widgets\Parts\DataRowReorder
-     * @uxon-template {"order_index_attribute_alias": "", "direction": "asc"}
+     * @uxon-template {"order_index_attribute_alias": "", "order_direction": "asc"}
      *
      * @param UxonObject $uxon
      * @return DataTable
@@ -394,7 +394,7 @@ class DataTree extends DataTable
     {
         $part = new DataRowReorder($this, $uxon);
         $this->row_reorder = $part;
-        $this->addSorter($part->getOrderIndexAttributeAlias(), $part->getDirection());
+        $this->addSorter($part->getOrderIndexAttributeAlias(), $part->getOrderDirection());
         return $this;
     }
     

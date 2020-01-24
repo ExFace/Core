@@ -77,14 +77,14 @@ class DataRowReorder implements WidgetPartInterface
     
     /**
      *
-     * @uxon-property direction
+     * @uxon-property order_direction
      * @uxon-type [asc,desc]
      *
      * @param string $value
      * @throws UnexpectedValueException
      * @return \exface\Core\Widgets\Parts\DataRowReorder
      */
-    public function setDirection($value)
+    public function setOrderDirection($value)
     {
         if (strtoupper($value) == SortingDirectionsDataType::ASC) {
             $this->direction = SortingDirectionsDataType::ASC;
@@ -100,7 +100,7 @@ class DataRowReorder implements WidgetPartInterface
      * 
      * @return string
      */
-    public function getDirection() : string
+    public function getOrderDirection() : string
     {
         return $this->direction;
     }
