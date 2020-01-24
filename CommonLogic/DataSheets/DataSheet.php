@@ -514,11 +514,6 @@ class DataSheet implements DataSheetInterface
      */
     public function dataRead(int $limit = null, int $offset = null) : int
     {
-        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeReadDataEvent($this));
-        if ($eventBefore->isPreventRead() === true) {
-            return 0;
-        }
-        
         $thisObject = $this->getMetaObject();
         
         // Empty the data before reading
@@ -530,6 +525,11 @@ class DataSheet implements DataSheetInterface
         }
         if (is_null($offset)) {
             $offset = $this->getRowsOffset();
+        }
+        
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeReadDataEvent($this, $limit, $offset));
+        if ($eventBefore->isPreventRead() === true) {
+            return 0;
         }
         
         try {
