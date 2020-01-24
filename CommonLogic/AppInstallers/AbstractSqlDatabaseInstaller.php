@@ -143,22 +143,24 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
-     * 
+     *
      * @param string $source_absolute_path
+     * @param string $indent
      * @return string
      */
     protected function installMigrations(string $source_absolute_path, string $indent = '') : string
     {
         $migrationsInApp = $this->getMigrationsFromApp($source_absolute_path);
         $migrationsInDB = $this->getMigrationsFromDb($this->getDataConnection());
+        $migrationsSkipped = $this->getSkippedMigrationsFromDb($this->getDataConnection());
         $migratedUp = 0;
         $migratedDown = 0;
-        
-        foreach ($this->diffMigrations($migrationsInDB, $migrationsInApp) as $migration) {
+
+        foreach ($this->diffMigrations($migrationsInDB, $migrationsInApp, $migrationsSkipped) as $migration) {
             $this->migrateDown($migration, $this->getDataConnection());
             $migratedDown++;
         }
-        foreach ($this->diffMigrations($migrationsInApp, $migrationsInDB) as $migration) {
+        foreach ($this->diffMigrations($migrationsInApp, $migrationsInDB, $migrationsSkipped) as $migration) {
             $this->migrateUp($migration, $this->getDataConnection());
             $migratedUp++;
         }
@@ -451,16 +453,23 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param SqlDataConnectorInterface $connection
      * @return SqlMigration
      */
-    abstract protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration;
-    
+    abstract protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection): SqlMigration;
+
     /**
      * Function to get all on the database currently applied migrations
      *
      * @param SqlDataConnectorInterface $connection
      * @return SqlMigration[]
      */
-    abstract protected function getMigrationsFromDb(SqlDataConnectorInterface $connection) : array;
-               
+    abstract protected function getMigrationsFromDb(SqlDataConnectorInterface $connection): array;
+
+    /**
+     * Function to get migrations that are marked for skip from the database.
+     *
+     * @param SqlDataConnectorInterface $connection
+     * @return array
+     */
+    abstract protected function getSkippedMigrationsFromDb(SqlDataConnectorInterface $connection): array;
 
     /**
      * Iterates through the files in "%source_absolute_path%/%install_folder_name%/%sql_folder_name%/%SqlDbType%/%folders%"
@@ -469,8 +478,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param string $source_absolute_path
      * @param string $folder_name
      * @return string
-     */    
-    protected function runSqlFromFilesInFolder(string $source_absolute_path, array $folders) : string
+     */
+    protected function runSqlFromFilesInFolder(string $source_absolute_path, array $folders): string
     {
         $files = $this->getFiles($source_absolute_path, $folders);
         $result = '';
@@ -525,28 +534,39 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         }
         return $migrs;
     }
-    
+
     /**
-     * Builds an array containing items that are in $migrations_base but are not in $migrations_substract
-     * 
+     * Builds an array containing items that are in $migrations_base but are not in $migrations_substract or
+     * $migrations_skip.
+     *
      * @param SqlMigration[] $migrations_base
      * @param SqlMigration[] $migrations_substract
+     * @param SqlMigration[] $migrations_skip
      * @return SqlMigration[]
      */
-    protected function diffMigrations(array $migrations_base, array $migrations_substract) : array
-    {        
-        if (empty($migrations_substract)){
+    protected function diffMigrations(array $migrations_base, array $migrations_substract, array $migrations_skip): array
+    {
+        if (empty($migrations_substract) && empty($migrations_skip)) {
             return $migrations_base;
         }
-        $arr = array ();
+        $arr = array();
         foreach ($migrations_base as $mB) {
             $check = false;
             foreach ($migrations_substract as $mS) {
                 if ($mB->equals($mS)) {
                     $check = true;
+                    break;
                 }
             }
-            if ($check === false){
+            if (!$check) {
+                foreach ($migrations_skip as $mSk) {
+                    if ($mB->equals($mSk)) {
+                        $check = true;
+                        break;
+                    }
+                }
+            }
+            if ($check === false) {
                 $arr[] = $mB;
             }
         }

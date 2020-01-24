@@ -18,29 +18,35 @@ class SqlMigration
     private $up_datetime = '';
     
     private $up_script = '';
-    
+
     private $up_result = '';
-    
+
     private $down_datetime = '';
-    
+
     private $down_script = '';
-    
+
     private $down_result = '';
-    
+
     private $is_up = FALSE;
-    
-    
+
+    private $failed_flag = false;
+
+    private $failed_message = '';
+
+    private $skip_flag = false;
+
+
     /**
-     * 
+     *
      * @param string $migration_name
      * @param string $up_script
      * @param string $down_script
      */
     public function __construct($migration_name, $up_script, $down_script)
     {
-        $this->migration_name=$migration_name;
-        $this->up_script=$up_script;
-        $this->down_script=$down_script;
+        $this->migration_name = $migration_name;
+        $this->up_script = $up_script;
+        $this->down_script = $down_script;
     }
     
     /**
@@ -122,7 +128,7 @@ class SqlMigration
     {
         return $this->down_result;
     }
-    
+
     /**
      * Returns if Migration is up (TRUE) or not (FALSE)
      *
@@ -131,16 +137,46 @@ class SqlMigration
     public function isUp(): bool
     {
         return $this->is_up;
-    }    
- 
+    }
+
+    /**
+     * Returns if the migration failed.
+     *
+     * @return bool
+     */
+    public function isFailed(): bool
+    {
+        return $this->failed_flag;
+    }
+
+    /**
+     * Returns the error message with which the migration failed.
+     *
+     * @return string
+     */
+    public function getFailedMessage(): string
+    {
+        return $this->failed_message;
+    }
+
+    /**
+     * Returns if the migration is skipped.
+     *
+     * @return bool
+     */
+    public function isSkipped(): bool
+    {
+        return $this->skip_flag;
+    }
+
     /**
      * Function to compare if this migration equals other Migration.
      * They are equal when the Migration name is the same.
-     * 
+     *
      * @param SqlMigration $otherMigration
      * @return bool
      */
-    public function equals(SqlMigration $otherMigration) : bool
+    public function equals(SqlMigration $otherMigration): bool
     {
         $thisFileName = pathinfo($this->getMigrationName(), PATHINFO_FILENAME);
         $otherFileName = pathinfo($otherMigration->getMigrationName(), PATHINFO_FILENAME);
@@ -172,11 +208,24 @@ class SqlMigration
      * @param string $result
      * @return SqlMigration
      */
-    public function setDown (string $dateTime, string $result) : SqlMigration
+    public function setDown(string $dateTime, string $result): SqlMigration
     {
         $this->is_up = false;
         $this->down_datetime = $dateTime;
         $this->down_result = $result;
+        return $this;
+    }
+
+    public function setFailed(bool $failed, string $failed_message): SqlMigration
+    {
+        $this->failed_flag = $failed;
+        $this->failed_message = $failed_message;
+        return $this;
+    }
+
+    public function setSkip(bool $skip): SqlMigration
+    {
+        $this->skip_flag = $skip;
         return $this;
     }
 }
