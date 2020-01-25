@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\Model;
 
+use exface\Core\Interfaces\DataSheets\DataColumnInterface;
+
 /**
  * A condition group contains one or more conditions and/or other (nested) condition groups combined by one logical operator,
  * e.g. OR( AND( cond1 = val1, cond2 < val2 ), cond3 = val3 ).
@@ -29,14 +31,32 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
     public function addConditionFromExpression(ExpressionInterface $expression, $value = NULL, string $comparator = EXF_COMPARATOR_IS) : ConditionGroupInterface;
     
     /**
-     * Creates a new condition and adds it to this condition group.
+     * Creates a new condition and adds it to the filters of this data sheet to the root condition group.
      *
-     * @param string $column_name
+     * @param string $expression_string
      * @param mixed $value
      * @param string $comparator
      * @return ConditionGroupInterface
      */
-    public function addConditionsFromString(MetaObjectInterface $base_object, string $expression_string, $value, string $comparator = null) : ConditionGroupInterface;
+    public function addConditionFromString(string $expression_string, $value, string $comparator = null) : ConditionGroupInterface;
+    
+    /**
+     * Adds an filter based on a list of values: the column value must equal one of the values in the list.
+     * The list may be an array or a comma separated string
+     * FIXME move to ConditionGroup, so it can be used for nested groups too!
+     *
+     * @param string|ExpressionInterface $expressionString
+     * @param string|array $values
+     * @return ConditionGroupInterface
+     */
+    public function addConditionFromValueArray($expressionOrString, $value_list) : ConditionGroupInterface;
+    
+    /**
+     *
+     * @param DataColumnInterface $column
+     * @return ConditionGroupInterface
+     */
+    public function addConditionFromColumnValues(DataColumnInterface $column) : ConditionGroupInterface;
     
     /**
      * Adds a subgroup to this group.

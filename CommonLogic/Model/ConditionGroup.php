@@ -12,6 +12,9 @@ use exface\Core\Interfaces\Model\ConditionInterface;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\DataSheets\DataColumnInterface;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Factories\ExpressionFactory;
 
 /**
  * Default implementation of the ConditionGroupInterface
@@ -75,32 +78,6 @@ class ConditionGroup implements ConditionGroupInterface
             $condition = ConditionFactory::createFromExpression($this->exface, $expression, $value, $comparator);
             $this->addCondition($condition);
         }
-        return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     * @see ConditionGroupInterface::addCondition()
-     */
-    public function addConditionsFromString(MetaObjectInterface $base_object, string $expression_string, $value, string $comparator = null) : ConditionGroupInterface
-    {
-        $value = trim($value);
-                
-        // A special feature for string condition is the possibility to specify a comma separated list of attributes in one element
-        // of the filters array, wich means that at least one of the attributes should match the value
-        // IDEA move this logic to the condition, so it can be used generally
-        $expression_strings = explode(EXF_LIST_SEPARATOR, $expression_string);
-        if (count($expression_strings) > 1) {
-            $group = ConditionGroupFactory::createEmpty($this->exface, EXF_LOGICAL_OR);
-            foreach ($expression_strings as $f) {
-                $group->addCondition(ConditionFactory::createFromExpressionString($base_object, $f, $value, $comparator));
-            }
-            $this->addNestedGroup($group);
-        } elseif (! is_null($value) && $value !== '') {
-            $this->addCondition(ConditionFactory::createFromExpressionString($base_object, $expression_string, $value, $comparator));
-        }
-        
         return $this;
     }
 
@@ -516,5 +493,79 @@ class ConditionGroup implements ConditionGroupInterface
             default: 
                 throw new RuntimeException('Unsupported logical operator "' . $op . '" in condition group "' . $this->toString() . '"!');
         }
+    }
+    
+    /**
+     * Creates a new condition and adds it to the filters of this data sheet to the root condition group.
+     *
+     * @param string $expression_string
+     * @param mixed $value
+     * @param string $comparator
+     * @return ConditionGroupInterface
+     */
+    public function addConditionFromString(string $expression_string, $value, string $comparator = null) : ConditionGroupInterface
+    {
+        $base_object = $this->getBaseObject();
+        if ($base_object === null) {
+            throw new InvalidArgumentException('Cannot create conditional expression from "' . $expression_string .  '": cannot determine base meta object!');
+        }
+        
+        $value = trim($value);
+        
+        // A special feature for string condition is the possibility to specify a comma separated list of attributes in one element
+        // of the filters array, wich means that at least one of the attributes should match the value
+        // IDEA move this logic to the condition, so it can be used generally
+        $expression_strings = explode(EXF_LIST_SEPARATOR, $expression_string);
+        if (count($expression_strings) > 1) {
+            $group = ConditionGroupFactory::createEmpty($this->exface, EXF_LOGICAL_OR);
+            foreach ($expression_strings as $f) {
+                $group->addCondition(ConditionFactory::createFromExpressionString($base_object, $f, $value, $comparator));
+            }
+            $this->addNestedGroup($group);
+        } elseif (! is_null($value) && $value !== '') {
+            $this->addCondition(ConditionFactory::createFromExpressionString($base_object, $expression_string, $value, $comparator));
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * Adds an filter based on a list of values: the column value must equal one of the values in the list.
+     * The list may be an array or a comma separated string
+     * FIXME move to ConditionGroup, so it can be used for nested groups too!
+     *
+     * @param string|ExpressionInterface $expressionString
+     * @param string|array $values
+     */
+    public function addConditionFromValueArray($expressionOrString, $value_list) : ConditionGroupInterface
+    {
+        if ($expressionOrString instanceof ExpressionInterface) {
+            $expr = $expressionOrString;
+        } else {
+            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $expressionOrString, $this->getBaseObject());
+        }
+        if (is_array($value_list) === true) {
+            if ($expr->isMetaAttribute() === true){
+                $delimiter = $expr->getAttribute()->getValueListDelimiter();
+            } else {
+                $delimiter = EXF_LIST_SEPARATOR;
+            }
+            $value = implode($delimiter, $value_list);
+        } else {
+            $value = $value_list;
+        }
+        $this->addConditionFromExpression($expr, $value, EXF_COMPARATOR_IN);
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param DataColumnInterface $column
+     * @return ConditionGroupInterface
+     */
+    public function addConditionFromColumnValues(DataColumnInterface $column) : ConditionGroupInterface
+    {
+        $this->addConditionFromString($column->getExpressionObj()->toString(), implode(($column->getAttribute() ? $column->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR), array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
+        return $this;
     }
 }

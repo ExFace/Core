@@ -62,7 +62,7 @@ class ReadPrefill extends ReadData
             return ResultFactory::createDataResult($task, $data_sheet);
         } else {
             if ($data_sheet->hasUidColumn(true)) {
-                $data_sheet->addFilterFromColumnValues($data_sheet->getUidColumn());
+                $data_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
             } /*elseif ($data_sheet->getFilters()->isEmpty() === false) {
                 return ResultFactory::createDataResult($task, $data_sheet->removeRows());
             }*/
