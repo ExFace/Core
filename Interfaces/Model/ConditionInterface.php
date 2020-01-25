@@ -3,7 +3,6 @@ namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * A condition is a simple conditional predicate consisting of a (left) expression,
@@ -66,13 +65,5 @@ interface ConditionInterface extends ConditionalExpressionInterface
      * @return string|boolean
      */
     public function getAttributeAlias();
-    
-    /**
-     * 
-     * @param DataSheetInterface $data_sheet
-     * @param int $row_number
-     * @return bool
-     */
-    public function evaluate(DataSheetInterface $data_sheet = null, int $row_number = null) : bool;
 }
 

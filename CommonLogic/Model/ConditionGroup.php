@@ -190,10 +190,15 @@ class ConditionGroup implements ConditionGroupInterface
     public function rebase(string $relation_path_to_new_base_object, callable $filter_callback = null) : ConditionGroupInterface
     {
         // Do nothing, if the relation path is empty (nothing to rebase...)
-        if (! $relation_path_to_new_base_object)
+        if (! $relation_path_to_new_base_object) {
             return $this;
+        }
         
-        $result = ConditionGroupFactory::createEmpty($this->exface, $this->getOperator());
+        if ($this->hasBaseObject() === true) {
+            $result = ConditionGroupFactory::createEmpty($this->exface, $this->getOperator(), $this->getBaseObject()->getRelatedObject($relation_path_to_new_base_object));
+        } else {
+            $result = ConditionGroupFactory::createEmpty($this->exface, $this->getOperator());
+        }
         foreach ($this->getConditions() as $condition) {
             // Remove conditions not matching the filter
             if (! is_null($filter_callback) && call_user_func($filter_callback, $condition, $relation_path_to_new_base_object) === false) {
@@ -261,6 +266,9 @@ class ConditionGroup implements ConditionGroupInterface
     {
         $uxon = new UxonObject();
         $uxon->setProperty('operator', $this->getOperator());
+        if ($this->hasBaseObject() === true) {
+            $uxon->setProperty('base_object_alias', $this->getBaseObjectSelector());
+        }
         foreach ($this->getConditions() as $cond) {
             $uxon->appendToProperty('conditions', $cond->exportUxonObject());
         }
