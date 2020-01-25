@@ -972,9 +972,9 @@ SQL;
             $userData->getColumns()->addFromAttribute($attr);
         }
         if ($selector->isUid() === true) {
-            $userData->getFilters()->addConditionsFromString($userMetaObj, 'UID', $selector->toString(), EXF_COMPARATOR_EQUALS);
+            $userData->getFilters()->addConditionFromString('UID', $selector->toString(), EXF_COMPARATOR_EQUALS);
         } else {
-            $userData->getFilters()->addConditionsFromString($userMetaObj, 'USERNAME', $selector->toString(), EXF_COMPARATOR_EQUALS);
+            $userData->getFilters()->addConditionFromString('USERNAME', $selector->toString(), EXF_COMPARATOR_EQUALS);
         }
         $userData->dataRead();
         
@@ -997,7 +997,7 @@ SQL;
         $userMetaObj = $this->getWorkbench()->model()->getObject('exface.Core.USER');
         if ($userData === null) {
             $userData = DataSheetFactory::createFromObject($userMetaObj);
-            $userData->getFilters()->addConditionsFromString($userMetaObj, 'USERNAME', $user->getUsername(), EXF_COMPARATOR_EQUALS);
+            $userData->getFilters()->addConditionFromString('USERNAME', $user->getUsername(), EXF_COMPARATOR_EQUALS);
         }
         
         foreach ($userMetaObj->getAttributes() as $attr) {

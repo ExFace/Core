@@ -63,7 +63,7 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
         if ($data_sheet->getUidColumn()) {
             $data_sheet = $this->getWidget()->prepareDataSheetToPrefill($data_sheet);
             if (! $data_sheet->isFresh()) {
-                $data_sheet->addFilterFromColumnValues($data_sheet->getUidColumn());
+                $data_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
                 $data_sheet->dataRead();
             }
             $data_sheet->getColumns()->removeByKey($data_sheet->getUidColumn()->getName());

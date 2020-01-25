@@ -153,7 +153,7 @@ class MessageList extends Container
             $ds->getColumns()->addFromExpression('HINT');
             $ds->getColumns()->addFromExpression('DESCRIPTION');
             $ds->getColumns()->addFromExpression('DOCS');
-            $ds->addFilterInFromString('CODE', array_keys($this->messageCodesToLoad), ComparatorDataType::IN);
+            $ds->getFilters()->addConditionFromValueArray('CODE', array_keys($this->messageCodesToLoad), ComparatorDataType::IN);
             $ds->dataRead();
             
             foreach ($ds->getRows() as $row) {

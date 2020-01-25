@@ -577,7 +577,7 @@ class DataSheet implements DataSheetInterface
                 // Add filter over parent keys
                 $parentSheetKeyCol = $subsheet->getJoinKeyColumnOfParentSheet();
                 $foreign_keys = $parentSheetKeyCol->getValues(false);
-                $subsheet->addFilterFromString($subsheet->getJoinKeyAliasOfSubsheet(), implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+                $subsheet->getFilters()->addConditionFromString($subsheet->getJoinKeyAliasOfSubsheet(), implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
                 // Read data
                 $subsheet->dataRead();
                 // Do the JOIN
@@ -738,7 +738,7 @@ class DataSheet implements DataSheetInterface
                 // Create another data sheet selecting those UIDs currently present in the data source
                 $uid_check_ds = DataSheetFactory::createFromObject($this->getMetaObject());
                 $uid_check_ds->getColumns()->add($uidCol->copy());
-                $uid_check_ds->addFilterFromColumnValues($uidCol);
+                $uid_check_ds->getFilters()->addConditionFromColumnValues($uidCol);
                 $uid_check_ds->dataRead();
                 $missing_uids = $uidCol->diffValues($uid_check_ds->getUidColumn());
                 // Filter away empty UID values, because we already have the in $emptyUidRows
@@ -862,7 +862,7 @@ class DataSheet implements DataSheetInterface
                     if (! $relThisSheetKeyCol || $relThisKeyVal === '' || $relThisKeyVal === mull) {
                         throw new DataSheetWriteError($this, 'Cannot update nested data - missing key value in main data sheet!');
                     }
-                    $nestedSheet->addFilterFromString($relPathFromNestedSheet->toString(), $relThisKeyVal, ComparatorDataType::EQUALS);
+                    $nestedSheet->getFilters()->addConditionFromString($relPathFromNestedSheet->toString(), $relThisKeyVal, ComparatorDataType::EQUALS);
                     if (! $relNestedSheetCol = $nestedSheet->getColumns()->getByExpression($relPathFromNestedSheet->toString())) {
                         $relNestedSheetCol = $nestedSheet->getColumns()->addFromExpression($relPathFromNestedSheet->toString());
                     }
@@ -882,7 +882,7 @@ class DataSheet implements DataSheetInterface
             // Use the UID column as a filter to make sure, only these rows are affected
             if ($column->getAttribute()->getAliasWithRelationPath() == $this->getMetaObject()->getUidAttributeAlias()) {
                 $uidAttr = $this->getMetaObject()->getUidAttribute();
-                $query->addFilterFromString($uidAttr->getAlias(), implode($uidAttr->getValueListDelimiter(), array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
+                $query->getFilters()->addConditionFromString($uidAttr->getAlias(), implode($uidAttr->getValueListDelimiter(), array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
                 // Do not update the UID attribute if it is neither editable nor required
                 if ($uidAttr->isEditable() === false && $uidAttr->isRequired() === false) {
                     continue;
@@ -916,7 +916,7 @@ class DataSheet implements DataSheetInterface
                     $uid_data_sheet->getColumns()->removeAll();
                     $uid_data_sheet->getColumns()->addFromExpression($this->getMetaObject()->getUidAttributeAlias());
                     $uid_data_sheet->getColumns()->addFromExpression($uid_column_alias);
-                    $uid_data_sheet->addFilterFromString($this->getMetaObject()->getUidAttributeAlias(), implode($this->getUidColumn()->getValues(), $this->getUidColumn()->getAttribute()->getValueListDelimiter()), EXF_COMPARATOR_IN);
+                    $uid_data_sheet->getFilters()->addConditionFromString($this->getMetaObject()->getUidAttributeAlias(), implode($this->getUidColumn()->getValues(), $this->getUidColumn()->getAttribute()->getValueListDelimiter()), EXF_COMPARATOR_IN);
                     $uid_data_sheet->dataRead();
                     $uid_column = $uid_data_sheet->getColumn($uid_column_alias);
                 }
@@ -1297,7 +1297,7 @@ class DataSheet implements DataSheetInterface
                                 $ds->getFilters()->removeCondition($cond);
                             }
                             // Add an IN-filter for the UID column
-                            $ds->addFilterFromColumnValues($ds->getUidColumn());
+                            $ds->getFilters()->addConditionFromColumnValues($ds->getUidColumn());
                         }
                         $ds->dataDelete($transaction);
                     }
@@ -1383,7 +1383,7 @@ class DataSheet implements DataSheetInterface
                 if ($thisUidCol = $this->getUidColumn()) {
                     $uids = $thisUidCol->getValues(false);
                     if (! empty($uids)) {
-                        $ds->addFilterInFromString($thisUidCol->getExpressionObj()->rebase($rel->getAliasWithModifier())->toString(), $uids);
+                        $ds->getFilters()->addConditionFromValueArray($thisUidCol->getExpressionObj()->rebase($rel->getAliasWithModifier())->toString(), $uids);
                     }
                     
                     // For self-relations some additional filters need to be done on cascading delete sheets!
@@ -1391,7 +1391,7 @@ class DataSheet implements DataSheetInterface
                         // The cascading delete should not attempt to delete the rows already taken care
                         // of by this sheet - so exclude them by filter! Otherwise we will get infinite 
                         // recursion!
-                        $ds->addFilterFromString($thisUidCol->getAttributeAlias(), implode(',', $uids), ComparatorDataType::NOT_IN);
+                        $ds->getFilters()->addConditionFromString($thisUidCol->getAttributeAlias(), implode(',', $uids), ComparatorDataType::NOT_IN);
                         // Also keep UID-filters of the main sheet in addition to the rebased filters
                         // to make sure, that if we have excluding filters (= meaning DO NOT DELETE 
                         // certain UIDs), the cascading deletes will not delete the corresponding items
@@ -1423,66 +1423,15 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     * Creates a new condition and adds it to the filters of this data sheet to the root condition group.
-     * FIXME Make ConditionGroup::addConditionsFromString() better usable by introducing the base object there. Then
-     * remove this method here.
+     * @deprecated use $this->getFilters()->addConditionFromString() instead!
      *
      * @param string $column_name            
      * @param mixed $value            
      * @param string $comparator            
      */
-    function addFilterFromString($expression_string, $value, $comparator = null)
+    public function addFilterFromString($expression_string, $value, $comparator = null)
     {
-        $base_object = $this->getMetaObject();
-        $this->getFilters()->addConditionsFromString($base_object, $expression_string, $value, $comparator);
-        return $this;
-    }
-
-    /**
-     * Adds an filter based on a list of values: the column value must equal one of the values in the list.
-     * The list may be an array or a comma separated string
-     * FIXME move to ConditionGroup, so it can be used for nested groups too!
-     *
-     * @param string $column            
-     * @param string|array $values            
-     */
-    function addFilterInFromString($column, $value_list)
-    {
-        if (is_array($value_list)) {
-            if ($this->getColumn($column) && $this->getColumn($column)->getAttribute()){
-                $delimiter = $this->getColumn($column)->getAttribute()->getValueListDelimiter();
-            } else {
-                $delimiter = EXF_LIST_SEPARATOR;
-            }
-            $value = implode($delimiter, $value_list);
-        } else {
-            $value = $value_list;
-        }
-        $this->addFilterFromString($column, $value, EXF_COMPARATOR_IN);
-        return $this;
-    }
-
-    /**
-     * Adds an filter based on a list of values: the column value must equal one of the values in the list.
-     * The list may be an array or a comma separated string
-     * FIXME move to ConditionGroup, so it can be used for nested groups too!
-     *
-     * @param string $column            
-     * @param string|array $values            
-     */
-    function addFilterIsFromString($column, $value_list)
-    {
-        if (is_array($value_list)) {
-            if ($this->getColumn($column) && $this->getColumn($column)->getAttribute()){
-                $delimiter = $this->getColumn($column)->getAttribute()->getValueListDelimiter();
-            } else {
-                $delimiter = EXF_LIST_SEPARATOR;
-            }
-            $value = implode($delimiter, $value_list);
-        } else {
-            $value = $value_list;
-        }
-        $this->addFilterFromString($column, $value, EXF_COMPARATOR_IN);
+        $this->getFilters()->addConditionFromString($expression_string, $value, $comparator);
         return $this;
     }
 
@@ -1491,7 +1440,7 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getSorters()
      */
-    function getSorters()
+    public function getSorters()
     {
         return $this->sorters;
     }
@@ -1948,12 +1897,6 @@ class DataSheet implements DataSheetInterface
         foreach ($rowNumbers as $row_number) {
             $this->removeRow($row_number);
         }
-        return $this;
-    }
-
-    public function addFilterFromColumnValues(DataColumnInterface $column)
-    {
-        $this->addFilterFromString($column->getExpressionObj()->toString(), implode(($column->getAttribute() ? $column->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR), array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
         return $this;
     }
 
