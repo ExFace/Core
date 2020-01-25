@@ -1423,19 +1423,6 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     * @deprecated use $this->getFilters()->addConditionFromString() instead!
-     *
-     * @param string $column_name            
-     * @param mixed $value            
-     * @param string $comparator            
-     */
-    public function addFilterFromString($expression_string, $value, $comparator = null)
-    {
-        $this->getFilters()->addConditionFromString($expression_string, $value, $comparator);
-        return $this;
-    }
-
-    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getSorters()

@@ -216,7 +216,7 @@ class CopyData extends SaveData implements iCreateData
                 // Read data filtered by the left key of the reverse relations. The values for the filter come
                 // from the input column, which is the left key of the regular relation.
                 $oldLeftKeyValue = $currentData->getColumns()->getByAttribute($rel->getLeftKeyAttribute())->getCellValue($rownr);
-                $relSheet->addFilterFromString($relRev->getLeftKeyAttribute()->getAlias(), $oldLeftKeyValue, EXF_COMPARATOR_EQUALS);
+                $relSheet->getFilters()->addConditionFromString($relRev->getLeftKeyAttribute()->getAlias(), $oldLeftKeyValue, EXF_COMPARATOR_EQUALS);
                 $relSheet->dataRead();
                 
                 // If there is nothing to be copied, skip to the next relation.

@@ -400,8 +400,8 @@ abstract class AbstractDataConnector implements DataConnectionInterface
         
         $credData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.DATA_CONNECTION_CREDENTIALS');
         $credData->getColumns()->addMultiple(['NAME', 'DATA_CONNECTION', 'DATA_CONNECTOR_CONFIG', 'PRIVATE']);
-        $credData->addFilterFromString('USER_CREDENTIALS__USER', $user->getUid(), ComparatorDataType::EQUALS);
-        $credData->addFilterFromString('DATA_CONNECTION', $this->getId(), ComparatorDataType::EQUALS);
+        $credData->getFilters()->addConditionFromString('USER_CREDENTIALS__USER', $user->getUid(), ComparatorDataType::EQUALS);
+        $credData->getFilters()->addConditionFromString('DATA_CONNECTION', $this->getId(), ComparatorDataType::EQUALS);
         $credData->dataRead();
         
         $isPrivate = $user->is($this->getWorkbench()->getSecurity()->getAuthenticatedUser());
@@ -426,8 +426,8 @@ abstract class AbstractDataConnector implements DataConnectionInterface
                         $credData->dataDelete($transaction);
                     } else {
                         $credUserData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_CREDENTIALS');
-                        $credUserData->addFilterFromString('USER', $user->getUid(), ComparatorDataType::EQUALS);
-                        $credUserData->addFilterFromString('DATA_CONNECTION_CREDENTIALS', $credData->getUidColumn()->getCellValue(0), ComparatorDataType::EQUALS);
+                        $credUserData->getFilters()->addConditionFromString('USER', $user->getUid(), ComparatorDataType::EQUALS);
+                        $credUserData->getFilters()->addConditionFromString('DATA_CONNECTION_CREDENTIALS', $credData->getUidColumn()->getCellValue(0), ComparatorDataType::EQUALS);
                         $credUserData->dataDelete($transaction);
                     }
                     
