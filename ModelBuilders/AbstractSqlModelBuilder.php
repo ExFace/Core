@@ -147,7 +147,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
         
         $existing_objects = DataSheetFactory::createFromObjectIdOrAlias($app->getWorkbench(), 'exface.Core.OBJECT');
         $existing_objects->getColumns()->addFromExpression('DATA_ADDRESS');
-        $existing_objects->addFilterFromString('APP', $app->getUid(), EXF_COMPARATOR_EQUALS);
+        $existing_objects->getFilters()->addConditionFromString('APP', $app->getUid(), EXF_COMPARATOR_EQUALS);
         $existing_objects->dataRead();
         
         $newObjectsSheet = DataSheetFactory::createFromObjectIdOrAlias($app->getWorkbench(), 'exface.Core.OBJECT');
@@ -367,8 +367,8 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
                 $ds = DataSheetFactory::createFromObjectIdOrAlias($object->getWorkbench(), 'exface.Core.OBJECT');
                 $ds->getColumns()->addFromUidAttribute();
                 $ds->getColumns()->addFromExpression('NAME');
-                $ds->addFilterFromString('DATA_ADDRESS', $relatedTable, EXF_COMPARATOR_EQUALS);
-                $ds->addFilterFromString('DATA_SOURCE', $object->getDataSourceId(), EXF_COMPARATOR_EQUALS);
+                $ds->getFilters()->addConditionFromString('DATA_ADDRESS', $relatedTable, EXF_COMPARATOR_EQUALS);
+                $ds->getFilters()->addConditionFromString('DATA_SOURCE', $object->getDataSourceId(), EXF_COMPARATOR_EQUALS);
                 $ds->dataRead();
                 if ($ds->countRows() === 1) {
                     $row['RELATED_OBJ'] = $ds->getUidColumn()->getValues()[0];

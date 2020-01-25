@@ -202,7 +202,7 @@ class UxonSchema implements UxonSchemaInterface
         $filepathRelative = $this->getFilenameForEntity($prototypeClass);
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_PROPERTY_ANNOTATION');
         $ds->getColumns()->addMultiple(['PROPERTY', 'TYPE', 'TEMPLATE', 'DEFAULT']);
-        $ds->addFilterFromString('FILE', $filepathRelative);
+        $ds->getFilters()->addConditionFromString('FILE', $filepathRelative);
         try {
             $ds->dataRead();
         } catch (\Throwable $e) {
@@ -428,8 +428,8 @@ class UxonSchema implements UxonSchemaInterface
             } else {
                 $alias = $parts[0];
             }
-            $ds->addFilterFromString('APP__ALIAS', $namespace);
-            $ds->addFilterFromString('ALIAS', $alias);
+            $ds->getFilters()->addConditionFromString('APP__ALIAS', $namespace);
+            $ds->getFilters()->addConditionFromString('ALIAS', $alias);
         }
         $ds->dataRead();
         
@@ -838,7 +838,7 @@ class UxonSchema implements UxonSchemaInterface
         
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.' . strtoupper($this::getSchemaName()) . '_PRESET');
         $ds->getColumns()->addMultiple(['UID','NAME', 'PROTOTYPE__LABEL', 'DESCRIPTION', 'PROTOTYPE', 'UXON' , 'WRAP_PATH', 'WRAP_FLAG']);
-        $ds->addFilterFromString('UXON_SCHEMA', $this::getSchemaName());
+        $ds->getFilters()->addConditionFromString('UXON_SCHEMA', $this::getSchemaName());
         $ds->getSorters()
         ->addFromString('PROTOTYPE', SortingDirectionsDataType::ASC)
         ->addFromString('NAME', SortingDirectionsDataType::ASC);

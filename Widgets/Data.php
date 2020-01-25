@@ -178,7 +178,7 @@ class Data
             // Add filters if they have values
             foreach ($this->getFilters() as $filter_widget) {
                 if ($filter_widget->getValue()) {
-                    $data_sheet->addFilterFromString($filter_widget->getAttributeAlias(), $filter_widget->getValue(), $filter_widget->getComparator());
+                    $data_sheet->getFilters()->addConditionFromString($filter_widget->getAttributeAlias(), $filter_widget->getValue(), $filter_widget->getComparator());
                 }
             }
             // Add sorters
