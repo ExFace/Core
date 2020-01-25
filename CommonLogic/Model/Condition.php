@@ -453,12 +453,7 @@ class Condition implements ConditionInterface
             }
         }
         
-        $leftExpr = $this->getExpression();
-        switch (true) {
-            case $leftExpr->isMetaAttribute() === true || $leftExpr->isFormula():
-                $leftCol = $data_sheet->getColumns()->getByExpression($leftExpr);
-        }
-        $leftVal = $leftExpr->evaluate($data_sheet, $leftCol ?? '', $row_number);
+        $leftVal = $this->getExpression()->evaluate($data_sheet, $row_number);
         $rightVal = $this->getValue();
         return $this->compare($leftVal, $this->getComparator(), $rightVal);
     }

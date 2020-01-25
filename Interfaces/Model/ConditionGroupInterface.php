@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\Interfaces\Model;
 
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-
 /**
  * A condition group contains one or more conditions and/or other (nested) condition groups combined by one logical operator,
  * e.g. OR( AND( cond1 = val1, cond2 < val2 ), cond3 = val3 ).
@@ -128,13 +126,5 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
      * @return int
      */
     public function countNestedGroups(bool $recursive = true) : int;
-    
-    /**
-     * 
-     * @param DataSheetInterface $data_sheet
-     * @param int $row_number
-     * @return bool
-     */
-    public function evaluate(DataSheetInterface $data_sheet = null, int $row_number = null) : bool;
 }
 

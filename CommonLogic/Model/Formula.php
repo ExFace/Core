@@ -94,7 +94,7 @@ abstract class Formula implements FormulaInterface
      *
      * @see \exface\Core\Interfaces\Formulas\FormulaInterface::evaluate()
      */
-    public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, $row_number = null)
+    public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, int $row_number = null)
     {
         $args = array();
         
