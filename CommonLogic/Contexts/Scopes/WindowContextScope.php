@@ -85,5 +85,10 @@ class WindowContextScope extends AbstractContextScope
         }
         return $contexts;
     }
+    
+    public function refreshContext(ContextInterface $context) : ContextInterface
+    {
+        return $this->getContextManager()->getScopeSession()->refreshContext($context);
+    }
 }
 ?>

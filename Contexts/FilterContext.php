@@ -10,11 +10,12 @@ use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Exceptions\Contexts\ContextLoadError;
 use exface\Core\CommonLogic\Contexts\AbstractContext;
+use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 
 class FilterContext extends AbstractContext
 {
 
-    private $conditions_by_object = [];
+    private $conditions_by_object = null;
     
     private $updatedObjectIds = [];
     
@@ -29,7 +30,7 @@ class FilterContext extends AbstractContext
      */
     public function getConditions(MetaObjectInterface $object = NULL)
     {
-        if (empty($this->conditions_by_object) === true) {
+        if ($this->conditions_by_object === null) {
             $uxon = $this->conditionsUxon;
             if ($uxon === null || $uxon->isEmpty() === true) {
                 return [];
@@ -39,16 +40,7 @@ class FilterContext extends AbstractContext
                 return [];
             }
             
-            $exface = $this->getWorkbench();
-            foreach ($uxon->getPropertiesAll() as $objectId => $uxonConditions) {
-                foreach ($uxonConditions as $uxonCondition) {
-                    try {
-                        $this->conditions_by_object[$objectId][] = ConditionFactory::createFromUxon($exface, $uxonCondition);
-                    } catch (ErrorExceptionInterface $e) {
-                        // ignore context that cannot be instantiated!
-                    }
-                }
-            }
+            $this->getConditionsByObjectId();
         }
         
         $array = [];
@@ -66,7 +58,7 @@ class FilterContext extends AbstractContext
                     // 1) Ensure, there is a relation to the parent object and thus a relation path to rebase. However, the rebase() should not actually change
                     // The alias of the attribute or it's relation path if the parent object does not have it's own data address
                     // 2) Create an alternative rebase() method, that would work with objects. This would probably be harder to understand.
-                    if ($object_id != $object->getId()) {
+                    if ($object_id !== $object->getId()) {
                         foreach ($this->conditions_by_object[$object_id] as $condition) {
                             $exface = $this->getWorkbench();
                             $new_expresseion = ExpressionFactory::createFromString($exface, $condition->getExpression()->toString(), $object);
@@ -79,13 +71,37 @@ class FilterContext extends AbstractContext
                 }
             }
         } else {
-            foreach ($this->conditions_by_object as $object_id => $conditions) {
+            foreach ($this->getConditionsByObjectId() as $object_id => $conditions) {
                 foreach ($conditions as $condition) {
                     $array[] = $condition;
                 }
             }
         }
         return $array;
+    }
+    
+    /**
+     * 
+     * @return ConditionalExpressionInterface[]
+     */
+    private function getConditionsByObjectId() : array
+    {
+        if ($this->conditions_by_object === null) {
+            $uxon = $this->conditionsUxon;
+            if ($uxon !== null && $uxon->isEmpty() === false) {
+                $exface = $this->getWorkbench();
+                foreach ($uxon->getPropertiesAll() as $objectId => $uxonConditions) {
+                    foreach ($uxonConditions as $uxonCondition) {
+                        try {
+                            $this->conditions_by_object[$objectId][] = ConditionFactory::createFromUxon($exface, $uxonCondition);
+                        } catch (\Throwable $e) {
+                            // ignore context that cannot be instantiated!
+                        }
+                    }
+                }
+            }
+        }
+        return $this->conditions_by_object ?? [];
     }
 
     /**
@@ -97,8 +113,8 @@ class FilterContext extends AbstractContext
     public function addCondition(Condition $condition)
     {
         $objectId = $condition->getExpression()->getMetaObject()->getId();
-        if (empty($this->conditions_by_object) === true && $this->isEmpty() === false) {
-            $this->getConditions();
+        if ($this->conditions_by_object === null && $this->isEmpty() === false) {
+            $this->getConditionsByObjectId();
         }
         $this->conditions_by_object[$objectId][$condition->getExpression()->toString()] = $condition;
         $this->updatedObjectIds[] = $objectId;
@@ -186,18 +202,13 @@ class FilterContext extends AbstractContext
             $updatedConditions[$objectId] = $this->conditions_by_object[$objectId];                
         }
         // Re-read current session data
-        $this->getScope()->loadContextData($this);
+        $this->getScope()->refreshContext($this);
         
-        // If nothing changed, just return the freshly read UXON
-        if (empty($updatedConditions) === true) {
-            $uxon = $this->conditionsUxon ?? (new UxonObject());
-        } else {
-            $newConditions = array_merge($this->conditions_by_object, $updatedConditions);
-            $uxon = new UxonObject();
-            foreach ($newConditions as $objectId => $conditions) {
-                foreach ($conditions as $condition) {
-                    $uxon->appendToProperty($objectId, $condition->exportUxonObject());
-                }
+        $uxon = $this->conditionsUxon ?? (new UxonObject());
+        foreach ($updatedConditions as $objectId => $conditions) {
+            $uxon->unsetProperty($objectId);
+            foreach ($conditions as $condition) {
+                $uxon->appendToProperty($objectId, $condition->exportUxonObject());
             }
         }
         if ($uxon->isEmpty() === false) {
@@ -217,7 +228,7 @@ class FilterContext extends AbstractContext
     public function importUxonObject(UxonObject $uxon)
     {
         $this->conditionsUxon = $uxon->getProperty('conditions');
-        $this->conditions_by_object = [];
+        $this->conditions_by_object = null;
         return $this;
     }
 
