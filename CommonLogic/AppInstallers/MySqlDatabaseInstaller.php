@@ -159,7 +159,7 @@ SQL;
 
 SELECT * FROM {$this->getMigrationsTableName()}
 WHERE ((down_datetime IS NULL AND failed_flag=0) OR (down_datetime IS NOT NULL AND failed_flag=1))
-ORDER BY migration_name DESC";
+ORDER BY migration_name DESC;
 
 SQL;
         return $this->getMigrationsFromSql($connection, $sql);
@@ -279,7 +279,7 @@ SQL;
             $down_result_string = $this->stringifyQueryResults($down_result);
             //da Transaction Rollback nicht korrekt funktioniert
             $sql_update = <<<SQL
-            
+
 UPDATE {$this->getMigrationsTableName()}
 SET down_datetime=now(), down_result="{$this->escapeSqlStringValue($down_result_string)}", failed_flag=0, failed_message=NULL
 WHERE id='$id';
@@ -334,7 +334,7 @@ INSERT INTO {$this->getMigrationsTableName()}
         "{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getUpScript()))}",
         "{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}",
         1,
-        "{$this->escapeSqlStringValue($message)}",
+        "{$this->escapeSqlStringValue($message)}"
     );
 
 SQL;
