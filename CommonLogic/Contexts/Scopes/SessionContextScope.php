@@ -52,14 +52,6 @@ class SessionContextScope extends AbstractContextScope
         
         return parent::init();
     }
-    
-    public function refreshContext(ContextInterface $context) : ContextInterface
-    {
-        $this->sessionOpen();
-        $this->loadContextData($context);
-        $this->sessionClose();
-        return $context;
-    }
 
     /**
      * Since the session context ist stored in the $_SESSION, loading contexts simply fetches the contents

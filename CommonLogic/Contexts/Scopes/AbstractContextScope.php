@@ -112,6 +112,17 @@ abstract class AbstractContextScope implements ContextScopeInterface
         }
         return $context_class;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextScopeInterface::reloadContext()
+     */
+    public function reloadContext(ContextInterface $context)
+    {
+        $this->loadContextData($context);
+        return;
+    }
 
     /**
      * Loads data saved in the current context scope into the given context object
