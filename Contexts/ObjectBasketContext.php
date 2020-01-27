@@ -38,7 +38,7 @@ class ObjectBasketContext extends AbstractContext
         $basket_data = $this->createBasketSheet($data_sheet->getMetaObject());
         $basket_data->importRows($data_sheet);
         if (! $basket_data->isFresh()) {
-            $basket_data->addFilterInFromString($data_sheet->getUidColumn()->getName(), $data_sheet->getUidColumn()->getValues(false));
+            $basket_data->getFilters()->addConditionFromValueArray($data_sheet->getUidColumn()->getName(), $data_sheet->getUidColumn()->getValues(false));
             $basket_data->dataRead();
         }
         

@@ -384,7 +384,7 @@ class InputSelect extends Input implements iSupportMultiSelect
             // Use this relation as filter to query the data source for selectable options
             if ($col = $data_sheet->getColumns()->getByAttribute($relation_from_options_to_prefill_object->getRightKeyAttribute(true))) {
                 $pointer = DataPointerFactory::createFromColumn($col);
-                $this->getOptionsDataSheet()->addFilterInFromString($relation_from_options_to_prefill_object->getAlias(), $col->getValues(false));
+                $this->getOptionsDataSheet()->getFilters()->addConditionFromValueArray($relation_from_options_to_prefill_object->getAlias(), $col->getValues(false));
                 // TODO there is actually no filters property for InputSelect. Perhaps it is a good idea to
                 // transfer it to InputSelect from InputCombo - since we can even prefill it here?
                 $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'filters', $pointer));

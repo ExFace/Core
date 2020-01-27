@@ -187,7 +187,7 @@ class UxonAutosuggest extends AbstractAction
             'DESCRIPTION'
             
         ]);
-        $ds->addFilterFromString('FILE', $filepathRelative, ComparatorDataType::EQUALS);
+        $ds->getFilters()->addConditionFromString('FILE', $filepathRelative, ComparatorDataType::EQUALS);
         $ds->getSorters()->addFromString('PROPERTY', SortingDirectionsDataType::ASC);
         
         try {
@@ -211,7 +211,7 @@ class UxonAutosuggest extends AbstractAction
             'TITLE',
             'DESCRIPTION'
         ]);
-        $dsClass->addFilterFromString('FILE', $filepathRelative);
+        $dsClass->getFilters()->addConditionFromString('FILE', $filepathRelative);
         try {
             $dsClass->dataRead();
         } catch (\Throwable $e) {

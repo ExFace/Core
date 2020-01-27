@@ -222,7 +222,7 @@ trait ExceptionTrait {
                 $ds = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.MESSAGE');
                 $ds->getColumns()->addMultiple(['TITLE', 'HINT', 'DESCRIPTION', 'TYPE']);
                 if ($error_code) {
-                    $ds->addFilterFromString('CODE', $error_code);
+                    $ds->getFilters()->addConditionFromString('CODE', $error_code);
                     $ds->dataRead();
                 }
                 $this->messageData = $ds;
