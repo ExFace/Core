@@ -35,6 +35,7 @@ class WindowContextScope extends AbstractContextScope
      */
     public function loadContextData(ContextInterface $context)
     {
+        $this->getContextManager()->getScopeSession()->loadContextData($context);
         // Do nothing untill the windows scope is separated from the session scope
     }
 

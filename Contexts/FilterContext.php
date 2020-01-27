@@ -202,7 +202,7 @@ class FilterContext extends AbstractContext
             $updatedConditions[$objectId] = $this->conditions_by_object[$objectId];                
         }
         // Re-read current session data
-        $this->getScope()->refreshContext($this);
+        $this->getScope()->loadContextData($this);
         
         $uxon = $this->conditionsUxon ?? (new UxonObject());
         foreach ($updatedConditions as $objectId => $conditions) {
