@@ -370,8 +370,12 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         // Create a new hidden filter if there is no such filter already
         if (! $filter_widget) {
             $page = $this->getPage();
-            $filter_widget = WidgetFactory::createFromUxon($page, $relation->getLeftKeyAttribute()->getDefaultEditorUxon(), $this);
-            $filter_widget->setAttributeAlias($relation->getLeftKeyAttribute()->getAlias());
+            $filter_attr = $relation->getLeftKeyAttribute();
+            $filter_widget = WidgetFactory::createFromUxon($page, $filter_attr->getDefaultEditorUxon(), $this);
+            $filter_widget->setAttributeAlias($filter_attr->getAlias());
+            if ($filter_attr->isHidden() === true) {
+                $filter_widget->setHidden(true);
+            }
             $this->addFilter($filter_widget);
         }
         return $filter_widget;
