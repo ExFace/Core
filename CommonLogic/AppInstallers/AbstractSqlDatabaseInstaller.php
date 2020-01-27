@@ -152,15 +152,14 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     {
         $migrationsInApp = $this->getMigrationsFromApp($source_absolute_path);
         $migrationsInDB = $this->getMigrationsFromDb($this->getDataConnection());
-        $migrationsSkipped = $this->getSkippedMigrationsFromDb($this->getDataConnection());
         $migratedUp = 0;
         $migratedDown = 0;
 
-        foreach ($this->diffMigrations($migrationsInDB, $migrationsInApp, $migrationsSkipped) as $migration) {
+        foreach ($this->getDownMigrations($migrationsInDB, $migrationsInApp) as $migration) {
             $this->migrateDown($migration, $this->getDataConnection());
             $migratedDown++;
         }
-        foreach ($this->diffMigrations($migrationsInApp, $migrationsInDB, $migrationsSkipped) as $migration) {
+        foreach ($this->getUpMigrations($migrationsInDB, $migrationsInApp) as $migration) {
             $this->migrateUp($migration, $this->getDataConnection());
             $migratedUp++;
         }
@@ -464,14 +463,6 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     abstract protected function getMigrationsFromDb(SqlDataConnectorInterface $connection): array;
 
     /**
-     * Function to get migrations that are marked for skip from the database.
-     *
-     * @param SqlDataConnectorInterface $connection
-     * @return array
-     */
-    abstract protected function getSkippedMigrationsFromDb(SqlDataConnectorInterface $connection): array;
-
-    /**
      * Iterates through the files in "%source_absolute_path%/%install_folder_name%/%sql_folder_name%/%SqlDbType%/%folders%"
      * and all subfolders attempting to execute the SQL scripts stored in those files
      *
@@ -525,7 +516,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param string $source_absolute_path
      * @return SqlMigration[]
      */
-    protected function getMigrationsFromApp(string $source_absolute_path) : array
+    protected function getMigrationsFromApp(string $source_absolute_path): array
     {
         $migrs = [];
         foreach ($this->getFiles($source_absolute_path, $this->getFoldersWithMigrations()) as $path) {
@@ -536,48 +527,67 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
 
     /**
-     * Builds an array containing items that are in $migrations_base but are not in $migrations_substract or
-     * $migrations_skip.
+     * Builds an array containing items that are in the App but not in the DB.
      *
-     * @param SqlMigration[] $migrations_base
-     * @param SqlMigration[] $migrations_substract
-     * @param SqlMigration[] $migrations_skip
+     * @param SqlMigration[] $migrations_in_db
+     * @param SqlMigration[] $migrations_in_app
      * @return SqlMigration[]
      */
-    protected function diffMigrations(array $migrations_base, array $migrations_substract, array $migrations_skip): array
+    protected function getUpMigrations(array $migrations_in_db, array $migrations_in_app): array
     {
-        if (empty($migrations_substract) && empty($migrations_skip)) {
-            return $migrations_base;
+        if (empty($migrations_in_db)) {
+            return $migrations_in_app;
         }
         $arr = array();
-        foreach ($migrations_base as $mB) {
-            $check = false;
-            foreach ($migrations_substract as $mS) {
-                if ($mB->equals($mS)) {
-                    $check = true;
+        foreach ($migrations_in_app as $mApp) {
+            $present = false;
+            foreach ($migrations_in_db as $mDb) {
+                if ($mApp->equals($mDb)) {
+                    $present = true;
+                    if ($mDb->isFailed() && empty($mDb->getDownDatetime()) && !$mDb->isSkipped()) {
+                        // There was an error on the last execution of the UP-script and the script is not sKipped.
+                        $arr[] = $mDb->setUpScript($mApp->getUpScript())->setDownScript($mApp->getDownScript());
+                    }
                     break;
                 }
             }
-            if (!$check) {
-                foreach ($migrations_skip as $mSk) {
-                    if ($mB->equals($mSk)) {
-                        $check = true;
-                        break;
-                    }
-                }
-            }
-            if ($check === false) {
-                $arr[] = $mB;
+            if ($present === false) {
+                $arr[] = $mApp;
             }
         }
         return $arr;
     }
-    
+
+    /**
+     * Builds an array containing items that are in the DB but not in the App.
+     *
+     * @param SqlMigration[] $migrations_in_db
+     * @param SqlMigration[] $migrations_in_app
+     * @return SqlMigration[]
+     */
+    protected function getDownMigrations(array $migrations_in_db, array $migrations_in_app): array
+    {
+        $arr = array();
+        foreach ($migrations_in_db as $mDb) {
+            $present = false;
+            foreach ($migrations_in_app as $mApp) {
+                if ($mDb->equals($mApp)) {
+                    $present = true;
+                    break;
+                }
+            }
+            if ($present === false && !$mDb->isSkipped()) {
+                $arr[] = $mDb;
+            }
+        }
+        return $arr;
+    }
+
     /**
      * Cuts the input string at the down-marker occurence
      * and gives back either the part before that or from that point on
      * if there is no down-marker occurence gives back the whole script
-     * 
+     *
      * @param string $src
      * @param bool $up
      * @return string

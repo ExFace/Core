@@ -78,23 +78,29 @@ class SqlMigration
     {
         return $this->up_datetime;
     }
-    
+
     /**
      * Returns Up script of the SqlMigration
      *
      * @return string
      */
-    public function getUpScript() : string
+    public function getUpScript(): string
     {
         return $this->up_script;
     }
-   
+
+    public function setUpScript(string $upScript): SqlMigration
+    {
+        $this->up_script = $upScript;
+        return $this;
+    }
+
     /**
      * Returns up result of the SqlMigration
      *
      * @return string
      */
-    public function getUpResult() : string
+    public function getUpResult(): string
     {
         return $this->up_result;
     }
@@ -108,23 +114,29 @@ class SqlMigration
     {
         return $this->down_datetime;
     }
-    
+
     /**
      * Returns Down script of SqlMigration
      *
      * @return string
      */
-    public function getDownScript() : string
+    public function getDownScript(): string
     {
         return $this->down_script;
     }
-    
+
+    public function setDownScript(string $downScript): SqlMigration
+    {
+        $this->down_script = $downScript;
+        return $this;
+    }
+
     /**
      * Returns Down result of SqlMigration
      *
      * @return string
      */
-    public function getDownResult() : string
+    public function getDownResult(): string
     {
         return $this->down_result;
     }
@@ -149,6 +161,12 @@ class SqlMigration
         return $this->failed_flag;
     }
 
+    public function setFailed(bool $failed): SqlMigration
+    {
+        $this->failed_flag = $failed;
+        return $this;
+    }
+
     /**
      * Returns the error message with which the migration failed.
      *
@@ -159,6 +177,12 @@ class SqlMigration
         return $this->failed_message;
     }
 
+    public function setFailedMessage(string $failed_message): SqlMigration
+    {
+        $this->failed_message = $failed_message;
+        return $this;
+    }
+
     /**
      * Returns if the migration is skipped.
      *
@@ -167,6 +191,12 @@ class SqlMigration
     public function isSkipped(): bool
     {
         return $this->skip_flag;
+    }
+
+    public function setSkipped(bool $skipped): SqlMigration
+    {
+        $this->skip_flag = $skipped;
+        return $this;
     }
 
     /**
@@ -213,19 +243,6 @@ class SqlMigration
         $this->is_up = false;
         $this->down_datetime = $dateTime;
         $this->down_result = $result;
-        return $this;
-    }
-
-    public function setFailed(bool $failed, string $failed_message): SqlMigration
-    {
-        $this->failed_flag = $failed;
-        $this->failed_message = $failed_message;
-        return $this;
-    }
-
-    public function setSkip(bool $skip): SqlMigration
-    {
-        $this->skip_flag = $skip;
         return $this;
     }
 }
