@@ -118,7 +118,7 @@ class Data
     
     private $hide_refresh_button = null;
 
-    private $hide_header = false;
+    private $hide_header = null;
     
     private $hide_footer = false;
     

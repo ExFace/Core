@@ -35,7 +35,17 @@ class WindowContextScope extends AbstractContextScope
      */
     public function loadContextData(ContextInterface $context)
     {
-        // Do nothing untill the windows scope is separated from the session scope
+        $this->getContextManager()->getScopeSession()->loadContextData($context);
+    }
+    
+    /**
+     * The window scope currently just delegates to the session scope, which actually takes care of saving and loading data
+     *
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::reloadContext()
+     */
+    public function reloadContext(ContextInterface $context)
+    {
+        $this->getContextManager()->getScopeSession()->reloadContext($context);
     }
 
     /**
