@@ -1,13 +1,10 @@
 <?php
 namespace exface\Core\Actions;
 
-use exface\Core\Factories\ActionFactory;
-use exface\Core\Factories\WidgetFactory;
 use exface\Core\Widgets\Dialog;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\CommonLogic\Constants\Icons;
-use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 
 /**
  * Open a dialog to perform an advanced search for values for a specified input widget.
@@ -17,7 +14,9 @@ use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
  * widget you like (the default table widget of the target object by default) and put the selected value into the target input or select
  * widget once the dialog is closed.
  *
- * Basic Example:
+ * ## Example
+ * 
+ * ```
  *  {
  *      "widget_type": "Form",
  *      "object_alias" "my.app.ORDER"
@@ -39,16 +38,20 @@ use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
  *          }
  *      ]
  *  }
+ *  
+ * ````
  *
  * This action can be used with any widget, that accepts input.
  *
  * @author Stefan Leupold
+ * @author Thomas Michael
  *        
  */
 class ShowLookupDialog extends ShowDialog
 {
-
     private $target_widget_id = null;
+    
+    private $multi_select = null;
 
     /**
      * 
@@ -65,6 +68,16 @@ class ShowLookupDialog extends ShowDialog
             $this->getWidgetDefinedIn()->setCloseDialogAfterActionSucceeds(false);
         }
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowDialog::getDialogWidgetType()
+     */
+    protected function getDialogWidgetType() : string
+    {
+        return 'DataLookupDialog';
+    }
 
     /**
      * 
@@ -74,19 +87,13 @@ class ShowLookupDialog extends ShowDialog
     protected function enhanceDialogWidget(Dialog $dialog)
     {
         $dialog = parent::enhanceDialogWidget($dialog);
-        $page = $this->getWidgetDefinedIn()->getPage();
+        
+        if ($this->getMultiSelect() !== null) {
+            $dialog->setMultiSelect($this->getMultiSelect());
+        }
         
         /* @var $data_table \exface\Core\Widgets\DataTable */
-        if ($dialog->isEmpty()) {
-            $data_table = WidgetFactory::create($page, 'DataTable', $dialog);
-            $data_table->setMetaObject($this->getMetaObject());
-            if ($this->getWidgetDefinedIn()->getParent()->getMultiselect() === true){
-                $data_table->setMultiSelect(true);
-            }
-            $dialog->addWidget($data_table);
-        } else {
-            $data_table = reset($dialog->getWidgets());
-        }
+        $data_table = $dialog->getDataWidget();
         
         if ($data_table->getMetaObject()->hasLabelAttribute() === true) {
             $labelAlias = $data_table->getMetaObject()->getLabelAttributeAlias();
@@ -120,10 +127,10 @@ class ShowLookupDialog extends ShowDialog
     }
 
     /**
-     * The widget which should receive the selected values.
+     * The id of the widget to receive the selected values.
      *
      * @uxon-property target_widget_id
-     * @uxon-type string
+     * @uxon-type uxon:$..id
      *
      * @param boolean $value            
      * @return \exface\Core\Actions\ShowLookupDialog
@@ -133,6 +140,32 @@ class ShowLookupDialog extends ShowDialog
         $this->target_widget_id = $value;
         return $this;
     }
+    
+    /**
+     * Set to TRUE to allow selection of multiple entries in the lookup dialog.
+     * 
+     * If the lookup dialog is called from an input widget (e.g. `InputComboTable`) this setting
+     * is inherited from that input. Otherwise it is `false` by default.
+     * 
+     * @uxon-property multi_select
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return ShowLookupDialog
+     */
+    public function setMultiSelect(bool $trueOrFalse) : ShowLookupDialog
+    {
+        $this->multi_select = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool|NULL
+     */
+    protected function getMultiSelect() : ?bool
+    {
+        return $this->multi_select;
+    }
 }
-
-?>

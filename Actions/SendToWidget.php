@@ -45,10 +45,10 @@ class SendToWidget extends AbstractAction
     }
     
     /**
-     * The widget which should receive the selected values.
+     * The id of the widget to receive the data.
      *
      * @uxon-property target_widget_id
-     * @uxon-type string
+     * @uxon-type uxon:$..id
      *
      * @param boolean $value
      * @return \exface\Core\Actions\ShowLookupDialog
