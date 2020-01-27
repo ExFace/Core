@@ -454,7 +454,7 @@ class Condition implements ConditionInterface
         }
         
         $leftVal = $this->getExpression()->evaluate($data_sheet, $row_number);
-        $rightVal = $this->getValue();
+        $rightVal = $this->getValue(); // Value is already parsed via datatype in setValue()
         return $this->compare($leftVal, $this->getComparator(), $rightVal);
     }
     
