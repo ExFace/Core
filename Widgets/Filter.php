@@ -622,6 +622,33 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     /**
      * The comparison operator for the filter.
      * 
+     * Possible comparators:
+     * 
+     * - `=` - universal comparator similar to SQL's `LIKE` with % on both sides. Can compare different 
+     * data types. If the left value is a string, becomes TRUE if it contains the right value. Case 
+     * insensitive for strings
+     * - `!=` - yields TRUE if `IS` would result in FALSE
+     * - `==` - compares two single values of the same type. Case sensitive for stings. Normalizes the 
+     * values before comparison though, so the date `-1 == 21.09.2020` will yield TRUE on the 22.09.2020. 
+     * - `!==` - the inverse of `EQUALS`
+     * - `[` - IN-comparator - compares to each vaule in a list via EQUALS. Becomes true if the left
+     * value equals at least on of the values in the list within the right value. The list on the
+     * right side must consist of numbers or strings separated by commas or the attribute's value
+     * list delimiter if filtering over an attribute. The right side can also be another type of
+     * expression (e.g. a formula or widget link), that yields such a list.
+     * - `![` - the inverse von `[` . Becomes true if the left value equals none of the values in the 
+     * list within the right value. The list on the right side must consist of numbers or strings separated 
+     * by commas or the attribute's value list delimiter if filtering over an attribute. The right side can 
+     * also be another type of expression (e.g. a formula or widget link), that yields such a list.
+     * - `<` - yields TRUE if the left value is less than the right one. Both values must be of
+     * comparable types: e.g. numbers or dates.
+     * - `<=` - yields TRUE if the left value is less than or equal to the right one. 
+     * Both values must be of comparable types: e.g. numbers or dates.
+     * - `>` - yields TRUE if the left value is greater than the right one. Both values must be of
+     * comparable types: e.g. numbers or dates.
+     * - `>=` - yields TRUE if the left value is greater than or equal to the right one. 
+     * Both values must be of comparable types: e.g. numbers or dates.
+     * 
      * @uxon-property comparator
      * @uxon-type metamodel:comparator
      * @uxon-default =
