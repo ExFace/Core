@@ -882,7 +882,7 @@ class DataSheet implements DataSheetInterface
             // Use the UID column as a filter to make sure, only these rows are affected
             if ($column->getAttribute()->getAliasWithRelationPath() == $this->getMetaObject()->getUidAttributeAlias()) {
                 $uidAttr = $this->getMetaObject()->getUidAttribute();
-                $query->getFilters()->addConditionFromString($uidAttr->getAlias(), implode($uidAttr->getValueListDelimiter(), array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
+                $query->addFilterFromString($uidAttr->getAlias(), implode($uidAttr->getValueListDelimiter(), array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
                 // Do not update the UID attribute if it is neither editable nor required
                 if ($uidAttr->isEditable() === false && $uidAttr->isRequired() === false) {
                     continue;
