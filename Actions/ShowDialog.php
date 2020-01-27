@@ -10,7 +10,6 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Factories\UiPageFactory;
-use exface\Core\Widgets\AbstractWidget;
 
 /**
  * Renders a dialog with any contents specified in the widget-property.
@@ -58,6 +57,12 @@ class ShowDialog extends ShowWidget implements iShowDialog
         return $dialog;
     }
     
+    /**
+     * Returns the widget type of the dialog to be created if no widget type was specified by
+     * the user.
+     * 
+     * @return string
+     */
     protected function getDialogWidgetType() : string
     {
         return 'Dialog';
