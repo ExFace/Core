@@ -26,7 +26,18 @@ class DataLookupDialog extends Dialog
             $dataConfigurator = $data_table->getConfiguratorWidget();
             foreach($data_table->getColumns() as $col) {
                 if ($col->isHidden() === false && $col->getAttributeAlias()) {
-                    $dataConfigurator->addFilter($dataConfigurator->createFilterWidget($col->getAttributeAlias()));
+                    if ($col->isBoundToLabelAttribute() === true || ($col->isBoundToAttribute() && $col->getAttribute()->getRelationPath()->isEmpty() === false && $col->getAttribute()->isLabelForObject() === true)) {
+                        $filterAttrAlias = $col->getAttribute()->getRelationPath()->toString();
+                    } else {
+                        $filterAttrAlias = $col->getAttributeAlias();
+                    }
+                    if ($filterAttrAlias !== '' || $filterAttrAlias !== null) {
+                        $filterWidget = $dataConfigurator->createFilterWidget($filterAttrAlias);
+                        if ($filterWidget->getInputWidget() instanceof iSupportMultiSelect) {
+                            $filterWidget->getInputWidget()->setMultiSelect(true);
+                        }
+                        $dataConfigurator->addFilter($filterWidget);
+                    }
                 }
             }
             
