@@ -25,6 +25,16 @@ interface ContextScopeInterface extends WorkbenchDependantInterface
     public function getContext($alias);
     
     /**
+     * Refreshes the data within the context with the latest information from the scope storage.
+     * 
+     * NOTE: This will overwrite any changes not saved via saveContexts()!
+     * 
+     * @param ContextInterface $context
+     * @return void
+     */
+    public function reloadContext(ContextInterface $context);
+    
+    /**
      * Removes the context matching the given alias from the scope
      * 
      * @param string $alias

@@ -23,14 +23,16 @@ class FilterContext extends AbstractContext
 
     /**
      * Returns an array with all conditions from the current context
+     * 
+     * TODO Modify to look for possible related objects and rebase() their conditions!
+     * Currently we only look for conitions based on direct attributes of the object given.
      *
      * @param MetaObjectInterface $object            
-     * @return Condition[] TODO Modify to look for possible related objects and rebase() their conditions!
-     *         Ccurrently we only look for conitions based on direct attributes of the object given.
+     * @return Condition[] 
      */
     public function getConditions(MetaObjectInterface $object = NULL)
     {
-        if ($this->conditions_by_object === null) {
+        if ($this->conditions_by_object === null || ($object !== null && $this->conditions_by_object[$object->getId()] === null)) {
             $uxon = $this->conditionsUxon;
             if ($uxon === null || $uxon->isEmpty() === true) {
                 return [];
@@ -40,13 +42,22 @@ class FilterContext extends AbstractContext
                 return [];
             }
             
-            $this->getConditionsByObjectId();
+            if ($object !== null) {
+                foreach($this->getObjectIds($object) as $object_id) {
+                    $objectConditions = $this->getConditionsFromUxon($uxon, $object_id)[$object_id];
+                    if (empty($objectConditions) === false) {
+                        $this->conditions_by_object[$object_id] = $objectConditions;
+                    }
+                }
+            } else {
+                $this->conditions_by_object = $this->getConditionsFromUxon($uxon);
+            }
         }
         
         $array = [];
-        if ($object) {
+        if ($object !== null) {
             // Get object ids of the given object and all its parents
-            $ids = array_merge(array($object->getId()), $object->getParentObjectsIds());
+            $ids = $this->getObjectIds($object);
             // Look for filter conditions for these objects
             foreach ($ids as $object_id) {
                 if (is_array($this->conditions_by_object[$object_id])) {
@@ -71,7 +82,7 @@ class FilterContext extends AbstractContext
                 }
             }
         } else {
-            foreach ($this->getConditionsByObjectId() as $object_id => $conditions) {
+            foreach ($this->conditions_by_object as $object_id => $conditions) {
                 foreach ($conditions as $condition) {
                     $array[] = $condition;
                 }
@@ -82,26 +93,39 @@ class FilterContext extends AbstractContext
     
     /**
      * 
-     * @return ConditionalExpressionInterface[]
+     * @param MetaObjectInterface $object
+     * @return string[]
      */
-    private function getConditionsByObjectId() : array
+    private function getObjectIds(MetaObjectInterface $object) : array
     {
-        if ($this->conditions_by_object === null) {
-            $uxon = $this->conditionsUxon;
-            if ($uxon !== null && $uxon->isEmpty() === false) {
-                $exface = $this->getWorkbench();
-                foreach ($uxon->getPropertiesAll() as $objectId => $uxonConditions) {
-                    foreach ($uxonConditions as $uxonCondition) {
-                        try {
-                            $this->conditions_by_object[$objectId][] = ConditionFactory::createFromUxon($exface, $uxonCondition);
-                        } catch (\Throwable $e) {
-                            // ignore context that cannot be instantiated!
-                        }
+        return array_merge(array($object->getId()), $object->getParentObjectsIds());
+    }
+    
+    /**
+     * 
+     * @param UxonObject $uxon
+     * @param string $filterObjectId
+     * @return ConditionalExpressionInterface[][]
+     */
+    private function getConditionsFromUxon(UxonObject $uxon, string $filterObjectId = null) : array
+    {
+        $conditions = [];
+        if ($uxon !== null && $uxon->isEmpty() === false) {
+            $exface = $this->getWorkbench();
+            foreach ($uxon->getPropertiesAll() as $oId => $uxonConditions) {
+                if ($filterObjectId !== null && $oId !== $filterObjectId) {
+                    continue;
+                }
+                foreach ($uxonConditions as $uxonCondition) {
+                    try {
+                        $conditions[$oId][] = ConditionFactory::createFromUxon($exface, $uxonCondition);
+                    } catch (\Throwable $e) {
+                        // ignore context that cannot be instantiated!
                     }
                 }
             }
         }
-        return $this->conditions_by_object ?? [];
+        return $conditions;
     }
 
     /**
@@ -113,8 +137,8 @@ class FilterContext extends AbstractContext
     public function addCondition(Condition $condition)
     {
         $objectId = $condition->getExpression()->getMetaObject()->getId();
-        if ($this->conditions_by_object === null && $this->isEmpty() === false) {
-            $this->getConditionsByObjectId();
+        if (($this->conditions_by_object === null || $this->conditions_by_object[$objectId] === null) && $this->isEmpty() === false) {
+            $this->conditions_by_object[$objectId] = $this->getConditionsFromUxon($this->conditionsUxon, $objectId)[$objectId];
         }
         $this->conditions_by_object[$objectId][$condition->getExpression()->toString()] = $condition;
         $this->updatedObjectIds[] = $objectId;
@@ -202,7 +226,7 @@ class FilterContext extends AbstractContext
             $updatedConditions[$objectId] = $this->conditions_by_object[$objectId];                
         }
         // Re-read current session data
-        $this->getScope()->loadContextData($this);
+        $this->getScope()->reloadContext($this);
         
         $uxon = $this->conditionsUxon ?? (new UxonObject());
         foreach ($updatedConditions as $objectId => $conditions) {
