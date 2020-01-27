@@ -747,7 +747,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
      * The action to open an advanced search dialog.
      *
      * @uxon-property lookup_action
-     * @uxon-type \exface\Core\CommonLogic\AbstractAction
+     * @uxon-type \exface\Core\Actions\ShowLookupDialog
      * @uxon-template {"alias": "exface.Core.ShowLookupDialog"}
      *
      * @param UxonObject $uxon
@@ -791,11 +791,13 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     public function getLookupButton() : Button
     {
         if ($this->lookupButton === null) {
+            /* @var $btn \exface\Core\Widgets\Button */
             $btn = WidgetFactory::createFromUxonInParent($this, new UxonObject([
                 'widget_type' => 'Button',
                 'object_alias' => $this->getTable()->getMetaObject()->getAliasWithNamespace(),
                 'action' => $this->getLookupActionUxon()
             ]));
+            $btn->setInputWidget($this);
             $this->lookupButton = $btn;
         }
         return $this->lookupButton;
