@@ -10,6 +10,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
 
 /**
  * This behavior may be used for soft-deletion, i.e. for setting an specific value to an attribute of an object, instead of deleting it.
@@ -42,6 +44,17 @@ class SoftDeleteBehavior extends AbstractBehavior
     }
     
     /**
+     * This function contains all the logic for setting the given soft-delete-value into the given soft-delete-attribute.
+     * The entries which shall be marked as deleted are read from the datasheet passed with the event.
+     * The rows to set deleted may be passed in two different ways, and have to be handled differently:
+     *      - rows are passed as actual rows in the datasheet:
+     *          The columns of the datasheet are being stripped down to the essential ones (`uid`, `modified_on`
+     *          and the softDeleteAttribute), then the soft-delete-value is set to the soft-delete-attribute,
+     *          and the data is updated to the metaobject.
+     *          
+     *      - there are no rows in the events datasheet, only filters:
+     *          Firstly, all rows which match the filters passed in the datasheet are read from the metaobject,
+     *          then handle the datasheet as described above.
      * 
      * @param OnBeforeDeleteDataEvent $event
      * @throws DataSheetColumnNotFoundError
@@ -61,7 +74,8 @@ class SoftDeleteBehavior extends AbstractBehavior
             return;
         }
 
-        $event->preventDelete();
+        // prevent deletion of the main object, but dont prevent the cascading deletion
+        $event->preventDelete(false);
 
         $transaction = $event->getTransaction();
 
@@ -69,35 +83,45 @@ class SoftDeleteBehavior extends AbstractBehavior
 
         $updateData = $eventData->copy();
         
+        // add all data, that fits the filters, or else update wont work when a datasheet with no rows, but only filters is given. (FIXME?)
+        if ($updateData->isEmpty() && $updateData->getFilters() !== null){
+            $updateData->dataRead();
+        }
+        
         if ($updateData->hasUidColumn()){
             $uidCol = $updateData->getUidColumn();
         }
         
-        // remove all columns, except of the uid-column
+        // remove all columns, except of the modified-on- and uid-column
         foreach ($updateData->getColumns() as $col){
-            if ($col === $uidCol){
-                continue;
+            switch (true){
+                case ($col->getAttributeAlias() === 'modified_on'):
+                case ($col === $uidCol):
+                    break;
+                default:
+                    $updateData->getColumns()->remove($col);
             }
-            $updateData->getColumns()->remove($col);
         }
         
+        // add the soft-delete-column
         $updateData->getColumns()->addFromExpression($this->getSoftDeleteAttributeAlias());
-
+        
         try {
             // first check if metaobject has soft-delete-attribute
             if ($eventData->getMetaObject()->hasAttribute($this->getSoftDeleteAttributeAlias())){
-                // add all data, that fits the filters, or else update wont work when a datasheet with no rows, only filters is given. (FIXME?)
-                $updateData->dataRead();
-                // get the relavant column for flagging the object, set value
-                if ($deletedCol = $updateData->getColumns()->getByExpression($this->getSoftDeleteAttributeAlias())){
-                    $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
+                
+                if ($updateData->isEmpty() === false){
+                    $updateData = $this->assignFlagsInDataSheetRows($updateData);
+                    $updatedRows = $updateData->dataUpdate(false, $transaction);
+                    $affected_rows += $updatedRows;
+                } else {
+                    $transaction->rollback();
+                    throw new DataSheetStructureError($updateData, 'Cannot set SoftDeleteFlag for current selection: no rows found in data sheet!');
                 }
-                // update objects in metamodel
-                $updatedRows = $updateData->dataUpdate(false);
-                $affected_rows += $updatedRows;
+                
             } else {
                 $transaction->rollback();
-                throw new DataSheetColumnNotFoundError($eventData, 'Cannot set "IsDeleted" flag for current object: column "' . $this->getSoftDeleteAttributeAlias() . '" not found in given data sheet!');                
+                throw new DataSheetColumnNotFoundError($eventData, 'Cannot set SoftDeleteFlag for current object: column "' . $this->getSoftDeleteAttributeAlias() . '" not found in given data sheet!');                
             }
 
             $eventData->setCounterForRowsInDataSource($updateData->countRowsInDataSource());
@@ -107,17 +131,27 @@ class SoftDeleteBehavior extends AbstractBehavior
             throw new DataSheetWriteError($eventData, 'Data source error. ' . $e->getMessage(), null, $e);
         }
         if ($eventData->isEmpty() === false){
-            if ($deletedCol = $eventData->getColumns()->getByExpression($this->getSoftDeleteAttributeAlias())){
-                $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
-            }
+            $eventData = $this->assignFlagsInDataSheetRows($eventData);
         }
                 
 //        $this->getWorkbench()->eventManager()->dispatch(new OnDeleteDataEvent($eventData, $transaction));
         
-        $transaction->commit();
-        
         return $affected_rows;
         
+    }
+    
+    /**
+     * Function for setting the softdelete-flag in all the rows of an given datasheet.
+     * 
+     * @param DataSheetInterface $ds
+     * @return DataSheetInterface
+     */
+    protected function assignFlagsInDataSheetRows(DataSheetInterface $ds) : DataSheetInterface
+    {
+        if ($deletedCol = $ds->getColumns()->getByExpression($this->getSoftDeleteAttributeAlias())){
+            $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
+        }
+        return $ds;
     }
     
     /**
