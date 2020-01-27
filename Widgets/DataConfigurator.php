@@ -316,7 +316,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     public function findFilterByRelation(MetaRelationInterface $relation)
     {
         foreach ($this->getFilters() as $filter_widget) {
-            if ($filter_widget->getAttributeAlias() == $relation->getAlias()) {
+            if ($filter_widget->isBoundToAttribute() === true && $filter_widget->getAttribute()->is($relation->getLeftKeyAttribute())) {
                 $found = $filter_widget;
                 break;
             } else {
