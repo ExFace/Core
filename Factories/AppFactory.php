@@ -82,7 +82,7 @@ abstract class AppFactory extends AbstractSelectableComponentFactory
         $appObject = $exface->model()->getObject('exface.Core.APP');
         $appDataSheet = DataSheetFactory::createFromObject($appObject);
         $appDataSheet->getColumns()->addFromAttribute($appObject->getAttribute('ALIAS'));
-        $appDataSheet->getFilters()->addConditionsFromString($appObject, $appObject->getUidAttributeAlias(), $uid);
+        $appDataSheet->getFilters()->addConditionFromString($appObject->getUidAttributeAlias(), $uid);
         $appDataSheet->dataRead();
         
         if ($appDataSheet->countRows() === 0) {
