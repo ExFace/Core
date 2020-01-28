@@ -548,6 +548,10 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
                         // There was an error on the last execution of the UP-script and the script is not sKipped.
                         $arr[] = $mDb->setUpScript($mApp->getUpScript())->setDownScript($mApp->getDownScript());
                     }
+                    if (!$mDb->isFailed() && !empty($mDb->getDownDatetime()) && !$mDb->isSkipped()) {
+                        // Reinstallation of the migration.
+                        $arr[] = $mDb->setUpScript($mApp->getUpScript())->setDownScript($mApp->getDownScript());
+                    }
                     break;
                 }
             }
