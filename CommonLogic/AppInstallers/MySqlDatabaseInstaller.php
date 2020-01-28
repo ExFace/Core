@@ -243,7 +243,7 @@ SQL;
 UPDATE {$this->getMigrationsTableName()}
 SET
     up_script="{$this->escapeSqlStringValue(StringDataType::encodeUTF8($up_script))}",
-    down_script="{$this->escapeSqlStringValue(StringDataType::encodeUTF8($down_script))}",
+    down_script="{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}",
     failed_flag=1,
     failed_message="{$this->escapeSqlStringValue($e->getMessage())}"
 WHERE id='{$migration->getId()}';
