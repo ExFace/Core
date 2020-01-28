@@ -52,16 +52,16 @@ class SqlMigration
     public function initFromDb(array $data): SqlMigration
     {
         $this->id = $data['id'];
-        $this->migration_name = $data['migration_name'];
-        $this->up_datetime = $data['up_datetime'];
-        $this->up_script = $data['up_script'];
-        $this->up_result = $data['up_result'];
-        $this->down_datetime = $data['down_datetime'];
-        $this->down_script = $data['down_script'];
-        $this->down_result = $data['down_result'];
+        $this->migration_name = !empty($data['migration_name']) ? $data['migration_name'] : '';
+        $this->up_datetime = !empty($data['up_datetime']) ? $data['up_datetime'] : '';
+        $this->up_script = !empty($data['up_script']) ? $data['up_script'] : '';
+        $this->up_result = !empty($data['up_result']) ? $data['up_result'] : '';
+        $this->down_datetime = !empty($data['down_datetime']) ? $data['down_datetime'] : '';
+        $this->down_script = !empty($data['down_script']) ? $data['down_script'] : '';
+        $this->down_result = !empty($data['down_result']) ? $data['down_result'] : '';
         $this->is_up = (bool)$data['up_datetime'];
         $this->failed_flag = (bool)$data['failed_flag'];
-        $this->failed_message = $data['failed_message'];
+        $this->failed_message = !empty($data['failed_message']) ? $data['failed_message'] : '';
         $this->skip_flag = (bool)$data['skip_flag'];
         return $this;
     }
