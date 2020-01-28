@@ -316,7 +316,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     public function findFilterByRelation(MetaRelationInterface $relation)
     {
         foreach ($this->getFilters() as $filter_widget) {
-            if ($filter_widget->getAttributeAlias() == $relation->getAlias()) {
+            if ($filter_widget->isBoundToAttribute() === true && $filter_widget->getAttribute()->is($relation->getLeftKeyAttribute())) {
                 $found = $filter_widget;
                 break;
             } else {
@@ -370,8 +370,12 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         // Create a new hidden filter if there is no such filter already
         if (! $filter_widget) {
             $page = $this->getPage();
-            $filter_widget = WidgetFactory::createFromUxon($page, $relation->getLeftKeyAttribute()->getDefaultEditorUxon(), $this);
-            $filter_widget->setAttributeAlias($relation->getLeftKeyAttribute()->getAlias());
+            $filter_attr = $relation->getLeftKeyAttribute();
+            $filter_widget = WidgetFactory::createFromUxon($page, $filter_attr->getDefaultEditorUxon(), $this);
+            $filter_widget->setAttributeAlias($filter_attr->getAlias());
+            if ($filter_attr->isHidden() === true) {
+                $filter_widget->setHidden(true);
+            }
             $this->addFilter($filter_widget);
         }
         return $filter_widget;

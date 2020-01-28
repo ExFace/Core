@@ -61,7 +61,7 @@ trait AttributeCaptionTrait
      *
      * @return bool
      */
-    protected function isBoundToLabelAttribute() : bool
+    public function isBoundToLabelAttribute() : bool
     {
         $alias = $this->getAttributeAlias();
         
