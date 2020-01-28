@@ -12,6 +12,7 @@ use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 
 /**
  * This behavior may be used for soft-deletion, i.e. for setting an specific value to an attribute of an object, instead of deleting it.
@@ -85,59 +86,52 @@ class SoftDeleteBehavior extends AbstractBehavior
         
         // add all data, that fits the filters, or else update wont work when a datasheet with no rows, but only filters is given. (FIXME?)
         if ($updateData->isEmpty() && $updateData->getFilters() !== null){
-            $updateData->dataRead();
+            $updateData->addRow([]);
         }
         
         if ($updateData->hasUidColumn()){
             $uidCol = $updateData->getUidColumn();
         }
         
-        // remove all columns, except of the modified-on- and uid-column
+        // remove all columns, except of system columns
         foreach ($updateData->getColumns() as $col){
-            switch (true){
-                case ($col->getAttributeAlias() === 'modified_on'):
-                case ($col === $uidCol):
-                    break;
-                default:
-                    $updateData->getColumns()->remove($col);
+            if ($updateData->getMetaObject()->hasAttribute($col->getAttributeAlias())){
+                switch (true){
+                    case ($col->getAttribute()->isSystem()):
+                    case ($col === $uidCol):
+                        break;
+                    default:
+                        $updateData->getColumns()->remove($col);
+                }
+            } else {
+                $updateData->getColumns()->remove($col);
             }
         }
-        
-        // add the soft-delete-column
-        $updateData->getColumns()->addFromExpression($this->getSoftDeleteAttributeAlias());
-        
-        try {
-            // first check if metaobject has soft-delete-attribute
-            if ($eventData->getMetaObject()->hasAttribute($this->getSoftDeleteAttributeAlias())){
-                
-                if ($updateData->isEmpty() === false){
-                    $updateData = $this->assignFlagsInDataSheetRows($updateData);
-                    $updatedRows = $updateData->dataUpdate(false, $transaction);
-                    $affected_rows += $updatedRows;
-                } else {
-                    $transaction->rollback();
-                    throw new DataSheetStructureError($updateData, 'Cannot set SoftDeleteFlag for current selection: no rows found in data sheet!');
-                }
-                
+
+
+        // first check if metaobject has soft-delete-attribute
+        if ($eventData->getMetaObject()->hasAttribute($this->getSoftDeleteAttributeAlias())){
+            
+            // add the soft-delete-column
+            $deletedCol = $updateData->getColumns()->addFromAttribute($this->getSoftDeleteAttribute());
+            
+            if ($updateData->isEmpty() === false){
+                $updateData = $this->assignFlagsInDataSheetRows($updateData);
+                $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
+                $updatedRows = $updateData->dataUpdate(false, $transaction);
+                $affected_rows += $updatedRows;
             } else {
-                $transaction->rollback();
-                throw new DataSheetColumnNotFoundError($eventData, 'Cannot set SoftDeleteFlag for current object: column "' . $this->getSoftDeleteAttributeAlias() . '" not found in given data sheet!');                
+                throw new DataSheetStructureError($updateData, 'Cannot set SoftDeleteFlag for current selection: no rows found in data sheet!');
             }
 
             $eventData->setCounterForRowsInDataSource($updateData->countRowsInDataSource());
-            
-        } catch (\Throwable $e) {
-            $transaction->rollback();
-            throw new DataSheetWriteError($eventData, 'Data source error. ' . $e->getMessage(), null, $e);
-        }
+
         if ($eventData->isEmpty() === false){
-            $eventData = $this->assignFlagsInDataSheetRows($eventData);
+            $deletedCol = $eventData->getColumns()->getByAttribute($this->getSoftDeleteAttribute());
+            $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
         }
-                
-//        $this->getWorkbench()->eventManager()->dispatch(new OnDeleteDataEvent($eventData, $transaction));
-        
+
         return $affected_rows;
-        
     }
     
     /**
@@ -160,7 +154,11 @@ class SoftDeleteBehavior extends AbstractBehavior
      */
     public function getSoftDeleteAttributeAlias() 
     {
-        return $this->soft_delete_attribute_alias;
+        if ($this->getObject()->hasAttribute($this->soft_delete_attribute_alias)){
+            return $this->soft_delete_attribute_alias;
+        } else {
+            throw new BehaviorConfigurationError($this->getObject(), 'Configuration error: no attribute ' . $this->getSoftDeleteAttributeAlias() . 'found in object ' . $this->getObject()->getAlias() . '.');
+        }
     }
     
     /**
@@ -176,6 +174,8 @@ class SoftDeleteBehavior extends AbstractBehavior
     public function setSoftDeleteAttributeAlias(string $value) : SoftDeleteBehavior
     {
         $this->soft_delete_attribute_alias = $value;
+        //check whether the getter throws en exeption, to ensure the attributename is valid for this object
+        $this->getSoftDeleteAttributeAlias();
         return $this;
     }
         
