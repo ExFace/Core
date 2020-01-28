@@ -177,7 +177,7 @@ SQL;
      */
     protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection): SqlMigration
     {
-        if ($migration->isUp() == TRUE && !$migration->isFailed()) {
+        if ($migration->isUp() == TRUE) {
             throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' already up!');
         }
         $this->ensureMigrationsTableExists($connection);
@@ -191,14 +191,18 @@ SQL;
 
 UPDATE {$this->getMigrationsTableName()}
 SET
+    up_datetime=now(),
     up_script="{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getUpScript()))}",
     up_result="{$this->escapeSqlStringValue($up_result_string)}",
+    down_datetime=NULL,
     down_script="{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}",
+    down_result=NULL,
     failed_flag=0,
     failed_message=NULL
 WHERE id='{$migration->getId()}';
 
 SQL;
+                $connection->runSql($sql_script);
             } else {
                 // Migration doesn't have an ID, so there is no log entry yet meaning that its a new UP-script.
                 $sql_script = <<<SQL
@@ -218,10 +222,9 @@ INSERT INTO {$this->getMigrationsTableName()}
     );
 
 SQL;
+                $query_script = $connection->runSql($sql_script);
+                $migration->setId(intval($query_script->getLastInsertId()));
             }
-
-            $query_insert = $connection->runSql($sql_script);
-            $migration->setId(intval($query_insert->getLastInsertId()));
             $connection->transactionCommit();
             $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ': script UP executed successfully ');
         } catch (\Throwable $e) {
@@ -233,8 +236,12 @@ SQL;
 
 UPDATE {$this->getMigrationsTableName()}
 SET
+    up_datetime=now(),
     up_script="{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getUpScript()))}",
+    up_result=NULL,
+    down_datetime=NULL,
     down_script="{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}",
+    down_result=NULL,
     failed_flag=1,
     failed_message="{$this->escapeSqlStringValue($e->getMessage())}"
 WHERE id='{$migration->getId()}';
@@ -281,7 +288,7 @@ SQL;
      */
     protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection): SqlMigration
     {
-        if ($migration->isUp() == FALSE && !$migration->isFailed()) {
+        if ($migration->isUp() == FALSE) {
             throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' already down!');
         }
         $this->ensureMigrationsTableExists($connection);
@@ -297,7 +304,12 @@ SQL;
             $sql_script = <<<SQL
 
 UPDATE {$this->getMigrationsTableName()}
-SET down_datetime=now(), down_result="{$this->escapeSqlStringValue($down_result_string)}", failed_flag=0, failed_message=NULL
+SET 
+    down_datetime=now(),
+    down_script="{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}",
+    down_result="{$this->escapeSqlStringValue($down_result_string)}",
+    failed_flag=0,
+    failed_message=NULL
 WHERE id='{$migration->getId()}';
 
 SQL;
@@ -311,7 +323,12 @@ SQL;
             $sql_script = <<<SQL
 
 UPDATE {$this->getMigrationsTableName()}
-SET down_datetime=now(), failed_flag=1, failed_message="{$this->escapeSqlStringValue($e->getMessage())}"
+SET 
+    down_datetime=now(),
+    down_script="{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}",
+    down_result=NULL,
+    failed_flag=1,
+    failed_message="{$this->escapeSqlStringValue($e->getMessage())}"
 WHERE id='{$migration->getId()}';
 
 SQL;

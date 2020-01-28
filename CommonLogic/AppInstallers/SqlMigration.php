@@ -59,7 +59,9 @@ class SqlMigration
         $this->down_datetime = !empty($data['down_datetime']) ? $data['down_datetime'] : '';
         $this->down_script = !empty($data['down_script']) ? $data['down_script'] : '';
         $this->down_result = !empty($data['down_result']) ? $data['down_result'] : '';
-        $this->is_up = (bool)$data['up_datetime'];
+        $this->is_up =
+            (!(bool)$data['down_datetime'] && !(bool)$data['failed_flag']) ||
+            ((bool)$data['down_datetime'] && (bool)$data['failed_flag']);
         $this->failed_flag = (bool)$data['failed_flag'];
         $this->failed_message = !empty($data['failed_message']) ? $data['failed_message'] : '';
         $this->skip_flag = (bool)$data['skip_flag'];
