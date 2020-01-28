@@ -113,7 +113,6 @@ class SoftDeleteBehavior extends AbstractBehavior
             
             // if the datasheet still contains no datarows, then no items have to be marked as deleted
             if ($updateData->isEmpty() === false){
-                $updateData = $this->assignFlagsInDataSheetRows($updateData);
                 $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
                 $updatedRows = $updateData->dataUpdate(false, $transaction);
                 $affected_rows += $updatedRows;
