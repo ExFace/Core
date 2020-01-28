@@ -48,33 +48,56 @@ class SqlMigration
         $this->up_script = $up_script;
         $this->down_script = $down_script;
     }
-    
+
+    public function initFromDb(array $data): SqlMigration
+    {
+        $this->id = $data['id'];
+        $this->migration_name = $data['migration_name'];
+        $this->up_datetime = $data['up_datetime'];
+        $this->up_script = $data['up_script'];
+        $this->up_result = $data['up_result'];
+        $this->down_datetime = $data['down_datetime'];
+        $this->down_script = $data['down_script'];
+        $this->down_result = $data['down_result'];
+        $this->is_up = (bool)$data['up_datetime'];
+        $this->failed_flag = (bool)$data['failed_flag'];
+        $this->failed_message = $data['failed_message'];
+        $this->skip_flag = (bool)$data['skip_flag'];
+        return $this;
+    }
+
     /**
      * Returns id of the SqlMigration
-     * 
+     *
      * @return string
      */
     public function getId(): ?string
     {
         return $this->id;
     }
-    
+
+    public function setId(string $id): SqlMigration
+    {
+        $this->id = $id;
+        return $this;
+    }
+
     /**
      * Returns name of the SqlMigration
      *
      * @return string
      */
-    public function getMigrationName() : string
+    public function getMigrationName(): string
     {
         return $this->migration_name;
-    }    
- 
+    }
+
     /**
-     * Returns Up Datetime ofthe SqlMigration
+     * Returns Up Datetime of the SqlMigration
      *
      * @return string
      */
-    public function getUpDatetime() : string
+    public function getUpDatetime(): string
     {
         return $this->up_datetime;
     }
@@ -215,17 +238,14 @@ class SqlMigration
     
     /**
      * Function to change the state of the migration to UP, meaning $is_up = TRUE.
-     * 
-     * @param int $id
+     *
      * @param string $dateTime
-     * @param string $script
      * @param string $result
      * @return SqlMigration
      */
-    public function setUp(int $id, string $dateTime, string $result) : SqlMigration
+    public function setUp(string $dateTime, string $result): SqlMigration
     {
         $this->is_up = true;
-        $this->id = $id;
         $this->up_datetime = $dateTime;
         $this->up_result = $result;
         return $this;

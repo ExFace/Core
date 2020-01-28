@@ -164,13 +164,7 @@ SQL;
         }
         foreach ($migrs_db as $a) {
             $mig = new SqlMigration($a['migration_name'], $a['up_script'], $a['down_script']);
-            $mig->setUp(intval($a['id']), $a['up_datetime'], $a['up_result']);
-            if ($a['failed_flag']) {
-                $mig->setFailed(true)->setFailedMessage($a['failed_message']);
-            }
-            if ($a['skip_flag']) {
-                $mig->setSkipped(true);
-            }
+            $mig->initFromDb($a);
             $migrs[] = $mig;
         }
         return $migrs;
@@ -187,22 +181,19 @@ SQL;
             throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' already up!');
         }
         $this->ensureMigrationsTableExists($connection);
-        $up_script = $migration->getUpScript();
         try {
             $connection->transactionStart();
-            $up_result = $this->runSqlMultiStatementScript($connection, $up_script, false);
+            $up_result = $this->runSqlMultiStatementScript($connection, $migration->getUpScript(), false);
             $up_result_string = $this->stringifyQueryResults($up_result);
-            $migration_name = $migration->getMigrationName();
-            $down_script = $migration->getDownScript();
             if ($migration->getId()) {
                 // Migration has an ID, so there already is a log entry meaning that the UP-script has failed previously.
                 $sql_script = <<<SQL
 
 UPDATE {$this->getMigrationsTableName()}
 SET
-    up_script="{$this->escapeSqlStringValue(StringDataType::encodeUTF8($up_script))}",
+    up_script="{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getUpScript()))}",
     up_result="{$this->escapeSqlStringValue($up_result_string)}",
-    down_script="{$this->escapeSqlStringValue(StringDataType::encodeUTF8($down_script))}",
+    down_script="{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}",
     failed_flag=0,
     failed_message=NULL
 WHERE id='{$migration->getId()}';
@@ -220,19 +211,19 @@ INSERT INTO {$this->getMigrationsTableName()}
         down_script
     )
     VALUES (
-        "{$this->escapeSqlStringValue($migration_name)}",
-        "{$this->escapeSqlStringValue(StringDataType::encodeUTF8($up_script))}",
+        "{$this->escapeSqlStringValue($migration->getMigrationName())}",
+        "{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getUpScript()))}",
         "{$this->escapeSqlStringValue($up_result_string)}",
-        "{$this->escapeSqlStringValue(StringDataType::encodeUTF8($down_script))}"
+        "{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}"
     );
 
 SQL;
             }
 
             $query_insert = $connection->runSql($sql_script);
-            $id = intval($query_insert->getLastInsertId());
+            $migration->setId(intval($query_insert->getLastInsertId()));
             $connection->transactionCommit();
-            $this->getWorkbench()->getLogger()->debug('SQL ' . $migration_name . ': script UP executed successfully ');
+            $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ': script UP executed successfully ');
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
             $connection->transactionRollback();
@@ -242,7 +233,7 @@ SQL;
 
 UPDATE {$this->getMigrationsTableName()}
 SET
-    up_script="{$this->escapeSqlStringValue(StringDataType::encodeUTF8($up_script))}",
+    up_script="{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getUpScript()))}",
     down_script="{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}",
     failed_flag=1,
     failed_message="{$this->escapeSqlStringValue($e->getMessage())}"
@@ -273,13 +264,13 @@ SQL;
             $this->migrationFailed($migration, $connection, $sql_script);
             throw new InstallerRuntimeError($this, 'Migration up ' . $migration->getMigrationName() . ' failed!', null, $e);
         }
-        $sql_select = "SELECT * FROM {$this->getMigrationsTableName()} WHERE id='$id'";
+        $sql_select = "SELECT * FROM {$this->getMigrationsTableName()} WHERE id='{$migration->getId()}'";
         $select_array = $connection->runSql($sql_select)->getResultArray();
         if (empty($select_array)) {
             $this->migrationFailed($migration, $connection, 'Migration up ' . $migration->getMigrationName() . ' failed to write into migrations table!');
             throw new InstallerRuntimeError($this, 'Migration up ' . $migration->getMigrationName() . ' failed to write into migrations table!');
         }
-        $migration->setUp($id, $select_array[0]['up_datetime'], $up_result_string);
+        $migration->setUp($select_array[0]['up_datetime'], $up_result_string);
         return $migration;
     }
 
@@ -294,22 +285,20 @@ SQL;
             throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' already down!');
         }
         $this->ensureMigrationsTableExists($connection);
-        $down_script = $migration->getDownScript();
-        if (empty($down_script)) {
+        if (empty($migration->getDownScript())) {
             $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ': Migration has no down script');
             return $migration;
         }
-        $id = $migration->getId();
         try {
             $connection->transactionStart();
-            $down_result = $this->runSqlMultiStatementScript($connection, $down_script, false);
+            $down_result = $this->runSqlMultiStatementScript($connection, $migration->getDownScript(), false);
             $down_result_string = $this->stringifyQueryResults($down_result);
             //da Transaction Rollback nicht korrekt funktioniert
             $sql_script = <<<SQL
 
 UPDATE {$this->getMigrationsTableName()}
 SET down_datetime=now(), down_result="{$this->escapeSqlStringValue($down_result_string)}", failed_flag=0, failed_message=NULL
-WHERE id='$id';
+WHERE id='{$migration->getId()}';
 
 SQL;
             $connection->runSql($sql_script);
@@ -329,7 +318,7 @@ SQL;
             $this->migrationFailed($migration, $connection, $sql_script);
             throw new InstallerRuntimeError($this, 'Migration down ' . $migration->getMigrationName() . ' failed!');
         }
-        $sql_select = "SELECT * FROM {$this->getMigrationsTableName()} WHERE id='$id'";
+        $sql_select = "SELECT * FROM {$this->getMigrationsTableName()} WHERE id='{$migration->getId()}'";
         $select_array = $connection->runSql($sql_select)->getResultArray();
         if (empty($select_array)) {
             $this->migrationFailed($migration, $connection, 'Something went very wrong');
