@@ -745,6 +745,56 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     
     /**
      * The action to open an advanced search dialog.
+     * 
+     * NOTE: depending on the facade used, the trigger for the advanced search dialog
+     * may be different: some facades will place a search-button next to the dropdown,
+     * others may include a "more..."-item in the dropdown menu, etc. There may also
+     * be facades, that do not support lookup dialogs for `InputComboTable`.
+     * 
+     * By default, the generic action `exface.Core.ShowLookupDialog` is used. It creates
+     * a search dialog based on default-display settings in the metamodel of the object
+     * being searched. This basically means, that the lookup-dialog will show the same
+     * table as the `InputComboTable` and provide filter over every visible column.
+     * 
+     * You can customize the lookup dialog by specifying a custom `lookup_action` or
+     * a custom `widget` within the action's configuration:
+     * 
+     * ```
+     * {
+     *  "widget_type": "InputComboTable",
+     *  "lookup_action": {
+     *      "alias": "exface.Core.ShowLookupDialog",
+     *      "widget": {
+     *          "object_alias": "...",
+     *          "widget_type": "DataTable",
+     *          "filters": [
+     *              {
+     *                "attribute_alias": "..."
+     *              }
+     *          ],
+     *          "columns": [
+     *              {
+     *                "attribute_alias": "..."
+     *              }
+     *          ]
+     *      }
+     *   }
+     * }
+     * 
+     * ```
+     * 
+     * If you plan to reuse the lookup widget multiple times, save the action's
+     * configuration in the model and use it like this:
+     * 
+     * ```
+     * {
+     *  "widget_type": "InputComboTable",
+     *  "lookup_action": {
+     *      "alias": "my.App.MyLookupAction"
+     *  }
+     * }
+     * 
+     * ```
      *
      * @uxon-property lookup_action
      * @uxon-type \exface\Core\Actions\ShowLookupDialog
