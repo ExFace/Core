@@ -7,6 +7,9 @@ use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Exceptions\Behaviors\DataSheetDeleteForbiddenError;
+use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\CommonLogic\Model\Expression;
 
 /**
  * Prevents the deletion of data if it matches the provided conditions.
@@ -121,9 +124,38 @@ class UndeletableBehavior extends AbstractBehavior
      */
     public function handleOnBeforeDelete(OnBeforeDeleteDataEvent $event)
     {
+        if ($this->isDisabled())
+            return;
+        
         // TODO add column to input data if not exists
+        $eventDataSheet = $event->getDataSheet();
+        
+        // Do not do anything, if the base object of the data sheet is not the object with the behavior and is not
+        // extended from it.
+        if (! $eventDataSheet->getMetaObject()->isExactly($this->getObject())) {
+            return;
+        }
+        
+        foreach ($this->getConditionGroup()->getConditions() as $condition){
+            try {
+                $attribute = $eventDataSheet->getMetaObject()->getAttribute($condition->getAttributeAlias());
+            } catch (\Exception $e) {
+                    continue;
+            }
+            if (! $eventDataSheet->getColumns()->getByAttribute($attribute)){
+                $eventDataSheet->getColumns()->getByAttribute($attribute);
+            }
+        }
+        
         // TODO read data if $eventData->isFresh() === false and $eventData()->getMetaObject()->isReadable()
+        if ($eventDataSheet->isFresh() === false && $eventDataSheet->getMetaObject()->isReadable()){
+            $eventDataSheet->dataRead();
+        }
+        
         // TODO $this->getConditionGroup()->evaluate()
+        if ($this->getConditionGroup()->evaluate($eventDataSheet) === true){
+            throw new DataSheetDeleteForbiddenError($eventDataSheet, 'Delete Exeption: The deletion of this element of ' . $eventDataSheet->getMetaObject()->getAlias() . ' is prohibited an behaviour.');
+        }
     }
     
     /**
