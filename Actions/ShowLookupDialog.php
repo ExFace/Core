@@ -70,11 +70,11 @@ class ShowLookupDialog extends ShowDialog
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ShowDialog::getDialogWidgetType()
+     * @see \exface\Core\Actions\ShowDialog::getDefaultWidgetType()
      */
-    protected function getDialogWidgetType() : string
+    public function getDefaultWidgetType() : ?string
     {
         return 'DataLookupDialog';
     }
