@@ -123,8 +123,9 @@ class SoftDeleteBehavior extends AbstractBehavior
             } else {
                 throw new DataSheetStructureError($updateData, 'Cannot set SoftDeleteFlag for current selection: no rows found in data sheet!');
             }
-
-            $eventData->setCounterForRowsInDataSource($updateData->countRowsInDataSource());
+        }
+            
+        $eventData->setCounterForRowsInDataSource($updateData->countRowsInDataSource());
 
         if ($eventData->isEmpty() === false){
             $deletedCol = $eventData->getColumns()->getByAttribute($this->getSoftDeleteAttribute());
