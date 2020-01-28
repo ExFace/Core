@@ -455,6 +455,12 @@ class Condition implements ConditionInterface
         
         $leftVal = $this->getExpression()->evaluate($data_sheet, $row_number);
         $rightVal = $this->getValue(); // Value is already parsed via datatype in setValue()
+        
+        //handles the case for when an array with only one element is being passed for the left value.
+        if (is_array($leftVal) && count($leftVal) === 1){
+            $leftVal = $leftVal[0];
+        }
+
         return $this->compare($leftVal, $this->getComparator(), $rightVal);
     }
     
@@ -475,6 +481,14 @@ class Condition implements ConditionInterface
                 return $leftVal === $rightVal;
             case ComparatorDataType::EQUALS_NOT:
                 return $leftVal !== $rightVal;
+            case ComparatorDataType::GREATER_THAN:
+                return $leftVal > $rightVal;
+            case ComparatorDataType::LESS_THAN:
+                return $leftVal < $rightVal;
+            case ComparatorDataType::GREATER_THAN_OR_EQUALS:
+                return $leftVal >= $rightVal;
+            case ComparatorDataType::LESS_THAN_OR_EQUALS:
+                return $leftVal <= $rightVal;
             default:
                 // TODO #conditions
                 throw new NotImplementedError('Evaluating conditions with comparator "' . $comparator . '" in-memory not supported yet!');
