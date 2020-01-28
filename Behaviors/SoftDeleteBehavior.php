@@ -83,22 +83,12 @@ class SoftDeleteBehavior extends AbstractBehavior
         $affected_rows = 0;
 
         $updateData = $eventData->copy();
-        
-        // add all data, that fits the filters, or else update wont work when a datasheet with no rows, but only filters is given. (FIXME?)
-        if ($updateData->isEmpty() && $updateData->getFilters() !== null){
-            $updateData->addRow([]);
-        }
-        
-        if ($updateData->hasUidColumn()){
-            $uidCol = $updateData->getUidColumn();
-        }
-        
-        // remove all columns, except of system columns
+
+        // remove all columns, except of system columns (like 'id' or 'modified-on' columns)
         foreach ($updateData->getColumns() as $col){
             if ($updateData->getMetaObject()->hasAttribute($col->getAttributeAlias())){
                 switch (true){
                     case ($col->getAttribute()->isSystem()):
-                    case ($col === $uidCol):
                         break;
                     default:
                         $updateData->getColumns()->remove($col);
@@ -108,45 +98,37 @@ class SoftDeleteBehavior extends AbstractBehavior
             }
         }
 
-
         // first check if metaobject has soft-delete-attribute
         if ($eventData->getMetaObject()->hasAttribute($this->getSoftDeleteAttributeAlias())){
             
             // add the soft-delete-column
             $deletedCol = $updateData->getColumns()->addFromAttribute($this->getSoftDeleteAttribute());
             
+            // if there are no datarows in the passed datasheet, but there are filters assigned:
+            // add a single row of data, with only the soft-delete-attribute being set, so that this 
+            // attribute can be assigned to every row fitting the filter later
+            if ($updateData->isEmpty() && $updateData->getFilters() !== null){
+                $updateData->addRow([$this->getSoftDeleteAttributeAlias() => $this->getSoftDeleteValue()]);
+            }
+            
+            // if the datasheet still contains no datarows, then no items have to be marked as deleted
             if ($updateData->isEmpty() === false){
                 $updateData = $this->assignFlagsInDataSheetRows($updateData);
                 $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
                 $updatedRows = $updateData->dataUpdate(false, $transaction);
                 $affected_rows += $updatedRows;
-            } else {
-                throw new DataSheetStructureError($updateData, 'Cannot set SoftDeleteFlag for current selection: no rows found in data sheet!');
             }
         }
             
         $eventData->setCounterForRowsInDataSource($updateData->countRowsInDataSource());
 
+        // also update the original data sheet for further use
         if ($eventData->isEmpty() === false){
             $deletedCol = $eventData->getColumns()->getByAttribute($this->getSoftDeleteAttribute());
             $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
         }
 
         return $affected_rows;
-    }
-    
-    /**
-     * Function for setting the softdelete-flag in all the rows of an given datasheet.
-     * 
-     * @param DataSheetInterface $ds
-     * @return DataSheetInterface
-     */
-    protected function assignFlagsInDataSheetRows(DataSheetInterface $ds) : DataSheetInterface
-    {
-        if ($deletedCol = $ds->getColumns()->getByExpression($this->getSoftDeleteAttributeAlias())){
-            $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
-        }
-        return $ds;
     }
     
     /**
