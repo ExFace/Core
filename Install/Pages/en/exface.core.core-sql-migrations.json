@@ -23,6 +23,12 @@
             },
             {
                 "attribute_alias": "down_datetime"
+            },
+            {
+                "attribute_alias": "failed_flag"
+            },
+            {
+                "attribute_alias": "skip_flag"
             }
         ],
         "buttons": [
