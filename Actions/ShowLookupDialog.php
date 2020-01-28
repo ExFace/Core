@@ -64,17 +64,17 @@ class ShowLookupDialog extends ShowDialog
         $this->setPrefillWithInputData(false);
         $this->setIcon(Icons::SEARCH);
         
-        if ($this->getWidgetDefinedIn() && $this->getWidgetDefinedIn()->is('DialogButton')) {
+        if ($this->isDefinedInWidget() === true && $this->getWidgetDefinedIn()->is('DialogButton')) {
             $this->getWidgetDefinedIn()->setCloseDialogAfterActionSucceeds(false);
         }
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ShowDialog::getDialogWidgetType()
+     * @see \exface\Core\Actions\ShowDialog::getDefaultWidgetType()
      */
-    protected function getDialogWidgetType() : string
+    public function getDefaultWidgetType() : ?string
     {
         return 'DataLookupDialog';
     }

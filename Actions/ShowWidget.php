@@ -129,7 +129,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowWidget::getDefaultWidgetType()
      */
-    public function getDefaultWidgetType()
+    public function getDefaultWidgetType() : ?string
     {
         return null;
     }
