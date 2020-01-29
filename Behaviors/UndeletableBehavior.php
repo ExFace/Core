@@ -10,6 +10,8 @@ use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\Behaviors\DataSheetDeleteForbiddenError;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\Exceptions\RuntimeException;
+use Symfony\Component\Translation\Catalogue\OperationInterface;
 
 /**
  * Prevents the deletion of data if it matches the provided conditions.
@@ -136,25 +138,96 @@ class UndeletableBehavior extends AbstractBehavior
             return;
         }
         
+        $dataSheet = $eventDataSheet->copy();
+        
         foreach ($this->getConditionGroup()->getConditions() as $condition){
             try {
-                $attribute = $eventDataSheet->getMetaObject()->getAttribute($condition->getAttributeAlias());
+                $attribute = $dataSheet->getMetaObject()->getAttribute($condition->getAttributeAlias());
             } catch (\Exception $e) {
                     continue;
             }
-            if (! $eventDataSheet->getColumns()->getByAttribute($attribute)){
-                $eventDataSheet->getColumns()->getByAttribute($attribute);
+            if (! $dataSheet->getColumns()->getByAttribute($attribute)){
+                $dataSheet->getColumns()->addFromAttribute($attribute);
             }
         }
         
+        $labelAttributeAlias = $dataSheet->getMetaObject()->getLabelAttributeAlias();
+        if ($labelAttributeAlias !== null){
+            $dataSheet->getColumns()->addFromAttribute($dataSheet->getMetaObject()->getLabelAttribute());
+        }
+        
         // TODO read data if $eventData->isFresh() === false and $eventData()->getMetaObject()->isReadable()
-        if ($eventDataSheet->isFresh() === false && $eventDataSheet->getMetaObject()->isReadable()){
-            $eventDataSheet->dataRead();
+        if ($dataSheet->isFresh() === false && $dataSheet->getMetaObject()->isReadable()){
+            if ($uidCol = $dataSheet->getUidColumn() === false){
+                $uidCol = $dataSheet->getColumns()->addFromUidAttribute();
+            }
+            $dataSheet->getFilters()->addConditionFromColumnValues($uidCol->getValues());
+            
+            $dataSheet->dataRead();
         }
         
         // TODO $this->getConditionGroup()->evaluate()
-        if ($this->getConditionGroup()->evaluate($eventDataSheet) === true){
-            throw new DataSheetDeleteForbiddenError($eventDataSheet, 'Delete Exeption: The deletion of this element of ' . $eventDataSheet->getMetaObject()->getAlias() . ' is prohibited an behaviour.');
+        $conditionGroup =  $this->getConditionGroup();
+        $result = true;
+        $errorCondition = null;
+        $operator = $conditionGroup->getOperator();
+        foreach($dataSheet->getRows() as $idx => $row){
+            
+            $resRow = array();
+            $resSingleRow = null;
+            foreach ($conditionGroup->getConditions() as $con){
+                $resSingleColumn = $con->evaluate($dataSheet, $idx);
+                switch (true){
+                    case $operator == EXF_LOGICAL_AND && $resSingleColumn === false:
+                        $resSingleRow = false;
+                        break;
+                    case $operator == EXF_LOGICAL_OR && $resSingleColumn === true:
+                        $resSingleRow = true;
+                        $errorCondition = $con;
+                        break;
+                    case $operator == EXF_LOGICAL_AND && $resSingleColumn === true:
+                        $errorCondition = $con;
+                    default:
+                        $resRow[] = $resSingleColumn;
+                }
+                if ($resSingleRow !== null){
+                    break;
+                }
+            }
+            
+            if ($resSingleRow === null){
+                switch ($operator){
+                    case EXF_LOGICAL_AND:
+                        $resSingleRow = (in_array(false, $resRow) === true);
+                        break;
+                    case EXF_LOGICAL_OR:
+                        $resSingleRow = in_array(true, $resRow);
+                        break;
+                    case EXF_LOGICAL_XOR:
+                        $resSingleRow = count(array_filter($resRow, function(bool $val){return $val === true;})) === 1;
+                        break;
+                    default:
+                        throw new RuntimeException('Unsupported logical operator "' . $operator . '" in condition group "' . $conditionGroup->toString() . '"!');
+                }
+            }
+            
+            if ($resSingleRow === true){
+                $result = true;
+                break;
+            }
+        }
+
+        if ($result === true){
+            $errorRowDescriptor = '';
+                        
+            if ($labelAttributeAlias !== null && $row[$labelAttributeAlias] !== null){
+                $errorRowDescriptor = '"' . $row[$labelAttributeAlias] . '"'; 
+            }
+            if ($errorRowDescriptor == ''){
+                $errorRowDescriptor = $idx;
+            }
+            
+            throw new DataSheetDeleteForbiddenError($dataSheet, 'Delete Exeption: Item ' . $errorRowDescriptor . ' in the current selection of ' . $dataSheet->getMetaObject()->getAlias() . ' does fulfill the condition ' . $errorCondition->toString() . ' set in a behaviour, its deletion is therefore prohibited.');
         }
     }
     
