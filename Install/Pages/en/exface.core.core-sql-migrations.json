@@ -19,10 +19,18 @@
                 "attribute_alias": "up_datetime"
             },
             {
+                "attribute_alias": "up_script",
+                "hidden": true
+            },
+            {
                 "attribute_alias": "is_down"
             },
             {
                 "attribute_alias": "down_datetime"
+            },
+            {
+                "attribute_alias": "down_script",
+                "hidden": true
             },
             {
                 "attribute_alias": "failed_flag"
@@ -35,6 +43,104 @@
             {
                 "action_alias": "exface.Core.ShowObjectInfoDialog",
                 "bind_to_double_click": true
+            },
+            {
+                "caption": "Skip\/Unskip",
+                "action": {
+                    "alias": "exface.Core.UpdateData",
+                    "input_rows_min": 1,
+                    "input_rows_max": 1,
+                    "input_mapper": {
+                        "column_to_column_mappings": [
+                            {
+                                "from": "=not(skip_flag)",
+                                "to": "skip_flag"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "caption": "Run UP",
+                "action": {
+                    "alias": "exface.Core.ActionChain",
+                    "actions": [
+                        {
+                            "alias": "exface.Core.CustomDataSourceQuery",
+                            "query_attribute_alias": "up_script",
+                            "input_rows_min": 1,
+                            "input_rows_max": 1
+                        },
+                        {
+                            "alias": "exface.Core.UpdateData",
+                            "input_mapper": {
+                                "column_to_column_mappings": [
+                                    {
+                                        "from": "=now()",
+                                        "to": "up_datetime"
+                                    },
+                                    {
+                                        "from": "=nullValue()",
+                                        "to": "up_result"
+                                    },
+                                    {
+                                        "from": "=nullValue()",
+                                        "to": "down_datetime"
+                                    },
+                                    {
+                                        "from": "=nullValue()",
+                                        "to": "down_result"
+                                    },
+                                    {
+                                        "from": 0,
+                                        "to": "failed_flag"
+                                    },
+                                    {
+                                        "from": "=nullValue()",
+                                        "to": "failed_message"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "caption": "Run DOWN",
+                "action": {
+                    "alias": "exface.Core.ActionChain",
+                    "actions": [
+                        {
+                            "alias": "exface.Core.CustomDataSourceQuery",
+                            "query_attribute_alias": "down_script",
+                            "input_rows_min": 1,
+                            "input_rows_max": 1
+                        },
+                        {
+                            "alias": "exface.Core.UpdateData",
+                            "input_mapper": {
+                                "column_to_column_mappings": [
+                                    {
+                                        "from": "=now()",
+                                        "to": "down_datetime"
+                                    },
+                                    {
+                                        "from": "=nullValue()",
+                                        "to": "down_result"
+                                    },
+                                    {
+                                        "from": 0,
+                                        "to": "failed_flag"
+                                    },
+                                    {
+                                        "from": "=nullValue()",
+                                        "to": "failed_message"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
             }
         ],
         "sorters": [
@@ -52,8 +158,7 @@
                 "attribute_alias": "migration_name"
             },
             {
-                "attribute_alias": "is_down",
-                "value": 0
+                "attribute_alias": "is_down"
             },
             {
                 "attribute_alias": "up_datetime",
@@ -70,6 +175,12 @@
             {
                 "attribute_alias": "down_datetime",
                 "comparator": "<="
+            },
+            {
+                "attribute_alias": "failed_flag"
+            },
+            {
+                "attribute_alias": "skip_flag"
             }
         ]
     }

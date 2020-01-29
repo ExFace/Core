@@ -69,14 +69,16 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
 {
     private $queries = [];
 
+    private $queryAttributeAlias = '';
+
     private $data_connection = null;
-    
+
     private $dataSource = null;
 
     private $aplicable_to_object_alias = null;
 
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::init()
      */
@@ -87,12 +89,14 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     }
 
     /**
-     *
+     * @param TaskInterface $task
      * @return string[]
      */
-    public function getQueries() : array
+    public function getQueries(TaskInterface $task): array
     {
-        return $this->queries;
+        $data = $task->getInputData();
+        $queryAttributeScripts = $data->getColumnValues($this->getQueryAttributeAlias());
+        return array_merge($this->queries, $queryAttributeScripts);
     }
 
     /**
@@ -101,7 +105,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
      * @uxon-property queries
      * @uxon-type array
      * @uxon-template [""]
-     * 
+     *
      * @param UxonObject $query_strings
      * @return \exface\Core\Actions\CustomDataSourceQuery
      */
@@ -111,12 +115,23 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
         return $this;
     }
 
+    public function getQueryAttributeAlias(): string
+    {
+        return $this->queryAttributeAlias;
+    }
+
+    public function setQueryAttributeAlias(string $queryAttributeAlias): CustomDataSourceQuery
+    {
+        $this->queryAttributeAlias = $queryAttributeAlias;
+        return $this;
+    }
+
     /**
-     * 
+     *
      * @param string $string
      * @return \exface\Core\Actions\CustomDataSourceQuery
      */
-    public function addQuery(string $string) : CustomDataSourceQuery
+    public function addQuery(string $string): CustomDataSourceQuery
     {
         $this->queries[] = $string;
         return $this;
@@ -214,14 +229,14 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     {
         $counter = 0;
         $data_sheet = $this->getInputDataSheet($task);
-        
-        foreach ($this->getQueries() as $query) {
+
+        foreach ($this->getQueries($task) as $query) {
             $queryRuns = [];
-            
+
             // See if the query has any placeholders
             foreach (StringDataType::findPlaceholders($query) as $ph) {
                 /* @var $col \exface\Core\CommonLogic\DataSheets\DataColumn */
-                if (! $col = $data_sheet->getColumns()->get(DataColumn::sanitizeColumnName($ph))) {
+                if (!$col = $data_sheet->getColumns()->get(DataColumn::sanitizeColumnName($ph))) {
                     throw new ActionInputMissingError($this, 'Cannot perform custom query in "' . $this->getAliasWithNamespace() . '": placeholder "' . $ph . '" not found in inupt data!', '6T5DNWE');
                 }
                 // Replace the placeholder for each row and save each resulting query into
