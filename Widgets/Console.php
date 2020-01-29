@@ -10,7 +10,6 @@ use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use Symfony\Component\Translation\Tests\StringClass;
 
 /**
  * Shows a command line terminal.
@@ -426,7 +425,7 @@ class Console extends AbstractWidget
                     foreach ($col->getValues(false) as $val) {
                         $vals[] = $this->escapeCommandPlaceholderValue($val, $col->getDataType());
                     }
-                    $phvals[$ph] = implode($vals);
+                    $phvals[$ph] = implode($this->getCommandPlaceholderValueListDelimiter(), $vals);
                 }
             }
             $cmds[$nr] = StringDataType::replacePlaceholders($cmd, $phvals);
