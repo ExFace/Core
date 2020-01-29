@@ -455,11 +455,6 @@ class Condition implements ConditionInterface
         
         $leftVal = $this->getExpression()->evaluate($data_sheet, $row_number);
         $rightVal = $this->getValue(); // Value is already parsed via datatype in setValue()
-        
-        //handles the case for when an array with only one element is being passed for the left value.
-        if (is_array($leftVal) && count($leftVal) === 1){
-            $leftVal = $leftVal[0];
-        }
 
         return $this->compare($leftVal, $this->getComparator(), $rightVal);
     }
