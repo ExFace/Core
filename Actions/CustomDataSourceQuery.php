@@ -89,6 +89,9 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     }
 
     /**
+     * Merges the queries defined in the queries property with the queries defined by the query_attribute_alias property.
+     * Queries property queries are executed first.
+     *
      * @param TaskInterface $task
      * @return string[]
      */
@@ -115,11 +118,23 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
         return $this;
     }
 
+    /**
+     * @return string
+     */
     public function getQueryAttributeAlias(): string
     {
         return $this->queryAttributeAlias;
     }
 
+    /**
+     * An attribute-alias of the meta-object that holds queries to run in data source language (e.g. SQL).
+     *
+     * @uxon-property query_attribute_alias
+     * @uxon-type string
+     *
+     * @param string $queryAttributeAlias
+     * @return CustomDataSourceQuery
+     */
     public function setQueryAttributeAlias(string $queryAttributeAlias): CustomDataSourceQuery
     {
         $this->queryAttributeAlias = $queryAttributeAlias;

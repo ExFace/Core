@@ -49,6 +49,12 @@ class SqlMigration
         $this->down_script = $down_script;
     }
 
+    /**
+     * Init the SqlMigration from a database array containing the necessary data.
+     *
+     * @param array $data
+     * @return SqlMigration
+     */
     public function initFromDb(array $data): SqlMigration
     {
         $this->id = $data['id'];
@@ -78,6 +84,12 @@ class SqlMigration
         return $this->id;
     }
 
+    /**
+     * Sets the id of the SqlMigration
+     *
+     * @param string $id
+     * @return SqlMigration
+     */
     public function setId(string $id): SqlMigration
     {
         $this->id = $id;
@@ -114,6 +126,12 @@ class SqlMigration
         return $this->up_script;
     }
 
+    /**
+     * Sets the UP-script of the SqlMigration
+     *
+     * @param string $upScript
+     * @return SqlMigration
+     */
     public function setUpScript(string $upScript): SqlMigration
     {
         $this->up_script = $upScript;
@@ -150,6 +168,12 @@ class SqlMigration
         return $this->down_script;
     }
 
+    /**
+     * Sets the DOWN-script of the SqlMigration
+     *
+     * @param string $downScript
+     * @return SqlMigration
+     */
     public function setDownScript(string $downScript): SqlMigration
     {
         $this->down_script = $downScript;
@@ -186,6 +210,12 @@ class SqlMigration
         return $this->failed_flag;
     }
 
+    /**
+     * Sets the failed flag of the SqlMigration
+     *
+     * @param bool $failed
+     * @return SqlMigration
+     */
     public function setFailed(bool $failed): SqlMigration
     {
         $this->failed_flag = $failed;
@@ -202,6 +232,12 @@ class SqlMigration
         return $this->failed_message;
     }
 
+    /**
+     * Sets the failed message of the SqlMigration
+     *
+     * @param string $failed_message
+     * @return SqlMigration
+     */
     public function setFailedMessage(string $failed_message): SqlMigration
     {
         $this->failed_message = $failed_message;
@@ -218,6 +254,12 @@ class SqlMigration
         return $this->skip_flag;
     }
 
+    /**
+     * Sets the skip flag of the SqlMigration
+     *
+     * @param bool $skipped
+     * @return SqlMigration
+     */
     public function setSkipped(bool $skipped): SqlMigration
     {
         $this->skip_flag = $skipped;
