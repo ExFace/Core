@@ -23,6 +23,8 @@ use exface\Core\Widgets\Parts\Charts\AreaChartSeries;
 use exface\Core\Exceptions\Facades\FacadeOutputError;
 use exface\Core\Widgets\Parts\Charts\GraphChartSeries;
 use exface\Core\Widgets\DataButton;
+use exface\Core\Widgets\Parts\Charts\HeatmapChartSeries;
+use exface\Core\Widgets\Parts\Charts\Traits\VisualMapChartSeriesTrait;
 
 /**
  *
@@ -884,6 +886,7 @@ JS;
     {
         $series = $this->getWidget()->getSeries();
         $seriesConfig = '';
+        $visualMapConfig = '';
         foreach ($series as $s) {
             if ($s instanceof PieChartSeries && count($series) > 1) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support pie charts with multiple series!');
@@ -891,17 +894,27 @@ JS;
             if ($s instanceof GraphChartSeries && count($series) > 1) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support graph charts with multiple series!');
             }
+            if ($s instanceof HeatmapChartSeries && count($series) > 1) {
+                throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support heatmap charts with multiple series!');
+            }
             if (($s instanceof LineChartSeries || $s instanceof ColumnChartSeries) && count($series) > 1 && $s->getSplitByAttributeAlias() !== null) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support split by attribute with multiple series!');
             }
             $seriesConfig .= $this->buildJsChartSeriesConfig($s) . ',';
+            if ($s instanceof VisualMapChartSeriesTrait) {
+                $visualMapConfig .= $this->buildJsVisualMapConfig($s) . ',';
+            }
             
             if ($s instanceof BarChartSeries && $s->getIndex() != 0) {
                 if ($series[$s->getIndex() - 1] instanceof BarChartSeries === false) {
                     throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support bar charts mixed with other chart types!');
                 }
             }
-        }        
+        }
+        $visualMapJs = '';
+        if ($visualMapConfig !== '') {
+            $visualMapJs = "visualMap: [{$visualMapConfig}],";
+        }
         return <<<JS
         
 {
@@ -909,6 +922,7 @@ JS;
     tooltip : {$this->buildJsChartPropertyTooltip()}
    	legend: {$this->buildJsChartPropertyLegend()}
 	series: [{$seriesConfig}],
+    {$visualMapJs}
     {$this->buildJsAxes()}
     
 }
@@ -938,7 +952,9 @@ JS;
             case $series instanceof PieChartSeries:
                 return $this->buildJsPieChart($series);
             case $series instanceof GraphChartSeries:
-                return $this->buildJsGraphChart($series);                
+                return $this->buildJsGraphChart($series);
+            case $series instanceof HeatmapChartSeries:
+                return $this->buildJsHeatmapChart($series); 
         }
     }
     
@@ -1263,6 +1279,47 @@ JS;
     }
     
     /**
+     * build heatmap series configuration
+     * 
+     * @param HeatmapChartSeries $series
+     * @return string
+     */
+    protected function buildJsHeatmapChart(HeatmapChartSeries $series) : string
+    {
+        $series =  <<<JS
+        
+        {
+            name: '{$series->getCaption()}',
+            _index: {$series->getIndex()},
+            type: 'heatmap',
+            label: {
+            normal: {
+                show: true,
+                formatter: (param) => {
+                    if (param.data['{$series->getValueDataColumn()->getDataColumnName()}'] ===  0) {
+                        return 'N/A';
+                    } else {
+                        return param.data['{$series->getValueDataColumn()->getDataColumnName()}']
+                    } 
+                   
+                }
+            }
+        },
+            coordinateSystem: 'cartesian2d',
+            encode: {
+                x: '{$series->getXAxis()->getDataColumn()->getDataColumnName()}',
+                y: '{$series->getYAxis()->getDataColumn()->getDataColumnName()}'
+            },
+            xAxisIndex: {$series->getXAxis()->getIndex()},
+            yAxisIndex: {$series->getYAxis()->getIndex()},
+        }
+
+JS;
+       
+        return $series;
+    }
+    
+    /**
      * build axes configuration
      *
      * @return string
@@ -1349,6 +1406,11 @@ JS;
         } else {
             $grid = 'true';
         }
+        if ($axis->hasGridArea() === false) {
+            $gridArea = 'false';
+        } else {
+            $gridArea = 'true';
+        }
         if ($axis->getMinValue() === null) {
             $min = '';
         } else {
@@ -1420,6 +1482,7 @@ JS;
         {$inverse}
         type: '{$axisTypeLower}',
         splitLine: { show: $grid },
+        splitArea: {show: $gridArea},
         position: '{$position}',
         show: false,
         nameGap: {$nameGap},
@@ -1502,6 +1565,25 @@ JS;
     
 JS;
 
+    }
+    
+    /**
+     * build the configuration for the VisualMap part graph (for now only used in heatmap graphs)
+     * 
+     * @param ChartSeries $series
+     * @return string
+     */
+    protected function buildJsVisualMapConfig(VisualMapChartSeriesTrait $series) : string
+    {
+        return <<<JS
+
+        {
+            dimension: {$series->getValueDataColumn()->getDataColumnName()},
+            
+        }
+
+JS;
+        
     }
     
     /**
@@ -1868,7 +1950,6 @@ JS;
     gridmargin['bottom'] += {$this->buildJsGridMarginBottom()};
     gridmargin['left'] += {$this->buildJsGridMarginLeft()};
     
-    newOptions.grid = gridmargin;
     var oldOptions = {$this->buildJsEChartsVar()}.getOption()
     
     var zoomSet = "{$zoomSet}"
@@ -1884,7 +1965,9 @@ JS;
             }
             newOptions.dataZoom = zoom            
         }
-    }    
+    }
+
+    newOptions.grid = gridmargin;    
     {$this->buildJsEChartsVar()}.setOption(newOptions);
     
     var split = "{$this->getWidget()->getSeries()[0]->getSplitByAttributeAlias()}" || undefined
@@ -1995,7 +2078,7 @@ JS;
         return <<<JS
     
     var splitDatasetObject = {};
-        for (var i=0; i < {$dataJs}.length; i++) {
+    for (var i=0; i < {$dataJs}.length; i++) {
         var p = {$dataJs}[i][split];
         if (!splitDatasetObject[p]) {
             splitDatasetObject[p] = [];
@@ -2382,6 +2465,15 @@ JS;
         }
     }
     
+    protected function isHeatmapChart() : bool
+    {
+        if ($this->getWidget()->getSeries()[0] instanceof HeatMapChartSeries) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
     /**
      * build basic tooltip configuration
      *
@@ -2410,7 +2502,36 @@ JS;
 },
 
 JS;
-            
+        } elseif ($this->isHeatmapChart()) {
+            $series = $this->getWidget()->getSeries()[0];
+            $xAxisCaption = $series->getXAxis()->getCaption();
+            $xAxisName = $series->getXAxis()->getDataColumn()->getDataColumnName();
+            $yAxisCaption = $series->getYAxis()->getCaption();
+            $yAxisName = $series->getYAxis()->getDataColumn()->getDataColumnName();
+            $valueName = $series->getValueDataColumn()->getDataColumnName();
+            return <<<JS
+
+{
+	formatter: function(params) {
+        var xAxisName = '{$xAxisName}';
+        var yAxisName = '{$yAxisName}';
+        var valueName = '{$valueName}';
+        var xAxisCaption = '{$xAxisCaption}';
+        var yAxisCaption = '{$yAxisCaption}';
+        var xAxisValue = params.data[xAxisName];
+        var yAxisValue = params.data[yAxisName];
+        var value = params.data[valueName];
+        var tooltip = '<table class="exf-tooltip-table">'
+        tooltip = tooltip + '<tr><td>' + xAxisCaption + '</td><td>'+ xAxisValue + '</td></tr>'
+        tooltip = tooltip + '<tr><td>' + yAxisCaption + '</td><td>'+ yAxisValue + '</td></tr>'
+        tooltip = tooltip + '<tr><td>' + valueName + '</td><td>'+ value + '</td></tr>'
+        tooltip = tooltip + '</table>'
+		return tooltip;
+	},
+    confine: true,
+},
+
+JS;
         } else {
             return <<<JS
             
