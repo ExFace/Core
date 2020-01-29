@@ -6,8 +6,8 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 trait VisualMapChartSeriesTrait
 {
-    const VISUAL_MAP_TYPE_CONTINUOUS = 'continuous';
-    const VISUAL_MAP_TYPE_PIECEWISE = 'piecewise';
+    static $VISUAL_MAP_TYPE_CONTINUOUS = 'continuous';
+    static $VISUAL_MAP_TYPE_PIECEWISE = 'piecewise';
     
     private $visualMap = null;
     private $visualMapType = null;
@@ -38,13 +38,14 @@ trait VisualMapChartSeriesTrait
      * @param string $type
      * @return VisualMapChartSeriesTrait
      */
-    public function setVisualMapType(string $type) : VisualMapChartSeriesTrait
+    public function setVisualMapType(string $type) : ChartSeries
     {
         $visualMapType = mb_strtoupper($type);
-        if (defined(__CLASS__ . '::VISUAL_MAP_TYPE_' . $visualMapType)) {
+        $variable = 'self::$VISUAL_MAP_TYPE_' . $visualMapType;
+        if (isset($variable)) {
             $this->visualMapType = $visualMapType;
         } else {
-            throw new WidgetPropertyInvalidValueError($this->getChart(), 'Invalid visualMao type "' . $visualMapType . '". Only CONTINUOUS or PIECEWISE are allowed!', '6TA2Y6A');
+            throw new WidgetPropertyInvalidValueError($this->getChart(), 'Invalid visual map type "' . $visualMapType . '". Only CONTINUOUS or PIECEWISE are allowed!', '6TA2Y6A');
         }
         return $this;        
     }
@@ -72,7 +73,7 @@ trait VisualMapChartSeriesTrait
      * @param bool $trueOrFalse
      * @return VisualMapChartSeriesTrait
      */
-    public function setVisualMapDragable(bool $trueOrFalse) : VisualMapChartSeriesTrait
+    public function setVisualMapDragable(bool $trueOrFalse) : ChartSeries
     {
         if ($this->visualMapType === null) {
             $this->visualMapType === self::VISUAL_MAP_TYPE_CONTINUOUS;
@@ -96,7 +97,7 @@ trait VisualMapChartSeriesTrait
      * @param int $number
      * @return VisualMapChartSeriesTrait
      */
-    public function setVisualMapSplitNumber(int $number) : VisualMapChartSeriesTrait
+    public function setVisualMapSplitNumber(int $number) : ChartSeries
     {
         if ($this->visualMapType === null) {
             $this->visualMapType === self::VISUAL_MAP_TYPE_PIECEWISE;
@@ -119,7 +120,7 @@ trait VisualMapChartSeriesTrait
      * @param int $min
      * @return VisualMapChartSeriesTrait
      */
-    public function setVisualMapMin(int $min) : VisualMapChartSeriesTrait
+    public function setVisualMapMin(int $min) : ChartSeries
     {
         if ($this->visualMap === null) {
             $this->visualMap = true;
@@ -146,7 +147,7 @@ trait VisualMapChartSeriesTrait
      * @param int $min
      * @return VisualMapChartSeriesTrait
      */
-    public function setVisualMapMax(int $min) : VisualMapChartSeriesTrait
+    public function setVisualMapMax(int $min) : ChartSeries
     {
         if ($this->visualMap === null) {
             $this->visualMap = true;
