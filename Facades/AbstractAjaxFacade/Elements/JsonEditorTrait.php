@@ -16,7 +16,7 @@ use exface\Core\CommonLogic\Workbench;
  * 
  * ```
  * require: {
- *	"npm-asset/jsoneditor" : "^6.1||^7.0",
+ *	"npm-asset/jsoneditor" : "^7.0||^8.0",
  *	"npm-asset/picomodal" : "^3.0.0",
  *	"npm-asset/mobius1-selectr" : "^2.4.12"
  * }
