@@ -345,6 +345,14 @@ SQL;
         return $migration;
     }
 
+    /**
+     * Runs the passed SQL-script to write error logs to the DB.
+     *
+     * @param SqlMigration $migration
+     * @param SqlDataConnectorInterface $connection
+     * @param string $sql_script
+     * @return SqlMigration
+     */
     private function migrationFailed(SqlMigration $migration, SqlDataConnectorInterface $connection, string $sql_script): SqlMigration
     {
         try {
