@@ -669,11 +669,27 @@
             "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputUxon\",\"width\":\"2\",\"height\":\"6\"}",
             "ALIAS": "UxonFacade",
             "SHORT_DESCRIPTION": "User Experience Object Notation (JSON schema) for facade configuration"
+        },
+        {
+            "CREATED_ON": "2020-01-30 18:11:57",
+            "MODIFIED_ON": "2020-01-30 18:19:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea438c00f52350bb290205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Attribute Type",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/StringEnumDataType.php",
+            "CONFIG_UXON": "{\"show_values\":false,\"values\":{\"D\":\"Data\",\"C\":\"Compound\"}}",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\"}",
+            "ALIAS": "AttributeType",
+            "SHORT_DESCRIPTION": ""
         }
     ],
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.DATATYPE",
         "conditions": [
             {
                 "expression": "APP",
