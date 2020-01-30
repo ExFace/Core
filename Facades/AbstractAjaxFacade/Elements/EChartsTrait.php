@@ -1624,8 +1624,12 @@ JS;
             $inRange = "inRange: {color: {$colors}},";
         }
             
-        
-        $left = 100 + $count * $this->baseVisualMapOffset();
+        if ($count === 0) {
+            $left = "'center'";
+        } else {
+            $left = $this->buildJsGridMarginLeft() + $count * $this->baseVisualMapOffset();
+        }
+                
         return <<<JS
 
         {
