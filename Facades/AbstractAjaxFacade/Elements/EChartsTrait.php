@@ -436,6 +436,7 @@ JS;
 
             var clickCount = {$this->buildJsEChartsVar()}._clickCount;
             var params = {$params};
+            console.log(params);
             var selected = {$this->buildJsGetSelectedRowFunction('params.data')};
             
             clickCount++;
@@ -1447,7 +1448,7 @@ JS;
             $axisTick = <<<JS
             
         axisTick: {
-            alignWithLabel: true,
+            alignWithLabel: false,
         },
 
 JS;
@@ -1639,7 +1640,6 @@ JS;
             {$maxOpen}
             {$inRange}
             formatter: function(a,b) {
-                console.log('formatter:', a,b);
                 if (b === undefined) {
                     return {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'a')};
                 }
