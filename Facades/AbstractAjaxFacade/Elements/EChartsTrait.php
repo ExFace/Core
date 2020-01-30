@@ -19,12 +19,13 @@ use exface\Core\Widgets\Parts\Charts\PieChartSeries;
 use exface\Core\Widgets\Parts\Charts\RoseChartSeries;
 use exface\Core\Widgets\Parts\Charts\SplineChartSeries;
 use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
+use exface\Core\Widgets\Parts\Charts\Interfaces\iHaveVisualMapChartPart;
 use exface\Core\Widgets\Parts\Charts\AreaChartSeries;
 use exface\Core\Exceptions\Facades\FacadeOutputError;
 use exface\Core\Widgets\Parts\Charts\GraphChartSeries;
 use exface\Core\Widgets\DataButton;
 use exface\Core\Widgets\Parts\Charts\HeatmapChartSeries;
-use exface\Core\Widgets\Parts\Charts\Traits\VisualMapChartSeriesTrait;
+use exface\Core\Widgets\Parts\Charts\VisualMapChartPart;
 
 /**
  *
@@ -715,6 +716,10 @@ JS;
 
 JS;
                 
+        } elseif ($this->isHeatmapChart()) {
+            
+            return '';
+        
         } else {
             return <<<JS
         var echart = {$this->buildJsEChartsVar()};
@@ -887,6 +892,7 @@ JS;
         $series = $this->getWidget()->getSeries();
         $seriesConfig = '';
         $visualMapConfig = '';
+        $visualMapCount = 0;
         foreach ($series as $s) {
             if ($s instanceof PieChartSeries && count($series) > 1) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support pie charts with multiple series!');
@@ -901,8 +907,9 @@ JS;
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support split by attribute with multiple series!');
             }
             $seriesConfig .= $this->buildJsChartSeriesConfig($s) . ',';
-            if ($s instanceof VisualMapChartSeriesTrait) {
-                $visualMapConfig .= $this->buildJsVisualMapConfig($s) . ',';
+            if ($s instanceof iHaveVisualMapChartPart && $s->hasVisualMap() === true) {
+                $visualMapConfig .= $this->buildJsVisualMapConfig($s, $visualMapCount) . ',';
+                $visualMapCount++;
             }
             
             if ($s instanceof BarChartSeries && $s->getIndex() != 0) {
@@ -1527,6 +1534,16 @@ JS;
             $offset += 25;
         }
         if ($axis->getDimension() === Chart::AXIS_X) {
+            $hasVisualMap = false;
+            foreach ($this->getWidget()->getSeries() as $s) {
+                if ($s instanceof iHaveVisualMapChartPart && $s->hasVisualMap() === true && $s->getVisualMap()->getShow() === true) {
+                    $hasVisualMap = true;
+                    break;
+                }
+            }
+            if ($hasVisualMap === true) {
+                $offset += $this->baseZoomOffset();
+            }
             $JsOffset = "bottom: {$offset},";
         } elseif ($axis->getDimension() === Chart::AXIS_Y) {            
             $offset += 25;
@@ -1573,13 +1590,61 @@ JS;
      * @param ChartSeries $series
      * @return string
      */
-    protected function buildJsVisualMapConfig(VisualMapChartSeriesTrait $series) : string
+    protected function buildJsVisualMapConfig(iHaveVisualMapChartPart $series, int $count = null) : string
     {
+        $visualMap = $series->getVisualMap();
+        if ($visualMap === null) {
+            return '';
+        }        
+        
+        $type = mb_strtolower($visualMap->getType());
+        $show = 'true';
+        if ($visualMap->getShow() === false) {
+            $show = 'false';
+        }
+        $dragable = '';
+        if ($visualMap->getType() === VisualMapChartPart::VISUAL_MAP_TYPE_CONTINUOUS && $visualMap->isDragable() === true) {
+            $dragable = "calculable: true,";  
+        }
+        $splitNumber = '';        
+        if ($visualMap->getType() === VisualMapChartPart::VISUAL_MAP_TYPE_PIECEWISE) {
+            $splitNumber = "splitNumber: {$visualMap->getSplitNumber()},";
+            $minOpen = 'minOpen: true,';
+            $maxOpen = 'maxOpen: true,';
+        }
+        $inRange = '';
+        if ($visualMap->getColors() !== null) {
+            $colors = json_encode($visualMap->getColors());
+            $inRange = "inRange: {color: {$colors}},";
+        }
+            
+        
+        $left = 100 + $count * $this->baseVisualMapOffset();
         return <<<JS
 
         {
-            dimension: {$series->getValueDataColumn()->getDataColumnName()},
-            
+            type: '{$type}',
+            dimension: '{$series->getValueDataColumn()->getDataColumnName()}',
+            min: {$visualMap->getMin()},
+            max: {$visualMap->getMax()},
+            show: {$show},
+            {$dragable}
+            {$splitNumber}
+            {$minOpen}
+            {$maxOpen}
+            {$inRange}
+            formatter: function(a,b) {
+                console.log('formatter:', a,b);
+                if (b === undefined) {
+                    return {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'a')};
+                }
+                var nr1 = {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'a')};
+                var nr2 = {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'b')};
+                return nr1 + ' - ' + nr2;
+            },
+            orient: 'horizontal',
+            left: $left,
+            top: 'bottom'
         }
 
 JS;
@@ -1708,6 +1773,16 @@ JS;
     protected function baseZoomOffset() : int
     {
         return 40;
+    }
+    
+    /**
+     * basic offset value that needs to be added to the visualMap `left` property for each additional visualMap
+     *
+     * @return int
+     */
+    protected function baseVisualMapOffset() : int
+    {
+        return 250;
     }
     
     /**
@@ -2411,6 +2486,16 @@ JS;
         if ($this->legendHidden() === false && $widget->getLegendPosition() === 'bottom') {
             $margin += $this->baseLegendOffset();
         }
+        $hasVisualMap = false;
+        foreach ($this->getWidget()->getSeries() as $s) {
+            if ($s instanceof iHaveVisualMapChartPart && $s->hasVisualMap() === true && $s->getVisualMap()->getShow() === true) {
+                $hasVisualMap = true;
+                break;
+            }
+        }
+        if ($hasVisualMap === true) {
+            $margin += $this->baseZoomOffset();
+        }
         $margin += $this->baseZoomOffset() * $count;
         return $margin;
     }
@@ -2519,8 +2604,20 @@ JS;
         var xAxisCaption = '{$xAxisCaption}';
         var yAxisCaption = '{$yAxisCaption}';
         var xAxisValue = params.data[xAxisName];
+        var xFormatter = function(a) {
+                return {$this->buildJsLabelFormatter($series->getXAxis()->getDataColumn(), 'a')}
+            };
+        xAxisValue = xFormatter(xAxisValue);
         var yAxisValue = params.data[yAxisName];
+        var yFormatter = function(a) {
+                return {$this->buildJsLabelFormatter($series->getYAxis()->getDataColumn(), 'a')}
+            };
+        yAxisValue = yFormatter(yAxisValue);        
         var value = params.data[valueName];
+        var valueFormatter = function(a) {
+                return {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'a')}
+            };
+        value = valueFormatter(value);
         var tooltip = '<table class="exf-tooltip-table">'
         tooltip = tooltip + '<tr><td>' + xAxisCaption + '</td><td>'+ xAxisValue + '</td></tr>'
         tooltip = tooltip + '<tr><td>' + yAxisCaption + '</td><td>'+ yAxisValue + '</td></tr>'
