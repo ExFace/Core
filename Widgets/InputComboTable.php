@@ -512,23 +512,27 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             return;
         }
         
-        if (! $data_sheet->isEmpty()) {
-            if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
-                $this->doPrefillWithWidgetObject($data_sheet);
-            } else {
-                // If the prefill data was loaded for another object, there are still multiple possibilities to prefill
-                if ($data_sheet->getMetaObject()->is($this->getTableObject())) {
-                    $this->doPrefillWithOptionsObject($data_sheet);
-                    return;
-                } elseif ($this->getRelation()) {
-                    $this->doPrefillWithRelationsInData($data_sheet);
-                    return;
-                }
-                // If we are still here, that means, the above checks did not work. We still can try to use the prefill data
-                // to filter the options, so just pass it to the internal data widget
-                $this->getTable()->prefill($data_sheet);
-            }
+        if ($data_sheet->isEmpty() === true) {
+            return;
         }
+        
+        if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
+            $this->doPrefillWithWidgetObject($data_sheet);
+        } else {
+            // If the prefill data was loaded for another object, there are still multiple possibilities to prefill
+            if ($data_sheet->getMetaObject()->is($this->getTableObject())) {
+                $this->doPrefillWithOptionsObject($data_sheet);
+                return;
+            } elseif ($this->getRelation()) {
+                $this->doPrefillWithRelationsInData($data_sheet);
+                return;
+            }
+            // If we are still here, that means, the above checks did not work. We still can try to use the prefill data
+            // to filter the options, so just pass it to the internal data widget
+            $this->getTable()->prefill($data_sheet);
+        }
+        
+        return;
     }
 
     /**
