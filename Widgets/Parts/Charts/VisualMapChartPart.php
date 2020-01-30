@@ -98,7 +98,7 @@ class VisualMapChartPart
     }
     
     /**
-     * set if in the visualMap part the min and max value should be dragable. Only works when `visual_map_type` is `continuous`
+     * set if in the visualMap part the min and max value should be dragable. Only works when `type` is `continuous`
      * 
      * uxon-property dragable
      * uxon-type boolean
@@ -127,7 +127,7 @@ class VisualMapChartPart
     }
     
     /**
-     * Set the number of pieces the visual map should have. Only works if `visual_map_type` is `piecewise`.
+     * Set the number of pieces the visual map should have. Only has an effect if `type` is `piecewise`.
      * Default is 5.
      * 
      * @uxon-property split_number
@@ -206,8 +206,8 @@ class VisualMapChartPart
     }
     
     /**
-     * Set if the visualMap part should be shown or not. Data values will still be map to the colors if this property
-     * is set to `false` and `visual_map` is set to `true`.
+     * Set if the visualMap part should be shown or not. Data values will still be mapped to the colors if this property
+     * is set to `false`.
      * Default is `true`.
      * 
      * uxon-property show
@@ -237,9 +237,10 @@ class VisualMapChartPart
      * Set the colors for the visualMap part. The first color will be assigned to value set in the `min` property,
      * the last  will be assigned to value set in the `max` property.
      * Every color in between will be maped to values in between.
-     * If the `visual_map_type` is set to `continuous` the widget will try to apply a smooth transition between the colors.
-     * If the `visual_map_type` is set to `piecewise` it is advised to give 2 colors more than the value set in the property `visual_map_split_number` as
-     * by default 2 extra pieces will be added for values that are lower/higher than the values set in in the `min` / `max` properties.
+     * If the `type` is set to `continuous` the widget will try to apply a smooth transition between the colors.
+     * If the `type` is set to `piecewise` it is advised to give 1 colors more than the value set in the property `split_number` as
+     * by default 2 extra pieces will be added for values that are lower/higher than the values set in in the `min` / `max` properties and the values in the
+     * min/max range will be split into `split_number`-1 pieces.
      * To disable that behaviour set the property `show_excluded_values` to false.
      * If no colors are set, the Widget will choose colors according to the facade. 
      * 
@@ -266,9 +267,10 @@ class VisualMapChartPart
     }
     
     /**
-     * Set if values lower than min and higher than max should be shown as an extra piece in
+     * Set if values lower than min and higher than max should be shown and if there should be added an extra piece in
      * a visualMap of the type `piecewise`.
-     * Default is `false`.
+     * If the visualMap is of type `continuous` those values will always be shown.
+     * Default is `true`.
      * 
      * uxon-property show_excluded_values
      * uxon-type boolean
