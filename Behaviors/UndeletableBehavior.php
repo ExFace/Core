@@ -207,10 +207,10 @@ class UndeletableBehavior extends AbstractBehavior
             if ($resSingleRow === null){
                 switch ($operator){
                     case EXF_LOGICAL_AND:
-                        $resSingleRow = (in_array(false, $resRow) === true);
+                        $resSingleRow = (in_array(false, $resRow, true) === false);
                         break;
                     case EXF_LOGICAL_OR:
-                        $resSingleRow = in_array(true, $resRow);
+                        $resSingleRow = in_array(true, $resRow, true);
                         break;
                     case EXF_LOGICAL_XOR:
                         $resSingleRow = count(array_filter($resRow, function(bool $val){return $val === true;})) === 1;
