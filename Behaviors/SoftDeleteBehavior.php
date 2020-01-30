@@ -98,25 +98,21 @@ class SoftDeleteBehavior extends AbstractBehavior
             }
         }
 
-        // first check if metaobject has soft-delete-attribute
-        if ($eventData->getMetaObject()->hasAttribute($this->getSoftDeleteAttributeAlias())){
-            
-            // add the soft-delete-column
-            $deletedCol = $updateData->getColumns()->addFromAttribute($this->getSoftDeleteAttribute());
-            
-            // if there are no datarows in the passed datasheet, but there are filters assigned:
-            // add a single row of data, with only the soft-delete-attribute being set, so that this 
-            // attribute can be assigned to every row fitting the filter later
-            if ($updateData->isEmpty() && $updateData->getFilters() !== null){
-                $updateData->addRow([$this->getSoftDeleteAttributeAlias() => $this->getSoftDeleteValue()]);
-            }
-            
-            // if the datasheet still contains no datarows, then no items have to be marked as deleted
-            if ($updateData->isEmpty() === false){
-                $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
-                $updatedRows = $updateData->dataUpdate(false, $transaction);
-                $affected_rows += $updatedRows;
-            }
+        // add the soft-delete-column
+        $deletedCol = $updateData->getColumns()->addFromAttribute($this->getSoftDeleteAttribute());
+        
+        // if there are no datarows in the passed datasheet, but there are filters assigned:
+        // add a single row of data, with only the soft-delete-attribute being set, so that this 
+        // attribute can be assigned to every row fitting the filter later
+        if ($updateData->isEmpty() && $updateData->getFilters() !== null){
+            $updateData->addRow([$deletedCol->getName() => $this->getSoftDeleteValue()]);
+        }
+        
+        // if the datasheet still contains no datarows, then no items have to be marked as deleted
+        if ($updateData->isEmpty() === false){
+            $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
+            $updatedRows = $updateData->dataUpdate(false, $transaction);
+            $affected_rows += $updatedRows;
         }
             
         $eventData->setCounterForRowsInDataSource($updateData->countRowsInDataSource());
@@ -134,13 +130,9 @@ class SoftDeleteBehavior extends AbstractBehavior
      * 
      * @return string
      */
-    public function getSoftDeleteAttributeAlias() 
+    protected function getSoftDeleteAttributeAlias() 
     {
-        if ($this->getObject()->hasAttribute($this->soft_delete_attribute_alias)){
-            return $this->soft_delete_attribute_alias;
-        } else {
-            throw new BehaviorConfigurationError($this->getObject(), 'Configuration error: no attribute ' . $this->getSoftDeleteAttributeAlias() . 'found in object ' . $this->getObject()->getAlias() . '.');
-        }
+        return $this->soft_delete_attribute_alias;
     }
     
     /**
@@ -155,9 +147,11 @@ class SoftDeleteBehavior extends AbstractBehavior
      */
     public function setSoftDeleteAttributeAlias(string $value) : SoftDeleteBehavior
     {
-        $this->soft_delete_attribute_alias = $value;
-        //check whether the getter throws en exeption, to ensure the attributename is valid for this object
-        $this->getSoftDeleteAttributeAlias();
+        if ($this->getObject()->hasAttribute($value)){
+            $this->soft_delete_attribute_alias = $value;
+        } else {
+            throw new BehaviorConfigurationError($this->getObject(), 'Configuration error: no attribute ' . $value . 'found in object ' . $this->getObject()->getAlias() . '.');
+        }
         return $this;
     }
         
@@ -165,9 +159,13 @@ class SoftDeleteBehavior extends AbstractBehavior
      * 
      * @return MetaAttributeInterface
      */
-    public function getSoftDeleteAttribute() : MetaAttributeInterface
+    protected  function getSoftDeleteAttribute() : MetaAttributeInterface
     {
-        return $this->getObject()->getAttribute($this->getSoftDeleteAttributeAlias()); 
+        if ($this->getObject()->hasAttribute($this->getSoftDeleteAttributeAlias())){
+            return $this->getObject()->getAttribute($this->getSoftDeleteAttributeAlias()); 
+        } else {
+            throw new BehaviorConfigurationError($this->getObject(), 'Configuration error: no attribute ' . $this->getSoftDeleteAttributeAlias() . 'found in object ' . $this->getObject()->getAlias() . '.');
+        }
     }
     
     /**
@@ -205,7 +203,7 @@ class SoftDeleteBehavior extends AbstractBehavior
     {
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('soft_delete_attribute_alias', $this->getSoftDeleteAttributeAlias());
-        $uxon->setProperty('soft_delete_value', $this->getSoftDeleteValue);
+        $uxon->setProperty('soft_delete_value', $this->getSoftDeleteValue());
         return $uxon;
     }
 }
