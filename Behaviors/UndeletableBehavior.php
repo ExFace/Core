@@ -185,19 +185,19 @@ class UndeletableBehavior extends AbstractBehavior
             $resRow = array();
             $resSingleRow = null;
             foreach ($conditionGroup->getConditions() as $con){
-                $resSingleColumn = $con->evaluate($dataSheet, $idx);
+                $resSingleCondition = $con->evaluate($dataSheet, $idx);
                 switch (true){
-                    case $operator == EXF_LOGICAL_AND && $resSingleColumn === false:
+                    case $operator == EXF_LOGICAL_AND && $resSingleCondition === false:
                         $resSingleRow = false;
                         break;
-                    case $operator == EXF_LOGICAL_OR && $resSingleColumn === true:
+                    case $operator == EXF_LOGICAL_OR && $resSingleCondition === true:
                         $resSingleRow = true;
                         $errorCondition = $con;
                         break;
-                    case $operator == EXF_LOGICAL_AND && $resSingleColumn === true:
+                    case $operator == EXF_LOGICAL_AND && $resSingleCondition === true:
                         $errorCondition = $con;
                     default:
-                        $resRow[] = $resSingleColumn;
+                        $resRow[] = $resSingleCondition;
                 }
                 if ($resSingleRow !== null){
                     break;
