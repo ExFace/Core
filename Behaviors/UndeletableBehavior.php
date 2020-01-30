@@ -141,15 +141,23 @@ class UndeletableBehavior extends AbstractBehavior
         $dataSheet = $eventDataSheet->copy();
         
         foreach ($this->getConditionGroup()->getConditions() as $condition){
-            try {
-                $attribute = $dataSheet->getMetaObject()->getAttribute($condition->getAttributeAlias());
-            } catch (\Exception $e) {
-                    continue;
+            $expression = $condition->getExpression();
+            switch (true){
+                case $expression->isMetaAttribute():
+                    try {
+                        $attribute = $dataSheet->getMetaObject()->getAttribute($condition->getAttributeAlias());
+                    } catch (\Exception $e) {
+                        continue;
+                    }
+                    if (! $dataSheet->getColumns()->getByAttribute($attribute)){
+                        $dataSheet->getColumns()->addFromAttribute($attribute);
+                    }
+                    break;
+                case $expression->isString():
+                case $expression->isFormula():
+                    $dataSheet->getColumns()->addFromExpression($expression);
             }
-            if (! $dataSheet->getColumns()->getByAttribute($attribute)){
-                $dataSheet->getColumns()->addFromAttribute($attribute);
-            }
-        }
+       }
         
         $labelAttributeAlias = $dataSheet->getMetaObject()->getLabelAttributeAlias();
         if ($labelAttributeAlias !== null){
@@ -158,17 +166,18 @@ class UndeletableBehavior extends AbstractBehavior
         
         // TODO read data if $eventData->isFresh() === false and $eventData()->getMetaObject()->isReadable()
         if ($dataSheet->isFresh() === false && $dataSheet->getMetaObject()->isReadable()){
-            if ($uidCol = $dataSheet->getUidColumn() === false){
+            $uidCol = $dataSheet->getUidColumn();
+            if ($uidCol === false){
                 $uidCol = $dataSheet->getColumns()->addFromUidAttribute();
             }
-            $dataSheet->getFilters()->addConditionFromColumnValues($uidCol->getValues());
+            $dataSheet->getFilters()->addConditionFromColumnValues($uidCol);
             
             $dataSheet->dataRead();
         }
         
         // TODO $this->getConditionGroup()->evaluate()
         $conditionGroup =  $this->getConditionGroup();
-        $result = true;
+        $result = false;
         $errorCondition = null;
         $operator = $conditionGroup->getOperator();
         foreach($dataSheet->getRows() as $idx => $row){
