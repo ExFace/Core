@@ -214,6 +214,10 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         $table->setLazyLoading($this->getLazyLoading());
         $table->setLazyLoadingAction($this->getLazyLoadingActionUxon());
         
+        // Add a quick-search filter over the text-attribute to make sure quick search works correctly
+        // even if the table object has no alias!
+        $table->addFilter($table->createFilterWidget($this->getTextAttributeAlias())->setIncludeInQuickSearch(true));
+        
         $this->data_table = $table;
         
         // Ensure, that special columns needed for the InputComboTable are present. This must be done after $this->data_table is
@@ -868,6 +872,10 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             $uxon = new UxonObject([
                 'alias' => 'exface.Core.ShowLookupDialog'
             ]);
+        }
+        
+        if ($uxon->hasProperty('object_alias') === false) {
+            $uxon->setProperty('object_alias', $this->getTableObject()->getAliasWithNamespace());
         }
         
         if ($uxon->hasProperty('target_widget_id') ===  false) {
