@@ -516,10 +516,6 @@ class DataSheet implements DataSheetInterface
     {
         $thisObject = $this->getMetaObject();
         
-        // Empty the data before reading
-        // IDEA Enable incremental reading by distinguishing between reading the same page an reading a new page
-        $this->removeRows();
-        
         if (is_null($limit)) {
             $limit = $this->getRowsLimit();
         }
@@ -531,6 +527,10 @@ class DataSheet implements DataSheetInterface
         if ($eventBefore->isPreventRead() === true) {
             return 0;
         }
+        
+        // Empty the data before reading
+        // IDEA Enable incremental reading by distinguishing between reading the same page an reading a new page
+        $this->removeRows();
         
         try {
             $query = $this->dataReadInitQueryBuilder($thisObject);
