@@ -1606,14 +1606,19 @@ JS;
         if ($visualMap->getType() === VisualMapChartPart::VISUAL_MAP_TYPE_CONTINUOUS && $visualMap->isDragable() === true) {
             $dragable = "calculable: true,";  
         }
-        $splitNumber = '';        
+        $splitNumber = '';
+        $minOpen = '';
+        $maxOpen = '';
         if ($visualMap->getType() === VisualMapChartPart::VISUAL_MAP_TYPE_PIECEWISE) {
             $splitNumber = "splitNumber: {$visualMap->getSplitNumber()},";
-            $minOpen = 'minOpen: true,';
-            $maxOpen = 'maxOpen: true,';
+            if ($visualMap->getShowExcludedValues() === true) {                
+                $minOpen = 'minOpen: true,';
+                $maxOpen = 'maxOpen: true,';
+            }
         }
+        
         $inRange = '';
-        if ($visualMap->getColors() !== null) {
+        if (count($visualMap->getColors()) > 0) {
             $colors = json_encode($visualMap->getColors());
             $inRange = "inRange: {color: {$colors}},";
         }

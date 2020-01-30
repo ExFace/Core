@@ -6,6 +6,30 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 
+
+/**
+ * Adds a visualMap part to the Chart. The visualMap part maps colors to chart values and by default shows a visualMap
+ * either as pieces or as a continuous strip.
+ *
+ * Example:
+ *
+ * ```json
+ * series[
+ *  {
+ *      "type": "heatmap",
+ *      "visual_map": {
+ *          "type": "continuous",
+ *          "min": 0,
+ *          "max": 40,
+ *          "colors": ['blue', 'yellow', 'red'],
+ *          "show": true
+ *      }
+ *  }
+ * ]
+ *
+ * ```
+ *
+ */
 class VisualMapChartPart
 { 
     use ImportUxonObjectTrait;
@@ -21,6 +45,7 @@ class VisualMapChartPart
     private $dragable = false;
     private $show = true;
     private $colors = [];
+    private $showExludedValues = true; 
     
     public function __construct(ChartSeries $series, UxonObject $uxon = null)
     {
@@ -209,10 +234,14 @@ class VisualMapChartPart
     }
     
     /**
-     * Set the colors for the visualMap part. The first color will be assigned to minimum value, the last to the maximum value.
+     * Set the colors for the visualMap part. The first color will be assigned to value set in the `min` property,
+     * the last  will be assigned to value set in the `max` property.
      * Every color in between will be maped to values in between.
      * If the `visual_map_type` is set to `continuous` the widget will try to apply a smooth transition between the colors.
-     * If the `visual_map_type` is set to `piecewise` it is advised to give the same amount of colors as the property `visual_map_split_number`
+     * If the `visual_map_type` is set to `piecewise` it is advised to give 2 colors more than the value set in the property `visual_map_split_number` as
+     * by default 2 extra pieces will be added for values that are lower/higher than the values set in in the `min` / `max` properties.
+     * To disable that behaviour set the property `show_excluded_values` to false.
+     * If no colors are set, the Widget will choose colors according to the facade. 
      * 
      * uxon-property $colors
      * uxon-type array
@@ -226,11 +255,43 @@ class VisualMapChartPart
         return $this;
     }
     
+    /**
+     * Get the colors for the visualMap part
+     * 
+     * @return array
+     */
     public function getColors() : array
     {
         return $this->colors;
     }
     
-
+    /**
+     * Set if values lower than min and higher than max should be shown as an extra piece in
+     * a visualMap of the type `piecewise`.
+     * Default is `false`.
+     * 
+     * uxon-property show_excluded_values
+     * uxon-type boolean
+     * uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return VisualMapChartPart
+     */
+    public function setShowExcludedValues(bool $trueOrFalse) : VisualMapChartPart
+    {
+        $this->showExludedValues = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * Get if values lower than min and higher than max should be shown as an extra piece in
+     * a visualMap of the type `piecewise`.
+     * 
+     * @return bool
+     */
+    public function getShowExcludedValues() : bool
+    {
+        return $this->showExludedValues;
+    }
     
 }
