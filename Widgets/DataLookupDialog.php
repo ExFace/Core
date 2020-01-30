@@ -58,6 +58,25 @@ class DataLookupDialog extends Dialog
             $data_table->setMetaObject($this->getMetaObject());
             $data_table->setMultiSelect($this->getMultiSelect());
             
+            if ($data_table->hasColumns() === false) {
+                if ($data_table->getMetaObject()->hasLabelAttribute() === true) {
+                    $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getLabelAttribute()));
+                } elseif ($data_table->getMetaObject()->hasUidAttribute() === true && $data_table->getMetaObject()->getUidAttribute()->isHidden() === false) {
+                    $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getUidAttribute()));
+                } else {
+                    $cnt = 0;
+                    foreach ($data_table->getMetaObject()->getAttributes() as $attr) {
+                        if ($attr->isHidden() === false) {
+                            $data_table->addColumn($data_table->createColumnFromAttribute($attr));
+                            $cnt++;
+                        }
+                        if ($cnt >= 5) {
+                            break;
+                        }
+                    }
+                }
+            }
+            
             $dataConfigurator = $data_table->getConfiguratorWidget();
             foreach($data_table->getColumns() as $col) {
                 if ($col->isHidden() === false && $col->isBoundToAttribute() === true) {
