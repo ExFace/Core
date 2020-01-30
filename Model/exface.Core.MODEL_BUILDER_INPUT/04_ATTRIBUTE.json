@@ -82,6 +82,10 @@
             "attribute_alias": "RELATION_CARDINALITY"
         },
         {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -184,6 +188,7 @@
             "COMMENTS": "",
             "NAME": "App",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "APP",
             "DATATYPE": "0x31000000000000000000000000000000",
             "DATA_ADDRESS": "",
@@ -226,6 +231,7 @@
             "COMMENTS": "",
             "NAME": "Data Source",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "DATA_SOURCE",
             "DATATYPE": "0x31000000000000000000000000000000",
             "DATA_ADDRESS": "",
@@ -268,6 +274,7 @@
             "COMMENTS": "",
             "NAME": "Object Data Address Mask",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "OBJECT_DATA_ADDRESS_MASK",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "",
@@ -310,6 +317,7 @@
             "COMMENTS": "",
             "NAME": "Object",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "OBJECT",
             "DATATYPE": "0x31000000000000000000000000000000",
             "DATA_ADDRESS": "",
@@ -335,6 +343,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.ATTRIBUTE",
         "conditions": [
             {
                 "expression": "OBJECT__APP",

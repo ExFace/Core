@@ -82,6 +82,10 @@
             "attribute_alias": "RELATION_CARDINALITY"
         },
         {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -184,6 +188,7 @@
             "COMMENTS": "",
             "NAME": "Title",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "TITLE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "line(1)",
@@ -209,6 +214,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.ATTRIBUTE",
         "conditions": [
             {
                 "expression": "OBJECT__APP",
