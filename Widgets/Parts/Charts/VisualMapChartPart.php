@@ -239,8 +239,8 @@ class VisualMapChartPart
      * Every color in between will be maped to values in between.
      * If the `type` is set to `continuous` the widget will try to apply a smooth transition between the colors.
      * If the `type` is set to `piecewise` it is advised to give 1 colors more than the value set in the property `split_number` as
-     * by default 2 extra pieces will be added for values that are lower/higher than the values set in in the `min` / `max` properties and the values in the
-     * min/max range will be split into `split_number`-1 pieces.
+     * by default 2 extra pieces will be added for values that are lower/higher than the values set in in the `min` / `max` properties
+     * and the values in the min/max range will be split into `split_number`-1 pieces.
      * To disable that behaviour set the property `show_excluded_values` to false.
      * If no colors are set, the Widget will choose colors according to the facade. 
      * 

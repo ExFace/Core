@@ -45,7 +45,7 @@ class HeatmapChartSeries extends ChartSeries implements iHaveVisualMapChartPart
      * ```
      *
      * @uxon-property visual_map
-     * @uxon-type exface\Core\Widgets\Parts\Charts\VisualMapCahrtPart
+     * @uxon-type exface\Core\Widgets\Parts\Charts\VisualMapChartPart
      * @uxon-template {"type": "", "min": "", "max": ""}
      *
      * @param UxonObject $uxon
