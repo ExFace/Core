@@ -82,6 +82,10 @@
             "attribute_alias": "RELATION_CARDINALITY"
         },
         {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -184,6 +188,7 @@
             "COMMENTS": "",
             "NAME": "Property",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "PROPERTY",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-property",
@@ -226,6 +231,7 @@
             "COMMENTS": "",
             "NAME": "Type",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "TYPE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-type",
@@ -268,6 +274,7 @@
             "COMMENTS": "",
             "NAME": "Template",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "TEMPLATE",
             "DATATYPE": "0x11e7b02848321d2398350205857feb80",
             "DATA_ADDRESS": "uxon-template",
@@ -310,6 +317,7 @@
             "COMMENTS": "",
             "NAME": "Default",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "DEFAULT",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-default",
@@ -352,6 +360,7 @@
             "COMMENTS": "",
             "NAME": "Required",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "REQUIRED",
             "DATATYPE": "0x37000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-required",
@@ -377,6 +386,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.ATTRIBUTE",
         "conditions": [
             {
                 "expression": "OBJECT__APP",

@@ -82,6 +82,10 @@
             "attribute_alias": "RELATION_CARDINALITY"
         },
         {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -184,6 +188,7 @@
             "COMMENTS": "",
             "NAME": "Is part of app",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "APP",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "app_oid",
@@ -226,6 +231,7 @@
             "COMMENTS": null,
             "NAME": "Name",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "name",
@@ -268,6 +274,7 @@
             "COMMENTS": null,
             "NAME": "Description",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "DESCRIPTION",
             "DATATYPE": "0x31310000000000000000000000000000",
             "DATA_ADDRESS": "description",
@@ -310,6 +317,7 @@
             "COMMENTS": "",
             "NAME": "Facade",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "FACADE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "facade_filepath",
@@ -352,6 +360,7 @@
             "COMMENTS": "",
             "NAME": "Facade Configuration",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "FACADE_UXON",
             "DATATYPE": "0x11ea20adab7769cbaa030205857feb80",
             "DATA_ADDRESS": "facade_uxon",
@@ -377,6 +386,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.ATTRIBUTE",
         "conditions": [
             {
                 "expression": "OBJECT__APP",

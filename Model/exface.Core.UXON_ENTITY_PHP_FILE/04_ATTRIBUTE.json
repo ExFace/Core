@@ -82,6 +82,10 @@
             "attribute_alias": "RELATION_CARDINALITY"
         },
         {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -184,6 +188,7 @@
             "COMMENTS": "",
             "NAME": "Class annotation",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "CLASS_ANNOTATION",
             "DATATYPE": "0x11e7b93f315ab6ca84cce4b318306b9a",
             "DATA_ADDRESS": "pathname_relative",
@@ -209,6 +214,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.ATTRIBUTE",
         "conditions": [
             {
                 "expression": "OBJECT__APP",

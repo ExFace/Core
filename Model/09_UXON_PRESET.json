@@ -909,6 +909,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.UXON_PRESET",
         "conditions": [
             {
                 "expression": "APP",
