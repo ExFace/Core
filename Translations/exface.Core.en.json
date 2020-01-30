@@ -211,6 +211,7 @@
     "PAGE.ATTRIBUTE_EDITOR.CUSTOMIZING": "Customizing",
     "PAGE.ATTRIBUTE_EDITOR.OPEN_DATATYPE": "Data Type",
     "PAGE.ATTRIBUTE_EDITOR.OPEN_DATATYPE_HINT": "Open editor for the currently selected data type",
+    "PAGE.ATTRIBUTE_EDITOR.COMPOUND": "Compound Attribute",
     "PAGE.OBJECTS.APP_ALIAS": "App alias",
     "PAGE.OBJECTS.COPY_OBJECT": "Copy Object",
     "PAGE.OBJECTS.COPY_OBJECT_WITH_ATTRIBUTES": "Copy Object incl. Attributes",
