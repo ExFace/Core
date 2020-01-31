@@ -4,9 +4,7 @@ namespace exface\Core\Behaviors;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Interfaces\Model\BehaviorInterface;
-use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
@@ -77,10 +75,7 @@ class SoftDeleteBehavior extends AbstractBehavior
      * 
      * @param OnBeforeDeleteDataEvent $event
      * 
-     * @throws DataSheetColumnNotFoundError
-     * @throws DataSheetWriteError
-     * 
-     * @return void|number
+     * @return void
      */
     public function setFlagOnDelete(OnBeforeDeleteDataEvent $event)
     {
@@ -99,8 +94,6 @@ class SoftDeleteBehavior extends AbstractBehavior
         $event->preventDelete(false);
 
         $transaction = $event->getTransaction();
-
-        $affected_rows = 0;
 
         $updateData = $eventData->copy();
 
@@ -130,8 +123,7 @@ class SoftDeleteBehavior extends AbstractBehavior
         // if the datasheet still contains no datarows, then no items have to be marked as deleted
         if ($updateData->isEmpty() === false){
             $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
-            $updatedRows = $updateData->dataUpdate(false, $transaction);
-            $affected_rows += $updatedRows;
+            $updateData->dataUpdate(false, $transaction);
             $eventData->setCounterForRowsInDataSource($updateData->countRowsInDataSource());
         }
             
@@ -140,7 +132,7 @@ class SoftDeleteBehavior extends AbstractBehavior
             $deletedColInEventData->setValueOnAllRows($this->getSoftDeleteValue());
         }
 
-        return $affected_rows;
+        return;
     }
     
     /**
