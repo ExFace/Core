@@ -121,15 +121,18 @@ class UndeletableBehavior extends AbstractBehavior
     }
     
     /**
+     * This method is responsible for analyzing the expressions for the behavior defined in the metamodel, gethering the object's
+     * relevant data from the metamodel and evaluating whether the deletion for a dataset is allowed, or not.
      * 
      * @param OnBeforeDeleteDataEvent $event
+     * @throws RuntimeException
+     * @throws DataSheetDeleteForbiddenError
      */
     public function handleOnBeforeDelete(OnBeforeDeleteDataEvent $event)
     {
         if ($this->isDisabled())
             return;
         
-        // TODO add column to input data if not exists
         $eventDataSheet = $event->getDataSheet();
         
         // Do not do anything, if the base object of the data sheet is not the object with the behavior and is not
@@ -140,8 +143,10 @@ class UndeletableBehavior extends AbstractBehavior
         
         $dataSheet = $eventDataSheet->copy();
         
+        // add column to input data if not exists
         foreach ($this->getConditionGroup()->getConditions() as $condition){
             $expression = $condition->getExpression();
+            // differenciate between multiple forms of expressions, and handle them differently
             switch (true){
                 case $expression->isMetaAttribute():
                     try {
@@ -162,12 +167,13 @@ class UndeletableBehavior extends AbstractBehavior
             }
        }
         
+        // attach label attribute to datasheet, if exists
         $labelAttributeAlias = $dataSheet->getMetaObject()->getLabelAttributeAlias();
         if ($labelAttributeAlias !== null){
             $dataSheet->getColumns()->addFromAttribute($dataSheet->getMetaObject()->getLabelAttribute());
         }
         
-        // TODO read data if $eventData->isFresh() === false and $eventData()->getMetaObject()->isReadable()
+        // read data if $eventData->isFresh() === false and $eventData()->getMetaObject()->isReadable()
         if ($dataSheet->isFresh() === false && $dataSheet->getMetaObject()->isReadable()){
             $uidCol = $dataSheet->getUidColumn();
             if ($uidCol === false){
@@ -178,17 +184,20 @@ class UndeletableBehavior extends AbstractBehavior
             $dataSheet->dataRead();
         }
         
-        // TODO $this->getConditionGroup()->evaluate()
         $conditionGroup =  $this->getConditionGroup();
         $result = false;
         $errorCondition = null;
         $operator = $conditionGroup->getOperator();
+        
+        // evaluate the dataset row by row and condition by condition, so that if an item is detected as being
+        // undeletable, the exact item and the crucial expression can be passed in the error message.
         foreach($dataSheet->getRows() as $idx => $row){
-            
             $resRow = array();
             $resSingleRow = null;
+            //evaluate all conditons regarding the current row in the datasheet
             foreach ($conditionGroup->getConditions() as $con){
                 $resSingleCondition = $con->evaluate($dataSheet, $idx);
+                // interpret the result of the current expression
                 switch (true){
                     case $operator == EXF_LOGICAL_AND && $resSingleCondition === false:
                         $resSingleRow = false;
@@ -198,15 +207,23 @@ class UndeletableBehavior extends AbstractBehavior
                         $errorCondition = $con;
                         break;
                     case $operator == EXF_LOGICAL_AND && $resSingleCondition === true:
+                        // If the conditions are combined by an AND-operator, and the item found is true, then
+                        // store the current condition as an error-conditon in beforehand, just in case
+                        // the whole expressiongroup turns out to be true.
+                        // By that there will always be an expression to display if the deletion is forbidden.
                         $errorCondition = $con;
                     default:
+                        // If the result of the current conditiongroup isn't already concluded, attatch the
+                        // result for the current statement to an array.
                         $resRow[] = $resSingleCondition;
                 }
+                //break if the result of the whole expressiongroup has already been concluded
                 if ($resSingleRow !== null){
                     break;
                 }
             }
             
+            // if the result isn't concluded yet, analyze the array with the returnvalues of every evaluation made on the current row
             if ($resSingleRow === null){
                 switch ($operator){
                     case EXF_LOGICAL_AND:
@@ -223,6 +240,7 @@ class UndeletableBehavior extends AbstractBehavior
                 }
             }
             
+            // if one single row in the datasheet is found to fulfill the given set of conditions, break.
             if ($resSingleRow === true){
                 $result = true;
                 break;
@@ -231,17 +249,17 @@ class UndeletableBehavior extends AbstractBehavior
 
         if ($result === true){
             $errorRowDescriptor = '';
-                        
+            
+            // check if the regarding row has an alias for throwing in the exeption
             if ($labelAttributeAlias !== null && $row[$labelAttributeAlias] !== null){
                 $errorRowDescriptor = '"' . $row[$labelAttributeAlias] . '"'; 
             }
+            // if not, just use the position of the crucial datarow in the current selection
             if ($errorRowDescriptor == ''){
-                $errorRowDescriptor = $idx;
+                $errorRowDescriptor = $idx + 1;
             }
             
-            throw new DataSheetDeleteForbiddenError($dataSheet, $this->translate('BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR', ['%row%' => $errorRowDescriptor, '%expression%' => $errorCondition->toString()]));
-            
-            //throw new DataSheetDeleteForbiddenError($dataSheet, 'Delete Exeption: Item ' . $errorRowDescriptor . ' in the current selection of ' . $dataSheet->getMetaObject()->getAlias() . ' does fulfill the condition ' . $errorCondition->toString() . ' set in a behaviour, its deletion is therefore prohibited.');
+            throw new DataSheetDeleteForbiddenError($dataSheet, $this->translate('BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR', ['%row%' => $errorRowDescriptor, '%expression%' => $errorCondition->toString()]));    
         }
     }
     
@@ -273,6 +291,13 @@ class UndeletableBehavior extends AbstractBehavior
         return $this->conditionGroup;
     }
     
+    /**
+     * 
+     * @param string $messageId
+     * @param array $placeholderValues
+     * @param float $pluralNumber
+     * @return string
+     */
     protected function translate(string $messageId, array $placeholderValues = null, float $pluralNumber = null) : string
     {
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate($messageId, $placeholderValues, $pluralNumber);
