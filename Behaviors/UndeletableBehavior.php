@@ -156,6 +156,9 @@ class UndeletableBehavior extends AbstractBehavior
                 case $expression->isString():
                 case $expression->isFormula():
                     $dataSheet->getColumns()->addFromExpression($expression);
+                    break;
+                default:
+                    throw new RuntimeException('Unsupported expression "' . $expression->toString() . '" in behavior "' . $this->getAlias() . '"!');
             }
        }
         
@@ -236,7 +239,9 @@ class UndeletableBehavior extends AbstractBehavior
                 $errorRowDescriptor = $idx;
             }
             
-            throw new DataSheetDeleteForbiddenError($dataSheet, 'Delete Exeption: Item ' . $errorRowDescriptor . ' in the current selection of ' . $dataSheet->getMetaObject()->getAlias() . ' does fulfill the condition ' . $errorCondition->toString() . ' set in a behaviour, its deletion is therefore prohibited.');
+            throw new DataSheetDeleteForbiddenError($dataSheet, $this->translate('BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR', ['%row%' => $errorRowDescriptor, '%expression%' => $errorCondition->toString()]));
+            
+            //throw new DataSheetDeleteForbiddenError($dataSheet, 'Delete Exeption: Item ' . $errorRowDescriptor . ' in the current selection of ' . $dataSheet->getMetaObject()->getAlias() . ' does fulfill the condition ' . $errorCondition->toString() . ' set in a behaviour, its deletion is therefore prohibited.');
         }
     }
     
@@ -266,5 +271,10 @@ class UndeletableBehavior extends AbstractBehavior
             $this->conditionGroup = ConditionGroupFactory::createFromUxon($this->getWorkbench(), $this->conditionGroupUxon, $this->getObject());
         }
         return $this->conditionGroup;
+    }
+    
+    protected function translate(string $messageId, array $placeholderValues = null, float $pluralNumber = null) : string
+    {
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate($messageId, $placeholderValues, $pluralNumber);
     }
 }
