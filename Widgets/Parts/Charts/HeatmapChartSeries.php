@@ -15,10 +15,7 @@ class HeatmapChartSeries extends ChartSeries implements iHaveVisualMapChartPart
     private $visualMap = null;
     
     public function hasVisualMap(): bool
-    {
-        if ($this->visualMap === null) {
-            return false;
-        }
+    {        
         return true;
     }
 
@@ -32,25 +29,31 @@ class HeatmapChartSeries extends ChartSeries implements iHaveVisualMapChartPart
      * series[
      *  {
      *      "type": "heatmap",
-     *      "visual_map": {
-     *          "type": "continuous",
+     *      "color_scale": {
      *          "min": 0,
      *          "max": 40,
-     *          "colors": ['blue', 'yellow', 'red'],
-     *          "show": true
+     *          "use_color_groups": 5,
+     *          "colors": ['green', 'yellow', 'red'],
+     *          "show_scale_filter": false
      *      }
      *  }
      * ]
      *
      * ```
      *
-     * @uxon-property visual_map
+     * @uxon-property color_scale
      * @uxon-type exface\Core\Widgets\Parts\Charts\VisualMapChartPart
-     * @uxon-template {"type": "", "min": "", "max": ""}
+     * @uxon-template {"min": "", "max": ""}
      *
      * @param UxonObject $uxon
      * @return ChartSeries
      */
+    public function setColorScale(UxonObject $uxon) : ChartSeries
+    {
+        $this->setVisualMap($uxon);
+        return $this;
+    }
+    
     public function setVisualMap(UxonObject $uxon) : ChartSeries
     {
         $visualMap = new VisualMapChartPart($this, $uxon);
@@ -60,7 +63,7 @@ class HeatmapChartSeries extends ChartSeries implements iHaveVisualMapChartPart
     
     public function getVisualMap() : ?VisualMapChartPart
     {
-        return $this->visualMap;
+        return $this->visualMap ?? new VisualMapChartPart($this);
     }
     
 }
