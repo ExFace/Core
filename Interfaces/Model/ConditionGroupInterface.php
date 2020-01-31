@@ -146,5 +146,11 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
      * @return int
      */
     public function countNestedGroups(bool $recursive = true) : int;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionalExpressionInterface::isEmpty()
+     */
+    public function isEmpty(bool $checkValues = false) : bool;
 }
-
