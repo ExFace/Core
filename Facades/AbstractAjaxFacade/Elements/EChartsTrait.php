@@ -1576,7 +1576,7 @@ JS;
         if ($axis->getDimension() === Chart::AXIS_X) {
             $hasVisualMap = false;
             foreach ($this->getWidget()->getSeries() as $s) {
-                if ($s instanceof iHaveVisualMapChartPart && $s->hasVisualMap() === true && $s->getVisualMap()->getShow() === true) {
+                if ($s instanceof iHaveVisualMapChartPart && $s->hasVisualMap() === true && $s->getVisualMap()->getShowScaleFilter() === true) {
                     $hasVisualMap = true;
                     break;
                 }
@@ -1637,34 +1637,26 @@ JS;
             return '';
         }        
         
-        $type = mb_strtolower($visualMap->getType());
-        $show = 'true';
-        if ($visualMap->getShow() === false) {
-            $show = 'false';
-        }
+        $type = '';
+        $splitNumber = '';        
         $dragable = '';
-        if ($visualMap->getType() === VisualMapChartPart::VISUAL_MAP_TYPE_CONTINUOUS && $visualMap->isDragable() === true) {
-            $dragable = "calculable: true,";  
+        if ($visualMap->getUseColorGroups() === null) {
+            $type = VisualMapChartPart::VISUAL_MAP_TYPE_CONTINUOUS;
+            $dragable = "calculable: true,";
+        } else {
+            $type = VisualMapChartPart::VISUAL_MAP_TYPE_PIECEWISE;
+            $splitNumber = 'splitNumber: ' . $visualMap->getUseColorGroups() . ',';
         }
-        $splitNumber = '';
-        $minOpen = '';
-        $maxOpen = '';
-        if ($visualMap->getType() === VisualMapChartPart::VISUAL_MAP_TYPE_PIECEWISE) {
-            $splitNumber = "splitNumber: {$visualMap->getSplitNumber()},";
-            if ($visualMap->getShowValuesAboveMax() === true) {                
-                $maxOpen = 'maxOpen: true,';
-            }
-            /*if ($visualMap->getShowValuesBelowMin() === true) {
-                $minOpen = 'minOpen: true,';
-            }*/
-        }
-        
+        $type = strtolower($type);
+        $show = 'true';
+        if ($visualMap->getShowScaleFilter() === false) {
+            $show = 'false';
+        }        
         $inRange = '';
         if (count($visualMap->getColors()) > 0) {
             $colors = json_encode($visualMap->getColors());
             $inRange = "inRange: {color: {$colors}},";
-        }
-            
+        }            
         if ($count === 0) {
             $left = "'center'";
         } else {
@@ -1679,10 +1671,10 @@ JS;
             min: {$visualMap->getMin()},
             max: {$visualMap->getMax()},
             show: {$show},
+            maxOpen: true,
+            minOpen: false,
             {$dragable}
-            {$splitNumber}            
-            {$maxOpen}
-            {$minOpen}
+            {$splitNumber}
             {$inRange}
             formatter: function(a,b) {
                 if (b === undefined) {
@@ -1690,7 +1682,7 @@ JS;
                 }
                 var nr1 = {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'a')};
                 var nr2 = {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'b')};
-                return nr1 + ' - ' + nr2;
+                return '> ' + nr1 + ' - ' + nr2;
             },
             orient: 'horizontal',
             left: $left,
@@ -2538,7 +2530,7 @@ JS;
         }
         $hasVisualMap = false;
         foreach ($this->getWidget()->getSeries() as $s) {
-            if ($s instanceof iHaveVisualMapChartPart && $s->hasVisualMap() === true && $s->getVisualMap()->getShow() === true) {
+            if ($s instanceof iHaveVisualMapChartPart && $s->hasVisualMap() === true && $s->getVisualMap()->getShowScaleFilter() === true) {
                 $hasVisualMap = true;
                 break;
             }
@@ -2644,6 +2636,7 @@ JS;
             $yAxisCaption = $series->getYAxis()->getCaption();
             $yAxisName = $series->getYAxis()->getDataColumn()->getDataColumnName();
             $valueName = $series->getValueDataColumn()->getDataColumnName();
+            $valueCaption = $series->getValueDataColumn()->getCaption();
             return <<<JS
 
 {
@@ -2653,6 +2646,7 @@ JS;
         var valueName = '{$valueName}';
         var xAxisCaption = '{$xAxisCaption}';
         var yAxisCaption = '{$yAxisCaption}';
+        var valueCaption = '{$valueCaption}';
         var xAxisValue = params.data[xAxisName];
         var xFormatter = function(a) {
                 return {$this->buildJsLabelFormatter($series->getXAxis()->getDataColumn(), 'a')}
@@ -2668,10 +2662,10 @@ JS;
                 return {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'a')}
             };
         value = valueFormatter(value);
-        var tooltip = '<table class="exf-tooltip-table">'
+        var tooltip = '<table class="exf-echarts-tooltip-table">'
         tooltip = tooltip + '<tr><td>' + xAxisCaption + '</td><td>'+ xAxisValue + '</td></tr>'
         tooltip = tooltip + '<tr><td>' + yAxisCaption + '</td><td>'+ yAxisValue + '</td></tr>'
-        tooltip = tooltip + '<tr><td>' + valueName + '</td><td>'+ value + '</td></tr>'
+        tooltip = tooltip + '<tr><td>' + valueCaption + '</td><td>'+ value + '</td></tr>'
         tooltip = tooltip + '</table>'
 		return tooltip;
 	},
@@ -2705,7 +2699,7 @@ JS;
                 break;
             }
         }
-        var tooltip = '<table class="exf-tooltip-table"><tr><th align = "left" colspan = "3">' + params[0].axisValueLabel + '</th></tr>';
+        var tooltip = '<table class="exf-echarts-tooltip-table"><tr><th align = "left" colspan = "3">' + params[0].axisValueLabel + '</th></tr>';
         var tooltipPart = '';
         var currentAxis = params[0].axisIndex;
         // for each object in params build a table row

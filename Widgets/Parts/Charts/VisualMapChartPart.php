@@ -17,12 +17,12 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
  * series[
  *  {
  *      "type": "heatmap",
- *      "visual_map": {
- *          "type": "continuous",
+ *      "color_scale": {
  *          "min": 0,
  *          "max": 40,
- *          "colors": ['blue', 'yellow', 'red'],
- *          "show": true
+ *          "use_color_groups": 5,
+ *          "colors": ['green', 'yellow', 'red'],
+ *          "show_scale_filter": false
  *      }
  *  }
  * ]
@@ -38,15 +38,11 @@ class VisualMapChartPart
     const VISUAL_MAP_TYPE_PIECEWISE = 'PIECEWISE';
     
     private $series = null;
-    private $type = null;
     private $min = 0;
     private $max = 100;
-    private $splitNumber = 5;
-    private $dragable = false;
-    private $show = true;
+    private $splitNumber = null;
+    private $showScaleFilter = true;
     private $colors = [];
-    private $showValuesBelowMin = true;
-    private $showValuesAboveMax = true;
     
     public function __construct(ChartSeries $series, UxonObject $uxon = null)
     {
@@ -66,98 +62,49 @@ class VisualMapChartPart
     }
     
     /**
-     * Set the visualMap type. Possible types are 'continuous'and 'piecewise'.
-     *
-     * @uxon-property type
-     * @uxon-type [continuous, piecewise]
-     *
-     * @param string $type
-     * @return VisualMapChartPart
-     */
-    public function setType(string $type) : VisualMapChartPart
-    {
-        $type = mb_strtoupper($type);
-        if (defined(__CLASS__ . '::VISUAL_MAP_TYPE_' . $type)) {
-            $this->type = $type;
-        } else {
-            throw new WidgetPropertyInvalidValueError($this->getChartSeries()->getChart(), 'Invalid visual map type "' . $type . '". Only CONTINUOUS or PIECEWISE are allowed!', '6TA2Y6A');
-        }
-        return $this;        
-    }
-    
-    /**
-     * get the type of the visualMap part
+     * get the type of the color scale filter
      * 
      * @return string
      */
     public function getType() : string
     {
-        if ($this->type === null) {
+        if ($this->splitNumber === null) {
             return self::VISUAL_MAP_TYPE_CONTINUOUS;
         }
-        return $this->type;
+        return self::VISUAL_MAP_TYPE_PIECEWISE;
     }
     
     /**
-     * set if in the visualMap part the min and max value should be dragable. Only works when `type` is `continuous`
-     * 
-     * uxon-property dragable
-     * uxon-type boolean
-     * uxon-default false
-     * 
-     * @param bool $trueOrFalse
-     * @return VisualMapChartPart
-     */
-    public function setDragable(bool $trueOrFalse) : VisualMapChartPart
-    {
-        if ($this->type === null) {
-            $this->type === self::VISUAL_MAP_TYPE_CONTINUOUS;
-        }
-        $this->dragable = $trueOrFalse;
-        return $this;
-    }
-    
-    /**
-     * get if the visualMap part should be dragable
-     * 
-     * @return string
-     */
-    public function isDragable() : bool
-    {
-        return $this->dragable;
-    }
-    
-    /**
-     * Set the number of pieces the visual map should have. Only has an effect if `type` is `piecewise`.
-     * Default is 5.
+     * Set the number of pieces the color scale should have. Set 'false' to use a a continuous color scale.
+     * Set `true` to use a default (5) count of pieces. Set a `number` to divide the range between min/max into that amount
+     * of pieces.
      * 
      * @uxon-property split_number
-     * @uxon-type integer
      * 
      * @param int $number
      * @return VisualMapChartPart
      */
-    public function setSplitNumber(int $number) : VisualMapChartPart
-    {
-        if ($this->type === null) {
-            $this->type === self::VISUAL_MAP_TYPE_PIECEWISE;
-        }
-        if ($number > 0) {
-            $this->splitNumber = $number;
+    public function setUseColorGroups($boolOrNumber) : VisualMapChartPart
+    {        
+        if (gettype($boolOrNumber) === 'boolean') {
+            if ($boolOrNumber === true)
+            $this->splitNumber = 5;
+        } else if(gettype($boolOrNumber) === 'integer') {
+            $this->splitNumber = $boolOrNumber;            
         } else {
-            throw new WidgetPropertyInvalidValueError($this->getChart(), 'Invalid visual map split number "' . $number . '". Only numbers higher than 0 are allowed!', '6TA2Y6A');
+            throw new WidgetPropertyInvalidValueError($this->getChart(), 'Invalid use_color_groups value "' . $boolOrNumber . '". Only boolean or integer higher than 0 are allowed!', '6TA2Y6A');
         }
         
         return $this;
     }
     
-    public function getSplitNumber() : int
+    public function getUseColorGroups() : ?int
     {
         return $this->splitNumber;
     }
     
     /**
-     * Set the minimal value to be displayed on the visualMap part.
+     * Set the minimal value to be displayed on the color scale.
      * Default is 0.
      * 
      * @uxon-property min
@@ -182,7 +129,7 @@ class VisualMapChartPart
     }
     
     /**
-     * Set the maximal value to be displayed on the visualMap part.
+     * Set the maximal value to be displayed on the color scale.
      * Default is 100.
      *
      * @uxon-property max
@@ -207,42 +154,40 @@ class VisualMapChartPart
     }
     
     /**
-     * Set if the visualMap part should be shown or not. Data values will still be mapped to the colors if this property
-     * is set to `false`.
+     * Set if the color scale filter should be shown or not.
+     * Data values will still be mapped to the colors if this property is set to `false`.
      * Default is `true`.
      * 
-     * uxon-property show
+     * uxon-property show_scale_filter
      * uxon-property boolean
      * uxon-default true
      * 
      * @param bool $trueOrFalse
      * @return VisualMapChartPart
      */
-    public function setShow(bool $trueOrFalse) : VisualMapChartPart
+    public function setShowScaleFilter(bool $trueOrFalse) : VisualMapChartPart
     {
-        $this->show = $trueOrFalse;
+        $this->showScaleFilter = $trueOrFalse;
         return $this;
     }
     
     /**
-     * Get if the visualMap part should be shown or not.
+     * Get if the color scale filter should be shown or not.
      * 
      * @return bool
      */
-    public function getShow() : bool
+    public function getShowScaleFilter() : bool
     {
-        return $this->show;
+        return $this->showScaleFilter;
     }
     
     /**
-     * Set the colors for the visualMap part. The first color will be assigned to value set in the `min` property,
-     * the last  will be assigned to value set in the `max` property.
-     * Every color in between will be maped to values in between.
-     * If the `type` is set to `continuous` the widget will try to apply a smooth transition between the colors.
-     * If the `type` is set to `piecewise` it is advised to give 1 colors more than the value set in the property `split_number` as
-     * by default 2 extra pieces will be added for values that are lower/higher than the values set in in the `min` / `max` properties
-     * and the values in the min/max range will be split into `split_number`-1 pieces.
-     * To disable that behaviour set the property `show_excluded_values` to false.
+     * Set the colors for the color scale filter. The first color will be assigned to value set in the `min` property,
+     * the last  will be assigned to the `max` value or, if `use_color_groups` is `true` or an integer, to the group
+     * for values higher than `max`. Every color in between will be maped to values in between.
+     * If the `use_color_groups` property is set to a number it is advised to as many colors as `use_color_groups` is set to plus
+     * and additional one, because one extra pieces will be added for values that are higher than the values set in in the `max` property.
+     * The values in the min/max range will be split into as many groups as given in the `use_color_groups` property.
      * If no colors are set, the Widget will choose colors according to the facade. 
      * 
      * uxon-property colors
@@ -266,82 +211,5 @@ class VisualMapChartPart
     {
         return $this->colors;
     }
-    
-    /**
-     * Set if values lower than min and higher than max should be shown and if there should be added an extra piece in
-     * a visualMap of the type `piecewise`.
-     * If the visualMap is of type `continuous` those values will always be shown.
-     * Default is `true`.
-     * 
-     * uxon-property show_values_excluded
-     * uxon-type boolean
-     * uxon-default false
-     * 
-     * @param bool $trueOrFalse
-     * @return VisualMapChartPart
-     */
-    /*public function setShowValuesExcluded(bool $trueOrFalse) : VisualMapChartPart
-    {
-        $this->showValuesAboveMax = $trueOrFalse;
-        $this->showValuesBelowMin = $trueOrFalse;
-        return $this;
-    }*/
-    
-    /**
-     * Set if values higher than max should be shown and if an extra piece should be added in a visualMap of the type `piecewise`.
-     * If the visualMap is of type `continuous` those values will always be shown.
-     * Default is `true`.
-     *
-     * uxon-property show_values_above_max
-     * uxon-type boolean
-     * uxon-default false
-     *
-     * @param bool $trueOrFalse
-     * @return VisualMapChartPart
-     */
-    public function setShowValuesAboveMax(bool $trueOrFalse) : VisualMapChartPart
-    {
-        $this->showValuesAboveMax = $trueOrFalse;
-        return $this;
-    }
-    
-    /**
-     * Get if values higher than max should be shown and extra piece should be added in a visualMap of the type `piecewise`.
-     * Default is `true`.
-     *
-     * @return bool
-     */
-    public function getShowValuesAboveMax() : bool
-    {
-        return $this->showValuesAboveMax;
-    }
-    
-    /**
-     * Set if values lower than min should be shown and if there should be added an extra piece in a visualMap of the type `piecewise`.
-     * If the visualMap is of type `continuous` those values will always be shown.
-     * Default is `true`.
-     *
-     * uxon-property show_values_below_min
-     * uxon-type boolean
-     * uxon-default false
-     *
-     * @param bool $trueOrFalse
-     * @return VisualMapChartPart
-     */
-    /*public function setShowValuesBelowMin(bool $trueOrFalse) : VisualMapChartPart
-    {
-        $this->showValuesBelowMin = $trueOrFalse;
-        return $this;
-    }*/
-    
-    /**
-     * Get if values lower than min should be shown and an extra piece should be added in a visualMap of the type `piecewise`.
-     *
-     * @return bool
-     */
-    /*public function getShowValuesBelowMin() : bool
-    {
-        return $this->showValuesBelowMin;
-    }*/
     
 }
