@@ -28,6 +28,45 @@ use exface\Core\Widgets\Parts\Charts\HeatmapChartSeries;
 use exface\Core\Widgets\Parts\Charts\VisualMapChartPart;
 
 /**
+ * Trait to use for implementation of charts into a facade using echarts library (https://www.echartsjs.com/en/index.html).
+ * 
+ * A custom build echarts javascript file is used.
+ * The echarts website provides a tool to build a custom version of their library: https://www.echartsjs.com/en/builder.html
+ * It is possible that the tool does not work correctly with the Google Chrome browser (it stops during the .js file creation),
+ * if that happens use Firefox to create the custom .js file.
+ * The current custom file includes the following chart types, coordinate systems, components and other parts:
+ * 
+ * Charts:
+ * Bar, Line, Pie, Scatter, Heatmap, Sunburst, Graph, Gauge
+ * 
+ * Coordinate Systems:
+ * Grid, Polar, SingleAxis
+ * 
+ * Components:
+ * Title, Legend, Tooltip, MarkPoint, MarkLine, MarkArea, DataZoom, VisualMap
+ * 
+ * Others:
+ * Utilities, CodeCompression
+ * 
+ * 
+ * To use the EChartsTrait in a facade add in the function where the HTML for the site is created the following function
+ * `addChartButtons()` to add the buttons to change the chart type to your site.
+ * Also you should add a resize script which, at one point, calls the `buildJsEChartsResize()` function from the trait.
+ * Generating the javascript for the site call the following functions from the trait:
+ * `buildJsEChartsVar()` -> generate a js variable the echarts component will be accessable on
+ * `buildJsFunctions()` -> to build and add all the javascript function needed for echarts to work correctly
+ * `buildJsEChartsInit()` -> initialize the echarts component (possible custom implementation is neede for the facade)
+ * `buildJsRefresh()` -> add the function to refresh the chart
+ * 
+ * Its also necessary to implement the function buildJsDataLoadFunctionBody which should provide a javascript function the provides/loads the 
+ * data for the chart.
+ * Its recommended to implement a function like `buildJsDataLoaderOnLoaded()` which gets called after data fetching from a server or such was succesful.
+ * This function should call the EChartsTrait function `buildJsRedraw()`, with the data rows als parameter, to redraw the chart with the new data.
+ * The trait also provides the functions `buildJsEChartsShowLoading()` and `buildJsEChartsHideLoading()` which might be called when the site is busy loading data,
+ * and when its finished loading data.
+ * 
+ * For an example of how to use the ECahrtsTrait in a facade, see the file `exface\JEasyUIFacade\Facades\Elements\EuiChart.php` which shows the implamantation for the JeasyUI Facade.
+ *
  *
  * @method Chart getWidget()
  * @author Ralf Mulansky
