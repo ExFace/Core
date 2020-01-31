@@ -45,7 +45,8 @@ class VisualMapChartPart
     private $dragable = false;
     private $show = true;
     private $colors = [];
-    private $showExludedValues = true; 
+    private $showValuesBelowMin = true;
+    private $showValuesAboveMax = true;
     
     public function __construct(ChartSeries $series, UxonObject $uxon = null)
     {
@@ -244,7 +245,7 @@ class VisualMapChartPart
      * To disable that behaviour set the property `show_excluded_values` to false.
      * If no colors are set, the Widget will choose colors according to the facade. 
      * 
-     * uxon-property $colors
+     * uxon-property colors
      * uxon-type array
      * 
      * @param UxonObject $colors
@@ -272,28 +273,75 @@ class VisualMapChartPart
      * If the visualMap is of type `continuous` those values will always be shown.
      * Default is `true`.
      * 
-     * uxon-property show_excluded_values
+     * uxon-property show_values_excluded
      * uxon-type boolean
      * uxon-default false
      * 
      * @param bool $trueOrFalse
      * @return VisualMapChartPart
      */
-    public function setShowExcludedValues(bool $trueOrFalse) : VisualMapChartPart
+    /*public function setShowValuesExcluded(bool $trueOrFalse) : VisualMapChartPart
     {
-        $this->showExludedValues = $trueOrFalse;
+        $this->showValuesAboveMax = $trueOrFalse;
+        $this->showValuesBelowMin = $trueOrFalse;
+        return $this;
+    }*/
+    
+    /**
+     * Set if values higher than max should be shown and if an extra piece should be added in a visualMap of the type `piecewise`.
+     * If the visualMap is of type `continuous` those values will always be shown.
+     * Default is `true`.
+     *
+     * uxon-property show_values_above_max
+     * uxon-type boolean
+     * uxon-default false
+     *
+     * @param bool $trueOrFalse
+     * @return VisualMapChartPart
+     */
+    public function setShowValuesAboveMax(bool $trueOrFalse) : VisualMapChartPart
+    {
+        $this->showValuesAboveMax = $trueOrFalse;
         return $this;
     }
     
     /**
-     * Get if values lower than min and higher than max should be shown as an extra piece in
-     * a visualMap of the type `piecewise`.
-     * 
+     * Get if values higher than max should be shown and extra piece should be added in a visualMap of the type `piecewise`.
+     * Default is `true`.
+     *
      * @return bool
      */
-    public function getShowExcludedValues() : bool
+    public function getShowValuesAboveMax() : bool
     {
-        return $this->showExludedValues;
+        return $this->showValuesAboveMax;
     }
+    
+    /**
+     * Set if values lower than min should be shown and if there should be added an extra piece in a visualMap of the type `piecewise`.
+     * If the visualMap is of type `continuous` those values will always be shown.
+     * Default is `true`.
+     *
+     * uxon-property show_values_below_min
+     * uxon-type boolean
+     * uxon-default false
+     *
+     * @param bool $trueOrFalse
+     * @return VisualMapChartPart
+     */
+    /*public function setShowValuesBelowMin(bool $trueOrFalse) : VisualMapChartPart
+    {
+        $this->showValuesBelowMin = $trueOrFalse;
+        return $this;
+    }*/
+    
+    /**
+     * Get if values lower than min should be shown and an extra piece should be added in a visualMap of the type `piecewise`.
+     *
+     * @return bool
+     */
+    /*public function getShowValuesBelowMin() : bool
+    {
+        return $this->showValuesBelowMin;
+    }*/
     
 }

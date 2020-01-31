@@ -1612,10 +1612,12 @@ JS;
         $maxOpen = '';
         if ($visualMap->getType() === VisualMapChartPart::VISUAL_MAP_TYPE_PIECEWISE) {
             $splitNumber = "splitNumber: {$visualMap->getSplitNumber()},";
-            if ($visualMap->getShowExcludedValues() === true) {                
-                $minOpen = 'minOpen: true,';
+            if ($visualMap->getShowValuesAboveMax() === true) {                
                 $maxOpen = 'maxOpen: true,';
             }
+            /*if ($visualMap->getShowValuesBelowMin() === true) {
+                $minOpen = 'minOpen: true,';
+            }*/
         }
         
         $inRange = '';
@@ -1639,9 +1641,9 @@ JS;
             max: {$visualMap->getMax()},
             show: {$show},
             {$dragable}
-            {$splitNumber}
-            {$minOpen}
+            {$splitNumber}            
             {$maxOpen}
+            {$minOpen}
             {$inRange}
             formatter: function(a,b) {
                 if (b === undefined) {
