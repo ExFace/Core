@@ -413,6 +413,15 @@ class DataTree extends DataTable
     }
     
     /**
+     * 
+     * @return bool
+     */
+    public function hasRowReorder() : bool
+    {
+        return $this->row_reorder !== null;
+    }
+    
+    /**
      * Returns TRUE if row reordering is enabled for this table and FALSE otherwise.
      *
      * @return boolean
