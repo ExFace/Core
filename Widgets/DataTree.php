@@ -30,6 +30,8 @@ class DataTree extends DataTable
     private $tree_root_uid = null;
     
     private $row_reorder = null;
+    
+    private $keepExpandedPathsOnRefresh = null;
 
     protected function init()
     {
@@ -429,6 +431,31 @@ class DataTree extends DataTable
     public function hasRowGroups()
     {
         return $this->row_grouper !== null;
+    }
+    
+    /**
+     *
+     * @return bool|NULL
+     */
+    public function getKeepExpandedPathsOnRefresh() : ?bool
+    {
+        return $this->keepExpandedPathsOnRefresh;
+    }
+    
+    /**
+     * Set to FALSE to collapse all tree nodes on refresh, search, filter, etc.
+     * 
+     * @uxon-property keep_expanded_paths_on_refresh
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return DataTree
+     */
+    public function setKeepExpandedPathsOnRefresh(bool $value) : DataTree
+    {
+        $this->keepExpandedPathsOnRefresh = $value;
+        return $this;
     }
 }
 ?>
