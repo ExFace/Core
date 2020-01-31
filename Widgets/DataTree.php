@@ -6,6 +6,10 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\FlagTreeFolderDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\Parts\DataRowReorder;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
 
 class DataTree extends DataTable
 {
@@ -24,6 +28,8 @@ class DataTree extends DataTable
     private $tree_expanded = false;
 
     private $tree_root_uid = null;
+    
+    private $row_reorder = null;
 
     protected function init()
     {
@@ -222,9 +228,9 @@ class DataTree extends DataTable
 
     public function getTreeRootUid()
     {
-        // TODO need a method to determine the root node of a tree somehow. Perhaps query for a record with parent = null?
-        if (! $this->tree_root_uid) {
-            $this->tree_root_uid = 1;
+        if ($this->tree_root_uid) {
+            // TODO need a method to determine the root node of a tree somehow. Perhaps query for a record with parent = null?
+            //$this->tree_root_uid = 1;
         }
         return $this->tree_root_uid;
     }
@@ -261,6 +267,10 @@ class DataTree extends DataTable
             $data_sheet->getColumns()->addFromExpression($this->getTreeFolderFlagAttributeAlias());
         }
         $data_sheet->getColumns()->addFromExpression($this->getTreeParentIdAttributeAlias());
+        
+        if ($this->getTreeRootUid() !== null && $data_sheet->getFilters()->isEmpty(true) === true && $this->getMetaObject()->is($data_sheet->getMetaObject())) {
+            $data_sheet->addFilterFromString($this->getTreeParentIdAttributeAlias(), $this->getTreeRootUid(), ComparatorDataType::EQUALS);
+        }
         
         return $data_sheet;
     }
@@ -355,6 +365,61 @@ class DataTree extends DataTable
         }
         
         return $this->getColumn($this->getTreeLeafIdColumnId());
+    }
+    
+    /**
+     * Sets the attribute and direction rows are sorted by in a parent node
+     * 
+     * Example:
+     *
+     * ```json
+     * {
+     *  "widget_type": "DataTree",
+     *  "row_reorder": {
+     *      "order_index_attribute_alias": "MY_ATTRIBUTE",
+     *      "order_direction": "ASC"
+     *  }
+     * }
+     *
+     * ```
+     *
+     * @uxon-property row_reorder
+     * @uxon-type \exface\Core\Widgets\Parts\DataRowReorder
+     * @uxon-template {"order_index_attribute_alias": "", "order_direction": "asc"}
+     *
+     * @param UxonObject $uxon
+     * @return DataTable
+     */
+    public function setRowReorder(UxonObject $uxon) : DataTree
+    {
+        $part = new DataRowReorder($this, $uxon);
+        $this->row_reorder = $part;
+        $this->addSorter($part->getOrderIndexAttributeAlias(), $part->getOrderDirection());
+        return $this;
+    }
+    
+    /**
+     * Returns the DataRowReorder widget if row reordering is configured or throws exception.
+     *
+     * @throws WidgetLogicError
+     * @return DataRowReorder
+     */
+    public function getRowReorder() : DataRowReorder
+    {
+        if (is_null($this->row_reorder)) {
+            throw new WidgetLogicError($this, 'Property row_reorder not set prior to reorder initialization!');
+        }
+        return $this->row_reorder;
+    }
+    
+    /**
+     * Returns TRUE if row reordering is enabled for this table and FALSE otherwise.
+     *
+     * @return boolean
+     */
+    public function hasRowGroups()
+    {
+        return $this->row_grouper !== null;
     }
 }
 ?>
