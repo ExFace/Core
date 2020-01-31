@@ -6,21 +6,38 @@ use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\DataSheets\DataColumn;
-use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 /**
- * This behavior may be used for soft-deletion, i.e. for setting an specific value to an attribute of an object, instead of deleting it.
- * Therefore this behavior requires two attibutes in order to be used: 
- *      `$soft_delete_attribute_alias` - as the attribute of the object, in which the deletion is being flagged
- *      `$soft_delete_value` - as the value a deleted object has in that attribute, when it should be considered deleted.
+ * Replaces the default delete-operation by setting a "deleted"-attribute to a special value.
  * 
- * @author tmc
+ * Instead of letting the data source actually remove data on delete-operations, this behavior
+ * performs an update and sets the attribute specified by the `soft_delete_attribute_alias`
+ * to the `soft_delete_value`, thus marking the data item as "deleted".
+ * 
+ * Note, that `soft_delete_value` value will be parsed into the data type of the soft-delete
+ * attribute, so you can use any supported notation: e.g. a `0` for the current timestamp for
+ * time-attribute (e.g. if you have a `deleted_on` attribute with a timestamp instead of 
+ * a `deleted_flag`).
+ * 
+ * ## Examples
+ * 
+ * For example, this is used for the Core app's PAGEs. The following configuration sets the
+ * attribute `deleted_flag` to `1` for every deleted page instead of actually removing it
+ * from the model database.
+ * 
+ * ```
+ * {
+ *  "soft_delete_attribute_alias": "deleted_flag",
+ *  "soft_delete_value": 1
+ * }
+ * 
+ * ```
+ * 
+ * @author Thomas Michael
+ * @author Andrej Kabachnik
  *
  */
 class SoftDeleteBehavior extends AbstractBehavior
@@ -36,8 +53,6 @@ class SoftDeleteBehavior extends AbstractBehavior
      */
     public function register() : BehaviorInterface
     {
-        $this->getSoftDeleteAttribute()->setSystem(true)->setDefaultAggregateFunction('MAX');
-       
         $this->getWorkbench()->eventManager()->addListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'setFlagOnDelete']);
 
         $this->setRegistered(true);
@@ -45,21 +60,26 @@ class SoftDeleteBehavior extends AbstractBehavior
     }
     
     /**
-     * This function contains all the logic for setting the given soft-delete-value into the given soft-delete-attribute.
+     * This function contains all the logic for setting the given soft-delete-value into the given 
+     * soft-delete-attribute.
+     * 
      * The entries which shall be marked as deleted are read from the datasheet passed with the event.
      * The rows to set deleted may be passed in two different ways, and have to be handled differently:
-     *      - rows are passed as actual rows in the datasheet:
-     *          The columns of the datasheet are being stripped down to the essential ones (`uid`, `modified_on`
-     *          and the softDeleteAttribute), then the soft-delete-value is set to the soft-delete-attribute,
-     *          and the data is updated to the metaobject.
+     * 
+     * - rows are passed as actual rows in the datasheet:
+     * The columns of the datasheet are being stripped down to the essential ones (`uid`, `modified_on`
+     * and the softDeleteAttribute), then the soft-delete-value is set to the soft-delete-attribute,
+     * and the data is updated to the metaobject.
      *          
-     *      - there are no rows in the events datasheet, only filters:
-     *          Firstly, all rows which match the filters passed in the datasheet are read from the metaobject,
-     *          then handle the datasheet as described above.
+     * - there are no rows in the events datasheet, only filters:
+     * Firstly, all rows which match the filters passed in the datasheet are read from the metaobject,
+     * then handle the datasheet as described above.
      * 
      * @param OnBeforeDeleteDataEvent $event
+     * 
      * @throws DataSheetColumnNotFoundError
      * @throws DataSheetWriteError
+     * 
      * @return void|number
      */
     public function setFlagOnDelete(OnBeforeDeleteDataEvent $event)
@@ -86,12 +106,11 @@ class SoftDeleteBehavior extends AbstractBehavior
 
         // remove all columns, except of system columns (like 'id' or 'modified-on' columns)
         foreach ($updateData->getColumns() as $col){
-            if ($updateData->getMetaObject()->hasAttribute($col->getAttributeAlias())){
-                switch (true){
-                    case ($col->getAttribute()->isSystem()):
-                        break;
-                    default:
-                        $updateData->getColumns()->remove($col);
+            if ($col->getExpressionObj()->isMetaAttribute() === true){
+                if($col->getAttribute()->isSystem() === true) {
+                    break;
+                } else {
+                    $updateData->getColumns()->remove($col);
                 }
             } else {
                 $updateData->getColumns()->remove($col);
@@ -104,7 +123,7 @@ class SoftDeleteBehavior extends AbstractBehavior
         // if there are no datarows in the passed datasheet, but there are filters assigned:
         // add a single row of data, with only the soft-delete-attribute being set, so that this 
         // attribute can be assigned to every row fitting the filter later
-        if ($updateData->isEmpty() && $updateData->getFilters() !== null){
+        if ($updateData->isEmpty() === true && $updateData->getFilters()->isEmpty(true) === false){
             $updateData->addRow([$deletedCol->getName() => $this->getSoftDeleteValue()]);
         }
         
@@ -113,14 +132,12 @@ class SoftDeleteBehavior extends AbstractBehavior
             $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
             $updatedRows = $updateData->dataUpdate(false, $transaction);
             $affected_rows += $updatedRows;
+            $eventData->setCounterForRowsInDataSource($updateData->countRowsInDataSource());
         }
             
-        $eventData->setCounterForRowsInDataSource($updateData->countRowsInDataSource());
-
         // also update the original data sheet for further use
-        if ($eventData->isEmpty() === false){
-            $deletedCol = $eventData->getColumns()->getByAttribute($this->getSoftDeleteAttribute());
-            $deletedCol->setValueOnAllRows($this->getSoftDeleteValue());
+        if ($eventData->isEmpty() === false && $deletedColInEventData = $eventData->getColumns()->getByAttribute($this->getSoftDeleteAttribute())){
+            $deletedColInEventData->setValueOnAllRows($this->getSoftDeleteValue());
         }
 
         return $affected_rows;
@@ -147,7 +164,7 @@ class SoftDeleteBehavior extends AbstractBehavior
      */
     public function setSoftDeleteAttributeAlias(string $value) : SoftDeleteBehavior
     {
-        if ($this->getObject()->hasAttribute($value)){
+        if ($this->getObject()->hasAttribute($value) === true){
             $this->soft_delete_attribute_alias = $value;
         } else {
             throw new BehaviorConfigurationError($this->getObject(), 'Configuration error: no attribute ' . $value . 'found in object ' . $this->getObject()->getAlias() . '.');
@@ -161,10 +178,10 @@ class SoftDeleteBehavior extends AbstractBehavior
      */
     protected  function getSoftDeleteAttribute() : MetaAttributeInterface
     {
-        if ($this->getObject()->hasAttribute($this->getSoftDeleteAttributeAlias())){
+        try {
             return $this->getObject()->getAttribute($this->getSoftDeleteAttributeAlias()); 
-        } else {
-            throw new BehaviorConfigurationError($this->getObject(), 'Configuration error: no attribute ' . $this->getSoftDeleteAttributeAlias() . 'found in object ' . $this->getObject()->getAlias() . '.');
+        } catch (MetaAttributeNotFoundError $e) {
+            throw new BehaviorConfigurationError($this->getObject(), 'Configuration error: no attribute "' . $this->getSoftDeleteAttributeAlias() . '" found in object "' . $this->getObject()->getAlias() . '".');
         }
     }
     
