@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-01-30 18:23:04",
-            "MODIFIED_ON": "2020-01-30 20:42:30",
+            "MODIFIED_ON": "2020-01-31 09:03:17",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea438d8ecc15debb290205857feb80",
@@ -96,7 +96,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"height\":\"auto\",\"columns_in_grid\":1,\"widgets\":[{\"attribute_alias\":\"COMPOUND_ATTRIBUTE__OBJECT\",\"id\":\"object_selector\",\"disabled\":true},{\"attribute_alias\":\"COMPOUND_ATTRIBUTE\",\"widget_type\":\"InputComboTable\",\"filters\":[{\"attribute_alias\":\"TYPE\",\"value\":\"C\",\"comparator\":\"==\"},{\"attribute_alias\":\"OBJECT\",\"value\":\"=object_selector!UID\",\"comparator\":\"==\"}]},{\"attribute_alias\":\"ATTRIBUTE\",\"widget_type\":\"InputComboTable\",\"filters\":[{\"attribute_alias\":\"OBJECT\",\"value\":\"=object_selector!UID\",\"comparator\":\"==\"}]},{\"attribute_alias\":\"SEQUENCE_INDEX\"},{\"attribute_alias\":\"DELIMITER\"}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"height\":\"auto\",\"columns_in_grid\":1,\"widgets\":[{\"attribute_alias\":\"COMPOUND_ATTRIBUTE__OBJECT\",\"id\":\"object_selector\",\"disabled\":true},{\"attribute_alias\":\"COMPOUND_ATTRIBUTE\",\"widget_type\":\"InputComboTable\",\"filters\":[{\"attribute_alias\":\"OBJECT\",\"value\":\"=object_selector!UID\",\"comparator\":\"==\"}]},{\"attribute_alias\":\"ATTRIBUTE\",\"widget_type\":\"InputComboTable\",\"filters\":[{\"attribute_alias\":\"OBJECT\",\"value\":\"=object_selector!UID\",\"comparator\":\"==\"}]},{\"attribute_alias\":\"SEQUENCE_INDEX\"},{\"attribute_alias\":\"VALUE_PREFIX\"},{\"attribute_alias\":\"VALUE_SUFFIX\"}]}",
             "ALIAS": "ATTRIBUTE_COMPOUND",
             "DATA_ADDRESS": "exf_attribute_compound"
         }
