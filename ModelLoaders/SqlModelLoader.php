@@ -9,7 +9,6 @@ use exface\Core\Factories\DataSorterFactory;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
 use exface\Core\Factories\ConditionFactory;
-use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Factories\BehaviorFactory;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
@@ -145,7 +144,7 @@ class SqlModelLoader implements ModelLoaderInterface
 					' . $this->buildSqlUuidSelector('ds.base_object_oid') . ' as base_object_oid,
 					EXISTS (SELECT 1 FROM exf_object_behaviors ob WHERE ob.object_oid = o.oid) AS has_behaviors
 				FROM exf_object o 
-					LEFT JOIN exf_app a ON o.app_oid = a.oid 
+					INNER JOIN exf_app a ON o.app_oid = a.oid 
 					LEFT JOIN exf_data_source ds ON o.data_source_oid = ds.oid
 				WHERE ' . $q_where);
         if ($res = $query->getResultArray()) {
@@ -207,7 +206,7 @@ class SqlModelLoader implements ModelLoaderInterface
 					' . $this->buildSqlUuidSelector('a.related_object_oid') . ' as related_object_oid,
 					' . $this->buildSqlUuidSelector('a.related_object_special_key_attribute_oid') . ' as related_object_special_key_attribute_oid,
 					o.object_alias as rev_relation_alias
-				FROM exf_attribute a LEFT JOIN exf_object o ON a.object_oid = o.oid
+				FROM exf_attribute a INNER JOIN exf_object o ON a.object_oid = o.oid
 				WHERE a.object_oid = ' . $object->getId() . ' OR a.related_object_oid = ' . $object->getId());
         if ($res = $query->getResultArray()) {
             $relation_attrs = [];
@@ -525,8 +524,8 @@ class SqlModelLoader implements ModelLoaderInterface
                 a.app_alias AS data_connection_app_alias' . $select_user_credentials . '
 			FROM exf_data_source ds 
                 LEFT JOIN exf_data_connection dc ON ' . $join_on . '
-                ' . $join_user_credentials . '
                 LEFT JOIN exf_app a ON dc.app_oid = a.oid
+                ' . $join_user_credentials . '
 			WHERE ' . $selectorFilter;
         
         $query = $this->getDataConnection()->runSql($sql);
@@ -633,9 +632,6 @@ class SqlModelLoader implements ModelLoaderInterface
             $select_user_credentials = ', dcc.data_connector_config AS user_connector_config';
         }
         
-        // The following IF is needed to install SQL update 8 introducing new columns in the
-        // data source table. If the updated had not yet been installed, these columns are
-        // not selected.
         $sql = '
 			SELECT
 				dc.read_only_flag AS connection_read_only,
@@ -749,7 +745,7 @@ class SqlModelLoader implements ModelLoaderInterface
 					oa.config_uxon, 
 					oa.use_in_object_basket_flag, 
 					a.app_alias
-				FROM exf_object_action oa LEFT JOIN exf_app a ON a.oid = oa.action_app_oid
+				FROM exf_object_action oa INNER JOIN exf_app a ON a.oid = oa.action_app_oid
 				WHERE ' . $sql_where);
         if ($res = $query->getResultArray()) {
             foreach ($res as $row) {
@@ -919,9 +915,11 @@ SQL;
     protected function cacheDataType(DataTypeSelectorInterface $selector)
     {
         if ($selector->isUid()){
+            // If loading a data type by UID, fetch all types of the app, it belongs to
             $where = 'dt.app_oid = (SELECT fd.app_oid FROM exf_data_type fd WHERE fd.oid = ' . $selector->toString() . ')';
         } else {
-            $where = "dt.app_oid = (SELECT fa.oid FROM exf_app fa WHERE fa.app_alias = '" . $selector->getAppAlias() . "')";
+            // If loading by alias, fetch all types from the app, who's alias matches the namespace of the data type alias
+            $where = "a.app_alias = '" . $selector->getAppAlias() . "'";
         }
         $query = $this->getDataConnection()->runSql('
 				SELECT
@@ -930,7 +928,9 @@ SQL;
                     a.app_alias,
                     ve.code as validation_error_code,
                     ve.title as validation_error_text
-				FROM exf_data_type dt LEFT JOIN exf_message ve ON dt.validation_error_oid = ve.oid LEFT JOIN exf_app a ON a.oid = dt.app_oid
+				FROM exf_data_type dt 
+                    INNER JOIN exf_app a ON a.oid = dt.app_oid
+                    LEFT JOIN exf_message ve ON dt.validation_error_oid = ve.oid
 				WHERE ' . $where);
         foreach ($query->getResultArray() as $dt) {
             $this->data_types_by_uid[$dt['oid']] = $dt;
