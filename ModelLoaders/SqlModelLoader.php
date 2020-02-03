@@ -420,10 +420,10 @@ class SqlModelLoader implements ModelLoaderInterface
 
     protected function createAttributeFromDbRow(MetaObjectInterface $object, array $row)
     {
-        if ($row['type'] === self::ATTRIBUTE_TYPE_COMPOUND) {
-            $attr = new Attribute($object);
-        } else {
+        if ($row['attribute_type'] === self::ATTRIBUTE_TYPE_COMPOUND) {
             $attr = new CompoundAttribute($object);
+        } else {
+            $attr = new Attribute($object);
         }
         $attr->setId($row['oid']);
         $attr->setAlias($row['attribute_alias']);
@@ -882,9 +882,6 @@ SQL;
     */
     public function loadAttributeComponents(CompoundAttributeInterface $attribute) : CompoundAttributeInterface
     {
-        if (empty($attribute->getComponentAttributes()) === false) {
-            throw new RuntimeException('Cannot load components of a compound attribute: already loaded previously!');
-        }
         $query = $this->getDataConnection()->runSql("
             SELECT
                 ac.*,
