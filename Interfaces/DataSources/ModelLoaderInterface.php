@@ -23,6 +23,7 @@ use exface\Core\Exceptions\UserNotUniqueError;
 use exface\Core\Interfaces\Selectors\DataSourceSelectorInterface;
 use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
+use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 
 interface ModelLoaderInterface
 {
@@ -70,6 +71,15 @@ interface ModelLoaderInterface
      * @return MetaAttributeInterface
      */
     public function loadAttribute(MetaObjectInterface $object, $attribute_alias);
+    
+    /**
+     * Loads component attributes for the given compound attribute
+     * 
+     * @param CompoundAttributeInterface $attribute
+     * 
+     * @return CompoundAttributeInterface
+     */
+    public function loadAttributeComponents(CompoundAttributeInterface $attribute) : CompoundAttributeInterface;
     
     /**
      *
