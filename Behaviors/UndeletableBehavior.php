@@ -259,7 +259,11 @@ class UndeletableBehavior extends AbstractBehavior
                 $errorRowDescriptor = $idx + 1;
             }
             
-            throw new DataSheetDeleteForbiddenError($dataSheet, $this->translate('BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR', ['%row%' => $errorRowDescriptor, '%expression%' => $errorCondition->toString()]));    
+            throw new DataSheetDeleteForbiddenError($dataSheet, $this->translate('BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR', 
+                                                                                    ['%row%' => $errorRowDescriptor, 
+                                                                                     '%expression%' => $errorCondition->toString(), 
+                                                                                     '%behavior%' => $this->getAlias(), 
+                                                                                     '%object%' => $dataSheet->getMetaObject()->getAlias()]));    
         }
     }
     
