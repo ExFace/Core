@@ -1256,6 +1256,9 @@ class Data
      */
     public function getQuickSearchEnabled() : ?bool
     {
+        if ($this->quickSearchEnabled === null && $this->getMetaObject()->hasLabelAttribute() === false && empty($this->getConfiguratorWidget()->getQuickSearchFilters()) === true) {
+            return false;
+        }
         return $this->quickSearchEnabled;
     }
     
