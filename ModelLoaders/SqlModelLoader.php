@@ -55,6 +55,8 @@ use exface\Core\Exceptions\DataSources\DataSourceNotFoundError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 use exface\Core\Factories\UserFactory;
+use exface\Core\Interfaces\Model\CompoundAttributeInterface;
+use exface\Core\CommonLogic\Model\CompoundAttribute;
 
 /**
  * 
@@ -63,6 +65,8 @@ use exface\Core\Factories\UserFactory;
  */
 class SqlModelLoader implements ModelLoaderInterface
 {
+    const ATTRIBUTE_TYPE_COMPOUND = 'C';
+    
     private $data_connection = null;
     
     private $data_types_by_uid = [];
@@ -416,7 +420,11 @@ class SqlModelLoader implements ModelLoaderInterface
 
     protected function createAttributeFromDbRow(MetaObjectInterface $object, array $row)
     {
-        $attr = new Attribute($object);
+        if ($row['type'] === self::ATTRIBUTE_TYPE_COMPOUND) {
+            $attr = new Attribute($object);
+        } else {
+            $attr = new CompoundAttribute($object);
+        }
         $attr->setId($row['oid']);
         $attr->setAlias($row['attribute_alias']);
         $attr->setName($row['attribute_name']);
@@ -865,6 +873,35 @@ SQL;
     public function loadAttribute(MetaObjectInterface $object, $attribute_alias)
     {
         return $object->getAttribute($attribute_alias);
+    }
+    
+    /**
+    *
+    * {@inheritDoc}
+    * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadAttributeComponents()
+    */
+    public function loadAttributeComponents(CompoundAttributeInterface $attribute) : CompoundAttributeInterface
+    {
+        if (empty($attribute->getComponentAttributes()) === false) {
+            throw new RuntimeException('Cannot load components of a compound attribute: already loaded previously!');
+        }
+        $query = $this->getDataConnection()->runSql("
+            SELECT
+                ac.*,
+                {$this->buildSqlUuidSelector('ac.attribute_oid')} as attribute_oid,
+                {$this->buildSqlUuidSelector('ac.compound_attribute_oid')} as compound_attribute_oid
+            FROM exf_attribute_compound ac
+            WHERE ac.compound_attribute_oid = {$attribute->getId()}
+            ORDER BY ac.sequence_index ASC
+        ");
+                foreach ($query->getResultArray() as $row) {
+                    $attribute->addComponentAttribute(
+                        $attribute->getObject()->getAttributes()->getByAttributeId($row['attribute_oid']),
+                        $row['value_prefix'] ?? '',
+                        $row['value_suffix'] ?? ''
+                        );
+                }
+                return $attribute;
     }
     
     /**
