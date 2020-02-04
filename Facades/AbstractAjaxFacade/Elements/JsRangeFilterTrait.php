@@ -140,7 +140,7 @@ JS;
      * 
      * @see JqueryFilterTrait::buildJsValueGetterMethod()
      */
-    public function buildJsValueGetterMethod($value)
+    public function buildJsValueGetterMethod()
     {
         throw new FacadeLogicError('Cannot use JsRangeFilterTrait::buildJsValueGetterMethod() - use buildJsValueGetter() instead!');
     }
