@@ -219,12 +219,17 @@ class Console extends AbstractWidget
     {
         $commands = $uxon->toArray();
         $this->startCommands = $commands;
+        
+        // PHP 7.3+ quotes #-characters, so we need to replace them back here - otherwise
+        $numberCharacterExcaped = (version_compare(PHP_VERSION, '7.3.0') >= 0);
+        
         foreach ($commands as $command) {
             $rule = '/' . preg_quote($command, '/') . '/';
             $phs = [];
             foreach(StringDataType::findPlaceholders($command) as $ph) {
                 $phs[$ph] = '.*';
-                $rule = str_replace('\\[#'.$ph.'#\\]', '[#'.$ph.'#]', $rule);
+                $phRegEx = $numberCharacterExcaped ? '\\[\\#'.$ph.'\\#\\]' : '\\[#'.$ph.'#\\]';
+                $rule = str_replace($phRegEx, '[#'.$ph.'#]', $rule);
             }
             $rule = StringDataType::replacePlaceholders($rule, $phs);
             $this->allowedCommands[] = $rule;
