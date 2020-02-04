@@ -917,4 +917,35 @@ class DataColumn implements DataColumnInterface
         $this->setValues($parsedVals);
         return;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::hasEmptyValues()
+     */
+    public function hasEmptyValues() : bool
+    {
+        foreach ($this->getValues(false) as $val) {
+            if ($val === null || $val === '') {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::findEmptyRows()
+     */
+    public function findEmptyRows() : array
+    {
+        $rowNos = [];
+        foreach ($this->getValues(false) as $rowNo => $val) {
+            if ($val === null || $val === '') {
+                $rowNos[] = $rowNo;
+            }
+        }
+        return $rowNos;
+    }
 }

@@ -802,16 +802,20 @@ class DataSheet implements DataSheetInterface
                 continue;
             }
             
+            // Since updating an attribute also means updating the corresponding object, we need
+            // to apply fixed values to every attribute of the object. Note, that the updated
+            // attribute may be a related one, so we need to add fixed attributes of it's (related)
+            // object.
             /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
             foreach ($col->getAttribute()->getObject()->getAttributes() as $attr) {
-                if ($expr = $attr->getFixedValue()) {
+                if ($fixedExpr = $attr->getFixedValue()) {
                     $alias_with_relation_path = RelationPath::relationPathAdd($rel_path, $attr->getAlias());
                     if (! $col = $this->getColumn($alias_with_relation_path)) {
                         $col = $this->getColumns()->addFromExpression($alias_with_relation_path, NULL, true);
                     } elseif ($col->getIgnoreFixedValues()) {
                         continue;
                     }
-                    $col->setValuesByExpression($expr);
+                    $col->setValuesByExpression($fixedExpr);
                 }
             }
             $processed_relations[$rel_path] = true;
@@ -833,7 +837,10 @@ class DataSheet implements DataSheetInterface
             if (! $column->getExpressionObj()->isMetaAttribute()) {
                 // Skip columns, that do not represent a meta attribute
                 continue;
-            } elseif ($column->getAttribute()->isWritable() === false && ($this->hasUidColumn() === true && $column === $this->getUidColumn()) === false) {
+            } 
+            
+            $columnAttr = $column->getAttribute();
+            if ($columnAttr->isWritable() === false && ($this->hasUidColumn() === true && $column === $this->getUidColumn()) === false) {
                 // Skip read-only attributes unless it is the UID column (which will be used as a filter later on)
                 continue;
             } elseif ($column->getDataType()->is(DataSheetDataType::class)) {
@@ -870,17 +877,23 @@ class DataSheet implements DataSheetInterface
                     $nestedSheet->dataReplaceByFilters($transaction, true, false);
                 }
                 continue;                
-            } elseif (! $column->getAttribute()) {
-                // Skip columns, that reference non existing attributes
-                // TODO Is throwing an exception appropriate here?
-                throw new MetaAttributeNotFoundError($this->getMetaObject(), 'Attribute "' . $column->getExpressionObj()->toString() . '" of object "' . $this->getMetaObject()->getAliasWithNamespace() . '" not found!');
             } elseif (DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $column->getExpressionObj()->toString())) {
                 // Skip columns with aggregate functions
                 continue;
             }
             
+            // If the column represents a required attribute, check if all rows have values.
+            // If not, try to generate them from default and fixed values of the attribute.
+            if ($columnAttr->isRequired() === true && $column->hasEmptyValues() === true) {
+                try {
+                    $column->setValuesFromDefaults();
+                } catch (DataSheetRuntimeError $e) {
+                    throw new DataSheetWriteError($this, 'Failed to update object "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . '): missing values for required attribute "' . $columnAttr->getName() . '" (alias ' . $columnAttr->getAliasWithRelationPath() . ') on row(s) ' . implode(', ', $column->findEmptyRows()) . '!', null, $e);
+                }
+            }
+            
             // Use the UID column as a filter to make sure, only these rows are affected
-            if ($column->getAttribute()->getAliasWithRelationPath() == $this->getMetaObject()->getUidAttributeAlias()) {
+            if ($columnAttr->getAliasWithRelationPath() == $this->getMetaObject()->getUidAttributeAlias()) {
                 $uidAttr = $this->getMetaObject()->getUidAttribute();
                 $query->addFilterFromString($uidAttr->getAlias(), implode($uidAttr->getValueListDelimiter(), array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
                 // Do not update the UID attribute if it is neither editable nor required
@@ -891,7 +904,7 @@ class DataSheet implements DataSheetInterface
             
             // Add all other columns to values
             // First check, if the attribute belongs to a related object
-            if ($rel_path = $column->getAttribute()->getRelationPath()->toString()) {
+            if ($rel_path = $columnAttr->getRelationPath()->toString()) {
                 if ($this->getMetaObject()->getRelation($rel_path)->isForwardRelation()) {
                     $uid_column_alias = $rel_path;
                 } else {
@@ -1069,7 +1082,11 @@ class DataSheet implements DataSheetInterface
                 if (! $col = $this->getColumns()->getByAttribute($attr)) {
                     $col = $this->getColumns()->addFromExpression($attr->getAlias());
                 }
-                $col->setValuesFromDefaults();
+                try {
+                    $col->setValuesFromDefaults();
+                } catch (DataSheetRuntimeError $e) {
+                    throw new DataSheetWriteError($this, 'Failed to create object "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . '): missing values for required attribute "' . $attr->getName() . '" (alias ' . $attr->getAliasWithRelationPath() . ') on row(s) ' . implode(', ', $col->findEmptyRows()) . '!', null, $e);
+                }
             }
         }
         
@@ -1101,7 +1118,7 @@ class DataSheet implements DataSheetInterface
                 try {
                     $req_col->setValuesFromDefaults();
                 } catch (DataSheetRuntimeError $e) {
-                    throw new DataSheetMissingRequiredValueError($this, 'Required attribute "' . $req->getName() . '" (alias "' . $req->getAlias() . '") not set in at least one row!', null, $e);
+                    throw new DataSheetMissingRequiredValueError($this, 'Required attribute "' . $req->getName() . '" (alias "' . $req->getAlias() . '") not set in row(s) ' . $req_col->findEmptyRows() . '!', null, $e);
                 }
             }
         }
@@ -1140,7 +1157,7 @@ class DataSheet implements DataSheetInterface
             }
             
             // Check the uid column for values. If there, it's an update!
-            if ($column->getAttribute()->getAlias() == $this->getMetaObject()->getUidAttributeAlias() && $update_if_uid_found) {
+            if ($column->getAttribute()->getAliasWithRelationPath() == $this->getMetaObject()->getUidAttributeAlias() && $update_if_uid_found) {
                 // TODO
             } else {
                 // If at least one column has values, remember this.
