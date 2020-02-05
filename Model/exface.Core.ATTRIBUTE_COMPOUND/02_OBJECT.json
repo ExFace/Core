@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-01-30 18:23:04",
-            "MODIFIED_ON": "2020-02-03 12:11:53",
+            "MODIFIED_ON": "2020-02-05 09:24:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea438d8ecc15debb290205857feb80",
@@ -89,14 +89,14 @@
             "WRITABLE_FLAG": "1",
             "COMMENTS": "",
             "DOCS": "",
-            "NAME": "Compound Attribute",
+            "NAME": "Compound Attribute Component",
             "INHERIT_DATA_SOURCE_BASE_OBJECT": "1",
             "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
-            "SHORT_DESCRIPTION": "",
+            "SHORT_DESCRIPTION": "A compound attribute consists of multiple regular attributes (component attributes). Values for the compound are calculated by concatenating it's components with the respective prefixes and suffixes.",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"height\":\"auto\",\"columns_in_grid\":1,\"widgets\":[{\"attribute_alias\":\"COMPOUND_ATTRIBUTE__OBJECT\",\"id\":\"object_selector\",\"readonly\":true},{\"attribute_alias\":\"COMPOUND_ATTRIBUTE\",\"widget_type\":\"InputComboTable\",\"filters\":[{\"attribute_alias\":\"OBJECT\",\"value\":\"=object_selector!UID\",\"comparator\":\"==\"}]},{\"attribute_alias\":\"ATTRIBUTE\",\"widget_type\":\"InputComboTable\",\"filters\":[{\"attribute_alias\":\"OBJECT\",\"value\":\"=object_selector!UID\",\"comparator\":\"==\"}]},{\"attribute_alias\":\"SEQUENCE_INDEX\"},{\"attribute_alias\":\"VALUE_PREFIX\"},{\"attribute_alias\":\"VALUE_SUFFIX\"}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"height\":\"auto\",\"columns_in_grid\":2,\"messages\":[{\"type\":\"hint\",\"text\":\"=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.COMPOUND_COMPONENT_HINT')\"}],\"widgets\":[{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"COMPOUND_ATTRIBUTE__OBJECT\",\"id\":\"object_selector\",\"readonly\":true},{\"attribute_alias\":\"COMPOUND_ATTRIBUTE\",\"widget_type\":\"InputComboTable\",\"filters\":[{\"attribute_alias\":\"OBJECT\",\"value\":\"=object_selector!UID\",\"comparator\":\"==\"},{\"attribute_alias\":\"TYPE\",\"value\":\"C\",\"comparator\":\"==\"}]},{\"attribute_alias\":\"ATTRIBUTE\",\"widget_type\":\"InputComboTable\",\"filters\":[{\"attribute_alias\":\"OBJECT\",\"value\":\"=object_selector!UID\",\"comparator\":\"==\"},{\"attribute_alias\":\"TYPE\",\"value\":\"C\",\"comparator\":\"!==\"}]},{\"attribute_alias\":\"SEQUENCE_INDEX\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.COMPOUND_DELIMITER')\",\"widgets\":[{\"attribute_alias\":\"VALUE_PREFIX\"},{\"attribute_alias\":\"VALUE_SUFFIX\"}]}]}",
             "ALIAS": "ATTRIBUTE_COMPOUND",
             "DATA_ADDRESS": "exf_attribute_compound"
         }

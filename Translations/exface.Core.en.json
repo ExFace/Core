@@ -212,6 +212,8 @@
     "PAGE.ATTRIBUTE_EDITOR.OPEN_DATATYPE": "Data Type",
     "PAGE.ATTRIBUTE_EDITOR.OPEN_DATATYPE_HINT": "Open editor for the currently selected data type",
     "PAGE.ATTRIBUTE_EDITOR.COMPOUND": "Compound Attribute",
+    "PAGE.ATTRIBUTE_EDITOR.COMPOUND_DELIMITER": "Delimiter",
+    "PAGE.ATTRIBUTE_EDITOR.COMPOUND_COMPONENT_HINT": "For proper use of values of the compound attribute (e.g. for filtering or saving data), make sure that each component has prefixes and/or suffixes, that never appear inside the components values.\n\nFor example, if you have an order position id attribute, that consists of the order number and the position index, giving the position index the prefix \"--\" would produce compound values like 123--1, 123--2, etc. These can be split back into their components because a double minus is very unlikely to be part of the order number the position index.",
     "PAGE.OBJECTS.APP_ALIAS": "App alias",
     "PAGE.OBJECTS.COPY_OBJECT": "Copy Object",
     "PAGE.OBJECTS.COPY_OBJECT_WITH_ATTRIBUTES": "Copy Object incl. Attributes",
