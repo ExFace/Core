@@ -211,6 +211,8 @@
     "PAGE.ATTRIBUTE_EDITOR.OPEN_DATATYPE": "Datentyp",
     "PAGE.ATTRIBUTE_EDITOR.OPEN_DATATYPE_HINT": "Editor für den ausgewählten Datentyp öffnen",
     "PAGE.ATTRIBUTE_EDITOR.COMPOUND": "Zusammengesetztes Attribut",
+    "PAGE.ATTRIBUTE_EDITOR.COMPOUND_DELIMITER": "Trenner",
+    "PAGE.ATTRIBUTE_EDITOR.COMPOUND_COMPONENT_HINT": "Damit Werte des zusammengesetzen Attributs korrekt verwendet werden können (insb. als Filter oder bei Schreib-Operationen), müssen Präfixe und Suffixe der Teil-Attribute so gesetzt werden, dass sie als eindeutige Trenner funktioniern - also innerhalb des Wertes eines Teil-Attributs nie vorkommen.\n\nZ.B.: wenn die Id einer Auftragsposition aus Auftragsnummer und Positionsnummer besteht, würde der Präfix \"--\" an der Pos.Nr. solche Ids produzieren: 123--1, 123--2, etc. Diese können problemlos wieder in Einzelteile zerlegt werden, da ein doppeltes Minus weder in der Auftragsnummer noch in der Positionsnummer vorkommen kann.",
     "PAGE.OBJECTS.APP_ALIAS": "App Alias",
     "PAGE.OBJECTS.COPY_OBJECT": "Objekt kopieren",
     "PAGE.OBJECTS.COPY_OBJECT_WITH_ATTRIBUTES": "Objekt mit Attributen kopieren",

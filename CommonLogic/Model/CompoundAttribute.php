@@ -9,7 +9,6 @@ use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ConditionFactory;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
@@ -80,12 +79,12 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
                 list($part, $toSplit) = explode($delim, $toSplit, 2);
                 $values[] = $part;
             } else {
-                throw new RuntimeException('Cannot split value "' . $value . '" of compound attribute "' . $this->getAliasWithRelationPath() . '": could not find delimiter for compound component with sequence index ' . $idx);
+                throw new RuntimeException('Cannot split value "' . $value . '" of compound attribute "' . $this->getAliasWithRelationPath() . '": could not find delimiter for compound component with sequence index ' . $idx, '79G9JUB');
             }
         }
         
         if ($toSplit !== null) {
-            throw new RuntimeException('Failed to split value "' . $value . '" of compound attribute "' . $this->getAliasWithRelationPath() . '": non-empty remainder "' . $toSplit . '" after processing all components');
+            throw new RuntimeException('Failed to split value "' . $value . '" of compound attribute "' . $this->getAliasWithRelationPath() . '": non-empty remainder "' . $toSplit . '" after processing all components', '79G9JUB');
         }
         
         return $values;
