@@ -475,7 +475,6 @@ JS;
 
             var clickCount = {$this->buildJsEChartsVar()}._clickCount;
             var params = {$params};
-            console.log(params);
             var selected = {$this->buildJsGetSelectedRowFunction('params.data')};
             
             clickCount++;
