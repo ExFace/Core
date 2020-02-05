@@ -965,7 +965,23 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $aggregator = ! is_null($aggregator) ? $aggregator : $qpart->getAggregator();
         $select = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false);
         
+        // Can't just list binary values - need to transform them to strings first! 
+        if (strcasecmp($qpart->getAttribute()->getDataAddressProperty('SQL_DATA_TYPE'),'binary') === 0 && ($aggregator->getFunction() == AggregatorFunctionsDataType::LIST_ALL || $aggregator->getFunction() == AggregatorFunctionsDataType::LIST_DISTINCT)) {
+            $select = $this->buildSqlSelectBinaryAsHEX($select);
+        }
+        
         return $this->buildSqlGroupByExpression($qpart, $select, $aggregator);
+    }
+    
+    /**
+     * Returns the SQL to transform the given binary SELECT predicate into something like 0x12433.
+     * 
+     * @param string $select_from
+     * @return string
+     */
+    protected function buildSqlSelectBinaryAsHEX(string $select_from) : string
+    {
+        return 'CONCAT(\'0x\', LOWER(HEX(' . $select_from . ')))';
     }
     
     /**
