@@ -1634,7 +1634,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if (! $prefix_rel_path->isEmpty()) {
                     // FIXME add support for related_object_special_key_alias
                     $prefix_rel_str = RelationPath::relationPathAdd($prefix_rel_path->toString(), $this->getMainObject()->getRelatedObject($prefix_rel_path->toString())->getUidAttributeAlias());
-                    $prefix_rel_qpart = new QueryPartSelect($prefix_rel_str, $this, DataColumn::sanitizeColumnName($prefix_rel_str));
+                    $prefix_rel_qpart = new QueryPartSelect($prefix_rel_str, $this, null, DataColumn::sanitizeColumnName($prefix_rel_str));
                     $junction = $this->buildSqlSelect($prefix_rel_qpart, null, null, '');
                 } else {
                     $junctionTableAlias = $this->getShortAlias($start_rel->getLeftObject()->getAlias() . $this->getQueryId());
@@ -1661,7 +1661,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // If we are dealing with a regular relation, build a subquery to select primary keys from joined tables and match them to the foreign key of the main table
                 $relq->addFilter($qpart->rebase($relq, $start_rel->getAliasWithModifier()));
                 $relq->addAttribute($start_rel->getRightKeyAttribute()->getAlias());
-                $junction_qpart = new QueryPartSelect($start_rel->getLeftKeyAttribute()->getAlias(), $this, $start_rel->getLeftKeyAttribute()->getAliasWithRelationPath());
+                $junction_qpart = new QueryPartSelect($start_rel->getLeftKeyAttribute()->getAlias(), $this, null, $start_rel->getLeftKeyAttribute()->getAliasWithRelationPath());
                 $junction = $this->buildSqlSelect($junction_qpart, null, null, '');
             }
             
@@ -1893,7 +1893,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if (! $qpart = $this->getAttribute($ph_attribute_alias)) {
                 // Throw an error if the attribute cannot be resolved relative to the main object of the query
                 try {
-                    $qpart = new QueryPartSelect($ph_attribute_alias, $this, DataColumn::sanitizeColumnName($string));
+                    $qpart = new QueryPartSelect($ph_attribute_alias, $this, null, DataColumn::sanitizeColumnName($string));
                 } catch (MetaAttributeNotFoundError $e){
                     throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": no attribute "' . $ph_attribute_alias . '" found for query base object ' . $this->getMainObject()->getAliasWithNamespace() . '!', null, $e);
                 }
