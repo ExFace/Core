@@ -24,15 +24,11 @@ use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetDeleteError;
 use exface\Core\Exceptions\Model\MetaObjectHasNoDataSourceError;
-use exface\Core\CommonLogic\QueryBuilder\RowDataArrayFilter;
-use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
 use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
-use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Interfaces\QueryBuilderInterface;
 use exface\Core\Events\DataSheet\OnBeforeValidateDataEvent;
 use exface\Core\Events\DataSheet\OnValidateDataEvent;
@@ -50,7 +46,6 @@ use exface\Core\Factories\RelationPathFactory;
 use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\DataTypes\RelationCardinalityDataType;
 use exface\Core\DataTypes\ComparatorDataType;
-use exface\Core\DataTypes\RelationDataType;
 use exface\Core\Interfaces\Model\ConditionInterface;
 
 /**
@@ -1052,8 +1047,9 @@ class DataSheet implements DataSheetInterface
      */
     public function dataCreate(bool $update_if_uid_found = true, DataTransactionInterface $transaction = null) : int
     {
-        if ($this->getMetaObject()->isWritable() === false) {
-            throw new DataSheetWriteError($this, 'Cannot create data for object ' . $this->getMetaObject()->getAliasWithNamespace() . ': object is not writeable!', '70Y6HAK');
+        $thisObj = $this->getMetaObject();
+        if ($thisObj->isWritable() === false) {
+            throw new DataSheetWriteError($this, 'Cannot create data for object ' . $thisObj->getAliasWithNamespace() . ': object is not writeable!', '70Y6HAK');
         }
         
         // Start a new transaction, if not given
@@ -1073,11 +1069,11 @@ class DataSheet implements DataSheetInterface
         }
         
         // Create a query
-        $query = QueryBuilderFactory::createForObject($this->getMetaObject());
+        $query = QueryBuilderFactory::createForObject($thisObj);
         $nestedSheets = [];
         
         // Add values for columns based on attributes with defaults or fixed values
-        foreach ($this->getMetaObject()->getAttributes()->getAll() as $attr) {
+        foreach ($thisObj->getAttributes()->getAll() as $attr) {
             if ($def = ($attr->getDefaultValue() ? $attr->getDefaultValue() : $attr->getFixedValue())) {
                 if (! $col = $this->getColumns()->getByAttribute($attr)) {
                     $col = $this->getColumns()->addFromExpression($attr->getAlias());
@@ -1085,13 +1081,13 @@ class DataSheet implements DataSheetInterface
                 try {
                     $col->setValuesFromDefaults();
                 } catch (DataSheetRuntimeError $e) {
-                    throw new DataSheetWriteError($this, 'Failed to create object "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . '): missing values for required attribute "' . $attr->getName() . '" (alias ' . $attr->getAliasWithRelationPath() . ') on row(s) ' . implode(', ', $col->findEmptyRows()) . '!', null, $e);
+                    throw new DataSheetWriteError($this, 'Failed to create object "' . $thisObj->getName() . '" (' . $thisObj->getAliasWithNamespace() . '): missing values for required attribute "' . $attr->getName() . '" (alias ' . $attr->getAliasWithRelationPath() . ') on row(s) ' . implode(', ', $col->findEmptyRows()) . '!', null, $e);
                 }
             }
         }
         
         // Check, if all required attributes are present
-        foreach ($this->getMetaObject()->getAttributes()->getRequired() as $req) {
+        foreach ($thisObj->getAttributes()->getRequired() as $req) {
             // Skip read-only attributes. They can also be marked as required if the are allways present, but
             // since they are not writeable, we cannot explicitly create tehm.
             if ($req->isWritable() === false) {
@@ -1108,7 +1104,7 @@ class DataSheet implements DataSheetInterface
                     // Try to get the value from the current filter contexts: if the missing attribute was used as a direct filter, we assume, that the data is saved
                     // in the same context, so we can set the attribute value to the filter value
                     // TODO Look in other context scopes, not only in the application scope. Still looking for an elegant solution here.
-                    foreach ($this->exface->getContext()->getScopeApplication()->getFilterContext()->getConditions($this->getMetaObject()) as $cond) {
+                    foreach ($this->exface->getContext()->getScopeApplication()->getFilterContext()->getConditions($thisObj) as $cond) {
                         if ($req->getAlias() == $cond->getExpression()->toString() && ($cond->getComparator() == EXF_COMPARATOR_EQUALS || $cond->getComparator() == EXF_COMPARATOR_IS)) {
                             $this->setColumnValues($req->getAlias(), $cond->getValue());
                         }
@@ -1150,36 +1146,36 @@ class DataSheet implements DataSheetInterface
                 continue;
             }
             
-            // Check if the meta attribute really exists
-            if (! $column->getAttribute()) {
-                throw new MetaAttributeNotFoundError($this->getMetaObject(), 'Cannot find attribute for data sheet column "' . $column->getName() . '"!');
-                continue;
+            // If at least one column has values, remember this.
+            if (count($column->getValues(false)) > 0) {
+                $values_found = true;
             }
-            
-            // Check the uid column for values. If there, it's an update!
-            if ($column->getAttribute()->getAliasWithRelationPath() == $this->getMetaObject()->getUidAttributeAlias() && $update_if_uid_found) {
-                // TODO
-            } else {
-                // If at least one column has values, remember this.
-                if (count($column->getValues(false)) > 0) {
-                    $values_found = true;
-                }
-                // Add all other columns to values
-                $query->addValues($column->getExpressionObj()->toString(), $column->getValues(false));
-            }
+            // Add all other columns to values
+            $query->addValues($column->getExpressionObj()->toString(), $column->getValues(false));
         }
         
         if (! $values_found) {
             throw new DataSheetWriteError($this, 'Cannot create data in data source: no values found to save!');
         }
         
+        // If there we want an update for existing UIDs, we need to check if they exist first.
+        // This is only possible for readable UIDs, because otherwise we can't check if they exist!
+        if ($update_if_uid_found === true && $this->hasUidColumn(true) === true && $this->getUidColumn()->getAttribute()->isReadable() === true) {
+            $checkUidsSheet = DataSheetFactory::createFromObject($thisObj);
+            $checkUidsSheet->getFilters()->addConditionFromColumnValues($this->getUidColumn());
+            $checkUidsSheet->dataRead();
+            if ($checkUidsSheet->isEmpty() === false) {
+                throw new DataSheetWriteError($this, 'Update on duplicate UIDs not supported yet in data sheets!');
+            }
+        }
+        
         // Run the query
-        $connection = $this->getMetaObject()->getDataConnection();
+        $connection = $thisObj->getDataConnection();
         $transaction->addDataConnection($connection);
         try {
             $result = $query->create($connection);
             $new_uids = [];
-            $uidKey = $this->hasUidColumn() ? $this->getUidColumn()->getName() : DataColumn::sanitizeColumnName($this->getMetaObject()->getUidAttributeAlias());
+            $uidKey = $this->hasUidColumn() ? $this->getUidColumn()->getName() : DataColumn::sanitizeColumnName($thisObj->getUidAttributeAlias());
             foreach ($result->getResultRows() as $row) {
                 $new_uids[] = $row[$uidKey];
             }
@@ -1210,9 +1206,9 @@ class DataSheet implements DataSheetInterface
                         continue;
                     }
                     $nestedCol = $this->getColumns()->get($columnName);
-                    $nestedRel = $this->getMetaObject()->getRelation($nestedCol->getAttributeAlias());
+                    $nestedRel = $thisObj->getRelation($nestedCol->getAttributeAlias());
                     if ($nestedRel->getCardinality()->__toString() !== RelationCardinalityDataType::ONE_TO_N) {
-                        throw new DataSheetRuntimeError($this, 'Cannot create nested data for "' . $this->getMetaObject()->getName() . '" (' . $nestedRel->getRightObject()->getAliasWithNamespace() . ') within "' . $this->getMetaObject()->getRightObject()->getName() . '": only one-to-many relations allowed!');
+                        throw new DataSheetRuntimeError($this, 'Cannot create nested data for "' . $thisObj->getName() . '" (' . $nestedRel->getRightObject()->getAliasWithNamespace() . ') within "' . $thisObj->getRightObject()->getName() . '": only one-to-many relations allowed!');
                     }
                     if ($update_if_uid_found === false && $nestedSheet->hasUidColumn() === true) {
                         $nestedSheet->getUidColumn()->setValueOnAllRows('');
@@ -1236,7 +1232,7 @@ class DataSheet implements DataSheetInterface
         }
         
         // Save the new UIDs in the data sheet
-        $this->setColumnValues($this->getMetaObject()->getUidAttributeAlias(), $new_uids);
+        $this->setColumnValues($thisObj->getUidAttributeAlias(), $new_uids);
         
         $this->getWorkbench()->eventManager()->dispatch(new OnCreateDataEvent($this, $transaction));
         
