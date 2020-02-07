@@ -221,7 +221,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     public function setFiltersConditionGroup(ConditionGroup $condition_group)
     {
         $this->clearFilters();
-        $this->filters = $this->getFilters()->createQueryPartFromConditionGroup($condition_group);
+        $this->filters = QueryPartFilterGroup::createQueryPartFromConditionGroup($condition_group, $this);
         return $this;
     }
 

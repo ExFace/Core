@@ -5,10 +5,8 @@ use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Interfaces\Model\AggregatorInterface;
-use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
-use exface\Core\Exceptions\RuntimeException;
 
 class QueryPartAttribute extends QueryPart
 {
@@ -18,16 +16,10 @@ class QueryPartAttribute extends QueryPart
     private $used_relations = null;
     
     private $dataAddressProperties = [];
-    
-    private $parentQueryPart = null;
-    
-    private $children = [];
 
-    function __construct($alias, AbstractQueryBuilder $query, QueryPartAttribute $parentQueryPart = null)
+    function __construct($alias, AbstractQueryBuilder $query, QueryPart $parentQueryPart = null)
     {
-        parent::__construct($alias, $query);
-        
-        $this->parentQueryPart = $parentQueryPart;
+        parent::__construct($alias, $query, $parentQueryPart);
         
         if (! $attr = $query->getMainObject()->getAttribute($alias)) {
             throw new QueryBuilderException('Attribute "' . $alias . '" of object "' . $query->getMainObject()->getAlias() . '" not found!');
@@ -188,30 +180,6 @@ class QueryPartAttribute extends QueryPart
     public function getColumnKey() : string
     {
         return DataColumn::sanitizeColumnName($this->getAlias());
-    }
-    
-    public function getParentQueryPart() : ?QueryPartAttribute
-    {
-        return $this->parentQueryPart;
-    }
-    
-    public function isCompound() : bool
-    {
-        return empty($this->children) === false;
-    }
-    
-    public function hasParent() : bool
-    {
-        return $this->parentQueryPart !== null;
-    }
-    
-    protected function addChildQueryPart(QueryPartAttribute $qpart) : QueryPartAttribute
-    {
-        if ($qpart->getParentQueryPart() !== $this) {
-            throw new RuntimeException('Cannot add child query part "' . $qpart->getAlias() . '" to "' . $this->getAlias() . '": the child has no parent registered!');
-        }
-        $this->children[] = $qpart;
-        return $this;
     }
 }
 ?>
