@@ -92,6 +92,25 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
     
     /**
      * 
+     * @param array $values
+     * @throws RuntimeException
+     * @return string
+     */
+    public function mergeValues(array $values) : string
+    {
+        $components = $this->getComponents();
+        if (count($values) !== count($components)) {
+            throw new RuntimeException("Cannont merge values for compound attribute '{$this->getAliasWithRelationPath()}'. Different amount of values given than attribute has components!", '79G9JUB');
+        }
+        $mergedValue = '';
+        foreach ($components as $idx => $comp) {
+            $mergedValue .= $comp->getValuePrefix() . $values[$idx] . $comp->getValueSuffix();
+        }
+        return $mergedValue;
+    }
+    
+    /**
+     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\CompoundAttributeInterface::splitCondition()
      */
