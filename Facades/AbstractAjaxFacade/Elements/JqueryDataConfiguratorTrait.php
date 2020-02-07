@@ -132,6 +132,6 @@ JS;
      */
     public function buildJsResetter() : string
     {
-        return parent::buildJsResetter() . $this->getFacade()->getElement($this->getWidget()->getDataWidget())->buildJsRefresh();
+        return parent::buildJsResetter() . ';' . $this->getFacade()->getElement($this->getWidget()->getDataWidget())->buildJsRefresh();
     }
 }
