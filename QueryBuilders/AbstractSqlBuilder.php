@@ -33,6 +33,8 @@ use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Interfaces\Model\CompoundAttributeInterface;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * A query builder for generic SQL syntax.
@@ -290,6 +292,29 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     foreach ($rows as $nr => $row) {
                         $rows[$nr][$full_alias] = $row[$short_alias];
                         unset($rows[$nr][$short_alias]);
+                    }
+                }
+            }
+            foreach ($this->getAttributes() as $qpart) {
+                if ($qpart->isCompound() && $qpart->getAttribute() instanceof CompoundAttributeInterface) {                    
+                    foreach ($rows as $nr => $row) {
+                        $compValues = [];
+                        if ($qpart->hasAggregator() === true) {
+                            switch ($qpart->getAggregator()->getFunction()->__toString()) {
+                                case AggregatorFunctionsDataType::COUNT:
+                                    $compQpart = $qpart->getCompoundChildren()[0];
+                                    $rows[$nr][$qpart->getColumnKey()] = $row[$compQpart->getColumnKey()];
+                                    unset ($rows[$nr][$compQpart->getColumnKey()]);
+                                    break;
+                                default:
+                                    throw new RuntimeException('Cannot read compound attributes with aggregator' . $this->getAggregator()->exportString() . '!');
+                            }
+                        } else {
+                            foreach ($qpart->getCompoundChildren() as $component) {
+                                $compValues[] = $row[$component->getColumnkey()];
+                            }
+                            $rows[$nr][$qpart->getColumnKey()] = $qpart->getAttribute()->mergeValues($compValues);
+                        }
                     }
                 }
             }
@@ -1099,14 +1124,33 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                             $join .= StringDataType::replacePlaceholders($customOn, ['~left_alias' => $left_table_alias, '~right_alias' => $right_table_alias]);
                         } else {
                             // Otherwise create the ON clause from the attributes on both sides of the relation.
-                            $left_join_on = $this->buildSqlJoinSide($rel->getLeftKeyAttribute()->getDataAddress(), $left_table_alias);
-                            $right_join_on = $this->buildSqlJoinSide($rel->getRightKeyAttribute()->getDataAddress(), $right_table_alias);
-                            $join .=  $left_join_on . ' = ' . $right_join_on;
-                            if ($customSelectWhere = $right_obj->getDataAddressProperty('SQL_SELECT_WHERE')) {
-                                if (stripos($customSelectWhere, 'SELECT ') === false) {
-                                    $join .= ' AND ' . StringDataType::replacePlaceholders($customSelectWhere, ['~alias' => $right_table_alias]);
+                            if ($rel->getLeftKeyAttribute() instanceof CompoundAttributeInterface) {
+                                $leftJoins = array();
+                                $rightJoins = array();
+                                foreach($rel->getLeftKeyAttribute()->getComponents() as $comp) {
+                                    $leftJoins[] = $this->buildSqlJoinSide($comp->getAttribute()->getDataAddress(), $left_table_alias);
+                                }
+                                foreach($rel->getRightKeyAttribute()->getComponents() as $comp) {
+                                    $rightJoins[] = $this->buildSqlJoinSide($comp->getAttribute()->getDataAddress(), $right_table_alias);
+                                }
+                                if (count($leftJoins) !== count($rightJoins)) {
+                                    throw new RuntimeException("Can not build SQL JOIN statement because compound attribute '{$rel->getLeftKeyAttribute()->getAlias()}' has different component count than '{$rel->getRightKeyAttribute()->getAlias()}'!");
                                 } else {
-                                    $join .= $this->buildSqlComment('Cannot use SQL_SELECT_WHERE of object "' . $right_obj->getName() . '" (' . $right_obj->getAliasWithNamespace() . ') in a JOIN - a column may not be outer-joined to a subquery!');
+                                    foreach ($leftJoins as $idx => $leftJoin) {
+                                        $join .= $leftJoin . ' = ' . $rightJoins[$idx] . ' AND ';
+                                    }
+                                    $join = substr($join, 0, -4);
+                                }
+                            } else {
+                                $left_join_on = $this->buildSqlJoinSide($rel->getLeftKeyAttribute()->getDataAddress(), $left_table_alias);
+                                $right_join_on = $this->buildSqlJoinSide($rel->getRightKeyAttribute()->getDataAddress(), $right_table_alias);
+                                $join .=  $left_join_on . ' = ' . $right_join_on;
+                                if ($customSelectWhere = $right_obj->getDataAddressProperty('SQL_SELECT_WHERE')) {
+                                    if (stripos($customSelectWhere, 'SELECT ') === false) {
+                                        $join .= ' AND ' . StringDataType::replacePlaceholders($customSelectWhere, ['~alias' => $right_table_alias]);
+                                    } else {
+                                        $join .= $this->buildSqlComment('Cannot use SQL_SELECT_WHERE of object "' . $right_obj->getName() . '" (' . $right_obj->getAliasWithNamespace() . ') in a JOIN - a column may not be outer-joined to a subquery!');
+                                    }
                                 }
                             }
                         }
@@ -1246,7 +1290,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $op = $this->buildSqlLogicalOperator($qpart->getOperator());
         
         foreach ($qpart->getFilters() as $qpart_fltr) {
-            if ($fltr_string = $this->buildSqlWhereCondition($qpart_fltr, $rely_on_joins)) {
+            if ($qpart_fltr->isCompound() === true) {
+                if ($grp_string = $this->buildSqlWhere($qpart_fltr->getCompoundFilterGroup(), $rely_on_joins)) {
+                    $where .= "\n " . ($where ? $op . " " : '') . "(" . $grp_string . ")";
+                }
+            } elseif ($fltr_string = $this->buildSqlWhereCondition($qpart_fltr, $rely_on_joins)) {
                 $where .= "\n-- buildSqlWhereCondition(" . $qpart_fltr->getCondition()->toString() . ", " . $rely_on_joins . ")"
                         . "\n " . ($where ? $op . " " : '') . $fltr_string;
             }
