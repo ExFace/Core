@@ -174,7 +174,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::isValueLogicalNull()
      */
-    protected static function isValueLogicalNull($value) : bool
+    public static function isValueLogicalNull($value) : bool
     {
         return strcasecmp($value, EXF_LOGICAL_NULL) === 0;
     }
