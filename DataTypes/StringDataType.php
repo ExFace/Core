@@ -135,7 +135,7 @@ class StringDataType extends AbstractDataType
      */
     public static function cast($string)
     {
-        if (is_scalar($string) === true || static::isEmptyValue($string) === true){
+        if (is_scalar($string) === true || static::isValueEmpty($string) === true){
             return $string;
         } elseif (is_array($string) === true){
             return implode(EXF_LIST_SEPARATOR, $string);

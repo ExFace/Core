@@ -156,17 +156,27 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public static function cast($value)
     {
-        return static::isEmptyValue($value) === true ? null : $value;
+        return static::isValueEmpty($value) === true ? null : $value;
     }
     
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::isEmptyValue()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::isValueEmpty()
      */
-    public static function isEmptyValue($value) : bool
+    public static function isValueEmpty($value) : bool
     {
         return $value === null || $value === '';
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::isValueLogicalNull()
+     */
+    protected static function isValueLogicalNull($value) : bool
+    {
+        return strcasecmp($value, EXF_LOGICAL_NULL) === 0;
     }
     
     /**

@@ -645,25 +645,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             case $data_type instanceof StringDataType:
                 // JSON values are strings too, but their columns should be null even if the value is an
                 // empty object or empty array (otherwise the cells would never be null)
-                if (($data_type instanceof JsonDataType) && $data_type::isEmptyValue($value) === true) {
+                if (($data_type instanceof JsonDataType) && $data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
                 } else {
                     $value = $value === null ? 'NULL' : "'" . $this->escapeString($value) . "'";
                 }  
                 break;
             case $data_type instanceof BooleanDataType:
-                if ($data_type::isEmptyValue($value) === true) {
+                if ($data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
                 } else {
                     $value = $value ? 1 : 0;
                 }
                 break;
             case $data_type instanceof NumberDataType:
-                $value = $data_type::isEmptyValue($value) === true ? 'NULL' : $value;
+                $value = $data_type::isValueEmpty($value) === true ? 'NULL' : $value;
                 break;
             case $data_type instanceof DateDataType:
             case $data_type instanceof TimeDataType:
-                $value = $data_type::isEmptyValue($value) === true ? 'NULL' : "'" . $this->escapeString($value) . "'";
+                $value = $data_type::isValueEmpty($value) === true ? 'NULL' : "'" . $this->escapeString($value) . "'";
                 break;
             default:
                 $value = "'" . $this->escapeString($value) . "'";
