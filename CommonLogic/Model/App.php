@@ -295,7 +295,7 @@ class App implements AppInterface
     {
         if (is_null($this->uid)) {
             $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.APP');
-            $ds->addFilterFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
+            $ds->getFilters()->addConditionFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
             $ds->dataRead();
             if ($ds->countRows() == 0) {
                 throw new LogicException('No app matching alias "' . $this->getAliasWithNamespace() . '" is installed!');
@@ -514,7 +514,7 @@ class App implements AppInterface
         $cols->addFromExpression('UID');
         $cols->addFromExpression('DEFAULT_LANGUAGE_CODE');
         $cols->addFromExpression('NAME');
-        $ds->addFilterFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
+        $ds->getFilters()->addConditionFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
         $ds->dataRead();
         return $ds;
     }

@@ -64,6 +64,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.OBJECT_BEHAVIORS",
         "conditions": [
             {
                 "expression": "APP",

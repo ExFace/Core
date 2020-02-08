@@ -41,7 +41,7 @@ class Price extends \exface\Core\CommonLogic\Model\Formula
         
         $ds = DataSheetFactory::createFromObjectIdOrAlias('alexa.RMS.CURRENCY');
         $ds->getColumns()->addFromExpression('SUFFIX');
-        $ds->addFilterFromString('OID', $currency_oid);
+        $ds->getFilters()->addConditionFromString('OID', $currency_oid);
         $ds->dataRead();
         $currency = $ds->getRow();
         

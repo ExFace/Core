@@ -10,7 +10,6 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Factories\UiPageFactory;
-use exface\Core\Widgets\AbstractWidget;
 
 /**
  * Renders a dialog with any contents specified in the widget-property.
@@ -42,7 +41,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
     {
         /* @var $dialog \exface\Core\Widgets\Dialog */
         $parent_widget = $this->getWidgetDefinedIn();
-        $dialog = WidgetFactory::create($page, 'Dialog', $parent_widget);
+        $dialog = WidgetFactory::create($page, $this->getDefaultWidgetType(), $parent_widget);
         $dialog->setMetaObject($this->getMetaObject());
         
         if ($contained_widget) {
@@ -153,7 +152,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
      * {@inheritDoc}
      * @see \exface\Core\Actions\ShowWidget::getDefaultWidgetType()
      */
-    public function getDefaultWidgetType()
+    public function getDefaultWidgetType() : ?string
     {
         return 'Dialog';
     }
@@ -198,6 +197,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
     /**
      * Adds extra buttons to a dialog.
      *
+     * ```
      * "dialog_buttons": [
      *      {
      *          "widget_type": "DialogButton",
@@ -205,6 +205,8 @@ class ShowDialog extends ShowWidget implements iShowDialog
      *          "caption": "Speichern"
      *      }
      *  ]
+     *  
+     * ```
      *  
      * @uxon-property dialog_buttons
      * @uxon-type \exface\Core\Widgets\DialogButton[]

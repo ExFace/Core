@@ -609,7 +609,7 @@ class StateMachineBehavior extends AbstractBehavior
         foreach ($this->getObject()->getAttributes() as $attr) {
             $check_sheet->getColumns()->addFromAttribute($attr);
         }
-        $check_sheet->addFilterFromColumnValues($data_sheet->getUidColumn());
+        $check_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
         $check_sheet->dataRead();
         $check_column = $check_sheet->getColumns()->getByAttribute($this->getStateAttribute());
         $check_cnt = count($check_column->getValues());

@@ -83,7 +83,7 @@ class ObjectBasketShowDialog extends ShowDialog
         // Prefill table
         $ds = $this->getContext()->getBasketByObject($this->getMetaObject())->copy();
         if (! $ds->isEmpty()) {
-            $ds->addFilterFromColumnValues($ds->getUidColumn());
+            $ds->getFilters()->addConditionFromColumnValues($ds->getUidColumn());
             $table->prepareDataSheetToPrefill($ds);
             $table->prefill($ds);
         }

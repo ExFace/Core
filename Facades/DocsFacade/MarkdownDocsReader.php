@@ -71,7 +71,7 @@ class MarkdownDocsReader extends MarkdownReader
         $ds->getColumns()->addFromExpression('PATHNAME_RELATIVE');
         $ds->getColumns()->addFromExpression('PATHNAME_ABSOLUTE');
         $ds->getColumns()->addFromExpression('NAME');
-        $ds->addFilterFromString('CONTENTS', $q);
+        $ds->getFilters()->addConditionFromString('CONTENTS', $q);
         
         $ds->dataRead();
         

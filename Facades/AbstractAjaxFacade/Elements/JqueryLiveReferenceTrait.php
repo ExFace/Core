@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Interfaces\Widgets\iHaveValue;
+use exface\Core\Widgets\Value;
 
 /**
  * This trait makes it easy to implement live references in jQuery based widgets.
@@ -37,6 +38,10 @@ trait JqueryLiveReferenceTrait {
      */
     protected function buildJsLiveReference()
     {
+        if (($this->getWidget() instanceof Value) && $this->getWidget()->isInTable() === true) {
+            return '';
+        }
+        
         $output = '';
         if ($linked_element = $this->getLinkedFacadeElement()) {
             $output = '

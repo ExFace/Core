@@ -82,6 +82,10 @@
             "attribute_alias": "RELATION_CARDINALITY"
         },
         {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -184,6 +188,7 @@
             "COMMENTS": "",
             "NAME": "Data Connection",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "DATA_CONNECTION",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "data_connection_oid",
@@ -226,6 +231,7 @@
             "COMMENTS": "",
             "NAME": "Connection Configuration",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "DATA_CONNECTOR_CONFIG",
             "DATATYPE": "0x31300000000000000000000000000000",
             "DATA_ADDRESS": "data_connector_config",
@@ -268,6 +274,7 @@
             "COMMENTS": "",
             "NAME": "Credential Set Name",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "name",
@@ -310,6 +317,7 @@
             "COMMENTS": "",
             "NAME": "Private",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "PRIVATE",
             "DATATYPE": "0x37000000000000000000000000000000",
             "DATA_ADDRESS": "private",
@@ -335,6 +343,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.ATTRIBUTE",
         "conditions": [
             {
                 "expression": "OBJECT__APP",

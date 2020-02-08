@@ -199,8 +199,8 @@ class UiPageTree
             throw new \ErrorException($this, "Invalid page selector '{$parentPageSelector->toString()}'");
         }
         
-        $ds->addFilterFromString($parentAlias, $parentPageSelector->toString(), '==');
-        $ds->addFilterFromString('MENU_VISIBLE', 1, '==');
+        $ds->getFilters()->addConditionFromString($parentAlias, $parentPageSelector->toString(), '==');
+        $ds->getFilters()->addConditionFromString('MENU_VISIBLE', 1, '==');
         
         $ds->dataRead();
         return $ds;
