@@ -1,20 +1,24 @@
 <?php
 namespace exface\Core\Widgets\Parts;
 
-use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Widgets\Traits\DataWidgetPartTrait;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
- * This widget part is used to reorder rows in a DataTable
+ * This widget part is used to reorder rows in a `DataTable` or `DataTree`.
  * 
- * Example:
+ * Adds the possibility to reorder rows in a data widget and save their order. Depending
+ * on the facade, the reordering may work differently: e.g. via drag&drop or up/down
+ * buttons. Changing the order will only update the affected attributes - i.e. the
+ * `order_index_attribute_alias` here and eventually the parent in a tree widget.
+ * 
+ * ## Example:
  * 
  * ```json
  * {
- *  "widget_type": "DataTable",
+ *  "widget_type": "DataTree",
  *  "row_reorder": {
  *      "order_index_attribute_alias": "MY_ATTRIBUTE",
  *      "direction": "ASC"
@@ -43,10 +47,9 @@ class DataRowReorder implements WidgetPartInterface
      */
     public function exportUxonObject()
     {
-        $uxon = new UxonObject([
-            'order_index_attribute_alias' => $this->getOrderIndexAttributeAlias(),
-            'direction' => $this->direction
-        ]);
+        $uxon = parent::exportUxonObject();
+        $uxon->setProperty('order_index_attribute_alias', $this->getOrderIndexAttributeAlias());
+        $uxon->setProperty('direction', $this->direction);
         
         return $uxon;
     }
@@ -81,7 +84,7 @@ class DataRowReorder implements WidgetPartInterface
      * @uxon-type [asc,desc]
      *
      * @param string $value
-     * @throws UnexpectedValueException
+     * @throws InvalidArgumentException
      * @return \exface\Core\Widgets\Parts\DataRowReorder
      */
     public function setOrderDirection($value)
@@ -91,7 +94,7 @@ class DataRowReorder implements WidgetPartInterface
         } elseif (strtoupper($value) == SortingDirectionsDataType::DESC) {
             $this->direction = SortingDirectionsDataType::DESC;
         } else {
-            throw new UnexpectedValueException('Invalid sort direction "' . $value . '" for a date row reorder only DESC or ASC are allowed!', '6T5V9KS');
+            throw new InvalidArgumentException('Invalid sort direction "' . $value . '" for a date row reorder only DESC or ASC are allowed!', '6T5V9KS');
         }
         return $this;
     }
