@@ -10,7 +10,15 @@
     "replaces_page_alias": null,
     "contents": {
         "object_alias": "exface.Core.PAGE",
-        "widget_type": "DataTable",
+        "widget_type": "DataTree",
+        "tree_parent_id_attribute_alias": "MENU_PARENT",
+        "tree_folder_flag_attribute_alias": "IS_FOLDER_FLAG",
+        "tree_root_uid": "NULL",
+        "paginate": false,
+        "row_reorder": {
+            "order_index_attribute_alias": "MENU_POSITION",
+            "order_direction": "asc"
+        },
         "filters": [
             {
                 "attribute_alias": "NAME"
@@ -24,7 +32,8 @@
             {
                 "attribute_alias": "CONTENT",
                 "widget_type": "Input",
-                "height": 1
+                "height": 1,
+                "width": 1
             },
             {
                 "attribute_alias": "APP"
@@ -41,10 +50,10 @@
                 "attribute_alias": "ALIAS"
             },
             {
-                "attribute_alias": "MENU_PARENT__LABEL"
+                "attribute_alias": "MENU_VISIBLE"
             },
             {
-                "attribute_alias": "MENU_INDEX"
+                "attribute_alias": "MENU_POSITION"
             },
             {
                 "attribute_alias": "TEMPLATE__LABEL"
@@ -64,12 +73,23 @@
         ],
         "sorters": [
             {
-                "attribute_alias": "MENU_PARENT__LABEL",
+                "attribute_alias": "MENU_POSITION",
                 "direction": "asc"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectCreateDialog"
             },
             {
-                "attribute_alias": "MENU_INDEX",
-                "direction": "asc"
+                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectCopyDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
             }
         ]
     }
