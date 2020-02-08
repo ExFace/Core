@@ -84,7 +84,7 @@ class QuickSearchUrlParamReader implements MiddlewareInterface
                 }
             }
             if ($quick_search_filter) {
-                $data_sheet->addFilterFromString($quick_search_filter, $quick_search);
+                $data_sheet->getFilters()->addConditionFromString($quick_search_filter, $quick_search);
             } else {
                 throw new FacadeRequestParsingError('Cannot perform quick search on object "' . $widget->getMetaObject()->getAliasWithNamespace() . '": either mark one of the attributes as a label in the model or set inlude_in_quick_search = true for one of the filters in the widget definition!', '6T6HSL4');
             }

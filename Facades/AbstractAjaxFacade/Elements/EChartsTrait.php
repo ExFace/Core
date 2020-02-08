@@ -1739,7 +1739,7 @@ JS;
             len = 0;
         } else {
             val = {$this->buildJsLabelFormatter($axis->getDataColumn(), 'val')}
-            len = (typeof val === 'string' || val instanceof String ? val.length : val.toString().length);
+            len = (typeof val === 'string' || val instanceof String ? val.length : (val || '').toString().length);
         }
         gap = {$gap};
         if (axes["{$axis->getDataColumn()->getDataColumnName()}"]['gap'] < gap) {

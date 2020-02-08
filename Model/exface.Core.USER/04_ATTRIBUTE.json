@@ -82,6 +82,10 @@
             "attribute_alias": "RELATION_CARDINALITY"
         },
         {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -184,6 +188,7 @@
             "COMMENTS": "",
             "NAME": "First Name",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "FIRST_NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "first_name",
@@ -226,6 +231,7 @@
             "COMMENTS": "",
             "NAME": "Last Name",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "LAST_NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "last_name",
@@ -268,6 +274,7 @@
             "COMMENTS": "",
             "NAME": "Username",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "USERNAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "username",
@@ -310,6 +317,7 @@
             "COMMENTS": "",
             "NAME": "Locale",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "LOCALE",
             "DATATYPE": "0x11ea12218ced0ceb84aee4b318306b9a",
             "DATA_ADDRESS": "locale",
@@ -352,6 +360,7 @@
             "COMMENTS": "",
             "NAME": "Email",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "EMAIL",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "email",
@@ -394,6 +403,7 @@
             "COMMENTS": "",
             "NAME": "Password",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "PASSWORD",
             "DATATYPE": "0x11ea0aea84bb7da1be19e4b318306b9a",
             "DATA_ADDRESS": "password",
@@ -419,6 +429,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.ATTRIBUTE",
         "conditions": [
             {
                 "expression": "OBJECT__APP",

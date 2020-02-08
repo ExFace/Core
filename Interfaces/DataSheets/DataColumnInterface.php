@@ -8,6 +8,8 @@ use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
+use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 
 interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 {
@@ -176,9 +178,18 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      *
      * @param string $cell_value            
      * @param boolean $case_sensitive            
-     * @return integer[]
+     * @return int[]
      */
     public function findRowsByValue($cell_value, $case_sensitive = false);
+    
+    /**
+     * Returns an array with indexes of rows, where the column has empty values (i.e. NULL or '').
+     * 
+     * Will return an empty array for empty columns!
+     * 
+     * @return int[]
+     */
+    public function findEmptyRows() : array;
 
     /**
      * Returns an array with all values of this column, which are not present in another one.
@@ -255,6 +266,13 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @return boolean
      */
     public function isEmpty($check_values = false);
+    
+    /**
+     * Returns TRUE if the column has at least one empty value (i.e. NULL or '')
+     * 
+     * @return bool
+     */
+    public function hasEmptyValues() : bool;
 
     /**
      * Applies default and fixed values defined in the meta model to this column.
@@ -359,4 +377,14 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @return bool
      */
     public function hasAggregator() : bool;
+    
+    /**
+     * Replaces all values in the column by their normalized versions according to the column's data type.
+     * 
+     * @throws DataTypeCastingError
+     * @throws DataTypeValidationError
+     * 
+     * @return void
+     */
+    public function normalizeValues();
 }

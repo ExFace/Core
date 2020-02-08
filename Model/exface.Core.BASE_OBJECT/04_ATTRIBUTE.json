@@ -82,6 +82,10 @@
             "attribute_alias": "RELATION_CARDINALITY"
         },
         {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -184,6 +188,7 @@
             "COMMENTS": "",
             "NAME": "Created on",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "CREATED_ON",
             "DATATYPE": "0x11e93b4b3d1f22188c660205857feb80",
             "DATA_ADDRESS": "created_on",
@@ -226,6 +231,7 @@
             "COMMENTS": "",
             "NAME": "Modified on",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "MODIFIED_ON",
             "DATATYPE": "0x11e93b4b3d1f22188c660205857feb80",
             "DATA_ADDRESS": "modified_on",
@@ -268,6 +274,7 @@
             "COMMENTS": "",
             "NAME": "Created by",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "CREATED_BY_USER",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "created_by_user_oid",
@@ -310,6 +317,7 @@
             "COMMENTS": "",
             "NAME": "Modified by",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "MODIFIED_BY_USER",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "modified_by_user_oid",
@@ -352,6 +360,7 @@
             "COMMENTS": "",
             "NAME": "UID",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "UID",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "oid",
@@ -377,6 +386,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.ATTRIBUTE",
         "conditions": [
             {
                 "expression": "OBJECT__APP",

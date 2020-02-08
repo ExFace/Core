@@ -232,7 +232,7 @@ class User implements UserInterface
             foreach ($userModel->getAttributes() as $attr) {
                 $userSheet->getColumns()->addFromAttribute($attr);
             }
-            $userSheet->getFilters()->addConditionsFromString($userModel, 'USERNAME', $this->getUsername(), EXF_COMPARATOR_EQUALS);
+            $userSheet->getFilters()->addConditionFromString('USERNAME', $this->getUsername(), EXF_COMPARATOR_EQUALS);
             $userSheet->dataRead();
         }
         

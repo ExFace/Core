@@ -303,25 +303,25 @@ class Expression implements ExpressionInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::evaluate()
      */
-    public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, $column_name = null, $row_number = null)
+    public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, $row_number = null)
     {
-        if ($this->isStatic()) {
-            if ($this->isFormula()) {
+        if ($this->isStatic() === true) {
+            if ($this->isFormula() === true) {
                 return $this->getFormula()->evaluate();
             } else {
                 return $this->value;
             }
             
         } else {
-            if (is_null($data_sheet) || is_null($column_name)) {
+            if ($data_sheet === null) {
                 throw new InvalidArgumentException('In a non-static expression $data_sheet and $column_name are mandatory arguments.');
             }
             
-            if (is_null($row_number)) {
+            if ($row_number === null) {
                 $result = array();
                 $rows_and_totals_count = $data_sheet->countRows() + count($data_sheet->getTotalsRows());
                 for ($r = 0; $r < $rows_and_totals_count; $r ++) {
-                    $result[] = $this->evaluate($data_sheet, $column_name, $r);
+                    $result[] = $this->evaluate($data_sheet, $r);
                 }
                 return $result;
             }
@@ -329,7 +329,7 @@ class Expression implements ExpressionInterface
                 case self::TYPE_ATTRIBUTE:
                     return $data_sheet->getColumns()->getByExpression($this->attribute_alias)->getCellValue($row_number);
                 case self::TYPE_FORMULA:
-                    return $this->getFormula()->evaluate($data_sheet, $column_name, $row_number);
+                    return $this->getFormula()->evaluate($data_sheet, $row_number);
                 default:
                     return $this->value;
             }

@@ -20,6 +20,7 @@ use exface\Core\Widgets\DataImporter;
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\DataSpreadSheetFooter;
+use exface\Core\CommonLogic\Model\RelationPath;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -547,14 +548,21 @@ JS;
                 $rel = $cellWidget->getAttribute()->getRelation();
                 
                 $srcSheet = DataSheetFactory::createFromObject($rel->getRightObject());
-                $srcLabelAttr = $srcSheet->getMetaObject()->getLabelAttribute();
+                
                 $srcIdAttr = $srcSheet->getMetaObject()->getUidAttribute();
-                $srcLabelCol = $srcSheet->getColumns()->addFromAttribute($srcLabelAttr);
                 $srcIdCol = $srcSheet->getColumns()->addFromAttribute($srcIdAttr);
-                $srcLabelName = $srcLabelCol->getName();
                 $srcIdName = $srcIdCol->getName();
                 
+                $srcLabelAttr = $srcSheet->getMetaObject()->getLabelAttribute();
+                if ($srcLabelAttr->isRelation() === true && $srcLabelAttr->getRelation()->getRightObject()->hasLabelAttribute() === true) {
+                    $srcLabelCol = $srcSheet->getColumns()->addFromExpression(RelationPath::relationPathAdd($srcLabelAttr->getAlias(), 'LABEL'));
+                } else {
+                    $srcLabelCol = $srcSheet->getColumns()->addFromAttribute($srcLabelAttr);
+                }
+                $srcLabelName = $srcLabelCol->getName();
+                
                 $srcSheet->dataRead();
+                
                 $srcData = [];
                 foreach ($srcSheet->getRows() as $row) {
                     $srcData[] = ['id' => $row[$srcIdName], 'name' => $row[$srcLabelName]];

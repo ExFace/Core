@@ -328,11 +328,11 @@ class DataColumn implements DataColumnInterface
     public function setValuesByExpression(ExpressionInterface $expression, $overwrite = true)
     {
         if ($overwrite || $this->isEmpty()) {
-            $this->setValues($expression->evaluate($this->getDataSheet(), $this->getName()));
+            $this->setValues($expression->evaluate($this->getDataSheet()));
         } else {
             foreach ($this->getValues(false) as $row => $val) {
                 if (! is_null($val) && $val !== '') {
-                    $this->setValue($row, $expression->evaluate($this->getDataSheet(), $this->getName(), $row));
+                    $this->setValue($row, $expression->evaluate($this->getDataSheet(), $row));
                 }
             }
         }
@@ -717,7 +717,7 @@ class DataColumn implements DataColumnInterface
         if ($fixedEx && $this->getIgnoreFixedValues() === false) {
             // Fixed values MUST be calculated unless this feature is explicitly disabled for the column
             foreach ($this->getValues(false) as $row_id => $val) {
-                $this->setValue($row_id, $fixedEx->evaluate($sheet, $this->getName(), $row_id));
+                $this->setValue($row_id, $fixedEx->evaluate($sheet, $row_id));
             }
         }
         
@@ -726,7 +726,7 @@ class DataColumn implements DataColumnInterface
         foreach ($this->getValues(false) as $row_id => $val) {
             if ($val === null || $val === '') {
                 if ($attr->getDefaultValue()) {
-                    $this->setValue($row_id, $defaultEx->evaluate($sheet, $this->getName(), $row_id));
+                    $this->setValue($row_id, $defaultEx->evaluate($sheet, $row_id));
                 } elseif ($leaveNoEmptyValues === true) {
                     // If a value is still empty and we do not want it to be so - throw an error!
                     throw new DataSheetRuntimeError($sheet, 'Cannot fill column with default values ' . $this->getMetaObject()->getName() . ': attribute ' . $attr->getName() . ' not set in row ' . $row_id . '!', '6T5UX3Q');
@@ -901,5 +901,51 @@ class DataColumn implements DataColumnInterface
     public function hasAggregator() : bool
     {
         return $this->getAggregator() !== null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::validateValues()
+     */
+    public function normalizeValues()
+    {
+        $parsedVals = [];
+        foreach ($this->getValues(false) as $val) {
+            $parsedVals[] = $this->getDataType()->parse($val);
+        }
+        $this->setValues($parsedVals);
+        return;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::hasEmptyValues()
+     */
+    public function hasEmptyValues() : bool
+    {
+        foreach ($this->getValues(false) as $val) {
+            if ($val === null || $val === '') {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::findEmptyRows()
+     */
+    public function findEmptyRows() : array
+    {
+        $rowNos = [];
+        foreach ($this->getValues(false) as $rowNo => $val) {
+            if ($val === null || $val === '') {
+                $rowNos[] = $rowNo;
+            }
+        }
+        return $rowNos;
     }
 }

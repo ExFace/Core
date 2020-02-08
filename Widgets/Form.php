@@ -12,6 +12,8 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * A Form is a Panel with buttons.
@@ -93,6 +95,24 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
             $this->messageList = WidgetFactory::create($this->getPage(), 'MessageList', $this);
         }
         return $this->messageList;
+    }
+    
+    /**
+     * Array of `Message` widgets to display in the form's message list.
+     *
+     * @uxon-property messages
+     * @uxon-type \exface\Core\Widgets\Message[]
+     * @uxon-template [{"type": "info", "text": ""}]
+     *
+     * @param UxonObject $uxon
+     * @return MessageList
+     *
+     * @see \exface\Core\Interfaces\Widgets\iShowMessageList::setMessages()
+     */
+    public function setMessages(UxonObject $uxon) : iShowMessageList
+    {
+        $this->getMessageList()->setMessages($uxon);
+        return $this;
     }
     
     /**

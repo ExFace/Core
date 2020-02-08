@@ -10,25 +10,54 @@ use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Exceptions\Contexts\ContextLoadError;
 use exface\Core\CommonLogic\Contexts\AbstractContext;
+use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 
 class FilterContext extends AbstractContext
 {
 
-    private $conditions_by_object = array();
+    private $conditions_by_object = null;
+    
+    private $updatedObjectIds = [];
+    
+    private $conditionsUxon = null;
 
     /**
      * Returns an array with all conditions from the current context
+     * 
+     * TODO Modify to look for possible related objects and rebase() their conditions!
+     * Currently we only look for conitions based on direct attributes of the object given.
      *
      * @param MetaObjectInterface $object            
-     * @return Condition[] TODO Modify to look for possible related objects and rebase() their conditions!
-     *         Ccurrently we only look for conitions based on direct attributes of the object given.
+     * @return Condition[] 
      */
     public function getConditions(MetaObjectInterface $object = NULL)
     {
-        $array = array();
-        if ($object) {
+        if ($this->conditions_by_object === null || ($object !== null && $this->conditions_by_object[$object->getId()] === null)) {
+            $uxon = $this->conditionsUxon;
+            if ($uxon === null || $uxon->isEmpty() === true) {
+                return [];
+            }
+            
+            if ($object !== null && $uxon->hasProperty($object->getId()) === false) {
+                return [];
+            }
+            
+            if ($object !== null) {
+                foreach($this->getObjectIds($object) as $object_id) {
+                    $objectConditions = $this->getConditionsFromUxon($uxon, $object_id)[$object_id];
+                    if (empty($objectConditions) === false) {
+                        $this->conditions_by_object[$object_id] = $objectConditions;
+                    }
+                }
+            } else {
+                $this->conditions_by_object = $this->getConditionsFromUxon($uxon);
+            }
+        }
+        
+        $array = [];
+        if ($object !== null) {
             // Get object ids of the given object and all its parents
-            $ids = array_merge(array($object->getId()), $object->getParentObjectsIds());
+            $ids = $this->getObjectIds($object);
             // Look for filter conditions for these objects
             foreach ($ids as $object_id) {
                 if (is_array($this->conditions_by_object[$object_id])) {
@@ -40,7 +69,7 @@ class FilterContext extends AbstractContext
                     // 1) Ensure, there is a relation to the parent object and thus a relation path to rebase. However, the rebase() should not actually change
                     // The alias of the attribute or it's relation path if the parent object does not have it's own data address
                     // 2) Create an alternative rebase() method, that would work with objects. This would probably be harder to understand.
-                    if ($object_id != $object->getId()) {
+                    if ($object_id !== $object->getId()) {
                         foreach ($this->conditions_by_object[$object_id] as $condition) {
                             $exface = $this->getWorkbench();
                             $new_expresseion = ExpressionFactory::createFromString($exface, $condition->getExpression()->toString(), $object);
@@ -61,6 +90,43 @@ class FilterContext extends AbstractContext
         }
         return $array;
     }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @return string[]
+     */
+    private function getObjectIds(MetaObjectInterface $object) : array
+    {
+        return array_merge(array($object->getId()), $object->getParentObjectsIds());
+    }
+    
+    /**
+     * 
+     * @param UxonObject $uxon
+     * @param string $filterObjectId
+     * @return ConditionalExpressionInterface[][]
+     */
+    private function getConditionsFromUxon(UxonObject $uxon, string $filterObjectId = null) : array
+    {
+        $conditions = [];
+        if ($uxon !== null && $uxon->isEmpty() === false) {
+            $exface = $this->getWorkbench();
+            foreach ($uxon->getPropertiesAll() as $oId => $uxonConditions) {
+                if ($filterObjectId !== null && $oId !== $filterObjectId) {
+                    continue;
+                }
+                foreach ($uxonConditions as $uxonCondition) {
+                    try {
+                        $conditions[$oId][] = ConditionFactory::createFromUxon($exface, $uxonCondition);
+                    } catch (\Throwable $e) {
+                        // ignore context that cannot be instantiated!
+                    }
+                }
+            }
+        }
+        return $conditions;
+    }
 
     /**
      * Adds a condition to the current context
@@ -70,7 +136,12 @@ class FilterContext extends AbstractContext
      */
     public function addCondition(Condition $condition)
     {
-        $this->conditions_by_object[$condition->getExpression()->getMetaObject()->getId()][$condition->getExpression()->toString()] = $condition;
+        $objectId = $condition->getExpression()->getMetaObject()->getId();
+        if (($this->conditions_by_object === null || $this->conditions_by_object[$objectId] === null) && $this->isEmpty() === false) {
+            $this->conditions_by_object[$objectId] = $this->getConditionsFromUxon($this->conditionsUxon, $objectId)[$objectId];
+        }
+        $this->conditions_by_object[$objectId][$condition->getExpression()->toString()] = $condition;
+        $this->updatedObjectIds[] = $objectId;
         return $this;
     }
 
@@ -82,25 +153,46 @@ class FilterContext extends AbstractContext
      */
     public function removeCondition(Condition $condition)
     {
-        unset($this->conditions_by_object[$condition->getExpression()->getMetaObject()->getId()][$condition->getExpression()->toString()]);
+        $object = $condition->getExpression()->getMetaObject();
+        if (empty($this->getConditions($object)) === false) {
+            unset($this->conditions_by_object[$object->getId()][$condition->getExpression()->toString()]);
+            $this->updatedObjectIds[] = $object->getId();
+        }
         return $this;
     }
 
     /**
      * Removes all conditions based on a certain attribute
      *
-     * @param attribute $attribute            
+     * @param MetaAttributeInterface $attribute            
      * @return \exface\Core\Contexts\FilterContext
      */
     public function removeConditionsForAttribute(MetaAttributeInterface $attribute)
     {
-        if (is_array($this->conditions_by_object[$attribute->getObjectId()])) {
-            foreach ($this->conditions_by_object[$attribute->getObjectId()] as $id => $condition) {
-                if ($condition->getAttributeAlias() == $attribute->getAliasWithRelationPath()) {
-                    unset($this->conditions_by_object[$attribute->getObjectId()][$id]);
+        $objectConditions = $this->getConditions($attribute->getObject());
+        if (empty($objectConditions) === false) {
+            foreach ($objectConditions as $condition) {
+                if ($condition->getAttributeAlias() === $attribute->getAliasWithRelationPath()) {
+                    $this->removeCondition($condition);
                 }
             }
         }
+        return $this;
+    }
+    
+    /**
+     * Removes all conditions set for the given object
+     *
+     * @param MetaObjectInterface $object
+     * @return \exface\Core\Contexts\FilterContext
+     */
+    public function removeConditionsForObject(MetaObjectInterface $object)
+    {
+        unset($this->conditions_by_object[$object->getId()]);
+        if ($this->conditionsUxon !== null) {
+            $this->conditionsUxon->unsetProperty($object->getId());
+        }
+        $this->updatedObjectIds[$object->getId()];
         return $this;
     }
 
@@ -111,7 +203,13 @@ class FilterContext extends AbstractContext
      */
     public function removeAllConditions()
     {
+        if (empty($this->conditions_by_object) === false) {
+            $this->updatedObjectIds = array_keys($this->conditions_by_object);
+        } elseif ($this->conditionsUxon !== null) {
+            $this->updatedObjectIds = array_keys($this->conditionsUxon->toArray());
+        }
         $this->conditions_by_object = array();
+        $this->conditionsUxon = new UxonObject();
         return $this;
     }
 
@@ -122,13 +220,26 @@ class FilterContext extends AbstractContext
      */
     public function exportUxonObject()
     {
-        $uxon = new UxonObject();
-        if (! $this->isEmpty()) {
-            foreach ($this->getConditions() as $condition) {
-                $uxon->appendToProperty('conditions', $condition->exportUxonObject());
+        $updatedConditions = [];
+        // If there are updated object conditions, we know, that $this->conditions_by_object was populated.
+        foreach ($this->updatedObjectIds as $objectId) {
+            $updatedConditions[$objectId] = $this->conditions_by_object[$objectId];                
+        }
+        // Re-read current session data
+        $this->getScope()->reloadContext($this);
+        
+        $uxon = $this->conditionsUxon ?? (new UxonObject());
+        foreach ($updatedConditions as $objectId => $conditions) {
+            $uxon->unsetProperty($objectId);
+            foreach ($conditions as $condition) {
+                $uxon->appendToProperty($objectId, $condition->exportUxonObject());
             }
         }
-        return $uxon;
+        if ($uxon->isEmpty() === false) {
+            return (new UxonObject())->setProperty('conditions', $uxon);
+        } else {
+            return new UxonObject();
+        }
     }
 
     /**
@@ -140,22 +251,14 @@ class FilterContext extends AbstractContext
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        $exface = $this->getWorkbench();
-        if ($uxon->hasProperty('conditions')) {
-            foreach ($uxon->getProperty('conditions') as $uxon_condition) {
-                try {
-                    $this->addCondition(ConditionFactory::createFromUxon($exface, $uxon_condition));
-                } catch (ErrorExceptionInterface $e) {
-                    // ignore context that cannot be instantiated!
-                }
-            }
-        }
+        $this->conditionsUxon = $uxon->getProperty('conditions');
+        $this->conditions_by_object = null;
         return $this;
     }
 
     public function isEmpty()
     {
-        return empty($this->conditions_by_object) ? true : false;
+        return empty($this->conditions_by_object) === true && ($this->conditionsUxon === null || $this->conditionsUxon->isEmpty()) ? true : false;
     }
     
     /**
@@ -176,6 +279,15 @@ class FilterContext extends AbstractContext
     public function getName()
     {
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.FILTER.NAME');
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasChanges() : bool
+    {
+        return empty($this->updatedObjectIds) === false;
     }
 }
 ?>

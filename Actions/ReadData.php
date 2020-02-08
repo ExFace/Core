@@ -74,7 +74,7 @@ class ReadData extends AbstractAction implements iReadData
     protected function updateFilterContext(DataSheetInterface $data_sheet)
     {
         $context = $this->getApp()->getWorkbench()->getContext()->getScopeWindow()->getFilterContext();
-        $context->removeAllConditions();
+        $context->removeConditionsForObject($data_sheet->getMetaObject());
         foreach ($data_sheet->getFilters()->getConditions() as $condition) {
             if (! $condition->isEmpty()){
                 $context->addCondition($condition);

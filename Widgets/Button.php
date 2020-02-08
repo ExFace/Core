@@ -17,7 +17,6 @@ use exface\Core\Interfaces\Widgets\iDefineAction;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Traits\iHaveColorTrait;
-use exface\Core\Interfaces\Widgets\iHaveCaption;
 use exface\Core\Interfaces\Widgets\iCanBeDisabled;
 use exface\Core\Interfaces\Actions\iResetWidgets;
 

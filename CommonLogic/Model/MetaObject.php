@@ -959,7 +959,7 @@ class MetaObject implements MetaObjectInterface
         return $this->default_sorters;
     }
 
-    public function getModel()
+    public function getModel() : ModelInterface
     {
         return $this->model;
     }

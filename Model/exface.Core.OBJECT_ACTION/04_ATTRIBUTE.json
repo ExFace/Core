@@ -82,6 +82,10 @@
             "attribute_alias": "RELATION_CARDINALITY"
         },
         {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -184,6 +188,7 @@
             "COMMENTS": "",
             "NAME": "Belongs to object",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "OBJECT",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "object_oid",
@@ -226,6 +231,7 @@
             "COMMENTS": "",
             "NAME": "Prototype Action",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "ACTION_PROTOTYPE",
             "DATATYPE": "0x11e7b93f315ab6ca84cce4b318306b9a",
             "DATA_ADDRESS": "action",
@@ -268,6 +274,7 @@
             "COMMENTS": "",
             "NAME": "Action Alias",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "ALIAS",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "alias",
@@ -310,6 +317,7 @@
             "COMMENTS": "",
             "NAME": "Action Name",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "name",
@@ -352,6 +360,7 @@
             "COMMENTS": "",
             "NAME": "Description",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "SHORT_DESCRIPTION",
             "DATATYPE": "0x31310000000000000000000000000000",
             "DATA_ADDRESS": "short_description",
@@ -394,6 +403,7 @@
             "COMMENTS": "",
             "NAME": "Action Configuration",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "CONFIG_UXON",
             "DATATYPE": "0x11e905164dfeed99b04c0205857feb80",
             "DATA_ADDRESS": "config_uxon",
@@ -436,6 +446,7 @@
             "COMMENTS": "",
             "NAME": "Is part of app",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "APP",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "action_app_oid",
@@ -478,6 +489,7 @@
             "COMMENTS": "",
             "NAME": "Use in Object Basket",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "USE_IN_OBJECT_BASKET_FLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
             "DATA_ADDRESS": "use_in_object_basket_flag",
@@ -520,6 +532,7 @@
             "COMMENTS": "",
             "NAME": "Documentation",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "DOCS",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "docs_path",
@@ -545,6 +558,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.ATTRIBUTE",
         "conditions": [
             {
                 "expression": "OBJECT__APP",
