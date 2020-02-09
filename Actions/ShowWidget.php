@@ -39,7 +39,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
 
     private $widget_id = null;
 
-    private $prefill_with_filter_context = true;
+    private $prefill_with_filter_context = false;
 
     private $prefill_with_input_data = true;
     
@@ -293,6 +293,8 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
                         // of the data sheet and change the widget to look in 
                         // columns as well as in filters...
                         try {
+                            $data_sheet->getFilters()->addCondition($condition);
+                            
                             $col = $data_sheet->getColumns()->addFromExpression($condition->getExpression());
                             // Add the value of the filter (if there) as cell value
                             if (! is_null($condition->getValue()) && $condition->getValue() !== ''){
