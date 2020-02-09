@@ -53,6 +53,8 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     
     private $grid = null;
     
+    private $gridArea = null;
+    
     private $rotate_labels = false;
 
     const POSITION_TOP = 'TOP';
@@ -428,6 +430,34 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     public function setGrid(bool $value) : ChartAxis
     {
         $this->grid = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function hasGridArea() : bool
+    {
+        if($this->gridArea === null){
+            return false;
+        }
+        return $this->gridArea;
+    }
+    
+    /**
+     * Set to TRUE to make the grid areas for this axis visible or to FALSE (default) to force hiding it.
+     *
+     * @uxon-property grid_area
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return ChartAxis
+     */
+    public function setGridArea(bool $trueOrFalse) : ChartAxis
+    {
+        $this->gridArea = $trueOrFalse;
         return $this;
     }
 
