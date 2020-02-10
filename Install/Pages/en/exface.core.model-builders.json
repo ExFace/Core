@@ -1,13 +1,13 @@
 {
     "id": "0xc6088850d80a11e7bc3700a0c6000012",
     "alias_with_namespace": "exface.core.model-builders",
-    "menu_parent_page_alias": "exface.core.documentation",
-    "menu_index": "6",
+    "menu_parent_page_selector": "0xf831c595ba2c11e7895fe4b318306b9a",
+    "menu_index": 6,
     "menu_visible": true,
     "name": "Model Builders",
     "description": "Browse available model builders and documentation",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
     "contents": {
         "object_alias": "exface.core.MODEL_BUILDER",
         "widget_type": "DataTable",

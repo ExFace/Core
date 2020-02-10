@@ -1,13 +1,13 @@
 {
     "id": "0xb90bb0b8949f11e7a605028037ec0200",
     "alias_with_namespace": "exface.core.logs",
-    "menu_parent_page_alias": "exface.core.administration",
-    "menu_index": "3",
+    "menu_parent_page_selector": "0xf8310d4bba2c11e7895fe4b318306b9a",
+    "menu_index": 3,
     "menu_visible": true,
     "name": "Logs",
     "description": "View system\/error logs",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
     "contents": {
         "widget_type": "SplitHorizontal",
         "object_alias": "exface.Core.LOG",

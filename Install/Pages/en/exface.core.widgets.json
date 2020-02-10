@@ -1,13 +1,13 @@
 {
     "id": "0x3187ce4c949f11e7b01d028037ec0200",
     "alias_with_namespace": "exface.core.widgets",
-    "menu_parent_page_alias": "exface.core.documentation",
-    "menu_index": "1",
+    "menu_parent_page_selector": "0xf831c595ba2c11e7895fe4b318306b9a",
+    "menu_index": 1,
     "menu_visible": true,
     "name": "Widgets",
     "description": "Browse available widgets and their properties",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
     "contents": {
         "object_alias": "exface.core.WIDGET",
         "widget_type": "DataTable",

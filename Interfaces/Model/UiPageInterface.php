@@ -163,21 +163,19 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return UiPageInterface
      */
     public function setUpdateable($true_or_false);
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasMenuParent() : bool;
 
     /**
      * Returns the alias of the parent page (the actual parent - not a page, that replaces the parent!!!).
      * 
      * @return string
      */
-    public function getMenuParentPageAlias();
-
-    /**
-     * Sets the parent of the page by setting an UID or an alias.
-     * 
-     * @param string $menuParentPageAlias
-     * @return UiPageInterface
-     */
-    public function setMenuParentPageAlias($menuParentPageAlias);
+    public function getMenuParentPageSelector() : ?UiPageSelectorInterface;
     
     /**
      * 
@@ -192,31 +190,13 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
      * If there is page, that replaces the actual parent, that page is returned by
      * befault. Set $ignoreReplacement to true to get the actual parent.
      * 
-     * NOTE: getMenuParentPageAlias() always returns the alias of the actual page
+     * NOTE: getMenuParentPageSelector() always returns the selector of the linked page
      * in contrast to this method.
      * 
      * @param bool $ignoreReplacement
      * @return UiPageInterface|null
      */
     public function getMenuParentPage(bool $ignoreReplacement = false) : ?UiPageInterface;
-
-    /**
-     * Returns the default menu position of the page in the form 'menuParentPageAlias:menuIndex'.
-     * 
-     * @return string
-     */
-    public function getMenuDefaultPosition();
-
-    /**
-     * Sets the default menu position of the page in the form 'menuParentPageAlias:menuIndex'.
-     * 
-     * This is important to determine if the page has been moved manually. If it has been
-     * moved, the position in the tree will not be changed during an update.
-     * 
-     * @param string $menuDefaultPosition
-     * @return UiPageInterface
-     */
-    public function setMenuDefaultPosition($menuDefaultPosition);
     
     /**
      * Returns the index (position number starting with 0) of this page in the 
@@ -236,13 +216,32 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return UiPageInterface
      */
     public function setMenuIndex($number);
-
+    
     /**
-     * Returns the menu position of the page in the form 'menuParentPageAlias:menuIndex'.
-     *
-     * @return string
+     * 
+     * @param string|UiPageSelectorInterface $selectorOrString
+     * @return UiPageInterface
      */
-    public function getMenuPosition();
+    public function setMenuParentPageSelectorDefault($selectorOrString) : UiPageInterface;
+    
+    /**
+     * 
+     * @return UiPageSelectorInterface|NULL
+     */
+    public function getMenuParentPageSelectorDefault() : ?UiPageSelectorInterface;
+    
+    /**
+     * 
+     * @return int|NULL
+     */
+    public function  getMenuIndexDefault() : ?int;
+    
+    /**
+     * 
+     * @param int $number
+     * @return UiPageInterface
+     */
+    public function setMenuIndexDefault(int $number) : UiPageInterface;
 
     /**
      * Returns if the page was moved in the menu tree compared to the default menu position.
@@ -343,7 +342,7 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
      * 
      * @return string
      */
-    public function getReplacesPageAlias();
+    public function getReplacesPageSelector() : ?UiPageSelectorInterface;
 
     /**
      * Specifies the alias of the page, this one will replace when resolving widget links.
@@ -359,7 +358,7 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @param string $alias_with_namespace
      * @return UiPageInterface
      */
-    public function setReplacesPageAlias($alias_with_namespace);
+    public function setReplacesPageSelector($alias_with_namespace);
 
     /**
      * Returns the raw contents of the UI page, that is stored in the CMS (stringified UXON).
