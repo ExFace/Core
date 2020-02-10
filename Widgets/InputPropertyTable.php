@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Widgets\Traits\SingleValueInputTrait;
+
 /**
  * A tabular input for a flat JSON object: keys in one column, values in the other.
  * 
@@ -9,6 +11,8 @@ namespace exface\Core\Widgets;
  */
 class InputPropertyTable extends Input
 {
+    use SingleValueInputTrait;
+    
     private $allow_add_properties = true;
 
     private $allow_remove_properties = true;
