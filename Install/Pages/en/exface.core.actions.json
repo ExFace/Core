@@ -1,13 +1,13 @@
 {
     "id": "0xb00f0326949e11e79341028037ec0200",
     "alias_with_namespace": "exface.core.actions",
-    "menu_parent_page_alias": "exface.core.documentation",
-    "menu_index": "2",
+    "menu_parent_page_selector": "0xf831c595ba2c11e7895fe4b318306b9a",
+    "menu_index": 2,
     "menu_visible": true,
     "name": "Action Prototypes",
     "description": "Browse available actions and their properties",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
     "contents": {
         "object_alias": "exface.core.ACTION",
         "widget_type": "DataTable",

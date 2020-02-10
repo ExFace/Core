@@ -1,13 +1,13 @@
 {
     "id": "0xd5bf319a949e11e79bd9028037ec0200",
     "alias_with_namespace": "exface.core.behavior-prototypes",
-    "menu_parent_page_alias": "exface.core.documentation",
-    "menu_index": "3",
+    "menu_parent_page_selector": "0xf831c595ba2c11e7895fe4b318306b9a",
+    "menu_index": 3,
     "menu_visible": true,
     "name": "Behavior Prototypes",
     "description": "Browse available behaviors and their properties",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
     "contents": {
         "object_alias": "exface.core.BEHAVIOR",
         "widget_type": "DataTable",

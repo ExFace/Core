@@ -1,13 +1,13 @@
 {
     "id": "0xa7760458949e11e7a353028037ec0200",
     "alias_with_namespace": "exface.core.apps",
-    "menu_parent_page_alias": "exface.core.metamodel",
-    "menu_index": "0",
+    "menu_parent_page_selector": "0x8f9e3238949e11e7aa5f028037ec0200",
+    "menu_index": 0,
     "menu_visible": true,
     "name": "Apps",
     "description": "Create, install, repair and backup apps",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
     "contents": {
         "object_alias": "exface.Core.APP",
         "widget_type": "DataTable",

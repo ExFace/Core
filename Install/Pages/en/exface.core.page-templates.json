@@ -1,13 +1,13 @@
 {
     "id": "0xb108669020a211ea8d5600a0c6000009",
     "alias_with_namespace": "exface.core.page-templates",
-    "menu_parent_page_alias": "exface.core.pages",
-    "menu_index": "1",
+    "menu_parent_page_selector": "0xaab623e6632411e8aab30205857feb80",
+    "menu_index": 1,
     "menu_visible": true,
     "name": "Page Templates",
     "description": "",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.PAGE_TEMPLATE",

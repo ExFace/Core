@@ -1,13 +1,13 @@
 {
     "id": "0xe9c7828260f811e9845bf816544f0673",
     "alias_with_namespace": "exface.core.core-sql-migrations",
-    "menu_parent_page_alias": "exface.core.logs",
-    "menu_index": "0",
+    "menu_parent_page_selector": "0xb90bb0b8949f11e7a605028037ec0200",
+    "menu_index": 0,
     "menu_visible": true,
     "name": "Core SQL Migrations",
     "description": "",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.metamodel_db_migrations",

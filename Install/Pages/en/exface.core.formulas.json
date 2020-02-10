@@ -1,13 +1,13 @@
 {
     "id": "0xf831b3ccba2c11e7895fe4b318306b9a",
     "alias_with_namespace": "exface.core.formulas",
-    "menu_parent_page_alias": "exface.core.documentation",
-    "menu_index": "8",
+    "menu_parent_page_selector": "0xf831c595ba2c11e7895fe4b318306b9a",
+    "menu_index": 8,
     "menu_visible": true,
     "name": "Formulas",
     "description": "Browse available formulas and their parameters",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
     "contents": {
         "object_alias": "exface.Core.FORMULA",
         "widget_type": "DataTable",

@@ -24,10 +24,9 @@ use exface\Core\Interfaces\CmsConnectorInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Events\Widget\OnRemoveEvent;
 use exface\Core\Exceptions\UiPage\UiPageLoadingError;
-use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 use exface\Core\Factories\FacadeFactory;
-use exface\Core\CommonLogic\Selectors\FacadeSelector;
 use exface\Core\Exceptions\LogicException;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -71,14 +70,14 @@ class UiPage implements UiPageInterface
 
     private $updateable = true;
 
-    private $menuParentPageAlias = null;
-
     private $menuParentPageSelector = null;
-
-    private $menuDefaultPosition = null;
-
+    
+    private $menuParentPageSelectorDefault = null;
+    
     private $menuIndex = 0;
 
+    private $menuIndexDefault = null;
+    
     private $menuVisible = true;
 
     private $id = null;
@@ -89,7 +88,7 @@ class UiPage implements UiPageInterface
 
     private $intro = '';
 
-    private $replacesPageAlias = null;
+    private $replacesPageSelector = null;
 
     private $contents = null;
 
@@ -639,31 +638,6 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentPageAlias()
-     */
-    public function getMenuParentPageAlias()
-    {
-        if (is_null($this->menuParentPageAlias) && ! is_null($this->menuParentPageSelector)) {
-            $this->menuParentPageAlias = $this->getMenuParentPage(true)->getAliasWithNamespace();
-        }
-        return $this->menuParentPageAlias;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentPageAlias()
-     */
-    public function setMenuParentPageAlias($menuParentPageAlias)
-    {
-        $this->menuParentPageAlias = $menuParentPageAlias;
-        $this->menuParentPageSelector = null;
-        return $this;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentPage()
      */
     public function getMenuParentPage(bool $ignoreReplacement = false) : ?UiPageInterface
@@ -677,12 +651,12 @@ class UiPage implements UiPageInterface
     /**
      * Returns the selector (id or alias) for the parent page in the main menu or NULL if no parent defined.
      * 
-     * @return string|null
+     * @return UiPageSelectorInterface|null
      */
-    protected function getMenuParentPageSelector()
+    public function getMenuParentPageSelector() : ?UiPageSelectorInterface
     {
-        if (is_null($this->menuParentPageSelector) && ! is_null($this->menuParentPageAlias)) {
-            return $this->menuParentPageAlias;
+        if ($this->menuParentPageSelector !== null && is_string($this->menuParentPageSelector)) {
+            $this->menuParentPageSelector = SelectorFactory::createPageSelector($this->getWorkbench(), $this->menuParentPageSelector);
         }
         return $this->menuParentPageSelector;
     }
@@ -695,28 +669,6 @@ class UiPage implements UiPageInterface
     public function setMenuParentPageSelector($id_or_alias)
     {
         $this->menuParentPageSelector = $id_or_alias;
-        $this->menuParentPageAlias = null;
-        return $this;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuDefaultPosition()
-     */
-    public function getMenuDefaultPosition()
-    {
-        return $this->menuDefaultPosition;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuDefaultPosition()
-     */
-    public function setMenuDefaultPosition($menuDefaultPosition)
-    {
-        $this->menuDefaultPosition = $menuDefaultPosition;
         return $this;
     }
 
@@ -742,23 +694,13 @@ class UiPage implements UiPageInterface
     }
 
     /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuPosition()
-     */
-    public function getMenuPosition()
-    {
-        return $this->getMenuParentPageAlias() . ':' . $this->getMenuIndex();
-    }
-
-    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::isMoved()
      */
     public function isMoved()
     {
-        return strcasecmp($this->getMenuPosition(), $this->getMenuDefaultPosition()) != 0;
+        return $this->getMenuIndexDefault() !== null && $this->getMenuParentPageSelectorDefault() !== null && (strcasecmp($this->getMenuParentPageSelector(), $this->getMenuParentPageSelectorDefault()) !== 0 || $this->getMenuIndex() !== $this->getMenuIndexDefault());
     }
 
     /**
@@ -890,21 +832,24 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getReplacesPageAlias()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getReplacesPageSelector()
      */
-    public function getReplacesPageAlias()
+    public function getReplacesPageSelector() : ?UiPageSelectorInterface
     {
-        return $this->replacesPageAlias;
+        if ($this->replacesPageSelector !== null && is_string($this->replacesPageSelector)) {
+            $this->replacesPageSelector = SelectorFactory::createPageSelector($this->getWorkbench(), $this->replacesPageSelector);
+        }
+        return $this->replacesPageSelector;
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setReplacesPageAlias()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setReplacesPageSelector()
      */
-    public function setReplacesPageAlias($alias_with_namespace)
+    public function setReplacesPageSelector($uidOrAlias)
     {
-        $this->replacesPageAlias = $alias_with_namespace;
+        $this->replacesPageSelector = $uidOrAlias;
         return $this;
     }
 
@@ -1036,13 +981,13 @@ class UiPage implements UiPageInterface
         $uxon = new UxonObject();
         $uxon->setProperty('id', $this->getId());
         $uxon->setProperty('alias_with_namespace', $this->getAliasWithNamespace());
-        $uxon->setProperty('menu_parent_page_alias', $this->getMenuParentPageAlias());
+        $uxon->setProperty('menu_parent_page_selector', $this->getMenuParentPageSelector()->toString());
         $uxon->setProperty('menu_index', $this->getMenuIndex());
         $uxon->setProperty('menu_visible', $this->getMenuVisible());
         $uxon->setProperty('name', $this->getName());
         $uxon->setProperty('description', $this->getDescription());
         $uxon->setProperty('intro', $this->getIntro());
-        $uxon->setProperty('replaces_page_alias', $this->getReplacesPageAlias());
+        $uxon->setProperty('replaces_page_selector', $this->getReplacesPageSelector());
         
         $contents = trim($this->getContents());
         if (! $contents) {
@@ -1085,7 +1030,12 @@ class UiPage implements UiPageInterface
         } else {
             $copy->setApp($this->$appSelector);
         }
-        $copy->setMenuDefaultPosition($this->getMenuDefaultPosition());
+        if ($this->getMenuIndexDefault() !== null) {
+            $copy->setMenuIndexDefault($this->getMenuIndexDefault());
+        }
+        if ($this->getMenuParentPageSelectorDefault() !== null) {
+            $copy->setMenuParentPageSelectorDefault($this->getMenuParentPageSelectorDefault());
+        }
         return $copy;
     }
 
@@ -1112,11 +1062,11 @@ class UiPage implements UiPageInterface
             $page = $pageOrSelectorOrString;
         }
         
-        if ($page->getReplacesPageAlias() && $this->compareToPageReplace($this, $page)) {
+        if ($page->getReplacesPageSelector() && $this->compareToPageReplace($this, $page)) {
             // Ersetzt die uebergebene Seite eine andere Seite, koennte es diese Seite sein (auch
             // ueber eine Kette von Ersetzungen).
             return true;
-        } elseif ($this->getReplacesPageAlias() && $this->compareToPageReplace($page, $this)) {
+        } elseif ($this->getReplacesPageSelector() && $this->compareToPageReplace($page, $this)) {
             // Ersetzt diese Seite eine andere Seite, koennte es die uebergebene Seite sein (auch
             // ueber eine Kette von Ersetzungen).
             return true;
@@ -1160,31 +1110,23 @@ class UiPage implements UiPageInterface
     public function isExactly($pageOrSelectorOrString) : bool
     {
         if ($pageOrSelectorOrString instanceof UiPageInterface) {
-            return $this->compareToIdAlias($pageOrSelectorOrString->getId(), $pageOrSelectorOrString->getAliasWithNamespace());
-        } else {
-            return $this->compareToIdAlias($pageOrSelectorOrString, $pageOrSelectorOrString);
-        }
-    }
-
-    /**
-     * This function compares this UiPage to the passed UID and alias.
-     * 
-     * If the UID of this UiPage and the passed UID match or the alias of this UiPage and
-     * the passed alias match it returns true, false otherwise.
-     * 
-     * @param string $id
-     * @param string $alias
-     * @return boolean
-     */
-    protected function compareToIdAlias($id, $alias)
-    {
-        if ($this->getId() && $id && strcasecmp($this->getId(), $id) == 0) {
-            return true;
-        } elseif ($this->getAliasWithNamespace() && $alias && strcasecmp($this->getAliasWithNamespace(), $alias) == 0) {
-            return true;
+            return $this->getId() === $pageOrSelectorOrString->getId();
         }
         
-        return false;
+        if ($pageOrSelectorOrString instanceof UiPageSelectorInterface) {
+            $selector = $pageOrSelectorOrString;
+        } else {
+            $selector = SelectorFactory::createPageSelector($this->getWorkbench(), $pageOrSelectorOrString);
+        }
+        
+        if ($selector->isUid() === true) {
+            return $this->getId() === $selector->toString();
+        }
+        if ($selector->isAlias() === true) {
+            return strcasecmp($this->getAliasWithNamespace(), $selector->toString()) === 0;
+        }
+        
+        throw new RuntimeException('Cannot compare page "' . $this->getAliasWithNamespace() . '" to selector "' . $selector->toString() . '": unknown selector type!');
     }
 
     /**
@@ -1199,10 +1141,10 @@ class UiPage implements UiPageInterface
         if ($this->getId() != $page->getId() && ! in_array('id', $ignore_properties)) {
             return false;
         }
-        if ($this->getAliasWithNamespace() != $page->getAliasWithNamespace() && ! in_array('aliaswithnamespace', $ignore_properties)) {
+        if ($this->getAliasWithNamespace() != $page->getAliasWithNamespace()) {
             return false;
         }
-        if ($this->getMenuParentPageAlias() != $page->getMenuParentPageAlias() && ! in_array('menuparentpagealias', $ignore_properties)) {
+        if ($this->getMenuParentPageSelector()->toString() != $page->getMenuParentPageSelector()->toString()) {
             return false;
         }
         if ($this->getMenuIndex() != $page->getMenuIndex() && ! in_array('menuindex', $ignore_properties)) {
@@ -1220,7 +1162,7 @@ class UiPage implements UiPageInterface
         if ($this->getIntro() != $page->getIntro() && ! in_array('intro', $ignore_properties)) {
             return false;
         }
-        if ($this->getReplacesPageAlias() != $page->getReplacesPageAlias() && ! in_array('replacespagealias', $ignore_properties)) {
+        if ($this->getReplacesPageSelector() != $page->getReplacesPageSelector() && ! in_array('replacespagealias', $ignore_properties)) {
             return false;
         }
         if ($this->getContents() != $page->getContents() && ! in_array('contents', $ignore_properties)) {
@@ -1319,5 +1261,80 @@ class UiPage implements UiPageInterface
             throw new LogicException('Cannot modify facade configuration for a page after the facade had been loaded!');
         }
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentPageSelectorDefault()
+     */
+    public function setMenuParentPageSelectorDefault($selectorOrString): UiPageInterface
+    {
+        $this->menuParentPageSelectorDefault = $selectorOrString;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuIndexDefault()
+     */
+    public function getMenuIndexDefault(): ?int
+    {
+        return $this->menuIndexDefault;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuIndexDefault()
+     */
+    public function setMenuIndexDefault(int $number): UiPageInterface
+    {
+        $this->menuIndexDefault = $number;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentPageSelectorDefault()
+     */
+    public function getMenuParentPageSelectorDefault(): ?UiPageSelectorInterface
+    {
+        if ($this->menuParentPageSelectorDefault !== null && is_string($this->menuParentPageSelectorDefault)) {
+            $this->menuParentPageSelectorDefault = SelectorFactory::createPageSelector($this->getWorkbench(), $this->menuParentPageSelectorDefault);
+        }
+        return $this->menuParentPageSelectorDefault;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::hasMenuParent()
+     */
+    public function hasMenuParent() : bool
+    {
+        return $this->menuParentPageSelector !== null;
+    }
+
+    /**
+     * @deprecated use setMenuParentPageSelector() instead!
+     * @param string $aliasWithNamespace
+     * @return UiPageInterface
+     */
+    protected function setMenuParentPageAlias(string $aliasWithNamespace) : UiPageInterface
+    {
+        return $this->setMenuParentPageSelector($aliasWithNamespace);
+    }
+    
+    /**
+     * @deprecated use setReplacesPageSelector() instead!
+     * @param string $aliasWithNamespace
+     * @return UiPageInterface
+     */
+    protected function setReplacesPageAlias(string $aliasWithNamespace) : UiPageInterface
+    {
+        return $this->setReplacesPageSelector($aliasWithNamespace);
     }
 }

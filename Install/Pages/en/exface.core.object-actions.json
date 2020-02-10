@@ -1,13 +1,13 @@
 {
     "id": "0x2cbeb8ba628211e8b7db0205857feb80",
     "alias_with_namespace": "exface.core.object-actions",
-    "menu_parent_page_alias": "exface.core.objects",
-    "menu_index": "2",
+    "menu_parent_page_selector": "0xe6ea2a1a949e11e78de5028037ec0200",
+    "menu_index": 2,
     "menu_visible": true,
     "name": "Object Actions",
     "description": "Search for actions across all objects",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.OBJECT_ACTION",

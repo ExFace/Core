@@ -1154,18 +1154,27 @@ SQL;
         $uiPage->setName($row['name']);
         $uiPage->setDescription($row['description']);
         $uiPage->setIntro($row['intro']);
-        $uiPage->setMenuIndex($row['menu_index']);
-        $uiPage->setMenuVisible(! $row['menu_visible']);
+        $uiPage->setMenuIndex(intval($row['menu_index']));
+        $uiPage->setMenuVisible($row['menu_visible'] ? true : false);
+        
         if ($row['parent_oid']) {
             $uiPage->setMenuParentPageSelector($row['parent_oid']);
         }
-        $uiPage->setUpdateable($row['auto_update_disabled'] ? false : true);
-        $uiPage->setReplacesPageAlias($row['replace_page_alias']);
-        $uiPage->setMenuDefaultPosition($row['default_menu_position']);
+        
+        $uiPage->setUpdateable($row['auto_update_with_app'] ? true : false);
+        $uiPage->setReplacesPageSelector($row['replace_page_oid']);
         $uiPage->setContents($row['content']);
+        
         $uiPage->setFacadeSelector($row['facade_filepath']);
         if ($row['facade_uxon']) {
             $uiPage->setFacadeConfig(new UxonObject($row['facade_uxon']));
+        }
+        
+        if ($row['default_menu_parent_oid'] !== null) {
+            $uiPage->setMenuParentPageSelectorDefault($row['default_menu_parent_oid']);
+        }
+        if ($row['default_menu_index'] !== null) {
+            $uiPage->setMenuIndexDefault($row['default_menu_index']);
         }
         
         $this->pages_loaded[$uiPage->getId()] = $uiPage;
