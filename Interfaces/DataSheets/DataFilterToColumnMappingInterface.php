@@ -30,4 +30,11 @@ interface DataFilterToColumnMappingInterface extends DataColumnMappingInterface
      * @return DataFilterToColumnMappingInterface
      */
     public function setToSingleRowSeparator(string $value) : DataFilterToColumnMappingInterface;
+    
+    /**
+     * 
+     * @param bool $value
+     * @return DataFilterToColumnMappingInterface
+     */
+    public function setPreventInheritingFilter(bool $value) : DataFilterToColumnMappingInterface;
 }
