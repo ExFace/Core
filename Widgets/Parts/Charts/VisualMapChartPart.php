@@ -44,6 +44,11 @@ class VisualMapChartPart
     private $showScaleFilter = true;
     private $colors = [];
     
+    /**
+     * 
+     * @param ChartSeries $series
+     * @param UxonObject $uxon
+     */
     public function __construct(ChartSeries $series, UxonObject $uxon = null)
     {
         $this->series = $series;
@@ -79,7 +84,8 @@ class VisualMapChartPart
      * Set `true` to use a default (5) count of pieces. Set a `number` to divide the range between min/max into that amount
      * of pieces.
      * 
-     * @uxon-property split_number
+     * @uxon-property use_color_groups
+     * @uxon-type integer
      * 
      * @param int $number
      * @return VisualMapChartPart
@@ -98,6 +104,10 @@ class VisualMapChartPart
         return $this;
     }
     
+    /**
+     * 
+     * @return int|NULL
+     */
     public function getUseColorGroups() : ?int
     {
         return $this->splitNumber;
@@ -105,10 +115,12 @@ class VisualMapChartPart
     
     /**
      * Set the minimal value to be displayed on the color scale.
+     * 
      * Default is 0.
      * 
      * @uxon-property min
      * @uxon-type integer
+     * @uxon-default 0
      * 
      * @param int $min
      * @return VisualMapChartPart
@@ -155,12 +167,13 @@ class VisualMapChartPart
     
     /**
      * Set if the color scale filter should be shown or not.
+     * 
      * Data values will still be mapped to the colors if this property is set to `false`.
      * Default is `true`.
      * 
-     * uxon-property show_scale_filter
-     * uxon-property boolean
-     * uxon-default true
+     * @uxon-property show_scale_filter
+     * @uxon-type boolean
+     * @uxon-default true
      * 
      * @param bool $trueOrFalse
      * @return VisualMapChartPart
@@ -182,16 +195,22 @@ class VisualMapChartPart
     }
     
     /**
-     * Set the colors for the color scale filter. The first color will be assigned to value set in the `min` property,
-     * the last  will be assigned to the `max` value or, if `use_color_groups` is `true` or an integer, to the group
-     * for values higher than `max`. Every color in between will be maped to values in between.
-     * If the `use_color_groups` property is set to a number it is advised to as many colors as `use_color_groups` is set to plus
-     * and additional one, because one extra pieces will be added for values that are higher than the values set in in the `max` property.
-     * The values in the min/max range will be split into as many groups as given in the `use_color_groups` property.
+     * Set the colors for the color scale filter. 
+     * 
+     * The first color will be assigned to value set in the `min` property, the last  will be assigned to 
+     * the `max` value or, if `use_color_groups` is `true` or an integer, to the group for values higher 
+     * than `max`. Every color in between will be maped to values in between.
+     * 
+     * If the `use_color_groups` property is set to a number it is advised to as many colors as `use_color_groups` 
+     * is set to plus and additional one, because one extra pieces will be added for values that are higher than 
+     * the values set in in the `max` property. The values in the min/max range will be split into as many groups 
+     * as given in the `use_color_groups` property.
+     * 
      * If no colors are set, the Widget will choose colors according to the facade. 
      * 
-     * uxon-property colors
-     * uxon-type array
+     * @uxon-property colors
+     * @uxon-type array
+     * @uxon-template ["",""]
      * 
      * @param UxonObject $colors
      * @return VisualMapChartPart
