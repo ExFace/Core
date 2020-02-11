@@ -33,6 +33,7 @@ use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 use exface\Core\Uxon\ActionSchema;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
+use exface\Core\Interfaces\Actions\InputValidationRuleInterface;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -104,6 +105,10 @@ abstract class AbstractAction implements ActionInterface
     private $input_object_alias = null;
     
     private $result_object_alias = null;
+    
+    private $input_validation_conditions = null;
+    
+    private $input_validation_conditions_uxon = null;
 
     /**
      *
@@ -1124,5 +1129,66 @@ abstract class AbstractAction implements ActionInterface
     {
         return ActionSchema::class;
     }
+    
+    /**
+     *
+     * @return InputValidationRuleInterface[]
+     */
+    public function getInputValidationRules() : array
+    {
+        if ($this->input_validation_conditions === null) {
+            if ($this->input_validation_conditions_uxon !== null) {
+                // TODO instantiate validation rules
+            } else {
+                $this->input_validation_conditions = [];
+            }
+        }
+        return $this->input_validation_conditions;
+    }
+    
+    /**
+     * Defines validation rules for input data.
+     * 
+     * Each validation rule
+     * 
+     * ## Example: 
+     * 
+     * ```
+     * {
+     *  "input_validation_rules": [
+     *      {
+     *          "message": "[#ATTRIUTE_ALIAS_1#] appears to be to high! Expecting a maximum of [#ATTRIBUTE_ALIAS_2#]",
+     *          "message_type": "warning",
+     *          "operator": "AND",
+     *          "conditions": [
+     *              {
+     *                  "left_expression": "ATTRIUTE_ALIAS_1",
+     *                  "comparator": ">",
+     *                  "right_expression": "ATTRIUTE_ALIAS_2"
+     *              }
+     *          ]
+     *      }
+     *  ]
+     * }
+     * 
+     * ```
+     * 
+     * @uxon-property input_input_validation_conditions
+     * @uxon-type 
+     * @uxon-template [{"message": "", "conditions": [{"left_expression": "", "comparator": "", "right_expression"}]}]
+     * 
+     * @param UxonObject $uxon
+     * @return ActionInterface
+     */
+    public function setInputValidationRules(UxonObject $uxon) : ActionInterface
+    {
+        $this->input_validation_conditions_uxon = $uxon;
+        $this->input_validation_conditions = null;
+        return $this;
+    }
+    
+    public function hasInputValidationRules() : bool
+    {
+        return empty($this->input_validation_conditions) === false || $this->input_validation_conditions_uxon !== null;
+    }
 }
-?>
