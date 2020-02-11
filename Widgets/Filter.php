@@ -38,6 +38,10 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * default value (see examples below). You can also mark a filter as `required` to prevent 
  * loading data if it has no value.
  * 
+ * Note, that generic inputs `Input` or `InputHidden` will automatically get `multiple_values_allowed` 
+ * set to `true`, so they can be used with in-comparators (`[`, `![`) by default. This means, you can 
+ * type "value1, value2" into a regular `Input` filter and will get an `OR`-search automatically.
+ * 
  * To create complex filter with multiple conditions, you can specify a custom `condition_group`
  * with as many conditions on different attributes as you like. Use the `[#value#]` in the
  * `value` property of a condition to get the current value from the filter's input widget.
@@ -364,6 +368,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         // Some widgets need to be transformed to be a meaningfull filter
         if ($input->is('InputCheckBox')) {
             $input = $input->transformIntoSelect();
+        }
+        
+        if ($input->getWidgetType() === 'Input' || $input->getWidgetType() === 'InputHidden') {
+            $input->setMultipleValuesAllowed(true);
         }
         
         // Set a default comparator

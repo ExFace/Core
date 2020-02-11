@@ -80,7 +80,7 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * 
      * @see DataTypeInterface::parse($string) for a similar, but more restrictive method for 
      * instantiated types.
-     * @see DataTypeInterface::isEmptyValue($string) for a type-specific check for empty values.
+     * @see DataTypeInterface::isValueEmpty($string) for a type-specific check for empty values.
      *
      * @param mixed $value
      *        
@@ -96,7 +96,18 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * @param mixed $value
      * @return bool
      */
-    public static function isEmptyValue($value) : bool;
+    public static function isValueEmpty($value) : bool;
+    
+    /**
+     * Returns TRUE if the given value is a valid value meaning NULL.
+     * 
+     * In contrast to isValueEmpty() this value is set and a valid one, but it's meaning
+     * is NULL or EMPTY.
+     * 
+     * @param mixed $value
+     * @return bool
+     */
+    public static function isValueLogicalNull($value) : bool;
     
     /**
      * Returns a normalized representation of the given string mathing all the rules defined in the

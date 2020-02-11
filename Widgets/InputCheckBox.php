@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Widgets\Traits\SingleValueInputTrait;
+
 /**
  * This widget represents a two-state-switch mostly displayed as a checkbox.
  *
@@ -9,6 +11,7 @@ namespace exface\Core\Widgets;
  */
 class InputCheckBox extends Input
 {
+    use SingleValueInputTrait;
 
     /**
      * 

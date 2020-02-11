@@ -78,6 +78,6 @@ trait JqueryDataTableTrait {
     public function buildJsResetter() : string
     {
         $configuratorElement = $this->getFacade()->getElement($this->getWidget()->getConfiguratorWidget());
-        return $this->buildJsDataResetter() . $configuratorElement->buildJsResetter();
+        return $this->buildJsDataResetter() . ';' . $configuratorElement->buildJsResetter();
     }
 }

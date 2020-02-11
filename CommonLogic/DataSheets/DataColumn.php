@@ -709,7 +709,9 @@ class DataColumn implements DataColumnInterface
      */
     public function setValuesFromDefaults(bool $leaveNoEmptyValues = true) : DataColumnInterface
     {
-        $attr = $this->getAttribute();
+        if ($this->getExpressionObj()->isMetaAttribute() === false || ! $attr = $this->getAttribute()) {
+            return $this;
+        }
         $fixedEx = $attr->getFixedValue();
         $defaultEx = $attr->getDefaultValue();
         $sheet = $this->getDataSheet();

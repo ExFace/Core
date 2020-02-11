@@ -670,25 +670,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             case $data_type instanceof StringDataType:
                 // JSON values are strings too, but their columns should be null even if the value is an
                 // empty object or empty array (otherwise the cells would never be null)
-                if (($data_type instanceof JsonDataType) && $data_type::isEmptyValue($value) === true) {
+                if (($data_type instanceof JsonDataType) && $data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
                 } else {
                     $value = $value === null ? 'NULL' : "'" . $this->escapeString($value) . "'";
                 }  
                 break;
             case $data_type instanceof BooleanDataType:
-                if ($data_type::isEmptyValue($value) === true) {
+                if ($data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
                 } else {
                     $value = $value ? 1 : 0;
                 }
                 break;
             case $data_type instanceof NumberDataType:
-                $value = $data_type::isEmptyValue($value) === true ? 'NULL' : $value;
+                $value = $data_type::isValueEmpty($value) === true ? 'NULL' : $value;
                 break;
             case $data_type instanceof DateDataType:
             case $data_type instanceof TimeDataType:
-                $value = $data_type::isEmptyValue($value) === true ? 'NULL' : "'" . $this->escapeString($value) . "'";
+                $value = $data_type::isValueEmpty($value) === true ? 'NULL' : "'" . $this->escapeString($value) . "'";
                 break;
             default:
                 $value = "'" . $this->escapeString($value) . "'";
@@ -1011,7 +1011,23 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $aggregator = ! is_null($aggregator) ? $aggregator : $qpart->getAggregator();
         $select = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false);
         
+        // Can't just list binary values - need to transform them to strings first! 
+        if (strcasecmp($qpart->getAttribute()->getDataAddressProperty('SQL_DATA_TYPE'),'binary') === 0 && ($aggregator->getFunction() == AggregatorFunctionsDataType::LIST_ALL || $aggregator->getFunction() == AggregatorFunctionsDataType::LIST_DISTINCT)) {
+            $select = $this->buildSqlSelectBinaryAsHEX($select);
+        }
+        
         return $this->buildSqlGroupByExpression($qpart, $select, $aggregator);
+    }
+    
+    /**
+     * Returns the SQL to transform the given binary SELECT predicate into something like 0x12433.
+     * 
+     * @param string $select_from
+     * @return string
+     */
+    protected function buildSqlSelectBinaryAsHEX(string $select_from) : string
+    {
+        return 'CONCAT(\'0x\', LOWER(HEX(' . $select_from . ')))';
     }
     
     /**
