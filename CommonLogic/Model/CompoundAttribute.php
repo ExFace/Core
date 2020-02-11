@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\Interfaces\Model\CompoundAttributeComponentInterface;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\RuntimeException;
@@ -10,6 +11,7 @@ use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 /**
  *
@@ -92,6 +94,25 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
     
     /**
      * 
+     * @param array $values
+     * @throws RuntimeException
+     * @return string
+     */
+    public function mergeValues(array $values) : string
+    {
+        $components = $this->getComponents();
+        if (count($values) !== count($components)) {
+            throw new RuntimeException("Cannont merge values for compound attribute '{$this->getAliasWithRelationPath()}'. Different amount of values given than attribute has components!", '79G9JUB');
+        }
+        $mergedValue = '';
+        foreach ($components as $idx => $comp) {
+            $mergedValue .= $comp->getValuePrefix() . $values[$idx] . $comp->getValueSuffix();
+        }
+        return $mergedValue;
+    }
+    
+    /**
+     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\CompoundAttributeInterface::splitCondition()
      */
@@ -134,4 +155,19 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
         
         return $group;
     }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\CompoundAttributeInterface::getComponent()
+     */
+    public function getComponent(int $index): CompoundAttributeComponentInterface
+    {
+        $comp = $this->getComponents()[$index];
+        if ($comp === null) {
+            throw new MetaAttributeNotFoundError($this->getObject(), 'Component "' . $index . '" not found for compound attribute "' . $this->getName() . '" (alias ' . $this->getAliasWithRelationPath() . ')!');
+        }
+        return $comp;
+    }
+
 }

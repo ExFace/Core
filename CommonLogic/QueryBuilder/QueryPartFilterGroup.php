@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 
 /**
  * A filter group query part represents a condition group used for filtering in a query.
@@ -37,8 +38,7 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
     /**
      * Adds a filter to the group.
      *
-     * @param
-     *            QueryPartFilter
+     * @param QueryPartFilter $filter
      * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup
      */
     public function addFilter(QueryPartFilter $filter)
@@ -60,7 +60,7 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
      */
     public function addCondition(Condition $condition)
     {
-        $qpart = $this->createQueryPartFromCondition($condition);
+        $qpart = $this::createQueryPartFromCondition($condition, $this->getQuery());
         $this->addFilter($qpart);
         return $qpart;
     }
@@ -86,7 +86,7 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
      */
     public function addConditionGroup(ConditionGroup $group)
     {
-        $qpart = $this->createQueryPartFromConditionGroup($group);
+        $qpart = $this::createQueryPartFromConditionGroup($group, $this->getQuery());
         $this->addNestedGroup($qpart);
         return $qpart;
     }
@@ -134,10 +134,9 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
      * @param Condition $condition            
      * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilter
      */
-    public function createQueryPartFromCondition(Condition $condition)
+    public static function createQueryPartFromCondition(Condition $condition, AbstractQueryBuilder $query, QueryPart $parentQueryPart = null)
     {
-        $qpart = new QueryPartFilter($condition->getExpression()->toString(), $this->query);
-        $qpart->setCondition($condition);
+        $qpart = new QueryPartFilter($condition->getExpression()->toString(), $query, $condition, $parentQueryPart);
         return $qpart;
     }
 
@@ -147,9 +146,9 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
      * @param ConditionGroup $group            
      * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup
      */
-    public function createQueryPartFromConditionGroup(ConditionGroup $group)
+    public static function createQueryPartFromConditionGroup(ConditionGroup $group, AbstractQueryBuilder $query, QueryPart $parentQueryPart = null)
     {
-        $qpart = new QueryPartFilterGroup('', $this->query);
+        $qpart = new QueryPartFilterGroup('', $query, $parentQueryPart);
         $qpart->setOperator($group->getOperator());
         foreach ($group->getConditions() as $c) {
             $qpart->addCondition($c);

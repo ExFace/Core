@@ -20,6 +20,13 @@ interface CompoundAttributeInterface extends MetaAttributeInterface
     
     /**
      * 
+     * @param int $index
+     * @return CompoundAttributeComponentInterface
+     */
+    public function getComponent(int $index) : CompoundAttributeComponentInterface;
+    
+    /**
+     * 
      * @param MetaAttributeInterface $attribute
      * @return CompoundAttributeInterface
      */
