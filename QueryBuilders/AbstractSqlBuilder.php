@@ -33,6 +33,8 @@ use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Interfaces\Model\CompoundAttributeInterface;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * A query builder for generic SQL syntax.
@@ -290,6 +292,29 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     foreach ($rows as $nr => $row) {
                         $rows[$nr][$full_alias] = $row[$short_alias];
                         unset($rows[$nr][$short_alias]);
+                    }
+                }
+            }
+            foreach ($this->getAttributes() as $qpart) {
+                if ($qpart->isCompound() && $qpart->getAttribute() instanceof CompoundAttributeInterface) {                    
+                    foreach ($rows as $nr => $row) {
+                        $compValues = [];
+                        if ($qpart->hasAggregator() === true) {
+                            switch ($qpart->getAggregator()->getFunction()->__toString()) {
+                                case AggregatorFunctionsDataType::COUNT:
+                                    $compQpart = $qpart->getCompoundChildren()[0];
+                                    $rows[$nr][$qpart->getColumnKey()] = $row[$compQpart->getColumnKey()];
+                                    unset ($rows[$nr][$compQpart->getColumnKey()]);
+                                    break;
+                                default:
+                                    throw new RuntimeException('Cannot read compound attributes with aggregator' . $this->getAggregator()->exportString() . '!');
+                            }
+                        } else {
+                            foreach ($qpart->getCompoundChildren() as $component) {
+                                $compValues[] = $row[$component->getColumnkey()];
+                            }
+                            $rows[$nr][$qpart->getColumnKey()] = $qpart->getAttribute()->mergeValues($compValues);
+                        }
                     }
                 }
             }
@@ -754,7 +779,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      *            set to TRUE to force the result to be compatible with GROUP BY
      * @return string
      */
-    protected function buildSqlSelect(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, $aggregator = null, $make_groupable = false)
+    protected function buildSqlSelect(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, $aggregator = null, bool $make_groupable = null)
     {
         $output = '';
         $comment = "\n-- buildSqlSelect(" . $qpart->getAlias() . ", " . $select_from . ", " . $select_as . ", " . $aggregator . ", " . $make_groupable . ")\n";
@@ -785,6 +810,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $select_as = $this->getShortAlias($select_as ?? $qpart->getColumnKey());
         $select_from = $this->getShortAlias($select_from);
         $aggregator = ! is_null($aggregator) ? $aggregator : $qpart->getAggregator();
+        $make_groupable = $make_groupable ?? $this->isSubquery();
         
         // build subselects for reverse relations if the body of the select is not specified explicitly
         if (! $select_column && $qpart->getUsedRelations(RelationTypeDataType::REVERSE)) {
@@ -920,6 +946,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // This only makes sense, if we have a reference to the parent query (= the $select_from parameter is set)
         if ($select_from) {
             $rightKeyAttribute = $rev_rel->getRightKeyAttribute();
+            $customJoinOn = $qpart->getDataAddressProperty('SQL_JOIN_ON');
             if (! $reg_rel_path->isEmpty()) {
                 // attach to the related object key of the last regular relation before the reverse one
                 $junction_attribute = $this->getMainObject()->getAttribute(RelationPath::relationPathAdd($reg_rel_path->toString(), $this->getMainObject()->getRelation($reg_rel_path->toString())->getRightKeyAttribute()->getAlias()));
@@ -929,9 +956,28 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             // The filter needs to be an EQ, since we want a to compare by "=" to whatever we define without any quotes
             // Putting the value in brackets makes sure it is treated as an SQL expression and not a normal value
-            $junctionQpart = $relq->addFilterWithCustomSql($rightKeyAttribute->getAlias(), '(' . $select_from . $this->getAliasDelim() . $junction_attribute->getDataAddress() . ')', EXF_COMPARATOR_EQUALS);
+            if ($rightKeyAttribute instanceof CompoundAttributeInterface) {
+                // If it's a compound attribute, we need filter query parts for every compound
+                if (! $junction_attribute instanceof CompoundAttributeInterface) {
+                    throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": Relations with compound attributes as keys only supported in SQL query builders if both keys are compounds!');
+                }
+                if (count($rightKeyAttribute->getComponents()) !== count($junction_attribute->getComponents())) {
+                    throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": the compound attribute keys on both sides have different number of components!');
+                }
+                foreach ($rightKeyAttribute->getComponents() as $compIdx => $rightKeyComp) {
+                    $relq->addFilterWithCustomSql($rightKeyComp->getAttribute()->getAlias(), '(' . $select_from . $this->getAliasDelim() . $junction_attribute->getComponent($compIdx)->getAttribute()->getDataAddress() . ')', EXF_COMPARATOR_EQUALS);
+                }
+            } else {
+                if (! $junction_attribute->getDataAddress() && ! $customJoinOn) {
+                    throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": one of the relation key attributes has neither a data address nor an SQL_JOIN_ON custom address property!');
+                }
+                $junctionQpart = $relq->addFilterWithCustomSql($rightKeyAttribute->getAlias(), '(' . $select_from . $this->getAliasDelim() . $junction_attribute->getDataAddress() . ')', EXF_COMPARATOR_EQUALS);
+            }
             
-            if ($customJoinOn = $qpart->getDataAddressProperty('SQL_JOIN_ON')) {
+            if ($customJoinOn) {
+                if (! $junctionQpart) {
+                    throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": custom JOINs via SQL_JOIN_ON only supported for regular key attributes (no compounds, etc.)!');
+                }
                 // If it's a custom JOIN, calculate it here
                 $customJoinOn = StringDataType::replacePlaceholders($customJoinOn, ['~left_alias' => $this->getShortAlias($this->getMainObject()->getAlias()), '~right_alias' => $select_from]);
                 $junctionQpart->setDataAddressProperty('SQL_WHERE', $customJoinOn);
@@ -1106,25 +1152,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 foreach ($rels as $alias => $rel) {
                     /* @var $rel \exface\Core\Interfaces\Model\MetaRelationInterface */
                     if ($rel->isForwardRelation() === true) {
+                        // Forward relations are simple JOINs
                         $right_table_alias = $this->getShortAlias($alias . $this->getQueryId());
                         $right_obj = $this->getMainObject()->getRelatedObject($alias);
                         // generate the join sql
                         $join = "\n " . $this->buildSqlJoinType($rel) . ' JOIN ' . str_replace('[#~alias#]', $right_table_alias, $right_obj->getDataAddress()) . $this->buildSqlAsForTables($right_table_alias) . ' ON ';
-                        if ($customOn = $rel->getLeftKeyAttribute()->getDataAddressProperty('SQL_JOIN_ON')) {
+                        $leftKeyAttr = $rel->getLeftKeyAttribute();
+                        if ($customOn = $leftKeyAttr->getDataAddressProperty('SQL_JOIN_ON')) {
                             // If a custom join condition ist specified in the attribute, that defines the relation, just replace the aliases in it
                             $join .= StringDataType::replacePlaceholders($customOn, ['~left_alias' => $left_table_alias, '~right_alias' => $right_table_alias]);
                         } else {
                             // Otherwise create the ON clause from the attributes on both sides of the relation.
-                            $left_join_on = $this->buildSqlJoinSide($rel->getLeftKeyAttribute()->getDataAddress(), $left_table_alias);
-                            $right_join_on = $this->buildSqlJoinSide($rel->getRightKeyAttribute()->getDataAddress(), $right_table_alias);
-                            $join .=  $left_join_on . ' = ' . $right_join_on;
-                            if ($customSelectWhere = $right_obj->getDataAddressProperty('SQL_SELECT_WHERE')) {
-                                if (stripos($customSelectWhere, 'SELECT ') === false) {
-                                    $join .= ' AND ' . StringDataType::replacePlaceholders($customSelectWhere, ['~alias' => $right_table_alias]);
-                                } else {
-                                    $join .= $this->buildSqlComment('Cannot use SQL_SELECT_WHERE of object "' . $right_obj->getName() . '" (' . $right_obj->getAliasWithNamespace() . ') in a JOIN - a column may not be outer-joined to a subquery!');
-                                }
-                            }
+                            $join .= $this->buildSqlJoinOn($leftKeyAttr, $rel->getRightKeyAttribute(), $left_table_alias, $right_table_alias);
                         }
                         $joins[$right_table_alias] = $join;
                         // continue with the related object
@@ -1139,6 +1178,57 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return $joins;
     }
     
+    /**
+     * Builds string for sql join on.
+     * When $leftKeyAttr and $rightKeyAttr are compound attributes, string is build for each component and
+     * connected with `AND`.
+     * 
+     * @param CompoundAttributeInterface $leftKeyAttr
+     * @param CompoundAttributeInterface $rightKeyAttr
+     * @param string $leftTableAlias
+     * @param string $rightTableAlias
+     * @throws RuntimeException
+     * @return string
+     */
+    protected function buildSqlJoinOn(MetaAttributeInterface $leftKeyAttr, MetaAttributeInterface $rightKeyAttr, string $leftTableAlias, string $rightTableAlias) : string
+    {
+        $join = '';
+        // If the keys are compounds, we need a comlex ON with multiple predicates.
+        // For regular a key attributes a simple `ON left.col = right.col` is enough (see else-branch)
+        if ($leftKeyAttr instanceof CompoundAttributeInterface) {
+            if (! $rightKeyAttr instanceof CompoundAttributeInterface) {
+                throw new QueryBuilderException('Cannot render SQL join on for attributes  "' . $leftKeyAttr->getAliasWithRelationPath() . '" and "' . $rightKeyAttr->getAliasWithRelationPath() . '": Relations with compound attributes as keys only supported in SQL query builders if both keys are compounds!');
+            }
+            if (count($leftKeyAttr->getComponents()) !== count($rightKeyAttr->getComponents())) {
+                throw new QueryBuilderException('Cannot render SQL join on for attributes  "' . $leftKeyAttr->getAliasWithRelationPath() . '" and "' . $rightKeyAttr->getAliasWithRelationPath() . '": the compound attribute keys on both sides have different number of components!');
+            }
+            $compoundJoins= array();
+            foreach($leftKeyAttr->getComponents() as $compIdx => $comp) {
+                $compoundJoins[] = $this->buildSqlJoinOn($comp->getAttribute(), $rightKeyAttr->getComponent($compIdx)->getAttribute(), $leftTableAlias, $rightTableAlias);
+            }
+            $join = implode(' AND ', $compoundJoins);
+        } else {
+            $right_obj = $rightKeyAttr->getObject();
+            $left_join_on = $this->buildSqlJoinSide($leftKeyAttr->getDataAddress(), $leftTableAlias);
+            $right_join_on = $this->buildSqlJoinSide($rightKeyAttr->getDataAddress(), $rightTableAlias);
+            $join .=  $left_join_on . ' = ' . $right_join_on;
+            if ($customSelectWhere = $right_obj->getDataAddressProperty('SQL_SELECT_WHERE')) {
+                if (stripos($customSelectWhere, 'SELECT ') === false) {
+                    $join .= ' AND ' . StringDataType::replacePlaceholders($customSelectWhere, ['~alias' => $rightTableAlias]);
+                } else {
+                    $join .= $this->buildSqlComment('Cannot use SQL_SELECT_WHERE of object "' . $right_obj->getName() . '" (' . $right_obj->getAliasWithNamespace() . ') in a JOIN - a column may not be outer-joined to a subquery!');
+                }
+            }
+        }
+        return $join;
+    }
+    
+    /**
+     * LEFT vs. INNER JOIN etc.
+     * 
+     * @param MetaRelationInterface $relation
+     * @return string
+     */
     protected function buildSqlJoinType(MetaRelationInterface $relation)
     {
         /* FIXME use inner joins for required relations? Supposed to be faster, but it would result in different
@@ -1149,6 +1239,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return 'LEFT';
     }
 
+    /**
+     * E.g. `table_alias.data_address`
+     * 
+     * @param string $data_address
+     * @param string $table_alias
+     * @return string
+     */
     protected function buildSqlJoinSide($data_address, $table_alias)
     {
         $join_side = $data_address;
@@ -1262,7 +1359,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $op = $this->buildSqlLogicalOperator($qpart->getOperator());
         
         foreach ($qpart->getFilters() as $qpart_fltr) {
-            if ($fltr_string = $this->buildSqlWhereCondition($qpart_fltr, $rely_on_joins)) {
+            if ($qpart_fltr->isCompound() === true) {
+                if ($grp_string = $this->buildSqlWhere($qpart_fltr->getCompoundFilterGroup(), $rely_on_joins)) {
+                    $where .= "\n " . ($where ? $op . " " : '') . "(" . $grp_string . ")";
+                }
+            } elseif ($fltr_string = $this->buildSqlWhereCondition($qpart_fltr, $rely_on_joins)) {
                 $where .= "\n-- buildSqlWhereCondition(" . $qpart_fltr->getCondition()->toString() . ", " . $rely_on_joins . ")"
                         . "\n " . ($where ? $op . " " : '') . $fltr_string;
             }
@@ -1650,7 +1751,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if (! $prefix_rel_path->isEmpty()) {
                     // FIXME add support for related_object_special_key_alias
                     $prefix_rel_str = RelationPath::relationPathAdd($prefix_rel_path->toString(), $this->getMainObject()->getRelatedObject($prefix_rel_path->toString())->getUidAttributeAlias());
-                    $prefix_rel_qpart = new QueryPartSelect($prefix_rel_str, $this, DataColumn::sanitizeColumnName($prefix_rel_str));
+                    $prefix_rel_qpart = new QueryPartSelect($prefix_rel_str, $this, null, DataColumn::sanitizeColumnName($prefix_rel_str));
                     $junction = $this->buildSqlSelect($prefix_rel_qpart, null, null, '');
                 } else {
                     $junctionTableAlias = $this->getShortAlias($start_rel->getLeftObject()->getAlias() . $this->getQueryId());
@@ -1677,7 +1778,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // If we are dealing with a regular relation, build a subquery to select primary keys from joined tables and match them to the foreign key of the main table
                 $relq->addFilter($qpart->rebase($relq, $start_rel->getAliasWithModifier()));
                 $relq->addAttribute($start_rel->getRightKeyAttribute()->getAlias());
-                $junction_qpart = new QueryPartSelect($start_rel->getLeftKeyAttribute()->getAlias(), $this, $start_rel->getLeftKeyAttribute()->getAliasWithRelationPath());
+                $junction_qpart = new QueryPartSelect($start_rel->getLeftKeyAttribute()->getAlias(), $this, null, $start_rel->getLeftKeyAttribute()->getAliasWithRelationPath());
                 $junction = $this->buildSqlSelect($junction_qpart, null, null, '');
             }
             
@@ -1909,7 +2010,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if (! $qpart = $this->getAttribute($ph_attribute_alias)) {
                 // Throw an error if the attribute cannot be resolved relative to the main object of the query
                 try {
-                    $qpart = new QueryPartSelect($ph_attribute_alias, $this, DataColumn::sanitizeColumnName($string));
+                    $qpart = new QueryPartSelect($ph_attribute_alias, $this, null, DataColumn::sanitizeColumnName($string));
                 } catch (MetaAttributeNotFoundError $e){
                     throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": no attribute "' . $ph_attribute_alias . '" found for query base object ' . $this->getMainObject()->getAliasWithNamespace() . '!', null, $e);
                 }
@@ -2150,5 +2251,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         return true;
+    }
+    
+    protected function isSubquery() : bool
+    {
+        return $this->query_id > 0;
     }
 }
