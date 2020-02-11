@@ -24,6 +24,12 @@ class ShowDialog extends ShowWidget implements iShowDialog
     private $dialog_buttons_uxon = null;
     
     private $maximize = null;
+    
+    protected function init()
+    {
+        parent::init();
+        $this->setPrefillWithFilterContext(true);
+    }
 
     /**
      * Creates the dialog widget.

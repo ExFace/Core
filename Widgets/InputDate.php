@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\TimestampDataType;
 use exface\Core\Factories\DataTypeFactory;
+use exface\Core\Widgets\Traits\SingleValueInputTrait;
 
 /**
  * An input-field for dates (without time).
@@ -38,6 +39,8 @@ use exface\Core\Factories\DataTypeFactory;
  */
 class InputDate extends Input
 {
+    use SingleValueInputTrait;
+    
     private $format = null;
     
     /**

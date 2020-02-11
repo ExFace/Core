@@ -15,6 +15,7 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Exceptions\NotImplementedError;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 abstract class AbstractQueryBuilder implements QueryBuilderInterface
 {
@@ -129,7 +130,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      *
      * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
-    public function getMainObject()
+    public function getMainObject() : MetaObjectInterface
     {
         return $this->main_object;
     }

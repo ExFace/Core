@@ -55,9 +55,9 @@ class DataSheetDataType extends AbstractDataType
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::isEmptyValue()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::isValueEmpty()
      */
-    public static function isEmptyValue($val) : bool
+    public static function isValueEmpty($val) : bool
     {
         return empty($val) === true;
     }

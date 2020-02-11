@@ -10,6 +10,9 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\Factories\ConditionFactory;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * A query builder for MySQL.
@@ -279,27 +282,40 @@ class MySqlBuilder extends AbstractSqlBuilder
     function delete(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         // filters -> WHERE
-        // Relations (joins) are not supported in delete clauses, so check for them first!
-        if (count($this->getFilters()->getUsedRelations()) > 0) {
-            throw new QueryBuilderException('Filters over attributes of related objects are not supported in DELETE queries!');
-        }
-        /* This was an unfinished attempt to overcome the filtering problem at least for filters like RELATION__UID.
-         * didn't have time to test it thoroughly. May come back later.
+        
         foreach ($this->getFilters()->getFilters() as $qpart) {
             $rels = $qpart->getUsedRelations();
             switch (count($rels)) {
-                case 0: continue;
+                // Filters without relation can be used directly
+                case 0: break;
+                /* IDEA The ugly logic below for fetching the foreign keys to delete can be avoided for
+                 * direct relations like RELATION__UID because the value of UID is the the same as that
+                 * of RELATION. This was an unfinished attempt to do this. Need to finalize it some time.
                 case 1:
                     $rel = reset($rels);
                     if ($rel->isForwardRelation() && $this->getMainObject()->isExactly($rel->getLeftObject())) {
                         $this->getFilters()->removeFilter($qpart);
                         $this->addFilterFromString($rel->getLeftKeyAttribute()->getAlias(), $qpart->getCompareValue(), $qpart->getComparator());
                         break;
-                    }
+                    }*/
+                // MySQL does not support DELETE queries with JOINs or subselects, so if we have relations
+                // in the filter, we first perform a SELECT fetching a distinct list of foreign keys in the
+                // base tabel (= left key attributes of the first relation in the path). Then we can DELETE
+                // filtering by that list.
                 default:
-                    throw new QueryBuilderException('Filters over attributes of related objects are not supported in DELETE queries!');
+                    $filterQuery = new self($this->getSelector());
+                    $filterQuery->setMainObject($this->getMainObject());
+                    $leftKeyAlias = $qpart->getFirstRelation()->getLeftKeyAttribute()->getAlias();
+                    $leftKeyQpart = $filterQuery->addAttribute(DataAggregation::addAggregatorToAlias($leftKeyAlias, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::LIST_DISTINCT)));
+                    $filterQuery->addFilter($qpart);
+                    $result = $filterQuery->read($data_connection);
+                    $leftKeyValues = $result->getResultRows()[0][$leftKeyQpart->getColumnKey()];
+                    // Replace the relation-filter by an IN-filter with the list of foreign key values.
+                    $this->getFilters()->removeFilter($qpart);
+                    $this->getFilters()->addCondition(ConditionFactory::createFromExpressionString($this->getMainObject(), $leftKeyAlias, $leftKeyValues, ComparatorDataType::IN));
             }
-        }*/
+        }
+        
         $where = $this->buildSqlWhere($this->getFilters());
         $where = $where ? "\n WHERE " . $where : '';
         if (! $where)

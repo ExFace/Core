@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Factories\DataTypeFactory;
+use exface\Core\Widgets\Traits\SingleValueInputTrait;
 
 /**
  * An input-field for time-values (without date).
@@ -33,9 +34,11 @@ use exface\Core\Factories\DataTypeFactory;
  * - (+/-)? ... (h/m/s/)? (e.g. 0 => now, 1 or 1h or +1h => in one hour, 45m => in 45 minutes, -15m => 15 minutes ago)
  * 
  * @author Andrej Kabachnik
- *         */
+ */
 class InputTime extends Input
 {
+    use SingleValueInputTrait;
+    
     private $showSeconds = null;
     
     private $amPm = null;
