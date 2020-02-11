@@ -69,10 +69,10 @@ class PrefixedFilterUrlParamsReader implements MiddlewareInterface
                 $expr = urldecode(substr($var, $prefixLength));
                 if (is_array($val)) {
                     foreach ($val as $v) {
-                        $dataSheet->addFilterFromString($expr, $v);
+                        $dataSheet->getFilters()->addConditionFromString($expr, $v);
                     }
                 } else {
-                    $dataSheet->addFilterFromString($expr, $val);
+                    $dataSheet->getFilters()->addConditionFromString($expr, $val);
                 }
             }
         }

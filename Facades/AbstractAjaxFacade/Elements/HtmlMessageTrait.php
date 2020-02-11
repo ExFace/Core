@@ -20,7 +20,7 @@ trait HtmlMessageTrait {
 				<div class="exf-message ' . $this->buildCssMessageTypeClass() . '">
 					<div class="exf-message-icon">' . $this->buildHtmMessagelIcon() . '</div>
 					<div class="exf-message-title">' . $this->getWidget()->getCaption() . '</div>
-                    <div class="exf-message-text">' . $this->getWidget()->getText() . '</div>
+                    <div class="exf-message-text">' . nl2br($this->getWidget()->getText()) . '</div>
 				</div>';
         return $output;
     }

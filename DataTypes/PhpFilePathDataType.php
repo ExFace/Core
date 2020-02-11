@@ -76,7 +76,7 @@ class PhpFilePathDataType extends FilePathDataType
                 if ($tokens[$i][0] === T_CLASS) {
                     for ($j = $i + 1; $j < $tokensCount; $j ++) {
                         if ($i+2 >= $tokensCount-1) {
-                            return static::getClassFromFile($absolute_path, $bufferSize*2);
+                            return static::findClassInFile($absolute_path, $bufferSize*2);
                         }
                         $class = trim($tokens[$i + 2][1]);
                         break;

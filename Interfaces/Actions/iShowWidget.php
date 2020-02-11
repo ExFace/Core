@@ -72,5 +72,5 @@ interface iShowWidget extends iNavigate, iUsePrefillData
      * 
      * @return string
      */
-    public function getDefaultWidgetType();
+    public function getDefaultWidgetType() : ?string;
 }

@@ -19,6 +19,11 @@ use exface\Core\Exceptions\LogicException;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\NotImplementedError;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * A condition is a simple conditional predicate consisting of a (left) expression,
@@ -455,6 +460,56 @@ class Condition implements ConditionInterface
     public function copy()
     {
         return ConditionFactory::createFromUxon($this->getWorkbench(), $this->exportUxonObject());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionInterface::evaluate()
+     */
+    public function evaluate(DataSheetInterface $data_sheet = null, int $row_number = null) : bool
+    {
+        if ($data_sheet === null) {
+            if ($row_number !== null) {
+                throw new RuntimeException('Cannot evaluate a condition: do data provided!');
+            }
+        }
+        
+        $leftVal = $this->getExpression()->evaluate($data_sheet, $row_number);
+        $rightVal = $this->getValue(); // Value is already parsed via datatype in setValue()
+
+        return $this->compare($leftVal, $this->getComparator(), $rightVal);
+    }
+    
+    protected function compare($leftVal, string $comparator, $rightVal) : bool
+    {
+        if ($rightVal === EXF_LOGICAL_NULL) {
+            $rightVal = null;
+        }
+        if ($leftVal === EXF_LOGICAL_NULL) {
+            $leftVal = null;
+        }
+        switch ($comparator) {
+            case ComparatorDataType::IS:
+                return mb_stripos($leftVal, $rightVal) !== false;
+            case ComparatorDataType::IS_NOT:
+                return mb_stripos($leftVal, $rightVal) === false;
+            case ComparatorDataType::EQUALS:
+                return $leftVal === $rightVal;
+            case ComparatorDataType::EQUALS_NOT:
+                return $leftVal !== $rightVal;
+            case ComparatorDataType::GREATER_THAN:
+                return $leftVal > $rightVal;
+            case ComparatorDataType::LESS_THAN:
+                return $leftVal < $rightVal;
+            case ComparatorDataType::GREATER_THAN_OR_EQUALS:
+                return $leftVal >= $rightVal;
+            case ComparatorDataType::LESS_THAN_OR_EQUALS:
+                return $leftVal <= $rightVal;
+            default:
+                // TODO #conditions
+                throw new NotImplementedError('Evaluating conditions with comparator "' . $comparator . '" in-memory not supported yet!');
+        }
     }
     
     /**

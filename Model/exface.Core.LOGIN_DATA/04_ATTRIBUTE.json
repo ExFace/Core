@@ -82,6 +82,10 @@
             "attribute_alias": "RELATION_CARDINALITY"
         },
         {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -184,6 +188,7 @@
             "COMMENTS": "",
             "NAME": "Token Class",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "AUTH_TOKEN_CLASS",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "",
@@ -226,6 +231,7 @@
             "COMMENTS": "",
             "NAME": "User Name",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "USERNAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "",
@@ -268,6 +274,7 @@
             "COMMENTS": "",
             "NAME": "Password",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "PASSWORD",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "",
@@ -310,6 +317,7 @@
             "COMMENTS": "Data source selector (UID or alias)",
             "NAME": "Data Connection",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "CONNECTION",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "",
@@ -352,6 +360,7 @@
             "COMMENTS": "",
             "NAME": "Save Credentials for User",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "CONNECTION_SAVE_FOR_USER",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "",
@@ -394,6 +403,7 @@
             "COMMENTS": "",
             "NAME": "Save Credentials",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "CONNECTION_SAVE",
             "DATATYPE": "0x37000000000000000000000000000000",
             "DATA_ADDRESS": "",
@@ -419,6 +429,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.ATTRIBUTE",
         "conditions": [
             {
                 "expression": "OBJECT__APP",

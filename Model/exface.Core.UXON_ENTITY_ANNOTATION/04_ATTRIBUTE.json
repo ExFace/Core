@@ -82,6 +82,10 @@
             "attribute_alias": "RELATION_CARDINALITY"
         },
         {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -184,6 +188,7 @@
             "COMMENTS": "",
             "NAME": "Entity",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "ENTITY",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "classname",
@@ -226,6 +231,7 @@
             "COMMENTS": "",
             "NAME": "Presets",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "PRESETS",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-preset",
@@ -268,6 +274,7 @@
             "COMMENTS": "",
             "NAME": "Author",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "AUTHOR",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "author",
@@ -293,6 +300,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.ATTRIBUTE",
         "conditions": [
             {
                 "expression": "OBJECT__APP",

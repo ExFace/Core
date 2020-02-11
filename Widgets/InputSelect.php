@@ -135,7 +135,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function getMultiSelect()
     {
-        return $this->multi_select;
+        return $this->getMultipleValuesAllowed();
     }
 
     /**
@@ -149,7 +149,20 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function setMultiSelect($value)
     {
-        $this->multi_select = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        return $this->setMultipleValuesAllowed(\exface\Core\DataTypes\BooleanDataType::cast($value));
+    }
+    
+    /**
+     * Same as setMultiSelect()
+     * 
+     * Overriding this method here hides the UXON property `multiple_values_delimiter` in
+     * `InputSelect` widgets, only showing `multi_select_value_delimiter`.
+     * 
+     * @see \exface\Core\Widgets\Input::setMultipleValuesAllowed()
+     */
+    public function setMultipleValuesAllowed(bool $value) : Input
+    {
+        return parent::setMultipleValuesAllowed($value);
     }
 
     /**
@@ -384,7 +397,7 @@ class InputSelect extends Input implements iSupportMultiSelect
             // Use this relation as filter to query the data source for selectable options
             if ($col = $data_sheet->getColumns()->getByAttribute($relation_from_options_to_prefill_object->getRightKeyAttribute(true))) {
                 $pointer = DataPointerFactory::createFromColumn($col);
-                $this->getOptionsDataSheet()->addFilterInFromString($relation_from_options_to_prefill_object->getAlias(), $col->getValues(false));
+                $this->getOptionsDataSheet()->getFilters()->addConditionFromValueArray($relation_from_options_to_prefill_object->getAlias(), $col->getValues(false));
                 // TODO there is actually no filters property for InputSelect. Perhaps it is a good idea to
                 // transfer it to InputSelect from InputCombo - since we can even prefill it here?
                 $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'filters', $pointer));
@@ -863,14 +876,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function getMultiSelectValueDelimiter()
     {
-        if (is_null($this->multi_select_value_delimiter)){
-            if ($this->getAttribute()){
-                $this->multi_select_value_delimiter = $this->getAttribute()->getValueListDelimiter();
-            } else {
-                $this->multi_select_value_delimiter = EXF_LIST_SEPARATOR;
-            }
-        }
-        return $this->multi_select_value_delimiter;
+        return $this->getMultipleValuesDelimiter();
     }
 
     /**
@@ -888,8 +894,20 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function setMultiSelectValueDelimiter($value)
     {
-        $this->multi_select_value_delimiter = $value;
-        return $this;
+        return $this->setMultipleValuesDelimiter($value);
+    }
+    
+    /**
+     * Same as setMultiSelectValueDelimiter()
+     * 
+     * Overriding this method here hides the UXON property `multiple_values_delimiter` in
+     * `InputSelect` widgets, only showing `multi_select_value_delimiter`.
+     * 
+     * @see \exface\Core\Widgets\Input::setMultipleValuesDelimiter()
+     */
+    public function setMultipleValuesDelimiter(string $value) : Input
+    {
+        return parent::setMultipleValuesDelimiter($value);
     }
     
     /**

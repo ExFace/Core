@@ -82,6 +82,10 @@
             "attribute_alias": "RELATION_CARDINALITY"
         },
         {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -184,6 +188,7 @@
             "COMMENTS": "",
             "NAME": "Is part of app",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "APP",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "app_oid",
@@ -226,6 +231,7 @@
             "COMMENTS": null,
             "NAME": "Name",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "name",
@@ -268,6 +274,7 @@
             "COMMENTS": null,
             "NAME": "Description",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "DESCRIPTION",
             "DATATYPE": "0x31310000000000000000000000000000",
             "DATA_ADDRESS": "description",
@@ -310,6 +317,7 @@
             "COMMENTS": "",
             "NAME": "Prototype",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "PROTOTYPE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "prototype",
@@ -352,6 +360,7 @@
             "COMMENTS": "",
             "NAME": "UXON",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "UXON",
             "DATATYPE": "0x11e905162eeb6334b04c0205857feb80",
             "DATA_ADDRESS": "uxon",
@@ -394,6 +403,7 @@
             "COMMENTS": "",
             "NAME": "Place wrapped UXON in",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "WRAP_PATH",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "wrap_path_in_preset",
@@ -436,6 +446,7 @@
             "COMMENTS": "",
             "NAME": "Usable as wrapper",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "WRAP_FLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
             "DATA_ADDRESS": "IF([#WRAP_PATH#] <> \"\", 1, 0)",
@@ -478,6 +489,7 @@
             "COMMENTS": "",
             "NAME": "UXON schema",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "UXON_SCHEMA",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "uxon_schema",
@@ -503,6 +515,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.ATTRIBUTE",
         "conditions": [
             {
                 "expression": "OBJECT__APP",

@@ -38,6 +38,10 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * default value (see examples below). You can also mark a filter as `required` to prevent 
  * loading data if it has no value.
  * 
+ * Note, that generic inputs `Input` or `InputHidden` will automatically get `multiple_values_allowed` 
+ * set to `true`, so they can be used with in-comparators (`[`, `![`) by default. This means, you can 
+ * type "value1, value2" into a regular `Input` filter and will get an `OR`-search automatically.
+ * 
  * To create complex filter with multiple conditions, you can specify a custom `condition_group`
  * with as many conditions on different attributes as you like. Use the `[#value#]` in the
  * `value` property of a condition to get the current value from the filter's input widget.
@@ -366,6 +370,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             $input = $input->transformIntoSelect();
         }
         
+        if ($input->getWidgetType() === 'Input' || $input->getWidgetType() === 'InputHidden') {
+            $input->setMultipleValuesAllowed(true);
+        }
+        
         // Set a default comparator
         $defaultComparator = $this->getDefaultComparator($input);
         if ($this->comparator === null) {
@@ -621,6 +629,33 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
 
     /**
      * The comparison operator for the filter.
+     * 
+     * Possible comparators:
+     * 
+     * - `=` - universal comparator similar to SQL's `LIKE` with % on both sides. Can compare different 
+     * data types. If the left value is a string, becomes TRUE if it contains the right value. Case 
+     * insensitive for strings
+     * - `!=` - yields TRUE if `IS` would result in FALSE
+     * - `==` - compares two single values of the same type. Case sensitive for stings. Normalizes the 
+     * values before comparison though, so the date `-1 == 21.09.2020` will yield TRUE on the 22.09.2020. 
+     * - `!==` - the inverse of `EQUALS`
+     * - `[` - IN-comparator - compares to each vaule in a list via EQUALS. Becomes true if the left
+     * value equals at least on of the values in the list within the right value. The list on the
+     * right side must consist of numbers or strings separated by commas or the attribute's value
+     * list delimiter if filtering over an attribute. The right side can also be another type of
+     * expression (e.g. a formula or widget link), that yields such a list.
+     * - `![` - the inverse von `[` . Becomes true if the left value equals none of the values in the 
+     * list within the right value. The list on the right side must consist of numbers or strings separated 
+     * by commas or the attribute's value list delimiter if filtering over an attribute. The right side can 
+     * also be another type of expression (e.g. a formula or widget link), that yields such a list.
+     * - `<` - yields TRUE if the left value is less than the right one. Both values must be of
+     * comparable types: e.g. numbers or dates.
+     * - `<=` - yields TRUE if the left value is less than or equal to the right one. 
+     * Both values must be of comparable types: e.g. numbers or dates.
+     * - `>` - yields TRUE if the left value is greater than the right one. Both values must be of
+     * comparable types: e.g. numbers or dates.
+     * - `>=` - yields TRUE if the left value is greater than or equal to the right one. 
+     * Both values must be of comparable types: e.g. numbers or dates.
      * 
      * @uxon-property comparator
      * @uxon-type metamodel:comparator

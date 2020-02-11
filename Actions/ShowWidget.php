@@ -39,7 +39,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
 
     private $widget_id = null;
 
-    private $prefill_with_filter_context = true;
+    private $prefill_with_filter_context = false;
 
     private $prefill_with_input_data = true;
     
@@ -129,7 +129,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowWidget::getDefaultWidgetType()
      */
-    public function getDefaultWidgetType()
+    public function getDefaultWidgetType() : ?string
     {
         return null;
     }
@@ -238,7 +238,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         if ($data_sheet && $data_sheet->countRows() > 0 && $data_sheet->hasUidColumn(true)) {
             $data_sheet = $widget->prepareDataSheetToPrefill($data_sheet);
             if (! $data_sheet->isFresh()) {
-                $data_sheet->addFilterFromColumnValues($data_sheet->getUidColumn());
+                $data_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
                 $data_sheet->dataRead();
             }
         }
@@ -293,6 +293,8 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
                         // of the data sheet and change the widget to look in 
                         // columns as well as in filters...
                         try {
+                            $data_sheet->getFilters()->addCondition($condition);
+                            
                             $col = $data_sheet->getColumns()->addFromExpression($condition->getExpression());
                             // Add the value of the filter (if there) as cell value
                             if (! is_null($condition->getValue()) && $condition->getValue() !== ''){

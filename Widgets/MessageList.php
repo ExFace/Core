@@ -6,9 +6,26 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\MessageTypeDataType;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
- * Lists messages within other widgets (e.g. Forms).
+ * Lists `Message` widgets - usefull within `Form`s, `Dialog`s, etc.
+ * 
+ * ## Example
+ * 
+ * ```
+ * {
+ *  "widget_type": "MessageList",
+ *  "object_alias": "my.App.SOME_OBJECT",
+ *  "messages": [
+ *      {
+ *          "type": "info",
+ *          "text": "Hi! I am an info-message"
+ *      }
+ *  ]
+ * }
+ * ```
  *
  * @author Andrej Kabachnik
  *        
@@ -24,6 +41,50 @@ class MessageList extends Container
     public function getMessages() : array
     {
         return $this->getWidgets();
+    }
+    
+    /**
+     * Array of `Message` widgets to display in the message list.
+     * 
+     * @uxon-property widgets
+     * @uxon-type \exface\Core\Widgets\Message[]
+     * @uxon-template [{"type": "info", "text": ""}]
+     * 
+     * @param UxonObject $uxon
+     * @return MessageList
+     */
+    public function setMessages(UxonObject $uxon) : MessageList
+    {
+        return $this->setWidgets($uxon);
+    }
+    
+    /**
+     * Array of `Message` widgets to display in the message list.
+     * 
+     * @uxon-property widgets
+     * @uxon-type \exface\Core\Widgets\Message[]
+     * @uxon-template [{"type": "info", "text": ""}]
+     * 
+     * @see \exface\Core\Widgets\Container::setWidgets()
+     */
+    public function setWidgets($widget_or_uxon_array)
+    {
+        $widgets = [];
+        foreach ($widget_or_uxon_array as $widgetOrUxon) {
+            if ($widgetOrUxon instanceof UxonObject) {
+                $widget = WidgetFactory::createFromUxonInParent($this, $widgetOrUxon, 'Message');
+            } else {
+                $widget = $widgetOrUxon;
+            }
+            
+            if (! ($widget instanceof Message)) {
+                throw new WidgetConfigurationError($this, 'Cannot include "' . ($widget instanceof WidgetInterface ? $widget->getWidgetType() : gettype($widget)) . '" in a ' . $this->getWidgetType() . ': only Message widgets or derivatives allowed!');
+            }
+            
+            $widgets[] = $widget;
+        }
+        
+        return parent::setWidgets($widgets);
     }
     
     /**
@@ -153,7 +214,7 @@ class MessageList extends Container
             $ds->getColumns()->addFromExpression('HINT');
             $ds->getColumns()->addFromExpression('DESCRIPTION');
             $ds->getColumns()->addFromExpression('DOCS');
-            $ds->addFilterInFromString('CODE', array_keys($this->messageCodesToLoad), ComparatorDataType::IN);
+            $ds->getFilters()->addConditionFromValueArray('CODE', array_keys($this->messageCodesToLoad), ComparatorDataType::IN);
             $ds->dataRead();
             
             foreach ($ds->getRows() as $row) {

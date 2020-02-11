@@ -11,7 +11,21 @@ use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\CommonLogic\UxonObject;
 
 /**
- * A generic input field: single line accepting any set of characters.
+ * A generic input field: a single line accepting any set of characters.
+ * 
+ * `Input` is the base for all sorts of input-widgets like `InputNumber`, `InputDate`, etc.
+ * They are all meant to collect user input in forms, different configurator widgets, editable
+ * table columns and so on.
+ * 
+ * Inputs will validate the received data against their `value_data_type` and display errors
+ * and/or hints if this validation fails.
+ * 
+ * Generic inputs like `Input` or `InputHidden` can optionally accept multiple values separated
+ * by a delimiter. Use `multiple_values_allowed` and `multiple_values_delimiter` to control this.
+ * 
+ * Actions in forms and dialogs get their input data from input widgets, unless these are
+ * marked `readonly` or `display_only`. Note: `disabled` inputs still pass their data to actions,
+ * they merely disallow user interaction!
  * 
  * @author Andrej Kabachnik
  *
@@ -25,6 +39,10 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
     private $readonly = false;
 
     private $display_only = false;
+    
+    private $allowMultipleValues = false;
+    
+    private $multiValueDelimiter = null;
 
     /**
      * Input widgets are considered as required if they are explicitly marked as such or if the represent a meta attribute,
@@ -206,7 +224,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
     {
         if (! $this->getIgnoreDefaultValue() && $default_expr = $this->getDefaultValueExpression()) {
             if ($data_sheet = $this->getPrefillData()) {
-                $value = $default_expr->evaluate($data_sheet, \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getAttribute()->getAlias()), 0);
+                $value = $default_expr->evaluate($data_sheet, 0);
             } elseif ($default_expr->isConstant()) {
                 $value = $default_expr->getRawValue();
             }
@@ -350,6 +368,67 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
     {
         $def = $this->getDefaultValue();
         return $def !== null && $def !== '';
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getMultipleValuesAllowed() : bool
+    {
+        return $this->allowMultipleValues;
+    }
+    
+    /**
+     * Set to TRUE to allow input of multiple values sepearted by the `multiple_value_delimiter`.
+     * 
+     * @uxon-property multiple_values_allowed
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return Input
+     */
+    public function setMultipleValuesAllowed(bool $value) : Input
+    {
+        $this->allowMultipleValues = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getMultipleValuesDelimiter() : string
+    {
+        if (is_null($this->multiValueDelimiter)){
+            if ($this->getAttribute()){
+                $this->multiValueDelimiter = $this->getAttribute()->getValueListDelimiter();
+            } else {
+                $this->multiValueDelimiter = EXF_LIST_SEPARATOR;
+            }
+        }
+        return $this->multiValueDelimiter;
+    }
+    
+    /**
+     * Separator to use when `multiple_values_allowed` is `true`.
+     * 
+     * If the input is bound to an attribute from the meta model, that attribute's
+     * value list delimiter is used by default. Otherwise a comma `,` is the default
+     * delimiter.
+     * 
+     * @uxon-property multiple_values_delimiter
+     * @uxon-type string
+     * @uxon-default ,
+     * 
+     * @param string $value
+     * @return Input
+     */
+    public function setMultipleValuesDelimiter(string $value) : Input
+    {
+        $this->multiValueDelimiter = $value;
+        return $this;
     }
 }
 ?>
