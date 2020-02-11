@@ -44,6 +44,8 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
     }
     
     private $messageList = null;
+    
+    private $autofocusFirst = true;
 
     /**
      *
@@ -217,5 +219,30 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
     public function getHideHelpButton($default = false) : ?bool
     {
         return $this->getHideHelpButtonViaTrait(null) ?? $this->hasParent() === true;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getAutofocusFirstInput() : bool
+    {
+        return $this->autofocusFirst;
+    }
+    
+    /**
+     * Set to FALSE to disable giving focus to the first visible input widget.
+     * 
+     * @uxon-property autofocus_first_input
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return Form
+     */
+    public function setAutofocusFirstInput(bool $value) : Form
+    {
+        $this->autofocusFirst = $value;
+        return $this;
     }
 }
