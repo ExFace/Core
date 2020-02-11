@@ -26,6 +26,10 @@ use exface\Core\Interfaces\Model\ConditionGroupInterface;
  * Multi-select filters yield multiple values resulting in multiple rows in the to-sheet
  * unless `to_single_row` is set to `true`.
  * 
+ * If `inherit_filters` is set in the mapper, matching filters will NOT be inherited by
+ * defualt (because they are transformed to columns). If you want them to get inherited,
+ * set `prevent_inheriting_filter` to `false` for this mapping.
+ * 
  * @see DataColumnMappingInterface
  * 
  * @author Andrej Kabachnik
@@ -38,6 +42,8 @@ class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterT
     private $toSingleRowSeparator = null;
     
     private $toSingleRow = false;
+    
+    private $removeFilter = true;
     
     /**
      * 
@@ -108,6 +114,9 @@ class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterT
             if (strcasecmp($condition->getExpression()->toString(), $exprString) === 0) {
                 if ($comparator === $ccomp || ($comparator === null || $comparator === '')) {
                     $result[] = $condition;
+                    if ($this->getPreventInheritingFilter()) {
+                        $fromConditionGroup->removeCondition($condition);
+                    }
                 }
             }
         }
@@ -191,6 +200,31 @@ class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterT
     {
         $this->toSingleRowSeparator = $value;
         $this->toSingleRow = true;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getPreventInheritingFilter() : bool
+    {
+        return $this->removeFilter;
+    }
+    
+    /**
+     * Set to FALSE if you want the to-sheet to inherit the filter if possible.
+     * 
+     * @uxon-property prevent_inheriting_filter
+     * @uxon-type boolean
+     * @uxon-default true     * 
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataFilterToColumnMappingInterface::setPreventInheritingFilter()
+     */
+    public function setPreventInheritingFilter(bool $value) : DataFilterToColumnMapping
+    {
+        $this->removeFilter = $value;
         return $this;
     }
 }
