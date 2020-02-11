@@ -196,7 +196,7 @@ class ServiceParameter implements ServiceParameterInterface
     
     public function parseValue($val) : string
     {
-        if ($this->isRequired() && $this->getDataType()->isEmptyValue($val)) {
+        if ($this->isRequired() && $this->getDataType()->isValueEmpty($val)) {
             throw new ActionInputMissingError($this->getAction(), 'Service parameter "' . $this->getName() . '" cannot be empty!');
         }
         

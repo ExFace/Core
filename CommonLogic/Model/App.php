@@ -295,7 +295,7 @@ class App implements AppInterface
     {
         if (is_null($this->uid)) {
             $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.APP');
-            $ds->addFilterFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
+            $ds->getFilters()->addConditionFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
             $ds->dataRead();
             if ($ds->countRows() == 0) {
                 throw new LogicException('No app matching alias "' . $this->getAliasWithNamespace() . '" is installed!');
@@ -482,7 +482,12 @@ class App implements AppInterface
     public function getLanguageDefault() : string
     {
         try { 
-            return $this->getAppModelDataSheet()->getCellValue('DEFAULT_LANGUAGE_CODE', 0);
+            $language = $this->getAppModelDataSheet()->getCellValue('DEFAULT_LANGUAGE_CODE', 0);
+            if ($language != null) {
+                return $language;
+            } else {
+                return $this->getWorkbench()->getConfig()->getOption('LOCALE.DEFAULT');
+            }
         } catch (DataSheetReadError $e) {
             // Catch read errors in case, the app does not yet exist in the model (this may happen
             // on rare occasions, when apps are just being installed)
@@ -514,7 +519,7 @@ class App implements AppInterface
         $cols->addFromExpression('UID');
         $cols->addFromExpression('DEFAULT_LANGUAGE_CODE');
         $cols->addFromExpression('NAME');
-        $ds->addFilterFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
+        $ds->getFilters()->addConditionFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
         $ds->dataRead();
         return $ds;
     }

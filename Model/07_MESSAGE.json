@@ -2122,11 +2122,26 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2020-02-05 10:39:00",
+            "MODIFIED_ON": "2020-02-05 10:39:44",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea4803b36afb51b2cfe4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "79G9JUB",
+            "TITLE": "Cannot handle value of compound attribute",
+            "DESCRIPTION": "Values of compound attributes are concatenated values of their component attributes separated by prefixes and suffixes defined in the meta model. This error means, that the concatenated value could not be split back into individual values of the component attributes.\n\nChange the configuration of the compound attribute in the meta model so that prefixes and suffixes produce unambiguous delimiters between component values: e.g. use `--` between numbers, special characters like `$$` between strings, etc.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.MESSAGE",
         "conditions": [
             {
                 "expression": "APP",

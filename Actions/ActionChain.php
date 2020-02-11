@@ -25,24 +25,30 @@ use exface\Core\CommonLogic\Tasks\ResultData;
  * 
  * NOTE: actions showing widgets cannot be used in actions chains as the will not show anything!
  *
- * Here is a simple example:
+ * Here is a simple example for releasing an order and priniting it with a single button:
+ * 
+ * ```
  *  {
  *      "alias": "exface.Core.ActionChain",
+ *      "name": "Release",
+ *      "input_rows_min": 1,
+ *      "input_rows_max": 1,
  *      "actions": [
  *          {
- *              "alias": "my.app.CreateOrder",
- *              "name": "Order",
- *              "input_rows_min": 0
+ *              "alias": "my.app.ReleaseOrder",
  *          },
  *          {
  *              "alias": "my.app.PrintOrder"
  *          }
  *      ]
- * }
+ *  }
+ * 
+ * ```
  *
  * As a rule of thumb, the action chain will behave as the first action in the it: it will inherit it's name, input restrictions, etc.
  * Thus, in the above example, the action chain would inherit the name "Order" and "input_rows_min=0". However, there are some
  * important exceptions from this rule:
+ * 
  * - the chain has modified data if at least one of the actions modified data
  *
  * By default, all actions in the chain will be performed in a single transaction. That is, all actions will get rolled back if at least

@@ -41,7 +41,7 @@ interface FormulaInterface extends WorkbenchDependantInterface
      * @param int $row_number            
      * @return mixed
      */
-    public function evaluate(DataSheetInterface $data_sheet, $column_name, $row_number);
+    public function evaluate(DataSheetInterface $data_sheet, int $row_number);
 
     /**
      * Returns the data sheet, the formula is being run on
@@ -56,20 +56,6 @@ interface FormulaInterface extends WorkbenchDependantInterface
      * @return DataTypeInterface
      */
     public function getDataType();
-
-    /**
-     * Returns the column name of the data sheet column currently being processed
-     *
-     * @return string
-     */
-    public function getCurrentColumnName();
-    
-    /**
-     * Returns the column of the data sheet, that the formula is being applied to
-     * 
-     * @return DataColumnInterface
-     */
-    public function getCurrentColumn();
 
     /**
      * Returns the row number in the data sheet currently being processed.

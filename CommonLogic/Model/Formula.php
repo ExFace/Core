@@ -94,7 +94,7 @@ abstract class Formula implements FormulaInterface
      *
      * @see \exface\Core\Interfaces\Formulas\FormulaInterface::evaluate()
      */
-    public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, $column_name = null, $row_number = null)
+    public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, int $row_number = null)
     {
         $args = array();
         
@@ -105,18 +105,17 @@ abstract class Formula implements FormulaInterface
                 }
                 
             } else {
-                if (is_null($data_sheet) || is_null($column_name) || is_null($row_number)) {
+                if (is_null($data_sheet) || is_null($row_number)) {
                     throw new InvalidArgumentException('In a non-static formula $data_sheet, $column_name and $row_number are mandatory arguments.');
                 }
                 
                 
                 foreach ($this->arguments as $expr) {
-                    $args[] = $expr->evaluate($data_sheet, $column_name, $row_number);
+                    $args[] = $expr->evaluate($data_sheet, $row_number);
                 }
                 
                 
                 $this->setDataSheet($data_sheet);
-                $this->setCurrentColumnName($column_name);
                 $this->setCurrentRowNumber($row_number);
             }
             
@@ -125,7 +124,7 @@ abstract class Formula implements FormulaInterface
                 'run'
             ), $args);
         } catch (\Throwable $e) {
-            throw new FormulaError('Cannot evaluate formula "' . $this->selector->toString() . '" on column "' . $column_name . '" for row ' . $row_number . '.', null, $e);
+            throw new FormulaError('Cannot evaluate formula "' . $this->selector->toString() . '" for row ' . $row_number . '.', null, $e);
         }
     }
 
@@ -206,37 +205,6 @@ abstract class Formula implements FormulaInterface
             $a->mapAttribute($map_from, $map_to);
             $this->arguments[$key] = $a;
         }
-    }
-
-    /**
-     * Returns the column name of the data sheet column currently being processed
-     *
-     * @return string
-     */
-    public function getCurrentColumnName()
-    {
-        return $this->current_column_name;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::getCurrentColumn()
-     */
-    public function getCurrentColumn()
-    {
-        return $this->getDataSheet()->getColumns()->get($this->getCurrentColumnName());
-    }
-
-    /**
-     *
-     * @param string $value            
-     * @return \exface\Core\CommonLogic\Model\Formula
-     */
-    protected function setCurrentColumnName($value)
-    {
-        $this->current_column_name = $value;
-        return $this;
     }
 
     /**

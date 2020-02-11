@@ -10,7 +10,6 @@ use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use Symfony\Component\Translation\Tests\StringClass;
 
 /**
  * Shows a command line terminal.
@@ -220,12 +219,17 @@ class Console extends AbstractWidget
     {
         $commands = $uxon->toArray();
         $this->startCommands = $commands;
+        
+        // PHP 7.3+ quotes #-characters, so we need to replace them back here - otherwise
+        $numberCharacterExcaped = (version_compare(PHP_VERSION, '7.3.0') >= 0);
+        
         foreach ($commands as $command) {
             $rule = '/' . preg_quote($command, '/') . '/';
             $phs = [];
             foreach(StringDataType::findPlaceholders($command) as $ph) {
                 $phs[$ph] = '.*';
-                $rule = str_replace('\\[#'.$ph.'#\\]', '[#'.$ph.'#]', $rule);
+                $phRegEx = $numberCharacterExcaped ? '\\[\\#'.$ph.'\\#\\]' : '\\[#'.$ph.'#\\]';
+                $rule = str_replace($phRegEx, '[#'.$ph.'#]', $rule);
             }
             $rule = StringDataType::replacePlaceholders($rule, $phs);
             $this->allowedCommands[] = $rule;
@@ -426,7 +430,7 @@ class Console extends AbstractWidget
                     foreach ($col->getValues(false) as $val) {
                         $vals[] = $this->escapeCommandPlaceholderValue($val, $col->getDataType());
                     }
-                    $phvals[$ph] = implode($vals);
+                    $phvals[$ph] = implode($this->getCommandPlaceholderValueListDelimiter(), $vals);
                 }
             }
             $cmds[$nr] = StringDataType::replacePlaceholders($cmd, $phvals);

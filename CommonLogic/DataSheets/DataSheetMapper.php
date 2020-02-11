@@ -97,7 +97,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
                 }
             }
             if (! $data_sheet->isFresh()){
-                $data_sheet->addFilterFromColumnValues($data_sheet->getUidColumn());
+                $data_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
                 $data_sheet->dataRead();
             }
         }

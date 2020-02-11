@@ -4,6 +4,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Widgets\Input;
 
 /**
  * This trait contains a generic buildJsValidator() method and some usefull helpers for 
@@ -82,8 +83,15 @@ trait JqueryInputValidationTrait {
         $js = '';
         switch (true) {
             case $type instanceof StringDataType:
+                // Validate string min legnth
                 if ($type->getLengthMin() > 0) {
                     $js .= "if($valueJs.toString().length < {$type->getLengthMin()}) { $onFailJs } \n";
+                }
+                
+                // Validate string max length
+                // ... unless multi-value input is allowed!
+                if (($this->getWidget() instanceof Input) && $this->getWidget()->getMultipleValuesAllowed() === true) {
+                    break;
                 }
                 if ($type->getLengthMax() > 0) {
                     $js .= "if($valueJs.toString().length > {$type->getLengthMax()}) { $onFailJs } \n";
@@ -122,7 +130,7 @@ trait JqueryInputValidationTrait {
                 if ($type->getLengthMin() > 0) {
                     $lengthCond = ' ≥ ' . $type->getLengthMin();
                 }
-                if ($type->getLengthMax() > 0) {
+                if ($type->getLengthMax() > 0 && ($widget instanceof Input && $widget->getMultipleValuesAllowed() === false)) {
                     $lengthCond .= ($lengthCond ? ' ' . $and . ' ' : '') . ' ≤ ' . $type->getLengthMax();
                 }
                 if ($lengthCond) {

@@ -257,7 +257,7 @@ class TimeStampingBehavior extends AbstractBehavior
         // Only read current data if there are UIDs or filters in the original sheet!
         // Otherwise it would read ALL data which is useless.
         if ($originalSheet->hasUidColumn(true) === true || $originalSheet->getFilters()->isEmpty() === false) {
-            $check_sheet->addFilterFromColumnValues($originalSheet->getUidColumn());
+            $check_sheet->getFilters()->addConditionFromColumnValues($originalSheet->getUidColumn());
             $check_sheet->dataRead();
         }
         return $check_sheet;

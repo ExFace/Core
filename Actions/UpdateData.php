@@ -38,7 +38,7 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
         /* TODO #undo-action
         if ($data_sheet->countRows() && $data_sheet->getUidColumn()) {
             $backup = $data_sheet->copy();
-            $backup->addFilterFromColumnValues($backup->getUidColumn());
+            $backup->getFilters()->addConditionFromColumnValues($backup->getUidColumn());
             $backup->removeRows()->dataRead();
             $this->setUndoDataSheet($backup);
             $undoable = true;
