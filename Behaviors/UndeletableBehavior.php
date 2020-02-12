@@ -150,7 +150,7 @@ class UndeletableBehavior extends AbstractBehavior
             switch (true){
                 case $expression->isMetaAttribute():
                     try {
-                        $attribute = $dataSheet->getMetaObject()->getAttribute($condition->getAttributeAlias());
+                        $attribute = $expression->getAttribute();
                     } catch (\Exception $e) {
                         continue;
                     }

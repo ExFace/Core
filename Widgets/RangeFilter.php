@@ -110,7 +110,7 @@ class RangeFilter extends Filter
      */
     protected function validateComparator(string $comparator) : string
     {
-        if (in_array(Condition::sanitizeComparator($comparator), $this->getValidComparators()) === false) {
+        if (in_array(ComparatorDataType::cast($comparator), $this->getValidComparators()) === false) {
             throw new WidgetPropertyInvalidValueError($this, 'Invalid comparator "' . $comparator . '" used for RangeFilter widget: only <, >, <=, >= supported!');
         }
         return $comparator;
