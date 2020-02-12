@@ -222,7 +222,7 @@ class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterT
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataFilterToColumnMappingInterface::setPreventInheritingFilter()
      */
-    public function setPreventInheritingFilter(bool $value) : DataFilterToColumnMapping
+    public function setPreventInheritingFilter(bool $value) : DataFilterToColumnMappingInterface
     {
         $this->removeFilter = $value;
         return $this;
