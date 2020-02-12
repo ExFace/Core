@@ -42,6 +42,10 @@ class DataSheetMapper implements DataSheetMapperInterface {
     
     private $inheritColumns = null;
     
+    private $inheritFilters = null;
+    
+    private $inheritSorters = null;
+    
     public function __construct(Workbench $workbench)
     {
         $this->workbench = $workbench;
@@ -64,11 +68,24 @@ class DataSheetMapper implements DataSheetMapperInterface {
         // Create an empty to-sheet
         $toSheet = DataSheetFactory::createFromObject($this->getToMetaObject());
         
+        // Inherit columns if neccessary
         if ($this->getInheritColumns()){
             foreach ($fromSheet->getColumns() as $fromCol){
                 $toSheet->getColumns()->add(DataColumnFactory::createFromUxon($toSheet, $fromCol->exportUxonObject()));
             }
             $toSheet->importRows($fromSheet);
+        }
+        
+        // Inherit filters if neccessary
+        if ($this->getInheritFilters()){
+            $toSheet->setFilters($fromSheet->getFilters());
+        }
+        
+        // Inherit sorters if neccessary
+        if ($this->getInheritSorters()){
+            foreach ($fromSheet->getSorters()->getAll() as $sorter) {
+                $toSheet->getSorters()->add($sorter);
+            }
         }
         
         // Map columns to columns
@@ -388,16 +405,9 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * 
      * @return boolean
      */
-    public function getInheritColumns()
+    public function getInheritColumns() : bool
     {
-        if (is_null($this->inheritColumns)){
-            if ($this->canInheritColumns()){
-                return true;
-            } else {
-                return false;
-            }
-        }
-        return $this->inheritColumns;
+        return $this->inheritColumns ?? $this->canInheritColumns();
     }
     
     /**
@@ -414,10 +424,8 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * @throws DataSheetMapperError
      * @return \exface\Core\CommonLogic\DataSheets\DataSheetMapper
      */
-    public function setInheritColumns($true_or_false)
+    public function setInheritColumns(bool $value) : DataSheetMapperInterface
     {
-        $value = BooleanDataType::cast($true_or_false);
-        
         if ($value){
             if (! $this->canInheritColumns()) {
                 throw new DataSheetMapperError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit columns from sheets of "' . $this->getFromMetaObject() . '"!');
@@ -429,13 +437,108 @@ class DataSheetMapper implements DataSheetMapperInterface {
     }
     
     /**
+     * Returns TRUE if columns of the from-sheet should be inherited by the to-sheet.
+     *
+     * By default, this will be TRUE if the to-sheet is based on the same object as the
+     * from-sheet or a derivative and FALSE otherwise.
+     *
+     * @return boolean
+     */
+    public function getInheritFilters()
+    {
+        return $this->inheritFilters ?? $this->canInheritFilters();
+    }
+    
+    /**
+     * Set to FALSE to prevent the to-sheet from inheriting compatible filters from the from-sheet.
+     *
+     * If the to-sheet is based on the same object as the from-sheet or a derivative,
+     * the mapper will copy all filters by default and apply the mapping afterwards.
+     * This option can prevent this behavior.
+     *
+     * @uxon-property inherit_filters
+     * @uxon-type boolean
+     *
+     * @param boolean $true_or_false
+     * @throws DataSheetMapperError
+     * @return \exface\Core\CommonLogic\DataSheets\DataSheetMapper
+     */
+    public function setInheritFilters(bool $value) : DataSheetMapperInterface
+    {
+        if ($value){
+            if (! $this->canInheritFilters()) {
+                throw new DataSheetMapperError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit filters from sheets of "' . $this->getFromMetaObject() . '"!');
+            }
+        }
+        
+        $this->inheritFilters = $value;
+        return $this;
+    }
+    
+    /**
+     * Returns TRUE if columns of the from-sheet should be inherited by the to-sheet.
+     *
+     * By default, this will be TRUE if the to-sheet is based on the same object as the
+     * from-sheet or a derivative and FALSE otherwise.
+     *
+     * @return boolean
+     */
+    public function getInheritSorters()
+    {
+        return $this->inheritSorters ?? $this->canInheritSorters();
+    }
+    
+    /**
+     * Set to FALSE to prevent the to-sheet from inheriting compatible sorters from the from-sheet.
+     *
+     * If the to-sheet is based on the same object as the from-sheet or a derivative,
+     * the mapper will copy all sorters by default and apply the mapping afterwards.
+     * This option can prevent this behavior.
+     *
+     * @uxon-property inherit_sorters
+     * @uxon-type boolean
+     *
+     * @param boolean $true_or_false
+     * @throws DataSheetMapperError
+     * @return \exface\Core\CommonLogic\DataSheets\DataSheetMapper
+     */
+    public function setInheritSorters(bool $value) : DataSheetMapperInterface
+    {
+        if ($value){
+            if (! $this->canInheritSorters()) {
+                throw new DataSheetMapperError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit sorters from sheets of "' . $this->getFromMetaObject() . '"!');
+            }
+        }
+        
+        $this->inheritSorters = $value;
+        return $this;
+    }
+    
+    /**
      * Returns TRUE if columns of the from-sheet sheet can be inherited by the to-sheet.
      * 
      * @return boolean
      */
-    protected function canInheritColumns()
+    protected function canInheritColumns() : bool
     {
         return $this->getToMetaObject()->is($this->getFromMetaObject());
     }
     
+    /**
+     * 
+     * @return bool
+     */
+    protected function canInheritFilters() : bool
+    {
+        return $this->canInheritColumns();
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function canInheritSorters() : bool
+    {
+        return $this->canInheritColumns();
+    }
 }
