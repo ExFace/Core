@@ -671,7 +671,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             return $this;
         }
         try {
-            $this->comparator = Condition::sanitizeComparator($value);
+            $this->comparator = ComparatorDataType::cast($value);
         } catch (UnexpectedValueException $e){
             throw new WidgetPropertyInvalidValueError($this, 'Invalid comparator "' . $value . '" used for filter widget!', '6W1SD52', $e);
         }

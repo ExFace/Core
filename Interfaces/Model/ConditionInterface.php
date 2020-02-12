@@ -22,18 +22,18 @@ use exface\Core\Exceptions\UnexpectedValueException;
 interface ConditionInterface extends ConditionalExpressionInterface
 {
     /**
-     * Returns the expression to filter
+     * Returns expression for the left side
      *
      * @return ExpressionInterface
      */
-    public function getExpression() : ExpressionInterface;
+    public function getLeftExpression() : ExpressionInterface;
     
     /**
-     * Returns the value to compare to
+     * Returns expression for the right side
      *
-     * @return mixed
+     * @return ExpressionInterface
      */
-    public function getValue() : ?string;
+    public function getRightExpression() : ExpressionInterface;
     
     /**
      * Returns the comparison operator from this condition.
@@ -44,26 +44,9 @@ interface ConditionInterface extends ConditionalExpressionInterface
     public function getComparator() : string;
     
     /**
-     * TODO move to ComparatorDataType once it is here
-     * 
-     * 
-     * @param string $value
-     * @throws UnexpectedValueException
-     * @return string|boolean
-     */
-    public static function sanitizeComparator(string $value) : string;
-    
-    /**
      *
      * @return DataTypeInterface
      */
     public function getDataType() : DataTypeInterface;
-    
-    /**
-     * Returns the attribute_alias to filter if the filter is based upon an attribute or FALSE otherwise
-     *
-     * @return string|boolean
-     */
-    public function getAttributeAlias();
 }
 

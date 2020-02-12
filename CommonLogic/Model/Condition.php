@@ -24,6 +24,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 
 /**
  * A condition is a simple conditional predicate consisting of a (left) expression,
@@ -35,12 +36,15 @@ use exface\Core\DataTypes\StringDataType;
  * 
  * A condition can be expressed in UXON:
  * 
+ * ```
  * {
  *  "object_alias": "my.App.myObject",
- *  "expression": "myAttribute",
+ *  "left_expression": "MY_ATTRIBUTE",
  *  "comparator": "=",
- *  "value" = "myValue"
+ *  "right_expression" = "myValue"
  * }
+ * 
+ * ```
  * 
  * Depending on the comparator, the value may be a scalar or an array (for IN-comparators).
  * 
@@ -60,13 +64,13 @@ class Condition implements ConditionInterface
     
     private $leftExprRaw = null;
     
+    private $leftExprIsSet = false;
+    
     private $rightExpr = null;
     
     private $rightExprRaw = null;
-
-    private $value = null;
     
-    private $value_set = false;
+    private $rightExprIsSet = false;
 
     private $comparator = null;
 
@@ -102,30 +106,25 @@ class Condition implements ConditionInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
-     * @see ConditionInterface::getExpression()
+     * @deprecated use getLeftExpression() instead!
+     * @return ExpressionInterface
      */
     public function getExpression() : ExpressionInterface
     {
-        return $this->expression;
+        return $this->getLeftExpression();
     }
 
     /**
-     *
-     * {@inheritdoc}
-     * @see ConditionInterface::getValue()
+     * @deprecated use getRightExpression()->getRawValue() instead!
+     * @return string|NULL
      */
     public function getValue() : ?string
     {
-        return $this->value;
+        return $this->getRightExpression()->getRawValue();
     }
 
     /**
-     * The right side of the condition.
-     * 
-     * @uxon-property value
-     * @uxon-type metamodel:expression
+     * @deprecated use setRightExpression() instead!
      * 
      * @param string $value
      * @throws RangeException
@@ -133,15 +132,13 @@ class Condition implements ConditionInterface
      */
     protected function setValue(string $value) : ConditionInterface
     {
-        $this->value_set = true;
+        $this->rightExprIsSet = true;
         try {
             $value = $this->getDataType()->parse($value);
         } catch (\Throwable $e) {
             throw new RangeException('Illegal filter value "' . $value . '" for attribute "' . $this->getAttributeAlias() . '" of data type "' . $this->getExpression()->getAttribute()->getDataType()->getName() . '": ' . $e->getMessage(), '6T5WBNB', $e);
-            $value = null;
-            $this->unset();
         }
-        $this->value = $value;
+        $this->rightExpr = ExpressionFactory::createFromString($this->getWorkbench(), $value, $this->getBaseObject(), true);
         return $this;
     }
 
@@ -152,7 +149,7 @@ class Condition implements ConditionInterface
      */
     public function getComparator() : string
     {
-        if (is_null($this->comparator)) {
+        if ($this->comparator === null) {
             $this->comparator = $this->guessComparator();
         }
         return $this->comparator;
@@ -164,7 +161,7 @@ class Condition implements ConditionInterface
      */
     protected function guessComparator()
     {
-        if ($this->hasBaseObject() === false && ! ($base_object = $this->getLeftExpression()->getMetaObject() ?? $this->getRightExpression()->getMetaObject()) ){
+        if ($this->hasBaseObject() === false && null === ($base_object = $this->getLeftExpression()->getMetaObject() ?? $this->getRightExpression()->getMetaObject()) ){
             return EXF_COMPARATOR_IS;
         }
         
@@ -222,11 +219,11 @@ class Condition implements ConditionInterface
             // a value enclosed in [] is actually a IN-statement
             $value = trim($value, "[]");
             $comparator = EXF_COMPARATOR_IN;
-        } elseif (strpos($expression_string, EXF_LIST_SEPARATOR) === false
+        } elseif ($base_object !== null
+            && strpos($expression_string, EXF_LIST_SEPARATOR) === false
             && $base_object->hasAttribute($expression_string)
             && ($base_object->getAttribute($expression_string)->getDataType() instanceof NumberDataType
-                || $base_object->getAttribute($expression_string)->getDataType() instanceof RelationDataType
-                )
+                || $base_object->getAttribute($expression_string)->getDataType() instanceof RelationDataType)
             && strpos($value, $base_object->getAttribute($expression_string)->getValueListDelimiter()) !== false) {
                 // if a numeric attribute has a value with commas, it is actually an IN-statement
                 $comparator = EXF_COMPARATOR_IN;
@@ -249,35 +246,12 @@ class Condition implements ConditionInterface
     protected function setComparator(string $value) : ConditionInterface
     {
         try {
-            $this->comparator = static::sanitizeComparator($value);
-        } catch (UnexpectedValueException $e){
+            $this->comparator = ComparatorDataType::cast($value);
+        } catch (DataTypeCastingError $e){
             throw new UnexpectedValueException('Invalid comparator value in condition "' . $this->getExpression()->toString() . ' ' . $value . ' ' . $this->getValue() . '"!', '6W1SD52', $e);
         }
         
         return $this;
-    }
-    
-    /**
-     *
-     * {@inheritdoc}
-     * @see ConditionInterface::sanitizeComparator()
-     */
-    public static function sanitizeComparator(string $value) : string
-    {
-        $validated = false;
-        foreach (get_defined_constants(true)['user'] as $constant => $comparator) {
-            if (substr($constant, 0, 15) === 'EXF_COMPARATOR_') {
-                if (strcasecmp($value, $comparator) === 0) {
-                    $validated = true;
-                    $value = $comparator;
-                    break;
-                }
-            }
-        }
-        if (! $validated) {
-            throw new UnexpectedValueException('Invalid comparator value "' . $value . '"!', '6W1SD52');
-        }
-        return $value;
     }
 
     /**
@@ -294,27 +268,13 @@ class Condition implements ConditionInterface
     }
 
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\ConditionInterface::getAttributeAlias()
-     */
-    public function getAttributeAlias()
-    {
-        if ($this->getExpression()->isMetaAttribute()) {
-            return $this->getExpression()->toString();
-        } else {
-            return false;
-        }
-    }
-
-    /**
      *
      * {@inheritdoc}
      * @see ConditionalExpressionInterface::toString()
      */
     public function toString() : string
     {
-        return $this->getExpression()->toString() . ' ' . $this->getComparator() . ' ' . $this->getValue();
+        return $this->getLeftExpression()->toString() . ' ' . $this->getComparator() . ' ' . $this->getRightExpression()->toString();
     }
 
     /**
@@ -334,10 +294,10 @@ class Condition implements ConditionInterface
     public function exportUxonObject()
     {
         $uxon = new UxonObject();
-        $uxon->setProperty('expression', $this->getExpression()->toString());
+        $uxon->setProperty('left_expression', $this->getLeftExpression()->toString());
         $uxon->setProperty('comparator', $this->getComparator());
-        $uxon->setProperty('value', $this->getValue());
-        $uxon->setProperty('object_alias', $this->getExpression()->getMetaObject()->getAliasWithNamespace());
+        $uxon->setProperty('right_expression', $this->getRightExpression()->toString());
+        $uxon->setProperty('object_alias', $this->getBaseObject()->getAliasWithNamespace());
         return $uxon;
     }
 
@@ -430,7 +390,7 @@ class Condition implements ConditionInterface
      */
     public function isEmpty() : bool
     {
-        return ! $this->value_set;
+        return ! $this->rightExprIsSet || ! $this->leftExprIsSet;
     }
 
     /**
@@ -564,7 +524,7 @@ class Condition implements ConditionInterface
      * @param string $value
      * @return ConditionGroup
      */
-    protected function setObjectAlias(string $aliasWithNamespaceOrUid) : ConditionGroup
+    protected function setObjectAlias(string $aliasWithNamespaceOrUid) : ConditionInterface
     {
         $this->baseObjectSelector = $aliasWithNamespaceOrUid;
         $this->baseObject = null;
@@ -574,12 +534,15 @@ class Condition implements ConditionInterface
     protected function setLeftExpression($expressionOrStringOrUxon) : Condition
     {
         if ($expressionOrStringOrUxon instanceof ExpressionInterface) {
-            $this->leftExprRaw = $expressionOrStringOrUxon;
-            $this->leftExpr = null;
-        } else {
-            $this->leftExprRaw = null;
             $this->leftExpr = $expressionOrStringOrUxon;
+            $this->leftExprRaw = null;
+            $this->data_type = $expressionOrStringOrUxon->getDataType();
+        } else {
+            $this->leftExpr = null;
+            $this->leftExprRaw = $expressionOrStringOrUxon;
         }
+        // TODO check if data types of the two condition sides are compatible!
+        $this->leftExprIsSet = true;
         return $this;
     }
     
@@ -598,12 +561,13 @@ class Condition implements ConditionInterface
     protected function setRightExpression($expressionOrStringOrUxon) : Condition
     {
         if ($expressionOrStringOrUxon instanceof ExpressionInterface) {
-            $this->rightExprRaw = $expressionOrStringOrUxon;
-            $this->rightExpr = null;
-        } else {
-            $this->rightExprRaw = null;
             $this->rightExpr = $expressionOrStringOrUxon;
+            $this->rightExprRaw = null;
+        } else {
+            $this->rightExpr = null;
+            $this->rightExprRaw = $expressionOrStringOrUxon;
         }
+        $this->rightExprIsSet = true;
         return $this;
     }
     

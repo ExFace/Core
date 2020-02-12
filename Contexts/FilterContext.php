@@ -172,7 +172,12 @@ class FilterContext extends AbstractContext
         $objectConditions = $this->getConditions($attribute->getObject());
         if (empty($objectConditions) === false) {
             foreach ($objectConditions as $condition) {
-                if ($condition->getAttributeAlias() === $attribute->getAliasWithRelationPath()) {
+                if ($condition->getLeftExpression()->isMetaAttribute() === true) {
+                    $attrAlias = $condition->getLeftExpression()->toString();
+                } elseif ($condition->getRightExpression()->isMetaAttribute() === true) {
+                    $attrAlias = $condition->getRightExpression()->toString();
+                }
+                if ($attrAlias !== null && $attrAlias === $attribute->getAliasWithRelationPath()) {
                     $this->removeCondition($condition);
                 }
             }
