@@ -447,19 +447,33 @@ class Condition implements ConditionInterface
      */
     public function evaluate(DataSheetInterface $data_sheet = null, int $row_number = null) : bool
     {
-        if ($data_sheet === null) {
-            if ($row_number !== null) {
-                throw new RuntimeException('Cannot evaluate a condition: do data provided!');
-            }
+        if ($this->isEmpty() === true) {
+            return $data_sheet;
+        }
+        
+        if ($data_sheet === null && $row_number !== null) {
+            throw new RuntimeException('Cannot evaluate a condition: do data provided!');
         }
         
         $leftVal = $this->getExpression()->evaluate($data_sheet, $row_number);
         $rightVal = $this->getValue(); // Value is already parsed via datatype in setValue()
 
-        return $this->compare($leftVal, $this->getComparator(), $rightVal);
+        $listDelimiter = $this->getExpression()->isMetaAttribute() ? $this->getExpression()->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
+        return $this->compare($leftVal, $this->getComparator(), $rightVal, $listDelimiter);
     }
     
-    protected function compare($leftVal, string $comparator, $rightVal) : bool
+    /**
+     * 
+     * @param mixed $leftVal
+     * @param string $comparator
+     * @param mixed $rightVal
+     * @param string $listDelimiter
+     * 
+     * @throws RuntimeException
+     * 
+     * @return bool
+     */
+    protected function compare($leftVal, string $comparator, $rightVal, string $listDelimiter = EXF_LIST_SEPARATOR) : bool
     {
         if ($rightVal === EXF_LOGICAL_NULL) {
             $rightVal = null;
@@ -469,9 +483,9 @@ class Condition implements ConditionInterface
         }
         switch ($comparator) {
             case ComparatorDataType::IS:
-                return mb_stripos($leftVal, $rightVal) !== false;
+                return $rightVal === null || mb_stripos($leftVal, $rightVal) !== false;
             case ComparatorDataType::IS_NOT:
-                return mb_stripos($leftVal, $rightVal) === false;
+                return mb_stripos($leftVal, $rightVal ?? '') === false;
             case ComparatorDataType::EQUALS:
                 return $leftVal === $rightVal;
             case ComparatorDataType::EQUALS_NOT:
@@ -484,9 +498,21 @@ class Condition implements ConditionInterface
                 return $leftVal >= $rightVal;
             case ComparatorDataType::LESS_THAN_OR_EQUALS:
                 return $leftVal <= $rightVal;
+            case ComparatorDataType::IN:
+            case ComparatorDataType::NOT_IN:
+                $resposeOnFound = $comparator === ComparatorDataType::IN ? true : false;
+                if ($rightVal === null) {
+                    return ! $resposeOnFound;
+                }
+                $rightParts = is_array($rightVal) ? $rightVal : explode($listDelimiter, $rightVal);
+                foreach ($rightParts as $part) {
+                    if ($this->compare($leftVal, ComparatorDataType::EQUALS, $part)) {
+                        return $resposeOnFound;
+                    }
+                }
+                return ! $resposeOnFound;
             default:
-                // TODO #conditions
-                throw new NotImplementedError('Evaluating conditions with comparator "' . $comparator . '" in-memory not supported yet!');
+                throw new RuntimeException('Invalid comparator "' . $comparator . '" used in condition "' . $this->toString() . '"!');
         }
     }
 }

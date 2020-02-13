@@ -932,6 +932,48 @@
             "UXON": "{\"widget_type\":\"DataTree\",\"object_alias\":\"\",\"tree_parent_id_attribute_alias\":\"\",\"tree_folder_flag_attribute_alias\":\"\",\"paginate\":false,\"lazy_load_tree_levels\":false,\"columns\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2020-02-11 08:02:21",
+            "MODIFIED_ON": "2020-02-11 08:42:24",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea4ca4c340f1a8b2cfe4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Heatmap with custom colors",
+            "DESCRIPTION": "Plots color-highlighted values for every x\/y coordinate. The color depends on the `value_attribute_alias` and will be calculated automatically using a gradient between the provided `colors`.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
+            "UXON": "{\"object_alias\":\"\",\"widget_type\":\"Chart\",\"hide_legend\":true,\"data\":{\"paginate\":false},\"axis_y\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"axis_x\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"series\":[{\"type\":\"heatmap\",\"value_attribute_alias\":\"\",\"x_axis_no\":0,\"y_axis_no\":0,\"color_scale\":{\"colors\":[\"#36a832\",\"#ffe921\",\"red\"]}}]}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2020-02-11 08:40:03",
+            "MODIFIED_ON": "2020-02-11 08:40:03",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea4caa070de1e9b2cfe4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Heatmap with discrete color groups",
+            "DESCRIPTION": "Plots color-highlighted values for every x\/y coordinate. The color depends on the `value_attribute_alias`. The property `use_color_groups` of the `color_scale` results in 2 color groups between the `min` and `max` scale values along with automatic \"above\" and \"below\" color groups.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
+            "UXON": "{\"object_alias\":\"\",\"widget_type\":\"Chart\",\"hide_legend\":true,\"data\":{\"paginate\":false},\"axis_y\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"axis_x\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"series\":[{\"type\":\"heatmap\",\"value_attribute_alias\":\"\",\"x_axis_no\":0,\"y_axis_no\":0,\"color_scale\":{\"use_color_groups\":2,\"min\":0,\"max\":20,\"colors\":[\"#36a832\",\"#ffe921\",\"red\"]}}]}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2020-02-11 08:41:19",
+            "MODIFIED_ON": "2020-02-11 08:42:07",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea4caa348980beb2cfe4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Simple heatmap with autom. continuos color scale",
+            "DESCRIPTION": "Plots color-highlighted values for every x\/y coordinate. The color depends on the `value_attribute_alias` and will be calculated automatically.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
+            "UXON": "{\"object_alias\":\"\",\"widget_type\":\"Chart\",\"hide_legend\":true,\"data\":{\"paginate\":false},\"axis_y\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"axis_x\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"series\":[{\"type\":\"heatmap\",\"value_attribute_alias\":\"\",\"x_axis_no\":0,\"y_axis_no\":0,\"color_scale\":{\"colors\":[\"#36a832\",\"#ffe921\",\"red\"]}}]}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
         }
     ],
     "totals_rows": [],

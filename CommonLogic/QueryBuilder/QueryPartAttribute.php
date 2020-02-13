@@ -5,7 +5,6 @@ use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Interfaces\Model\AggregatorInterface;
-use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 
@@ -18,9 +17,9 @@ class QueryPartAttribute extends QueryPart
     
     private $dataAddressProperties = [];
 
-    function __construct($alias, AbstractQueryBuilder $query)
+    function __construct($alias, AbstractQueryBuilder $query, QueryPart $parentQueryPart = null)
     {
-        parent::__construct($alias, $query);
+        parent::__construct($alias, $query, $parentQueryPart);
         
         if (! $attr = $query->getMainObject()->getAttribute($alias)) {
             throw new QueryBuilderException('Attribute "' . $alias . '" of object "' . $query->getMainObject()->getAlias() . '" not found!');
@@ -80,6 +79,11 @@ class QueryPartAttribute extends QueryPart
     public function setAggregator(AggregatorInterface $value)
     {
         $this->aggregator = $value;
+    }
+    
+    public function hasAggregator() : bool
+    {
+        return $this->aggregator !== null;
     }
 
     /**

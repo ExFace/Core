@@ -4,6 +4,9 @@ namespace exface\Core\CommonLogic\QueryBuilder;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\Interfaces\Model\CompoundAttributeInterface;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Model\ConditionInterface;
 
 /**
  * The filter query part represents one filter within a query (in SQL it translates to a WHERE-statement).
@@ -15,7 +18,6 @@ use exface\Core\Interfaces\iCanBeCopied;
  */
 class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
 {
-
     private $compare_value = null;
 
     private $comparator = null;
@@ -25,10 +27,13 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
     private $apply_after_reading = false;
     
     private $value_is_data_address = false;
+    
+    private $compoundFilterGroup = null;
 
-    function __construct($alias, AbstractQueryBuilder $query)
+    function __construct($alias, AbstractQueryBuilder $query, ConditionInterface $condition, QueryPart $parentQueryPart = null)
     {
-        parent::__construct($alias, $query);
+        parent::__construct($alias, $query, $parentQueryPart);
+        $this->condition = $condition;
         // If we filter over an attribute, which actually is a reverse relation, we need to explicitly tell the query, that
         // it is a relation and not a direct attribute. Concider the case of CUSTOMER<-CUSTOMER_CARD. If we filter CUSTOMERs over
         // CUSTOMER_CARD, it would look as if the CUSTOMER_CARD is an attribute of CUSTOMER. We need to detect this and transform
@@ -36,6 +41,13 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
         if ($this->getAttribute()->isRelation() && $this->getQuery()->getMainObject()->getRelation($alias)->isReverseRelation()) {
             $attr = $this->getQuery()->getMainObject()->getAttribute(RelationPath::relationPathAdd($alias, $this->getAttribute()->getObject()->getUidAttributeAlias()));
             $this->setAttribute($attr);
+        }
+        
+        if ($this->getAttribute() instanceof CompoundAttributeInterface) {
+            if ($this->hasAggregator() === true) {
+                throw new RuntimeException('Cannot filter compound attributes with aggregators!');
+            }
+            $this->addChildQueryPart($this->getCompoundFilterGroup());
         }
     }
 
@@ -105,16 +117,6 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
 
     /**
      *
-     * @param Condition $condition            
-     */
-    public function setCondition(Condition $condition)
-    {
-        $this->condition = $condition;
-        return $this;
-    }
-
-    /**
-     *
      * @return boolean
      */
     public function getApplyAfterReading()
@@ -171,6 +173,19 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
         $copy = clone $this;
         $copy->condition = $this->getCondition()->copy();
         return $copy;
+    }
+    
+    public function getCompoundFilterGroup() : QueryPartFilterGroup
+    {
+        if ($this->compoundFilterGroup === null) {
+            if (($this->getAttribute() instanceof CompoundAttributeInterface) === false) {
+                throw new RuntimeException('TODO');
+            }
+            
+            $compoundFilterGroup = $this->getAttribute()->splitCondition($this->getCondition());
+            $this->compoundFilterGroup = QueryPartFilterGroup::createQueryPartFromConditionGroup($compoundFilterGroup, $this->getQuery(), $this);
+        }
+        return $this->compoundFilterGroup;
     }
 }
 ?>

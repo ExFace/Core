@@ -14,6 +14,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
+use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 abstract class AbstractQueryBuilder implements QueryBuilderInterface
@@ -142,10 +143,9 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      */
     public function addAttribute(string $attribute_alias, string $column_name = null) : QueryPartSelect
     {
-        $column_name = $column_name ?? DataColumn::sanitizeColumnName($attribute_alias);
-        $qpart = new QueryPartSelect($attribute_alias, $this, $column_name);
+        $qpart = new QueryPartSelect($attribute_alias, $this, null, $column_name);
         if ($qpart->isValid()) {
-            $this->attributes[$column_name] = $qpart;
+            $this->addQueryPart($qpart);
         }
         return $qpart;
     }
@@ -222,7 +222,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     public function setFiltersConditionGroup(ConditionGroup $condition_group)
     {
         $this->clearFilters();
-        $this->filters = $this->getFilters()->createQueryPartFromConditionGroup($condition_group);
+        $this->filters = QueryPartFilterGroup::createQueryPartFromConditionGroup($condition_group, $this);
         return $this;
     }
 
@@ -424,7 +424,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     {
         $qpart = new QueryPartValue($attribute_alias, $this);
         $qpart->setValue($value);
-        $this->values[$attribute_alias] = $qpart;
+        $this->addQueryPart($qpart);
         return $qpart;
     }
 
@@ -509,11 +509,18 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      */
     public function addQueryPart(QueryPart $qpart)
     {
-        if ($qpart instanceof QueryPartValue) {
-            $this->values[$qpart->getAlias()] = $qpart;
-        } elseif ($qpart instanceof QueryPartAttribute) {
-            $this->attributes[$qpart->getAlias()] = $qpart;
-        } // FIXME add all other query parts. Perhaps use this metho even in the regular add...() methods to centralize the population of the private arrays.
+        switch (true) {
+            case $qpart instanceof QueryPartValue:
+                $this->values[$qpart->getAlias()] = $qpart;
+                break;
+            case $qpart instanceof QueryPartAttribute:
+                $columnKey = $qpart instanceof QueryPartSelect ? $qpart->getColumnKey() : $qpart->getAlias();
+                $this->attributes[$columnKey] = $qpart;
+                break;
+            default:
+                // FIXME add all other query parts. Perhaps use this metho even in the regular add...() methods to centralize the population of the private arrays.
+                throw new NotImplementedError('Adding ready-made query parts to existing queries not supported for ' . get_class($qpart));
+        } 
         return $this;
     }
 
