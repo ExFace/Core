@@ -96,7 +96,7 @@ class Chart extends AbstractWidget implements
     /**
      * @var bool
      */
-    private $hide_header = false;
+    private $hide_header = null;
 
     /**
      *
@@ -615,12 +615,12 @@ class Chart extends AbstractWidget implements
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveHeader::getHideHeader()
      */
-    public function getHideHeader()
+    public function getHideHeader() : ?bool
     {
         return $this->hide_header;
     }
 
-    public function setHideHeader($value)
+    public function setHideHeader(bool $value) : iHaveHeader
     {
         $this->hide_header = $value;
         return $this;
