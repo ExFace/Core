@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Widgets\Traits\SingleValueInputTrait;
+
 /**
  * A (masked) password input
  * 
@@ -9,4 +11,5 @@ namespace exface\Core\Widgets;
  */
 class InputPassword extends Input
 {
+    use SingleValueInputTrait;
 }

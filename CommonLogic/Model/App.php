@@ -482,7 +482,12 @@ class App implements AppInterface
     public function getLanguageDefault() : string
     {
         try { 
-            return $this->getAppModelDataSheet()->getCellValue('DEFAULT_LANGUAGE_CODE', 0);
+            $language = $this->getAppModelDataSheet()->getCellValue('DEFAULT_LANGUAGE_CODE', 0);
+            if ($language != null) {
+                return $language;
+            } else {
+                return $this->getWorkbench()->getConfig()->getOption('LOCALE.DEFAULT');
+            }
         } catch (DataSheetReadError $e) {
             // Catch read errors in case, the app does not yet exist in the model (this may happen
             // on rare occasions, when apps are just being installed)
