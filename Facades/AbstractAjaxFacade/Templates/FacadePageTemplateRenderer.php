@@ -12,6 +12,21 @@ use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 
+/**
+ * A generic HTML template renderer working with [#placeholders#].
+ * 
+ * ## Supported Placeholders
+ * 
+ * - `[#~head#]` - replaced by the output of `Facade::buildHtmlHead($widget, true)`
+ * - `[#~body#]` - replaced by the output of `Facade::buildHtmlBody($widget)`
+ * - `[#~widget:<widget_type>#] - renders a widget, e.g. `[#~widget:NavCrumbs#]`
+ * - `[#~url:<page_selector>#]` - replaced by the URL to the page identified by the 
+ * `<page_selector>` (i.e. UID or alias with namespace)
+ * - `[#~page:<attribute_alias>#]` - replaced by the value of a current page's attribute
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class FacadePageTemplateRenderer implements TemplateRendererInterface
 {
     use ImportUxonObjectTrait;
@@ -163,7 +178,8 @@ class FacadePageTemplateRenderer implements TemplateRendererInterface
                 $val = $this->getFacade()->buildHtml($phWidget);
                 break;
             case StringDataType::startsWith($placeholder, '~url:') === true;
-            
+                $pageSelectorString = StringDataType::substringAfter($placeholder, '~url:');
+                $val = $this->getFacade()->buildUrlToPage($pageSelectorString);
                 break;
             case StringDataType::startsWith($placeholder, '~page:');
                 $property = StringDataType::substringAfter($placeholder, '~page:');
