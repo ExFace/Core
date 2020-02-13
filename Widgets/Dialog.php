@@ -290,7 +290,12 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
         return is_null($this->header) ? false : true;
     }
     
-    public function getHideHeader()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveHeader::getHideHeader()
+     */
+    public function getHideHeader() : ?bool
     {
         return $this->hide_header;
     }
@@ -305,9 +310,9 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
      * 
      * @see \exface\Core\Interfaces\Widgets\iHaveHeader::setHideHeader()
      */
-    public function setHideHeader($boolean)
+    public function setHideHeader(bool $boolean) : iHaveHeader
     {
-        $this->hide_header = BooleanDataType::cast($boolean);
+        $this->hide_header = $boolean;
     }
     
     /**

@@ -1101,7 +1101,12 @@ class Data
         return 'DataConfigurator';
     } 
     
-    public function getHideHeader()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveHeader::getHideHeader()
+     */
+    public function getHideHeader() : ?bool
     {
         return $this->hide_header;
     }
@@ -1114,9 +1119,9 @@ class Data
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveHeader::setHideHeader()
      */
-    public function setHideHeader($value)
+    public function setHideHeader(bool $value) : iHaveHeader
     {
-        $this->hide_header = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->hide_header = $value;
         return $this;
     }
     
