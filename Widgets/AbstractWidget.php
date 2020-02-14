@@ -34,6 +34,8 @@ use exface\Core\Uxon\WidgetSchema;
 use exface\Core\Widgets\Traits\iHaveVisibilityTrait;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Parts\ConditionalProperty;
+use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Factories\SelectorFactory;
 
 /**
  * Basic ExFace widget
@@ -97,6 +99,8 @@ abstract class AbstractWidget implements WidgetInterface
     private $disabled_if = null;
 
     private $parentByType = [];
+    
+    private $facadeOptions = null;
 
     /**
      *
@@ -1322,5 +1326,63 @@ abstract class AbstractWidget implements WidgetInterface
         $this->getWorkbench()->eventManager()->dispatch($event);
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WidgetInterface::getFacadeOptions()
+     */
+    public function getFacadeOptions(FacadeInterface $facade) : ?UxonObject
+    {
+        if ($this->facadeOptions === null) {
+            return null;
+        }
+        foreach ($this->facadeOptions as $facadeSelectorString => $uxon) {
+            $facadeSelector = SelectorFactory::createFacadeSelector($this->getWorkbench(), $facadeSelectorString);
+            if ($facade->is($facadeSelector)) {
+                return $uxon;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Facade-specific options for this widget defined for each facade
+     * 
+     * Example:
+     * 
+     * ```
+     * {
+     *  "facade_options": {
+     *      "exface.AdminLTEFacade.AdminLTEFacade": {
+     *          "option_1": "value_of_option_1",
+     *          "option_2": "value_of_option_2"
+     *      }
+     *  }
+     * }
+     * 
+     * ```
+     * 
+     * @uxon-property facade_options
+     * @uxon-type object
+     * @uxon-template {"": {"": ""}}
+     * 
+     * @param UxonObject $value
+     * @return AbstractWidget
+     */
+    public function setFacadeOptions(UxonObject $value) : WidgetInterface
+    {
+        $this->facadeOptions = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WidgetInterface::hasFacadeOptions()
+     */
+    public function hasFacadeOptions(FacadeInterface $facade) : bool
+    {
+        return $this->getFacadeOptions($facade) !== null;
+    }
 }
-?>
