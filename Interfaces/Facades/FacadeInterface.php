@@ -12,11 +12,11 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 interface FacadeInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeConvertedToUxon
 {
     /**
-     * Returns TRUE if this facade matches the given facade alias and false otherwise (case insensitive!)
+     * Returns TRUE if this facade matches the given facade selector or is a derivative of that facade.
      *
-     * @param string $facade_alias            
+     * @param string|FacadeSelectorInterface $aliasOrSelector            
      */
-    public function is($facade_alias) : bool;
+    public function is($aliasOrSelector) : bool;
 
     /**
      * Returns the app, that contains the facade

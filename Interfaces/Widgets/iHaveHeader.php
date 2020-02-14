@@ -6,15 +6,17 @@ use exface\Core\Interfaces\WidgetInterface;
 interface iHaveHeader extends WidgetInterface
 {
     /**
-     * @return boolean
+     * Returns TRUE if the header MUST be hidden, FALSE if it must be shown and NULL if it's up to the facade.
+     * 
+     * @return boolean|NULL
      */
-    function getHideHeader();
+    function getHideHeader() : ?bool;
     
     /**
      * 
      * @param boolean $boolean
      * @return iHaveHeader
      */
-    function setHideHeader($boolean);
+    function setHideHeader(bool $boolean) : iHaveHeader;
     
 }
