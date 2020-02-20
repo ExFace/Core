@@ -805,12 +805,12 @@ class DataSheet implements DataSheetInterface
             foreach ($col->getAttribute()->getObject()->getAttributes() as $attr) {
                 if ($fixedExpr = $attr->getFixedValue()) {
                     $alias_with_relation_path = RelationPath::relationPathAdd($rel_path, $attr->getAlias());
-                    if (! $col = $this->getColumn($alias_with_relation_path)) {
-                        $col = $this->getColumns()->addFromExpression($alias_with_relation_path, NULL, true);
-                    } elseif ($col->getIgnoreFixedValues()) {
+                    if (! $fixedCol = $this->getColumn($alias_with_relation_path)) {
+                        $fixedCol = $this->getColumns()->addFromExpression($alias_with_relation_path, NULL, true);
+                    } elseif ($fixedCol->getIgnoreFixedValues()) {
                         continue;
                     }
-                    $col->setValuesByExpression($fixedExpr);
+                    $fixedCol->setValuesByExpression($fixedExpr);
                 }
             }
             $processed_relations[$rel_path] = true;
