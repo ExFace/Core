@@ -119,6 +119,8 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     private $header_sort_multiple = false;
 
     private $context_menu = null;
+    
+    private $multi_select_sync_attribute = null;
 
     function hasRowDetails()
     {
@@ -554,5 +556,31 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
         }
         
         return $uxon;
+    }
+    
+    /**
+     * Set the attribute alias all rows with the same value in corresponding column should be selected when one row gets selected.
+     * 
+     * @uxon-property multi_select_sync_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $value
+     * @return \exface\Core\Widgets\DataTable
+     */
+    public function setMultiSelectSyncAttributeAlias(string $value)
+    {
+        $this->setMultiSelect(true);
+        $this->multi_select_sync_attribute = $value;
+        return $this;
+    }
+    
+    /**
+     * Get the attribute alias all rows with the same value in corresponding column should be selected when one row gets selected.
+     *
+     * @return \exface\Core\Widgets\string
+     */
+    public function getMultiSelectSyncAttributeAlias()
+    {
+        return $this->multi_select_sync_attribute;
     }
 }
