@@ -4,7 +4,6 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
-use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -34,8 +33,6 @@ use exface\Core\Widgets\Traits\iHaveColumnsAndColumnGroupsTrait;
 use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Interfaces\Widgets\iHaveSorters;
 use exface\Core\Widgets\Parts\DataFooter;
-use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Widgets\iTakeInput;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -242,7 +239,7 @@ class Data
                 // FIXME check, if a filter on the current relation is there already, and add it only in this case
                 /* @var $rel \exface\Core\CommonLogic\Model\relation */
                 if ($rel = $thisObject->findRelation($prefillObject)) {
-                    $fltr = $this->getConfiguratorWidget()->createFilterFromRelation($rel);
+                    $fltr = $this->getConfiguratorWidget()->addFilterFromRelation($rel);
                     $data_sheet = $fltr->prepareDataSheetToPrefill($data_sheet);
                 }
             }
@@ -393,11 +390,6 @@ class Data
         return $this;
     }
 
-    public function createFilterWidget($attribute_alias = null, UxonObject $uxon_object = null)
-    {
-        return $this->getConfiguratorWidget()->createFilterWidget($attribute_alias, $uxon_object);
-    }
-
     /**
      *
      * @see \exface\Core\Widgets\AbstractWidget::prefill()
@@ -427,8 +419,8 @@ class Data
             $attr = $condition->getExpression()->getAttribute();
             $attribute_filters = $this->getConfiguratorWidget()->findFiltersByAttribute($attr);
             // If no filters are there, create one
-            if (count($attribute_filters) == 0) {
-                $filter = $this->createFilterWidget($condition->getExpression()->getAttribute()->getAliasWithRelationPath());
+            if (empty($attribute_filters) === true) {
+                $filter = $this->getConfiguratorWidget()->createFilterWidget($condition->getExpression()->getAttribute()->getAliasWithRelationPath());
                 $this->addFilter($filter);
                 $filter->setValue($condition->getValue());
                 // Disable the filter because if the user changes it, the
@@ -477,7 +469,7 @@ class Data
             // If anything goes wrong, log away the error but continue, as
             // the prefills are not critical in general.
             try {
-                $filter_widget = $this->getConfiguratorWidget()->createFilterFromRelation($rel);
+                $filter_widget = $this->getConfiguratorWidget()->addFilterFromRelation($rel);
                 $filter_widget->prefill($data_sheet);
             } catch (\Throwable $e) {
                 $this->getWorkbench()->getLogger()->logException($e);
