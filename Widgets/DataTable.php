@@ -577,7 +577,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     /**
      * Get the attribute alias all rows with the same value in corresponding column should be selected when one row gets selected.
      *
-     * @return \exface\Core\Widgets\string
+     * @return string
      */
     public function getMultiSelectSyncAttributeAlias()
     {
