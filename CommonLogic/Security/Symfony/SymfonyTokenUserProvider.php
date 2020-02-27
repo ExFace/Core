@@ -35,6 +35,11 @@ class SymfonyTokenUserProvider implements UserProviderInterface
         return $this->workbench;
     }
     
+    protected function getUserModel() : \exface\Core\Interfaces\UserInterface
+    {
+        return $this->workbench->getSecurity()->getUser($this->token);
+    }
+    
     /**
      * Loads the user for the given username.
      *
@@ -47,8 +52,8 @@ class SymfonyTokenUserProvider implements UserProviderInterface
      */
     public function loadUserByUsername($username)
     {
-        if ($username === $this->token->getUsername()) {
-            return SymfonyUserWrapper($this->token->getUser());
+        if ($username === $this->getUserModel()->getUsername()) {
+            return SymfonyUserWrapper($this->getUserModel());
         }
         throw new UsernameNotFoundException('Username mismatch! Attempted to load username "' . $username . '" with token for "' . $this->token->getUsername() . '".');
     }
