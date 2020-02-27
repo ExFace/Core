@@ -10,6 +10,7 @@ use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\CommonLogic\Security\AuthenticationToken\AnonymousAuthToken;
 use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\CommonLogic\Security\Authenticators\SymfonyAuthenticator;
+use exface\Core\Factories\UserFactory;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -24,6 +25,8 @@ class SecurityManager implements SecurityManagerInterface
     private $authenticators = null;
     
     private $authenticatedToken = null;
+    
+    private $userCache = [];
 
     /**
      *
@@ -103,7 +106,28 @@ class SecurityManager implements SecurityManagerInterface
      */
     public function getAuthenticatedUser() : UserInterface
     {
-        return $this->getAuthenticatedToken()->getUser();
+        return $this->getUser($this->getAuthenticatedToken());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\SecurityManagerInterface::getUser()
+     */
+    public function getUser(AuthenticationTokenInterface $token) : UserInterface
+    {
+        if (($user = $this->userCache[$token->getUsername()]) !== null) {
+            return $user;    
+        }
+        
+        if ($token->getUsername() && $token->isAnonymous() === false) {
+            $user = UserFactory::createFromModel($this->getWorkbench(), $token->getUsername());
+        } else {
+            $user = UserFactory::createAnonymous($this->getWorkbench());
+        }
+        $this->userCache[$token->getUsername()] = $user;
+        
+        return $user;
     }
 
     /**

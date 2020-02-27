@@ -29,4 +29,12 @@ interface SecurityManagerInterface extends WorkbenchDependantInterface, Authenti
      * @return UserInterface
      */
     public function getAuthenticatedUser() : UserInterface;
+    
+    /**
+     * Returns the user model for the given authentication token. 
+     * 
+     * @param AuthenticationTokenInterface $token
+     * @return UserInterface
+     */
+    public function getUser(AuthenticationTokenInterface $token) : UserInterface;
 }
