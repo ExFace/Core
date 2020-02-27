@@ -55,37 +55,33 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
      */
     public function splitValue(string $value) : array
     {
-        $delim = '';
         $toSplit = $value;
         $values = [];
         $components = $this->getComponents();
         
         $firstPrefix = $components[0]->getValuePrefix();
+        $lastSuffix = $this->getComponent(count($components)-1)->getValueSuffix();
+        
         if ($firstPrefix !== '' && substr($toSplit, 0, strlen($firstPrefix)) === $firstPrefix) {
+            //cut off the prefix of the first component (if exists)
             $toSplit = substr($toSplit, strlen($firstPrefix));
         }
-        
-        foreach ($components as $idx => $comp) {
-            $compNext = $components[$idx+1];
-            if ($compNext === null) {
-                $lastSuffix = $comp->getValueSuffix();
-                if ($lastSuffix !== '' && substr($toSplit, 0, strlen($lastSuffix)) === $lastSuffix) {
-                    $toSplit = substr($toSplit, 0, (-1)*strlen($lastSuffix));
-                }
-                $values[] = $toSplit;
-                $toSplit = null;
-                break;
-            }
-            $delim = $comp->getValueSuffix() . $compNext->getValuePrefix();
-            if ($delim !== '') {
-                list($part, $toSplit) = explode($delim, $toSplit, 2);
-                $values[] = $part;
-            } else {
-                throw new RuntimeException('Cannot split value "' . $value . '" of compound attribute "' . $this->getAliasWithRelationPath() . '": could not find delimiter for compound component with sequence index ' . $idx, '79G9JUB');
-            }
+        foreach ($this->getComponentDelimiters() as $delim) {
+            //cut the value at the delimiters
+            list($part, $toSplit) = explode($delim, $toSplit, 2);
+            $values[] = $part;
+        }
+        if ($lastSuffix !== '') {
+            //cut the remaining value at the last suffix (if exists) and at to values array
+            list($part, $toSplit) = explode($lastSuffix, $toSplit, 2);
+            $values[] = $part;           
+        } else {
+            //if last suffix doesnt exist add the remaining value to values array
+            $values[] = $toSplit;
+            $toSplit = null;
         }
         
-        if ($toSplit !== null) {
+        if ($toSplit !== null && $toSplit !== '') {
             throw new RuntimeException('Failed to split value "' . $value . '" of compound attribute "' . $this->getAliasWithRelationPath() . '": non-empty remainder "' . $toSplit . '" after processing all components', '79G9JUB');
         }
         
@@ -93,6 +89,33 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
     }
     
     /**
+     * Returns array with delimiters for components. Delimiter consist of a component suffix and the next component's prefix.
+     * Array does NOT contain prefix of first component and suffix of last component.
+     *
+     * @throws RuntimeException
+     * @return array
+     */
+    public function getComponentDelimiters() : array
+    {
+        $components = $this->getComponents();
+        $delims = [];
+        foreach ($components as $idx => $comp) {
+            $compNext = $components[$idx+1];
+            if ($compNext === null) {
+                break;
+            }
+            $delim = $comp->getValueSuffix() . $compNext->getValuePrefix();
+            if ($delim !== '') {
+                $delims[] = $delim;
+            } else {
+                throw new RuntimeException('Cannot split values of compound attribute "' . $this->getAliasWithRelationPath() . '": could not find delimiter for compound component with sequence index ' . $idx, '79G9JUB');
+            }
+        }
+        return $delims;
+    }
+    
+    /**
+     * Merge the given values array to a compound value with the components prefixes and suffixes added
      * 
      * @param array $values
      * @throws RuntimeException

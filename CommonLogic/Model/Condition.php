@@ -448,7 +448,7 @@ class Condition implements ConditionInterface
     public function evaluate(DataSheetInterface $data_sheet = null, int $row_number = null) : bool
     {
         if ($this->isEmpty() === true) {
-            return $data_sheet;
+            return true;
         }
         
         if ($data_sheet === null && $row_number !== null) {
