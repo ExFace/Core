@@ -216,7 +216,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         
         // Add a quick-search filter over the text-attribute to make sure quick search works correctly
         // even if the table object has no alias!
-        $table->addFilter($table->createFilterWidget($this->getTextAttributeAlias())->setIncludeInQuickSearch(true));
+        $table->addFilter($table->getConfiguratorWidget()->createFilterWidget($this->getTextAttributeAlias())->setIncludeInQuickSearch(true));
         
         $this->data_table = $table;
         
