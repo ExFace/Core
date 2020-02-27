@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Interfaces\Security;
 
-use exface\Core\Interfaces\UserInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 
 /**
@@ -14,13 +13,7 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
  *
  */
 interface AuthenticationTokenInterface
-{
-    /**
-     * 
-     * @return UserInterface
-     */
-    public function getUser() : UserInterface;
-    
+{    
     /**
      * 
      * @return string|NULL
