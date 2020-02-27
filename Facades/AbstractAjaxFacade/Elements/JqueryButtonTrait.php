@@ -28,34 +28,58 @@ trait JqueryButtonTrait {
     
     private $onSuccessJs = [];
 
+    /**
+     * Returns the JS code to run when refreshing/resetting widgets after the action.
+     * 
+     * @param Button $widget
+     * @param AbstractJqueryElement $input_element
+     * @return string
+     */
     protected function buildJsInputRefresh(Button $widget, $input_element)
     {
         $js = '';
         
         // Reset the input if needed (before refreshing!!!)
-        $js .= $this->buildJsInputReset($widget, $input_element);
-        
-        // Refresh the input if needed
-        if ($widget->getRefreshInput() === true && $refreshJs = $input_element->buildJsRefresh()) {
-            $js .= $refreshJs . ';';
-        }
+        $js .= $this->buildJsResetWidgets($widget, $input_element);
         
         // Refresh the linked widget if needed
-        if ($link = $widget->getRefreshWidgetLink()) {
-            if ($widget->getPage()->is($link->getTargetPageAlias()) && $linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
-                $js .= "\n" . $linked_element->buildJsRefresh(true);
-            }
-        }
+        $js .= $this->buildJsRefreshWidgets($widget, $input_element);
         
         return $js;
     }
     
-    protected function buildJsInputReset(button $widget, $input_element) : string
+    /**
+     * Returns the JS code to refresh all neccessary widgets after the button's action succeeds.
+     * 
+     * @param Button $widget
+     * @param AbstractJqueryElement $input_element
+     * @return string
+     */
+    protected function buildJsRefreshWidgets(Button $widget, $input_element) : string
     {
-        if ($widget->getResetInput() === true && $resetJs = $input_element->buildJsResetter()) {
-            return $resetJs . ';';
+        $js = '';
+        foreach ($widget->getRefreshWidgetIds() as $widgetId) {
+            $refreshEl = $this->getFacade()->getElementByWidgetId($widgetId, $widget->getPage());
+            $js .=  $refreshEl->buildJsRefresh(true) . "\n";
         }
-        return '';
+        return $js;
+    }
+    
+    /**
+     * Returns the JS code to reset all neccessary widgets after the button's action succeeds.
+     *
+     * @param Button $widget
+     * @param AbstractJqueryElement $input_element
+     * @return string
+     */
+    protected function buildJsResetWidgets(button $widget, $input_element) : string
+    {
+        $js = '';
+        foreach ($widget->getResetWidgetIds() as $id) {
+            $resetElem = $this->getFacade()->getElementByWidgetId($id, $widget->getPage());
+            $js .= $resetElem->buildJsResetter() . "\n";
+        }
+        return $js;
     }
 
     public function buildJsClickFunctionName()
@@ -198,7 +222,7 @@ JS;
         } elseif ($action instanceof SendToWidget) {
             $output = $this->buildJsClickSendToWidget($action, $input_element);
         } elseif ($action instanceof ResetWidget) {
-            $output = $this->buildJsInputReset($widget, $input_element);
+            $output = $this->buildJsResetWidgets($widget, $input_element);
         } else {
             $output = $this->buildJsClickCallServerAction($action, $input_element);
         }
