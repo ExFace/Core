@@ -1,13 +1,10 @@
 <?php
 namespace exface\Core\CommonLogic\Security\Authenticators;
 
-use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
-use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthToken;
 use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * BETA
@@ -15,19 +12,11 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
  * @author Andrej Kabachnik
  *
  */
-class LdapAuthenticator implements AuthenticatorInterface
-{
-    private $workbench;
-    
+class LdapAuthenticator extends AbstractAuthenticator
+{    
     private $hostname = null;
     
     private $authenticatedToken = null;
-    
-    public function __construct(WorkbenchInterface $workbench, string $hostname)
-    {
-        $this->workbench = $workbench;
-        $this->hostname = $hostname;
-    }
     
     /**
      *
@@ -81,26 +70,37 @@ class LdapAuthenticator implements AuthenticatorInterface
     }
     
     /**
-     *
+     * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getName()
+     * @see \exface\Core\CommonLogic\Security\Authenticators\AbstractAuthenticator::getNameDefault()
      */
-    public function getName() : string
+    protected function getNameDefault() : string
     {
         return 'LDAP Authentication';
-    }
-    public function getWorkbench()
-    {
-        return $this->workbench();
     }
     
     /**
      *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::createLoginWidget()
+     * @return string
      */
-    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    public function getHost() : string
     {
-        return $container;
+        return $this->hostname;
+    }
+    
+    /**
+     * The LDAP server host name
+     * 
+     * @uxon-property host
+     * @uxon-type uri
+     * @uxon-required true
+     * 
+     * @param string $value
+     * @return LdapAuthenticator
+     */
+    public function setHost(string $value) : LdapAuthenticator
+    {
+        $this->hostname = $value;
+        return $this;
     }
 }
