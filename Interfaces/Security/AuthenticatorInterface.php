@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces\Security;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * Authenticators can authenticate auth-tokens in different ways.
@@ -60,4 +61,16 @@ interface AuthenticatorInterface extends WorkbenchDependantInterface
      * @return string
      */
     public function getName() : string;
+    
+    /**
+     * Populates the given container with inputs required to perform authentication via this connector.
+     *
+     * In many cases, this method will simply add input-widgets for username and password.
+     * However, some connection may add a secondary authentication factor or even use a
+     * `Browser` widget to display a remote login-page (e.g. for OAuth-authentication).
+     *
+     * @param iContainOtherWidgets $container
+     * @return iContainOtherWidgets
+     */
+    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets;
 }

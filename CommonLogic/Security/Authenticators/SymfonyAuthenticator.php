@@ -25,6 +25,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use Symfony\Component\Security\Core\Authentication\Provider\LdapBindAuthenticationProvider;
 use Symfony\Component\Ldap\Ldap;
 use Symfony\Component\Ldap\Adapter\ExtLdap\Adapter;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 class SymfonyAuthenticator implements AuthenticatorInterface
 {
@@ -154,5 +155,15 @@ class SymfonyAuthenticator implements AuthenticatorInterface
         return new AnonymousToken(
             'secret', new SymfonyUserWrapper(UserFactory::createAnonymous($this->getWorkbench()))
             );
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::createLoginWidget()
+     */
+    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    {
+        return $container;
     }
 }

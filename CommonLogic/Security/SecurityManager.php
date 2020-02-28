@@ -11,6 +11,7 @@ use exface\Core\CommonLogic\Security\AuthenticationToken\AnonymousAuthToken;
 use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\CommonLogic\Security\Authenticators\SymfonyAuthenticator;
 use exface\Core\Factories\UserFactory;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -194,6 +195,14 @@ class SecurityManager implements SecurityManagerInterface
     {
         return true;
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::createLoginWidget()
+     */
+    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    {
+        return $container;
+    }
 }
-?>

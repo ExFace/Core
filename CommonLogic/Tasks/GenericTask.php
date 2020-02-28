@@ -211,6 +211,7 @@ class GenericTask implements TaskInterface
             }
             $this->inputData = DataSheetFactory::createFromObject($this->getMetaObject());
         }
+        
         return $this->inputData->copy();
     }
     

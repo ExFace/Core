@@ -7,6 +7,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthToken;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * BETA
@@ -91,5 +92,15 @@ class LdapAuthenticator implements AuthenticatorInterface
     public function getWorkbench()
     {
         return $this->workbench();
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::createLoginWidget()
+     */
+    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    {
+        return $container;
     }
 }
