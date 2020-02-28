@@ -2,12 +2,10 @@
 namespace exface\Core\CommonLogic\Security\Authenticators;
 
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
-use exface\Core\Interfaces\Security\SecurityManagerInterface;
 use Symfony\Component\Security\Core\Authentication\AuthenticationProviderManager;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Security\Core\User\UserChecker;
-use exface\Core\Exceptions\RuntimeException;
 use Symfony\Component\Security\Core\Authentication\Provider\DaoAuthenticationProvider;
 use exface\Core\CommonLogic\Security\Symfony\SymfonyUserProvider;
 use Symfony\Component\Security\Core\Encoder\EncoderFactory;
@@ -18,32 +16,16 @@ use exface\Core\Factories\UserFactory;
 use exface\Core\Interfaces\Security\PasswordAuthenticationTokenInterface;
 use exface\Core\Interfaces\Security\PreAuthenticatedTokenInterface;
 use Symfony\Component\Security\Core\Authentication\Token\PreAuthenticatedToken;
-use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
-use exface\Core\Interfaces\WorkbenchInterface;
-use Symfony\Component\Security\Core\Authentication\Provider\LdapBindAuthenticationProvider;
-use Symfony\Component\Ldap\Ldap;
-use Symfony\Component\Ldap\Adapter\ExtLdap\Adapter;
 
-class SymfonyAuthenticator implements AuthenticatorInterface
+class SymfonyAuthenticator extends AbstractAuthenticator
 {
     private $authenticatedToken = null;
     
     private $authenticatedSymfonyToken = null;
     
     private $symfonyAuthManager = null;
-    
-    private $workbench = null;
-    
-    /**
-     * 
-     * @param WorkbenchInterface $workbench
-     */
-    public function __construct(WorkbenchInterface $workbench)
-    {
-        $this->workbench = $workbench;
-    }
     
     /**
      *
@@ -76,21 +58,11 @@ class SymfonyAuthenticator implements AuthenticatorInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getName()
+     * @see \exface\Core\CommonLogic\Security\Authenticators\AbstractAuthenticator::getNameDefault()
      */
-    public function getName() : string
+    protected function getNameDefault() : string
     {
         return 'Symfony Authentication';
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
-     */
-    public function getWorkbench()
-    {
-        return $this->workbench;
     }
     
     protected function getSymfonyAuthManager() : AuthenticationProviderManager
