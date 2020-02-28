@@ -12,6 +12,8 @@ use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\CommonLogic\Security\Authenticators\SymfonyAuthenticator;
 use exface\Core\Factories\UserFactory;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -46,7 +48,7 @@ class SecurityManager implements SecurityManagerInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Security\SecurityManagerInterface::authenticate()
+     * @see \exface\Core\Interfaces\Security\AuthenticationProviderInterface::authenticate()
      */
     public function authenticate(AuthenticationTokenInterface $token): AuthenticationTokenInterface
     {      
@@ -75,7 +77,7 @@ class SecurityManager implements SecurityManagerInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Security\SecurityManagerInterface::isAuthenticated()
+     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::isAuthenticated()
      */
     public function isAuthenticated(AuthenticationTokenInterface $token) : bool
     {
@@ -167,11 +169,25 @@ class SecurityManager implements SecurityManagerInterface
      */
     protected function initAuthenticators() : self
     {
-        $this->authenticators = [
-            new SymfonyAuthenticator($this->getWorkbench())
-        ];
-        foreach ($this->getWorkbench()->getConfig()->getOption('SECURITY.AUTHENTICATORS') as $class) {
-            $this->authenticators[] = new $class($this->getWorkbench());
+        $this->authenticators = [];
+        foreach ($this->getWorkbench()->getConfig()->getOption('SECURITY.AUTHENTICATORS') as $authConfig) {
+            switch (true) {
+                case is_string($authConfig):
+                    $class = $authConfig;
+                    $uxon = null;
+                    break;
+                case $authConfig instanceof UxonObject:
+                    $class = $authConfig->getProperty('class');
+                    $uxon = $authConfig->unsetProperty('class');
+                    break;
+                default:
+                    throw new UnexpectedValueException('Invalid authenticator configuration in System.config.json: each authenticator can either be a string or an object!');
+            } 
+            $authenticator = new $class($this->getWorkbench());
+            if ($uxon !== null && $uxon->isEmpty() === false) {
+                $authenticator->importUxonObject($uxon);
+            }
+            $this->authenticators[] = $authenticator;
         }
         return $this;
     }

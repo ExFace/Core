@@ -1,13 +1,10 @@
 <?php
 namespace exface\Core\Interfaces\Security;
 
-use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
-use exface\Core\Exceptions\Security\AuthenticationFailedError;
-use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
- * Authenticators can authenticate auth-tokens in different ways.
+ * Authenticators are configurable authentication providers used to log-in users in the security system.
  * 
  * There can be any number of authenticators in a workbench. Each is responsible
  * for processing tokens, that it supports - see `isSupported()`. The `SecurityManager`
@@ -19,7 +16,7 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
  * @author Andrej Kabachnik
  *
  */
-interface AuthenticatorInterface extends WorkbenchDependantInterface
+interface AuthenticatorInterface extends AuthenticationProviderInterface
 {
     /**
      * Authenticators must be instantiatable with just the workbench as argument
@@ -29,15 +26,6 @@ interface AuthenticatorInterface extends WorkbenchDependantInterface
      * @param WorkbenchInterface $workbench
      */
     public function __construct(WorkbenchInterface $workbench);
-    
-    /**
-     * Authenticates the given token or throws an exception.
-     * 
-     * @param AuthenticationTokenInterface $token
-     * @throws AuthenticationFailedError
-     * @return AuthenticationTokenInterface
-     */
-    public function authenticate(AuthenticationTokenInterface $token) : AuthenticationTokenInterface;
     
     /**
      * Checks if the given token is still authenticated.
@@ -61,16 +49,4 @@ interface AuthenticatorInterface extends WorkbenchDependantInterface
      * @return string
      */
     public function getName() : string;
-    
-    /**
-     * Populates the given container with inputs required to perform authentication via this connector.
-     *
-     * In many cases, this method will simply add input-widgets for username and password.
-     * However, some connection may add a secondary authentication factor or even use a
-     * `Browser` widget to display a remote login-page (e.g. for OAuth-authentication).
-     *
-     * @param iContainOtherWidgets $container
-     * @return iContainOtherWidgets
-     */
-    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets;
 }
