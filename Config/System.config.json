@@ -28,7 +28,12 @@
     
     "SECURITY.DISABLE_ANONYMOUS_ACCESS": false,
     "SECURITY.AUTHENTICATORS" : [
-    	"\\exface\\ModxCmsConnector\\CommonLogic\\Security\\ModxCmsAuthenticator"
+    	{
+    		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SymfonyAuthenticator"
+    	}, 
+    	{
+    		"class": "\\exface\\ModxCmsConnector\\CommonLogic\\Security\\ModxCmsAuthenticator"
+		}
     ],
     
     "FACADES.ROUTES": {},
