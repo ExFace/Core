@@ -25,6 +25,20 @@ class LoginPrompt extends Container implements iFillEntireContainer
     {
         return $this->getWidgets();
     }
+    
+    public function getWidgets(callable $filter = null)
+    {
+        if (parent::hasWidgets() === false) {
+            $this->getWorkbench()->getSecurity()->createLoginWidget($this);
+        }
+        return parent::getWidgets($filter);
+    }
+
+    
+    public function addForm(Form $widget, int $position = null) : LoginPrompt
+    {
+        return $this->addWidget($widget, $position);
+    }
 
     /**
      * Array of login forms (im multiple login options required).

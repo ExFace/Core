@@ -9,11 +9,13 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\CommonLogic\Security\AuthenticationToken\AnonymousAuthToken;
 use exface\Core\Interfaces\Security\AuthenticatorInterface;
-use exface\Core\CommonLogic\Security\Authenticators\SymfonyAuthenticator;
 use exface\Core\Factories\UserFactory;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Widgets\LoginPrompt;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\CommonLogic\Security\AuthenticationToken\RememberMeAuthToken;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -97,7 +99,12 @@ class SecurityManager implements SecurityManagerInterface
     public function getAuthenticatedToken() : AuthenticationTokenInterface
     {
         if ($this->authenticatedToken === null) {
-            $this->authenticatedToken = new AnonymousAuthToken($this->getWorkbench());
+            try {
+                $token = $this->authenticate(new RememberMeAuthToken());
+            } catch (AuthenticationFailedError $e) {
+                $token = new AnonymousAuthToken($this->getWorkbench());
+            }
+            $this->authenticatedToken = $token;
         }
         return $this->authenticatedToken;
     }
@@ -219,6 +226,23 @@ class SecurityManager implements SecurityManagerInterface
      */
     public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
     {
+        if ($container instanceof LoginPrompt) {
+            $loginPrompt = $container;
+        } else {
+            $loginPrompt = WidgetFactory::create($container->getPage(), 'LoginPrompt', $container);
+            $container->addWidget($loginPrompt);
+        }
+        
+        foreach ($this->getAuthenticators() as $authenticator) {
+            $loginForm = WidgetFactory::create($loginPrompt->getPage(), 'Form', $loginPrompt);
+            $loginForm->setObjectAlias('exface.Core.LOGIN_DATA');
+            $authenticator->createLoginWidget($loginForm);
+            if ($loginForm->isEmpty() === false) {
+                $loginForm->setCaption($authenticator->getName());
+                $loginPrompt->addForm($loginForm);
+            }
+        }
+        
         return $container;
     }
 }
