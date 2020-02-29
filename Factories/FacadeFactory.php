@@ -51,5 +51,10 @@ abstract class FacadeFactory extends AbstractSelectableComponentFactory
         }
         return $facade;
     }
+    
+    public static function createDefaultHttpFacade(WorkbenchInterface $workbench) : FacadeInterface
+    {
+        return static::createFromString(\exface\JEasyUIFacade\Facades\JEasyUIFacade::class, $workbench);
+    }
 }
 ?>

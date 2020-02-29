@@ -30,10 +30,7 @@
     "SECURITY.AUTHENTICATORS" : [
     	{
     		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SymfonyAuthenticator"
-    	}, 
-    	{
-    		"class": "\\exface\\ModxCmsConnector\\CommonLogic\\Security\\ModxCmsAuthenticator"
-		}
+    	}
     ],
     
     "FACADES.ROUTES": {},

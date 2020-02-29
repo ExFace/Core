@@ -22,4 +22,14 @@ class AuthenticationFailedError extends RuntimeException implements Authenticati
             'exception' => $exception
         ];
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getStatusCode()
+     */
+    public function getStatusCode()
+    {
+        return 403;
+    }
 }
