@@ -18,6 +18,10 @@ use exface\Core\Interfaces\Security\PreAuthenticatedTokenInterface;
 use Symfony\Component\Security\Core\Authentication\Token\PreAuthenticatedToken;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iHaveButtons;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
 
 class SymfonyAuthenticator extends AbstractAuthenticator
 {
@@ -126,5 +130,32 @@ class SymfonyAuthenticator extends AbstractAuthenticator
         return new AnonymousToken(
             'secret', new SymfonyUserWrapper(UserFactory::createAnonymous($this->getWorkbench()))
             );
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Security\Authenticators\AbstractAuthenticator::createLoginWidget()
+     */
+    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    {
+        $container->setWidgets(new UxonObject([
+            [
+                'attribute_alias' => 'USERNAME',
+                'required' => true
+            ],[
+                'attribute_alias' => 'PASSWORD'
+            ]
+        ]));
+        
+        if ($container instanceof iHaveButtons && $container->hasButtons() === false) {
+            $container->addButton($container->createButton(new UxonObject([
+                'action_alias' => 'exface.Core.Login',
+                'align' => EXF_ALIGN_OPPOSITE,
+                'visibility' => WidgetVisibilityDataType::PROMOTED
+            ])));
+        }
+        
+        return $container;
     }
 }
