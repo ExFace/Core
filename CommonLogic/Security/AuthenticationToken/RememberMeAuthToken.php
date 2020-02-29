@@ -2,46 +2,31 @@
 namespace exface\Core\CommonLogic\Security\AuthenticationToken;
 
 use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
-use exface\Core\Interfaces\Security\PasswordAuthenticationTokenInterface;
 
 /**
- * Authentication token for the typical username+password authentication.
+ * Authentication token for the anonymous user.
  * 
  * @author Andrej Kabachnik
  *
  */
-class UsernamePasswordAuthToken implements PasswordAuthenticationTokenInterface
+class RememberMeAuthToken implements AuthenticationTokenInterface
 {
-    private $username = null;
-    
-    private $password = null;
+    private $workbench = null;
     
     private $facade = null;
     
-    private $user = null;
+    private $username = null;
     
     /**
      * 
-     * @param string $username
-     * @param string $password
-     * @param FacadeInterface $facade
+     * @param WorkbenchInterface $workbench
      */
-    public function __construct(string $username, string $password, FacadeInterface $facade = null)
+    public function __construct(string $username = null, FacadeInterface $facade = null)
     {
         $this->facade = $facade;
         $this->username = $username;
-        $this->password = $password;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Security\PasswordAuthenticationTokenInterface::getPassword()
-     */
-    public function getPassword(): string
-    {
-        return $this->password;
     }
 
     /**
@@ -71,6 +56,6 @@ class UsernamePasswordAuthToken implements PasswordAuthenticationTokenInterface
      */
     public function isAnonymous() : bool
     {
-        return false;
+        return $this->username === null;
     }
 }
