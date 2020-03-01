@@ -22,6 +22,7 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 
 class SymfonyAuthenticator extends AbstractAuthenticator
 {
@@ -66,7 +67,7 @@ class SymfonyAuthenticator extends AbstractAuthenticator
      */
     protected function getNameDefault() : string
     {
-        return 'Symfony Authentication';
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.SIGN_IN');
     }
     
     protected function getSymfonyAuthManager() : AuthenticationProviderManager
@@ -144,9 +145,14 @@ class SymfonyAuthenticator extends AbstractAuthenticator
                 'attribute_alias' => 'USERNAME',
                 'required' => true
             ],[
-                'attribute_alias' => 'PASSWORD'
+                'attribute_alias' => 'PASSWORD',
+                'required' => true
             ]
         ]));
+        
+        if ($container instanceof iLayoutWidgets) {
+            $container->setColumnsInGrid(1);
+        }
         
         if ($container instanceof iHaveButtons && $container->hasButtons() === false) {
             $container->addButton($container->createButton(new UxonObject([
