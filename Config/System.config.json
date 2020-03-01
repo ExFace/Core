@@ -3,6 +3,9 @@
 	"MODEL_LOADER": "exface/Core/ModelLoaders/SqlModelLoader.php",
 	"CMS_CONNECTOR": "exface/ModxCmsConnector/CmsConnectors/Modx.php",
 	
+	"TITLE": "Power UI",
+	"TITLE_HTML": "Power <b>UI</b>",
+	
 	"CACHE.ENABLED": true,
 	
 	"DEBUG.LIVE_CLASS_AUTOLOADER": true,
