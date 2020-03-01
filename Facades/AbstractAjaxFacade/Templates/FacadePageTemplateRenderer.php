@@ -23,6 +23,8 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
  * - `[#~url:<page_selector>#]` - replaced by the URL to the page identified by the 
  * `<page_selector>` (i.e. UID or alias with namespace)
  * - `[#~page:<attribute_alias>#]` - replaced by the value of a current page's attribute
+ * - `[#~config:<app_alias>:<config_key>#]` - replaced by the value of the configuration option
+ * - `[#~translate:<app_alias>:<message>#]` - replaced by the message's translation to current locale
  * 
  * @author Andrej Kabachnik
  *
@@ -184,6 +186,16 @@ class FacadePageTemplateRenderer implements TemplateRendererInterface
             case StringDataType::startsWith($placeholder, '~page:');
                 $property = StringDataType::substringAfter($placeholder, '~page:');
                 $val = $this->renderPlaceholderPageProperty($property, $this->getPage());
+                break;
+            case StringDataType::startsWith($placeholder, '~config:');
+                $value = StringDataType::substringAfter($placeholder, '~config:');
+                list($appAlias, $option) = explode(':', $value);
+                $val = $this->getWorkbench()->getApp($appAlias)->getConfig()->getOption(mb_strtoupper($option));
+                break;
+            case StringDataType::startsWith($placeholder, '~translate:');
+                $value = StringDataType::substringAfter($placeholder, '~translate:');
+                list($appAlias, $message) = explode(':', $value);
+                $val = $this->getWorkbench()->getApp($appAlias)->getTranslator()->translate(mb_strtoupper($message));
                 break;
             default:
                 throw new RuntimeException('Unknown placehodler "[#' . $placeholder . '#]" found in template "' . $this->getTemplateFilePath() . '"!');
