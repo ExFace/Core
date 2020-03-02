@@ -49,6 +49,7 @@
     "ACTION.LOGIN.RESULT": "Anmeldung erfolgreich!",
     
     "ACTION.LOGOUT.NAME": "Abmelden",
+    "ACTION.LOGOUT.RESULT": "Abmeldung erfolgreich!",
     
     "ACTION.GENERATEMODELFROMDATASOURCE.NAME": "Modell generieren",
 	"ACTION.GENERATEMODELFROMDATASOURCE.RESULT_FOR_OBJECT": "%created_counter% Attribut(e) für %object_counter% Objekt(e) erstellt. %skipped_counter% Attribut(e) als Dublikate ignoriert!",
@@ -137,6 +138,8 @@
     "CONTEXT.OBJECTBASKET.REMOVE_ALL": "Alle entfernen",
     
     "CONTEXT.USER.NAME": "Benutzer",
+    "CONTEXT.USER.NOT_LOGGED_IN_HINT": "Sie sind nicht angemeldet.",
+    "CONTEXT.USER.LOGGED_IN_HINT": "Sie sind angemeldet.",
 	
     "GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Summe",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.AVG": "Durchschnitt",

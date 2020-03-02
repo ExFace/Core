@@ -7,8 +7,6 @@ use exface\Core\Widgets\Container;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Contexts\ContextInterface;
-use exface\Core\DataTypes\LocaleDataType;
-use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Contexts\ContextRuntimeError;
 
@@ -56,10 +54,10 @@ class UserContext extends AbstractContext
     {       
         $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
         $uxon = null;
+        $coreApp = $this->getWorkbench()->getCoreApp();
         
         //when user is logged in, build context with user details and logout button
         if ($user->isUserAnonymous() === false){
-            $icon = Icons::SIGN_OUT;
             $uxon = [
               "widget_type" => "Form",
               "height" => "100%",
@@ -68,7 +66,7 @@ class UserContext extends AbstractContext
               "widgets" => [
                 [
                     "widget_type" => "Message",
-                    "value" => "You are logged in.",
+                    "value" => $coreApp->getTranslator()->translate('CONTEXT.USER.LOGGED_IN_HINT'),
                     "width" => "100%"
                 ],
                 [
@@ -100,25 +98,20 @@ class UserContext extends AbstractContext
               "buttons" => [
                 [
                     "action" => [
-                        "alias" => "exface.Core.GoToUrl",
-                        "url" => $this->getWorkbench()->getUrl() . "login.html"
-                    ],
-                    "caption" => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.LOGOUT.NAME'),
-                    "icon" => $icon,
-                    "align" => "left"
+                        "alias" => "exface.Core.Logout"
+                    ]
                 ]
               ]
             ];
         // when user is not logged in, build context with login button and message that user is not logged in    
         } else {
-            $icon = Icons::SIGN_IN;
             $uxon = [
               "widget_type" => "Form",
               "object_alias" => "exface.Core.USER",
               "widgets" => [
                     [
                         "widget_type" => "Message",
-                        "value" => "You are not logged in. Please Login!",
+                        "value" => $coreApp->getTranslator()->translate('CONTEXT.USER.NOT_LOGGED_IN_HINT'),
                         "width" => "100%"
                     ],[
                         "widget_type" => "Display",
@@ -131,18 +124,23 @@ class UserContext extends AbstractContext
               "buttons" => [
                 [
                     "action" => [
-                        "alias" => "exface.Core.GoToUrl",
-                        "url" => $this->getWorkbench()->getUrl() . "logout.html"
-                    ],
-                    "caption" => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.LOGIN.NAME'),
-                    "icon" => $icon
+                        "alias" => "exface.Core.ShowLoginDialog",
+                        "input_mapper" => [
+                            "column_to_column_mappings" => [
+                                [
+                                    "from" => 'username',
+                                    "to" => 'username'
+                                ]    
+                            ]
+                        ]
+                    ]
                 ]
               ]
             ];
         }
         
         $uxon_object = UxonObject::fromAnything($uxon);
-        $form = WidgetFactory::createFromUxon($container->getPage(), $uxon_object);      
+        $form = WidgetFactory::createFromUxonInParent($container, $uxon_object);      
         
         $container->addWidget($form);
         

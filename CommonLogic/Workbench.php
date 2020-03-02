@@ -474,7 +474,7 @@ class Workbench implements WorkbenchInterface
      */
     public function getUrl() : string
     {
-        $url = $this->getConfig()->getOption('BASE_URLS')->toArray()[0];
+        $url = $this->getConfig()->getOption('SERVER.BASE_URLS')->toArray()[0];
         if ($url !== null) {
             return $url;
         }

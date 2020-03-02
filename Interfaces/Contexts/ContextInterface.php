@@ -54,7 +54,7 @@ interface ContextInterface extends AliasInterface, iCanBeConvertedToUxon, Workbe
      * Sets the scope for this specific context
      *
      * @param AbstractContextScope $context_scope            
-     * @return AbstractContext
+     * @return ContextInterface
      */
     public function setScope(ContextScopeInterface $context_scope);
 
