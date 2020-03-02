@@ -270,10 +270,10 @@ JS;
 										if (response.success || response.undoURL){
 				                       		" . $this->buildJsShowMessageSuccess("response.success + (response.undoable ? ' <a href=\"" . $this->buildJsUndoUrl($action, $input_element) . "\" style=\"display:block; float:right;\">UNDO</a>' : '')") . "
 											if(response.redirect){
-												if (response.redirect.indexOf('target=_blank') !== 0) {
+												if (response.redirect.indexOf('target=_blank') > -1) {
 													window.open(response.redirect.replace('target=_blank',''), '_newtab');
-												}
-												else {
+												} else {
+                                                    {$this->getFacade()->getElement($widget->getPage()->getWidgetRoot())->buildJsBusyIconShow()}
 													window.location.href = response.redirect;
 												}
 	                       					}
