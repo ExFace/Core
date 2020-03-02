@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Tasks;
 use exface\Core\Interfaces\Tasks\ResultUriInterface;
 use Psr\Http\Message\UriInterface;
 use exface\Core\DataTypes\BooleanDataType;
+use function GuzzleHttp\Psr7\uri_for;
 
 /**
  * Task result containing a downloadable file: i.e. text, code, etc..
@@ -24,10 +25,24 @@ class ResultUri extends ResultMessage implements ResultUriInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Tasks\ResultUriInterface::setUri()
      */
-    public function setUri(UriInterface $uri): ResultUriInterface
+    public function setUri($uri): ResultUriInterface
     {
-        $this->uri = $uri;
+        if ($uri instanceof UriInterface) {
+            $this->uri = $uri;
+        } else {
+            $this->uri = $this->getUriFromString($uri);
+        }
         return $this;
+    }
+    
+    /**
+     * 
+     * @param string $url
+     * @return UriInterface
+     */
+    protected function getUriFromString(string $url) : UriInterface
+    {
+        return uri_for($url);
     }
 
     /**
@@ -47,7 +62,7 @@ class ResultUri extends ResultMessage implements ResultUriInterface
      */
     public function hasUri(): bool
     {
-        return is_null($this->uri) ? false : true;
+        return $this->uri !== null;
     }
     
     /**

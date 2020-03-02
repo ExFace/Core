@@ -4,7 +4,6 @@ namespace exface\Core\Facades\AbstractAjaxFacade;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement;
-use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
@@ -44,19 +43,23 @@ use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsTimeFormatter;
 use exface\Core\Interfaces\Widgets\CustomWidgetInterface;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpTaskFacade;
-use exface\Core\Facades\AbstractHttpFacade\Middleware\FacadeResolverMiddleware;
 use Psr\Http\Message\RequestInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Templates\FacadePageTemplateRenderer;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Facades\HtmlPageFacadeInterface;
+use exface\Core\CommonLogic\Tasks\ResultRedirect;
+use function GuzzleHttp\Psr7\uri_for;
 
 /**
  * 
  * @author Andrej Kabachnik
  *
  */
-abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade
+abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade implements HtmlPageFacadeInterface
 {
     // TODO #nocms remove rendering modes completely in favor of isRequestXXX() methods
     const MODE_HEAD = 'HEAD';
@@ -322,18 +325,30 @@ HTML;
 
     /**
      * 
-     * @param string $page_or_id_or_alias
+     * @param UiPageInterface|UiPageSelectorInterface|string $pageOrSelectorOrString
      * @param string $url_params
      * @return string
      */
-    public function buildUrlToPage($page_or_id_or_alias, $url_params = '')
+    public function buildUrlToPage($pageOrSelectorOrString, string $url_params = '') : string
     {
-        $selector = new UiPageSelector($this->getWorkbench(), $page_or_id_or_alias);
-        if ($selector->isAlias()) {
-            $url = $selector->toString() . $this->getPageFileExtension();
-        } else {
-            $url = UiPageFactory::createFromModel($this->getWorkbench(), $selector)->getAliasWithNamespace();
-        }
+        switch (true) {
+            case $pageOrSelectorOrString instanceof UiPageInterface:
+                $alias = $pageOrSelectorOrString->getAliasWithNamespace();
+                break;
+            case is_string($pageOrSelectorOrString):
+                $pageOrSelectorOrString = new UiPageSelector($this->getWorkbench(), $pageOrSelectorOrString);
+                // Don't break here: continue with the selector-logic
+            case $pageOrSelectorOrString instanceof UiPageSelectorInterface:
+                if ($pageOrSelectorOrString->isAlias()) {
+                    $alias = $pageOrSelectorOrString->toString();
+                } else {
+                    $alias = UiPageFactory::createFromModel($this->getWorkbench(), $pageOrSelectorOrString)->getAliasWithNamespace();
+                }
+                break;
+            default:
+                throw new InvalidArgumentException('Cannot create URL for page "' . $pageOrSelectorOrString . '": invalid type of input!');
+        } 
+        $url = mb_strtolower($alias) . $this->getPageFileExtension();
         $params = ltrim($url_params, "?");
         return $url . ($params ? '?' . $params : '');
     }
@@ -485,11 +500,18 @@ HTML;
                 break;   
                 
             case $result instanceof ResultUriInterface:
-                $uri = $result->getUri();
+                if ($result instanceof ResultRedirect && $result->hasTargetPage()) {
+                    $uri = uri_for($this->buildUrlToPage($result->getTargetPageSelector()));
+                } else {
+                    $uri = $result->getUri();
+                }
+                
                 if ($result->getOpenInNewWindow()) {
                     $uri = $uri->withQuery($uri->getQuery() ."target=_blank");
                 }
+                
                 $json = [
+                    "success" => $result->getMessage(),
                     "redirect" => $uri->__toString()
                 ];
                 break;  
