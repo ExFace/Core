@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Exceptions\Contexts\ContextNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\UserException;
+use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 
 /**
  * The session context scope represents the PHP session (on server side).
@@ -17,10 +18,17 @@ use exface\Core\Exceptions\UserException;
  */
 class SessionContextScope extends AbstractContextScope
 {
+    const KEY_USERNAME = 'username';
+    
+    const KEY_LOCALE = 'locale';
 
     private $session_id = null;
 
     private $session_locale = null;
+    
+    private $session_user = null;
+    
+    private $force_update_session_data = false;
 
     /**
      * Since the session context ist stored in the $_SESSION, init() makes sure, the session is available and tries to
@@ -43,8 +51,12 @@ class SessionContextScope extends AbstractContextScope
             }
         }
         
-        if ($locale = $this->getSessionData('locale')) {
-            $this->setSessionLocale($locale);
+        if ($locale = $this->getSessionData(self::KEY_LOCALE)) {
+            $this->session_locale = $locale;
+        }
+        
+        if ($username = $this->getSessionData(self::KEY_USERNAME)) {
+            $this->session_user = $username;
         }
         
         // It is important to save the session once we have read the data, because otherwise it will block concurrent ajax-requests
@@ -94,11 +106,10 @@ class SessionContextScope extends AbstractContextScope
         // In particular, this prevens unneeded session operatinos, which may have negative
         // performance impact and can even produce PHP warnings if headers were sent already
         // (e.g. by the CMS).
-        if (empty($this->getContextsLoaded()) === true) {
+        if (empty($this->getContextsLoaded()) === true && $this->force_update_session_data === false) {
             return $this;
         }
         
-        // var_dump($_SESSION);
         try {
             $this->sessionOpen();
         } catch (\ErrorException $e) {
@@ -124,7 +135,8 @@ class SessionContextScope extends AbstractContextScope
         }
         
         // Save other session data
-        $this->setSessionData('locale', $this->session_locale);
+        $this->setSessionData(self::KEY_LOCALE, $this->session_locale);
+        $this->setSessionData(self::KEY_USERNAME, $this->session_user);
         
         // It is important to save the session once we have read the data, because otherwise it will block concurrent ajax-requests
         $this->sessionClose();
@@ -209,17 +221,6 @@ class SessionContextScope extends AbstractContextScope
             }
         } else {
             $this->setSessionId(session_id());
-            // Check, which user data is saved in the session context scope. If it is not
-            // the same user, than the current one (= the one, that is logged on in the
-            // CMS), than clear all context data. This is important, because, when the
-            // user loggs out, the session is not changed - it's just an internal state
-            // change.
-            $currentUser = $this->getContextManager()->getScopeUser()->getUserCurrent();
-            $sessionUser = $this->getSessionData('user');
-            if ($sessionUser !== $currentUser->getUsername()) {
-                $this->clearSessionData();
-                $this->setSessionData('user', $currentUser->getUsername());
-            }
         }
         return $this;
     }
@@ -305,6 +306,9 @@ class SessionContextScope extends AbstractContextScope
     protected function clearSessionData() : SessionContextScope
     {
         unset($_SESSION['exface']);
+        foreach ($this->getContextsLoaded() as $context) {
+            $this->reloadContext($context);
+        }
         return $this;
     }
 
@@ -338,5 +342,57 @@ class SessionContextScope extends AbstractContextScope
         $this->session_locale = $value;
         return $this;
     }
+    
+    public function setSessionAuthToken(AuthenticationTokenInterface $token) : SessionContextScope
+    {
+        $userChanged = $this->session_user !== $token->getUsername();
+        if ($token->getUsername() === null) {
+            $this->unsetSessionUsername();
+        } else {
+            $this->setSessionUsername($token->getUsername());
+        }
+        if ($userChanged === true) {
+            $this->clearSessionData();
+            foreach ($this->getContextsLoaded() as $context) {
+                $this->reloadContext($context);
+            }
+        }
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    public function getSessionUsername() : ?string
+    {
+        return $this->session_user;
+    }
+    
+    /**
+     * 
+     * @param string $value
+     * @return SessionContextScope
+     */
+    protected function setSessionUsername(string $value) : SessionContextScope
+    {
+        if ($this->session_user !== $value) {
+            $this->session_user = $value;
+            $this->force_update_session_data = true;
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return SessionContextScope
+     */
+    protected function unsetSessionUsername() : SessionContextScope
+    {
+        if ($this->session_user !== null) {
+            $this->session_user = null;
+            $this->force_update_session_data = true;
+        }
+        return $this;
+    }
 }
-?>

@@ -73,26 +73,11 @@ class RememberMeAuthenticator extends AbstractAuthenticator
     
     public function setTokenInSession(AuthenticationTokenInterface $token) : RememberMeAuthenticator
     {
-        return $this->setUsernameInSession($token->getUsername());
+        return $this->getWorkbench()->getContext()->getScopeSession()->setSessionAuthToken($token);
     }
     
     protected function getUsernameFromSession() : ?string
     {
-        return $this->getSessionDataContext()->getVariableForApp($this->getWorkbench()->getCoreApp(), 'remember_me_username');
-    }
-    
-    /**
-     * 
-     * @param string|null $username
-     * @return RememberMeAuthenticator
-     */
-    protected function setUsernameInSession(string $username = null) : RememberMeAuthenticator
-    {
-        return $this->getSessionDataContext()->setVariableForApp($this->getWorkbench()->getCoreApp(), 'remember_me_username', $username);
-    }
-    
-    protected function getSessionDataContext() : DataContext
-    {
-        return $this->getWorkbench()->getContext()->getScopeSession()->getContext(DataContext::class);
+        return $this->getWorkbench()->getContext()->getScopeSession()->getSessionUsername();
     }
 }

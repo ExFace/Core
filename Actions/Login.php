@@ -12,6 +12,7 @@ use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthTok
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Factories\UserFactory;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Actions\iModifyContext;
 
 /**
  * Performs an authentication attempt using the supplied login data.
@@ -23,7 +24,7 @@ use exface\Core\DataTypes\BooleanDataType;
  * @author Andrej Kabachnik
  *
  */
-class Login extends AbstractAction
+class Login extends AbstractAction implements iModifyContext
 {
     protected function init()
     {
@@ -48,11 +49,14 @@ class Login extends AbstractAction
             } else {
                 $dataConnection->authenticate($token, $saveCred);
             }
+            $result = ResultFactory::createMessageResult($task, $this->translate('RESULT'));
         } else {
             $this->getWorkbench()->getSecurity()->authenticate($token);
+            $result = ResultFactory::createRedirectToPageResult($task, $task->getPageSelector(), $this->translate('RESULT'));
         }
         
-        return ResultFactory::createMessageResult($task, $this->translate('RESULT'));
+        $result->setContextModified(true);
+        return $result;
     }
     
     protected function getAuthToken(TaskInterface $task) : AuthenticationTokenInterface

@@ -5,6 +5,9 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 
 /**
  * Navigates to the given page taking the selected input object as filter and an optional set of additional filters.
@@ -27,6 +30,11 @@ class GoToPage extends ShowWidget
 
     private $open_in_new_window = false;
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowWidget::init()
+     */
     protected function init()
     {
         parent::init();
