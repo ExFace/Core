@@ -474,8 +474,12 @@ class SqlModelLoader implements ModelLoaderInterface
         
         // Defaults
         $attr->setDefaultDisplayOrder($row['default_display_order']);
-        $attr->setDefaultValue($row['default_value']);
-        $attr->setFixedValue($row['fixed_value']);
+        if ($row['default_value'] !== null && $row['default_value'] !== '') {
+            $attr->setDefaultValue($row['default_value']);
+        }
+        if ($row['fixed_value'] !== null && $row['fixed_value'] !== '') {
+            $attr->setFixedValue($row['fixed_value']);
+        }
         $attr->setFormula($row['attribute_formula']);
         if ($row['default_sorter_dir']){
             $attr->setDefaultSorterDir($row['default_sorter_dir']);
