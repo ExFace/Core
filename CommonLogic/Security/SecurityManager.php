@@ -5,7 +5,6 @@ use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Interfaces\Security\SecurityManagerInterface;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\CommonLogic\Security\AuthenticationToken\AnonymousAuthToken;
 use exface\Core\Interfaces\Security\AuthenticatorInterface;
@@ -64,7 +63,7 @@ class SecurityManager implements SecurityManagerInterface
                 $authenticated = $authenticator->authenticate($token);
                 $this->storeAuthenticatedToken($authenticated);
                 return $authenticated;
-            } catch (AuthenticationException $e) {
+            } catch (AuthenticationFailedError $e) {
                 $err->addAuthenticatorError($authenticator, new AuthenticationFailedError($e->getMessage(), null, $e));
             }
         }

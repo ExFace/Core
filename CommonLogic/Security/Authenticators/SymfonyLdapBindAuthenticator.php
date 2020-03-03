@@ -6,12 +6,38 @@ use exface\Core\CommonLogic\Security\Symfony\SymfonyUserProvider;
 use Symfony\Component\Security\Core\Authentication\Provider\LdapBindAuthenticationProvider;
 use Symfony\Component\Ldap\Ldap;
 use Symfony\Component\Ldap\Adapter\ExtLdap\Adapter;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Interfaces\Widgets\iLayoutWidgets;
+use exface\Core\Interfaces\Widgets\iHaveButtons;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\CommonLogic\Security\AuthenticationToken\DomainUsernamePasswordAuthToken;
+use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 
+/**
+ * Performs authentication via the Symfony LdapBindAuthenticationProvider.
+ * 
+ * @link https://symfony.com/doc/current/security/ldap.html
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
 {    
     private $host = null;
     
     private $dnString = '{username}';
+    
+    private $domains = null;
+    
+    public function authenticate(AuthenticationTokenInterface $token): AuthenticationTokenInterface
+    {
+        if ($token instanceof DomainUsernamePasswordAuthToken) {
+            $domain = $token->getDomain();
+            $this->setDnString($domain . '\{username}');
+        }
+        return parent::authenticate($token);
+    }
     
     /**
      * 
@@ -20,7 +46,7 @@ class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
      */
     protected function getNameDefault() : string
     {
-        return 'Symfony LDAP Authentication';
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.LDAP.SIGN_IN');
     }
     
     /**
@@ -108,4 +134,75 @@ class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
         return $this;
     }
     
+    /**
+     * The windows domains allowed.
+     * 
+     * @uxon-property domains
+     * @uxon-type array
+     * @uxon-template [""]
+     * 
+     * @param string[]|UxonObject $domain
+     * @return SymfonyLdapBindAuthenticator
+     */
+    public function setDomains($arrayOrUxon) : SymfonyLdapBindAuthenticator
+    {
+        if ($arrayOrUxon instanceof UxonObject) {
+            $this->domains = $arrayOrUxon->toArray(); 
+        } elseif (is_array($arrayOrUxon)) {
+            $this->domains = $arrayOrUxon;
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string[]|NULL
+     */
+    public function getDomains() : ?array
+    {
+        return $this->domains;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Security\Authenticators\SymfonyAuthenticator::createLoginWidget()
+     */
+    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    {
+        $container->setWidgets(new UxonObject([
+            [
+                'data_column_name' => 'DOMAIN',
+                'widget_type' => 'InputSelect',
+                'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.LDAP.DOMAIN'),
+                'selectable_options' => array_combine($this->getDomains(), $this->getDomains()) ?? [],
+                'required' => true
+            ],[
+                'attribute_alias' => 'USERNAME',
+                'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.LDAP.USERNAME'),
+                'required' => true
+            ],[
+                'attribute_alias' => 'PASSWORD',
+                'required' => true
+            ],[
+                'attribute_alias' => 'AUTH_TOKEN_CLASS',
+                'value' => '\\' . DomainUsernamePasswordAuthToken::class,
+                'widget_type' => 'InputHidden'
+            ]
+        ]));
+        
+        if ($container instanceof iLayoutWidgets) {
+            $container->setColumnsInGrid(1);
+        }
+        
+        if ($container instanceof iHaveButtons && $container->hasButtons() === false) {
+            $container->addButton($container->createButton(new UxonObject([
+                'action_alias' => 'exface.Core.Login',
+                'align' => EXF_ALIGN_OPPOSITE,
+                'visibility' => WidgetVisibilityDataType::PROMOTED
+            ])));
+        }
+        
+        return $container;
+    }
 }
