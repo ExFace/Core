@@ -15,6 +15,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 
 /**
  * Implementation for the AjaxFacadeElementInterface based on jQuery.
@@ -896,14 +897,20 @@ JS;
     }
     
     /**
-     * Returns TRUE if this element is the only one visible within it's parent container and FALSE otherwise.
+     * Returns TRUE if this element is part of a grid widget and FALSE otherwise.
      *
-     * @return boolean
+     * @return bool
      */
-    protected function isOnlyVisibleElementInContainer()
+    protected function isGridItem() : bool
     {
         $widget = $this->getWidget();
-        return $widget->hasParent() && ($widget->getParent() instanceof Container) && $widget->getParent()->countWidgetsVisible() > 1 ? true : false;
+        
+        if ($widget->hasParent() === false) {
+            return false;
+        }
+        
+        $parent = $widget->getParent();
+        return ($parent instanceof iLayoutWidgets && $parent->countWidgetsVisible() > 1);
     }
     
     /**
