@@ -251,6 +251,9 @@
     
     "SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED": "This connection does not require/support user authentication.",
     "SECURITY.SIGN_IN": "Anmelden",
+    "SECURITY.LDAP.SIGN_IN": "Anmelden mit Windows-Nutzer",
+    "SECURITY.LDAP.DOMAIN": "Windows-Domäne",
+    "SECURITY.LDAP.USERNAME": "Windows-Nutzername",
     
 	"WIDGET.SELECT_ALL": "All",
 	"WIDGET.SELECT_YES": "Yes",

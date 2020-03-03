@@ -250,6 +250,9 @@
     
     "SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED": "Diese Verbindung benötigt bzw. unterstützt keine Nutzer-Anmeldung.",
     "SECURITY.SIGN_IN": "Sign in",
+    "SECURITY.LDAP.SIGN_IN": "Sign in with Windows user",
+    "SECURITY.LDAP.DOMAIN": "Windows domain",
+    "SECURITY.LDAP.USERNAME": "Windows user name",
     
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",
