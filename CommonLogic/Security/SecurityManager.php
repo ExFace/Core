@@ -16,6 +16,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Widgets\LoginPrompt;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Security\AuthenticationToken\RememberMeAuthToken;
+use exface\Core\CommonLogic\Security\Authenticators\RememberMeAuthenticator;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -197,6 +198,7 @@ class SecurityManager implements SecurityManagerInterface
             }
             $this->authenticators[] = $authenticator;
         }
+        $this->authenticators[] = new RememberMeAuthenticator($this->getWorkbench());
         return $this;
     }
     
