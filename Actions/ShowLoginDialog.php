@@ -11,6 +11,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Exceptions\Actions\ActionInputMissingError;
 
 /**
  * Shows a login dialog.
@@ -30,6 +32,11 @@ use exface\Core\Interfaces\WidgetInterface;
  */
 class ShowLoginDialog extends ShowDialog
 {
+    const LOGIN_TO_WORKBENCH = 'workbench';
+    const LOGIN_TO_CONNECTION = 'connection';
+    
+    private $loginTo = self::LOGIN_TO_WORKBENCH;
+    
     protected function init()
     {
         parent::init();
@@ -47,7 +54,10 @@ class ShowLoginDialog extends ShowDialog
         
         $dialog = $this->getDialogWidget();
         
-        if ($connectionSelector = $inputData->getCellValue('CONNECTION', 0)) {
+        if ($this->getLoginTo() === self::LOGIN_TO_CONNECTION) {
+            if (! $connectionSelector = $inputData->getCellValue('CONNECTION', 0)) {
+                throw new ActionInputMissingError($this, 'No data connection to log in to: please provide a CONNECTION in input data!');
+            }
             $dataConnection = DataConnectionFactory::createFromModel($this->getWorkbench(), $connectionSelector);
             $dataConnection->createLoginWidget($dialog);
             $dialog
@@ -78,14 +88,6 @@ class ShowLoginDialog extends ShowDialog
                     'value' => $userId
                 ])));
             }
-        } else {
-            $dialog
-            ->addWidget(WidgetFactory::createFromUxonInParent($dialog, new UxonObject([
-                'attribute_alias' => 'USERNAME'
-            ])))
-            ->addWidget(WidgetFactory::createFromUxonInParent($dialog, new UxonObject([
-                'attribute_alias' => 'PASSWORD'
-            ])));
         }
         
         return parent::perform($task, $transaction);
@@ -99,12 +101,50 @@ class ShowLoginDialog extends ShowDialog
         $dialog->setColumnsInGrid(1);
         $dialog->setMaximized(false);
         $dialog->setHeight('auto');
-        $dialog->addButton($dialog->createButton(new UxonObject([
-            'action_alias' => 'exface.Core.Login',
-            'align' => EXF_ALIGN_OPPOSITE,
-            'visibility' => WidgetVisibilityDataType::PROMOTED
-        ])));
+        
+        if ($this->getLoginTo() === self::LOGIN_TO_WORKBENCH) {
+            $dialog
+            ->addWidget(WidgetFactory::createFromUxonInParent($dialog, new UxonObject([
+                'widget_type' => 'LoginPrompt'
+            ])));
+            $dialog->setHideCloseButton(true);
+        } else {
+            $dialog->addButton($dialog->createButton(new UxonObject([
+                'action_alias' => 'exface.Core.Login',
+                'align' => EXF_ALIGN_OPPOSITE,
+                'visibility' => WidgetVisibilityDataType::PROMOTED
+            ])));
+        }
         
         return $dialog;
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getLoginTo() : string
+    {
+        return $this->loginTo;
+    }
+    
+    /**
+     * Log in to the workbench (default) or a specific data connection?
+     * 
+     * @uxon-property login_to
+     * @uxon-type [workbench,connection]
+     * @uxon-default workbench
+     * 
+     * @param string $value
+     * @return ShowLoginDialog
+     */
+    public function setLoginTo(string $value) : ShowLoginDialog
+    {
+        $constName = 'self::LOGIN_TO_' . mb_strtoupper($value);
+        if (! defined($constName)) {
+            throw new ActionConfigurationError($this, 'Invalid value "' . $value . '" for property "login_to" of action "' . $this->getAliasWithNamespace() . '"!');
+        }
+        $this->loginTo = constant($constName);
+        return $this;
     }
 }
