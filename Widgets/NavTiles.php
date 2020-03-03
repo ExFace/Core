@@ -11,6 +11,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\Model\UiPageTreeNode;
 use exface\Core\Factories\UiPageTreeFactory;
+use exface\Core\Factories\UiPageFactory;
 
 /**
  * NavTiles show a hierarchical navigational tile menu starting from a given parent page.
@@ -101,9 +102,9 @@ class NavTiles extends WidgetGrid
     public function getWidgets(callable $filter = null)
     {
         if ($this->tilesBuilt === false) {
-            $tree = UiPageTreeFactory::createFromRootPage($this->getWorkbench(), $this->getWorkbench()->getCMS()->getPage($this->getRootPageSelector()), $this->getDepth());
+            $tree = UiPageTreeFactory::createFromRootPage(UiPageFactory::createFromModel($this->getWorkbench(), $this->getRootPageSelector()), $this->getDepth());
             $nodes = $tree->getRootNodes();
-            $this->createTileGroupFromNodes($nodes, $this->getWorkbench()->getCMS()->getPage($this->getRootPageSelector())->getName());
+            $this->createTileGroupFromNodes($nodes, UiPageFactory::createFromModel($this->getWorkbench(), $this->getRootPageSelector())->getName());
             
             $this->tilesBuilt = true;
             
