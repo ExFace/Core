@@ -35,9 +35,6 @@
     "SECURITY.AUTHENTICATORS" : [
     	{
     		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SymfonyAuthenticator"
-    	},
-    	{
-    		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\RememberMeAuthenticator"
     	}
     ],
     
