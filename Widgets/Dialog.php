@@ -83,6 +83,9 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     public function setHideCloseButton($value)
     {
         $this->hide_close_button = $value;
+        if ($this->close_button !== null) {
+            $this->close_button->setHidden($value);
+        }
         return $this;
     }
 
