@@ -81,7 +81,8 @@ class ShowMassEditDialog extends ShowDialog
         
         // Make the save button refresh the same widget as the Button showing the dialog would do
         if ($this->getWidgetDefinedIn() instanceof Button) {
-            $save_button->setRefreshWidgetIds($this->getWidgetDefinedIn()->getRefreshWidgetIds());
+            $save_button->setRefreshWidgetIds($this->getWidgetDefinedIn()->getRefreshWidgetIds(false));
+            $save_button->setResetWidgetIds($this->getWidgetDefinedIn()->getResetWidgetIds(false));
             $this->getWidgetDefinedIn()->setRefreshWidgetLink(null);
         }
         $dialog->addButton($save_button);
