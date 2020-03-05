@@ -27,6 +27,7 @@ use exface\Core\Exceptions\UiPage\UiPageLoadingError;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -97,6 +98,8 @@ class UiPage implements UiPageInterface
     private $aliasWithNamespace = null;
 
     private $dirty = false;
+    
+    private $published = true;
 
     /**
      * @deprecated use UiPageFactory::create() instead!
@@ -1340,5 +1343,57 @@ class UiPage implements UiPageInterface
     protected function setReplacesPageAlias(string $aliasWithNamespace) : UiPageInterface
     {
         return $this->setReplacesPageSelector($aliasWithNamespace);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setPublished()
+     */
+    public function setPublished(bool $true_or_false) : UiPageInterface
+    {
+        $this->published = $true_or_false;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::isPublished()
+     */
+    public function isPublished() : bool
+    {
+        return $this->published;
+    }
+    
+    public function exportDataRow(DataSheetInterface $dataSheet) : DataSheetInterface
+    {
+        $dataSheet->addRow([
+            'UID' => $this->getId(),
+            'ALIAS' => $this->getAliasWithNamespace(),
+            'APP' => $this->hasApp() ? $this->getApp()->getUid() : null,
+            'AUTO_UPDATE_WITH_APP' => $this->isUpdateable(),
+            'CONTENT' => $this->getContents(),
+            'DEFAULT_MENU_INDEX' => $this->getMenuIndexDefault(),
+            'DEFAULT_MENU_PARENT' => $this->getMenuParentPageSelectorDefault() !== null ? $this->getPageUidFromSelector($this->getMenuParentPageSelectorDefault()) : null,
+            'DESCRIPTION' => $this->getDescription(),
+            'INTRO' => $this->getIntro(),
+            'MENU_PARENT' => $this->getMenuParentPageSelector() !== null ? $this->getPageUidFromSelector($this->getMenuParentPageSelector()) : null,
+            'MENU_POSITION' => $this->getMenuIndex(),
+            'MENU_VISIBLE' => $this->getMenuVisible(),
+            'NAME' => $this->getName(),
+            'REPLACE_PAGE' => $this->getReplacesPageSelector() !== null ? $this->getPageUidFromSelector($this->getReplacesPageSelector()) : null,
+            'PUBLISHED' => $this->isPublished()
+        ]);
+        
+        return $dataSheet;
+    }
+    
+    private function getPageUidFromSelector(UiPageSelectorInterface $selector) : string
+    {
+        if ($selector->isUid()) {
+            return $selector->toString();
+        }
+        return UiPageFactory::createFromModel($this->getWorkbench(), $selector)->getId();
     }
 }

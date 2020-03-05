@@ -20,6 +20,9 @@ class HexadecimalNumberDataType extends NumberDataType
      */
     public static function cast($string)
     {
+        if (is_string($string) === false && $string !== null) {
+            throw new DataTypeCastingError('Cannot cast "' . gettype($string) . '" to a hexadecimal number');
+        }
         switch (true) {
             // Return NULL for casting empty values as an empty string '' actually is not a number!
             case static::isValueEmpty($string) === true:

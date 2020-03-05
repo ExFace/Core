@@ -467,4 +467,17 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return UiPageInterface
      */
     public function setFacadeSelector($selectorOrString) : UiPageInterface;
+    
+    /**
+     * 
+     * @param bool $true_or_false
+     * @return UiPageInterface
+     */
+    public function setPublished(bool $true_or_false) : UiPageInterface;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isPublished() : bool;
 }
