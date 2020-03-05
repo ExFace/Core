@@ -254,6 +254,11 @@
     "SECURITY.LDAP.DOMAIN": "Windows domain",
     "SECURITY.LDAP.USERNAME": "Windows user name",
     
+    "SECURITY.POLICIES.COMBINING.DENY_OVERRIDES": "Sperren wenn mind. 1 Sperre",
+    "SECURITY.POLICIES.COMBINING.PERMIT_OVERRIDES": "Erlauben wenn mind. 1 Erlaubnis",
+    "SECURITY.POLICIES.COMBINING.DENY_UNLESS_PERMIT": "Sperren wenn nicht erlaubt",
+    "SECURITY.POLICIES.COMBINING.PERMIT_UNLESS_DENY": "Erlauben wenn nicht gesperrt",
+    
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",
 	"WIDGET.SELECT_NO": "Nein",
