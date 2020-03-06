@@ -1237,7 +1237,7 @@ class UiPage implements UiPageInterface
     public function getFacade() : FacadeInterface
     {
         if ($this->facade === null) {
-            if ($this->facade !== null) {
+            if ($this->facadeSelector !== null) {
                 $this->facade = FacadeFactory::createFromAnything($this->facadeSelector, $this->getWorkbench());
             } else {
                 $this->facade = FacadeFactory::createDefaultHttpFacade($this->getWorkbench());
