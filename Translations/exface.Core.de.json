@@ -258,6 +258,8 @@
     "SECURITY.POLICIES.COMBINING.PERMIT_OVERRIDES": "Erlauben wenn mind. 1 Erlaubnis",
     "SECURITY.POLICIES.COMBINING.DENY_UNLESS_PERMIT": "Sperren wenn nicht erlaubt",
     "SECURITY.POLICIES.COMBINING.PERMIT_UNLESS_DENY": "Erlauben wenn nicht gesperrt",
+    "SECURITY.POLICIES.EFFECT.DENY": "Sperren",
+    "SECURITY.POLICIES.EFFECT.PEMIT": "Erlauben",
     
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",
