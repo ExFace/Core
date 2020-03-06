@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS `exf_auth_point` (
   `alias` varchar(50) NOT NULL,
   `descr` varchar(200) DEFAULT NULL,
   `app_oid` binary(16) NOT NULL,
-  `type` varchar(1) NOT NULL,
+  `default_effect` CHAR(1) NOT NULL DEFAULT 'P',
   `combining_algorithm` varchar(30) NOT NULL,
   `active_flag` tinyint(1) NOT NULL DEFAULT '1',
   `target_user_role_applicable` tinyint(1) NOT NULL DEFAULT '0',
