@@ -169,7 +169,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-02-09 07:29:47",
-            "MODIFIED_ON": "2020-02-09 07:33:14",
+            "MODIFIED_ON": "2020-03-10 17:48:19",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4b0de5c80edfb2cfe4b318306b9a",
@@ -189,7 +189,7 @@
             "NAME": "Role",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
-            "ALIAS": "user_role",
+            "ALIAS": "USER_ROLE",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "user_role_oid",
             "OBJECT": "0x11ea4b0de07b2dcab2cfe4b318306b9a",
@@ -212,7 +212,7 @@
         },
         {
             "CREATED_ON": "2020-02-09 07:29:47",
-            "MODIFIED_ON": "2020-02-09 07:32:47",
+            "MODIFIED_ON": "2020-03-10 17:48:19",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4b0de5c87c7fb2cfe4b318306b9a",
@@ -232,7 +232,7 @@
             "NAME": "User",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
-            "ALIAS": "user",
+            "ALIAS": "USER",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "user_oid",
             "OBJECT": "0x11ea4b0de07b2dcab2cfe4b318306b9a",
