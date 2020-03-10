@@ -17,23 +17,20 @@ class UiPageFactory extends AbstractStaticFactory
      * the CMS if it exists there.
      * 
      * @param UiPageSelectorInterface $selector
-     * @param CmsConnectorInterface $cms
      * 
      * @return UiPageInterface
      */
-    public static function create(UiPageSelectorInterface $selector, CmsConnectorInterface $cms = null) : UiPageInterface
+    public static function create(UiPageSelectorInterface $selector) : UiPageInterface
     {
-        $cms = is_null($cms) ? $selector->getWorkbench()->getCMS() : $cms;
         $page = null;
         if (! $selector->isEmpty()) {
             try {
-                $page = self::createFromModel($cms->getWorkbench(), $selector);
-                // $page = $cms->getPage($selector);
+                $page = self::createFromModel($selector->getWorkbench(), $selector);
             } catch (UiPageNotFoundError $e) {
                 // do nothing
             }
         }
-        return ! is_null($page) ? $page : new UiPage($selector, $cms);
+        return ! is_null($page) ? $page : new UiPage($selector);
     }
     
     /**
@@ -41,14 +38,13 @@ class UiPageFactory extends AbstractStaticFactory
      * 
      * @param WorkbenchInterface $workbench
      * @param UiPageSelectorInterface|string $selectorOrString
-     * @param CmsConnectorInterface $cms
      * 
      * @return UiPageInterface
      */
-    public static function createBlank(WorkbenchInterface $workbench, $selectorOrString, CmsConnectorInterface $cms = null) : UiPageInterface
+    public static function createBlank(WorkbenchInterface $workbench, $selectorOrString) : UiPageInterface
     {
         $selector = $selectorOrString instanceof UiPageSelectorInterface ? $selectorOrString : SelectorFactory::createPageSelector($workbench, $selectorOrString);
-        return new UiPage($selector, $cms);
+        return new UiPage($selector);
     }
 
     /**
@@ -71,7 +67,6 @@ class UiPageFactory extends AbstractStaticFactory
      * 
      * @param UiPageSelectorInterface $selector
      * @param string $contents
-     * @param CmsConnectorInterface $cms
      * @return UiPageInterface
      */
     public static function createFromString(UiPageSelectorInterface $selector, string $contents) : UiPageInterface
@@ -93,43 +88,17 @@ class UiPageFactory extends AbstractStaticFactory
     }
 
     /**
-     * Creates a page which is obtained from the CMS by the passed alias.
-     * 
-     * The parameter $ignoreReplacement allows to get the exact page matching the selector
-     * even if it was replaced by another page.
-     * 
-     * @param CmsConnectorFactory $cms
-     * @param UiPageSelectorInterface|string $selectorOrString
-     * @param bool $ignoreReplacement
-     * 
-     * @throws UiPageNotFoundError
-     * 
-     * @return UiPageInterface
-     */
-    public static function createFromCmsPage(CmsConnectorInterface $cms, $selectorOrString, bool $ignoreReplacement = false) : UiPageInterface
-    {
-        if ($selectorOrString instanceof UiPageSelectorInterface) {
-            $selector = $selectorOrString;
-        } else {
-            $selector = SelectorFactory::createPageSelector($cms->getWorkbench(), $selectorOrString);
-        }
-        return self::createFromModel($cms->getWorkbench(), $selector);
-        return $cms->getPage($selector, $ignoreReplacement);
-    }
-
-    /**
      * Creates a page from a uxon description.
      * 
      * @param WorkbenchInterface $workbench
      * @param UxonObject $uxon
-     * @param CmsConnectorInterface $cms
      * @param array $skip_property_names
      * 
      * @return UiPageInterface
      */
-    public static function createFromUxon(WorkbenchInterface $workbench, UxonObject $uxon, CmsConnectorInterface $cms = null, array $skip_property_names = array())
+    public static function createFromUxon(WorkbenchInterface $workbench, UxonObject $uxon, array $skip_property_names = array())
     {
-        $page = static::createBlank($workbench, '', $cms);
+        $page = static::createBlank($workbench, '');
         $page->importUxonObject($uxon, $skip_property_names);
         return $page;
     }
