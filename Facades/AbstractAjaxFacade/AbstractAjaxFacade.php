@@ -220,7 +220,7 @@ HTML;
      */
     protected function createElement(WidgetInterface $widget) : AbstractJqueryElement
     {
-        $elem_class = $this->getClass($widget);
+        $elem_class = $this->getElementClassForWidget($widget);
         $instance = new $elem_class($widget, $this);
         
         if ($widget instanceof CustomWidgetInterface) {
@@ -257,7 +257,7 @@ HTML;
      * @param WidgetInterface $widget
      * @return string
      */
-    protected function getClass(WidgetInterface $widget) : string
+    protected function getElementClassForWidget(WidgetInterface $widget) : string
     {
         $elem_class = $this->classes_by_widget_type[$widget->getWidgetType()];
         if (is_null($elem_class)) {
