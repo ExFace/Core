@@ -165,7 +165,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     protected function getHintMaxCharsInLine()
     {
         if (is_null($this->hint_max_chars_in_line)) {
-            $this->hint_max_chars_in_line = $this->getFacade()->getConfig()->getOption('HINT_MAX_CHARS_IN_LINE');
+            $this->hint_max_chars_in_line = $this->getFacade()->getConfig()->getOption('WIDGET.ALL.HINT_MAX_CHARS_IN_LINE');
         }
         return $this->hint_max_chars_in_line;
     }
@@ -241,7 +241,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     public function buildJsFunctionPrefix()
     {
         if (is_null($this->function_prefix)) {
-            $this->function_prefix = str_replace($this->getFacade()->getConfig()->getOption('FORBIDDEN_CHARS_IN_FUNCTION_PREFIX')->toArray(), '_', $this->getId()) . '_';
+            $this->function_prefix = str_replace($this->getFacade()->getConfig()->getOption('WIDGET.ALL.FORBIDDEN_CHARS_IN_FUNCTION_PREFIX')->toArray(), '_', $this->getId()) . '_';
         }
         return $this->function_prefix;
     }
@@ -350,7 +350,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
      */
     public function cleanId($id)
     {
-        return str_replace($this->getFacade()->getConfig()->getOption('FORBIDDEN_CHARS_IN_ELEMENT_ID')->toArray(), '_', $id);
+        return str_replace($this->getFacade()->getConfig()->getOption('WIDGET.ALL.FORBIDDEN_CHARS_IN_ELEMENT_ID')->toArray(), '_', $id);
     }
 
     /**
@@ -513,7 +513,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     public function getWidthDefault()
     {
         if (is_null($this->width_default)) {
-            $this->width_default = $this->getFacade()->getConfig()->getOption('WIDTH_DEFAULT');
+            $this->width_default = $this->getFacade()->getConfig()->getOption('WIDGET.ALL.WIDTH_DEFAULT');
         }
         return $this->width_default;
     }
@@ -538,7 +538,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     public function getWidthRelativeUnit()
     {
         if (is_null($this->width_relative_unit)) {
-            $this->width_relative_unit = $this->getFacade()->getConfig()->getOption('WIDTH_RELATIVE_UNIT');
+            $this->width_relative_unit = $this->getFacade()->getConfig()->getOption('WIDGET.ALL.WIDTH_RELATIVE_UNIT');
         }
         return $this->width_relative_unit;
     }
@@ -551,7 +551,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     public function getWidthMinimum()
     {
         if (null === $this->width_minimum) {
-            $this->width_minimum = $this->getFacade()->getConfig()->getOption('WIDTH_MINIMUM');
+            $this->width_minimum = $this->getFacade()->getConfig()->getOption('WIDGET.ALL.WIDTH_MINIMUM');
             $width = $this->getWidget()->getWidth();
             if ($width->isRelative() === true && $width->isMax() === false) {
                 $this->width_minimum = round($this->width_minimum * $this->getWidget()->getWidth()->getValue(), 0);
@@ -568,7 +568,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     public function getHeightRelativeUnit()
     {
         if (is_null($this->height_relative_unit)) {
-            $this->height_relative_unit = $this->getFacade()->getConfig()->getOption('HEIGHT_RELATIVE_UNIT');
+            $this->height_relative_unit = $this->getFacade()->getConfig()->getOption('WIDGET.ALL.HEIGHT_RELATIVE_UNIT');
         }
         return $this->height_relative_unit;
     }

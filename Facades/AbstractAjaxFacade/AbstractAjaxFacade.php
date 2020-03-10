@@ -700,11 +700,7 @@ HTML;
      */
     protected function buildHeadersAccessControl() : array
     {
-        if (! $this->getConfig()->hasOption('FACADES.AJAX.HEADERS.ACCESS_CONTROL')) {
-            $headers = $this->getWorkbench()->getConfig()->getOption('FACADES.AJAX.HEADERS.ACCESS_CONTROL')->toArray();
-        } else {
-            $headers = $this->getConfig()->getOption('FACADES.AJAX.HEADERS.ACCESS_CONTROL')->toArray();
-        }
+        $headers = $this->getConfig()->getOption('FACADE.AJAX.ACCESS_CONTROL_HEADERS')->toArray();
         return array_filter($headers);
     }
     
@@ -732,7 +728,7 @@ HTML;
      */
     public function getUrlRouteDefault() : string
     {
-        return $this->getConfig()->getOption('DEFAULT_AJAX_URL');
+        return $this->getConfig()->getOption('FACADE.AJAX.BASE_URL');
     }
 }
 ?>
