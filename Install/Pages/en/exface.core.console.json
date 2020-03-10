@@ -2,7 +2,7 @@
     "id": "0x6179ab4000ac11ea8fb10205857feb80",
     "alias_with_namespace": "exface.core.console",
     "menu_parent_page_selector": "0xf8310d4bba2c11e7895fe4b318306b9a",
-    "menu_index": 4,
+    "menu_index": 5,
     "menu_visible": true,
     "name": "Console",
     "description": "",
