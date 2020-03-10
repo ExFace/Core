@@ -2,7 +2,7 @@
     "id": "0x9d1ad1d03bda11e8934200a0c6000012",
     "alias_with_namespace": "exface.core.translations",
     "menu_parent_page_selector": "0x8f9e3238949e11e7aa5f028037ec0200",
-    "menu_index": 7,
+    "menu_index": 8,
     "menu_visible": true,
     "name": "Translations",
     "description": "View translations, search for i18n-keys",

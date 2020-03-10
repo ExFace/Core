@@ -2,7 +2,7 @@
     "id": "0xdd41b032949e11e798a5028037ec0200",
     "alias_with_namespace": "exface.core.messages",
     "menu_parent_page_selector": "0x8f9e3238949e11e7aa5f028037ec0200",
-    "menu_index": 5,
+    "menu_index": 6,
     "menu_visible": true,
     "name": "Messages",
     "description": "Manage and create message codes",

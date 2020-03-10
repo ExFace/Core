@@ -1,0 +1,47 @@
+{
+    "id": "0x11ea630d9cdcc7f1a2e30205857feb80",
+    "alias_with_namespace": "exface.core.page-groups",
+    "menu_parent_page_selector": "0xaab623e6632411e8aab30205857feb80",
+    "menu_index": 0,
+    "menu_visible": true,
+    "name": "Page Groups",
+    "description": "",
+    "intro": "",
+    "replaces_page_selector": null,
+    "contents": {
+        "widget_type": "DataTable",
+        "object_alias": "exface.Core.PAGE_GROUP",
+        "columns": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "PAGE_GROUP_PAGES__UID:COUNT",
+                "caption": "Pages"
+            },
+            {
+                "attribute_alias": "AUTHORIZATION_POLICY__UID:COUNT",
+                "caption": "Authorization Policies"
+            },
+            {
+                "attribute_alias": "APP__LABEL"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectCreateDialog"
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectCopyDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject",
+                "visibility": "optional"
+            }
+        ]
+    }
+}
