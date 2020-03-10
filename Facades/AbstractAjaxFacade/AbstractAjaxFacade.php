@@ -233,7 +233,7 @@ HTML;
      */
     protected function createElement(WidgetInterface $widget) : AbstractJqueryElement
     {
-        $elem_class = $this->getClass($widget);
+        $elem_class = $this->getElementClassForWidget($widget);
         $instance = new $elem_class($widget, $this);
         
         if ($widget instanceof CustomWidgetInterface) {
@@ -270,7 +270,7 @@ HTML;
      * @param WidgetInterface $widget
      * @return string
      */
-    protected function getClass(WidgetInterface $widget) : string
+    protected function getElementClassForWidget(WidgetInterface $widget) : string
     {
         $elem_class = $this->classes_by_widget_type[$widget->getWidgetType()];
         if (is_null($elem_class)) {
@@ -758,11 +758,7 @@ HTML;
      */
     protected function buildHeadersAccessControl() : array
     {
-        if (! $this->getConfig()->hasOption('FACADES.AJAX.HEADERS.ACCESS_CONTROL')) {
-            $headers = $this->getWorkbench()->getConfig()->getOption('FACADES.AJAX.HEADERS.ACCESS_CONTROL')->toArray();
-        } else {
-            $headers = $this->getConfig()->getOption('FACADES.AJAX.HEADERS.ACCESS_CONTROL')->toArray();
-        }
+        $headers = $this->getConfig()->getOption('FACADE.AJAX.ACCESS_CONTROL_HEADERS')->toArray();
         return array_filter($headers);
     }
     
@@ -790,7 +786,7 @@ HTML;
      */
     public function getUrlRouteDefault() : string
     {
-        return $this->getConfig()->getOption('DEFAULT_AJAX_URL');
+        return $this->getConfig()->getOption('FACADE.AJAX.BASE_URL');
     }
     
     /**
