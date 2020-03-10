@@ -31,6 +31,8 @@ class Date extends \exface\Core\CommonLogic\Model\Formula
         $dataType = $this->getDataType();
         if ($format) {
             $dataType->setFormat($format);
+        } else {
+            $dataType->setFormat(DateDataType::DATE_ICU_FORMAT_INTERNAL);
         }
         
         return $dataType->formatDate($date);
