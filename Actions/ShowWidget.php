@@ -487,7 +487,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         if ($this->isWidgetDefined()) {
             return $this->getWidget()->getPage();
         }
-        return UiPageFactory::createFromCmsPage($this->getWorkbench()->getCMS(), $this->page_alias);
+        return UiPageFactory::createFromModel($this->getWorkbench(), $this->page_alias);
     }
     
     public function getPageAlias()
