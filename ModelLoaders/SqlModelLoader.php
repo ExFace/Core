@@ -1171,7 +1171,7 @@ SQL;
         
         $uiPage->setFacadeSelector($row['facade_filepath']);
         if ($row['facade_uxon']) {
-            $uiPage->setFacadeConfig(new UxonObject($row['facade_uxon']));
+            $uiPage->setFacadeConfig(new UxonObject(json_decode($row['facade_uxon'], true)));
         }
         
         if ($row['default_menu_parent_oid'] !== null) {
