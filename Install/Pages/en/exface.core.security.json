@@ -22,7 +22,7 @@
                 "attribute_alias": "APP__LABEL"
             },
             {
-                "attribute_alias": "TYPE"
+                "attribute_alias": "DEFAULT_EFFECT"
             },
             {
                 "attribute_alias": "COMBINING_ALGORITHM"
