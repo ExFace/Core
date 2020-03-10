@@ -206,6 +206,16 @@ class Expression implements ExpressionInterface
     {
         return $this->toString() === null;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::isLogicalNull()
+     */
+    public function isLogicalNull() : bool
+    {
+        return $this->toString() === EXF_LOGICAL_NULL;
+    }
 
     /**
      * {@inheritdoc}
