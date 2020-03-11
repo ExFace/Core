@@ -1142,7 +1142,7 @@ class UiPage implements UiPageInterface
         if ($this->getAliasWithNamespace() != $page->getAliasWithNamespace()) {
             return false;
         }
-        if ($this->getMenuParentPageSelector()->toString() != $page->getMenuParentPageSelector()->toString()) {
+        if ($this->hasMenuParent() && $page->hasMenuParent() && $this->getMenuParentPageSelector()->toString() != $page->getMenuParentPageSelector()->toString()) {
             return false;
         }
         if ($this->getMenuIndex() != $page->getMenuIndex() && ! in_array('menuindex', $ignore_properties)) {
