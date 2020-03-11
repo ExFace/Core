@@ -25,7 +25,8 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
  * - `[#~page:<attribute_alias|url>#]` - replaced by the value of a current page's attribute or URL
  * - `[#~config:<app_alias>:<config_key>#]` - replaced by the value of the configuration option
  * - `[#~translate:<app_alias>:<message>#]` - replaced by the message's translation to current locale
- * - `[#~session:<option>#]` - replaced by session
+ * - `[#~session:<option>#]` - replaced by session option values
+ * - `[#~facade:<attribute_alias>]` - replaced by the value of a current facade's attribute
  * 
  * @author Andrej Kabachnik
  *
@@ -202,6 +203,13 @@ class FacadePageTemplateRenderer implements TemplateRendererInterface
                 $option = StringDataType::substringAfter($placeholder, '~session:');
                 $val = $this-> renderPlaceholderSessionOption($option);
                 break;
+            case StringDataType::startsWith($placeholder, '~facade:') === true;
+                $option = StringDataType::substringAfter($placeholder, '~facade:');
+                $methodName = 'get' . StringDataType::convertCaseUnderscoreToPascal($option);
+                if (method_exists($this->getFacade(), $methodName)) {
+                    $val = call_user_func([$this->getFacade(), $methodName]);
+                    break;
+                } 
             default:
                 throw new RuntimeException('Unknown placehodler "[#' . $placeholder . '#]" found in template "' . $this->getTemplateFilePath() . '"!');
         }
