@@ -1,0 +1,63 @@
+{
+    "id": "0x11ea5edc2f798596b9920205857feb80",
+    "alias_with_namespace": "exface.core.security",
+    "menu_parent_page_selector": "0xf8310d4bba2c11e7895fe4b318306b9a",
+    "menu_index": 2,
+    "menu_visible": true,
+    "name": "Security",
+    "description": "",
+    "intro": "",
+    "replaces_page_selector": null,
+    "contents": {
+        "widget_type": "DataTable",
+        "object_alias": "exface.Core.AUTHORIZATION_POINT",
+        "columns": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "APP__LABEL"
+            },
+            {
+                "attribute_alias": "DEFAULT_EFFECT"
+            },
+            {
+                "attribute_alias": "COMBINING_ALGORITHM"
+            },
+            {
+                "attribute_alias": "TARGET_USER_ROLE_APPLICABLE"
+            },
+            {
+                "attribute_alias": "TARGET_PAGE_GROUP_APPLICABLE"
+            },
+            {
+                "attribute_alias": "TARGET_OBJECT_APPLICABLE"
+            },
+            {
+                "attribute_alias": "TARGET_ACTION_APPLICABLE"
+            },
+            {
+                "attribute_alias": "TARGET_FACADE_APPLICABLE"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectCreateDialog"
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectCopyDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject",
+                "visibility": "optional"
+            }
+        ]
+    }
+}

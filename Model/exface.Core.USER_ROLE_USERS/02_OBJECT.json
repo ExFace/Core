@@ -80,16 +80,16 @@
     ],
     "rows": [
         {
-            "CREATED_ON": "2020-02-09 07:27:44",
-            "MODIFIED_ON": "2020-02-09 07:34:43",
+            "CREATED_ON": "2020-02-09 07:29:38",
+            "MODIFIED_ON": "2020-03-10 20:56:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
-            "UID": "0x11ea4b0d9c862d5db2cfe4b318306b9a",
+            "UID": "0x11ea4b0de07b2dcab2cfe4b318306b9a",
             "READABLE_FLAG": "1",
             "WRITABLE_FLAG": "1",
             "COMMENTS": "",
             "DOCS": "",
-            "NAME": "User Role",
+            "NAME": "Role User",
             "INHERIT_DATA_SOURCE_BASE_OBJECT": "1",
             "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
@@ -97,8 +97,8 @@
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_EDITOR_UXON": null,
-            "ALIAS": "USER_GROUP",
-            "DATA_ADDRESS": "exf_user_role"
+            "ALIAS": "USER_ROLE_USERS",
+            "DATA_ADDRESS": "exf_user_role_users"
         }
     ],
     "totals_rows": [],

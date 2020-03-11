@@ -70,7 +70,12 @@ class Login extends AbstractAction implements iModifyContext
                 if ($param->getName() === 'facade') {
                     $constructorArgs[] = $task->getFacade();
                 } else {
-                    $constructorArgs[] = $inputRow[$param->getName()];
+                    foreach ($inputRow as $key => $val) {
+                        if (strcasecmp($key, $param->getName()) === 0) {
+                            $constructorArgs[] = $val;
+                            break;
+                        }
+                    }
                 }
             }
             $token = $reflector->newInstanceArgs($constructorArgs);

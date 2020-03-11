@@ -2,7 +2,7 @@
     "id": "0xb9d24bcaa23e11e9ae46106530e7aff7",
     "alias_with_namespace": "exface.core.uxon-presets",
     "menu_parent_page_selector": "0x8f9e3238949e11e7aa5f028037ec0200",
-    "menu_index": 8,
+    "menu_index": 9,
     "menu_visible": true,
     "name": "UXON Presets",
     "description": "Manage presets for widgets, actions, behaviors, etc.",

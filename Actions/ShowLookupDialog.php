@@ -95,13 +95,6 @@ class ShowLookupDialog extends ShowDialog
         /* @var $data_table \exface\Core\Widgets\DataTable */
         $data_table = $dialog->getDataWidget();
         
-        if ($data_table->getMetaObject()->hasLabelAttribute() === true) {
-            $labelAlias = $data_table->getMetaObject()->getLabelAttributeAlias();
-            if (! $data_table->getColumnByAttributeAlias($labelAlias) && ! $data_table->getColumnByDataColumnName($this->getWorkbench()->getConfig()->getOption("METAMODEL.OBJECT_LABEL_ALIAS"))) {
-                $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getLabelAttribute()));
-            }
-        }
-        
         $btnUxon = new UxonObject([
             'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.SHOWLOOKUPDIALOG.SAVE_BUTTON"),
             'visibility' => WidgetVisibilityDataType::PROMOTED,

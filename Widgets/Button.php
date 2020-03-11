@@ -315,13 +315,19 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     }
     
     /**
-     * Returns the ids of widgets to refresh after the button's action succeeds (including he input widget if neccessary!).
+     * Returns the ids of widgets to refresh after the button's action succeeds.
+     * 
+     * By default, the result will include the id of the input widget if it must be
+     * refreshed too (i.e. `refresh_input` is `true`). Set the parameter `$includeInputWidget`
+     * to `false` to get only the additional refresh-widgets.
+     * 
+     * @param bool $includeInputWidget
      * 
      * @return string[]
      */
-    public function getRefreshWidgetIds() : array
+    public function getRefreshWidgetIds(bool $includeInputWidget = true) : array
     {
-        if ($this->getRefreshInput() === true) {
+        if ($includeInputWidget && $this->getRefreshInput() === true) {
             return array_merge($this->refreshWidgetIds, [$this->getInputWidget()->getId()]);
         }
         return $this->refreshWidgetIds;
@@ -405,13 +411,19 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     }
     
     /**
-     * Returns the ids of widgets to reset after the button's action succeeds (including he input widget if neccessary!).
+     * Returns the ids of widgets to reset after the button's action succeeds.
+     * 
+     * By default, the result will include the id of the input widget if it must be
+     * reset too (i.e. `reset_input` is `true`). Set the parameter `$includeInputWidget`
+     * to `false` to get only the additional reset-widgets.
+     * 
+     * @param bool $includeInputWidget
      * 
      * @return string[]
      */
-    public function getResetWidgetIds() : ?array
+    public function getResetWidgetIds(bool $includeInputWidget = true) : ?array
     {
-        if ($this->getResetInput() === true) {
+        if ($includeInputWidget && $this->getResetInput() === true) {
             return array_merge($this->resetWidgetIds, [$this->getInputWidget()->getId()]);
         }
         return $this->resetWidgetIds;

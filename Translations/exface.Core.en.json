@@ -251,6 +251,16 @@
     
     "SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED": "This connection does not require/support user authentication.",
     "SECURITY.SIGN_IN": "Anmelden",
+    "SECURITY.LDAP.SIGN_IN": "Anmelden mit Windows-Nutzer",
+    "SECURITY.LDAP.DOMAIN": "Windows-Domäne",
+    "SECURITY.LDAP.USERNAME": "Windows-Nutzername",
+    
+	"SECURITY.POLICIES.COMBINING.DENY_OVERRIDES": "Deny overrides",
+    "SECURITY.POLICIES.COMBINING.PERMIT_OVERRIDES": "Permit overrides",
+    "SECURITY.POLICIES.COMBINING.DENY_UNLESS_PERMIT": "Deny unless permitted",
+    "SECURITY.POLICIES.COMBINING.PERMIT_UNLESS_DENY": "Permit unless denied",
+    "SECURITY.POLICIES.EFFECT.DENY": "Deny",
+    "SECURITY.POLICIES.EFFECT.PERMIT": "Permit",
     
 	"WIDGET.SELECT_ALL": "All",
 	"WIDGET.SELECT_YES": "Yes",

@@ -218,7 +218,7 @@ class WebConsoleFacade extends AbstractHttpFacade
     protected function getWidgetFromRequest(RequestInterface $request) : Console
     {
         $pageSelector = $request->getParsedBody()['page'];
-        $page = UiPageFactory::createFromCmsPage($this->getWorkbench()->getCMS(), $pageSelector);
+        $page = UiPageFactory::createFromModel($this->getWorkbench(), $pageSelector);
         $widgetId = $request->getParsedBody()['widget'];
         return $page->getWidget($widgetId);
     }

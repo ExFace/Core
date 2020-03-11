@@ -58,8 +58,6 @@ class UiPage implements UiPageInterface
     private $facadeUxon = null;
     
     private $facade = null;
-
-    private $cms = null;
     
     private $selector = null;
 
@@ -107,12 +105,9 @@ class UiPage implements UiPageInterface
      * @param UiPageSelectorInterface $selector
      * @param CmsConnectorInterface $cms
      */
-    public function __construct(UiPageSelectorInterface $selector, CmsConnectorInterface $cms = null)
+    public function __construct(UiPageSelectorInterface $selector)
     {
         $this->selector = $selector;
-        $this->cms = is_null($cms) ? $selector->getWorkbench()->getCMS() : $cms;
-        // FIXME still needed?
-        // $this->setAppUidOrAlias($appUidOrAlias);
     }
 
     /**
@@ -1057,7 +1052,7 @@ class UiPage implements UiPageInterface
         if (! $pageOrSelectorOrString instanceof UiPageInterface) {
             try {
                 $selector = $pageOrSelectorOrString instanceof UiPageSelectorInterface ? $pageOrSelectorOrString : SelectorFactory::createPageSelector($this->getWorkbench(), $pageOrSelectorOrString);
-                $page = $this->getCMS()->getPage($selector, true);
+                $page = UiPageFactory::createFromModel($this->getWorkbench(), $selector, true);
             } catch (UiPageNotFoundError $upnfe) {
                 return false;
             }
@@ -1094,7 +1089,7 @@ class UiPage implements UiPageInterface
     protected function compareToPageReplace(UiPageInterface $page1, UiPageInterface $page2)
     {
         try {
-            $replacedPage = $this->getCMS()->getPage($page1->getSelector());
+            $replacedPage = UiPageFactory::createFromModel($this->getWorkbench(), $page1->getSelector());
         } catch (UiPageNotFoundError $uipnfe) {
             return false;
         }
@@ -1218,15 +1213,6 @@ class UiPage implements UiPageInterface
     public function getSelector() : UiPageSelectorInterface
     {
         return $this->selector;
-    }
-    
-    /**
-     * 
-     * @return \exface\Core\Interfaces\CmsConnectorInterface
-     */
-    public function getCMS()
-    {
-        return $this->cms;
     }
     
     /**

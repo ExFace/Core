@@ -21,6 +21,7 @@ class AuthenticationFailedError extends RuntimeException implements Authenticati
             'authenticator' => $authenticator,
             'exception' => $exception
         ];
+        return $this;
     }
     
     /**

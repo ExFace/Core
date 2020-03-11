@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-02-08 21:31:18",
-            "MODIFIED_ON": "2020-02-09 07:35:53",
+            "MODIFIED_ON": "2020-03-10 20:49:36",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4aba4bb25832b2cfe4b318306b9a",
@@ -96,7 +96,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"SplitVertical\",\"panels\":[{\"height\":3,\"widgets\":[{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"DESCRIPTION\",\"width\":\"max\"}]},{\"caption\":\"Pages\",\"widgets\":[{\"widget_type\":\"DataTable\",\"object_alias\":\"exface.Core.PAGE_GROUP_PAGES\",\"filters\":[{\"attribute_alias\":\"PAGE_GROUP\",\"required\":true,\"widget_type\":\"InputHidden\"}],\"columns\":[{\"attribute_alias\":\"PAGE__NAME\"},{\"attribute_alias\":\"PAGE__ALIAS\"},{\"attribute_alias\":\"PAGE__APP__ALIAS\"},{\"attribute_alias\":\"PAGE__TEMPLATE__LABEL\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"visibility\":\"optional\"}]}]}]}",
             "ALIAS": "PAGE_GROUP",
             "DATA_ADDRESS": "exf_page_group"
         }
