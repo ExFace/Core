@@ -54,6 +54,11 @@
     "ACTION.GENERATEMODELFROMDATASOURCE.NAME": "Modell generieren",
 	"ACTION.GENERATEMODELFROMDATASOURCE.RESULT_FOR_OBJECT": "%created_counter% Attribut(e) für %object_counter% Objekt(e) erstellt. %skipped_counter% Attribut(e) als Dublikate ignoriert!",
 	
+	"ACTION.GENERIC.ADD": "Hinzufügen",
+	"ACTION.GENERIC.REMOVE": "Entfernen",
+	"ACTION.GENERIC.CANCEL": "Abbrechen",
+	"ACTION.GENERIC.OK": "OK",
+	
     "ACTION.GOBACK.NAME": "Zurück",
 	"ACTION.GOTOURL.NAME": "Webseite anzeigen",
 	"ACTION.GOTOURL.SUCCESS": "Sie werden weitergeleitet...",
