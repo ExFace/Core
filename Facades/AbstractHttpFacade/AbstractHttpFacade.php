@@ -26,8 +26,7 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
      */
     public function buildUrlToSiteRoot() : string
     {
-        // TODO #nocms
-        return '';
+        return $this->getWorkbench()->getUrl();
     }
     
     /**
