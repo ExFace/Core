@@ -684,6 +684,36 @@
             "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\"}",
             "ALIAS": "AttributeType",
             "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2020-03-05 12:15:31",
+            "MODIFIED_ON": "2020-03-05 12:32:14",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea5edaf32d8b2db9920205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Policy Combining Algorithm",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/PolicyCombiningAlgorithmDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\"}",
+            "ALIAS": "PolicyCombningAlgorithm",
+            "SHORT_DESCRIPTION": "Combining algorithm for security policies"
+        },
+        {
+            "CREATED_ON": "2020-03-06 16:24:29",
+            "MODIFIED_ON": "2020-03-06 16:24:29",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea5fc6f57a20b9a2e30205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Policy Effect",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/PolicyEffectDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\"}",
+            "ALIAS": "PolicyEffect",
+            "SHORT_DESCRIPTION": "Effect of security policies: permit or deny"
         }
     ],
     "totals_rows": [],

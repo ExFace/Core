@@ -80,25 +80,25 @@
     ],
     "rows": [
         {
-            "CREATED_ON": "2018-05-29 07:48:36",
-            "MODIFIED_ON": "2020-03-10 21:00:52",
+            "CREATED_ON": "2020-03-05 12:17:38",
+            "MODIFIED_ON": "2020-03-10 20:12:30",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
-            "UID": "0x11e86314af5caf7f971b0205857feb80",
+            "UID": "0x11ea5edb3ee5cbe8b9920205857feb80",
             "READABLE_FLAG": "1",
             "WRITABLE_FLAG": "1",
             "COMMENTS": "",
             "DOCS": "",
-            "NAME": "Page",
+            "NAME": "Authorization Point",
             "INHERIT_DATA_SOURCE_BASE_OBJECT": "1",
             "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"tabs\",\"tabs\":[{\"caption\":\"Page Properties\",\"widgets\":[{\"attribute_alias\":\"UID\",\"widget_type\":\"InputHidden\",\"id\":\"page_uid_field\"},{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"TEMPLATE\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"PUBLISHED\"},{\"attribute_alias\":\"DESCRIPTION\",\"width\":\"max\"},{\"attribute_alias\":\"INTRO\",\"width\":\"max\",\"height\":5},{\"attribute_alias\":\"REPLACE_PAGE\"},{\"attribute_alias\":\"PAGE[REPLACE_PAGE]__ALIAS:LIST_DISTINCT\",\"caption\":\"Replaced by\",\"widget_type\":\"Input\",\"readonly\":true},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Menu\",\"widgets\":[{\"attribute_alias\":\"MENU_VISIBLE\"},{\"attribute_alias\":\"MENU_PARENT\"},{\"attribute_alias\":\"MENU_POSITION\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"App \\\/ Package\",\"widgets\":[{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"DEFAULT_MENU_PARENT\"},{\"attribute_alias\":\"DEFAULT_MENU_INDEX\"},{\"attribute_alias\":\"AUTO_UPDATE_WITH_APP\"}]}]},{\"caption\":\"Widget\",\"widgets\":[{\"attribute_alias\":\"CONTENT\",\"hide_caption\":true,\"width\":\"100%\",\"height\":\"100%\"}]},{\"caption\":\"Page Groups\",\"widgets\":[{\"widget_type\":\"DataTable\",\"object_alias\":\"exface.Core.PAGE_GROUP_PAGES\",\"filters\":[{\"attribute_alias\":\"PAGE\",\"value\":\"=page_uid_field\",\"comparator\":\"==\",\"required\":true,\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_alias\":\"PAGE_GROUP__NAME\"},{\"attribute_alias\":\"PAGE_GROUP__DESCRIPTION\"},{\"attribute_alias\":\"PAGE_GROUP__PAGE_GROUP_PAGES__UID:COUNT\",\"caption\":\"Pages\"},{\"attribute_alias\":\"PAGE_GROUP__AUTHORIZATION_POLICY__UID:COUNT\",\"caption\":\"Security Policies\"},{\"attribute_alias\":\"PAGE_GROUP__APP__LABEL\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\",\"disabled_if\":{\"operator\":\"AND\",\"conditions\":[{\"value_left\":\"=page_uid_field\",\"comparator\":\"==\",\"value_right\":\"\"}]}},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.DeleteObject\"}]}]}]}]}",
-            "ALIAS": "PAGE",
-            "DATA_ADDRESS": "exf_page"
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"tabs\",\"tabs\":[{\"caption\":\"Authorization Point\",\"widgets\":[{\"widget_type\":\"WidgetGroup\",\"width\":2,\"widgets\":[{\"attribute_alias\":\"UID\",\"widget_type\":\"InputHidden\",\"id\":\"auth_point_id_field\"},{\"attribute_alias\":\"NAME\",\"width\":2},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"ACTIVE_FLAG\"},{\"attribute_alias\":\"COMBINING_ALGORITHM\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Supported policy targets\",\"width\":2,\"widgets\":[{\"attribute_alias\":\"TARGET_USER_ROLE_APPLICABLE\"},{\"attribute_alias\":\"TARGET_PAGE_GROUP_APPLICABLE\"},{\"attribute_alias\":\"TARGET_OBJECT_APPLICABLE\"},{\"attribute_alias\":\"TARGET_FACADE_APPLICABLE\"},{\"attribute_alias\":\"TARGET_ACTION_APPLICABLE\"}]}]},{\"caption\":\"Details\",\"widgets\":[{\"widget_type\":\"DataTable\",\"object_alias\":\"exface.Core.AUTHORIZATION_POLICY\",\"filters\":[{\"attribute_alias\":\"AUTHORIZATION_POINT\",\"comparator\":\"==\",\"widget_type\":\"InputHidden\",\"required\":true}],\"columns\":[{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"EFFECT\"},{\"attribute_alias\":\"TARGET_USER_ROLE__LABEL\"},{\"attribute_alias\":\"TARGET_PAGE_GROUP__LABEL\"},{\"attribute_alias\":\"TARGET_OBJECT__LABEL\"},{\"attribute_alias\":\"APP__LABEL\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\",\"disabled_if\":{\"operator\":\"AND\",\"conditions\":[{\"value_left\":\"=auth_point_id_field\",\"comparator\":\"==\",\"value_right\":\"\"}]}},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"visibility\":\"optional\"}]}]}]}]}",
+            "ALIAS": "AUTHORIZATION_POINT",
+            "DATA_ADDRESS": "exf_auth_point"
         }
     ],
     "totals_rows": [],

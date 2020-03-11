@@ -98,6 +98,8 @@ class Data
 
     /** @var boolean */
     private $is_editable = false;
+    
+    private $editable_changes_reset_on_refresh = true;
 
     /** @var WidgetLinkInterface */
     private $refresh_with_widget = null;
@@ -940,6 +942,39 @@ class Data
     public function setEditable($value = true) : iShowData
     {
         $this->is_editable = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getEditableChangesResetOnRefresh() : bool
+    {
+        return $this->editable_changes_reset_on_refresh;
+    }
+    
+    /**
+     * Set to FALSE to make changes in editable columns survive refreshes.
+     * 
+     * By default, any changes, that were not saved explicitly, will be lost
+     * as soon as the widget is refreshed - that is if a search is performed
+     * or the data is sorted, etc. If this `editable_changes_reset_on_refresh`
+     * is set to `false`, changes made in editable columns will "survive"
+     * refreshes. On the other hand, there will be no possibility to revert
+     * them, unless there is a dedicated reset-button (e.g. one with action
+     * `exface.Core.ResetWidget`).     * 
+     * 
+     * @uxon-property editable_changes_reset_on_refresh
+     * @uxon-type boolean
+     * @uxon-default true 
+     * 
+     * @param bool $value
+     * @return Data
+     */
+    public function setEditableChangesResetOnRefresh(bool $value) : Data
+    {
+        $this->editable_changes_reset_on_refresh = $value;
         return $this;
     }
 

@@ -59,22 +59,37 @@ class DataLookupDialog extends Dialog
             $data_table->setMultiSelect($this->getMultiSelect());
             $data_table->getPaginator()->setCountAllRows(false);
             
+            // If the table has no columns, determine them from the model
             if ($data_table->hasColumns() === false) {
-                if ($data_table->getMetaObject()->hasLabelAttribute() === true) {
-                    $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getLabelAttribute()));
-                } elseif ($data_table->getMetaObject()->hasUidAttribute() === true && $data_table->getMetaObject()->getUidAttribute()->isHidden() === false) {
-                    $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getUidAttribute()));
-                } else {
-                    $cnt = 0;
-                    foreach ($data_table->getMetaObject()->getAttributes() as $attr) {
-                        if ($attr->isHidden() === false) {
-                            $data_table->addColumn($data_table->createColumnFromAttribute($attr));
-                            $cnt++;
+                $defaultDisplayAttrs = $data_table->getMetaObject()->getAttributes()->getDefaultDisplayList();
+                switch (true) {
+                    // If the object has default display attributes, use them
+                    case $defaultDisplayAttrs->isEmpty() === false:
+                        foreach ($defaultDisplayAttrs as $attr) {
+                            $data_table->addColumn($data_table->createColumnFromAttribute($attr), $attr->getDefaultDisplayOrder());
                         }
-                        if ($cnt >= 5) {
-                            break;
+                        break;
+                    // Otherwise use the object's label if there is one
+                    case $data_table->getMetaObject()->hasLabelAttribute() === true:
+                        $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getLabelAttribute()));
+                        break;
+                    // If neither a label nor default-display attributes exist, see if the UID is not hidden
+                    case $defaultDisplayAttrs->isEmpty() && $data_table->getMetaObject()->hasUidAttribute() === true && $data_table->getMetaObject()->getUidAttribute()->isHidden() === false:
+                        $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getUidAttribute()));
+                        break;
+                    // Since we need columns a any case, just take the first 4 attributes if nothing else
+                    // helps
+                    default:
+                        $cnt = 0;
+                        foreach ($data_table->getMetaObject()->getAttributes() as $attr) {
+                            if ($attr->isHidden() === false) {
+                                $data_table->addColumn($data_table->createColumnFromAttribute($attr));
+                                $cnt++;
+                            }
+                            if ($cnt >= 4) {
+                                break;
+                            }
                         }
-                    }
                 }
             }
             

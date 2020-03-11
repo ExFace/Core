@@ -4,13 +4,6 @@
 	"METAMODEL.OBJECT_LABEL_ALIAS": "LABEL",
 	
 	"FACADES.DEFAULT_UI_FACADE": "exface.JEasyUIFacade.JEasyUIFacade",
-	"FACADES.AJAX.HEADERS.ACCESS_CONTROL" : {
-		"Access-Control-Allow-Origin": "",
-		"Access-Control-Allow-Credentials": "true",
-		"Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE",
-		"Access-Control-Allow-Headers": "",
-		"Access-Control-Expose-Headers": ""
-	},
     "FACADES.DEFAULT_WIDGET_FOR_UNKNOWN_DATA_TYPES" : "Input",
     "FACADES.DEFAULT_WIDGET_FOR_RELATIONS" : "InputComboTable",
     

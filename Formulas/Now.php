@@ -20,6 +20,8 @@ class Now extends \exface\Core\CommonLogic\Model\Formula
         $dataType = DataTypeFactory::createFromPrototype($this->getWorkbench(), DateTimeDataType::class);
         if ($format) {
             $dataType->setFormat($format);
+        } else {
+            $dataType->setFormat(DateTimeDataType::DATETIME_ICU_FORMAT_INTERNAL);
         }
         
         return $dataType->formatDate($date);

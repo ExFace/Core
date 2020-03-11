@@ -61,7 +61,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-01-08 18:26:36",
-            "MODIFIED_ON": "2020-01-10 12:23:59",
+            "MODIFIED_ON": "2020-03-03 14:21:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea3244285e38889442e4b318306b9a",
@@ -70,7 +70,7 @@
             "ALIAS": "CreateCredentialsDialog",
             "NAME": "Add Connection",
             "SHORT_DESCRIPTION": "",
-            "CONFIG_UXON": "{\"icon\":\"key\",\"widget\":{\"widget_type\":\"Dialog\",\"object_alias\":\"exface.Core.DATA_CONNECTION_CREDENTIALS\",\"columns_in_grid\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"DATA_CONNECTION\"},{\"caption\":\"Save credentials for User\",\"attribute_alias\":\"USER_CREDENTIALS__USER\",\"required\":false}],\"buttons\":[{\"visibility\":\"promoted\",\"align\":\"opposite\",\"action\":{\"alias\":\"exface.Core.ShowLoginDialog\",\"input_mapper\":{\"column_to_column_mappings\":[{\"from\":\"DATA_CONNECTION\",\"to\":\"CONNECTION\"},{\"from\":\"USER_CREDENTIALS__USER\",\"to\":\"CONNECTION_SAVE_FOR_USER\"},{\"from\":\"=1\",\"to\":\"CONNECTION_SAVE\"}]}}}]}}",
+            "CONFIG_UXON": "{\"icon\":\"key\",\"widget\":{\"widget_type\":\"Dialog\",\"object_alias\":\"exface.Core.DATA_CONNECTION_CREDENTIALS\",\"columns_in_grid\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"DATA_CONNECTION\"},{\"caption\":\"Save credentials for User\",\"attribute_alias\":\"USER_CREDENTIALS__USER\",\"required\":false}],\"buttons\":[{\"visibility\":\"promoted\",\"align\":\"opposite\",\"action\":{\"alias\":\"exface.Core.ShowLoginDialog\",\"login_to\":\"connection\",\"input_mapper\":{\"column_to_column_mappings\":[{\"from\":\"DATA_CONNECTION\",\"to\":\"CONNECTION\"},{\"from\":\"USER_CREDENTIALS__USER\",\"to\":\"CONNECTION_SAVE_FOR_USER\"},{\"from\":\"=1\",\"to\":\"CONNECTION_SAVE\"}]}}}]}}",
             "APP": "0x31000000000000000000000000000000",
             "USE_IN_OBJECT_BASKET_FLAG": "0",
             "DOCS": ""

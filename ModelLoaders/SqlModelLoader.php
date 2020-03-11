@@ -1167,7 +1167,7 @@ SQL;
         
         $uiPage->setUpdateable($row['auto_update_with_app'] ? true : false);
         $uiPage->setReplacesPageSelector($row['replace_page_oid']);
-        $uiPage->setContents($row['content']);
+        $uiPage->setContents($row['content'] ?? new UxonObject());
         
         $uiPage->setFacadeSelector($row['facade_filepath']);
         if ($row['facade_uxon']) {
