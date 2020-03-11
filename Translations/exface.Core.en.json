@@ -51,6 +51,11 @@
     "ACTION.LOGOUT.NAME": "Logout",
     "ACTION.LOGOUT.RESULT": "Signed out successfully.",
     
+    "ACTION.GENERIC.ADD": "Add",
+	"ACTION.GENERIC.REMOVE": "Remove",
+	"ACTION.GENERIC.CANCEL": "Cancel",
+	"ACTION.GENERIC.OK": "OK",
+	
     "ACTION.GENERATEMODELFROMDATASOURCE.NAME": "Generate Model",
 	"ACTION.GENERATEMODELFROMDATASOURCE.RESULT_FOR_OBJECT": "Created %created_counter% attribute(s) for %object_counter% object(s). %skipped_counter% attributes skipped as duplicates!",
 	
