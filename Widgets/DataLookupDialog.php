@@ -45,6 +45,8 @@ class DataLookupDialog extends Dialog
 {
     private $multi_select = null;
     
+    private $dataWidget = nulL;
+    
     /**
      * 
      * {@inheritDoc}
@@ -111,6 +113,7 @@ class DataLookupDialog extends Dialog
                 }
             }
             
+            $this->dataWidget = $data_table;
             $this->addWidget($data_table);
             
             if ($data_table->getMetaObject()->hasLabelAttribute() === true) {
@@ -140,6 +143,10 @@ class DataLookupDialog extends Dialog
     public function setMultiSelect(bool $trueOrFalse) : DataLookupDialog
     {
         $this->multi_select = $trueOrFalse;
+        $dataWidget = $this->getDataWidget();
+        if ($dataWidget instanceof iSupportMultiSelect) {
+            $dataWidget->setMultiSelect($trueOrFalse);
+        }
         return $this;
     }
     
@@ -165,6 +172,6 @@ class DataLookupDialog extends Dialog
      */
     public function getDataWidget() : Data
     {
-        return $this->getWidgetFirst();
+        return $this->dataWidget ?? $this->getWidgetFirst();
     }
 }
