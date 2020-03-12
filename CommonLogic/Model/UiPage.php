@@ -229,13 +229,20 @@ class UiPage implements UiPageInterface
             }
         }
         
-        if ($id_space_length = strpos($id, static::WIDGET_ID_SPACE_SEPARATOR)) {
+        // If the widget id contains an id space, first attempt to determine the parent
+        // widget of that id space. This is possible if the id space is the id of the
+        // spaces parent widget (e.g. an id space produced by ShowWidget-actions). Searching
+        // only inside the parent significantly reduces the number of widgets to examine.
+        $id_original = $id;
+        $id_space = '';
+        $id_space_parent = $parent;
+        while ($id_space_length = strpos($id, static::WIDGET_ID_SPACE_SEPARATOR)) {
             $id_space = substr($id, 0, $id_space_length);
             $id = substr($id, $id_space_length + 1);
-            return $this->getWidgetFromIdSpace($id, $id_space, $parent);
-        } else {
-            return $this->getWidgetFromIdSpace($id, '', $parent);
+            $id_space_parent = $this->getWidgetFromIdSpace($id_space, '', $id_space_parent);
         }
+        
+        return $this->getWidgetFromIdSpace($id_original, '', $id_space_parent);
     }
 
     /**
@@ -327,25 +334,40 @@ class UiPage implements UiPageInterface
             return $widget;
         }
         
-        if ($parent->getId() === $id) {
+        $parentId = $parent->getId();
+        if ($parentId === $id) {
             return $parent;
         }
         
-        if (StringDataType::startsWith($id_space, $parent->getId() . self::WIDGET_ID_SEPARATOR)) {
+        if (StringDataType::startsWith($id_space, $parentId . self::WIDGET_ID_SEPARATOR)) {
             $id_space_root = $this->getWidget($id_space, $parent);
             return $this->getWidgetFromIdSpace($id, $id_space, $id_space_root);
         }
         
         $id_is_path = false;
-        if (StringDataType::startsWith($id_with_namespace, $parent->getId() . self::WIDGET_ID_SEPARATOR)) {
+        if (StringDataType::startsWith($id_with_namespace, $parentId . self::WIDGET_ID_SEPARATOR)) {
             $id_is_path = true;
         }
+        
+        // See if the id searched for has an id space
+        $subjIdSpace = StringDataType::substringBefore($id_with_namespace, self::WIDGET_ID_SPACE_SEPARATOR, false, false, true);
         
         foreach ($parent->getChildren() as $child) {
             $child_id = $child->getId();
             if ($child_id == $id_with_namespace) {
                 return $child;
             } else {
+                
+                // If the subject id has an id space and we are in that id space, than it is
+                // obvious, that searching in widgets, that have a different id space makes
+                // no sense. Here we check if the child has a different id space and simply
+                // continue with the next child in this case.
+                if ($subjIdSpace && $parent->getIdSpace() === $subjIdSpace) {
+                    if ($child->getIdSpace() !== $subjIdSpace) {
+                        continue;
+                    }
+                }
+                
                 if (! $use_id_path || ! $id_is_path || StringDataType::startsWith($id_with_namespace, $child_id . self::WIDGET_ID_SEPARATOR)) {
                     // If we are looking for a non-path id or the path includes the id of the child, look within the child
                     try {
