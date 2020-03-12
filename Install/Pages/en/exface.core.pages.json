@@ -39,6 +39,12 @@
                 "attribute_alias": "APP"
             },
             {
+                "attribute_alias": "PAGE_GROUP_PAGES__PAGE_GROUP"
+            },
+            {
+                "attribute_alias": "PAGE_GROUP_PAGES__PAGE_GROUP__AUTHORIZATION_POLICY__TARGET_USER_ROLE"
+            },
+            {
                 "attribute_alias": "UID"
             }
         ],
