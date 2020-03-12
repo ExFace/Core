@@ -576,7 +576,7 @@ HTML;
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::createResponseFromError()
      */
-    protected function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface 
+    public function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface 
     {
         if ($exception instanceof ExceptionInterface) {
             $status_code = is_numeric($exception->getStatusCode()) ? $exception->getStatusCode() : 500;

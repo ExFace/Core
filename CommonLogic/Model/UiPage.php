@@ -1164,7 +1164,7 @@ class UiPage implements UiPageInterface
         if ($this->getAliasWithNamespace() != $page->getAliasWithNamespace()) {
             return false;
         }
-        if ($this->getMenuParentPageSelector()->toString() != $page->getMenuParentPageSelector()->toString()) {
+        if ($this->hasMenuParent() && $page->hasMenuParent() && $this->getMenuParentPageSelector()->toString() != $page->getMenuParentPageSelector()->toString()) {
             return false;
         }
         if ($this->getMenuIndex() != $page->getMenuIndex() && ! in_array('menuindex', $ignore_properties)) {
@@ -1245,7 +1245,7 @@ class UiPage implements UiPageInterface
     public function getFacade() : FacadeInterface
     {
         if ($this->facade === null) {
-            if ($this->facade !== null) {
+            if ($this->facadeSelector !== null) {
                 $this->facade = FacadeFactory::createFromAnything($this->facadeSelector, $this->getWorkbench());
             } else {
                 $this->facade = FacadeFactory::createDefaultHttpFacade($this->getWorkbench());
