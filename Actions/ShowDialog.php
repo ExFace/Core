@@ -47,7 +47,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
     {
         /* @var $dialog \exface\Core\Widgets\Dialog */
         $parent_widget = $this->getWidgetDefinedIn();
-        $dialog = WidgetFactory::create($page, $this->getDefaultWidgetType(), $parent_widget);
+        $dialog = WidgetFactory::createFromUxonInParent($parent_widget, $this->addIdSpaceToWidgetUxon(new UxonObject()), $this->getDefaultWidgetType());
         $dialog->setMetaObject($this->getMetaObject());
         
         if ($contained_widget) {
