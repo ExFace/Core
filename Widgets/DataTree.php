@@ -9,6 +9,8 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\DataRowReorder;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\CommonLogic\Model\RelationPath;
 
 /**
  * A table showing a hierarchical structure (tree).
@@ -186,7 +188,7 @@ class DataTree extends DataTable
      *
      * @throws WidgetConfigurationError if more than one recursive relation is found
      */
-    public function getTreeParentIdAttributeAlias()
+    public function getTreeParentRelationAlias()
     {
         // If the parent relation is not specified explicitly, we search for a relation to the object itself
         if (! $this->tree_parent_id_attribute_alias) {
@@ -196,12 +198,46 @@ class DataTree extends DataTable
                     if ($found_one === true) {
                         throw new WidgetConfigurationError($this, 'More than one recursive relations found for the treeGrid "' . $this->getId() . '". Please specify "tree_parent_id_attribute_alias" in the description of the widget!', '6T91BRG');
                     }
-                    $this->setTreeParentIdAttributeAlias($rel->getAliasWithModifier());
+                    $this->setTreeParentRelationAlias($rel->getAliasWithModifier());
                     $found_one = true;
                 }
             }
         }
         return $this->tree_parent_id_attribute_alias;
+    }
+    
+    /**
+     * Returns the attribute of the tree object, that represents the parent-relation.
+     * 
+     * @return MetaAttributeInterface
+     */
+    public function getTreeParentRelationAttribute() : MetaAttributeInterface
+    {
+        return $this->getMetaObject()->getAttribute($this->getTreeParentRelationAlias());
+    }
+    
+    /**
+     * Returns the relation to the parent level.
+     * 
+     * @return MetaRelationInterface
+     */
+    public function getTreeParentRelation() : MetaRelationInterface
+    {
+        return $this->getMetaObject()->getRelation($this->getTreeParentRelationAlias());
+    }
+    
+    /**
+     * Returns the attribute, that is the key of the parent level (= right key attribute of the parent-relation).
+     * 
+     * @return MetaAttributeInterface
+     */
+    public function getTreeParentKeyAttribute() : MetaAttributeInterface
+    {
+        $keyAlias = $this->getTreeParentRelation()->getRightKeyAttribute()->getAliasWithRelationPath();
+        if ($this->getTreeParentRelationAttribute()->isRelated()) {
+            $keyAlias = RelationPath::relationPathAdd($this->getTreeParentRelationAttribute()->getRelationPath()->toString(), $keyAlias);
+        }
+        return $this->getMetaObject()->getAttribute($keyAlias);
     }
     
     /**
@@ -251,16 +287,26 @@ class DataTree extends DataTable
      * 
      * The attribute is also automatically added as a hidden column!
      *
-     * @uxon-property tree_parent_id_attribute_alias
+     * @uxon-property tree_parent_relation_alias
      * @uxon-type metamodel:attribute
      *
      * @param string $value     
      * @return DataTree       
      */
-    public function setTreeParentIdAttributeAlias($value) : DataTree
+    public function setTreeParentRelationAlias(string $value) : DataTree
     {
         $this->tree_parent_id_attribute_alias = $value;
         return $this;
+    }
+    
+    /**
+     * @deprecated use setTreeParentRelationAlias()
+     * @param string $value
+     * @return DataTree
+     */
+    public function setTreeParentIdAttributeAlias($value) : DataTree
+    {
+        return $this->setTreeParentRelationAlias($value);
     }
 
     public function getTreeExpanded()
@@ -330,11 +376,12 @@ class DataTree extends DataTable
         if ($this->hasTreeFolderFlag()) {
             $data_sheet->getColumns()->addFromExpression($this->getTreeFolderFlagAttributeAlias());
         }
-        $data_sheet->getColumns()->addFromExpression($this->getTreeParentIdAttributeAlias());
+        $data_sheet->getColumns()->addFromExpression($this->getTreeParentRelationAlias());
+        $data_sheet->getColumns()->addFromExpression($this->getTreeParentKeyAttribute()->getAliasWithRelationPath());
         
         // Automatically add a root-filter if the root UID is known and lazy_load_tree_levels is not explicitly off
         if ($this->getTreeRootUid() !== null && $this->getLazyLoadTreeLevels() !== false && $data_sheet->getFilters()->isEmpty(true) === true && $this->getMetaObject()->is($data_sheet->getMetaObject())) {
-            $data_sheet->getFilters()->addConditionFromString($this->getTreeParentIdAttributeAlias(), $this->getTreeRootUid(), ComparatorDataType::EQUALS);
+            $data_sheet->getFilters()->addConditionFromString($this->getTreeParentRelationAlias(), $this->getTreeRootUid(), ComparatorDataType::EQUALS);
         }
         if ($this->getLazyLoadTreeLevels() === true && $this->getTreeRootUid() === null) {
             throw new WidgetConfigurationError($this, 'Cannot use `lazy_load_tree_levels` in a ' . $this->getWidgetType() . ' if no `tree_root_uid` is specified!');
