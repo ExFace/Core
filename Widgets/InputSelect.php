@@ -982,5 +982,15 @@ class InputSelect extends Input implements iSupportMultiSelect
         }
         return parent::setValue($value);
     }
+    
+    /**
+     * Same as isBoundToAttribute(), but for the value text.
+     * 
+     * @return bool
+     */
+    public function isTextBoundToAttribute() : bool
+    {
+        return $this->getTextAttributeAlias() ? true : false;
+    }
 }
 ?>

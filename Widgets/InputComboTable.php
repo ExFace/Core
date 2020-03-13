@@ -17,6 +17,7 @@ use exface\Core\Factories\QueryBuilderFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
 
 /**
  * An InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
@@ -466,14 +467,23 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     {
         // If the sheet is based upon the object, that is being selected by this Combo, we can use the prefill sheet
         // values directly
+        $rowNr = $this->getMultiSelect() !== true ? 0 : null;
         if ($col = $data_sheet->getColumns()->getByAttribute($this->getValueAttribute())) {
-            $pointer = DataPointerFactory::createFromColumn($col, 0);
-            $this->setValue($pointer->getValue());
+            $pointer = DataPointerFactory::createFromColumn($col, $rowNr);
+            $value = $pointer->getValue();
+            if ($this->getMultiSelect() && is_array($value)) {
+                $value = $col->aggregate(AggregatorFunctionsDataType::LIST_ALL);
+            }
+            $this->setValue($value);
             $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $pointer));
         }
         if ($col = $data_sheet->getColumns()->getByAttribute($this->getTextAttribute())) {
-            $pointer = DataPointerFactory::createFromColumn($col, 0);
-            $this->setValueText($pointer->getValue());
+            $pointer = DataPointerFactory::createFromColumn($col, $rowNr);
+            $text = $pointer->getValue();
+            if ($this->getMultiSelect() && is_array($text)) {
+                $text = $col->aggregate(AggregatorFunctionsDataType::LIST_ALL);
+            }
+            $this->setValueText($text);
             $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value_text', $pointer));
         }
         return;

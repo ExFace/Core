@@ -4,7 +4,6 @@ namespace exface\Core\Behaviors;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Actions\iUndoActions;
-use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Exceptions\Behaviors\ConcurrentWriteError;
 use exface\Core\Exceptions\Behaviors\ConcurrentWritesCannotBePreventedWarning;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
@@ -201,7 +200,7 @@ class TimeStampingBehavior extends AbstractBehavior
                 // beim Bearbeiten mehrerer Objekte ueber Massenupdate ueber Knopf, mehrerer Objekte ueber Knopf mit Filtern
                 // $check_nr > 1, $update_nr == 1
                 $updated_val = $updated_column->getValues()[0];
-                $check_val = DataColumn::aggregateValues($check_column->getValues(), AggregatorFunctionsDataType::fromValue($this->getWorkbench(), $check_column->getAttribute()->getDefaultAggregateFunction()));
+                $check_val = $check_column->aggregate(AggregatorFunctionsDataType::fromValue($this->getWorkbench(), $check_column->getAttribute()->getDefaultAggregateFunction()));
                 
                 try {
                     if (empty($data_sheet->getUidColumn()->getValues()[0])) {
