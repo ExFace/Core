@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-02-09 07:27:44",
-            "MODIFIED_ON": "2020-03-10 20:56:45",
+            "MODIFIED_ON": "2020-03-12 20:51:46",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4b0d9c862d5db2cfe4b318306b9a",
@@ -96,7 +96,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"width\":2,\"widgets\":[{\"widget_type\":\"SplitVertical\",\"panels\":[{\"height\":4,\"widgets\":[{\"attribute_alias\":\"NAME\",\"width\":\"max\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"DESCRIPTION\",\"width\":\"max\"}]},{\"caption\":\"Members\",\"widgets\":[{\"widget_type\":\"DataTable\",\"object_alias\":\"exface.Core.USER_ROLE_USERS\",\"filters\":[{\"attribute_alias\":\"USER_ROLE\",\"widget_type\":\"InputHidden\",\"required\":true}],\"columns\":[{\"attribute_alias\":\"USER__USERNAME\"},{\"attribute_alias\":\"USER__FIRST_NAME\"},{\"attribute_alias\":\"USER__LAST_NAME\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\",\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')\",\"icon\":\"plus\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')\",\"icon\":\"minus\"}]}]}]}]}",
             "ALIAS": "USER_ROLE",
             "DATA_ADDRESS": "exf_user_role"
         }

@@ -1,0 +1,50 @@
+{
+    "id": "0x11ea648437c38ffea2e30205857feb80",
+    "alias_with_namespace": "exface.core.user-roles",
+    "menu_parent_page_selector": "0x0a3e0996949f11e78ac4028037ec0200",
+    "menu_index": 1,
+    "menu_visible": true,
+    "name": "Roles",
+    "description": "",
+    "intro": "",
+    "replaces_page_selector": null,
+    "contents": {
+        "widget_type": "DataTable",
+        "object_alias": "exface.Core.USER_ROLE",
+        "columns": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "APP__ALIAS"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "USER_ROLE_USERS__UID:COUNT",
+                "caption": "Users"
+            },
+            {
+                "attribute_alias": "AUTHORIZATION_POLICY__UID:COUNT",
+                "caption": "Policies"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectCreateDialog"
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectCopyDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject",
+                "visibility": "optional"
+            }
+        ]
+    }
+}

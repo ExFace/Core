@@ -30,17 +30,14 @@
                 "attribute_alias": "FIRST_NAME"
             },
             {
-                "attribute_alias": "EMAIL"
+                "attribute_alias": "LOCALE"
             },
             {
-                "attribute_alias": "LOCALE"
+                "attribute_alias": "USER_ROLE_USERS__USER_ROLE__LABEL:LIST_DISTINCT"
             },
             {
                 "attribute_alias": "USER_CREDENTIALS__UID:COUNT",
                 "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS')"
-            },
-            {
-                "attribute_alias": "USER_CREDENTIALS__NAME:LIST_DISTINCT"
             },
             {
                 "attribute_alias": "UID"
