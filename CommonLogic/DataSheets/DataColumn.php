@@ -822,7 +822,7 @@ class DataColumn implements DataColumnInterface
         } elseif ($aggregatorOrString instanceof AggregatorInterface) {
             $aggregator = $aggregatorOrString;
         } else {
-            $aggregator = new Aggregator($this->getWorkbench(), $aggregator);
+            $aggregator = new Aggregator($this->getWorkbench(), $aggregatorOrString);
         }
         
         // If using a LIST-aggregator without a delimiter parameter, replace the aggregator with one
