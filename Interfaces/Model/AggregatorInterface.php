@@ -7,9 +7,27 @@ use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
+/**
+ * Aggregators are special expressions to define data aggregation like `SUM`, `AVG`, but also `COUNT_IF(condition)`.
+ * 
+ * Aggregators consist of a function name and (sometimes) optional parameters in braces. 
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 interface AggregatorInterface extends WorkbenchDependantInterface, iCanBeConvertedToString
 {
-    public function __construct(Workbench $workbench, $aggregator_string);
+    /**
+     * Instantiates an aggregator from it's string representation - e.g. `COUNT_IF(condition)`.
+     * 
+     * The $arguments are treated as defaults: if the aggregator string has it's own arguments,
+     * they will be used instead of $arguments.
+     * 
+     * @param Workbench $workbench
+     * @param string|AggregatorFunctionsDataType $aggregator_string
+     * @param array $arguments
+     */
+    public function __construct(Workbench $workbench, $aggregator_string, array $arguments = null);
     
     /**
      * @return AggregatorFunctionsDataType
@@ -25,6 +43,14 @@ interface AggregatorInterface extends WorkbenchDependantInterface, iCanBeConvert
      * @return boolean
      */
     public function hasArguments();
+    
+    /**
+     * Returns TRUE if this aggregator uses the same aggregate function as the given one.
+     * 
+     * @param AggregatorInterface|string $stringOrAggregator
+     * @return bool
+     */
+    public function is($stringOrAggregator) : bool;
     
     /**
      * Returns the data type resulting after aggregating the given data type.

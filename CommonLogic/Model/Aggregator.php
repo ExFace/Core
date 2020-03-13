@@ -13,9 +13,7 @@ use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
 use exface\Core\Factories\SelectorFactory;
 
 /**
- * Aggregators are special expressions to define data aggregation like SUM, AVG, but also COUNT_IF(condition).
- * 
- * Aggregators consist of a function name and (mostly) optional parameters in braces. 
+ * Default implementation of the AggregatorInterface
  * 
  * IDEA Having the AggregatorFunctionsDataType now, we could transfer all the logic to the data type
  * and remove the AggregatorInterface. This would also allow to validate aggregators including
@@ -34,39 +32,78 @@ class Aggregator implements AggregatorInterface {
     
     private $workbench = null;
     
-    public function __construct(Workbench $workbench, $aggregator_string)
+    /**
+     * 
+     * @param Workbench $workbench
+     * @param string|AggregatorFunctionsDataType $aggregator_string
+     * @param string[] $arguments
+     */
+    public function __construct(Workbench $workbench, $aggregator_string, array $arguments = null)
     {
         $this->workbench = $workbench;
         $aggregator_string = (string) $aggregator_string;
         $this->aggregator_string = $aggregator_string;
         $this->importString($aggregator_string);
+        if ($arguments === null) {
+            $this->arguments = array_merge($arguments, $this->arguments);
+        }
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
+     */
     public function getWorkbench()
     {
         return $this->workbench;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\AggregatorInterface::getFunction()
+     */
     public function getFunction()
     {
         return $this->function;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\AggregatorInterface::getArguments()
+     */
     public function getArguments()
     {
         return $this->arguments;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\AggregatorInterface::hasArguments()
+     */
     public function hasArguments()
     {
         return empty($this->arguments) ? false : true;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToString::exportString()
+     */
     public function exportString()
     {
         return $this->getFunction() . ($this->hasArguments() ? '(' . implode(', ', $this->getArguments()) . ')' : '');
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToString::importString()
+     */
     public function importString($aggregator_string)
     {
         if ($args_pos = strpos($aggregator_string, '(')) {
@@ -88,9 +125,28 @@ class Aggregator implements AggregatorInterface {
         return SelectorFactory::createDataTypeSelector($this->getWorkbench(), static::class);
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function __toString()
     {
         return $this->exportString();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\AggregatorInterface::is()
+     */
+    public function is($stringOrAggregator) : bool
+    {
+        if ($stringOrAggregator instanceof AggregatorInterface) {
+            $aggregator = $stringOrAggregator;
+        } else {
+            $aggregator = new self($this->getWorkbench(), $stringOrAggregator);
+        }
+        return $this->getFunction() == $aggregator->getFunction();
     }
     
     /**
