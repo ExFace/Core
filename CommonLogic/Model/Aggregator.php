@@ -44,7 +44,7 @@ class Aggregator implements AggregatorInterface {
         $aggregator_string = (string) $aggregator_string;
         $this->aggregator_string = $aggregator_string;
         $this->importString($aggregator_string);
-        if ($arguments === null) {
+        if ($arguments !== null) {
             $this->arguments = array_merge($arguments, $this->arguments);
         }
     }
