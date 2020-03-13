@@ -21,10 +21,12 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
  * - `[#~body#]` - replaced by the output of `Facade::buildHtmlBody($widget)`
  * - `[#~widget:<widget_type>#] - renders a widget, e.g. `[#~widget:NavCrumbs#]`
  * - `[#~url:<page_selector>#]` - replaced by the URL to the page identified by the 
- * `<page_selector>` (i.e. UID or alias with namespace)
- * - `[#~page:<attribute_alias>#]` - replaced by the value of a current page's attribute
+ * `<page_selector>` (i.e. UID or alias with namespace) or to the server adress
+ * - `[#~page:<attribute_alias|url>#]` - replaced by the value of a current page's attribute or URL
  * - `[#~config:<app_alias>:<config_key>#]` - replaced by the value of the configuration option
  * - `[#~translate:<app_alias>:<message>#]` - replaced by the message's translation to current locale
+ * - `[#~session:<option>#]` - replaced by session option values
+ * - `[#~facade:<attribute_alias>]` - replaced by the value of a current facade's attribute
  * 
  * @author Andrej Kabachnik
  *
@@ -197,6 +199,17 @@ class FacadePageTemplateRenderer implements TemplateRendererInterface
                 list($appAlias, $message) = explode(':', $value);
                 $val = $this->getWorkbench()->getApp($appAlias)->getTranslator()->translate(mb_strtoupper($message));
                 break;
+            case StringDataType::startsWith($placeholder, '~session:') === true;
+                $option = StringDataType::substringAfter($placeholder, '~session:');
+                $val = $this-> renderPlaceholderSessionOption($option);
+                break;
+            case StringDataType::startsWith($placeholder, '~facade:') === true;
+                $option = StringDataType::substringAfter($placeholder, '~facade:');
+                $methodName = 'get' . StringDataType::convertCaseUnderscoreToPascal($option);
+                if (method_exists($this->getFacade(), $methodName)) {
+                    $val = call_user_func([$this->getFacade(), $methodName]);
+                    break;
+                } 
             default:
                 throw new RuntimeException('Unknown placehodler "[#' . $placeholder . '#]" found in template "' . $this->getTemplateFilePath() . '"!');
         }
@@ -215,11 +228,28 @@ class FacadePageTemplateRenderer implements TemplateRendererInterface
             case 'alias':
                 $val = $this->getPage()->getAliasWithNamespace();
                 break;
+            case 'url':
+                $val = $this->getFacade()->buildUrlToPage($this->getPage());
+                break;
             default:
                 $method = 'get' . StringDataType::convertCaseUnderscoreToPascal($property);
                 $val = call_user_func([$page, $method]);
         }
         return $val;
+    }
+    
+    protected function renderPlaceholderSessionOption(string $option) : string
+    {
+        switch ($option) {
+            case 'language':
+                $locale = $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
+                $val = explode('_', $locale)[0];
+                break;
+            default:
+                $val = '';
+        }
+        return $val;
+        
     }
     
     /**
