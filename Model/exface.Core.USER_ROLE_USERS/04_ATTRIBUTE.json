@@ -169,7 +169,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-02-09 07:29:47",
-            "MODIFIED_ON": "2020-03-10 17:48:19",
+            "MODIFIED_ON": "2020-03-12 20:54:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4b0de5c80edfb2cfe4b318306b9a",
@@ -182,7 +182,7 @@
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
             "DEFAULT_EDITOR_UXON": null,
-            "COPY_WITH_RELATED_OBJECT": "0",
+            "COPY_WITH_RELATED_OBJECT": "1",
             "DELETE_WITH_RELATED_OBJECT": "1",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
