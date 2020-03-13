@@ -1345,11 +1345,14 @@ class UiPage implements UiPageInterface
     
     /**
      * @deprecated use setReplacesPageSelector() instead!
-     * @param string $aliasWithNamespace
+     * @param string|null $aliasWithNamespace
      * @return UiPageInterface
      */
-    protected function setReplacesPageAlias(string $aliasWithNamespace) : UiPageInterface
+    protected function setReplacesPageAlias($aliasWithNamespace) : UiPageInterface
     {
+        if ($aliasWithNamespace === null) {
+            return $this;
+        }
         return $this->setReplacesPageSelector($aliasWithNamespace);
     }
     
