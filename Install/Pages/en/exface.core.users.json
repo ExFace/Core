@@ -11,12 +11,19 @@
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.USER",
+        "multi_select": true,
         "filters": [
             {
                 "attribute_alias": "USERNAME"
             },
             {
                 "attribute_alias": "USER_CREDENTIALS__DATA_CONNECTION_CREDENTIALS__DATA_CONNECTION"
+            },
+            {
+                "attribute_alias": "USER_ROLE_USERS__USER_ROLE"
+            },
+            {
+                "attribute_alias": "LOCALE"
             }
         ],
         "columns": [
@@ -62,6 +69,41 @@
             },
             {
                 "action_alias": "exface.Core.DeleteObject"
+            },
+            {
+                "caption": "Add User Role",
+                "action": {
+                    "alias": "exface.Core.ShowObjectCreateDialog",
+                    "object_alias": "exface.Core.USER_ROLE_USERS",
+                    "prefill_with_input_data": true,
+                    "input_rows_min": 1,
+                    "input_rows_max": null,
+                    "widget": {
+                        "widget_type": "Dialog",
+                        "object_alias": "exface.Core.USER_ROLE_USERS",
+                        "width": 1,
+                        "height": "auto",
+                        "widgets": [
+                            {
+                                "attribute_alias": "USER",
+                                "widget_type": "InputComboTable",
+                                "multi_select": true,
+                                "disabled": true,
+                                "height": 3
+                            },
+                            {
+                                "attribute_alias": "USER_ROLE"
+                            }
+                        ],
+                        "buttons": [
+                            {
+                                "action_alias": "exface.Core.CreateData",
+                                "align": "opposite",
+                                "visibility": "promoted"
+                            }
+                        ]
+                    }
+                }
             }
         ]
     }
