@@ -3,13 +3,13 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
-use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\SelectorFactory;
+use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
 
-class UiPageTreeNode
+class UiPageTreeNode implements UiPageTreeNodeInterface
 {
     private $exface = null;
     
@@ -32,10 +32,18 @@ class UiPageTreeNode
     private $pageAlias = null;    
     
     
+    /**
+     * 
+     * @param WorkbenchInterface $exface
+     * @param string $pageAlias
+     * @param string $name
+     * @param string $uid
+     * @param UiPageTreeNode $parentNode
+     */
     public function __construct(WorkbenchInterface $exface, string $pageAlias, string $name, string $uid, UiPageTreeNode $parentNode = null)
     {
         $this->exface = $exface;
-        $this->pageSelector = SelectorFactory::createPageSelector($exface, $pageAlias);
+        $this->pageSelector = SelectorFactory::createPageSelector($exface, $uid);
         $this->pageAlias = $pageAlias;
         $this->name = $name;
         $this->uid = $uid;

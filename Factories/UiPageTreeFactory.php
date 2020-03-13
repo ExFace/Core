@@ -4,6 +4,7 @@ namespace exface\Core\Factories;
 use exface\Core\CommonLogic\Model\UiPageTree;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\CommonLogic\Model\UiPageTreeNode;
 
 class UiPageTreeFactory extends AbstractStaticFactory
 {
@@ -101,7 +102,10 @@ class UiPageTreeFactory extends AbstractStaticFactory
     public static function createForLeafNode(Workbench $exface, UiPageInterface $leafPage, UiPageInterface $rootPage = null) : UiPageTree
     {
         $tree = new UiPageTree($exface);
-        $tree->setExpandPathToPage($leafPage);
+        $node = new UiPageTreeNode($exface, $leafPage->getAlias(), $leafPage->getName(), $leafPage->getId());
+        $node->setDescription($leafPage->getDescription());
+        $node->setIntro($leafPage->getIntro());
+        $tree->setExpandPathToNode($node);
         if ($rootPage !== null) {
             $tree->setRootPages([$rootPage]);
         }
@@ -134,7 +138,10 @@ class UiPageTreeFactory extends AbstractStaticFactory
     public static function createBreadcrumbsToPage(Workbench $exface, UiPageInterface $page, UiPageInterface $rootPage = null) : UiPageTree
     {
         $tree = new UiPageTree($exface);
-        $tree->setExpandPathToPage($page);
+        $node = new UiPageTreeNode($exface, $page->getAlias(), $page->getName(), $page->getId());
+        $node->setDescription($page->getDescription());
+        $node->setIntro($page->getIntro());
+        $tree->setExpandPathToNode($node);
         if ($rootPage !== null) {
             $tree->setRootPages([$rootPage]);
         }
