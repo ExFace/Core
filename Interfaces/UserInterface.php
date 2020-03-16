@@ -3,8 +3,9 @@ namespace exface\Core\Interfaces;
 
 use exface\Core\CommonLogic\Model\User;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Selectors\UserRoleSelectorInterface;
 
-interface UserInterface extends WorkbenchDependantInterface
+interface UserInterface extends UserImpersonationInterface, WorkbenchDependantInterface
 {
 
     /**
@@ -13,13 +14,6 @@ interface UserInterface extends WorkbenchDependantInterface
      * @return string
      */
     public function getUid();
-
-    /**
-     * Returns the username of the user.
-     * 
-     * @return string
-     */
-    public function getUsername();
 
     /**
      * Sets the username of the user.
@@ -145,4 +139,11 @@ interface UserInterface extends WorkbenchDependantInterface
      * @return string
      */
     public function getInitials() : string;
+    
+    /**
+     * 
+     * @param UserRoleSelectorInterface $selector
+     * @return bool
+     */
+    public function hasRole(UserRoleSelectorInterface $selector) : bool;
 }

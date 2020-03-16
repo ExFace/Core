@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\DataTypes\EnumStaticDataTypeTrait;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 /**
- * Enumeration of security policy combining algorithms: deny-overrides, etc.
+ * Enumeration of security policy combining algorithms: deny-unless-permit, etc.
  * 
  * @method PolicyCombiningAlgorithmDataType DENY_OVERRIDES(\exface\Core\CommonLogic\Workbench $workbench)
  * @method PolicyCombiningAlgorithmDataType PERMIT_OVERRIDES(\exface\Core\CommonLogic\Workbench $workbench)
@@ -19,8 +19,8 @@ class PolicyCombiningAlgorithmDataType extends StringDataType implements EnumDat
 {
     use EnumStaticDataTypeTrait;
     
-    const DENY_OVERRIDES = "deny-overrides";
-    const PERMIT_OVERRIDES = "permit-overrides";
+    //const DENY_OVERRIDES = "deny-overrides";
+    //const PERMIT_OVERRIDES = "permit-overrides";
     const DENY_UNLESS_PERMIT = "deny-unless-permit";
     const PERMIT_UNLESS_DENY = "permit-unles-deny";
     

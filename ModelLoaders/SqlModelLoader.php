@@ -62,6 +62,12 @@ use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 use exface\Core\Factories\UserFactory;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\CommonLogic\Model\CompoundAttribute;
+use exface\Core\Interfaces\Security\AuthorizationPointInterface;
+use exface\Core\DataTypes\PolicyEffectDataType;
+use exface\Core\Interfaces\UserImpersonationInterface;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\PolicyCombiningAlgorithmDataType;
+use exface\Core\DataTypes\PolicyTargetDataType;
 
 /**
  * 
@@ -1105,6 +1111,85 @@ SQL;
     { 
         $user->exportDataSheet()->dataDelete();
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadAuthorizationPoint()
+     */
+    public function loadAuthorizationPoint(AuthorizationPointInterface $authPoint, UserImpersonationInterface $userOrToken) : AuthorizationPointInterface
+    {
+        if ($userOrToken->getUsername() !== null) {
+            
+            $userFilter = <<<SQL
+
+        apol.target_user_role_oid IN (
+            SELECT 
+                turu.user_role_oid
+            FROM
+                exf_user_role_users turu
+                INNER JOIN exf_user u ON turu.user_oid = u.oid
+            WHERE
+                u.username = '{$userOrToken->getUsername()}'
+        )
+SQL;
+        }
+        
+        $sql = <<<SQL
+SELECT 
+    apol.*, 
+    apt.alias,
+    apt.active_flag,
+    apt.default_effect,
+    apt.combining_algorithm,
+    apt.name as auth_point_name,
+    {$this->buildSqlUuidSelector('apt.app_oid')} AS app_oid,
+    {$this->buildSqlUuidSelector('apol.target_page_group_oid')} AS target_page_group_oid,
+    {$this->buildSqlUuidSelector('apol.target_user_role_oid')} AS target_user_role_oid,
+    {$this->buildSqlUuidSelector('apol.target_object_oid')} AS target_object_oid
+FROM 
+    exf_auth_policy apol
+    INNER JOIN exf_auth_point apt ON apol.auth_point_oid = apt.oid
+WHERE 
+    apt.alias = '{$authPoint->getAlias()}'
+    AND (
+        {$userFilter}
+        OR apol.target_user_role_oid IS NULL
+    )
+SQL;
+        
+        $apAppUid = $authPoint->getApp()->getUid();
+        $apConfigured = false;
+        foreach ($this->getDataConnection()->runSql($sql)->getResultArray() as $row) {
+            if ($apAppUid !== $row['app_oid']) {
+                continue;
+            }
+            
+            if ($apConfigured === false) {
+                $authPoint
+                    ->setActive(BooleanDataType::cast($row['active_flag']))
+                    ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), $row['default_effect']))
+                    ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), $row['combining_algorithm']))
+                    ->setName($row['auth_point_name']);
+                $apConfigured = true;
+            }
+            
+            $authPoint->addPolicy(
+                [
+                    PolicyTargetDataType::USER_ROLE => $row['target_user_role_oid'],
+                    PolicyTargetDataType::PAGE_GROUP => $row['target_page_group_oid'],
+                    PolicyTargetDataType::META_OBJECT => $row['target_object_oid'],
+                    PolicyTargetDataType::ACTION => $row['target_action_selector'],
+                    PolicyTargetDataType::FACADE => $row['target_facade_selector'],
+                ], 
+                PolicyEffectDataType::fromValue($this->getWorkbench(), $row['effect']),
+                $row['name'],
+                $row['condition_uxon']
+            );
+        }
+        
+        return $authPoint;
     }
     
     /**
