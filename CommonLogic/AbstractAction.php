@@ -309,7 +309,7 @@ abstract class AbstractAction implements ActionInterface
      *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::getResultMessageText()
      */
-    public function getResultMessageText()
+    public function getResultMessageText() : ?string
     {
         return $this->result_message_text;
     }
