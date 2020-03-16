@@ -231,21 +231,29 @@ class UiPageTree
     {
         $modelLoader = $this->getWorkbench()->model()->getModelLoader();
         /*@var UiPageTreeNodeInterface $node*/
-        if ($start === true) {
+        if ($start === true && $this->expandPathOnly === false) {
             $node = $modelLoader->loadUiPageTreeChildNodes($node);
         }
-        $node = $modelLoader->loadUiPageTreeParentNode($node);
+        $parentNode = $modelLoader->loadUiPageTreeParentNode($node, !($this->expandPathOnly));
         
         //if node is not an array and if it is not in rootPageNodes
-        if (!is_array($node) && $this->nodeInRootNodes($node) === false) {
-            $node = $this->buildParentMenuNodes($node);
+        if ($parentNode !== null && $this->nodeInRootNodes($parentNode) === false) {
+            $menuNodes = $this->buildParentMenuNodes($parentNode);
+            return $menuNodes;
         }
-        if (is_array($node)) {
-            return $node;
+        if ($parentNode === null) {
+            $parentNode = $node;
+        }
+        if ($this->nodeInRootNodes($parentNode) === true) {
+            for ($i = 0; $i < count($this->rootPagesNodes); $i++) {
+                if ($parentNode->getUid() === $this->rootPagesNodes[$i]->getUid()) {
+                    $this->rootPagesNodes[$i] = $parentNode;
+                    continue;
+                }
+            }
+            return $this->rootPagesNodes;
         } else {
-            $nodes = [];
-            $nodes[] = $node;
-            return $nodes;
+            return [];
         }
     }
     
