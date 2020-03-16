@@ -204,7 +204,7 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     
     /**
      * 
-     * @return array
+     * @return UiPageTreeNode[]
      */
     public function getChildNodes() : array
     {
@@ -241,7 +241,10 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
      */
     public function isPage(UiPageInterface $page) : bool
     {
-        return $page->is($this->getPageSelector());
+        if ($page->getId() === $this->getUid()) {
+            return true;
+        }
+        return false;
     }
     
     /**
@@ -253,10 +256,12 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
      */
     public function isParentOf(UiPageInterface $page) : bool
     {
-        if ($page->getMenuParentPage() === null) {
-            return false;
+        foreach ($this->getChildNodes() as $childNode) {
+            if ($childNode->getUid() === $page->getId()) {
+                return true;
+            }
         }
-        return $page->getMenuParentPage()->is($this->getPageSelector());        
+        return false;
     }
     
     /**
@@ -268,12 +273,17 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
      */
     public function isAncestorOf(UiPageInterface $page) : bool
     {
-        $checkPage = $page;
-        while ($checkPage->getMenuParentPage() !== null) {
-            if ($this->isParentOf($checkPage)) {
+        //return true;
+        while (!empty($this->getChildNodes())) {
+            if ($this->isParentOf($page)) {
                 return true;
             }
-            $checkPage = $checkPage->getMenuParentPage();            
+            foreach ($this->getChildNodes() as $childNode) {
+                if ($childNode->isAncestorOf($page)) {
+                    return true;
+                }
+            }
+            return false;
         }
         return false;          
     }    
