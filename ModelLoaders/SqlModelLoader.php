@@ -627,12 +627,12 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         
         $exface = $selector->getWorkbench();
-        // See if a (hex-)ID is given or an alias. The latter will need to be wrapped in qotes!
-        $data_connection_id_or_alias = $selector->toString();
-        if (false === $selector->isUid()) {
-            $data_connection_id_or_alias = '"' . $selector->toString() . '"';
+        
+        if ($selector->isUid()) {
+            $filter = 'dc.oid = ' . $selector->toString();
+        } else {
+            $filter = 'dc.alias = "' . $selector->toString() . '"';
         }
-        $filter = "(dc.oid = " . $data_connection_id_or_alias . " OR dc.alias = " . $data_connection_id_or_alias . ")";
         
         // If there is a user logged in, fetch his specific connctor config (credentials)
         $authToken = $exface->getSecurity()->getAuthenticatedToken();
@@ -661,9 +661,9 @@ class SqlModelLoader implements ModelLoaderInterface
         $query = $this->getDataConnection()->runSql($sql);
         $ds = $query->getResultArray();
         if (count($ds) > 1) {
-            throw new RangeException('Multiple user credentials found for data connection "' . $data_connection_id_or_alias . '" and user "' . $user_name . '"!', '6T4R8UM');
+            throw new RangeException('Multiple user credentials found for data connection "' . $selector . '" and user "' . $user_name . '"!', '6T4R8UM');
         } elseif (count($ds) != 1) {
-            throw new RangeException('Cannot find data connection "' . $data_connection_id_or_alias . '"!', '6T4R97R');
+            throw new RangeException('Cannot find data connection "' . $selector . '"!', '6T4R97R');
         }
         $ds = $ds[0];
         
