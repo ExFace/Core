@@ -26,6 +26,7 @@ use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
+use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
 
 interface ModelLoaderInterface
 {
@@ -204,5 +205,34 @@ interface ModelLoaderInterface
      * @return ModelLoaderInterface
      */
     public function deleteUser(UserInterface $user) : ModelLoaderInterface;
+    
+    /**
+     * Loads all child nodes from the given node and adds them as childs to the node. If `childNodes` is given those nodes in that array wont be 
+     * newly created from database entries but instead will be added as childs to the given node, if they actually are child nodes.
+     * Returns the given node with the added child nodes.
+     *
+     * @param UiPageTreeNodeInterface $node
+     * @param UiPageTreeNodeInterface[] $childNodes
+     * @return UiPageTreeNodeInterface
+     */
+    public function loadUiPageTreeChildNodes(UiPageTreeNodeInterface $node, array $childNodes = []) : UiPageTreeNodeInterface;
+    
+    /**
+     * Loads the parent node from the given node and adds given node to that parent node.
+     * When `loadSiblingNodes` is `true` all nodes that have the same parent node as the given node will also be added as child nodes to the created parent node.
+     * Returns the parent node or NULL if given node has no parent node.
+     *
+     * @param UiPageTreeNodeInterface $node
+     * @return UiPageTreeNodeInterface|NULL
+     */
+    public function loadUiPageTreeParentNode(UiPageTreeNodeInterface $node, $loadSiblingNodes = true) : ?UiPageTreeNodeInterface;
+    
+    /**
+     * Loads and creates all root nodes from the database. Root nodes are those nodes that dont have a parent node, meaning for example the parent_oid is NULL.
+     * Returns array with root nodes.
+     *
+     * @return UiPageTreeNodeInterface[]
+     */
+    public function loadUiPageTreeRootNodes(UiPageTreeNodeInterface $node = null) : array;
 }
 ?>
