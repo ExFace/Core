@@ -5,8 +5,8 @@ use exface\Core\Interfaces\UserInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
+use exface\Core\Interfaces\Selectors\UserRoleSelectorInterface;
 
 /**
  * Representation of an Exface user.
@@ -16,7 +16,6 @@ use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
  */
 class User implements UserInterface
 {
-
     private $exface;
 
     private $dataSheet;
@@ -91,7 +90,7 @@ class User implements UserInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\UserInterface::getUsername()
      */
-    public function getUsername()
+    public function getUsername() : ?string
     {
         return $this->username;
     }
@@ -358,5 +357,16 @@ class User implements UserInterface
             return 'Guest';
         }
         return mb_substr($this->getFirstName(), 0, 1) . '.' . mb_substr($this->getLastName(), 0, 1) . '.';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::hasRole()
+     */
+    public function hasRole(UserRoleSelectorInterface $selector): bool
+    {
+        // TODO
+        return true;
     }
 }

@@ -2,6 +2,7 @@
 namespace exface\Core\Interfaces\Security;
 
 use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\UserImpersonationInterface;
 
 /**
  * Tokens store authentication information and can be authenticated by whe workbench security.
@@ -12,14 +13,8 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
  * @author Andrej Kabachnik
  *
  */
-interface AuthenticationTokenInterface
+interface AuthenticationTokenInterface extends UserImpersonationInterface
 {    
-    /**
-     * 
-     * @return string|NULL
-     */
-    public function getUsername() : ?string;
-    
     /**
      * Returns the facade, that the user uses to interact with the workbench (if available).
      * 

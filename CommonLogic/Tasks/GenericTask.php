@@ -16,6 +16,7 @@ use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
 
 /**
  * Generic task implementation to create task programmatically.
@@ -395,6 +396,8 @@ class GenericTask implements TaskInterface
     {
         if (is_null($this->originPage)) {
             $this->originPage = UiPageFactory::create($this->getPageSelector());
+            $pageAP = new UiPageAuthorizationPoint($this->getWorkbench()->getCoreApp(), 'PAGE_ACCESS');
+            $pageAP->authorize($this->originPage);
         }
         return $this->originPage;
     }
