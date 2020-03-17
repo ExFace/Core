@@ -39,7 +39,7 @@ class CreateData extends SaveData implements iCreateData
         
         $this->setUndoDataSheet($data_sheet);
         
-        $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CREATEDATA.RESULT', ['%number%' => $affected_rows], $affected_rows);
+        $message = $this->getResultMessageText() ?? $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CREATEDATA.RESULT', ['%number%' => $affected_rows], $affected_rows);
         $result = ResultFactory::createDataResult($task, $data_sheet, $message);
         if ($affected_rows > 0) {
             $result->setDataModified(true);
