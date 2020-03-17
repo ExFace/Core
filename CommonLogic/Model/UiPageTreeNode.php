@@ -29,7 +29,9 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     
     private $uid = null;
     
-    private $pageAlias = null;    
+    private $pageAlias = null;
+    
+    private $childNodesLoaded = false;
     
     
     /**
@@ -38,12 +40,12 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
      * @param string $pageAlias
      * @param string $name
      * @param string $uid
-     * @param UiPageTreeNode $parentNode
+     * @param UiPageTreeNodeInterface $parentNode
      */
-    public function __construct(WorkbenchInterface $exface, string $pageAlias, string $name, string $uid, UiPageTreeNode $parentNode = null)
+    public function __construct(WorkbenchInterface $exface, string $pageAlias, string $name, string $uid, UiPageTreeNodeInterface $parentNode = null)
     {
         $this->exface = $exface;
-        $this->pageSelector = SelectorFactory::createPageSelector($exface, $uid);
+        $this->pageSelector = SelectorFactory::createPageSelector($exface, $pageAlias);
         $this->pageAlias = $pageAlias;
         $this->name = $name;
         $this->uid = $uid;
@@ -92,10 +94,10 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     
     /**
      * 
-     * @param UiPageTreeNode $parentNode
-     * @return UiPageTreeNode
+     * @param UiPageTreeNodeInterface $parentNode
+     * @return UiPageTreeNodeInterface
      */
-    public function setParentNode(UiPageTreeNode $parentNode) : UiPageTreeNode
+    public function setParentNode(UiPageTreeNodeInterface $parentNode) : UiPageTreeNodeInterface
     {
         $this->parentNode = $parentNode;
         return $this;
@@ -112,9 +114,9 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     
     /**
      * 
-     * @return UiPageTreeNode|NULL
+     * @return UiPageTreeNodeInterface|NULL
      */
-    public function getParentNode() : ?UiPageTreeNode
+    public function getParentNode() : ?UiPageTreeNodeInterface
     {
         return $this->parentNode;   
     }
@@ -141,9 +143,9 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     /**
      * 
      * @param string $intro
-     * @return UiPageTreeNode
+     * @return UiPageTreeNodeInterface
      */
-    public function setIntro (string $intro) : UiPageTreeNode
+    public function setIntro (string $intro) : UiPageTreeNodeInterface
     {
         $this->intro = $intro;
         return $this;
@@ -173,9 +175,9 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     /**
      * 
      * @param string $descpription
-     * @return UiPageTreeNode
+     * @return UiPageTreeNodeInterface
      */
-    public function setDescription (string $descpription) : UiPageTreeNode
+    public function setDescription (string $descpription) : UiPageTreeNodeInterface
     {
         $this->description = $descpription;
         return $this;
@@ -204,7 +206,7 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     
     /**
      * 
-     * @return UiPageTreeNode[]
+     * @return UiPageTreeNodeInterface[]
      */
     public function getChildNodes() : array
     {
@@ -212,13 +214,44 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     }
     
     /**
+     *
+     * @return UiPageTreeNodeInterface
+     */
+    public function resetChildNodes() : UiPageTreeNodeInterface
+    {
+        $this->childNodes = [];
+        $this->setChildNodesLoaded(false);
+        return $this;
+    }
+    
+    /**
      * 
-     * @param UiPageTreeNode $node
+     * @param bool $trueOrFalse
+     * @return UiPageTreeNodeInterface
+     */
+    public function setChildNodesLoaded(bool $trueOrFalse) : UiPageTreeNodeInterface
+    {
+        $this->childNodesLoaded = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getChildNodesLoaded() : bool
+    {
+        return $this->childNodesLoaded;
+    }
+    
+    /**
+     * 
+     * @param UiPageTreeNodeInterface $node
      * @param int $position
      * @throws InvalidArgumentException
-     * @return UiPageTreeNode
+     * @return UiPageTreeNodeInterface
      */
-    public function addChildNode(UiPageTreeNode $node, int $position = null) : UiPageTreeNode
+    public function addChildNode(UiPageTreeNodeInterface $node, int $position = null) : UiPageTreeNodeInterface
     {
         if ($node->getParentNode() !== $this){
             throw new InvalidArgumentException("The parent node of the given node '{$node->getName()}' is not the node '{$this->getName()}' !");

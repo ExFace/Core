@@ -8,9 +8,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 
 interface UiPageTreeNodeInterface
 {
-    public function __construct(WorkbenchInterface $exface, string $pageAlias, string $name, string $uid, UiPageTreeNode $parentNode = null);
-    
-    /**
+     /**
      *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
@@ -37,10 +35,10 @@ interface UiPageTreeNodeInterface
     
     /**
      * 
-     * @param UiPageTreeNode $parentNode
-     * @return UiPageTreeNode
+     * @param UiPageTreeNodeInterface $parentNode
+     * @return UiPageTreeNodeInterface
      */
-    public function setParentNode(UiPageTreeNode $parentNode) : UiPageTreeNode;
+    public function setParentNode(UiPageTreeNodeInterface $parentNode) : UiPageTreeNodeInterface;
     
     /**
      * 
@@ -50,9 +48,9 @@ interface UiPageTreeNodeInterface
     
     /**
      * 
-     * @return UiPageTreeNode|NULL
+     * @return UiPageTreeNodeInterface|NULL
      */
-    public function getParentNode() : ?UiPageTreeNode;
+    public function getParentNode() : ?UiPageTreeNodeInterface;
     
     /**
      * Returns the nodes inherent page.
@@ -70,9 +68,9 @@ interface UiPageTreeNodeInterface
     /**
      * 
      * @param string $intro
-     * @return UiPageTreeNode
+     * @return UiPageTreeNodeInterface
      */
-    public function setIntro (string $intro) : UiPageTreeNode;
+    public function setIntro (string $intro) : UiPageTreeNodeInterface;
     
     /**
      * 
@@ -89,9 +87,9 @@ interface UiPageTreeNodeInterface
     /**
      * 
      * @param string $descpription
-     * @return UiPageTreeNode
+     * @return UiPageTreeNodeInterface
      */
-    public function setDescription (string $descpription) : UiPageTreeNode;
+    public function setDescription (string $descpription) : UiPageTreeNodeInterface;
     
     /**
      * 
@@ -112,13 +110,32 @@ interface UiPageTreeNodeInterface
     public function getChildNodes() : array;
     
     /**
+     *
+     * @return UiPageTreeNodeInterface
+     */
+    public function resetChildNodes() : UiPageTreeNodeInterface;
+    
+    /**
      * 
-     * @param UiPageTreeNode $node
+     * @param UiPageTreeNodeInterface $node
      * @param int $position
      * @throws InvalidArgumentException
-     * @return UiPageTreeNode
+     * @return UiPageTreeNodeInterface
      */
-    public function addChildNode(UiPageTreeNode $node, int $position = null) : UiPageTreeNode;
+    public function addChildNode(UiPageTreeNodeInterface $node, int $position = null) : UiPageTreeNodeInterface;
+    
+    /**
+     *
+     * @param bool $trueOrFalse
+     * @return UiPageTreeNodeInterface
+     */
+    public function setChildNodesLoaded(bool $trueOrFalse) : UiPageTreeNodeInterface;
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getChildNodesLoaded() : bool;
     
     /**
      * Checks if the given page is equal to the page inherent to this node.
