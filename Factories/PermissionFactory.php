@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Security\PermissionInterface;
 use exface\Core\CommonLogic\Security\Authorization\Permission;
 use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Security\AuthorizationPolicyInterface;
 
 /**
  * Instantiates security policy permissions.
@@ -14,22 +15,43 @@ use exface\Core\Exceptions\InvalidArgumentException;
  */
 abstract class PermissionFactory extends AbstractStaticFactory
 {
-    public static function createIndeterminate() : PermissionInterface
+    /**
+     * 
+     * @param \Throwable $error
+     * @param AuthorizationPolicyInterface $policy
+     * @return PermissionInterface
+     */
+    public static function createIndeterminate(\Throwable $error = null, AuthorizationPolicyInterface $policy = null) : PermissionInterface
     {
-        return new Permission(null, null, true);
+        return new Permission(null, null, true, null, $policy, $error);
     }
     
-    public static function createNotApplicable() : PermissionInterface
+    /**
+     * 
+     * @param AuthorizationPolicyInterface $policy
+     * @return PermissionInterface
+     */
+    public static function createNotApplicable(AuthorizationPolicyInterface $policy = null) : PermissionInterface
     {
         return new Permission(null, null, null, true);
     }
     
-    public static function createDenied() : PermissionInterface
+    /**
+     * 
+     * @param AuthorizationPolicyInterface $policy
+     * @return PermissionInterface
+     */
+    public static function createDenied(AuthorizationPolicyInterface $policy = null) : PermissionInterface
     {
         return new Permission(true);
     }
     
-    public static function createPermitted() : PermissionInterface
+    /**
+     * 
+     * @param AuthorizationPolicyInterface $policy
+     * @return PermissionInterface
+     */
+    public static function createPermitted(AuthorizationPolicyInterface $policy = null) : PermissionInterface
     {
         return new Permission(null, true);
     }
@@ -40,13 +62,13 @@ abstract class PermissionFactory extends AbstractStaticFactory
      * @throws InvalidArgumentException
      * @return PermissionInterface
      */
-    public static function createFromPolicyEffect(PolicyEffectDataType $effect) : PermissionInterface
+    public static function createFromPolicyEffect(PolicyEffectDataType $effect, AuthorizationPolicyInterface $policy = null) : PermissionInterface
     {
         switch ($effect->__toString()) {
             case PolicyEffectDataType::PERMIT:
-                return static::createPermitted();
+                return static::createPermitted($policy);
             case PolicyEffectDataType::DENY:
-                return static::createDenied();
+                return static::createDenied($policy);
             default:
                 throw new InvalidArgumentException('Cannot create permission from policy effect "' . $effect->__toString() . '"!');
         }

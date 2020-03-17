@@ -81,7 +81,7 @@ class GenericAuthorizationPolicy implements AuthorizationPolicyInterface
         
         if ($this->userRoleSelector !== null) {
             if ($user->hasRole($this->userRoleSelector) === false) {
-                return PermissionFactory::createNotApplicable();
+                return PermissionFactory::createNotApplicable($this);
             } else {
                 $applied = true;
             }
@@ -89,7 +89,7 @@ class GenericAuthorizationPolicy implements AuthorizationPolicyInterface
         
         if ($this->pageGroupSelector) {
             if ($page === null || $page->isInGroup($this->pageGroupSelector) === false) {
-                return PermissionFactory::createNotApplicable();
+                return PermissionFactory::createNotApplicable($this);
             } else {
                 $applied = true;
             }
@@ -97,7 +97,7 @@ class GenericAuthorizationPolicy implements AuthorizationPolicyInterface
         
         if ($this->metaObjectSelector) {
             if ($object === null || $object->is($this->metaObjectSelector) === false) {
-                return PermissionFactory::createNotApplicable();
+                return PermissionFactory::createNotApplicable($this);
             } else {
                 $applied = true;
             }
@@ -105,7 +105,7 @@ class GenericAuthorizationPolicy implements AuthorizationPolicyInterface
         
         if ($this->actionSelector) {
             if ($action === null || $action->is($this->actionSelector) === false) {
-                return PermissionFactory::createNotApplicable();
+                return PermissionFactory::createNotApplicable($this);
             } else {
                 $applied = true;
             }
@@ -113,22 +113,37 @@ class GenericAuthorizationPolicy implements AuthorizationPolicyInterface
         
         if ($this->facadeSelector) {
             if ($facade === null || $facade->is($this->facadeSelector) === false) {
-                return PermissionFactory::createNotApplicable();
+                return PermissionFactory::createNotApplicable($this);
             } else {
                 $applied = true;
             }
         }
         
         if ($applied === false) {
-            return PermissionFactory::createNotApplicable();
+            return PermissionFactory::createNotApplicable($this);
         }
         
         // If all targets are applicable, the permission is the effect of this condition.
-        return PermissionFactory::createFromPolicyEffect($this->getEffect());
+        return PermissionFactory::createFromPolicyEffect($this->getEffect(), $this);
     }
     
-    protected function getEffect() : PolicyEffectDataType
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthorizationPolicyInterface::getEffect()
+     */
+    public function getEffect() : PolicyEffectDataType
     {
         return $this->effect;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthorizationPolicyInterface::getName()
+     */
+    public function getName() : ?string
+    {
+        return $this->name;
     }
 }

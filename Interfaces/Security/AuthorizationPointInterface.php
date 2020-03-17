@@ -7,6 +7,7 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\DataTypes\PolicyCombiningAlgorithmDataType;
+use exface\Core\Interfaces\UserImpersonationInterface;
 
 /**
  * The authorization point represents a access permission check in an app's security logic.
@@ -96,6 +97,18 @@ interface AuthorizationPointInterface extends WorkbenchDependantInterface, Alias
     
     /**
      * 
+     * @return PolicyEffectDataType
+     */
+    public function getDefaultPolicyEffect() : PolicyEffectDataType;
+    
+    /**
+     * 
+     * @return PolicyCombiningAlgorithmDataType
+     */
+    public function getPolicyCombiningAlgorithm() : PolicyCombiningAlgorithmDataType;
+    
+    /**
+     * 
      * @param PolicyCombiningAlgorithmDataType $algorithm
      * @return AuthorizationPointInterface
      */
@@ -104,4 +117,19 @@ interface AuthorizationPointInterface extends WorkbenchDependantInterface, Alias
     public function setName(string $name) : AuthorizationPointInterface;
     
     public function getName() : string;
+    
+    
+    
+    /**
+     *
+     * @return string
+     */
+    public function getUid() : string;
+    
+    /**
+     *
+     * @param string $value
+     * @return AuthorizationPointInterface
+     */
+    public function setUid(string $value) : AuthorizationPointInterface;
 }
