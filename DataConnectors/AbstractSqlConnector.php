@@ -301,13 +301,13 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
         }
         
         if ($updateUserCredentials === true) {
-            $user = $credentialsOwner ?? $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
+            $user = $credentialsOwner;
             $uxon = new UxonObject([
                 'user' => $token->getUsername(),
                 'password' => $token->getPassword()
             ]);
             $credentialSetName = ($token->getUsername() ? $token->getUsername() : 'no username') . ' - ' . $this->getName();
-            $this->updateUserCredentials($user, $uxon, $credentialSetName);
+            $this->saveCredentials($uxon, $credentialSetName, $user);
         }
         
         return $token;
