@@ -8,6 +8,7 @@ use exface\Core\Exceptions\Security\AccessDeniedError;
 use exface\Core\Events\Security\OnAuthorizedEvent;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
+use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 
 /**
  * 
@@ -29,25 +30,22 @@ class UiPageAuthorizationPoint extends AbstractAuthorizationPoint
         if ($userOrToken === null) {
             $userOrToken = $this->getWorkbench()->getSecurity()->getAuthenticatedToken();
         }
-        
-        if ($this->isLoaded() === false) {
-            $this->loadModel($userOrToken);
-        }
             
-        try {
-            $this->combinePermissions($this->evaluatePolicies($page, $userOrToken));
-            return $page;
-        } catch (\Throwable $e) {
-            if ($this->getDefaultPolicyEffect() == PolicyEffectDataType::PERMIT) {
+        $permission = new CombinedPermission($this->getPolicyCombiningAlgorithm(), $this->evaluatePolicies($page, $userOrToken));
+        switch (true) {
+            case $permission->isPermitted():
+            case ($permission->isIndeterminate() || $permission->isNotApplicable()) && $this->getDefaultPolicyEffect() == PolicyEffectDataType::PERMIT:
                 $event = new OnAuthorizedEvent($this, $userOrToken, $page);
                 $this->getWorkbench()->eventManager()->dispatch($event);
                 return $page;
-            } else {
-                if (! ($e instanceof AccessDeniedError)) {
-                    $e = new AccessDeniedError('Failed evaluating authorization policies!', null, $e);
+            case $permission->isDenied():
+            case ($permission->isIndeterminate() || $permission->isNotApplicable()) && $this->getDefaultPolicyEffect() == PolicyEffectDataType::DENY:
+                if ($page && $userOrToken) {
+                    $forUser = $userOrToken->isAnonymous() ? 'for anonymous users' : 'for user "' . $userOrToken->getUsername() . '"';
+                    throw new AccessPermissionDeniedError($this, $permission, $userOrToken, $page, 'Access to page "' . $page->getAliasWithNamespace() . '" denied ' . $forUser . '!');
+                } else {
+                    throw new AccessPermissionDeniedError($this, $permission, $userOrToken, $page, 'Unknown error while validating page access permissions!');
                 }
-                throw $e;
-            }
         }
     }
     
@@ -64,7 +62,7 @@ class UiPageAuthorizationPoint extends AbstractAuthorizationPoint
     
     protected function evaluatePolicies(UiPageInterface $page, UserImpersonationInterface $userOrToken) : \Generator
     {
-        foreach ($this->getPolicies() as $policy) {
+        foreach ($this->getPolicies($userOrToken) as $policy) {
             yield $policy->authorize($userOrToken, $page);
         }
     }

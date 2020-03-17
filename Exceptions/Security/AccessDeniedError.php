@@ -10,5 +10,4 @@ use exface\Core\Exceptions\RuntimeException;
  *        
  */
 class AccessDeniedError extends RuntimeException
-{
-}
+{}

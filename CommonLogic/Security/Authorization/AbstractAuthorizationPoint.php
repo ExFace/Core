@@ -8,8 +8,6 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\Security\AuthorizationPolicyInterface;
 use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\DataTypes\PolicyCombiningAlgorithmDataType;
-use exface\Core\Interfaces\Security\PermissionInterface;
-use exface\Core\Factories\PermissionFactory;
 use exface\Core\Interfaces\UserImpersonationInterface;
 
 abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
@@ -31,6 +29,8 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
     
     private $name = null;
     
+    private $uid = null;
+    
     private $isLoadedForUser = null;
     
     /**
@@ -42,6 +42,7 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
         $this->workbench = $app->getWorkbench();
         $this->alias = $alias;
         $this->app = $app;
+        $this->workbench->model()->getModelLoader()->loadAuthorizationPoint($this);
     }
     
     /**
@@ -58,8 +59,12 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
      * 
      * @return AuthorizationPolicyInterface[]
      */
-    protected function getPolicies() : array
+    public function getPolicies(UserImpersonationInterface $userOrToken) : array
     {
+        if ($this->isPolicyModelLoaded($userOrToken) === false) {
+            $this->loadPolicies($userOrToken);
+        }
+        
         return $this->policies;
     }
     
@@ -101,7 +106,7 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
         return $this;
     }
     
-    protected function getPolicyCombiningAlgorithm() : PolicyCombiningAlgorithmDataType
+    public function getPolicyCombiningAlgorithm() : PolicyCombiningAlgorithmDataType
     {
         return $this->combinationAlgorithm;
     }
@@ -112,7 +117,7 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
         return $this;
     }
     
-    protected function getDefaultPolicyEffect() : PolicyEffectDataType
+    public function getDefaultPolicyEffect() : PolicyEffectDataType
     {
         return $this->defaultEffect;
     }
@@ -120,34 +125,6 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
     public function getApp(): AppInterface
     {
         return $this->app;
-    }
-    
-    /**
-     * 
-     * @param \Generator $permissions
-     * @return PermissionInterface
-     */
-    protected function combinePermissions(iterable $permissions) : PermissionInterface
-    {
-        switch ($this->getPolicyCombiningAlgorithm()->toString()) {
-            case PolicyCombiningAlgorithmDataType::DENY_UNLESS_PERMIT:
-                foreach ($permissions as $permission) {
-                    if ($permission->isPermitted()) {
-                        return $permission;
-                    }
-                }
-                return PermissionFactory::createDenied();
-            break;
-            case PolicyCombiningAlgorithmDataType::PERMIT_UNLESS_DENY:
-                foreach ($permissions as $permission) {
-                    if ($permission->isDenied()) {
-                        return $permission;
-                    }
-                }
-                return PermissionFactory::createPermitted();
-            break;
-        }
-        
     }
     
     /**
@@ -170,16 +147,47 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
         return $this;
     }
     
-    protected function isLoaded() : bool
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthorizationPointInterface::getUid()
+     */
+    public function getUid() : string
     {
-        return $this->isLoadedForUser !== null;
+        return $this->uid;
     }
     
-    protected function loadModel(UserImpersonationInterface $userOrToken) : self
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthorizationPointInterface::setUid()
+     */
+    public function setUid(string $value) : AuthorizationPointInterface
+    {
+        $this->uid = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param UserImpersonationInterface $userOrToken
+     * @return bool
+     */
+    protected function isPolicyModelLoaded(UserImpersonationInterface $userOrToken) : bool
+    {
+        return $this->isLoadedForUser !== null && $userOrToken->getUsername() === $this->isLoadedForUser->getUsername();
+    }
+    
+    /**
+     * 
+     * @param UserImpersonationInterface $userOrToken
+     * @return self
+     */
+    protected function loadPolicies(UserImpersonationInterface $userOrToken) : self
     {
         $this->policies = [];
         $this->isLoadedForUser = null;
-        $this->workbench->model()->getModelLoader()->loadAuthorizationPoint($this, $userOrToken);
+        $this->workbench->model()->getModelLoader()->loadAuthorizationPolicies($this, $userOrToken);
         $this->isLoadedForUser = $userOrToken;
         return $this;
     }

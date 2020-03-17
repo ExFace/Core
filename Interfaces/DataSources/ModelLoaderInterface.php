@@ -174,7 +174,15 @@ interface ModelLoaderInterface
      * 
      * @param AuthorizationPointInterface $authPoint
      */
-    public function loadAuthorizationPoint(AuthorizationPointInterface $authPoint, UserImpersonationInterface $userOrToken) : AuthorizationPointInterface;
+    public function loadAuthorizationPoint(AuthorizationPointInterface $authPoint) : AuthorizationPointInterface;
+    
+    /**
+     * 
+     * @param AuthorizationPointInterface $authPoint
+     * @param UserImpersonationInterface $userOrToken
+     * @return AuthorizationPointInterface
+     */
+    public function loadAuthorizationPolicies(AuthorizationPointInterface $authPoint, UserImpersonationInterface $userOrToken) : AuthorizationPointInterface;
     
     /**
      * 

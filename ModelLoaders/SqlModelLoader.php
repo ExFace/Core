@@ -68,6 +68,7 @@ use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\PolicyCombiningAlgorithmDataType;
 use exface\Core\DataTypes\PolicyTargetDataType;
+use exface\Core\Exceptions\LogicException;
 
 /**
  * 
@@ -1118,14 +1119,57 @@ SQL;
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadAuthorizationPoint()
      */
-    public function loadAuthorizationPoint(AuthorizationPointInterface $authPoint, UserImpersonationInterface $userOrToken) : AuthorizationPointInterface
+    public function loadAuthorizationPoint(AuthorizationPointInterface $authPoint) : AuthorizationPointInterface
+    {        
+        $sql = <<<SQL
+SELECT 
+    apt.*, 
+    {$this->buildSqlUuidSelector('apt.oid')} AS oid,
+    {$this->buildSqlUuidSelector('apt.app_oid')} AS app_oid
+FROM 
+    exf_auth_point apt
+WHERE 
+    apt.alias = '{$authPoint->getAlias()}'
+SQL;
+        
+        // Since we only filter on (non-namespaced) alias in the SQL, there may be 
+        // multiple rows here although it's extremely unprobable
+        $result = $this->getDataConnection()->runSql($sql)->getResultArray();
+        switch (count($result)) {
+            case 0:
+                throw new LogicException('Authorization point "' . $authPoint->getAliasWithNamespace() . '" not found in metamodel!');
+            case 1:
+                $checkApp = false;
+                break;
+            default:
+                $checkApp = true;
+                $apAppUid = $authPoint->getApp()->getUid();
+                break;
+        }
+        
+        foreach ($result as $row) {
+            if ($checkApp === true && $apAppUid !== $row['app_oid']) {
+                continue;
+            }
+            $authPoint
+                ->setName($row['name'])
+                ->setUid($row['oid'])
+                ->setActive(BooleanDataType::cast($row['active_flag']))
+                ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), $row['default_effect']))
+                ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), $row['combining_algorithm']));
+        }
+        
+        return $authPoint;
+    }
+    
+    public function loadAuthorizationPolicies(AuthorizationPointInterface $authPoint, UserImpersonationInterface $userOrToken) : AuthorizationPointInterface
     {
         if ($userOrToken->getUsername() !== null) {
             
             $userFilter = <<<SQL
-
+            
         apol.target_user_role_oid IN (
-            SELECT 
+            SELECT
                 turu.user_role_oid
             FROM
                 exf_user_role_users turu
@@ -1133,48 +1177,27 @@ SQL;
             WHERE
                 u.username = '{$userOrToken->getUsername()}'
         )
+        OR
 SQL;
         }
         
         $sql = <<<SQL
-SELECT 
-    apol.*, 
-    apt.alias,
-    apt.active_flag,
-    apt.default_effect,
-    apt.combining_algorithm,
-    apt.name as auth_point_name,
-    {$this->buildSqlUuidSelector('apt.app_oid')} AS app_oid,
+SELECT
+    apol.*,
     {$this->buildSqlUuidSelector('apol.target_page_group_oid')} AS target_page_group_oid,
     {$this->buildSqlUuidSelector('apol.target_user_role_oid')} AS target_user_role_oid,
     {$this->buildSqlUuidSelector('apol.target_object_oid')} AS target_object_oid
-FROM 
+FROM
     exf_auth_policy apol
-    INNER JOIN exf_auth_point apt ON apol.auth_point_oid = apt.oid
-WHERE 
-    apt.alias = '{$authPoint->getAlias()}'
+WHERE
+    apol.auth_point_oid = {$authPoint->getUid()}
     AND (
         {$userFilter}
-        OR apol.target_user_role_oid IS NULL
+        apol.target_user_role_oid IS NULL
     )
 SQL;
         
-        $apAppUid = $authPoint->getApp()->getUid();
-        $apConfigured = false;
-        foreach ($this->getDataConnection()->runSql($sql)->getResultArray() as $row) {
-            if ($apAppUid !== $row['app_oid']) {
-                continue;
-            }
-            
-            if ($apConfigured === false) {
-                $authPoint
-                    ->setActive(BooleanDataType::cast($row['active_flag']))
-                    ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), $row['default_effect']))
-                    ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), $row['combining_algorithm']))
-                    ->setName($row['auth_point_name']);
-                $apConfigured = true;
-            }
-            
+        foreach ($this->getDataConnection()->runSql($sql)->getResultArray() as $row) {            
             $authPoint->addPolicy(
                 [
                     PolicyTargetDataType::USER_ROLE => $row['target_user_role_oid'],
@@ -1182,7 +1205,7 @@ SQL;
                     PolicyTargetDataType::META_OBJECT => $row['target_object_oid'],
                     PolicyTargetDataType::ACTION => $row['target_action_selector'],
                     PolicyTargetDataType::FACADE => $row['target_facade_selector'],
-                ], 
+                ],
                 PolicyEffectDataType::fromValue($this->getWorkbench(), $row['effect']),
                 $row['name'],
                 $row['condition_uxon']

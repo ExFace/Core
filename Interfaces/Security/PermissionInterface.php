@@ -16,4 +16,8 @@ interface PermissionInterface
     public function isIndeterminate() : bool;
     
     public function isNotApplicable() : bool;
+    
+    public function getException() : ?\Throwable;
+    
+    public function getPolicy() : ?AuthorizationPolicyInterface;
 }
