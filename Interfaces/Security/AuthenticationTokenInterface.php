@@ -21,14 +21,4 @@ interface AuthenticationTokenInterface extends UserImpersonationInterface
      * @return FacadeInterface|NULL
      */
     public function getFacade() : ?FacadeInterface;
-    
-    /**
-     * Returns TRUE if the token represents an anonymous user.
-     * 
-     * This is important as different authorizantion providers treat anonymous users
-     * differently. Some may even have a username for the anonymous user!
-     * 
-     * @return bool
-     */
-    public function isAnonymous() : bool;
 }

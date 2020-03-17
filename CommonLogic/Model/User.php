@@ -270,9 +270,8 @@ class User implements UserInterface
     }
 
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\UserInterface::isUserAdmin()
+     * @deprecated
+     * TODO #nocms remove in favor of hasRole()
      */
     public function isUserAdmin()
     {
@@ -283,11 +282,20 @@ class User implements UserInterface
     }
 
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\UserInterface::isUserAnonymous()
+     * @deprecated use isAnonymous() instead
+     * TODO #nocms remove
      */
     public function isUserAnonymous()
+    {
+        return $this->isAnonymous();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserImpersonationInterface::isAnonymous()
+     */
+    public function isAnonymous() : bool
     {
         $this->anonymous = ($this->username === null);
         return $this->anonymous;
