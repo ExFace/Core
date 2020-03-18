@@ -8,7 +8,6 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
 use exface\Core\CommonLogic\ModelBuilders\AbstractModelBuilder;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
@@ -26,6 +25,7 @@ use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\DataTypes\BinaryDataType;
 
 /**
  * This is the base for all SQL model builders in the core.
@@ -228,19 +228,20 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
     protected function guessDataType(MetaObjectInterface $object, string $sql_data_type, $length = null, $scale = null) : DataTypeInterface
     {
         $workbench = $object->getWorkbench();
-        switch (strtoupper($sql_data_type)) {
-            case 'BIGINT':
-            case 'INT':
-            case 'INTEGER':
+        $sqlType = strtoupper($sql_data_type);
+        switch (true) {
+            case $sqlType === 'BIGINT':
+            case $sqlType === 'INT':
+            case $sqlType === 'INTEGER':
                 if ($length == 1) {
                     $data_type = DataTypeFactory::createFromString($workbench, BooleanDataType::class);
                 } else {
                     $data_type = DataTypeFactory::createFromString($workbench, IntegerDataType::class);
                 }
                 break;
-            case 'NUMBER':
-            case 'DECIMAL':
-            case 'FLOAT':
+            case $sqlType === 'NUMBER':
+            case $sqlType === 'DECIMAL':
+            case $sqlType === 'FLOAT':
                 if (is_numeric($scale) === true && $scale == 0) {
                     $data_type = DataTypeFactory::createFromString($workbench, IntegerDataType::class);
                 } else {
@@ -250,24 +251,26 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
                     }
                 }
                 break;
-            case 'TIME':
+            case $sqlType === 'TIME':
                 $data_type = DataTypeFactory::createFromString($workbench, TimeDataType::class);
                 break;
-            case 'TIMESTAMP':
+            case $sqlType === 'TIMESTAMP':
                 $data_type = DataTypeFactory::createFromString($workbench, TimestampDataType::class);
                 break;
-            case 'DATETIME':
+            case $sqlType === 'DATETIME':
                 $data_type = DataTypeFactory::createFromString($workbench, DateTimeDataType::class);
                 break;
-            case 'DATE':
+            case $sqlType === 'DATE':
                 $data_type = DataTypeFactory::createFromString($workbench, DateDataType::class);
                 break;
-            case 'TEXT':
-            case 'LONGTEXT':
+            case strpos($sqlType, 'TEXT') !== false:
                 $data_type = DataTypeFactory::createFromString($workbench, TextDataType::class);
                 break;
-            case 'BINARY':
+            case strpos($sqlType, 'BINARY') !== false:
                 $data_type = DataTypeFactory::createFromString($workbench, HexadecimalNumberDataType::class);
+                break;
+            case strpos($sqlType, 'BLOB') !== false:
+                $data_type = DataTypeFactory::createFromString($workbench, BinaryDataType::class);
                 break;
             default:
                 $data_type = DataTypeFactory::createFromString($workbench, StringDataType::class);
