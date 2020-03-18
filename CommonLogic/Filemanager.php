@@ -104,14 +104,8 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
      */
     public function getPathToCacheFolder() : string
     {
-        if (is_null($this->path_to_cache_folder)) {
-            try {
-                $path = $this->getWorkbench()->getConfig()->getOption('FOLDERS.CACHE_PATH_ABSOLUTE');
-            } catch (ConfigOptionNotFoundError $e) {
-                $path = '';
-            }
-
-            $this->path_to_cache_folder = $path ? $path : $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_CACHE;
+        if ($this->path_to_cache_folder === null) {
+            $this->path_to_cache_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_CACHE;
             if (! is_dir($this->path_to_cache_folder)) {
                 static::pathConstruct($this->path_to_cache_folder);
             }
@@ -173,13 +167,8 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
      */
     public function getPathToLogFolder() : string
     {
-        if (is_null($this->path_to_log_folder)) {
-            try {
-                $path = $this->getWorkbench()->getConfig()->getOption('FOLDERS.LOGS_PATH_ABSOLUTE');
-            } catch (ConfigOptionNotFoundError $e) {
-                $path = '';
-            }
-            $this->path_to_log_folder = $path ? $path : $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_LOG;
+        if ($this->path_to_log_folder === null) {
+            $this->path_to_log_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_LOG;
             if (! is_dir($this->path_to_log_folder)) {
                 static::pathConstruct($this->path_to_log_folder);
             }
@@ -220,13 +209,8 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
      */
     public function getPathToBackupFolder()
     {
-        if (is_null($this->path_to_backup_folder)) {
-            try {
-                $path = $this->getWorkbench()->getConfig()->getOption('FOLDERS.BACKUP_PATH_ABSOLUTE');
-            } catch (ConfigOptionNotFoundError $e) {
-                $path = '';
-            }
-            $this->path_to_backup_folder = $path ? $path : $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_BACKUP;
+        if ($this->path_to_backup_folder === null) {
+            $this->path_to_backup_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_BACKUP;
             if (! is_dir($this->path_to_backup_folder)) {
                 static::pathConstruct($this->path_to_backup_folder);
             }
