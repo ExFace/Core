@@ -30,8 +30,9 @@ class UiPageAuthorizationPoint extends AbstractAuthorizationPoint
         if ($userOrToken === null) {
             $userOrToken = $this->getWorkbench()->getSecurity()->getAuthenticatedToken();
         }
-            
-        $permission = new CombinedPermission($this->getPolicyCombiningAlgorithm(), $this->evaluatePolicies($page, $userOrToken));
+        
+        $permissionsGenerator = $this->evaluatePolicies($page, $userOrToken);
+        $permission = new CombinedPermission($this->getPolicyCombiningAlgorithm(), $permissionsGenerator);
         switch (true) {
             case $permission->isPermitted():
             case ($permission->isIndeterminate() || $permission->isNotApplicable()) && $this->getDefaultPolicyEffect() == PolicyEffectDataType::PERMIT:
