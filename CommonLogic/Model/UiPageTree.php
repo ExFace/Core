@@ -16,7 +16,7 @@ class UiPageTree
     
     private $depth = null;
     
-    private $rootPagesNodes = [];
+    private $startRootNodes = [];
         
     private $rootNodes = [];
     
@@ -57,15 +57,29 @@ class UiPageTree
      * @param UiPageInterface[] $pages
      * @return UiPageTree
      */
-    protected function setRootPagesNodes(array $pages) : UiPageTree
+    protected function buildStartRootNodes(array $pages) : UiPageTree
     {
         foreach ($pages as $page) {
             $node = new UiPageTreeNode($this->getWorkbench(), $page->getAlias(), $page->getName(), $page->getId());
             $node->setDescription($page->getDescription());
             $node->setIntro($page->getIntro());
-            $this->rootPagesNodes[] = $node;
+            $this->startRootNodes[] = $node;
         }
         return $this;
+    }
+    
+    public function setStartRootNodes (array $nodes) : UiPageTree
+    {
+        if (empty($this->startRootNodes)) {
+            $this->startRootNodes = $nodes;
+        }
+        #TODO throw Excpetion maybe
+        return $this;
+    }
+    
+    public function getStartRootNodes () : array
+    {        
+        return $this->startRootNodes;
     }
     
     /**
@@ -76,7 +90,7 @@ class UiPageTree
      */
     public function setRootPages(array $pages) : UiPageTree
     {
-        $this->setRootPagesNodes($pages);
+        $this->buildStartRootNodes($pages);
         $this->reset();
         return $this;
     }
@@ -98,13 +112,23 @@ class UiPageTree
     }
     
     /**
+     * Get the expand depth of the tree
+     * 
+     * @return int|NULL
+     */
+    public function getExpandDepth() : ?int
+    {
+        return $this->depth;
+    }
+    
+    /**
      * 
      * @param UiPageTreeNodeInterface $node
      * @return UiPageTree
      */
-    public function setExpandPathToNode(UiPageTreeNodeInterface $node) : UiPageTree
+    public function setExpandPathToPage(UiPageInterface $page) : UiPageTree
     {
-        $this->expandPathToNode = $node;
+        $this->expandPathToPage = $page;
         $this->reset();
         return $this;
     }
@@ -113,18 +137,18 @@ class UiPageTree
      * 
      * @return bool
      */
-    protected function hasExpandPathToNode() : bool
+    public function hasExpandPathToPage() : bool
     {
-        return !is_null($this->expandPathToNode);
+        return !is_null($this->expandPathToPage);
     }
     
     /**
      * 
-     * @return UiPageTreeNodeInterface|NULL
+     * @return UiPageInterface|NULL
      */
-    protected function getExpandPathToNode() : ?UiPageTreeNodeInterface
+    public function getExpandPathToPage() : ?UiPageInterface
     {
-        return $this->expandPathToNode;
+        return $this->expandPathToPage;
     }
     
     /**
@@ -175,105 +199,20 @@ class UiPageTree
      * @return UiPageTree
      */
     protected function loadTree() : UiPageTree
-    {
-        if (empty($this->rootPagesNodes)) {
-            $modelLoader = $this->getWorkbench()->model()->getModelLoader();
-            $this->rootPagesNodes = $modelLoader->loadUiPageTreeRootNodes();
-        }
-        if ($this->hasExpandPathToNode()) {
-            $this->rootNodes = $this->buildParentMenuNodes($this->getExpandPathToNode(), true);
-        } else {
-            foreach ($this->rootPagesNodes as $rootNode) {
-                $this->buildChildMenuNodes(1, $rootNode);
-                $this->rootNodes[] = $rootNode;
-            }            
-        }
+    {   
+        $this->rootNodes = $this->getWorkbench()->model()->getModelLoader()->loadUiPageTree($this);
         return $this;
     }
     
     /**
+     * Checks if the given node is in the satrt root nodes of this tree.
      * 
-     * @param UiPageSelectorInterface $parentPageSelector
-     * @throws \ErrorException
-     * @return DataSheetInterface
+     * @param UiPageTreeNodeInterface $node
+     * @return bool
      */
-    protected function getMenuDataSheet(UiPageSelectorInterface $parentPageSelector) : DataSheetInterface
+    public function nodeInRootNodes(UiPageTreeNodeInterface $node) : bool
     {
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PAGE');
-        $ds->getColumns()->addMultiple(['UID', 'CMS_ID', 'NAME', 'DESCRIPTION', 'INTRO', 'ALIAS']);
-        $ds->getSorters()->addFromString('MENU_POSITION');
-        
-        if ($parentPageSelector->isAlias()) {
-            $parentAlias = 'MENU_PARENT__ALIAS';
-        } elseif ($parentPageSelector->isUid()) {
-            $parentAlias = 'MENU_PARENT__UID';
-        } else {
-            throw new \ErrorException($this, "Invalid page selector '{$parentPageSelector->toString()}'");
-        }
-        
-        $ds->getFilters()->addConditionFromString($parentAlias, $parentPageSelector->toString(), '==');
-        $ds->getFilters()->addConditionFromString('MENU_VISIBLE', 1, '==');
-        
-        $ds->dataRead();
-        return $ds;
-    }
-    
-    /**
-     * Builds the root nodes for the tree by going levels upwards from the given `page`, till the default root page is reached or
-     * an ancestor of the given `page` is in the `rootPage` array of the tree object.
-     * 
-     * @param UiPageInterface $page
-     * @param string $childPageId
-     * @param UiPageTreeNode[] $childNodes
-     * @return UiPageTreeNode[]
-     */
-    protected function buildParentMenuNodes(UiPageTreeNodeInterface $node, bool $start = false) : array
-    {
-        $modelLoader = $this->getWorkbench()->model()->getModelLoader();
-        /*@var UiPageTreeNodeInterface $node*/
-        if ($start === true && $this->expandPathOnly === false) {
-            $node = $modelLoader->loadUiPageTreeChildNodes($node);
-        }
-        $parentNode = $modelLoader->loadUiPageTreeParentNode($node, !($this->expandPathOnly));
-        
-        //if node is not an array and if it is not in rootPageNodes
-        if ($parentNode !== null && $this->nodeInRootNodes($parentNode) === false) {
-            $menuNodes = $this->buildParentMenuNodes($parentNode);
-            return $menuNodes;
-        }
-        if ($parentNode === null) {
-            $parentNode = $node;
-        }
-        if ($this->nodeInRootNodes($parentNode) === true) {
-            for ($i = 0; $i < count($this->rootPagesNodes); $i++) {
-                if ($parentNode->getUid() === $this->rootPagesNodes[$i]->getUid()) {
-                    $this->rootPagesNodes[$i] = $parentNode;
-                    continue;
-                }
-            }
-            return $this->rootPagesNodes;
-        } else {
-            return [];
-        }
-    }
-    
-    
-    protected function buildChildMenuNodes(int $level, UiPageTreeNodeInterface $node) : UiPageTreeNodeInterface
-    {
-        $modelLoader = $this->getWorkbench()->model()->getModelLoader();
-        $modelLoader->loadUiPageTreeChildNodes($node);
-        if ($this->depth === null || $level < $this->depth) {
-            foreach ($node->getChildNodes() as $childNode) {
-                $this->buildChildMenuNodes($level + 1, $childNode);
-            }
-        }
-        
-        return $node;
-    }
-    
-    protected function nodeInRootNodes(UiPageTreeNodeInterface $node) : bool
-    {
-        foreach ($this->rootPagesNodes as $rootNode) {
+        foreach ($this->startRootNodes as $rootNode) {
             if ($node->getUid() === $rootNode->getUid()) {
                 return true;
             }
