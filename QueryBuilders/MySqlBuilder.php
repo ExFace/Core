@@ -13,6 +13,7 @@ use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\DataTypes\BinaryDataType;
 
 /**
  * A query builder for MySQL.
@@ -261,6 +262,28 @@ class MySqlBuilder extends AbstractSqlBuilder
             $output = parent::prepareWhereValue($value, $data_type, $sql_data_type);
         }
         return $output;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareInputValue()
+     */
+    protected function prepareInputValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
+    {
+        if ($sql_data_type === 'binary' && $data_type instanceof BinaryDataType) {
+            $value = parent::prepareInputValue($value, $data_type, $sql_data_type);
+            switch ($data_type->getEncoding()) {
+                case BinaryDataType::ENCODING_BASE64:
+                    return "FROM_BASE64(" . $value . ")";
+                case BinaryDataType::ENCODING_HEX:
+                    return "UNHEX(" . trim($value, "'") . ")";
+                default:
+                    throw new QueryBuilderException('Cannot convert value to binary data: invalid encoding "' . $data_type->getEncoding() . '"!');
+            }
+        }
+        
+        return parent::prepareInputValue($value, $data_type, $sql_data_type);
     }
 
     /**

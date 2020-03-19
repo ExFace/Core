@@ -35,6 +35,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\DataTypes\BinaryDataType;
 
 /**
  * A query builder for generic SQL syntax.
@@ -174,7 +175,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         'ID',
         'LEVEL',
         'ORDER',
-        'GROUP'
+        'GROUP',
+        'BINARY'
     );
     
     // Aliases
@@ -673,7 +675,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if (($data_type instanceof JsonDataType) && $data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
                 } else {
-                    $value = $value === null ? 'NULL' : "'" . $this->escapeString($value) . "'";
+                    $value = $value === null ? 'NULL' : "'" . $this->escapeString($value) . "'"; 
                 }  
                 break;
             case $data_type instanceof BooleanDataType:

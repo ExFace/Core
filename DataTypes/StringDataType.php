@@ -149,7 +149,8 @@ class StringDataType extends AbstractDataType
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::parse()
      */
-    public function parse($string){
+    public function parse($string)
+    {
         $value = parent::parse($string);
         
         // validate length
