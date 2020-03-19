@@ -33,10 +33,11 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
         $columns_array = $meta_object->getDataConnection()->runSql($columns_sql)->getResultArray();
         $rows = array();
         foreach ($columns_array as $col) {
+            $dataType = $this->guessDataType($meta_object, $col['Type']);
             $row = [
                 'NAME' => $this->generateLabel($col['Field'], $col['Comment']),
                 'ALIAS' => $col['Field'],
-                'DATATYPE' => $this->getDataTypeId($this->guessDataType($meta_object, $col['Type'])),
+                'DATATYPE' => $this->getDataTypeId($dataType),
                 'DATA_ADDRESS' => $col['Field'],
                 'OBJECT' => $meta_object->getId(),
                 'REQUIREDFLAG' => ($col['Null'] == 'NO' ? 1 : 0),
@@ -44,12 +45,17 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
             ];
             
             $addrProps = new UxonObject();
-            if (stripos($col['Type'], 'binary') !== false) {
+            if (stripos($col['Type'], 'binary') !== false || stripos($col['Type'], 'blob') !== false) {
                $addrProps->setProperty('SQL_DATA_TYPE', 'binary');
             }
             // Add mor data address properties here, if neccessary
             if ($addrProps->isEmpty() === false) {
                 $row['DATA_ADDRESS_PROPS'] = $addrProps->toJson();
+            }
+            
+            $dataTypeProps = $this->getDataTypeConfig($dataType, $col['Type']);
+            if (! $dataTypeProps->isEmpty()) {
+                $row['CUSTOM_DATA_TYPE'] = $dataTypeProps->toJson();
             }
                 
             $rows[] = $row;
@@ -98,6 +104,52 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
             $rows[$nr]['NAME'] = $this->generateLabel($row['NAME'], $row['SHORT_DESCRIPTION']);
         }
         return $rows;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::getDataTypeConfig()
+     */
+    protected function getDataTypeConfig(DataTypeInterface $type, string $source_data_type, $length = null, $scale = null) : UxonObject
+    {
+        $uxon = parent::getDataTypeConfig($type, $source_data_type, $length, $scale);
+        
+        $source_data_type = strtoupper($source_data_type);
+        $srcTypeParts = explode('(', $source_data_type);
+        if (count($srcTypeParts) > 1) {
+            $source_data_type = $srcTypeParts[0];
+            $srcTypeOptions = rtrim($srcTypeParts[1], ")");
+        }
+        
+        $source_data_type = mb_strtoupper($source_data_type);
+        switch (true) {
+            /* TODO how to give a MAX to a hex number?
+            case StringDataType::endsWith($source_data_type, 'BINARY') && $srcTypeOptions:
+                $uxon->setProperty('size_max', $srcTypeOptions);
+                break;*/
+            case StringDataType::endsWith($source_data_type, 'CHAR') && $srcTypeOptions:
+                $uxon->setProperty('length_max', $srcTypeOptions);
+                break;
+            case $source_data_type === 'TINYBLOB':
+            case $source_data_type === 'TINYTEXT':
+                $uxon->setProperty('length_max', 255);
+                break;
+            case $source_data_type === 'BLOB':
+            case $source_data_type === 'TEXT':
+                $uxon->setProperty('length_max', 65535);
+                break;
+            case $source_data_type === 'MEDIUMBLOB':
+            case $source_data_type === 'MEDIUMTEXT':
+                $uxon->setProperty('length_max', 16777215);
+                break;
+            case $source_data_type === 'LONGBLOB':
+            case $source_data_type === 'LONGTEXT':
+                $uxon->setProperty('length_max', 4294967295);
+                break;
+        }
+        
+        return $uxon;
     }
 }
 ?>
