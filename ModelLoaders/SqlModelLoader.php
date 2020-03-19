@@ -64,6 +64,7 @@ use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\CommonLogic\Model\CompoundAttribute;
 use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
 use exface\Core\CommonLogic\Model\UiPageTreeNode;
+use exface\Core\CommonLogic\Model\UiPageTree;
 
 /**
  * 
@@ -89,6 +90,7 @@ class SqlModelLoader implements ModelLoaderInterface
     private $pages_loaded = [];
     
     private $nodes_loaded = [];
+    
     
     /**
      * 
@@ -1184,10 +1186,104 @@ SQL;
         if ($row['default_menu_index'] !== null) {
             $uiPage->setMenuIndexDefault($row['default_menu_index']);
         }
-        
+       
         $this->pages_loaded[$uiPage->getId()] = $uiPage;
         
         return $uiPage;
+    }
+    
+    
+    
+    /**
+     * 
+     * @param UiPageTree $tree
+     * @return array
+     */
+    public function loadUiPageTree(UiPageTree $tree) : array
+    {
+        $exface = $this->getWorkbench();
+        if (empty($tree->getStartRootNodes())) {
+            $rows = $this->loadTreeLevel();
+            $nodes = [];
+            foreach ($rows as $row) {
+                $rootNode = new UiPageTreeNode($exface, $row['alias'], $row['name'], $row['oid']);
+                $rootNode->setDescription($row['description']);
+                $rootNode->setIntro($row['intro']);
+                $nodes[] = $rootNode;
+                $this->nodes_loaded[$rootNode->getUid] = $rootNode;
+            }
+            
+            $tree->setStartRootNodes($nodes);
+        }
+        $treeRootNodes = $tree->getStartRootNodes();        
+        if ($tree->hasExpandPathToPage()) {
+            $nodeId = $tree->getExpandPathToPage()->getId();         
+            while ($nodeId !== null) {
+                $parentNode = null;
+                $parentNodeId = null;
+                if ($this->nodes_loaded[$nodeId] !== null && $this->nodes_loaded[$nodeId]->getChildNodesLoaded() === true && $this->nodes_loaded[$nodeId]->hasParentNode() === true) {
+                    // if node is already loaded with its childs and also has a parentNode, no need to load it again
+                    $parentNode = $this->nodes_loaded[$nodeId];
+                    $parentNodeId = $parentNode->getParentNode()->getUid();
+                } else {
+                    // load node and its childs
+                    $rows = $this->loadTreeLevel($nodeId);
+                    foreach ($rows as $row) {
+                        if ($row['oid'] === $nodeId) {
+                            if ($this->nodes_loaded[$row['oid']] !== null) {
+                                // if node already was loded before, take that
+                                $parentNode = $this->nodes_loaded[$row['oid']];
+                            } else {
+                                $parentNode = new UiPageTreeNode($exface, $row['alias'], $row['name'], $row['oid']);
+                                $parentNode->setDescription($row['description']);
+                                $parentNode->setIntro($row['intro']);
+                                $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
+                            }
+                            $parentNodeId = $row['parent_oid'];                       
+                            break;
+                            // when parent node was created no need to search in the rest of the rows
+                       }
+                    }
+                }
+                if ($parentNode !== null && $parentNode->getChildNodesLoaded() === false) {
+                    foreach ($rows as $row) {                   
+                        if ($parentNode !== null && $row['oid'] !== $nodeId) {
+                            if ($this->nodes_loaded[$row['oid']] !== null && $this->nodes_loaded[$row['oid']]->getChildNodesLoaded() === true) {
+                                //if the child node was already loaded before and also it's child, take that node
+                                $childNode = $this->nodes_loaded[$row['oid']];
+                                $childNode->setParentNode($parentNode);
+                            } else {
+                                $childNode = new UiPageTreeNode($exface, $row['alias'], $row['name'], $row['oid'], $parentNode);
+                                $childNode->setDescription($row['description']);
+                                $childNode->setIntro($row['intro']);
+                            }
+                            $this->nodes_loaded[$childNode->getUid()] = $childNode;
+                            $parentNode->addChildNode($childNode, intval($row['menu_index']));
+                            $parentNode->setChildNodesLoaded(true);
+                            $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
+                        }
+                    }
+                }
+                if ($tree->nodeInRootNodes($parentNode)) {
+                    $nodeId = null;
+                    for ($i = 0; $i < count($treeRootNodes); $i++) {
+                        if ($treeRootNodes[$i]->getUid() === $parentNode->getUid()) {
+                            $treeRootNodes[$i] = $parentNode;
+                            break;
+                        }
+                    }
+                } else {
+                    $nodeId = $parentNodeId;
+                }
+            }
+            return $treeRootNodes;   
+        } else {
+            $nodes = [];
+            foreach ($treeRootNodes as $rootNode) {
+                $nodes[] = $this->loadUiPageTreeChildNodes($tree, $rootNode, 0);
+            }
+            return $nodes;
+        }
     }
     
     /**
@@ -1196,152 +1292,136 @@ SQL;
      * @param UiPageTreeNodeInterface[] $childNodes
      * @return UiPageTreeNodeInterface
      */
-    public function loadUiPageTreeChildNodes(UiPageTreeNodeInterface $node, array $childNodes = []) : UiPageTreeNodeInterface
+    protected function loadUiPageTreeChildNodes(UiPageTree $tree, UiPageTreeNodeInterface $node, ?int $level) : UiPageTreeNodeInterface
     {
-        $uid = $node->getUid();
-        if ($this->nodes_loaded[$uid] !== null) {
-            if ($this->nodes_loaded[$uid]->getChildNodesLoaded() === true) {
-                return $this->nodes_loaded[$uid];
+        $depth = $tree->getExpandDepth();        
+        if ($level === null || $level < $depth) {
+            $childNodes = null;
+            if ($this->nodes_loaded[$node->getUid()] !== null && $this->nodes_loaded[$node->getUid()]->getChildNodesLoaded() === true) {
+                $childNodes = $this->nodes_loaded[$node->getUid()];
+                $node->resetChildNodes();
+                foreach ($childNodes as $childNode) {
+                    $childNode = $this->loadUiPageTreeChildNodes($tree, $childNode, $level + 1);
+                    $node->addChildNode($childNode);                    
+                }
+                $node->setChildNodesLoaded(true);
+                $this->nodes_loaded[$node->getUid()] = $node;
+                return $node;
+            } else {
+                $rows = $this->loadTreeChildLevels($node->getUid());                
+                $childIds = [];
+                foreach ($rows as $row) {
+                    //build first level child nodes
+                    if ($row['parent_oid'] === $node->getUid()  && !in_array($row['oid'], $childIds)) {
+                        if ($this->nodes_loaded[$row['oid']] !== null) {
+                            $childNode = $this->nodes_loaded[$row['oid']];
+                        } else {
+                            $childNode = new UiPageTreeNode($this->getWorkbench(), $row['alias'], $row['name'], $row['oid'], $node);
+                            $childNode->setDescription($row['description']);
+                            $childNode->setIntro($row['intro']);
+                            $this->nodes_loaded[$childNode->getUid()] = $childNode;
+                        }
+                        $childIds[] = $childNode->getUid();
+                        $node->addChildNode($childNode);
+                    }
+                }                
+                $node->setChildNodesLoaded(true);
+                $childNodes = $node->getChildNodes();
             }
-        }
-        $query = $this->getDataConnection()->runSql("
-            #load child nodes 
-            SELECT 
-                {$this->buildSqlUuidSelector('p.oid')} as oid,
-                p.name,
-                p.alias,
-                p.description,
-                p.intro
-            FROM exf_page p
-            WHERE p.menu_visible = 1 AND p.parent_oid = {$uid}
-            ORDER BY p.menu_index"            
-        );
-        //get all child entries for given $node
-        $rows = $query->getResultArray();
-        //add all result rows as new child nodes
-        foreach ($rows as $row) {
-            $skip = false;            
-            foreach ($childNodes as $childNode) {
-                //if there is a node in $childNodes with same uid as in a row, add it as child and skip creating it as new node
-                if ($row['oid'] === $childNode->getUid()) {
-                    $childNode->setParentNode($node);
+            if ($level === null || $level + 1 < $depth) {                
+                $node->resetChildNodes();
+                //build second level of child nodes
+                foreach ($childNodes as $childNode) {
+                    foreach ($rows as $row) {
+                        if ($childNode->getUid() === $row['c_parent_oid']) {
+                            if ($this->nodes_loaded[$row['c_oid']] !== null) {
+                                $childChildNode = $this->nodes_loaded[$row['c_oid']];
+                            } else {
+                                $childChildNode = new UiPageTreeNode($this->getWorkbench(), $row['c_alias'], $row['c_name'], $row['c_oid'], $childNode);
+                                $childChildNode->setDescription($row['c_description']);
+                                $childChildNode->setIntro($row['c_intro']);
+                            }
+                            //load sub levels for child child tree nodes if needed
+                            $childChildNode = $this->loadUiPageTreeChildNodes($tree, $childChildNode, $level + 2);
+                            $this->nodes_loaded[$childChildNode->getUid()] = $childChildNode;
+                            $childNode->addChildNode($childChildNode);
+                        }
+                    }
+                    $childNode->setChildNodesLoaded(true);
+                    $this->nodes_loaded[$childNode->getUid()] = $childNode;                    
                     $node->addChildNode($childNode);
-                    $this->nodes_loaded[$childNode->getUid()] = $childNode;
-                    $skip = true;
-                    continue;
-                }
-            }
-            if ($skip === false) {
-                $childNode = new UiPageTreeNode($this->getWorkbench(), $row['alias'], $row['name'], $row['oid'], $node);
-                $childNode->setDescription($row['description']);
-                $childNode->setIntro($row['intro']);
-                $this->nodes_loaded[$childNode->getUid()] = $childNode;
-                $node->addChildNode($childNode);
+                }                
+                $node->setChildNodesLoaded(true);
             }
         }
-        $node->setChildNodesLoaded(true);
-        $this->nodes_loaded[$uid] = $node;
-        return $node;        
+        return $node;
     }
     
     /**
+     * Loads date for node with given `id` and all childs of that node.
      * 
-     * @param UiPageTreeNodeInterface $node
-     * @return UiPageTreeNodeInterface|NULL
+     * @param string $sqlWhere
+     * @return array
      */
-    public function loadUiPageTreeParentNode(UiPageTreeNodeInterface $node, $loadSiblingNodes = true) : ?UiPageTreeNodeInterface
+    protected function loadTreeLevel(string $id = null) : array
     {
-        $uid = $node->getUid();
-        if ($this->nodes_loaded[$uid] !== null) {
-            if ($this->nodes_loaded[$uid]->hasParentNode()) {
-                $parentNode = $this->nodes_loaded[$uid]->getParentNode();
-                if ($loadSiblingNodes === false) {
-                    $parentNode->resetChildNodes();
-                    $node->setParentNode($parentNode);
-                    $parentNode->addChildNode($node);
-                    return $parentNode;
-                } else {
-                    if ($parentNode->getChildNodesLoaded() === true) {
-                        return $parentNode;
-                    }
-                }
-            }
-        }
-        $query = $this->getDataConnection()->runSql("
-            #load parent node 
-            SELECT 
-                {$this->buildSqlUuidSelector('p.oid')} as oid,
-                p.name,
-                p.alias,
-                p.description,
-                p.intro
-            FROM exf_page o
-                LEFT JOIN exf_page p ON o.parent_oid = p.oid
-            WHERE p.menu_visible = 1 AND o.oid = {$uid}
-            ORDER BY p.menu_index"
-        );
-        $row = $query->getResultArray()[0];
-        if (empty($row) === true) {
-            return null;
+        $sqlWhere = '';
+        if ($id === null) {
+            $sqlWhere = "WHERE p.parent_oid IS NULL AND p.menu_visible = 1";
         } else {
-            $parentNode = new UiPageTreeNode($this->getWorkbench(), $row['alias'], $row['name'], $row['oid']);
-            $parentNode->setDescription($row['description']);
-            $parentNode->setIntro($row['intro']);
-            if ($loadSiblingNodes === true) {
-                $parentNode = $this->loadUiPageTreeChildNodes($parentNode, [$node]);
-            } else {
-                $node->setParentNode($parentNode);
-                $parentNode->addChildNode($node);
-            }
-            $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
-            return $parentNode;
+            $sqlWhere = "WHERE (p.oid = {$id} OR p.parent_oid = {$id}) AND p.menu_visible = 1";
         }
-        
-    }
-    
-    /**
-     * 
-     * @return UiPageTreeNodeInterface[]
-     */
-    public function loadUiPageTreeRootNodes(UiPageTreeNodeInterface $node = null) : array
-    {
-        $nodes = [];
-        $query = $this->getDataConnection()->runSql("
-            #load root nodes 
-            SELECT 
+        $sql = "
+            #load node and childs
+            SELECT
                 {$this->buildSqlUuidSelector('p.oid')} as oid,
+                {$this->buildSqlUuidSelector('p.parent_oid')} as parent_oid,
                 p.name,
                 p.alias,
                 p.description,
-                p.intro
+                p.intro,
+                p.menu_index
             FROM exf_page p
-                WHERE p.menu_visible = 1 AND p.parent_oid IS NULL
-            ORDER BY p.menu_index"
-        );
+            {$sqlWhere}
+            ORDER BY p.menu_index";
+        $query = $this->getDataConnection()->runSql($sql);
         $rows = $query->getResultArray();
-        foreach ($rows as $row) {
-            if ($node !== null && $node->getUid() === $row['oid']) {
-                $nodes[] = $node;
-                $this->nodes_loaded[$node->getUid] = $node;
-            } else {
-                $skip = false;
-                foreach ($this->nodes_loaded as $loadedNode) {
-                    if ($loadedNode->getUid() === $row['oid']) {
-                        $nodes[] = $loadedNode;
-                        $skip = true;
-                        continue;
-                    }
-                }
-                if ($skip === false) {
-                    $rootNode = new UiPageTreeNode($this->getWorkbench(), $row['alias'], $row['name'], $row['oid']);
-                    $rootNode->setDescription($row['description']);
-                    $rootNode->setIntro($row['intro']);            
-                    $nodes[] = $rootNode;
-                    $this->nodes_loaded[$rootNode->getUid] = $rootNode;
-                }
-            }
-        }
-        return $nodes;
+        return $rows;        
+    }
+    
+    /**
+     * Loads data for 2 tree child levels from the level with the given `id`. 
+     * 
+     * @param string $id
+     * @return array
+     */
+    protected function loadTreeChildLevels(string $id) : array
+    {
+        $sql = "
+            #load two child levels
+            SELECT
+                {$this->buildSqlUuidSelector('p.oid')} as oid,
+                {$this->buildSqlUuidSelector('p.parent_oid')} as parent_oid,
+                p.name,
+                p.alias,
+                p.description,
+                p.intro,
+                p.menu_index,
+                {$this->buildSqlUuidSelector('c.oid')} as c_oid,
+                {$this->buildSqlUuidSelector('c.parent_oid')} as c_parent_oid,
+                c.name as c_name,
+                c.alias as c_alias,
+                c.description as c_description,
+                c.intro c_intro,
+                c.menu_index c_menu_index
+            FROM exf_page p
+            LEFT JOIN exf_page c ON p.oid = c.parent_oid
+            WHERE p.parent_oid = {$id} AND (p.menu_visible = 1 AND (c.menu_visible = 1 OR c.menu_visible is NULL))
+            ORDER BY p.menu_index, c.menu_index";
+        $query = $this->getDataConnection()->runSql($sql);
+        $rows = $query->getResultArray();
+        return $rows;
+            
     }
 }
 

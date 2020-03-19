@@ -101,11 +101,8 @@ class UiPageTreeFactory extends AbstractStaticFactory
      */
     public static function createForLeafNode(Workbench $exface, UiPageInterface $leafPage, UiPageInterface $rootPage = null) : UiPageTree
     {
-        $tree = new UiPageTree($exface);
-        $node = new UiPageTreeNode($exface, $leafPage->getAlias(), $leafPage->getName(), $leafPage->getId());
-        $node->setDescription($leafPage->getDescription());
-        $node->setIntro($leafPage->getIntro());
-        $tree->setExpandPathToNode($node);
+        $tree = new UiPageTree($exface);        
+        $tree->setExpandPathToPage($leafPage);
         if ($rootPage !== null) {
             $tree->setRootPages([$rootPage]);
         }
@@ -138,10 +135,7 @@ class UiPageTreeFactory extends AbstractStaticFactory
     public static function createBreadcrumbsToPage(Workbench $exface, UiPageInterface $page, UiPageInterface $rootPage = null) : UiPageTree
     {
         $tree = new UiPageTree($exface);
-        $node = new UiPageTreeNode($exface, $page->getAlias(), $page->getName(), $page->getId());
-        $node->setDescription($page->getDescription());
-        $node->setIntro($page->getIntro());
-        $tree->setExpandPathToNode($node);
+        $tree->setExpandPathToPage($page);
         if ($rootPage !== null) {
             $tree->setRootPages([$rootPage]);
         }
