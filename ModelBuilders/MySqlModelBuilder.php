@@ -40,8 +40,9 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
                 'DATATYPE' => $this->getDataTypeId($dataType),
                 'DATA_ADDRESS' => $col['Field'],
                 'OBJECT' => $meta_object->getId(),
-                'REQUIREDFLAG' => ($col['Null'] == 'NO' ? 1 : 0),
-                'SHORT_DESCRIPTION' => ($col['Comment'] ? $col['Comment'] : '')
+                'REQUIREDFLAG' => ($col['Null'] === 'NO' && $col['Extra'] !== 'auto_increment' ? 1 : 0),
+                'SHORT_DESCRIPTION' => ($col['Comment'] ? $col['Comment'] : ''),
+                'UIDFLAG' => $col['Key'] === 'PRI' ? 1 : 0
             ];
             
             $addrProps = new UxonObject();
