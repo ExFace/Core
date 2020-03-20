@@ -89,7 +89,7 @@ class BinaryDataType extends StringDataType
      * 
      * @return int
      */
-    public function getMaxSizeInBytes() : int
+    public function getMaxSizeInBytes() : ?int
     {
         return $this->getLengthMax();
     }
@@ -98,8 +98,11 @@ class BinaryDataType extends StringDataType
      * 
      * @return float
      */
-    public function getMaxSizeInMB() : float
+    public function getMaxSizeInMB() : ?float
     {
+        if ($this->getMaxSizeInBytes() === null) {
+            return null;
+        }
         return $this->getMaxSizeInBytes() / 1000000;
     }
 }
