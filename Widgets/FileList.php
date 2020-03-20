@@ -37,7 +37,7 @@ use exface\Core\DataTypes\StringDataType;
  * 
  * ### Upload files
  * 
- * To upload files the `upload` must be set to `true` and a `file_content_attribute_alias`
+ * To upload files the `upload_enabled` must be set to `true` and a `file_content_attribute_alias`
  * must be specified (otherwise there's no place to upload). Use `upload_options` to apply
  * restrictions to file size, type, name length, etc.
  * 
@@ -54,7 +54,7 @@ use exface\Core\DataTypes\StringDataType;
  *   "filename_attribute_alias": "filename",
  *   "mime_type_attribute_alias": "type",
  *   "file_content_attribute_alias": "inhalt",
- *   "upload": true,
+ *   "upload_enabled": true,
  *   "upload_options": {
  *     "allowed_mime_types": [
  *       "application/pdf"
@@ -87,7 +87,7 @@ use exface\Core\DataTypes\StringDataType;
  *          "filename_attribute_alias": "filename",
  *          "mime_type_attribute_alias": "type",
  *          "file_content_attribute_alias": "inhalt",
- *          "upload": true,
+ *          "upload_enabled": true,
  *          "filters": [
  *              {
  *                  "attribute_alias": "ORDER",
@@ -148,6 +148,10 @@ class FileList extends DataTable
     
     private $downloadUrlColumn = null;
     
+    private $fileModificationTimeAttributeAlias = null;
+    
+    private $fileModificationTimeColumn = null;
+    
     private $uploader = null;
     
     private $uploaderUxon = null;
@@ -156,6 +160,11 @@ class FileList extends DataTable
     
     private $download = false;
     
+    /**
+     * 
+     * @throws WidgetConfigurationError
+     * @return DataColumn
+     */
     public function getFilenameColumn() : DataColumn
     {
         if ($this->filenameColumn !== null) {
@@ -165,7 +174,7 @@ class FileList extends DataTable
     }
     
     /**
-     * The attribute for the file name (including the extension)
+     * The attribute for the file name (including the extension, but without the path)
      * 
      * @uxon-property filename_attribute_alias
      * @uxon-type metamodel:attribute
@@ -183,6 +192,11 @@ class FileList extends DataTable
         return $this;
     }
     
+    /**
+     * 
+     * @throws WidgetConfigurationError
+     * @return DataColumn
+     */
     public function getMimeTypeColumn() : DataColumn
     {
         if ($this->mimeTypeColumn !== null) {
@@ -192,7 +206,7 @@ class FileList extends DataTable
     }
     
     /**
-     * The attribute for the mime type
+     * The attribute for the mime type - e.g. `application/pdf`, etc.
      *
      * @uxon-property mime_type_attribute_alias
      * @uxon-type metamodel:attribute
@@ -209,6 +223,11 @@ class FileList extends DataTable
         return $this;
     }
     
+    /**
+     * 
+     * @throws WidgetConfigurationError
+     * @return DataColumn
+     */
     public function getThumbnailColumn() : DataColumn
     {
         if ($this->thumbnailColumn !== null) {
@@ -217,13 +236,21 @@ class FileList extends DataTable
         throw new WidgetConfigurationError($this, 'No data column with thumbnails found!');
     }
     
+    /**
+     * 
+     * @return bool
+     */
     public function hasThumbnailColumn() : bool
     {
         return $this->thumbnailAttributeAlias !== null || $this->thumbnailColumn !== null;
     }
     
     /**
-     * The attribute for the thumbnail
+     * The attribute for the thumbnail.
+     * 
+     * If this property is set, the content of the specified attribute will be used to display
+     * a thumbnail for each file - if the facade rendering the `FileList` supports thumbnails,
+     * of course.
      *
      * @uxon-property thumbnail_attribute_alias
      * @uxon-type metamodel:attribute
@@ -240,6 +267,11 @@ class FileList extends DataTable
         return $this;
     }
     
+    /**
+     * 
+     * @throws WidgetConfigurationError
+     * @return DataColumn
+     */
     public function getFileContentColumn() : DataColumn
     {
         if ($this->fileContentColumn !== null) {
@@ -256,7 +288,9 @@ class FileList extends DataTable
     }
     
     /**
-     * The attribute for the file contents
+     * The attribute for the file contents (typically a binary).
+     * 
+     * This property is required if `upload` is enabled.
      *
      * @uxon-property file_content_attribute_alias
      * @uxon-type metamodel:attribute
@@ -272,7 +306,55 @@ class FileList extends DataTable
         $this->fileContentColumn = $col;
         return $this;
     }
+
+    /**
+     * 
+     * @throws WidgetConfigurationError
+     * @return DataColumn
+     */
+    public function getFileModificationTimeColumn() : DataColumn
+    {
+        if ($this->fileModificationTimeColumn !== null) {
+            return $this->fileModificationTimeColumn;
+        }
+        throw new WidgetConfigurationError($this, 'No data column with download URLs found!');
+    }
     
+    /**
+     * 
+     * @return bool
+     */
+    public function hasFileModificationTimeColumn() : bool
+    {
+        return $this->fileModificationTimeAttributeAlias !== null || $this->fileModificationTimeColumn !== null;
+    }
+    
+    /**
+     * The attribute for last modification time of the file.
+     * 
+     * This property is optional, but if the data source supports it, it can be filled automatically
+     * when uploading files.
+     *
+     * @uxon-property file_modification_time_attribute_alias
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $value
+     * @return FileList
+     */
+    public function setFileModificationTimeAttributeAlias(string $value) : FileList
+    {
+        $this->fileModificationTimeAttributeAlias = $value;
+        $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
+        $this->addColumn($col);
+        $this->fileModificationTimeColumn = $col;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @throws WidgetConfigurationError
+     * @return DataColumn
+     */
     public function getDownloadUrlColumn() : DataColumn
     {
         if ($this->downloadUrlColumn !== null) {
@@ -281,13 +363,21 @@ class FileList extends DataTable
         throw new WidgetConfigurationError($this, 'No data column with download URLs found!');
     }
     
+    /**
+     * 
+     * @return bool
+     */
     public function hasDownloadUrlColumn() : bool
     {
         return $this->downloadUrlAttributeAlias !== null || $this->downloadUrlColumn !== null;
     }
     
     /**
-     * The attribute for the URL for downloading the file
+     * The attribute for the URL for downloading the file.
+     * 
+     * This property is needed if the files are stored somewhere, where they can be downloaded from:
+     * e.g. in the file system of the workbench server or on a dedicated media-server or dokument
+     * management system.
      *
      * @uxon-property download_url_attribute_alias
      * @uxon-type metamodel:attribute
@@ -304,16 +394,11 @@ class FileList extends DataTable
         return $this;
     }
     
-    public function isUploadEnabled() : bool
-    {
-        return $this->getUpload();
-    }
-    
     /**
-     *
+     * 
      * @return bool
      */
-    public function getUpload() : bool
+    public function isUploadEnabled() : bool
     {
         return $this->upload;
     }
@@ -321,14 +406,14 @@ class FileList extends DataTable
     /**
      * Set to TRUE to allow uploading files - see `upload_options` for details
      * 
-     * @uxon-property upload
+     * @uxon-property upload_enabled
      * @uxon-type boolean
      * @uxon-default false
      * 
      * @param bool $value
      * @return FileList
      */
-    public function setUpload(bool $value) : FileList
+    public function setUploadEnabled(bool $value) : FileList
     {
         $this->upload = $value;
         return $this;
@@ -377,31 +462,22 @@ class FileList extends DataTable
         return $this;
     }
     
-    /**
-     * 
-     * @return bool
-     */
-    public function getDownload() : bool
-    {
-        return $this->download;
-    }
-    
     public function isDownloadEnabled() : bool
     {
-        return $this->getDownload();
+        return $this->download;
     }
     
     /**
      * Set to TRUE to allow downloading files
      * 
-     * @uxon-property download
+     * @uxon-property download_enabled
      * @uxon-type boolean
      * @uxon-default false
      * 
      * @param bool $value
      * @return FileList
      */
-    public function setDownload(bool $value) : FileList
+    public function setDownloadEnabled(bool $value) : FileList
     {
         $this->download = $value;
         return $this;

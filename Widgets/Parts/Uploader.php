@@ -29,6 +29,8 @@ class Uploader implements WidgetPartInterface
     
     private $maxFileSizeMb = 10;
     
+    private $maxFiles = null;
+    
     public function __construct(WidgetInterface $widget, UxonObject $uxon = null)
     {
         $this->widget = $widget;
@@ -186,4 +188,29 @@ class Uploader implements WidgetPartInterface
         $this->maxFileSizeMb = NumberDataType::cast($value);
         return $this;
     }
+    
+    /**
+     *
+     * @return int|null
+     */
+    public function getMaxFiles() : ?int
+    {
+        return $this->maxFiles;
+    }
+    
+    /**
+     * Maximum number of files to upload - unlimited by default.
+     * 
+     * @uxon-property max_files
+     * @uxon-type integers
+     * 
+     * @param int $value
+     * @return Uploader
+     */
+    public function setMaxFiles(int $value) : Uploader
+    {
+        $this->maxFiles = $value;
+        return $this;
+    }
+    
 }
