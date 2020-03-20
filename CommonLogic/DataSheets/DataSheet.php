@@ -1147,7 +1147,7 @@ class DataSheet implements DataSheetInterface
             }
             
             // If at least one column has values, remember this.
-            if (count($column->getValues(false)) > 0) {
+            if ($column->isEmpty() === false) {
                 $values_found = true;
             }
             // Add all other columns to values
@@ -1179,7 +1179,7 @@ class DataSheet implements DataSheetInterface
             foreach ($result->getResultRows() as $row) {
                 $new_uids[] = $row[$uidKey];
             }
-        } catch (\Throwable $e) {
+        } catch (\Throwable $e) {throw $e;
             $transaction->rollback();
             $commit = false;
             throw new DataSheetWriteError($this, $e->getMessage(), null, $e);
@@ -1232,7 +1232,9 @@ class DataSheet implements DataSheetInterface
         }
         
         // Save the new UIDs in the data sheet
-        $this->setColumnValues($thisObj->getUidAttributeAlias(), $new_uids);
+        if (! empty($new_uids)) {
+            $this->setColumnValues($thisObj->getUidAttributeAlias(), $new_uids);
+        }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnCreateDataEvent($this, $transaction));
         
