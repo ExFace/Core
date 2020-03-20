@@ -108,38 +108,4 @@ class UiPageTreeFactory extends AbstractStaticFactory
         }
         return $tree;
     }
-    
-    /**
-     * /**
-     * Creates a tree with the as `rootPage` property given root page as root, 
-     * if no root page is given the default root page is used as root.
-     * The tree shows all ancestor pages of the leaf page, given as `leafPage` property, till the root page.
-     * That type of tree is also called breadcrumbs.
-     *  
-     * The root page can also be set by calling the `setRootPages` function of the tree object and giving the root page as an array.
-     * 
-     * To get the tree root nodes call the function `getRootNodes()` of the tree object.
-     * 
-     * Example with `App1_ChildPage3_Child1` as leaf page:
-     * 
-     * App1
-     *   App1_ChildPage3
-     *      App1_ChildPage3_Child1
-     *          App1_ChildPage3_Child1_Child
-     * 
-     * @param Workbench $exface
-     * @param UiPageInterface $page 
-     * @param UiPageInterface $rootPage
-     * @return UiPageTree
-     */
-    public static function createBreadcrumbsToPage(Workbench $exface, UiPageInterface $page, UiPageInterface $rootPage = null) : UiPageTree
-    {
-        $tree = new UiPageTree($exface);
-        $tree->setExpandPathToPage($page);
-        if ($rootPage !== null) {
-            $tree->setRootPages([$rootPage]);
-        }
-        $tree->setExpandPathOnly(true);
-        return $tree;
-    }
 }

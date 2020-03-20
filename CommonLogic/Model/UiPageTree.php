@@ -22,8 +22,6 @@ class UiPageTree
     
     private $expandPathToNode = null;
     
-    private $expandPathOnly = false;
-    
     public function __construct(WorkbenchInterface $exface)
     {
         $this->exface = $exface;
@@ -153,29 +151,6 @@ class UiPageTree
     
     /**
      * 
-     * @return bool
-     */
-    protected function isExpandPathOnly() : bool
-    {
-        return $this->expandPathOnly;
-    }
-    
-    /**
-     * Set if the tree should only contain nodes that are in the path to the page given in the
-     * property `expandPathToNode` of the tree. 
-     * 
-     * @param bool $trueOrFalse
-     * @return UiPageTree
-     */
-    public function setExpandPathOnly(bool $trueOrFalse) : UiPageTree
-    {
-        $this->expandPathOnly = $trueOrFalse;
-        $this->reset();
-        return $this;
-    }
-    
-    /**
-     * 
      * @return UiPageTree
      */
     protected function reset() : UiPageTree
@@ -188,7 +163,7 @@ class UiPageTree
      * 
      * @return bool
      */
-    protected function isLoaded() : bool
+    public function isLoaded() : bool
     {
         return $this->rootNodes !== null;
     }
