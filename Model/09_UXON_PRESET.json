@@ -999,7 +999,7 @@
             "NAME": "FileList with upload",
             "DESCRIPTION": "To upload files the `upload` must be set to `true` and a `file_content_attribute_alias` must be specified (otherwise there's no place to upload). Use `upload_options` to apply restrictions to file size, type, name length, etc.",
             "PROTOTYPE": "exface\/Core\/Widgets\/FileList.php",
-            "UXON": "{\"widget_type\":\"FileList\",\"object_alias\":\"\",\"filename_attribute_alias\":\"\",\"mime_type_attribute_alias\":\"\",\"file_content_attribute_alias\":\"\",\"upload\":true,\"upload_options\":{\"allowed_mime_types\":[\"application\\\/pdf\"]}}",
+            "UXON": "{\"widget_type\":\"FileList\",\"object_alias\":\"\",\"filename_attribute_alias\":\"\",\"mime_type_attribute_alias\":\"\",\"file_content_attribute_alias\":\"\",\"upload_enabled\":true,\"upload_options\":{\"allowed_mime_types\":[\"application\\\/pdf\"]}}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget"
         },
@@ -1013,7 +1013,7 @@
             "NAME": "FileList to upload attachments to master-object",
             "DESCRIPTION": "Use this with master-detail widgets. The hidden column with a widget-link for value makes sure all newly uploaded files automatically get the id of the master object.",
             "PROTOTYPE": "exface\/Core\/Widgets\/FileList.php",
-            "UXON": "{\"widget_type\":\"FileList\",\"object_alias\":\"\",\"filename_attribute_alias\":\"\",\"mime_type_attribute_alias\":\"\",\"file_content_attribute_alias\":\"\",\"upload\":true,\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO MASTER OBJECT!\",\"required\":true,\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO MASTER OBJECT!\",\"hidden\":true,\"value\":\"=widget_link_to_id_of_master_object\"}]}",
+            "UXON": "{\"widget_type\":\"FileList\",\"object_alias\":\"\",\"filename_attribute_alias\":\"\",\"mime_type_attribute_alias\":\"\",\"file_content_attribute_alias\":\"\",\"upload_enabled\":true,\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO MASTER OBJECT!\",\"required\":true,\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO MASTER OBJECT!\",\"hidden\":true,\"value\":\"=widget_link_to_id_of_master_object\"}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget"
         }
