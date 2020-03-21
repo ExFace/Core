@@ -686,6 +686,36 @@
             "SHORT_DESCRIPTION": ""
         },
         {
+            "CREATED_ON": "2020-03-18 13:44:31",
+            "MODIFIED_ON": "2020-03-18 13:44:31",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea691e99c125eca3480205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Binary Data",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/BinaryDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": null,
+            "ALIAS": "Binary",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2020-03-19 20:28:21",
+            "MODIFIED_ON": "2020-03-19 20:28:21",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6a202d12e541a3480205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "File content type (MimeType)",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/MimeTypeDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\"}",
+            "ALIAS": "MimeType",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
             "CREATED_ON": "2020-03-05 12:15:31",
             "MODIFIED_ON": "2020-03-05 12:32:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
