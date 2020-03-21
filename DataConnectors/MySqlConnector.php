@@ -214,7 +214,7 @@ class MySqlConnector extends AbstractSqlConnector
         
         try {
             return mysqli_rollback($this->getCurrentConnection());
-        } catch (\mysqli_sql_exception $e) {
+        } catch (\Throwable $e) {
             throw new DataConnectionRollbackFailedError($this, "Rollback failed: " . $e->getMessage(), '6T2T2S1', $e);
         }
         return $this;
