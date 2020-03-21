@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-03-10 19:49:17",
-            "MODIFIED_ON": "2020-03-10 20:11:21",
+            "MODIFIED_ON": "2020-03-21 16:28:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea63083a80f8c8a2e30205857feb80",
@@ -96,7 +96,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"AUTHORIZATION_POINT\"},{\"attribute_alias\":\"EFFECT\"},{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"DESCRIPTION\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Targets\",\"widgets\":[{\"attribute_alias\":\"TARGET_USER_ROLE\"},{\"attribute_alias\":\"TARGET_PAGE_GROUP\"},{\"attribute_alias\":\"TARGET_OBJECT\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Additional conditions\",\"width\":\"max\",\"widgets\":[{\"attribute_alias\":\"CONDITION_UXON\",\"hide_caption\":true}]}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"AUTHORIZATION_POINT\"},{\"attribute_alias\":\"EFFECT\"},{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"DESCRIPTION\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Targets\",\"widgets\":[{\"attribute_alias\":\"TARGET_USER_ROLE\"},{\"attribute_alias\":\"TARGET_PAGE_GROUP\"},{\"attribute_alias\":\"TARGET_OBJECT\"},{\"attribute_alias\":\"TARGET_ACTION_MODEL\"},{\"attribute_alias\":\"TARGET_ACTION_PROTOTYPE\"},{\"attribute_alias\":\"TARGET_FACADE\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Additional conditions\",\"width\":\"max\",\"widgets\":[{\"attribute_alias\":\"CONDITION_UXON\",\"height\":12,\"width\":\"max\",\"hide_caption\":true}]}]}",
             "ALIAS": "AUTHORIZATION_POLICY",
             "DATA_ADDRESS": "exf_auth_policy"
         }
