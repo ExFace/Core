@@ -421,7 +421,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $this->prepareInputValue('', $uid_qpart->getAttribute()->getDataType(), $uid_qpart->getDataAddressProperty('SQL_DATA_TYPE'))
             ), $uid_generator);
             
-            $columns[$uid_qpart->getColumnKey()] = $uid_qpart->getDataAddress();
+            $columns[$uid_qpart->getDataAddress()] = $uid_qpart->getDataAddress();
             $last_uid_sql_var = '@last_uid';
             foreach ($values as $nr => $row) {
                 $values[$nr][$uid_qpart->getDataAddress()] = $last_uid_sql_var . ' := ' . $uid_generator;
