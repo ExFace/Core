@@ -25,6 +25,9 @@
             },
             {
                 "attribute_alias": "APP__LABEL"
+            },
+            {
+                "attribute_alias": "DESCRIPTION"
             }
         ],
         "buttons": [
