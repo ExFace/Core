@@ -28,6 +28,9 @@
             {
                 "attribute_alias": "AUTHORIZATION_POLICY__UID:COUNT",
                 "caption": "Policies"
+            },
+            {
+                "attribute_alias": "DESCRIPTION"
             }
         ],
         "buttons": [
@@ -42,8 +45,7 @@
                 "action_alias": "exface.Core.ShowObjectCopyDialog"
             },
             {
-                "action_alias": "exface.Core.DeleteObject",
-                "visibility": "optional"
+                "action_alias": "exface.Core.DeleteObject"
             }
         ]
     }

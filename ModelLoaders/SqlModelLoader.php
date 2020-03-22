@@ -812,6 +812,7 @@ class SqlModelLoader implements ModelLoaderInterface
             $dbInstaller = new MySqlDatabaseInstaller($coreAppSelector);
             $dbInstaller
                 ->setFoldersWithMigrations(['InitDB','Migrations'])
+                ->setFoldersWithStaticSql(['Views'])
                 ->setDataConnection($modelConnection);
             
             $this->getWorkbench()->eventManager()->addListener(OnInstallEvent::getEventName(), [$this, 'finalizeInstallation']);

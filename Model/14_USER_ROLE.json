@@ -71,6 +71,28 @@
             "DESCRIPTION": "",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "MODEL_DEV"
+        },
+        {
+            "CREATED_ON": "2020-03-22 13:39:26",
+            "MODIFIED_ON": "2020-03-22 13:39:46",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6c428d7e7e9fa3480205857feb80",
+            "NAME": "Superuser: access everything",
+            "DESCRIPTION": "",
+            "APP": "0x31000000000000000000000000000000",
+            "ALIAS": "SUPERUSER"
+        },
+        {
+            "CREATED_ON": "2020-03-22 13:54:52",
+            "MODIFIED_ON": "2020-03-22 13:54:52",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6c44b4d365f6a3480205857feb80",
+            "NAME": "Anonymous",
+            "DESCRIPTION": "",
+            "APP": "0x31000000000000000000000000000000",
+            "ALIAS": "ANONYMOUS"
         }
     ],
     "totals_rows": [],
