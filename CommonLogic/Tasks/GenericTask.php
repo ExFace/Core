@@ -321,7 +321,7 @@ class GenericTask implements TaskInterface
      */
     public function isTriggeredByWidget(): bool
     {
-        return is_null($this->originWigetId) ? false : true;
+        return $this->isTriggeredOnPage() && $this->originWigetId !== null;
     }
     
     /**
@@ -331,7 +331,7 @@ class GenericTask implements TaskInterface
      */
     public function isTriggeredOnPage(): bool
     {
-        return is_null($this->originPageSelctor) ? false : true;
+        return $this->originPageSelctor !== null;
     }
 
     /**
@@ -379,7 +379,7 @@ class GenericTask implements TaskInterface
     {
         if ($selectorOrString instanceof UiPageSelectorInterface) {
             $this->originPageSelctor = $selectorOrString;
-        } else {
+        } elseif ($selectorOrString !== '') {
             $this->originPageSelctor = new UiPageSelector($this->getWorkbench(), $selectorOrString);
         }
         $this->originPage = null;
