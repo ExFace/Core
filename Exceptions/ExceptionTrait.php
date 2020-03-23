@@ -311,6 +311,9 @@ trait ExceptionTrait {
      */
     public function getStatusCode()
     {
+        if ($this->getPrevious() && $this->getPrevious() instanceof ExceptionInterface && $code = $this->getPrevious()->getStatusCode()){
+            return $code;
+        } 
         return 500;
     }
 

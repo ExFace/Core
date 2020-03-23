@@ -40,7 +40,7 @@ class SymfonyAuthenticator extends AbstractAuthenticator
             $this->authenticatedToken = $token;
             $this->authenticatedSymfonyToken = $symfonyAuthenticatedToken;
         } catch (AuthenticationException $e) {
-            throw new AuthenticationFailedError($e->getMessage(), null, $e);
+            throw new AuthenticationFailedError($this, $e->getMessage(), null, $e);
         }
         return $token;
     }
