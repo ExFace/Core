@@ -52,7 +52,7 @@ class SecurityManager implements SecurityManagerInterface
      */
     public function authenticate(AuthenticationTokenInterface $token): AuthenticationTokenInterface
     {      
-        $err = new AuthenticationFailedError('Authentication failed!');
+        $err = new AuthenticationFailedError($this, 'Authentication failed!');
         foreach ($this->getAuthenticators() as $authenticator) {
             if ($authenticator->isSupported($token) === false) {
                 continue;
@@ -62,7 +62,7 @@ class SecurityManager implements SecurityManagerInterface
                 $this->storeAuthenticatedToken($authenticated);
                 return $authenticated;
             } catch (AuthenticationException $e) {
-                $err->addAuthenticatorError($authenticator, new AuthenticationFailedError($e->getMessage(), null, $e));
+                $err->addSecondaryError(new AuthenticationFailedError($authenticator, $e->getMessage(), null, $e));
             }
         }
         

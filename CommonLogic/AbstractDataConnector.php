@@ -361,7 +361,7 @@ abstract class AbstractDataConnector implements DataConnectionInterface
             $this->performConnect();
             return $token;
         } catch (DataConnectionFailedError $e) {
-            throw new AuthenticationFailedError('Authentication failed!', null, $e);
+            throw new AuthenticationFailedError($this, 'Authentication failed!', null, $e);
         }
     }
     

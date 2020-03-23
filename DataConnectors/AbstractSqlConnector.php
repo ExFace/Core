@@ -297,7 +297,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
                 $this->setCurrentConnection($prevConnection);
             }
         } catch (DataConnectionFailedError $e) {
-            throw new AuthenticationFailedError('Authentication failed! ' . $e->getMessage(), null, $e);
+            throw new AuthenticationFailedError($this, 'Authentication failed! ' . $e->getMessage(), null, $e);
         }
         
         if ($updateUserCredentials === true) {
