@@ -1,12 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Factories\SelectorFactory;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
 

@@ -79,7 +79,7 @@ class UiPageTreeFactory extends AbstractStaticFactory
      * as well as all ancestor pages, and all pages on the same level as the ancestor pages,
      * till the root page.
      *  
-     * The root page can also be set by calling the `setRootPages` function of the tree object and giving the root page as an array.
+     * The root page can also be set by calling the `setRootPages` function of the tree object.
      * 
      * To get the tree root nodes call the function `getRootNodes()` of the tree object.
      * 
