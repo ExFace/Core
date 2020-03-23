@@ -974,6 +974,48 @@
             "UXON": "{\"object_alias\":\"\",\"widget_type\":\"Chart\",\"hide_legend\":true,\"data\":{\"paginate\":false},\"axis_y\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"axis_x\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"series\":[{\"type\":\"heatmap\",\"value_attribute_alias\":\"\",\"x_axis_no\":0,\"y_axis_no\":0,\"color_scale\":{\"colors\":[\"#36a832\",\"#ffe921\",\"red\"]}}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2020-03-19 17:44:59",
+            "MODIFIED_ON": "2020-03-19 17:44:59",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6a095a60795fa3480205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "FileList read-only",
+            "DESCRIPTION": "This widget will just show a list of files. The `mime_type_attribute_alias` enables facades to display icons for file types if possible.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/FileList.php",
+            "UXON": "{\"widget_type\":\"FileList\",\"object_alias\":\"\",\"filename_attribute_alias\":\"\",\"mime_type_attribute_alias\":\"\"}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2020-03-19 17:46:03",
+            "MODIFIED_ON": "2020-03-20 13:07:03",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6a0980bb44baa3480205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "FileList with upload",
+            "DESCRIPTION": "To upload files the `upload` must be set to `true` and a `file_content_attribute_alias` must be specified (otherwise there's no place to upload). Use `upload_options` to apply restrictions to file size, type, name length, etc.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/FileList.php",
+            "UXON": "{\"widget_type\":\"FileList\",\"object_alias\":\"\",\"filename_attribute_alias\":\"\",\"mime_type_attribute_alias\":\"\",\"file_content_attribute_alias\":\"\",\"upload_enabled\":true,\"upload_options\":{\"allowed_mime_types\":[\"application\\\/pdf\"]}}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2020-03-19 20:23:49",
+            "MODIFIED_ON": "2020-03-20 13:07:16",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6a1f8afdd918a3480205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "FileList to upload attachments to master-object",
+            "DESCRIPTION": "Use this with master-detail widgets. The hidden column with a widget-link for value makes sure all newly uploaded files automatically get the id of the master object.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/FileList.php",
+            "UXON": "{\"widget_type\":\"FileList\",\"object_alias\":\"\",\"filename_attribute_alias\":\"\",\"mime_type_attribute_alias\":\"\",\"file_content_attribute_alias\":\"\",\"upload_enabled\":true,\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO MASTER OBJECT!\",\"required\":true,\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO MASTER OBJECT!\",\"hidden\":true,\"value\":\"=widget_link_to_id_of_master_object\"}]}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
         }
     ],
     "totals_rows": [],

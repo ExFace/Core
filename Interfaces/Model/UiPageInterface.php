@@ -14,6 +14,7 @@ use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
+use exface\Core\Interfaces\Selectors\UiPageGroupSelectorInterface;
 
 /**
  * A page represents on screen of the UI and is basically the model for a web page in most cases.
@@ -480,4 +481,11 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return bool
      */
     public function isPublished() : bool;
+    
+    /**
+     * 
+     * @param UiPageGroupSelectorInterface $aliasOrUid
+     * @return bool
+     */
+    public function isInGroup(UiPageGroupSelectorInterface $aliasOrUid) : bool;
 }

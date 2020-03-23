@@ -390,9 +390,9 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
     /**
      * Returns the text for the result message if one was set in the UXON description of the action and NULL otherwise.
      *
-     * @return string
+     * @return string|NULL
      */
-    public function getResultMessageText();
+    public function getResultMessageText() : ?string;
     
     /**
      * Overrides the auto-generated result message with the given text.

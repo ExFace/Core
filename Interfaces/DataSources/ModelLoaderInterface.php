@@ -27,6 +27,8 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\CommonLogic\Model\UiPageTree;
+use exface\Core\Interfaces\Security\AuthorizationPointInterface;
+use exface\Core\Interfaces\UserImpersonationInterface;
 
 interface ModelLoaderInterface
 {
@@ -169,6 +171,24 @@ interface ModelLoaderInterface
      */
     public function getInstaller();
     
+    /**
+     * 
+     * @param AuthorizationPointInterface $authPoint
+     */
+    public function loadAuthorizationPoint(AuthorizationPointInterface $authPoint) : AuthorizationPointInterface;
+    
+    /**
+     * 
+     * @param AuthorizationPointInterface $authPoint
+     * @param UserImpersonationInterface $userOrToken
+     * @return AuthorizationPointInterface
+     */
+    public function loadAuthorizationPolicies(AuthorizationPointInterface $authPoint, UserImpersonationInterface $userOrToken) : AuthorizationPointInterface;
+    
+    /**
+     * 
+     * @param UserSelectorInterface $selector
+     */
     public function loadUser(UserSelectorInterface $selector) : UserInterface;
     
     /**

@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 
 interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 {
@@ -321,12 +322,26 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     public function removeRows();
 
     /**
-     * Aggregates all values in this column using the given aggregator.
+     * Returns the aggregation result for all current values of the column.
+     * 
+     * The aggregation is applied in-memory to the currently loaded values. No operation is performed
+     * on the data source!
+     * 
+     * If no aggregator is specified, the a default will be determined as follows:
+     * - If the column has totals (e.g. a sum in the footer), the aggregator of the first total will
+     * be applied.
+     * - If the column is bound to a meta attribute, the attribute's default aggregate function will
+     * be used.
+     * - Otherwise a DataSheetRuntimeError will be thrown.
+     * 
+     * If LIST-aggregators are used on a column bound to a meta attribute, the default value list
+     * delimiter will be used (unless a delimiter is specified explicitly in the aggregator)
      *
-     * @param AggregatorInterface $aggregator            
-     * @return string
+     * @param AggregatorInterface|string $aggregator 
+     * @throws DataSheetRuntimeError           
+     * @return string|float
      */
-    public function aggregate(AggregatorInterface $aggregator);
+    public function aggregate($aggregatorOrString = null);
 
     /**
      * Returns the meta object of this data column

@@ -35,6 +35,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\DataTypes\BinaryDataType;
 
 /**
  * A query builder for generic SQL syntax.
@@ -174,7 +175,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         'ID',
         'LEVEL',
         'ORDER',
-        'GROUP'
+        'GROUP',
+        'BINARY'
     );
     
     // Aliases
@@ -404,13 +406,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // This is important because the UID will mostly not be marked as a mandatory attribute in order to preserve the
         // possibility of mixed creates and updates among multiple rows. But an empty non-required attribute will never
         // show up as a value here. Still that value is required!
-        if ($uid_qpart === null) {
-            $uid_qpart = $this->addValue($this->getMainObject()->getUidAttributeAlias(), '');
+        if ($uid_qpart === null && $this->getMainObject()->getUidAttribute()->getDataAddressProperty('SQL_INSERT')) {
+            $uid_qpart = $this->addValue($this->getMainObject()->getUidAttributeAlias(), null);
         }
         
         // If the UID query part has a custom SQL insert statement, render it here and make sure it's saved
         // into a variable because all sorts of last_insert_id() function will not return such a value.
-        if ($uid_qpart->hasValues() === false && $uid_generator = $uid_qpart->getDataAddressProperty('SQL_INSERT')) {
+        if ($uid_qpart && $uid_qpart->hasValues() === false && $uid_generator = $uid_qpart->getDataAddressProperty('SQL_INSERT')) {
             $uid_generator = str_replace(array(
                 '[#~alias#]',
                 '[#~value#]'
@@ -427,7 +429,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         $insertedIds = [];
-        $uidAlias = $this->getMainObject()->getUidAttribute()->getAlias();
+        $uidAlias = $uid_qpart ? $uid_qpart->getColumnKey() : null;
         $insertedCounter = 0;
         foreach ($values as $nr => $row) {
             $sql = 'INSERT INTO ' . $this->getMainObject()->getDataAddress() . ' (' . implode(', ', $columns) . ') VALUES (' . implode(',', $row) . ')';
@@ -451,7 +453,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // TODO How to get multiple inserted ids???
             if ($cnt = $query->countAffectedRows()) {
                 $insertedCounter += $cnt;
-                $insertedIds[] = [$uidAlias => $last_id];
+                if ($uidAlias !== null) {
+                    $insertedIds[] = [$uidAlias => $last_id];
+                }
             }
             
             $query->freeResult();
@@ -673,7 +677,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if (($data_type instanceof JsonDataType) && $data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
                 } else {
-                    $value = $value === null ? 'NULL' : "'" . $this->escapeString($value) . "'";
+                    $value = $value === null ? 'NULL' : "'" . $this->escapeString($value) . "'"; 
                 }  
                 break;
             case $data_type instanceof BooleanDataType:
@@ -1492,7 +1496,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if ($attr->isRelation() && $comp != EXF_COMPARATOR_IN) {
             // always use the equals comparator for foreign keys! It's faster!
             $comp = EXF_COMPARATOR_EQUALS;
-        } elseif ($attr->isExactly($this->getMainObject()->getUidAttribute()) && ($comp == EXF_COMPARATOR_IS || $comp == EXF_COMPARATOR_IS_NOT)) {
+        } elseif ($this->getMainObject()->hasUidAttribute() && $attr->isExactly($this->getMainObject()->getUidAttribute()) && ($comp == EXF_COMPARATOR_IS || $comp == EXF_COMPARATOR_IS_NOT)) {
             $comp = $comp === EXF_COMPARATOR_IS ? EXF_COMPARATOR_EQUALS : EXF_COMPARATOR_EQUALS_NOT;
         } elseif (($qpart->getDataType() instanceof NumberDataType) && ($comp == EXF_COMPARATOR_IS || $comp == EXF_COMPARATOR_IS_NOT) && is_numeric($val)) {
             // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
