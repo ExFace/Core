@@ -1194,18 +1194,16 @@ SQL;
         return $uiPage;
     }
     
-    
-    
     /**
      * 
-     * @param UiPageTree $tree
-     * @return array
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadUiPageTree()
      */
     public function loadUiPageTree(UiPageTree $tree) : array
     {
         $exface = $this->getWorkbench();
         if (empty($tree->getStartRootNodes())) {
-            $rows = $this->loadTreeLevel();
+            $rows = $this->loadUiPageTreeLevel();
             $nodes = [];
             foreach ($rows as $row) {
                 $rootNode = new UiPageTreeNode($exface, $row['alias'], $row['name'], $row['oid']);
@@ -1253,7 +1251,7 @@ SQL;
                 $parentNodeId = $parentNode->getParentNode()->getUid();
             } else {
                 // load node and its childs
-                $rows = $this->loadTreeLevel($nodeId);
+                $rows = $this->loadUiPageTreeLevel($nodeId);
                 foreach ($rows as $row) {
                     if ($row['oid'] === $nodeId) {
                         if ($this->nodes_loaded[$row['oid']] !== null) {
@@ -1329,7 +1327,7 @@ SQL;
                 $this->nodes_loaded[$node->getUid()] = $node;
                 return $node;
             } else {
-                $rows = $this->loadTreeChildLevels($node->getUid());                
+                $rows = $this->loadUiPageTreeLevel($node->getUid(), true);                
                 $childIds = [];
                 foreach ($rows as $row) {
                     //build first level child nodes
@@ -1354,13 +1352,13 @@ SQL;
                 //build second level of child nodes
                 foreach ($childNodes as $childNode) {
                     foreach ($rows as $row) {
-                        if ($childNode->getUid() === $row['c_parent_oid']) {
-                            if ($this->nodes_loaded[$row['c_oid']] !== null) {
-                                $childChildNode = $this->nodes_loaded[$row['c_oid']];
+                        if ($childNode->getUid() === $row['parent_oid']) {
+                            if ($this->nodes_loaded[$row['oid']] !== null) {
+                                $childChildNode = $this->nodes_loaded[$row['oid']];
                             } else {
-                                $childChildNode = new UiPageTreeNode($exface, $row['c_alias'], $row['c_name'], $row['c_oid'], $childNode);
-                                $childChildNode->setDescription($row['c_description']);
-                                $childChildNode->setIntro($row['c_intro']);
+                                $childChildNode = new UiPageTreeNode($exface, $row['alias'], $row['name'], $row['oid'], $childNode);
+                                $childChildNode->setDescription($row['description']);
+                                $childChildNode->setIntro($row['intro']);
                             }
                             //load sub levels for child child tree nodes if needed
                             $childChildNode = $this->loadUiPageTreeChildNodes($tree, $childChildNode, $level + 2);
@@ -1379,21 +1377,24 @@ SQL;
     }
     
     /**
-     * Loads data for node with given `id` and all childs of that node.
+     * Returns data for node with given `id` and all childs of that node, if `loadTwoLevels` is true returns data for two child levels for given `id` instead.
      * 
      * @param string $sqlWhere
      * @return array
      */
-    protected function loadTreeLevel(string $id = null) : array
+    protected function loadUiPageTreeLevel(string $id = null, bool $loadTwoLevels = false) : array
     {
         $sqlWhere = '';
         if ($id === null) {
-            $sqlWhere = "WHERE parent_oid IS NULL AND menu_visible = 1";
+            $sqlWhere = "
+            WHERE parent_oid IS NULL AND menu_visible = 1";
         } else {
-            $sqlWhere = "WHERE (oid = {$id} OR parent_oid = {$id}) AND menu_visible = 1";
+            $sqlWhere = "
+            WHERE (oid = {$id} OR parent_oid = {$id}) AND menu_visible = 1";
         }
+        $sqlOrder = "
+            ORDER BY parent_oid, menu_index";
         $sql = "
-            #load node and childs
             SELECT
                 {$this->buildSqlUuidSelector('oid')} as oid,
                 {$this->buildSqlUuidSelector('parent_oid')} as parent_oid,
@@ -1402,47 +1403,34 @@ SQL;
                 description,
                 intro,
                 menu_index
-            FROM exf_page
+            FROM exf_page";
+                
+        if ($loadTwoLevels === true) {
+            $sqlUnionInnerWhere = '';
+            if ($id === null) {
+                $sqlUnionInnerWhere = $sqlWhere;
+            } else {
+                $sqlUnionInnerWhere = "
+                WHERE parent_oid = {$id} AND menu_visible = 1";
+            }
+            $sqlUnionWhere = "
+               WHERE parent_oid IN (SELECT
+	           oid
+	           FROM exf_page {$sqlUnionInnerWhere})";
+            $sql .= "            
             {$sqlWhere}
-            ORDER BY menu_index";
+            UNION ALL
+                {$sql}
+                {$sqlUnionWhere}";
+                
+        } else {
+            $sql .= $sqlWhere;
+        }
+        
+        $sql = "#load UiPageTree Data" . $sql . $sqlOrder;
         $query = $this->getDataConnection()->runSql($sql);
         $rows = $query->getResultArray();
         return $rows;        
-    }
-    
-    /**
-     * Loads data for 2 tree child levels from the level with the given `id`. 
-     * 
-     * @param string $id
-     * @return array
-     */
-    protected function loadTreeChildLevels(string $id) : array
-    {
-        $sql = "
-            #load two child levels
-            SELECT
-                {$this->buildSqlUuidSelector('p.oid')} as oid,
-                {$this->buildSqlUuidSelector('p.parent_oid')} as parent_oid,
-                p.name,
-                p.alias,
-                p.description,
-                p.intro,
-                p.menu_index,
-                {$this->buildSqlUuidSelector('c.oid')} as c_oid,
-                {$this->buildSqlUuidSelector('c.parent_oid')} as c_parent_oid,
-                c.name as c_name,
-                c.alias as c_alias,
-                c.description as c_description,
-                c.intro c_intro,
-                c.menu_index c_menu_index
-            FROM exf_page p
-            LEFT JOIN exf_page c ON p.oid = c.parent_oid
-            WHERE p.parent_oid = {$id} AND (p.menu_visible = 1 AND (c.menu_visible = 1 OR c.menu_visible is NULL))
-            ORDER BY p.menu_index, c.menu_index";
-        $query = $this->getDataConnection()->runSql($sql);
-        $rows = $query->getResultArray();
-        return $rows;
-            
     }
 }
 
