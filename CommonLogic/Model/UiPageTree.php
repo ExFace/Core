@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
+use Symfony\Component\Config\Definition\Exception\ForbiddenOverwriteException;
 
 class UiPageTree
 {
@@ -66,8 +67,9 @@ class UiPageTree
     {
         if (empty($this->startRootNodes)) {
             $this->startRootNodes = $nodes;
+        } else {
+            throw new ForbiddenOverwriteException('Starting root nodes for this UiPageTree are set already, either by giving a root page or loading root nodes from database. Overwriting those root nodes is not permitted!');
         }
-        #TODO throw Excpetion maybe
         return $this;
     }
     
