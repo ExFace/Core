@@ -19,6 +19,7 @@ use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DataSheetDataType;
+use exface\Core\CommonLogic\Model\Aggregator;
 
 class DataColumn implements DataColumnInterface
 {
@@ -801,19 +802,42 @@ class DataColumn implements DataColumnInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::aggregate()
      */
-    public function aggregate(AggregatorInterface $aggregator)
+    public function aggregate($aggregatorOrString = null)
     {
-        $result = '';
-        $values = $this->getValues(false);
-        try {
-            $result = static::aggregateValues($values, $aggregator);
-        } catch (\Throwable $e) {
-            throw new DataSheetRuntimeError($this->getDataSheet(), 'Cannot aggregate over column "' . $this->getName() . '" of a data sheet of "' . $this->getMetaObject()->getAliasWithNamespace() . '": unknown aggregator function "' . $aggregator . '"!', '6T5UXLD', $e);
+        if ($aggregatorOrString === null) {
+            // If no aggregator is specified, see if we can guess one
+            switch (true) {
+                // If the column has totals, use the aggregator of the first total
+                case $this->hasTotals():
+                    $aggregator = $this->getTotals()->getFirst()->getAggregator();
+                    break;
+                // If the column is bound to an attribute, use it's default aggregate function
+                case $this->getExpressionObj()->isMetaAttribute():
+                    $aggregator = new Aggregator($this->getWorkbench(), $this->getAttribute()->getDefaultAggregateFunction());
+                default:
+                    throw new DataSheetRuntimeError($this->getDataSheet(), 'Cannot aggregte values of column "' . $this->getName() . '": no aggregator specified!', '6T5UXLD');
+            }
+        } elseif ($aggregatorOrString instanceof AggregatorInterface) {
+            $aggregator = $aggregatorOrString;
+        } else {
+            $aggregator = new Aggregator($this->getWorkbench(), $aggregatorOrString);
         }
-        return $result;
+        
+        // If using a LIST-aggregator without a delimiter parameter, replace the aggregator with one
+        // that uses the value list delimiter of this column's attribute.
+        if (($aggregator->is(AggregatorFunctionsDataType::LIST_ALL) || $aggregator->is(AggregatorFunctionsDataType::LIST_DISTINCT)) && $aggregator->hasArguments() === false) {
+            if ($attr = $this->getAttribute()) {
+                $aggregator = new Aggregator($this->getWorkbench(), $aggregator->getFunction(), [$attr->getValueListDelimiter()]);
+            }
+        }
+        
+        try {
+            return static::aggregateValues($this->getValues(false), $aggregator);
+        } catch (\Throwable $e) {
+            throw new DataSheetRuntimeError($this->getDataSheet(), 'Cannot aggregate values of column "' . $this->getName() . '" of a data sheet of "' . $this->getMetaObject()->getAliasWithNamespace() . '": unknown aggregator function "' . $aggregator . '"!', '6T5UXLD', $e);
+        }
     }
 
     /**
@@ -832,10 +856,10 @@ class DataColumn implements DataColumnInterface
         $output = '';
         switch ($func->getValue()) {
             case AggregatorFunctionsDataType::LIST_ALL:
-                $output = implode(($args[0] ? $args[0] : ', '), $row_array);
+                $output = implode(($args[0] ? $args[0] : EXF_LIST_SEPARATOR), $row_array);
                 break;
             case AggregatorFunctionsDataType::LIST_DISTINCT:
-                $output = implode(($args[0] ? $args[0] : ', '), array_unique($row_array));
+                $output = implode(($args[0] ? $args[0] : EXF_LIST_SEPARATOR), array_unique($row_array));
                 break;
             case AggregatorFunctionsDataType::MIN:
                 $output = count($row_array) > 0 ? min($row_array) : 0;

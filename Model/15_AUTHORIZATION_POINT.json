@@ -1,0 +1,138 @@
+{
+    "object_alias": "exface.Core.AUTHORIZATION_POINT",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "DESCR",
+            "attribute_alias": "DESCR"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "COMBINING_ALGORITHM",
+            "attribute_alias": "COMBINING_ALGORITHM"
+        },
+        {
+            "name": "ACTIVE_FLAG",
+            "attribute_alias": "ACTIVE_FLAG"
+        },
+        {
+            "name": "TARGET_USER_ROLE_APPLICABLE",
+            "attribute_alias": "TARGET_USER_ROLE_APPLICABLE"
+        },
+        {
+            "name": "TARGET_PAGE_GROUP_APPLICABLE",
+            "attribute_alias": "TARGET_PAGE_GROUP_APPLICABLE"
+        },
+        {
+            "name": "TARGET_FACADE_APPLICABLE",
+            "attribute_alias": "TARGET_FACADE_APPLICABLE"
+        },
+        {
+            "name": "TARGET_OBJECT_APPLICABLE",
+            "attribute_alias": "TARGET_OBJECT_APPLICABLE"
+        },
+        {
+            "name": "TARGET_ACTION_APPLICABLE",
+            "attribute_alias": "TARGET_ACTION_APPLICABLE"
+        },
+        {
+            "name": "DEFAULT_EFFECT",
+            "attribute_alias": "DEFAULT_EFFECT"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2020-03-05 12:41:34",
+            "MODIFIED_ON": "2020-03-22 13:41:07",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea5ede96e738f6b9920205857feb80",
+            "NAME": "Access to UI pages",
+            "ALIAS": "PAGE_ACCESS",
+            "DESCR": "",
+            "APP": "0x31000000000000000000000000000000",
+            "COMBINING_ALGORITHM": "permit-unless-deny",
+            "ACTIVE_FLAG": "1",
+            "TARGET_USER_ROLE_APPLICABLE": "1",
+            "TARGET_PAGE_GROUP_APPLICABLE": "1",
+            "TARGET_FACADE_APPLICABLE": "0",
+            "TARGET_OBJECT_APPLICABLE": "0",
+            "TARGET_ACTION_APPLICABLE": "0",
+            "DEFAULT_EFFECT": "P"
+        },
+        {
+            "CREATED_ON": "2020-03-22 13:41:44",
+            "MODIFIED_ON": "2020-03-22 13:52:44",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6c42dfac007ba3480205857feb80",
+            "NAME": "Access to contexts",
+            "ALIAS": "CONTEXT_ACCESS",
+            "DESCR": null,
+            "APP": "0x31000000000000000000000000000000",
+            "COMBINING_ALGORITHM": "permit-unless-deny",
+            "ACTIVE_FLAG": "1",
+            "TARGET_USER_ROLE_APPLICABLE": "1",
+            "TARGET_PAGE_GROUP_APPLICABLE": "0",
+            "TARGET_FACADE_APPLICABLE": "0",
+            "TARGET_OBJECT_APPLICABLE": "0",
+            "TARGET_ACTION_APPLICABLE": "0",
+            "DEFAULT_EFFECT": "P"
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.AUTHORIZATION_POINT",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.AUTHORIZATION_POINT"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

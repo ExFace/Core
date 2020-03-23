@@ -18,6 +18,7 @@ use exface\Core\Exceptions\UiPage\UiPageNotPartOfAppError;
 use Ramsey\Uuid\Uuid;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\Selectors\UiPageGroupSelectorInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Interfaces\CmsConnectorInterface;
@@ -1345,11 +1346,14 @@ class UiPage implements UiPageInterface
     
     /**
      * @deprecated use setReplacesPageSelector() instead!
-     * @param string $aliasWithNamespace
+     * @param string|null $aliasWithNamespace
      * @return UiPageInterface
      */
-    protected function setReplacesPageAlias(string $aliasWithNamespace) : UiPageInterface
+    protected function setReplacesPageAlias($aliasWithNamespace) : UiPageInterface
     {
+        if ($aliasWithNamespace === null) {
+            return $this;
+        }
         return $this->setReplacesPageSelector($aliasWithNamespace);
     }
     
@@ -1404,4 +1408,16 @@ class UiPage implements UiPageInterface
         }
         return UiPageFactory::createFromModel($this->getWorkbench(), $selector)->getId();
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::isInGroup()
+     */
+    public function isInGroup(UiPageGroupSelectorInterface $aliasOrUid): bool
+    {
+        // TODO
+        return true;
+    }
+
 }

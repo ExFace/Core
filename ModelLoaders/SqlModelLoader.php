@@ -65,6 +65,13 @@ use exface\Core\CommonLogic\Model\CompoundAttribute;
 use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
 use exface\Core\CommonLogic\Model\UiPageTreeNode;
 use exface\Core\CommonLogic\Model\UiPageTree;
+use exface\Core\Interfaces\Security\AuthorizationPointInterface;
+use exface\Core\DataTypes\PolicyEffectDataType;
+use exface\Core\Interfaces\UserImpersonationInterface;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\PolicyCombiningAlgorithmDataType;
+use exface\Core\DataTypes\PolicyTargetDataType;
+use exface\Core\Exceptions\LogicException;
 
 /**
  * 
@@ -646,12 +653,12 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         
         $exface = $selector->getWorkbench();
-        // See if a (hex-)ID is given or an alias. The latter will need to be wrapped in qotes!
-        $data_connection_id_or_alias = $selector->toString();
-        if (false === $selector->isUid()) {
-            $data_connection_id_or_alias = '"' . $selector->toString() . '"';
+        
+        if ($selector->isUid()) {
+            $filter = 'dc.oid = ' . $selector->toString();
+        } else {
+            $filter = 'dc.alias = "' . $selector->toString() . '"';
         }
-        $filter = "(dc.oid = " . $data_connection_id_or_alias . " OR dc.alias = " . $data_connection_id_or_alias . ")";
         
         // If there is a user logged in, fetch his specific connctor config (credentials)
         $authToken = $exface->getSecurity()->getAuthenticatedToken();
@@ -680,9 +687,9 @@ class SqlModelLoader implements ModelLoaderInterface
         $query = $this->getDataConnection()->runSql($sql);
         $ds = $query->getResultArray();
         if (count($ds) > 1) {
-            throw new RangeException('Multiple user credentials found for data connection "' . $data_connection_id_or_alias . '" and user "' . $user_name . '"!', '6T4R8UM');
+            throw new RangeException('Multiple user credentials found for data connection "' . $selector . '" and user "' . $user_name . '"!', '6T4R8UM');
         } elseif (count($ds) != 1) {
-            throw new RangeException('Cannot find data connection "' . $data_connection_id_or_alias . '"!', '6T4R97R');
+            throw new RangeException('Cannot find data connection "' . $selector . '"!', '6T4R97R');
         }
         $ds = $ds[0];
         
@@ -813,6 +820,7 @@ class SqlModelLoader implements ModelLoaderInterface
             $dbInstaller = new MySqlDatabaseInstaller($coreAppSelector);
             $dbInstaller
                 ->setFoldersWithMigrations(['InitDB','Migrations'])
+                ->setFoldersWithStaticSql(['Views'])
                 ->setDataConnection($modelConnection);
             
             $this->getWorkbench()->eventManager()->addListener(OnInstallEvent::getEventName(), [$this, 'finalizeInstallation']);
@@ -1113,6 +1121,107 @@ SQL;
     { 
         $user->exportDataSheet()->dataDelete();
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadAuthorizationPoint()
+     */
+    public function loadAuthorizationPoint(AuthorizationPointInterface $authPoint) : AuthorizationPointInterface
+    {        
+        $sql = <<<SQL
+SELECT 
+    apt.*, 
+    {$this->buildSqlUuidSelector('apt.oid')} AS oid,
+    {$this->buildSqlUuidSelector('apt.app_oid')} AS app_oid
+FROM 
+    exf_auth_point apt
+WHERE 
+    apt.alias = '{$authPoint->getAlias()}'
+SQL;
+        
+        // Since we only filter on (non-namespaced) alias in the SQL, there may be 
+        // multiple rows here although it's extremely unprobable
+        $result = $this->getDataConnection()->runSql($sql)->getResultArray();
+        switch (count($result)) {
+            case 0:
+                throw new LogicException('Authorization point "' . $authPoint->getAliasWithNamespace() . '" not found in metamodel!');
+            case 1:
+                $checkApp = false;
+                break;
+            default:
+                $checkApp = true;
+                $apAppUid = $authPoint->getApp()->getUid();
+                break;
+        }
+        
+        foreach ($result as $row) {
+            if ($checkApp === true && $apAppUid !== $row['app_oid']) {
+                continue;
+            }
+            $authPoint
+                ->setName($row['name'])
+                ->setUid($row['oid'])
+                ->setActive(BooleanDataType::cast($row['active_flag']))
+                ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), $row['default_effect']))
+                ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), $row['combining_algorithm']));
+        }
+        
+        return $authPoint;
+    }
+    
+    public function loadAuthorizationPolicies(AuthorizationPointInterface $authPoint, UserImpersonationInterface $userOrToken) : AuthorizationPointInterface
+    {
+        if ($userOrToken->getUsername() !== null) {
+            
+            $userFilter = <<<SQL
+            
+        apol.target_user_role_oid IN (
+            SELECT
+                turu.user_role_oid
+            FROM
+                exf_user_role_users turu
+                INNER JOIN exf_user u ON turu.user_oid = u.oid
+            WHERE
+                u.username = '{$userOrToken->getUsername()}'
+        )
+        OR
+SQL;
+        }
+        
+        $sql = <<<SQL
+SELECT
+    apol.*,
+    {$this->buildSqlUuidSelector('apol.target_page_group_oid')} AS target_page_group_oid,
+    {$this->buildSqlUuidSelector('apol.target_user_role_oid')} AS target_user_role_oid,
+    {$this->buildSqlUuidSelector('apol.target_object_oid')} AS target_object_oid
+FROM
+    exf_auth_policy apol
+WHERE
+    apol.auth_point_oid = {$authPoint->getUid()}
+    AND (
+        {$userFilter}
+        apol.target_user_role_oid IS NULL
+    )
+SQL;
+        
+        foreach ($this->getDataConnection()->runSql($sql)->getResultArray() as $row) {            
+            $authPoint->addPolicy(
+                [
+                    PolicyTargetDataType::USER_ROLE => $row['target_user_role_oid'],
+                    PolicyTargetDataType::PAGE_GROUP => $row['target_page_group_oid'],
+                    PolicyTargetDataType::META_OBJECT => $row['target_object_oid'],
+                    PolicyTargetDataType::ACTION => $row['target_action_selector'],
+                    PolicyTargetDataType::FACADE => $row['target_facade_selector'],
+                ],
+                PolicyEffectDataType::fromValue($this->getWorkbench(), $row['effect']),
+                $row['name'],
+                $row['condition_uxon']
+            );
+        }
+        
+        return $authPoint;
     }
     
     /**

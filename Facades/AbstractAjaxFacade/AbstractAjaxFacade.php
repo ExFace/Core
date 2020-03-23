@@ -624,7 +624,9 @@ HTML;
     protected function isShowingErrorDetails() : bool
     {
         try {
-            return $this->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY') && $this->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAdmin();
+            $onlyAdmins = BooleanDataType::cast($this->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY'));
+            $isAdmin = $this->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAdmin();
+            return  ! $onlyAdmins || ($onlyAdmins && $isAdmin);
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
             return false;
