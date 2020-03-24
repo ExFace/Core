@@ -38,7 +38,7 @@ class NavCrumbs extends AbstractWidget
     public function getBreadcrumbs() : array
     {
         $leafPage = $this->getPage();
-        $tree = UiPageTreeFactory::createBreadcrumbsToPage($this->getWorkbench(), $leafPage);
+        $tree = UiPageTreeFactory::createForLeafNode($this->getWorkbench(), $leafPage);
         if ($this->rootPage !== null) {
             $tree->setRootPages([$this->rootPage]);
         }

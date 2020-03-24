@@ -104,8 +104,11 @@ class NavTiles extends WidgetGrid
         if ($this->tilesBuilt === false) {
             $tree = UiPageTreeFactory::createFromRootPage($this->getWorkbench(), UiPageFactory::createFromModel($this->getWorkbench(), $this->getRootPageSelector()), $this->getDepth());
             $nodes = $tree->getRootNodes();
-            $this->createTileGroupFromNodes($nodes, UiPageFactory::createFromModel($this->getWorkbench(), $this->getRootPageSelector())->getName());
-            
+            foreach ($nodes as $node) {
+                if ($node->hasChildNodes()) {
+                    $this->createTileGroupFromNodes($node->getChildNodes(), $node->getName());
+                }
+            }            
             $this->tilesBuilt = true;
             
         }

@@ -26,6 +26,7 @@ use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
+use exface\Core\CommonLogic\Model\UiPageTree;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Interfaces\UserImpersonationInterface;
 
@@ -224,5 +225,14 @@ interface ModelLoaderInterface
      * @return ModelLoaderInterface
      */
     public function deleteUser(UserInterface $user) : ModelLoaderInterface;
+    
+    /**
+     * Loads data from database and builds the tree structure for the given tree, returning an array of root nodes for the tree.
+     *
+     * @param UiPageTree $tree
+     * @return array
+     */
+    public function loadUiPageTree(UiPageTree $tree) : array;
+    
 }
 ?>

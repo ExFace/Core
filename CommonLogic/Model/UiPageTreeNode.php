@@ -3,13 +3,13 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
-use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\SelectorFactory;
+use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
 
-class UiPageTreeNode
+class UiPageTreeNode implements UiPageTreeNodeInterface
 {
     private $exface = null;
     
@@ -29,10 +29,20 @@ class UiPageTreeNode
     
     private $uid = null;
     
-    private $pageAlias = null;    
+    private $pageAlias = null;
+    
+    private $childNodesLoaded = false;
     
     
-    public function __construct(WorkbenchInterface $exface, string $pageAlias, string $name, string $uid, UiPageTreeNode $parentNode = null)
+    /**
+     * 
+     * @param WorkbenchInterface $exface
+     * @param string $pageAlias
+     * @param string $name
+     * @param string $uid
+     * @param UiPageTreeNodeInterface $parentNode
+     */
+    public function __construct(WorkbenchInterface $exface, string $pageAlias, string $name, string $uid, UiPageTreeNodeInterface $parentNode = null)
     {
         $this->exface = $exface;
         $this->pageSelector = SelectorFactory::createPageSelector($exface, $pageAlias);
@@ -84,10 +94,10 @@ class UiPageTreeNode
     
     /**
      * 
-     * @param UiPageTreeNode $parentNode
-     * @return UiPageTreeNode
+     * @param UiPageTreeNodeInterface $parentNode
+     * @return UiPageTreeNodeInterface
      */
-    public function setParentNode(UiPageTreeNode $parentNode) : UiPageTreeNode
+    public function setParentNode(UiPageTreeNodeInterface $parentNode) : UiPageTreeNodeInterface
     {
         $this->parentNode = $parentNode;
         return $this;
@@ -104,9 +114,9 @@ class UiPageTreeNode
     
     /**
      * 
-     * @return UiPageTreeNode|NULL
+     * @return UiPageTreeNodeInterface|NULL
      */
-    public function getParentNode() : ?UiPageTreeNode
+    public function getParentNode() : ?UiPageTreeNodeInterface
     {
         return $this->parentNode;   
     }
@@ -133,9 +143,9 @@ class UiPageTreeNode
     /**
      * 
      * @param string $intro
-     * @return UiPageTreeNode
+     * @return UiPageTreeNodeInterface
      */
-    public function setIntro (string $intro) : UiPageTreeNode
+    public function setIntro (string $intro) : UiPageTreeNodeInterface
     {
         $this->intro = $intro;
         return $this;
@@ -165,9 +175,9 @@ class UiPageTreeNode
     /**
      * 
      * @param string $descpription
-     * @return UiPageTreeNode
+     * @return UiPageTreeNodeInterface
      */
-    public function setDescription (string $descpription) : UiPageTreeNode
+    public function setDescription (string $descpription) : UiPageTreeNodeInterface
     {
         $this->description = $descpription;
         return $this;
@@ -196,7 +206,7 @@ class UiPageTreeNode
     
     /**
      * 
-     * @return array
+     * @return UiPageTreeNodeInterface[]
      */
     public function getChildNodes() : array
     {
@@ -204,13 +214,44 @@ class UiPageTreeNode
     }
     
     /**
+     *
+     * @return UiPageTreeNodeInterface
+     */
+    public function resetChildNodes() : UiPageTreeNodeInterface
+    {
+        $this->childNodes = [];
+        $this->setChildNodesLoaded(false);
+        return $this;
+    }
+    
+    /**
      * 
-     * @param UiPageTreeNode $node
+     * @param bool $trueOrFalse
+     * @return UiPageTreeNodeInterface
+     */
+    public function setChildNodesLoaded(bool $trueOrFalse) : UiPageTreeNodeInterface
+    {
+        $this->childNodesLoaded = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getChildNodesLoaded() : bool
+    {
+        return $this->childNodesLoaded;
+    }
+    
+    /**
+     * 
+     * @param UiPageTreeNodeInterface $node
      * @param int $position
      * @throws InvalidArgumentException
-     * @return UiPageTreeNode
+     * @return UiPageTreeNodeInterface
      */
-    public function addChildNode(UiPageTreeNode $node, int $position = null) : UiPageTreeNode
+    public function addChildNode(UiPageTreeNodeInterface $node, int $position = null) : UiPageTreeNodeInterface
     {
         if ($node->getParentNode() !== $this){
             throw new InvalidArgumentException("The parent node of the given node '{$node->getName()}' is not the node '{$this->getName()}' !");
@@ -233,7 +274,10 @@ class UiPageTreeNode
      */
     public function isPage(UiPageInterface $page) : bool
     {
-        return $page->is($this->getPageSelector());
+        if ($page->getId() === $this->getUid()) {
+            return true;
+        }
+        return false;
     }
     
     /**
@@ -245,10 +289,12 @@ class UiPageTreeNode
      */
     public function isParentOf(UiPageInterface $page) : bool
     {
-        if ($page->getMenuParentPage() === null) {
-            return false;
+        foreach ($this->getChildNodes() as $childNode) {
+            if ($childNode->getUid() === $page->getId()) {
+                return true;
+            }
         }
-        return $page->getMenuParentPage()->is($this->getPageSelector());        
+        return false;
     }
     
     /**
@@ -260,12 +306,17 @@ class UiPageTreeNode
      */
     public function isAncestorOf(UiPageInterface $page) : bool
     {
-        $checkPage = $page;
-        while ($checkPage->getMenuParentPage() !== null) {
-            if ($this->isParentOf($checkPage)) {
+        //return true;
+        while (!empty($this->getChildNodes())) {
+            if ($this->isParentOf($page)) {
                 return true;
             }
-            $checkPage = $checkPage->getMenuParentPage();            
+            foreach ($this->getChildNodes() as $childNode) {
+                if ($childNode->isAncestorOf($page)) {
+                    return true;
+                }
+            }
+            return false;
         }
         return false;          
     }    
