@@ -11,6 +11,7 @@ use exface\Core\DataTypes\LocaleDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Contexts\ContextRuntimeError;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
 
 /**
  * The UserContext shows the logged in User and some user-related controls like a logout button.
@@ -98,14 +99,27 @@ class UserContext extends AbstractContext
                 ]
               ],
               "buttons" => [
-                [
+                  [
+                      "action" => [
+                          "alias" => "exface.Core.ShowUserAccountDialog",
+                          "input_data_sheet" => [
+                              "object_alias" => "exface.Core.USER",
+                              "rows" => [
+                                  [
+                                      "UID" => $user->getUid()
+                                  ]
+                              ] 
+                          ]
+                      ]
+                  ],
+                  [
                     "action" => [
                         "alias" => "exface.Core.GoToUrl",
                         "url" => $this->getWorkbench()->getCMS()->buildUrlToSiteRoot() . "/login.html?webloginmode=lo"
                     ],
                     "caption" => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.LOGOUT.NAME'),
                     "icon" => $icon,
-                    "align" => "left"
+                    "align" => EXF_ALIGN_OPPOSITE
                 ]
               ]
             ];
@@ -135,14 +149,15 @@ class UserContext extends AbstractContext
                         "url" => $this->getWorkbench()->getCMS()->buildUrlToSiteRoot() . "/login.html"
                     ],
                     "caption" => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.LOGIN.NAME'),
-                    "icon" => $icon
+                    "icon" => $icon,
+                    "visibility" => WidgetVisibilityDataType::PROMOTED
                 ]
               ]
             ];
         }
         
         $uxon_object = UxonObject::fromAnything($uxon);
-        $form = WidgetFactory::createFromUxon($container->getPage(), $uxon_object);      
+        $form = WidgetFactory::createFromUxon($container->getPage(), $uxon_object, $container);      
         
         $container->addWidget($form);
         
