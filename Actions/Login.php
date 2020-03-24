@@ -56,7 +56,7 @@ class Login extends AbstractAction implements iModifyContext
                 $dataConnection->authenticate($token, $saveCred);
             }
             if ($this->getReloadOnSuccess($task) === true) {
-                $result = ResultFactory::createUriResult($task, '#', $this->translate('RESULT'));
+                $result = ResultFactory::createUriResult($task, '#', $this->translate('RESULT') . ' ' . $this->translate('RESULT_RELOADING'));
             } else {
                 $result = ResultFactory::createMessageResult($task, $this->translate('RESULT'));
             }
