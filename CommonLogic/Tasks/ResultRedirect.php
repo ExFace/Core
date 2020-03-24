@@ -8,6 +8,8 @@ use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\UrlDataType;
 
 /**
  * Task result redirecting to a UI page or URI.
@@ -38,7 +40,11 @@ class ResultRedirect extends ResultUri
     {
         $facade = $facade ?? $this->getTask()->getFacade();
         if ($facade instanceof HtmlPageFacadeInterface) {
-            $url = $facade->buildUrlToPage($this->getTargetPageSelector());
+            if ($targetSelector = $this->getTargetPageSelector()) {
+                $url = $facade->buildUrlToPage($targetSelector);
+            } else {
+                $url = parent::getUri();
+            }
         } else {
             throw new LogicException('Cannot transform a page selector into a URL for task result: need to pass a facade instance explicitly for results of tasks not issued by HTML page templates!');
         }

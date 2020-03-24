@@ -53,8 +53,6 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Facades\HtmlPageFacadeInterface;
 use exface\Core\CommonLogic\Tasks\ResultRedirect;
 use function GuzzleHttp\Psr7\uri_for;
-use exface\Core\Exceptions\Security\AuthenticationFailedError;
-use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\CommonLogic\Selectors\UserSelector;
 
