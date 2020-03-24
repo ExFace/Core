@@ -4,15 +4,13 @@ namespace exface\Core\Actions;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\DataConnectionFactory;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Selectors\UserSelector;
-use exface\Core\Factories\UiPageFactory;
+use exface\Core\CommonLogic\AbstractActionShowDynamicDialog;
+use exface\Core\Widgets\Dialog;
+use exface\Core\Exceptions\Actions\ActionInputMissingError;
 
 /**
  * Shows a login dialog.
@@ -30,13 +28,18 @@ use exface\Core\Factories\UiPageFactory;
  * @author Andrej Kabachnik
  *
  */
-class ShowLoginDialog extends ShowDialog
+class ShowLoginDialog extends AbstractActionShowDynamicDialog
 {
     const LOGIN_TO_WORKBENCH = 'workbench';
     const LOGIN_TO_CONNECTION = 'connection';
     
     private $loginTo = self::LOGIN_TO_WORKBENCH;
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowDialog::init()
+     */
     protected function init()
     {
         parent::init();
@@ -47,12 +50,15 @@ class ShowLoginDialog extends ShowDialog
         $this->setPrefillWithPrefillData(true);
         $this->setPrefillWithFilterContext(false);
     }
-    
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractActionShowDynamicDialog::enhanceDialogOnActionPerform()
+     */
+    protected function enhanceDialogOnActionPerform(Dialog $dialog, TaskInterface $task) : Dialog
     {
         $inputData = $this->getInputDataSheet($task);
-        
-        $dialog = $this->getDialogWidget();
         
         if ($this->getLoginTo() === self::LOGIN_TO_CONNECTION) {
             if (! $connectionSelector = $inputData->getCellValue('CONNECTION', 0)) {
@@ -66,36 +72,25 @@ class ShowLoginDialog extends ShowDialog
             $loginPrompt = $dataConnection->createLoginWidget($loginPrompt, $saveCreds, $saveForSelector);
         }
         
-        return parent::perform($task, $transaction);
+        return $dialog;
     }
     
-    protected function createDialogWidget(UiPageInterface $page, WidgetInterface $contained_widget = NULL)
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractActionShowDynamicDialog::enhanceDialogOnActionInit()
+     */
+    protected function enhanceDialogOnActionInit(Dialog $dialog) : Dialog
     {
-        /* @var $dialog \exface\Core\Widgets\Dialog */
-        $dialog = WidgetFactory::create(UiPageFactory::createEmpty($this->getWorkbench()), $this->getDefaultWidgetType());
-        $dialog->setMetaObject($this->getMetaObject());
-        
-        if ($contained_widget) {
-            $dialog->addWidget($contained_widget);
-            if (false === $contained_widget->getWidth()->isUndefined()) {
-                $dialog->setWidth($contained_widget->getWidth()->getValue());
-            }
-            if (false === $contained_widget->getHeight()->isUndefined()) {
-                $dialog->setHeight($contained_widget->getHeight()->getValue());
-            }
-        }
-        
         $dialog->setObjectAlias('exface.Core.LOGIN_DATA');
         $dialog->setColumnsInGrid(1);
         $dialog->setMaximized(false);
         $dialog->setHeight('auto');
         
-        $dialog
-        ->addWidget(WidgetFactory::createFromUxonInParent($dialog, new UxonObject([
+        $dialog->addWidget(WidgetFactory::createFromUxonInParent($dialog, new UxonObject([
             'widget_type' => 'LoginPrompt'
         ])));
         $dialog->setHideCloseButton(true);
-        
         return $dialog;
     }
     
