@@ -73,7 +73,7 @@ trait EnumStaticDataTypeTrait {
      * Returns a value when called statically like so: MyEnum::SOME_VALUE() given SOME_VALUE is a class constant
      *
      * @param string $name
-     * @param array  $arguments
+     * @param array $arguments
      *
      * @return static
      * @throws BadMethodCallException
