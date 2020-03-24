@@ -47,6 +47,7 @@
     
     "ACTION.LOGIN.NAME": "Anmelden",
     "ACTION.LOGIN.RESULT": "Anmeldung erfolgreich!",
+    "ACTION.LOGIN.RESULT_RELOADING": "Die App wird neu gestartet.",
     
     "ACTION.LOGOUT.NAME": "Abmelden",
     "ACTION.LOGOUT.RESULT": "Abmeldung erfolgreich!",
@@ -254,6 +255,8 @@
     "PAGE.TABS.GENERAL": "Allgemein",
     
     "SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED": "Diese Verbindung benötigt bzw. unterstützt keine Nutzer-Anmeldung.",
+    "SECURITY.CONNECTIONS.LOGIN_TITLE": "Anmeldung in Datenquelle",
+    
     "SECURITY.SIGN_IN": "Sign in",
     "SECURITY.LDAP.SIGN_IN": "Sign in with Windows user",
     "SECURITY.LDAP.DOMAIN": "Windows domain",
@@ -270,7 +273,6 @@
     "SECURITY.POLICIES.TARGET.ACTION": "Aktion",
     "SECURITY.POLICIES.TARGET.META_OBJECT": "Objekt",
     "SECURITY.POLICIES.TARGET.FACADE": "Fassade",
-    
     
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",

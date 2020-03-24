@@ -11,8 +11,8 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Actions\iRunFacadeScript;
 use exface\Core\Actions\SendToWidget;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
-use exface\Core\Widgets\Parts\ConditionalProperty;
 use exface\Core\Actions\ResetWidget;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * 
@@ -229,6 +229,25 @@ JS;
         
         return $output;
     }
+    
+    protected function buildJsRequestCommonParams(WidgetInterface $trigger, ActionInterface $action) : string
+    {
+        if ($trigger->getPage()->hasModel()) {
+            $triggerProperties = <<<JS
+                                    resource: '{$trigger->getPage()->getAliasWithNamespace()}',
+									element: '{$trigger->getId()}',
+									
+JS;
+        } else {
+            $triggerProperties = '';
+        }
+        return <<<JS
+
+                                    action: '{$action->getAliasWithNamespace()}',
+									object: '{$trigger->getMetaObject()->getId()}',
+                                    {$triggerProperties}
+JS;
+    }
 
     protected function buildJsClickCallServerAction(ActionInterface $action, AbstractJqueryElement $input_element)
     {
@@ -245,10 +264,7 @@ JS;
 								url: '" . $this->getAjaxUrl() . "',
                                 {$headers} 
 								data: {	
-									action: '" . $widget->getActionAlias() . "',
-									resource: '" . $widget->getPage()->getAliasWithNamespace() . "',
-									element: '" . $widget->getId() . "',
-									object: '" . $widget->getMetaObject()->getId() . "',
+									{$this->buildJsRequestCommonParams($widget, $action)}
 									data: requestData
 								},
 								success: function(data, textStatus, jqXHR) {
@@ -262,19 +278,25 @@ JS;
     										response.error = data;
     									}
                                     }
-				                   	if (response.success){
+				                   	if (response.success !== undefined){
 										" . $this->buildJsCloseDialog($widget, $input_element) . "
 										" . $this->buildJsInputRefresh($widget, $input_element) . "
 				                       	" . $this->buildJsBusyIconHide() . "
 				                       	$('#" . $this->getId() . "').trigger('" . $action->getAliasWithNamespace() . ".action.performed', [requestData, '" . $input_element->getId() . "']);
-										if (response.success || response.undoURL){
+										if (response.success !== undefined || response.undoURL){
 				                       		" . $this->buildJsShowMessageSuccess("response.success + (response.undoable ? ' <a href=\"" . $this->buildJsUndoUrl($action, $input_element) . "\" style=\"display:block; float:right;\">UNDO</a>' : '')") . "
-											if(response.redirect){
-												if (response.redirect.indexOf('target=_blank') > -1) {
-													window.open(response.redirect.replace('target=_blank',''), '_newtab');
-												} else {
-                                                    {$this->getFacade()->getElement($widget->getPage()->getWidgetRoot())->buildJsBusyIconShow()}
-													window.location.href = response.redirect;
+											if(response.redirect !== undefined){
+                                                switch (true) {
+												    case response.redirect.indexOf('target=_blank') !== -1:
+													    window.open(response.redirect.replace('target=_blank',''), '_newtab');
+                                                        break;
+                                                    case response.redirect === '':
+                                                        {$this->getFacade()->getElement($widget->getPage()->getWidgetRoot())->buildJsBusyIconShow()}
+                                                        window.location.reload();
+                                                        break;
+                                                    default: 
+                                                        {$this->getFacade()->getElement($widget->getPage()->getWidgetRoot())->buildJsBusyIconShow()}
+                                                        window.location.href = response.redirect;
 												}
 	                       					}
                                             if(response.download){

@@ -43,7 +43,7 @@ class LdapAuthenticator extends AbstractAuthenticator
         // verbinden zum ldap server
         $ldapconn = @ldap_connect($this->hostname);
         if (!$ldapconn) {
-            throw new AuthenticationFailedError('No connection to LDAP server!');
+            throw new AuthenticationFailedError($this, 'No connection to LDAP server!');
         }
         
         // binden zum ldap server
@@ -51,7 +51,7 @@ class LdapAuthenticator extends AbstractAuthenticator
         
         // Bindung überpfrüfen
         if (! $ldapbind) {
-            throw new AuthenticationFailedError('LDAP authentication failed');
+            throw new AuthenticationFailedError($this, 'LDAP authentication failed');
         }
         $this->authenticatedToken = $token;
         return $token;

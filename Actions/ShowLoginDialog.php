@@ -4,15 +4,14 @@ namespace exface\Core\Actions;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\DataConnectionFactory;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\DataTypes\WidgetVisibilityDataType;
-use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\CommonLogic\Selectors\UserSelector;
+use exface\Core\CommonLogic\AbstractActionShowDynamicDialog;
+use exface\Core\Widgets\Dialog;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
 
 /**
  * Shows a login dialog.
@@ -30,13 +29,18 @@ use exface\Core\Exceptions\Actions\ActionInputMissingError;
  * @author Andrej Kabachnik
  *
  */
-class ShowLoginDialog extends ShowDialog
+class ShowLoginDialog extends AbstractActionShowDynamicDialog
 {
     const LOGIN_TO_WORKBENCH = 'workbench';
     const LOGIN_TO_CONNECTION = 'connection';
     
     private $loginTo = self::LOGIN_TO_WORKBENCH;
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowDialog::init()
+     */
     protected function init()
     {
         parent::init();
@@ -47,75 +51,47 @@ class ShowLoginDialog extends ShowDialog
         $this->setPrefillWithPrefillData(true);
         $this->setPrefillWithFilterContext(false);
     }
-    
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractActionShowDynamicDialog::enhanceDialogOnActionPerform()
+     */
+    protected function enhanceDialogOnActionPerform(Dialog $dialog, TaskInterface $task) : Dialog
     {
         $inputData = $this->getInputDataSheet($task);
-        
-        $dialog = $this->getDialogWidget();
         
         if ($this->getLoginTo() === self::LOGIN_TO_CONNECTION) {
             if (! $connectionSelector = $inputData->getCellValue('CONNECTION', 0)) {
                 throw new ActionInputMissingError($this, 'No data connection to log in to: please provide a CONNECTION in input data!');
             }
             $dataConnection = DataConnectionFactory::createFromModel($this->getWorkbench(), $connectionSelector);
-            $dataConnection->createLoginWidget($dialog);
-            $dialog
-            ->addWidget(WidgetFactory::createFromUxonInParent($dialog, new UxonObject([
-                'widget_type' => 'InputHidden',
-                'attribute_alias' => 'CONNECTION',
-                'value' => $dataConnection->getId()
-            ])))
-            ->addWidget(WidgetFactory::createFromUxonInParent($dialog, new UxonObject([
-                'attribute_alias' => 'CONNECTION__LABEL',
-                'readonly' => true,
-                'value' => $dataConnection->getName()
-            ])));
-            
-            if ($saveFlag = $inputData->getCellValue('CONNECTION_SAVE', 0)) {
-                $dialog
-                ->addWidget(WidgetFactory::createFromUxonInParent($dialog, new UxonObject([
-                    'attribute_alias' => 'CONNECTION_SAVE',
-                    'value' => $saveFlag
-                ])));
-            }
-            
-            if ($userId = $inputData->getCellValue('CONNECTION_SAVE_FOR_USER', 0)) {
-                $dialog
-                ->addWidget(WidgetFactory::createFromUxonInParent($dialog, new UxonObject([
-                    'widget_type' => 'InputHidden',
-                    'attribute_alias' => 'CONNECTION_SAVE_FOR_USER',
-                    'value' => $userId
-                ])));
-            }
+            $loginPrompt = $dialog->getWidgetFirst();
+            $saveCreds = BooleanDataType::cast($inputData->getCellValue('CONNECTION_SAVE', 0));
+            $saveFor = $inputData->getCellValue('CONNECTION_SAVE_FOR_USER', 0);
+            $saveForSelector = $saveFor ? new UserSelector($this->getWorkbench(), $saveFor) : null;
+            $loginPrompt = $dataConnection->createLoginWidget($loginPrompt, $saveCreds, $saveForSelector);
         }
         
-        return parent::perform($task, $transaction);
+        return $dialog;
     }
     
-    protected function createDialogWidget(UiPageInterface $page, WidgetInterface $contained_widget = NULL)
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractActionShowDynamicDialog::enhanceDialogOnActionInit()
+     */
+    protected function enhanceDialogOnActionInit(Dialog $dialog) : Dialog
     {
-        $dialog = parent::createDialogWidget($page, $contained_widget);
-        
         $dialog->setObjectAlias('exface.Core.LOGIN_DATA');
         $dialog->setColumnsInGrid(1);
         $dialog->setMaximized(false);
         $dialog->setHeight('auto');
         
-        if ($this->getLoginTo() === self::LOGIN_TO_WORKBENCH) {
-            $dialog
-            ->addWidget(WidgetFactory::createFromUxonInParent($dialog, new UxonObject([
-                'widget_type' => 'LoginPrompt'
-            ])));
-            $dialog->setHideCloseButton(true);
-        } else {
-            $dialog->addButton($dialog->createButton(new UxonObject([
-                'action_alias' => 'exface.Core.Login',
-                'align' => EXF_ALIGN_OPPOSITE,
-                'visibility' => WidgetVisibilityDataType::PROMOTED
-            ])));
-        }
-        
+        $dialog->addWidget(WidgetFactory::createFromUxonInParent($dialog, new UxonObject([
+            'widget_type' => 'LoginPrompt'
+        ])));
+        $dialog->setHideCloseButton(true);
         return $dialog;
     }
     

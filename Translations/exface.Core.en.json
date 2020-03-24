@@ -47,6 +47,7 @@
     
 	"ACTION.LOGIN.NAME": "Login",
     "ACTION.LOGIN.RESULT": "Authenticated successfully.",
+    "ACTION.LOGIN.RESULT_RELOADING": "Restarting the app.",
     
     "ACTION.LOGOUT.NAME": "Logout",
     "ACTION.LOGOUT.RESULT": "Signed out successfully.",
@@ -255,6 +256,8 @@
     "PAGE.TABS.GENERAL": "General",
     
     "SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED": "This connection does not require/support user authentication.",
+    "SECURITY.CONNECTIONS.LOGIN_TITLE": "Log in to data source",
+
     "SECURITY.SIGN_IN": "Anmelden",
     "SECURITY.LDAP.SIGN_IN": "Anmelden mit Windows-Nutzer",
     "SECURITY.LDAP.DOMAIN": "Windows-Domäne",

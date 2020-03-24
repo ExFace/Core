@@ -14,6 +14,7 @@ use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Widgets\Traits\iShowMessageListTrait;
 
 /**
  * A Form is a Panel with buttons.
@@ -39,11 +40,10 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageList, iHaveContextualHelp
 {
     use iHaveButtonsAndToolbarsTrait;
+    use iShowMessageListTrait;
     use iHaveContextualHelpTrait {
         getHideHelpButton as getHideHelpButtonViaTrait;
     }
-    
-    private $messageList = null;
     
     private $autofocusFirst = true;
 
@@ -84,51 +84,6 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
     public function getButtonWidgetType()
     {
         return 'Button';
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iShowMessageList::getMessageList()
-     */
-    public function getMessageList() : MessageList
-    {
-        if ($this->messageList === null) {
-            $this->messageList = WidgetFactory::create($this->getPage(), 'MessageList', $this);
-        }
-        return $this->messageList;
-    }
-    
-    /**
-     * Array of `Message` widgets to display in the form's message list.
-     *
-     * @uxon-property messages
-     * @uxon-type \exface\Core\Widgets\Message[]
-     * @uxon-template [{"type": "info", "text": ""}]
-     *
-     * @param UxonObject $uxon
-     * @return MessageList
-     *
-     * @see \exface\Core\Interfaces\Widgets\iShowMessageList::setMessages()
-     */
-    public function setMessages(UxonObject $uxon) : iShowMessageList
-    {
-        $this->getMessageList()->setMessages($uxon);
-        return $this;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iShowMessageList::hasMessages()
-     */
-    public function hasMessages() : bool
-    {
-        if ($this->messageList !== null && $this->getMessageList()->isEmpty() === false) {
-            return true;
-        } 
-        
-        return false;
     }
     
     /**

@@ -14,6 +14,8 @@ use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthToken;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\UserInterface;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 
 /**
  *
@@ -297,7 +299,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
                 $this->setCurrentConnection($prevConnection);
             }
         } catch (DataConnectionFailedError $e) {
-            throw new AuthenticationFailedError('Authentication failed! ' . $e->getMessage(), null, $e);
+            throw new AuthenticationFailedError($this, 'Authentication failed! ' . $e->getMessage(), null, $e);
         }
         
         if ($updateUserCredentials === true) {
@@ -318,17 +320,20 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::createLoginWidget()
      */
-    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    public function createLoginWidget(iContainOtherWidgets $container, bool $saveCredentials = true, UserSelectorInterface $credentialsOwner = null) : iContainOtherWidgets
     {
-        $container->setWidgets(new UxonObject([
-            [
+        $loginForm = $this->createLoginForm($container, $saveCredentials, $credentialsOwner);
+        
+        // Add USERNAME and PASSWORD on top of the default fields of the form.
+        $loginForm->addWidget(WidgetFactory::createFromUxonInParent($loginForm, new UxonObject([
                 'attribute_alias' => 'USERNAME',
                 'required' => true
-            ],[
-                'attribute_alias' => 'PASSWORD'
-            ]
-        ]));
+        ])), 0);
+        $loginForm->addWidget(WidgetFactory::createFromUxonInParent($loginForm, new UxonObject([
+            'attribute_alias' => 'PASSWORD'
+        ])), 1);
+        
+        $container->addWidget($loginForm);
         return $container;
     }
 }
-?>

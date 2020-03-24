@@ -6,6 +6,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iShowMessageList;
+use exface\Core\Widgets\Traits\iShowMessageListTrait;
 
 /**
  * A login promt with potentially multiple forms for different authentication options (i.e. local login, LDAP, OAuth, etc.).
@@ -13,8 +15,10 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * @author Andrej Kabachnik
  *        
  */
-class LoginPrompt extends Container implements iFillEntireContainer
+class LoginPrompt extends Container implements iFillEntireContainer, iShowMessageList
 {
+    use iShowMessageListTrait;
+    
     /**
      * Returns the panels of the Split.
      * Technically it is an alias for Split::getWidgets() for better readability.
@@ -56,7 +60,7 @@ class LoginPrompt extends Container implements iFillEntireContainer
     }
 
     /**
-     * {@inheritdoc}
+     * @deprecated use setForms() instead!
      * @see \exface\Core\Widgets\Container::setWidgets()
      */
     public function setWidgets($widget_or_uxon_array)
