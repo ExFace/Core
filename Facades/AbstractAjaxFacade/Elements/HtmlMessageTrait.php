@@ -16,12 +16,15 @@ trait HtmlMessageTrait {
 
     protected function buildHtmlMessage() : string
     {
-        $output = '
-				<div class="exf-message ' . $this->buildCssMessageTypeClass() . '">
-					<div class="exf-message-icon">' . $this->buildHtmMessagelIcon() . '</div>
-					<div class="exf-message-title">' . $this->getWidget()->getCaption() . '</div>
-                    <div class="exf-message-text">' . nl2br($this->getWidget()->getText()) . '</div>
-				</div>';
+        $text = nl2br($this->getWidget()->getText());
+        $output = <<<HTML
+
+				<div class="exf-message {$this->buildCssMessageTypeClass()} {$this->buildCssElementClass()}" style="{$this->buildCssElementStyle()}">
+					<div class="exf-message-icon">{$this->buildHtmMessagelIcon()}</div>
+					<div class="exf-message-title">{$this->getWidget()->getCaption()}</div>
+                    <div class="exf-message-text">{$text}</div>
+				</div>
+HTML;
         return $output;
     }
     
