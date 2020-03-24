@@ -62,7 +62,8 @@ class ShowLoginDialog extends ShowDialog
             $loginPrompt = $dialog->getWidgetFirst();
             $saveCreds = BooleanDataType::cast($inputData->getCellValue('CONNECTION_SAVE', 0));
             $saveFor = $inputData->getCellValue('CONNECTION_SAVE_FOR_USER', 0);
-            $loginPrompt = $dataConnection->createLoginWidget($loginPrompt, $saveCreds, new UserSelector($this->getWorkbench(), $saveFor));
+            $saveForSelector = $saveFor ? new UserSelector($this->getWorkbench(), $saveFor) : null;
+            $loginPrompt = $dataConnection->createLoginWidget($loginPrompt, $saveCreds, $saveForSelector);
         }
         
         return parent::perform($task, $transaction);
