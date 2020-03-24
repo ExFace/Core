@@ -12,6 +12,9 @@ use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthTok
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Factories\UserFactory;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Actions\iModifyContext;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Factories\SelectorFactory;
 
 /**
  * Performs an authentication attempt using the supplied login data.
@@ -23,8 +26,12 @@ use exface\Core\DataTypes\BooleanDataType;
  * @author Andrej Kabachnik
  *
  */
-class Login extends AbstractAction
+class Login extends AbstractAction implements iModifyContext
 {
+    private $redirectToPage = null;
+    
+    private $reloadOnSuccess = null;
+    
     protected function init()
     {
         parent::init();
@@ -48,11 +55,18 @@ class Login extends AbstractAction
             } else {
                 $dataConnection->authenticate($token, $saveCred);
             }
+            if ($this->getReloadOnSuccess($task) === true) {
+                $result = ResultFactory::createUriResult($task, '#', $this->translate('RESULT'));
+            } else {
+                $result = ResultFactory::createMessageResult($task, $this->translate('RESULT'));
+            }
         } else {
             $this->getWorkbench()->getSecurity()->authenticate($token);
+            $result = ResultFactory::createRedirectToPageResult($task, $this->getRedirectToPageSelector(), $this->translate('RESULT'));
         }
         
-        return ResultFactory::createMessageResult($task, $this->translate('RESULT'));
+        $result->setContextModified(true);
+        return $result;
     }
     
     protected function getAuthToken(TaskInterface $task) : AuthenticationTokenInterface
@@ -66,7 +80,12 @@ class Login extends AbstractAction
                 if ($param->getName() === 'facade') {
                     $constructorArgs[] = $task->getFacade();
                 } else {
-                    $constructorArgs[] = $inputRow[$param->getName()];
+                    foreach ($inputRow as $key => $val) {
+                        if (strcasecmp($key, $param->getName()) === 0) {
+                            $constructorArgs[] = $val;
+                            break;
+                        }
+                    }
                 }
             }
             $token = $reflector->newInstanceArgs($constructorArgs);
@@ -74,5 +93,68 @@ class Login extends AbstractAction
             $token = new UsernamePasswordAuthToken($inputRow['USERNAME'], $inputRow['PASSWORD'], $task->getFacade());
         }
         return $token;
+    }
+    
+    /**
+     *
+     * @return UiPageSelectorInterface|null
+     */
+    public function getRedirectToPageSelector(TaskInterface $task) : ?UiPageSelectorInterface
+    {
+        if ($this->redirectToPage === null && $this->getReloadOnSuccess($task) === true && $task->isTriggeredOnPage()) {
+            return $task->getPageSelector();
+        }
+        return $this->redirectToPage;
+    }
+    
+    /**
+     * Id or alias of the page to redirect to after login.
+     * 
+     * Alternatively use `reload_on_success` to just reload the current page.
+     * 
+     * @uxon-property redirect_to_page
+     * @uxon-type metamodel:page
+     * 
+     * @param string $value
+     * @return Login
+     */
+    public function setRedirectToPage($pageSeletorOrString) : Login
+    {
+        if ($pageSeletorOrString instanceof UiPageSelectorInterface) {
+            $this->redirectToPage = $pageSeletorOrString;
+        } else {
+            $this->redirectToPage = SelectorFactory::createPageSelector($this->getWorkbench(), $pageSeletorOrString);
+        }
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getReloadOnSuccess(TaskInterface $task) : bool
+    {
+        if ($this->reloadOnSuccess === null) {
+            if ($task->hasInputData()) {
+                return BooleanDataType::cast($task->getInputData()->getCellValue('RELOAD_ON_SUCCESS', 0));
+            } 
+        }
+        return $this->reloadOnSuccess ?? true;
+    }
+    
+    /**
+     * Set to FALSE to prevent the page from reloading after successfull authentication.
+     * 
+     * @uxon-property reload_on_success
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return Login
+     */
+    public function setReloadOnSuccess(bool $value) : Login
+    {
+        $this->reloadOnSuccess = $value;
+        return $this;
     }
 }

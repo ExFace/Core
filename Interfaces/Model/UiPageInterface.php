@@ -453,6 +453,13 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return UiPageInterface
      */
     public function setApp(AppSelectorInterface $selector) : UiPageInterface;
+    
+    /**
+     * Returns TRUE if the page is part of the metamodel and FALSE if it was created programmatically.
+     * 
+     * Knowing this is important as only modeled pages can be linked to.
+     * 
+     * @return bool
+     */
+    public function hasModel() : bool;
 }
-
-?>

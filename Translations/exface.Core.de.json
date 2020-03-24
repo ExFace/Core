@@ -49,6 +49,7 @@
     "ACTION.LOGIN.RESULT": "Anmeldung erfolgreich!",
     
     "ACTION.LOGOUT.NAME": "Abmelden",
+    "ACTION.LOGOUT.RESULT": "Abmeldung erfolgreich!",
     
     "ACTION.GENERATEMODELFROMDATASOURCE.NAME": "Modell generieren",
 	"ACTION.GENERATEMODELFROMDATASOURCE.RESULT_FOR_OBJECT": "%created_counter% Attribut(e) für %object_counter% Objekt(e) erstellt. %skipped_counter% Attribut(e) als Dublikate ignoriert!",

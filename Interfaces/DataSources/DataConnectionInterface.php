@@ -10,11 +10,9 @@ use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\Interfaces\Selectors\DataConnectorSelectorInterface;
 use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
 use exface\Core\Interfaces\Model\MetaModelPrototypeInterface;
-use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
-use exface\Core\Exceptions\Security\AuthenticationFailedError;
-use exface\Core\Interfaces\UserInterface;
 use exface\Core\Interfaces\Security\AuthenticationProviderInterface;
+use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 
 interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeConvertedToUxon, MetaModelPrototypeInterface, AuthenticationProviderInterface
 {
@@ -154,4 +152,17 @@ interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInte
     public function isReadOnly() : bool;
     
     public function setReadOnly(bool $trueOrFalse) : DataConnectionInterface;
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticationProviderInterface::createLoginWidget()
+     * 
+     * @param iContainOtherWidgets $container
+     * @param bool $saveCredentials
+     * @param UserSelectorInterface
+     * 
+     * @return iContainOtherWidgets
+     */
+    public function createLoginWidget(iContainOtherWidgets $container, bool $saveCredentials = true, UserSelectorInterface $credentialsOwner = null) : iContainOtherWidgets;
 }

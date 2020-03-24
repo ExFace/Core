@@ -46,7 +46,7 @@
     "ACTION.FAVORITESADD.RESULT": "%number% objects added to favorites.",
     
 	"ACTION.LOGIN.NAME": "Login",
-    "ACTION.LOGIN.RESULT": "Authenticated successfully!",
+    "ACTION.LOGIN.RESULT": "Authenticated successfully.",
     
     "ACTION.LOGOUT.NAME": "Logout",
     
