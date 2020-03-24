@@ -2,8 +2,8 @@
 namespace exface\Core\Exceptions\Security;
 
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
+use exface\Core\Interfaces\Security\AuthenticationProviderInterface;
 
 /**
  * Exception thrown if an authentication attempt fails
@@ -15,13 +15,12 @@ class AuthenticationFailedError extends RuntimeException implements Authenticati
 {
     private $authErrors = [];
     
-    public function addAuthenticatorError(AuthenticatorInterface $authenticator, AuthenticationExceptionInterface $exception) : self
+    private $provider = null;
+    
+    public function __construct(AuthenticationProviderInterface $authProvider, $message, $alias = null, $previous = null)
     {
-        $this->authErrors[] = [
-            'authenticator' => $authenticator,
-            'exception' => $exception
-        ];
-        return $this;
+        parent::__construct($message, $alias, $previous);
+        $this->provider = $authProvider;
     }
     
     /**
@@ -31,6 +30,21 @@ class AuthenticationFailedError extends RuntimeException implements Authenticati
      */
     public function getStatusCode()
     {
-        return 403;
+        return 401;
+    }
+    
+    public function addSecondaryError(AuthenticationExceptionInterface $exception) : self
+    {
+        $this->authErrors[] = $exception;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface::getAuthenticationProvider()
+     */
+    public function getAuthenticationProvider() : AuthenticationProviderInterface
+    {
+        return $this->provider;
     }
 }

@@ -53,6 +53,10 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Facades\HtmlPageFacadeInterface;
 use exface\Core\CommonLogic\Tasks\ResultRedirect;
 use function GuzzleHttp\Psr7\uri_for;
+use exface\Core\Exceptions\Security\AuthenticationFailedError;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\CommonLogic\Selectors\UserSelector;
 
 /**
  * 
@@ -536,8 +540,8 @@ HTML;
         // Encode the response object to JSON converting <, > and " to HEX-values (e.g. \u003C). Without that conversion
         // there might be trouble with HTML in the responses (e.g. jEasyUI will break it when parsing the response)
         if (! empty($json)) {
-            if ($result->isContextModified()) {
-                $context_bar = $result->getTask()->getWidgetTriggeredBy()->getPage()->getContextBar();
+            if ($result->isContextModified() && $result->getTask()->isTriggeredOnPage()) {
+                $context_bar = $result->getTask()->getPageTriggeredOn()->getContextBar();
                 $json['extras']['ContextBar'] = $this->getElement($context_bar)->buildJsonContextBarUpdate();
             }
             $headers['Content-type'] = ['application/json;charset=utf-8'];
@@ -583,6 +587,23 @@ HTML;
         } else {
             $status_code = 500;
         }
+        
+        // If the error goes back to failed authorization (HTTP status 401), see if a login-prompt should be shown.
+        if ($exception instanceof ExceptionInterface && $exception->getStatusCode() == 401) {
+            // Don't show the login-prompt if the request is a login-action itself. In this case,
+            // it originates from a login form, so we don't need another one.
+            /* @var $task \exface\Core\CommonLogic\Tasks\HttpTask */
+            $task = $request->getAttribute($this->getRequestAttributeForTask());
+            if (strcasecmp($task->getActionSelector()->toString(), 'exface.Core.Login') !== 0) {
+                // See if the method createResponseUnauthorized() can handle this exception.
+                // If not, continue with the regular error handling.
+                $response = $this->createResponseUnauthorized($exception, $page);
+                if ($response !== null) {
+                    return $response;
+                }
+            }
+        }
+        
         $headers = [];
         $body = '';
         
@@ -617,6 +638,56 @@ HTML;
     }
     
     /**
+     * Renders 401-errors with login-prompts if needed.
+     * 
+     * By default, the login-prompt is shown whenever the error has an AuthentificationFailedError 
+     * exception in it's stack trace. This type of exception has a link to the authentification 
+     * provider, that caused the error, so a new login-form for this provider can be rendered.
+     * 
+     * Override this method, if a specific facade needs special treatment for unauthorized-exceptions.
+     * 
+     * @param \Throwable $exception
+     * @param UiPageInterface $page
+     * @return ResponseInterface
+     */
+    protected function createResponseUnauthorized(\Throwable $exception, UiPageInterface $page = null) : ?ResponseInterface
+    {
+        $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench());
+        
+        $authErr = $exception;
+        while (! ($authErr instanceof AuthenticationFailedError)) {
+            $authErr = $authErr->getPrevious();
+        }
+        if ($authErr !== null) {
+            $this->getWorkbench()->getLogger()->logException($exception);
+            /* @var $loginPrompt \exface\Core\Widgets\LoginPrompt */
+            $loginPrompt = WidgetFactory::create($page, 'LoginPrompt');
+            $loginPrompt->setObjectAlias('exface.Core.LOGIN_DATA');
+            $loginFormCreated = false;
+            
+            $provider = $authErr->getAuthenticationProvider();
+            if ($provider instanceof DataConnectionInterface) {
+                // Saving connection credentials is only possible if a user is authenticated!
+                if ($this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous() === false) {
+                    $loginPrompt = $provider->createLoginWidget($loginPrompt, true, new UserSelector($this->getWorkbench(), $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->getUsername()));
+                    $loginPrompt->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.CONNECTIONS.LOGIN_TITLE'));
+                    $loginPrompt->getMessageList()->addError($authErr->getMessage());
+                    $loginFormCreated = true;
+                }
+            } else {
+                $loginPrompt = $provider->createLoginWidget($loginPrompt);
+                $loginFormCreated = true;
+            }
+                  
+            if ($loginFormCreated === true) {
+                $body = $this->buildHtmlHead($loginPrompt) . "\n" . $this->buildHtmlBody($loginPrompt);
+                return new Response(401, $this->buildHeadersAccessControl(), $body);
+            }
+        }
+        return null;
+    }
+    
+    /**
      * Returns TRUE if error detail widgets are to be shown.
      * 
      * @return bool
@@ -646,6 +717,7 @@ HTML;
     {
         $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench());
         $body = '';
+        
         try {
             if ($exception instanceof AuthenticationFailedError) {
                 $debug_widget = WidgetFactory::create($page, 'LoginPrompt');

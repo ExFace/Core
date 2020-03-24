@@ -51,7 +51,7 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     public function addWidget(AbstractWidget $widget, $position = NULL)
     {
         if ($widget instanceof iFillEntireContainer) {
-            if ($container = $widget->getAlternativeContainerForOrphanedSiblings()) {
+            if ($this->isEmpty() === false && $container = $widget->getAlternativeContainerForOrphanedSiblings()) {
                 foreach ($this->getWidgets() as $w) {
                     $container->addWidget($w);
                 }

@@ -9,6 +9,7 @@ use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Contexts\ContextRuntimeError;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
 
 /**
  * The UserContext shows the logged in User and some user-related controls like a logout button.
@@ -96,12 +97,24 @@ class UserContext extends AbstractContext
                 ]
               ],
               "buttons" => [
-                [
-                    "action" => [
-                        "alias" => "exface.Core.Logout"
-                    ]
+                  [
+                      "action" => [
+                          "alias" => "exface.Core.ShowUserAccountDialog",
+                          "input_data_sheet" => [
+                              "object_alias" => "exface.Core.USER",
+                              "rows" => [
+                                  [
+                                      "UID" => $user->getUid()
+                                  ]
+                              ] 
+                          ]
+                      ]
+                  ],
+                  [
+                    "action_alias" => "exface.Core.Logout",
+                    "align" => EXF_ALIGN_OPPOSITE
+                  ]
                 ]
-              ]
             ];
         // when user is not logged in, build context with login button and message that user is not logged in    
         } else {
@@ -133,7 +146,8 @@ class UserContext extends AbstractContext
                                 ]    
                             ]
                         ]
-                    ]
+                    ],
+                    "visibility" => WidgetVisibilityDataType::PROMOTED
                 ]
               ]
             ];

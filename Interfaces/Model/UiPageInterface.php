@@ -488,4 +488,13 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return bool
      */
     public function isInGroup(UiPageGroupSelectorInterface $aliasOrUid) : bool;
+    
+    /**
+     * Returns TRUE if the page is part of the metamodel and FALSE if it was created programmatically.
+     * 
+     * Knowing this is important as only modeled pages can be linked to.
+     * 
+     * @return bool
+     */
+    public function hasModel() : bool;
 }

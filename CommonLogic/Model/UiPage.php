@@ -1269,7 +1269,13 @@ class UiPage implements UiPageInterface
         $this->facade = null;
         return $this;
     }
-    
+
+    /**
+     * 
+     * @param UxonObject $uxon
+     * @throws LogicException
+     * @return UiPageInterface
+     */
     public function setFacadeConfig(UxonObject $uxon) : UiPageInterface
     {
         $this->facadeUxon = $uxon;
@@ -1288,6 +1294,16 @@ class UiPage implements UiPageInterface
     {
         $this->menuParentPageSelectorDefault = $selectorOrString;
         return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::hasModel()
+     */
+    public function hasModel() : bool
+    {
+        return $this->contents !== null || $this->contents_uxon !== null;
     }
 
     /**
