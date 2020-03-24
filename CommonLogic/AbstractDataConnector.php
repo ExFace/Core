@@ -27,6 +27,11 @@ use exface\Core\Interfaces\UserInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Widgets\Form;
+use exface\Core\Widgets\LoginPrompt;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Interfaces\Selectors\UserSelectorInterface;
+use exface\Core\Factories\UserFactory;
 
 abstract class AbstractDataConnector implements DataConnectionInterface
 {
@@ -370,7 +375,7 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::createLoginWidget()
      */
-    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    public function createLoginWidget(iContainOtherWidgets $container, bool $saveCredentials = true, UserSelectorInterface $credentialsOwner = null) : iContainOtherWidgets
     {
         $container->addWidget(WidgetFactory::createFromUxonInParent($container, new UxonObject([
             'widget_type' => 'Message',
@@ -378,6 +383,81 @@ abstract class AbstractDataConnector implements DataConnectionInterface
             'text' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED')
         ])));
         return $container;
+    }
+    
+    /**
+     * Creates a default login-form within a `LoginPrompt` widget with inputs common for all data sources.
+     * 
+     * Use this method to quickly create a basic login form. Just add inputs specific for your
+     * authentification method (e.g. `USERNAME` and `PASSWORD` inputs) and add the form to the
+     * `LoginPrompt` or whereevery you need to display it.
+     * 
+     * The form will have disabled fields showing the current connection, the save-credentials flag
+     * and the selected user UID. It also automatically includes `RELOAD_ON_SUCCESS` = `false` if
+     * the `LoginPrompt` is placed within another widget. This means, that the entire browser tab
+     * will be refreshed for connection-login-prompts unless they are placed within another widget
+     * (e.g. a button) - in other words `LoginPrompt`s in error messages.
+     * 
+     * NOTE: The created form will not be added to the `LoginPrompt` automatically!
+     * 
+     * See AbstractSqlConnector::createLoginWidget() for example usage.
+     * 
+     * @param LoginPrompt $loginPrompt
+     * @param bool $saveCredentials
+     * @param UserSelectorInterface $saveCredentialsForUser
+     * @return Form
+     */
+    protected function createLoginForm(LoginPrompt $loginPrompt, bool $saveCredentials = true, UserSelectorInterface $saveCredentialsForUser = null) : Form
+    {
+        $loginForm = WidgetFactory::create($loginPrompt->getPage(), 'Form', $loginPrompt);
+        $loginForm->setObjectAlias('exface.Core.LOGIN_DATA');
+        
+        $userUid = null;
+        if ($saveCredentialsForUser !== null) {
+            if ($saveCredentialsForUser->isUid()) {
+                $userUid = $saveCredentialsForUser->toString();
+            } else {
+                $user = UserFactory::createFromSelector($saveCredentialsForUser);
+                $userUid = $user->getUid();
+            }
+        }
+        
+        $loginForm->setCaption($this->getName());
+        
+        $loginForm->setWidgets(new UxonObject([
+            [
+                'widget_type' => 'InputHidden',
+                'attribute_alias' => 'CONNECTION',
+                'value' => $this->getId()
+            ],[
+                'attribute_alias' => 'CONNECTION__LABEL',
+                'readonly' => true,
+                'value' => $this->getName()
+            ],[
+                'attribute_alias' => 'CONNECTION_SAVE',
+                'value' => $saveCredentials ? 1 : 0
+            ],[
+                'widget_type' => 'InputHidden',
+                'attribute_alias' => 'CONNECTION_SAVE_FOR_USER',
+                'value' => $userUid ?? ''
+            ]   
+        ]));
+        
+        if ($loginPrompt->hasParent() === true) {
+            $loginForm->addWidget(WidgetFactory::createFromUxonInParent($loginForm, new UxonObject([
+                'widget_type' => 'InputHidden',
+                'attribute_alias' => 'RELOAD_ON_SUCCESS',
+                'value' => false
+            ])));
+        }
+        
+        $loginForm->addButton($loginForm->createButton(new UxonObject([
+            'action_alias' => 'exface.Core.Login',
+            'align' => EXF_ALIGN_OPPOSITE,
+            'visibility' => WidgetVisibilityDataType::PROMOTED
+        ])));
+        
+        return $loginForm;
     }
     
     /**

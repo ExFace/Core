@@ -1299,6 +1299,16 @@ class UiPage implements UiPageInterface
     {
         return $this->cms;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::hasModel()
+     */
+    public function hasModel() : bool
+    {
+        return $this->contents !== null || $this->contents_uxon !== null;
+    }
 }
 
 ?>

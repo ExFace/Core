@@ -140,7 +140,7 @@ class ResultFactory extends AbstractStaticFactory
      * @param UriInterface|string $uriOrString
      * @return ResultUriInterface
      */
-    public static function createUriResult(TaskInterface $task, $uriOrString) : ResultUriInterface
+    public static function createUriResult(TaskInterface $task, $uriOrString, string $message = null) : ResultUriInterface
     {
         $result = new ResultUri($task);
         if ($uriOrString instanceof UriInterface) {
@@ -149,6 +149,11 @@ class ResultFactory extends AbstractStaticFactory
             $uri = new Uri($uriOrString);
         }
         $result->setUri($uri);
+        
+        if ($message !== null) {
+            $result->setMessage($message);
+        }
+        
         return $result;
     }
     
