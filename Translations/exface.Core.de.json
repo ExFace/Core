@@ -247,6 +247,7 @@
     "PAGE.TABS.GENERAL": "Allgemein",
     
     "SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED": "Diese Verbindung benötigt bzw. unterstützt keine Nutzer-Anmeldung.",
+    "SECURITY.CONNECTIONS.LOGIN_TITLE": "Anmeldung in Datenquelle",
     
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",

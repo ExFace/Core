@@ -247,7 +247,8 @@
     "PAGE.TABS.GENERAL": "General",
     
     "SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED": "This connection does not require/support user authentication.",
-    
+    "SECURITY.CONNECTIONS.LOGIN_TITLE": "Log in to data source",
+   	
 	"WIDGET.SELECT_ALL": "All",
 	"WIDGET.SELECT_YES": "Yes",
 	"WIDGET.SELECT_NO": "No",
