@@ -82,6 +82,7 @@ class ShowLoginDialog extends AbstractActionShowDynamicDialog
      */
     protected function enhanceDialogOnActionInit(Dialog $dialog) : Dialog
     {
+        $dialog = parent::enhanceDialogOnActionInit($dialog);
         $dialog->setObjectAlias('exface.Core.LOGIN_DATA');
         $dialog->setColumnsInGrid(1);
         $dialog->setMaximized(false);
