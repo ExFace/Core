@@ -135,8 +135,8 @@ class Login extends AbstractAction implements iModifyContext
     public function getReloadOnSuccess(TaskInterface $task) : bool
     {
         if ($this->reloadOnSuccess === null) {
-            if ($task->hasInputData()) {
-                return BooleanDataType::cast($task->getInputData()->getCellValue('RELOAD_ON_SUCCESS', 0));
+            if ($task->hasInputData() && $col = $task->getInputData()->getColumns()->get('RELOAD_ON_SUCCESS')) {
+                return BooleanDataType::cast($col->getCellValue(0));
             } 
         }
         return $this->reloadOnSuccess ?? true;

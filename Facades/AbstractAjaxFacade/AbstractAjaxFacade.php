@@ -617,6 +617,7 @@ HTML;
         }
         if ($authErr !== null) {
             $this->getWorkbench()->getLogger()->logException($exception);
+            /* @var $loginPrompt \exface\Core\Widgets\LoginPrompt */
             $loginPrompt = WidgetFactory::create($page, 'LoginPrompt');
             $loginPrompt->setObjectAlias('exface.Core.LOGIN_DATA');
             $loginFormCreated = false;
@@ -625,7 +626,9 @@ HTML;
             if ($provider instanceof DataConnectionInterface) {
                 // Saving connection credentials is only possible if a user is authenticated!
                 if ($this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous() === false) {
-                    $loginPrompt = $provider->createLoginWidget($loginPrompt, true, new UserSelector($this->getWorkbench(), $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid()));
+                    $loginPrompt = $provider->createLoginWidget($loginPrompt, true, new UserSelector($this->getWorkbench(), $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->getUsername()));
+                    $loginPrompt->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.CONNECTIONS.LOGIN_TITLE'));
+                    $loginPrompt->getMessageList()->addError($authErr->getMessage());
                     $loginFormCreated = true;
                 }
             } else {
