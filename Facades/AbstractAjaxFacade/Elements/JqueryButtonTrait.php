@@ -11,8 +11,8 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Actions\iRunFacadeScript;
 use exface\Core\Actions\SendToWidget;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
-use exface\Core\Widgets\Parts\ConditionalProperty;
 use exface\Core\Actions\ResetWidget;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * 
@@ -229,6 +229,25 @@ JS;
         
         return $output;
     }
+    
+    protected function buildJsRequestCommonParams(WidgetInterface $trigger, ActionInterface $action) : string
+    {
+        if ($trigger->getPage()->hasModel()) {
+            $triggerProperties = <<<JS
+                                    resource: '{$trigger->getPage()->getAliasWithNamespace()}',
+									element: '{$trigger->getId()}',
+									
+JS;
+        } else {
+            $triggerProperties = '';
+        }
+        return <<<JS
+
+                                    action: '{$action->getAliasWithNamespace()}',
+									object: '{$trigger->getMetaObject()->getId()}',
+                                    {$triggerProperties}
+JS;
+    }
 
     protected function buildJsClickCallServerAction(ActionInterface $action, AbstractJqueryElement $input_element)
     {
@@ -245,10 +264,7 @@ JS;
 								url: '" . $this->getAjaxUrl() . "',
                                 {$headers} 
 								data: {	
-									action: '" . $widget->getActionAlias() . "',
-									resource: '" . $widget->getPage()->getAliasWithNamespace() . "',
-									element: '" . $widget->getId() . "',
-									object: '" . $widget->getMetaObject()->getId() . "',
+									{$this->buildJsRequestCommonParams($widget, $action)}
 									data: requestData
 								},
 								success: function(data, textStatus, jqXHR) {
