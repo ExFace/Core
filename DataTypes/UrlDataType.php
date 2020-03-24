@@ -19,6 +19,16 @@ class UrlDataType extends StringDataType
     }
     
     /**
+     * 
+     * @param string $url
+     * @return bool
+     */
+    public static function isAbsolute(string $url) : bool
+    {
+        return StringDataType::startsWith('http', $url, false);
+    }
+    
+    /**
      *
      * @return string
      */

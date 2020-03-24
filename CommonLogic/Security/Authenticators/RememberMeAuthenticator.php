@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic\Security\Authenticators;
 
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
-use exface\Core\Contexts\DataContext;
 use exface\Core\CommonLogic\Security\AuthenticationToken\RememberMeAuthToken;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 
@@ -22,7 +21,7 @@ class RememberMeAuthenticator extends AbstractAuthenticator
     public function authenticate(AuthenticationTokenInterface $token) : AuthenticationTokenInterface
     {
         if (! ($token instanceof RememberMeAuthToken)) {
-            throw new AuthenticationFailedError('Invalid token type!');
+            throw new AuthenticationFailedError($this, 'Invalid token type!');
         }
         
         $sessionUserName = $this->getUsernameFromSession();
@@ -30,7 +29,7 @@ class RememberMeAuthenticator extends AbstractAuthenticator
         if ($token->getUsername() === null && $sessionUserName !== null) {
             $token = new RememberMeAuthToken($sessionUserName, $token->getFacade());
         } elseif ($token->getUsername() === null || $token->getUsername() !== $sessionUserName) {
-            throw new AuthenticationFailedError('Cannot authenticate user "' . $token->getUsername() . '" via remember-me.');
+            throw new AuthenticationFailedError($this, 'Cannot authenticate user "' . $token->getUsername() . '" via remember-me.');
         }
         
         return $token;
