@@ -262,19 +262,25 @@ JS;
     										response.error = data;
     									}
                                     }
-				                   	if (response.success){
+				                   	if (response.success !== undefined){
 										" . $this->buildJsCloseDialog($widget, $input_element) . "
 										" . $this->buildJsInputRefresh($widget, $input_element) . "
 				                       	" . $this->buildJsBusyIconHide() . "
 				                       	$('#" . $this->getId() . "').trigger('" . $action->getAliasWithNamespace() . ".action.performed', [requestData, '" . $input_element->getId() . "']);
-										if (response.success || response.undoURL){
+										if (response.success !== undefined || response.undoURL){
 				                       		" . $this->buildJsShowMessageSuccess("response.success + (response.undoable ? ' <a href=\"" . $this->buildJsUndoUrl($action, $input_element) . "\" style=\"display:block; float:right;\">UNDO</a>' : '')") . "
-											if(response.redirect){
-												if (response.redirect.indexOf('target=_blank') > -1) {
-													window.open(response.redirect.replace('target=_blank',''), '_newtab');
-												} else {
-                                                    {$this->getFacade()->getElement($widget->getPage()->getWidgetRoot())->buildJsBusyIconShow()}
-													window.location.href = response.redirect;
+											if(response.redirect !== undefined){
+                                                switch (true) {
+												    case response.redirect.indexOf('target=_blank') !== -1:
+													    window.open(response.redirect.replace('target=_blank',''), '_newtab');
+                                                        break;
+                                                    case response.redirect === '':
+                                                        {$this->getFacade()->getElement($widget->getPage()->getWidgetRoot())->buildJsBusyIconShow()}
+                                                        window.location.reload();
+                                                        break;
+                                                    default: 
+                                                        {$this->getFacade()->getElement($widget->getPage()->getWidgetRoot())->buildJsBusyIconShow()}
+                                                        window.location.href = response.redirect;
 												}
 	                       					}
                                             if(response.download){
