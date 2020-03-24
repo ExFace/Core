@@ -32,6 +32,7 @@ use exface\Core\Widgets\LoginPrompt;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 use exface\Core\Factories\UserFactory;
+use exface\Core\DataTypes\MessageTypeDataType;
 
 abstract class AbstractDataConnector implements DataConnectionInterface
 {
@@ -378,9 +379,15 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     public function createLoginWidget(iContainOtherWidgets $container, bool $saveCredentials = true, UserSelectorInterface $credentialsOwner = null) : iContainOtherWidgets
     {
         $container->addWidget(WidgetFactory::createFromUxonInParent($container, new UxonObject([
-            'widget_type' => 'Message',
-            'type' => 'info',
-            'text' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED')
+            'widget_type' => 'Form',
+            'caption' => $this->getName(),
+            'widgets' => [
+                [
+                    'widget_type' => 'Message',
+                    'type' => MessageTypeDataType::INFO,
+                    'text' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED')
+                ]
+            ]
         ])));
         return $container;
     }
