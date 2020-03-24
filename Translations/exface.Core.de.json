@@ -47,6 +47,7 @@
     
     "ACTION.LOGIN.NAME": "Anmelden",
     "ACTION.LOGIN.RESULT": "Anmeldung erfolgreich!",
+    "ACTION.LOGIN.RESULT_RELOADING": "Die App wird neu gestartet.",
     
     "ACTION.LOGOUT.NAME": "Abmelden",
     "ACTION.LOGOUT.RESULT": "Abmeldung erfolgreich!",

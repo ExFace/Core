@@ -47,6 +47,7 @@
     
 	"ACTION.LOGIN.NAME": "Login",
     "ACTION.LOGIN.RESULT": "Authenticated successfully.",
+    "ACTION.LOGIN.RESULT_RELOADING": "Restarting the app.",
     
     "ACTION.LOGOUT.NAME": "Logout",
     
