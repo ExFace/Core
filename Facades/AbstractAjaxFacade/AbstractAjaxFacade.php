@@ -49,6 +49,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\CommonLogic\Selectors\UserSelector;
 
 /**
  * 
@@ -624,7 +625,7 @@ HTML;
             if ($provider instanceof DataConnectionInterface) {
                 // Saving connection credentials is only possible if a user is authenticated!
                 if ($this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous() === false) {
-                    $loginPrompt = $provider->createLoginWidget($loginPrompt, true, $this->getWorkbench()->getSecurity()->getAuthenticatedUser());
+                    $loginPrompt = $provider->createLoginWidget($loginPrompt, true, new UserSelector($this->getWorkbench(), $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid()));
                     $loginFormCreated = true;
                 }
             } else {
