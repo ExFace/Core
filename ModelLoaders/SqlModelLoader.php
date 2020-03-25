@@ -1391,7 +1391,7 @@ SQL;
                             $childNode->setIntro($row['intro']);
                         }
                         $this->nodes_loaded[$childNode->getUid()] = $childNode;
-                        $parentNode->addChildNode($childNode, intval($row['menu_index']));
+                        $parentNode->addChildNode($childNode);
                         $parentNode->setChildNodesLoaded(true);
                         $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
                     }
