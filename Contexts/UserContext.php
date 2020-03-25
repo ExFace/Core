@@ -67,36 +67,41 @@ class UserContext extends AbstractContext
               "object_alias" => "exface.Core.USER",
               "columns_in_grid" => "1",
               "widgets" => [
-                [
-                    "widget_type" => "Message",
-                    "value" => "You are logged in.",
-                    "width" => "100%"
-                ],
-                [
-                    "widget_type" => "Display",
-                    "attribute_alias" => "USERNAME",
-                    "width" => "100%",
-                    "value" => $user->getUsername()
-                ],
-                [
-                    "widget_type" => "Display",
-                    "attribute_alias" => "FIRST_NAME",
-                    "width" => "100%",
-                    "value" => $user->getFirstName()
-                ],
-                [
-                    "widget_type" => "Display",
-                    "attribute_alias" => "LAST_NAME",
-                    "width" => "100%",
-                    "value" => $user->getLastName()
-                ],
-                [
-                    "widget_type" => "Display",
-                    "caption" => "Language",
-                    "attribute_alias" => "LOCALE",
-                    "width" => "100%",
-                    "value" => $user->getLocale()
-                ]
+                  [
+                      "widget_type" => "Message",
+                      "value" => "You are logged in.",
+                      "width" => "100%"
+                  ],
+                  [
+                      "widget_type" => "InputHidden",
+                      "attribute_alias" => "UID",
+                      "value" => $user->getUid()
+                  ],
+                  [
+                      "widget_type" => "Display",
+                      "attribute_alias" => "USERNAME",
+                      "width" => "100%",
+                      "value" => $user->getUsername()
+                  ],
+                  [
+                      "widget_type" => "Display",
+                      "attribute_alias" => "FIRST_NAME",
+                      "width" => "100%",
+                      "value" => $user->getFirstName()
+                  ],
+                  [
+                      "widget_type" => "Display",
+                      "attribute_alias" => "LAST_NAME",
+                      "width" => "100%",
+                      "value" => $user->getLastName()
+                  ],
+                  [
+                      "widget_type" => "Display",
+                      "caption" => "Language",
+                      "attribute_alias" => "LOCALE",
+                      "width" => "100%",
+                      "value" => $user->getLocale()
+                  ]
               ],
               "buttons" => [
                   [
