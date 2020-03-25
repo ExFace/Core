@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW user_policy_view AS
+CREATE OR REPLACE VIEW exf_user_policy AS
 SELECT 
 	u.oid AS user_oid,
 	uru.user_role_oid AS user_role_oid,
