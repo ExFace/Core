@@ -592,7 +592,7 @@ HTML;
             // it originates from a login form, so we don't need another one.
             /* @var $task \exface\Core\CommonLogic\Tasks\HttpTask */
             $task = $request->getAttribute($this->getRequestAttributeForTask());
-            if (strcasecmp($task->getActionSelector()->toString(), 'exface.Core.Login') !== 0) {
+            if ($task && strcasecmp($task->getActionSelector()->toString(), 'exface.Core.Login') !== 0) {
                 // See if the method createResponseUnauthorized() can handle this exception.
                 // If not, continue with the regular error handling.
                 $response = $this->createResponseUnauthorized($exception, $page);
@@ -605,30 +605,25 @@ HTML;
         $headers = [];
         $body = '';
         
-        if ($exception instanceof AuthenticationFailedError) {
+        $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
+        if ($mode === static::MODE_HEAD) {
             $headers['Content-Type'] = ['text/html;charset=utf-8'];
+            $body = $this->buildHtmlHeadError($exception);
+        } elseif ($this->isShowingErrorDetails() === true) {
+            // If details needed, render a widget
             $body = $this->buildHtmlFromError($request, $exception, $page);
+            $headers['Content-Type'] = ['text/html;charset=utf-8'];
         } else {
-            $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
-            if ($mode === static::MODE_HEAD) {
-                $headers['Content-Type'] = ['text/html;charset=utf-8'];
-                $body = $this->buildHtmlHeadError($exception);
-            } elseif ($this->isShowingErrorDetails() === true) {
-                // If details needed, render a widget
+            if ($request->getAttribute($this->getRequestAttributeForAction()) === 'exface.Core.ShowWidget') {
+                // If we were rendering a widget, return HTML even for non-detail cases
                 $body = $this->buildHtmlFromError($request, $exception, $page);
                 $headers['Content-Type'] = ['text/html;charset=utf-8'];
             } else {
-                if ($request->getAttribute($this->getRequestAttributeForAction()) === 'exface.Core.ShowWidget') {
-                    // If we were rendering a widget, return HTML even for non-detail cases
-                    $body = $this->buildHtmlFromError($request, $exception, $page);
-                    $headers['Content-Type'] = ['text/html;charset=utf-8'];
-                } else {
-                    // Otherwise render error data, so the JS can interpret it.
-                    $body = $this->encodeData($this->buildResponseDataError($exception));
-                    $headers['Content-Type'] = ['application/json;charset=utf-8'];
-                }
+                // Otherwise render error data, so the JS can interpret it.
+                $body = $this->encodeData($this->buildResponseDataError($exception));
+                $headers['Content-Type'] = ['application/json;charset=utf-8'];
             }
-        }        
+        }     
         
         $this->getWorkbench()->getLogger()->logException($exception);
         
@@ -717,11 +712,7 @@ HTML;
         $body = '';
         
         try {
-            if ($exception instanceof AuthenticationFailedError) {
-                $debug_widget = WidgetFactory::create($page, 'LoginPrompt');
-            } else {
-                $debug_widget = $exception->createWidget($page);
-            }
+            $debug_widget = $exception->createWidget($page);
             $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
             switch (true) {
                 case $mode === static::MODE_HEAD:
