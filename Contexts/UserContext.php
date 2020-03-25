@@ -98,6 +98,7 @@ class UserContext extends AbstractContext
               ],
               "buttons" => [
                   [
+                      "caption" => $this->getApp()->getTranslator()->translate('CONTEXT.USER.MY_ACCOUNT'),
                       "action" => [
                           "alias" => "exface.Core.ShowUserAccountDialog",
                           "input_data_sheet" => [

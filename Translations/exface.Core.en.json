@@ -146,6 +146,7 @@
     "CONTEXT.USER.NAME": "User",
     "CONTEXT.USER.NOT_LOGGED_IN_HINT": "You are not logged in. Please Login!",
 	"CONTEXT.USER.LOGGED_IN_HINT": "You are logged in.",
+	"CONTEXT.USER.MY_ACCOUNT": "Meine Daten",
 	
 	"GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Sum",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.AVG": "Average",
