@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW user_policy_view AS
+CREATE OR REPLACE VIEW exf_page_policy AS
 SELECT 
 	p.oid AS page_oid,
 	pgp.page_group_oid AS page_group_oid,
