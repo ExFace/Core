@@ -139,6 +139,7 @@
     "CONTEXT.OBJECTBASKET.REMOVE_ALL": "Alle entfernen",
     
     "CONTEXT.USER.NAME": "Benutzer",
+    "CONTEXT.USER.MY_ACCOUNT": "Meine Daten",
 	
     "GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Summe",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.AVG": "Durchschnitt",
