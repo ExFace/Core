@@ -7,7 +7,7 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\DataTypes\PolicyCombiningAlgorithmDataType;
-use exface\Core\Interfaces\UserImpersonationInterface;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 
 /**
  * The authorization point represents a access permission check in an app's security logic.
@@ -41,10 +41,12 @@ use exface\Core\Interfaces\UserImpersonationInterface;
 interface AuthorizationPointInterface extends WorkbenchDependantInterface, AliasInterface
 {    
     /**
-     * Performs the authorization logic of the authorization point.
+     * Evaluates the logic of the authorization point triggering the OnAuthorizedEvent
+     * or throwing an authorization exception depending on the result.
      * 
      * Every authorization point (AP) has it's own internal logic and event it's own 
-     * input and output parameters. 
+     * input and output parameters. The workbech is notified about the access decision
+     * via event or exception.
      * 
      * Generally the method should accept all input parameters needed and return the
      * (possibly modified) object or resource, access to whic was being authorized.
@@ -56,6 +58,8 @@ interface AuthorizationPointInterface extends WorkbenchDependantInterface, Alias
      * kinds of authorization logic can hook in correctly.
      * 
      * @triggers \exface\Core\Events\Security\OnAuthorizedEvent
+     * 
+     * @throws AuthorizationExceptionInterface
      * 
      * @return mixed
      */
@@ -114,11 +118,18 @@ interface AuthorizationPointInterface extends WorkbenchDependantInterface, Alias
      */
     public function setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType $algorithm) : AuthorizationPointInterface;
     
+    /**
+     * 
+     * @param string $name
+     * @return AuthorizationPointInterface
+     */
     public function setName(string $name) : AuthorizationPointInterface;
-    
+
+    /**
+     * 
+     * @return string
+     */
     public function getName() : string;
-    
-    
     
     /**
      *

@@ -32,22 +32,8 @@ class UiPageAuthorizationPoint extends AbstractAuthorizationPoint
         }
         
         $permissionsGenerator = $this->evaluatePolicies($page, $userOrToken);
-        $permission = new CombinedPermission($this->getPolicyCombiningAlgorithm(), $permissionsGenerator);
-        switch (true) {
-            case $permission->isPermitted():
-            case ($permission->isIndeterminate() || $permission->isNotApplicable()) && $this->getDefaultPolicyEffect() == PolicyEffectDataType::PERMIT:
-                $event = new OnAuthorizedEvent($this, $userOrToken, $page);
-                $this->getWorkbench()->eventManager()->dispatch($event);
-                return $page;
-            case $permission->isDenied():
-            case ($permission->isIndeterminate() || $permission->isNotApplicable()) && $this->getDefaultPolicyEffect() == PolicyEffectDataType::DENY:
-                if ($page && $userOrToken) {
-                    $forUser = $userOrToken->isAnonymous() ? 'for anonymous users' : 'for user "' . $userOrToken->getUsername() . '"';
-                    throw new AccessPermissionDeniedError($this, $permission, $userOrToken, $page, 'Access to page "' . $page->getAliasWithNamespace() . '" denied ' . $forUser . '!');
-                } else {
-                    throw new AccessPermissionDeniedError($this, $permission, $userOrToken, $page, 'Unknown error while validating page access permissions!');
-                }
-        }
+        $this->combinePermissions($permissionsGenerator, $userOrToken, $page);
+        return $page;
     }
     
     /**

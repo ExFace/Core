@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Security\Authorization\CombinedPermission;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 
 /**
  * Exception thrown if authorization fails on an authorization point
@@ -20,7 +21,7 @@ use exface\Core\Interfaces\WidgetInterface;
  * @author Andrej Kabachnik
  *        
  */
-class AccessPermissionDeniedError extends AccessDeniedError
+class AccessPermissionDeniedError extends AccessDeniedError implements AuthorizationExceptionInterface
 {
     private $permission = null;
     

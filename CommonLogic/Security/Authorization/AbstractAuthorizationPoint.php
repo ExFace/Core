@@ -9,6 +9,10 @@ use exface\Core\Interfaces\Security\AuthorizationPolicyInterface;
 use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\DataTypes\PolicyCombiningAlgorithmDataType;
 use exface\Core\Interfaces\UserImpersonationInterface;
+use exface\Core\Interfaces\AliasInterface;
+use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
+use exface\Core\Events\Security\OnAuthorizedEvent;
+use exface\Core\Interfaces\Security\PermissionInterface;
 
 abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
 {
@@ -190,5 +194,48 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
         $this->workbench->model()->getModelLoader()->loadAuthorizationPolicies($this, $userOrToken);
         $this->isLoadedForUser = $userOrToken;
         return $this;
+    }
+    
+    /**
+     * Combines the given permissions triggering the `OnAuthorizedEvent` or throwing access-denied errors
+     * depending on the configuration of the authorization point - return the resulting combined permission.
+     * 
+     * The parameters $userOrToken and $resource are only used in the events/exceptions.
+     * 
+     * Returning the resulting `CombinedPermission` allows to appen additional validation logic even if
+     * the current configuration of the authorization point allows access.
+     * 
+     * @param PermissionInterface[] $permissions
+     * @param UserImpersonationInterface $userOrToken
+     * @param mixed $resource
+     * 
+     * @triggers \exface\Core\Events\Security\OnAuthorizedEvent
+     * 
+     * @throws AccessPermissionDeniedError
+     * 
+     * @return CombinedPermission
+     */
+    protected function combinePermissions(iterable $permissions, UserImpersonationInterface $userOrToken, $resource = null) : CombinedPermission
+    {
+        $permission = new CombinedPermission($this->getPolicyCombiningAlgorithm(), $permissions);
+        switch (true) {
+            case $permission->isPermitted():
+            case ($permission->isIndeterminate() || $permission->isNotApplicable()) && $this->getDefaultPolicyEffect() == PolicyEffectDataType::PERMIT:
+                $event = new OnAuthorizedEvent($this, $userOrToken, $resource);
+                $this->getWorkbench()->eventManager()->dispatch($event);
+                break;
+            case $permission->isDenied():
+            case ($permission->isIndeterminate() || $permission->isNotApplicable()) && $this->getDefaultPolicyEffect() == PolicyEffectDataType::DENY:
+                if ($resource && $userOrToken) {
+                    $forUser = $userOrToken->isAnonymous() ? 'for anonymous users' : 'for user "' . $userOrToken->getUsername() . '"';
+                    if ($resource instanceof AliasInterface) {
+                        $resourceString = $resource->getAliasWithNamespace();
+                    }
+                    throw new AccessPermissionDeniedError($this, $permission, $userOrToken, $resource, 'Access to page "' . $resourceString . '" denied ' . $forUser . '!');
+                } else {
+                    throw new AccessPermissionDeniedError($this, $permission, $userOrToken, $resource, 'Unknown error while validating page access permissions!');
+                }
+        }
+        return $permission;
     }
 }
