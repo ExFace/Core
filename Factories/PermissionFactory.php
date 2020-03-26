@@ -21,8 +21,14 @@ abstract class PermissionFactory extends AbstractStaticFactory
      * @param AuthorizationPolicyInterface $policy
      * @return PermissionInterface
      */
-    public static function createIndeterminate(\Throwable $error = null, AuthorizationPolicyInterface $policy = null) : PermissionInterface
+    public static function createIndeterminate(\Throwable $error = null, PolicyEffectDataType $wouldBeEffect = null, AuthorizationPolicyInterface $policy = null) : PermissionInterface
     {
+        switch (true) {
+            case ($wouldBeEffect && $wouldBeEffect->__toString() === PolicyEffectDataType::PERMIT):
+                return new Permission(null, true, true, null, $policy, $error);
+            case ($wouldBeEffect && $wouldBeEffect->__toString() === PolicyEffectDataType::DENY):
+                return new Permission(true, null, true, null, $policy, $error);
+        }
         return new Permission(null, null, true, null, $policy, $error);
     }
     

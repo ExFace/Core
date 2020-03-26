@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\Security\Authorization;
 
-use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\CommonLogic\UxonObject;
@@ -50,5 +49,15 @@ class ContextAuthorizationPoint extends AbstractAuthorizationPoint
         foreach ($this->getPolicies($userOrToken) as $policy) {
             yield $policy->authorize($userOrToken, $context);
         }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Security\Authorization\AbstractAuthorizationPoint::getResourceName()
+     */
+    protected function getResourceName($resource) : string
+    {
+        return 'context "' . $resource->getAliasWithNamespace() . '"';
     }
 }

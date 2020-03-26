@@ -101,20 +101,6 @@ class ContextBar extends Toolbar
                 continue;
             }
             
-            if ($uxon->getProperty('restrict_only_admins') && ! $this->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAdmin()){
-                $this->getWorkbench()->getLogger()->info('Not adding context "' . $uxon->getProperty('context_scope') . ':' . $uxon->getProperty('context_alias') . '" to ContextBar: it is accessible for admins only!');
-                continue;
-            } else {
-                $uxon->unsetProperty('restrict_only_admins');
-            }
-            
-            if ($uxon->getProperty('restrict_only_authenticated') && $this->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
-                $this->getWorkbench()->getLogger()->info('Not adding context "' . $uxon->getProperty('context_scope') . ':' . $uxon->getProperty('context_alias') . '" to ContextBar: it is accessible for logged in users only!');
-                continue;
-            } else {
-                $uxon->unsetProperty('restrict_only_authenticated');
-            }
-            
             try {
                 $context = $contextManager->getScope($uxon->getProperty('context_scope'))->getContext($uxon->getProperty('context_alias'));
                 $uxon->unsetProperty('context_scope');

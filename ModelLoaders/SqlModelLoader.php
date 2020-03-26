@@ -1173,8 +1173,20 @@ SQL;
     
     public function loadAuthorizationPolicies(AuthorizationPointInterface $authPoint, UserImpersonationInterface $userOrToken) : AuthorizationPointInterface
     {
-        if ($userOrToken->getUsername() !== null) {
+        if ($userOrToken->isAnonymous()) {
+            $userFilter = <<<SQL
             
+        apol.target_user_role_oid IN (
+            SELECT
+                turu.user_role_oid
+            FROM
+                exf_user_role_users turu
+            WHERE
+                turu.user_oid = 0x00000000000000000000000000000000
+        )
+        OR
+SQL;
+        } else {
             $userFilter = <<<SQL
             
         apol.target_user_role_oid IN (

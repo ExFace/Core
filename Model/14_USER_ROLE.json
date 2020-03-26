@@ -40,17 +40,6 @@
     ],
     "rows": [
         {
-            "CREATED_ON": "2020-03-12 17:20:41",
-            "MODIFIED_ON": "2020-03-12 17:20:41",
-            "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
-            "UID": "0x11ea6485cb5ef723a2e30205857feb80",
-            "NAME": "Administrator",
-            "DESCRIPTION": "",
-            "APP": "0x31000000000000000000000000000000",
-            "ALIAS": "ADMIN"
-        },
-        {
             "CREATED_ON": "2020-03-12 17:21:07",
             "MODIFIED_ON": "2020-03-12 17:21:07",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -93,6 +82,17 @@
             "DESCRIPTION": "",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "ANONYMOUS"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:38:33",
+            "MODIFIED_ON": "2020-03-26 19:38:33",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f996061c094a3480205857feb80",
+            "NAME": "Administrator",
+            "DESCRIPTION": "Manage users and access rights",
+            "APP": "0x31000000000000000000000000000000",
+            "ALIAS": "ADMIN"
         }
     ],
     "totals_rows": [],

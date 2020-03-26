@@ -54,6 +54,26 @@
             "NAME": "Metamodel",
             "APP": "0x31000000000000000000000000000000",
             "DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:39:26",
+            "MODIFIED_ON": "2020-03-26 19:40:45",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f997fc61ac8a3480205857feb80",
+            "NAME": "User Management",
+            "APP": "0x31000000000000000000000000000000",
+            "DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:41:08",
+            "MODIFIED_ON": "2020-03-26 19:42:13",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f99bd1d72c4a3480205857feb80",
+            "NAME": "Credential Storage",
+            "APP": "0x31000000000000000000000000000000",
+            "DESCRIPTION": ""
         }
     ],
     "totals_rows": [],
