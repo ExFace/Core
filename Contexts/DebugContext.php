@@ -42,20 +42,6 @@ class DebugContext extends AbstractContext
     
     private $profiler = null;
     
-    public function __construct(ContextSelectorInterface $selector)
-    {
-        parent::__construct($selector);
-        
-        /* FIXME #nocms need to instatiate contexts AFTER the context scope was instatiated and became
-         * available via it's getScope...() method. Otherwise contexts, that require information about
-         * the logged-in user produce infinite loops because the authentication via RememberMeAuthenticator
-         * use SessionContextScope->getSessionUsername(), which causes the scope to be instantiated again,
-         * triggering it's contexts again and they trigger the authentication.
-        if ($selector->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
-            throw new ContextAccessDeniedError($this, 'The debug context cannot be used for anonymous users!');
-        }*/
-    }
-    
     /**
      * Returns TRUE if the debugger is active and FALSE otherwise
      * 

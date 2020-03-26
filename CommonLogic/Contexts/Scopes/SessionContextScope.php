@@ -7,6 +7,7 @@ use exface\Core\Exceptions\Contexts\ContextNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\UserException;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
+use exface\Core\CommonLogic\Workbench;
 
 /**
  * The session context scope represents the PHP session (on server side).
@@ -29,27 +30,16 @@ class SessionContextScope extends AbstractContextScope
     private $session_user = null;
     
     private $force_update_session_data = false;
-
-    /**
-     * Since the session context ist stored in the $_SESSION, init() makes sure, the session is available and tries to
-     * instantiate all contexts saved there.
-     * Thus, the session contexts are always loaded on startup, not only once they are
-     * actually used. This should be OK, since window contexts will probably be used in every single request.
-     *
-     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::init()
-     */
-    protected function init()
+    
+    private $sessionData = [];
+    
+    public function __construct(Workbench $exface)
     {
+        parent::__construct($exface);
+        
         $this->sessionOpen();
-        if ($this->getSavedContexts() instanceof UxonObject) {
-            foreach ($this->getSavedContexts() as $alias => $uxon) {
-                try {
-                    $this->getContext($alias);
-                } catch (ContextNotFoundError $error) {
-                    $this->removeContext($alias);
-                }
-            }
-        }
+        
+        $this->sessionData = $_SESSION['exface'];
         
         if ($locale = $this->getSessionData(self::KEY_LOCALE)) {
             $this->session_locale = $locale;
@@ -61,6 +51,27 @@ class SessionContextScope extends AbstractContextScope
         
         // It is important to save the session once we have read the data, because otherwise it will block concurrent ajax-requests
         $this->sessionClose();
+    }
+
+    /**
+     * Since the session context ist stored in the $_SESSION, init() makes sure, the session is available and tries to
+     * instantiate all contexts saved there.
+     * Thus, the session contexts are always loaded on startup, not only once they are
+     * actually used. This should be OK, since window contexts will probably be used in every single request.
+     *
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::init()
+     */
+    public function init()
+    {
+        if ($this->getSavedContexts() instanceof UxonObject) {
+            foreach ($this->getSavedContexts() as $alias => $uxon) {
+                try {
+                    $this->getContext($alias);
+                } catch (ContextNotFoundError $error) {
+                    $this->removeContext($alias);
+                }
+            }
+        }
         
         return parent::init();
     }
