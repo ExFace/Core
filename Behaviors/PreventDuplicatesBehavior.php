@@ -164,6 +164,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     /**
      * @uxon-property ignore_duplicates_in_multi_row_operations
      * @uxon-type boolean
+     * @uxon-default true
      * 
      * @param bool $trueOrFalse
      * @return PreventDuplicatesBehavior
@@ -186,6 +187,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     /**
      * @uxon-property ignore_duplicates_in_single_row_operations
      * @uxon-type boolean
+     * @uxon-default false
      * 
      * @param bool $trueOrFalse
      * @return PreventDuplicatesBehavior
