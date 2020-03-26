@@ -15,6 +15,11 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\CommonLogic\Selectors\UserRoleSelector;
+use exface\Core\CommonLogic\Selectors\UiPageGroupSelector;
+use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
+use exface\Core\CommonLogic\Selectors\ActionSelector;
+use exface\Core\CommonLogic\Selectors\FacadeSelector;
 
 class GenericAuthorizationPolicy implements AuthorizationPolicyInterface
 {
@@ -34,7 +39,7 @@ class GenericAuthorizationPolicy implements AuthorizationPolicyInterface
     
     private $facadeSelector = null;
     
-    private $configionUxon = null;
+    private $conditionUxon = null;
     
     private $effect = null;
     
@@ -50,19 +55,31 @@ class GenericAuthorizationPolicy implements AuthorizationPolicyInterface
     {
         $this->workbench = $workbench;
         $this->name = $name;
-        $this->userRoleSelector = $targets[PolicyTargetDataType::USER_ROLE];
-        $this->pageGroupSelector = $targets[PolicyTargetDataType::PAGE_GROUP];
-        $this->metaObjectSelector = $targets[PolicyTargetDataType::META_OBJECT];
-        $this->actionSelector = $targets[PolicyTargetDataType::ACTION];
-        $this->facadeSelector = $targets[PolicyTargetDataType::FACADE];
-        $this->configionUxon = $conditionUxon;
+        if ($str = $targets[PolicyTargetDataType::USER_ROLE]) {
+            $this->userRoleSelector = new UserRoleSelector($this->workbench, $str);
+        }
+        if ($str = $targets[PolicyTargetDataType::PAGE_GROUP]) {
+            $this->pageGroupSelector = new UiPageGroupSelector($this->workbench, $str);
+        }
+        if ($str = $targets[PolicyTargetDataType::META_OBJECT]) {
+            $this->metaObjectSelector = new MetaObjectSelector($this->workbench, $str);
+        }
+        if ($str = $targets[PolicyTargetDataType::ACTION]) {
+            $this->actionSelector = new ActionSelector($this->workbench, $str);
+        }
+        if ($str = $targets[PolicyTargetDataType::FACADE]) {
+            $this->facadeSelector = new FacadeSelector($this->workbench, $str);
+        }
+        
+        $this->conditionUxon = $conditionUxon;
+        $this->importUxonObject($conditionUxon);
+        
         $this->effect = $effect;
     }
     
     public function exportUxonObject()
     {
-        $uxon = new UxonObject();
-        return $uxon;
+        return $this->conditionUxon ?? new UxonObject();
     }
 
     /**
@@ -73,54 +90,58 @@ class GenericAuthorizationPolicy implements AuthorizationPolicyInterface
     public function authorize(UserImpersonationInterface $userOrToken = null, UiPageInterface $page = null, MetaObjectInterface $object = null, ActionInterface $action = null, FacadeInterface $facade = null): PermissionInterface
     {
         $applied = false;
-        if ($userOrToken instanceof AuthenticationTokenInterface) {
-            $user = $this->workbench->getSecurity()->getUser($userOrToken);
-        } else {
-            $user = $userOrToken;
-        }
-        
-        if ($this->userRoleSelector !== null) {
-            if ($user->hasRole($this->userRoleSelector) === false) {
-                return PermissionFactory::createNotApplicable($this);
+        try {
+            if ($userOrToken instanceof AuthenticationTokenInterface) {
+                $user = $this->workbench->getSecurity()->getUser($userOrToken);
             } else {
-                $applied = true;
+                $user = $userOrToken;
             }
-        }        
-        
-        if ($this->pageGroupSelector) {
-            if ($page === null || $page->isInGroup($this->pageGroupSelector) === false) {
+            
+            if ($this->userRoleSelector !== null) {
+                if ($user->hasRole($this->userRoleSelector) === false) {
+                    return PermissionFactory::createNotApplicable($this);
+                } else {
+                    $applied = true;
+                }
+            }        
+            
+            if ($this->pageGroupSelector) {
+                if ($page === null || $page->isInGroup($this->pageGroupSelector) === false) {
+                    return PermissionFactory::createNotApplicable($this);
+                } else {
+                    $applied = true;
+                }
+            }
+            
+            if ($this->metaObjectSelector) {
+                if ($object === null || $object->is($this->metaObjectSelector) === false) {
+                    return PermissionFactory::createNotApplicable($this);
+                } else {
+                    $applied = true;
+                }
+            }
+            
+            if ($this->actionSelector) {
+                if ($action === null || $action->is($this->actionSelector) === false) {
+                    return PermissionFactory::createNotApplicable($this);
+                } else {
+                    $applied = true;
+                }
+            }
+            
+            if ($this->facadeSelector) {
+                if ($facade === null || $facade->is($this->facadeSelector) === false) {
+                    return PermissionFactory::createNotApplicable($this);
+                } else {
+                    $applied = true;
+                }
+            }
+            
+            if ($applied === false) {
                 return PermissionFactory::createNotApplicable($this);
-            } else {
-                $applied = true;
             }
-        }
-        
-        if ($this->metaObjectSelector) {
-            if ($object === null || $object->is($this->metaObjectSelector) === false) {
-                return PermissionFactory::createNotApplicable($this);
-            } else {
-                $applied = true;
-            }
-        }
-        
-        if ($this->actionSelector) {
-            if ($action === null || $action->is($this->actionSelector) === false) {
-                return PermissionFactory::createNotApplicable($this);
-            } else {
-                $applied = true;
-            }
-        }
-        
-        if ($this->facadeSelector) {
-            if ($facade === null || $facade->is($this->facadeSelector) === false) {
-                return PermissionFactory::createNotApplicable($this);
-            } else {
-                $applied = true;
-            }
-        }
-        
-        if ($applied === false) {
-            return PermissionFactory::createNotApplicable($this);
+        } catch (\Throwable $e) {
+            return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         
         // If all targets are applicable, the permission is the effect of this condition.

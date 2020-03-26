@@ -45,17 +45,33 @@ class Permission implements PermissionInterface
     
     public function isDenied(): bool
     {
+        if ($this->isIndeterminate()) {
+            return false;
+        }
         return $this->deny ?? false;
     }
 
     public function isPermitted(): bool
     {
+        if ($this->isIndeterminate()) {
+            return false;
+        }
         return $this->permit ?? false;
     }
 
     public function isIndeterminate(): bool
     {
         return $this->indeterminate ?? false;
+    }
+    
+    public function isIndeterminatePermit(): bool
+    {
+        return $this->indeterminate && $this->permit;
+    }
+    
+    public function isIndeterminateDeny(): bool
+    {
+        return $this->indeterminate && $this->deny;
     }
 
     public function isNotApplicable(): bool
@@ -71,5 +87,27 @@ class Permission implements PermissionInterface
     public function getPolicy(): ?AuthorizationPolicyInterface
     {
         return $this->policy;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PermissionInterface::toXACMLDecision()
+     */
+    public function toXACMLDecision() : string
+    {
+        switch (true) {
+            case $this->indeterminate === true && $this->permit === true: return 'Indeterminate{P}';
+            case $this->indeterminate === true && $this->deny === true: return 'Indeterminate{D}';
+            case $this->indeterminate === true: return 'Indeterminate{DP}';
+            case $this->isNotApplicable: return 'NotApplicable';
+            case $this->permit === true: return 'Permit';
+            case $this->deny === true: return 'Deny';
+        }
+    }
+    
+    public function __toString()
+    {
+        return $this->toXACMLDecision();
     }
 }

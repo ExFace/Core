@@ -92,7 +92,7 @@
         },
         {
             "CREATED_ON": "2020-03-22 13:41:44",
-            "MODIFIED_ON": "2020-03-22 13:52:44",
+            "MODIFIED_ON": "2020-03-26 17:01:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea6c42dfac007ba3480205857feb80",
@@ -100,14 +100,14 @@
             "ALIAS": "CONTEXT_ACCESS",
             "DESCR": null,
             "APP": "0x31000000000000000000000000000000",
-            "COMBINING_ALGORITHM": "permit-unless-deny",
+            "COMBINING_ALGORITHM": "deny-unless-permit",
             "ACTIVE_FLAG": "1",
             "TARGET_USER_ROLE_APPLICABLE": "1",
             "TARGET_PAGE_GROUP_APPLICABLE": "0",
             "TARGET_FACADE_APPLICABLE": "0",
             "TARGET_OBJECT_APPLICABLE": "0",
             "TARGET_ACTION_APPLICABLE": "0",
-            "DEFAULT_EFFECT": "P"
+            "DEFAULT_EFFECT": "D"
         }
     ],
     "totals_rows": [],

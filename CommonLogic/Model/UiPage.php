@@ -1430,9 +1430,9 @@ class UiPage implements UiPageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::isInGroup()
      */
-    public function isInGroup(UiPageGroupSelectorInterface $aliasOrUid): bool
+    public function isInGroup(UiPageGroupSelectorInterface $selector): bool
     {
-        // TODO
+        // TODO #nocms
         return true;
     }
 

@@ -62,34 +62,38 @@ class ContextAuthorizationPolicy implements AuthorizationPolicyInterface
      */
     public function authorize(UserImpersonationInterface $userOrToken = null, ContextInterface $context = null): PermissionInterface
     {
-        if ($userOrToken instanceof AuthenticationTokenInterface) {
-            $user = $this->workbench->getSecurity()->getUser($userOrToken);
-        } else {
-            $user = $userOrToken;
-        }
-        
-        $applied = false;
-        
-        if ($this->userRoleSelector !== null) {
-            if ($user->hasRole($this->userRoleSelector) === false) {
-                return PermissionFactory::createNotApplicable($this);
+        try {
+            if ($userOrToken instanceof AuthenticationTokenInterface) {
+                $user = $this->workbench->getSecurity()->getUser($userOrToken);
+            } else {
+                $user = $userOrToken;
+            }
+            
+            $applied = false;
+            
+            if ($this->userRoleSelector !== null) {
+                if ($user->hasRole($this->userRoleSelector) === false) {
+                    return PermissionFactory::createNotApplicable($this);
+                } else {
+                    $applied = true;
+                }
+            }
+            
+            if ($this->getContextSelectorString() !== null) {
+                if ($context->getAliasWithNamespace() !== $this->getContextSelectorString()) {
+                    return PermissionFactory::createNotApplicable($this);
+                } else {
+                    $applied = true;
+                }
             } else {
                 $applied = true;
             }
-        }
-        
-        if ($this->getContextSelectorString() !== null) {
-            if ($context->getAliasWithNamespace() !== $this->getContextSelectorString()) {
+            
+            if ($applied === false) {
                 return PermissionFactory::createNotApplicable($this);
-            } else {
-                $applied = true;
             }
-        } else {
-            $applied = true;
-        }
-        
-        if ($applied === false) {
-            return PermissionFactory::createNotApplicable($this);
+        } catch (\Throwable $e) {
+            return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         
         // If all targets are applicable, the permission is the effect of this condition.
@@ -135,5 +139,4 @@ class ContextAuthorizationPolicy implements AuthorizationPolicyInterface
         $this->contextSelector = $value;
         return $this;
     }
-    
 }

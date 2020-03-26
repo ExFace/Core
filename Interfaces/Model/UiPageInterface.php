@@ -484,10 +484,10 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
     
     /**
      * 
-     * @param UiPageGroupSelectorInterface $aliasOrUid
+     * @param UiPageGroupSelectorInterface $selector
      * @return bool
      */
-    public function isInGroup(UiPageGroupSelectorInterface $aliasOrUid) : bool;
+    public function isInGroup(UiPageGroupSelectorInterface $selector) : bool;
     
     /**
      * Returns TRUE if the page is part of the metamodel and FALSE if it was created programmatically.

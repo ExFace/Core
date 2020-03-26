@@ -53,4 +53,14 @@ class UiPageAuthorizationPoint extends AbstractAuthorizationPoint
             yield $policy->authorize($userOrToken, $page);
         }
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Security\Authorization\AbstractAuthorizationPoint::getResourceName()
+     */
+    protected function getResourceName($resource) : string
+    {
+        return 'page "' . $resource->getAliasWithNamespace() . '"';
+    }
 }

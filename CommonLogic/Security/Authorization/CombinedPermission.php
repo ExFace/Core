@@ -5,6 +5,8 @@ use exface\Core\Interfaces\Security\AuthorizationPolicyInterface;
 use exface\Core\Interfaces\Security\PermissionInterface;
 use exface\Core\DataTypes\PolicyCombiningAlgorithmDataType;
 use exface\Core\Factories\PermissionFactory;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
  * This permission is calculated by combining a given set of permissions unsing a specified algorithm.
@@ -44,6 +46,16 @@ class CombinedPermission implements PermissionInterface
     public function isIndeterminate(): bool
     {
         return $this->result->isIndeterminate();
+    }
+    
+    public function isIndeterminatePermit(): bool
+    {
+        return $this->result->isIndeterminatePermit();
+    }
+    
+    public function isIndeterminateDeny(): bool
+    {
+        return $this->result->isIndeterminateDeny();
     }
 
     public function isNotApplicable(): bool
@@ -112,25 +124,68 @@ class CombinedPermission implements PermissionInterface
      */
     protected function combinePermissionsWithAlgorithm(iterable $permissions, PolicyCombiningAlgorithmDataType $algorithm, array &$resultArray) : PermissionInterface
     {
-        switch ($algorithm->__toString()) {
-            case PolicyCombiningAlgorithmDataType::DENY_UNLESS_PERMIT:
-                foreach ($permissions as $permission) {
-                    $resultArray[] = $permission;
-                    if ($permission->isPermitted()) {
-                        return new $permission;
-                    }
-                }
-                return PermissionFactory::createDenied();
-                break;
-            case PolicyCombiningAlgorithmDataType::PERMIT_UNLESS_DENY:
-                foreach ($permissions as $permission) {
-                    $resultArray[] = $permission;
-                    if ($permission->isDenied()) {
-                        return $permission;
-                    }
-                }
-                return PermissionFactory::createPermitted();
-                break;
+        $method = 'combineVia' . StringDataType::convertCaseUnderscoreToPascal(str_replace('-', '_', $algorithm->__toString()));
+        if (method_exists($this, $method)) {
+            return call_user_func_array([$this, $method], [$permissions, &$resultArray]);
         }
+        throw new InvalidArgumentException('Unsupported policy combining algorithm "' . $algorithm->__toString() . '"!');
+    }
+    
+    /**
+     * The “Deny-unless-permit” combining algorithm is intended for those cases where a permit decision should have 
+     * priority over a deny decision, and an “Indeterminate” or “NotApplicable” must never be the result. It is 
+     * particularly useful at the top level in a policy structure to ensure that a PDP will always return a definite 
+     * “Permit” or “Deny” result. This algorithm has the following behavior.
+     * 
+     * 1. If any decision is "Permit", the result is "Permit".
+     * 2. Otherwise, the result is "Deny".
+     * 
+     * @param iterable $permissions
+     * @param array $resultArray
+     * @return PermissionInterface
+     */
+    protected function combineViaDenyUnlessPermit(iterable $permissions, array &$resultArray) : PermissionInterface
+    {
+        foreach ($permissions as $permission) {
+            $resultArray[] = $permission;
+            if ($permission->isPermitted()) {
+                return new $permission;
+            }
+        }
+        return PermissionFactory::createDenied();
+    }
+    
+    /**
+     * The “Permit-unless-deny” combining algorithm is intended for those cases where a deny decision should have priority 
+     * over a permit decision, and an “Indeterminate” or “NotApplicable” must never be the result. It is particularly useful 
+     * at the top level in a policy structure to ensure that a PDP will always return a definite “Permit” or “Deny” result. 
+     * This algorithm has the following behavior.
+     * 
+     * 1. If any decision is "Deny", the result is "Deny".
+     * 2. Otherwise, the result is "Permit".
+     * 
+     * @param iterable $permissions
+     * @param array $resultArray
+     * @return PermissionInterface
+     */
+    protected function combineViaPermitUnlessDeny(iterable $permissions, array &$resultArray) : PermissionInterface
+    {
+        foreach ($permissions as $permission) {
+            $resultArray[] = $permission;
+            if ($permission->isDenied()) {
+                return $permission;
+            }
+        }
+        return PermissionFactory::createPermitted();
+    }
+    
+    public function toXACMLDecision() : string
+    {
+        return $this->result->toXACMLDecision();
+    }
+    
+    public function __toString()
+    {
+        return $this->toXACMLDecision();
     }
 }

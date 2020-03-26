@@ -228,14 +228,13 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
             case ($permission->isIndeterminate() || $permission->isNotApplicable()) && $this->getDefaultPolicyEffect() == PolicyEffectDataType::DENY:
                 if ($resource && $userOrToken) {
                     $forUser = $userOrToken->isAnonymous() ? 'for anonymous users' : 'for user "' . $userOrToken->getUsername() . '"';
-                    if ($resource instanceof AliasInterface) {
-                        $resourceString = $resource->getAliasWithNamespace();
-                    }
-                    throw new AccessPermissionDeniedError($this, $permission, $userOrToken, $resource, 'Access to page "' . $resourceString . '" denied ' . $forUser . '!');
+                    throw new AccessPermissionDeniedError($this, $permission, $userOrToken, $resource, 'Access to ' . $this->getResourceName($resource) . ' denied ' . $forUser . '!');
                 } else {
                     throw new AccessPermissionDeniedError($this, $permission, $userOrToken, $resource, 'Unknown error while validating page access permissions!');
                 }
         }
         return $permission;
     }
+    
+    protected abstract function getResourceName($resource) : string;
 }
