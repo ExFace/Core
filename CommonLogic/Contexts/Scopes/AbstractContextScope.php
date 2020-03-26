@@ -6,13 +6,12 @@ use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Contexts\FilterContext;
 use exface\Core\Contexts\ActionContext;
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\Exceptions\Contexts\ContextNotFoundError;
 use exface\Core\Factories\ContextFactory;
 use exface\Core\Factories\SelectorFactory;
+use exface\Core\CommonLogic\Security\Authorization\ContextAuthorizationPoint;
 
 abstract class AbstractContextScope implements ContextScopeInterface
 {
-
     private $active_contexts = array();
 
     private $exface = NULL;
@@ -23,7 +22,6 @@ abstract class AbstractContextScope implements ContextScopeInterface
     {
         $this->exface = $exface;
         $this->name = str_replace('ContextScope', '', substr(get_class($this), (strrpos(get_class($this), '\\') + 1)));
-        $this->init();
     }
 
     /**
@@ -34,7 +32,7 @@ abstract class AbstractContextScope implements ContextScopeInterface
      *
      * @return AbstractContextScope
      */
-    protected function init()
+    public function init()
     {
         return $this;
     }
@@ -82,8 +80,9 @@ abstract class AbstractContextScope implements ContextScopeInterface
         if (! $this->active_contexts[$alias]) {
             $selector = SelectorFactory::createContextSelector($this->getWorkbench(), $alias);            
             $context = ContextFactory::createInScope($selector, $this);
-            $this->loadContextData($context);
+            $context = $this->getContextManager()->authorize($context);
             $this->active_contexts[$alias] = $context;
+            $this->loadContextData($context);
         }
         return $this->active_contexts[$alias];
     }
@@ -97,20 +96,6 @@ abstract class AbstractContextScope implements ContextScopeInterface
     {
         unset($this->active_contexts[$alias]);
         return $this;
-    }
-    
-    /**
-     * 
-     * @param string $context_alias
-     * @return string
-     */
-    protected function getClassFromAlias($context_alias)
-    {
-        $context_class = '\\exface\\Core\\Contexts\\' . $context_alias . 'Context';
-        if (! class_exists($context_class)) {
-            $context_class = '\\exface\\Core\\Contexts\\' . ucfirst(strtolower($context_alias)) . 'Context';
-        }
-        return $context_class;
     }
     
     /**
@@ -129,7 +114,7 @@ abstract class AbstractContextScope implements ContextScopeInterface
      *
      * @return AbstractContextScope
      */
-    abstract public function loadContextData(ContextInterface $context);
+    abstract protected function loadContextData(ContextInterface $context);
 
     /**
      * 

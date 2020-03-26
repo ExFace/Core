@@ -1217,7 +1217,7 @@ SQL;
                 ],
                 PolicyEffectDataType::fromValue($this->getWorkbench(), $row['effect']),
                 $row['name'],
-                $row['condition_uxon']
+                UxonObject::fromAnything($row['condition_uxon'] ?? [])
             );
         }
         
