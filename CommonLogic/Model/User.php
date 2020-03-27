@@ -7,6 +7,10 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
 use exface\Core\Interfaces\Selectors\UserRoleSelectorInterface;
+use exface\Core\CommonLogic\Selectors\UserRoleSelector;
+use exface\Core\ModelLoaders\SqlModelLoader;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
  * Representation of an Exface user.
@@ -39,6 +43,8 @@ class User implements UserInterface
     private $modelLoader = null;
     
     private $modelLoaded = false;
+    
+    private $roleSelectors = null;
 
     /**
      * 
@@ -374,7 +380,76 @@ class User implements UserInterface
      */
     public function hasRole(UserRoleSelectorInterface $selector): bool
     {
-        // TODO
-        return true;
+        foreach ($this->getRoleSelectors() as $rs) {
+            if ($rs->__toString() === $selector->__toString()) {
+                return true;
+            }
+        }
+        
+        // If the selector is an alias and it's not one of the built-in aliases, look up the
+        // the UID and check that.
+        if ($selector->isAlias() && $selector->toString() !== UserRoleSelector::AUTHENTICATED_USER_ROLE_ALIAS) {
+            $appAlias = $selector->getAppAlias();
+            $roleAlias = StringDataType::substringAfter($selector->toString(), $appAlias . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER);
+            $roleSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE');
+            $roleSheet->getColumns()->addFromUidAttribute();
+            $roleSheet->getFilters()->addConditionFromString('ALIAS', $roleAlias);
+            $roleSheet->getFilters()->addConditionFromString('APP__ALIAS', $appAlias);
+            $roleSheet->dataRead();
+            if ($roleSheet->countRows() === 1) {
+                return $this->hasRole(new UserRoleSelector($this->getWorkbench(), $roleSheet->getUidColumn()->getCellValue(0)));
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * 
+     * @return UserRoleSelectorInterface[]
+     */
+    protected function getRoleSelectors() : array
+    {
+        if ($this->roleSelectors === null) {
+            if ($this->modelLoaded === false) {
+                $this->loadData();
+            } else {
+                $this->roleSelectors = [];
+            }
+        }
+        if (empty($this->roleSelectors) && $this->isAnonymous() === false) {
+            $this->roleSelectors = $this->addBuiltInRoles($this->roleSelectors || []);
+        }
+        return $this->roleSelectors;
+    }
+    
+    /**
+     * 
+     * @param UserRoleSelectorInterface[] $selectorArray
+     * @return UserRoleSelectorInterface[]
+     */
+    protected function addBuiltInRoles(array $selectorArray) : array
+    {
+        $selectorArray[] = new UserRoleSelector($this->getWorkbench(), UserRoleSelector::AUTHENTICATED_USER_ROLE_OID);
+        $selectorArray[] = new UserRoleSelector($this->getWorkbench(), UserRoleSelector::AUTHENTICATED_USER_ROLE_ALIAS);
+        return $selectorArray;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::addRoleSelector()
+     */
+    public function addRoleSelector($selectorOrString) : UserInterface
+    {
+        if (empty($this->roleSelectors)) {
+            $this->roleSelectors = $this->addBuiltInRoles($this->roleSelectors ?? []);
+        }
+        if ($selectorOrString instanceof UserRoleSelectorInterface) {
+            $this->roleSelectors[] = $selectorOrString;
+        } else {
+            $this->roleSelectors[] = new UserRoleSelector($this->getWorkbench(), $selectorOrString);
+        }
+        return $this;
     }
 }

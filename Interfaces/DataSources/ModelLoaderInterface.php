@@ -203,30 +203,6 @@ interface ModelLoaderInterface
     public function loadUserData(UserInterface $user) : UserInterface;
     
     /**
-     * Creates the passed Exface user.
-     *
-     * @param UserInterface $user
-     * @return ModelLoaderInterface
-     */
-    public function createUser(UserInterface $user) : ModelLoaderInterface;
-    
-    /**
-     * Updates the passed Exface user.
-     *
-     * @param UserInterface $user
-     * @return ModelLoaderInterface
-     */
-    public function updateUser(UserInterface $user) : ModelLoaderInterface;
-    
-    /**
-     * Deletes the passed Exface user.
-     *
-     * @param UserInterface $user
-     * @return ModelLoaderInterface
-     */
-    public function deleteUser(UserInterface $user) : ModelLoaderInterface;
-    
-    /**
      * Loads data from database and builds the tree structure for the given tree, returning an array of root nodes for the tree.
      *
      * @param UiPageTree $tree

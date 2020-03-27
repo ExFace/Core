@@ -129,4 +129,11 @@ interface UserInterface extends UserImpersonationInterface, WorkbenchDependantIn
      * @return bool
      */
     public function hasRole(UserRoleSelectorInterface $selector) : bool;
+    
+    /**
+     * 
+     * @param UserRoleSelectorInterface|string $selectorOrString
+     * @return UserInterface
+     */
+    public function addRoleSelector($selectorOrString) : UserInterface;
 }

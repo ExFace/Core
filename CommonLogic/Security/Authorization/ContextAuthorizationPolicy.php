@@ -71,12 +71,10 @@ class ContextAuthorizationPolicy implements AuthorizationPolicyInterface
             
             $applied = false;
             
-            if ($this->userRoleSelector !== null) {
-                if ($user->hasRole($this->userRoleSelector) === false) {
-                    return PermissionFactory::createNotApplicable($this);
-                } else {
-                    $applied = true;
-                }
+            if ($this->userRoleSelector !== null && $user->hasRole($this->userRoleSelector) === false) {
+                return PermissionFactory::createNotApplicable($this);
+            } else {
+                $applied = true; 
             }
             
             if ($this->getContextSelectorString() !== null) {
