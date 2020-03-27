@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Factories\UiPageTreeFactory;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\CommonLogic\Model\UiPageTreeNode;
+use exface\Core\Factories\UiPageFactory;
 
 /**
  * NavMenu shows a hierarchical navigational menu starting from a given root page or,
@@ -62,7 +63,7 @@ class NavMenu extends AbstractWidget
      */
     public function setRootPageAlias(string $pageSelectorString) : NavMenu
     {
-        $this->rootPage = $this->getWorkbench()->getCMS()->getPage(SelectorFactory::createPageSelector($this->getWorkbench(), $pageSelectorString));
+        $this->rootPage = UiPageFactory::createFromModel($this->getWorkbench(), $pageSelectorString);
         return $this;
     }
 }

@@ -30,7 +30,7 @@ class UserContext extends AbstractContext
     public function getIcon()
     {
         $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
-        if ($user->isUserAnonymous() === true) {
+        if ($user->isAnonymous() === true) {
             return Icons::USER_SECRET;
         }
         return Icons::USER_CIRCLE_O;
@@ -58,7 +58,7 @@ class UserContext extends AbstractContext
         $coreApp = $this->getWorkbench()->getCoreApp();
         
         //when user is logged in, build context with user details and logout button
-        if ($user->isUserAnonymous() === false){
+        if ($user->isAnonymous() === false){
             $uxon = [
               "widget_type" => "Form",
               "height" => "100%",

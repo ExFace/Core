@@ -828,7 +828,7 @@ HTML;
     protected function buildHtmlHeadIcons() : array
     {
         $tags = [];
-        $icons = $this->getWorkbench()->getCMS()->getFavIcons();
+        $icons = $this->getWorkbench()->getConfig()->getOption('SERVER.ICONS')->toArray();
         $favicon = $icons[0];
         if (is_array($favicon)) {
             $tags[] = '<link rel="shortcut icon" href="' . $favicon['src'] . '">';
