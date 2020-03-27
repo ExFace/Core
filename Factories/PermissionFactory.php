@@ -39,7 +39,7 @@ abstract class PermissionFactory extends AbstractStaticFactory
      */
     public static function createNotApplicable(AuthorizationPolicyInterface $policy = null) : PermissionInterface
     {
-        return new Permission(null, null, null, true);
+        return new Permission(null, null, null, true, $policy);
     }
     
     /**
@@ -49,7 +49,7 @@ abstract class PermissionFactory extends AbstractStaticFactory
      */
     public static function createDenied(AuthorizationPolicyInterface $policy = null) : PermissionInterface
     {
-        return new Permission(true);
+        return new Permission(true, null, null, null, $policy);
     }
     
     /**
@@ -59,7 +59,7 @@ abstract class PermissionFactory extends AbstractStaticFactory
      */
     public static function createPermitted(AuthorizationPolicyInterface $policy = null) : PermissionInterface
     {
-        return new Permission(null, true);
+        return new Permission(null, true, null, null, $policy);
     }
     
     /**

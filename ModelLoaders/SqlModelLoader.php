@@ -71,6 +71,8 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\PolicyCombiningAlgorithmDataType;
 use exface\Core\DataTypes\PolicyTargetDataType;
 use exface\Core\Exceptions\LogicException;
+use exface\Core\CommonLogic\Selectors\UserRoleSelector;
+use exface\Core\CommonLogic\Selectors\UserSelector;
 
 /**
  * 
@@ -80,10 +82,6 @@ use exface\Core\Exceptions\LogicException;
 class SqlModelLoader implements ModelLoaderInterface
 {
     const ATTRIBUTE_TYPE_COMPOUND = 'C';
-    
-    const ANONYMOUS_USER_OID = '0x00000000000000000000000000000000';
-    
-    const AUTHENTICATED_USER_GROUP_OID = '0x11ea6fa3cab9a380a3480205857feb80';
     
     private $data_connection = null;
     
@@ -1058,72 +1056,47 @@ SQL;
     
     public function loadUserData(UserInterface $user, DataSheetInterface $userData = null) : UserInterface
     {
-        $userMetaObj = $this->getWorkbench()->model()->getObject('exface.Core.USER');
-        if ($userData === null) {
-            $userData = DataSheetFactory::createFromObject($userMetaObj);
-            $userData->getFilters()->addConditionFromString('USERNAME', $user->getUsername(), EXF_COMPARATOR_EQUALS);
-        }
+        $sql = <<<SQL
+SELECT
+    u.*,
+    {$this->buildSqlUuidSelector('u.oid')} AS oid,
+    (
+        SELECT GROUP_CONCAT({$this->buildSqlUuidSelector('uru.user_role_oid')}, ',')
+        FROM exf_user_role_users uru
+        WHERE uru.user_oid = u.oid
+    ) as role_oids
+FROM
+    exf_user u
+WHERE
+    u.username = '{$user->getUsername()}'
+SQL;
         
-        foreach ($userMetaObj->getAttributes() as $attr) {
-            $userData->getColumns()->addFromAttribute($attr);
-        }
-        if ($userData->isFresh() === false) {
-            $userData->dataRead();
-        }
+        $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
         
-        if ($userData->countRows() == 0) {
-            throw new UserNotFoundError('No user "' . $user->getUsername() . '" exists in the metamodel.');
-        } elseif ($userData->countRows() == 1) {
-            $row = $userData->getRow(0);
-            $user->setUid($row['UID']);
-            $user->setLocale($row['LOCALE']);
-            $user->setFirstName($row['FIRST_NAME']);
-            $user->setLastName($row['LAST_NAME']);
-            $user->setEmail($row['EMAIL']);
-            if ($row['PASSWORD'] !== null) {
-                $user->setPassword($row['PASSWORD']);
-            }
-        } else {
-            throw new UserNotUniqueError('More than one user exist in the metamodel for username "' . $user->getUsername() . '".');
+        switch (count($rows)) {
+            case 0:
+                throw new UserNotFoundError('No user "' . $user->getUsername() . '" exists in the metamodel.');
+            case 1:
+                $row = $rows[0];
+                $user->setUid($row['oid']);
+                $user->setLocale($row['locale']);
+                $user->setFirstName($row['first_name']);
+                $user->setLastName($row['last_name']);
+                $user->setEmail($row['email']);
+                if ($row['password'] !== null) {
+                    $user->setPassword($row['password']);
+                }
+                if ($row['role_oids']) {
+                    foreach (explode(',', $row['role_oids']) as $roleUid) {
+                        $user->addRoleSelector($roleUid);
+                    }
+                }
+                break;
+            default:
+                throw new UserNotUniqueError('More than one user exist in the metamodel for username "' . $user->getUsername() . '".');
         }
         
         return $user;
-    }
-    
-    /**
-     * Creates the passed Exface user.
-     *
-     * @param UserInterface $user
-     * @return ModelLoaderInterface
-     */
-    public function createUser(UserInterface $user) : ModelLoaderInterface
-    {
-        $user->exportDataSheet()->dataCreate();
-        return $this;
-    }
-    
-    /**
-     * Updates the passed Exface user.
-     *
-     * @param UserInterface $user
-     * @return ModelLoaderInterface
-     */
-    public function updateUser(UserInterface $user) : ModelLoaderInterface
-    {
-        $user->exportDataSheet()->dataUpdate();
-        return $this;
-    }
-    
-    /**
-     * Deletes the passed Exface user.
-     *
-     * @param UserInterface $user
-     * @return ModelLoaderInterface
-     */
-    public function deleteUser(UserInterface $user) : ModelLoaderInterface
-    { 
-        $user->exportDataSheet()->dataDelete();
-        return $this;
     }
     
     /**
@@ -1179,7 +1152,7 @@ SQL;
         if ($userOrToken->isAnonymous()) {
             // Load all policies of the anonymous user
             // + all policies without a user group
-            $anonymouseUserOid = self::ANONYMOUS_USER_OID;
+            $anonymouseUserOid = UserSelector::ANONYMOUS_USER_OID;
             $userFilter = <<<SQL
             
         apol.target_user_role_oid IN (
@@ -1196,7 +1169,7 @@ SQL;
             // Load all policies of this user's group
             // + all policies of the built-in group exface.Core.AUTHENTICATED
             // + all policies without a user group
-            $authenticatedGroupOid = self::AUTHENTICATED_USER_GROUP_OID;
+            $authenticatedGroupOid = UserRoleSelector::AUTHENTICATED_USER_ROLE_OID;
             $userFilter = <<<SQL
             
         apol.target_user_role_oid IN (
