@@ -192,7 +192,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $errorMessage = $this->translate('BEHAVIOR.PREVENTDUPLICATEBEHAVIOR.CREATE_DUPLICATES_FORBIDDEN_ERROR', ['%row%' => $errorRowDescriptor, '%object%' => $object->getAlias()]);
         } catch (\Exception $e) {
             #TODO log the error or such?
-            $errorMessage = 'Can not update/create data, as itcontains duplicates of alreadyy existing data!';
+            $errorMessage = 'Can not update/create data, as it contains duplicates of already existing data!';
         }
         return $errorMessage;
     }
