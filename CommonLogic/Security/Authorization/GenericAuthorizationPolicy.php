@@ -21,6 +21,11 @@ use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\CommonLogic\Selectors\FacadeSelector;
 
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class GenericAuthorizationPolicy implements AuthorizationPolicyInterface
 {
     use ImportUxonObjectTrait;
@@ -97,40 +102,38 @@ class GenericAuthorizationPolicy implements AuthorizationPolicyInterface
                 $user = $userOrToken;
             }
             
-            if ($this->userRoleSelector !== null) {
-                if ($user->hasRole($this->userRoleSelector) === false) {
-                    return PermissionFactory::createNotApplicable($this);
-                } else {
-                    $applied = true;
-                }
-            }        
+            if ($this->userRoleSelector !== null && $user->hasRole($this->userRoleSelector) === false) {
+                return PermissionFactory::createNotApplicable($this);
+            } else {
+                $applied = true;
+            }    
             
-            if ($this->pageGroupSelector) {
-                if ($page === null || $page->isInGroup($this->pageGroupSelector) === false) {
-                    return PermissionFactory::createNotApplicable($this);
-                } else {
-                    $applied = true;
-                }
-            }
-            
-            if ($this->metaObjectSelector) {
-                if ($object === null || $object->is($this->metaObjectSelector) === false) {
+            if ($page !== null) {
+                if ($this->pageGroupSelector !== null && $page->isInGroup($this->pageGroupSelector) === false) {
                     return PermissionFactory::createNotApplicable($this);
                 } else {
                     $applied = true;
                 }
             }
             
-            if ($this->actionSelector) {
-                if ($action === null || $action->is($this->actionSelector) === false) {
+            if ($object !== null) {
+                if ($this->metaObjectSelector !== null && $object->is($this->metaObjectSelector) === false) {
                     return PermissionFactory::createNotApplicable($this);
                 } else {
                     $applied = true;
                 }
             }
             
-            if ($this->facadeSelector) {
-                if ($facade === null || $facade->is($this->facadeSelector) === false) {
+            if ($action !== null) {
+                if ($this->actionSelector !== null && $action->is($this->actionSelector) === false) {
+                    return PermissionFactory::createNotApplicable($this);
+                } else {
+                    $applied = true;
+                }
+            }
+            
+            if ($facade !== null) {
+                if ($this->facadeSelector !== null && $facade->is($this->facadeSelector) === false) {
                     return PermissionFactory::createNotApplicable($this);
                 } else {
                     $applied = true;
