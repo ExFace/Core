@@ -6,6 +6,7 @@
 	"SERVER.TITLE": "Power UI",
 	"SERVER.TITLE_HTML": "Power <b>UI</b>",
 	"SERVER.BASE_URLS": [],
+	"SERVER.ICONS": [],
 	
 	"CACHE.ENABLED": true,
 	

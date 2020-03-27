@@ -487,7 +487,7 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      */
     protected function saveCredentials(UxonObject $uxon, string $credentialSetName = null, UserInterface $user = null) : AbstractDataConnector
     {
-        if (($user !== null && $user->isUserAnonymous() === true) || $this->hasModel() === false || $uxon->isEmpty() === true) {
+        if (($user !== null && $user->isAnonymous() === true) || $this->hasModel() === false || $uxon->isEmpty() === true) {
             return $this;
         }
         

@@ -281,19 +281,10 @@ class User implements UserInterface
      */
     public function isUserAdmin()
     {
-        if ($this->isUserAnonymous()) {
+        if ($this->isAnonymous()) {
             return false;
         }
-        return $this->getWorkbench()->getCMS()->isUserAdmin();
-    }
-
-    /**
-     * @deprecated use isAnonymous() instead
-     * TODO #nocms remove
-     */
-    public function isUserAnonymous()
-    {
-        return $this->isAnonymous();
+        return $this->hasRole(new UserRoleSelector($this->getWorkbench(), 'exface.Core.SUPERUSER'));
     }
     
     /**
@@ -367,7 +358,7 @@ class User implements UserInterface
      */
     public function getInitials() : string
     {
-        if ($this->isUserAnonymous() === true) {
+        if ($this->isAnonymous() === true) {
             return 'Guest';
         }
         return mb_substr($this->getFirstName(), 0, 1) . '.' . mb_substr($this->getLastName(), 0, 1) . '.';

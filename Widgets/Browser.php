@@ -40,7 +40,7 @@ class Browser extends AbstractWidget implements iFillEntireContainer
     public function setUrl(string $url) : Browser
     {
         $phs = [
-            'api' => $this->getWorkbench()->getCMS()->buildUrlToRouter() . '/api'
+            'api' => $this->getWorkbench()->getUrl() . 'api'
         ];
         $this->url = StringDataType::replacePlaceholders($url, $phs);
         return $this;
@@ -69,7 +69,7 @@ class Browser extends AbstractWidget implements iFillEntireContainer
     public function setUrlBase(string $url) : Browser
     {
         $phs = [
-            'api' => $this->getWorkbench()->getCMS()->buildUrlToRouter() . '/api'
+            'api' => $this->getWorkbench()->getUrl() . 'api'
         ];
         $this->urlBase = StringDataType::replacePlaceholders($url, $phs);
         return $this;
