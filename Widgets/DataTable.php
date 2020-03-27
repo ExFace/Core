@@ -13,6 +13,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Parts\DataRowGrouper;
 use exface\Core\Widgets\Traits\EditableTableTrait;
 use exface\Core\Widgets\Traits\DataTableTrait;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * Renders data as a table with filters, columns, and toolbars.
@@ -439,7 +440,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *
      * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
      */
-    public function getAlternativeContainerForOrphanedSiblings()
+    public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets
     {
         return null;
     }

@@ -11,5 +11,5 @@ interface iFillEntireContainer extends WidgetInterface
      * @return
      *
      */
-    public function getAlternativeContainerForOrphanedSiblings();
+    public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets;
 }

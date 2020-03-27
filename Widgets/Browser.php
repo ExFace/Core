@@ -80,15 +80,8 @@ class Browser extends AbstractWidget implements iFillEntireContainer
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
      */
-    public function getAlternativeContainerForOrphanedSiblings()
+    public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets
     {
-        if ($this->getParent() && $this->getParent() instanceof iContainOtherWidgets) {
-            return $this->getParent();
-        }
-        
-        if ($this->orphanContainer === null) {
-            $this->orphanContainer = WidgetFactory::create($this->getPage(), 'Container', $this);
-        }
-        return $this->orphanContainer;
+        return null;
     }
 }

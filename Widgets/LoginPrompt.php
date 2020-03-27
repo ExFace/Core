@@ -8,6 +8,7 @@ use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iShowMessageList;
 use exface\Core\Widgets\Traits\iShowMessageListTrait;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * A login promt with potentially multiple forms for different authentication options (i.e. local login, LDAP, OAuth, etc.).
@@ -91,7 +92,7 @@ class LoginPrompt extends Container implements iFillEntireContainer, iShowMessag
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
      */
-    public function getAlternativeContainerForOrphanedSiblings()
+    public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets
     {
         return $this->getWidgetFirst();
     }

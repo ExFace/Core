@@ -13,6 +13,7 @@ use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 use exface\Core\Exceptions\UnderflowException;
 use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
+use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 
 /**
  * The Container is a basic widget, that contains other widgets - typically simple ones like inputs.
@@ -452,5 +453,30 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
         $this->readonly = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::isFilledBySingleWidget()
+     */
+    public function isFilledBySingleWidget() : bool
+    {
+        return $this->getFillerWidget() !== null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getFillerWidget()
+     */
+    public function getFillerWidget() : ?iFillEntireContainer
+    {
+        $visibleChildren = $this->getWidgets(function($w) {
+            return $w->isHidden() === false;
+        });
+        if (count($visibleChildren) === 1 && ($visibleChildren[0] instanceof iFillEntireContainer)) {
+            return $visibleChildren[0];
+        }
+        return null;
+    }
 }
-?>
