@@ -9,7 +9,6 @@ use exface\Core\Factories\DataSorterFactory;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
 use exface\Core\Factories\ConditionFactory;
-use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Factories\BehaviorFactory;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
@@ -81,6 +80,10 @@ use exface\Core\Exceptions\LogicException;
 class SqlModelLoader implements ModelLoaderInterface
 {
     const ATTRIBUTE_TYPE_COMPOUND = 'C';
+    
+    const ANONYMOUS_USER_OID = '0x00000000000000000000000000000000';
+    
+    const AUTHENTICATED_USER_GROUP_OID = '0x11ea6fa3cab9a380a3480205857feb80';
     
     private $data_connection = null;
     
@@ -1174,6 +1177,9 @@ SQL;
     public function loadAuthorizationPolicies(AuthorizationPointInterface $authPoint, UserImpersonationInterface $userOrToken) : AuthorizationPointInterface
     {
         if ($userOrToken->isAnonymous()) {
+            // Load all policies of the anonymous user
+            // + all policies without a user group
+            $anonymouseUserOid = self::ANONYMOUS_USER_OID;
             $userFilter = <<<SQL
             
         apol.target_user_role_oid IN (
@@ -1182,11 +1188,15 @@ SQL;
             FROM
                 exf_user_role_users turu
             WHERE
-                turu.user_oid = 0x00000000000000000000000000000000
+                turu.user_oid = $anonymouseUserOid
         )
         OR
 SQL;
         } else {
+            // Load all policies of this user's group
+            // + all policies of the built-in group exface.Core.AUTHENTICATED
+            // + all policies without a user group
+            $authenticatedGroupOid = self::AUTHENTICATED_USER_GROUP_OID;
             $userFilter = <<<SQL
             
         apol.target_user_role_oid IN (
@@ -1198,6 +1208,7 @@ SQL;
             WHERE
                 u.username = '{$userOrToken->getUsername()}'
         )
+        OR apol.target_user_role_oid = $authenticatedGroupOid
         OR
 SQL;
         }
