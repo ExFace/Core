@@ -4,11 +4,8 @@ namespace exface\Core\CommonLogic\Security\Authorization;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\DataTypes\PolicyEffectDataType;
-use exface\Core\Exceptions\Security\AccessDeniedError;
-use exface\Core\Events\Security\OnAuthorizedEvent;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
-use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 
 /**
  * 
@@ -47,6 +44,12 @@ class UiPageAuthorizationPoint extends AbstractAuthorizationPoint
         return $this;
     }
     
+    /**
+     * 
+     * @param UiPageInterface $page
+     * @param UserImpersonationInterface $userOrToken
+     * @return \Generator
+     */
     protected function evaluatePolicies(UiPageInterface $page, UserImpersonationInterface $userOrToken) : \Generator
     {
         foreach ($this->getPolicies($userOrToken) as $policy) {
