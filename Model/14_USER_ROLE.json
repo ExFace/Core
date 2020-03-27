@@ -74,12 +74,12 @@
         },
         {
             "CREATED_ON": "2020-03-22 13:54:52",
-            "MODIFIED_ON": "2020-03-22 13:54:52",
+            "MODIFIED_ON": "2020-03-26 20:53:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea6c44b4d365f6a3480205857feb80",
             "NAME": "Anonymous",
-            "DESCRIPTION": "",
+            "DESCRIPTION": "Non-authenticated users",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "ANONYMOUS"
         },
@@ -93,6 +93,28 @@
             "DESCRIPTION": "Manage users and access rights",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "ADMIN"
+        },
+        {
+            "CREATED_ON": "2020-03-26 20:53:06",
+            "MODIFIED_ON": "2020-03-26 20:53:06",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6fa3cab9a380a3480205857feb80",
+            "NAME": "Authenticated",
+            "DESCRIPTION": "Automatically given to all named users",
+            "APP": "0x31000000000000000000000000000000",
+            "ALIAS": "AUTHENTICATED"
+        },
+        {
+            "CREATED_ON": "2020-03-27 14:44:40",
+            "MODIFIED_ON": "2020-03-27 14:45:38",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea70397cb072cca3480205857feb80",
+            "NAME": "Debugger",
+            "DESCRIPTION": "Access to logs and extended error display",
+            "APP": "0x31000000000000000000000000000000",
+            "ALIAS": "DEBUGGER"
         }
     ],
     "totals_rows": [],
