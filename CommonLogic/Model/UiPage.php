@@ -100,7 +100,7 @@ class UiPage implements UiPageInterface
     public function __construct(UiPageSelectorInterface $selector, CmsConnectorInterface $cms = null)
     {
         $this->selector = $selector;
-        $this->cms = is_null($cms) ? $selector->getWorkbench() : $cms;
+        $this->cms = is_null($cms) ? $selector->getWorkbench()->getCMS() : $cms;
         // FIXME still needed?
         // $this->setAppUidOrAlias($appUidOrAlias);
     }
