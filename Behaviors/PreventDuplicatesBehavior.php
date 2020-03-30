@@ -58,20 +58,21 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             return;
         }
         
-        $duplicatesIdx = $this->getDuplicatesIndices($eventSheet);
+        $duplicatesRowNumbers = $this->getDuplicatesRowNumbers($eventSheet);
         $eventRows = $eventSheet->getRows();
-        if (count($eventRows) <= 1 && $this->getIgnoreDuplicatesInSingleRowCreate() === true && !empty($duplicatesIdx)) {
+        if (count($eventRows) <= 1 && $this->getIgnoreDuplicatesInSingleRowCreate() === true && !empty($duplicatesRowNumbers)) {
             $eventSheet->removeRow(1);
-            #TODO this means the data sheet will be empty, so will probably throw an error. Should this be prevented and how
+            $event->preventCreate(true);
             return;
         } else if (count($eventRows) > 1 && $this->getIgnoreDuplicatesInMultiRowCreate() === true) {
-            foreach (array_reverse($duplicatesIdx) as $index) {
+            foreach (array_reverse($duplicatesRowNumbers) as $rowNumber) {
                 // have to reverse array with indices because rows in data sheet get reindexed when one is removed
-                $eventSheet->removeRow($index);
+                $eventSheet->removeRow($rowNumber);
+                
             }
             return;
         }
-        $errorMessage = $this->buildDuplicatesErrorMessage($eventSheet, $duplicatesIdx);
+        $errorMessage = $this->buildDuplicatesErrorMessage($eventSheet, $duplicatesRowNumbers);
         throw new DataSheetCreateDuplicatesForbiddenError($eventSheet, $errorMessage, $this->getDuplicateErrorCode());
     }
     
@@ -93,11 +94,11 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             return;
         }
         
-        $duplicatesIdx = $this->getDuplicatesIndices($eventSheet);
-        if (empty($duplicatesIdx)) {
+        $duplicatesRowNumbers = $this->getDuplicatesRowNumbers($eventSheet);
+        if (empty($duplicatesRowNumbers)) {
             return;
         }
-        $errorMessage = $this->buildDuplicatesErrorMessage($eventSheet, $duplicatesIdx);
+        $errorMessage = $this->buildDuplicatesErrorMessage($eventSheet, $duplicatesRowNumbers);
         throw new DataSheetCreateDuplicatesForbiddenError($eventSheet, $errorMessage, $this->getDuplicateErrorCode());
     }
     
@@ -107,7 +108,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      * @param DataSheetInterface $eventSheet
      * @return array
      */
-    protected function getDuplicatesIndices(DataSheetInterface $eventSheet) : array
+    protected function getDuplicatesRowNumbers(DataSheetInterface $eventSheet) : array
     {   
         // check if aliases given in `compare_attributes` actually exist in data sheet, if not dont use it for comparison
         $columns = $eventSheet->getColumns();
@@ -145,7 +146,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             return [];
         }
         $checkRows = $checkSheet->getRows();
-        $duplicatesIdx = [];
+        $duplicatesRowNumbers = [];
         for ($i = 0; $i < count($eventRows); $i++) {
             foreach ($checkRows as $chRow) {
                 $duplicate = true;
@@ -157,29 +158,29 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                     }
                 }
                 if ($duplicate === true) {
-                    $duplicatesIdx[] = $i;
+                    $duplicatesRowNumbers[] = $i;
                     break;
                 }
             }
         }
         
-        return $duplicatesIdx;
+        return $duplicatesRowNumbers;
     }
     
     /**
      * 
      * @param DataSheetInterface $dataSheet
-     * @param array $duplicatesIdx
+     * @param array $duplicatesRowNumbers
      * @return string
      */
-    protected function buildDuplicatesErrorMessage(DataSheetInterface $dataSheet, array $duplicatesIdx) : string
+    protected function buildDuplicatesErrorMessage(DataSheetInterface $dataSheet, array $duplicatesRowNumbers) : string
     {
         $object = $dataSheet->getMetaObject();
         $labelAttributeAlias = $object->getLabelAttributeAlias();
         $rows = $dataSheet->getRows();
         $errorRowDescriptor = '';
         $errorMessage = '';
-        foreach ($duplicatesIdx as $index) {
+        foreach ($duplicatesRowNumbers as $index) {
             $row = $rows[$index];
             if ($labelAttributeAlias !== null && $row[$labelAttributeAlias] !== null){
                 $errorRowDescriptor .= "'{$row[$labelAttributeAlias]}', ";
@@ -191,7 +192,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         try {
             $errorMessage = $this->translate('BEHAVIOR.PREVENTDUPLICATEBEHAVIOR.CREATE_DUPLICATES_FORBIDDEN_ERROR', ['%row%' => $errorRowDescriptor, '%object%' => $object->getAlias()]);
         } catch (\Exception $e) {
-            #TODO log the error or such?
+            $this->getWorkbench()->getLogger()->logException($e);
             $errorMessage = 'Can not update/create data, as it contains duplicates of already existing data!';
         }
         return $errorMessage;
