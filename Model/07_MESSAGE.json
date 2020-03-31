@@ -2136,6 +2136,20 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2020-03-31 14:42:01",
+            "MODIFIED_ON": "2020-03-31 14:42:01",
+            "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
+            "MODIFIED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
+            "UID": "0x11ea734d049d4f25b3cb025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7A8LNGD",
+            "TITLE": "Change password failed",
+            "DESCRIPTION": "This error occurs when changing a password fails.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
