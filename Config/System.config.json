@@ -1,18 +1,20 @@
 {
 	"METAMODEL.LOADER_CLASS": "\\exface\\Core\\ModelLoaders\\SqlModelLoader",
+	"METAMODEL.QUERY_BUILDER": "\\exface\\Core\\QueryBuilders\\MySqlBuilder",
 	"METAMODEL.CONNECTOR": "\\exface\\Core\\DataConnectors\\MySqlConnector",
 	"METAMODEL.CONNECTOR_CONFIG": {
-		"host": "",
-		"user": "",
-		"dbase": ""
+		"host": "localhost",
+		"dbase": "exface",
+		"user": "root",
+		"password": ""
 	},
-	"METAMODEL.QUERY_BUILDER": "\\exface\\Core\\QueryBuilders\\MySqlBuilder",
 	
 	"SERVER.TITLE": "Power UI",
 	"SERVER.TITLE_HTML": "Power <b>UI</b>",
 	"SERVER.BASE_URLS": [],
 	"SERVER.ICONS": [],
-	
+	"SERVER.INDEX_PAGE_SELECTOR" : "index",
+    
 	"CACHE.ENABLED": true,
 	
 	"DEBUG.LIVE_CLASS_AUTOLOADER": true,
