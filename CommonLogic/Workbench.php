@@ -4,9 +4,7 @@ namespace exface\Core\CommonLogic;
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'autoload.php';
 
 use exface\Core\CommonLogic\Log\Log;
-use exface\Core\Interfaces\CmsConnectorInterface;
 use exface\Core\Factories\DataConnectionFactory;
-use exface\Core\Factories\CmsConnectorFactory;
 use exface\Core\Factories\AppFactory;
 use exface\Core\Factories\ModelLoaderFactory;
 use exface\Core\Interfaces\Events\EventManagerInterface;
@@ -26,7 +24,6 @@ use exface\Core\CommonLogic\Selectors\AppSelector;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Exceptions\AppNotFoundError;
-use exface\Core\CommonLogic\Selectors\CmsConnectorSelector;
 use exface\Core\CommonLogic\Selectors\ModelLoaderSelector;
 use exface\Core\Exceptions\AppComponentNotFoundError;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
@@ -40,8 +37,6 @@ class Workbench implements WorkbenchInterface
     private $started = false;
 
     private $data;
-
-    private $cms;
 
     private $mm;
 
@@ -103,7 +98,8 @@ class Workbench implements WorkbenchInterface
         // Start the error handler
         $dbg = new Debugger($this->logger);
         $this->setDebugger($dbg);
-        if ($this->getConfig()->getOption('DEBUG.PRETTIFY_ERRORS')) {
+        $config = $this->getConfig();
+        if ($config->getOption('DEBUG.PRETTIFY_ERRORS')) {
             $dbg->setPrettifyErrors(true);
         }
 
@@ -111,8 +107,6 @@ class Workbench implements WorkbenchInterface
         $this->event_manager = new EventManager($this);
         $this->event_manager->dispatch(new OnStartEvent($this));
         
-        // load the CMS connector
-        $this->cms = CmsConnectorFactory::create(new CmsConnectorSelector($this, $this->getConfig()->getOption('CMS_CONNECTOR')));
         // init data module
         $this->data = new DataManager($this);
         
@@ -120,13 +114,14 @@ class Workbench implements WorkbenchInterface
         $this->mm = new \exface\Core\CommonLogic\Model\Model($this);
         
         // Init the ModelLoader
-        $model_loader_selector = new ModelLoaderSelector($this, $this->getConfig()->getOption('MODEL_LOADER'));
+        $model_loader_selector = new ModelLoaderSelector($this, $config->getOption('METAMODEL.LOADER_CLASS'));
         try {
             $model_loader = ModelLoaderFactory::create($model_loader_selector);
         } catch (AppComponentNotFoundError $e) {
             throw new InvalidArgumentException('No valid model loader found in current configuration - please add a valid "MODEL_LOADER" : "file_path_or_qualified_alias_or_qualified_class_name" to your config in "' . $this->filemanager()->getPathToConfigFolder() . '"', null, $e);
         }
-        $model_connection = DataConnectionFactory::createFromPrototype($this, $this->getConfig()->getOption('MODEL_DATA_CONNECTOR'));
+        
+        $model_connection = DataConnectionFactory::createFromPrototype($this, $config->getOption('METAMODEL.CONNECTOR'), $config->getOption('METAMODEL.CONNECTOR_CONFIG'));
         $model_loader->setDataConnection($model_connection);
         $this->model()->setModelLoader($model_loader);
         
@@ -189,15 +184,6 @@ class Workbench implements WorkbenchInterface
             throw new RuntimeException('Workbench not started: missing context manager! Did you forget Workbench->start()?');
         }
         return $this->context;
-    }
-
-    /**
-     *
-     * @return CmsConnectorInterface
-     */
-    public function getCMS()
-    {
-        return $this->cms;
     }
 
     /**

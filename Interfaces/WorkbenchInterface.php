@@ -44,12 +44,6 @@ interface WorkbenchInterface extends TaskHandlerInterface
     
     /**
      *
-     * @return CmsConnectorInterface
-     */
-    public function getCMS();
-    
-    /**
-     *
      * @return DataManagerInterface
      */
     public function data();

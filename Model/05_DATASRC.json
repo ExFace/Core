@@ -57,18 +57,18 @@
     "rows": [
         {
             "CREATED_ON": "2011-01-01 00:00:00",
-            "MODIFIED_ON": "2018-05-29 07:49:44",
+            "MODIFIED_ON": "2020-03-31 08:40:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
-            "DEFAULT_CONNECTION": "",
+            "DEFAULT_CONNECTION": "0x11ea72c00f0fadeca3480205857feb80",
             "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/MySqlBuilder.php",
             "READABLE_FLAG": "1",
             "WRITABLE_FLAG": "1",
             "BASE_OBJECT": "0x32370000000000000000000000000000",
-            "LABEL": "Metamodel DB",
-            "ALIAS": "metamodel_db"
+            "LABEL": "Metamodel Data Source",
+            "ALIAS": "METAMODEL_SOURCE"
         },
         {
             "CREATED_ON": "2016-11-21 10:54:08",

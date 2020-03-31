@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\DataConnectors;
 
-use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionTransactionStartError;
 use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
