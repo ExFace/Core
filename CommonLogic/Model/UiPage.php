@@ -21,7 +21,6 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\Selectors\UiPageGroupSelectorInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Factories\SelectorFactory;
-use exface\Core\Interfaces\CmsConnectorInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Events\Widget\OnRemoveEvent;
 use exface\Core\Exceptions\UiPage\UiPageLoadingError;
@@ -104,7 +103,6 @@ class UiPage implements UiPageInterface
      * @deprecated use UiPageFactory::create() instead!
      * 
      * @param UiPageSelectorInterface $selector
-     * @param CmsConnectorInterface $cms
      */
     public function __construct(UiPageSelectorInterface $selector)
     {

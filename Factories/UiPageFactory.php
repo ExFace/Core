@@ -6,7 +6,6 @@ use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
-use exface\Core\Interfaces\CmsConnectorInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 class UiPageFactory extends AbstractStaticFactory

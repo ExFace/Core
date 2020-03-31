@@ -1,7 +1,12 @@
 {
-	"MODEL_DATA_CONNECTOR": "exface/ModxCmsConnector/DataConnectors/ModxDb.php",
-	"MODEL_LOADER": "exface/Core/ModelLoaders/SqlModelLoader.php",
-	"CMS_CONNECTOR": "exface/ModxCmsConnector/CmsConnectors/Modx.php",
+	"METAMODEL.LOADER_CLASS": "\\exface\\Core\\ModelLoaders\\SqlModelLoader",
+	"METAMODEL.CONNECTOR": "\\exface\\Core\\DataConnectors\\MySqlConnector",
+	"METAMODEL.CONNECTOR_CONFIG": {
+		"host": "",
+		"user": "",
+		"dbase": ""
+	},
+	"METAMODEL.QUERY_BUILDER": "\\exface\\Core\\QueryBuilders\\MySqlBuilder",
 	
 	"SERVER.TITLE": "Power UI",
 	"SERVER.TITLE_HTML": "Power <b>UI</b>",
@@ -41,5 +46,6 @@
     
     "FACADES.ROUTES": {},
     
-    "FACADES.ABSTRACTPWAFACADE.WORKBOX_VENDOR_PATH": "npm-asset/workbox-sw/build/workbox-sw.js"
+    "FACADES.ABSTRACTPWAFACADE.WORKBOX_VENDOR_PATH": "npm-asset/workbox-sw/build/workbox-sw.js",
+    "FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_FILENAME": "ServiceWorker.js"
 }

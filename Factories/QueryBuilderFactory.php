@@ -7,7 +7,14 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\QueryBuilderInterface;
 use exface\Core\CommonLogic\Selectors\QueryBuilderSelector;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\CommonLogic\Filemanager;
+use exface\Core\QueryBuilders\ModelLoaderQueryBuilder;
 
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 abstract class QueryBuilderFactory extends AbstractSelectableComponentFactory
 {
 
@@ -19,6 +26,9 @@ abstract class QueryBuilderFactory extends AbstractSelectableComponentFactory
      */
     public static function create(QueryBuilderSelectorInterface $selector) : QueryBuilderInterface
     {
+        if (self::isModelLoaderQueryBuilder($selector)) {
+            self::createFromString($selector->getWorkbench(), $selector->getWorkbench()->getConfig()->getOption('METAMODEL.QUERY_BUILDER'));
+        }
         return static::createFromSelector($selector);
     }
 
@@ -49,5 +59,19 @@ abstract class QueryBuilderFactory extends AbstractSelectableComponentFactory
         $qb->setMainObject($object);
         return $qb;
     }
-} 
-?>
+    
+    /**
+     *
+     * @param QueryBuilderSelectorInterface $selector
+     * @return bool
+     */
+    protected static function isModelLoaderQueryBuilder(QueryBuilderSelectorInterface $selector) : bool
+    {
+        switch (true) {
+            case $selector->isClassname() && strcasecmp($selector->toString(), '\\' . ModelLoaderQueryBuilder::class) === 0:
+            case $selector->isFilepath() && strcasecmp(Filemanager::pathNormalize($selector->toString()), Filemanager::pathNormalize(ModelLoaderQueryBuilder::class) . '.php') === 0:
+                return true;
+        }
+        return false;
+    }
+}

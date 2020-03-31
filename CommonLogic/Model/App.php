@@ -28,7 +28,6 @@ use exface\Core\Exceptions\AppComponentNotFoundError;
 use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 use exface\Core\Interfaces\Selectors\BehaviorSelectorInterface;
-use exface\Core\Interfaces\CmsConnectorInterface;
 use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
 use exface\Core\Interfaces\Selectors\DataConnectorSelectorInterface;
 use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
@@ -39,8 +38,6 @@ use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\ClassSelectorInterface;
 use exface\Core\CommonLogic\Traits\AliasTrait;
-use exface\Core\CommonLogic\Selectors\DataTypeSelector;
-use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 use exface\Core\Contexts\DataContext;
 use exface\Core\Interfaces\Selectors\WidgetSelectorInterface;
@@ -651,8 +648,6 @@ class App implements AppInterface
                 return 'Facades';
             case $selector instanceof BehaviorSelectorInterface:
                 return 'Behaviors';
-            case $selector instanceof CmsConnectorInterface:
-                return 'CmsConnectors';
             case $selector instanceof ContextSelectorInterface:
                 return 'Contexts';
             case $selector instanceof DataConnectorSelectorInterface:

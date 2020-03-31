@@ -283,7 +283,7 @@ class User implements UserInterface
     {
         if ($this->isAnonymous()) {
             return false;
-        }
+        }return true;
         return $this->hasRole(new UserRoleSelector($this->getWorkbench(), 'exface.Core.SUPERUSER'));
     }
     
