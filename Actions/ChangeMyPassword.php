@@ -6,8 +6,9 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
-use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use exface\Core\Factories\ResultFactory;
+use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthToken;
+use exface\Core\Exceptions\Actions\ActionChangeMyPasswordFailedError;
 
 class ChangeMyPassword extends UpdateData
 {
@@ -33,19 +34,31 @@ class ChangeMyPassword extends UpdateData
     {
         $dataSheet = $this->getInputDataSheet($task);
         
-        if (! $dataSheet->getColumns()->getByExpression('USER') || ! $dataSheet->getColumns()->getByExpression('PASSWORD') || ! $dataSheet->getColumns()->getByExpression('OLD PASSWORD')) {
-            throw new DataSheetColumnNotFoundError($dataSheet, "Can not update password, make sure the data sheet contains the Columns 'USER', 'PASSWORD' and 'OLD PASSWORD'!");
+        if (! $dataSheet->getColumns()->getByExpression('USERNAME') || ! $dataSheet->getColumns()->getByExpression('PASSWORD') || ! $dataSheet->getColumns()->getByExpression('OLD_PASSWORD')) {
+            throw new DataSheetColumnNotFoundError($dataSheet, "Can not update password, make sure the data sheet contains the Columns 'USER', 'PASSWORD' and 'OLD_PASSWORD'!");
         }
-        $user = $dataSheet->getRow(0)['USER'];
-        $oldPassword = $dataSheet->getRow(0)['OLD PASSWORD'];
+        $user = $dataSheet->getRow(0)['USERNAME'];
+        if ($user !== $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUsername()) {
+            throw new ActionChangeMyPasswordFailedError($this, $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CHANGEMYPASSWORD.WRONG_USER'));
+        }
+        $oldPassword = $dataSheet->getRow(0)['OLD_PASSWORD'];
         //$newPassword = $dataSheet->getRow(0)['PASSWORD'];
-        $this->getWorkbench()->getSecurity()->authenticate(new UsernamePasswordToken($user, $oldPassword, 'secured_area'));
-        
+        try {
+            $this->getWorkbench()->getSecurity()->authenticate(new UsernamePasswordAuthToken($user, $oldPassword));
+        } catch (\Exception $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
+            throw new ActionChangeMyPasswordFailedError($this, $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CHANGEMYPASSWORD.WRONG_PASSWORD'));
+        }
         //remove old Password form data sheet (is that needed?)
-        $dataSheet->getColumns()->removeByKey('OLD PASSWORD');
+        $dataSheet->getColumns()->removeByKey('OLD_PASSWORD');
         $undoable = false;
         
-        $affectedRows = $dataSheet->dataUpdate(false, $transaction);
+        try {
+            $affectedRows = $dataSheet->dataUpdate(false, $transaction);
+        } catch (\Exception $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
+            throw new ActionChangeMyPasswordFailedError($this, $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CHANGEMYPASSWORD.FAILED'));
+        }
         
         $result = ResultFactory::createDataResult($task, $dataSheet);
         $result->setMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.UPDATEDATA.RESULT', ['%number%' => $affectedRows], $affectedRows));
