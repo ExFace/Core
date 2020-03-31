@@ -13,7 +13,7 @@ use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\DataTypes\PasswordHashDataType;
 
 /**
- * Action to change password of a user. Only for internal purpose, dont use as it needs very specific input data configuration.
+ * Action to change password of a user. Only for internal purpose, dont use otherwise as it needs very specific input data configuration.
  * 
  * @author rml
  *
@@ -40,8 +40,7 @@ class ChangeMyPassword extends UpdateData
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        $dataSheet = $this->getInputDataSheet($task);
-        
+        $dataSheet = $this->getInputDataSheet($task);        
         if (! $dataSheet->getColumns()->getByExpression('USERNAME') || ! $dataSheet->getColumns()->getByExpression('PASSWORD') || ! $dataSheet->getColumns()->getByExpression('OLD_PASSWORD')) {
             throw new ActionInputMissingError($this, "Can not update password, make sure the input data contains the Columns 'USER', 'PASSWORD' and 'OLD_PASSWORD'!");
         }
@@ -67,10 +66,8 @@ class ChangeMyPassword extends UpdateData
         $result->setUndoable($undoable);
         if ($affectedRows > 0) {
             $result->setDataModified(true);
-        }
-        
+        }        
         return $result;
-    }
-    
+    }    
 }
 ?>
