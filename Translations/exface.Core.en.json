@@ -1,6 +1,11 @@
 {
 	"ACTION.AUTOSUGGEST.NAME": "Autosuggest",
 	
+	"ACTION.CHANGEMYPASSWORD.NAME": "Change password",
+	"ACTION.CHANGEMYPASSWORD.FAILED": "Password could not be updated.",	
+	"ACTION.CHANGEMYPASSWORD.WRONG_PASSWORD": "Password could not be updated, old password is incorrect.",
+	"ACTION.CHANGEMYPASSWORD.WRONG_USER": "Password could not be updated, it is not possible to change the password of another user.",
+	
 	"ACTION.CREATEDATA.RESULT": "%number% item created.|%number% items created.",
 	"ACTION.CREATEDATA.NAME": "Create",
 	"ACTION.COPYDATA.RESULT": "Copied %number% object|Copied %number% objects",
