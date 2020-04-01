@@ -105,7 +105,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      */
     function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        throw new QueryBuilderException('COUNT not implemented in "' . get_class($this) . '"!');
+        throw new QueryBuilderException('COUNT operation not implemented in "' . get_class($this) . '"!');
     }
 
     /**

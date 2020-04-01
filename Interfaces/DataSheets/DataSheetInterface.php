@@ -145,14 +145,18 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * Performs a count operation on the data source to get fresh information about
      * how many rows would match the filters and aggregations of this data sheet.
      * 
+     * Returns NULL if the data source cannot count at current conditions. The data
+     * sources may distinguish between counting errors an silently refusing to count
+     * in order to enable dynamic pagination.
+     * 
      * Avoid calling dataCount() explicitly!!! Some data sources like large SQL tables 
      * or OLAP cubes in general have very poor counting performance. Instead use
      * countRowsInDataSource() and let the syste decide if a count operation is
      * really required!
      *  
-     * @return int
+     * @return int|NULL
      */
-    public function dataCount() : int;
+    public function dataCount() : ?int;
 
     /**
      * 
