@@ -62,4 +62,9 @@ class PasswordHashDataType extends StringDataType
         $this->hashAlgorithm = $value;
         return $this;
     }
+    
+    public function isSensitiveData() : bool
+    {
+        return true;
+    }
 }
