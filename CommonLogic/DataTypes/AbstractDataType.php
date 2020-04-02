@@ -43,6 +43,8 @@ abstract class AbstractDataType implements DataTypeInterface
     private $validationErrorText = null;
     
     private $value = null;
+    
+    private $sensitive = false;
 
     public function __construct(DataTypeSelectorInterface $selector, $value = null, UxonObject $configuration = null)
     {
@@ -507,6 +509,31 @@ abstract class AbstractDataType implements DataTypeInterface
     {
         // TODO compare uxon configuration
         return $this->getValue() === $valueObject->getValue() && $this->getAliasWithNamespace() === $valueObject->getAliasWithNamespace() && get_called_class() == get_class($valueObject);
+    }
+    
+    /**
+     * Set if the data is sensitive, so it can be censored if needed, for example passwords in data sheet exceptions.
+     * 
+     * @uxon-property sensitive_data
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return AbstractDataType
+     */
+    public function setSensitiveData(bool $trueOrFalse) : AbstractDataType
+    {
+        $this->sensitive = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isSensitiveData() : bool
+    {
+        return $this->sensitive;
     }
 
 }
