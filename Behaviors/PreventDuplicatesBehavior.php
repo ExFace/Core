@@ -13,7 +13,21 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 
 /**
- 
+ * Behavior to prevent a creation of a duplicate dataset on create or update Operations.
+ * On multi row create operations duplicates will be ignored and deleted from the data sheet by default.
+ * If a dataset is a duplicate will be evaluaated on the attributes given in the `compare_attributes` uxon property.
+ * 
+ * Configuration example:
+ * 
+ * {
+ *  "compare_attributes": [
+ *      "USER",
+ *      "USER_ROLE"
+ *  ],
+ *  "ignore_duplicates_in_multi_row_create": true,
+ *  "ignore_duplicates_in_single_row_create": false
+ * }
+ * 
  */
 class PreventDuplicatesBehavior extends AbstractBehavior
 {
