@@ -572,6 +572,9 @@ class DataSheet implements DataSheetInterface
                 // Add filter over parent keys
                 $parentSheetKeyCol = $subsheet->getJoinKeyColumnOfParentSheet();
                 $foreign_keys = $parentSheetKeyCol->getValues(false);
+                if ($subsheet->getJoinKeyColumnOfSubsheet()->isAttribute() && $subsheet->getJoinKeyColumnOfSubsheet()->getAttribute()->isReadable() === false) {
+                    throw new DataSheetJoinError($this, 'Cannot join subsheet based on object "' . $subsheet->getMetaObject()->getName() . '" to data sheet of "' . $this->getMetaObject()->getName() . '": the subsheet\'s key column attribute "' . $subsheet->getJoinKeyColumnOfSubsheet()->getAttribute()->getName() . '" is not readable!');
+                }
                 $subsheet->getFilters()->addConditionFromString($subsheet->getJoinKeyAliasOfSubsheet(), implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
                 // Read data
                 $subsheet->dataRead();
