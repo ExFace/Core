@@ -60,7 +60,9 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         
         $duplicatesRowNumbers = $this->getDuplicatesRowNumbers($eventSheet);
         $eventRows = $eventSheet->getRows();
-        if (count($eventRows) <= 1 && $this->getIgnoreDuplicatesInSingleRowCreate() === true && !empty($duplicatesRowNumbers)) {
+        if (empty($duplicatesRowNumbers)) {
+            return;
+        } elseif (count($eventRows) <= 1 && $this->getIgnoreDuplicatesInSingleRowCreate() === true) {
             $eventSheet->removeRow(1);
             $event->preventCreate(true);
             return;
@@ -153,6 +155,15 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                 foreach ($this->getCompareAttributes() as $attrAlias) {
                     $dataType = $columns->getByExpression($attrAlias)->getDataType();
                     if ($dataType->parse($eventRows[$i][$attrAlias]) != $dataType->parse($chRow[$attrAlias])) {
+                        $duplicate = false;
+                        break;
+                    }
+                }
+                if ($eventSheet->getMetaObject()->hasUidAttribute()) {
+                    //if data sheet has uid column check if the UIDs fit, if so, its not a duplicate, its a normal update (with the same data)
+                    $uidattr = $eventSheet->getMetaObject()->getUidAttributeAlias();
+                    $dataType = $columns->getByExpression($uidattr)->getDataType();
+                    if ($dataType->parse($eventRows[$i][$uidattr]) == $dataType->parse($chRow[$uidattr])) {
                         $duplicate = false;
                         break;
                     }
