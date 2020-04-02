@@ -1,5 +1,6 @@
 -- UP
 
+DROP TABLE IF EXISTS `exf_page`;
 CREATE TABLE IF NOT EXISTS `exf_page` (
   `oid` binary(16) NOT NULL,
   `created_on` datetime NOT NULL,
