@@ -1,6 +1,9 @@
 {
 	"ACTION.AUTOSUGGEST.NAME": "Подсказка",
 	
+	"ACTION.CHANGEMYPASSWORD.NAME": "Change password",
+	"ACTION.CHANGEMYPASSWORD.WRONG_PASSWORD": "Password could not be updated, old password is incorrect.",
+	
 	"ACTION.CREATEDATA.RESULT": "%number% объект создано.|%number% объекта создано.|%number% объектов создано.",
 	"ACTION.CREATEDATA.NAME": "Новый объект",
 	"ACTION.SHOWOBJECTCREATEDIALOG.NAME": "Создать",
