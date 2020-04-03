@@ -71,7 +71,7 @@ class DataContext extends AbstractContext
      */
     public function unsetVariableForApp(AppInterface $app, $variable_name)
     {
-        unset($this->variables[$app->getAliasWithNamespace()][$variable_name]);
+        unset($this->variables[$this->getNamespaceForApp($app)][$variable_name]);
         return $this;
     }
 
@@ -84,7 +84,7 @@ class DataContext extends AbstractContext
      */
     public function setVariableForApp(AppInterface $app, $variable_name, $value)
     {
-        return $this->setVariable($app->getAliasWithNamespace(), $variable_name, $value);
+        return $this->setVariable($this->getNamespaceForApp($app), $variable_name, $value);
     }
 
     /**
@@ -95,7 +95,7 @@ class DataContext extends AbstractContext
      */
     public function getVariableForApp(AppInterface $app, $variable_name)
     {
-        return $this->getVariable($app->getAliasWithNamespace(), $variable_name);
+        return $this->getVariable($this->getNamespaceForApp($app), $variable_name);
     }
 
     /**
@@ -120,7 +120,12 @@ class DataContext extends AbstractContext
      */
     public function getVariablesForApp(AppInterface $app)
     {
-        return $this->getVariablesFromNamespace($app->getAliasWithNamespace());
+        return $this->getVariablesFromNamespace($this->getNamespaceForApp($app));
+    }
+    
+    protected function getNamespaceForApp(AppInterface $app) : string
+    {
+        return mb_strtolower($app->getAliasWithNamespace());
     }
 
     /**
