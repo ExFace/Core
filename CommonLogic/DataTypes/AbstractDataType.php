@@ -512,7 +512,7 @@ abstract class AbstractDataType implements DataTypeInterface
     }
     
     /**
-     * Set if the data is sensitive, so itcan be censored if needed, for example passwords in data sheet exceptions.
+     * Set if the data is sensitive, so it can be censored if needed, for example passwords in data sheet exceptions.
      * 
      * @uxon-property sensitive_data
      * @uxon-type boolean
@@ -528,7 +528,6 @@ abstract class AbstractDataType implements DataTypeInterface
     }
     
     /**
-     * 
      * 
      * @return bool
      */

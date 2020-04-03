@@ -2138,6 +2138,19 @@
             "DOCS": ""
         },
         {
+            "CREATED_ON": "2020-03-24 13:20:37",
+            "MODIFIED_ON": "2020-03-24 13:20:37",
+            "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
+            "MODIFIED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
+            "UID": "0x11ea6dc9df046bd38eff0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7A4ZQVV",
+            "TITLE": "Forbidden creation of a duplicate dataset",
+            "DESCRIPTION": "This error occurs when trying to create a dataset that is a duplicate of an already existing dataset. The attribute aliases to evaluate if the dataset is a duplicate are specified in the 'PreventDuplicatesBehavior' uxon definition of the affected object.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
+        },
             "CREATED_ON": "2020-03-31 14:42:01",
             "MODIFIED_ON": "2020-03-31 15:20:24",
             "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
