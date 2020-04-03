@@ -14,6 +14,8 @@ use exface\Core\Factories\WidgetFactory;
  */
 trait DataSheetExceptionTrait {
     
+    #TODO function to censor columns with sensitive data
+    
     use ExceptionTrait {
 		createDebugWidget as parentCreateDebugWidget;
 	}
