@@ -357,6 +357,13 @@ class User implements UserInterface
         if ($this->isUserAnonymous() === true) {
             return 'Guest';
         }
-        return mb_substr($this->getFirstName(), 0, 1) . '.' . mb_substr($this->getLastName(), 0, 1) . '.';
+        $firstInitial = mb_substr($this->getFirstName(), 0, 1);
+        $secondInitial = mb_substr($this->getLastName(), 0, 1);
+        
+        if (! $firstInitial && ! $secondInitial) {
+            return $this->getUsername();
+        }
+        
+        return ($firstInitial ? $firstInitial . '.' : '') . ($secondInitial ? $secondInitial . '.' : '');
     }
 }
