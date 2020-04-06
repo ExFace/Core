@@ -55,7 +55,7 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
         $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER');
         $userDataSheet->getFilters()->addConditionFromString('USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
         $userDataSheet->dataRead();
-        if (empty($userDataSheet->getRows())) {
+        if (empty($userDataSheet->getRows()) && $this->getCreateNewUsers() === true) {
             $user = $this->createUserFromToken($token, $this->getWorkbench());
             if ($this->getNewUserRoles() !== null) {
                 $user = $this->addRolesToUser($this->getWorkbench(), $user, $this->getNewUserRoles());
@@ -94,8 +94,7 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
      */
     protected function getNameDefault() : string
     {
-        //return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.LDAP.SIGN_IN');
-        return 'DataConnectionAuthenticator';
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.DATACONNECTION.SIGN_IN');
     }
     
     /**
@@ -196,12 +195,12 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
             [
                 'data_column_name' => 'DATACONNECTIONALIAS',
                 'widget_type' => 'InputSelect',
-                'caption' => 'DATA CONNECTION',
+                'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.DATACONNECTION.CONNECTION'),
                 'selectable_options' => array_combine($this->getConnectionAliases(), $conNames) ?? [],
                 'required' => true
             ],[
                 'attribute_alias' => 'USERNAME',
-                'caption' => 'USERNAME',
+                'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.DATACONNECTION.USERNAME'),
                 'required' => true
             ],[
                 'attribute_alias' => 'PASSWORD'
