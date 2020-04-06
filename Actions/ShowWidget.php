@@ -292,13 +292,18 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
                         // columns as well as in filters...
                         try {
                             // Add the value of the filter (if there) as cell value
-                            if (! is_null($condition->getValue()) && $condition->getValue() !== ''){
+                            $value = $condition->getValue();
+                            if ($value !== null && $value !== ''){
                                 $data_sheet->getFilters()->addCondition($condition);
                                 if (! $col = $data_sheet->getColumns()->getByExpression($condition->getExpression())) {
                                     $col = $data_sheet->getColumns()->addFromExpression($condition->getExpression());
                                 }
                                 if ($col->isEmpty(true)) {
-                                    $col->setValueOnAllRows($condition->getValue());
+                                    if ($data_sheet->isEmpty()) {
+                                        $col->setValues([$value]);
+                                    } else {
+                                        $col->setValueOnAllRows($value);
+                                    }
                                 }
                             }
                         } catch (\Exception $e) {
