@@ -88,7 +88,19 @@
         ],
         "buttons": [
             {
-                "action_alias": "exface.Core.ShowObjectCreateDialog"
+                "action": {
+                    "alias": "exface.Core.ShowObjectCreateDialog",
+                    "prefill_with_input_data": true,
+                    "input_mapper": {
+                        "column_to_column_mappings": [
+                            {
+                                "from": "UID",
+                                "to": "MENU_PARENT"
+                            }
+                        ],
+                        "inherit_columns": false
+                    }
+                }
             },
             {
                 "action_alias": "exface.Core.ShowObjectEditDialog",
