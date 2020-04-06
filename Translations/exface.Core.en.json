@@ -265,10 +265,14 @@
     "SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED": "This connection does not require/support user authentication.",
     "SECURITY.CONNECTIONS.LOGIN_TITLE": "Log in to data source",
 
-    "SECURITY.SIGN_IN": "Anmelden",
-    "SECURITY.LDAP.SIGN_IN": "Anmelden mit Windows-Nutzer",
-    "SECURITY.LDAP.DOMAIN": "Windows-Domäne",
-    "SECURITY.LDAP.USERNAME": "Windows-Nutzername",
+    "SECURITY.SIGN_IN": "Sign in",
+    "SECURITY.LDAP.SIGN_IN": "Sign in with Windows user",
+    "SECURITY.LDAP.DOMAIN": "Windows domain",
+    "SECURITY.LDAP.USERNAME": "Windows user name",
+    
+    "SECURITY.DATACONNECTION.SIGN_IN": "Sign in via data connection",
+    "SECURITY.DATACONNECTION.CONNECTION": "Connection name",
+    "SECURITY.DATACONNECTION.USERNAME": "Connection user name",
     
 	"SECURITY.POLICIES.COMBINING.DENY_OVERRIDES": "Deny overrides",
     "SECURITY.POLICIES.COMBINING.PERMIT_OVERRIDES": "Permit overrides",
