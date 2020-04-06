@@ -17,6 +17,7 @@ use exface\Core\Widgets\LoginPrompt;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Security\AuthenticationToken\RememberMeAuthToken;
 use exface\Core\CommonLogic\Security\Authenticators\RememberMeAuthenticator;
+use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -64,7 +65,7 @@ class SecurityManager implements SecurityManagerInterface
                 $authenticated = $authenticator->authenticate($token);
                 $this->storeAuthenticatedToken($authenticated);
                 return $authenticated;
-            } catch (AuthenticationException $e) {
+            } catch (AuthenticationExceptionInterface $e) {
                 $err->addSecondaryError(new AuthenticationFailedError($authenticator, $e->getMessage(), null, $e));
             }
         }
