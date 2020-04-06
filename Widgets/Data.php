@@ -1078,8 +1078,10 @@ class Data
         }
         $uxon->setProperty('aggregate_by_attribute_alias', $this->getAggregateByAttributeAlias());
         $uxon->setProperty('lazy_loading', $this->getLazyLoading());
-        $uxon->setProperty('lazy_loading_action', $this->getLazyLoadingActionAlias());
-        $uxon->setProperty('lazy_loading_group_id', $this->getLazyLoadingGroupId());
+        $uxon->setProperty('lazy_loading_action', $this->getLazyLoadingActionUxon());
+        if ($this->getLazyLoadingGroupId() !== null) {
+            $uxon->setProperty('lazy_loading_group_id', $this->getLazyLoadingGroupId());
+        }
         
         foreach ($this->getColumnGroups() as $col_group) {
             $uxon->appendToProperty('columns', $col_group->exportUxonObject());
