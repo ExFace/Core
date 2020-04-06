@@ -298,7 +298,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
                                     $col = $data_sheet->getColumns()->addFromExpression($condition->getExpression());
                                 }
                                 if ($col->isEmpty(true)) {
-                                    $col->setValueOnAllRows();
+                                    $col->setValueOnAllRows($condition->getValue());
                                 }
                             }
                         } catch (\Exception $e) {
