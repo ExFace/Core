@@ -36,6 +36,7 @@ class AuthenticationFailedError extends RuntimeException implements Authenticati
     public function addSecondaryError(AuthenticationExceptionInterface $exception) : self
     {
         $this->authErrors[] = $exception;
+        return $this;
     }
     
     /**
