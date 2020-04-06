@@ -176,10 +176,13 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                 if ($eventSheet->getMetaObject()->hasUidAttribute()) {
                     //if data sheet has uid column check if the UIDs fit, if so, its not a duplicate, its a normal update (with the same data)
                     $uidattr = $eventSheet->getMetaObject()->getUidAttributeAlias();
-                    $dataType = $columns->getByExpression($uidattr)->getDataType();
-                    if ($dataType->parse($eventRows[$i][$uidattr]) == $dataType->parse($chRow[$uidattr])) {
-                        $duplicate = false;
-                        break;
+                    $col = $columns->getByExpression($uidattr);
+                    if ($col !== false) {
+                        $dataType = $col->getDataType();
+                        if ($dataType->parse($eventRows[$i][$uidattr]) == $dataType->parse($chRow[$uidattr])) {
+                            $duplicate = false;
+                            break;
+                        }
                     }
                 }
                 if ($duplicate === true) {
