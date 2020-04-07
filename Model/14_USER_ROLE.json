@@ -36,6 +36,10 @@
         {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "SYNC_WITH_EXT_ROLE",
+            "attribute_alias": "SYNC_WITH_EXT_ROLE"
         }
     ],
     "rows": [
@@ -48,7 +52,8 @@
             "NAME": "UI Designer",
             "DESCRIPTION": "",
             "APP": "0x31000000000000000000000000000000",
-            "ALIAS": "UI_DESIGNER"
+            "ALIAS": "UI_DESIGNER",
+            "SYNC_WITH_EXT_ROLE": ""
         },
         {
             "CREATED_ON": "2020-03-12 17:21:42",
@@ -59,7 +64,8 @@
             "NAME": "Metamodel Developer",
             "DESCRIPTION": "",
             "APP": "0x31000000000000000000000000000000",
-            "ALIAS": "MODEL_DEV"
+            "ALIAS": "MODEL_DEV",
+            "SYNC_WITH_EXT_ROLE": ""
         },
         {
             "CREATED_ON": "2020-03-22 13:39:26",
@@ -70,7 +76,8 @@
             "NAME": "Superuser: access everything",
             "DESCRIPTION": "",
             "APP": "0x31000000000000000000000000000000",
-            "ALIAS": "SUPERUSER"
+            "ALIAS": "SUPERUSER",
+            "SYNC_WITH_EXT_ROLE": ""
         },
         {
             "CREATED_ON": "2020-03-22 13:54:52",
@@ -81,7 +88,8 @@
             "NAME": "Anonymous",
             "DESCRIPTION": "Non-authenticated users",
             "APP": "0x31000000000000000000000000000000",
-            "ALIAS": "ANONYMOUS"
+            "ALIAS": "ANONYMOUS",
+            "SYNC_WITH_EXT_ROLE": ""
         },
         {
             "CREATED_ON": "2020-03-26 19:38:33",
@@ -92,7 +100,8 @@
             "NAME": "Administrator",
             "DESCRIPTION": "Manage users and access rights",
             "APP": "0x31000000000000000000000000000000",
-            "ALIAS": "ADMIN"
+            "ALIAS": "ADMIN",
+            "SYNC_WITH_EXT_ROLE": ""
         },
         {
             "CREATED_ON": "2020-03-26 20:53:06",
@@ -103,7 +112,8 @@
             "NAME": "Authenticated",
             "DESCRIPTION": "Automatically given to all named users",
             "APP": "0x31000000000000000000000000000000",
-            "ALIAS": "AUTHENTICATED"
+            "ALIAS": "AUTHENTICATED",
+            "SYNC_WITH_EXT_ROLE": ""
         },
         {
             "CREATED_ON": "2020-03-27 14:44:40",
@@ -114,7 +124,8 @@
             "NAME": "Debugger",
             "DESCRIPTION": "Access to logs and extended error display",
             "APP": "0x31000000000000000000000000000000",
-            "ALIAS": "DEBUGGER"
+            "ALIAS": "DEBUGGER",
+            "SYNC_WITH_EXT_ROLE": ""
         }
     ],
     "totals_rows": [],

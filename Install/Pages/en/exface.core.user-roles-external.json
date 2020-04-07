@@ -1,0 +1,52 @@
+{
+    "id": "0x11ea78b086e9cba4ac460205857feb80",
+    "alias_with_namespace": "exface.core.user-roles-external",
+    "menu_parent_page_selector": "0x0a3e0996949f11e78ac4028037ec0200",
+    "menu_index": 2,
+    "menu_visible": true,
+    "name": "Synced External Roles",
+    "description": "",
+    "intro": "",
+    "replaces_page_selector": null,
+    "contents": {
+        "widget_type": "DataTable",
+        "object_alias": "exface.Core.USER_ROLE_EXTERNAL",
+        "columns": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "AUTHENTICATOR_NAME"
+            },
+            {
+                "attribute_alias": "USER_ROLE__LABEL"
+            },
+            {
+                "attribute_alias": "USER_ROLE[SYNC_WITH_EXT_ROLE]__UID:COUNT",
+                "caption": "Synced with internal role",
+                "cell_widget": {
+                    "widget_type": "Display",
+                    "value_data_type": "exface.Core.Boolean"
+                }
+            },
+            {
+                "attribute_alias": "CREATED_ON"
+            },
+            {
+                "attribute_alias": "AUTHENTICATOR_CLASS"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
+            }
+        ]
+    }
+}
