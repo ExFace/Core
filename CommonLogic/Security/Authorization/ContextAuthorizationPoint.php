@@ -6,6 +6,7 @@ use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Interfaces\Contexts\ContextInterface;
+use exface\Core\Factories\PermissionFactory;
 
 /**
  * 
@@ -24,6 +25,10 @@ class ContextAuthorizationPoint extends AbstractAuthorizationPoint
      */
     public function authorize(ContextInterface $context = null, UserImpersonationInterface $userOrToken = null) : ContextInterface
     {
+        if ($this->isDisabled()) {
+            return PermissionFactory::createPermitted();
+        }
+        
         if ($userOrToken === null) {
             $userOrToken = $this->getWorkbench()->getSecurity()->getAuthenticatedToken();
         }

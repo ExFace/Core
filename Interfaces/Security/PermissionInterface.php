@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\Interfaces\Security;
 
-use Symfony\Component\Translation\Tests\StringClass;
-
 /**
  * 
  * 

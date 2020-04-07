@@ -1075,9 +1075,9 @@ SQL;
             $authPoint
                 ->setName($row['name'])
                 ->setUid($row['oid'])
-                ->setActive(BooleanDataType::cast($row['active_flag']))
-                ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), $row['default_effect']))
-                ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), $row['combining_algorithm']));
+                ->setDisabled(BooleanDataType::cast($row['disabled_flag']))
+                ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), ($row['default_effect_local'] ? $row['default_effect_local'] : $row['default_effect_in_app'])))
+                ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), ($row['combining_algorithm_local'] ? $row['combining_algorithm_local'] : $row['combining_algorithm_in_app'])));
         }
         
         return $authPoint;
@@ -1132,6 +1132,7 @@ FROM
     exf_auth_policy apol
 WHERE
     apol.auth_point_oid = {$authPoint->getUid()}
+    AND apol.disabled_flag = 0
     AND (
         {$userFilter}
         apol.target_user_role_oid IS NULL

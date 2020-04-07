@@ -73,16 +73,6 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
         return $this->authorizationPoint;
     }
     
-    protected function getPermissionText(PermissionInterface $p) : string
-    {
-        switch (true) {
-            case $p->isDenied() : return 'Denied';
-            case $p->isPermitted() : return 'Permitted';
-            case $p->isIndeterminate() : return 'Indeterminate';
-            case $p->isNotApplicable() : return 'Not applicable';
-        }
-    }
-    
     public function getSubject() : UserImpersonationInterface
     {
         return $this->subject;
@@ -141,6 +131,12 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
                 ],
                 [
                     'widget_type' => 'Display',
+                    'caption' => 'Disabled',
+                    'value_data_type' => 'exface.Core.Boolean',
+                    'value' => $this->getAuthorizationPoint()->isDisabled()
+                ],
+                [
+                    'widget_type' => 'Display',
                     'caption' => 'Default effect',
                     'value' => $this->getAuthorizationPoint()->getDefaultPolicyEffect()->getLabelOfValue()
                 ],
@@ -179,13 +175,18 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
         $group->addWidget($table);
         
         $dataSheet = DataSheetFactory::createFromObject($table->getMetaObject());
+        $dataSheet->getColumns()->addMultiple([
+            'EFFECT',
+            'NAME'
+        ]);
+        $dataSheet->getColumns()->addFromExpression('DECISION', 'Decision');
         
         foreach ($permissions as $permission) {
             $policy = $permission->getPolicy();
             $dataSheet->addRow([
                 'EFFECT' => $policy ? $policy->getEffect()->__toString() : '',
                 'NAME' => $policy ? $policy->getName() : '',
-                'PERMISSION' => $this->getPermissionText($permission)
+                'DECISION' => $permission->__toString()
             ]);
         }
         

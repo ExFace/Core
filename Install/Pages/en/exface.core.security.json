@@ -16,10 +16,13 @@
                 "attribute_alias": "NAME"
             },
             {
+                "attribute_alias": "APP__ALIAS"
+            },
+            {
                 "attribute_alias": "ALIAS"
             },
             {
-                "attribute_alias": "APP__LABEL"
+                "attribute_alias": "DISABLED_FLAG"
             },
             {
                 "attribute_alias": "DEFAULT_EFFECT"
