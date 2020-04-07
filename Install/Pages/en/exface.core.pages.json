@@ -68,7 +68,7 @@
                 "attribute_alias": "TEMPLATE__LABEL"
             },
             {
-                "attribute_alias": "APP__LABEL"
+                "attribute_alias": "APP__NAME"
             },
             {
                 "attribute_alias": "CREATED_ON"
