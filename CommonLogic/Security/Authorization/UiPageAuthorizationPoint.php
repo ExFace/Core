@@ -6,6 +6,7 @@ use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
+use exface\Core\Factories\PermissionFactory;
 
 /**
  * 
@@ -24,6 +25,10 @@ class UiPageAuthorizationPoint extends AbstractAuthorizationPoint
      */
     public function authorize(UiPageInterface $page = null, UserImpersonationInterface $userOrToken = null) : UiPageInterface
     {
+        if ($this->isDisabled()) {
+            return PermissionFactory::createPermitted();
+        }
+        
         if ($userOrToken === null) {
             $userOrToken = $this->getWorkbench()->getSecurity()->getAuthenticatedToken();
         }

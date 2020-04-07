@@ -86,11 +86,17 @@ interface AuthorizationPointInterface extends WorkbenchDependantInterface, Alias
     
     /**
      * 
+     * @return bool
+     */
+    public function isDisabled() : bool;
+    
+    /**
+     * 
      * @param bool $trueOrFalse
      * 
      * @return AuthorizationPointInterface
      */
-    public function setActive(bool $trueOrFalse) : AuthorizationPointInterface;
+    public function setDisabled(bool $trueOrFalse) : AuthorizationPointInterface;
     
     /**
      * 
