@@ -3,7 +3,7 @@ namespace exface\Core\CommonLogic\Selectors;
 
 use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
 use exface\Core\CommonLogic\Selectors\Traits\UidSelectorTrait;
-use exface\Core\CommonLogic\Selectors\Traits\AliasSelectorTrait;
+use exface\Core\CommonLogic\Selectors\Traits\AliasSelectorWithOptionalNamespaceTrait;
 
 /**
  * Generic implementation of the DataConnectionSelectorInterface.
@@ -15,7 +15,7 @@ use exface\Core\CommonLogic\Selectors\Traits\AliasSelectorTrait;
  */
 class DataConnectionSelector extends AbstractSelector implements DataConnectionSelectorInterface
 {
-    use AliasSelectorTrait;
+    use AliasSelectorWithOptionalNamespaceTrait;
     use UidSelectorTrait;
     
     /**
