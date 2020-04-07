@@ -14,8 +14,7 @@ use exface\Core\Factories\DataConnectionFactory;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\ComparatorDataType;
-use exface\Core\CommonLogic\Security\Authenticators\Traits\createUserFromTokenTrait;
-use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTrait;
 
 /**
  * Performs authentication via data connectors. 
@@ -25,7 +24,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
  */
 class DataConnectionAuthenticator extends AbstractAuthenticator
 {    
-    use createUserFromTokenTrait;
+    use CreateUserFromTokenTrait;
     
     private $authenticatedToken = null;
     
@@ -57,13 +56,17 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
             $userDataSheet->getFilters()->addConditionFromString('USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
             $userDataSheet->dataRead();
             if (empty($userDataSheet->getRows())) {
-                $user = $this->createUserFromToken($token, $this->getWorkbench());
+                try {                    
+                    $user = $this->createUserFromToken($token, $this->getWorkbench());
+                } catch (\Throwable $e) {
+                    throw new AuthenticationFailedError('User could not be created!');
+                }
                 if ($this->getNewUserRoles() !== null) {
                     try {                        
                         $user = $this->addRolesToUser($this->getWorkbench(), $user, $this->getNewUserRoles());
-                    } catch (UnexpectedValueException $e) {                        
+                    } catch (\Throwable $e) {                        
                         $user->exportDataSheet()->dataDelete();
-                        throw new UnexpectedValueException($e->getMessage());
+                        throw new AuthenticationFailedError('User roles could not be applied!');
                     }
                 }
             }
