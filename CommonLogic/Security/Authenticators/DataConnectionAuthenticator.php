@@ -15,6 +15,7 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\CommonLogic\Security\Authenticators\Traits\createUserFromTokenTrait;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
  * Performs authentication via data connectors. 
@@ -48,21 +49,27 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
         try {
             $connector = DataConnectionFactory::createFromModel($this->getWorkbench(), $token->getDataConnectionAlias());;
             $connector->authenticate($token, false);
-            $this->authenticatedToken = $token;
         } catch (AuthenticationException $e) {
             throw new AuthenticationFailedError($this, $e->getMessage(), null, $e);
         }
-        $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER');
-        $userDataSheet->getFilters()->addConditionFromString('USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
-        $userDataSheet->dataRead();
-        if (empty($userDataSheet->getRows()) && $this->getCreateNewUsers() === true) {
-            $user = $this->createUserFromToken($token, $this->getWorkbench());
-            if ($this->getNewUserRoles() !== null) {
-                $user = $this->addRolesToUser($this->getWorkbench(), $user, $this->getNewUserRoles());
+        if ($this->getCreateNewUsers() === true) {
+            $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER');
+            $userDataSheet->getFilters()->addConditionFromString('USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
+            $userDataSheet->dataRead();
+            if (empty($userDataSheet->getRows())) {
+                $user = $this->createUserFromToken($token, $this->getWorkbench());
+                if ($this->getNewUserRoles() !== null) {
+                    try {                        
+                        $user = $this->addRolesToUser($this->getWorkbench(), $user, $this->getNewUserRoles());
+                    } catch (UnexpectedValueException $e) {                        
+                        $user->exportDataSheet()->dataDelete();
+                        throw new UnexpectedValueException($e->getMessage());
+                    }
+                }
             }
+            //second authentification to save credentials
+            $connector->authenticate($token, true, $user);
         }
-        //second authentification to save credentials
-        $connector->authenticate($token, true, $user);
         $this->authenticatedToken = $token;
         return $token;
     }
@@ -127,7 +134,7 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
     }
     
     /**
-     * Set if a new PowerUI user should be created if no user with that name already exists.
+     * Set if a new PowerUI user should be created if no user with that username already exists.
      * 
      * @uxon-property create_new_users
      * @uxon-type boolean
