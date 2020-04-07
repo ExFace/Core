@@ -12,8 +12,9 @@ use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\DataTypes\StringDataType;
 
-trait createUserFromTokenTrait
+trait CreateUserFromTokenTrait
 {
 
     /**
@@ -54,16 +55,18 @@ trait createUserFromTokenTrait
         foreach ($rolesArray as $role) {
             $roleSelector = new UserRoleSelector($exface, $role);
             if ($roleSelector->isUid()) {
-                $orFilterGroup->addConditionFromString($roleDataSheet->getMetaObject()->getUidAttributeAlias(), $role, ComparatorDataType::EQUALS);
-            } elseif ($roleSelector->isAlias()) {
-                $aliasFilterGrp = ConditionGroupFactory::createEmpty($this->getWorkbench(), EXF_LOGICAL_AND, $roleDataSheet->getMetaObject());
-                $aliasFilterGrp->addConditionFromString('APP__ALIAS', $roleSelector->getAppAlias(), ComparatorDataType::EQUALS);
-                $roleAlias = substr($roleSelector->toString(), strlen($roleSelector->getAppAlias() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER));
-                if ($roleAlias === false) {
-                    throw new UnexpectedValueException("The provided role '{$roleSelector->toString()}' does not fit the required pattern. Roles need to be provided in the pattern 'vendor.app.role'!");
+                $orFilterGroup->addConditionFromString($roleDataSheet->getMetaObject()->getUidAttributeAlias(), $roleSelector->toString(), ComparatorDataType::EQUALS);
+            } elseif ($roleSelector->isAlias()) {                
+                if ($roleSelector->hasNamespace() === false) {
+                    $orFilterGroup->addConditionFromString('ALIAS', $roleSelector->toString(), ComparatorDataType::EQUALS);
+                } else {
+                    $aliasFilterGrp = ConditionGroupFactory::createEmpty($this->getWorkbench(), EXF_LOGICAL_AND, $roleDataSheet->getMetaObject());
+                    $aliasFilterGrp->addConditionFromString('APP__ALIAS', $roleSelector->getAppAlias(), ComparatorDataType::EQUALS);
+                    //$roleAlias = substr($roleSelector->toString(), strlen($roleSelector->getAppAlias() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER));
+                    $roleAlias = StringDataType::substringAfter($roleSelector->toString(), $roleSelector->getAppAlias() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER);                    
+                    $aliasFilterGrp->addConditionFromString('ALIAS', $roleAlias, ComparatorDataType::EQUALS);
+                    $orFilterGroup->addNestedGroup($aliasFilterGrp);
                 }
-                $aliasFilterGrp->addConditionFromString('ALIAS', $roleAlias, ComparatorDataType::EQUALS);
-                $orFilterGroup->addNestedGroup($aliasFilterGrp);
             }
         }
         $roleDataSheet->getFilters()->addNestedGroup($orFilterGroup);        
