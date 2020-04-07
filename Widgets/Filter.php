@@ -286,8 +286,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             
             // Set a special caption for filters on relations, which is derived from the relation itself
             // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
-            if (false === $uxon->hasProperty('caption') && true === $attr->isRelation()) {
-                $uxon->setProperty('caption', $attr->getRelation()->getName());
+            if (false === $uxon->hasProperty('caption') && $attr->isRelation()) {
+                // Get the relation from the object and not $attr->getRelation() because the latter would
+                // yield the wrong relation direction in case of reverse reltions.
+                $uxon->setProperty('caption', $this->getMetaObject()->getRelation($this->getAttributeAlias())->getName());
             }
             
             // Try to use the default editor UXON of the attribute
