@@ -26,7 +26,7 @@ trait iCanBeAlignedTrait {
      * current facade.
      *
      * @uxon-property align
-     * @uxon-type string
+     * @uxon-type [default,opposite,left,right,center]
      *
      * @see \exface\Core\Interfaces\Widgets\iCanBeAligned::setAlign()
      */
