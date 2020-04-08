@@ -59,14 +59,14 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
                 try {                    
                     $user = $this->createUserFromToken($token, $this->getWorkbench());
                 } catch (\Throwable $e) {
-                    throw new AuthenticationFailedError('User could not be created!');
+                    throw new AuthenticationFailedError($this, 'User could not be created!', null, $e);
                 }
                 if ($this->getNewUserRoles() !== null) {
                     try {                        
                         $user = $this->addRolesToUser($this->getWorkbench(), $user, $this->getNewUserRoles());
                     } catch (\Throwable $e) {                        
                         $user->exportDataSheet()->dataDelete();
-                        throw new AuthenticationFailedError('User roles could not be applied!');
+                        throw new AuthenticationFailedError($this, 'User roles could not be applied!', null, $e);
                     }
                 }
             }
