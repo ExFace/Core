@@ -24,7 +24,7 @@ trait CreateUserFromTokenTrait
      * @param WorkbenchInterface $exface
      * @return UserInterface
      */
-    protected function createUserFromToken(UsernamePasswordAuthToken $token, WorkbenchInterface $exface): UserInterface
+    protected function createUserFromToken(UsernamePasswordAuthToken $token, WorkbenchInterface $exface, string $surname = null, string $givenname = null): UserInterface
     {
         $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER');
         $row = [];
@@ -32,6 +32,12 @@ trait CreateUserFromTokenTrait
         $row['PASSWORD'] = $token->getPassword();
         $row['MODIFIED_BY_USER'] = UserSelector::ANONYMOUS_USER_OID;
         $row['LOCALE'] = $exface->getConfig()->getOption("LOCALE.DEFAULT");
+        if ($surname !== null) {
+            $row['LAST_NAME'] = $surname;
+        }
+        if ($givenname !== null) {
+            $row['FIRST_NAME'] = $givenname;
+        }
         $userDataSheet->addRow($row);
         $userDataSheet->dataCreate();
         $user = UserFactory::createFromUsernameOrUid($exface, $userDataSheet->getRow(0)[$userDataSheet->getMetaObject()->getUidAttributeAlias()]);
