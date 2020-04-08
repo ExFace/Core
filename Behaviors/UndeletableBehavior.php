@@ -149,11 +149,7 @@ class UndeletableBehavior extends AbstractBehavior
             // differenciate between multiple forms of expressions, and handle them differently
             switch (true){
                 case $expression->isMetaAttribute():
-                    try {
-                        $attribute = $dataSheet->getMetaObject()->getAttribute($condition->getAttributeAlias());
-                    } catch (\Exception $e) {
-                        continue;
-                    }
+                    $attribute = $dataSheet->getMetaObject()->getAttribute($condition->getAttributeAlias());
                     if (! $dataSheet->getColumns()->getByAttribute($attribute)){
                         $dataSheet->getColumns()->addFromAttribute($attribute);
                     }
