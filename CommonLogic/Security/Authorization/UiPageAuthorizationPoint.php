@@ -69,6 +69,6 @@ class UiPageAuthorizationPoint extends AbstractAuthorizationPoint
      */
     protected function getResourceName($resource) : string
     {
-        return 'page "' . $resource->getAliasWithNamespace() . '"';
+        return 'page "' . $resource->getName() . '" (alias ' . $resource->getAliasWithNamespace() . ')';
     }
 }

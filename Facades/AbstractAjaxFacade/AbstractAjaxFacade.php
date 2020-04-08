@@ -56,6 +56,8 @@ use function GuzzleHttp\Psr7\uri_for;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
+use exface\Core\Factories\ActionFactory;
+use exface\Core\Actions\Login;
 
 /**
  * 
@@ -578,7 +580,7 @@ HTML;
             // it originates from a login form, so we don't need another one.
             /* @var $task \exface\Core\CommonLogic\Tasks\HttpTask */
             $task = $request->getAttribute($this->getRequestAttributeForTask());
-            if ($task && strcasecmp($task->getActionSelector()->toString(), 'exface.Core.Login') !== 0) {
+            if ($task && ! (ActionFactory::createEmpty($task->getActionSelector()) instanceof Login)) {
                 // See if the method createResponseUnauthorized() can handle this exception.
                 // If not, continue with the regular error handling.
                 $response = $this->createResponseUnauthorized($request, $exception, $page);
@@ -599,14 +601,14 @@ HTML;
                 $headers['Content-Type'] = ['text/html;charset=utf-8'];
                 break;
             default:
-                if ($request->getAttribute($this->getRequestAttributeForAction()) === 'exface.Core.ShowWidget') {
+                if ($this->isRequestAjax($request)) {
+                    // Render error data for AJAX requests, so the JS can interpret it.
+                    $body = $this->encodeData($this->buildResponseDataError($exception));
+                    $headers['Content-Type'] = ['application/json;charset=utf-8'];
+                } else {
                     // If we were rendering a widget, return HTML even for non-detail cases
                     $body = $this->buildHtmlFromError($request, $exception, $page);
                     $headers['Content-Type'] = ['text/html;charset=utf-8'];
-                } else {
-                    // Otherwise render error data, so the JS can interpret it.
-                    $body = $this->encodeData($this->buildResponseDataError($exception));
-                    $headers['Content-Type'] = ['application/json;charset=utf-8'];
                 }
         }     
         
@@ -654,12 +656,14 @@ HTML;
                 }
             } else {
                 $loginPrompt = $provider->createLoginWidget($loginPrompt);
+                $loginPrompt->getMessageList()->addError($authErr->getMessage());
                 $loginFormCreated = true;
             }
                   
             if ($loginFormCreated === true) {
-                $body = $this->buildHtmlHead($loginPrompt, ! $this->isRequestAjax($request)) . "\n" . $this->buildHtmlBody($loginPrompt);
-                return new Response(401, $this->buildHeadersAccessControl(), $body);
+                $renderer = new FacadePageTemplateRenderer($this, $this->getPageTemplateFilePathForUnauthorized(), $loginPrompt);
+                $requestBody = $renderer->render();
+                return new Response(401, $this->buildHeadersAccessControl(), $requestBody);
             }
         }
         return null;
@@ -836,6 +840,26 @@ HTML;
      * @return string
      */
     protected abstract function getPageTemplateFilePathDefault() : string;
+    
+    /**
+     * Returns the path to the unauthorized-page template file (absolute or relative to the vendor folder)
+     *
+     * @return string
+     */
+    protected function getPageTemplateFilePathForUnauthorized() : string
+    {
+        return $this->getPageTemplateFilePathDefault();
+    }
+    
+    /**
+     * Returns the path to the unauthorized-page template file (absolute or relative to the vendor folder)
+     *
+     * @return string
+     */
+    protected function getPageTemplateFilePathForErrors() : string
+    {
+        return $this->getPageTemplateFilePathDefault();
+    }
     
     /**
      *
