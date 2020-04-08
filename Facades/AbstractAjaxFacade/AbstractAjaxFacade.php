@@ -661,9 +661,7 @@ HTML;
             }
                   
             if ($loginFormCreated === true) {
-                $renderer = new FacadePageTemplateRenderer($this, $this->getPageTemplateFilePathForUnauthorized(), $loginPrompt);
-                $requestBody = $renderer->render();
-                return new Response(401, $this->buildHeadersAccessControl(), $requestBody);
+                return new Response(401, $this->buildHeadersAccessControl(), $this->buildHtmlPage($loginPrompt, $this->getPageTemplateFilePathForUnauthorized()));
             }
         }
         return null;
@@ -890,9 +888,10 @@ HTML;
         return $this;
     }
     
-    protected function buildHtmlPage(WidgetInterface $widget) : string
+    protected function buildHtmlPage(WidgetInterface $widget, string $pagetTemplateFilePath = null) : string
     {
-        $renderer = new FacadePageTemplateRenderer($this, $this->getPageTemplateFilePath(), $widget);
+        $pagetTemplateFilePath = $pagetTemplateFilePath ?? $this->getPageTemplateFilePath();
+        $renderer = new FacadePageTemplateRenderer($this, $pagetTemplateFilePath, $widget);
         return $renderer->render();
     }
     
