@@ -113,14 +113,21 @@ class FacadePageTemplateRenderer implements TemplateRendererInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface::render()
      */
-    public function render() : string
+    public function render(array $customPlaceholders = []) : string
     {
         $tpl = $this->getTemplate();
         
         $phs = StringDataType::findPlaceholders($tpl);
         $phVals = [];
         foreach ($phs as $ph) {
+            if ($customPlaceholders[$ph] !== null) {
+                continue;
+            }
             $phVals[$ph] = $this->renderPlaceholderValue($ph);
+        }
+        
+        foreach ($customPlaceholders as $ph => $value) {
+            $phVals[$ph] = $value;
         }
         
         return StringDataType::replacePlaceholders($tpl, $phVals, false);

@@ -99,7 +99,7 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
                 [
                     'widget_type' => 'Display',
                     'caption' => 'Resulting permission',
-                    'value' => $this->getPermissionText($permission)
+                    'value' => $permission->toXACMLDecision()
                 ],
                 [
                     'widget_type' => 'Display',
@@ -186,7 +186,7 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
             $dataSheet->addRow([
                 'EFFECT' => $policy ? $policy->getEffect()->__toString() : '',
                 'NAME' => $policy ? $policy->getName() : '',
-                'DECISION' => $permission->__toString()
+                'DECISION' => $permission->toXACMLDecision()
             ]);
         }
         
