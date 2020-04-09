@@ -12,8 +12,6 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\CommonLogic\Security\AuthenticationToken\DataConnectionUsernamePasswordAuthToken;
 use exface\Core\Factories\DataConnectionFactory;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTrait;
 
 /**
@@ -29,10 +27,6 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
     private $authenticatedToken = null;
     
     private $connectionAliases = null;
-    
-    private $createNewUsers = false;
-    
-    private $newUsersRoles = null;
     
     /**
      *
@@ -52,26 +46,13 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
             throw new AuthenticationFailedError($this, $e->getMessage(), null, $e);
         }
         if ($this->getCreateNewUsers() === true) {
-            $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER');
-            $userDataSheet->getFilters()->addConditionFromString('USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
-            $userDataSheet->dataRead();
-            if (empty($userDataSheet->getRows())) {
-                try {                    
-                    $user = $this->createUserFromToken($token, $this->getWorkbench());
-                } catch (\Throwable $e) {
-                    throw new AuthenticationFailedError($this, 'User could not be created!', null, $e);
-                }
-                if ($this->getNewUserRoles() !== null) {
-                    try {                        
-                        $user = $this->addRolesToUser($this->getWorkbench(), $user, $this->getNewUserRoles());
-                    } catch (\Throwable $e) {                        
-                        $user->exportDataSheet()->dataDelete();
-                        throw new AuthenticationFailedError($this, 'User roles could not be applied!', null, $e);
-                    }
-                }
-            }
+            $user = $this->createUserWithRoles($this->getWorkbench(), $token);            
             //second authentification to save credentials
             $connector->authenticate($token, true, $user);
+        } else {
+            if (empty($this->getUserData($this->getWorkbench(), $token)->getRows())) {
+                throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!');
+            }
         }
         $this->authenticatedToken = $token;
         return $token;
@@ -134,56 +115,6 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
     protected function getConnectionAliases() : ?array
     {
         return $this->connectionAliases;
-    }
-    
-    /**
-     * Set if a new PowerUI user should be created if no user with that username already exists.
-     * 
-     * @uxon-property create_new_users
-     * @uxon-type boolean
-     * @uxon-default false
-     * 
-     * @param bool $trueOrFalse
-     * @return DataConnectionAuthenticator
-     */
-    public function setCreateNewUsers(bool $trueOrFalse) : DataConnectionAuthenticator
-    {
-        $this->createNewUsers = $trueOrFalse;
-        return $this;
-    }
-    
-    protected function getCreateNewUsers() : bool
-    {
-        return $this->createNewUsers;
-    }
-    
-    /**
-     * The role aliases for the roles newly created users should inherit.
-     *
-     * @uxon-property create_new_users_with_roles
-     * @uxon-type array
-     * @uxon-template [""]
-     *
-     * @param string[]|UxonObject $create_new_users_with_roles
-     * @return DataConnectionAuthenticator
-     */
-    public function setCreateNewUsersWithRoles($arrayOrUxon) : DataConnectionAuthenticator
-    {
-        if ($arrayOrUxon instanceof UxonObject) {
-            $this->newUsersRoles = $arrayOrUxon->toArray();
-        } elseif (is_array($arrayOrUxon)) {
-            $this->newUsersRoles = $arrayOrUxon;
-        }
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return array|NULL
-     */
-    protected function getNewUserRoles() : ?array
-    {
-        return $this->newUsersRoles;
     }
     
     /**
