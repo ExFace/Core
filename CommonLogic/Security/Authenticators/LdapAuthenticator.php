@@ -32,11 +32,13 @@ class LdapAuthenticator extends AbstractAuthenticator
     
     private $domains = null;
     
-    private $dnString = '[#domain#]\[#username#]';
+    private $dnString = '[#domain#]\\[#username#]';
     
     private $usernameInputCaption = null;
     
-    #TODO setUserNameInputCaption, DnString konfigurierbar mit Platzhaltern
+    private $ldapSurnameAlias = 'surname';
+    
+    private $ldapGivenNameAlias = 'givenname';
     
     /**
      *
@@ -79,7 +81,7 @@ class LdapAuthenticator extends AbstractAuthenticator
                 $baseDn .= 'dc=' . $part . ',';
             }
             $baseDn = substr($baseDn, 0, -1);
-            $attributes = ['distinguishedname', 'givenname', 'surname', 'name'];
+            $attributes = [$this->getLdapGivennameAlias(), $this->getLdapSurnameAlias()];
             $ldapresult = ldap_search($ldapconn, $baseDn, "(&(objectClass=user)(sAMAccountName={$token->getUsername()}))", $attributes);
             if ($ldapresult === false) {
                 $this->getWorkbench()->getLogger()->logException(new RuntimeException(ldap_error($ldapconn), ldap_errno($ldapconn)));
@@ -88,26 +90,13 @@ class LdapAuthenticator extends AbstractAuthenticator
             $surname = null;
             $givenname = null;
             if ($entry_array['count'] > 0) {
-                $surname = $entry_array[0]['surname'][0];
-                $givenname = $entry_array[0]['givenname'][0];
-            }
-            $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER');
-            $userDataSheet->getFilters()->addConditionFromString('USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
-            $userDataSheet->dataRead();
-            if (empty($userDataSheet->getRows())) {
-                try {
-                    $user = $this->createUserFromToken($token, $this->getWorkbench(), $surname, $givenname);
-                } catch (\Throwable $e) {
-                    throw new AuthenticationFailedError($this, 'User could not be created!', null, $e);
-                }
-                if ($this->getNewUserRoles() !== null) {
-                    try {
-                        $user = $this->addRolesToUser($this->getWorkbench(), $user, $this->getNewUserRoles());
-                    } catch (\Throwable $e) {
-                        $user->exportDataSheet()->dataDelete();
-                        throw new AuthenticationFailedError($this, 'User roles could not be applied!', null, $e);
-                    }
-                }
+                $surname = $entry_array[0][$this->getLdapSurnameAlias()][0];
+                $givenname = $entry_array[0][$this->getLdapGivennameAlias()][0];
+            }            
+            $user = $this->createUserWithRoles($this->getWorkbench(), $token, $surname, $givenname);
+        } else {
+            if (empty($this->getUserData($this->getWorkbench(), $token)->getRows())) {
+                throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!');
             }
         }
         ldap_unbind($ldapconn);
@@ -149,7 +138,7 @@ class LdapAuthenticator extends AbstractAuthenticator
      *
      * @return string
      */
-    public function getHost() : string
+    protected function getHost() : string
     {
         return $this->hostname;
     }
@@ -185,7 +174,7 @@ class LdapAuthenticator extends AbstractAuthenticator
         if ($arrayOrUxon instanceof UxonObject) {
             $this->domains = $arrayOrUxon->toArray();
         } elseif (is_array($arrayOrUxon)) {
-            $this->domains = $arrayOrUxon;
+            $this->domains = array_combine($arrayOrUxon, $arrayOrUxon);
         }
         return $this;
     }
@@ -194,59 +183,9 @@ class LdapAuthenticator extends AbstractAuthenticator
      *
      * @return string[]|NULL
      */
-    public function getDomains() : ?array
+    protected function getDomains() : ?array
     {
         return $this->domains;
-    }
-    
-    /**
-     * Set if a new PowerUI user should be created if no user with that username already exists.
-     *
-     * @uxon-property create_new_users
-     * @uxon-type boolean
-     * @uxon-default false
-     *
-     * @param bool $trueOrFalse
-     * @return DataConnectionAuthenticator
-     */
-    public function setCreateNewUsers(bool $trueOrFalse) : LdapAuthenticator
-    {
-        $this->createNewUsers = $trueOrFalse;
-        return $this;
-    }
-    
-    protected function getCreateNewUsers() : bool
-    {
-        return $this->createNewUsers;
-    }
-    
-    /**
-     * The role aliases for the roles newly created users should inherit.
-     *
-     * @uxon-property create_new_users_with_roles
-     * @uxon-type array
-     * @uxon-template [""]
-     *
-     * @param string[]|UxonObject $create_new_users_with_roles
-     * @return DataConnectionAuthenticator
-     */
-    public function setCreateNewUsersWithRoles($arrayOrUxon) : LdapAuthenticator
-    {
-        if ($arrayOrUxon instanceof UxonObject) {
-            $this->newUsersRoles = $arrayOrUxon->toArray();
-        } elseif (is_array($arrayOrUxon)) {
-            $this->newUsersRoles = $arrayOrUxon;
-        }
-        return $this;
-    }
-    
-    /**
-     *
-     * @return array|NULL
-     */
-    protected function getNewUserRoles() : ?array
-    {
-        return $this->newUsersRoles;
     }
     
     /**
@@ -262,7 +201,7 @@ class LdapAuthenticator extends AbstractAuthenticator
      * The dn_string for LDAP authentication.
      *
      * This key defines the form of the string used in order to compose the DN of the user, from the username.
-     * Supported placeholders are `[#domain#]` and `[#username#]`. Default is [#domain#]\[#username#].
+     * Supported placeholders are `[#domain#]` and `[#username#]`. Default is [#domain#]\\[#username#].
      *
      * @uxon-property dn_string
      * @uxon-type string
@@ -302,6 +241,56 @@ class LdapAuthenticator extends AbstractAuthenticator
     }
     
     /**
+     * Set the property name the surname is saved as in the Ldap user object.
+     * Default is `surname`
+     * 
+     * @uxon-property ldap_surname_alias
+     * @uxon-type string
+     * 
+     * @param string $alias
+     * @return LdapAuthenticator
+     */
+    public function setLdapSurnameAlias(string $alias) : LdapAuthenticator
+    {
+        $this->ldapSurnameAlias;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getLdapSurnameAlias() : string
+    {
+        return  $this->ldapSurnameAlias;
+    }
+    
+    /**
+     * Set the property name the givenname is saved as in the Ldap user object.
+     * Default is `givenname`
+     *
+     * @uxon-property ldap_givenname_alias
+     * @uxon-type string
+     *
+     * @param string $alias
+     * @return LdapAuthenticator
+     */
+    public function setLdapGivennameAlias(string $alias) : LdapAuthenticator
+    {
+        $this->ldapGivennameAlias;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    protected function getLdapGivennameAlias() : string
+    {
+        return  $this->ldapGivenNameAlias;
+    }
+    
+    /**
      *
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Security\Authenticators\SymfonyAuthenticator::createLoginWidget()
@@ -313,7 +302,7 @@ class LdapAuthenticator extends AbstractAuthenticator
                 'data_column_name' => 'DOMAIN',
                 'widget_type' => 'InputSelect',
                 'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.LDAP.DOMAIN'),
-                'selectable_options' => array_combine($this->getDomains(), $this->getDomains()) ?? [],
+                'selectable_options' => $this->getDomains() ?? [],
                 'required' => true
             ],[
                 'attribute_alias' => 'USERNAME',
