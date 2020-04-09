@@ -28,7 +28,6 @@ abstract class AbstractHttpTaskFacade extends AbstractHttpFacade
     const REQUEST_ATTRIBUTE_NAME_TASK = 'task';
     const REQUEST_ATTRIBUTE_NAME_PAGE = 'page';
     const REQUEST_ATTRIBUTE_NAME_ACTION = 'action';
-    const REQUEST_ATTRIBUTE_NAME_RENDERING_MODE = 'rendering_mode';
     
     protected function init()
     {
@@ -146,14 +145,5 @@ abstract class AbstractHttpTaskFacade extends AbstractHttpFacade
     public function getRequestAttributeForPage() : string
     {
         return static::REQUEST_ATTRIBUTE_NAME_PAGE;
-    }
-    
-    /**
-     * 
-     * @return string
-     */
-    public function getRequestAttributeForRenderingMode() : string
-    {
-        return static::REQUEST_ATTRIBUTE_NAME_RENDERING_MODE;
     }
 }

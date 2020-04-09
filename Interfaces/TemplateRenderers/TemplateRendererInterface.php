@@ -6,5 +6,5 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 
 interface TemplateRendererInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon
 {
-    public function render() : string;
+    public function render(array $customPlaceholders = []) : string;
 }

@@ -55,6 +55,9 @@ use exface\Core\CommonLogic\Tasks\ResultRedirect;
 use function GuzzleHttp\Psr7\uri_for;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\CommonLogic\Selectors\UserSelector;
+use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
+use exface\Core\Factories\ActionFactory;
+use exface\Core\Actions\Login;
 
 /**
  * 
@@ -63,12 +66,6 @@ use exface\Core\CommonLogic\Selectors\UserSelector;
  */
 abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade implements HtmlPageFacadeInterface
 {
-    // TODO #nocms remove rendering modes completely in favor of isRequestXXX() methods
-    const MODE_HEAD = 'HEAD';
-    const MODE_BODY = 'BODY';
-    const MODE_PAGE = 'PAGE';
-    const MODE_FULL = '';
-
     private $elements = [];
     
     private $requestIdCache = [];
@@ -447,22 +444,13 @@ HTML;
             $this->requestIdCache[$cacheKey] = $result;
         }
         
-        $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode());
-        
         /* @var $headers array [header_name => array_of_values] */
         $headers = [];
         /* @var $status_code int */
         $status_code = $result->getResponseCode();
         
         if ($result->isEmpty()) {
-            // Empty results must still produce output if rendering HTML HEAD - the common includes must still
-            // be there for the facade to work.
-            if ($mode === static::MODE_HEAD) {
-                $body = implode("\n", $this->buildHtmlHeadCommonIncludes());
-            } else {
-                $body = null;
-            }
-            return new Response($status_code, $headers, $body);
+            return new Response($status_code, $headers);
         }
         
         switch (true) {
@@ -475,12 +463,6 @@ HTML;
             case $result instanceof ResultWidgetInterface:
                 $widget = $result->getWidget();
                 switch (true) {
-                    case $mode === static::MODE_HEAD:
-                        $body = $this->buildHtmlHead($widget, true);
-                        break;
-                    case $mode === static::MODE_BODY:
-                        $body = $this->buildHtmlBody($widget);
-                        break;
                     case $this->isRequestFrontend($request) === true:
                         $body = $this->buildHtmlPage($widget);
                         break;
@@ -586,16 +568,22 @@ HTML;
             $status_code = 500;
         }
         
+        // If the user is not logged on an the permission is denied, wrap the error in an
+        // AuthenticationFailedError to tell the facade to handle it as an unauthorized-error
+        if ($exception instanceof AccessPermissionDeniedError && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous()) {
+            $exception = new AuthenticationFailedError($this->getWorkbench()->getSecurity(), $exception->getMessage(), null, $exception);
+        }
+        
         // If the error goes back to failed authorization (HTTP status 401), see if a login-prompt should be shown.
         if ($exception instanceof ExceptionInterface && $exception->getStatusCode() == 401) {
             // Don't show the login-prompt if the request is a login-action itself. In this case,
             // it originates from a login form, so we don't need another one.
             /* @var $task \exface\Core\CommonLogic\Tasks\HttpTask */
             $task = $request->getAttribute($this->getRequestAttributeForTask());
-            if ($task && strcasecmp($task->getActionSelector()->toString(), 'exface.Core.Login') !== 0) {
+            if ($task && ! (ActionFactory::createEmpty($task->getActionSelector()) instanceof Login)) {
                 // See if the method createResponseUnauthorized() can handle this exception.
                 // If not, continue with the regular error handling.
-                $response = $this->createResponseUnauthorized($exception, $page);
+                $response = $this->createResponseUnauthorized($request, $exception, $page);
                 if ($response !== null) {
                     return $response;
                 }
@@ -605,24 +593,23 @@ HTML;
         $headers = [];
         $body = '';
         
-        $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
-        if ($mode === static::MODE_HEAD) {
-            $headers['Content-Type'] = ['text/html;charset=utf-8'];
-            $body = $this->buildHtmlHeadError($exception);
-        } elseif ($this->isShowingErrorDetails() === true) {
-            // If details needed, render a widget
-            $body = $this->buildHtmlFromError($request, $exception, $page);
-            $headers['Content-Type'] = ['text/html;charset=utf-8'];
-        } else {
-            if ($request->getAttribute($this->getRequestAttributeForAction()) === 'exface.Core.ShowWidget') {
-                // If we were rendering a widget, return HTML even for non-detail cases
+        switch (true) {
+            case $this->isShowingErrorDetails() === true:
+            case $exception instanceof AccessPermissionDeniedError && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous():
+                // If details needed, render a widget
                 $body = $this->buildHtmlFromError($request, $exception, $page);
                 $headers['Content-Type'] = ['text/html;charset=utf-8'];
-            } else {
-                // Otherwise render error data, so the JS can interpret it.
-                $body = $this->encodeData($this->buildResponseDataError($exception));
-                $headers['Content-Type'] = ['application/json;charset=utf-8'];
-            }
+                break;
+            default:
+                if ($this->isRequestAjax($request)) {
+                    // Render error data for AJAX requests, so the JS can interpret it.
+                    $body = $this->encodeData($this->buildResponseDataError($exception));
+                    $headers['Content-Type'] = ['application/json;charset=utf-8'];
+                } else {
+                    // If we were rendering a widget, return HTML even for non-detail cases
+                    $body = $this->buildHtmlFromError($request, $exception, $page);
+                    $headers['Content-Type'] = ['text/html;charset=utf-8'];
+                }
         }     
         
         $this->getWorkbench()->getLogger()->logException($exception);
@@ -643,7 +630,7 @@ HTML;
      * @param UiPageInterface $page
      * @return ResponseInterface
      */
-    protected function createResponseUnauthorized(\Throwable $exception, UiPageInterface $page = null) : ?ResponseInterface
+    protected function createResponseUnauthorized(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ?ResponseInterface
     {
         $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench());
         
@@ -669,12 +656,17 @@ HTML;
                 }
             } else {
                 $loginPrompt = $provider->createLoginWidget($loginPrompt);
+                $loginPrompt->getMessageList()->addError($authErr->getMessage());
                 $loginFormCreated = true;
             }
                   
             if ($loginFormCreated === true) {
-                $body = $this->buildHtmlHead($loginPrompt) . "\n" . $this->buildHtmlBody($loginPrompt);
-                return new Response(401, $this->buildHeadersAccessControl(), $body);
+                if ($this->isRequestAjax($request)) {
+                    $responseBody = $this->buildHtmlHead($loginPrompt) . "\n" . $this->buildHtmlBody($loginPrompt);
+                } else {
+                    $responseBody = $this->buildHtmlPage($loginPrompt, $this->getPageTemplateFilePathForUnauthorized());
+                }
+                return new Response(401, $this->buildHeadersAccessControl(), $responseBody);
             }
         }
         return null;
@@ -713,14 +705,7 @@ HTML;
         
         try {
             $debug_widget = $exception->createWidget($page);
-            $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
             switch (true) {
-                case $mode === static::MODE_HEAD:
-                    $body = $this->buildHtmlHead($debug_widget, true);
-                    break;
-                case $mode === static::MODE_BODY:
-                    $body = $this->buildHtmlBody($debug_widget);
-                    break;
                 case $this->isRequestFrontend($request) === true:
                     $body = $this->buildHtmlPage($debug_widget);
                     break;
@@ -860,6 +845,26 @@ HTML;
     protected abstract function getPageTemplateFilePathDefault() : string;
     
     /**
+     * Returns the path to the unauthorized-page template file (absolute or relative to the vendor folder)
+     *
+     * @return string
+     */
+    protected function getPageTemplateFilePathForUnauthorized() : string
+    {
+        return $this->getPageTemplateFilePathDefault();
+    }
+    
+    /**
+     * Returns the path to the unauthorized-page template file (absolute or relative to the vendor folder)
+     *
+     * @return string
+     */
+    protected function getPageTemplateFilePathForErrors() : string
+    {
+        return $this->getPageTemplateFilePathDefault();
+    }
+    
+    /**
      *
      * @return string
      */
@@ -888,9 +893,10 @@ HTML;
         return $this;
     }
     
-    protected function buildHtmlPage(WidgetInterface $widget) : string
+    protected function buildHtmlPage(WidgetInterface $widget, string $pagetTemplateFilePath = null) : string
     {
-        $renderer = new FacadePageTemplateRenderer($this, $this->getPageTemplateFilePath(), $widget);
+        $pagetTemplateFilePath = $pagetTemplateFilePath ?? $this->getPageTemplateFilePath();
+        $renderer = new FacadePageTemplateRenderer($this, $pagetTemplateFilePath, $widget);
         return $renderer->render();
     }
     
