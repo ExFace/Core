@@ -72,60 +72,115 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
         return $this->policies;
     }
     
+    /**
+     * 
+     * @param AuthorizationPolicyInterface $policy
+     * @return AbstractAuthorizationPoint
+     */
     protected function addPolicyInstance(AuthorizationPolicyInterface $policy) : AbstractAuthorizationPoint
     {
         $this->policies[] = $policy;
         return $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
+     */
     public function getNamespace()
     {
         return $this->getApp()->getAliasWithNamespace();
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getAlias()
+     */
     public function getAlias()
     {
         return $this->alias;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getAliasWithNamespace()
+     */
     public function getAliasWithNamespace()
     {
         return $this->getNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getAlias();
     }
-    
-    public function setActive(bool $trueOrFalse): AuthorizationPointInterface
+   
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthorizationPointInterface::setDisabled()
+     */
+    public function setDisabled(bool $trueOrFalse): AuthorizationPointInterface
     {
         $this->active = $trueOrFalse;
         return $this;
     }
     
-    protected function isActive(): bool
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthorizationPointInterface::isDisabled()
+     */
+    public function isDisabled(): bool
     {
         return $this->active;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthorizationPointInterface::setPolicyCombiningAlgorithm()
+     */
     public function setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType $algorithm): AuthorizationPointInterface
     {
         $this->combinationAlgorithm = $algorithm;
         return $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthorizationPointInterface::getPolicyCombiningAlgorithm()
+     */
     public function getPolicyCombiningAlgorithm() : PolicyCombiningAlgorithmDataType
     {
         return $this->combinationAlgorithm;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthorizationPointInterface::setDefaultPolicyEffect()
+     */
     public function setDefaultPolicyEffect(PolicyEffectDataType $effect): AuthorizationPointInterface
     {
         $this->defaultEffect = $effect;
         return $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthorizationPointInterface::getDefaultPolicyEffect()
+     */
     public function getDefaultPolicyEffect() : PolicyEffectDataType
     {
         return $this->defaultEffect;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthorizationPointInterface::getApp()
+     */
     public function getApp(): AppInterface
     {
         return $this->app;

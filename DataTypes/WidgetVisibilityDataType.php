@@ -19,10 +19,10 @@ class WidgetVisibilityDataType extends StringDataType implements EnumDataTypeInt
 {
     use EnumStaticDataTypeTrait;
     
-    const NORMAL = "NORMAL";
-    const PROMOTED = "PROMOTED";
-    const OPTIONAL = "OPTIONAL";
-    const HIDDEN = "HIDDEN";
+    const NORMAL = 50;
+    const PROMOTED = 90;
+    const OPTIONAL = 30;
+    const HIDDEN = 10;
     
     private $labels = [];
     
@@ -37,12 +37,22 @@ class WidgetVisibilityDataType extends StringDataType implements EnumDataTypeInt
             $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
             
             foreach (static::getValuesStatic() as $val) {
-                $this->labels[$val] = $translator->translate('WIDGET.VISIBILITY.' . $val);
+                $this->labels[$val] = $translator->translate('WIDGET.VISIBILITY.' . $this->getConstantName($val));
             }
         }
         
         return $this->labels;
     }
 
+    protected function getConstantName(int $value) : ?string
+    {
+        switch ($value) {
+            case 10: return 'HIDDEN';
+            case 30: return 'OPTIONAL';
+            case 50: return 'NORMAL';
+            case 90: return 'PROMOTED';
+        }
+        return null;
+    }
 }
 ?>
