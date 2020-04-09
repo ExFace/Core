@@ -661,7 +661,12 @@ HTML;
             }
                   
             if ($loginFormCreated === true) {
-                return new Response(401, $this->buildHeadersAccessControl(), $this->buildHtmlPage($loginPrompt, $this->getPageTemplateFilePathForUnauthorized()));
+                if ($this->isRequestAjax($request)) {
+                    $responseBody = $this->buildHtmlHead($loginPrompt) . "\n" . $this->buildHtmlBody($loginPrompt);
+                } else {
+                    $responseBody = $this->buildHtmlPage($loginPrompt, $this->getPageTemplateFilePathForUnauthorized());
+                }
+                return new Response(401, $this->buildHeadersAccessControl(), $responseBody);
             }
         }
         return null;
