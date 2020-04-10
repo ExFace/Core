@@ -66,8 +66,8 @@
             "attribute_alias": "COMBINING_ALGORITHM_IN_APP"
         },
         {
-            "name": "POLICY_PROTOTYPE",
-            "attribute_alias": "POLICY_PROTOTYPE"
+            "name": "POLICY_PROTOTYPE_CLASS",
+            "attribute_alias": "POLICY_PROTOTYPE_CLASS"
         }
     ],
     "rows": [
@@ -88,7 +88,7 @@
             "TARGET_ACTION_APPLICABLE": "0",
             "DEFAULT_EFFECT_IN_APP": "D",
             "COMBINING_ALGORITHM_IN_APP": "deny-unless-permit",
-            "POLICY_PROTOTYPE": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\GenericAuthorizationPolicy"
+            "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\GenericAuthorizationPolicy"
         },
         {
             "CREATED_ON": "2020-03-22 13:41:44",
@@ -107,7 +107,7 @@
             "TARGET_ACTION_APPLICABLE": "0",
             "DEFAULT_EFFECT_IN_APP": "D",
             "COMBINING_ALGORITHM_IN_APP": "deny-unless-permit",
-            "POLICY_PROTOTYPE": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\ContextAuthorizationPolicy"
+            "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\ContextAuthorizationPolicy"
         }
     ],
     "totals_rows": [],
