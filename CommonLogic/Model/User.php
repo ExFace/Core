@@ -11,6 +11,7 @@ use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 use exface\Core\ModelLoaders\SqlModelLoader;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\CommonLogic\Selectors\UserSelector;
 
 /**
  * Representation of an Exface user.
@@ -81,6 +82,9 @@ class User implements UserInterface
     {
         if ($this->uid === null && $this->modelLoaded === false) {
             $this->loadData();
+        }
+        if ($this->isAnonymous()) {
+            return UserSelector::ANONYMOUS_USER_OID;
         }
         return $this->uid;
     }
