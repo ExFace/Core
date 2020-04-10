@@ -13,6 +13,8 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\CommonLogic\Security\AuthenticationToken\DomainUsernamePasswordAuthToken;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
+use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTrait;
+use exface\Core\Exceptions\Security\AuthenticationFailedError;
 
 /**
  * Performs authentication via the Symfony LdapBindAuthenticationProvider.
@@ -24,6 +26,8 @@ use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
  */
 class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
 {    
+    use CreateUserFromTokenTrait;
+    
     private $host = null;
     
     private $dnString = '{username}';
@@ -36,7 +40,15 @@ class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
             $domain = $token->getDomain();
             $this->setDnString($domain . '\{username}');
         }
-        return parent::authenticate($token);
+        parent::authenticate($token);
+        if ($this->getCreateNewUsers() === true) {
+            $user = $this->createUserWithRoles($this->getWorkbench(), $token);
+        } else {
+            if (empty($this->getUserData($this->getWorkbench(), $token)->getRows())) {
+                throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!');
+            }
+        }
+        return $token;
     }
     
     /**
@@ -147,9 +159,9 @@ class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
     public function setDomains($arrayOrUxon) : SymfonyLdapBindAuthenticator
     {
         if ($arrayOrUxon instanceof UxonObject) {
-            $this->domains = $arrayOrUxon->toArray(); 
+            $this->domains = $arrayOrUxon->toArray();
         } elseif (is_array($arrayOrUxon)) {
-            $this->domains = $arrayOrUxon;
+            $this->domains = array_combine($arrayOrUxon, $arrayOrUxon);
         }
         return $this;
     }
@@ -175,7 +187,7 @@ class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
                 'data_column_name' => 'DOMAIN',
                 'widget_type' => 'InputSelect',
                 'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.LDAP.DOMAIN'),
-                'selectable_options' => array_combine($this->getDomains(), $this->getDomains()) ?? [],
+                'selectable_options' => $this->getDomains() ?? [],
                 'required' => true
             ],[
                 'attribute_alias' => 'USERNAME',

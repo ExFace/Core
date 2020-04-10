@@ -3,7 +3,6 @@ namespace exface\Core\CommonLogic\Security\Authenticators;
 
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
-use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthToken;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\UxonObject;
@@ -11,6 +10,11 @@ use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\CommonLogic\Security\AuthenticationToken\DomainUsernamePasswordAuthToken;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTrait;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Performs authentication via PHP LDAP extension. 
@@ -20,11 +24,21 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
  */
 class LdapAuthenticator extends AbstractAuthenticator
 {    
+    use CreateUserFromTokenTrait;
+    
     private $hostname = null;
     
     private $authenticatedToken = null;
     
     private $domains = null;
+    
+    private $dnString = '[#domain#]\\[#username#]';
+    
+    private $usernameInputCaption = null;
+    
+    private $ldapSurnameAlias = 'surname';
+    
+    private $ldapGivenNameAlias = 'givenname';
     
     /**
      *
@@ -33,26 +47,59 @@ class LdapAuthenticator extends AbstractAuthenticator
      */
     public function authenticate(AuthenticationTokenInterface $token) : AuthenticationTokenInterface
     {
-        if (! $token instanceof UsernamePasswordAuthToken) {
+        if (! $token instanceof DomainUsernamePasswordAuthToken) {
             throw new InvalidArgumentException('Invalid token type!');
         }
-        // verwenden von ldap bind
-        $ldaprdn  = $token->getUsername();  // ldap rdn oder dn
-        $ldappass = $token->getPassword();  // entsprechendes password
+        
+        $ldappass = $token->getPassword();
+        $placeholders = [];
+        $placeholders['username'] = $token->getUsername();
+        $placeholders['domain'] = $token->getDomain();
+        $ldaprdn = StringDataType::replacePlaceholders($this->getDnString(), $placeholders);
         
         // verbinden zum ldap server
-        $ldapconn = @ldap_connect($this->hostname);
-        if (!$ldapconn) {
+        $host = $this->getHost(); 
+        $ldapconn = @ldap_connect($host);        
+        if (!$ldapconn) {            
             throw new AuthenticationFailedError($this, 'No connection to LDAP server!');
         }
         
-        // binden zum ldap server
-        $ldapbind = ldap_bind($ldapconn, $ldaprdn, $ldappass);
+        // those options are necessary for ldap_search to work, must be applied before the ldap_bind
+        ldap_set_option ($ldapconn, LDAP_OPT_REFERRALS, 0);
+        ldap_set_option($ldapconn, LDAP_OPT_PROTOCOL_VERSION, 3);
         
-        // Bindung überpfrüfen
+        // anmelden am ldap server
+        $ldapbind = ldap_bind($ldapconn, $ldaprdn, $ldappass);
         if (! $ldapbind) {
-            throw new AuthenticationFailedError($this, 'LDAP authentication failed');
+            throw new AuthenticationFailedError($this, 'LDAP authentication failed', null, new RuntimeException(ldap_error($ldapconn), ldap_errno($ldapconn)));
+        }        
+        
+        if ($this->getCreateNewUsers() === true) {
+            $dnArray = explode('.', $host);
+            $baseDn = '';
+            foreach ($dnArray as $part) {
+                $baseDn .= 'dc=' . $part . ',';
+            }
+            $baseDn = substr($baseDn, 0, -1);
+            $attributes = [$this->getLdapGivennameAlias(), $this->getLdapSurnameAlias()];
+            $ldapresult = ldap_search($ldapconn, $baseDn, "(&(objectClass=user)(sAMAccountName={$token->getUsername()}))", $attributes);
+            if ($ldapresult === false) {
+                $this->getWorkbench()->getLogger()->logException(new RuntimeException(ldap_error($ldapconn), ldap_errno($ldapconn)));
+            }
+            $entry_array = ldap_get_entries($ldapconn, $ldapresult);
+            $surname = null;
+            $givenname = null;
+            if ($entry_array['count'] > 0) {
+                $surname = $entry_array[0][$this->getLdapSurnameAlias()][0];
+                $givenname = $entry_array[0][$this->getLdapGivennameAlias()][0];
+            }            
+            $user = $this->createUserWithRoles($this->getWorkbench(), $token, $surname, $givenname);
+        } else {
+            if (empty($this->getUserData($this->getWorkbench(), $token)->getRows())) {
+                throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!');
+            }
         }
+        ldap_unbind($ldapconn);
         $this->authenticatedToken = $token;
         return $token;
     }
@@ -74,7 +121,7 @@ class LdapAuthenticator extends AbstractAuthenticator
      */
     public function isSupported(AuthenticationTokenInterface $token) : bool
     {
-        return $token instanceof UsernamePasswordAuthToken;
+        return $token instanceof DomainUsernamePasswordAuthToken;
     }
     
     /**
@@ -91,7 +138,7 @@ class LdapAuthenticator extends AbstractAuthenticator
      *
      * @return string
      */
-    public function getHost() : string
+    protected function getHost() : string
     {
         return $this->hostname;
     }
@@ -120,14 +167,14 @@ class LdapAuthenticator extends AbstractAuthenticator
      * @uxon-template [""]
      *
      * @param string[]|UxonObject $domain
-     * @return SymfonyLdapBindAuthenticator
+     * @return LdapAuthenticator
      */
-    public function setDomains($arrayOrUxon) : SymfonyLdapBindAuthenticator
+    public function setDomains($arrayOrUxon) : LdapAuthenticator
     {
         if ($arrayOrUxon instanceof UxonObject) {
             $this->domains = $arrayOrUxon->toArray();
         } elseif (is_array($arrayOrUxon)) {
-            $this->domains = $arrayOrUxon;
+            $this->domains = array_combine($arrayOrUxon, $arrayOrUxon);
         }
         return $this;
     }
@@ -136,9 +183,111 @@ class LdapAuthenticator extends AbstractAuthenticator
      *
      * @return string[]|NULL
      */
-    public function getDomains() : ?array
+    protected function getDomains() : ?array
     {
         return $this->domains;
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    protected function getDnString() : string
+    {
+        return $this->dnString;
+    }
+    
+    /**
+     * The dn_string for LDAP authentication.
+     *
+     * This key defines the form of the string used in order to compose the DN of the user, from the username.
+     * Supported placeholders are `[#domain#]` and `[#username#]`. Default is [#domain#]\\[#username#].
+     *
+     * @uxon-property dn_string
+     * @uxon-type string
+     * @uxon-template [#domain#]\[#username#]
+     * @uxon-default [#domain#]\[#username#]
+     *
+     * @param string $value
+     * @return LdapAuthenticator
+     */
+    public function setDnString(string $value) : LdapAuthenticator
+    {
+        $this->dnString = $value;
+        return $this;
+    }
+    
+    /**
+     * Set the caption for the input field of the username.
+     * 
+     * @uxon-property username_input_caption
+     * @uxon-type string
+     * 
+     * @param string $caption
+     * @return LdapAuthenticator
+     */
+    public function setUsernameInputCaption(string $caption) : LdapAuthenticator
+    {
+        $this->usernameInputCaption = $caption;
+        return $this;
+    }
+    
+    protected function getUsernameInputCaption() : string
+    {
+        if ($this->usernameInputCaption === null) {
+            return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.LDAP.USERNAME');
+        }
+        return $this->usernameInputCaption;
+    }
+    
+    /**
+     * Set the property name the surname is saved as in the Ldap user object.
+     * Default is `surname`
+     * 
+     * @uxon-property ldap_surname_alias
+     * @uxon-type string
+     * 
+     * @param string $alias
+     * @return LdapAuthenticator
+     */
+    public function setLdapSurnameAlias(string $alias) : LdapAuthenticator
+    {
+        $this->ldapSurnameAlias;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getLdapSurnameAlias() : string
+    {
+        return  $this->ldapSurnameAlias;
+    }
+    
+    /**
+     * Set the property name the givenname is saved as in the Ldap user object.
+     * Default is `givenname`
+     *
+     * @uxon-property ldap_givenname_alias
+     * @uxon-type string
+     *
+     * @param string $alias
+     * @return LdapAuthenticator
+     */
+    public function setLdapGivennameAlias(string $alias) : LdapAuthenticator
+    {
+        $this->ldapGivennameAlias;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    protected function getLdapGivennameAlias() : string
+    {
+        return  $this->ldapGivenNameAlias;
     }
     
     /**
@@ -153,11 +302,11 @@ class LdapAuthenticator extends AbstractAuthenticator
                 'data_column_name' => 'DOMAIN',
                 'widget_type' => 'InputSelect',
                 'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.LDAP.DOMAIN'),
-                'selectable_options' => array_combine($this->getDomains(), $this->getDomains()) ?? [],
+                'selectable_options' => $this->getDomains() ?? [],
                 'required' => true
             ],[
                 'attribute_alias' => 'USERNAME',
-                'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.LDAP.USERNAME'),
+                'caption' => $this->getUsernameInputCaption(),
                 'required' => true
             ],[
                 'attribute_alias' => 'PASSWORD',
