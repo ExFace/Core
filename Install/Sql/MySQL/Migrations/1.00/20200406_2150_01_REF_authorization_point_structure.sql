@@ -1,7 +1,7 @@
 -- UP
 
 ALTER TABLE `exf_auth_point`
-	CHANGE COLUMN `combining_algorithm` `combining_algorithm_in_app` VARCHAR(30) NOT NULL COLLATE 'utf8_general_ci' AFTER `default_effect`,
+	CHANGE COLUMN `combining_algorithm` `combining_algorithm_in_app` VARCHAR(30) NOT NULL COLLATE 'utf8_general_ci' AFTER `default_effect_in_app`,
 	CHANGE COLUMN `default_effect` `default_effect_in_app` CHAR(1) NOT NULL DEFAULT 'P' COLLATE 'utf8_general_ci' AFTER `app_oid`,
 	CHANGE COLUMN `active_flag` `disabled_flag` TINYINT(1) NOT NULL DEFAULT '0' AFTER `combining_algorithm_in_app`,
 	ADD COLUMN `default_effect_local` CHAR(1) NULL DEFAULT NULL AFTER `default_effect_in_app`,
@@ -20,7 +20,7 @@ ALTER TABLE `exf_auth_policy`
 -- DOWN
 
 ALTER TABLE `exf_auth_point`
-	CHANGE COLUMN `combining_algorithm_in_app` `combining_algorithm` VARCHAR(30) NOT NULL COLLATE 'utf8_general_ci' AFTER `default_effect_in_app`,
+	CHANGE COLUMN `combining_algorithm_in_app` `combining_algorithm` VARCHAR(30) NOT NULL COLLATE 'utf8_general_ci' AFTER `default_effect`,
 	CHANGE COLUMN `default_effect_in_app` `default_effect` CHAR(1) NOT NULL DEFAULT 'P' COLLATE 'utf8_general_ci' AFTER `app_oid`,
 	CHANGE COLUMN `disabled_flag` `active_flag` TINYINT(1) NOT NULL DEFAULT '0' AFTER `combining_algorithm`,
 	DROP COLUMN `default_effect_local`,
