@@ -58,6 +58,8 @@ use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Actions\Login;
+use exface\Core\Widgets\LoginPrompt;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * 
@@ -634,42 +636,19 @@ HTML;
     {
         $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench());
         
-        $authErr = $exception;
-        while (! ($authErr instanceof AuthenticationFailedError)) {
-            $authErr = $authErr->getPrevious();
+        try {
+            $loginPrompt = LoginPrompt::createFromException($page, $exception);
+        } catch (\Throwable $e) {
+            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+            return null;
         }
-        if ($authErr !== null) {
-            $this->getWorkbench()->getLogger()->logException($exception);
-            /* @var $loginPrompt \exface\Core\Widgets\LoginPrompt */
-            $loginPrompt = WidgetFactory::create($page, 'LoginPrompt');
-            $loginPrompt->setObjectAlias('exface.Core.LOGIN_DATA');
-            $loginFormCreated = false;
-            
-            $provider = $authErr->getAuthenticationProvider();
-            if ($provider instanceof DataConnectionInterface) {
-                // Saving connection credentials is only possible if a user is authenticated!
-                if ($this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous() === false) {
-                    $loginPrompt = $provider->createLoginWidget($loginPrompt, true, new UserSelector($this->getWorkbench(), $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->getUsername()));
-                    $loginPrompt->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.CONNECTIONS.LOGIN_TITLE'));
-                    $loginPrompt->getMessageList()->addError($authErr->getMessage());
-                    $loginFormCreated = true;
-                }
-            } else {
-                $loginPrompt = $provider->createLoginWidget($loginPrompt);
-                $loginPrompt->getMessageList()->addError($authErr->getMessage());
-                $loginFormCreated = true;
-            }
-                  
-            if ($loginFormCreated === true) {
-                if ($this->isRequestAjax($request)) {
-                    $responseBody = $this->buildHtmlHead($loginPrompt) . "\n" . $this->buildHtmlBody($loginPrompt);
-                } else {
-                    $responseBody = $this->buildHtmlPage($loginPrompt, $this->getPageTemplateFilePathForUnauthorized());
-                }
-                return new Response(401, $this->buildHeadersAccessControl(), $responseBody);
-            }
+        
+        if ($this->isRequestAjax($request)) {
+            $responseBody = $this->buildHtmlHead($loginPrompt) . "\n" . $this->buildHtmlBody($loginPrompt);
+        } else {
+            $responseBody = $this->buildHtmlPage($loginPrompt, $this->getPageTemplateFilePathForUnauthorized());
         }
-        return null;
+        return new Response(401, $this->buildHeadersAccessControl(), $responseBody);
     }
     
     /**
