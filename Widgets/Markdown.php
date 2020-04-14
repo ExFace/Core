@@ -5,6 +5,12 @@ use cebe\markdown\GithubMarkdown;
 
 /**
  * Shows markdown contents rendered as HTML.
+ * 
+ * The markdown code can be 
+ * 
+ * - loaded from a data source (by specifying an `attribute_alias` for the widget)
+ * - loaded from a file (by specifying the path in `file`)
+ * - directly specified in the `html` property of the widget
  *
  * @author Andrej Kabachnik
  *        

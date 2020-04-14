@@ -6,11 +6,18 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Facades\HttpFileServerFacade;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 /**
  * The HTML widget simply shows some HTML.
  * 
  * In contrast to a Text widget it will be seamlessly embedded in an HTML-based facade
  * and not put into a paragraph as plain text.
+ * 
+ * The HTML can be 
+ * 
+ * - loaded from a data source (by specifying an `attribute_alias` for the widget)
+ * - loaded from a file (by specifying the path in `file`)
+ * - directly specified in the `html` property of the widget
  *
  * @author Andrej Kabachnik
  *        
@@ -28,6 +35,8 @@ class Html extends Display
     private $baseUrl = '';
     
     private $baseUrlAttributeAlias = null;
+    
+    private $filePathRelativeToBase = null;
 
     /**
      * 
@@ -277,6 +286,67 @@ class Html extends Display
             $html = preg_replace('#(href|src)="([^:"]*)("|(?:(?:%20|\s|\+)[^"]*"))#','$1="' . $base . '$2$3', $html);
         }
         return $html;
+    }
+    
+    /**
+     * If required to show contents of a file, place the file path relative to base folder here.
+     * 
+     * NOTE: the widget cannot show file contents and be bound to a meta attribute at the same
+     * time! Either user `attribute_alias` or `file`, but not both!
+     * 
+     * @uxon-property file
+     * @uxon-type string
+     * 
+     * @param string $pathRelativeToBaseFolder
+     * @return Html
+     */
+    public function setFile(string $pathRelativeToBaseFolder) : Html
+    {
+        $this->filePathRelativeToBase = $pathRelativeToBaseFolder;
+        return $this;
+    }
+    
+    public function isBoundToFile() : bool
+    {
+        return $this->filePathRelativeToBase !== null;
+    }
+    
+    public function getFilePathRelative() : ?string
+    {
+        if ($this->isBoundToAttribute() === true) {
+            throw new WidgetConfigurationError($this, 'Cannot bind an ' . $this->getWidgetType() . ' widget to meta attribute "' . $this->getAttributeAlias() . '" and file "' . $this->filePathRelativeToBase . '" at the same time!');
+        }
+        return $this->filePathRelativeToBase;
+    }
+    
+    protected function getFilePathAbsolute() : ?string
+    {
+        if ($relPath = $this->getFilePathRelative()) {
+            $filemanager = $this->getWorkbench()->filemanager();
+            return $filemanager::pathJoin([$filemanager->getPathToBaseFolder(), $relPath]);
+        }
+        return null;
+    }
+    
+    public function getFileContents() : ?string
+    {
+        if ($absPath = $this->getFilePathAbsolute()) {
+            return file_get_contents($absPath);
+        }
+        return null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getValue()
+     */
+    public function getValue()
+    {
+        if ($this->isBoundToFile() === true) {
+            return $this->getFileContents();
+        }
+        return parent::getValue();
     }
 }
 ?>
