@@ -19,6 +19,39 @@ use exface\Core\Exceptions\Security\AuthenticationFailedError;
 /**
  * Performs authentication via the Symfony LdapBindAuthenticationProvider.
  * 
+ * See https://symfony.com/doc/current/security/ldap.html for detailes on Symfony's
+ * LDAP configuration.
+ * 
+ * ## Examples
+ * 
+ * ### Authentication + create new users with static roles
+ * 
+ * ```
+ * {
+ * 		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SymfonyLdapBindAuthenticator",
+ * 		"host": "MYLDAP",
+ *      "dn_string": "{username}",
+ * 		"domains": [
+ * 			"mydomain"
+ * 		],
+ * 		"create_new_users": true,
+ * 		"create_new_users_with_roles": [
+ * 			"exface.Core.SUPERUSER"
+ * 		]
+ * }
+ * 
+ * ```
+ * 
+ * Place the domain name of your LDAP server (or it's IP address) in the `host` property
+ * and list all domains available for logging in to under `domains`.
+ * 
+ * If `create_new_users` is `true`, a new workbench user will be created automatically once
+ * a new username is authenticated successfully. These new users can be assigned some roles
+ * under `create_new_users_with_roles`. 
+ * 
+ * If a new user is not assigned any roles, he or she will only have access to resources
+ * available for the user roles `exface.Core.ANONYMOUS` and `exface.Core.AUTHENTICATED`.
+ * 
  * @link https://symfony.com/doc/current/security/ldap.html
  * 
  * @author Andrej Kabachnik
@@ -42,7 +75,7 @@ class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
         }
         parent::authenticate($token);
         if ($this->getCreateNewUsers() === true) {
-            $user = $this->createUserWithRoles($this->getWorkbench(), $token);
+            $this->createUserWithRoles($this->getWorkbench(), $token);
         } else {
             if (empty($this->getUserData($this->getWorkbench(), $token)->getRows())) {
                 throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!');
