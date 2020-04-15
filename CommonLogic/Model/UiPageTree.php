@@ -55,7 +55,7 @@ class UiPageTree
     protected function buildStartRootNodes(array $pages) : UiPageTree
     {
         foreach ($pages as $page) {
-            $node = new UiPageTreeNode($this->getWorkbench(), $page->getAlias(), $page->getName(), $page->getId());
+            $node = new UiPageTreeNode($this->getWorkbench(), $page->getAlias(), $page->getName(), $page->getUid());
             $node->setDescription($page->getDescription());
             $node->setIntro($page->getIntro());
             $this->startRootNodes[] = $node;

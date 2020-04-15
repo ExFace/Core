@@ -274,7 +274,7 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
      */
     public function isPage(UiPageInterface $page) : bool
     {
-        if ($page->getId() === $this->getUid()) {
+        if ($page->getUid() === $this->getUid()) {
             return true;
         }
         return false;
@@ -290,7 +290,7 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     public function isParentOf(UiPageInterface $page) : bool
     {
         foreach ($this->getChildNodes() as $childNode) {
-            if ($childNode->getUid() === $page->getId()) {
+            if ($childNode->getUid() === $page->getUid()) {
                 return true;
             }
         }
