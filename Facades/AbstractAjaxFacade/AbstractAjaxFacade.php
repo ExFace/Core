@@ -422,7 +422,7 @@ HTML;
         $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
         
         /* @var $headers array [header_name => array_of_values] */
-        $headers = [];
+        $headers = $this->buildHeadersAccessControl();
         /* @var $status_code int */
         $status_code = $result->getResponseCode();
         
@@ -441,7 +441,6 @@ HTML;
             case $result instanceof ResultDataInterface:
                 $json = $this->buildResponseData($result->getData(), $result->getTask()->getWidgetTriggeredBy());
                 $json["success"] = $result->getMessage();
-                $headers = array_merge($headers, $this->buildHeadersAccessControl());
                 break;
                 
             case $result instanceof ResultWidgetInterface:
@@ -565,7 +564,7 @@ HTML;
             }
         }
         
-        $headers = [];
+        $headers = $this->buildHeadersAccessControl();
         $body = '';
         
         $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
