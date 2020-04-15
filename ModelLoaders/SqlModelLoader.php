@@ -1201,7 +1201,7 @@ SQL;
         }
         
         $uiPage = UiPageFactory::createBlank($this->getWorkbench(), $row['alias']);
-        $uiPage->setId($row['oid']);
+        $uiPage->setUid($row['oid']);
         if ($row['app_oid']) {
             $uiPage->setApp(SelectorFactory::createAppSelector($this->getWorkbench(), $row['app_oid']));
         }
@@ -1231,7 +1231,7 @@ SQL;
             $uiPage->setMenuIndexDefault($row['default_menu_index']);
         }
        
-        $this->pages_loaded[$uiPage->getId()] = $uiPage;
+        $this->pages_loaded[$uiPage->getUid()] = $uiPage;
         
         return $uiPage;
     }
@@ -1279,11 +1279,11 @@ SQL;
     {
         $treeRootNodes = $tree->getStartRootNodes();
         $exface = $this->getWorkbench();
-        $loadedtree = $this->menu_tress_loaded[$tree->getExpandPathToPage()->getId()];
+        $loadedtree = $this->menu_tress_loaded[$tree->getExpandPathToPage()->getUid()];
         if ($loadedtree !== null && $loadedtree->isLoaded() === true) {
             return $loadedtree->getRootNodes();
         }
-        $nodeId = $tree->getExpandPathToPage()->getId();
+        $nodeId = $tree->getExpandPathToPage()->getUid();
         while ($nodeId !== null) {
             $parentNode = null;
             $parentNodeId = null;
@@ -1342,7 +1342,7 @@ SQL;
                 $nodeId = $parentNodeId;
             }
         }
-        $this->menu_tress_loaded[$tree->getExpandPathToPage()->getId()] = $tree;
+        $this->menu_tress_loaded[$tree->getExpandPathToPage()->getUid()] = $tree;
         return $treeRootNodes;
     }
     

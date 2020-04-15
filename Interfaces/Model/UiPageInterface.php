@@ -4,9 +4,7 @@ namespace exface\Core\Interfaces\Model;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\ContextBar;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
-use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\RuntimeException;
@@ -33,7 +31,7 @@ use exface\Core\Interfaces\Selectors\UiPageGroupSelectorInterface;
  * @author Andrej Kabachnik
  *
  */
-interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeConvertedToUxon
+interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
 {
     /**
      * 
@@ -167,19 +165,6 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
     
     /**
      * 
-     * @return bool
-     */
-    public function hasMenuParent() : bool;
-
-    /**
-     * Returns the alias of the parent page (the actual parent - not a page, that replaces the parent!!!).
-     * 
-     * @return string
-     */
-    public function getMenuParentPageSelector() : ?UiPageSelectorInterface;
-    
-    /**
-     * 
      * @param string $id_or_alias
      * @return UiPageInterface
      */
@@ -267,76 +252,11 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
     public function setMenuVisible($menuVisible);
 
     /**
-     * Returns the unique id of the page.
-     * 
-     * This id is unique across all apps!
-     * 
-     * @return string
-     */
-    public function getId();
-    
-    /**
      * 
      * @param string $uid
      * @return UiPageInterface
      */
-    public function setId(string $uid) : UiPageInterface;
-
-    /**
-     * Returns the name of the page.
-     * 
-     * The name is what most facades will show as header and menu title.
-     * 
-     * @return string
-     */
-    public function getName();
-
-    /**
-     * Overwrites the name of the page.
-     * 
-     * @param string $string
-     * @return UiPageInterface
-     */
-    public function setName($string);
-    
-    /**
-     * Returns the description of this page.
-     * 
-     * The description is used as hint, tooltip or similar by most facades.
-     * It is a short text describing, what functionality the page offers:
-     * e.g. "View an manage meta object of installed apps" for the object-page
-     * in the metamodel editor.
-     * 
-     * @return string
-     */
-    public function getDescription();
-    
-    /**
-     * Overwrites the description of this page.
-     *
-     * The description is used as hint, tooltip or similar by most facades.
-     * It is a short text describing, what functionality the page offers:
-     * e.g. "View an manage meta object of installed apps" for the object-page
-     * in the metamodel editor.
-     *
-     * @return string
-     */
-    public function setDescription($string);
-
-    /**
-     * Returns an introduction text for the page to be used in contextual help, etc.
-     * 
-     * @return string
-     */
-    public function getIntro();
-
-    /**
-     * Overwrites introduction text for the page.
-     * 
-     * @param string $string
-     * @return UiPageInterface
-     */
-    public function setIntro($text);
+    public function setUid(string $uid) : UiPageInterface;
 
     /**
      * Returns the qualified alias of the page, this one should replace when resolving widget links.
@@ -468,19 +388,6 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return UiPageInterface
      */
     public function setFacadeSelector($selectorOrString) : UiPageInterface;
-    
-    /**
-     * 
-     * @param bool $true_or_false
-     * @return UiPageInterface
-     */
-    public function setPublished(bool $true_or_false) : UiPageInterface;
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function isPublished() : bool;
     
     /**
      * 

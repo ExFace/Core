@@ -859,9 +859,7 @@ JS;
     }
     
     /**
-     * Returns the id of the UI page of the widget represented by this element.
-     * 
-     * This is just a shortcut to calling $this->getWidget()->getPage()->getId()
+     * Returns the selector of the UI page of the widget represented by this element.
      * 
      * @return string
      */
