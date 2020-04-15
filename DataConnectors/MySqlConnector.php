@@ -62,11 +62,12 @@ class MySqlConnector extends AbstractSqlConnector
             }
             
             // Set the character set
-            // mysqli_query($conn, "{$this->getConnectionMethod()} {$this->getCharset()}");
-            if (function_exists('mysqli_set_charset')) {
-                mysqli_set_charset($conn, $this->getCharset());
-            } else {
-                mysqli_query($conn, "SET NAMES {$this->getCharset()}");
+            if ($this->getCharacterSet()) {
+                if (function_exists('mysqli_set_charset')) {
+                    mysqli_set_charset($conn, $this->getCharset());
+                } else {
+                    mysqli_query($conn, "SET NAMES {$this->getCharset()}");
+                }
             }
             
             $this->setCurrentConnection($conn);
@@ -305,9 +306,9 @@ class MySqlConnector extends AbstractSqlConnector
     }
     
 
-    public function getCharset()
+    public function getCharset() : ?string
     {
-        return $this->getCharacterSet() ?? 'utf8';
+        return $this->getCharacterSet();
     }
 
     /**
