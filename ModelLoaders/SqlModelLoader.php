@@ -1190,6 +1190,8 @@ SQL;
                 {$this->buildSqlUuidSelector('p.oid')} as oid,
                 {$this->buildSqlUuidSelector('p.parent_oid')} as parent_oid,
                 {$this->buildSqlUuidSelector('p.page_template_oid')} as page_template_oid,
+                {$this->buildSqlUuidSelector('p.created_by_user_oid')} as created_by_user_oid,
+                {$this->buildSqlUuidSelector('p.modified_by_user_oid')} as modified_by_user_oid,
                 pt.facade_filepath, 
                 pt.facade_uxon,
                 (
@@ -1243,6 +1245,19 @@ SQL;
             foreach (explode(',', $row['group_oids']) as $groupUid) {
                 $uiPage->addGroupSelector($groupUid);
             }
+        }
+        
+        if ($row['created_on'] !== null) {            
+            $uiPage->setCreatedOn($row['created_on']);
+        }
+        if ($row['created_by_user_oid'] !== null) {
+            $uiPage->setCreatedByUser($row['created_by_user_oid']);
+        }
+        if ($row['modified_on'] !== null) {
+            $uiPage->setModifiedOn($row['modified_on']);
+        }
+        if ($row['modified_by_user_oid'] !== null) {
+            $uiPage->setModifiedByUser($row['modified_by_user_oid']);
         }
        
         $this->pages_loaded[$uiPage->getUid()] = $uiPage;
