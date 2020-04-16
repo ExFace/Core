@@ -8,7 +8,6 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
 use exface\Core\Interfaces\Selectors\UserRoleSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
-use exface\Core\ModelLoaders\SqlModelLoader;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UserSelector;

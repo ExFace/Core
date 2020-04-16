@@ -11,9 +11,12 @@ use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
+use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
 
 class UiPageTreeNode implements UiPageTreeNodeInterface
 {
+    use UiMenuItemTrait;
+    
     private $exface = null;
     
     private $tree = null;

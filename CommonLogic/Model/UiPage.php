@@ -18,7 +18,6 @@ use exface\Core\Exceptions\UiPage\UiPageNotPartOfAppError;
 use Ramsey\Uuid\Uuid;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
-use exface\Core\Interfaces\Selectors\UiPageGroupSelectorInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
@@ -29,6 +28,7 @@ use exface\Core\Exceptions\LogicException;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
+use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -45,8 +45,9 @@ use exface\Core\Interfaces\Model\UiMenuItemInterface;
  */
 class UiPage implements UiPageInterface
 {
-    
     use ImportUxonObjectTrait;
+    
+    use UiMenuItemTrait;
 
     const WIDGET_ID_SEPARATOR = '_';
 
@@ -1420,16 +1421,4 @@ class UiPage implements UiPageInterface
         }
         return UiPageFactory::createFromModel($this->getWorkbench(), $selector)->getUid();
     }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::isInGroup()
-     */
-    public function isInGroup(UiPageGroupSelectorInterface $selector): bool
-    {
-        // TODO #nocms
-        return true;
-    }
-
 }
