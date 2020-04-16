@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\UiPageTreeNode;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
+use exface\Core\Interfaces\Selectors\UiPageGroupSelectorInterface;
 
 class UiPageTreeFactory extends AbstractStaticFactory
 {
@@ -111,6 +112,20 @@ class UiPageTreeFactory extends AbstractStaticFactory
         return $tree;
     }
     
+    /**
+     * Creates a page tree node from it's properties
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param string $alias
+     * @param string $name
+     * @param string $pageUid
+     * @param bool $published
+     * @param UiPageTreeNodeInterface $parentNode
+     * @param string $description
+     * @param string $intro
+     * @param UiPageGroupSelectorInterface|string $pageGroupSelectors
+     * @return UiPageTreeNode
+     */
     public static function createNode(
         WorkbenchInterface $workbench, 
         string $alias, 
@@ -119,7 +134,8 @@ class UiPageTreeFactory extends AbstractStaticFactory
         bool $published,
         UiPageTreeNodeInterface $parentNode = null,
         string $description = null,
-        string $intro = null) : UiPageTreeNode
+        string $intro = null,
+        array $pageGroupSelectors = null) : UiPageTreeNode
     {
         $node = new UiPageTreeNode($workbench, $alias, $name, $pageUid, $parentNode);
         $node->setPublished($published);
@@ -128,6 +144,11 @@ class UiPageTreeFactory extends AbstractStaticFactory
         }
         if ($intro !== null) {
             $node->setIntro($intro);
+        }
+        if ($pageGroupSelectors !== null) {
+            foreach ($pageGroupSelectors as $selectorOrString) {
+                $node->addGroupSelector($selectorOrString);
+            }
         }
         return $node;
     }

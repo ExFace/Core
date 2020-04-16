@@ -9,11 +9,16 @@ use exface\Core\Interfaces\Security\AuthorizationPolicyInterface;
 use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\DataTypes\PolicyCombiningAlgorithmDataType;
 use exface\Core\Interfaces\UserImpersonationInterface;
-use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 use exface\Core\Events\Security\OnAuthorizedEvent;
 use exface\Core\Interfaces\Security\PermissionInterface;
 
+/**
+ * Base class for core authorization points.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
 {
     

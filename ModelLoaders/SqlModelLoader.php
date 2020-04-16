@@ -71,6 +71,7 @@ use exface\Core\Exceptions\LogicException;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\Factories\UiPageTreeFactory;
+use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 
 /**
  * 
@@ -1256,21 +1257,11 @@ SQL;
      */
     public function loadPageTree(UiPageTree $tree) : array
     {
-        $exface = $this->getWorkbench();
         if (empty($tree->getStartRootNodes())) {
             $rows = $this->loadPageTreeLevel();
             $nodes = [];
             foreach ($rows as $row) {
-                $rootNode = UiPageTreeFactory::createNode(
-                    $exface, 
-                    $row['alias'], 
-                    $row['name'], 
-                    $row['oid'], 
-                    ($row['published'] ? true : false),
-                    null,
-                    $row['description'],
-                    $row['intro']
-                );
+                $rootNode = $this->loadPageTreeCreateNodeFromDbRow($row);
                 $nodes[] = $rootNode;
                 $this->nodes_loaded[$rootNode->getUid] = $rootNode;
             }
@@ -1289,6 +1280,29 @@ SQL;
         }
     }
     
+    private function loadPageTreeCreateNodeFromDbRow(array $row, UiPageTreeNodeInterface $parentNode = null, $skipUnauthorized = false) : UiPageTreeNodeInterface
+    {
+        try {
+            return UiPageTreeFactory::createNode(
+                $this->getWorkbench(),
+                $row['alias'],
+                $row['name'],
+                $row['oid'],
+                ($row['published'] ? true : false),
+                $parentNode,
+                $row['description'],
+                $row['intro'],
+                $row['group_oids'] ? explode(',', $row['group_oids']) : null
+            );
+        } catch (AccessPermissionDeniedError $e) {
+            if ($skipUnauthorized === true) {
+                return null;
+            } else {
+                throw $e;
+            }
+        }
+    }
+    
     /**
      * Returns the root nodes for the given tree to a page set in `setExpandPathToPage` in the given tree
      * 
@@ -1298,7 +1312,6 @@ SQL;
     protected function loadPageTreeParentNodes(UiPageTree $tree) : array
     {
         $treeRootNodes = $tree->getStartRootNodes();
-        $exface = $this->getWorkbench();
         $loadedtree = $this->menu_tress_loaded[$tree->getExpandPathToPage()->getUid()];
         if ($loadedtree !== null && $loadedtree->isLoaded() === true) {
             return $loadedtree->getRootNodes();
@@ -1320,16 +1333,7 @@ SQL;
                             // if node already was loaded before, take that
                             $parentNode = $this->nodes_loaded[$row['oid']];
                         } else {
-                            $parentNode = UiPageTreeFactory::createNode(
-                                $exface,
-                                $row['alias'],
-                                $row['name'],
-                                $row['oid'],
-                                ($row['published'] ? true : false),
-                                null,
-                                $row['description'],
-                                $row['intro']
-                            );
+                            $parentNode = $this->loadPageTreeCreateNodeFromDbRow($row);
                             $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
                         }
                         $parentNodeId = $row['parent_oid'];
@@ -1346,16 +1350,7 @@ SQL;
                             $childNode = $this->nodes_loaded[$row['oid']];
                             $childNode->setParentNode($parentNode);
                         } else {
-                            $childNode = UiPageTreeFactory::createNode(
-                                $exface,
-                                $row['alias'],
-                                $row['name'],
-                                $row['oid'],
-                                ($row['published'] ? true : false),
-                                $parentNode,
-                                $row['description'],
-                                $row['intro']
-                            );
+                            $childNode = $this->loadPageTreeCreateNodeFromDbRow($row, $parentNode);
                         }
                         $this->nodes_loaded[$childNode->getUid()] = $childNode;
                         $parentNode->addChildNode($childNode);
@@ -1411,17 +1406,7 @@ SQL;
                         if ($this->nodes_loaded[$row['oid']] !== null) {
                             $childNode = $this->nodes_loaded[$row['oid']];
                         } else {
-                            $childNode = UiPageTreeFactory::createNode(
-                                $exface,
-                                $row['alias'],
-                                $row['name'],
-                                $row['oid'],
-                                ($row['published'] ? true : false),
-                                $node,
-                                $row['description'],
-                                $row['intro']
-                            );
-                            
+                            $childNode = $this->loadPageTreeCreateNodeFromDbRow($row, $node);
                             $this->nodes_loaded[$childNode->getUid()] = $childNode;
                         }
                         $childIds[] = $childNode->getUid();
@@ -1440,16 +1425,7 @@ SQL;
                             if ($this->nodes_loaded[$row['oid']] !== null) {
                                 $childChildNode = $this->nodes_loaded[$row['oid']];
                             } else {
-                                $childChildNode = UiPageTreeFactory::createNode(
-                                    $exface,
-                                    $row['alias'],
-                                    $row['name'],
-                                    $row['oid'],
-                                    ($row['published'] ? true : false),
-                                    $childNode,
-                                    $row['description'],
-                                    $row['intro']
-                                );
+                                $childChildNode = $this->loadPageTreeCreateNodeFromDbRow($row, $childNode);
                             }
                             //load sub levels for child child tree nodes if needed
                             $childChildNode = $this->loadPageTreeChildNodes($tree, $childChildNode, $level + 2);
@@ -1487,14 +1463,19 @@ SQL;
             ORDER BY parent_oid, menu_index";
         $sql = "
             SELECT
-                {$this->buildSqlUuidSelector('oid')} as oid,
-                {$this->buildSqlUuidSelector('parent_oid')} as parent_oid,
-                name,
-                alias,
-                description,
-                intro,
-                menu_index
-            FROM exf_page";
+                {$this->buildSqlUuidSelector('p.oid')} as oid,
+                {$this->buildSqlUuidSelector('p.parent_oid')} as parent_oid,
+                p.name,
+                p.alias,
+                p.description,
+                p.intro,
+                p.menu_index,
+                (
+                    SELECT GROUP_CONCAT({$this->buildSqlUuidSelector('pgp.page_group_oid')}, ',')
+                    FROM exf_page_group_pages pgp
+                    WHERE pgp.page_oid = p.oid
+                ) as group_oids
+            FROM exf_page p";
                 
         if ($loadTwoLevels === true) {
             $sqlUnionInnerWhere = '';
@@ -1502,10 +1483,10 @@ SQL;
                 $sqlUnionInnerWhere = $sqlWhere;
             } else {
                 $sqlUnionInnerWhere = "
-                WHERE parent_oid = {$id} AND menu_visible = 1";
+                WHERE p.parent_oid = {$id} AND menu_visible = 1";
             }
             $sqlUnionWhere = "
-               WHERE parent_oid IN (SELECT
+               WHERE p.parent_oid IN (SELECT
 	           oid
 	           FROM exf_page {$sqlUnionInnerWhere})";
             $sql .= "            
