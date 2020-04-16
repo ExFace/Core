@@ -404,4 +404,56 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      * @return bool
      */
     public function hasModel() : bool;
+    
+    /**
+     *
+     * @param string $createdBy
+     * @return UiPageInterface
+     */
+    public function setCreatedByUser(string $createdBy) : UiPageInterface;
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    public function getCreatedByUser() : ?string;
+    
+    /**
+     *
+     * @param string $createdBy
+     * @return UiPageInterface
+     */
+    public function setModifiedByUser(string $modifiedBy) : UiPageInterface;
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    public function getModifiedByUser() : ?string;
+    
+    /**
+     *
+     * @param string $createdOn
+     * @return UiPageInterface
+     */
+    public function setCreatedOn(string $createdOn) : UiPageInterface;
+    
+    /**
+     *
+     * @return string
+     */
+    public function getCreatedOn() : ?string;
+    
+    /**
+     *
+     * @param string $createdOn
+     * @return UiPageInterface
+     */
+    public function setModifiedOn(string $modifiedOn) : UiPageInterface;
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    public function getModifiedOn() : ?string;
 }
