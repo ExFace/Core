@@ -12,6 +12,8 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
+use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
+use exface\Core\Exceptions\Security\AccessDeniedError;
 
 class UiPageTreeNode implements UiPageTreeNodeInterface
 {
@@ -248,6 +250,13 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     {
         if ($node->getParentNode() !== $this){
             throw new InvalidArgumentException("The parent node of the given node '{$node->getName()}' is not the node '{$this->getName()}' !");
+        }
+        
+        $ap = new UiPageAuthorizationPoint($this->getWorkbench()->getCoreApp(), 'PAGE_ACCESS');
+        try {
+            $ap->authorize($node);
+        } catch (AccessDeniedError $e) {
+            return $this;
         }
         
         if ($position === null || ! is_numeric($position)) {
