@@ -100,6 +100,14 @@ class UiPage implements UiPageInterface
     private $dirty = false;
     
     private $published = true;
+    
+    private $created_by_user = null;
+    
+    private $modified_by_user = null;
+    
+    private $created_on = null;
+    
+    private $modified_on = null;
 
     /**
      * @deprecated use UiPageFactory::create() instead!
@@ -1027,6 +1035,10 @@ class UiPage implements UiPageInterface
         $uxon->setProperty('description', $this->getDescription());
         $uxon->setProperty('intro', $this->getIntro());
         $uxon->setProperty('replaces_page_selector', $this->getReplacesPageSelector());
+        $uxon->setProperty('created_by_user', $this->getCreatedByUser());
+        $uxon->setProperty('created_on', $this->getCreatedOn());
+        $uxon->setProperty('modified_by_user', $this->getModifiedByUser());
+        $uxon->setProperty('modified_on', $this->getModifiedOn());
         
         $contents = trim($this->getContents());
         if (! $contents) {
@@ -1379,6 +1391,16 @@ class UiPage implements UiPageInterface
     }
     
     /**
+     * @deprecated use setParentPageSelector() instead!
+     * @param string $aliasWithNamespace
+     * @return UiPageInterface
+     */
+    private function setMenuParentPageAlias(string $aliasWithNamespace) : UiPageInterface
+    {
+        return $this->setParentPageSelector($aliasWithNamespace);
+    }
+    
+    /**
      * @deprecated use setReplacesPageSelector() instead!
      * @param string|null $aliasWithNamespace
      * @return UiPageInterface
@@ -1429,7 +1451,11 @@ class UiPage implements UiPageInterface
             'MENU_VISIBLE' => $this->getMenuVisible(),
             'NAME' => $this->getName(),
             'REPLACE_PAGE' => $this->getReplacesPageSelector() !== null ? $this->getPageUidFromSelector($this->getReplacesPageSelector()) : null,
-            'PUBLISHED' => $this->isPublished()
+            'PUBLISHED' => $this->isPublished(),
+            'CREATED_BY_USER' => $this->getCreatedByUser(),
+            'CREATED_ON' => $this->getCreatedOn(),
+            'MODIFIED_BY_USER' => $this->getModifiedByUser(),
+            'MODIFIED_ON' => $this->getModifiedOn()
         ]);
         
         return $dataSheet;
@@ -1441,5 +1467,85 @@ class UiPage implements UiPageInterface
             return $selector->toString();
         }
         return UiPageFactory::createFromModel($this->getWorkbench(), $selector)->getUid();
+    }
+    
+    /**
+     *
+     * @param string $createdBy
+     * @return UiPageInterface
+     */
+    public function setCreatedByUser(string $createdBy) : UiPageInterface
+    {
+        $this->created_by_user = $createdBy;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    public function getCreatedByUser() : ?string
+    {
+        return $this->created_by_user;
+    }
+    
+    /**
+     *
+     * @param string $createdBy
+     * @return UiPageInterface
+     */
+    public function setModifiedByUser(string $modifiedBy) : UiPageInterface
+    {
+        $this->modified_by_user = $modifiedBy;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    public function getModifiedByUser() : ?string
+    {
+        return $this->modified_by_user;
+    }
+    
+    /**
+     *
+     * @param string $createdOn
+     * @return UiPageInterface
+     */
+    public function setCreatedOn(string $createdOn) : UiPageInterface
+    {
+        $this->created_on = $createdOn;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getCreatedOn() : ?string
+    {
+        return $this->created_on;
+    }
+    
+    /**
+     *
+     * @param string $createdOn
+     * @return UiPageInterface
+     */
+    public function setModifiedOn(string $modifiedOn) : UiPageInterface
+    {
+        $this->modified_on = $modifiedOn;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    public function getModifiedOn() : ?string
+    {
+        return $this->modified_on;
     }
 }
