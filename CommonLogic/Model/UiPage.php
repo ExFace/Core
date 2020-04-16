@@ -681,6 +681,16 @@ class UiPage implements UiPageInterface
         }
         return $this->menuParentPageSelector;
     }
+    
+    /**
+     * @deprecated use setParentPageSelector() instead
+     * @param string $id_or_alias
+     * @return \exface\Core\Interfaces\Model\UiPageInterface
+     */
+    private function setMenuParentPageSelector($id_or_alias)
+    {
+        return $this->setParentPageSelector($id_or_alias);
+    }
 
     /**
      * 
@@ -768,6 +778,17 @@ class UiPage implements UiPageInterface
     public function getId()
     {
         return $this->getUid();
+    }
+    
+    /**
+     * @deprecated use setUid() instead!
+     * 
+     * @param string $uid
+     * @return UiPageInterface
+     */
+    private function setId(string $uid) : UiPageInterface
+    {
+        return $this->setUid($uid);
     }
 
     /**
