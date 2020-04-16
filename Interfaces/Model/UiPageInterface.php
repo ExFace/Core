@@ -38,6 +38,14 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      * @return UiPageSelectorInterface
      */
     public function getSelector() : UiPageSelectorInterface;
+    
+    /**
+     * Overwrites the name of the page.
+     *
+     * @param string $string
+     * @return UiPageInterface
+     */
+    public function setName($string);
 
     /**
      *
@@ -168,7 +176,7 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      * @param string $id_or_alias
      * @return UiPageInterface
      */
-    public function setMenuParentPageSelector($id_or_alias);
+    public function setParentPageSelector($id_or_alias);
 
     /**
      * Returns the parent page or NULL if this page has no parent.
@@ -176,13 +184,13 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      * If there is page, that replaces the actual parent, that page is returned by
      * befault. Set $ignoreReplacement to true to get the actual parent.
      * 
-     * NOTE: getMenuParentPageSelector() always returns the selector of the linked page
+     * NOTE: getParentPageSelector() always returns the selector of the linked page
      * in contrast to this method.
      * 
      * @param bool $ignoreReplacement
      * @return UiPageInterface|null
      */
-    public function getMenuParentPage(bool $ignoreReplacement = false) : ?UiPageInterface;
+    public function getParentPage(bool $ignoreReplacement = false) : ?UiPageInterface;
     
     /**
      * Returns the index (position number starting with 0) of this page in the 
@@ -208,13 +216,13 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      * @param string|UiPageSelectorInterface $selectorOrString
      * @return UiPageInterface
      */
-    public function setMenuParentPageSelectorDefault($selectorOrString) : UiPageInterface;
+    public function setParentPageSelectorDefault($selectorOrString) : UiPageInterface;
     
     /**
      * 
      * @return UiPageSelectorInterface|NULL
      */
-    public function getMenuParentPageSelectorDefault() : ?UiPageSelectorInterface;
+    public function getParentPageSelectorDefault() : ?UiPageSelectorInterface;
     
     /**
      * 

@@ -173,7 +173,7 @@ class UiPageTree
      */
     protected function loadTree() : UiPageTree
     {   
-        $this->rootNodes = $this->getWorkbench()->model()->getModelLoader()->loadUiPageTree($this);
+        $this->rootNodes = $this->getWorkbench()->model()->getModelLoader()->loadPageTree($this);
         return $this;
     }
     
