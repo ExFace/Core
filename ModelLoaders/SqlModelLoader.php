@@ -1190,7 +1190,12 @@ SQL;
                 {$this->buildSqlUuidSelector('p.parent_oid')} as parent_oid,
                 {$this->buildSqlUuidSelector('p.page_template_oid')} as page_template_oid,
                 pt.facade_filepath, 
-                pt.facade_uxon
+                pt.facade_uxon,
+                (
+                    SELECT GROUP_CONCAT({$this->buildSqlUuidSelector('pgp.page_group_oid')}, ',')
+                    FROM exf_page_group_pages pgp
+                    WHERE pgp.page_oid = p.oid
+                ) as group_oids
             FROM exf_page p 
                 LEFT JOIN exf_page_template pt ON p.page_template_oid = pt.oid
             WHERE " . $where
@@ -1231,6 +1236,12 @@ SQL;
         }
         if ($row['default_menu_index'] !== null) {
             $uiPage->setMenuIndexDefault($row['default_menu_index']);
+        }
+        
+        if ($row['group_oids']) {
+            foreach (explode(',', $row['group_oids']) as $groupUid) {
+                $uiPage->addGroupSelector($groupUid);
+            }
         }
        
         $this->pages_loaded[$uiPage->getUid()] = $uiPage;

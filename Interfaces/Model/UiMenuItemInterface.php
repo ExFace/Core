@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces\Model;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Interfaces\Selectors\UiPageGroupSelectorInterface;
 
 /**
  * Common interface for anything, that can be put into a UI menu - pages, page tree nodes, etc.
@@ -96,4 +97,18 @@ interface UiMenuItemInterface extends WorkbenchDependantInterface, AliasInterfac
      * @return bool
      */
     public function isPublished() : bool;
+    
+    /**
+     *
+     * @param UiPageGroupSelectorInterface $selector
+     * @return bool
+     */
+    public function isInGroup(UiPageGroupSelectorInterface $selector) : bool;
+    
+    /**
+     * 
+     * @param UiPageGroupSelectorInterface|string $selectorOrString
+     * @return UiMenuItemInterface
+     */
+    public function addGroupSelector($selectorOrString) : UiMenuItemInterface;
 }
