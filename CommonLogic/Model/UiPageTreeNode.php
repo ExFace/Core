@@ -8,6 +8,9 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Model\UiMenuItemInterface;
 
 class UiPageTreeNode implements UiPageTreeNodeInterface
 {
@@ -32,6 +35,8 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     private $pageAlias = null;
     
     private $childNodesLoaded = false;
+    
+    private $published = true;
     
     
     /**
@@ -87,7 +92,7 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
      * 
      * @return string
      */
-    public function getUid() : string
+    public function getUid() : ?string
     {
         return $this->uid;   
     }
@@ -107,7 +112,7 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
      * 
      * @return bool
      */
-    public function hasParentNode() : bool
+    public function hasParent() : bool
     {
         return $this->parentNode !== null;
     }
@@ -143,9 +148,9 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     /**
      * 
      * @param string $intro
-     * @return UiPageTreeNodeInterface
+     * @return UiMenuItemInterface
      */
-    public function setIntro (string $intro) : UiPageTreeNodeInterface
+    public function setIntro (string $intro) : UiMenuItemInterface
     {
         $this->intro = $intro;
         return $this;
@@ -153,31 +158,19 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     
     /**
      * 
-     * @return bool
-     */
-    public function hasIntro() : bool
-    {
-        return $this->intro !== null;
-    }
-    
-    /**
-     * 
      * @return string
      */
-    public function getIntro() : string
+    public function getIntro() : ?string
     {
-        if ($this->intro !== null) {
-            return $this->intro;
-        }
-        return '';
+        return $this->intro;
     }
     
     /**
      * 
      * @param string $descpription
-     * @return UiPageTreeNodeInterface
+     * @return UiMenuItemInterface
      */
-    public function setDescription (string $descpription) : UiPageTreeNodeInterface
+    public function setDescription (string $descpription) : UiMenuItemInterface
     {
         $this->description = $descpription;
         return $this;
@@ -187,12 +180,9 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
      * 
      * @return string
      */
-    public function getDescription() : string
+    public function getDescription() : ?string
     {
-        if ($this->description !== null) {
-            return $this->description;
-        }
-        return '';
+        return $this->description;
     }
     
     /**
@@ -319,5 +309,67 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
             return false;
         }
         return false;          
-    }    
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::isPublished()
+     */
+    public function isPublished(): bool
+    {
+        return $this->published;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::setPublished()
+     */
+    public function setPublished(bool $true_or_false) : UiMenuItemInterface
+    {
+        $this->published = $true_or_false;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getAliasWithNamespace()
+     */
+    public function getAliasWithNamespace()
+    {
+        return $this->getPageAlias();
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::getParentPageSelector()
+     */
+    public function getParentPageSelector(): ?UiPageSelectorInterface
+    {
+        return $this->getParentNode()->getPageSelector();
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
+     */
+    public function getNamespace()
+    {
+        return StringDataType::substringBefore($this->getPageAlias(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, '', false, true);
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getAlias()
+     */
+    public function getAlias()
+    {
+        return StringDataType::substringAfter($this->getPageAlias(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $this->getPageAlias(), false, true);
+    }
+    
 }

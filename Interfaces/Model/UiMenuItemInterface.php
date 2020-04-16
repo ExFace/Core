@@ -6,6 +6,7 @@ use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 
 /**
+ * Common interface for anything, that can be put into a UI menu - pages, page tree nodes, etc.
  * 
  * @author Andrej Kabachnik
  *
@@ -16,23 +17,23 @@ interface UiMenuItemInterface extends WorkbenchDependantInterface, AliasInterfac
      * 
      * @return bool
      */
-    public function hasMenuParent() : bool;
+    public function hasParent() : bool;
 
     /**
      * Returns the alias of the parent page (the actual parent - not a page, that replaces the parent!!!).
      * 
      * @return string
      */
-    public function getMenuParentPageSelector() : ?UiPageSelectorInterface;
+    public function getParentPageSelector() : ?UiPageSelectorInterface;
 
     /**
      * Returns the unique id of the page.
      * 
      * This id is unique across all apps!
      * 
-     * @return string
+     * @return string|NULL
      */
-    public function getUid();
+    public function getUid() : ?string;
 
     /**
      * Returns the name of the page.
@@ -41,15 +42,7 @@ interface UiMenuItemInterface extends WorkbenchDependantInterface, AliasInterfac
      * 
      * @return string
      */
-    public function getName();
-
-    /**
-     * Overwrites the name of the page.
-     * 
-     * @param string $string
-     * @return UiPageInterface
-     */
-    public function setName($string);
+    public function getName() : string;
     
     /**
      * Returns the description of this page.
@@ -59,9 +52,9 @@ interface UiMenuItemInterface extends WorkbenchDependantInterface, AliasInterfac
      * e.g. "View an manage meta object of installed apps" for the object-page
      * in the metamodel editor.
      * 
-     * @return string
+     * @return string|NULL
      */
-    public function getDescription();
+    public function getDescription() : ?string;
     
     /**
      * Overwrites the description of this page.
@@ -72,30 +65,31 @@ interface UiMenuItemInterface extends WorkbenchDependantInterface, AliasInterfac
      * in the metamodel editor.
      *
      * @return string
+     * @return UiMenuItemInterface
      */
-    public function setDescription($string);
+    public function setDescription(string $string) : UiMenuItemInterface;
 
     /**
      * Returns an introduction text for the page to be used in contextual help, etc.
      * 
-     * @return string
+     * @return string|NULL
      */
-    public function getIntro();
+    public function getIntro() : ?string;
 
     /**
      * Overwrites introduction text for the page.
      * 
      * @param string $string
-     * @return UiPageInterface
+     * @return UiMenuItemInterface
      */
-    public function setIntro($text);
+    public function setIntro(string $text) : UiMenuItemInterface;
     
     /**
      * 
      * @param bool $true_or_false
-     * @return UiPageInterface
+     * @return UiMenuItemInterface
      */
-    public function setPublished(bool $true_or_false) : UiPageInterface;
+    public function setPublished(bool $true_or_false) : UiMenuItemInterface;
     
     /**
      * 

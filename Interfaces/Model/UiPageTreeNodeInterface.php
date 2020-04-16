@@ -1,25 +1,11 @@
 <?php
 namespace exface\Core\Interfaces\Model;
 
-use exface\Core\Interfaces\WorkbenchInterface;
-use exface\Core\CommonLogic\Model\UiPageTreeNode;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 
-interface UiPageTreeNodeInterface
+interface UiPageTreeNodeInterface extends UiMenuItemInterface
 {
-     /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
-     */
-    public function getWorkbench();
-    
-    /**
-     * 
-     * @return string
-     */
-    public function getName() : string;
     
     /**
      * 
@@ -29,22 +15,10 @@ interface UiPageTreeNodeInterface
     
     /**
      * 
-     * @return string
-     */
-    public function getUid() : string;
-    
-    /**
-     * 
      * @param UiPageTreeNodeInterface $parentNode
      * @return UiPageTreeNodeInterface
      */
     public function setParentNode(UiPageTreeNodeInterface $parentNode) : UiPageTreeNodeInterface;
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function hasParentNode() : bool;
     
     /**
      * 
@@ -64,38 +38,6 @@ interface UiPageTreeNodeInterface
      * @return UiPageSelectorInterface
      */
     public function getPageSelector() : UiPageSelectorInterface;
-    
-    /**
-     * 
-     * @param string $intro
-     * @return UiPageTreeNodeInterface
-     */
-    public function setIntro (string $intro) : UiPageTreeNodeInterface;
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function hasIntro() : bool;
-    
-    /**
-     * 
-     * @return string
-     */
-    public function getIntro() : string;
-    
-    /**
-     * 
-     * @param string $descpription
-     * @return UiPageTreeNodeInterface
-     */
-    public function setDescription (string $descpription) : UiPageTreeNodeInterface;
-    
-    /**
-     * 
-     * @return string
-     */
-    public function getDescription() : string;
     
     /**
      * 

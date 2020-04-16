@@ -5,6 +5,8 @@ use exface\Core\CommonLogic\Model\UiPageTree;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\UiPageTreeNode;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
 
 class UiPageTreeFactory extends AbstractStaticFactory
 {
@@ -107,5 +109,26 @@ class UiPageTreeFactory extends AbstractStaticFactory
             $tree->setRootPages([$rootPage]);
         }
         return $tree;
+    }
+    
+    public static function createNode(
+        WorkbenchInterface $workbench, 
+        string $alias, 
+        string $name, 
+        string $pageUid,
+        bool $published,
+        UiPageTreeNodeInterface $parentNode = null,
+        string $description = null,
+        string $intro = null) : UiPageTreeNode
+    {
+        $node = new UiPageTreeNode($workbench, $alias, $name, $pageUid, $parentNode);
+        $node->setPublished($published);
+        if ($description !== null) {
+            $node->setDescription($description);
+        }
+        if ($intro !== null) {
+            $node->setIntro($intro);
+        }
+        return $node;
     }
 }

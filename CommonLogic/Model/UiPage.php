@@ -28,6 +28,7 @@ use exface\Core\Factories\FacadeFactory;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Model\UiMenuItemInterface;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -657,12 +658,12 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentPage()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getParentPage()
      */
-    public function getMenuParentPage(bool $ignoreReplacement = false) : ?UiPageInterface
+    public function getParentPage(bool $ignoreReplacement = false) : ?UiPageInterface
     {
-        if ($this->getMenuParentPageSelector() !== null) {
-            return UiPageFactory::createFromModel($this->getWorkbench(), $this->getMenuParentPageSelector(), $ignoreReplacement);
+        if ($this->getParentPageSelector() !== null) {
+            return UiPageFactory::createFromModel($this->getWorkbench(), $this->getParentPageSelector(), $ignoreReplacement);
         }
         return null;
     }
@@ -672,7 +673,7 @@ class UiPage implements UiPageInterface
      * 
      * @return UiPageSelectorInterface|null
      */
-    public function getMenuParentPageSelector() : ?UiPageSelectorInterface
+    public function getParentPageSelector() : ?UiPageSelectorInterface
     {
         if ($this->menuParentPageSelector !== null && is_string($this->menuParentPageSelector)) {
             $this->menuParentPageSelector = SelectorFactory::createPageSelector($this->getWorkbench(), $this->menuParentPageSelector);
@@ -683,9 +684,9 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentPageSelector()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setParentPageSelector()
      */
-    public function setMenuParentPageSelector($id_or_alias)
+    public function setParentPageSelector($id_or_alias)
     {
         $this->menuParentPageSelector = $id_or_alias;
         return $this;
@@ -719,7 +720,7 @@ class UiPage implements UiPageInterface
      */
     public function isMoved()
     {
-        return $this->getMenuIndexDefault() !== null && $this->getMenuParentPageSelectorDefault() !== null && (strcasecmp($this->getMenuParentPageSelector(), $this->getMenuParentPageSelectorDefault()) !== 0 || $this->getMenuIndex() !== $this->getMenuIndexDefault());
+        return $this->getMenuIndexDefault() !== null && $this->getParentPageSelectorDefault() !== null && (strcasecmp($this->getParentPageSelector(), $this->getParentPageSelectorDefault()) !== 0 || $this->getMenuIndex() !== $this->getMenuIndexDefault());
     }
 
     /**
@@ -771,7 +772,7 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setId()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setUid()
      */
     public function setUid(string $uid) : UiPageInterface
     {
@@ -785,9 +786,9 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getName()
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::getName()
      */
-    public function getName()
+    public function getName() : string
     {
         return $this->name;
     }
@@ -795,9 +796,9 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setName()
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::setName()
      */
-    public function setName($string)
+    public function setName($string) : UiMenuItemInterface
     {
         $this->name = $string;
         return $this;
@@ -806,9 +807,9 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getDescription()
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::getDescription()
      */
-    public function getDescription()
+    public function getDescription() : ?string
     {
         return $this->description;
     }
@@ -816,33 +817,20 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setDescription()
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::setDescription()
      */
-    public function setDescription($string)
+    public function setDescription(string $string) : UiMenuItemInterface
     {
         $this->description = $string;
         return $this;
-    }
-     
-    /**
-     * @deprecated use setDescription() instead. To be removed in july 2018
-     * 
-     * @TODO remove in july 2018
-     * 
-     * @param string $string
-     * @return UiPageInterface
-     */
-    public function setShortDescription($string)
-    {
-        return $this->setDescription($string);
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getIntro()
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::getIntro()
      */
-    public function getIntro()
+    public function getIntro() : ?string
     {
         return $this->intro;
     }
@@ -850,9 +838,9 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setIntro()
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::setIntro()
      */
-    public function setIntro($text)
+    public function setIntro(string $text) : UiMenuItemInterface
     {
         $this->intro = $text;
         return $this;
@@ -1010,7 +998,7 @@ class UiPage implements UiPageInterface
         $uxon = new UxonObject();
         $uxon->setProperty('id', $this->getUid());
         $uxon->setProperty('alias_with_namespace', $this->getAliasWithNamespace());
-        $uxon->setProperty('menu_parent_page_selector', $this->getMenuParentPageSelector()->toString());
+        $uxon->setProperty('menu_parent_page_selector', $this->getParentPageSelector()->toString());
         $uxon->setProperty('menu_index', $this->getMenuIndex());
         $uxon->setProperty('menu_visible', $this->getMenuVisible());
         $uxon->setProperty('name', $this->getName());
@@ -1062,8 +1050,8 @@ class UiPage implements UiPageInterface
         if ($this->getMenuIndexDefault() !== null) {
             $copy->setMenuIndexDefault($this->getMenuIndexDefault());
         }
-        if ($this->getMenuParentPageSelectorDefault() !== null) {
-            $copy->setMenuParentPageSelectorDefault($this->getMenuParentPageSelectorDefault());
+        if ($this->getParentPageSelectorDefault() !== null) {
+            $copy->setParentPageSelectorDefault($this->getParentPageSelectorDefault());
         }
         return $copy;
     }
@@ -1173,7 +1161,7 @@ class UiPage implements UiPageInterface
         if ($this->getAliasWithNamespace() != $page->getAliasWithNamespace()) {
             return false;
         }
-        if ($this->hasMenuParent() && $page->hasMenuParent() && $this->getMenuParentPageSelector()->toString() != $page->getMenuParentPageSelector()->toString()) {
+        if ($this->hasParent() && $page->hasParent() && $this->getParentPageSelector()->toString() != $page->getParentPageSelector()->toString()) {
             return false;
         }
         if ($this->getMenuIndex() != $page->getMenuIndex() && ! in_array('menuindex', $ignore_properties)) {
@@ -1296,9 +1284,9 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentPageSelectorDefault()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setParentPageSelectorDefault()
      */
-    public function setMenuParentPageSelectorDefault($selectorOrString): UiPageInterface
+    public function setParentPageSelectorDefault($selectorOrString): UiPageInterface
     {
         $this->menuParentPageSelectorDefault = $selectorOrString;
         return $this;
@@ -1338,9 +1326,9 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentPageSelectorDefault()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getParentPageSelectorDefault()
      */
-    public function getMenuParentPageSelectorDefault(): ?UiPageSelectorInterface
+    public function getParentPageSelectorDefault(): ?UiPageSelectorInterface
     {
         if ($this->menuParentPageSelectorDefault !== null && is_string($this->menuParentPageSelectorDefault)) {
             $this->menuParentPageSelectorDefault = SelectorFactory::createPageSelector($this->getWorkbench(), $this->menuParentPageSelectorDefault);
@@ -1351,21 +1339,21 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::hasMenuParent()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::hasParent()
      */
-    public function hasMenuParent() : bool
+    public function hasParent() : bool
     {
         return $this->menuParentPageSelector !== null;
     }
 
     /**
-     * @deprecated use setMenuParentPageSelector() instead!
+     * @deprecated use setParentPageSelector() instead!
      * @param string $aliasWithNamespace
      * @return UiPageInterface
      */
-    protected function setMenuParentPageAlias(string $aliasWithNamespace) : UiPageInterface
+    protected function setParentPageAlias(string $aliasWithNamespace) : UiPageInterface
     {
-        return $this->setMenuParentPageSelector($aliasWithNamespace);
+        return $this->setParentPageSelector($aliasWithNamespace);
     }
     
     /**
@@ -1384,9 +1372,9 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setPublished()
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::setPublished()
      */
-    public function setPublished(bool $true_or_false) : UiPageInterface
+    public function setPublished(bool $true_or_false) : UiMenuItemInterface
     {
         $this->published = $true_or_false;
         return $this;
@@ -1395,7 +1383,7 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::isPublished()
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::isPublished()
      */
     public function isPublished() : bool
     {
@@ -1411,10 +1399,10 @@ class UiPage implements UiPageInterface
             'AUTO_UPDATE_WITH_APP' => $this->isUpdateable(),
             'CONTENT' => $this->getContents(),
             'DEFAULT_MENU_INDEX' => $this->getMenuIndexDefault(),
-            'DEFAULT_MENU_PARENT' => $this->getMenuParentPageSelectorDefault() !== null ? $this->getPageUidFromSelector($this->getMenuParentPageSelectorDefault()) : null,
+            'DEFAULT_MENU_PARENT' => $this->getParentPageSelectorDefault() !== null ? $this->getPageUidFromSelector($this->getParentPageSelectorDefault()) : null,
             'DESCRIPTION' => $this->getDescription(),
             'INTRO' => $this->getIntro(),
-            'MENU_PARENT' => $this->getMenuParentPageSelector() !== null ? $this->getPageUidFromSelector($this->getMenuParentPageSelector()) : null,
+            'MENU_PARENT' => $this->getParentPageSelector() !== null ? $this->getPageUidFromSelector($this->getParentPageSelector()) : null,
             'MENU_POSITION' => $this->getMenuIndex(),
             'MENU_VISIBLE' => $this->getMenuVisible(),
             'NAME' => $this->getName(),

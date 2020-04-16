@@ -208,7 +208,7 @@ interface ModelLoaderInterface
      * @param UiPageTree $tree
      * @return array
      */
-    public function loadUiPageTree(UiPageTree $tree) : array;
+    public function loadPageTree(UiPageTree $tree) : array;
     
 }
 ?>
