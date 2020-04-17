@@ -627,8 +627,11 @@ class UiPage implements UiPageInterface
     }
 
     /**
+     * The app, the page belongs to (if any)
      * 
-     * {@inheritDoc}
+     * @uxon-property app
+     * @uxon-type metamodel:app
+     * 
      * @see \exface\Core\Interfaces\Model\UiPageInterface::setApp()
      */
     public function setApp(AppSelectorInterface $selector) : UiPageInterface
@@ -691,7 +694,11 @@ class UiPage implements UiPageInterface
     }
     
     /**
-     * @deprecated use setParentPageSelector() instead
+     * The page selector for the parent page in the menu
+     * 
+     * @uxon-property menu_parent_page_selector
+     * @uxon-type metamodel:page
+     * 
      * @param string $id_or_alias
      * @return \exface\Core\Interfaces\Model\UiPageInterface
      */
@@ -789,7 +796,10 @@ class UiPage implements UiPageInterface
     }
     
     /**
-     * @deprecated use setUid() instead!
+     * The UID of the page
+     * 
+     * @uxon-property id
+     * @uxon-type string
      * 
      * @param string $uid
      * @return UiPageInterface
@@ -824,8 +834,12 @@ class UiPage implements UiPageInterface
     }
 
     /**
+     * The name of the page in the default language of it's app
      * 
-     * {@inheritDoc}
+     * @uxon-property name
+     * @uxon-type string
+     * @uxon-required true
+     * 
      * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::setName()
      */
     public function setName($string) : UiMenuItemInterface
@@ -845,8 +859,11 @@ class UiPage implements UiPageInterface
     }
     
     /**
+     * A short description for the page in the default language of it's app
      * 
-     * {@inheritDoc}
+     * @uxon-property description
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::setDescription()
      */
     public function setDescription(string $string) : UiMenuItemInterface
@@ -866,8 +883,11 @@ class UiPage implements UiPageInterface
     }
 
     /**
+     * An long description (introduction) for the page
      * 
-     * {@inheritDoc}
+     * @uxon-property intro
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::setIntro()
      */
     public function setIntro(string $text) : UiMenuItemInterface
@@ -940,8 +960,11 @@ class UiPage implements UiPageInterface
     }
 
     /**
+     * UXON description of the page's content (widgets)
      * 
-     * {@inheritDoc}
+     * @uxon-property contents
+     * @uxon-type \exface\Core\Widgets\AbstractWidget
+     * 
      * @see \exface\Core\Interfaces\Model\UiPageInterface::setContents()
      */
     public function setContents($contents)
