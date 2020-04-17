@@ -2,7 +2,7 @@
     "uid": "0x6179ab4000ac11ea8fb10205857feb80",
     "alias_with_namespace": "exface.core.console",
     "menu_parent_page_selector": "0xf8310d4bba2c11e7895fe4b318306b9a",
-    "menu_index": 5,
+    "menu_index": 7,
     "menu_visible": true,
     "name": "Console",
     "description": "",
@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2019-11-06 16:44:55",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-03-10 20:25:10",
+    "modified_on": "2020-04-17 12:49:25",
     "contents": {
         "widget_type": "Console",
         "object_alias": "exface.Core.ACTION",
