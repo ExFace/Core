@@ -30,6 +30,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
 use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\Factories\UserFactory;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -1411,6 +1412,18 @@ class UiPage implements UiPageInterface
     
     public function exportDataRow(DataSheetInterface $dataSheet) : DataSheetInterface
     {
+        $createdBySelector = $this->getCreatedByUserSelector();
+        if ($createdBySelector->isUid()) {
+            $createdByUid = $createdBySelector->toString();
+        } else {
+            $createdByUid = UserFactory::createFromSelector($createdBySelector)->getUid();
+        }
+        $modifiedBySelector = $this->getModifiedByUserSelector();
+        if ($modifiedBySelector->isUid()) {
+            $modifiedByUid = $modifiedBySelector->toString();
+        } else {
+            $modifiedByUid = UserFactory::createFromSelector($modifiedBySelector)->getUid();
+        }
         $dataSheet->addRow([
             'UID' => $this->getUid(),
             'ALIAS' => $this->getAliasWithNamespace(),
@@ -1427,9 +1440,9 @@ class UiPage implements UiPageInterface
             'NAME' => $this->getName(),
             'REPLACE_PAGE' => $this->getReplacesPageSelector() !== null ? $this->getPageUidFromSelector($this->getReplacesPageSelector()) : null,
             'PUBLISHED' => $this->isPublished(),
-            'CREATED_BY_USER' => $this->getCreatedByUserSelector()->toString(),
+            'CREATED_BY_USER' => $createdByUid,
             'CREATED_ON' => $this->getCreatedOn(),
-            'MODIFIED_BY_USER' => $this->getModifiedByUserSelector()->toString(),
+            'MODIFIED_BY_USER' => $modifiedByUid,
             'MODIFIED_ON' => $this->getModifiedOn()
         ]);
         
