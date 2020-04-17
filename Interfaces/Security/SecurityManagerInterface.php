@@ -55,5 +55,5 @@ interface SecurityManagerInterface extends WorkbenchDependantInterface, Authenti
      * @param AuthorizationPointSelector|string $selectorOrString
      * @return AuthorizationPointInterface
      */
-    public function getAuthorizationPoint(string $selectorOrString) : AuthorizationPointInterface;
+    public function getAuthorizationPoint($selectorOrString) : AuthorizationPointInterface;
 }
