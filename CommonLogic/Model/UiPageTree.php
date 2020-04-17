@@ -6,6 +6,8 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
 use Symfony\Component\Config\Definition\Exception\ForbiddenOverwriteException;
+use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
+use exface\Core\Exceptions\Security\AccessDeniedError;
 
 class UiPageTree
 {
@@ -173,7 +175,16 @@ class UiPageTree
      */
     protected function loadTree() : UiPageTree
     {   
-        $this->rootNodes = $this->getWorkbench()->model()->getModelLoader()->loadPageTree($this);
+        $rootNodes = $this->getWorkbench()->model()->getModelLoader()->loadPageTree($this);
+        foreach ($rootNodes as $nr => $node) {
+            $ap = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class);
+            try {
+                $ap->authorize($node);
+            } catch (AccessDeniedError $e) {
+                unset($rootNodes[$nr]);
+            }
+        }
+        $this->rootNodes = $rootNodes;
         return $this;
     }
     

@@ -326,27 +326,6 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::isPublished()
-     */
-    public function isPublished(): bool
-    {
-        return $this->published;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::setPublished()
-     */
-    public function setPublished(bool $true_or_false) : UiMenuItemInterface
-    {
-        $this->published = $true_or_false;
-        return $this;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\AliasInterface::getAliasWithNamespace()
      */
     public function getAliasWithNamespace()

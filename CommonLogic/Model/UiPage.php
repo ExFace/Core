@@ -29,6 +29,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
+use exface\Core\DataTypes\DateTimeDataType;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -98,16 +99,6 @@ class UiPage implements UiPageInterface
     private $aliasWithNamespace = null;
 
     private $dirty = false;
-    
-    private $published = true;
-    
-    private $created_by_user = null;
-    
-    private $modified_by_user = null;
-    
-    private $created_on = null;
-    
-    private $modified_on = null;
 
     /**
      * @deprecated use UiPageFactory::create() instead!
@@ -1058,9 +1049,9 @@ class UiPage implements UiPageInterface
         $uxon->setProperty('description', $this->getDescription());
         $uxon->setProperty('intro', $this->getIntro());
         $uxon->setProperty('replaces_page_selector', $this->getReplacesPageSelector());
-        $uxon->setProperty('created_by_user', $this->getCreatedByUser());
+        $uxon->setProperty('created_by_user', $this->getCreatedByUserSelector()->toString());
         $uxon->setProperty('created_on', $this->getCreatedOn());
-        $uxon->setProperty('modified_by_user', $this->getModifiedByUser());
+        $uxon->setProperty('modified_by_user', $this->getModifiedByUserSelector()->toString());
         $uxon->setProperty('modified_on', $this->getModifiedOn());
         
         $contents = trim($this->getContents());
@@ -1436,27 +1427,6 @@ class UiPage implements UiPageInterface
         return $this->setReplacesPageSelector($aliasWithNamespace);
     }
     
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::setPublished()
-     */
-    public function setPublished(bool $true_or_false) : UiMenuItemInterface
-    {
-        $this->published = $true_or_false;
-        return $this;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::isPublished()
-     */
-    public function isPublished() : bool
-    {
-        return $this->published;
-    }
-    
     public function exportDataRow(DataSheetInterface $dataSheet) : DataSheetInterface
     {
         $dataSheet->addRow([
@@ -1490,85 +1460,5 @@ class UiPage implements UiPageInterface
             return $selector->toString();
         }
         return UiPageFactory::createFromModel($this->getWorkbench(), $selector)->getUid();
-    }
-    
-    /**
-     *
-     * @param string $createdBy
-     * @return UiPageInterface
-     */
-    public function setCreatedByUser(string $createdBy) : UiPageInterface
-    {
-        $this->created_by_user = $createdBy;
-        return $this;
-    }
-    
-    /**
-     *
-     * @return string|NULL
-     */
-    public function getCreatedByUser() : ?string
-    {
-        return $this->created_by_user;
-    }
-    
-    /**
-     *
-     * @param string $createdBy
-     * @return UiPageInterface
-     */
-    public function setModifiedByUser(string $modifiedBy) : UiPageInterface
-    {
-        $this->modified_by_user = $modifiedBy;
-        return $this;
-    }
-    
-    /**
-     *
-     * @return string|NULL
-     */
-    public function getModifiedByUser() : ?string
-    {
-        return $this->modified_by_user;
-    }
-    
-    /**
-     *
-     * @param string $createdOn
-     * @return UiPageInterface
-     */
-    public function setCreatedOn(string $createdOn) : UiPageInterface
-    {
-        $this->created_on = $createdOn;
-        return $this;
-    }
-    
-    /**
-     *
-     * @return string
-     */
-    public function getCreatedOn() : ?string
-    {
-        return $this->created_on;
-    }
-    
-    /**
-     *
-     * @param string $createdOn
-     * @return UiPageInterface
-     */
-    public function setModifiedOn(string $modifiedOn) : UiPageInterface
-    {
-        $this->modified_on = $modifiedOn;
-        return $this;
-    }
-    
-    /**
-     *
-     * @return string|NULL
-     */
-    public function getModifiedOn() : ?string
-    {
-        return $this->modified_on;
     }
 }

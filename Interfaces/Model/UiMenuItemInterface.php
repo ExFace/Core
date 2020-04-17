@@ -5,6 +5,7 @@ use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\Selectors\UiPageGroupSelectorInterface;
+use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 
 /**
  * Common interface for anything, that can be put into a UI menu - pages, page tree nodes, etc.
@@ -111,4 +112,56 @@ interface UiMenuItemInterface extends WorkbenchDependantInterface, AliasInterfac
      * @return UiMenuItemInterface
      */
     public function addGroupSelector($selectorOrString) : UiMenuItemInterface;
+    
+    /**
+     *
+     * @param UserSelectorInterface|string $createdBy
+     * @return UiMenuItemInterface
+     */
+    public function setCreatedByUserSelector($createdBy) : UiMenuItemInterface;
+    
+    /**
+     *
+     * @return UserSelectorInterface
+     */
+    public function getCreatedByUserSelector() : UserSelectorInterface;
+    
+    /**
+     *
+     * @param UserSelectorInterface|string $createdBy
+     * @return UiMenuItemInterface
+     */
+    public function setModifiedByUserSelector($modifiedBy) : UiMenuItemInterface;
+    
+    /**
+     *
+     * @return UserSelectorInterface
+     */
+    public function getModifiedByUserSelector() : UserSelectorInterface;
+    
+    /**
+     *
+     * @param string $dateTimeString
+     * @return UiMenuItemInterface
+     */
+    public function setCreatedOn(string $dateTimeString) : UiMenuItemInterface;
+    
+    /**
+     *
+     * @return string
+     */
+    public function getCreatedOn() : string;
+    
+    /**
+     *
+     * @param string $dateTimeString
+     * @return UiMenuItemInterface
+     */
+    public function setModifiedOn(string $dateTimeString) : UiMenuItemInterface;
+    
+    /**
+     *
+     * @return string
+     */
+    public function getModifiedOn() : string;
 }

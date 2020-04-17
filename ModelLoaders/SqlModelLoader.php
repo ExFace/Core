@@ -1226,6 +1226,11 @@ SQL;
         $uiPage->setReplacesPageSelector($row['replace_page_oid']);
         $uiPage->setContents($row['content'] ?? new UxonObject());
         
+        $uiPage->setCreatedOn($row['created_on']);
+        $uiPage->setCreatedByUserSelector($row['created_by_user_oid']);
+        $uiPage->setModifiedOn($row['modified_on']);
+        $uiPage->setModifiedByUserSelector($row['modified_by_user_oid']);
+        
         $uiPage->setFacadeSelector($row['facade_filepath']);
         if ($row['facade_uxon']) {
             $uiPage->setFacadeConfig(new UxonObject(json_decode($row['facade_uxon'], true)));
@@ -1242,19 +1247,6 @@ SQL;
             foreach (explode(',', $row['group_oids']) as $groupUid) {
                 $uiPage->addGroupSelector($groupUid);
             }
-        }
-        
-        if ($row['created_on'] !== null) {            
-            $uiPage->setCreatedOn($row['created_on']);
-        }
-        if ($row['created_by_user_oid'] !== null) {
-            $uiPage->setCreatedByUser($row['created_by_user_oid']);
-        }
-        if ($row['modified_on'] !== null) {
-            $uiPage->setModifiedOn($row['modified_on']);
-        }
-        if ($row['modified_by_user_oid'] !== null) {
-            $uiPage->setModifiedByUser($row['modified_by_user_oid']);
         }
        
         $this->pages_loaded[$uiPage->getUid()] = $uiPage;
@@ -1292,27 +1284,32 @@ SQL;
         }
     }
     
-    private function loadPageTreeCreateNodeFromDbRow(array $row, UiPageTreeNodeInterface $parentNode = null, $skipUnauthorized = false) : UiPageTreeNodeInterface
+    /**
+     * 
+     * @param array $row
+     * @param UiPageTreeNodeInterface $parentNode
+     * @return UiPageTreeNodeInterface
+     */
+    private function loadPageTreeCreateNodeFromDbRow(array $row, UiPageTreeNodeInterface $parentNode = null) : UiPageTreeNodeInterface
     {
-        try {
-            return UiPageTreeFactory::createNode(
-                $this->getWorkbench(),
-                $row['alias'],
-                $row['name'],
-                $row['oid'],
-                ($row['published'] ? true : false),
-                $parentNode,
-                $row['description'],
-                $row['intro'],
-                $row['group_oids'] ? explode(',', $row['group_oids']) : null
-            );
-        } catch (AccessPermissionDeniedError $e) {
-            if ($skipUnauthorized === true) {
-                return null;
-            } else {
-                throw $e;
-            }
-        }
+        $node = UiPageTreeFactory::createNode(
+            $this->getWorkbench(),
+            $row['alias'],
+            $row['name'],
+            $row['oid'],
+            ($row['published'] ? true : false),
+            $parentNode,
+            $row['description'],
+            $row['intro'],
+            $row['group_oids'] ? explode(',', $row['group_oids']) : null
+        );
+        
+        $node->setCreatedOn($row['created_on']);
+        $node->setCreatedByUserSelector($row['created_by_user_oid']);
+        $node->setModifiedOn($row['modified_on']);
+        $node->setModifiedByUserSelector($row['modified_by_user_oid']);
+        
+        return $node;
     }
     
     /**
@@ -1395,7 +1392,6 @@ SQL;
      */
     protected function loadPageTreeChildNodes(UiPageTree $tree, UiPageTreeNodeInterface $node, ?int $level) : UiPageTreeNodeInterface
     {
-        $exface = $this->getWorkbench();
         $depth = $tree->getExpandDepth();        
         if ($level === null || $level < $depth) {
             $childNodes = null;
@@ -1481,7 +1477,12 @@ SQL;
                 p.alias,
                 p.description,
                 p.intro,
+                p.published,
                 p.menu_index,
+                p.created_on,
+                p.created_by_user_oid,
+                p.modified_on,
+                p.modified_by_user_oid,
                 (
                     SELECT GROUP_CONCAT({$this->buildSqlUuidSelector('pgp.page_group_oid')}, ',')
                     FROM exf_page_group_pages pgp

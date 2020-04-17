@@ -79,4 +79,22 @@ abstract class PermissionFactory extends AbstractStaticFactory
                 throw new InvalidArgumentException('Cannot create permission from policy effect "' . $effect->__toString() . '"!');
         }
     }
+    
+    /**
+     *
+     * @param PolicyEffectDataType $effect
+     * @throws InvalidArgumentException
+     * @return PermissionInterface
+     */
+    public static function createFromPolicyEffectInverted(PolicyEffectDataType $effect, AuthorizationPolicyInterface $policy = null) : PermissionInterface
+    {
+        switch ($effect->__toString()) {
+            case PolicyEffectDataType::DENY:
+                return static::createPermitted($policy);
+            case PolicyEffectDataType::PERMIT:
+                return static::createDenied($policy);
+            default:
+                throw new InvalidArgumentException('Cannot create permission from policy effect "' . $effect->__toString() . '"!');
+        }
+    }
 }
