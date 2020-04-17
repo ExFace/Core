@@ -1049,7 +1049,7 @@ class UiPage implements UiPageInterface
     {
         /** @var UxonObject $uxon */
         $uxon = new UxonObject();
-        $uxon->setProperty('id', $this->getUid());
+        $uxon->setProperty('uid', $this->getUid());
         $uxon->setProperty('alias_with_namespace', $this->getAliasWithNamespace());
         $uxon->setProperty('menu_parent_page_selector', $this->getParentPageSelector()->toString());
         $uxon->setProperty('menu_index', $this->getMenuIndex());

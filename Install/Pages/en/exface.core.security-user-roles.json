@@ -1,5 +1,5 @@
 {
-    "id": "0x11ea6c403ea5197ea3480205857feb80",
+    "uid": "0x11ea6c403ea5197ea3480205857feb80",
     "alias_with_namespace": "exface.core.security-user-roles",
     "menu_parent_page_selector": "0x11ea5edc2f798596b9920205857feb80",
     "menu_index": 0,
@@ -8,6 +8,10 @@
     "description": "",
     "intro": "",
     "replaces_page_selector": null,
+    "created_by_user": "0x31000000000000000000000000000000",
+    "created_on": "2020-03-22 13:22:50",
+    "modified_by_user": "0x31000000000000000000000000000000",
+    "modified_on": "2020-03-22 13:38:36",
     "contents": {
         "extend_widget": "[exface.core.user-roles]"
     }

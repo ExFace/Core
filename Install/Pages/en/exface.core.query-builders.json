@@ -1,5 +1,5 @@
 {
-    "id": "0xcdf966ba949e11e7a875028037ec0200",
+    "uid": "0xcdf966ba949e11e7a875028037ec0200",
     "alias_with_namespace": "exface.core.query-builders",
     "menu_parent_page_selector": "0xf831c595ba2c11e7895fe4b318306b9a",
     "menu_index": 7,
@@ -8,6 +8,10 @@
     "description": "Browse available query builders and their documentation",
     "intro": "",
     "replaces_page_selector": null,
+    "created_by_user": "0x31000000000000000000000000000000",
+    "created_on": "2016-11-21 12:16:23",
+    "modified_by_user": "0x31000000000000000000000000000000",
+    "modified_on": "2019-09-18 17:18:35",
     "contents": {
         "object_alias": "exface.core.QUERY_BUILDER",
         "widget_type": "DataTable",

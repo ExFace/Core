@@ -1,5 +1,5 @@
 {
-    "id": "0xe6ea2a1a949e11e78de5028037ec0200",
+    "uid": "0xe6ea2a1a949e11e78de5028037ec0200",
     "alias_with_namespace": "exface.core.objects",
     "menu_parent_page_selector": "0x8f9e3238949e11e7aa5f028037ec0200",
     "menu_index": 4,
@@ -8,6 +8,10 @@
     "description": "Manage meta objects, attributes, relations, etc.",
     "intro": "Hier werden Meta-Objekte gepflegt. Jedes Objekt geh\u00f6rt zu genau einer App. App-\u00fcbergreifende Relationen sind jedoch \u00fcber die Attribute m\u00f6glich.",
     "replaces_page_selector": null,
+    "created_by_user": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "created_on": "2013-06-20 19:21:06",
+    "modified_by_user": "0x31000000000000000000000000000000",
+    "modified_on": "2020-03-10 20:24:56",
     "contents": {
         "object_alias": "exface.Core.OBJECT",
         "widget_type": "DataTable",

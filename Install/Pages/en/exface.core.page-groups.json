@@ -1,5 +1,5 @@
 {
-    "id": "0x11ea630d9cdcc7f1a2e30205857feb80",
+    "uid": "0x11ea630d9cdcc7f1a2e30205857feb80",
     "alias_with_namespace": "exface.core.page-groups",
     "menu_parent_page_selector": "0xaab623e6632411e8aab30205857feb80",
     "menu_index": 0,
@@ -8,6 +8,10 @@
     "description": "",
     "intro": "",
     "replaces_page_selector": null,
+    "created_by_user": "0x31000000000000000000000000000000",
+    "created_on": "2020-03-10 20:27:50",
+    "modified_by_user": "0x31000000000000000000000000000000",
+    "modified_on": "2020-03-22 13:36:15",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.PAGE_GROUP",
