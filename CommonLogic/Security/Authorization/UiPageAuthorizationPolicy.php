@@ -14,6 +14,7 @@ use exface\Core\Factories\PermissionFactory;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 use exface\Core\CommonLogic\Selectors\UiPageGroupSelector;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
  * Policy for access to UI pages and menu items.
@@ -36,6 +37,8 @@ class UiPageAuthorizationPolicy implements AuthorizationPolicyInterface
     private $conditionUxon = null;
     
     private $effect = null;
+    
+    private $hideUnpublished = true;
     
     /**
      * 
@@ -81,6 +84,10 @@ class UiPageAuthorizationPolicy implements AuthorizationPolicyInterface
     {
         $applied = false;
         try {
+            if ($menuItem === null) {
+                throw new InvalidArgumentException('Cannot evalute page access policy: no page or menu item provided!');
+            }
+            
             if ($userOrToken instanceof AuthenticationTokenInterface) {
                 $user = $this->workbench->getSecurity()->getUser($userOrToken);
             } else {
@@ -93,11 +100,22 @@ class UiPageAuthorizationPolicy implements AuthorizationPolicyInterface
                 $applied = true;
             }
             
-            if ($menuItem !== null) {
-                if ($this->pageGroupSelector !== null && $menuItem->isInGroup($this->pageGroupSelector) === false) {
-                    return PermissionFactory::createNotApplicable($this);
-                } else {
-                    $applied = true;
+            if ($this->pageGroupSelector !== null && $menuItem->isInGroup($this->pageGroupSelector) === false) {
+                return PermissionFactory::createNotApplicable($this);
+            } else {
+                $applied = true;
+            }
+            
+            // Deny access to unpublished menu items unless their author is the current user
+            if ($menuItem->isPublished() === false && $this->getHideUnpublished() === true) {
+                $creatorSelector = $menuItem->getCreatedByUserSelector();
+                switch (true) {
+                    case $creatorSelector->isUid() && $creatorSelector->toString() === $user->getUid():
+                        break;
+                    case $creatorSelector->isUsername() && $creatorSelector->toString() === $user->getUsername():
+                        break;
+                    default:
+                        return PermissionFactory::createFromPolicyEffectInverted($this->getEffect(), $this);
                 }
             }
             
@@ -130,5 +148,30 @@ class UiPageAuthorizationPolicy implements AuthorizationPolicyInterface
     public function getName() : ?string
     {
         return $this->name;
+    }
+    
+    /**
+     * Set to FALSE to show give access to unpublished pages and menu items.
+     * 
+     * By default, only the creator of an unpublished page can see it. All
+     * other users require a special policy matching that page and having
+     * `hide_unpublished` set to `true`;
+     * 
+     * @uxon-property hide_unpublished
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $trueOrFalse
+     * @return UiPageAuthorizationPolicy
+     */
+    protected function setHideUnpublished(bool $trueOrFalse) : UiPageAuthorizationPolicy
+    {
+        $this->hideUnpublished = $trueOrFalse;
+        return $this;
+    }
+    
+    protected function getHideUnpublished() : bool
+    {
+        return $this->hideUnpublished;
     }
 }
