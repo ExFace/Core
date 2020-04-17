@@ -1186,6 +1186,7 @@ SQL;
                 p.*,
                 {$this->buildSqlUuidSelector('p.oid')} as oid,
                 {$this->buildSqlUuidSelector('p.parent_oid')} as parent_oid,
+                {$this->buildSqlUuidSelector('p.default_menu_parent_oid')} as default_menu_parent_oid,
                 {$this->buildSqlUuidSelector('p.page_template_oid')} as page_template_oid,
                 {$this->buildSqlUuidSelector('p.created_by_user_oid')} as created_by_user_oid,
                 {$this->buildSqlUuidSelector('p.modified_by_user_oid')} as modified_by_user_oid,

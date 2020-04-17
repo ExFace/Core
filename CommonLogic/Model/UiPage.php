@@ -737,7 +737,10 @@ class UiPage implements UiPageInterface
      */
     public function isMoved()
     {
-        return $this->getMenuIndexDefault() !== null && $this->getParentPageSelectorDefault() !== null && (strcasecmp($this->getParentPageSelector(), $this->getParentPageSelectorDefault()) !== 0 || $this->getMenuIndex() !== $this->getMenuIndexDefault());
+        $defaultsExist = $this->getMenuIndexDefault() !== null && $this->getParentPageSelectorDefault() !== null;
+        $differentParent = strcasecmp($this->getParentPageSelector(), $this->getParentPageSelectorDefault()) !== 0;
+        $differentIndex = $this->getMenuIndex() !== $this->getMenuIndexDefault();
+        return $defaultsExist === true && ($differentParent || $differentIndex);
     }
 
     /**
@@ -1203,43 +1206,22 @@ class UiPage implements UiPageInterface
     {
         $ignore_properties = array_map('strtolower', $ignore_properties);
         
-        if ($this->getUid() != $page->getUid() && ! in_array('id', $ignore_properties)) {
-            return false;
-        }
-        if ($this->getAliasWithNamespace() != $page->getAliasWithNamespace()) {
-            return false;
-        }
-        if ($this->hasParent() && $page->hasParent() && $this->getParentPageSelector()->toString() != $page->getParentPageSelector()->toString()) {
-            return false;
-        }
-        if ($this->getMenuIndex() != $page->getMenuIndex() && ! in_array('menuindex', $ignore_properties)) {
-            return false;
-        }
-        if ($this->getMenuVisible() != $page->getMenuVisible() && ! in_array('menuvisible', $ignore_properties)) {
-            return false;
-        }
-        if ($this->getName() != $page->getName() && ! in_array('name', $ignore_properties)) {
-            return false;
-        }
-        if ($this->getDescription() != $page->getDescription() && ! in_array('description', $ignore_properties)) {
-            return false;
-        }
-        if ($this->getIntro() != $page->getIntro() && ! in_array('intro', $ignore_properties)) {
-            return false;
-        }
-        if ($this->getReplacesPageSelector() != $page->getReplacesPageSelector() && ! in_array('replacespagealias', $ignore_properties)) {
-            return false;
-        }
-        if ($this->getContents() != $page->getContents() && ! in_array('contents', $ignore_properties)) {
-            return false;
-        }
-        if (! in_array('app', $ignore_properties)) {
-            if ($this->hasApp() !== $page->hasApp()) {
+        switch (true) {
+            // TODO add all fields here or even better - compare UXONs
+            case $this->getUid() != $page->getUid() && ! in_array('id', $ignore_properties):
+            case $this->getAliasWithNamespace() != $page->getAliasWithNamespace():
+            case $this->hasParent() !== $page->hasParent() && ! in_array('menu_parent_page_selector', $ignore_properties):
+            case $this->hasParent() && $page->hasParent() && $this->getParentPageSelector()->toString() != $page->getParentPageSelector()->toString() && ! in_array('menu_parent_page_selector', $ignore_properties):
+            case $this->getMenuIndex() != $page->getMenuIndex() && ! in_array('menu_index', $ignore_properties):
+            case $this->getMenuVisible() != $page->getMenuVisible() && ! in_array('menu_visible', $ignore_properties):
+            case $this->getName() != $page->getName() && ! in_array('name', $ignore_properties):
+            case $this->getDescription() != $page->getDescription() && ! in_array('description', $ignore_properties):
+            case $this->getIntro() != $page->getIntro() && ! in_array('intro', $ignore_properties):
+            case $this->getReplacesPageSelector() != $page->getReplacesPageSelector() && ! in_array('replaces_page_selector', $ignore_properties):
+            case $this->getContents() != $page->getContents() && ! in_array('contents', $ignore_properties):
+            case $this->hasApp() !== $page->hasApp() && ! in_array('app', $ignore_properties):
+            case $this->hasApp() && $page->hasApp() && $this->getApp()->getAliasWithNamespace() !== $page->getApp()->getAliasWithNamespace() && ! in_array('app', $ignore_properties):
                 return false;
-            }
-            if ($this->hasApp() && $page->hasApp() && $this->getApp() !== $page->getApp()) {
-                return false;
-            }
         }
         
         return true;
