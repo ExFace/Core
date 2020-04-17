@@ -2,7 +2,6 @@
 namespace exface\Core\Interfaces\Security;
 
 use exface\Core\Interfaces\WorkbenchDependantInterface;
-use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\PolicyEffectDataType;
@@ -16,12 +15,12 @@ use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
  * Accordingly, there is the `UiPageAuthorizationPoint`, the `ActionAuthorizationPoint`,
  * and so on. 
  * 
- * Every such access permission check basically instantiates it's authorization
- * point (AP), loads it's configuration from the metamodel and calls it's `authorize()`
- * method with arguments appropriate for the specific AP - typically the subject (user),
- * the resource being accessed and/or the action being performed. The AP performs it's 
- * internal logic and either grants permission by returning the resource or throwing
- * an authorization exception. 
+ * Every such access permission check needs to aquire an instance of such an authorization
+ * point and call it's `authorize()` method with arguments appropriate for the specific AP - 
+ * typically the subject (user), the resource being accessed and/or the action being performed. 
+ * The AP performs it's internal logic and either grants permission by returning the resource 
+ * or throwing an authorization exception. Most APs logic will be based on the it's model
+ * configuration, but technically every AP is fre to use any kind of logic.
  * 
  * Obviously, the arguments and the return value of the `authorize()` method depend
  * on the logic and capabilities of the AP and the code surrunding it. Apps may have
@@ -41,7 +40,7 @@ use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 interface AuthorizationPointInterface extends WorkbenchDependantInterface
 {    
     /**
-     * Evaluates the logic of the authorization point triggering the OnAuthorizedEvent
+     * Evaluates the logic of the authorization point triggering the `OnAuthorizedEvent`
      * or throwing an authorization exception depending on the result.
      * 
      * Every authorization point (AP) has it's own internal logic and event it's own 
@@ -74,6 +73,11 @@ interface AuthorizationPointInterface extends WorkbenchDependantInterface
     
     /**
      * Allows to add policies to the authorization point.
+     * 
+     * The specific policy class depends on the AP. However, all policies have at least a set of
+     * target objects (e.g. user role, page group, action, etc.), a name, an effect (permit/deny)
+     * and a configuration UXON for addtional conditions that depend on the policy class. This
+     * common interface allows to configure different policies in the metamodel in a similar way.
      * 
      * @param array $targets
      * @param UxonObject $condition
