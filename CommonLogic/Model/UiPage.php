@@ -1208,7 +1208,7 @@ class UiPage implements UiPageInterface
         
         switch (true) {
             // TODO add all fields here or even better - compare UXONs
-            case $this->getUid() != $page->getUid() && ! in_array('id', $ignore_properties):
+            case $this->getUid() != $page->getUid() && ! in_array('uid', $ignore_properties) && ! in_array('id', $ignore_properties):
             case $this->getAliasWithNamespace() != $page->getAliasWithNamespace():
             case $this->hasParent() !== $page->hasParent() && ! in_array('menu_parent_page_selector', $ignore_properties):
             case $this->hasParent() && $page->hasParent() && $this->getParentPageSelector()->toString() != $page->getParentPageSelector()->toString() && ! in_array('menu_parent_page_selector', $ignore_properties):
