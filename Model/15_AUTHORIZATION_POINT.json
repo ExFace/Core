@@ -26,8 +26,8 @@
             "attribute_alias": "NAME"
         },
         {
-            "name": "ALIAS",
-            "attribute_alias": "ALIAS"
+            "name": "CLASS",
+            "attribute_alias": "CLASS"
         },
         {
             "name": "DESCR",
@@ -78,7 +78,7 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea5ede96e738f6b9920205857feb80",
             "NAME": "Access to UI pages",
-            "ALIAS": "PAGE_ACCESS",
+            "CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\UiPageAuthorizationPoint",
             "DESCR": "",
             "APP": "0x31000000000000000000000000000000",
             "TARGET_USER_ROLE_APPLICABLE": "1",
@@ -97,7 +97,7 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea6c42dfac007ba3480205857feb80",
             "NAME": "Access to contexts",
-            "ALIAS": "CONTEXT_ACCESS",
+            "CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\ContextAuthorizationPoint",
             "DESCR": null,
             "APP": "0x31000000000000000000000000000000",
             "TARGET_USER_ROLE_APPLICABLE": "1",
