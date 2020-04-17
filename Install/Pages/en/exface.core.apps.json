@@ -8,9 +8,9 @@
     "description": "Create, install, repair and backup apps",
     "intro": "",
     "replaces_page_selector": null,
-    "created_by_user": "0x31000000000000000000000000000000",
+    "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-03-12 14:04:30",
-    "modified_by_user": "0x31000000000000000000000000000000",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
     "modified_on": "2020-03-12 14:04:30",
     "contents": {
         "object_alias": "exface.Core.APP",

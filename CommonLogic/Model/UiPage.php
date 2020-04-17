@@ -1049,9 +1049,9 @@ class UiPage implements UiPageInterface
         $uxon->setProperty('description', $this->getDescription());
         $uxon->setProperty('intro', $this->getIntro());
         $uxon->setProperty('replaces_page_selector', $this->getReplacesPageSelector());
-        $uxon->setProperty('created_by_user', $this->getCreatedByUserSelector()->toString());
+        $uxon->setProperty('created_by_user_selector', $this->getCreatedByUserSelector()->toString());
         $uxon->setProperty('created_on', $this->getCreatedOn());
-        $uxon->setProperty('modified_by_user', $this->getModifiedByUserSelector()->toString());
+        $uxon->setProperty('modified_by_user_selector', $this->getModifiedByUserSelector()->toString());
         $uxon->setProperty('modified_on', $this->getModifiedOn());
         
         $contents = trim($this->getContents());
@@ -1445,9 +1445,9 @@ class UiPage implements UiPageInterface
             'NAME' => $this->getName(),
             'REPLACE_PAGE' => $this->getReplacesPageSelector() !== null ? $this->getPageUidFromSelector($this->getReplacesPageSelector()) : null,
             'PUBLISHED' => $this->isPublished(),
-            'CREATED_BY_USER' => $this->getCreatedByUser(),
+            'CREATED_BY_USER' => $this->getCreatedByUserSelector()->toString(),
             'CREATED_ON' => $this->getCreatedOn(),
-            'MODIFIED_BY_USER' => $this->getModifiedByUser(),
+            'MODIFIED_BY_USER' => $this->getModifiedByUserSelector()->toString(),
             'MODIFIED_ON' => $this->getModifiedOn()
         ]);
         
