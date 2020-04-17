@@ -3,6 +3,7 @@ namespace exface\Core\Interfaces\Security;
 
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
+use exface\Core\CommonLogic\Selectors\AuthorizationPointSelector;
 
 /**
  * Interface for the central security provider for the workbench.
@@ -37,4 +38,22 @@ interface SecurityManagerInterface extends WorkbenchDependantInterface, Authenti
      * @return UserInterface
      */
     public function getUser(AuthenticationTokenInterface $token) : UserInterface;
+    
+    /**
+     * Returns the authorization point specified by the given selector.
+     * 
+     * The security manager keeps a central repository of authorization points and makes sure
+     * their configuration is only loaded once. 
+     * 
+     * To authorize against an authorization point use something like this:
+     * 
+     * ```
+     * $workbench->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class)->authorize();
+     * 
+     * ```
+     * 
+     * @param AuthorizationPointSelector|string $selectorOrString
+     * @return AuthorizationPointInterface
+     */
+    public function getAuthorizationPoint(string $selectorOrString) : AuthorizationPointInterface;
 }

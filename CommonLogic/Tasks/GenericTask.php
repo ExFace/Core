@@ -396,7 +396,7 @@ class GenericTask implements TaskInterface
     {
         if (is_null($this->originPage)) {
             $this->originPage = UiPageFactory::create($this->getPageSelector());
-            $pageAP = new UiPageAuthorizationPoint($this->getWorkbench()->getCoreApp(), 'PAGE_ACCESS');
+            $pageAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class);
             $this->originPage = $pageAP->authorize($this->originPage);
         }
         return $this->originPage;

@@ -43,6 +43,10 @@ use exface\Core\Contexts\DataContext;
 use exface\Core\Interfaces\Selectors\WidgetSelectorInterface;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\Interfaces\Selectors\AuthorizationPointSelectorInterface;
+use exface\Core\Interfaces\Security\AuthorizationPointInterface;
+use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
+use exface\Core\CommonLogic\Security\Authorization\ContextAuthorizationPoint;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -623,7 +627,7 @@ class App implements AppInterface
                     $appAlias = $this->getAliasWithNamespace();
                 }
                 $componentAlias = substr($string, (strlen($appAlias)+1));
-                $subfolder = $this->getPrototypeClasssSubfolder($selector);
+                $subfolder = $this->getPrototypeClassSubNamespace($selector);
                 $classSuffix = $this->getPrototypeClassSuffix($selector);
                 $string = $appAlias . ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR . $subfolder . ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR . $componentAlias . $classSuffix;
                 return str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR, $string);
@@ -639,7 +643,7 @@ class App implements AppInterface
         return '';
     }
     
-    protected function getPrototypeClasssSubfolder(PrototypeSelectorInterface $selector) : string
+    protected function getPrototypeClassSubNamespace(PrototypeSelectorInterface $selector) : string
     {
         switch (true) {
             case $selector instanceof ActionSelectorInterface:
@@ -778,4 +782,3 @@ class App implements AppInterface
         return StringDataType::substringAfter($this->getAliasWithNamespace(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER);
     }
 }
-?>

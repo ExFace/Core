@@ -176,7 +176,7 @@ class ContextManager implements ContextManagerInterface
     public function authorize(ContextInterface $context) : ContextInterface
     {
         if ($this->authPoint === null) {
-            $this->authPoint = new ContextAuthorizationPoint($this->exface->getCoreApp(), 'CONTEXT_ACCESS');
+            $this->authPoint = $this->exface->getSecurity()->getAuthorizationPoint(ContextAuthorizationPoint::class);
         }
         return $this->authPoint->authorize($context, $this->exface->getSecurity()->getAuthenticatedToken());
     }

@@ -1044,6 +1044,7 @@ SQL;
      */
     public function loadAuthorizationPoint(AuthorizationPointInterface $authPoint) : AuthorizationPointInterface
     {        
+        $classEscaped = addslashes('\\' . get_class($authPoint));
         $sql = <<<SQL
 SELECT 
     apt.*, 
@@ -1052,39 +1053,35 @@ SELECT
 FROM 
     exf_auth_point apt
 WHERE 
-    apt.alias = '{$authPoint->getAlias()}'
+    apt.class = '{$classEscaped}'
 SQL;
         
-        // Since we only filter on (non-namespaced) alias in the SQL, there may be 
-        // multiple rows here although it's extremely unprobable
         $result = $this->getDataConnection()->runSql($sql)->getResultArray();
         switch (count($result)) {
             case 0:
-                throw new LogicException('Authorization point "' . $authPoint->getAliasWithNamespace() . '" not found in metamodel!');
+                throw new LogicException('Authorization point model for "' . stripslashes($classEscaped) . '" not found in metamodel!');
             case 1:
-                $checkApp = false;
+                $row = $result[0];
                 break;
             default:
-                $checkApp = true;
-                $apAppUid = $authPoint->getApp()->getUid();
-                break;
+                throw new LogicException('Multiple authorization point models found for "' . stripslashes($classEscaped) . '"!');
         }
         
-        foreach ($result as $row) {
-            if ($checkApp === true && $apAppUid !== $row['app_oid']) {
-                continue;
-            }
-            $authPoint
-                ->setName($row['name'])
-                ->setUid($row['oid'])
-                ->setDisabled(BooleanDataType::cast($row['disabled_flag']))
-                ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), ($row['default_effect_local'] ? $row['default_effect_local'] : $row['default_effect_in_app'])))
-                ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), ($row['combining_algorithm_local'] ? $row['combining_algorithm_local'] : $row['combining_algorithm_in_app'])));
-        }
+        $authPoint
+            ->setName($row['name'])
+            ->setUid($row['oid'])
+            ->setDisabled(BooleanDataType::cast($row['disabled_flag']))
+            ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), ($row['default_effect_local'] ? $row['default_effect_local'] : $row['default_effect_in_app'])))
+            ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), ($row['combining_algorithm_local'] ? $row['combining_algorithm_local'] : $row['combining_algorithm_in_app'])));
         
         return $authPoint;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadAuthorizationPolicies()
+     */
     public function loadAuthorizationPolicies(AuthorizationPointInterface $authPoint, UserImpersonationInterface $userOrToken) : AuthorizationPointInterface
     {
         if ($userOrToken->isAnonymous()) {

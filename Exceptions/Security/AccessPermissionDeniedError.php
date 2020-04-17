@@ -126,8 +126,8 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
                 ],
                 [
                     'widget_type' => 'Display',
-                    'caption' => 'Alias',
-                    'value' => $this->getAuthorizationPoint()->getAliasWithNamespace()
+                    'caption' => 'Class',
+                    'value' => '\\' . get_class($this->getAuthorizationPoint())
                 ],
                 [
                     'widget_type' => 'Display',

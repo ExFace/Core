@@ -46,10 +46,9 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
      * 
      * @param WorkbenchInterface $workbench
      */
-    public function __construct(AppInterface $app, string $alias)
+    public function __construct(AppInterface $app)
     {
         $this->workbench = $app->getWorkbench();
-        $this->alias = $alias;
         $this->app = $app;
         $this->workbench->model()->getModelLoader()->loadAuthorizationPoint($this);
     }
@@ -86,36 +85,6 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
     {
         $this->policies[] = $policy;
         return $this;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
-     */
-    public function getNamespace()
-    {
-        return $this->getApp()->getAliasWithNamespace();
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\AliasInterface::getAlias()
-     */
-    public function getAlias()
-    {
-        return $this->alias;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\AliasInterface::getAliasWithNamespace()
-     */
-    public function getAliasWithNamespace()
-    {
-        return $this->getNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getAlias();
     }
    
     /**
