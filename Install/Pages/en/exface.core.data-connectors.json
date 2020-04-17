@@ -8,9 +8,9 @@
     "description": "Browse available connectors and their properties",
     "intro": "",
     "replaces_page_selector": null,
-    "created_by_user": "0x31000000000000000000000000000000",
+    "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2016-12-02 18:05:01",
-    "modified_by_user": "0x31000000000000000000000000000000",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
     "modified_on": "2019-09-18 17:17:40",
     "contents": {
         "object_alias": "exface.core.DATA_CONNECTOR",
