@@ -252,7 +252,7 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
             throw new InvalidArgumentException("The parent node of the given node '{$node->getName()}' is not the node '{$this->getName()}' !");
         }
         
-        $ap = new UiPageAuthorizationPoint($this->getWorkbench()->getCoreApp(), 'PAGE_ACCESS');
+        $ap = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class);
         try {
             $ap->authorize($node);
         } catch (AccessDeniedError $e) {

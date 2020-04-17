@@ -38,7 +38,7 @@ use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-interface AuthorizationPointInterface extends WorkbenchDependantInterface, AliasInterface
+interface AuthorizationPointInterface extends WorkbenchDependantInterface
 {    
     /**
      * Evaluates the logic of the authorization point triggering the OnAuthorizedEvent

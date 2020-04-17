@@ -17,6 +17,10 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Security\AuthenticationToken\RememberMeAuthToken;
 use exface\Core\CommonLogic\Security\Authenticators\RememberMeAuthenticator;
 use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
+use exface\Core\Interfaces\Security\AuthorizationPointInterface;
+use exface\Core\Factories\AuthorizationPointFactory;
+use exface\Core\CommonLogic\Selectors\AuthorizationPointSelector;
+use exface\Core\Interfaces\Selectors\AuthorizationPointSelectorInterface;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -33,6 +37,8 @@ class SecurityManager implements SecurityManagerInterface
     private $authenticatedToken = null;
     
     private $userCache = [];
+    
+    private $apCache = [];
 
     /**
      *
@@ -247,5 +253,26 @@ class SecurityManager implements SecurityManagerInterface
         }
         
         return $container;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\SecurityManagerInterface::getAuthorizationPoint()
+     */
+    public function getAuthorizationPoint($selectorOrString) : AuthorizationPointInterface
+    {
+        if (! $ap = $this->apCache[(string) $selectorOrString]) {
+            if ($selectorOrString instanceof AuthorizationPointSelectorInterface) {
+                $class = $selectorOrString->toString();
+                $selector = $selectorOrString;
+            } elseif (is_string($selectorOrString)) {
+                $class = $selectorOrString;
+                $selector = new AuthorizationPointSelector($this->getWorkbench(), $class);
+            }
+            $ap = AuthorizationPointFactory::createFromSelector($selector);
+            $this->apCache[$class] = $ap;
+        }
+        return $ap;
     }
 }
