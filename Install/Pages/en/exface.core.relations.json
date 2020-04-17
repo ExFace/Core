@@ -1,5 +1,5 @@
 {
-    "id": "0x078d42f06f1611e8bb520205857feb80",
+    "uid": "0x078d42f06f1611e8bb520205857feb80",
     "alias_with_namespace": "exface.core.relations",
     "menu_parent_page_selector": "0xe6ea2a1a949e11e78de5028037ec0200",
     "menu_index": 0,
@@ -8,6 +8,10 @@
     "description": "Browse relations, build relaton paths",
     "intro": "Select a meta object and browse it's relation tree",
     "replaces_page_selector": null,
+    "created_by_user": "0x31000000000000000000000000000000",
+    "created_on": "2018-06-13 16:28:23",
+    "modified_by_user": "0x31000000000000000000000000000000",
+    "modified_on": "2020-01-31 16:08:43",
     "contents": {
         "object_alias": "exface.Core.RELATION_TREE_VIEW",
         "widget_type": "DataTree",

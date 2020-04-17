@@ -1,5 +1,5 @@
 {
-    "id": "0xc6088850d80a11e7bc3700a0c6000012",
+    "uid": "0xc6088850d80a11e7bc3700a0c6000012",
     "alias_with_namespace": "exface.core.model-builders",
     "menu_parent_page_selector": "0xf831c595ba2c11e7895fe4b318306b9a",
     "menu_index": 6,
@@ -8,6 +8,10 @@
     "description": "Browse available model builders and documentation",
     "intro": "",
     "replaces_page_selector": null,
+    "created_by_user": "0x31000000000000000000000000000000",
+    "created_on": "2017-12-03 10:16:17",
+    "modified_by_user": "0x31000000000000000000000000000000",
+    "modified_on": "2019-09-18 17:17:22",
     "contents": {
         "object_alias": "exface.core.MODEL_BUILDER",
         "widget_type": "DataTable",
