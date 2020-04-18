@@ -96,7 +96,7 @@ class OnAuthorizedEvent extends AbstractEvent implements AuthorizationPointEvent
      * 
      * @return object|NULL
      */
-    public function getObject()
+    public function getObject() : ?object
     {
         return $this->object;
     }
