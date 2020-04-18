@@ -29,7 +29,6 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
-use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Factories\UserFactory;
 
 /**

@@ -39,7 +39,7 @@ class OnAuthorizedEvent extends AbstractEvent implements AuthorizationPointEvent
     
     private $action = null;
     
-    public function __construct(AuthorizationPointInterface $authPoint, UserImpersonationInterface $userOrToken, iCanBeConvertedToUxon $object = null, ActionInterface $action = null)
+    public function __construct(AuthorizationPointInterface $authPoint, UserImpersonationInterface $userOrToken, $object = null, ActionInterface $action = null)
     {
         $this->ap = $authPoint;
         $this->subject = $userOrToken;
@@ -94,9 +94,9 @@ class OnAuthorizedEvent extends AbstractEvent implements AuthorizationPointEvent
 
     /**
      * 
-     * @return iCanBeConvertedToUxon|NULL
+     * @return object|NULL
      */
-    public function getObject() : ?iCanBeConvertedToUxon
+    public function getObject()
     {
         return $this->object;
     }
