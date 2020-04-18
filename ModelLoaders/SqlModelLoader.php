@@ -1397,10 +1397,11 @@ SQL;
         if ($level === null || $level < $depth) {
             $childNodes = null;
             if ($this->nodes_loaded[$node->getUid()] !== null && $this->nodes_loaded[$node->getUid()]->getChildNodesLoaded() === true) {
-                $childNodes = $this->nodes_loaded[$node->getUid()];
+                $childNodes = $this->nodes_loaded[$node->getUid()]->getChildnodes();
                 $node->resetChildNodes();
                 foreach ($childNodes as $childNode) {
                     $childNode = $this->loadPageTreeChildNodes($tree, $childNode, $level + 1);
+                    $childNode->setParentNode($node);
                     $node->addChildNode($childNode);                    
                 }
                 $node->setChildNodesLoaded(true);
@@ -1481,9 +1482,9 @@ SQL;
                 p.published,
                 p.menu_index,
                 p.created_on,
-                p.created_by_user_oid,
+                {$this->buildSqlUuidSelector('p.created_by_user_oid')} as created_by_user_oid,
                 p.modified_on,
-                p.modified_by_user_oid,
+                {$this->buildSqlUuidSelector('p.modified_by_user_oid')} as modified_by_user_oid,
                 (
                     SELECT GROUP_CONCAT({$this->buildSqlUuidSelector('pgp.page_group_oid')}, ',')
                     FROM exf_page_group_pages pgp
@@ -1497,7 +1498,7 @@ SQL;
                 $sqlUnionInnerWhere = $sqlWhere;
             } else {
                 $sqlUnionInnerWhere = "
-                WHERE p.parent_oid = {$id} AND menu_visible = 1";
+                WHERE parent_oid = {$id} AND menu_visible = 1";
             }
             $sqlUnionWhere = "
                WHERE p.parent_oid IN (SELECT
