@@ -2,7 +2,6 @@
 namespace exface\Core\Interfaces\Events;
 
 use exface\Core\Interfaces\UserImpersonationInterface;
-use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 
@@ -24,14 +23,14 @@ interface ABACEventInterface extends EventInterface
     /**
      * Returns the resource, that is being accessed: e.g. a UI page, a meta object, etc.
      * 
-     * @return iCanBeConvertedToUxon|NULL
+     * @return object|NULL
      */
-    public function getObject() : ?iCanBeConvertedToUxon;
+    public function getObject() : ?object;
     
     /**
      * Returns the action that is about to be performed.
      * 
-     * @return iCanBeConvertedToUxon|NULL
+     * @return ActionInterface|NULL
      */
     public function getAction() : ?ActionInterface;
     
