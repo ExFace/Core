@@ -20,6 +20,10 @@ use exface\Core\Uxon\FacadeSchema;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Facades\ConsoleFacade\CommandLoader;
 use exface\Core\Facades\ConsoleFacade\SymfonyCommandAdapter;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use exface\Core\CommonLogic\Security\AuthenticationToken\CliAuthToken;
+use exface\Core\CommonLogic\Security\Authenticators\CliAuthenticator;
 
 /**
  * Command line interface facade based on Symfony Console.
@@ -210,5 +214,15 @@ class ConsoleFacade extends Application implements FacadeInterface
     public static function getUxonSchemaClass() : ?string
     {
         return FacadeSchema::class;
+    }
+    
+    public function run(InputInterface $input = null, OutputInterface $output = null)
+    {
+        $userName = getenv('USER') ? getenv('USER') : getenv('USERNAME');        
+        $user = exec('whoami');
+        file_put_contents('C:\test.txt', 'Env-User: '. $userName);
+        $token = new CliAuthToken(CliAuthenticator::CLI_USERNAME_PREFIX . $userName, $this);
+        $this->getWorkbench()->getSecurity()->authenticate($token);
+        return parent::run($input, $output);
     }
 }
