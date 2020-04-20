@@ -21,6 +21,7 @@ use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Factories\AuthorizationPointFactory;
 use exface\Core\CommonLogic\Selectors\AuthorizationPointSelector;
 use exface\Core\Interfaces\Selectors\AuthorizationPointSelectorInterface;
+use exface\Core\CommonLogic\Security\Authenticators\CliAuthenticator;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -205,6 +206,7 @@ class SecurityManager implements SecurityManagerInterface
             $this->authenticators[] = $authenticator;
         }
         $this->authenticators[] = new RememberMeAuthenticator($this->getWorkbench());
+        $this->authenticators[] = new CliAuthenticator($this->getWorkbench());
         return $this;
     }
     
