@@ -93,7 +93,7 @@ trait UiMenuItemTrait {
     public function getCreatedByUserSelector() : UserSelectorInterface
     {
         if ($this->created_by_user === null) {
-            $this->created_by_user = $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->getUsername();
+            $this->created_by_user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid();
         }
         if (! ($this->created_by_user instanceof UserSelectorInterface)) {
             $this->created_by_user = new UserSelector($this->getWorkbench(), $this->created_by_user);
@@ -121,7 +121,7 @@ trait UiMenuItemTrait {
     public function getModifiedByUserSelector() : UserSelectorInterface
     {
         if ($this->modified_by_user === null) {
-            $this->modified_by_user = $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->getUsername();
+            $this->modified_by_user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid();
         }
         if (! ($this->modified_by_user instanceof UserSelectorInterface)) {
             $this->modified_by_user = new UserSelector($this->getWorkbench(), $this->modified_by_user);
