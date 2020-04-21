@@ -11,6 +11,7 @@ use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use exface\Core\Factories\DataSourceFactory;
 use exface\Core\Exceptions\DataSources\DataSourceHasNoConnectionError;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\FilePathDataType;
 
 /**
  * This creates and manages SQL databases and performs SQL updates.
@@ -139,7 +140,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      */
     protected function installStaticSql(string $source_absolute_path, string $indent = '') : string
     {
-        return $indent . $this->runSqlFromFilesInFolder($source_absolute_path, $this->getFoldersWithStaticSql());
+        return $this->runSqlFromFilesInFolder($source_absolute_path, $this->getFoldersWithStaticSql(), $indent);
     }
     
     /**
@@ -470,10 +471,11 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param string $folder_name
      * @return string
      */    
-    protected function runSqlFromFilesInFolder(string $source_absolute_path, array $folders) : string
+    protected function runSqlFromFilesInFolder(string $source_absolute_path, array $folders, string $indent = '') : string
     {
         $files = $this->getFiles($source_absolute_path, $folders);
-        $result = '';
+        $doneCnt = 0;
+        $errors = [];
         foreach ($files as $file){
             $sql = file_get_contents($file);
             $sql = $this->stripComments($sql);
@@ -481,13 +483,27 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
             try {
                 $this->runSqlMultiStatementScript($connection, $sql);
                 $this->getWorkbench()->getLogger()->debug('SQL script ' . $file . ' executed successfully ');
-                $result .= 'done.';
+                $doneCnt++;
             } catch (\Throwable $e) {
                 $this->getWorkbench()->getLogger()->logException($e);
-                $result .= 'failed.';
+                $filename = FilePathDataType::findFileName($file, true);
+                $errors[$filename] = $e;
             }
         }
-        return 'Static SQL: ' . ($result === '' ? 'not needed' : $result);
+        
+        if ($doneCnt === 0 && empty($errors)) {
+            $result = 'not needed';
+        } else {
+            $result = $doneCnt . ' successfull';
+            if (! empty($errors)) {
+                $result .= ', ' . count($errors) . ' errors: ';
+                foreach ($errors as $filename => $exception) {
+                    $result .= PHP_EOL . $indent . $indent . '- in ' . $filename . ': ' . $exception->getMessage();
+                }
+            }
+        }
+        
+        return $indent . 'Static SQL: ' . $result;
     }
        
     /**
