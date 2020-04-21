@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "1970-01-01 01:00:00",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-03-10 20:24:56",
+    "modified_on": "2020-04-21 06:58:49",
     "contents": {
         "widget_type": "Tabs",
         "object_alias": "exface.Core.UXON_PRESET",
@@ -39,6 +39,14 @@
                             },
                             {
                                 "attribute_alias": "WRAP_FLAG"
+                            },
+                            {
+                                "attribute_alias": "UXON",
+                                "input_widget": {
+                                    "widget_type": "Input",
+                                    "height": 1,
+                                    "width": 1
+                                }
                             }
                         ],
                         "columns": [
