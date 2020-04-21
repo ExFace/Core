@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-04-07 09:16:57",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-04-07 09:17:06",
+    "modified_on": "2020-04-20 10:22:41",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.USER_ROLE_EXTERNAL",
@@ -44,6 +44,10 @@
             }
         ],
         "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectCreateDialog",
+                "visibility": "optional"
+            },
             {
                 "action_alias": "exface.Core.ShowObjectEditDialog",
                 "bind_to_double_click": true
