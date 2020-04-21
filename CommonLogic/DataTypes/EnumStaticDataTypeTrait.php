@@ -100,6 +100,10 @@ trait EnumStaticDataTypeTrait {
             return parent::cast($value);
         }
         
+        if ($value === EXF_LOGICAL_NULL) {
+            return $value;
+        }
+        
         $value = parent::cast($value);
         
         if (! static::isValidStaticValue($value)){
