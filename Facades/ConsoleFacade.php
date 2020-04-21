@@ -88,6 +88,9 @@ class ConsoleFacade extends Application implements FacadeInterface
         $this->exface = $selector->getWorkbench();
         $this->selector = $selector;
         $this->setCommandLoader(new CommandLoader($this));
+        if ($this->isPhpScriptRunInCli() === true) {
+            $this->authenticate();
+        }
     }
 
     /**
@@ -216,13 +219,45 @@ class ConsoleFacade extends Application implements FacadeInterface
         return FacadeSchema::class;
     }
     
-    public function run(InputInterface $input = null, OutputInterface $output = null)
+    protected function authenticate() : void
     {
-        $userName = getenv('USER') ? getenv('USER') : getenv('USERNAME');        
-        $user = exec('whoami');
-        file_put_contents('C:\test.txt', 'Env-User: '. $userName);
-        $token = new CliAuthToken(CliAuthenticator::CLI_USERNAME_PREFIX . $userName, $this);
+        $userName = getenv('USER') ? getenv('USER') : getenv('USERNAME');
+        $token = new CliAuthToken($userName, $this);
         $this->getWorkbench()->getSecurity()->authenticate($token);
-        return parent::run($input, $output);
+        return;
+    }
+    
+    /**
+     * Check if php script is run in a cli environment
+     * 
+     * @return boolean
+     */
+    static public function isPhpScriptRunInCli()
+    {
+        if ( defined('STDIN') )
+        {
+            return true;
+        }
+        
+        if ( php_sapi_name() === 'cli' )
+        {
+            return true;
+        }
+        
+        if ( array_key_exists('SHELL', $_ENV) ) {
+            return true;
+        }
+        
+        if ( empty($_SERVER['REMOTE_ADDR']) and !isset($_SERVER['HTTP_USER_AGENT']) and count($_SERVER['argv']) > 0)
+        {
+            return true;
+        }
+        
+        if ( !array_key_exists('REQUEST_METHOD', $_SERVER) )
+        {
+            return true;
+        }
+        
+        return false;
     }
 }
