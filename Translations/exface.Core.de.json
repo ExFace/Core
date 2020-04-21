@@ -266,12 +266,12 @@
     
     "SECURITY.SIGN_IN": "Anmelden",
     "SECURITY.LDAP.SIGN_IN": "Anmelden mit Windows-Nutzer",
-    "SECURITY.LDAP.DOMAIN": "Windows-DomÃ¤ne",
+    "SECURITY.LDAP.DOMAIN": "Windows-Domäne",
     "SECURITY.LDAP.USERNAME": "Windows-Nutzername",
     
     "SECURITY.LDAP.DATACONNECTION": "Anmelden über Datenverbindung",
-    "SECURITY.DATACONNECTION.CONNECTION": "Verbindung-Name",
-    "SECURITY.DATACONNECTION.USERNAME": "Verbindung-Nutzername",
+    "SECURITY.DATACONNECTION.CONNECTION": "Verbindung",
+    "SECURITY.DATACONNECTION.USERNAME": "Nutzer",
     
     "SECURITY.POLICIES.COMBINING.DENY_OVERRIDES": "Sperren wenn mind. 1 Sperre",
     "SECURITY.POLICIES.COMBINING.PERMIT_OVERRIDES": "Erlauben wenn mind. 1 Erlaubnis",
