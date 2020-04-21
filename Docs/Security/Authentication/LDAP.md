@@ -11,15 +11,15 @@ The core includes two different authenticators to use for single-sign-on with LD
 
 ```
 {
-		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\LdapAuthenticator",
-		"host": "MYLDAP",
-		"domains": [
-			"mydomain"
-		],
-		"create_new_users": true,
-		"create_new_users_with_roles": [
-			"exface.Core.SUPERUSER"
-		]
+	"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\LdapAuthenticator",
+	"host": "MYLDAP",
+	"domains": [
+		"mydomain"
+	],
+	"create_new_users": true,
+	"create_new_users_with_roles": [
+		"exface.Core.SUPERUSER"
+	]
 }
 ```
 
@@ -37,16 +37,16 @@ available for the user roles `exface.Core.ANONYMOUS` and `exface.Core.AUTHENTICA
 
 ```
 {
-		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SymfonyLdapBindAuthenticator",
-		"host": "MYLDAP",
-     "dn_string": "{username}",
-		"domains": [
-			"mydomain"
-		],
-		"create_new_users": true,
-		"create_new_users_with_roles": [
-			"exface.Core.SUPERUSER"
-		]
+	"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SymfonyLdapBindAuthenticator",
+	"host": "MYLDAP",
+	"dn_string": "{username}",
+	"domains": [
+		"mydomain"
+	],
+	"create_new_users": true,
+	"create_new_users_with_roles": [
+		"exface.Core.SUPERUSER"
+	]
 }
 ```
 
