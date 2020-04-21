@@ -30,8 +30,7 @@ class CliAuthenticator extends AbstractAuthenticator
     {
         if (! ($token instanceof CliAuthToken)) {
             throw new AuthenticationFailedError($this, 'Invalid token type!');
-        }
-        
+        }        
         if (ConsoleFacade::isPhpScriptRunInCli() === false) {
             throw new AuthenticationFailedError($this, "Authenticator '{$this->getName()}' can only be used to authenticate when php scripts are run from a cli environment!");
         }
