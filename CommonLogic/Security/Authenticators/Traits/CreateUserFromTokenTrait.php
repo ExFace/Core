@@ -21,7 +21,7 @@ trait CreateUserFromTokenTrait
 {   
     private $createNewUsers = false;
     
-    private $newUsersRoles = null;
+    private $newUsersRoles = [];
     
     /**
      * Set if a new PowerUI user should be created if no user with that username already exists.
@@ -66,9 +66,9 @@ trait CreateUserFromTokenTrait
     
     /**
      *
-     * @return array|NULL
+     * @return array
      */
-    protected function getNewUserRoles() : ?array
+    protected function getNewUserRoles() : array
     {
         return $this->newUsersRoles;
     }
@@ -157,18 +157,21 @@ trait CreateUserFromTokenTrait
      * @throws AuthenticationFailedError
      * @return UserInterface
      */
-    protected function createUserWithRoles(WorkbenchInterface $exface, AuthenticationTokenInterface $token, string $surname = null, string $givenname = null) : UserInterface
+    protected function createUserWithRoles(WorkbenchInterface $exface, AuthenticationTokenInterface $token, string $surname = null, string $givenname = null, array $roles = null) : UserInterface
     {
-        $userDataSheet = $this->getUserData($exface, $token);        
+        $userDataSheet = $this->getUserData($exface, $token);
+        if ($roles === null) {
+            $roles = $this->getNewUserRoles();
+        }
         if (empty($this->getUserData($exface, $token)->getRows())) {
             try {
                 $user = $this->createUserFromToken($exface, $token, $surname, $givenname);
             } catch (\Throwable $e) {
                 throw new AuthenticationFailedError($this, 'User could not be created!', null, $e);
             }
-            if ($this->getNewUserRoles() !== null) {
+            if (!empty($roles)) {
                 try {
-                    $user = $this->addRolesToUser($exface, $user, $this->getNewUserRoles());
+                    $user = $this->addRolesToUser($exface, $user, $roles);
                 } catch (\Throwable $e) {
                     $user->exportDataSheet()->dataDelete();
                     throw new AuthenticationFailedError($this, 'User roles could not be applied!', null, $e);
