@@ -206,7 +206,6 @@ class SecurityManager implements SecurityManagerInterface
             $this->authenticators[] = $authenticator;
         }
         $this->authenticators[] = new RememberMeAuthenticator($this->getWorkbench());
-        $this->authenticators[] = new CliAuthenticator($this->getWorkbench());
         return $this;
     }
     
