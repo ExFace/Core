@@ -14,6 +14,8 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Security\Authorization\CombinedPermission;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\DataTypes\PolicyTargetDataType;
+use exface\Core\Factories\DataTypeFactory;
 
 /**
  * Exception thrown if authorization fails on an authorization point
@@ -52,7 +54,12 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
         $tab->addWidget($this->createSummary($error_message));
         
         if ($permission instanceof CombinedPermission) {
-            $tab->addWidget($this->createPoliciesTable($tab, $permission->getCombinedPermissions()));
+            $steps = [];
+            foreach ($permission->getCombinedPermissions() as $step) {
+                $steps[] = $step;
+            }
+            $steps[] = $permission;
+            $tab->addWidget($this->createPoliciesTable($tab, $steps));
         }
         
         $tab->addWidget($this->createAuthPointInfo($error_message));
@@ -160,18 +167,30 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
     {
         $group = WidgetFactory::createFromUxonInParent($parent, new UxonObject([
             'widget_type' => 'WidgetGroup',
-            'caption' => 'Policies',
+            'caption' => 'Evaluation Steps',
             'height' => '100%'
         ]));
-        
-        $table = WidgetFactory::createFromUxonInParent($parent, new UxonObject([
+        $tableUxon = new UxonObject([
             'widget_type' => 'DataTable',
             'object_alias' => 'exface.Core.AUTHORIZATION_POLICY',
             'lazy_loading' => false,
             'paginate' => false,
             'hide_header' => true,
-            'hide_footer' => true
-        ]));
+            'hide_footer' => true,
+            'columns' => [
+                [
+                    'attribute_alias' => 'EFFECT'
+                ],
+                [
+                    'attribute_alias' => 'NAME'
+                ],
+                [
+                    'data_column_name' => 'DECISION',
+                    'caption' => 'Decision'
+                ]
+            ]
+        ]);
+        $table = WidgetFactory::createFromUxonInParent($parent, $tableUxon);
         $group->addWidget($table);
         
         $dataSheet = DataSheetFactory::createFromObject($table->getMetaObject());
@@ -179,13 +198,22 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
             'EFFECT',
             'NAME'
         ]);
-        $dataSheet->getColumns()->addFromExpression('DECISION', 'Decision');
+        $dataSheet->getColumns()->addFromExpression('DECISION');
         
         foreach ($permissions as $permission) {
-            $policy = $permission->getPolicy();
+            switch (true) {
+                case $policy = $permission->getPolicy():
+                    $name = $policy ? $policy->getName() : '';
+                    $effect = $policy ? $policy->getEffect()->__toString() : '';
+                    break;
+                case $permission instanceof CombinedPermission:
+                    $name = 'Combining algorithm "' . $permission->getPolicyCombiningAlgorithm()->getValue() . '"';
+                    $effect = '';
+                    break;
+            }
             $dataSheet->addRow([
-                'EFFECT' => $policy ? $policy->getEffect()->__toString() : '',
-                'NAME' => $policy ? $policy->getName() : '',
+                'EFFECT' => $effect,
+                'NAME' => $name,
                 'DECISION' => $permission->toXACMLDecision()
             ]);
         }
