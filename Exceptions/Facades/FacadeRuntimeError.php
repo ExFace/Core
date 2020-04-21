@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Exceptions\Facades;
 
-use exface\Core\Exceptions\LogicException;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Exception thrown on rendering errors in the facade: e.g ambiguous element ids, etc..
@@ -9,6 +9,6 @@ use exface\Core\Exceptions\LogicException;
  * @author Andrej Kabachnik
  *        
  */
-class FacadeRuntimeError extends LogicException
+class FacadeRuntimeError extends RuntimeException
 {
 }
