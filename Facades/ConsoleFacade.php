@@ -20,10 +20,7 @@ use exface\Core\Uxon\FacadeSchema;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Facades\ConsoleFacade\CommandLoader;
 use exface\Core\Facades\ConsoleFacade\SymfonyCommandAdapter;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 use exface\Core\CommonLogic\Security\AuthenticationToken\CliAuthToken;
-use exface\Core\CommonLogic\Security\Authenticators\CliAuthenticator;
 
 /**
  * Command line interface facade based on Symfony Console.
