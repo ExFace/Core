@@ -54,6 +54,10 @@
             "attribute_alias": "TARGET_OBJECT"
         },
         {
+            "name": "CONDITION_UXON",
+            "attribute_alias": "CONDITION_UXON"
+        },
+        {
             "name": "TARGET_ACTION_MODEL",
             "attribute_alias": "TARGET_ACTION_MODEL"
         },
@@ -64,10 +68,6 @@
         {
             "name": "TARGET_FACADE",
             "attribute_alias": "TARGET_FACADE"
-        },
-        {
-            "name": "CONDITION_UXON",
-            "attribute_alias": "CONDITION_UXON"
         }
     ],
     "rows": [
@@ -85,10 +85,10 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "0x11ea6c428d7e7e9fa3480205857feb80",
             "TARGET_OBJECT": "",
+            "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": "",
-            "CONDITION_UXON": null
+            "TARGET_FACADE": ""
         },
         {
             "CREATED_ON": "2020-03-22 13:42:27",
@@ -104,10 +104,10 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "0x11ea6c428d7e7e9fa3480205857feb80",
             "TARGET_OBJECT": "",
+            "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": "",
-            "CONDITION_UXON": null
+            "TARGET_FACADE": ""
         },
         {
             "CREATED_ON": "2020-03-26 13:29:13",
@@ -123,10 +123,10 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "",
             "TARGET_OBJECT": "",
+            "CONDITION_UXON": "{\"context\":\"exface.Core.UserContext\"}",
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": "",
-            "CONDITION_UXON": "{\"context\":\"exface.Core.UserContext\"}"
+            "TARGET_FACADE": ""
         },
         {
             "CREATED_ON": "2020-03-26 13:29:31",
@@ -142,10 +142,10 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "",
             "TARGET_OBJECT": "",
+            "CONDITION_UXON": "{\"context\":\"exface.Core.FilterContext\"}",
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": "",
-            "CONDITION_UXON": "{\"context\":\"exface.Core.FilterContext\"}"
+            "TARGET_FACADE": ""
         },
         {
             "CREATED_ON": "2020-03-26 13:30:06",
@@ -161,10 +161,10 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "",
             "TARGET_OBJECT": "",
+            "CONDITION_UXON": "{\"context\":\"exface.Core.ActionContext\"}",
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": "",
-            "CONDITION_UXON": "{\"context\":\"exface.Core.ActionContext\"}"
+            "TARGET_FACADE": ""
         },
         {
             "CREATED_ON": "2020-03-26 17:03:55",
@@ -180,10 +180,10 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "",
             "TARGET_OBJECT": "",
+            "CONDITION_UXON": "{\"context\":\"exface.Core.ObjectBasketContext\"}",
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": "",
-            "CONDITION_UXON": "{\"context\":\"exface.Core.ObjectBasketContext\"}"
+            "TARGET_FACADE": ""
         },
         {
             "CREATED_ON": "2020-03-26 21:12:23",
@@ -199,10 +199,10 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "0x11ea6fa3cab9a380a3480205857feb80",
             "TARGET_OBJECT": "",
+            "CONDITION_UXON": "{\"context\":\"exface.Core.FavoritesContext\"}",
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": "",
-            "CONDITION_UXON": "{\"context\":\"exface.Core.FavoritesContext\"}"
+            "TARGET_FACADE": ""
         },
         {
             "CREATED_ON": "2020-03-27 14:46:37",
@@ -218,10 +218,10 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "0x11ea70397cb072cca3480205857feb80",
             "TARGET_OBJECT": "",
+            "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": "",
-            "CONDITION_UXON": null
+            "TARGET_FACADE": ""
         },
         {
             "CREATED_ON": "2020-04-16 06:50:27",
@@ -237,10 +237,10 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "0x11ea6fa3cab9a380a3480205857feb80",
             "TARGET_OBJECT": "",
+            "CONDITION_UXON": "{\"context\":\"exface.Core.DataContext\"}",
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": "",
-            "CONDITION_UXON": "{\"context\":\"exface.Core.DataContext\"}"
+            "TARGET_FACADE": ""
         }
     ],
     "totals_rows": [],
