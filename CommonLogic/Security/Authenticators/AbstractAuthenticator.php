@@ -10,6 +10,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Provides common base function for authenticators.
@@ -26,6 +27,8 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     private $workbench = null;
     
     private $name = null;
+    
+    private $id = null;
     
     /**
      * 
@@ -111,4 +114,29 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      * @return string
      */
     abstract protected function getNameDefault() : string;
+    
+    protected function getId() : string
+    {
+        if ($this->id === null) {
+            throw new RuntimeException('Missing "id" in authenticator configuration!');
+        }
+        return $this->id;
+    }
+    
+    /**
+     * Unique identifier for this authenticator configuration.
+     * 
+     * Each item in the config option `SECURITY.AUTHENTICATORS` must have a unique id!
+     * 
+     * @uxon-property id
+     * @uxon-type string
+     * 
+     * @param string $id
+     * @return AbstractAuthenticator
+     */
+    protected function setId(string $id) : AbstractAuthenticator
+    {
+        $this->id = $id;
+        return $this;
+    }
 }
