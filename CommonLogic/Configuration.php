@@ -212,7 +212,10 @@ class Configuration implements ConfigurationInterface
      */
     public function loadConfigUxon(UxonObject $uxon) : ConfigurationInterface
     {
-        $this->setConfigUxon($this->getConfigUxon()->extend($uxon));
+        // Can't use UxonObject::extend() here because the config cannot be merged
+        // recursively.
+        $merged = array_replace($this->getConfigUxon()->toArray(), $uxon->toArray());
+        $this->setConfigUxon(new UxonObject($merged));
         return $this;
     }
 
