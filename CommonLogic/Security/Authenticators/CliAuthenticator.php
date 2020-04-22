@@ -3,7 +3,7 @@ namespace exface\Core\CommonLogic\Security\Authenticators;
 
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
-use exface\Core\CommonLogic\Security\AuthenticationToken\CliAuthToken;
+use exface\Core\CommonLogic\Security\AuthenticationToken\CliEnvAuthToken;
 use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTrait;
 use exface\Core\Facades\ConsoleFacade;
 
@@ -28,24 +28,27 @@ class CliAuthenticator extends AbstractAuthenticator
      */
     public function authenticate(AuthenticationTokenInterface $token) : AuthenticationTokenInterface
     {
-        if (! ($token instanceof CliAuthToken)) {
+        if (! ($token instanceof CliEnvAuthToken)) {
             throw new AuthenticationFailedError($this, 'Invalid token type!');
         }        
+        
         if (ConsoleFacade::isPhpScriptRunInCli() === false) {
-            throw new AuthenticationFailedError($this, "Authenticator '{$this->getName()}' can only be used to authenticate when php scripts are run from a cli environment!");
+            throw new AuthenticationFailedError($this, "Authenticator '{$this->getName()}' can only be used to authenticate when php scripts are run from command line!");
         }
-        $userName = $this->getUsernameRunningPhpScript();
-        if ($token->getUsername() !== $userName) {
+        
+        $currentUsername = (new CliEnvAuthToken())->getUsername();
+        if ($token->getUsername() !== $currentUsername) {
             throw new AuthenticationFailedError($this, "Cannot authenticate user '{$token->getUsername()}' via '{$this->getName()}'");
         }
+        
         if ($this->getCreateNewUsers() === true) {
-            
             $roles = $this->getNewUserRoles();
             if (empty($roles) && $this->isNewUserSuperuser() === true) {
                 $roles[] = 'exface.core.SUPERUSER';
             }
             $this->createUserWithRoles($this->getWorkbench(), $token, null, null, $roles);
         }
+        
         $this->authenticatedToken = $token;
         
         return $token;
@@ -68,7 +71,7 @@ class CliAuthenticator extends AbstractAuthenticator
      */
     public function isSupported(AuthenticationTokenInterface $token) : bool
     {
-        return $token instanceof CliAuthToken;
+        return $token instanceof CliEnvAuthToken;
     }
     
     /**
@@ -78,41 +81,14 @@ class CliAuthenticator extends AbstractAuthenticator
      */
     protected function getNameDefault() : string
     {
-        return 'CliAuthenticator';
-    }
-    
-    /**
-     * Check if user running php script as write permission for a file
-     * 
-     * @param string $path
-     * @return boolean
-     */
-    protected function isFileWritable(string $path) : bool
-    {
-        $writable_file = (file_exists($path) && is_writable($path));
-        $writable_directory = (!file_exists($path) && is_writable(dirname($path)));
-        
-        if ($writable_file || $writable_directory) {
-            return true;
-        }
-        return false;
-    }
-    
-    /**
-     * gets the OS username running the php script
-     * 
-     * @return string|NULL
-     */
-    protected function getUsernameRunningPhpScript() : ?string
-    {
-        return getenv('USER') ? getenv('USER') : getenv('USERNAME');
+        return 'Command line authentication';
     }
     
     /**
      * Set if new created users should get the exface.core.SUPERUSER role when they have write permission for the System.config.json file.
      * If roles are set explicitly via the ´create_new_users_with_roles´ property this property will be ignored.
      * 
-     * @uxon-property create_new_user_as_superuser_if_config_writable
+     * @uxon-property create_new_users_as_superuser_if_config_writable
      * @uxon-type boolean
      * @uxon-default false
      * 
@@ -143,10 +119,33 @@ class CliAuthenticator extends AbstractAuthenticator
      */
     protected function isNewUserSuperuser() : bool    
     {
+        return $this->getCreateNewUsersAsSuperuserIfConfigWritable() === true && $this->isConfigWritable();        
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isConfigWritable() : bool
+    {
         $configFilePath = $this->getWorkbench()->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . 'System.config.json';
-        if ($this->getCreateNewUsersAsSuperuserIfConfigWritable() === true && $this->isFileWritable($configFilePath)) {
+        return $this->isFileWritable($configFilePath);
+    }
+    
+    /**
+     * Check if user running php script as write permission for a file
+     *
+     * @param string $path
+     * @return boolean
+     */
+    protected function isFileWritable(string $path) : bool
+    {
+        $writable_file = (file_exists($path) && is_writable($path));
+        $writable_directory = (!file_exists($path) && is_writable(dirname($path)));
+        
+        if ($writable_file || $writable_directory) {
             return true;
         }
-        return false;        
+        return false;
     }
 }

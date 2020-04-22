@@ -20,7 +20,10 @@ use exface\Core\Uxon\FacadeSchema;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Facades\ConsoleFacade\CommandLoader;
 use exface\Core\Facades\ConsoleFacade\SymfonyCommandAdapter;
-use exface\Core\CommonLogic\Security\AuthenticationToken\CliAuthToken;
+use exface\Core\CommonLogic\Security\AuthenticationToken\CliEnvAuthToken;
+use exface\Core\Exceptions\Security\AuthenticationFailedError;
+use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * Command line interface facade based on Symfony Console.
@@ -86,7 +89,12 @@ class ConsoleFacade extends Application implements FacadeInterface
         $this->selector = $selector;
         $this->setCommandLoader(new CommandLoader($this));
         if ($this->isPhpScriptRunInCli() === true) {
-            $this->authenticate();
+            try {
+                $this->authenticateCliUser();
+            } catch (AuthenticationExceptionInterface $e) {
+                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::ERROR);
+                // Do nothing - the console can still be run in anonymous mode
+            }
         }
     }
 
@@ -216,12 +224,17 @@ class ConsoleFacade extends Application implements FacadeInterface
         return FacadeSchema::class;
     }
     
-    protected function authenticate() : void
+    /**
+     * Authenticates the current CLI user in the workbench.
+     * 
+     * @throws AuthenticationFailedError
+     * 
+     * @return CliEnvAuthToken
+     */
+    protected function authenticateCliUser() : CliEnvAuthToken
     {
-        $userName = getenv('USER') ? getenv('USER') : getenv('USERNAME');
-        $token = new CliAuthToken($userName, $this);
-        $this->getWorkbench()->getSecurity()->authenticate($token);
-        return;
+        $token = new CliEnvAuthToken($this);
+        return $this->getWorkbench()->getSecurity()->authenticate($token);
     }
     
     /**
