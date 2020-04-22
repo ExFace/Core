@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic\Security\Authenticators\Traits;
 
 use exface\Core\Interfaces\UserInterface;
-use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthToken;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\UserFactory;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -16,12 +15,13 @@ use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 
 trait CreateUserFromTokenTrait
 {   
     private $createNewUsers = false;
     
-    private $newUsersRoles = null;
+    private $newUsersRoles = [];
     
     /**
      * Set if a new PowerUI user should be created if no user with that username already exists.
@@ -66,9 +66,9 @@ trait CreateUserFromTokenTrait
     
     /**
      *
-     * @return array|NULL
+     * @return array
      */
-    protected function getNewUserRoles() : ?array
+    protected function getNewUserRoles() : array
     {
         return $this->newUsersRoles;
     }
@@ -76,16 +76,18 @@ trait CreateUserFromTokenTrait
     /**
      * Creates a user from the given token and saves it to the database. Returns the user.
      * 
-     * @param UsernamePasswordAuthToken $token
+     * @param AuthenticationTokenInterface $token
      * @param WorkbenchInterface $exface
      * @return UserInterface
      */
-    protected function createUserFromToken(WorkbenchInterface $exface, UsernamePasswordAuthToken $token, string $surname = null, string $givenname = null): UserInterface
+    protected function createUserFromToken(WorkbenchInterface $exface, AuthenticationTokenInterface $token, string $surname = null, string $givenname = null): UserInterface
     {
         $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER');
         $row = [];
         $row['USERNAME'] = $token->getUsername();
-        $row['PASSWORD'] = $token->getPassword();
+        if (method_exists($token, 'getPassword')) {
+            $row['PASSWORD'] = $token->getPassword();
+        }
         $row['MODIFIED_BY_USER'] = UserSelector::ANONYMOUS_USER_OID;
         $row['LOCALE'] = $exface->getConfig()->getOption("LOCALE.DEFAULT");
         if ($surname !== null) {
@@ -149,24 +151,27 @@ trait CreateUserFromTokenTrait
      * Creates a new user, saves in the database and adds the roles.
      * 
      * @param WorkbenchInterface $exface
-     * @param UsernamePasswordAuthToken $token
+     * @param AuthenticationTokenInterface $token
      * @param string $surname
      * @param string $givenname
      * @throws AuthenticationFailedError
      * @return UserInterface
      */
-    protected function createUserWithRoles(WorkbenchInterface $exface, UsernamePasswordAuthToken $token, string $surname = null, string $givenname = null) : UserInterface
+    protected function createUserWithRoles(WorkbenchInterface $exface, AuthenticationTokenInterface $token, string $surname = null, string $givenname = null, array $roles = null) : UserInterface
     {
-        $userDataSheet = $this->getUserData($exface, $token);        
+        $userDataSheet = $this->getUserData($exface, $token);
+        if ($roles === null) {
+            $roles = $this->getNewUserRoles();
+        }
         if (empty($this->getUserData($exface, $token)->getRows())) {
             try {
                 $user = $this->createUserFromToken($exface, $token, $surname, $givenname);
             } catch (\Throwable $e) {
                 throw new AuthenticationFailedError($this, 'User could not be created!', null, $e);
             }
-            if ($this->getNewUserRoles() !== null) {
+            if (!empty($roles)) {
                 try {
-                    $user = $this->addRolesToUser($exface, $user, $this->getNewUserRoles());
+                    $user = $this->addRolesToUser($exface, $user, $roles);
                 } catch (\Throwable $e) {
                     $user->exportDataSheet()->dataDelete();
                     throw new AuthenticationFailedError($this, 'User roles could not be applied!', null, $e);
@@ -182,10 +187,10 @@ trait CreateUserFromTokenTrait
      * Returns data sheet with rows containing the data for users with same username as in the given token.
      * 
      * @param WorkbenchInterface $exface
-     * @param UsernamePasswordAuthToken $token
+     * @param AuthenticationTokenInterface $token
      * @return DataSheetInterface
      */
-    protected function getUserData(WorkbenchInterface $exface, UsernamePasswordAuthToken $token) : DataSheetInterface
+    protected function getUserData(WorkbenchInterface $exface, AuthenticationTokenInterface $token) : DataSheetInterface
     {
         $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER');
         $userFilterGroup = ConditionGroupFactory::createEmpty($exface, EXF_LOGICAL_AND, $userDataSheet->getMetaObject());
