@@ -8,7 +8,29 @@ use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTr
 use exface\Core\Facades\ConsoleFacade;
 
 /**
+ * Performs authentication for php scripts run in cli environment. 
  * 
+ * ## Examples
+ * 
+ * ### Authentication + create new users with static roles
+ * 
+ * ```
+ * {
+ * 		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\CliAuthenticator",
+ * 		"create_new_users": true,
+ * 		"create_new_users_with_roles": [
+ * 			"exface.Core.SUPERUSER"
+ * 		]
+ * }
+ * 
+ * ```
+ * 
+ * If `create_new_users` is `true`, a new workbench user will be created automatically once
+ * the authentication was successful. These new users can be assigned some roles
+ * under `create_new_users_with_roles`. The user will be created without a password.
+ * 
+ * If a new user is not assigned any roles, he or she will only have access to resources
+ * available for the user roles `exface.Core.ANONYMOUS` and `exface.Core.AUTHENTICATED`.
  * 
  * @author Andrej Kabachnik
  *
@@ -18,8 +40,6 @@ class CliAuthenticator extends AbstractAuthenticator
     use CreateUserFromTokenTrait;
     
     private $authenticatedToken = null;
-    
-    private $createNewUsersAsSuperuser = false;
 
     /**
      * 
@@ -41,12 +61,8 @@ class CliAuthenticator extends AbstractAuthenticator
             throw new AuthenticationFailedError($this, "Cannot authenticate user '{$token->getUsername()}' via '{$this->getName()}'");
         }
         
-        if ($this->getCreateNewUsers() === true) {
-            $roles = $this->getNewUserRoles();
-            if (empty($roles) && $this->isNewUserSuperuser() === true) {
-                $roles[] = 'exface.core.SUPERUSER';
-            }
-            $this->createUserWithRoles($this->getWorkbench(), $token, null, null, $roles);
+        if ($this->getCreateNewUsers() === true) {            
+            $this->createUserWithRoles($this->getWorkbench(), $token);
         }
         
         $this->authenticatedToken = $token;
@@ -82,70 +98,5 @@ class CliAuthenticator extends AbstractAuthenticator
     protected function getNameDefault() : string
     {
         return 'Command line authentication';
-    }
-    
-    /**
-     * Set if new created users should get the exface.core.SUPERUSER role when they have write permission for the System.config.json file.
-     * If roles are set explicitly via the ´create_new_users_with_roles´ property this property will be ignored.
-     * 
-     * @uxon-property create_new_users_as_superuser_if_config_writable
-     * @uxon-type boolean
-     * @uxon-default false
-     * 
-     * @param bool $trueOrFalse
-     * @return CliAuthenticator
-     */
-    public function setCreateNewUsersAsSuperuserIfConfigWritable(bool $trueOrFalse) : CliAuthenticator
-    {
-        $this->createNewUsersAsSuperuser = $trueOrFalse;
-        return $this;
-    }
-    
-    /**
-     * Get if new users should be created with ´exface.Core.Superuser´ role if the config file is writeable
-     * 
-     * @return bool
-     */
-    protected function getCreateNewUsersAsSuperuserIfConfigWritable() : bool
-    {
-        return $this->createNewUsersAsSuperuser;
-    }
-    
-    /**
-     * Returns true if requirements to add superuser role are matched, means if new users, that have write permission for config file, should be created
-     * as superuser and if write permission for config file exists.
-     * 
-     * @return bool
-     */
-    protected function isNewUserSuperuser() : bool    
-    {
-        return $this->getCreateNewUsersAsSuperuserIfConfigWritable() === true && $this->isConfigWritable();        
-    }
-    
-    /**
-     * 
-     * @return bool
-     */
-    protected function isConfigWritable() : bool
-    {
-        $configFilePath = $this->getWorkbench()->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . 'System.config.json';
-        return $this->isFileWritable($configFilePath);
-    }
-    
-    /**
-     * Check if user running php script as write permission for a file
-     *
-     * @param string $path
-     * @return boolean
-     */
-    protected function isFileWritable(string $path) : bool
-    {
-        $writable_file = (file_exists($path) && is_writable($path));
-        $writable_directory = (!file_exists($path) && is_writable(dirname($path)));
-        
-        if ($writable_file || $writable_directory) {
-            return true;
-        }
-        return false;
     }
 }
