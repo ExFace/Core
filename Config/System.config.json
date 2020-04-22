@@ -6,7 +6,8 @@
 		"host": "localhost",
 		"dbase": "exface",
 		"user": "root",
-		"password": ""
+		"password": "",
+		"charset": "utf8"
 	},
 	
 	"SERVER.TITLE": "Power UI",
@@ -46,7 +47,9 @@
     	{
     		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\CliAuthenticator",
     		"create_new_users": true,
-    		"create_new_users_as_superuser_if_config_writable": true
+    		"create_new_users_with_roles": [
+                "exface.core.SUPERUSER"
+            ]
     	}
     ],
     
