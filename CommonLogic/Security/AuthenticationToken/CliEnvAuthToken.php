@@ -2,16 +2,16 @@
 namespace exface\Core\CommonLogic\Security\AuthenticationToken;
 
 use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Interfaces\Security\PreAuthenticatedTokenInterface;
 
 /**
- * Authentication token for the anonymous user.
+ * Authentication token created from PHP's getenv('USER') or getenv('USERNAME').
  * 
  * @author Andrej Kabachnik
  *
  */
-class CliAuthToken implements AuthenticationTokenInterface
+class CliEnvAuthToken implements PreAuthenticatedTokenInterface
 {
     private $workbench = null;
     
@@ -23,10 +23,19 @@ class CliAuthToken implements AuthenticationTokenInterface
      * 
      * @param WorkbenchInterface $workbench
      */
-    public function __construct(string $username = null, FacadeInterface $facade = null)
+    public function __construct(FacadeInterface $facade = null)
     {
         $this->facade = $facade;
-        $this->username = $username;
+        $this->username = $this->getUsernameFromEnv();
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    private function getUsernameFromEnv() : ?string
+    {
+        return getenv('USER') ? getenv('USER') : getenv('USERNAME');
     }
 
     /**

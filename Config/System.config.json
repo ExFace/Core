@@ -38,11 +38,15 @@
     
     "LOCALE.DEFAULT": "en_US",
     
-    "SECURITY.LOGIN_URL": "login.html",
     "SECURITY.DISABLE_ANONYMOUS_ACCESS": false,
     "SECURITY.AUTHENTICATORS" : [
     	{
     		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SymfonyAuthenticator"
+    	},
+    	{
+    		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\CliAuthenticator",
+    		"create_new_users": true,
+    		"create_new_users_as_superuser_if_config_writable": true
     	}
     ],
     
