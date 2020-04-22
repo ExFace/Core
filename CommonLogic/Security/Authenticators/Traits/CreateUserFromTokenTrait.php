@@ -154,7 +154,7 @@ trait CreateUserFromTokenTrait
      * @param AuthenticationTokenInterface $token
      * @param string $surname
      * @param string $givenname
-     * @throws AuthenticationFailedError
+     * 
      * @return UserInterface
      */
     protected function createUserWithRoles(WorkbenchInterface $exface, AuthenticationTokenInterface $token, string $surname = null, string $givenname = null, array $roles = null) : UserInterface
@@ -164,17 +164,13 @@ trait CreateUserFromTokenTrait
             $roles = $this->getNewUserRoles();
         }
         if (empty($this->getUserData($exface, $token)->getRows())) {
-            try {
-                $user = $this->createUserFromToken($exface, $token, $surname, $givenname);
-            } catch (\Throwable $e) {
-                throw new AuthenticationFailedError($this, 'User could not be created!', null, $e);
-            }
+            $user = $this->createUserFromToken($exface, $token, $surname, $givenname);
             if (!empty($roles)) {
                 try {
                     $user = $this->addRolesToUser($exface, $user, $roles);
                 } catch (\Throwable $e) {
                     $user->exportDataSheet()->dataDelete();
-                    throw new AuthenticationFailedError($this, 'User roles could not be applied!', null, $e);
+                    throw $e;
                 }
             }
         } else {
