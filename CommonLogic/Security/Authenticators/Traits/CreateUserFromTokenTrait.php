@@ -13,7 +13,6 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 
@@ -85,9 +84,6 @@ trait CreateUserFromTokenTrait
         $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER');
         $row = [];
         $row['USERNAME'] = $token->getUsername();
-        if (method_exists($token, 'getPassword')) {
-            $row['PASSWORD'] = $token->getPassword();
-        }
         $row['MODIFIED_BY_USER'] = UserSelector::ANONYMOUS_USER_OID;
         $row['LOCALE'] = $exface->getConfig()->getOption("LOCALE.DEFAULT");
         if ($surname !== null) {
@@ -107,14 +103,13 @@ trait CreateUserFromTokenTrait
      * 
      * @param WorkbenchInterface $exface
      * @param UserInterface $user
-     * @param array $rolesArray
-     * @return UserInterface
+     * @param array $roles
      */
-    protected function addRolesToUser(WorkbenchInterface $exface, UserInterface $user, array $rolesArray) : UserInterface
+    protected function addRolesToUser(WorkbenchInterface $exface, UserInterface $user, array $roles) : void
     {
         $roleDataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER_ROLE');
         $orFilterGroup = ConditionGroupFactory::createEmpty($exface, EXF_LOGICAL_OR, $roleDataSheet->getMetaObject());
-        foreach ($rolesArray as $role) {
+        foreach ($roles as $role) {
             $roleSelector = new UserRoleSelector($exface, $role);
             if ($roleSelector->isUid()) {
                 $orFilterGroup->addConditionFromString($roleDataSheet->getMetaObject()->getUidAttributeAlias(), $roleSelector->toString(), ComparatorDataType::EQUALS);
@@ -124,7 +119,6 @@ trait CreateUserFromTokenTrait
                 } else {
                     $aliasFilterGrp = ConditionGroupFactory::createEmpty($exface, EXF_LOGICAL_AND, $roleDataSheet->getMetaObject());
                     $aliasFilterGrp->addConditionFromString('APP__ALIAS', $roleSelector->getAppAlias(), ComparatorDataType::EQUALS);
-                    //$roleAlias = substr($roleSelector->toString(), strlen($roleSelector->getAppAlias() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER));
                     $roleAlias = StringDataType::substringAfter($roleSelector->toString(), $roleSelector->getAppAlias() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER);                    
                     $aliasFilterGrp->addConditionFromString('ALIAS', $roleAlias, ComparatorDataType::EQUALS);
                     $orFilterGroup->addNestedGroup($aliasFilterGrp);
@@ -133,8 +127,8 @@ trait CreateUserFromTokenTrait
         }
         $roleDataSheet->getFilters()->addNestedGroup($orFilterGroup);        
         $roleDataSheet->dataRead();
-        if (empty($roleDataSheet->getRows())) {
-            return $user;
+        if ($roleDataSheet->isEmpty() === true) {
+            return;
         }
         $userRoleDataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER_ROLE_USERS');
         foreach ($roleDataSheet->getRows() as $row) {
@@ -144,7 +138,7 @@ trait CreateUserFromTokenTrait
             $userRoleDataSheet->addRow($userRoleRow);
         }
         $userRoleDataSheet->dataCreate();
-        return $user;
+        return;
     }
     
     /**
@@ -159,22 +153,21 @@ trait CreateUserFromTokenTrait
      */
     protected function createUserWithRoles(WorkbenchInterface $exface, AuthenticationTokenInterface $token, string $surname = null, string $givenname = null, array $roles = null) : UserInterface
     {
-        $userDataSheet = $this->getUserData($exface, $token);
         if ($roles === null) {
             $roles = $this->getNewUserRoles();
         }
-        if (empty($this->getUserData($exface, $token)->getRows())) {
+        if ($this->userExists($exface, $token) === false) {
             $user = $this->createUserFromToken($exface, $token, $surname, $givenname);
             if (!empty($roles)) {
                 try {
-                    $user = $this->addRolesToUser($exface, $user, $roles);
+                    $this->addRolesToUser($exface, $user, $roles);
                 } catch (\Throwable $e) {
-                    $user->exportDataSheet()->dataDelete();
+                    $this->deleteUser($user);
                     throw $e;
                 }
             }
         } else {
-            $user = UserFactory::createFromUsernameOrUid($exface, $userDataSheet->getRows(0)[0][$userDataSheet->getMetaObject()->getUidAttributeAlias()]);
+            $user = UserFactory::createFromUsernameOrUid($exface, $token->getUsername());
         }
         return $user;
     }
@@ -194,5 +187,29 @@ trait CreateUserFromTokenTrait
         $userDataSheet->getFilters()->addNestedGroup($userFilterGroup);
         $userDataSheet->dataRead();
         return $userDataSheet;
+    }
+    
+    /**
+     * Checks if a user with the username given in the token does  already exists, if so returns true.
+     * 
+     * @param WorkbenchInterface $exface
+     * @param AuthenticationTokenInterface $token
+     * @return bool
+     */
+    protected function userExists(WorkbenchInterface $exface, AuthenticationTokenInterface $token) : bool
+    {
+        $userDataSheet = $this->getUserData($exface, $token);
+        return $userDataSheet->isEmpty() === false;
+    }
+    
+    /**
+     * Deletes the user from the database.
+     * 
+     * @param UserInterface $user
+     */
+    protected function deleteUser(UserInterface $user) : void
+    {
+        $user->exportDataSheet()->dataDelete();
+        return;
     }
 }
