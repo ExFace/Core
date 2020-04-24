@@ -1170,13 +1170,13 @@ SQL;
                 }
             }
             $where = "p.alias = '" . $selector->toString() . "'";
-            $err = 'alias ' . $selector->toString();
+            $err = 'alias "' . $selector->toString() . '"';
         } elseif ($selector->isUid()) {
             if ($uiPage = $this->pages_loaded[$selector->toString()]) {
                 return $uiPage;
             }
             $where = "p.oid = " . $selector->toString();
-            $err = 'UID ' . $selector->toString();
+            $err = 'UID "' . $selector->toString() . '"';
         } else {
             throw new UiPageNotFoundError('Unsupported page selector ' . $selector->toString() . '!');
         }
