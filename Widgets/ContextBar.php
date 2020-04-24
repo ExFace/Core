@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
