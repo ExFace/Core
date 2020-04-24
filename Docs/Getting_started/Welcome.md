@@ -10,6 +10,6 @@ The main menu (on the left screen edge) as well as the tiles on the right side o
   - [Meta objects](exface.core.objects.html)
   - [Data connections](exface.core.connections.html)
 - [Users and roles](exface.core.users.html)
-  - [Configuring single-sign-on](Docs/Security/Authentication/index.md) - e.g. via LDAP or any data connection from the metamodel
+  - [Configuring single-sign-on](api/docs/exface/Core/Docs/Security/Authentication/index.md) - e.g. via LDAP or any data connection from the metamodel
 - [Logs](exface.core.logs.html)
 - [List of installed modules and licenses](axenox.packagemanager.home.html)
