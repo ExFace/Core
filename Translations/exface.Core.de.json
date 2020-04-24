@@ -61,6 +61,8 @@
 	"ACTION.GENERIC.ADD": "Hinzufügen",
 	"ACTION.GENERIC.REMOVE": "Entfernen",
 	"ACTION.GENERIC.CANCEL": "Abbrechen",
+	"ACTION.GENERIC.ENABLE": "Aktivieren",
+	"ACTION.GENERIC.DISABLE": "Sperren",
 	"ACTION.GENERIC.OK": "OK",
 	
     "ACTION.GOBACK.NAME": "Zurück",
