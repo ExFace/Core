@@ -1,6 +1,6 @@
 # Release history
 
-## 1.0
+## 1.0 (in development)
 
 First stand-alone release without the dependency on an external CMS-system.
 
