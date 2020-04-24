@@ -42,10 +42,12 @@
     "SECURITY.DISABLE_ANONYMOUS_ACCESS": false,
     "SECURITY.AUTHENTICATORS" : [
     	{
-    		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SymfonyAuthenticator"
+    		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SymfonyAuthenticator",
+    		"id": "USER_MODEL_AUTH"
     	},
     	{
     		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\CliAuthenticator",
+    		"id": "CLI_DEFAULT_AUTH",
     		"create_new_users": true,
     		"create_new_users_with_roles": [
                 "exface.core.SUPERUSER"

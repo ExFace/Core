@@ -21,6 +21,8 @@ use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Factories\AuthorizationPointFactory;
 use exface\Core\CommonLogic\Selectors\AuthorizationPointSelector;
 use exface\Core\Interfaces\Selectors\AuthorizationPointSelectorInterface;
+use exface\Core\Interfaces\AppInterface;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -185,7 +187,10 @@ class SecurityManager implements SecurityManagerInterface
     protected function initAuthenticators() : self
     {
         $this->authenticators = [];
-        foreach ($this->getWorkbench()->getConfig()->getOption('SECURITY.AUTHENTICATORS') as $authConfig) {
+        $systemConfig = $this->getWorkbench()->getConfig();
+        $authenticatorsUxon = $systemConfig->getOption('SECURITY.AUTHENTICATORS');
+        $authenticatorsUxonChanged = false;
+        foreach ($authenticatorsUxon as $pos => $authConfig) {
             switch (true) {
                 case is_string($authConfig):
                     $class = $authConfig;
@@ -193,11 +198,30 @@ class SecurityManager implements SecurityManagerInterface
                     break;
                 case $authConfig instanceof UxonObject:
                     $class = $authConfig->getProperty('class');
-                    $uxon = $authConfig->unsetProperty('class');
+                    $uxon = $authConfig->copy()->unsetProperty('class');
+                    // Autogenerate ids if the user has forgotten to give one. Ids make sure
+                    // authenticators can be addressed even if they are reordered
+                    if ($uxon->hasProperty('id') === false) {
+                        $newId = strtoupper(StringDataType::convertCaseCamelToUnderscore(StringDataType::substringAfter($class, '\\', $class, false, true)));
+                        $suffix = '';
+                        foreach ($authenticatorsUxon as $otherConfig) {
+                            if ($otherConfig->getProperty('id') === $newId.$suffix) {
+                                $suffix = $suffix === '' ? 2 : $suffix+1;
+                            }
+                        }
+                        $authConfig->setProperty('id', $newId.$suffix);
+                        $authenticatorsUxon->setProperty($pos, $authConfig);
+                        $authenticatorsUxonChanged = true;
+                    }
                     break;
                 default:
                     throw new UnexpectedValueException('Invalid authenticator configuration in System.config.json: each authenticator can either be a string or an object!');
             } 
+            
+            if ($authenticatorsUxonChanged === true) {
+                $systemConfig->setOption('SECURITY.AUTHENTICATORS', $authenticatorsUxon, AppInterface::CONFIG_SCOPE_SYSTEM);
+            }
+            
             $authenticator = new $class($this->getWorkbench());
             if ($uxon !== null && $uxon->isEmpty() === false) {
                 $authenticator->importUxonObject($uxon);
