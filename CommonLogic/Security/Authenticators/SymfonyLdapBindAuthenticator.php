@@ -22,6 +22,12 @@ use exface\Core\Exceptions\Security\AuthenticationFailedError;
  * See https://symfony.com/doc/current/security/ldap.html for detailes on Symfony's
  * LDAP configuration.
  * 
+ * ## Configuration options
+ * 
+ * - `host` - IP address or hostname of the LDAP server
+ * - `dn_string` - default is `[#domain#]\\[#username#]`.
+ * - `domains` - array of domains for the user to pick from.
+ * 
  * ## Examples
  * 
  * ### Authentication + create new users with static roles
@@ -78,7 +84,7 @@ class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
             $this->createUserWithRoles($this->getWorkbench(), $token);
         } else {
             if (empty($this->getUserData($this->getWorkbench(), $token)->getRows())) {
-                throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!');
+                throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!', '7AL3J9X');
             }
         }
         return $token;
