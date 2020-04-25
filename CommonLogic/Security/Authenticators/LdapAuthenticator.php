@@ -17,6 +17,12 @@ use exface\Core\DataTypes\StringDataType;
 /**
  * Performs authentication via PHP LDAP extension. 
  * 
+ * ## Configuration
+ * 
+ * - `host` - IP address or hostname of the LDAP server
+ * - `dn_string` - default is `[#domain#]\\[#username#]`.
+ * - `domains` - array of domains for the user to pick from.
+ * 
  * ## Examples
  * 
  * ### Authentication + create new users with static roles
@@ -98,7 +104,7 @@ class LdapAuthenticator extends AbstractAuthenticator
         // anmelden am ldap server
         $ldapbind = ldap_bind($ldapconn, $ldaprdn, $ldappass);
         if (! $ldapbind) {
-            throw new AuthenticationFailedError($this, 'LDAP authentication failed', null, new RuntimeException(ldap_error($ldapconn), ldap_errno($ldapconn)));
+            throw new AuthenticationFailedError($this, 'LDAP authentication failed', '7AL3J9X', new RuntimeException(ldap_error($ldapconn), ldap_errno($ldapconn)));
         }        
         
         if ($this->getCreateNewUsers() === true) {
@@ -123,7 +129,7 @@ class LdapAuthenticator extends AbstractAuthenticator
             $this->createUserWithRoles($this->getWorkbench(), $token, $surname, $givenname);
         } else {
             if (empty($this->getUserData($this->getWorkbench(), $token)->getRows())) {
-                throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!');
+                throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!', '7AL3J9X');
             }
         }
         ldap_unbind($ldapconn);

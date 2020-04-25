@@ -48,4 +48,14 @@ class AuthenticationFailedError extends RuntimeException implements Authenticati
     {
         return $this->provider;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\RuntimeException::getDefaultAlias()
+     */
+    public function getDefaultAlias()
+    {
+        return '7AL3G5P';
+    }
 }

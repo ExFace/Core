@@ -2164,6 +2164,34 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2020-04-24 19:38:15",
+            "MODIFIED_ON": "2020-04-25 17:39:18",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea86631d36697e97940205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7AL3G5P",
+            "TITLE": "Login failed!",
+            "DESCRIPTION": "",
+            "HINT": "Please check your credentials!",
+            "TYPE": "ERROR",
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2020-04-24 19:44:59",
+            "MODIFIED_ON": "2020-04-24 19:44:59",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea86640e7f2c0297940205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7AL3J9X",
+            "TITLE": "Invalid username\/password!",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
