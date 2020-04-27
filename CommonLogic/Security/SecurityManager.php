@@ -53,7 +53,7 @@ class SecurityManager implements SecurityManagerInterface
         // Initialize all authenticators to give them the option to register
         // event listeners (e.g. for the exface.Core.Security.OnBeforeAuthentication 
         // event).
-        $this->initAuthenticators();
+        $this->authenticators = self::loadAuthenticatorsFromConfig($this->getWorkbench());
     }
     
     /**
@@ -63,7 +63,7 @@ class SecurityManager implements SecurityManagerInterface
      */
     public function authenticate(AuthenticationTokenInterface $token): AuthenticationTokenInterface
     {      
-        $err = new AuthenticationFailedError($this, 'Authentication failed!');
+        $errors = [];
         foreach ($this->getAuthenticators() as $authenticator) {
             if ($authenticator->isSupported($token) === false) {
                 continue;
@@ -73,7 +73,7 @@ class SecurityManager implements SecurityManagerInterface
                 $this->storeAuthenticatedToken($authenticated);
                 return $authenticated;
             } catch (AuthenticationExceptionInterface $e) {
-                $err->addSecondaryError(new AuthenticationFailedError($authenticator, $e->getMessage(), null, $e));
+                $errors[] = $e;
             }
         }
         
@@ -82,7 +82,15 @@ class SecurityManager implements SecurityManagerInterface
             return $token;
         }
         
-        throw $err;
+        switch (count($errors)) {
+            case 0:
+                throw new AuthenticationFailedError($this, 'Authentication failed!');
+            case 1:
+                throw $errors[0];
+            default:
+                $err = new AuthenticationFailedError($this, 'Authentication failed! Tried ' . count($errors) . ' providers - see log details.' , null, null, $errors);
+                throw $err;
+        }
     }
     
     /**
@@ -182,12 +190,14 @@ class SecurityManager implements SecurityManagerInterface
     
     /**
      * 
-     * @return self
+     * @param WorkbenchInterface $workbench
+     * @throws UnexpectedValueException
+     * @return AuthenticatorInterface[]
      */
-    protected function initAuthenticators() : self
+    public static function loadAuthenticatorsFromConfig(WorkbenchInterface $workbench) : array
     {
-        $this->authenticators = [];
-        $systemConfig = $this->getWorkbench()->getConfig();
+        $authenticators = [];
+        $systemConfig = $workbench->getConfig();
         $authenticatorsUxon = $systemConfig->getOption('SECURITY.AUTHENTICATORS');
         $authenticatorsUxonChanged = false;
         foreach ($authenticatorsUxon as $pos => $authConfig) {
@@ -216,20 +226,20 @@ class SecurityManager implements SecurityManagerInterface
                     break;
                 default:
                     throw new UnexpectedValueException('Invalid authenticator configuration in System.config.json: each authenticator can either be a string or an object!');
-            } 
+            }
             
             if ($authenticatorsUxonChanged === true) {
                 $systemConfig->setOption('SECURITY.AUTHENTICATORS', $authenticatorsUxon, AppInterface::CONFIG_SCOPE_SYSTEM);
             }
             
-            $authenticator = new $class($this->getWorkbench());
+            $authenticator = new $class($workbench);
             if ($uxon !== null && $uxon->isEmpty() === false) {
                 $authenticator->importUxonObject($uxon);
             }
-            $this->authenticators[] = $authenticator;
+            $authenticators[] = $authenticator;
         }
-        $this->authenticators[] = new RememberMeAuthenticator($this->getWorkbench());
-        return $this;
+        $authenticators[] = new RememberMeAuthenticator($workbench);
+        return $authenticators;
     }
     
     /**
