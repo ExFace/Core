@@ -26,7 +26,7 @@ class ContextAuthorizationPoint extends AbstractAuthorizationPoint
     public function authorize(ContextInterface $context = null, UserImpersonationInterface $userOrToken = null) : ContextInterface
     {
         if ($this->isDisabled()) {
-            return PermissionFactory::createPermitted();
+            return $context;
         }
         
         if ($userOrToken === null) {
