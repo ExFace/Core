@@ -102,6 +102,7 @@ class FormToolbar extends Toolbar
                     if (count($container->findChildrenByAttribute($attr)) === 0) {
                         $widget = WidgetFactory::create($page, 'InputHidden', $container);
                         $widget->setAttributeAlias($attr->getAlias());
+                        $widget->setIgnoreDefaultValue(true);
                         if ($attr->isUidForObject()) {
                             $widget->setAggregator(AggregatorFunctionsDataType::LIST_ALL($workbench));
                         } else {
