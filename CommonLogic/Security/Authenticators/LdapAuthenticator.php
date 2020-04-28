@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTrait;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Factories\UserFactory;
 
 /**
  * Performs authentication via PHP LDAP extension. 
@@ -83,6 +84,7 @@ class LdapAuthenticator extends AbstractAuthenticator
         if (! $token instanceof DomainUsernamePasswordAuthToken) {
             throw new InvalidArgumentException('Invalid token type!');
         }
+        $this->checkAuthenticatorDisabledForUsername($token->getUsername());
         
         $ldappass = $token->getPassword();
         $placeholders = [];
@@ -105,9 +107,13 @@ class LdapAuthenticator extends AbstractAuthenticator
         $ldapbind = ldap_bind($ldapconn, $ldaprdn, $ldappass);
         if (! $ldapbind) {
             throw new AuthenticationFailedError($this, 'LDAP authentication failed', '7AL3J9X', new RuntimeException(ldap_error($ldapconn), ldap_errno($ldapconn)));
-        }        
+        }
         
-        if ($this->getCreateNewUsers() === true) {
+        $user = null;
+        
+        if ($this->userExists($token) === true) {
+            $user = $this->getUserFromToken($token);
+        } elseif ($this->userExists($token) === false && $this->getCreateNewUsers() === true) {
             $dnArray = explode('.', $host);
             $baseDn = '';
             foreach ($dnArray as $part) {
@@ -126,14 +132,13 @@ class LdapAuthenticator extends AbstractAuthenticator
                 $surname = $entry_array[0][$this->getLdapSurnameAlias()][0];
                 $givenname = $entry_array[0][$this->getLdapGivennameAlias()][0];
             }            
-            $this->createUserWithRoles($this->getWorkbench(), $token, $surname, $givenname);
+            $user = $this->createUserWithRoles($this->getWorkbench(), $token, $surname, $givenname);
         } else {
-            if (empty($this->getUserData($this->getWorkbench(), $token)->getRows())) {
-                throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!', '7AL3J9X');
-            }
+            throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!', '7AL3J9X');
         }
         ldap_unbind($ldapconn);
         $this->authenticatedToken = $token;
+        $this->logSuccessfulAuthentication($user, $token->getUsername());
         return $token;
     }
     
