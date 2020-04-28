@@ -56,15 +56,21 @@ class CliAuthenticator extends AbstractAuthenticator
             throw new AuthenticationFailedError($this, "Authenticator '{$this->getName()}' can only be used to authenticate when php scripts are run from command line!");
         }
         
+        $this->checkAuthenticatorDisabledForUsername($token->getUsername());
+        
         $currentUsername = (new CliEnvAuthToken())->getUsername();
         if ($token->getUsername() !== $currentUsername) {
             throw new AuthenticationFailedError($this, "Cannot authenticate user '{$token->getUsername()}' via '{$this->getName()}'");
         }
-        
-        if ($this->getCreateNewUsers() === true) {            
-            $this->createUserWithRoles($this->getWorkbench(), $token);
+        if ($this->userExists($token) === true) {
+            $user = $this->getUserFromToken($token);
+        } elseif ($this->userExists($token) === false && $this->getCreateNewUsers() === true) {
+            $user = $this->createUserWithRoles($this->getWorkbench(), $token);
+            //second authentification to save credentials
+        } else {
+            throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!');
         }
-        
+        $this->logSuccessfulAuthentication($user, $token->getUsername());
         $this->authenticatedToken = $token;
         
         return $token;

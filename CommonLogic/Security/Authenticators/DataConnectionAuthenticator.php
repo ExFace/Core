@@ -72,6 +72,7 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
         if (! $token instanceof DataConnectionUsernamePasswordAuthToken) {
             throw new InvalidArgumentException('Invalid token type!');
         }
+        $this->checkAuthenticatorDisabledForUsername($token->getUsername());
         
         try {
             $connector = DataConnectionFactory::createFromModel($this->getWorkbench(), $token->getDataConnectionAlias());;
@@ -79,15 +80,17 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
         } catch (AuthenticationException $e) {
             throw new AuthenticationFailedError($this, $e->getMessage(), null, $e);
         }
-        if ($this->getCreateNewUsers() === true) {
+        $user = null;
+        if ($this->userExists($token) === true) {
+            $user = $this->getUserFromToken($token);
+        } elseif ($this->userExists($token) === false && $this->getCreateNewUsers() === true) {
             $user = $this->createUserWithRoles($this->getWorkbench(), $token);            
             //second authentification to save credentials
             $connector->authenticate($token, true, $user);
-        } else {
-            if (empty($this->getUserData($this->getWorkbench(), $token)->getRows())) {
-                throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!');
-            }
+        } else {            
+            throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!');
         }
+        $this->logSuccessfulAuthentication($user, $token->getUsername());
         $this->authenticatedToken = $token;
         return $token;
     }
