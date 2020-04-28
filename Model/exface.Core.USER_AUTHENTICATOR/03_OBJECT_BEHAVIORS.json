@@ -48,16 +48,16 @@
     ],
     "rows": [
         {
-            "CREATED_ON": "2020-03-24 13:23:58",
-            "MODIFIED_ON": "2020-04-28 15:13:53",
+            "CREATED_ON": "2020-04-28 13:14:36",
+            "MODIFIED_ON": "2020-04-28 13:14:36",
             "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
             "MODIFIED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
-            "UID": "0x11ea6dca5659f65c8eff0205857feb80",
+            "UID": "0x11ea894171ce99a9aa6e025041000001",
             "BEHAVIOR": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
-            "CONFIG_UXON": "{\"on_duplicate_multi_row\":\"ignore\",\"on_duplicate_single_row\":\"ignore\",\"compare_attributes\":[\"USER\",\"USER_ROLE\"]}",
-            "OBJECT": "0x11ea4b0de07b2dcab2cfe4b318306b9a",
+            "CONFIG_UXON": "{\"on_duplicate_multi_row\":\"update\",\"on_duplicate_single_row\":\"update\",\"compare_attributes\":[\"AUTHENTICATOR_USERNAME\",\"AUTHENTICATOR\"]}",
+            "OBJECT": "0x11ea8619c8d1453697940205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Prevent Duplicate",
+            "NAME": "PreventDuplicates",
             "DESCRIPTION": ""
         }
     ],

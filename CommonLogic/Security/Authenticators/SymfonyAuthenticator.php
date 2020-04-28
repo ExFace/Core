@@ -39,9 +39,12 @@ class SymfonyAuthenticator extends AbstractAuthenticator
      */
     public function authenticate(AuthenticationTokenInterface $token): AuthenticationTokenInterface
     {
+        $this->checkAuthenticatorDisabledForUsername($token->getUsername());
         try {
             $symfonyToken = $this->createSymfonyAuthToken($token);
             $symfonyAuthenticatedToken = $this->getSymfonyAuthManager()->authenticate($symfonyToken);
+            $user = $this->getUserFromToken($token);
+            $this->logSuccessfulAuthentication($user, $token->getUsername());
             $this->authenticatedToken = $token;
             $this->authenticatedSymfonyToken = $symfonyAuthenticatedToken;
         } catch (AuthenticationException $e) {
