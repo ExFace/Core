@@ -21,6 +21,7 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Factories\UserFactory;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Exceptions\UserNotFoundError;
 
 /**
  * Provides common base function for authenticators.
@@ -203,7 +204,11 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      */
     protected function getUserData(AuthenticationTokenInterface $token) : DataSheetInterface
     {
-        $exface = $this->getWorkbench();
+        $userDataSheet = $this->userData[$token->getUsername()];
+        if ($userDataSheet !== null) {
+           return $this->getUserData($token);
+        }
+        $exface = $this->getWorkbench();        
         $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER');
         $userFilterGroup = ConditionGroupFactory::createEmpty($exface, EXF_LOGICAL_OR, $userDataSheet->getMetaObject());
         $userFilterGroup->addConditionFromString('USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
@@ -229,18 +234,22 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      */
     protected function userExists(AuthenticationTokenInterface $token) : bool
     {
-        $userDataSheet = $this->userData[$token->getUsername()];
-        if ($userDataSheet === null) {
-            $userDataSheet = $this->getUserData($token);
-        }
+        $userDataSheet = $this->getUserData($token);
         return $userDataSheet->isEmpty() === false;
     }
     
+    /**
+     * Returns a user matching the username in the token. Throws exception if no such user exists.
+     * 
+     * @param AuthenticationTokenInterface $token
+     * @throws UserNotFoundError
+     * @return UserInterface
+     */
     protected function getUserFromToken(AuthenticationTokenInterface $token) : UserInterface
     {
-        $userDataSheet = $this->userData[$token->getUsername()];
-        if ($userDataSheet === null) {
-            $userDataSheet = $this->getUserData($token);
+        $userDataSheet = $this->getUserData($token);
+        if ($userDataSheet->isEmpty()) {
+            throw new UserNotFoundError("No user found matching the username '{$token->getUsername()}'!");
         }
         $user = UserFactory::createFromUsernameOrUid($this->getWorkbench(), $userDataSheet->getRow(0)['UID']);
         return $user;
