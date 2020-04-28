@@ -748,7 +748,7 @@ HTML;
         return 'filter_';
     }
     
-    protected function buildUrlToVendorFile(string $pathInVendorFolder) : string
+    public function buildUrlToVendorFile(string $pathInVendorFolder) : string
     {
         return 'vendor/' . $pathInVendorFolder;
     }
