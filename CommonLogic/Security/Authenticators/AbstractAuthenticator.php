@@ -20,6 +20,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Factories\UserFactory;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * Provides common base function for authenticators.
@@ -162,6 +163,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     {
         $exface = $this->getWorkbench();
         $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER_AUTHENTICATOR');
+        $dataSheet->getColumns()->addFromExpression('DISABLED_FLAG');
         $filterGroup = ConditionGroupFactory::createEmpty($exface, EXF_LOGICAL_AND, $dataSheet->getMetaObject());
         $filterGroup->addConditionFromString('AUTHENTICATOR_USERNAME', $username, ComparatorDataType::EQUALS);
         $filterGroup->addConditionFromString('AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
@@ -171,7 +173,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
            return $this;
         }
         foreach ($dataSheet->getRows() as $row) {
-            if ($row['DISABLED_FLAG'] === true) {
+            if (BooleanDataType::cast($row['DISABLED_FLAG']) === true) {
                 throw new AuthenticationFailedError($this, "Authentication failed. Authenticator '{$this->getName()}' disabled for username '$username'!", '7AL3J9X');
             }
         }
