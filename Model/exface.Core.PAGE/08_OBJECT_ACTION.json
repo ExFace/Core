@@ -1,0 +1,104 @@
+{
+    "object_alias": "exface.Core.OBJECT_ACTION",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        },
+        {
+            "name": "ACTION_PROTOTYPE",
+            "attribute_alias": "ACTION_PROTOTYPE"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "SHORT_DESCRIPTION",
+            "attribute_alias": "SHORT_DESCRIPTION"
+        },
+        {
+            "name": "CONFIG_UXON",
+            "attribute_alias": "CONFIG_UXON"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "USE_IN_OBJECT_BASKET_FLAG",
+            "attribute_alias": "USE_IN_OBJECT_BASKET_FLAG"
+        },
+        {
+            "name": "DOCS",
+            "attribute_alias": "DOCS"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2020-04-28 10:56:00",
+            "MODIFIED_ON": "2020-04-28 10:56:24",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea893ec83627e097940205857feb80",
+            "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/GoToUrl.php",
+            "ALIAS": "GoToPageUrl",
+            "NAME": "Open Page",
+            "SHORT_DESCRIPTION": "",
+            "CONFIG_UXON": "{\"input_object_alias\":\"exface.Core.PAGE\",\"url\":\"[#ALIAS#].html\"}",
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "DOCS": ""
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.OBJECT_ACTION",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.OBJECT_ACTION"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}
