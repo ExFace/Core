@@ -155,6 +155,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     
     /**
      * Checks if the authenticator is flagged as disabled for the given username.
+     * Throws exception if it is flagged as disabled.
      * 
      * @param string $username
      * @throws AuthenticationFailedError
@@ -181,7 +182,13 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
         return $this;        
     }
     
-    protected function logSuccessfulAuthentication(UserInterface $user, string $username) : void
+    /**
+     * Writes/Updates log for successful login for this authenticator and given user and username.
+     * 
+     * @param UserInterface $user
+     * @param string $username
+     */
+    protected function logSuccessfulAuthentication(UserInterface $user, string $username) : AbstractAuthenticator
     {
         $exface = $this->getWorkbench();
         $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER_AUTHENTICATOR');
@@ -192,7 +199,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
         $row['LAST_AUTHENTICATED_ON'] = DateTimeDataType::now();
         $dataSheet->addRow($row);
         $dataSheet->dataCreate();
-        return;
+        return $this;
     }
     
     /**
