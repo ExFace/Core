@@ -11,6 +11,15 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Interfaces\UserInterface;
+use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Exceptions\Security\AuthenticationFailedError;
+use exface\Core\Factories\UserFactory;
 
 /**
  * Provides common base function for authenticators.
@@ -29,6 +38,8 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     private $name = null;
     
     private $id = null;
+    
+    private $userData = [];
     
     /**
      * 
@@ -138,5 +149,98 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     {
         $this->id = $id;
         return $this;
+    }
+    
+    /**
+     * Checks if the authenticator is flagged as disabled for the given username.
+     * 
+     * @param string $username
+     * @throws AuthenticationFailedError
+     * @return AbstractAuthenticator
+     */
+    protected function checkAuthenticatorDisabledForUsername(string $username) : AbstractAuthenticator
+    {
+        $exface = $this->getWorkbench();
+        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER_AUTHENTICATOR');
+        $filterGroup = ConditionGroupFactory::createEmpty($exface, EXF_LOGICAL_AND, $dataSheet->getMetaObject());
+        $filterGroup->addConditionFromString('AUTHENTICATOR_USERNAME', $username, ComparatorDataType::EQUALS);
+        $filterGroup->addConditionFromString('AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
+        $dataSheet->getFilters()->addNestedGroup($filterGroup);
+        $dataSheet->dataRead();
+        if ($dataSheet->isEmpty() === true) {
+           return $this;
+        }
+        foreach ($dataSheet->getRows() as $row) {
+            if ($row['DISABLED_FLAG'] === true) {
+                throw new AuthenticationFailedError($this, "Authentication failed. Authenticator '{$this->getName()}' disabled for username '$username'!", '7AL3J9X');
+            }
+        }
+        return $this;        
+    }
+    
+    protected function logSuccessfulAuthentication(UserInterface $user, string $username) : void
+    {
+        $exface = $this->getWorkbench();
+        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER_AUTHENTICATOR');
+        $row = [];
+        $row['USER'] = $user->getUid();
+        $row['AUTHENTICATOR_USERNAME'] = $username;
+        $row['AUTHENTICATOR'] = $this->getId();
+        $row['LAST_AUTHENTICATED_ON'] = DateTimeDataType::now();
+        $dataSheet->addRow($row);
+        $dataSheet->dataCreate();
+        return;
+    }
+    
+    /**
+     * Returns data sheet with rows containing the data for user in the given token.
+     *
+     * @param WorkbenchInterface $exface
+     * @param AuthenticationTokenInterface $token
+     * @return DataSheetInterface
+     */
+    protected function getUserData(AuthenticationTokenInterface $token) : DataSheetInterface
+    {
+        $exface = $this->getWorkbench();
+        $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER');
+        $userFilterGroup = ConditionGroupFactory::createEmpty($exface, EXF_LOGICAL_OR, $userDataSheet->getMetaObject());
+        $userFilterGroup->addConditionFromString('USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
+        
+        //add filters to check if username already exists in USER_AUTHENTICATOR data
+        $andFilterGroup = ConditionGroupFactory::createEmpty($exface, EXF_LOGICAL_AND, $userDataSheet->getMetaObject());
+        $andFilterGroup->addConditionFromString('USER_AUTHENTICATOR__AUTHENTICATOR_USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
+        $andFilterGroup->addConditionFromString('USER_AUTHENTICATOR__AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
+        
+        $userFilterGroup->addNestedGroup($andFilterGroup);
+        $userDataSheet->getFilters()->addNestedGroup($userFilterGroup);
+        $userDataSheet->dataRead();
+        $this->userData[$token->getUsername()] = $userDataSheet;        
+        return $userDataSheet;
+    }
+    
+    /**
+     * Checks if a user with the username given in the token does  already exists, if so returns true.
+     *
+     * @param WorkbenchInterface $exface
+     * @param AuthenticationTokenInterface $token
+     * @return bool
+     */
+    protected function userExists(AuthenticationTokenInterface $token) : bool
+    {
+        $userDataSheet = $this->userData[$token->getUsername()];
+        if ($userDataSheet === null) {
+            $userDataSheet = $this->getUserData($token);
+        }
+        return $userDataSheet->isEmpty() === false;
+    }
+    
+    protected function getUserFromToken(AuthenticationTokenInterface $token) : UserInterface
+    {
+        $userDataSheet = $this->userData[$token->getUsername()];
+        if ($userDataSheet === null) {
+            $userDataSheet = $this->getUserData($token);
+        }
+        $user = UserFactory::createFromUsernameOrUid($this->getWorkbench(), $userDataSheet->getRow(0)['UID']);
+        return $user;
     }
 }
