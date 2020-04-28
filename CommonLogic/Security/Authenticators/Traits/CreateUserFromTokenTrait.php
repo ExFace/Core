@@ -15,6 +15,7 @@ use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
+use exface\Core\CommonLogic\Model\MetaObject;
 
 trait CreateUserFromTokenTrait
 {   
@@ -156,50 +157,16 @@ trait CreateUserFromTokenTrait
         if ($roles === null) {
             $roles = $this->getNewUserRoles();
         }
-        if ($this->userExists($exface, $token) === false) {
-            $user = $this->createUserFromToken($exface, $token, $surname, $givenname);
-            if (!empty($roles)) {
-                try {
-                    $this->addRolesToUser($exface, $user, $roles);
-                } catch (\Throwable $e) {
-                    $this->deleteUser($user);
-                    throw $e;
-                }
+        $user = $this->createUserFromToken($exface, $token, $surname, $givenname);
+        if (!empty($roles)) {
+            try {
+                $this->addRolesToUser($exface, $user, $roles);
+            } catch (\Throwable $e) {
+                $this->deleteUser($user);
+                throw $e;
             }
-        } else {
-            $user = UserFactory::createFromUsernameOrUid($exface, $token->getUsername());
         }
         return $user;
-    }
-    
-    /**
-     * Returns data sheet with rows containing the data for users with same username as in the given token.
-     * 
-     * @param WorkbenchInterface $exface
-     * @param AuthenticationTokenInterface $token
-     * @return DataSheetInterface
-     */
-    protected function getUserData(WorkbenchInterface $exface, AuthenticationTokenInterface $token) : DataSheetInterface
-    {
-        $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER');
-        $userFilterGroup = ConditionGroupFactory::createEmpty($exface, EXF_LOGICAL_AND, $userDataSheet->getMetaObject());
-        $userFilterGroup->addConditionFromString('USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
-        $userDataSheet->getFilters()->addNestedGroup($userFilterGroup);
-        $userDataSheet->dataRead();
-        return $userDataSheet;
-    }
-    
-    /**
-     * Checks if a user with the username given in the token does  already exists, if so returns true.
-     * 
-     * @param WorkbenchInterface $exface
-     * @param AuthenticationTokenInterface $token
-     * @return bool
-     */
-    protected function userExists(WorkbenchInterface $exface, AuthenticationTokenInterface $token) : bool
-    {
-        $userDataSheet = $this->getUserData($exface, $token);
-        return $userDataSheet->isEmpty() === false;
     }
     
     /**
