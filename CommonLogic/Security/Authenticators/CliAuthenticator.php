@@ -6,6 +6,7 @@ use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\CommonLogic\Security\AuthenticationToken\CliEnvAuthToken;
 use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTrait;
 use exface\Core\Facades\ConsoleFacade;
+use exface\Core\CommonLogic\Security\AuthenticationToken\RememberMeAuthToken;
 
 /**
  * Performs authentication for php scripts run in cli environment. 
@@ -69,6 +70,9 @@ class CliAuthenticator extends AbstractAuthenticator
             //second authentification to save credentials
         } else {
             throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!');
+        }
+        if ($token->getUsername() !== $user->getUsername()) {
+            return new RememberMeAuthToken($user->getUsername());
         }
         $this->logSuccessfulAuthentication($user, $token->getUsername());
         $this->authenticatedToken = $token;

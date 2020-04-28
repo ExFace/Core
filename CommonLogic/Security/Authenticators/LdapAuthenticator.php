@@ -139,6 +139,9 @@ class LdapAuthenticator extends AbstractAuthenticator
         ldap_unbind($ldapconn);
         $this->authenticatedToken = $token;
         $this->logSuccessfulAuthentication($user, $token->getUsername());
+        if ($token->getUsername() !== $user->getUsername()) {
+            return new DomainUsernamePasswordAuthToken($token->getDomain(), $user->getUsername(), $token->getPassword());
+        }
         return $token;
     }
     
