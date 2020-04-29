@@ -15,11 +15,10 @@ use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\CommonLogic\Selectors\FacadeSelector;
 use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\Factories\SelectorFactory;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\CommonLogic\Selectors\Traits\FileSelectorTrait;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\DataTypes\FilePathDataType;
 
 /**
  * Policy for access to facades.
@@ -60,14 +59,7 @@ class FacadeAuthorizationPolicy implements AuthorizationPolicyInterface
         }
         if ($str = $targets[PolicyTargetDataType::FACADE]) {
             //SelectorFactory::createFacadeSelector($workbench, $selectorString)
-            $selector =  new FacadeSelector($this->workbench, $str);
-            if ($selector->isFilepath()) {
-                $alias = StringDataType::substringBefore($selector->toString(), '.' . FileSelectorInterface::PHP_FILE_EXTENSION);
-                $alias = str_replace('/Facades', '', $alias);
-                $alias = str_replace('/', AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $alias);
-                $selector = new FacadeSelector($this->workbench, $alias);
-            }
-            $this->facadeSelector = $selector;
+            $this->facadeSelector =  new FacadeSelector($this->workbench, $str);
         }
         
         $this->conditionUxon = $conditionUxon;
@@ -110,11 +102,21 @@ class FacadeAuthorizationPolicy implements AuthorizationPolicyInterface
             } else {
                 $applied = true;
             }
-            
-            if ($this->facadeSelector !== null && $facade->is($this->facadeSelector) === false) {
-                return PermissionFactory::createNotApplicable($this);
-            } else {
-                $applied = true;
+            /* @var $selector \exface\Core\CommonLogic\Selectors\FacadeSelector */
+            if (($selector = $this->facadeSelector) !== null) {
+                switch(true) {
+                    case $selector->isFilepath():
+                        $selectorClassPath = StringDataType::substringBefore($selector->toString(), '.' . FileSelectorInterface::PHP_FILE_EXTENSION);
+                        $facadeClassPath = FilePathDataType::normalize(get_class($facade));
+                        $applied =  $selectorClassPath === $facadeClassPath . 'test';
+                        break;
+                    case $selector->isClassname():
+                        $applied = trim(get_class($facade), "\\") === trim($selector->toString(), "\\");
+                        break;
+                    case $selector->isAlias():
+                        $applied = $facade->getAliasWithNamespace() === $selector->toString();
+                        break;                    
+                }
             }
             
             if ($applied === false) {
