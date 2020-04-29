@@ -212,23 +212,22 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     protected function getUserData(AuthenticationTokenInterface $token) : DataSheetInterface
     {
         $userDataSheet = $this->userData[$token->getUsername()];
-        if ($userDataSheet !== null) {
-           return $this->getUserData($token);
-        }
-        $exface = $this->getWorkbench();        
-        $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER');
-        $userFilterGroup = ConditionGroupFactory::createEmpty($exface, EXF_LOGICAL_OR, $userDataSheet->getMetaObject());
-        $userFilterGroup->addConditionFromString('USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
-        
-        //add filters to check if username already exists in USER_AUTHENTICATOR data
-        $andFilterGroup = ConditionGroupFactory::createEmpty($exface, EXF_LOGICAL_AND, $userDataSheet->getMetaObject());
-        $andFilterGroup->addConditionFromString('USER_AUTHENTICATOR__AUTHENTICATOR_USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
-        $andFilterGroup->addConditionFromString('USER_AUTHENTICATOR__AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
-        
-        $userFilterGroup->addNestedGroup($andFilterGroup);
-        $userDataSheet->getFilters()->addNestedGroup($userFilterGroup);
-        $userDataSheet->dataRead();
-        $this->userData[$token->getUsername()] = $userDataSheet;        
+        if ($userDataSheet === null) {           
+            $exface = $this->getWorkbench();        
+            $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER');
+            $userFilterGroup = ConditionGroupFactory::createEmpty($exface, EXF_LOGICAL_OR, $userDataSheet->getMetaObject());
+            $userFilterGroup->addConditionFromString('USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
+            
+            //add filters to check if username already exists in USER_AUTHENTICATOR data
+            $andFilterGroup = ConditionGroupFactory::createEmpty($exface, EXF_LOGICAL_AND, $userDataSheet->getMetaObject());
+            $andFilterGroup->addConditionFromString('USER_AUTHENTICATOR__AUTHENTICATOR_USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
+            $andFilterGroup->addConditionFromString('USER_AUTHENTICATOR__AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
+            
+            $userFilterGroup->addNestedGroup($andFilterGroup);
+            $userDataSheet->getFilters()->addNestedGroup($userFilterGroup);
+            $userDataSheet->dataRead();
+            $this->userData[$token->getUsername()] = $userDataSheet;
+        }        
         return $userDataSheet;
     }
     
