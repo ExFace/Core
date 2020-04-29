@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Selectors\FacadeSelector;
+use exface\Core\CommonLogic\Security\Authorization\FacadeAuthorizationPoint;
 
 abstract class FacadeFactory extends AbstractSelectableComponentFactory
 {
@@ -17,7 +18,10 @@ abstract class FacadeFactory extends AbstractSelectableComponentFactory
      */
     public static function create(FacadeSelectorInterface $selector) : FacadeInterface
     {
-        return parent::createFromSelector($selector);
+        $facade = parent::createFromSelector($selector);
+        $facadeAP = $selector->getWorkbench()->getSecurity()->getAuthorizationPoint(FacadeAuthorizationPoint::class);
+        $facade = $facadeAP->authorize($facade);
+        return $facade;
     }
 
     /**
@@ -49,6 +53,8 @@ abstract class FacadeFactory extends AbstractSelectableComponentFactory
         } else {
             throw new InvalidArgumentException('Cannot create facade from "' . get_class($selectorOrString) . '": expecting "FacadeSelector" or valid selector string!');
         }
+        $facadeAP = $exface->getSecurity()->getAuthorizationPoint(FacadeAuthorizationPoint::class);
+        $facade = $facadeAP->authorize($facade);
         return $facade;
     }
     
