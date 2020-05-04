@@ -108,7 +108,7 @@ class FacadeAuthorizationPolicy implements AuthorizationPolicyInterface
                     case $selector->isFilepath():
                         $selectorClassPath = StringDataType::substringBefore($selector->toString(), '.' . FileSelectorInterface::PHP_FILE_EXTENSION);
                         $facadeClassPath = FilePathDataType::normalize(get_class($facade));
-                        $applied =  $selectorClassPath === $facadeClassPath . 'test';
+                        $applied =  $selectorClassPath === $facadeClassPath;
                         break;
                     case $selector->isClassname():
                         $applied = trim(get_class($facade), "\\") === trim($selector->toString(), "\\");
