@@ -19,7 +19,11 @@ abstract class FacadeFactory extends AbstractSelectableComponentFactory
     public static function create(FacadeSelectorInterface $selector) : FacadeInterface
     {
         $facade = parent::createFromSelector($selector);
-        $facadeAP = $selector->getWorkbench()->getSecurity()->getAuthorizationPoint(FacadeAuthorizationPoint::class);
+        $exface = $facade->getWorkbench();
+        if ($exface->isStarted() === false) {
+            $exface->start();
+        }
+        $facadeAP = $exface->getSecurity()->getAuthorizationPoint(FacadeAuthorizationPoint::class);
         $facade = $facadeAP->authorize($facade);
         return $facade;
     }
@@ -46,6 +50,8 @@ abstract class FacadeFactory extends AbstractSelectableComponentFactory
     {
         if ($selectorOrString instanceof FacadeInterface) {
             $facade = $selectorOrString;
+            $facadeAP = $exface->getSecurity()->getAuthorizationPoint(FacadeAuthorizationPoint::class);
+            $facade = $facadeAP->authorize($facade);
         } elseif ($selectorOrString instanceof FacadeSelectorInterface) {
             $facade = static::create($selectorOrString);
         } elseif (is_string($selectorOrString)) {
@@ -53,8 +59,7 @@ abstract class FacadeFactory extends AbstractSelectableComponentFactory
         } else {
             throw new InvalidArgumentException('Cannot create facade from "' . get_class($selectorOrString) . '": expecting "FacadeSelector" or valid selector string!');
         }
-        $facadeAP = $exface->getSecurity()->getAuthorizationPoint(FacadeAuthorizationPoint::class);
-        $facade = $facadeAP->authorize($facade);
+       
         return $facade;
     }
     
