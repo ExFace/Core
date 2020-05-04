@@ -74,6 +74,22 @@
             "APP": "0x31000000000000000000000000000000",
             "USE_IN_OBJECT_BASKET_FLAG": "0",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2020-05-04 10:14:44",
+            "MODIFIED_ON": "2020-05-04 10:14:44",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deff52a8f4f97940205857feb80",
+            "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
+            "ALIAS": "RestorePageMenuPosition",
+            "NAME": "Restore Menu Position",
+            "SHORT_DESCRIPTION": "Moves the page to it's original position according to the app configuration",
+            "CONFIG_UXON": "{\"icon\":\"list-ol\",\"input_object_alias\":\"exface.Core.PAGE\",\"input_mapper\":{\"inherit_columns\":false,\"column_to_column_mappings\":[{\"from\":\"DEFAULT_MENU_INDEX\",\"to\":\"MENU_POSITION\"},{\"from\":\"DEFAULT_MENU_PARENT\",\"to\":\"MENU_PARENT\"},{\"from\":\"MODIFIED_ON\",\"to\":\"MODIFIED_ON\"},{\"from\":\"UID\",\"to\":\"UID\"}]}}",
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
