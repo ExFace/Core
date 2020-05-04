@@ -11,14 +11,25 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-04-24 09:12:01",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-05-04 09:26:42",
+    "modified_on": "2020-05-04 10:28:07",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.AUTHENTICATOR",
         "paginate": false,
         "columns": [
             {
+                "attribute_alias": "POSITION"
+            },
+            {
                 "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "USER_AUTHENTICATOR__UID:COUNT",
+                "caption": "Used by users"
+            },
+            {
+                "attribute_alias": "USER_ROLE_EXTERNAL__UID:COUNT",
+                "caption": "Synced user roles"
             }
         ],
         "sorters": [
