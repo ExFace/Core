@@ -1323,7 +1323,7 @@ SQL;
     {
         $treeRootNodes = $tree->getStartRootNodes();
         $loadedtree = $this->menu_tress_loaded[$tree->getExpandPathToPage()->getUid()];
-        if ($loadedtree !== null && $loadedtree->isLoaded() === true) {
+        if ($loadedtree !== null && $loadedtree->isLoaded() === true && $loadedtree->getStartRootNodes() === $treeRootNodes) {
             return $loadedtree->getRootNodes();
         }
         $nodeId = $tree->getExpandPathToPage()->getUid();
