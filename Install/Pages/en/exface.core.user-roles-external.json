@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-04-07 09:16:57",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-04-20 10:22:41",
+    "modified_on": "2020-05-04 06:57:42",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.USER_ROLE_EXTERNAL",
@@ -23,7 +23,7 @@
                 "attribute_alias": "ALIAS"
             },
             {
-                "attribute_alias": "AUTHENTICATOR_NAME"
+                "attribute_alias": "AUTHENTICATOR__LABEL"
             },
             {
                 "attribute_alias": "USER_ROLE__LABEL"
@@ -38,9 +38,6 @@
             },
             {
                 "attribute_alias": "CREATED_ON"
-            },
-            {
-                "attribute_alias": "AUTHENTICATOR_CLASS"
             }
         ],
         "buttons": [
