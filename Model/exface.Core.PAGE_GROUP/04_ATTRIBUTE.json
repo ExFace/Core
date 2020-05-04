@@ -169,7 +169,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-02-08 21:31:24",
-            "MODIFIED_ON": "2020-02-09 07:38:43",
+            "MODIFIED_ON": "2020-04-29 14:01:43",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4aba4f539e78b2cfe4b318306b9a",
@@ -194,7 +194,7 @@
             "DATA_ADDRESS": "name",
             "OBJECT": "0x11ea4aba4bb25832b2cfe4b318306b9a",
             "FORMATTER": "",
-            "DISPLAYORDER": null,
+            "DISPLAYORDER": "1",
             "LABELFLAG": "1",
             "UIDFLAG": "0",
             "HIDDENFLAG": "0",
@@ -212,7 +212,7 @@
         },
         {
             "CREATED_ON": "2020-02-08 21:31:24",
-            "MODIFIED_ON": "2020-02-09 07:38:43",
+            "MODIFIED_ON": "2020-04-29 14:01:43",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4aba4f5429eeb2cfe4b318306b9a",
@@ -237,7 +237,7 @@
             "DATA_ADDRESS": "app_oid",
             "OBJECT": "0x11ea4aba4bb25832b2cfe4b318306b9a",
             "FORMATTER": "",
-            "DISPLAYORDER": null,
+            "DISPLAYORDER": "3",
             "LABELFLAG": "0",
             "UIDFLAG": "0",
             "HIDDENFLAG": "0",
@@ -255,7 +255,7 @@
         },
         {
             "CREATED_ON": "2020-02-09 07:34:55",
-            "MODIFIED_ON": "2020-03-10 20:43:01",
+            "MODIFIED_ON": "2020-04-29 14:01:43",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4b0e9d82f735b2cfe4b318306b9a",
@@ -280,7 +280,7 @@
             "DATA_ADDRESS": "descr",
             "OBJECT": "0x11ea4aba4bb25832b2cfe4b318306b9a",
             "FORMATTER": "",
-            "DISPLAYORDER": null,
+            "DISPLAYORDER": "2",
             "LABELFLAG": "0",
             "UIDFLAG": "0",
             "HIDDENFLAG": "0",

@@ -11,10 +11,24 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-03-10 20:27:50",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-03-22 13:36:15",
+    "modified_on": "2020-05-04 07:09:31",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.PAGE_GROUP",
+        "filters": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "PAGE_GROUP_PAGES__PAGE"
+            },
+            {
+                "attribute_alias": "AUTHORIZATION_POLICY"
+            },
+            {
+                "attribute_alias": "APP"
+            }
+        ],
         "columns": [
             {
                 "attribute_alias": "NAME"

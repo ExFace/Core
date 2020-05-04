@@ -1,17 +1,17 @@
 {
     "uid": "0x0a3e0996949f11e78ac4028037ec0200",
     "alias_with_namespace": "exface.core.users",
-    "menu_parent_page_selector": "0xf8310d4bba2c11e7895fe4b318306b9a",
-    "menu_index": 2,
+    "menu_parent_page_selector": "0x11ea8de4ed64848f97940205857feb80",
+    "menu_index": 0,
     "menu_visible": true,
     "name": "Users",
-    "description": "Manage users and credentials",
+    "description": "Manage users, assign roles",
     "intro": "",
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2015-12-14 17:07:13",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-04-17 12:49:34",
+    "modified_on": "2020-05-04 09:25:30",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.USER",
@@ -21,10 +21,11 @@
                 "attribute_alias": "USERNAME"
             },
             {
-                "attribute_alias": "USER_CREDENTIALS__DATA_CONNECTION_CREDENTIALS__DATA_CONNECTION"
+                "attribute_alias": "USER_ROLE_USERS__USER_ROLE"
             },
             {
-                "attribute_alias": "USER_ROLE_USERS__USER_ROLE"
+                "attribute_alias": "USER_CREDENTIALS__DATA_CONNECTION_CREDENTIALS__DATA_CONNECTION",
+                "caption": "Credentials for connection"
             },
             {
                 "attribute_alias": "LOCALE"
@@ -49,9 +50,6 @@
             {
                 "attribute_alias": "USER_CREDENTIALS__UID:COUNT",
                 "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS')"
-            },
-            {
-                "attribute_alias": "UID"
             }
         ],
         "sorters": [
