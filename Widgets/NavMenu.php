@@ -34,8 +34,11 @@ class NavMenu extends AbstractWidget
 {    
     private $rootPage = null;
     
+    private $showRootNode = false;
+    
     /**
-     * Returns an array of UiPageTreeNodes. The array contains the nodes located directly under the root page in the menu.
+     * Returns an array of UiPageTreeNodes. The array contains the root nodes of the menu.
+     * If the root page was set, the array contains the node belonging to that root page.
      * If the node is an ancestor of the leaf page it contains all its child nodes as an array.
      * This structure continues till the current page node is reached.
      * If the current page has child nodes they are also shown in the menu. 
@@ -49,7 +52,11 @@ class NavMenu extends AbstractWidget
         if ($this->rootPage !== null) {
             $tree->setRootPages([$this->rootPage]);
         }
-        return $tree->getRootNodes();
+        if (count($tree->getRootNodes()) !== 1 || $this->showRootNode === true) {
+            return $tree->getRootNodes();
+        } else {
+            return $tree->getRootNodes()[0]->getChildNodes();
+        }
     }
     
     /**
@@ -65,5 +72,26 @@ class NavMenu extends AbstractWidget
     {
         $this->rootPage = UiPageFactory::createFromModel($this->getWorkbench(), $pageSelectorString);
         return $this;
+    }
+    
+    /**
+     * This property only applies when the NavMenu has only one root node. Set it to true, to have this root node shown in the menu.
+     * If that property is not set and there is only one root node, that node won't be shown.
+     * 
+     * @uxon-property show_root_node
+     * @uxon-type boolean
+     * 
+     * @param bool $trueOrFalse
+     * @return NavMenu
+     */
+    public function setShowRootNode (bool $trueOrFalse) : NavMenu
+    {
+        $this->showRootNode = $trueOrFalse;
+        return $this;
+    }
+    
+    public function getRootPageAlias() : ?string
+    {
+        return $this->rootPage;
     }
 }
