@@ -20,10 +20,18 @@
                         "widget_type": "DataTable",
                         "filters": [
                             {
-                                "attribute_alias": "NAME"
+                                "attribute_alias": "CONTENTS",
+                                "caption": "Log ID",
+                                "input_widget": {
+                                    "widget_type": "Input"
+                                }
                             },
                             {
-                                "attribute_alias": "PATHNAME_RELATIVE"
+                                "attribute_alias": "NAME",
+                                "caption": "Date",
+                                "input_widget": {
+                                    "widget_type": "InputDate"
+                                }
                             }
                         ],
                         "columns": [
