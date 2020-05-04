@@ -1144,8 +1144,8 @@ SQL;
                     PolicyTargetDataType::USER_ROLE => $row['target_user_role_oid'],
                     PolicyTargetDataType::PAGE_GROUP => $row['target_page_group_oid'],
                     PolicyTargetDataType::META_OBJECT => $row['target_object_oid'],
-                    PolicyTargetDataType::ACTION => $row['target_action_selector'],
-                    PolicyTargetDataType::FACADE => $row['target_facade_selector'],
+                    PolicyTargetDataType::ACTION => $row['target_action_class_path'],
+                    PolicyTargetDataType::FACADE => $row['target_facade_class_path'],
                 ],
                 PolicyEffectDataType::fromValue($this->getWorkbench(), $row['effect']),
                 $row['name'],
@@ -1323,7 +1323,7 @@ SQL;
     {
         $treeRootNodes = $tree->getStartRootNodes();
         $loadedtree = $this->menu_tress_loaded[$tree->getExpandPathToPage()->getUid()];
-        if ($loadedtree !== null && $loadedtree->isLoaded() === true) {
+        if ($loadedtree !== null && $loadedtree->isLoaded() === true && $loadedtree->getStartRootNodes() === $treeRootNodes) {
             return $loadedtree->getRootNodes();
         }
         $nodeId = $tree->getExpandPathToPage()->getUid();
