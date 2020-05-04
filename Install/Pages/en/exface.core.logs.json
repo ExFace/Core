@@ -2,7 +2,7 @@
     "uid": "0xb90bb0b8949f11e7a605028037ec0200",
     "alias_with_namespace": "exface.core.logs",
     "menu_parent_page_selector": "0xf8310d4bba2c11e7895fe4b318306b9a",
-    "menu_index": 5,
+    "menu_index": 6,
     "menu_visible": true,
     "name": "Logs",
     "description": "View system\/error logs",
@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2017-05-10 14:28:09",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-04-17 12:49:25",
+    "modified_on": "2020-05-04 08:55:54",
     "contents": {
         "widget_type": "SplitHorizontal",
         "object_alias": "exface.Core.LOG",
@@ -24,10 +24,18 @@
                         "widget_type": "DataTable",
                         "filters": [
                             {
-                                "attribute_alias": "NAME"
+                                "attribute_alias": "CONTENTS",
+                                "caption": "Log ID",
+                                "input_widget": {
+                                    "widget_type": "Input"
+                                }
                             },
                             {
-                                "attribute_alias": "PATHNAME_RELATIVE"
+                                "attribute_alias": "NAME",
+                                "caption": "Date",
+                                "input_widget": {
+                                    "widget_type": "InputDate"
+                                }
                             }
                         ],
                         "columns": [

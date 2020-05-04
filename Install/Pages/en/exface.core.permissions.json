@@ -1,0 +1,160 @@
+{
+    "uid": "0x11ea5edc2f798596b9920205857feb80",
+    "alias_with_namespace": "exface.core.permissions",
+    "menu_parent_page_selector": "0x11ea8de4ed64848f97940205857feb80",
+    "menu_index": 2,
+    "menu_visible": true,
+    "name": "Permissions",
+    "description": "Manage authorization points and policies",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2020-03-10 16:22:54",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2020-05-04 09:24:40",
+    "contents": {
+        "widget_type": "SplitVertical",
+        "object_alias": "exface.Core.AUTHORIZATION_POINT",
+        "panels": [
+            {
+                "caption": "Authorization Points",
+                "height": "35%",
+                "widgets": [
+                    {
+                        "widget_type": "DataTable",
+                        "id": "auth_points_table",
+                        "columns": [
+                            {
+                                "attribute_alias": "UID",
+                                "hidden": true
+                            },
+                            {
+                                "attribute_alias": "NAME"
+                            },
+                            {
+                                "attribute_alias": "APP__NAME"
+                            },
+                            {
+                                "attribute_alias": "DISABLED_FLAG"
+                            },
+                            {
+                                "attribute_alias": "DEFAULT_EFFECT"
+                            },
+                            {
+                                "attribute_alias": "COMBINING_ALGORITHM"
+                            },
+                            {
+                                "attribute_alias": "TARGET_USER_ROLE_APPLICABLE"
+                            },
+                            {
+                                "attribute_alias": "TARGET_PAGE_GROUP_APPLICABLE"
+                            },
+                            {
+                                "attribute_alias": "TARGET_OBJECT_APPLICABLE"
+                            },
+                            {
+                                "attribute_alias": "TARGET_ACTION_APPLICABLE"
+                            },
+                            {
+                                "attribute_alias": "TARGET_FACADE_APPLICABLE"
+                            }
+                        ],
+                        "buttons": [
+                            {
+                                "action_alias": "exface.Core.ShowObjectCreateDialog"
+                            },
+                            {
+                                "action_alias": "exface.Core.ShowObjectEditDialog",
+                                "bind_to_double_click": true
+                            },
+                            {
+                                "action_alias": "exface.Core.ShowObjectCopyDialog"
+                            },
+                            {
+                                "action_alias": "exface.Core.DeleteObject",
+                                "visibility": "optional"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "caption": "Policies",
+                "widgets": [
+                    {
+                        "widget_type": "DataTable",
+                        "object_alias": "exface.Core.AUTHORIZATION_POLICY",
+                        "row_grouper": {
+                            "group_by_attribute_alias": "TARGET_USER_ROLE__LABEL"
+                        },
+                        "filters": [
+                            {
+                                "attribute_alias": "AUTHORIZATION_POINT",
+                                "comparator": "==",
+                                "value": "=auth_points_table!UID",
+                                "apply_on_change": true,
+                                "input_widget": {
+                                    "widget_type": "InputHidden"
+                                }
+                            }
+                        ],
+                        "columns": [
+                            {
+                                "attribute_alias": "EFFECT"
+                            },
+                            {
+                                "attribute_alias": "NAME"
+                            },
+                            {
+                                "attribute_alias": "DISABLED_FLAG"
+                            },
+                            {
+                                "attribute_alias": "AUTHORIZATION_POINT__LABEL"
+                            },
+                            {
+                                "attribute_alias": "TARGET_USER_ROLE__LABEL"
+                            },
+                            {
+                                "attribute_alias": "TARGET_PAGE_GROUP__LABEL"
+                            },
+                            {
+                                "attribute_alias": "TARGET_OBJECT__LABEL"
+                            },
+                            {
+                                "attribute_alias": "TARGET_ACTION_PROTOTYPE__LABEL"
+                            },
+                            {
+                                "attribute_alias": "TARGET_ACTION_MODEL__LABEL"
+                            },
+                            {
+                                "attribute_alias": "TARGET_FACADE__LABEL"
+                            },
+                            {
+                                "attribute_alias": "CONDITION_FLAG"
+                            },
+                            {
+                                "attribute_alias": "APP__LABEL"
+                            }
+                        ],
+                        "buttons": [
+                            {
+                                "action_alias": "exface.Core.ShowObjectCreateDialog"
+                            },
+                            {
+                                "action_alias": "exface.Core.ShowObjectEditDialog",
+                                "bind_to_double_click": true
+                            },
+                            {
+                                "action_alias": "exface.Core.ShowObjectCopyDialog"
+                            },
+                            {
+                                "action_alias": "exface.Core.DeleteObject",
+                                "visibility": "optional"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

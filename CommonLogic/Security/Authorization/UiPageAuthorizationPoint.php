@@ -27,7 +27,7 @@ class UiPageAuthorizationPoint extends AbstractAuthorizationPoint
     public function authorize(UiMenuItemInterface $pageOrMenuNode = null, UserImpersonationInterface $userOrToken = null) : UiMenuItemInterface
     {
         if ($this->isDisabled()) {
-            return PermissionFactory::createPermitted();
+            return $pageOrMenuNode;
         }
         
         if ($userOrToken === null) {
