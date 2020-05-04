@@ -108,6 +108,25 @@
             "DEFAULT_EFFECT_IN_APP": "D",
             "COMBINING_ALGORITHM_IN_APP": "deny-unless-permit",
             "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\ContextAuthorizationPolicy"
+        },
+        {
+            "CREATED_ON": "2020-05-04 16:17:42",
+            "MODIFIED_ON": "2020-05-04 16:17:42",
+            "CREATED_BY_USER": "0x11ea8944856eaddaaa6e025041000001",
+            "MODIFIED_BY_USER": "0x11ea8944856eaddaaa6e025041000001",
+            "UID": "0x11ea8e12097517b8801f025041000001",
+            "NAME": "Access to facades",
+            "CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\FacadeAuthorizationPoint",
+            "DESCR": null,
+            "APP": "0x31000000000000000000000000000000",
+            "TARGET_USER_ROLE_APPLICABLE": "1",
+            "TARGET_PAGE_GROUP_APPLICABLE": "0",
+            "TARGET_FACADE_APPLICABLE": "1",
+            "TARGET_OBJECT_APPLICABLE": "0",
+            "TARGET_ACTION_APPLICABLE": "0",
+            "DEFAULT_EFFECT_IN_APP": "P",
+            "COMBINING_ALGORITHM_IN_APP": "permit-unless-deny",
+            "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\FacadeAuthorizationPolicy"
         }
     ],
     "totals_rows": [],
