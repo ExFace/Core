@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2018-05-29 11:42:56",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-05-04 10:15:34",
+    "modified_on": "2020-05-04 10:20:16",
     "contents": {
         "object_alias": "exface.Core.PAGE",
         "widget_type": "DataTree",
@@ -73,7 +73,7 @@
             },
             {
                 "attribute_alias": "PAGE_GROUP_PAGES__UID:COUNT",
-                "caption": "Page Groups"
+                "caption": "Groups"
             },
             {
                 "attribute_alias": "TEMPLATE__LABEL"
