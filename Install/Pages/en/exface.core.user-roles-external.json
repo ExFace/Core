@@ -1,8 +1,8 @@
 {
     "uid": "0x11ea78b086e9cba4ac460205857feb80",
     "alias_with_namespace": "exface.core.user-roles-external",
-    "menu_parent_page_selector": "0x0a3e0996949f11e78ac4028037ec0200",
-    "menu_index": 2,
+    "menu_parent_page_selector": "0x11ea860ba247621397940205857feb80",
+    "menu_index": 0,
     "menu_visible": true,
     "name": "Synced External Roles",
     "description": "",
@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-04-07 09:16:57",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-05-04 06:57:42",
+    "modified_on": "2020-05-04 08:58:25",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.USER_ROLE_EXTERNAL",
