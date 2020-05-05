@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2018-09-25 11:49:35",
-            "MODIFIED_ON": "2019-11-22 10:45:56",
+            "MODIFIED_ON": "2020-05-05 10:26:13",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e8c0b9147f34ffb73e0205857feb80",
@@ -95,7 +95,7 @@
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "0x11e6be0ad5666af88ddee4b318306b9a",
-            "DATA_ADDRESS_PROPS": null,
+            "DATA_ADDRESS_PROPS": "{\"finder_depth\":\"0\"}",
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "EVENT",
             "DATA_ADDRESS": "*\/*\/Events\/*\/On*.php"
