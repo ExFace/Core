@@ -33,6 +33,7 @@ use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 use exface\Core\Uxon\ActionSchema;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
+use exface\Core\CommonLogic\Security\Authorization\ActionAuthorizationPoint;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -288,6 +289,8 @@ abstract class AbstractAction implements ActionInterface
     public final function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : ResultInterface
     {
         // Start a new transaction if none passed
+        $actionAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class);
+        $task = $actionAP->authorize($this, $task);
         if (is_null($transaction)) {
             $transaction = $this->getWorkbench()->data()->startTransaction();
         }
