@@ -27,6 +27,32 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
  * 1. If any decision is "Deny", the result is "Deny".
  * 2. Otherwise, the result is "Permit".
  * 
+ * ## Permit Overrides
+ * 
+ * The permit overrides combining algorithm is intended for those cases where a permit decision should have priority over a deny decision.
+ * This algorithm has the following behavior.
+ * 
+ * 1. If any decision is "Permit", the result is "Permit".
+ * 2. Otherwise, if any decision is "Indeterminate{DP}", the result is "Indeterminate{DP}".
+ * 3. Otherwise, if any decision is "Indeterminate{P}" and another decision is “Indeterminate{D} or Deny, the result is "Indeterminate{DP}".
+ * 4. Otherwise, if any decision is "Indeterminate{P}", the result is "Indeterminate{P}".
+ * 5. Otherwise, if any decision is "Deny", the result is "Deny".
+ * 6. Otherwise, if any decision is "Indeterminate{D}", the result is "Indeterminate{D}".
+ * 7. Otherwise, the result is "NotApplicable".
+ * 
+ * Deny Overrides
+ * 
+ * The deny overrides combining algorithm is intended for those cases where a deny decision should have priority over a permit decision.
+ * This algorithm has the following behavior.
+ * 
+ * 1. If any decision is "Deny", the result is "Deny".
+ * 2. Otherwise, if any decision is "Indeterminate{DP}", the result is "Indeterminate{DP}".
+ * 3. Otherwise, if any decision is "Indeterminate{D}" and another decision is “Indeterminate{P} or Permit, the result is "Indeterminate{DP}".
+ * 4. Otherwise, if any decision is "Indeterminate{D}", the result is "Indeterminate{D}".
+ * 5. Otherwise, if any decision is "Permit", the result is "Permit".
+ * 6. Otherwise, if any decision is "Indeterminate{P}", the result is "Indeterminate{P}".
+ * 7. Otherwise, the result is "NotApplicable".
+ * 
  * @method PolicyCombiningAlgorithmDataType DENY_OVERRIDES(\exface\Core\CommonLogic\Workbench $workbench)
  * @method PolicyCombiningAlgorithmDataType PERMIT_OVERRIDES(\exface\Core\CommonLogic\Workbench $workbench)
  * @method PolicyCombiningAlgorithmDataType DENY_UNLESS_PERMIT(\exface\Core\CommonLogic\Workbench $workbench)
@@ -39,8 +65,8 @@ class PolicyCombiningAlgorithmDataType extends StringDataType implements EnumDat
 {
     use EnumStaticDataTypeTrait;
     
-    //const DENY_OVERRIDES = "deny-overrides";
-    //const PERMIT_OVERRIDES = "permit-overrides";
+    const DENY_OVERRIDES = "deny-overrides";
+    const PERMIT_OVERRIDES = "permit-overrides";
     const DENY_UNLESS_PERMIT = "deny-unless-permit";
     const PERMIT_UNLESS_DENY = "permit-unless-deny";
     
