@@ -1,0 +1,5 @@
+## Facade authorization point
+
+This authorization point allows to restrict access to specific facades to selected user roles only. These facades could then only be used by users with these roles regardless of the resources being accessed through the facade.
+
+Most facades are accessible by any user by default (even unauthorized guests) - permissions are defined for the resources behind the facade like pages, actions, etc. However, there are facades, that have their own logic and do not work with instances of the metamodel: e.g. the `DocsFacade` in the core, that is responsible for rendering the app documentation or custom facades built to expose web services. In these cases, the facade authorization point can be used to create simple authorization rules without the overhead to write a custom AP.

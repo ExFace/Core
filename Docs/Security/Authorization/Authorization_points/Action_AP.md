@@ -1,0 +1,3 @@
+# Action authorization point
+
+TODO
