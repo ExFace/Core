@@ -1,7 +1,7 @@
 {
     "uid": "0x11ea648437c38ffea2e30205857feb80",
     "alias_with_namespace": "exface.core.user-roles",
-    "menu_parent_page_selector": "0x11ea8de4ed64848f97940205857feb80",
+    "menu_parent_page_selector": "0x11ea5edc2f798596b9920205857feb80",
     "menu_index": 1,
     "menu_visible": true,
     "name": "User Roles",
