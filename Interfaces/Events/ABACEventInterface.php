@@ -25,7 +25,7 @@ interface ABACEventInterface extends EventInterface
      * 
      * @return object|NULL
      */
-    public function getObject() : ?object;
+    public function getObject();
     
     /**
      * Returns the action that is about to be performed.
