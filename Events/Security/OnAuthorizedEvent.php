@@ -8,7 +8,6 @@ use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
-use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Events\ABACEventInterface;
 
@@ -96,7 +95,7 @@ class OnAuthorizedEvent extends AbstractEvent implements AuthorizationPointEvent
      * 
      * @return object|NULL
      */
-    public function getObject() : ?object
+    public function getObject()
     {
         return $this->object;
     }
