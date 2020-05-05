@@ -1126,9 +1126,14 @@ SELECT
     apol.*,
     {$this->buildSqlUuidSelector('apol.target_page_group_oid')} AS target_page_group_oid,
     {$this->buildSqlUuidSelector('apol.target_user_role_oid')} AS target_user_role_oid,
-    {$this->buildSqlUuidSelector('apol.target_object_oid')} AS target_object_oid
+    {$this->buildSqlUuidSelector('apol.target_object_oid')} AS target_object_oid,
+    {$this->buildSqlUuidSelector('apol.target_object_action_oid')} AS target_object_action_oid,
+    baction.alias AS target_object_action_alias,
+    capp.app_alias AS target_object_action_app
 FROM
     exf_auth_policy apol
+LEFT JOIN exf_object_action baction ON apol.target_object_action_oid = baction.oid
+LEFT JOIN exf_app capp ON baction.action_app_oid = capp.oid
 WHERE
     apol.auth_point_oid = {$authPoint->getUid()}
     AND apol.disabled_flag = 0
@@ -1137,14 +1142,23 @@ WHERE
         apol.target_user_role_oid IS NULL
     )
 SQL;
-        
-        foreach ($this->getDataConnection()->runSql($sql)->getResultArray() as $row) {            
+        foreach ($this->getDataConnection()->runSql($sql)->getResultArray() as $row) {
+            $action = null;
+            if ($row['target_object_action_oid'] !== null && $row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {
+                #TODO
+                throw new \Exception('Policy cant have object action and action prototype defined!');
+            }
+            if ($row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {
+                $action = $row['target_action_class_path'];
+            } else if ($row['target_object_action_oid'] !== null) {
+                $action = $row['target_object_action_app'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $row['target_object_action_alias'];
+            }
             $authPoint->addPolicy(
                 [
                     PolicyTargetDataType::USER_ROLE => $row['target_user_role_oid'],
                     PolicyTargetDataType::PAGE_GROUP => $row['target_page_group_oid'],
                     PolicyTargetDataType::META_OBJECT => $row['target_object_oid'],
-                    PolicyTargetDataType::ACTION => $row['target_action_class_path'],
+                    PolicyTargetDataType::ACTION => $action,
                     PolicyTargetDataType::FACADE => $row['target_facade_class_path'],
                 ],
                 PolicyEffectDataType::fromValue($this->getWorkbench(), $row['effect']),
@@ -1369,7 +1383,7 @@ SQL;
                     }
                 }
             }
-            if ($tree->nodeInRootNodes($parentNode)) {
+            if ($parentNode !== null && $tree->nodeInRootNodes($parentNode)) {
                 $nodeId = null;
                 for ($i = 0; $i < count($treeRootNodes); $i++) {
                     if ($treeRootNodes[$i]->getUid() === $parentNode->getUid()) {
