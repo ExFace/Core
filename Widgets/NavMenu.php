@@ -2,16 +2,25 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Factories\UiPageTreeFactory;
-use exface\Core\Factories\SelectorFactory;
 use exface\Core\CommonLogic\Model\UiPageTreeNode;
 use exface\Core\Factories\UiPageFactory;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Exceptions\Security\AccessDeniedError;
+use exface\Core\CommonLogic\Selectors\UiPageSelector;
 
 /**
- * NavMenu shows a hierarchical navigational menu starting from a given root page or,
- * if no root page is given, from the default rootpage.
+ * A hierarchical navigation menu starting the servers index page or a given root page.
  * 
- * NavMenu produce a tree menu consisting of nodes. Each node contains its parent node and (if exists) its child nodes.
- * Each menu entry navigates to its inherent page when clicked.
+ * Depending on the facade used, the menu will look like a tree or accordion with multiple levels.
+ * 
+ * Parent-child relationships are derived from the metamodel of the pages. By default the
+ * menu's top-level node is the one defined in the `System.config.json` under 
+ * `SERVER.INDEX_PAGE_SELECTOR`. Use `root_page_selectors` to specify the top-level
+ * nodes explicitly. 
+ * 
+ * ## Examples
+ * 
+ * ### A menu from the `index` page down to the current page.
  *  
  * ```
  * {
@@ -21,9 +30,30 @@ use exface\Core\Factories\UiPageFactory;
  * 
  * ```
  * 
- * Using the optional `root_page_alias` property you can control which page should be the root page for the menu.
+ * ### Showing all root pages
  * 
- * The visual representation, as always, depends on the facade.
+ * ```
+ * {
+ *  "widget_type": "NavMenu",
+ *  "object_alias": "exface.Core.PAGE",
+ *  "root_page_selectors": []
+ * }
+ * 
+ * ```
+ * 
+ * ### A secondary menu
+ * 
+ * ```
+ * {
+ *  "widget_type": "NavMenu",
+ *  "object_alias": "exface.Core.PAGE",
+ *  "root_page_selectors": [
+ *      "index",
+ *      "secondary-menu-root"
+ *  ]
+ * }
+ * 
+ * ```
  * 
  * @method NavMenu getWidget() 
  *
@@ -32,9 +62,9 @@ use exface\Core\Factories\UiPageFactory;
  */
 class NavMenu extends AbstractWidget
 {    
-    private $rootPage = null;
-    
     private $showRootNode = false;
+    
+    private $rootPageSelectors = null;
     
     /**
      * Returns an array of UiPageTreeNodes. The array contains the root nodes of the menu.
@@ -47,30 +77,63 @@ class NavMenu extends AbstractWidget
      */
     public function getMenu() : array
     {
-        $leafPage = $this->getPage();
-        $tree = UiPageTreeFactory::createForLeafNode($this->getWorkbench(), $leafPage);
-        if ($this->rootPage !== null) {
-            $tree->setRootPages([$this->rootPage]);
+        $tree = UiPageTreeFactory::createForLeafNode($this->getWorkbench(), $this->getPage());
+        $rootSelectors = $this->getRootPageSelectors();
+        if (empty($rootSelectors) === false) {
+            $rootPages = [];
+            foreach ($rootSelectors as $rootSelector) {
+                try {
+                    $rootPages[] = UiPageFactory::createFromModel($this->getWorkbench(), $rootSelector);
+                } catch (AccessDeniedError $e) {
+                    // Ignore not accessible roots
+                }
+            }
+            $tree->setRootPages($rootPages);
         }
-        if (count($tree->getRootNodes()) !== 1 || $this->showRootNode === true) {
-            return $tree->getRootNodes();
-        } else {
+        if ($this->getShowRootNode() === false && count($tree->getRootNodes()) === 1) {
             return $tree->getRootNodes()[0]->getChildNodes();
+        } else {
+            return $tree->getRootNodes();
         }
     }
     
     /**
-     * Specifies the alias of the root page of the menu.
      * 
-     * @uxon-property root_page_alias
-     * @uxon-type metamodel:page
+     * @return string[]|UiPageSelectorInterface[]
+     */
+    public function getRootPageSelectors() : array
+    {
+        return $this->rootPageSelectors ?? [(new UiPageSelector($this->getWorkbench(), $this->getWorkbench()->getConfig()->getOption('SERVER.INDEX_PAGE_SELECTOR')))];
+    }
+    
+    /**
+     * Array of page UIDs or aliases to use as top-level menu nodes.
+     * 
+     * If not set, the page specified in the `System.config.json` under 
+     * `SERVER.INDEX_PAGE_SELECTOR` will be used by default.
+     * 
+     * @uxon-property root_page_selectors
+     * @uxon-type metamodel:page[]
+     * @uxon-template [""]
+     * 
+     * @param string[]|UiPageSelectorInterface[] $selectorsOrStrings
+     * @return NavMenu
+     */
+    public function setRootPageSelectors(array $selectorsOrStrings) : NavMenu
+    {
+        $this->rootPageSelectors = $selectorsOrStrings;
+        return $this;
+    }
+    
+    /**
+     * @deprecated use setRootPageSelectors() instead
      *
      * @param string $pageSelector
      * @return NavMenu
      */
     public function setRootPageAlias(string $pageSelectorString) : NavMenu
     {
-        $this->rootPage = UiPageFactory::createFromModel($this->getWorkbench(), $pageSelectorString);
+        $this->rootPageSelectors = [$pageSelectorString];
         return $this;
     }
     
@@ -84,14 +147,18 @@ class NavMenu extends AbstractWidget
      * @param bool $trueOrFalse
      * @return NavMenu
      */
-    public function setShowRootNode (bool $trueOrFalse) : NavMenu
+    public function setShowRootNode(bool $trueOrFalse) : NavMenu
     {
         $this->showRootNode = $trueOrFalse;
         return $this;
     }
     
-    public function getRootPageAlias() : ?string
+    /**
+     * 
+     * @return bool
+     */
+    public function getShowRootNode() : bool
     {
-        return $this->rootPage;
+        return $this->showRootNode;
     }
 }
