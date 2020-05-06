@@ -157,6 +157,13 @@ interface TaskInterface extends WorkbenchDependantInterface
     
     /**
      * 
+     * @param UiPageInterface $page
+     * @return TaskInterface
+     */
+    public function setPage(UiPageInterface $page) : TaskInterface;
+    
+    /**
+     * 
      * @see isTriggeredByWidget()
      * 
      * @param string $string
