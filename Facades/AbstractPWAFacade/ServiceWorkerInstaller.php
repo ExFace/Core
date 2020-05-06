@@ -7,6 +7,7 @@ use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
+use exface\Core\DataTypes\FilePathDataType;
 
 /**
  * This installer uses a ServiceWorkerBuilder to generate a ServiceWorker and places it as a new resource in the CMS.
@@ -128,7 +129,7 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
 JS;
 
 $filename = $this->buildUrlToServiceWorker();
-$path = $this->getWorkbench()->filemanager()->getPathToBaseFolder() . DIRECTORY_SEPARATOR . $filename;
+$path = $this->getWorkbench()->filemanager()->getPathToBaseFolder() . DIRECTORY_SEPARATOR . FilePathDataType::normalize($filename, DIRECTORY_SEPARATOR);
 file_put_contents($path, $code);
 return $filename;
     }
@@ -218,7 +219,7 @@ return $filename;
      */
     public function buildUrlToServiceWorker() : string
     {
-        return $this->getWorkbench()->getUrl() . $this->getWorkbench()->getConfig()->getOption("FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_FILENAME");
+        return $this->getWorkbench()->getConfig()->getOption("FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_FILENAME");
     }
 }
 ?>
