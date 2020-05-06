@@ -17,6 +17,7 @@ use exface\Core\CommonLogic\Selectors\UiPageSelector;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Generic task implementation to create task programmatically.
@@ -384,6 +385,21 @@ class GenericTask implements TaskInterface
             $this->originPageSelctor = new UiPageSelector($this->getWorkbench(), $selectorOrString);
         }
         $this->originPage = null;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::setPage()
+     */
+    public function setPage(UiPageInterface $page) : TaskInterface
+    {
+        if ($this->isTriggeredOnPage() === true) {
+            throw new RuntimeException('Cannot change page of a task, that is triggered by another page!');
+        }
+        $this->originPage = $page;
+        $this->originPageSelctor = $page->getSelector();
         return $this;
     }
     
