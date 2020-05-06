@@ -258,6 +258,7 @@
     "PAGE.USERS.CREDENTIALS": "Credentials",
     "PAGE.USERS.CREDENTIALS_ADD_CONNECTION": "Add connection",
     "PAGE.USERS.CREDENTIALS_UPDATE": "Update credentials",
+    "PAGE.USERS.LAST_LOGIN": "Last login",
     "PAGE.USERS.USER_DATA": "User Data",
     "PAGE.USERS.PERSONAL_DATA": "Personal Data",
     "PAGE.USERS.CREDENTIALS_TEST": "Test Access",
