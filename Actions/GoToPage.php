@@ -5,9 +5,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
+use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 
 /**
  * Navigates to the given page taking the selected input object as filter and an optional set of additional filters.
@@ -29,6 +28,8 @@ class GoToPage extends ShowWidget
     private $takeAlongFilters = array();
 
     private $open_in_new_window = false;
+    
+    private $hideButtonIfNoAccessToPage = false;
     
     /**
      * 
@@ -125,5 +126,49 @@ class GoToPage extends ShowWidget
     {
         $this->open_in_new_window = BooleanDataType::cast($value);
         return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getHideButtonIfNoAccessToPage() : bool
+    {
+        return $this->hideButtonIfNoAccessToPage;
+    }
+    
+    /**
+     * Set to TRUE to hide the trigger widget (button, tile, etc.) if the target page is not accessible for the current user.
+     * 
+     * @uxon-property hide_button_if_no_access_to_page
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return GoToPage
+     */
+    public function setHideButtonIfNoAccessToPage(bool $trueOrFalse) : GoToPage
+    {
+        $this->hideButtonIfNoAccessToPage = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowWidget::setPageAlias()
+     */
+    public function setPageAlias($value)
+    {
+        $result = parent::setPageAlias($value);
+        if ($this->getHideButtonIfNoAccessToPage() === true && $this->isDefinedInWidget()) {
+            try {
+                $pageAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class);
+                $pageAP->authorize($this->getPage());
+            } catch (AccessPermissionDeniedError $e) {
+                $this->getWidgetDefinedIn()->setHidden(true);
+            }
+        }
+        return $result;
     }
 }
