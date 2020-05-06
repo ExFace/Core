@@ -8,7 +8,8 @@ use exface\Core\Contexts\ActionContext;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Factories\ContextFactory;
 use exface\Core\Factories\SelectorFactory;
-use exface\Core\CommonLogic\Security\Authorization\ContextAuthorizationPoint;
+use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 abstract class AbstractContextScope implements ContextScopeInterface
 {
@@ -80,7 +81,11 @@ abstract class AbstractContextScope implements ContextScopeInterface
         if (! $this->active_contexts[$alias]) {
             $selector = SelectorFactory::createContextSelector($this->getWorkbench(), $alias);            
             $context = ContextFactory::createInScope($selector, $this);
-            $context = $this->getContextManager()->authorize($context);
+            try {
+                $context = $this->getContextManager()->authorize($context);
+            } catch (AccessPermissionDeniedError $e) {
+                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+            }
             $this->active_contexts[$alias] = $context;
             $this->loadContextData($context);
         }
