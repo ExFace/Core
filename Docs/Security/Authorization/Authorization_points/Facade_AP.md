@@ -10,7 +10,7 @@ Most facades are accessible by any user by default (even unauthorized guests) - 
 
 By default every newly added facade is accessible by any user by default, if it is needed to make a facade only accessible by a certain user group, for example if it is a facade to expose a web service, there are only a few rules to add to the Authorization Point for facades.
 
-First the `Policy combining algorithm` of the authorization point needs to be set to `Permit overrides`, which basically means that if a policy exists that permits access to facade, users with the role, configured in that policy, will have permission to a facade, no matter other policies that include that role.
+First the `Policy combining algorithm` of the authorization point needs to be set to `Permit overrides`, which basically means that if a policy exists that permits access to facade, users with the role, configured in that policy, will have permission to a facade, no matter other policies that include that role. The `Default Effect` of the authorization point needs to beset to `Permit`. This means if no policy can be applied for for a user he will have access to the facade.
 
 Second to deny every user role access to that facade add a policy for the facade authorization point. The policy needs to have the `Effect` `Deny`, no `User role` set and as `Facade` the facade that should be to restricted.
 After doing that no user will have access to that facade, so there has to be an other policy added, that will permit access for the user role that should have access.
