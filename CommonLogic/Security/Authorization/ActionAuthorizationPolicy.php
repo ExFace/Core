@@ -19,6 +19,8 @@ use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
+use exface\Core\CommonLogic\Selectors\UiPageGroupSelector;
+use exface\Core\Interfaces\Model\UiMenuItemInterface;
 
 /**
  * Policy for access to actions.
@@ -39,6 +41,8 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     private $actionSelector = null;
     
     private $metaObjectSelector = null;
+    
+    private $pageGroupSelector = null;
     
     private $conditionUxon = null;
     
@@ -64,6 +68,9 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
         }
         if ($str = $targets[PolicyTargetDataType::META_OBJECT]) {
             $this->metaObjectSelector = new MetaObjectSelector($this->workbench, $str);
+        }        
+        if ($str = $targets[PolicyTargetDataType::PAGE_GROUP]) {
+            $this->pageGroupSelector = new UiPageGroupSelector($this->workbench, $str);
         }
         
         $this->conditionUxon = $conditionUxon;
@@ -87,7 +94,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Security\AuthorizationPolicyInterface::authorize()
      */
-    public function authorize(UserImpersonationInterface $userOrToken = null, ActionInterface $action = null): PermissionInterface
+    public function authorize(UserImpersonationInterface $userOrToken = null, ActionInterface $action = null, UiMenuItemInterface $menuItem = null): PermissionInterface
     {
         $applied = false;
         try {
@@ -114,6 +121,11 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 } else {
                     $applied = true;
                 }
+            }
+            if ($this->pageGroupSelector !== null && $menuItem->isInGroup($this->pageGroupSelector) === false) {
+                return PermissionFactory::createNotApplicable($this);
+            } else {
+                $applied = true;
             }
             
             if (($selector = $this->actionSelector) !== null) {
