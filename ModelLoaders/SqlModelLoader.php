@@ -59,7 +59,6 @@ use exface\Core\Factories\UserFactory;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\CommonLogic\Model\CompoundAttribute;
 use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
-use exface\Core\CommonLogic\Model\UiPageTreeNode;
 use exface\Core\CommonLogic\Model\UiPageTree;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\DataTypes\PolicyEffectDataType;
@@ -71,7 +70,7 @@ use exface\Core\Exceptions\LogicException;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\Factories\UiPageTreeFactory;
-use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
  * 
@@ -1145,8 +1144,7 @@ SQL;
         foreach ($this->getDataConnection()->runSql($sql)->getResultArray() as $row) {
             $action = null;
             if ($row['target_object_action_oid'] !== null && $row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {
-                #TODO
-                throw new \Exception('Policy cant have object action and action prototype defined!');
+                throw new RuntimeException('Policy cant have object action and action prototype values!');
             }
             if ($row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {
                 $action = $row['target_action_class_path'];
