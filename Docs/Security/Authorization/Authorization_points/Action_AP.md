@@ -10,7 +10,7 @@ Most actions are accessible by any user by default but it might be necessary to 
 
 To restrict access to an action for users and make it accessible for only a certain user role, e.g only users with the role `Manager` should be allowed to delete datasets, use this authorization point.
 
-First the authorization point `Policy combining algorithm` needs to be set to `Permit Overrides`.
+First the authorization point `Policy combining algorithm` needs to be set to `Permit Overrides`. The `Default Effect` of the authorization point needs to beset to `Permit`. This means if no policy can be applied for for a user he will have access to the action.
 
 Second add a policy to that authorization point denying every user the access to the delete action. The policy needs to have `Deny` as `Effect` and no user role. It is possible to either set `Action prototype` or `Action Model` for a policy but **NOT** both at the same time. Set `Action prototype` if every action based on that prototype, eg. `exface.core.DeleteObject`, should be restriced, or set `Action Model` if only that specific action model should be restricted. After adding this policy no user will be able to use that action, so a second policy is needed to allow the desired user role, e.g. `Manager`, access to that action.
 
