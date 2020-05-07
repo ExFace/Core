@@ -8,6 +8,7 @@ use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Factories\PermissionFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Model\UiMenuItemInterface;
 
 /**
  * 
@@ -24,17 +25,24 @@ class ActionAuthorizationPoint extends AbstractAuthorizationPoint
      * 
      * @see \exface\Core\Interfaces\Security\AuthorizationPointInterface::authorize()
      */
-    public function authorize(ActionInterface $action = null, TaskInterface $task = null, UserImpersonationInterface $userOrToken = null) : TaskInterface
+    public function authorize(ActionInterface $action = null, TaskInterface $task = null, UserImpersonationInterface $userOrToken = null) : ?TaskInterface
     {
         if ($this->isDisabled()) {
-            return PermissionFactory::createPermitted();
+            return $task;
         }
         
         if ($userOrToken === null) {
             $userOrToken = $this->getWorkbench()->getSecurity()->getAuthenticatedToken();
         }
         
-        $permissionsGenerator = $this->evaluatePolicies($action, $userOrToken);
+        $page = null;
+        if ($action !== null && $action->isDefinedInWidget()) {
+            $page = $action->getWidgetDefinedIn()->getPage();
+        } elseif ($task !== null && $task->isTriggeredOnPage()) {
+            $page = $task->getPageTriggeredOn();
+        }
+        
+        $permissionsGenerator = $this->evaluatePolicies($action, $userOrToken, $page);
         $this->combinePermissions($permissionsGenerator, $userOrToken, $action);
         return $task;
     }
@@ -56,10 +64,10 @@ class ActionAuthorizationPoint extends AbstractAuthorizationPoint
      * @param UserImpersonationInterface $userOrToken
      * @return \Generator
      */
-    protected function evaluatePolicies(ActionInterface $action, UserImpersonationInterface $userOrToken) : \Generator
+    protected function evaluatePolicies(ActionInterface $action, UserImpersonationInterface $userOrToken, UiMenuItemInterface $menuItem) : \Generator
     {
         foreach ($this->getPolicies($userOrToken) as $policy) {
-            yield $policy->authorize($userOrToken, $action);
+            yield $policy->authorize($userOrToken, $action, $menuItem);
         }
     }
     
