@@ -64,7 +64,7 @@ class ActionAuthorizationPoint extends AbstractAuthorizationPoint
      * @param UserImpersonationInterface $userOrToken
      * @return \Generator
      */
-    protected function evaluatePolicies(ActionInterface $action, UserImpersonationInterface $userOrToken, UiMenuItemInterface $menuItem) : \Generator
+    protected function evaluatePolicies(ActionInterface $action, UserImpersonationInterface $userOrToken, UiMenuItemInterface $menuItem = null) : \Generator
     {
         foreach ($this->getPolicies($userOrToken) as $policy) {
             yield $policy->authorize($userOrToken, $action, $menuItem);
