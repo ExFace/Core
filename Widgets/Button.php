@@ -20,6 +20,7 @@ use exface\Core\Widgets\Traits\iHaveColorTrait;
 use exface\Core\Interfaces\Widgets\iCanBeDisabled;
 use exface\Core\Interfaces\Actions\iResetWidgets;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -60,6 +61,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     private $refreshWidgetIds = [];
     
     private $resetInputWidget = null;
+    
+    private $hiddenIfAccessDenied = false;
     
     /**
      * 
@@ -451,5 +454,39 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         
         $this->resetWidgetIds = array_unique($array);
         return $this;
+    }
+    
+    /**
+     * Set this property if the button should be hidden if a user is not allowed access to the action bound to it.
+     * 
+     * @uxon-property hidden_if_access_denied
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return Button
+     */
+    public function setHiddenIfAccessDenied(bool $trueOrFalse) : Button
+    {
+      $this->hiddenIfAccessDenied = $trueOrFalse;
+      return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::isHidden()
+     */
+    public function isHidden()
+    {
+        if ($this->hiddenIfAccessDenied === false) {
+            return parent::isHidden();
+        }
+        try {
+            $this->getAction()->isAuthorized();
+            return false;
+        } catch (AccessPermissionDeniedError $e) {
+            return true;
+        }        
     }
 }
