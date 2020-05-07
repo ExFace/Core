@@ -58,5 +58,28 @@
     "FACADES.ROUTES": {},
     
     "FACADES.ABSTRACTPWAFACADE.WORKBOX_VENDOR_PATH": "npm-asset/workbox-sw/build/workbox-sw.js",
-    "FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_FILENAME": "ServiceWorker.js"
+    "FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_FILENAME": "ServiceWorker.js",
+	"FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_ROUTES": {
+		"HTML pages": {
+    		"description": "Cache all HTML files. Use cache only if offline.",
+			"matcher": "/^.*\\.html/i",
+			"strategy": "workbox.strategies.networkFirst"
+		},
+		"Static JS, CSS, fonts from vendor folder": {
+			"description": "Cache static assets. Use cache only if offlie",
+			"matcher": "/vendor\\/.*(\\.js|\\.css|\\.woff2)/i",
+			"strategy": "workbox.strategies.networkFirst",
+			"cacheName": "asset-cache",
+    		"maxAgeSeconds": 604800
+		},
+		"images": {
+			"description": "Cache images. Use cache, but update in the background.",
+			"matcher": "/.*\\.(?:png|gif|jpg|jpeg|svg)$/i",
+			"strategy": "workbox.strategies.staleWhileRevalidate",
+			"cacheName": "image-cache",
+    		"maxEntries": 50,
+    		"maxAgeSeconds": 604800
+		}
+	},
+	"FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_IMPORTS": []
 }

@@ -56,18 +56,23 @@ class CoreApp extends App
         $installer->addInstaller($htaccessInstaller);
         
         // Add facade installers for core facades
+        
+        // HTTP file server facade
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(HttpFileServerFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
         
+        // Docs facade
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(DocsFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
         
+        // Proxy facade
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(ProxyFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
         
+        // Web console facade
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(WebConsoleFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
