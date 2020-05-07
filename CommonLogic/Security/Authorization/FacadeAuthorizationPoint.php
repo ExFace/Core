@@ -26,7 +26,7 @@ class FacadeAuthorizationPoint extends AbstractAuthorizationPoint
     public function authorize(FacadeInterface $facade = null, UserImpersonationInterface $userOrToken = null) : FacadeInterface
     {
         if ($this->isDisabled()) {
-            return PermissionFactory::createPermitted();
+            return $facade;
         }
         
         if ($userOrToken === null) {
