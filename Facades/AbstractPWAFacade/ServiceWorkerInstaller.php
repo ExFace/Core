@@ -8,9 +8,25 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\Selectors\AppSelector;
 
 /**
- * This installer uses a ServiceWorkerBuilder to generate a ServiceWorker and places it as a new resource in the CMS.
+ * This installer can be used to add code for a specific facade to the central PWA ServiceWorker.
+ * 
+ * ## How it works
+ * 
+ * 1) The facade app instantiates this installer and provides a `ServiceWorkerBuilder`, that produces
+ * the the JS code for routes and imports, that need to be added to the ServiceWorker for the facade.
+ * 2) The installer maintains a `ServiceWorker.config.json` where it keeps track of ServiceWorker
+ * code from each app separately - to avoid conflicts. Every install/uninstall operation updates the
+ * respecitve app's section in this config file, but does not affect the other apps in it.
+ * 3) After each install/uninstall the installer will generate a `ServiceWorker.js` from all the code
+ * in the config file. Thus, every time an app is installed or removed, it's part in the `ServiceWorker.js`
+ * is updated.
+ * 
+ * Using a `ServiceWorkerBuilder` allows to separate the responsibility for generating the JS code from
+ * the installer's logic concerned with the location of the ServiceWorker file, common routes, etc.
  *        
  * @author Andrej Kabachnik
  *        
@@ -21,6 +37,11 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
     
     private $disabled = false;
     
+    /**
+     * 
+     * @param SelectorInterface $selectorToInstall
+     * @param ServiceWorkerBuilder $builder
+     */
     public function __construct(SelectorInterface $selectorToInstall, ServiceWorkerBuilder $builder)
     {
         parent::__construct($selectorToInstall);
@@ -39,16 +60,7 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
         $builder = new ServiceWorkerBuilder();
         
         foreach ($config->getOption('INSTALLER.SERVICEWORKER.ROUTES') as $id => $uxon) {
-            $builder->addRouteToCache(
-                $id,
-                $uxon->getProperty('matcher'),
-                $uxon->getProperty('strategy'),
-                $uxon->getProperty('method'),
-                $uxon->getProperty('description'),
-                $uxon->getProperty('cacheName'),
-                $uxon->getProperty('maxEntries'),
-                $uxon->getProperty('maxAgeSeconds')
-                );
+            $builder->addRouteFromUxon($id, $uxon);
         }
         
         if ($config->hasOption('INSTALLER.SERVICEWORKER.IMPORTS')) {
@@ -75,16 +87,21 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
     {
         $indent = $this->getOutputIndentation();
         if ($this->isDisabled()) {
-            $config = $this->uninstallConfig($this->getApp());
+            $config = $this->uninstallFromConfig($this->getApp(), $this->getConfig());
         } else {
-            $config = $this->installConfig($this->getApp(), $this->getServiceWorkerBuilder());
+            $config = $this->installToConfig($this->getApp(), $this->getServiceWorkerBuilder(), $this->getConfig());
         }
         yield $indent . $this->buildServiceWorker($config) . PHP_EOL;
     }
     
+    protected function buildUrlToWorkbox() : string
+    {
+        return $this->getWorkbench()->getUrl() . 'vendor/' . $this->getWorkbench()->getConfig()->getOption('FACADES.ABSTRACTPWAFACADE.WORKBOX_VENDOR_PATH');
+    }
+    
     protected function buildServiceWorker(ConfigurationInterface $config) : string
     {
-        $workboxUrl = $this->getWorkbench()->getUrl() . 'vendor/' . $this->getWorkbench()->getConfig()->getOption('FACADES.ABSTRACTPWAFACADE.WORKBOX_VENDOR_PATH');
+        $workboxUrl = $this->buildUrlToWorkbox();;
         $builder = new ServiceWorkerBuilder($workboxUrl);
         foreach ($config->exportUxonObject() as $appAlias => $code) {
             if ($appAlias === '_IMPORTS') {
@@ -142,7 +159,7 @@ return $filename;
      */
     public function uninstall() : \Iterator
     {
-        $this->uninstallConfig($this->getApp());        
+        $this->uninstallFromConfig($this->getApp(), $this->getConfig());        
         return 'ServiceWorker configuration removed';
     }
 
@@ -174,9 +191,8 @@ return $filename;
         return $config;
     }
     
-    protected function installConfig(AppInterface $app, ServiceWorkerBuilder $swBuilder) : ConfigurationInterface
+    protected function installToConfig(AppInterface $app, ServiceWorkerBuilder $swBuilder, ConfigurationInterface $config) : ConfigurationInterface
     {
-        $config = $this->getConfig();
         $config->setOption($app->getAliasWithNamespace(), $swBuilder->buildJsLogic(), $this->getConfigScope());
         
         try {
@@ -187,13 +203,33 @@ return $filename;
         $imports = array_merge($currentImports, $swBuilder->getImports());
         $config->setOption('_IMPORTS', array_unique($imports), $this->getConfigScope());
         
-        return $config;
+        return $this->addCommonConfig($config);
     }
     
-    protected function uninstallConfig(AppInterface $app) : ConfigurationInterface
+    protected function uninstallFromConfig(AppInterface $app, ConfigurationInterface $config) : ConfigurationInterface
     {
-        $config = $this->getConfig();
         $config->unsetOption($app->getAliasWithNamespace(), $this->getConfigScope());
+        return $this->addCommonConfig($config);
+    }
+    
+    protected function addCommonConfig(ConfigurationInterface $config) : ConfigurationInterface
+    {
+        $builder = new ServiceWorkerBuilder($this->buildUrlToWorkbox());
+        $workbenchConfig = $this->getWorkbench()->getConfig();
+        
+        foreach ($workbenchConfig->getOption('FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_ROUTES') as $id => $uxon) {
+            $builder->addRouteFromUxon($id, $uxon);
+        }
+        $config->setOption($this->getWorkbench()->getCoreApp()->getAliasWithNamespace(), $builder->buildJsLogic(), $this->getConfigScope());
+        
+        try {
+            $currentImports = $config->getOption('_IMPORTS')->toArray();
+        } catch (ConfigOptionNotFoundError $e) {
+            $currentImports = [];
+        }
+        $imports = array_merge($currentImports, $workbenchConfig->getOption('FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_IMPORTS')->toArray());
+        $config->setOption('_IMPORTS', array_unique($imports), $this->getConfigScope());
+        
         return $config;
     }
     
@@ -222,4 +258,3 @@ return $filename;
         return $this->getWorkbench()->getConfig()->getOption("FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_FILENAME");
     }
 }
-?>
