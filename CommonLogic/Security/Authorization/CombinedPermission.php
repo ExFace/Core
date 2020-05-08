@@ -7,6 +7,7 @@ use exface\Core\DataTypes\PolicyCombiningAlgorithmDataType;
 use exface\Core\Factories\PermissionFactory;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\DataTypes\PolicyEffectDataType;
 
 /**
  * This permission is calculated by combining a given set of permissions unsing a specified algorithm.
@@ -177,6 +178,128 @@ class CombinedPermission implements PermissionInterface
             }
         }
         return PermissionFactory::createPermitted();
+    }
+    
+    /**
+     * The permit overrides combining algorithm is intended for those cases where a permit decision should have priority over a deny decision.
+     * This algorithm has the following behavior.
+     * 1. If any decision is "Permit", the result is "Permit".
+     * 2. Otherwise, if any decision is "Indeterminate{DP}", the result is "Indeterminate{DP}".
+     * 3. Otherwise, if any decision is "Indeterminate{P}" and another decision is “Indeterminate{D} or Deny, the result is "Indeterminate{DP}".
+     * 4. Otherwise, if any decision is "Indeterminate{P}", the result is "Indeterminate{P}".
+     * 5. Otherwise, if any decision is "Deny", the result is "Deny".
+     * 6. Otherwise, if any decision is "Indeterminate{D}", the result is "Indeterminate{D}".
+     * 7. Otherwise, the result is "NotApplicable".
+     * 
+     * @param iterable $permissions
+     * @param array $resultArray
+     * @return PermissionInterface
+     */
+    protected function combineViaPermitOverrides(iterable $permissions, array &$resultArray) : PermissionInterface
+    {
+        $atLeastOneIndeterminateD = false;
+        $atLeastOneIndeterminateP = false;
+        $atLeastOneIndeterminate = false;
+        $atLeastOneDeny = false;
+        foreach ($permissions as $permission) {
+            $resultArray[] = $permission;
+            if ($permission->isPermitted()) {
+                return $permission;
+            }
+            if ($permission->isDenied()) {
+                $atLeastOneDeny = true;
+                continue;
+            }
+            if ($permission->isIndeterminateDeny()) {
+                $atLeastOneIndeterminateD = true;
+                continue;
+            }
+            if ($permission->isIndeterminatePermit()) {
+                $atLeastOneIndeterminateP = true;
+                continue;
+            }
+            if ($permission->isIndeterminate()) {
+                $atLeastOneIndeterminate = true;
+                continue;
+            }
+        }
+        if ($atLeastOneIndeterminate) {
+            return PermissionFactory::createIndeterminate();
+        }
+        if ($atLeastOneIndeterminateP && ($atLeastOneIndeterminateD || $atLeastOneDeny)) {
+            return PermissionFactory::createIndeterminate();
+        }
+        if ($atLeastOneIndeterminateP === true) {
+            return PermissionFactory::createIndeterminate(null, PolicyEffectDataType::PERMIT);
+        }
+        if ($atLeastOneDeny) {
+            return PermissionFactory::createDenied();
+        }
+        if ($atLeastOneIndeterminateD === true) {
+            return PermissionFactory::createIndeterminate(null, PolicyEffectDataType::DENY);
+        }
+        return PermissionFactory::createNotApplicable();
+    }
+    
+    /**
+     * The deny overrides combining algorithm is intended for those cases where a deny decision should have priority over a permit decision.
+     * This algorithm has the following behavior.
+     * 1. If any decision is "Deny", the result is "Deny".
+     * 2. Otherwise, if any decision is "Indeterminate{DP}", the result is "Indeterminate{DP}".
+     * 3. Otherwise, if any decision is "Indeterminate{D}" and another decision is “Indeterminate{P} or Permit, the result is "Indeterminate{DP}".
+     * 4. Otherwise, if any decision is "Indeterminate{D}", the result is "Indeterminate{D}".
+     * 5. Otherwise, if any decision is "Permit", the result is "Permit".
+     * 6. Otherwise, if any decision is "Indeterminate{P}", the result is "Indeterminate{P}".
+     * 7. Otherwise, the result is "NotApplicable".
+     * 
+     * @param iterable $permissions
+     * @param array $resultArray
+     * @return PermissionInterface
+     */
+    protected function combineViaDenyOverrides(iterable $permissions, array &$resultArray) : PermissionInterface
+    {
+        $atLeastOneIndeterminateD = false;
+        $atLeastOneIndeterminateP = false;
+        $atLeastOneIndeterminate = false;
+        $atLeastOnePermit = false;
+        foreach ($permissions as $permission) {
+            $resultArray[] = $permission;
+            if ($permission->isDenied()) {
+                return $permission;
+            }
+            if ($permission->isPermitted()) {
+                $atLeastOnePermit = true;
+                continue;
+            }
+            if ($permission->isIndeterminateDeny()) {
+                $atLeastOneIndeterminateD = true;
+                continue;
+            }
+            if ($permission->isIndeterminatePermit()) {
+                $atLeastOneIndeterminateP = true;
+                continue;
+            }
+            if ($permission->isIndeterminate()) {
+                $atLeastOneIndeterminate = true;
+                continue;
+            }
+        }
+        if ($atLeastOneIndeterminate) {
+            return PermissionFactory::createIndeterminate();
+        }
+        if ($atLeastOneIndeterminateD && ($atLeastOneIndeterminateP || $atLeastOnePermit)) {
+            return PermissionFactory::createIndeterminate();
+        }        
+        if ($atLeastOneIndeterminateD === true) {
+            return PermissionFactory::createIndeterminate(null, PolicyEffectDataType::DENY);
+        }
+        if ($atLeastOnePermit) {
+            return PermissionFactory::createPermitted();
+        }
+        if ($atLeastOneIndeterminateP === true) {
+            return PermissionFactory::createIndeterminate(null, PolicyEffectDataType::PERMIT);
+        }
+        return PermissionFactory::createNotApplicable();
     }
     
     public function toXACMLDecision() : string

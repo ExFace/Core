@@ -13,7 +13,6 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTrait;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\Factories\UserFactory;
 
 /**
  * Performs authentication via PHP LDAP extension. 
@@ -38,7 +37,10 @@ use exface\Core\Factories\UserFactory;
  * 		"create_new_users": true,
  * 		"create_new_users_with_roles": [
  * 			"exface.Core.SUPERUSER"
- * 		]
+ * 		],
+ *      "ldap_name_alias": "name",
+ *      "ldap_name_pattern": "/(?<lastname>.*), (?<firstname>.*)/i",
+ *      "dn_string": "[#domain#]\\[#username#]"
  * }
  * 
  * ```
@@ -60,19 +62,25 @@ class LdapAuthenticator extends AbstractAuthenticator
 {    
     use CreateUserFromTokenTrait;
     
+    private const LDAP_NAME_DEFAULT_PATTERN = '/(?<lastname>.*), (?<firstname>.*)/i';
+    
+    private const LDAP_NAME_DEFAULT_ALIAS = 'name';
+    
+    private const LDAP_DEFAULT_DN_STRING = '[#domain#]\\[#username#]';
+    
     private $hostname = null;
     
     private $authenticatedToken = null;
     
     private $domains = null;
     
-    private $dnString = '[#domain#]\\[#username#]';
+    private $dnString = null;
     
     private $usernameInputCaption = null;
     
-    private $ldapSurnameAlias = 'surname';
+    private $ldapNameAlias = null;
     
-    private $ldapGivenNameAlias = 'givenname';
+    private $ldapNamePattern = null;
     
     /**
      *
@@ -120,17 +128,22 @@ class LdapAuthenticator extends AbstractAuthenticator
                 $baseDn .= 'dc=' . $part . ',';
             }
             $baseDn = substr($baseDn, 0, -1);
-            $attributes = [$this->getLdapGivennameAlias(), $this->getLdapSurnameAlias()];
+            $attributes = [$this->getLdapNameAlias()];
             $ldapresult = ldap_search($ldapconn, $baseDn, "(&(objectClass=user)(sAMAccountName={$token->getUsername()}))", $attributes);
             if ($ldapresult === false) {
                 $this->getWorkbench()->getLogger()->logException(new RuntimeException(ldap_error($ldapconn), ldap_errno($ldapconn)));
             }
-            $entry_array = ldap_get_entries($ldapconn, $ldapresult);
+            $entryArray = ldap_get_entries($ldapconn, $ldapresult);
             $surname = null;
             $givenname = null;
-            if ($entry_array['count'] > 0) {
-                $surname = $entry_array[0][$this->getLdapSurnameAlias()][0];
-                $givenname = $entry_array[0][$this->getLdapGivennameAlias()][0];
+            if ($entryArray['count'] > 0) {
+                $pattern = $this->getLdapNamePattern();
+                $nameString = $entryArray[0][$this->getLdapNameAlias()][0];
+                $matches = [];
+                if (preg_match_all($pattern, $nameString, $matches)) {
+                    $surname = $matches['lastname'][0];
+                    $givenname = $matches['firstname'][0];
+                }
             }            
             $user = $this->createUserWithRoles($this->getWorkbench(), $token, $surname, $givenname);
         } else {
@@ -235,6 +248,9 @@ class LdapAuthenticator extends AbstractAuthenticator
      */
     protected function getDnString() : string
     {
+        if ($this->dnString === null) {
+            return self::LDAP_DEFAULT_DN_STRING;
+        }
         return $this->dnString;
     }
     
@@ -282,43 +298,18 @@ class LdapAuthenticator extends AbstractAuthenticator
     }
     
     /**
-     * Set the property name the surname is saved as in the Ldap user object.
-     * Default is `surname`
-     * 
-     * @uxon-property ldap_surname_alias
-     * @uxon-type string
-     * 
-     * @param string $alias
-     * @return LdapAuthenticator
-     */
-    public function setLdapSurnameAlias(string $alias) : LdapAuthenticator
-    {
-        $this->ldapSurnameAlias;
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return string
-     */
-    protected function getLdapSurnameAlias() : string
-    {
-        return  $this->ldapSurnameAlias;
-    }
-    
-    /**
-     * Set the property name the givenname is saved as in the Ldap user object.
-     * Default is `givenname`
+     * Set the attribute name the users full name is saved as in the Ldap user object.
+     * Default is `name`.
      *
-     * @uxon-property ldap_givenname_alias
+     * @uxon-property ldap_name_attribute
      * @uxon-type string
      *
-     * @param string $alias
+     * @param string $attribute
      * @return LdapAuthenticator
      */
-    public function setLdapGivennameAlias(string $alias) : LdapAuthenticator
+    public function setLdapNameAttribute(string $attribute) : LdapAuthenticator
     {
-        $this->ldapGivennameAlias;
+        $this->ldapNameAlias = $attribute;
         return $this;
     }
     
@@ -326,9 +317,41 @@ class LdapAuthenticator extends AbstractAuthenticator
      *
      * @return string
      */
-    protected function getLdapGivennameAlias() : string
+    protected function getLdapNameAlias() : string
     {
-        return  $this->ldapGivenNameAlias;
+        if ($this->ldapNameAlias === null) {
+            return self::LDAP_NAME_DEFAULT_ALIAS;
+        }
+        return  $this->ldapNameAlias;
+    }
+    
+    /**
+     * Set the regular expression mask the value of the ldap_name_alias option in the Ldap user object will be evaluated by.
+     * The mask should contain the named character groups `lastname` and `firstname`.
+     * The default regular expression is: `/(?<lastname>.*), (?<firstname>.*)/i`.
+     * 
+     * @uxon-prototype ldap_name_pattern
+     * @uxon-type string
+     * 
+     * @param string $pattern
+     * @return LdapAuthenticator
+     */
+    public function setLdapNamePattern(string $pattern) : LdapAuthenticator
+    {
+        $this->ldapNamePattern = $pattern;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getLdapNamePattern() : string
+    {
+        if ($this->ldapNamePattern === null) {
+            return self::LDAP_NAME_DEFAULT_PATTERN;
+        }
+        return $this->ldapNamePattern;
     }
     
     /**

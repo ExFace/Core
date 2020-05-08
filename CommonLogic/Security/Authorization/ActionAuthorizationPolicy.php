@@ -13,20 +13,22 @@ use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Factories\PermissionFactory;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\CommonLogic\Selectors\FacadeSelector;
-use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\CommonLogic\Selectors\ActionSelector;
+use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\Interfaces\Selectors\FileSelectorInterface;
-use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\Interfaces\Selectors\FileSelectorInterface;
+use exface\Core\CommonLogic\Selectors\UiPageGroupSelector;
+use exface\Core\Interfaces\Model\UiMenuItemInterface;
 
 /**
- * Policy for access to facades.
+ * Policy for access to actions.
  * 
  * @author Andrej Kabachnik
  *
  */
-class FacadeAuthorizationPolicy implements AuthorizationPolicyInterface
+class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
 {
     use ImportUxonObjectTrait;
     
@@ -36,7 +38,11 @@ class FacadeAuthorizationPolicy implements AuthorizationPolicyInterface
     
     private $userRoleSelector = null;
     
-    private $facadeSelector = null;
+    private $actionSelector = null;
+    
+    private $metaObjectSelector = null;
+    
+    private $pageGroupSelector = null;
     
     private $conditionUxon = null;
     
@@ -57,9 +63,14 @@ class FacadeAuthorizationPolicy implements AuthorizationPolicyInterface
         if ($str = $targets[PolicyTargetDataType::USER_ROLE]) {
             $this->userRoleSelector = new UserRoleSelector($this->workbench, $str);
         }
-        if ($str = $targets[PolicyTargetDataType::FACADE]) {
-            //SelectorFactory::createFacadeSelector($workbench, $selectorString)
-            $this->facadeSelector =  new FacadeSelector($this->workbench, $str);
+        if ($str = $targets[PolicyTargetDataType::ACTION]) {
+            $this->actionSelector =  new ActionSelector($this->workbench, $str);
+        }
+        if ($str = $targets[PolicyTargetDataType::META_OBJECT]) {
+            $this->metaObjectSelector = new MetaObjectSelector($this->workbench, $str);
+        }        
+        if ($str = $targets[PolicyTargetDataType::PAGE_GROUP]) {
+            $this->pageGroupSelector = new UiPageGroupSelector($this->workbench, $str);
         }
         
         $this->conditionUxon = $conditionUxon;
@@ -83,12 +94,12 @@ class FacadeAuthorizationPolicy implements AuthorizationPolicyInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Security\AuthorizationPolicyInterface::authorize()
      */
-    public function authorize(UserImpersonationInterface $userOrToken = null, FacadeInterface $facade = null): PermissionInterface
+    public function authorize(UserImpersonationInterface $userOrToken = null, ActionInterface $action = null, UiMenuItemInterface $menuItem = null): PermissionInterface
     {
         $applied = false;
         try {
-            if ($facade === null) {
-                throw new InvalidArgumentException('Cannot evalute facade access policy: no facade provided!');
+            if ($action === null) {
+                throw new InvalidArgumentException('Cannot evalute action access policy: no action provided!');
             }
             
             if ($userOrToken instanceof AuthenticationTokenInterface) {
@@ -102,20 +113,34 @@ class FacadeAuthorizationPolicy implements AuthorizationPolicyInterface
             } else {
                 $applied = true;
             }
-            /* @var $selector \exface\Core\CommonLogic\Selectors\FacadeSelector */
-            if (($selector = $this->facadeSelector) !== null) {
+            
+            $object = $action->getMetaObject();
+            if ($object !== null) {
+                if ($this->metaObjectSelector !== null && $object->is($this->metaObjectSelector) === false) {
+                    return PermissionFactory::createNotApplicable($this);
+                } else {
+                    $applied = true;
+                }
+            }
+            if ($this->pageGroupSelector !== null && $menuItem->isInGroup($this->pageGroupSelector) === false) {
+                return PermissionFactory::createNotApplicable($this);
+            } else {
+                $applied = true;
+            }
+            
+            if (($selector = $this->actionSelector) !== null) {
                 switch(true) {
                     case $selector->isFilepath():
                         $selectorClassPath = StringDataType::substringBefore($selector->toString(), '.' . FileSelectorInterface::PHP_FILE_EXTENSION);
-                        $facadeClassPath = FilePathDataType::normalize(get_class($facade));
-                        $applied =  $selectorClassPath === $facadeClassPath;
+                        $actionClassPath = FilePathDataType::normalize(get_class($action));
+                        $applied = $selectorClassPath === $actionClassPath;
                         break;
                     case $selector->isClassname():
-                        $applied = trim(get_class($facade), "\\") === trim($selector->toString(), "\\");
+                        $applied = trim(get_class($action), "\\") === trim($selector->toString(), "\\");
                         break;
                     case $selector->isAlias():
-                        $applied = $facade->getAliasWithNamespace() === $selector->toString();
-                        break;                    
+                        $applied = $action->getAliasWithNamespace() === $selector->toString();
+                        break;
                 }
             }
             

@@ -18,6 +18,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\TaskHandlerInterface;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
+use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 
 /**
  * Common interface for all actions.
@@ -414,4 +415,10 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return ActionSelectorInterface
      */
     public function getSelector() : ActionSelectorInterface;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isAuthorized() : bool;
 }
