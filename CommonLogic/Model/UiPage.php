@@ -344,17 +344,16 @@ class UiPage implements UiPageInterface
             return $this->getWidgetFromIdSpace($id, $id_space, $id_space_root);
         }
         
-        $id_is_path = false;
-        if (StringDataType::startsWith($id_with_namespace, $parentId . self::WIDGET_ID_SEPARATOR)) {
-            $id_is_path = true;
-        }
+        $id_is_path = StringDataType::startsWith($id_with_namespace, $parentId . self::WIDGET_ID_SEPARATOR);
         
         // See if the id searched for has an id space
         $subjIdSpace = StringDataType::substringBefore($id_with_namespace, self::WIDGET_ID_SPACE_SEPARATOR, false, false, true);
         
         foreach ($parent->getChildren() as $child) {
             $child_id = $child->getId();
-            if ($child_id == $id_with_namespace) {
+            if ($child_id === $id_with_namespace) {
+                return $child;
+            } elseif ($subjIdSpace && $child->getIdSpace() === $subjIdSpace && StringDataType::substringAfter($id_with_namespace, $subjIdSpace . self::WIDGET_ID_SPACE_SEPARATOR) === $child_id) {
                 return $child;
             } else {
                 
