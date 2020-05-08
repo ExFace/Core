@@ -70,7 +70,6 @@ use exface\Core\Exceptions\LogicException;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\Factories\UiPageTreeFactory;
-use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
  * 
