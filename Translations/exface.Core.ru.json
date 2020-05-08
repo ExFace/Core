@@ -126,7 +126,8 @@
 	"INSTALLER.SQLSCHEMA.SUCCESS": "%counter% SQL-schema-update installed|%counter% SQL-schema-updates installed",
     "INSTALLER.SQLSCHEMA.FAILED": "SQL-schema-update %first_failed_id% failed: %error_text%|%counter% SQL-schema-updates failed starting with update %first_failed_id%: %error_text%",
 	
-	"LOCALIZATION.DATATYPE.FORMAT_HINT": "Input formats: ",
+	"LOCALIZATION.LOCALE": "ru_RU",
+    "LOCALIZATION.DATATYPE.FORMAT_HINT": "Формы ввода: ",
 	"LOCALIZATION.DATE.DATE_FORMAT": "dd.MM.yyyy",
 	"LOCALIZATION.DATE.DATE_FORMAT_HINT": "common date formats (e.g. 31/12/2019), short notation (e.g. 31122019), short notation for current year (e.g. 3112), relative entries (e.g. 0 for today, +1 for tomorrow, +1w, +1m, -1d, -1y  etc.)",
     "LOCALIZATION.DATE.DATE_FORMAT_EXCEL": "DD.MM.YYYY",
