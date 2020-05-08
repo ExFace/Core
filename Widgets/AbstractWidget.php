@@ -532,8 +532,8 @@ abstract class AbstractWidget implements WidgetInterface
      */
     public function getIdSpace()
     {
-        if (is_null($this->id_space)) {
-            if ($this->getParent() && $parent_id_space = $this->getParent()->getIdSpace()) {
+        if ($this->id_space === null) {
+            if ($this->hasParent() && $parent_id_space = $this->getParent()->getIdSpace()) {
                 $this->id_space = $parent_id_space;
             } else {
                 return '';
