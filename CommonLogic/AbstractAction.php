@@ -289,7 +289,8 @@ abstract class AbstractAction implements ActionInterface
      */
     public final function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : ResultInterface
     {        
-        $task = $this->isAuthorized($task);
+        $actionAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class);
+        $task = $actionAP->authorize($this, $task);
         // Start a new transaction if none passed
         if (is_null($transaction)) {
             $transaction = $this->getWorkbench()->data()->startTransaction();
@@ -1133,16 +1134,15 @@ abstract class AbstractAction implements ActionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::isAuthorized()
      */
-    public function isAuthorized(TaskInterface $task = null) : TaskInterface
+    public function isAuthorized() : bool
     {
         $actionAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class);
         try {
-            $task = $actionAP->authorize($this, $task);
-            return $task;
+            $actionAP->authorize($this);
+            return true;
         } catch (AccessPermissionDeniedError $e) {
-            throw $e;
+            return false;
         }
-        return $task;
     }
 }
 ?>

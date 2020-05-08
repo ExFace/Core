@@ -481,12 +481,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     {
         if ($this->hiddenIfAccessDenied === false) {
             return parent::isHidden();
-        }
-        try {
-            $this->getAction()->isAuthorized();
-            return false;
-        } catch (AccessPermissionDeniedError $e) {
-            return true;
         }        
+        return $this->getAction()->isAuthorized() === false;
+                   
     }
 }
