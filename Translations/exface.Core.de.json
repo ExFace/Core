@@ -192,6 +192,7 @@
     "INSTALLER.SQLSCHEMA.FAILED": "SQL-Schema-Update Nr. %first_failed_id% fehlerhaft: %error_text%|%counter% SQL-Schema-Updates wurden abgebrochen angefangen mit Update Nr. %first_failed_id%: %error_text%", 
     "INSTALLER.SQLSCHEMA.NO_UPDATES": "Keine SQL-Schema-Updates gefunden.",
     
+    "LOCALIZATION.LOCALE": "de_DE",
     "LOCALIZATION.DATATYPE.FORMAT_HINT": "Eingabeformate: ",
     "LOCALIZATION.DATE.DATE_FORMAT": "dd.MM.yyyy",
     "LOCALIZATION.DATE.DATE_FORMAT_HINT": "übliche Datumsformate (z.B. 31.12.2019), Kurznotation (z.B. 31122019), Kurznotation für aktuelles Jahr (z.B. 3112), relative Angaben (z.B. 0 für heute, +1 für morgen, +1w, +1m, -1d, -1y  etc.)",

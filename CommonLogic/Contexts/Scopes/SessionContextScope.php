@@ -43,7 +43,7 @@ class SessionContextScope extends AbstractContextScope
         $this->sessionData = $_SESSION['exface'];
         
         if ($locale = $this->getSessionData(self::KEY_LOCALE)) {
-            $this->session_locale = $locale;
+            $this->setSessionLocale($locale);
         }
         
         if ($username = $this->getSessionData(self::KEY_USERNAME)) {
@@ -318,6 +318,7 @@ class SessionContextScope extends AbstractContextScope
     protected function clearSessionData() : SessionContextScope
     {
         unset($_SESSION['exface']);
+        $this->session_locale = null;
         foreach ($this->getContextsLoaded() as $context) {
             $this->reloadContext($context);
         }
@@ -349,7 +350,7 @@ class SessionContextScope extends AbstractContextScope
      * @param string $value            
      * @return SessionContextScope
      */
-    public function setSessionLocale($value)
+    protected function setSessionLocale(string $value) : SessionContextScope
     {
         $this->session_locale = $value;
         return $this;
