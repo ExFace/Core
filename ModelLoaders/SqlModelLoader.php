@@ -59,7 +59,6 @@ use exface\Core\Factories\UserFactory;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\CommonLogic\Model\CompoundAttribute;
 use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
-use exface\Core\CommonLogic\Model\UiPageTreeNode;
 use exface\Core\CommonLogic\Model\UiPageTree;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\DataTypes\PolicyEffectDataType;
@@ -71,7 +70,6 @@ use exface\Core\Exceptions\LogicException;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\Factories\UiPageTreeFactory;
-use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 
 /**
  * 
@@ -1185,6 +1183,7 @@ SQL;
             SELECT 
                 p.*,
                 {$this->buildSqlUuidSelector('p.oid')} as oid,
+                {$this->buildSqlUuidSelector('p.app_oid')} as app_oid,
                 {$this->buildSqlUuidSelector('p.parent_oid')} as parent_oid,
                 {$this->buildSqlUuidSelector('p.default_menu_parent_oid')} as default_menu_parent_oid,
                 {$this->buildSqlUuidSelector('p.page_template_oid')} as page_template_oid,
