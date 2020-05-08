@@ -134,6 +134,26 @@
             "COMBINING_ALGORITHM_IN_APP": "permit-unless-deny",
             "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\FacadeAuthorizationPolicy",
             "DOCS": "exface\/Core\/Docs\/Security\/Authorization\/Authorization_points\/Facade_AP.md"
+        },
+        {
+            "CREATED_ON": "2020-05-05 16:36:16",
+            "MODIFIED_ON": "2020-05-05 16:53:43",
+            "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
+            "MODIFIED_BY_USER": "0x11ea8944856eaddaaa6e025041000001",
+            "UID": "0x11ea8eddc766689f8ba98c04ba002958",
+            "NAME": "Access to actions",
+            "CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\ActionAuthorizationPoint",
+            "DESCR": null,
+            "APP": "0x31000000000000000000000000000000",
+            "TARGET_USER_ROLE_APPLICABLE": "1",
+            "TARGET_PAGE_GROUP_APPLICABLE": "0",
+            "TARGET_FACADE_APPLICABLE": "0",
+            "TARGET_OBJECT_APPLICABLE": "1",
+            "TARGET_ACTION_APPLICABLE": "1",
+            "DEFAULT_EFFECT_IN_APP": "P",
+            "COMBINING_ALGORITHM_IN_APP": "permit-overrides",
+            "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\ActionAuthorizationPolicy",
+            "DOCS": "exface\/Core\/Docs\/Security\/Authorization\/Authorization_points\/Action_AP.md"
         }
     ],
     "totals_rows": [],
