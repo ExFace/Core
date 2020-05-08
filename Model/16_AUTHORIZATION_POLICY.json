@@ -241,6 +241,25 @@
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": ""
+        },
+        {
+            "CREATED_ON": "2020-05-06 17:01:17",
+            "MODIFIED_ON": "2020-05-06 17:01:17",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8fbb0f34c30c97940205857feb80",
+            "NAME": "Access user-administration pages",
+            "DESCRIPTION": "",
+            "EFFECT": "P",
+            "APP": "0x31000000000000000000000000000000",
+            "AUTHORIZATION_POINT": "0x11ea5ede96e738f6b9920205857feb80",
+            "TARGET_PAGE_GROUP": "0x11ea6f997fc61ac8a3480205857feb80",
+            "TARGET_USER_ROLE": "0x11ea6f996061c094a3480205857feb80",
+            "TARGET_OBJECT": "",
+            "CONDITION_UXON": null,
+            "TARGET_ACTION_MODEL": "",
+            "TARGET_ACTION_PROTOTYPE": "",
+            "TARGET_FACADE": ""
         }
     ],
     "totals_rows": [],
