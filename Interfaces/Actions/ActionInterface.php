@@ -418,9 +418,7 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
     
     /**
      * 
-     * @param TaskInterface $task
-     * @throws AccessPermissionDeniedError
-     * @return TaskInterface
+     * @return bool
      */
-    public function isAuthorized(TaskInterface $task) : TaskInterface;
+    public function isAuthorized() : bool;
 }
