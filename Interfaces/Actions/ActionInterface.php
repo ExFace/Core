@@ -19,6 +19,7 @@ use exface\Core\Interfaces\TaskHandlerInterface;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
+use exface\Core\Interfaces\UserImpersonationInterface;
 
 /**
  * Common interface for all actions.
@@ -399,10 +400,10 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
      * Overrides the auto-generated result message with the given text.
      * The text can contain placeholders.
      *
-     * Placeholders can be used for any column in the result data sheet of this action: e.g. for a CreateObject action
-     * a the follwoing text could be used: "Object [#LABEL#] with id [#UID#] created". If the result sheet contains
-     * multiple rows, the message text will be repeated for every row with the placeholders being replaced from that
-     * row.
+     * Placeholders can be used for any column in the result data sheet of this action: 
+     * e.g. for a CreateObject action a the follwoing text could be used: "Object [#LABEL#] 
+     * with id [#UID#] created". If the result sheet contains multiple rows, the message text 
+     * will be repeated for every row with the placeholders being replaced from that row.
      *
      * @param string $value
      * @return \exface\Core\CommonLogic\AbstractAction
@@ -417,8 +418,10 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
     public function getSelector() : ActionSelectorInterface;
     
     /**
+     * Returns TRUE if the action is allowed for the given (or currently loggen on) user and FALSE otherwise.
      * 
+     * @param UserImpersonationInterface $userOrToken
      * @return bool
      */
-    public function isAuthorized() : bool;
+    public function isAuthorized(UserImpersonationInterface $userOrToken = null) : bool;
 }
