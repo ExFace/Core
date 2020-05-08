@@ -33,6 +33,8 @@ use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 use exface\Core\Uxon\ActionSchema;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
+use exface\Core\CommonLogic\Security\Authorization\ActionAuthorizationPoint;
+use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -286,7 +288,9 @@ abstract class AbstractAction implements ActionInterface
      * @see \exface\Core\Interfaces\Actions\ActionInterface::handle()
      */
     public final function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : ResultInterface
-    {
+    {        
+        $actionAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class);
+        $task = $actionAP->authorize($this, $task);
         // Start a new transaction if none passed
         if (is_null($transaction)) {
             $transaction = $this->getWorkbench()->data()->startTransaction();
@@ -1123,6 +1127,22 @@ abstract class AbstractAction implements ActionInterface
     public static function getUxonSchemaClass() : ?string
     {
         return ActionSchema::class;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::isAuthorized()
+     */
+    public function isAuthorized() : bool
+    {
+        $actionAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class);
+        try {
+            $actionAP->authorize($this);
+            return true;
+        } catch (AccessPermissionDeniedError $e) {
+            return false;
+        }
     }
 }
 ?>

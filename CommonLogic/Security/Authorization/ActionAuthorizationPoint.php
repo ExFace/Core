@@ -6,36 +6,45 @@ use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Factories\PermissionFactory;
-use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Model\UiMenuItemInterface;
 
 /**
  * 
  * 
- * @method FacadeAuthorizationPolicy[] getPolicies()
+ * @method ActionAuthorizationPolicy[] getPolicies()
  * 
  * @author Andrej Kabachnik
  *
  */
-class FacadeAuthorizationPoint extends AbstractAuthorizationPoint
+class ActionAuthorizationPoint extends AbstractAuthorizationPoint
 {
 
     /**
      * 
      * @see \exface\Core\Interfaces\Security\AuthorizationPointInterface::authorize()
      */
-    public function authorize(FacadeInterface $facade = null, UserImpersonationInterface $userOrToken = null) : FacadeInterface
+    public function authorize(ActionInterface $action = null, TaskInterface $task = null, UserImpersonationInterface $userOrToken = null) : ?TaskInterface
     {
         if ($this->isDisabled()) {
-            return $facade;
+            return $task;
         }
         
         if ($userOrToken === null) {
             $userOrToken = $this->getWorkbench()->getSecurity()->getAuthenticatedToken();
         }
         
-        $permissionsGenerator = $this->evaluatePolicies($facade, $userOrToken);
-        $this->combinePermissions($permissionsGenerator, $userOrToken, $facade);
-        return $facade;
+        $page = null;
+        if ($action !== null && $action->isDefinedInWidget()) {
+            $page = $action->getWidgetDefinedIn()->getPage();
+        } elseif ($task !== null && $task->isTriggeredOnPage()) {
+            $page = $task->getPageTriggeredOn();
+        }
+        
+        $permissionsGenerator = $this->evaluatePolicies($action, $userOrToken, $page);
+        $this->combinePermissions($permissionsGenerator, $userOrToken, $action);
+        return $task;
     }
     
     /**
@@ -45,20 +54,20 @@ class FacadeAuthorizationPoint extends AbstractAuthorizationPoint
      */
     public function addPolicy(array $targets, PolicyEffectDataType $effect, string $name = '', UxonObject $condition = null) : AuthorizationPointInterface
     {
-        $this->addPolicyInstance(new FacadeAuthorizationPolicy($this->getWorkbench(), $name, $effect, $targets, $condition));
+        $this->addPolicyInstance(new ActionAuthorizationPolicy($this->getWorkbench(), $name, $effect, $targets, $condition));
         return $this;
     }
     
     /**
      * 
-     * @param FacadeInterface $facade
+     * @param ActionInterface $action
      * @param UserImpersonationInterface $userOrToken
      * @return \Generator
      */
-    protected function evaluatePolicies(FacadeInterface $facade, UserImpersonationInterface $userOrToken) : \Generator
+    protected function evaluatePolicies(ActionInterface $action, UserImpersonationInterface $userOrToken, UiMenuItemInterface $menuItem = null) : \Generator
     {
         foreach ($this->getPolicies($userOrToken) as $policy) {
-            yield $policy->authorize($userOrToken, $facade);
+            yield $policy->authorize($userOrToken, $action, $menuItem);
         }
     }
     
@@ -69,6 +78,6 @@ class FacadeAuthorizationPoint extends AbstractAuthorizationPoint
      */
     protected function getResourceName($resource) : string
     {
-        return "facade '{$resource->getAliasWithNamespace()}'";
+        return "action '{$resource->getAliasWithNamespace()}'";
     }
 }
