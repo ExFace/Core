@@ -81,11 +81,7 @@ abstract class AbstractContextScope implements ContextScopeInterface
         if (! $this->active_contexts[$alias]) {
             $selector = SelectorFactory::createContextSelector($this->getWorkbench(), $alias);            
             $context = ContextFactory::createInScope($selector, $this);
-            try {
-                $context = $this->getContextManager()->authorize($context);
-            } catch (AccessPermissionDeniedError $e) {
-                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
-            }
+            $context = $this->getContextManager()->authorize($context);
             $this->active_contexts[$alias] = $context;
             $this->loadContextData($context);
         }
