@@ -20,4 +20,14 @@ class AccessDeniedError extends RuntimeException
     {
         return 403;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\RuntimeException::getDefaultAlias()
+     */
+    public function getDefaultAlias()
+    {
+        return '7ATP376';
+    }
 }
