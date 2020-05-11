@@ -2,7 +2,7 @@
     "uid": "0x11ea8de4ed64848f97940205857feb80",
     "alias_with_namespace": "exface.core.permissions",
     "menu_parent_page_selector": "0x11ea5edc2f798596b9920205857feb80",
-    "menu_index": 2,
+    "menu_index": 1,
     "menu_visible": true,
     "name": "Permissions",
     "description": "Manage authorization points and policies",
@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-03-10 16:22:54",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-05-05 10:29:34",
+    "modified_on": "2020-05-11 07:12:19",
     "contents": {
         "widget_type": "SplitVertical",
         "object_alias": "exface.Core.AUTHORIZATION_POINT",
@@ -100,6 +100,24 @@
                                 "input_widget": {
                                     "widget_type": "InputHidden"
                                 }
+                            },
+                            {
+                                "attribute_alias": "TARGET_USER_ROLE"
+                            },
+                            {
+                                "attribute_alias": "TARGET_PAGE_GROUP"
+                            },
+                            {
+                                "attribute_alias": "TARGET_OBJECT"
+                            },
+                            {
+                                "attribute_alias": "TARGET_ACTION_MODEL"
+                            },
+                            {
+                                "attribute_alias": "TARGET_ACTION_PROTOTYPE"
+                            },
+                            {
+                                "attribute_alias": "TARGET_FACADE"
                             }
                         ],
                         "columns": [
@@ -152,8 +170,7 @@
                                 "action_alias": "exface.Core.ShowObjectCopyDialog"
                             },
                             {
-                                "action_alias": "exface.Core.DeleteObject",
-                                "visibility": "optional"
+                                "action_alias": "exface.Core.DeleteObject"
                             }
                         ]
                     }
