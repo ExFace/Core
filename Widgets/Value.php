@@ -300,8 +300,11 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     }
 
     /**
+     * How to aggregate values if the widget receives multiple
      * 
-     * {@inheritDoc}
+     * @uxon-property aggregator
+     * @uxon-type metamodel:aggregator
+     * 
      * @see \exface\Core\Interfaces\Widgets\iSupportAggregators::setAggregator()
      */
     public function setAggregator($aggregator_or_string)

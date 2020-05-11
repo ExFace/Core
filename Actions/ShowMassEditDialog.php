@@ -32,7 +32,8 @@ class ShowMassEditDialog extends ShowDialog
     {
         $this->setInputRowsMin(null);
         $this->setInputRowsMax(null);
-        $this->setIcon(Icons::PENCIL_MULTIPLE);
+        $this->setMaximize(false);
+        $this->setIcon(Icons::LIST_);
         $this->setPrefillWithInputData(true);
         $this->setPrefillWithFilterContext(false);
     }
@@ -46,7 +47,6 @@ class ShowMassEditDialog extends ShowDialog
     {
         $data_sheet = $this->getInputDataSheet($task);
         if ($this->isWidgetDefined()) {
-            $this->getWidget()->setCaption(intval($data_sheet->countRows()));
             if ($counter = $this->getAffectedCounterWidget()) {
                 $counter->setText($this->getAffectedCounterText($data_sheet));
             }
@@ -64,16 +64,12 @@ class ShowMassEditDialog extends ShowDialog
         // Add a message widget that displays what exactly we are editing here
         $counter_widget = WidgetFactory::create($this->getWidgetDefinedIn()->getPage(), 'Message', $dialog);
         $this->setAffectedCounterWidget($counter_widget);
-        $counter_widget->setCaption('Affected objects');
         $dialog->addWidget($counter_widget, 0);
         
         // Add a default save button that uses filter contexts
         // TODO make this button configurable via UXON
         $save_button = $dialog->createButton(new UxonObject([
-            'action' => [
-                'alias' => 'exface.Core.UpdateData',
-                'use_context_filters' => true
-            ],
+            'action_alias' => 'exface.Core.MassUpdateData',
             'visibility' => EXF_WIDGET_VISIBILITY_PROMOTED,
             'align' => EXF_ALIGN_OPPOSITE,
             'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.SHOWOBJECTEDITDIALOG.SAVE_BUTTON")
