@@ -166,7 +166,8 @@
 	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_DISTINCT": "Anzahl unterschiedlicher Werte",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_IF": "Anzahl mit Filter",
 	
-	"GLOBAL.MODEL.ACTIONS": "Aktionen",
+	"GLOBAL.MODEL.ACTION": "Aktion",
+    "GLOBAL.MODEL.ACTIONS": "Aktionen",
     "GLOBAL.MODEL.ATTRIBUTES": "Attribute",
     "GLOBAL.MODEL.BEHAVIORS": "Behaviors",
     "GLOBAL.MODEL.CONNECTIONS": "Verbindungen",
@@ -174,6 +175,8 @@
     "GLOBAL.MODEL.PAGES": "Seiten",
     "GLOBAL.MODEL.MODEL": "Modell",
     "GLOBAL.MODEL.OBJECTS": "Objekte",
+    "GLOBAL.MODEL.PERMISSIONS": "Berechtigungen",
+    "GLOBAL.MODEL.POLICIES": "Policies",
     "GLOBAL.MODEL.RELATIONS": "Relationen",
     "GLOBAL.MODEL.RELATION_TYPE.REGULAR": "Forwärts",
     "GLOBAL.MODEL.RELATION_TYPE.REVERSE": "Rückwärts",
