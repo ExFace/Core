@@ -14,8 +14,6 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Security\Authorization\CombinedPermission;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
-use exface\Core\DataTypes\PolicyTargetDataType;
-use exface\Core\Factories\DataTypeFactory;
 
 /**
  * Exception thrown if authorization fails on an authorization point
