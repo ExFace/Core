@@ -33,6 +33,8 @@ use exface\Core\Widgets\Traits\iHaveColumnsAndColumnGroupsTrait;
 use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Interfaces\Widgets\iHaveSorters;
 use exface\Core\Widgets\Parts\DataFooter;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -1027,16 +1029,18 @@ class Data
      * Set value data sheet for this widget. Parameter either can be of type DateSheetInterface or UxonObject.
      * 
      * @param DataSheetInterface|UxonObject $data_sheet_or_uxon
+     * @throws WidgetConfigurationError
      * @return Data
      */
     public function setValuesDataSheet($data_sheet_or_uxon) : Data
     {
         $dataSheet = null;
         if ($data_sheet_or_uxon instanceof UxonObject) {
-            $dataSheet = DataSheetFactory::createFromObject($this->getMetaObject());
-            $dataSheet->importUxonObject($data_sheet_or_uxon);
+            $dataSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $data_sheet_or_uxon);
         } elseif ($data_sheet_or_uxon instanceof DataSheetInterface) {
             $dataSheet = $data_sheet_or_uxon;
+        } else {
+            throw new WidgetConfigurationError($this, 'Cannot set values_data_sheet for "' . $this->getWidgetType() . '": expecting DataSheet or its UXON model, received "' . gettype($data_sheet_or_uxon) . '"!');
         }
         $this->values_data_sheet = $dataSheet;
         return $this;
@@ -1121,14 +1125,6 @@ class Data
         }
         
         return $uxon;
-    }
-    
-    public function setImportValuesDataSheet(UxonObject $uxon)
-    {
-        $dataSheet = DataSheetFactory::createFromObject($this->getMetaObject());
-        $dataSheet->importUxonObject($uxon);
-        $this->setValuesDataSheet($dataSheet);
-        return $this;
     }
     
     /**
