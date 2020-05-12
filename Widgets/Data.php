@@ -1023,9 +1023,22 @@ class Data
         return $this->values_data_sheet;
     }
 
-    public function setValuesDataSheet(DataSheetInterface $data_sheet)
+    /**
+     * Set value data sheet for this widget. Parameter either can be of type DateSheetInterface or UxonObject.
+     * 
+     * @param DataSheetInterface|UxonObject $data_sheet_or_uxon
+     * @return Data
+     */
+    public function setValuesDataSheet($data_sheet_or_uxon) : Data
     {
-        $this->values_data_sheet = $data_sheet;
+        $dataSheet = null;
+        if ($data_sheet_or_uxon instanceof UxonObject) {
+            $dataSheet = DataSheetFactory::createFromObject($this->getMetaObject());
+            $dataSheet->importUxonObject($data_sheet_or_uxon);
+        } elseif ($data_sheet_or_uxon instanceof DataSheetInterface) {
+            $dataSheet = $data_sheet_or_uxon;
+        }
+        $this->values_data_sheet = $dataSheet;
         return $this;
     }
 
@@ -1083,9 +1096,10 @@ class Data
             $uxon->setProperty('lazy_loading_group_id', $this->getLazyLoadingGroupId());
         }
         
-        foreach ($this->getColumnGroups() as $col_group) {
+        // TODO for now disabled as columns would be duplicated        
+        /*foreach ($this->getColumnGroups() as $col_group) {
             $uxon->appendToProperty('columns', $col_group->exportUxonObject());
-        }
+        }*/
         
         // TODO export toolbars to UXON instead of buttons. Currently all
         // information about toolbars is lost.
@@ -1102,8 +1116,19 @@ class Data
         if ($this->getRefreshWithWidget()) {
             $uxon->setProperty('refresh_with_widget', $this->getRefreshWithWidget()->exportUxonObject());
         }
+        if ($this->getPrefillData() !== null) {
+            $uxon->setProperty('values_data_sheet', $this->getValuesDataSheet()->exportUxonObject());
+        }
         
         return $uxon;
+    }
+    
+    public function setImportValuesDataSheet(UxonObject $uxon)
+    {
+        $dataSheet = DataSheetFactory::createFromObject($this->getMetaObject());
+        $dataSheet->importUxonObject($uxon);
+        $this->setValuesDataSheet($dataSheet);
+        return $this;
     }
     
     /**
