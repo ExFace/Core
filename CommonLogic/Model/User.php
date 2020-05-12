@@ -45,6 +45,8 @@ class User implements UserInterface
     private $modelLoaded = false;
     
     private $roleSelectors = null;
+    
+    private $disabled = false;
 
     /**
      * 
@@ -275,6 +277,13 @@ class User implements UserInterface
             $userSheet->setCellValue('PASSWORD', 0, $pwd);
         }
         
+        $userSheet->getColumns()->addFromAttribute($userModel->getAttribute('DISABLED_FLAG'));
+        if ($this->isDisabled()) {
+            $userSheet->setCellValue('DISABLED_FLAG', 0, '1');
+        } else {
+            $userSheet->setCellValue('DISABLED_FLAG', 0, '0');
+        }
+        
         return $userSheet;
     }
 
@@ -452,5 +461,29 @@ class User implements UserInterface
             $this->roleSelectors[] = new UserRoleSelector($this->getWorkbench(), $selectorOrString);
         }
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::setDisabled()
+     */
+    public function setDisabled(bool $trueOrFalse) : UserInterface
+    {
+        $this->disabled = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::isDisabled()
+     */
+    public function isDisabled() : bool
+    {
+        if ($this->disabled === null && $this->modelLoaded === false) {
+            $this->loadData();
+        }
+        return $this->disabled;
     }
 }
