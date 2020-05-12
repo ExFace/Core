@@ -1019,6 +1019,7 @@ SQL;
                 $user->setFirstName($row['first_name']);
                 $user->setLastName($row['last_name']);
                 $user->setEmail($row['email']);
+                $user->setDisabled(BooleanDataType::cast($row['disabled_flag']) ?? false);
                 if ($row['password'] !== null) {
                     $user->setPassword($row['password']);
                 }
