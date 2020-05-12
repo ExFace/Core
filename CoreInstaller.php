@@ -31,7 +31,14 @@ class CoreInstaller extends AbstractAppInstaller
         yield $indent . $this->createApiPhp($source_absolute_path);
         yield $indent . $this->removeLegacyFiles($source_absolute_path);
         
+        $needRestart = $this->getWorkbench()->isInstalled() === false;
+        
         $this->getWorkbench()->getConfig()->setOption('METAMODEL.INSTALLED_ON', DateTimeDataType::now(), AppInterface::CONFIG_SCOPE_SYSTEM);
+        
+        if ($needRestart) {
+            $this->getWorkbench()->stop();
+            $this->getWorkbench()->start();
+        }
     }
 
     /**
