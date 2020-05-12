@@ -235,14 +235,14 @@ class UiPage implements UiPageInterface
         // only inside the parent significantly reduces the number of widgets to examine.
         $id_original = $id;
         $id_space = '';
-        $id_space_parent = $parent;
+        $parent_of_id_space = $parent;
         while ($id_space_length = strpos($id, static::WIDGET_ID_SPACE_SEPARATOR)) {
-            $id_space = substr($id, 0, $id_space_length);
+            $id_space = ($id_space ? $id_space . static::WIDGET_ID_SPACE_SEPARATOR : '' ) . substr($id, 0, $id_space_length);
             $id = substr($id, $id_space_length + 1);
-            $id_space_parent = $this->getWidgetFromIdSpace($id_space, '', $id_space_parent);
+            $parent_of_id_space = $this->getWidgetFromIdSpace($id_space, '', $parent_of_id_space);
         }
         
-        return $this->getWidgetFromIdSpace($id_original, '', $id_space_parent);
+        return $this->getWidgetFromIdSpace($id_original, '', $parent_of_id_space);
     }
 
     /**
