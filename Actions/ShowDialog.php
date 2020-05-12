@@ -10,6 +10,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Factories\UiPageFactory;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Renders a dialog with any contents specified in the widget-property.
@@ -312,9 +313,15 @@ class ShowDialog extends ShowWidget implements iShowDialog
     protected function addIdSpaceToWidgetUxon(UxonObject $uxon) : UxonObject
     {
         if ($parent = $this->getWidgetDefinedIn()) {
-            $idSpace = $parent->getId();
-            if ($parentSpace = $parent->getIdSpace()) {
-                $idSpace = $parentSpace . $parent->getPage()->getWidgetIdSpaceSeparator() . $idSpace;
+            $parentId = $parent->getId();
+            $parentSpace = $parent->getIdSpace();
+            $sep = $parent->getPage()->getWidgetIdSpaceSeparator();
+            // If some of the parents already had their id spaces prepended to the ids,
+            // we should not prepend the id space again - otherwise it's doubled!
+            if ($parentSpace && StringDataType::startsWith($parentId, $parentSpace . $sep) === false) {
+                $idSpace = $parentSpace . $sep . $parentId;
+            } else {
+                $idSpace = $parentId;
             }
             $uxon->setProperty('id_space', $idSpace);
         }

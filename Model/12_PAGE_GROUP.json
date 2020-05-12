@@ -84,6 +84,26 @@
             "NAME": "index.html",
             "APP": "0x31000000000000000000000000000000",
             "DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2020-05-11 09:20:44",
+            "MODIFIED_ON": "2020-05-11 09:22:30",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea9368b0886a6fa9d10205857feb80",
+            "NAME": "Page Management",
+            "APP": "0x31000000000000000000000000000000",
+            "DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2020-05-11 09:24:04",
+            "MODIFIED_ON": "2020-05-11 09:25:44",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea93692830bb8ba9d10205857feb80",
+            "NAME": "Logs (runtime only)",
+            "APP": "0x31000000000000000000000000000000",
+            "DESCRIPTION": "Allows to view runtime logs. Useful for model and UI devs"
         }
     ],
     "totals_rows": [],

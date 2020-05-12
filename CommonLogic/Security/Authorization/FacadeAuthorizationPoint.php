@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Factories\PermissionFactory;
 use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Events\Facades\OnFacadeInitEvent;
 
 /**
  * 
@@ -18,7 +19,24 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
  */
 class FacadeAuthorizationPoint extends AbstractAuthorizationPoint
 {
-
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Security\Authorization\AbstractAuthorizationPoint::register()
+     */
+    protected function register() : AuthorizationPointInterface
+    {
+        $this->getWorkbench()->eventManager()->addListener(OnFacadeInitEvent::getEventName(), [$this, 'authorizeEvent']);
+        return $this;
+    }
+        
+    public function authorizeEvent(OnFacadeInitEvent $event)
+    {
+        $authToken = $this->getWorkbench()->getSecurity()->getAuthenticatedToken();
+        $this->authorize($event->getFacade(), $authToken);
+        return;
+    }
+    
     /**
      * 
      * @see \exface\Core\Interfaces\Security\AuthorizationPointInterface::authorize()

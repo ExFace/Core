@@ -23,6 +23,9 @@ use exface\Core\CommonLogic\Selectors\AuthorizationPointSelector;
 use exface\Core\Interfaces\Selectors\AuthorizationPointSelectorInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\SecurityException;
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\PhpFilePathDataType;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -40,7 +43,7 @@ class SecurityManager implements SecurityManagerInterface
     
     private $userCache = [];
     
-    private $apCache = [];
+    private $authPoints = [];
 
     /**
      *
@@ -54,6 +57,15 @@ class SecurityManager implements SecurityManagerInterface
         // event listeners (e.g. for the exface.Core.Security.OnBeforeAuthentication 
         // event).
         $this->authenticators = self::loadAuthenticatorsFromConfig($this->getWorkbench());
+        
+        // Initialize authorization points if the workbench is already installed.
+        // If it's not installed, we are in the process of installation and obviously no
+        // authorization restrictions are needed.
+        if ($workbench->isInstalled()) {
+            foreach ($workbench->model()->getModelLoader()->loadAuthorizationPoints() as $ap) {
+                $this->authPoints[get_class($ap)] = $ap; 
+            }
+        }
     }
     
     /**
@@ -296,17 +308,37 @@ class SecurityManager implements SecurityManagerInterface
      */
     public function getAuthorizationPoint($selectorOrString) : AuthorizationPointInterface
     {
-        if (! $ap = $this->apCache[(string) $selectorOrString]) {
-            if ($selectorOrString instanceof AuthorizationPointSelectorInterface) {
-                $class = $selectorOrString->toString();
+        if (! $ap = $this->authPoints[(string) $selectorOrString]) {
+            if (! $selectorOrString instanceof AuthorizationPointSelectorInterface) {
+                $selector = new AuthorizationPointSelector($this->getWorkbench(), $selectorOrString);
+            } else {
                 $selector = $selectorOrString;
-            } elseif (is_string($selectorOrString)) {
-                $class = $selectorOrString;
-                $selector = new AuthorizationPointSelector($this->getWorkbench(), $class);
             }
-            $ap = AuthorizationPointFactory::createFromSelector($selector);
-            $this->apCache[$class] = $ap;
+            
+            if ($selector->isClassname()) {
+                foreach ($this->authPoints as $cached) {
+                    if (ltrim($selector->toString(), "\\") === get_class($cached)) {
+                        $ap = $cached;
+                        $this->authPoints[(string) $selectorOrString] = $cached;
+                        break;
+                    }
+                }
+            } elseif ($selector->isFilepath()) {
+                $selectorClass = PhpFilePathDataType::findClassInFile($this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $selector->toString());
+                foreach ($this->authPoints as $cached) {
+                    if (ltrim($selectorClass, "\\") === get_class($cached)) {
+                        $ap = $cached;
+                        $this->authPoints[(string) $selectorOrString] = $cached;
+                        break;
+                    }
+                }
+            }
         }
+        
+        if (! $ap) {
+            throw new SecurityException('Authorization point "' . (string) $selectorOrString . '" not found!');
+        }
+        
         return $ap;
     }
 }

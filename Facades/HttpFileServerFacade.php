@@ -31,12 +31,13 @@ class HttpFileServerFacade extends AbstractHttpFacade
     public static function buildUrlForDownload(WorkbenchInterface $workbench, string $absolutePath)
     {
         // TODO route downloads over api/files and add an authorization point - see handle() method
-        $installationPath = $workbench->getInstallationPath();
+        $installationPath = FilePathDataType::normalize($workbench->getInstallationPath());
+        $absolutePath = FilePathDataType::normalize($absolutePath);
         if (StringDataType::startsWith($absolutePath, $installationPath) === false) {
             throw new FacadeRuntimeError('Cannot provide download link for file "' . $absolutePath . '"');
         }
         $relativePath = StringDataType::substringAfter($absolutePath, $installationPath);
-        return $workbench->getUrl() . FilePathDataType::normalize($relativePath, '/');
+        return $workbench->getUrl() . ltrim($relativePath, "/");
     }
 
     /**

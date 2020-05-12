@@ -235,14 +235,14 @@ class UiPage implements UiPageInterface
         // only inside the parent significantly reduces the number of widgets to examine.
         $id_original = $id;
         $id_space = '';
-        $id_space_parent = $parent;
+        $parent_of_id_space = $parent;
         while ($id_space_length = strpos($id, static::WIDGET_ID_SPACE_SEPARATOR)) {
-            $id_space = substr($id, 0, $id_space_length);
+            $id_space = ($id_space ? $id_space . static::WIDGET_ID_SPACE_SEPARATOR : '' ) . substr($id, 0, $id_space_length);
             $id = substr($id, $id_space_length + 1);
-            $id_space_parent = $this->getWidgetFromIdSpace($id_space, '', $id_space_parent);
+            $parent_of_id_space = $this->getWidgetFromIdSpace($id_space, '', $parent_of_id_space);
         }
         
-        return $this->getWidgetFromIdSpace($id_original, '', $id_space_parent);
+        return $this->getWidgetFromIdSpace($id_original, '', $parent_of_id_space);
     }
 
     /**
@@ -344,31 +344,41 @@ class UiPage implements UiPageInterface
             return $this->getWidgetFromIdSpace($id, $id_space, $id_space_root);
         }
         
-        $id_is_path = false;
-        if (StringDataType::startsWith($id_with_namespace, $parentId . self::WIDGET_ID_SEPARATOR)) {
-            $id_is_path = true;
-        }
-        
         // See if the id searched for has an id space
         $subjIdSpace = StringDataType::substringBefore($id_with_namespace, self::WIDGET_ID_SPACE_SEPARATOR, false, false, true);
+        if ($subjIdSpace) {
+            $subjIdInSpace = substr($id_with_namespace, (strlen($subjIdSpace) + 1));
+        }
+        
+        $id_is_path = StringDataType::startsWith($id_with_namespace, $parentId . self::WIDGET_ID_SEPARATOR);
+        // TODO not sure, if matching id spaces should be treated as $id_is_path too... No real-life examples found!
+        //            || ($parent->getIdSpace() === $subjIdSpace && StringDataType::startsWith($subjIdInSpace, $parentId . self::WIDGET_ID_SPACE_SEPARATOR));
         
         foreach ($parent->getChildren() as $child) {
             $child_id = $child->getId();
-            if ($child_id == $id_with_namespace) {
+            if ($child_id === $id_with_namespace) {
+                return $child;
+            } elseif ($subjIdSpace && $child->getIdSpace() === $subjIdSpace && $subjIdInSpace === $child_id) {
                 return $child;
             } else {
+                $subjIdStartsWithChildId = StringDataType::startsWith($id_with_namespace, $child_id . self::WIDGET_ID_SEPARATOR);
                 
                 // If the subject id has an id space and we are in that id space, than it is
                 // obvious, that searching in widgets, that have a different id space makes
                 // no sense. Here we check if the child has a different id space and simply
                 // continue with the next child in this case.
-                if ($subjIdSpace && $parent->getIdSpace() === $subjIdSpace) {
+                // NOTE: there have been cases, where a widget has a chained id space, but only
+                // part of it inside the actual id. It seem, this has something to do with the
+                // fact, that only user-defined ids include the id space really. This is why we
+                // check, if the searched id start with the child id here additionally - in these
+                // strange cases, the parent id space is longer, than that of the searched id.
+                if ($subjIdSpace && $parent->getIdSpace() === $subjIdSpace && ! $subjIdStartsWithChildId) {
                     if ($child->getIdSpace() !== $subjIdSpace) {
                         continue;
                     }
                 }
                 
-                if (! $use_id_path || ! $id_is_path || StringDataType::startsWith($id_with_namespace, $child_id . self::WIDGET_ID_SEPARATOR)) {
+                if (! $use_id_path || ! $id_is_path || $subjIdStartsWithChildId) {
                     // If we are looking for a non-path id or the path includes the id of the child, look within the child
                     try {
                         // Note, the child may deside itself, whe

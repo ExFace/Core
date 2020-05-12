@@ -70,6 +70,8 @@ use exface\Core\Exceptions\LogicException;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\Factories\UiPageTreeFactory;
+use exface\Core\Factories\AuthorizationPointFactory;
+use exface\Core\CommonLogic\Selectors\AuthorizationPointSelector;
 
 /**
  * 
@@ -1039,11 +1041,10 @@ SQL;
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadAuthorizationPoint()
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadAuthorizationPoints()
      */
-    public function loadAuthorizationPoint(AuthorizationPointInterface $authPoint) : AuthorizationPointInterface
+    public function loadAuthorizationPoints() : array
     {        
-        $classEscaped = addslashes('\\' . get_class($authPoint));
         $sql = <<<SQL
 SELECT 
     apt.*, 
@@ -1051,29 +1052,21 @@ SELECT
     {$this->buildSqlUuidSelector('apt.app_oid')} AS app_oid
 FROM 
     exf_auth_point apt
-WHERE 
-    apt.class = '{$classEscaped}'
 SQL;
         
         $result = $this->getDataConnection()->runSql($sql)->getResultArray();
-        switch (count($result)) {
-            case 0:
-                throw new LogicException('Authorization point model for "' . stripslashes($classEscaped) . '" not found in metamodel!');
-            case 1:
-                $row = $result[0];
-                break;
-            default:
-                throw new LogicException('Multiple authorization point models found for "' . stripslashes($classEscaped) . '"!');
+        $array = [];
+        foreach ($result as $row) {
+            $authPoint = AuthorizationPointFactory::createFromSelector(new AuthorizationPointSelector($this->getWorkbench(), ltrim($row['class'], "\\")));
+            $authPoint
+                ->setName($row['name'])
+                ->setUid($row['oid'])
+                ->setDisabled(BooleanDataType::cast($row['disabled_flag']))
+                ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), ($row['default_effect_local'] ? $row['default_effect_local'] : $row['default_effect_in_app'])))
+                ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), ($row['combining_algorithm_local'] ? $row['combining_algorithm_local'] : $row['combining_algorithm_in_app'])));
+            $array[] = $authPoint;
         }
-        
-        $authPoint
-            ->setName($row['name'])
-            ->setUid($row['oid'])
-            ->setDisabled(BooleanDataType::cast($row['disabled_flag']))
-            ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), ($row['default_effect_local'] ? $row['default_effect_local'] : $row['default_effect_in_app'])))
-            ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), ($row['combining_algorithm_local'] ? $row['combining_algorithm_local'] : $row['combining_algorithm_in_app'])));
-        
-        return $authPoint;
+        return $array;
     }
     
     /**
@@ -1197,6 +1190,7 @@ SQL;
             SELECT 
                 p.*,
                 {$this->buildSqlUuidSelector('p.oid')} as oid,
+                {$this->buildSqlUuidSelector('p.app_oid')} as app_oid,
                 {$this->buildSqlUuidSelector('p.parent_oid')} as parent_oid,
                 {$this->buildSqlUuidSelector('p.default_menu_parent_oid')} as default_menu_parent_oid,
                 {$this->buildSqlUuidSelector('p.page_template_oid')} as page_template_oid,

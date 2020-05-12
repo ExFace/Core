@@ -103,9 +103,7 @@ class Workbench implements WorkbenchInterface
             $dbg->setPrettifyErrors(true);
         }
 
-        // start the event dispatcher
-        $this->event_manager = new EventManager($this);
-        $this->event_manager->dispatch(new OnStartEvent($this));
+        $this->eventManager()->dispatch(new OnStartEvent($this));
         
         // init data module
         $this->data = new DataManager($this);
@@ -149,13 +147,23 @@ class Workbench implements WorkbenchInterface
     }
 
     /**
-     * Returns TRUE if start() was successfully called on this workbench instance and FALSE otherwise.
-     *
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::isStarted()
      */
-    public function isStarted()
+    public function isStarted() : bool
     {
         return $this->started;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::isInstalled()
+     */
+    public function isInstalled() : bool
+    {
+        return $this->getConfig()->getOption('METAMODEL.INSTALLED_ON') ? true : false;
     }
 
     /**
@@ -276,6 +284,9 @@ class Workbench implements WorkbenchInterface
      */
     public function eventManager()
     {
+        if ($this->event_manager === null) {
+            $this->event_manager = new EventManager($this);
+        }
         return $this->event_manager;
     }
 

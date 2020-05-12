@@ -4,7 +4,6 @@ namespace exface\Core\CommonLogic\Security\Authorization;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\AppInterface;
-use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\Security\AuthorizationPolicyInterface;
 use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\DataTypes\PolicyCombiningAlgorithmDataType;
@@ -50,8 +49,10 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
     {
         $this->workbench = $app->getWorkbench();
         $this->app = $app;
-        $this->workbench->model()->getModelLoader()->loadAuthorizationPoint($this);
+        $this->register();
     }
+    
+    protected abstract function register() : AuthorizationPointInterface;
     
     /**
      * 
@@ -257,12 +258,31 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
             case ($permission->isIndeterminate() || $permission->isNotApplicable()) && $this->getDefaultPolicyEffect() == PolicyEffectDataType::DENY:
                 if ($resource && $userOrToken) {
                     $forUser = $userOrToken->isAnonymous() ? 'for anonymous users' : 'for user "' . $userOrToken->getUsername() . '"';
-                    throw new AccessPermissionDeniedError($this, $permission, $userOrToken, $resource, 'Access to ' . $this->getResourceName($resource) . ' denied ' . $forUser . '!');
+                    throw $this->createAccessDeniedException('Access to ' . $this->getResourceName($resource) . ' denied ' . $forUser . '!', $permission, $userOrToken, $resource);
                 } else {
-                    throw new AccessPermissionDeniedError($this, $permission, $userOrToken, $resource, 'Unknown error while validating page access permissions!');
+                    throw $this->createAccessDeniedException('Unknown error while validating page access permissions!', $permission, $userOrToken, $resource);
                 }
         }
         return $permission;
+    }
+    
+    /**
+     * Creates an access denied exception (AccessPermissionDeniedError by default).
+     * 
+     * Override this method to make the authorization point produce it's own exception type.
+     * 
+     * @param string $message
+     * @param PermissionInterface $permission
+     * @param UserImpersonationInterface $userOrToken
+     * @param mixed $resource
+     * @param string $alias
+     * @param \Throwable $previous
+     * 
+     * @return AccessPermissionDeniedError
+     */
+    protected function createAccessDeniedException(string $message, PermissionInterface $permission, UserImpersonationInterface $userOrToken, $resource = null, string $alias = null, \Throwable $previous = null) : AccessPermissionDeniedError
+    {
+        return new AccessPermissionDeniedError($this, $permission, $userOrToken, $resource, $message, $alias, $previous);
     }
     
     protected abstract function getResourceName($resource) : string;

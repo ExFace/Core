@@ -2192,6 +2192,20 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2020-05-11 12:55:52",
+            "MODIFIED_ON": "2020-05-11 12:55:52",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea9386be12374aa9d10205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7ATP376",
+            "TITLE": "Access denied!",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

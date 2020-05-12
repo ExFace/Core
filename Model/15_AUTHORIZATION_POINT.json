@@ -77,11 +77,11 @@
     "rows": [
         {
             "CREATED_ON": "2020-03-05 12:41:34",
-            "MODIFIED_ON": "2020-05-05 10:10:52",
+            "MODIFIED_ON": "2020-05-06 16:42:32",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea5ede96e738f6b9920205857feb80",
-            "NAME": "Access to UI pages",
+            "NAME": "Access to navigation menu pages",
             "CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\UiPageAuthorizationPoint",
             "DESCR": "",
             "APP": "0x31000000000000000000000000000000",
@@ -117,7 +117,7 @@
         },
         {
             "CREATED_ON": "2020-05-04 16:17:42",
-            "MODIFIED_ON": "2020-05-05 10:28:27",
+            "MODIFIED_ON": "2020-05-08 10:43:10",
             "CREATED_BY_USER": "0x11ea8944856eaddaaa6e025041000001",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea8e12097517b8801f025041000001",
@@ -131,9 +131,29 @@
             "TARGET_OBJECT_APPLICABLE": "0",
             "TARGET_ACTION_APPLICABLE": "0",
             "DEFAULT_EFFECT_IN_APP": "P",
-            "COMBINING_ALGORITHM_IN_APP": "permit-unless-deny",
+            "COMBINING_ALGORITHM_IN_APP": "permit-overrides",
             "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\FacadeAuthorizationPolicy",
             "DOCS": "exface\/Core\/Docs\/Security\/Authorization\/Authorization_points\/Facade_AP.md"
+        },
+        {
+            "CREATED_ON": "2020-05-05 16:36:16",
+            "MODIFIED_ON": "2020-05-05 16:53:43",
+            "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
+            "MODIFIED_BY_USER": "0x11ea8944856eaddaaa6e025041000001",
+            "UID": "0x11ea8eddc766689f8ba98c04ba002958",
+            "NAME": "Access to actions",
+            "CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\ActionAuthorizationPoint",
+            "DESCR": null,
+            "APP": "0x31000000000000000000000000000000",
+            "TARGET_USER_ROLE_APPLICABLE": "1",
+            "TARGET_PAGE_GROUP_APPLICABLE": "0",
+            "TARGET_FACADE_APPLICABLE": "0",
+            "TARGET_OBJECT_APPLICABLE": "1",
+            "TARGET_ACTION_APPLICABLE": "1",
+            "DEFAULT_EFFECT_IN_APP": "P",
+            "COMBINING_ALGORITHM_IN_APP": "permit-overrides",
+            "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\ActionAuthorizationPolicy",
+            "DOCS": "exface\/Core\/Docs\/Security\/Authorization\/Authorization_points\/Action_AP.md"
         }
     ],
     "totals_rows": [],
