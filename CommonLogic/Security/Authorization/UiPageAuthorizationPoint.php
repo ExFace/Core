@@ -6,7 +6,6 @@ use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
-use exface\Core\Factories\PermissionFactory;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 
 /**
@@ -19,7 +18,16 @@ use exface\Core\Interfaces\Model\UiMenuItemInterface;
  */
 class UiPageAuthorizationPoint extends AbstractAuthorizationPoint
 {
-
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Security\Authorization\AbstractAuthorizationPoint::register()
+     */
+    protected function register() : AuthorizationPointInterface
+    {
+        return $this;
+    }
+    
     /**
      * 
      * @see \exface\Core\Interfaces\Security\AuthorizationPointInterface::authorize()

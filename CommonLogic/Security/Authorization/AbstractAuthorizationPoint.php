@@ -49,8 +49,10 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
     {
         $this->workbench = $app->getWorkbench();
         $this->app = $app;
-        $this->workbench->model()->getModelLoader()->loadAuthorizationPoint($this);
+        $this->register();
     }
+    
+    protected abstract function register() : AuthorizationPointInterface;
     
     /**
      * 
