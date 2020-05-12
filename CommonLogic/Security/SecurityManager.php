@@ -57,8 +57,14 @@ class SecurityManager implements SecurityManagerInterface
         // event listeners (e.g. for the exface.Core.Security.OnBeforeAuthentication 
         // event).
         $this->authenticators = self::loadAuthenticatorsFromConfig($this->getWorkbench());
-        foreach ($workbench->model()->getModelLoader()->loadAuthorizationPoints() as $ap) {
-            $this->authPoints[get_class($ap)] = $ap; 
+        
+        // Initialize authorization points if the workbench is already installed.
+        // If it's not installed, we are in the process of installation and obviously no
+        // authorization restrictions are needed.
+        if ($workbench->isInstalled()) {
+            foreach ($workbench->model()->getModelLoader()->loadAuthorizationPoints() as $ap) {
+                $this->authPoints[get_class($ap)] = $ap; 
+            }
         }
     }
     

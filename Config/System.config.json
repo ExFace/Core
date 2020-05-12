@@ -9,6 +9,7 @@
 		"password": "",
 		"charset": "utf8"
 	},
+	"METAMODEL.INSTALLED_ON": null,
 	
 	"SERVER.TITLE": "Power UI",
 	"SERVER.TITLE_HTML": "Power <b>UI</b>",

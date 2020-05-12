@@ -22,9 +22,15 @@ interface WorkbenchInterface extends TaskHandlerInterface
     /**
      * Returns TRUE if start() was successfully called on this workbench instance and FALSE otherwise.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isStarted();
+    public function isStarted() : bool;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isInstalled() : bool;
     
     /**
      *

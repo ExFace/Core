@@ -31,7 +31,7 @@ abstract class AbstractFacade implements FacadeInterface
         $this->selector = $selector;
         $this->init();
         
-        $this->exface->eventManager()->dispatch(new OnFacadeInitEvent($this));
+        $selector->getWorkbench()->eventManager()->dispatch(new OnFacadeInitEvent($this));
     }
 
     protected function init()
