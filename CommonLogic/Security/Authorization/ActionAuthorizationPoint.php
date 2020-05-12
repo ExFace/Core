@@ -20,7 +20,16 @@ use exface\Core\Interfaces\Model\UiMenuItemInterface;
  */
 class ActionAuthorizationPoint extends AbstractAuthorizationPoint
 {
-
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Security\Authorization\AbstractAuthorizationPoint::register()
+     */
+    protected function register() : AuthorizationPointInterface
+    {
+        return $this;
+    }
+    
     /**
      * 
      * @see \exface\Core\Interfaces\Security\AuthorizationPointInterface::authorize()

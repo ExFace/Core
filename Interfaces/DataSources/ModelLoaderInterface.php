@@ -173,9 +173,9 @@ interface ModelLoaderInterface
     
     /**
      * 
-     * @param AuthorizationPointInterface $authPoint
+     * @return AuthorizationPointInterface[]
      */
-    public function loadAuthorizationPoint(AuthorizationPointInterface $authPoint) : AuthorizationPointInterface;
+    public function loadAuthorizationPoints() : array;
     
     /**
      * 
