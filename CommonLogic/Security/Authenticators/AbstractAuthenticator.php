@@ -22,6 +22,7 @@ use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Factories\UserFactory;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\UserNotFoundError;
+use exface\Core\Exceptions\UserDisabledError;
 
 /**
  * Provides common base function for authenticators.
@@ -215,6 +216,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
         if ($userDataSheet === null) {           
             $exface = $this->getWorkbench();        
             $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER');
+            $userDataSheet->getColumns()->addFromExpression('DISABLED_FLAG');
             $userFilterGroup = ConditionGroupFactory::createEmpty($exface, EXF_LOGICAL_OR, $userDataSheet->getMetaObject());
             $userFilterGroup->addConditionFromString('USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
             
@@ -226,6 +228,12 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             $userFilterGroup->addNestedGroup($andFilterGroup);
             $userDataSheet->getFilters()->addNestedGroup($userFilterGroup);
             $userDataSheet->dataRead();
+            if ($userDataSheet->isEmpty()) {
+                throw new UserNotFoundError("No user found matching the username '{$token->getUsername()}'!");
+            }
+            if (BooleanDataType::cast($userDataSheet->getRow(0)['DISABLED_FLAG']) === true) {
+                throw new UserDisabledError("User with the username '{$token->getUsername()}' is disabled!");
+            }
             $this->userData[$token->getUsername()] = $userDataSheet;
         }        
         return $userDataSheet;
@@ -240,8 +248,12 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      */
     protected function userExists(AuthenticationTokenInterface $token) : bool
     {
-        $userDataSheet = $this->getUserData($token);
-        return $userDataSheet->isEmpty() === false;
+        try {
+            $this->getUserData($token);
+            return true;
+        } catch (UserNotFoundError $e) {
+            return false;
+        }
     }
     
     /**
@@ -254,9 +266,6 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     protected function getUserFromToken(AuthenticationTokenInterface $token) : UserInterface
     {
         $userDataSheet = $this->getUserData($token);
-        if ($userDataSheet->isEmpty()) {
-            throw new UserNotFoundError("No user found matching the username '{$token->getUsername()}'!");
-        }
         $user = UserFactory::createFromUsernameOrUid($this->getWorkbench(), $userDataSheet->getRow(0)['UID']);
         return $user;
     }
