@@ -138,7 +138,7 @@ class ContextBar extends Toolbar
                 
                 $this->addButton($btn);
             } catch (ContextAccessDeniedError $e){
-                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::INFO);
+                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
             } catch (\Throwable $e){
                 $this->getWorkbench()->getLogger()->logException($e);
             }

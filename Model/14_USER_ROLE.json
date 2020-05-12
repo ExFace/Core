@@ -45,31 +45,31 @@
     "rows": [
         {
             "CREATED_ON": "2020-03-12 17:21:07",
-            "MODIFIED_ON": "2020-03-12 17:21:07",
+            "MODIFIED_ON": "2020-05-11 09:31:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea6485db053e93a2e30205857feb80",
             "NAME": "UI Designer",
-            "DESCRIPTION": "",
+            "DESCRIPTION": "Edit pages and permissions",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "UI_DESIGNER",
             "SYNC_WITH_EXT_ROLE": ""
         },
         {
             "CREATED_ON": "2020-03-12 17:21:42",
-            "MODIFIED_ON": "2020-03-12 17:21:42",
+            "MODIFIED_ON": "2020-05-11 09:31:36",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea6485efba5d88a2e30205857feb80",
             "NAME": "Metamodel Developer",
-            "DESCRIPTION": "",
+            "DESCRIPTION": "Edit the metamodel",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "MODEL_DEV",
             "SYNC_WITH_EXT_ROLE": ""
         },
         {
             "CREATED_ON": "2020-03-22 13:39:26",
-            "MODIFIED_ON": "2020-03-22 13:39:46",
+            "MODIFIED_ON": "2020-05-11 09:44:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea6c428d7e7e9fa3480205857feb80",
@@ -93,14 +93,14 @@
         },
         {
             "CREATED_ON": "2020-03-26 19:38:33",
-            "MODIFIED_ON": "2020-03-26 19:38:33",
+            "MODIFIED_ON": "2020-05-06 17:00:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea6f996061c094a3480205857feb80",
-            "NAME": "Administrator",
+            "NAME": "User Administrator",
             "DESCRIPTION": "Manage users and access rights",
             "APP": "0x31000000000000000000000000000000",
-            "ALIAS": "ADMIN",
+            "ALIAS": "USER_ADMIN",
             "SYNC_WITH_EXT_ROLE": ""
         },
         {
@@ -117,7 +117,7 @@
         },
         {
             "CREATED_ON": "2020-03-27 14:44:40",
-            "MODIFIED_ON": "2020-03-27 14:45:38",
+            "MODIFIED_ON": "2020-05-11 09:33:03",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea70397cb072cca3480205857feb80",
@@ -125,6 +125,18 @@
             "DESCRIPTION": "Access to logs and extended error display",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "DEBUGGER",
+            "SYNC_WITH_EXT_ROLE": ""
+        },
+        {
+            "CREATED_ON": "2020-05-11 13:00:51",
+            "MODIFIED_ON": "2020-05-11 13:00:51",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea938770438c9ca9d10205857feb80",
+            "NAME": "Administrator",
+            "DESCRIPTION": "Everything in administration",
+            "APP": "0x31000000000000000000000000000000",
+            "ALIAS": "ADMINISTRATOR",
             "SYNC_WITH_EXT_ROLE": ""
         }
     ],

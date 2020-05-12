@@ -8,7 +8,8 @@ use exface\Core\Contexts\ActionContext;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Factories\ContextFactory;
 use exface\Core\Factories\SelectorFactory;
-use exface\Core\CommonLogic\Security\Authorization\ContextAuthorizationPoint;
+use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 abstract class AbstractContextScope implements ContextScopeInterface
 {

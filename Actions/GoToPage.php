@@ -5,9 +5,9 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
+use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
+use exface\Core\Interfaces\UserImpersonationInterface;
 
 /**
  * Navigates to the given page taking the selected input object as filter and an optional set of additional filters.
@@ -29,6 +29,8 @@ class GoToPage extends ShowWidget
     private $takeAlongFilters = array();
 
     private $open_in_new_window = false;
+    
+    private $hideButtonIfNoAccessToPage = false;
     
     /**
      * 
@@ -125,5 +127,25 @@ class GoToPage extends ShowWidget
     {
         $this->open_in_new_window = BooleanDataType::cast($value);
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::isAuthorized()
+     */
+    public function isAuthorized(UserImpersonationInterface $userOrToken = null) : bool
+    {
+        if (parent::isAuthorized($userOrToken)) {
+            try {
+                $pageAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class);
+                $pageAP->authorize($this->getPage());
+            } catch (AccessPermissionDeniedError $e) {
+                return false;
+            }
+            return true;
+        } else {
+            return false;
+        }
     }
 }

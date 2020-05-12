@@ -9,6 +9,7 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\CommonLogic\Security\AuthenticationToken\AnonymousAuthToken;
 use exface\Core\Interfaces\Actions\iModifyContext;
+use exface\Core\Factories\SelectorFactory;
 
 /**
  * Logs out the currently authenticated user.
@@ -27,7 +28,12 @@ class Logout extends AbstractAction implements iModifyContext
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $this->getWorkbench()->getSecurity()->authenticate(new AnonymousAuthToken($this->getWorkbench()));
-        $result = ResultFactory::createRedirectToPageResult($task, $task->getPageSelector(), $this->translate('RESULT'));
+        if ($task->isTriggeredOnPage()) {
+            $redirectToPageSelector = $task->getPageSelector();
+        } else {
+            $redirectToPageSelector = SelectorFactory::createPageSelector($this->getWorkbench(), $this->getWorkbench()->getConfig()->getOption('SERVER.INDEX_PAGE_SELECTOR'));
+        }
+        $result = ResultFactory::createRedirectToPageResult($task, $redirectToPageSelector, $this->translate('RESULT'));
         $result->setContextModified(true);
         return $result;
     }

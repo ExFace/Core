@@ -507,7 +507,13 @@ class App implements AppInterface
         $langs = [$this->getLanguageDefault()];
         foreach (glob($this->getTranslationsFolder() . DIRECTORY_SEPARATOR . "*.json") as $path) {
             $filename = pathinfo($path, PATHINFO_FILENAME);
-            $langs[] = StringDataType::substringAfter($filename, '.', false, false, true);
+            $lang = StringDataType::substringAfter($filename, '.', false, false, true);
+            $json = json_decode(file_get_contents($path), true);
+            if ($json && $locale = $json['LOCALIZATION.LOCALE']) {
+                $langs[] = $locale;
+            } else {
+                $langs[] = $lang;
+            }
         }
         return array_unique($langs);
     }
