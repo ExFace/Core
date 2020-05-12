@@ -104,7 +104,7 @@ class LdapAuthenticator extends AbstractAuthenticator
         $host = $this->getHost(); 
         $ldapconn = @ldap_connect($host);        
         if (!$ldapconn) {            
-            throw new AuthenticationFailedError($this, 'No connection to LDAP server!');
+            throw new AuthenticationFailedError($this, 'No connection to LDAP server!', '7AL3J9X');
         }
         
         // those options are necessary for ldap_search to work, must be applied before the ldap_bind
@@ -121,7 +121,7 @@ class LdapAuthenticator extends AbstractAuthenticator
         
         if ($this->userExists($token) === true) {
             $user = $this->getUserFromToken($token);
-        } elseif ($this->userExists($token) === false && $this->getCreateNewUsers() === true) {
+        } elseif ($this->getCreateNewUsers() === true) {
             $dnArray = explode('.', $host);
             $baseDn = '';
             foreach ($dnArray as $part) {
@@ -147,7 +147,7 @@ class LdapAuthenticator extends AbstractAuthenticator
             }            
             $user = $this->createUserWithRoles($this->getWorkbench(), $token, $surname, $givenname);
         } else {
-            throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!', '7AL3J9X');
+            throw new AuthenticationFailedError($this, "Authentication failed, no PowerUI user with that username '{$token->getUsername()}' exists and none was created!", '7AL3J9X');
         }
         ldap_unbind($ldapconn);
         $this->authenticatedToken = $token;

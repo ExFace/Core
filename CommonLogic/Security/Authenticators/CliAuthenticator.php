@@ -63,13 +63,14 @@ class CliAuthenticator extends AbstractAuthenticator
         if ($token->getUsername() !== $currentUsername) {
             throw new AuthenticationFailedError($this, "Cannot authenticate user '{$token->getUsername()}' via '{$this->getName()}'");
         }
+        $user = null;
         if ($this->userExists($token) === true) {
             $user = $this->getUserFromToken($token);
-        } elseif ($this->userExists($token) === false && $this->getCreateNewUsers() === true) {
+        } elseif ($this->getCreateNewUsers() === true) {
             $user = $this->createUserWithRoles($this->getWorkbench(), $token);
             //second authentification to save credentials
         } else {
-            throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!');
+            throw new AuthenticationFailedError($this, "Authentication failed, no PowerUI user with that username '{$token->getUsername()}' exists and none was created!", '7AL3J9X');
         }
         if ($token->getUsername() !== $user->getUsername()) {
             return new RememberMeAuthToken($user->getUsername());
