@@ -16,7 +16,10 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 
 /**
- * Exception thrown if authorization fails on an authorization point
+ * Exception thrown if authorization fails on an authorization point.
+ * 
+ * This exception will generate a debug widget tab with a detailed overview 
+ * of what happened in the authorization point including evaluated policies, etc.
  *
  * @author Andrej Kabachnik
  *        
@@ -31,6 +34,16 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
     
     private $object = null;
     
+    /**
+     * 
+     * @param AuthorizationPointInterface $authPoint
+     * @param PermissionInterface $permission
+     * @param UserImpersonationInterface $subject
+     * @param mixed $object
+     * @param string $message
+     * @param string $alias
+     * @param \Throwable $previous
+     */
     public function __construct(AuthorizationPointInterface $authPoint, PermissionInterface $permission, UserImpersonationInterface $subject, $object, $message, $alias = null, $previous = null)
     {
         parent::__construct($message, $alias, $previous);
@@ -40,6 +53,11 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
         $this->object = $object;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanGenerateDebugWidgets::createDebugWidget()
+     */
     public function createDebugWidget(DebugMessage $error_message)
     {
         $error_message = parent::createDebugWidget($error_message);
@@ -51,6 +69,8 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
         
         $tab->addWidget($this->createSummary($error_message));
         
+        $tab->addWidget($this->createAuthPointInfo($error_message));
+        
         if ($permission instanceof CombinedPermission) {
             $steps = [];
             foreach ($permission->getCombinedPermissions() as $step) {
@@ -60,29 +80,46 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
             $tab->addWidget($this->createPoliciesTable($tab, $steps));
         }
         
-        $tab->addWidget($this->createAuthPointInfo($error_message));
-        
         
         $error_message->addTab($tab);
         
         return $error_message;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface::getPermission()
+     */
     public function getPermission() : PermissionInterface
     {
         return $this->permission;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface::getAuthorizationPoint()
+     */
     public function getAuthorizationPoint() : AuthorizationPointInterface
     {
         return $this->authorizationPoint;
     }
     
+    /**
+     * 
+     * @return UserImpersonationInterface
+     */
     public function getSubject() : UserImpersonationInterface
     {
         return $this->subject;
     }
     
+    /**
+     * 
+     * @param iContainOtherWidgets $parent
+     * @return WidgetInterface
+     */
     protected function createSummary(iContainOtherWidgets $parent) : WidgetInterface
     {
         $permission = $this->getPermission();
@@ -117,6 +154,11 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
         return $summaryGroup;
     }
     
+    /**
+     * 
+     * @param iContainOtherWidgets $parent
+     * @return WidgetInterface
+     */
     protected function createAuthPointInfo(iContainOtherWidgets $parent) : WidgetInterface
     {
         $summaryGroup = WidgetFactory::createFromUxonInParent($parent, new UxonObject([
@@ -166,7 +208,8 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
         $group = WidgetFactory::createFromUxonInParent($parent, new UxonObject([
             'widget_type' => 'WidgetGroup',
             'caption' => 'Evaluation Steps',
-            'height' => '100%'
+            'height' => '14',
+            'width' => '2'
         ]));
         $tableUxon = new UxonObject([
             'widget_type' => 'DataTable',
@@ -221,16 +264,28 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
         return $group;
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function getSubjectText() : string
     {
         return $this->subject->isAnonymous() ? 'Anonymous' : $this->subject->getUsername();
     }
     
+    /**
+     * 
+     * @return mixed
+     */
     public function getObject()
     {
         return $this->object;
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function getObjectText() : string
     {
         switch (true) {
