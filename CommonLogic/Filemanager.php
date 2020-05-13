@@ -35,6 +35,8 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     
     private $path_to_config_folder = null;
     
+    private $path_to_data_folder = null;
+    
     private $path_to_user_data_folder = null;
     
     private $path_to_backup_folder = null;
@@ -52,7 +54,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     
     /**
      * Returns the absolute path to the base installation folder (e.g.
-     * c:\xampp\htdocs\exface\exface)
+     * c:\xampp\htdocs\exface)
      *
      * @return string
      */
@@ -63,7 +65,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     
     /**
      * Returns the absolute path to the base installation folder (e.g.
-     * c:\xampp\htdocs\exface\exface\vendor)
+     * c:\xampp\htdocs\exface\vendor)
      *
      * @return string
      */
@@ -73,8 +75,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     }
     
     /**
-     * Returns the absolute path to the base installation folder (e.g.
-     * c:\xampp\htdocs\exface\exface\UserData)
+     * Returns the absolute path to the user data folder (e.g. c:\xampp\htdocs\exface\data\users)
      *
      * @return string
      */
@@ -90,7 +91,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
              } catch (ConfigOptionNotFoundError $e) {
              $path = '';
              }*/
-            $this->path_to_user_data_folder = $path ? $path : $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_DATA . DIRECTORY_SEPARATOR . static::FOLDER_NAME_USER_DATA;
+            $this->path_to_user_data_folder = $path ? $path : $this->getPathToDataFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_USER_DATA;
             if (! is_dir($this->path_to_user_data_folder)) {
                 static::pathConstruct($this->path_to_user_data_folder);
             }
@@ -99,8 +100,27 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     }
     
     /**
+     * Returns the absolute path to the data (e.g. c:\xampp\htdocs\exface\data)
+     *
+     * @return string
+     */
+    public function getPathToDataFolder() : string
+    {
+        if (null === $this->path_to_data_folder) {
+            $this->path_to_data_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_DATA;
+            if (false === is_dir($this->path_to_data_folder)) {
+                mkdir($this->path_to_data_folder);
+            }
+            if (false === $this->isDirSecure($this->path_to_data_folder)) {
+                $this->secureDir($this->path_to_data_folder);
+            }
+        }
+        return $this->path_to_data_folder;
+    }
+    
+    /**
      * Returns the absolute path to the main cache folder (e.g.
-     * c:\xampp\htdocs\exface\exface\cache)
+     * c:\xampp\htdocs\exface\cache)
      *
      * @return string
      */
@@ -122,7 +142,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     }
     
     /**
-     * Returns the absolute path to the folder for temporary data (e.g. c:\xampp\htdocs\exface\exface\temp)
+     * Returns the absolute path to the folder for temporary data (e.g. c:\xampp\htdocs\exface\temp)
      *
      * @return string
      */
@@ -133,7 +153,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     
     /**
      * Returns the absolute path to the installation specific config folder (e.g.
-     * c:\xampp\htdocs\exface\exface\config)
+     * c:\xampp\htdocs\exface\config)
      *
      * @return string
      */
@@ -153,7 +173,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     
     /**
      * Returns the absolute path to the installation specific translations folder (e.g.
-     * c:\xampp\htdocs\exface\exface\translations)
+     * c:\xampp\htdocs\exface\translations)
      *
      * @return string
      */
@@ -307,7 +327,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     }
     
     /**
-     * Transforms "C:\wamp\www\exface\exface\vendor\exface\Core\CommonLogic\..\..\..\.." to "C:/wamp/www/exface/exface"
+     * Transforms "C:\wamp\www\exface\vendor\exface\Core\CommonLogic\..\..\..\.." to "C:/wamp/www/exface/exface"
      *
      * @param string $path
      * @return string
