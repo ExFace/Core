@@ -18,7 +18,6 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\TaskHandlerInterface;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
-use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 use exface\Core\Interfaces\UserImpersonationInterface;
 
 /**

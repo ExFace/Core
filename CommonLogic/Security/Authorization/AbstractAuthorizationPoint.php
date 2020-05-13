@@ -11,6 +11,7 @@ use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 use exface\Core\Events\Security\OnAuthorizedEvent;
 use exface\Core\Interfaces\Security\PermissionInterface;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 
 /**
  * Base class for core authorization points.
@@ -241,7 +242,7 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
      * 
      * @triggers \exface\Core\Events\Security\OnAuthorizedEvent
      * 
-     * @throws AccessPermissionDeniedError
+     * @throws AuthorizationExceptionInterface
      * 
      * @return CombinedPermission
      */
@@ -278,9 +279,9 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
      * @param string $alias
      * @param \Throwable $previous
      * 
-     * @return AccessPermissionDeniedError
+     * @return AuthorizationExceptionInterface
      */
-    protected function createAccessDeniedException(string $message, PermissionInterface $permission, UserImpersonationInterface $userOrToken, $resource = null, string $alias = null, \Throwable $previous = null) : AccessPermissionDeniedError
+    protected function createAccessDeniedException(string $message, PermissionInterface $permission, UserImpersonationInterface $userOrToken, $resource = null, string $alias = null, \Throwable $previous = null) : AuthorizationExceptionInterface
     {
         return new AccessPermissionDeniedError($this, $permission, $userOrToken, $resource, $message, $alias, $previous);
     }

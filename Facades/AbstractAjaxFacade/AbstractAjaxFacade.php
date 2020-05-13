@@ -47,19 +47,16 @@ use Psr\Http\Message\RequestInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Templates\FacadePageTemplateRenderer;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
-use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Facades\HtmlPageFacadeInterface;
 use exface\Core\CommonLogic\Tasks\ResultRedirect;
 use function GuzzleHttp\Psr7\uri_for;
-use exface\Core\Interfaces\DataSources\DataConnectionInterface;
-use exface\Core\CommonLogic\Selectors\UserSelector;
-use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Actions\Login;
 use exface\Core\Widgets\LoginPrompt;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 
 /**
  * 
@@ -571,7 +568,7 @@ HTML;
         
         // If the user is not logged on an the permission is denied, wrap the error in an
         // AuthenticationFailedError to tell the facade to handle it as an unauthorized-error
-        if ($exception instanceof AccessPermissionDeniedError && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous()) {
+        if ($exception instanceof AuthorizationExceptionInterface && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous()) {
             $exception = new AuthenticationFailedError($this->getWorkbench()->getSecurity(), $exception->getMessage(), null, $exception);
         }
         
@@ -596,7 +593,7 @@ HTML;
         
         switch (true) {
             case $this->isShowingErrorDetails() === true:
-            case $exception instanceof AccessPermissionDeniedError && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous():
+            case $exception instanceof AuthorizationExceptionInterface && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous():
                 // If details needed, render a widget
                 $body = $this->buildHtmlFromError($request, $exception, $page);
                 $headers['Content-Type'] = ['text/html;charset=utf-8'];

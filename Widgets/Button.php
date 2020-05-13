@@ -20,7 +20,6 @@ use exface\Core\Widgets\Traits\iHaveColorTrait;
 use exface\Core\Interfaces\Widgets\iCanBeDisabled;
 use exface\Core\Interfaces\Actions\iResetWidgets;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 
 /**
  * A Button is the primary widget for triggering actions.

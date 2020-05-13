@@ -6,8 +6,8 @@ use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
-use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 use exface\Core\Interfaces\UserImpersonationInterface;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 
 /**
  * Navigates to the given page taking the selected input object as filter and an optional set of additional filters.
@@ -140,7 +140,7 @@ class GoToPage extends ShowWidget
             try {
                 $pageAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class);
                 $pageAP->authorize($this->getPage());
-            } catch (AccessPermissionDeniedError $e) {
+            } catch (AuthorizationExceptionInterface $e) {
                 return false;
             }
             return true;

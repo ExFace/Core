@@ -34,8 +34,8 @@ use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 use exface\Core\Uxon\ActionSchema;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\CommonLogic\Security\Authorization\ActionAuthorizationPoint;
-use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 use exface\Core\Interfaces\UserImpersonationInterface;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -1141,7 +1141,7 @@ abstract class AbstractAction implements ActionInterface
         try {
             $actionAP->authorize($this, null, $userOrToken);
             return true;
-        } catch (AccessPermissionDeniedError $e) {
+        } catch (AuthorizationExceptionInterface $e) {
             return false;
         }
     }
