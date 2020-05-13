@@ -6,10 +6,9 @@ use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Interfaces\Contexts\ContextInterface;
-use exface\Core\Factories\PermissionFactory;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\Interfaces\Security\PermissionInterface;
-use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 
 /**
  * 
@@ -83,7 +82,7 @@ class ContextAuthorizationPoint extends AbstractAuthorizationPoint
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Security\Authorization\AbstractAuthorizationPoint::createAccessDeniedException()
      */
-    protected function createAccessDeniedException(string $message, PermissionInterface $permission, UserImpersonationInterface $userOrToken, $resource = null, string $alias = null, \Throwable $previous = null) : AccessPermissionDeniedError
+    protected function createAccessDeniedException(string $message, PermissionInterface $permission, UserImpersonationInterface $userOrToken, $resource = null, string $alias = null, \Throwable $previous = null) : AuthorizationExceptionInterface
     {
         return new ContextAccessDeniedError($this, $permission, $userOrToken, $resource, $message, $alias, $previous);
     }
