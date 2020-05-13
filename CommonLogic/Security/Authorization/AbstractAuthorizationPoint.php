@@ -16,6 +16,32 @@ use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 /**
  * Base class for core authorization points.
  * 
+ * It contains common logic usefull for authorization points (APs) in general. Extend it to
+ * create new APs!
+ * 
+ * There are different ways to trigger the APs logic when using this base class:
+ * 
+ * - use the `register()` method (called automatically when the workbench is started) to
+ * to add listeners to events and intercept these events if their payload is not authorized.
+ * See `FacadeAuthorizationPoint` or `ActionAuthorizationPoit` for examples. This method is
+ * recommended by default as it does not require to modify any business logic.
+ * - call the `authorize()` method directly from somewhere in the regular code
+ * - add a listener to the `exface.Core.Security.OnAuthorized` event from the `register()`
+ * method to perform additional checks after another AP has granted permission - thus,
+ * extending the logic of the other AP.
+ * 
+ * All options allow to modify authorized objects e.g. disabling certain parts of them, etc.
+ * 
+ * Authorization points based on this class will need to implement the following mehtods:
+ * 
+ * - `authorize()` - to define an properly handle required arguments
+ * - `addPolicy()` - to instantiate the desired policy class for every policy
+ * - `evaluatePolicies()` - to call the `authorize()` of every policy with proper arguments
+ * - `getResourceName()` - to provide a human-friendly name of the authorized resource for
+ * error messages etc.
+ * - `createAccessDeniedException()` - if you need a special exception class to be used for
+ * unauthorized exceptions. Otherwise the `AccessPermissionDeniedError` will be thrown.
+ * 
  * @author Andrej Kabachnik
  *
  */
