@@ -3,6 +3,12 @@ namespace exface\Core\Interfaces\Events;
 
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 
+/**
+ * Interface for events triggered by authorization points.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 interface AuthorizationPointEventInterface extends EventInterface
 {
     /**

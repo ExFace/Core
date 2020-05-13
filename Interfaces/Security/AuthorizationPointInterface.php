@@ -15,19 +15,31 @@ use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
  * Accordingly, there is the `UiPageAuthorizationPoint`, the `ActionAuthorizationPoint`,
  * and so on. 
  * 
- * Every such access permission check needs to aquire an instance of such an authorization
- * point and call it's `authorize()` method with arguments appropriate for the specific AP - 
- * typically the subject (user), the resource being accessed and/or the action being performed. 
+ * On the one hand, using different authorization points allows their internal logic to
+ * be specifically tailored for the objects they guard, on the other hand there is also
+ * a metamodel for every authorization point showing an admin, where exactly access can
+ * be restricted.
+ * 
+ * Each authorization point provides a method called `authorize()` which actually performs
+ * the check. The method takes arguments appropriate for the specific AP - typically a subject 
+ * (user), an instance of the resource being accessed and/or the action being performed. 
  * The AP performs it's internal logic and either grants permission by returning the resource 
  * or throwing an authorization exception. Most APs logic will be based on the it's model
- * configuration, but technically every AP is fre to use any kind of logic.
+ * configuration (i.e. policies defined in the model), but technically every AP is fre to 
+ * use any kind of logic.
+ * 
+ * When exactly the `authorize()` method is called also depends on the AP. It may be some
+ * explicit call in a central place in the code, but it can also be an event listener. The
+ * latter allows to create "non-invasive" APs, that do not require to modify any business
+ * logic. An AP can even listen to the `exface.Core.Security.OnAuthorized` event and sort-of
+ * extend another AP by doing additional checks.
  * 
  * Obviously, the arguments and the return value of the `authorize()` method depend
  * on the logic and capabilities of the AP and the code surrunding it. Apps may have
  * very different access restriction models - often even dictated by the security
  * logic of a remote system or data source. Since the workbench is actully in charge 
- * of interacting with the user, it must adhere to all that logic while still
- * providing understandable feedback to the user and handable configuration options.
+ * of interacting with the user, it must adhere to all that logic while still providing 
+ * understandable feedback to the user and handable configuration options.
  * 
  * Having a central interface to the authorization logic (consisting of APs and their 
  * metamodel) allows to present different approaches to access permission in a coherent 
