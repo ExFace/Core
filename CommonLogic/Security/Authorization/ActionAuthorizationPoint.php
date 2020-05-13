@@ -5,10 +5,10 @@ use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
-use exface\Core\Factories\PermissionFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
+use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 
 /**
  * 
@@ -27,7 +27,21 @@ class ActionAuthorizationPoint extends AbstractAuthorizationPoint
      */
     protected function register() : AuthorizationPointInterface
     {
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeActionPerformedEvent::getEventName(), [$this, 'authorizeEvent']);
         return $this;
+    }
+    
+    /**
+     * Checks authorization for an exface.Core.Actions.OnBeforeActionPerformed event.
+     *
+     * @param OnBeforeActionPerformedEvent $event
+     * @return void
+     */
+    public function authorizeEvent(OnBeforeActionPerformedEvent $event)
+    {
+        $authToken = $this->getWorkbench()->getSecurity()->getAuthenticatedToken();
+        $this->authorize($event->getAction(), $event->getTask(), $authToken);
+        return;
     }
     
     /**
