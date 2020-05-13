@@ -290,8 +290,6 @@ abstract class AbstractAction implements ActionInterface
      */
     public final function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : ResultInterface
     {        
-        $actionAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class);
-        $task = $actionAP->authorize($this, $task);
         // Start a new transaction if none passed
         if (is_null($transaction)) {
             $transaction = $this->getWorkbench()->data()->startTransaction();
