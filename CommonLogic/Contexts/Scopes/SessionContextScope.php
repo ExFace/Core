@@ -8,7 +8,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\UserException;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 
 /**
  * The session context scope represents the PHP session (on server side).
@@ -68,7 +68,7 @@ class SessionContextScope extends AbstractContextScope
             foreach ($this->getSavedContexts() as $alias => $uxon) {
                 try {
                     $this->getContext($alias);
-                } catch (ContextNotFoundError|AccessPermissionDeniedError $error) {
+                } catch (ContextNotFoundError|AuthorizationExceptionInterface $error) {
                     $this->removeContext($alias);
                 }
             }
