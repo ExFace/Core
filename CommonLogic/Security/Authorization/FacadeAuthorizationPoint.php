@@ -5,7 +5,6 @@ use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
-use exface\Core\Factories\PermissionFactory;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Events\Facades\OnFacadeInitEvent;
 
@@ -30,6 +29,11 @@ class FacadeAuthorizationPoint extends AbstractAuthorizationPoint
         return $this;
     }
         
+    /**
+     * Checks authorization for an exface.Core.Facades.OnFacadeInit event.
+     * @param OnFacadeInitEvent $event
+     * @return void
+     */
     public function authorizeEvent(OnFacadeInitEvent $event)
     {
         $authToken = $this->getWorkbench()->getSecurity()->getAuthenticatedToken();

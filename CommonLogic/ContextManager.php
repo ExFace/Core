@@ -11,9 +11,13 @@ use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope;
 use exface\Core\Exceptions\Contexts\ContextScopeNotFoundError;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
-use exface\Core\Interfaces\Contexts\ContextInterface;
-use exface\Core\CommonLogic\Security\Authorization\ContextAuthorizationPoint;
 
+/**
+ * Default implementation of the ContextManagerInterface
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class ContextManager implements ContextManagerInterface
 {
 
@@ -28,8 +32,6 @@ class ContextManager implements ContextManagerInterface
     private $user_scope = NULL;
 
     private $request_scope = null;
-    
-    private $authPoint = null;
 
     public function __construct(\exface\Core\CommonLogic\Workbench $exface)
     {
@@ -166,18 +168,5 @@ class ContextManager implements ContextManagerInterface
             throw new ContextScopeNotFoundError('Context scope "' . $scope_name . '" not found!', '6T5E14B');
         }
         return call_user_func(get_class($this) . '::' . $getter_method);
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Contexts\ContextManagerInterface::authorize()
-     */
-    public function authorize(ContextInterface $context) : ContextInterface
-    {
-        if ($this->authPoint === null) {
-            $this->authPoint = $this->exface->getSecurity()->getAuthorizationPoint(ContextAuthorizationPoint::class);
-        }
-        return $this->authPoint->authorize($context, $this->exface->getSecurity()->getAuthenticatedToken());
     }
 }

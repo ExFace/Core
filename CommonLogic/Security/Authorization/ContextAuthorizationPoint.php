@@ -9,11 +9,12 @@ use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\Interfaces\Security\PermissionInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\Events\Contexts\OnContextInitEvent;
 
 /**
  * 
  * 
- * @method GenericAuthorizationPolicy[] getPolicies()
+ * @method ContextAuthorizationPolicy[] getPolicies()
  * 
  * @author Andrej Kabachnik
  *
@@ -27,7 +28,21 @@ class ContextAuthorizationPoint extends AbstractAuthorizationPoint
      */
     protected function register() : AuthorizationPointInterface
     {
+        $this->getWorkbench()->eventManager()->addListener(OnContextInitEvent::getEventName(), [$this, 'authorizeEvent']);
         return $this;
+    }
+    
+    /**
+     * Checks authorization for an exface.Core.Contexts.OnContextInit event.
+     * 
+     * @param OnContextInitEvent $event
+     * @return void
+     */
+    public function authorizeEvent(OnContextInitEvent $event)
+    {
+        $authToken = $this->getWorkbench()->getSecurity()->getAuthenticatedToken();
+        $this->authorize($event->getContext(), $authToken);
+        return;
     }
     
     /**
