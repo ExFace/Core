@@ -517,6 +517,7 @@ abstract class AbstractDataConnector implements DataConnectionInterface
                     $oldUxon = UxonObject::fromJson($credData->getCellValue('DATA_CONNECTOR_CONFIG', 0));
                     $newUxon = $oldUxon->extend($uxon);
                     $credData->setCellValue('DATA_CONNECTOR_CONFIG', 0, $newUxon->toJson());
+                    $credData->dataUpdate(false, $transaction);
                     break;
                 } else {
                     // Otherwise create a new credential set and replace the old one with it
