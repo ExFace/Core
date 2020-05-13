@@ -8,6 +8,11 @@ use exface\Core\CommonLogic\Contexts\Scopes\ApplicationContextScope;
 use exface\Core\CommonLogic\Contexts\Scopes\UserContextScope;
 use exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope;
 
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 interface ContextManagerInterface
 {
 
@@ -75,11 +80,4 @@ interface ContextManagerInterface
      * @return \exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope
      */
     public function getScopeRequest() : RequestContextScope;
-    
-    /**
-     *
-     * @param ContextInterface $context
-     * @return ContextInterface
-     */
-    public function authorize(ContextInterface $context) : ContextInterface;
 }
