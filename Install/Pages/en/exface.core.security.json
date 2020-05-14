@@ -4,14 +4,14 @@
     "menu_parent_page_selector": "0xf8310d4bba2c11e7895fe4b318306b9a",
     "menu_index": 2,
     "menu_visible": true,
-    "name": "Security & Users",
+    "name": "Users & Security",
     "description": "Manage users, roles, permissions, etc.",
     "intro": "",
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-05-04 08:55:46",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-05-04 09:35:38",
+    "modified_on": "2020-05-14 07:41:51",
     "contents": {
         "object_alias": "exface.Core.USER",
         "widget_type": "SplitHorizontal",
@@ -56,10 +56,7 @@
                                                 "attribute_alias": "NAME"
                                             },
                                             {
-                                                "attribute_alias": "APP__ALIAS"
-                                            },
-                                            {
-                                                "attribute_alias": "ALIAS"
+                                                "attribute_alias": "DESCRIPTION"
                                             },
                                             {
                                                 "attribute_alias": "USER_ROLE_USERS__UID:COUNT",
@@ -70,7 +67,10 @@
                                                 "caption": "Policies"
                                             },
                                             {
-                                                "attribute_alias": "DESCRIPTION"
+                                                "attribute_alias": "APP__ALIAS"
+                                            },
+                                            {
+                                                "attribute_alias": "ALIAS"
                                             }
                                         ],
                                         "sorters": [
