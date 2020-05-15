@@ -4,31 +4,68 @@ namespace exface\Core\Behaviors;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
-use exface\Core\Exceptions\Behaviors\DataSheetCreateDuplicatesForbiddenError;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
-use exface\Core\Factories\AppFactory;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Factories\SelectorFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\Interfaces\DataSheets\DataColumnInterface;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Interfaces\Events\DataSheetEventInterface;
+use exface\Core\CommonLogic\Model\RelationPath;
 
 /**
- * Behavior to generate a transliterated string out of a string that is given in the data sheet.
- * The attribute alias of the column that contains the source strings to be transliterated is set with the uxon property `source_attribute_alias`.
- * The attribute alias of the column the app uid/alis the namespace should be extracted from that is preceded to the generated string is
- * set with the uxon-property `namespace_attribute_alias`.
- * The attribute alias of the column that the generated string should be saved in is set with the uxon-property `target_attribute_alias`.
- * The string will only be generated if the target cell in the data sheet is empty.
+ * Generates a the value for an alias-type attribute from another attribute (typically a name).
  * 
- * Configuration example:
+ * Affects update/create operations on data having the target (alias) column. This means, if
+ * alias is emptied intentionally, it will be regenerated. This also means, that the behavior
+ * will not have effect on operations, that do not inlcude the target column: e.g. partial
+ * updates.
  * 
+ * Generation is done as follows:
+ * 
+ * 1. Check if the input data has columns for `source_attribute_alias` and 
+ * `target_attribute_alias` (error if not)
+ * 2. Prepend a namespace if a `namespace_attribute_alias` is defined
+ * 3. Replace characters accoring to `replace_characters` configuration
+ * 4. Transliterate the result using PHP's `transliterator_transliterate()`
+ * 5. Transform the result's case if required by the `case` property
+ * 
+ * **NOTE**: Generation is only done if the target cell in the data sheet is empty!
+ * 
+ * ## Examples
+ * 
+ * This simple example will just "sluggify" an attribute aliased `NAME` and save the
+ * result in `ALIAS`.
+ * 
+ * ```
  * {
  *  "target_attribute_alias": "ALIAS",
- *  "namespace_attribute_alias": "APP",
  *  "source_attribute_alias": "NAME"
  * }
+ * 
+ * ```
+ * 
+ * Here is how alias generation works for the object `exface.Core.PAGES`. In addition
+ * to the simples case, a namespace will be appended, the result will be lowercased
+ * and whitespaces will be replaced by `-` instead of the default `_`.
+ * 
+ * ```
+ * {
+ *  "target_attribute_alias": "ALIAS",
+ *  "namespace_attribute_alias": "APP__ALIAS",
+ *  "source_attribute_alias": "NAME",
+ *  "case": "lower",
+ *  "replace_characters": {
+ *      " ": "-"
+ *  }
+ * }
+ * 
+ * ```
  * 
  */
 class AliasGeneratingBehavior extends AbstractBehavior
@@ -44,13 +81,17 @@ class AliasGeneratingBehavior extends AbstractBehavior
     
     private $namespaceAttributeAlias = null;
     
+    private $namespaceSeparator = null;
+    
     private $sourceAttributeAlias = null;
     
     private $targetAttributeAlias = null;
     
     private $case = null;
     
-    private $replaceCharacters = ["Ä"=>"Ae", "Ö"=>"Oe", "Ü"=>"Ue", "ä"=>"ae", "ö"=>"oe", "ü"=>"ue", "ß"=>"ss"];
+    private $replaceCharacters = ["Ä"=>"Ae", "Ö"=>"Oe", "Ü"=>"Ue", "ä"=>"ae", "ö"=>"oe", "ü"=>"ue", "ß"=>"ss", " "=>"_"];
+    
+    private $namespaceCache = [];
     
     /**
      * 
@@ -70,31 +111,29 @@ class AliasGeneratingBehavior extends AbstractBehavior
     /**
      * 
      * @param OnBeforeCreateDataEvent $event
-     * @throws DataSheetCreateDuplicatesForbiddenError
+     * @return void
      */
     public function handleOnBeforeCreate(OnBeforeCreateDataEvent $event)
     {
-        if ($this->isDisabled()) {
-            return ;
-        }
-        
-        $eventSheet = $event->getDataSheet();
-        //$eventSheet->getColumns()->set
-        $object = $eventSheet->getMetaObject();        
-        // Do not do anything, if the base object of the data sheet is not the object with the behavior and is not extended from it.
-        if (! $object->isExactly($this->getObject())) {
-            return;
-        }
-        
-        $eventSheet = $this->generateTransliteratedAliases($eventSheet);
+        $this->handleEvent($event);
     }
     
     /**
      * 
      * @param OnBeforeUpdateDataEvent $event
-     * @throws DataSheetCreateDuplicatesForbiddenError
+     * @return void
      */
     public function handleOnBeforeUpdate(OnBeforeUpdateDataEvent $event)
+    {
+        $this->handleEvent($event);
+    }
+    
+    /**
+     * 
+     * @param DataSheetEventInterface $event
+     * @return void
+     */
+    protected function handleEvent(DataSheetEventInterface $event)
     {
         if ($this->isDisabled()) {
             return ;
@@ -107,41 +146,123 @@ class AliasGeneratingBehavior extends AbstractBehavior
             return;
         }
         
-        $eventSheet = $this->generateTransliteratedAliases($eventSheet);
+        if ($eventSheet->hasAggregations() || $eventSheet->hasAggregateAll()) {
+            return;
+        }
+        
+        // If the target column exists and already has all values, don't do anything!
+        if ($targetCol = $eventSheet->getColumns()->getByAttribute($this->getTargetAttribute())) {
+            if ($targetCol->hasEmptyValues() === false) {
+                return;
+            }
+        } else {
+            return;
+        }
+        
+        $this->generateTransliteratedAliases($eventSheet, $targetCol);
     }
     
     /**
      * 
      * @param DataSheetInterface $dataSheet
+     * @param DataColumnInterface $targetCol
+     * 
+     * @throws BehaviorRuntimeError
+     * 
      * @return DataSheetInterface
      */
-    protected function generateTransliteratedAliases(DataSheetInterface $dataSheet) : DataSheetInterface
+    protected function generateTransliteratedAliases(DataSheetInterface $dataSheet, DataColumnInterface $targetCol) : DataSheetInterface
     {
-        $namespace = null;
-        $values = $dataSheet->getColumnValues($dataSheet->getColumns()->getByExpression($this->getSourceAttributeAlias())->getName());
-        foreach ($values as $idx => $value) {
-            if ($value !== null && $value !== '') {               
-                if ($this->getNamespaceAttributeAlias() !== null) {
-                    $appAliasOrUid = $dataSheet->getCellValue($dataSheet->getColumns()->getByExpression($this->getNamespaceAttributeAlias())->getName(), $idx);
-                    if ($appAliasOrUid !== null && $appAliasOrUid !== '') {
-                        $selector = SelectorFactory::createAppSelector($this->getWorkbench(), $appAliasOrUid);
-                        $app = AppFactory::createFromAnything($selector, $this->getWorkbench());
-                        $namespace = $app->getAliasWithNamespace();
-                    }
+        if ($srcCol = $dataSheet->getColumns()->getByAttribute($this->getSourceAttribute())) {
+            $srcValues = $srcCol->getValues();
+        } else {
+            throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ' from source attribute "' . $this->getSourceAttribute()->getAliasWithRelationPath() . '": no input data found for source attribute found!');
+        }
+        
+        if ($this->hasNamespace()) {
+            $nsAttr = $this->getNamespaceAttribute();
+            if ($nsCol = $dataSheet->getColumns()->getByAttribute($nsAttr)) {
+                if ($nsCol->hasEmptyValues()) {
+                    throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ': missing values in input data for namespace column "' . $this->getNamespaceAttribute()->getAliasWithRelationPath() . '"!');
                 }
-                if ($namespace !== null) {
-                    $value = $namespace . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $value;
-                }                
-                $transliterated = $this->transliterate($value);
-                
-                $transliterateColumnName = $dataSheet->getColumns()->getByExpression($this->getTargetAttributeAlias())->getName();
-                if ($dataSheet->getCellValue($transliterateColumnName, $idx) === null || $dataSheet->getCellValue($transliterateColumnName, $idx) === '') {
-                    $dataSheet->setCellValue($transliterateColumnName, $idx, $transliterated);
+                $nsValues = $nsCol->getValues(false);
+            } else {
+                if ($nsAttr->isRelated() === false) {
+                    throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ': missing values in input data for namespace column "' . $this->getNamespaceAttribute()->getAliasWithRelationPath() . '"!');
                 }
+                $nsValues = null;
             }
         }
         
+        $namespace = null;
+        foreach ($srcValues as $rowNo => $srcVal) {
+            $targetVal = $targetCol->getCellValue($rowNo);
+            if ($targetVal !== null && $targetVal !== '') {
+                continue;
+            }
+            
+            if ($srcVal === null || $srcVal === '') {    
+                throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ' from source attribute "' . $this->getSourceAttribute()->getAliasWithRelationPath() . '": no input data found for source attribute found!');
+            }
+            
+            if ($this->hasNamespace()) {
+                if ($nsValues !== null) {
+                    $namespace = $nsValues[$rowNo];
+                } else {
+                    $namespace = $this->getNamespaceFromRelation($dataSheet, $rowNo);
+                }
+                
+                if ($namespace !== null && $namespace !== '') {
+                    $srcVal = $namespace . $this->getNamespaceSeparator() . $srcVal;
+                }
+            }
+            
+            $transliterated = $this->transliterate($srcVal);
+            $targetCol->setValue($rowNo, $transliterated);
+        }
+        
         return $dataSheet;
+    }
+    
+    /**
+     * 
+     * @param DataSheetInterface $dataSheet
+     * @param int $rowNo
+     * 
+     * @throws BehaviorRuntimeError
+     * 
+     * @return string
+     */
+    protected function getNamespaceFromRelation(DataSheetInterface $dataSheet, int $rowNo) : string
+    {
+        $nsAttr = $this->getNamespaceAttribute();
+        $nsRelPath = $nsAttr->getRelationPath();
+        $nsRelLeftKeyAttr = $nsRelPath->getRelationFirst()->getLeftKeyAttribute();
+        $nsRelLeftCol = $dataSheet->getColumns()->getByAttribute($nsRelLeftKeyAttr);
+        if (! $nsRelLeftCol) {
+            throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ': missing values in input data for namespace key column "' . $nsRelLeftKeyAttr->getAliasWithRelationPath() . '"!');
+        }
+        
+        $nsRelLeftKeyVal = $nsRelLeftCol->getCellValue($rowNo);
+        if ($nsRelLeftKeyVal === null || $nsRelLeftKeyVal === '') {
+            return '';
+        }
+        if (($ns = $this->namespaceCache[$nsRelLeftKeyVal]) !== null) {
+            return $ns;
+        }
+        
+        $nsSheet = DataSheetFactory::createFromObject($nsRelPath->getEndObject());
+        $nsSheet->getFilters()->addConditionFromString(RelationPath::relationPathAdd($nsRelPath->reverse()->toString(), $nsRelLeftKeyAttr->getAlias()), $nsRelLeftKeyVal, ComparatorDataType::EQUALS);
+        $nsCol = $nsSheet->getColumns()->addFromExpression($nsAttr->getAlias());
+        $nsSheet->dataRead();
+        $ns = $nsCol->getCellValue(0) ?? '';
+        $this->namespaceCache[$nsRelLeftKeyVal] = $ns;
+        return $ns;
+    }
+    
+    protected function getErrorText() : string
+    {
+        return 'Cannot generate values for attribute "' . $this->getTargetAttribute()->getName() . '" (alias ' . $this->getTargetAttribute()->getAliasWithRelationPath() . '") of object "' . $this->getObject()->getName() . '" (' . $this->getObject()->getAliasWithNamespace() . ')';
     }
     
     /**
@@ -188,18 +309,31 @@ class AliasGeneratingBehavior extends AbstractBehavior
     }
     
     /**
-     * Set the name of the attribute which contains the source value that should be transliterated.
+     * The attribute which contains the source value that should be transliterated.
+     * 
+     * **NOTE**: If a data sheet has a column for `target_attribute_alias` with empty values,
+     * it MUST also have this column - otherwise the behavior will throw an error!
      * 
      * @uxon-property source_attribute_alias
-     * @uxon-type string
+     * @uxon-type metamodel:attribute
+     * @uxon-required true
      * 
-     * @param string $alias
+     * @param string $aliasWithRelationPath
      * @return AliasGeneratingBehavior
      */
-    public function setSourceAttributeAlias(string $alias) : AliasGeneratingBehavior
+    public function setSourceAttributeAlias(string $aliasWithRelationPath) : AliasGeneratingBehavior
     {
-        $this->sourceAttributeAlias = $alias;
+        $this->sourceAttributeAlias = $aliasWithRelationPath;
         return $this;
+    }
+    
+    /**
+     * 
+     * @return MetaAttributeInterface
+     */
+    protected function getSourceAttribute() : MetaAttributeInterface
+    {
+        return $this->getObject()->getAttribute($this->getSourceAttributeAlias());
     }
     
     /**
@@ -212,10 +346,14 @@ class AliasGeneratingBehavior extends AbstractBehavior
     }
     
     /**
-     * Set the app alias which alias including namespace should be added infront of the transliterated name.
+     * Use this attribute as namespace an prepend it to the generated alias.
+     * 
+     * The namespace will be separated from the alias by the `namespace_separator`.
+     * 
+     * You can use related attributes here.
      * 
      * @uxon-property namespace_attribute_alias
-     * @uxon-type string
+     * @uxon-type metamodel:attribute
      *
      * @param string $alias
      * @return AliasGeneratingBehavior
@@ -228,18 +366,69 @@ class AliasGeneratingBehavior extends AbstractBehavior
     
     /**
      * 
-     * @return string
+     * @return string|NULL
      */
-    protected function getNamespaceAttributeAlias() : string
+    protected function getNamespaceAttributeAlias() : ?string
     {
         return $this->namespaceAttributeAlias;
     }
     
     /**
-     * Set the attribute alias which should contain the generated value.
+     * A character or string to separate the namespace from the alias.
+     * 
+     * @uxon-property namespace_delimiter
+     * @uxon-type string
+     * @uxon-default .
+     * 
+     * @param string $string
+     * @return AliasGeneratingBehavior
+     */
+    public function setNamespaceSeparator(string $string) : AliasGeneratingBehavior
+    {
+        $this->namespaceSeparator = $string;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getNamespaceSeparator() : string
+    {
+        return $this->namespaceSeparator ?? AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
+    }
+    
+    /**
+     * 
+     * @return MetaAttributeInterface|NULL
+     */
+    protected function getNamespaceAttribute() : ?MetaAttributeInterface
+    {
+        if ($this->hasNamespace()) {
+            return $this->getObject()->getAttribute($this->getNamespaceAttributeAlias());
+        } else {
+            return null;
+        }
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasNamespace() : bool
+    {
+        return $this->namespaceAttributeAlias !== null;
+    }
+    
+    /**
+     * The attribute where to put the generated value.
+     * 
+     * **NOTE**: if the input data sheet will not have this column, the behavior
+     * will not have any effect!
      * 
      * @uxon-property target_attribute_alias
-     * @uxon-type string
+     * @uxon-type metamodel:attribute
+     * @uxon-required true
      *
      * @param string $alias
      * @return AliasGeneratingBehavior
@@ -257,6 +446,15 @@ class AliasGeneratingBehavior extends AbstractBehavior
     protected function getTargetAttributeAlias() : string
     {
         return $this->targetAttributeAlias;
+    }
+    
+    /**
+     * 
+     * @return MetaAttributeInterface
+     */
+    protected function getTargetAttribute() : MetaAttributeInterface
+    {
+        return $this->getObject()->getAttribute($this->getTargetAttributeAlias());
     }
     
     /**
@@ -294,7 +492,7 @@ class AliasGeneratingBehavior extends AbstractBehavior
     /**
      * @uxon-property replace_characters
      * @uxon-type UxonObject 
-     * @uxon-template {""} 
+     * @uxon-template {"":""} 
      * 
      * @param UxonObject $uxonObject
      * @return AliasGeneratingBehavior

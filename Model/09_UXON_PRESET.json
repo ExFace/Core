@@ -1030,6 +1030,34 @@
             "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE with UID of main object\",\"id\":\"uid_field\"},{\"attribute_alias\":\"\"},{\"caption\":\"\\\/\\\/ REPLACE with table caption\",\"widget_type\":\"DataTableResponsive\",\"object_alias\":\"\\\/\\\/ REPLACE with child object alias\",\"width\":\"max\",\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE with relation to main object\",\"required\":true,\"value\":\"=uid_field\",\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_group_alias\":\"~VISIBLE\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\",\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')\"}]}]}",
             "WRAP_PATH": "$.widgets[1]",
             "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2020-05-15 09:35:39",
+            "MODIFIED_ON": "2020-05-15 09:35:39",
+            "CREATED_BY_USER": "0x11ea95ea3987fa17a9d10205857feb80",
+            "MODIFIED_BY_USER": "0x11ea95ea3987fa17a9d10205857feb80",
+            "UID": "0x11ea968f6895902da9d10205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Generate an alias from a name",
+            "DESCRIPTION": "Will \"sluggify\" the first attribute and put it into the second one",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/AliasGeneratingBehavior.php",
+            "UXON": "{\"source_attribute_alias\":\"\",\"target_attribute_alias\":\"\"}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior"
+        },
+        {
+            "CREATED_ON": "2020-05-15 09:37:06",
+            "MODIFIED_ON": "2020-05-15 09:37:06",
+            "CREATED_BY_USER": "0x11ea95ea3987fa17a9d10205857feb80",
+            "MODIFIED_BY_USER": "0x11ea95ea3987fa17a9d10205857feb80",
+            "UID": "0x11ea968f9cb7046da9d10205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Generate an alias with namespace and custom character replacement",
+            "DESCRIPTION": "In addition to the simples case, a namespace will be appended, the result will be lowercased and whitespaces will be replaced by `-` instead of the default `_`.",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/AliasGeneratingBehavior.php",
+            "UXON": "{\"target_attribute_alias\":\"\",\"namespace_attribute_alias\":\"\",\"source_attribute_alias\":\"\",\"case\":\"lower\",\"replace_characters\":{\" \":\"-\"}}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior"
         }
     ],
     "totals_rows": [],
