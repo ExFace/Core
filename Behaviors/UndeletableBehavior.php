@@ -8,10 +8,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\Behaviors\DataSheetDeleteForbiddenError;
-use exface\Core\CommonLogic\Model\Attribute;
-use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Exceptions\RuntimeException;
-use Symfony\Component\Translation\Catalogue\OperationInterface;
 
 /**
  * Prevents the deletion of data if it matches the provided conditions.

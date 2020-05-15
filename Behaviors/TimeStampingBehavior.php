@@ -12,6 +12,21 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 
+/**
+ * Prevents concurrent writes using a timestamp updated with every crate/update operation.
+ * 
+ * ## Example
+ * 
+ * ```
+ * {
+ *  "updated_on_attribute_alias": "UPDATED_ON"
+ * }
+ * 
+ * ```
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class TimeStampingBehavior extends AbstractBehavior
 {
 
