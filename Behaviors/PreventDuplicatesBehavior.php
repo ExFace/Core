@@ -15,12 +15,19 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 /**
  * Behavior to prevent a creation of a duplicate dataset on create or update Operations.
- * By default an error message will be thrown if a duplicate is found. To change that behavior, the uxon-properties 
- * "on_duplicate_multi_row" and "on_duplicate_single_row" can be set to 'error', 'update', or 'ignore'.
- * If a dataset is a duplicate will be evaluated on the attributes given in the `compare_attributes` uxon property.
  * 
- * Configuration example:
+ * It works by searching data in the data source for matches on `compare_attributes` on
+ * every create or update operation. If matches are found, the behavior either throws 
+ * an error, ignores the new data or performs an update on the existing data row - depending
+ * on the properties `on_duplicate_multi_row` and `on_duplicate_single_row`.
  * 
+ * By default an error message will be thrown if a duplicate is found. 
+ * 
+ * ## Example
+ * 
+ * Here is how duplicates of `exface.Core.USER_AUTHENTICATOR` core object are prevented.
+ * 
+ * ```
  * {
  *  "compare_attributes": [
  *      "USER",
@@ -29,6 +36,8 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
  *  "on_duplicate_multi_row": 'update'
  *  "on_duplicate_single_row": 'error'
  * }
+ * 
+ * ````
  * 
  */
 class PreventDuplicatesBehavior extends AbstractBehavior
