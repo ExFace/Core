@@ -9,7 +9,7 @@
 		"password": "",
 		"charset": "utf8"
 	},
-	"METAMODEL.INSTALLED_ON": null,
+	"METAMODEL.INSTALLED_ON": "2020-05-13 12:00",
 	
 	"SERVER.TITLE": "Power UI",
 	"SERVER.TITLE_HTML": "Power <b>UI</b>",
@@ -53,7 +53,12 @@
     		"create_new_users_with_roles": [
                 "exface.core.SUPERUSER"
             ]
-    	}
+    	},    	
+		{
+			"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\RememberMeAuthenticator",
+			"lifetime_seconds": 604800,            
+            "id": "REMEMBERME_AUTH"
+		}
     ],
     
     "FACADES.ROUTES": {},

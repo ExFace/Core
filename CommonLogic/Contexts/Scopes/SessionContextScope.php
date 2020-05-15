@@ -155,7 +155,7 @@ class SessionContextScope extends AbstractContextScope
         
         return $this;
     }
-    
+        
     /**
      * 
      * {@inheritDoc}
@@ -163,7 +163,7 @@ class SessionContextScope extends AbstractContextScope
      */
     public function removeContext($alias)
     {
-        unset($_SESSION['exface']['contexts'][$alias]);
+        unset($_SESSION['exface'][$this->getWorkbench()->getInstallationFolderName()]['contexts'][$alias]);
         return parent::removeContext($alias);
     }
 
@@ -277,7 +277,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function getSessionContextData()
     {
-        return $_SESSION['exface']['contexts'];
+        return $_SESSION['exface'][$this->getWorkbench()->getInstallationFolderName()]['contexts'];
     }
 
     /**
@@ -289,7 +289,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function setSessionContextData($key, $value)
     {
-        $_SESSION['exface']['contexts'][$key] = $value;
+        $_SESSION['exface'][$this->getWorkbench()->getInstallationFolderName()]['contexts'][$key] = $value;
         return $this;
     }
     
