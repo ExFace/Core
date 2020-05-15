@@ -18,13 +18,11 @@ use exface\Core\CommonLogic\Security\AuthenticationToken\RememberMeAuthToken;
 use exface\Core\CommonLogic\Security\Authenticators\RememberMeAuthenticator;
 use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
-use exface\Core\Factories\AuthorizationPointFactory;
 use exface\Core\CommonLogic\Selectors\AuthorizationPointSelector;
 use exface\Core\Interfaces\Selectors\AuthorizationPointSelectorInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\SecurityException;
-use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\PhpFilePathDataType;
 
 /**
