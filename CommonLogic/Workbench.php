@@ -31,6 +31,7 @@ use exface\Core\Events\Workbench\OnStartEvent;
 use exface\Core\Events\Workbench\OnStopEvent;
 use exface\Core\Interfaces\Security\SecurityManagerInterface;
 use exface\Core\CommonLogic\Security\SecurityManager;
+use exface\Core\DataTypes\StringDataType;
 
 class Workbench implements WorkbenchInterface
 {
@@ -303,6 +304,11 @@ class Workbench implements WorkbenchInterface
         return $this->installation_path;
     }
     
+    public function getInstallationFolderName() : string
+    {        
+        return StringDataType::substringAfter($this->getInstallationPath(), DIRECTORY_SEPARATOR, false, true);
+    }
+    
     /**
      * Changes the path to the installation folder and the vendor folder for this instance.
      * 
@@ -477,5 +483,21 @@ class Workbench implements WorkbenchInterface
         }
         
         return '';
+    }
+    
+    /**
+     * Returns secret that is saved as option in system config. If secret in config is empty a new one is generated and saved.
+     * 
+     * @return string
+     */
+    public function getSecret() : string
+    {
+        $key = $this->getConfig()->getOption("ENCRYPTION.SALT");
+        if ($key === null || $key === '') {
+            $key = sodium_crypto_kdf_keygen();
+            $key = sodium_bin2base64($key, 1);
+            $this->getConfig()->setOption("ENCRYPTION.SALT", $key, AppInterface::CONFIG_SCOPE_INSTALLATION);
+        }
+        return $key;
     }
 }

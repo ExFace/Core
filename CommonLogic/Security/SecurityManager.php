@@ -250,7 +250,7 @@ class SecurityManager implements SecurityManagerInterface
             }
             $authenticators[] = $authenticator;
         }
-        $authenticators[] = new RememberMeAuthenticator($workbench);
+        //$authenticators[] = new RememberMeAuthenticator($workbench);
         return $authenticators;
     }
     
