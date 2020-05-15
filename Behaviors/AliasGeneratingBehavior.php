@@ -37,6 +37,9 @@ use exface\Core\CommonLogic\Model\RelationPath;
  * 
  * **NOTE**: Generation is only done if the target cell in the data sheet is empty!
  * 
+ * If you need to customize the transliteration, use `replace_characters` to define custom
+ * rules. 
+ * 
  * ## Examples
  * 
  * This simple example will just "sluggify" an attribute aliased `NAME` and save the
@@ -70,7 +73,6 @@ use exface\Core\CommonLogic\Model\RelationPath;
  */
 class AliasGeneratingBehavior extends AbstractBehavior
 {
-    
     const CASE_UPPER = 'UPPER';
     
     const CASE_LOWER = 'LOWER';
@@ -260,6 +262,10 @@ class AliasGeneratingBehavior extends AbstractBehavior
         return $ns;
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function getErrorText() : string
     {
         return 'Cannot generate values for attribute "' . $this->getTargetAttribute()->getName() . '" (alias ' . $this->getTargetAttribute()->getAliasWithRelationPath() . '") of object "' . $this->getObject()->getName() . '" (' . $this->getObject()->getAliasWithNamespace() . ')';
@@ -490,6 +496,26 @@ class AliasGeneratingBehavior extends AbstractBehavior
     }
     
     /**
+     * Custom replacement characters to change transliteration logic.
+     * 
+     * Put the character, string or regular expression to search for on the left side and
+     * the replacement character or string on the right side.
+     * 
+     * For example, here is how to replace whitespaces by hypens and remove tabs. Note,
+     * that the left expression for tabs is a regular expression. Regular expressions
+     * MUST start and end with a delimiter. The following delimiters are supported: `/`, 
+     * `~`, `@`, `;`, `%`, ```.
+     * 
+     * ```
+     * {
+     *  "replace_characters": {
+     *      " ": "-",
+     *      "/\\t/": ""
+     *  }
+     * }
+     * 
+     * ```
+     * 
      * @uxon-property replace_characters
      * @uxon-type UxonObject 
      * @uxon-template {"":""} 
@@ -505,7 +531,7 @@ class AliasGeneratingBehavior extends AbstractBehavior
     
     /**
      * 
-     * @return array
+     * @return string[]
      */
     protected function getReplaceCharacters() : array
     {
