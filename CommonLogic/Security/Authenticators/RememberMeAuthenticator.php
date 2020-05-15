@@ -4,6 +4,10 @@ namespace exface\Core\CommonLogic\Security\Authenticators;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\CommonLogic\Security\AuthenticationToken\RememberMeAuthToken;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
+use exface\Core\CommonLogic\Security\AuthenticationToken\AnonymousAuthToken;
+use exface\Core\Factories\UserFactory;
+use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
+use exface\Core\Exceptions\UserNotFoundError;
 
 /**
  * 
@@ -13,6 +17,9 @@ use exface\Core\Exceptions\Security\AuthenticationFailedError;
  */
 class RememberMeAuthenticator extends AbstractAuthenticator
 {    
+    
+    private $lifetime = null;
+
     /**
      * 
      * {@inheritDoc}
@@ -30,6 +37,14 @@ class RememberMeAuthenticator extends AbstractAuthenticator
             $token = new RememberMeAuthToken($sessionUserName, $token->getFacade());
         } elseif ($token->getUsername() === null || $token->getUsername() !== $sessionUserName) {
             throw new AuthenticationFailedError($this, 'Cannot authenticate user "' . $token->getUsername() . '" via remember-me.');
+        }
+        $user = $this->getWorkbench()->getSecurity()->getUser($token);
+        if ($user->hasModel() === false) {
+            //return new AnonymousAuthToken($this->getWorkbench());
+            throw new AuthenticationFailedError($this, 'Cannot authenticate user "' . $token->getUsername() . '" via remember-me. User does not exist!');
+        }
+        if  ($user->isDisabled()) {
+            throw new AuthenticationFailedError($this, 'Cannot authenticate user "' . $token->getUsername() . '" via remember-me. User is disabled!');
         }
         
         return $token;
@@ -53,6 +68,33 @@ class RememberMeAuthenticator extends AbstractAuthenticator
     public function isSupported(AuthenticationTokenInterface $token) : bool
     {
         return $token instanceof RememberMeAuthToken;
+    }
+    
+    /**
+     * Set the time in secodns a user should stay logged in after he did log in. Default is 1 week (604800 seconds).
+     * 
+     * @uxon-property liftetime_seconds
+     * @uxon-type integer
+     * 
+     * @param int $seconds
+     * @return RememberMeAuthenticator
+     */
+    public function setLifetimeSeconds (int $seconds) : RememberMeAuthenticator
+    {
+        $this->lifetime = $seconds;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return int
+     */
+    protected function getLiftetime() : int
+    {
+        if ($this->lifetime === null) {
+            return 604800;
+        }
+        return $this->lifetime;
     }
     
     /**
