@@ -304,6 +304,11 @@ class Workbench implements WorkbenchInterface
         return $this->installation_path;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::getInstallationFolderName()
+     */
     public function getInstallationFolderName() : string
     {        
         return StringDataType::substringAfter($this->getInstallationPath(), DIRECTORY_SEPARATOR, false, false, true);
