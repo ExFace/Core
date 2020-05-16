@@ -111,7 +111,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      * Use the `=TRANSLATE()` formula to make the name translatable.
      * 
      * @uxon-property name
-     * @uxon-type string     * 
+     * @uxon-type string
      * 
      * @param string $value
      * @return AbstractAuthenticator
