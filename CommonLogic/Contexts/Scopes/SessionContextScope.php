@@ -22,6 +22,8 @@ class SessionContextScope extends AbstractContextScope
 {
     const KEY_USERNAME = 'username';
     
+    const KEY_USERDATA = 'user';
+    
     const KEY_LOCALE = 'locale';
 
     private $session_id = null;
@@ -29,6 +31,8 @@ class SessionContextScope extends AbstractContextScope
     private $session_locale = null;
     
     private $session_user = null;
+    
+    private $session_user_data = null;
     
     private $force_update_session_data = false;
     
@@ -40,14 +44,14 @@ class SessionContextScope extends AbstractContextScope
         
         $this->sessionOpen();
         
-        $this->sessionData = $_SESSION['exface'];
+        $this->sessionData = $_SESSION['exface'][$this->getWorkbench()->getInstallationFolderName()];
         
         if ($locale = $this->getSessionData(self::KEY_LOCALE)) {
             $this->setSessionLocale($locale);
         }
         
-        if ($username = $this->getSessionData(self::KEY_USERNAME)) {
-            $this->session_user = $username;
+        if ($userdata = $this->getSessionData(self::KEY_USERDATA)) {
+            $this->session_user_data = $userdata;
         }
         
         // It is important to save the session once we have read the data, because otherwise it will block concurrent ajax-requests
@@ -148,7 +152,8 @@ class SessionContextScope extends AbstractContextScope
         
         // Save other session data
         $this->setSessionData(self::KEY_LOCALE, $this->session_locale);
-        $this->setSessionData(self::KEY_USERNAME, $this->session_user);
+        //$this->setSessionData(self::KEY_USERNAME, $this->session_user);
+        $this->setSessionData(self::KEY_USERDATA, $this->session_user_data);
         
         // It is important to save the session once we have read the data, because otherwise it will block concurrent ajax-requests
         $this->sessionClose();
@@ -300,7 +305,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function getSessionData(string $key)
     {
-        return $_SESSION['exface'][$key];
+        return $_SESSION['exface'][$this->getWorkbench()->getInstallationFolderName()][$key];
     }
     
     /**
@@ -311,13 +316,13 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function setSessionData(string $key, $data) : SessionContextScope
     {
-        $_SESSION['exface'][$key] = $data;
+        $_SESSION['exface'][$this->getWorkbench()->getInstallationFolderName()][$key] = $data;
         return $this;
     }
     
     protected function clearSessionData() : SessionContextScope
     {
-        unset($_SESSION['exface']);
+        unset($_SESSION['exface'][$this->getWorkbench()->getInstallationFolderName()]);
         $this->session_locale = null;
         foreach ($this->getContextsLoaded() as $context) {
             $this->reloadContext($context);
@@ -371,6 +376,31 @@ class SessionContextScope extends AbstractContextScope
             }
         }
         return $this;
+    }
+    
+    /**
+     * Set the session user data. 
+     * 
+     * @param string|NULL $data
+     * @return SessionContextScope
+     */
+    public function setSessionUserData(?string $data) : SessionContextScope
+    {
+        if ($data !== $this->session_user_data) {
+            $this->session_user_data = $data;
+            $this->force_update_session_data = true;
+        }
+        return $this;
+    }
+    
+    /**
+     * Return the session user data.
+     * 
+     * @return string|NULL
+     */
+    public function getSessionUserData() : ?string
+    {
+        return $this->session_user_data;
     }
     
     /**

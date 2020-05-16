@@ -187,7 +187,11 @@ class SecurityManager implements SecurityManagerInterface
     protected function storeAuthenticatedToken(AuthenticationTokenInterface $token) : self
     {
         $this->authenticatedToken = $token;
-        $this->getWorkbench()->getContext()->getScopeSession()->setSessionAuthToken($token);
+        foreach ($this->getAuthenticators() as $authenticator) {
+            if ($authenticator instanceof RememberMeAuthenticator) {                
+                $authenticator->saveSessionData($token);
+            }
+        }
         return $this;
     }
     
