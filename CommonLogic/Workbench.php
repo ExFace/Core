@@ -306,7 +306,7 @@ class Workbench implements WorkbenchInterface
     
     public function getInstallationFolderName() : string
     {        
-        return StringDataType::substringAfter($this->getInstallationPath(), DIRECTORY_SEPARATOR, false, true);
+        return StringDataType::substringAfter($this->getInstallationPath(), DIRECTORY_SEPARATOR, false, false, true);
     }
     
     /**
@@ -486,9 +486,9 @@ class Workbench implements WorkbenchInterface
     }
     
     /**
-     * Returns secret that is saved as option in system config. If secret in config is empty a new one is generated and saved.
      * 
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::getSecret()
      */
     public function getSecret() : string
     {
