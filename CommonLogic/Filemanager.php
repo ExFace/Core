@@ -96,8 +96,8 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
                 static::pathConstruct($this->path_to_user_data_folder);
             }
             
-            if (false === $this->isDirSecure($this->path_to_data_folder)) {
-                $this->secureDir($this->path_to_data_folder);
+            if (false === $this->isDirSecure($this->path_to_user_data_folder)) {
+                $this->secureDir($this->path_to_user_data_folder);
             }
         }
         return $this->path_to_user_data_folder;
