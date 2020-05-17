@@ -169,9 +169,9 @@
     "rows": [
         {
             "CREATED_ON": "2019-12-16 20:44:02",
-            "MODIFIED_ON": "2020-03-10 20:35:45",
+            "MODIFIED_ON": "2020-05-17 19:36:00",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11ea95ea3987fa17a9d10205857feb80",
             "UID": "0x11e863158a0a1b87971b0205857feb80",
             "SORTABLEFLAG": "1",
             "FILTERABLEFLAG": "1",
@@ -204,7 +204,7 @@
             "SORTERPOS": null,
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
-            "SHORT_DESCRIPTION": "",
+            "SHORT_DESCRIPTION": "Unique alias for the page. Also used in the URL. Generated automatically if not explicitly defined. A namespaced notation in lower case (like exface.core.administration) is recommended.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
