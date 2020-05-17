@@ -95,6 +95,10 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
             if (! is_dir($this->path_to_user_data_folder)) {
                 static::pathConstruct($this->path_to_user_data_folder);
             }
+            
+            if (false === $this->isDirSecure($this->path_to_data_folder)) {
+                $this->secureDir($this->path_to_data_folder);
+            }
         }
         return $this->path_to_user_data_folder;
     }
@@ -110,9 +114,6 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
             $this->path_to_data_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_DATA;
             if (false === is_dir($this->path_to_data_folder)) {
                 mkdir($this->path_to_data_folder);
-            }
-            if (false === $this->isDirSecure($this->path_to_data_folder)) {
-                $this->secureDir($this->path_to_data_folder);
             }
         }
         return $this->path_to_data_folder;
