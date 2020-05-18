@@ -4,12 +4,11 @@ namespace exface\Core\CommonLogic\Security\Authenticators;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\CommonLogic\Security\AuthenticationToken\RememberMeAuthToken;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
-use exface\Core\CommonLogic\Security\AuthenticationToken\AnonymousAuthToken;
-use exface\Core\Factories\UserFactory;
-use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
-use exface\Core\Exceptions\UserNotFoundError;
-use exface\Core\DataTypes\DateTimeDataType;
-use function GuzzleHttp\json_encode;
+use exface\Core\DataTypes\EncryptedDataType;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Events\Security\OnAuthenticatedEvent;
+use exface\Core\Interfaces\Security\AuthenticationProviderInterface;
+use exface\Core\Interfaces\Security\AuthenticatorInterface;
 
 /**
  * 
@@ -19,9 +18,30 @@ use function GuzzleHttp\json_encode;
  */
 class RememberMeAuthenticator extends AbstractAuthenticator
 {    
-    CONST SESSION_DATA_DELIMITER = ':';    
+    CONST SESSION_DATA_DELIMITER = ':';
     
-    private $lifetime = null;
+    /**
+     *
+     * @param WorkbenchInterface $workbench
+     */
+    public function __construct(WorkbenchInterface $workbench)
+    {
+        parent::__construct($workbench);
+        $workbench->eventManager()->addListener(OnAuthenticatedEvent::getEventName(), [$this, 'handleOnAuthenticated']);
+    }
+    
+    /**
+     * 
+     * @param OnAuthenticatedEvent $event
+     */
+    public function handleOnAuthenticated(OnAuthenticatedEvent $event)
+    {
+        if ($event->getAuthenticationProvider() instanceof RememberMeAuthenticator) {
+            return;
+        }
+        $this->saveSessionData($event->getToken(), $event->getAuthenticationProvider());
+        return;
+    }
     
     /**
      * 
@@ -81,33 +101,6 @@ class RememberMeAuthenticator extends AbstractAuthenticator
     }
     
     /**
-     * Set the time in seconds a user should stay logged in after he did log in. Default is 1 week (604800 seconds).
-     * 
-     * @uxon-property liftetime_seconds
-     * @uxon-type integer
-     * 
-     * @param int $seconds
-     * @return RememberMeAuthenticator
-     */
-    public function setLifetimeSeconds (int $seconds) : RememberMeAuthenticator
-    {
-        $this->lifetime = $seconds;
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return int
-     */
-    protected function getLiftetime() : int
-    {
-        if ($this->lifetime === null) {
-            return 604800;
-        }
-        return $this->lifetime;
-    }
-    
-    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Security\Authenticators\AbstractAuthenticator::getNameDefault()
@@ -117,19 +110,13 @@ class RememberMeAuthenticator extends AbstractAuthenticator
         return 'Remember me';
     }
     
-    /**
-     * Save the user data, matching this token, in the session.
-     * 
-     * @param AuthenticationTokenInterface $token
-     * @return RememberMeAuthenticator
-     */
-    public function saveSessionData(AuthenticationTokenInterface $token) : RememberMeAuthenticator
+    protected function saveSessionData(AuthenticationTokenInterface $token, AuthenticationProviderInterface $provider = null) : RememberMeAuthenticator
     {
         if ($token->isAnonymous()) {
             $this->getWorkbench()->getContext()->getScopeSession()->setSessionUserData(NULL);
             return $this;
         }
-        $this->getWorkbench()->getContext()->getScopeSession()->setSessionUserData($this->getSessionDataString($token));
+        $this->getWorkbench()->getContext()->getScopeSession()->setSessionUserData($this->createSessionDataString($token, $provider));
         return $this;        
     }
     
@@ -139,6 +126,7 @@ class RememberMeAuthenticator extends AbstractAuthenticator
         if ($dataString === null) {
             return $dataString;
         }
+        $dataString = EncryptedDataType::decrypt($this->getWorkbench(), $dataString);
         $data = json_decode($dataString, true);
         return $data;
     }
@@ -148,20 +136,26 @@ class RememberMeAuthenticator extends AbstractAuthenticator
      * @param AuthenticationTokenInterface $token
      * @return string
      */
-    protected function getSessionDataString (AuthenticationTokenInterface $token) : string
+    protected function createSessionDataString(AuthenticationTokenInterface $token, AuthenticationProviderInterface $provider) : string
     {
         $data = [];
         $oldSessionData = $this->getSessionData();
         if ($oldSessionData !== null && $oldSessionData['username'] === $token->getUsername()) {
             $expires = $oldSessionData['expires'];
-        } else {            
-            $expires = time() + $this->getLiftetime();
+        } else {
+            $lifetime = $this->getLifetime();
+            if ($provider instanceof AuthenticatorInterface && $provider->getLifetime() !== null) {
+                $lifetime = $provider->getLifetime();
+            }
+            $expires = time() + $lifetime;
         }
         $user = $this->getWorkbench()->getSecurity()->getUser($token);
         $data['username'] = $user->getUsername();
         $data['expires'] = $expires;
         $data['hash'] = $this->generateSessionDataHash($user->getUsername(), $expires, $user->getPassword());
-        return json_encode($data);
+        $string = json_encode($data);
+        $string = EncryptedDataType::encrypt($this->getWorkbench(), $string);
+        return $string;
     }
     
     /**
@@ -171,9 +165,12 @@ class RememberMeAuthenticator extends AbstractAuthenticator
      * @param string $password
      * @return string
      */
-    protected function generateSessionDataHash (string $username, int $expires, string $password) : string
+    protected function generateSessionDataHash (string $username, int $expires, string $password = null) : string
     {
-        return hash_hmac('sha256', $username . self::SESSION_DATA_DELIMITER . $expires . self::SESSION_DATA_DELIMITER . $password, $this->getSecret);
+        if ($password === null) {
+            $password = '';
+        }
+        return hash_hmac('sha256', $username . self::SESSION_DATA_DELIMITER . $expires . self::SESSION_DATA_DELIMITER . $password, $this->getSecret());
     }
     
     /**
@@ -182,21 +179,14 @@ class RememberMeAuthenticator extends AbstractAuthenticator
      */
     protected function getSecret() : string
     {
-        $this->getWorkbench()->getSecret();
+        return $this->getWorkbench()->getSecret();
     }
     
-    public function getTokenFromSession() : RememberMeAuthToken
+    public function getLifetime() : ?int
     {
-        return new RememberMeAuthToken($this->getUsernameFromSession());
-    }
-    
-    public function setTokenInSession(AuthenticationTokenInterface $token) : RememberMeAuthenticator
-    {
-        return $this->getWorkbench()->getContext()->getScopeSession()->setSessionAuthToken($token);
-    }
-    
-    protected function getUsernameFromSession() : ?string
-    {
-        return $this->getWorkbench()->getContext()->getScopeSession()->getSessionUsername();
+        if ($this->lifetime === null) {
+            return 604800;
+        }
+        return $this->lifetime;
     }
 }
