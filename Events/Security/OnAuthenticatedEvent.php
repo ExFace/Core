@@ -7,9 +7,9 @@ use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
- * Event fired before authentication happens in a facade.
+ * Event fired after a user was authenticated by the workbench security.
  *
- * @event exface.Core.Security.OnBeforeAuthentication
+ * @event exface.Core.Security.OnAuthenticated
  *
  * @author Andrej Kabachnik
  *        

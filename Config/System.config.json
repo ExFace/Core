@@ -56,7 +56,7 @@
     	},
         {
             "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\RememberMeAuthenticator",
-            "lifetime_seconds": 604800,
+            "token_lifetime_seconds": 604800,
             "id": "REMEMBERME_AUTH"
         }
     ],
