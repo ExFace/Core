@@ -15,17 +15,15 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Widgets\LoginPrompt;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Security\AuthenticationToken\RememberMeAuthToken;
-use exface\Core\CommonLogic\Security\Authenticators\RememberMeAuthenticator;
 use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
-use exface\Core\Factories\AuthorizationPointFactory;
 use exface\Core\CommonLogic\Selectors\AuthorizationPointSelector;
 use exface\Core\Interfaces\Selectors\AuthorizationPointSelectorInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\SecurityException;
-use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\PhpFilePathDataType;
+use exface\Core\Events\Security\OnAuthenticatedEvent;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -71,7 +69,7 @@ class SecurityManager implements SecurityManagerInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Security\AuthenticationProviderInterface::authenticate()
+     * @see \exface\Core\Interfaces\Security\SecurityManagerInterface::authenticate()
      */
     public function authenticate(AuthenticationTokenInterface $token): AuthenticationTokenInterface
     {      
@@ -83,6 +81,8 @@ class SecurityManager implements SecurityManagerInterface
             try {
                 $authenticated = $authenticator->authenticate($token);
                 $this->storeAuthenticatedToken($authenticated);
+                $event = new OnAuthenticatedEvent($this->getWorkbench(), $authenticated, $authenticator);
+                $this->getWorkbench()->eventManager()->dispatch($event);
                 return $authenticated;
             } catch (AuthenticationExceptionInterface $e) {
                 $errors[] = $e;
@@ -90,6 +90,8 @@ class SecurityManager implements SecurityManagerInterface
         }
         
         if ($token->isAnonymous() === true) {
+            $event = new OnAuthenticatedEvent($this->getWorkbench(), $token);
+            $this->getWorkbench()->eventManager()->dispatch($event);
             $this->storeAuthenticatedToken($token);
             return $token;
         }
@@ -187,11 +189,6 @@ class SecurityManager implements SecurityManagerInterface
     protected function storeAuthenticatedToken(AuthenticationTokenInterface $token) : self
     {
         $this->authenticatedToken = $token;
-        foreach ($this->getAuthenticators() as $authenticator) {
-            if ($authenticator instanceof RememberMeAuthenticator) {                
-                $authenticator->saveSessionData($token);
-            }
-        }
         return $this;
     }
     
@@ -345,4 +342,10 @@ class SecurityManager implements SecurityManagerInterface
         
         return $ap;
     }
+    
+    public function getLifetime(): ?int
+    {
+        return null;
+    }
+
 }
