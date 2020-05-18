@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces\Security;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\Selectors\AuthorizationPointSelector;
+use exface\Core\Exceptions\Security\AuthenticationFailedError;
 
 /**
  * Interface for the central security provider for the workbench.
@@ -13,6 +14,17 @@ use exface\Core\CommonLogic\Selectors\AuthorizationPointSelector;
  */
 interface SecurityManagerInterface extends WorkbenchDependantInterface, AuthenticatorInterface
 {
+    /**
+     * Authenticates the given token or throws an exception.
+     * 
+     * @triggers \exface\Core\Events\Security\OnAuthenticatedEvent
+     *
+     * @param AuthenticationTokenInterface $token
+     * @throws AuthenticationFailedError
+     * @return AuthenticationTokenInterface
+     */
+    public function authenticate(AuthenticationTokenInterface $token) : AuthenticationTokenInterface;
+
     /**
      * Returns the currently valid authentication token.
      * 

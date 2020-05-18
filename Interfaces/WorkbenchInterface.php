@@ -159,4 +159,12 @@ interface WorkbenchInterface extends TaskHandlerInterface
      * @return string
      */
     public function getUrl() : string;
+    
+    /**
+     * Returns secret that is saved as option in system config. If secret in config is empty a new one is generated and saved.
+     * Secret should be saved base64 encoded!
+     *
+     * @return string
+     */
+    public function getSecret() : string;
 }

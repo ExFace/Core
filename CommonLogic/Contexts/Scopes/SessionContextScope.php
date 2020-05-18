@@ -9,6 +9,7 @@ use exface\Core\Exceptions\UserException;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * The session context scope represents the PHP session (on server side).
@@ -22,13 +23,15 @@ class SessionContextScope extends AbstractContextScope
 {
     const KEY_USERNAME = 'username';
     
+    const KEY_USERDATA = 'user';
+    
     const KEY_LOCALE = 'locale';
 
     private $session_id = null;
 
     private $session_locale = null;
     
-    private $session_user = null;
+    private $session_user_data = null;
     
     private $force_update_session_data = false;
     
@@ -40,14 +43,14 @@ class SessionContextScope extends AbstractContextScope
         
         $this->sessionOpen();
         
-        $this->sessionData = $_SESSION['exface'];
+        $this->sessionData = $_SESSION['exface'][$this->getInstallationFolderName()];
         
         if ($locale = $this->getSessionData(self::KEY_LOCALE)) {
             $this->setSessionLocale($locale);
         }
         
-        if ($username = $this->getSessionData(self::KEY_USERNAME)) {
-            $this->session_user = $username;
+        if ($userdata = $this->getSessionData(self::KEY_USERDATA)) {
+            $this->session_user_data = $userdata;
         }
         
         // It is important to save the session once we have read the data, because otherwise it will block concurrent ajax-requests
@@ -148,14 +151,14 @@ class SessionContextScope extends AbstractContextScope
         
         // Save other session data
         $this->setSessionData(self::KEY_LOCALE, $this->session_locale);
-        $this->setSessionData(self::KEY_USERNAME, $this->session_user);
+        $this->setSessionData(self::KEY_USERDATA, $this->session_user_data);
         
         // It is important to save the session once we have read the data, because otherwise it will block concurrent ajax-requests
         $this->sessionClose();
         
         return $this;
     }
-    
+        
     /**
      * 
      * {@inheritDoc}
@@ -163,7 +166,7 @@ class SessionContextScope extends AbstractContextScope
      */
     public function removeContext($alias)
     {
-        unset($_SESSION['exface']['contexts'][$alias]);
+        unset($_SESSION['exface'][$this->getInstallationFolderName()]['contexts'][$alias]);
         return parent::removeContext($alias);
     }
 
@@ -277,7 +280,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function getSessionContextData()
     {
-        return $_SESSION['exface']['contexts'];
+        return $_SESSION['exface'][$this->getInstallationFolderName()]['contexts'];
     }
 
     /**
@@ -289,7 +292,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function setSessionContextData($key, $value)
     {
-        $_SESSION['exface']['contexts'][$key] = $value;
+        $_SESSION['exface'][$this->getInstallationFolderName()]['contexts'][$key] = $value;
         return $this;
     }
     
@@ -300,7 +303,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function getSessionData(string $key)
     {
-        return $_SESSION['exface'][$key];
+        return $_SESSION['exface'][$this->getInstallationFolderName()][$key];
     }
     
     /**
@@ -311,13 +314,13 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function setSessionData(string $key, $data) : SessionContextScope
     {
-        $_SESSION['exface'][$key] = $data;
+        $_SESSION['exface'][$this->getInstallationFolderName()][$key] = $data;
         return $this;
     }
     
     protected function clearSessionData() : SessionContextScope
     {
-        unset($_SESSION['exface']);
+        unset($_SESSION['exface'][$this->getInstallationFolderName()]);
         $this->session_locale = null;
         foreach ($this->getContextsLoaded() as $context) {
             $this->reloadContext($context);
@@ -356,56 +359,38 @@ class SessionContextScope extends AbstractContextScope
         return $this;
     }
     
-    public function setSessionAuthToken(AuthenticationTokenInterface $token) : SessionContextScope
+    /**
+     * Set the session user data. 
+     * 
+     * @param string|NULL $data
+     * @return SessionContextScope
+     */
+    public function setSessionUserData(?string $data) : SessionContextScope
     {
-        $userChanged = $this->session_user !== $token->getUsername();
-        if ($token->getUsername() === null) {
-            $this->unsetSessionUsername();
-        } else {
-            $this->setSessionUsername($token->getUsername());
-        }
-        if ($userChanged === true) {
-            $this->clearSessionData();
-            foreach ($this->getContextsLoaded() as $context) {
-                $this->reloadContext($context);
-            }
+        if ($data !== $this->session_user_data) {
+            $this->session_user_data = $data;
+            $this->force_update_session_data = true;
         }
         return $this;
     }
     
     /**
-     *
+     * Return the session user data.
+     * 
      * @return string|NULL
      */
-    public function getSessionUsername() : ?string
+    public function getSessionUserData() : ?string
     {
-        return $this->session_user;
+        return $this->session_user_data;
     }
     
     /**
+     * Returns installation folder name of exface instance.
      * 
-     * @param string $value
-     * @return SessionContextScope
+     * @return string
      */
-    protected function setSessionUsername(string $value) : SessionContextScope
+    protected function getInstallationFolderName() : string
     {
-        if ($this->session_user !== $value) {
-            $this->session_user = $value;
-            $this->force_update_session_data = true;
-        }
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return SessionContextScope
-     */
-    protected function unsetSessionUsername() : SessionContextScope
-    {
-        if ($this->session_user !== null) {
-            $this->session_user = null;
-            $this->force_update_session_data = true;
-        }
-        return $this;
+        return StringDataType::substringAfter($this->getWorkbench()->getInstallationPath(), DIRECTORY_SEPARATOR, false, false, true);
     }
 }

@@ -31,6 +31,7 @@ use exface\Core\Events\Workbench\OnStartEvent;
 use exface\Core\Events\Workbench\OnStopEvent;
 use exface\Core\Interfaces\Security\SecurityManagerInterface;
 use exface\Core\CommonLogic\Security\SecurityManager;
+use exface\Core\Factories\ConfigurationFactory;
 
 class Workbench implements WorkbenchInterface
 {
@@ -477,5 +478,28 @@ class Workbench implements WorkbenchInterface
         }
         
         return '';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::getSecret()
+     */
+    public function getSecret() : string
+    {
+        
+        $config = ConfigurationFactory::createFromApp($this->getCoreApp())->loadConfigFile($this->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . $this->getCoreApp()->getConfigFileName(CoreApp::CONFIG_FILENAME_SYSTEM), AppInterface::CONFIG_SCOPE_SYSTEM);
+        try {
+            $key = $config->getOption('SECURITY.ENCRYPTION.SALT');
+        } catch (ConfigOptionNotFoundError $e) {
+            $key = null;
+        }
+        //$key = $this->getConfig()->getOption("ENCRYPTION.SALT");
+        if ($key === null || $key === '') {
+            $key = sodium_crypto_kdf_keygen();
+            $key = sodium_bin2base64($key, 1);
+            $config->setOption("SECURITY.ENCRYPTION.SALT", $key, AppInterface::CONFIG_SCOPE_SYSTEM);
+        }
+        return $key;
     }
 }
