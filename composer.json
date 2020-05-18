@@ -16,7 +16,6 @@
 	},
 	"require" : {
 		"php" : "^7.2",
-		"ext-sodium" : "*",
 		"symfony/FileSystem" : "^3.1||^4.0",
 		"symfony/Event-Dispatcher" : "^3.1||^4.0",
 		"symfony/translation" : "^3.1||^4.0",
