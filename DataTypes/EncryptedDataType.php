@@ -3,6 +3,7 @@ namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Work in Progress!
@@ -16,6 +17,9 @@ class EncryptedDataType extends AbstractDataType
 {
     public static function encrypt(WorkbenchInterface $exface, string $data)
     {
+        if (! function_exists('sodium_crypto_secretbox')) {
+            throw new RuntimeException('Required PHP extension "sodium" not found!');
+        }
         $key = $exface->getSecurity()->getSecret();        
         $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
         $encryptedData = sodium_crypto_secretbox($data, $nonce, sodium_base642bin($key, 1));
@@ -25,6 +29,10 @@ class EncryptedDataType extends AbstractDataType
     // decrypt encrypted string
     public static function decrypt(WorkbenchInterface $exface, string $data)
     {
+        if (! function_exists('sodium_crypto_secretbox_open')) {
+            throw new RuntimeException('Required PHP extension "sodium" not found!');
+        }
+        
         $key = $exface->getSecurity()->getSecret();
         $key = sodium_base642bin($key, 1);
         $decoded = sodium_base642bin($data, 1);

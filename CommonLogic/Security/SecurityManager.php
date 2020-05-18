@@ -27,6 +27,7 @@ use exface\Core\Events\Security\OnAuthenticatedEvent;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\CoreApp;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -374,6 +375,9 @@ class SecurityManager implements SecurityManagerInterface
         }
         //$key = $this->getConfig()->getOption("ENCRYPTION.SALT");
         if ($key === null || $key === '') {
+            if (! function_exists('sodium_crypto_kdf_keygen')) {
+                throw new RuntimeException('Required PHP extension "sodium" not found!');
+            }
             $key = sodium_crypto_kdf_keygen();
             $key = sodium_bin2base64($key, 1);
             $config->setOption("SECURITY.ENCRYPTION.SALT", $key, AppInterface::CONFIG_SCOPE_SYSTEM);
