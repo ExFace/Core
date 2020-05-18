@@ -21,13 +21,28 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * editor will be directly applied to the Dialog. If another widget type is specified, it will be treated as a separate
  * widget and added to the dialog as a child widget. Thus, if the default editor is
  *
- * {"widgets": [{...}, {...}], "caption": "My caption"}
+ * ```
+ * {
+ *  "widgets": [
+ *      {"":""}, 
+ *      {"":""}
+ *  ], 
+ *  "caption": "My caption"
+ * }
+ * 
+ * ```
  *
  * the caption of the dialog will be set to "My caption" and all the widgets will get appended to the dialog. On the
  * other hand, the following default editor will produce a single tabs widget, which will be appended to the generic
  * dialog:
  *
- * {"widget_type": "Tabs", "tabs": [...]}
+ * ```
+ * {
+ *  "widget_type": "Tabs", 
+ *  "tabs": []
+ * }
+ * 
+ * ```
  *
  * If you choose to customize the dialog directly (first example), you can ommit the "widgets" array completely. This
  * will case the default editor widgets to get generated and appended to your custom dialog. This is an easy way to
