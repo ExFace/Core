@@ -68,4 +68,14 @@ interface SecurityManagerInterface extends WorkbenchDependantInterface, Authenti
      * @return AuthorizationPointInterface
      */
     public function getAuthorizationPoint($selectorOrString) : AuthorizationPointInterface;
+    
+    /**
+     * Returns secret that is saved as option in system config. 
+     * 
+     * If secret in config is empty a new one is generated and saved. 
+     * Secret should be saved base64 encoded!
+     *
+     * @return string
+     */
+    public function getSecret() : string;
 }

@@ -16,7 +16,7 @@ class EncryptedDataType extends AbstractDataType
 {
     public static function encrypt(WorkbenchInterface $exface, string $data)
     {
-        $key = $exface->getSecret();        
+        $key = $exface->getSecurity()->getSecret();        
         $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
         $encryptedData = sodium_crypto_secretbox($data, $nonce, sodium_base642bin($key, 1));
         return sodium_bin2base64($nonce . $encryptedData, 1);
@@ -25,7 +25,7 @@ class EncryptedDataType extends AbstractDataType
     // decrypt encrypted string
     public static function decrypt(WorkbenchInterface $exface, string $data)
     {
-        $key = $exface->getSecret();
+        $key = $exface->getSecurity()->getSecret();
         $key = sodium_base642bin($key, 1);
         $decoded = sodium_base642bin($data, 1);
         $nonce = mb_substr($decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, '8bit');
