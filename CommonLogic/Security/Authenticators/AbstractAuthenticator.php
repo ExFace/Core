@@ -42,7 +42,9 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     
     private $id = null;
     
-    private $userData = [];
+    private $userData = [];      
+    
+    private $lifetime = null;
     
     /**
      * 
@@ -111,7 +113,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      * Use the `=TRANSLATE()` formula to make the name translatable.
      * 
      * @uxon-property name
-     * @uxon-type string     * 
+     * @uxon-type string
      * 
      * @param string $value
      * @return AbstractAuthenticator
@@ -152,6 +154,34 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     {
         $this->id = $id;
         return $this;
+    }
+    
+    
+    
+    /**
+     * Set the time in seconds a user should stay logged in after he did log in. If property is not set, the lifetime will be decided
+     * by the remember me authenticator.
+     *
+     * @uxon-property liftetime_seconds
+     * @uxon-type integer
+     *
+     * @param int $seconds
+     * @return AbstractAuthenticator
+     */
+    protected function setLifetimeSeconds (int $seconds) : AbstractAuthenticator
+    {
+        $this->lifetime = $seconds;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getLifetime()
+     */
+    public function getLifetime() : ?int
+    {
+        return $this->lifetime;
     }
     
     /**
