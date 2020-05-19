@@ -522,7 +522,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function setValue($expression_or_string)
     {
         if (is_string($expression_or_string) && $this->getValueDataType() instanceof EncryptedDataType && $this->getValueDataType()->isValueEncrypted($expression_or_string)) {
-            $expression_or_string = EncryptedDataType::decrypt($this->getWorkbench(), $expression_or_string, $this->getValueDataType()->getEncryptionPrefix());
+            $expression_or_string = EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $expression_or_string, $this->getValueDataType()->getEncryptionPrefix());
         }
         return parent::setValue($expression_or_string);
     }
