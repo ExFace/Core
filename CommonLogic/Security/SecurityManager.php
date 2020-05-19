@@ -24,6 +24,10 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\SecurityException;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Events\Security\OnAuthenticatedEvent;
+use exface\Core\Factories\ConfigurationFactory;
+use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
+use exface\Core\CoreApp;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -343,9 +347,41 @@ class SecurityManager implements SecurityManagerInterface
         return $ap;
     }
     
-    public function getLifetime(): ?int
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getTokenLifetime()
+     */
+    public function getTokenLifetime(): ?int
     {
         return null;
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\SecurityManagerInterface::getSecret()
+     */
+    public function getSecret() : string
+    {
+        $workbench = $this->getWorkbench();
+        $app = $workbench->getCoreApp();
+        $config = ConfigurationFactory::createFromApp($app)
+            ->loadConfigFile($workbench->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . $app->getConfigFileName(CoreApp::CONFIG_FILENAME_SYSTEM), AppInterface::CONFIG_SCOPE_SYSTEM);
+        try {
+            $key = $config->getOption('SECURITY.ENCRYPTION.SALT');
+        } catch (ConfigOptionNotFoundError $e) {
+            $key = null;
+        }
+        //$key = $this->getConfig()->getOption("ENCRYPTION.SALT");
+        if ($key === null || $key === '') {
+            if (! function_exists('sodium_crypto_kdf_keygen')) {
+                throw new RuntimeException('Required PHP extension "sodium" not found!');
+            }
+            $key = sodium_crypto_kdf_keygen();
+            $key = sodium_bin2base64($key, 1);
+            $config->setOption("SECURITY.ENCRYPTION.SALT", $key, AppInterface::CONFIG_SCOPE_SYSTEM);
+        }
+        return $key;
+    }
 }

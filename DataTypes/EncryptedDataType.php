@@ -3,9 +3,13 @@ namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\WorkbenchInterface;
+<<<<<<< HEAD
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
+=======
+use exface\Core\Exceptions\RuntimeException;
+>>>>>>> refs/remotes/origin/1.x-dev
 
 /**
  * Work in Progress!
@@ -25,6 +29,7 @@ class EncryptedDataType extends AbstractDataType
     
     public function parse($value) : string
     {
+<<<<<<< HEAD
         if (StringDataType::startsWith($value, $this->getEncryptionPrefix(), true) === true) {
             $decrypt = self::decrypt($$this->getWorkbench(), StringDataType::substringAfter($value, $this->getEncryptionPrefix(), false, true));
             $string = $this->getInnerDataType()->parse($decrypt);
@@ -47,6 +52,12 @@ class EncryptedDataType extends AbstractDataType
             return $data;
         }
         $key = $exface->getSecret();        
+=======
+        if (! function_exists('sodium_crypto_secretbox')) {
+            throw new RuntimeException('Required PHP extension "sodium" not found!');
+        }
+        $key = $exface->getSecurity()->getSecret();        
+>>>>>>> refs/remotes/origin/1.x-dev
         $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
         $encryptedData = sodium_crypto_secretbox($data, $nonce, sodium_base642bin($key, 1));
         if ($prefix === null) {
@@ -58,10 +69,18 @@ class EncryptedDataType extends AbstractDataType
     // decrypt encrypted string
     public static function decrypt(WorkbenchInterface $exface, string $data, $prefix = null)
     {
+<<<<<<< HEAD
         if ($data === null || $data === '') {
             return $data;
         }
         $key = $exface->getSecret();
+=======
+        if (! function_exists('sodium_crypto_secretbox_open')) {
+            throw new RuntimeException('Required PHP extension "sodium" not found!');
+        }
+        
+        $key = $exface->getSecurity()->getSecret();
+>>>>>>> refs/remotes/origin/1.x-dev
         $key = sodium_base642bin($key, 1);
         if ($prefix !== null && $prefix !== '') {
             $data = StringDataType::substringAfter($data, $prefix);
