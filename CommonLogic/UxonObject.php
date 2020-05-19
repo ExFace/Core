@@ -321,5 +321,33 @@ class UxonObject implements \IteratorAggregate
         throw new LogicException('Direct access to properties of a UxonObject is not supported anymore!');
     }
     
-    
+    /**
+     * Returns a copy of the UXON with certain properties removed.
+     * 
+     * @param string[] $propertyNames
+     * @return UxonObject
+     */
+    public function withPropertiesRemoved(array $propertyNames) : UxonObject
+    {
+        $array = $this->array;
+        
+        if (empty($array)) {
+            return new UxonObject();
+        }
+        
+        $result = [];
+        $propertyNames = array_map('mb_strtolower', $propertyNames);
+        
+        foreach ($array as $key => $value) {
+            if (! in_array(mb_strtolower($key), $propertyNames)) {
+                if (is_array($value)) {
+                    $result[$key] = (new UxonObject($value))->withPropertiesRemoved($propertyNames)->toArray();
+                } else {
+                    $result[$key] = $value;
+                }
+            }
+        }
+        
+        return new UxonObject($result);
+    }
 }
