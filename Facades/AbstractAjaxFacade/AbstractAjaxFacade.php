@@ -578,7 +578,7 @@ HTML;
             // it originates from a login form, so we don't need another one.
             /* @var $task \exface\Core\CommonLogic\Tasks\HttpTask */
             $task = $request->getAttribute($this->getRequestAttributeForTask());
-            if ($task && ! (ActionFactory::createEmpty($task->getActionSelector()) instanceof Login)) {
+            if ($task && ! (ActionFactory::create($task->getActionSelector()) instanceof Login)) {
                 // See if the method createResponseUnauthorized() can handle this exception.
                 // If not, continue with the regular error handling.
                 $response = $this->createResponseUnauthorized($request, $exception, $page);

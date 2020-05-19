@@ -43,10 +43,7 @@ use exface\Core\Contexts\DataContext;
 use exface\Core\Interfaces\Selectors\WidgetSelectorInterface;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\DataTypes\FilePathDataType;
-use exface\Core\Interfaces\Selectors\AuthorizationPointSelectorInterface;
-use exface\Core\Interfaces\Security\AuthorizationPointInterface;
-use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
-use exface\Core\CommonLogic\Security\Authorization\ContextAuthorizationPoint;
+use exface\Core\Exceptions\Actions\ActionNotFoundError;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -775,6 +772,14 @@ class App implements AppInterface
     public function getAction(ActionSelectorInterface $selector, WidgetInterface $sourceWidget = null) : ActionInterface
     {
         $class = $this->getPrototypeClass($selector);
+        if (class_exists($class) === false) {
+            switch (true) {
+                case $selector->isAlias() : $selectorDescr = 'with alias '; break;
+                case $selector->isClassname() : $selectorDescr = 'with class name '; break;
+                case $selector->isFilepath() : $selectorDescr = 'with file path '; break;
+            }
+            throw new ActionNotFoundError('Action ' . $selectorDescr . '"' . $selector->toString() . '" not found!');
+        }
         return new $class($this, $sourceWidget);
     }
     

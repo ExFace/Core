@@ -6,7 +6,6 @@ use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Exceptions\Contexts\ContextNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\UserException;
-use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\DataTypes\StringDataType;

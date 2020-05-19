@@ -1,83 +1,92 @@
 {
-    "METAMODEL.LOADER_CLASS": "\\exface\\Core\\ModelLoaders\\SqlModelLoader",
-    "METAMODEL.QUERY_BUILDER": "\\exface\\Core\\QueryBuilders\\MySqlBuilder",
-    "METAMODEL.CONNECTOR": "\\exface\\Core\\DataConnectors\\MySqlConnector",
-    "METAMODEL.CONNECTOR_CONFIG": {
-        "host": "localhost",
-        "dbase": "exface",
-        "user": "root",
-        "password": "",
-        "charset": "utf8"
-    },
-    "METAMODEL.INSTALLED_ON": "2020-05-13 12:00",
-    "SERVER.TITLE": "Power UI",
-    "SERVER.TITLE_HTML": "Power <b>UI<\/b>",
-    "SERVER.BASE_URLS": [],
-    "SERVER.ICONS": [],
-    "SERVER.INDEX_PAGE_SELECTOR": "index",
-    "CACHE.ENABLED": true,    
-    "DEBUG.LIVE_CLASS_AUTOLOADER": true,
+	"METAMODEL.LOADER_CLASS": "\\exface\\Core\\ModelLoaders\\SqlModelLoader",
+	"METAMODEL.QUERY_BUILDER": "\\exface\\Core\\QueryBuilders\\MySqlBuilder",
+	"METAMODEL.CONNECTOR": "\\exface\\Core\\DataConnectors\\MySqlConnector",
+	"METAMODEL.CONNECTOR_CONFIG": {
+		"host": "localhost",
+		"dbase": "exface",
+		"user": "root",
+		"password": "",
+		"charset": "utf8"
+	},
+	"METAMODEL.INSTALLED_ON": null,
+	
+	"SERVER.TITLE": "Power UI",
+	"SERVER.TITLE_HTML": "Power <b>UI</b>",
+	"SERVER.BASE_URLS": [],
+	"SERVER.ICONS": [],
+	"SERVER.INDEX_PAGE_SELECTOR" : "index",
+    
+	"CACHE.ENABLED": true,
+	
+	"DEBUG.LIVE_CLASS_AUTOLOADER": true,
     "DEBUG.DISABLE_FACADE_ERROR_HANDLERS": false,
     "DEBUG.PRETTIFY_ERRORS": true,
     "DEBUG.SHOW_REQUEST_DUMP": false,
     "DEBUG.SHOW_META_MODEL_DETAILS": true,
     "DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY": true,
     "DEBUG.SUPPORT_EMAIL_ADDRESS": "support@mydomain.com",
+    
     "LOG.MINIMUM_LEVEL_TO_LOG": "debug",
     "LOG.MAX_DAYS_TO_KEEP": "14",
     "LOG.PERSIST_LOG_LEVEL": "alert",
     "LOG.PASSTHROUGH_LOG_LEVEL": "error",
+    
     "FOLDERS.INSTALLATION_PATH_ABSOLUTE": "",
     "FOLDERS.USERDATA_PATH_ABSOLUTE": "",
     "FOLDERS.CACHE_PATH_ABSOLUTE": "",
     "FOLDERS.BACKUP_PATH_ABSOLUTE": "",
     "FOLDERS.LOGS_PATH_ABSOLUTE": "",
+    
     "LOCALE.DEFAULT": "en_US",
+    
     "SECURITY.DISABLE_ANONYMOUS_ACCESS": false,
-    "SECURITY.ENCRYPTION.SALT": "",
-    "SECURITY.AUTHENTICATORS": [
-        {
-            "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SymfonyAuthenticator",
-            "id": "USER_MODEL_AUTH"
-        },
-        {
-            "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\CliAuthenticator",
-            "id": "CLI_DEFAULT_AUTH",
-            "create_new_users": true,
-            "create_new_users_with_roles": [
+    "SECURITY.AUTHENTICATORS" : [
+    	{
+    		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SymfonyAuthenticator",
+    		"id": "USER_MODEL_AUTH"
+    	},
+    	{
+    		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\CliAuthenticator",
+    		"id": "CLI_DEFAULT_AUTH",
+    		"create_new_users": true,
+    		"create_new_users_with_roles": [
                 "exface.core.SUPERUSER"
             ]
-        },
+    	},
         {
             "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\RememberMeAuthenticator",
-            "lifetime_seconds": 604800,
+            "token_lifetime_seconds": 604800,
             "id": "REMEMBERME_AUTH"
         }
     ],
-    "FACADES.ROUTES": [],
-    "FACADES.ABSTRACTPWAFACADE.WORKBOX_VENDOR_PATH": "npm-asset\/workbox-sw\/build\/workbox-sw.js",
+    "SECURITY.ENCRYPTION.SALT": "",
+    
+    "FACADES.ROUTES": {},
+    
+    "FACADES.ABSTRACTPWAFACADE.WORKBOX_VENDOR_PATH": "npm-asset/workbox-sw/build/workbox-sw.js",
     "FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_FILENAME": "ServiceWorker.js",
-    "FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_ROUTES": {
-        "HTML pages": {
-            "description": "Cache all HTML files. Use cache only if offline.",
-            "matcher": "\/^.*\\.html\/i",
-            "strategy": "workbox.strategies.networkFirst"
-        },
-        "Static JS, CSS, fonts from vendor folder": {
-            "description": "Cache static assets. Use cache only if offlie",
-            "matcher": "\/vendor\\\/.*(\\.js|\\.css|\\.woff2)\/i",
-            "strategy": "workbox.strategies.networkFirst",
-            "cacheName": "asset-cache",
-            "maxAgeSeconds": 604800
-        },
-        "images": {
-            "description": "Cache images. Use cache, but update in the background.",
-            "matcher": "\/.*\\.(?:png|gif|jpg|jpeg|svg)$\/i",
-            "strategy": "workbox.strategies.staleWhileRevalidate",
-            "cacheName": "image-cache",
-            "maxEntries": 50,
-            "maxAgeSeconds": 604800
-        }
-    },
-    "FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_IMPORTS": []
+	"FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_ROUTES": {
+		"HTML pages": {
+    		"description": "Cache all HTML files. Use cache only if offline.",
+			"matcher": "/^.*\\.html/i",
+			"strategy": "workbox.strategies.networkFirst"
+		},
+		"Static JS, CSS, fonts from vendor folder": {
+			"description": "Cache static assets. Use cache only if offlie",
+			"matcher": "/vendor\\/.*(\\.js|\\.css|\\.woff2)/i",
+			"strategy": "workbox.strategies.networkFirst",
+			"cacheName": "asset-cache",
+    		"maxAgeSeconds": 604800
+		},
+		"images": {
+			"description": "Cache images. Use cache, but update in the background.",
+			"matcher": "/.*\\.(?:png|gif|jpg|jpeg|svg)$/i",
+			"strategy": "workbox.strategies.staleWhileRevalidate",
+			"cacheName": "image-cache",
+    		"maxEntries": 50,
+    		"maxAgeSeconds": 604800
+		}
+	},
+	"FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_IMPORTS": []
 }

@@ -156,19 +156,21 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
         return $this;
     }
     
-    
-    
     /**
-     * Set the time in seconds a user should stay logged in after he did log in. If property is not set, the lifetime will be decided
-     * by the remember me authenticator.
+     * How long should a successful authentication be valid.
+     * 
+     * After this amount of seconds the user will be asked to log in again. The token
+     * lifetime can be set for every authenticator individually. If it is not, the token
+     * lifetime of the `RememberMeAuthenticator` will be used. 
      *
-     * @uxon-property liftetime_seconds
+     * @uxon-property token_liftetime_seconds
      * @uxon-type integer
+     * @uxon-default 604800
      *
      * @param int $seconds
      * @return AbstractAuthenticator
      */
-    protected function setLifetimeSeconds (int $seconds) : AbstractAuthenticator
+    protected function setTokenLifetimeSeconds(int $seconds) : AbstractAuthenticator
     {
         $this->lifetime = $seconds;
         return $this;
@@ -177,9 +179,9 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getLifetime()
+     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getTokenLifetime()
      */
-    public function getLifetime() : ?int
+    public function getTokenLifetime() : ?int
     {
         return $this->lifetime;
     }
