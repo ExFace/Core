@@ -5,7 +5,6 @@ use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -57,6 +56,8 @@ class ShowObjectInfoDialog extends ShowDialog
     private $show_only_editable_attributes = false;
 
     private $disable_editing = true;
+    
+    private $disable_buttons = true;
     
     private $showSmallDialogIfLessAttributesThen = 7;
 
@@ -129,6 +130,11 @@ class ShowObjectInfoDialog extends ShowDialog
         if (! is_null($contained_widget)) {
             $dialog->addWidget($contained_widget);
         } elseif ($default_editor_uxon && false === $default_editor_uxon->isEmpty()) {
+            
+            if ($this->getDisableButtons()) {
+                $dialog_uxon = $dialog_uxon->withPropertiesRemoved(['buttons']);
+            }
+            
             // Otherwise check, if there is a default editor for an object, and instantiate it if so
             $default_editor_type = $default_editor_uxon->getProperty('widget_type');
             // If the default editor has no widget_type or it is "Dialog" or an extension of it,
@@ -237,10 +243,33 @@ class ShowObjectInfoDialog extends ShowDialog
      * @param boolean $value
      * @return \exface\Core\Actions\ShowObjectInfoDialog
      */
-    public function setDisableEditing($value) : ShowObjectInfoDialog
+    public function setDisableEditing(bool $value) : ShowObjectInfoDialog
     {
-        $this->disable_editing = BooleanDataType::cast($value);
+        $this->disable_editing = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getDisableButtons() : bool
+    {
+        return $this->disable_buttons;
+    }
+    
+    /**
+     * Set to TRUE to remove all buttons from the object's default editor.
+     *
+     * @uxon-property disable_buttons
+     * @uxon-type boolean
+     *
+     * @param boolean $value
+     * @return \exface\Core\Actions\ShowObjectInfoDialog
+     */
+    public function setDisableButtons(bool $value) : ShowObjectInfoDialog
+    {
+        $this->disable_buttons = $value;
         return $this;
     }
 }
-?>

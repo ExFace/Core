@@ -53,30 +53,4 @@ trait MetaObjectExceptionTrait {
         $this->meta_object = $object;
         return $this;
     }
-    
-    /**
-     * 
-     * @param array $uxon
-     * @param string $keyName
-     * @return array
-     */
-    private function removeKeysFromUxon(array $uxon, string $keyName) : array
-    {
-        if (empty($uxon)) {
-            return $uxon;
-        }
-        
-        $result = [];
-        $keyName = strtolower($keyName);
-        foreach ($uxon as $key => $value) {
-            if (strtolower($key) !== $keyName) {
-                if (is_array($value)) {
-                    $result[$key] = $this->removeKeysFromUxon($value, $keyName);
-                } else {
-                    $result[$key] = $value;
-                }
-            }
-        }
-        return $result;
-    }
 }
