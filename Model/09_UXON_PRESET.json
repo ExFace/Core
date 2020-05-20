@@ -1114,6 +1114,20 @@
             "UXON": "{\"condition_group\":{\"operator\":\"AND\",\"conditions\":[{\"expression\":\"UID\",\"comparator\":\"[\",\"value\":\"\"}]}}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior"
+        },
+        {
+            "CREATED_ON": "2020-05-20 16:21:59",
+            "MODIFIED_ON": "2020-05-20 16:21:59",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea9ab60540b9458abc0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Set flag on an object (e.g. disable\/enable)",
+            "DESCRIPTION": "Replace the `0` in the `from` property with your desired value. Place the alias of the target attribute in the `to` property. Note: the input data MUST be based on the target meta object!",
+            "PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
+            "UXON": "{\"input_rows_min\":1,\"icon\":\"\",\"input_mapper\":{\"column_to_column_mappings\":[{\"from\":\"=0\",\"to\":\"\"}]}}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action"
         }
     ],
     "totals_rows": [],
