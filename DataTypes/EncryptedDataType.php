@@ -11,6 +11,7 @@ use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\CoreApp;
+use exface\Core\Exceptions\EncryptionError;
 
 /**
  * Work in Progress!
@@ -50,7 +51,7 @@ class EncryptedDataType extends AbstractDataType
     /**
      * Check if the given string is encrypted. String is seen as encrypted if it starts with the encryption prefix.
      * 
-     * @param unknown $value
+     * @param string|NULL $value
      * @return boolean
      */
     public function isValueEncrypted($value)
@@ -68,7 +69,10 @@ class EncryptedDataType extends AbstractDataType
      * @param string $secret
      * @param string $data
      * @param string $prefix
+     * 
      * @throws RuntimeException
+     * @throws EncryptionError
+     * 
      * @return string
      */
     public static function encrypt(string $secret, string $data, string $prefix = null) : string
@@ -79,12 +83,14 @@ class EncryptedDataType extends AbstractDataType
         if (! function_exists('sodium_crypto_secretbox')) {
             throw new RuntimeException('Required PHP extension "sodium" not found!');
         }
-        $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-        $encryptedData = sodium_crypto_secretbox($data, $nonce, sodium_base642bin($secret, 1));
-        if ($prefix === null) {
-            return sodium_bin2base64($nonce . $encryptedData, 1);
+        try {
+            $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+            $encryptedData = sodium_crypto_secretbox($data, $nonce, sodium_base642bin($secret, 1));
+        } catch (\Throwable $e) {
+            throw new EncryptionError('Cannot encrypt data: ' . $e->getMessage());
         }
-        return $prefix . sodium_bin2base64($nonce . $encryptedData, 1);
+        $encryptedB64 = sodium_bin2base64($nonce . $encryptedData, 1);
+        return ($prefix !== null ? $prefix : '') . $encryptedB64;
     }
     
     /**
@@ -94,7 +100,10 @@ class EncryptedDataType extends AbstractDataType
      * @param string $secret
      * @param string $data
      * @param string $prefix
+     * 
      * @throws RuntimeException
+     * @throws EncryptionError
+     * 
      * @return string
      */
     public static function decrypt(string $secret, string $data, string $prefix = null) : string
@@ -105,14 +114,18 @@ class EncryptedDataType extends AbstractDataType
         if (! function_exists('sodium_crypto_secretbox_open')) {
             throw new RuntimeException('Required PHP extension "sodium" not found!');
         }
-        $key = sodium_base642bin($secret, 1);
-        if ($prefix !== null && $prefix !== '') {
-            $data = StringDataType::substringAfter($data, $prefix);
+        try {
+            $key = sodium_base642bin($secret, 1);
+            if ($prefix !== null && $prefix !== '') {
+                $data = StringDataType::substringAfter($data, $prefix);
+            }
+            $decoded = sodium_base642bin($data, 1);
+            $nonce = mb_substr($decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, '8bit');
+            $ciphertext = mb_substr($decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, null, '8bit');
+            return sodium_crypto_secretbox_open($ciphertext, $nonce, $key);
+        } catch (\Throwable $e) {
+            throw new EncryptionError('Cannot decrypt data: ' . $e->getMessage());
         }
-        $decoded = sodium_base642bin($data, 1);
-        $nonce = mb_substr($decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, '8bit');
-        $ciphertext = mb_substr($decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, null, '8bit');
-        return sodium_crypto_secretbox_open($ciphertext, $nonce, $key);
     }
     
     /**
