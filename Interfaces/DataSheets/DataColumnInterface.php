@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
+use exface\Core\Exceptions\DataSheets\DataSheetUidColumnNotFoundError;
 
 interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 {
@@ -115,10 +116,22 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     /**
      * Returns the value of the given row within this column
      *
-     * @param integer $row_number            
+     * @param int $rowNumber    
+     *         
      * @return mixed
      */
-    public function getCellValue($row_number);
+    public function getValue(int $rowNumber);
+    
+    /**
+     * Returns the value of the row identified by the given UID value.
+     * 
+     * @param string $uidValue
+     * 
+     * @throws DataSheetUidColumnNotFoundError
+     * 
+     * @return mixed
+     */
+    public function getValueByUid(string $uidValue);
 
     /**
      *
