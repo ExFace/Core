@@ -299,13 +299,31 @@ class DataColumn implements DataColumnInterface
 
     /**
      *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::getCellValue()
+     * @deprecated use getValue() instead!
      */
     public function getCellValue($row_number)
     {
         return $this->getDataSheet()->getCellValue($this->getName(), $row_number);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::getValue()
+     */
+    public function getValue(int $rowNumber)
+    {
+        return $this->getDataSheet()->getCellValue($this->getName(), $rowNumber);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::getValueByUid()
+     */
+    public function getValueByUid(string $uidValue)
+    {
+        return $this->getValue($this->getDataSheet()->getUidColumn()->findRowByValue($uidValue));
     }
 
     /**
