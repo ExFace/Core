@@ -11,9 +11,13 @@ use exface\Core\Exceptions\DataSheets\DataSheetDeleteError;
  */
 class DataSheetDuplicatesError extends DataSheetDeleteError
 {
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\RuntimeException::getDefaultAlias()
+     */
     public function getDefaultAlias()
     {
         return '7A4ZQVV';
     }
-    
 }

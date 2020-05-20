@@ -2206,6 +2206,20 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2020-05-20 16:35:13",
+            "MODIFIED_ON": "2020-05-20 16:35:13",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea9ab7de351ab78abc0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7AYEKR3",
+            "TITLE": "Not allowed to delete!",
+            "DESCRIPTION": "",
+            "HINT": "Deletion of some of the selected items is prohibited by the app logic!",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
