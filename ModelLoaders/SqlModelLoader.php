@@ -72,6 +72,8 @@ use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\Factories\UiPageTreeFactory;
 use exface\Core\Factories\AuthorizationPointFactory;
 use exface\Core\CommonLogic\Selectors\AuthorizationPointSelector;
+use exface\Core\DataTypes\EncryptedDataType;
+use exface\Core\DataTypes\UxonDataType;
 
 /**
  * 
@@ -631,8 +633,24 @@ class SqlModelLoader implements ModelLoaderInterface
             throw new DataConnectionNotFoundError('Invalid or missing connector prototype in data connection "' . $row['data_connection_name'] . '" (' . $row['data_connection_alias'] . ')!');
         }
         // Merge config from the connection and the user credentials
-        $config = UxonObject::fromJson($row['data_connector_config']);
-        $config = $config->extend(UxonObject::fromJson($row['user_connector_config']));
+        $datatype = DataTypeFactory::createFromString($this->getWorkbench(), 'exface.Core.Encrypted');
+        $configData = $row['data_connector_config'];
+        if ($datatype->isValueEncrypted($configData)) {
+            $configData = EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $configData, $datatype->getEncryptionPrefix());
+        }
+        $config = UxonObject::fromJson($configData);
+        if ($row['user_connector_config'] !== null && $row['user_connector_config'] !== '' ) {
+            $value = $row['user_connector_config'];
+            if ($datatype->isValueEncrypted($value)) {
+                $value = EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $value, $datatype->getEncryptionPrefix());
+            }
+            try {
+                UxonDataType::cast($value);
+                $config = $config->extend(UxonObject::fromJson($value));
+            } catch(\Exception $e) {                
+                $this->getWorkbench()->getLogger()->logException($e);
+            }
+        }
         // Instantiate the connection
         $connection = DataConnectionFactory::create(
             $connectorSelector,
