@@ -644,6 +644,13 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return bool
      */
     public function hasAggregateAll() : bool;
+    
+    /**
+     * Returns rows from the data sheet. Encrypted values are returned decrypted.
+     * 
+     * @return array
+     */
+    public function getRowsDecrypted($how_many = 0, $offset = 0) : array;
 }
 
 ?>

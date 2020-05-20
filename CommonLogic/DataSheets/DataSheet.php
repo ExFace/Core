@@ -47,6 +47,7 @@ use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\DataTypes\RelationCardinalityDataType;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Model\ConditionInterface;
+use exface\Core\DataTypes\EncryptedDataType;
 
 /**
  * Default implementation of DataSheetInterface
@@ -2284,6 +2285,36 @@ class DataSheet implements DataSheetInterface
             return true;
         }
         return $this->aggregateAll;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getRowsDecrypted()
+     */
+    public function getRowsDecrypted($how_many = 0, $offset = 0) : array
+    {
+        $encryptedRows = $this->getRows($how_many, $offset);
+        if (empty($encryptedRows)) {
+            return $encryptedRows;
+        }
+        $rows = array_slice($encryptedRows, 0);
+        $columns = $this->getColumns();
+        foreach ($rows as $idx => $row) {                       
+            foreach ($columns as $col) {
+                $datatype = $col->getDataType();
+                if ($datatype instanceof EncryptedDataType) {
+                    $colName = $col->getName();
+                    $encrypted = $row[$colName];
+                    if ($datatype->isValueEncrypted($encrypted)) {
+                        $decrypted = EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $encrypted, $datatype->getEncryptionPrefix());
+                        $row[$colName] = $decrypted;
+                    }
+                }
+            }
+            $rows[$idx] = $row;
+        }
+        return $rows;
     }
     
 }

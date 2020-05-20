@@ -144,7 +144,7 @@ class RememberMeAuthenticator extends AbstractAuthenticator
         if ($dataString === null) {
             return $dataString;
         }
-        $dataString = EncryptedDataType::decrypt($this->getWorkbench(), $dataString);
+        $dataString = EncryptedDataType::decrypt($this->getSecret(), $dataString, EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT);
         $data = json_decode($dataString, true);
         return $data;
     }
@@ -172,7 +172,7 @@ class RememberMeAuthenticator extends AbstractAuthenticator
         $data['expires'] = $expires;
         $data['hash'] = $this->generateSessionDataHash($user->getUsername(), $expires, $user->getPassword());
         $string = json_encode($data);
-        $string = EncryptedDataType::encrypt($this->getWorkbench(), $string);
+        $string = EncryptedDataType::encrypt($this->getSecret(), $string, EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT);
         return $string;
     }
     
@@ -197,7 +197,7 @@ class RememberMeAuthenticator extends AbstractAuthenticator
      */
     protected function getSecret() : string
     {
-        return $this->getWorkbench()->getSecurity()->getSecret();
+        return EncryptedDataType::getSecret($this->getWorkbench());
     }
     
     /**
