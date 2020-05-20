@@ -28,6 +28,11 @@ class EncryptedDataType extends AbstractDataType
     
     private $encryptionPrefix = null;
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::parse()
+     */
     public function parse($value) : string
     {
         $exface = $this->getWorkbench();
@@ -42,8 +47,17 @@ class EncryptedDataType extends AbstractDataType
         return $encrypted;        
     }
     
-    public function isValueEncrypted(string $value)
+    /**
+     * Check if the given string is encrypted. String is seen as encrypted if it starts with the encryption prefix.
+     * 
+     * @param unknown $value
+     * @return boolean
+     */
+    public function isValueEncrypted($value)
     {
+        if (static::isValueEmpty($value)) {
+            return false;
+        }
         return StringDataType::startsWith($value, $this->getEncryptionPrefix());
     }
     
