@@ -9,6 +9,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Events\Security\OnAuthenticatedEvent;
 use exface\Core\Interfaces\Security\AuthenticationProviderInterface;
 use exface\Core\Interfaces\Security\AuthenticatorInterface;
+use exface\Core\Exceptions\EncryptionError;
 
 /**
  * Stores user data in the session context scope and attempts to re-authenticate the user with every request.
@@ -144,7 +145,11 @@ class RememberMeAuthenticator extends AbstractAuthenticator
         if ($dataString === null) {
             return $dataString;
         }
-        $dataString = EncryptedDataType::decrypt($this->getSecret(), $dataString, EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT);
+        try {
+            $dataString = EncryptedDataType::decrypt($this->getSecret(), $dataString);
+        } catch (EncryptionError $e) {
+            return null;
+        }
         $data = json_decode($dataString, true);
         return $data;
     }
@@ -172,7 +177,7 @@ class RememberMeAuthenticator extends AbstractAuthenticator
         $data['expires'] = $expires;
         $data['hash'] = $this->generateSessionDataHash($user->getUsername(), $expires, $user->getPassword());
         $string = json_encode($data);
-        $string = EncryptedDataType::encrypt($this->getSecret(), $string, EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT);
+        $string = EncryptedDataType::encrypt($this->getSecret(), $string);
         return $string;
     }
     
