@@ -11,4 +11,13 @@ use exface\Core\Exceptions\DataSheets\DataSheetDeleteError;
  */
 class DataSheetDeleteForbiddenError extends DataSheetDeleteError
 {
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\RuntimeException::getDefaultAlias()
+     */
+    public function getDefaultAlias()
+    {
+        return '7AYEKR3';
+    }
 }
