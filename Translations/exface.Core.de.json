@@ -133,7 +133,7 @@
 	
 	"BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR": "Das Element %row% aus \"%object%\" darf nicht gelöscht werden, da es die in einem Behaviour gesetzte Eigenschaft \"%expression%\" im Behavior \"%behavior%\" erfüllt.",
 	
-	"BEHAVIOR.PREVENTDUPLICATEBEHAVIOR.CREATE_DUPLICATES_FORBIDDEN_ERROR": "Element(e) %row% vom Objekt \"%object%\" kann/können nicht erstellt/aktualisiert werden, da es/sie schon existieren.",
+	"BEHAVIOR.PREVENTDUPLICATEBEHAVIOR.CREATE_DUPLICATES_FORBIDDEN_ERROR": "Daten in Zeile %row% von Objekt %object% sind Dublikate!",
 	
 	
 	"CONTEXT.ACTIONTEST.NAME": "ActionTest",

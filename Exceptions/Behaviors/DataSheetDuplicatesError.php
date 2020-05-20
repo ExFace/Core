@@ -9,7 +9,7 @@ use exface\Core\Exceptions\DataSheets\DataSheetDeleteError;
  * @author Ralf Mulansky
  *
  */
-class DataSheetCreateDuplicatesForbiddenError extends DataSheetDeleteError
+class DataSheetDuplicatesError extends DataSheetDeleteError
 {
     public function getDefaultAlias()
     {

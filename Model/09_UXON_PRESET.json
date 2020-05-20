@@ -1058,6 +1058,48 @@
             "UXON": "{\"target_attribute_alias\":\"\",\"namespace_attribute_alias\":\"\",\"source_attribute_alias\":\"\",\"case\":\"lower\",\"replace_characters\":{\" \":\"-\"}}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior"
+        },
+        {
+            "CREATED_ON": "2020-05-20 13:07:56",
+            "MODIFIED_ON": "2020-05-20 13:07:56",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea9a9ae92ef81c8abc0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Update on duplicates",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
+            "UXON": "{\"compare_attributes\":[\"\"],\"on_duplicate_single_row\":\"update\",\"on_duplicate_multi_row\":\"update\"}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior"
+        },
+        {
+            "CREATED_ON": "2020-05-20 13:10:49",
+            "MODIFIED_ON": "2020-05-20 13:10:49",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea9a9b508c26d78abc0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Error on duplicates",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
+            "UXON": "{\"compare_attributes\":[\"\"],\"duplicate_error_code\":\"\"}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior"
+        },
+        {
+            "CREATED_ON": "2020-05-20 13:12:46",
+            "MODIFIED_ON": "2020-05-20 13:12:46",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea9a9b961c81248abc0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Ignore duplicates (e.g. for mappings)",
+            "DESCRIPTION": "Will ignore duplicate rows on multi-row create. This is handy for creating mappings between objects en-masse, where you only need to be sure, there is a mapping.",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
+            "UXON": "{\"compare_attributes\":[\"\"],\"on_duplicate_single_row\":\"error\",\"on_duplicate_multi_row\":\"ignore\"}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior"
         }
     ],
     "totals_rows": [],
