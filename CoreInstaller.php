@@ -4,7 +4,6 @@ namespace exface\Core;
 use exface\Core\CommonLogic\AppInstallers\AbstractAppInstaller;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\DataTypes\DateTimeDataType;
-use exface\Core\Interfaces\AppInterface;
 
 /**
  *
@@ -33,7 +32,7 @@ class CoreInstaller extends AbstractAppInstaller
         
         $needRestart = $this->getWorkbench()->isInstalled() === false;
         
-        $this->getWorkbench()->getConfig()->setOption('METAMODEL.INSTALLED_ON', DateTimeDataType::now(), AppInterface::CONFIG_SCOPE_SYSTEM);
+        $this->getWorkbench()->getContext()->getScopeInstallation()->setVariable('last_metamodel_install', DateTimeDataType::now());
         
         if ($needRestart) {
             $this->getWorkbench()->stop();

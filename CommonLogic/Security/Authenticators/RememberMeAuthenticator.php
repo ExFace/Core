@@ -148,6 +148,7 @@ class RememberMeAuthenticator extends AbstractAuthenticator
         try {
             $dataString = EncryptedDataType::decrypt($this->getSecret(), $dataString);
         } catch (EncryptionError $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
             return null;
         }
         $data = json_decode($dataString, true);

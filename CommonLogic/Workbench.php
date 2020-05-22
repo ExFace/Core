@@ -163,7 +163,7 @@ class Workbench implements WorkbenchInterface
      */
     public function isInstalled() : bool
     {
-        return $this->getConfig()->getOption('METAMODEL.INSTALLED_ON') ? true : false;
+        return $this->getContext()->getScopeInstallation()->getVariable('last_metamodel_install') ? true : false;
     }
 
     /**

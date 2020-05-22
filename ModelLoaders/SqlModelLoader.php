@@ -66,7 +66,6 @@ use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\PolicyCombiningAlgorithmDataType;
 use exface\Core\DataTypes\PolicyTargetDataType;
-use exface\Core\Exceptions\LogicException;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\Factories\UiPageTreeFactory;
@@ -641,13 +640,13 @@ class SqlModelLoader implements ModelLoaderInterface
         $config = UxonObject::fromJson($configData);
         if ($row['user_connector_config'] !== null && $row['user_connector_config'] !== '' ) {
             $value = $row['user_connector_config'];
-            if ($datatype->isValueEncrypted($value)) {
-                $value = EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $value, $datatype->getEncryptionPrefix());
-            }
             try {
+                if ($datatype->isValueEncrypted($value)) {
+                    $value = EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $value, $datatype->getEncryptionPrefix());
+                }
                 UxonDataType::cast($value);
                 $config = $config->extend(UxonObject::fromJson($value));
-            } catch(\Exception $e) {                
+            } catch(\Throwable $e) {                
                 $this->getWorkbench()->getLogger()->logException($e);
             }
         }

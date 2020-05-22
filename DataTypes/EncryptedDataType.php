@@ -7,16 +7,36 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
-use exface\Core\Interfaces\AppInterface;
-use exface\Core\CoreApp;
 use exface\Core\Exceptions\EncryptionError;
 
 /**
- * Work in Progress!
+ * Allows to encrypt any other data using the widespread libsodium encryption library.
  * 
- * EcryptedDataType is a data type wrapper for data that should be encrypted.
+ * The data type of the raw data must specified in the `inner_datatype`, so that it
+ * can be verified properly. The encryption is done automatically whenever data is
+ * parsed. This way, data is encrypted throughout most operations in the workbench. 
+ * 
+ * Only right before being used - e.g. as widget value, widget data, etc. the data will
+ * be decrypted.
+ * 
+ * The encrypted data is encoded as Base64 and receives a special prefix (`$$~~` by default)
+ * in order to distinguish raw data and encrypted data easily. The refix can be changed
+ * in the data type configuration.
+ * 
+ * ## Example
+ * 
+ * Here is the configuration for the encryption of user credentials for data connections.
+ * The original data type is the UXON schema for data connection configuration. This type
+ * is used to work with decrypted data while the genericy `exface.Core.EncryptedData`
+ * is responsible for the encrypted state. 
+ * 
+ * ```
+ * {
+ *  "inner_data_type": "exface.Core.UxonDataConnection"
+ * }
+ * 
+ * ```
  * 
  * @author Ralf Mulansky
  *
@@ -117,7 +137,9 @@ class EncryptedDataType extends AbstractDataType
         try {
             $key = sodium_base642bin($secret, 1);
             if ($prefix !== null && $prefix !== '') {
-                $data = StringDataType::substringAfter($data, $prefix);
+                if (StringDataType::startsWith($data, $prefix)) {
+                    $data = substr($data, strlen($prefix));
+                }
             }
             $decoded = sodium_base642bin($data, 1);
             $nonce = mb_substr($decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, '8bit');
@@ -203,11 +225,9 @@ class EncryptedDataType extends AbstractDataType
      */
     public static function getSecret(WorkbenchInterface $workbench) : string
     {
-        $app = $workbench->getCoreApp();
-        $config = ConfigurationFactory::createFromApp($app)
-        ->loadConfigFile($workbench->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . $app->getConfigFileName(CoreApp::CONFIG_FILENAME_SYSTEM), AppInterface::CONFIG_SCOPE_SYSTEM);
+        $ctxtScope = $workbench->getContext()->getScopeInstallation();
         try {
-            $key = $config->getOption('SECURITY.ENCRYPTION.SALT');
+            $key = $ctxtScope->getVariable('sodium');
         } catch (ConfigOptionNotFoundError $e) {
             $key = null;
         }
@@ -218,9 +238,8 @@ class EncryptedDataType extends AbstractDataType
             }
             $key = sodium_crypto_kdf_keygen();
             $key = sodium_bin2base64($key, 1);
-            $config->setOption("SECURITY.ENCRYPTION.SALT", $key, AppInterface::CONFIG_SCOPE_SYSTEM);
+            $ctxtScope->setVariable("sodium", $key);
         }
         return $key;
     }
 }
-?>
