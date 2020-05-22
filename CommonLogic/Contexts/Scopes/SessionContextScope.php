@@ -317,10 +317,21 @@ class SessionContextScope extends AbstractContextScope
         return $this;
     }
     
-    protected function clearSessionData() : SessionContextScope
+    /**
+     * 
+     * @return SessionContextScope
+     */
+    public function clearSessionData() : SessionContextScope
     {
         unset($_SESSION['exface'][$this->getInstallationFolderName()]);
+        if (empty($_SESSION['exface'])) {
+            unset($_SESSION['exface']);
+        }
+        
         $this->session_locale = null;
+        $this->session_user_data = null;
+        $this->force_update_session_data = true;
+        
         foreach ($this->getContextsLoaded() as $context) {
             $this->reloadContext($context);
         }
@@ -338,8 +349,8 @@ class SessionContextScope extends AbstractContextScope
     {
         if ($this->session_locale === null) {
             try {
-                $this->session_locale = $this->getContextManager()->getScopeUser()->getUserCurrent()->getLocale();
-            } catch (UserException $e){
+                $this->session_locale = $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getLocale();
+            } catch (\Throwable $e){
                 $this->session_locale = $this->getWorkbench()->getConfig()->getOption('LOCALE.DEFAULT');
             }
         }
@@ -367,8 +378,8 @@ class SessionContextScope extends AbstractContextScope
     public function setSessionUserData(?string $data) : SessionContextScope
     {
         if ($data !== $this->session_user_data) {
+            $this->clearSessionData();
             $this->session_user_data = $data;
-            $this->force_update_session_data = true;
         }
         return $this;
     }
