@@ -1,14 +1,22 @@
 AddDefaultCharset utf-8
 
-#Options +FollowSymlinks
-RewriteEngine On
+Options -Indexes
 
-# For Friendly URLs
+RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
+
+# API requests
 RewriteRule ^api/.*$ vendor/exface/Core/index.php [L,QSA]
+# index request without any path
 RewriteRule ^/?$ vendor/exface/Core/index.php [L,QSA]
+# Requests to UI pages
 RewriteRule ^[^/]*\.html$ vendor/exface/Core/index.php [L,QSA]
+
+# Block requests to config, cache, backup, etc.
+RewriteRule ^(config|backup|translations|logs)/.*$ - [F]
+# Block requests to system files (starting with a dot) in the data folder
+RewriteRule ^data/\..*$ - [F]
 
 # Reduce server overhead by enabling output compression if supported.
 #php_flag zlib.output_compression On
