@@ -36,7 +36,7 @@ class LocaleDataType extends StringDataType implements EnumDataTypeInterface
     {
         if ($this->locales === null) {
             $currentLocale = $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
-            $defaultLocale = $this->getWorkbench()->getConfig()->getOption('LOCALE.DEFAULT');
+            $defaultLocale = $this->getWorkbench()->getConfig()->getOption('SERVER.DEFAULT_LOCALE');
             $this->locales = [
                 $currentLocale => $this->getLabelOfValue($currentLocale, $currentLocale),
                 $defaultLocale => $this->getLabelOfValue($defaultLocale, $currentLocale)
