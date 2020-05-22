@@ -177,7 +177,7 @@ class User implements UserInterface
         }
         
         if (! $this->locale) {
-            $this->locale = $this->getWorkbench()->getConfig()->getOption("LOCALE.DEFAULT");
+            $this->locale = $this->getWorkbench()->getConfig()->getOption("SERVER.DEFAULT_LOCALE");
         }
         
         return $this->locale;

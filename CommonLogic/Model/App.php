@@ -484,13 +484,13 @@ class App implements AppInterface
             if ($language != null) {
                 return $language;
             } else {
-                return $this->getWorkbench()->getConfig()->getOption('LOCALE.DEFAULT');
+                return $this->getWorkbench()->getConfig()->getOption('SERVER.DEFAULT_LOCALE');
             }
         } catch (DataSheetReadError $e) {
             // Catch read errors in case, the app does not yet exist in the model (this may happen
             // on rare occasions, when apps are just being installed)
             $this->getWorkbench()->getLogger()->logException($e);
-            return $this->getWorkbench()->getConfig()->getOption('LOCALE.DEFAULT');
+            return $this->getWorkbench()->getConfig()->getOption('SERVER.DEFAULT_LOCALE');
         }
     }
     

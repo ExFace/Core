@@ -86,7 +86,7 @@ trait CreateUserFromTokenTrait
         $row = [];
         $row['USERNAME'] = $token->getUsername();
         $row['MODIFIED_BY_USER'] = UserSelector::ANONYMOUS_USER_OID;
-        $row['LOCALE'] = $exface->getConfig()->getOption("LOCALE.DEFAULT");
+        $row['LOCALE'] = $exface->getConfig()->getOption("SERVER.DEFAULT_LOCALE");
         if ($surname !== null) {
             $row['LAST_NAME'] = $surname;
         }
