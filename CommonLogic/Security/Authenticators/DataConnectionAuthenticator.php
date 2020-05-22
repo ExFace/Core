@@ -164,21 +164,23 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
      */
     public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
     {   
+        $conAliases = $this->getConnectionAliases();
         $conNames = [];
-        if ($this->getConnectionAliases() !== null) {
-            foreach($this->getConnectionAliases() as $alias) {
+        if ($conAliases !== null) {
+            foreach($conAliases as $alias) {
                 $connector = DataConnectionFactory::createFromModel($this->getWorkbench(), $alias);
                 $conNames[] = $connector->getName();
             }
-        }
+        }        
         
         $container->setWidgets(new UxonObject([
             [
                 'data_column_name' => 'DATACONNECTIONALIAS',
                 'widget_type' => 'InputSelect',
                 'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.DATACONNECTION.CONNECTION'),
-                'selectable_options' => array_combine($this->getConnectionAliases(), $conNames) ?? [],
-                'required' => true
+                'selectable_options' => array_combine($conAliases, $conNames) ?? [],
+                'required' => true,
+                'value' => count($conAliases) === 1 ? $conAliases[0] : null
             ],[
                 'attribute_alias' => 'USERNAME',
                 'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.DATACONNECTION.USERNAME'),
