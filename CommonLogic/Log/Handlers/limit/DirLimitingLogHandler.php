@@ -4,7 +4,6 @@ namespace exface\Core\CommonLogic\Log\Handlers\limit;
 use exface\Core\CommonLogic\Log\Helpers\LogHelper;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
-use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 
 /**
  * Log handler that uses the given createCallback to instantiate an underlying log handler that logs files with a
@@ -49,22 +48,6 @@ class DirLimitingLogHandler extends LimitingWrapper
             return;
         }
         
-        // Get the time of the last cleanup. There is no need to perform the check
-        // more than once a day as the lifetime of the logs is defined in days.
-        $ctxtScope = $this->getWorkbench()->getContext()->getScopeInstallation();
-        try {
-            $last_cleanup = $ctxtScope->getVariable('last_log_cleanup');
-        } catch (ConfigOptionNotFoundError $e){
-            // If there was no last cleanup value yet, just set to now and skip the rest
-            $ctxtScope->setVariable('last_log_cleanup', date("Y-m-d H:i:s"));
-            return;
-        }
-        
-        // If the last cleanup took place less then a day ago, skip the rest.
-        if (strtotime($last_cleanup) > (time()-(60*60*24))){
-            return;
-        }
-        
         $limitTime = max(0, time() - ($this->maxDays * 24 * 60 * 60));
         $logFiles = glob(LogHelper::getPattern($this->logPath, $this->filenameFormat, '/*', $this->staticFileNamePart));
         
@@ -81,8 +64,6 @@ class DirLimitingLogHandler extends LimitingWrapper
             }
         }
         restore_error_handler();
-        
-        $ctxtScope->setVariable('last_log_cleanup', date("Y-m-d H:i:s"));
         
         return;
     }
