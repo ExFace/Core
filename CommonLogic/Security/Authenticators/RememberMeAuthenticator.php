@@ -29,6 +29,9 @@ class RememberMeAuthenticator extends AbstractAuthenticator
 {    
     CONST SESSION_DATA_DELIMITER = ':';
     
+    private $sessionData = null;
+    private $sessionDataEncrypted = null;
+    
     /**
      *
      * @param WorkbenchInterface $workbench
@@ -128,10 +131,12 @@ class RememberMeAuthenticator extends AbstractAuthenticator
     protected function saveSessionData(AuthenticationTokenInterface $token, AuthenticationProviderInterface $provider = null) : RememberMeAuthenticator
     {
         if ($token->isAnonymous()) {
-            $this->getWorkbench()->getContext()->getScopeSession()->setSessionUserData(NULL);
-            return $this;
+            $this->getWorkbench()->getContext()->getScopeSession()->clearSessionData();
+        } else {
+            $this->getWorkbench()->getContext()->getScopeSession()->setSessionUserData($this->createSessionDataString($token, $provider));
         }
-        $this->getWorkbench()->getContext()->getScopeSession()->setSessionUserData($this->createSessionDataString($token, $provider));
+        $this->sessionData = null;
+        $this->sessionDataEncrypted = null;
         return $this;        
     }
     
@@ -142,9 +147,19 @@ class RememberMeAuthenticator extends AbstractAuthenticator
     protected function getSessionData() : ?array
     {
         $dataString = $this->getWorkbench()->getContext()->getScopeSession()->getSessionUserData();
-        if ($dataString === null) {
-            return $dataString;
+        
+        // If already decrypted and the current session still has the same encrypted string,
+        // used the cached decrypted data to avoid another decryption run
+        if ($this->sessionDataEncrypted === $dataString && $this->sessionData !== null ) {
+            return $this->sessionData;
         }
+        
+        $this->sessionDataEncrypted = $dataString;
+        
+        if ($dataString === null) {
+            return null;
+        }
+        
         try {
             $dataString = EncryptedDataType::decrypt($this->getSecret(), $dataString);
         } catch (EncryptionError $e) {
@@ -152,6 +167,10 @@ class RememberMeAuthenticator extends AbstractAuthenticator
             return null;
         }
         $data = json_decode($dataString, true);
+        
+        // Cache decrypted data
+        $this->sessionData = $data;
+        
         return $data;
     }
     
