@@ -12,6 +12,7 @@ use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 use exface\Core\Events\Security\OnAuthorizedEvent;
 use exface\Core\Interfaces\Security\PermissionInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Base class for core authorization points.
@@ -289,6 +290,8 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
                 } else {
                     throw $this->createAccessDeniedException('Unknown error while validating page access permissions!', $permission, $userOrToken, $resource);
                 }
+            default:
+                throw new RuntimeException('Error evaluating permissions: invalid result!');
         }
         return $permission;
     }

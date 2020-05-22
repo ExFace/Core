@@ -45,24 +45,33 @@ trait UiMenuItemTrait {
         if ($selector->isAlias()) {
             $appAlias = $selector->getAppAlias();
             $roleAlias = StringDataType::substringAfter($selector->toString(), $appAlias . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER);
-            $roleSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PAGE_GROUP');
-            $roleSheet->getColumns()->addFromUidAttribute();
-            $roleSheet->getFilters()->addConditionFromString('ALIAS', $roleAlias);
-            $roleSheet->getFilters()->addConditionFromString('APP__ALIAS', $appAlias);
-            $roleSheet->dataRead();
-            if ($roleSheet->countRows() === 1) {
-                return $this->hasRole(new UiPageSelector($this->getWorkbench(), $roleSheet->getUidColumn()->getCellValue(0)));
+            $groupSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PAGE_GROUP');
+            $groupSheet->getColumns()->addFromUidAttribute();
+            $groupSheet->getFilters()->addConditionFromString('ALIAS', $roleAlias);
+            $groupSheet->getFilters()->addConditionFromString('APP__ALIAS', $appAlias);
+            $groupSheet->dataRead();
+            if ($groupSheet->countRows() === 1) {
+                return $this->isInGroup(new UiPageGroupSelector($this->getWorkbench(), $groupSheet->getUidColumn()->getCellValue(0)));
             }
         }
         
         return false;
     }
     
-    protected function getGroupSelectors() : array
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::getGroupSelectors()
+     */
+    public function getGroupSelectors() : array
     {
         return $this->groupSelectors;
     }
-    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::addGroupSelector()
+     */
     public function addGroupSelector($selectorOrString) : UiMenuItemInterface
     {
         if ($selectorOrString instanceof UiPageGroupSelectorInterface) {

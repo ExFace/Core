@@ -8,6 +8,8 @@ use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
 use Symfony\Component\Config\Definition\Exception\ForbiddenOverwriteException;
 use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
 use exface\Core\Exceptions\Security\AccessDeniedError;
+use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Factories\UiPageTreeFactory;
 
 class UiPageTree
 {
@@ -57,10 +59,7 @@ class UiPageTree
     protected function buildStartRootNodes(array $pages) : UiPageTree
     {
         foreach ($pages as $page) {
-            $node = new UiPageTreeNode($this->getWorkbench(), $page->getAlias(), $page->getName(), $page->getUid());
-            $node->setDescription($page->getDescription());
-            $node->setIntro($page->getIntro());
-            $this->startRootNodes[] = $node;
+            $this->startRootNodes[] = UiPageTreeFactory::createNodeFromPage($page);
         }
         return $this;
     }
@@ -182,6 +181,7 @@ class UiPageTree
                 $ap->authorize($node);
             } catch (AccessDeniedError $e) {
                 unset($rootNodes[$nr]);
+                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
             }
         }
         $this->rootNodes = $rootNodes;

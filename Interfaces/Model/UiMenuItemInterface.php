@@ -114,6 +114,12 @@ interface UiMenuItemInterface extends WorkbenchDependantInterface, AliasInterfac
     public function addGroupSelector($selectorOrString) : UiMenuItemInterface;
     
     /**
+     * 
+     * @return UiPageGroupSelectorInterface[]
+     */
+    public function getGroupSelectors() : array;
+    
+    /**
      *
      * @param UserSelectorInterface|string $createdBy
      * @return UiMenuItemInterface
