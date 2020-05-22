@@ -14,6 +14,8 @@ use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Interfaces\Security\PasswordAuthenticationTokenInterface;
 use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthToken;
+use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
+use exface\Core\Factories\FacadeFactory;
 
 /**
  * This PSR-15 middleware to handle authentication via workbench security.
@@ -100,7 +102,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
         
         // If the token is still anonymous, check if that is allowed in the configuration!
         if (true === $authenticatedToken->isAnonymous() && false === $this->isAnonymousAllowed()) {
-            return $this->createResponseAccessDenied('Access denied! Please log in first!');
+            return $this->createResponseAccessDenied($request);
         }
         
         return $handler->handle($request);
@@ -116,9 +118,16 @@ class AuthenticationMiddleware implements MiddlewareInterface
      * @param string $content
      * @return ResponseInterface
      */
-    protected function createResponseAccessDenied(string $content) : ResponseInterface
+    protected function createResponseAccessDenied(ServerRequestInterface $request, string $content = null) : ResponseInterface
     {
-        return new Response(403, [], $content);
+        $content = $content ?? 'Anonymous access denied!';
+        $exception = new AuthenticationFailedError($this->workbench->getSecurity(), $content);
+        
+        if ($this->facade instanceof AbstractAjaxFacade) {
+            return $this->facade->createResponseFromError($request, $exception);
+        } else {
+            return new Response(403, [], $content);
+        }
     }
     
     /**
