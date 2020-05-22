@@ -150,7 +150,7 @@ class CombinedPermission implements PermissionInterface
         foreach ($permissions as $permission) {
             $resultArray[] = $permission;
             if ($permission->isPermitted()) {
-                return new $permission;
+                return $permission;
             }
         }
         return PermissionFactory::createDenied();

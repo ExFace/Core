@@ -14,6 +14,7 @@ use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
 use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
 use exface\Core\Exceptions\Security\AccessDeniedError;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 class UiPageTreeNode implements UiPageTreeNodeInterface
 {
@@ -256,6 +257,7 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
         try {
             $ap->authorize($node);
         } catch (AccessDeniedError $e) {
+            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
             return $this;
         }
         

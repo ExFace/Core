@@ -152,4 +152,20 @@ class UiPageTreeFactory extends AbstractStaticFactory
         }
         return $node;
     }
+    
+    /**
+     * 
+     * @param UiPageInterface $page
+     * @return UiPageTreeNode
+     */
+    public static function createNodeFromPage(UiPageInterface $page) : UiPageTreeNode
+    {
+        $node = new UiPageTreeNode($page->getWorkbench(), $page->getAliasWithNamespace(), $page->getName(), $page->getUid());
+        $node->setDescription($page->getDescription());
+        $node->setIntro($page->getIntro());
+        foreach ($page->getGroupSelectors() as $groupSel) {
+            $node->addGroupSelector($groupSel);
+        }
+        return $node;
+    }
 }
