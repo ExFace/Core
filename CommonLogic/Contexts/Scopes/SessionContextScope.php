@@ -217,7 +217,7 @@ class SessionContextScope extends AbstractContextScope
             // If there is a session id saved in the context, this session was already loaded into it, so the next time
             // we need to open exactly the same session!
             if ($this->getSessionId()) {
-                session_id($this->getSessionId());
+                @session_id($this->getSessionId());
             }
             
             // It is important to wrap session_start() in a try-catch-block because it can produce warnings on certain
