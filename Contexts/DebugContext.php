@@ -14,10 +14,8 @@ use exface\Core\CommonLogic\Log\Handlers\DebugMessageFileHandler;
 use exface\Core\Actions\ShowContextPopup;
 use exface\Core\Actions\ContextApi;
 use exface\Core\CommonLogic\Log\Handlers\BufferingHandler;
-use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\CommonLogic\Profiler;
 use exface\Core\Interfaces\Contexts\ContextInterface;
-use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 
 /**
@@ -276,6 +274,7 @@ class DebugContext extends AbstractContext
             ->setActionAlias('exface.Core.ShowObjectInfoDialog')
             ->setBindToLeftClick(true)
             ->setHidden(true);
+        $details_button->getAction()->setDisableButtons(false);
         $data_list->addButton($details_button);
         
         $container->addWidget($data_list);
