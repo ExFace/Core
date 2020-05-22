@@ -676,7 +676,13 @@ class SqlModelLoader implements ModelLoaderInterface
         if ($selector->isUid()) {
             $filter = 'dc.oid = ' . $selector->toString();
         } else {
-            $filter = 'dc.alias = "' . $selector->toString() . '"';
+            if ($selector->hasNameSpace()) {
+                $appAlias = $selector->getAppAlias();
+                $alias = substr($selector->toString(), (strlen($appAlias)+1));
+                $filter = 'dc.alias = "' . $alias . '" AND a.app_alias = "' . $appAlias . '"';
+            } else {
+                $filter = 'dc.alias = "' . $selector->toString() . '"';
+            }
         }
         
         // If there is a user logged in, fetch his specific connctor config (credentials)
