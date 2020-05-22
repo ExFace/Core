@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope;
 use exface\Core\Exceptions\Contexts\ContextScopeNotFoundError;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
+use exface\Core\CommonLogic\Contexts\Scopes\InstallationContextScope;
 
 /**
  * Default implementation of the ContextManagerInterface
@@ -20,27 +21,33 @@ use exface\Core\Interfaces\Contexts\ContextScopeInterface;
  */
 class ContextManager implements ContextManagerInterface
 {
+    private $exface = null;
 
-    private $exface = NULL;
+    private $window_scope = null;
 
-    private $window_scope = NULL;
+    private $session_scope = null;
 
-    private $session_scope = NULL;
+    private $application_scope = null;
 
-    private $application_scope = NULL;
-
-    private $user_scope = NULL;
+    private $user_scope = null;
 
     private $request_scope = null;
+    
+    private $installation_scope = null;
 
+    /**
+     * 
+     * @param \exface\Core\CommonLogic\Workbench $exface
+     */
     public function __construct(\exface\Core\CommonLogic\Workbench $exface)
     {
         $this->exface = $exface;
     }
 
     /**
-     *
-     * @return \exface\Core\CommonLogic\Contexts\Scopes\WindowContextScope
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextManagerInterface::getScopeWindow()
      */
     public function getScopeWindow() : WindowContextScope
     {
@@ -52,8 +59,9 @@ class ContextManager implements ContextManagerInterface
     }
 
     /**
-     *
-     * @return \exface\Core\CommonLogic\Contexts\Scopes\SessionContextScope
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextManagerInterface::getScopeSession()
      */
     public function getScopeSession() : SessionContextScope
     {
@@ -65,8 +73,9 @@ class ContextManager implements ContextManagerInterface
     }
 
     /**
-     *
-     * @return \exface\Core\CommonLogic\Contexts\Scopes\ApplicationContextScope
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextManagerInterface::getScopeApplication()
      */
     public function getScopeApplication() : ApplicationContextScope
     {
@@ -78,8 +87,9 @@ class ContextManager implements ContextManagerInterface
     }
 
     /**
-     *
-     * @return \exface\Core\CommonLogic\Contexts\Scopes\UserContextScope
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextManagerInterface::getScopeUser()
      */
     public function getScopeUser() : UserContextScope
     {
@@ -88,6 +98,20 @@ class ContextManager implements ContextManagerInterface
             $this->user_scope->init();
         }
         return $this->user_scope;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextManagerInterface::getScopeInstallation()
+     */
+    public function getScopeInstallation() : InstallationContextScope
+    {
+        if ($this->installation_scope === null){
+            $this->installation_scope = new InstallationContextScope($this->exface);
+            $this->installation_scope->init();
+        }
+        return $this->installation_scope;
     }
 
     /**
@@ -116,7 +140,8 @@ class ContextManager implements ContextManagerInterface
             $this->getScopeSession(),
             $this->getScopeApplication(),
             $this->getScopeUser(),
-            $this->getScopeRequest()
+            $this->getScopeRequest(),
+            $this->getScopeInstallation()
         );
     }
 
@@ -137,9 +162,9 @@ class ContextManager implements ContextManagerInterface
     }
 
     /**
-     * Saves all contexts in all scopes
-     *
-     * @return ContextManagerInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextManagerInterface::saveContexts()
      */
     public function saveContexts() : ContextManagerInterface
     {
@@ -150,12 +175,9 @@ class ContextManager implements ContextManagerInterface
     }
 
     /**
-     * Returns the context scope specified by the given name (e.g.
-     * window, application, etc)
-     *
-     * @param string $scope_name            
-     * @throws ContextScopeNotFoundError if no context scope is found for the given name
-     * @return ContextScopeInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextManagerInterface::getScope()
      */
     public function getScope($scope_name) : ContextScopeInterface
     {

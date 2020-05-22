@@ -212,9 +212,9 @@
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2020-05-20 11:57:48",
+            "MODIFIED_ON": "2020-05-22 07:00:38",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x39323700000000000000000000000000",
             "SORTABLEFLAG": "1",
             "FILTERABLEFLAG": "1",
@@ -251,7 +251,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{\"inner_data_type\":\"exface.Core.PropertySet\"}"
+            "CUSTOM_DATA_TYPE": "{\"inner_data_type\":\"exface.Core.UxonDataConnection\"}"
         },
         {
             "CREATED_ON": "2020-01-08 16:50:29",

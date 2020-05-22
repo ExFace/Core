@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\Contexts\Scopes\SessionContextScope;
 use exface\Core\CommonLogic\Contexts\Scopes\ApplicationContextScope;
 use exface\Core\CommonLogic\Contexts\Scopes\UserContextScope;
 use exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope;
+use exface\Core\CommonLogic\Contexts\Scopes\InstallationContextScope;
 
 /**
  * 
@@ -74,6 +75,12 @@ interface ContextManagerInterface
      * @return \exface\Core\CommonLogic\Contexts\Scopes\UserContextScope
      */
     public function getScopeUser() : UserContextScope;
+    
+    /**
+     * 
+     * @return InstallationContextScope
+     */
+    public function getScopeInstallation() : InstallationContextScope;
 
     /**
      *
