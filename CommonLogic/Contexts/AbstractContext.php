@@ -9,7 +9,6 @@ use exface\Core\Widgets\Container;
 use exface\Core\CommonLogic\Constants\Colors;
 use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
 use exface\Core\CommonLogic\Traits\AliasTrait;
-use exface\Core\Events\Contexts\OnContextInitEvent;
 
 /**
  * This is a basic implementation of common context methods intended to be used
@@ -77,7 +76,6 @@ abstract class AbstractContext implements ContextInterface
     public function setScope(ContextScopeInterface $context_scope)
     {
         $this->scope = $context_scope;
-        $this->getWorkbench()->eventManager()->dispatch(new OnContextInitEvent($this));
         return $this;
     }
 
