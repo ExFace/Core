@@ -8,6 +8,7 @@ use exface\Core\Contexts\ActionContext;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Factories\ContextFactory;
 use exface\Core\Factories\SelectorFactory;
+use exface\Core\Events\Contexts\OnContextInitEvent;
 
 abstract class AbstractContextScope implements ContextScopeInterface
 {
@@ -80,6 +81,7 @@ abstract class AbstractContextScope implements ContextScopeInterface
             $selector = SelectorFactory::createContextSelector($this->getWorkbench(), $alias);            
             $context = ContextFactory::createInScope($selector, $this);
             $this->active_contexts[$alias] = $context;
+            $this->getWorkbench()->eventManager()->dispatch(new OnContextInitEvent($context));
             $this->loadContextData($context);
         }
         return $this->active_contexts[$alias];
