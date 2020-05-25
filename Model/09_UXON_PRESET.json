@@ -1128,6 +1128,20 @@
             "UXON": "{\"input_rows_min\":1,\"icon\":\"\",\"input_mapper\":{\"column_to_column_mappings\":[{\"from\":\"=0\",\"to\":\"\"}]}}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action"
+        },
+        {
+            "CREATED_ON": "2020-05-22 10:45:03",
+            "MODIFIED_ON": "2020-05-22 10:45:03",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea9c194578004e8abc0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Encrypted data",
+            "DESCRIPTION": "Will encrypt any data before sending to data source and decrypt it before showing. Just specify the the type of the raw (decrypted) data.",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/EncryptedDataType.php",
+            "UXON": "{\"inner_data_type\":\"\"}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "datatype"
         }
     ],
     "totals_rows": [],
