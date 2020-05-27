@@ -12,6 +12,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\Interfaces\Model\MetaAttributeListInterface;
 
 /**
  *
@@ -287,6 +288,19 @@ class DataColumnList extends EntityList implements DataColumnListInterface
     {
         foreach ($this->getDataSheet()->getMetaObject()->getAttributes()->getSystem() as $sys) {
             $this->addFromAttribute($sys);
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::addFromAttributeGroup()
+     */
+    public function addFromAttributeGroup(MetaAttributeListInterface $group) : DataColumnListInterface
+    {
+        foreach ($group->getAll() as $attr) {
+            $this->addFromAttribute($attr);
         }
         return $this;
     }
