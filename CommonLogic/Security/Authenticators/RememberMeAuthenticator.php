@@ -10,6 +10,7 @@ use exface\Core\Events\Security\OnAuthenticatedEvent;
 use exface\Core\Interfaces\Security\AuthenticationProviderInterface;
 use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\Exceptions\EncryptionError;
+use exface\Core\Facades\ConsoleFacade;
 
 /**
  * Stores user data in the session context scope and attempts to re-authenticate the user with every request.
@@ -64,6 +65,11 @@ class RememberMeAuthenticator extends AbstractAuthenticator
     {
         if (! ($token instanceof RememberMeAuthToken)) {
             throw new AuthenticationFailedError($this, 'Invalid token type!');
+        }
+        
+        // There are no sessions in CLI, so also no remmeber-me
+        if (ConsoleFacade::isPhpScriptRunInCli()) {
+            throw new AuthenticationFailedError($this, 'No Remember-Me possible on the command line!');
         }
         
         $sessionData = $this->getSessionData();
