@@ -8,6 +8,7 @@ use exface\Core\CommonLogic\Model\UiPageTreeNode;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
 use exface\Core\Interfaces\Selectors\UiPageGroupSelectorInterface;
+use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
 
 class UiPageTreeFactory extends AbstractStaticFactory
 {
@@ -150,6 +151,9 @@ class UiPageTreeFactory extends AbstractStaticFactory
                 $node->addGroupSelector($selectorOrString);
             }
         }
+        
+        $ap = $workbench->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class);
+        $ap->authorize($node);
         return $node;
     }
     
@@ -166,6 +170,8 @@ class UiPageTreeFactory extends AbstractStaticFactory
         foreach ($page->getGroupSelectors() as $groupSel) {
             $node->addGroupSelector($groupSel);
         }
+        $ap = $node->getWorkbench()->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class);
+        $ap->authorize($node);
         return $node;
     }
 }

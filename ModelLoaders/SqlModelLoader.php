@@ -73,6 +73,8 @@ use exface\Core\Factories\AuthorizationPointFactory;
 use exface\Core\CommonLogic\Selectors\AuthorizationPointSelector;
 use exface\Core\DataTypes\EncryptedDataType;
 use exface\Core\DataTypes\UxonDataType;
+use exface\Core\Exceptions\Security\AccessDeniedError;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * 
@@ -1295,9 +1297,13 @@ SQL;
             $rows = $this->loadPageTreeLevel();
             $nodes = [];
             foreach ($rows as $row) {
-                $rootNode = $this->loadPageTreeCreateNodeFromDbRow($row);
-                $nodes[] = $rootNode;
-                $this->nodes_loaded[$rootNode->getUid] = $rootNode;
+                try {
+                    $rootNode = $this->loadPageTreeCreateNodeFromDbRow($row);
+                    $nodes[] = $rootNode;
+                    $this->nodes_loaded[$rootNode->getUid] = $rootNode;
+                } catch (AccessDeniedError $e) {
+                    //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+                }
             }
             
             $tree->setStartRootNodes($nodes);
@@ -1356,6 +1362,7 @@ SQL;
             return $loadedtree->getRootNodes();
         }
         $nodeId = $tree->getExpandPathToPage()->getUid();
+        $oldNode = null;
         while ($nodeId !== null) {
             $parentNode = null;
             $parentNodeId = null;
@@ -1372,8 +1379,13 @@ SQL;
                             // if node already was loaded before, take that
                             $parentNode = $this->nodes_loaded[$row['oid']];
                         } else {
-                            $parentNode = $this->loadPageTreeCreateNodeFromDbRow($row);
-                            $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
+                            try {
+                                $parentNode = $this->loadPageTreeCreateNodeFromDbRow($row);
+                                $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
+                            } catch (AccessDeniedError $e) {
+                                //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+                                $parentNode = null;
+                            }
                         }
                         $parentNodeId = $row['parent_oid'];
                         break;
@@ -1389,14 +1401,19 @@ SQL;
                             $childNode = $this->nodes_loaded[$row['oid']];
                             $childNode->setParentNode($parentNode);
                         } else {
-                            $childNode = $this->loadPageTreeCreateNodeFromDbRow($row, $parentNode);
+                            try {
+                                $childNode = $this->loadPageTreeCreateNodeFromDbRow($row, $parentNode);
+                            } catch (AccessDeniedError $e) {
+                                //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+                                continue;
+                            }
                         }
                         $this->nodes_loaded[$childNode->getUid()] = $childNode;
-                        $parentNode->addChildNode($childNode);
+                        $parentNode->addChildNode($childNode);                        
                         $parentNode->setChildNodesLoaded(true);
-                        $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
                     }
                 }
+                $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
             }
             if ($parentNode !== null && $tree->nodeInRootNodes($parentNode)) {
                 $nodeId = null;
@@ -1406,8 +1423,12 @@ SQL;
                         break;
                     }
                 }
+            } elseif ($parentNode === null && $oldNode !== null) {
+                $treeRootNodes[] = $oldNode;
+                $nodeId = null;
             } else {
                 $nodeId = $parentNodeId;
+                $oldNode = $parentNode;
             }
         }
         $this->menu_tress_loaded[$tree->getExpandPathToPage()->getUid()] = $tree;
@@ -1443,13 +1464,19 @@ SQL;
                     //build first level child nodes
                     if ($row['parent_oid'] === $node->getUid()  && !in_array($row['oid'], $childIds)) {
                         if ($this->nodes_loaded[$row['oid']] !== null) {
-                            $childNode = $this->nodes_loaded[$row['oid']];
+                            $childNode = $this->nodes_loaded[$row['oid']];                            
+                            $childIds[] = $childNode->getUid();
+                            $node->addChildNode($childNode);
                         } else {
-                            $childNode = $this->loadPageTreeCreateNodeFromDbRow($row, $node);
-                            $this->nodes_loaded[$childNode->getUid()] = $childNode;
+                            try {
+                                $childNode = $this->loadPageTreeCreateNodeFromDbRow($row, $node);                                
+                                $childIds[] = $childNode->getUid();
+                                $node->addChildNode($childNode);
+                                $this->nodes_loaded[$childNode->getUid()] = $childNode;
+                            } catch (AccessDeniedError $e) {
+                                //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+                            }
                         }
-                        $childIds[] = $childNode->getUid();
-                        $node->addChildNode($childNode);
                     }
                 }                
                 $node->setChildNodesLoaded(true);
@@ -1464,7 +1491,12 @@ SQL;
                             if ($this->nodes_loaded[$row['oid']] !== null) {
                                 $childChildNode = $this->nodes_loaded[$row['oid']];
                             } else {
-                                $childChildNode = $this->loadPageTreeCreateNodeFromDbRow($row, $childNode);
+                                try {
+                                    $childChildNode = $this->loadPageTreeCreateNodeFromDbRow($row, $childNode);
+                                } catch (AccessDeniedError $e) {
+                                    //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+                                    continue;
+                                }
                             }
                             //load sub levels for child child tree nodes if needed
                             $childChildNode = $this->loadPageTreeChildNodes($tree, $childChildNode, $level + 2);
