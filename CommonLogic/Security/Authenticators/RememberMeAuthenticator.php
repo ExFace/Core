@@ -52,6 +52,12 @@ class RememberMeAuthenticator extends AbstractAuthenticator
         if ($event->getAuthenticationProvider() instanceof RememberMeAuthenticator) {
             return;
         }
+        
+        // There are no sessions in CLI, so also no remmeber-me
+        if (ConsoleFacade::isPhpScriptRunInCli()) {
+            return;
+        }
+        
         $this->saveSessionData($event->getToken(), $event->getAuthenticationProvider());
         return;
     }
