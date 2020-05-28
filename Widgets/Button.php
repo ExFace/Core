@@ -20,6 +20,7 @@ use exface\Core\Widgets\Traits\iHaveColorTrait;
 use exface\Core\Interfaces\Widgets\iCanBeDisabled;
 use exface\Core\Interfaces\Actions\iResetWidgets;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\CommonLogic\Model\UiPage;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -354,7 +355,20 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         } else {
             throw new WidgetConfigurationError($this, 'Invalid value "' . $uxonOrArray . '" of property "refresh_widget_ids" in widget "' . $this->getWidgetType() . '": expecting PHP or UXON array!');
         }
-        $this->refreshWidgetIds = array_unique($array);
+        $array = array_unique($array);
+        
+        // If the button itself has an id space (= e.g. is inside a dialog), and the provided
+        // ids don't have an id space, we should prefix them with the id space of the button,
+        // so they will be resolved within the same space as the button itself.
+        if ($idSpace = $this->getIdSpace()) {
+            foreach ($array as $no => $id) {
+                if(strpos($id, UiPage::WIDGET_ID_SPACE_SEPARATOR) === false) {
+                    $array[$no] = $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR . $id;
+                }
+            }
+        }
+        
+        $this->refreshWidgetIds = $array;
         return $this;
     }
     
