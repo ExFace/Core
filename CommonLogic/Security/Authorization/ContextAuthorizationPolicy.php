@@ -128,6 +128,10 @@ class ContextAuthorizationPolicy implements AuthorizationPolicyInterface
     }
     
     /**
+     * Alias of the context this policy applies to - e.g. `exface.Core.DebugContext`.
+     * 
+     * @uxon-property context
+     * @uxon-type metamodel:context
      * 
      * @param string $value
      * @return ContextAuthorizationPolicy
