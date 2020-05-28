@@ -454,7 +454,7 @@ HTML;
         
         switch (true) {
             case $result instanceof ResultDataInterface:
-                $json = $this->buildResponseData($result->getData(), $result->getTask()->getWidgetTriggeredBy());
+                $json = $this->buildResponseData($result->getData(), ($result->getTask()->isTriggeredByWidget() ? $result->getTask()->getWidgetTriggeredBy() : null));
                 $json["success"] = $result->getMessage();
                 break;
                 
