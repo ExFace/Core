@@ -91,8 +91,8 @@ abstract class AbstractContextScope implements ContextScopeInterface
                 unset($context);
                 return $instance;
             }
-            $this->active_contexts[$context->getAliasWithNamespace()] = $context;
             $this->getWorkbench()->eventManager()->dispatch(new OnContextInitEvent($context));
+            $this->active_contexts[$context->getAliasWithNamespace()] = $context;
             $this->loadContextData($context);
             return $context;
         }
