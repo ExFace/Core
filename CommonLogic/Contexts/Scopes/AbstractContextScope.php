@@ -9,6 +9,7 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\Factories\ContextFactory;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Events\Contexts\OnContextInitEvent;
+use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
 
 abstract class AbstractContextScope implements ContextScopeInterface
 {
@@ -74,17 +75,28 @@ abstract class AbstractContextScope implements ContextScopeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Contexts\ContextScopeInterface::getContext()
      */
-    public function getContext($alias)
+    public function getContext($aliasOrSelector) : ContextInterface
     {
         // If no context matching the alias exists, try to create one
-        if (! $this->active_contexts[$alias]) {
-            $selector = SelectorFactory::createContextSelector($this->getWorkbench(), $alias);            
+        if ($this->active_contexts[$aliasOrSelector] === null) {
+            if ($aliasOrSelector instanceof ContextSelectorInterface) {
+                $selector = $aliasOrSelector;
+            } else {
+                $selector = SelectorFactory::createContextSelector($this->getWorkbench(), $aliasOrSelector);  
+            }
             $context = ContextFactory::createInScope($selector, $this);
-            $this->active_contexts[$alias] = $context;
+            // If the selector was not an alias, see if the cache already has 
+            if ($selector->isAlias() === false && $this->active_contexts[$context->getAliasWithNamespace()] !== null) {
+                $instance = $this->active_contexts[$context->getAliasWithNamespace()];
+                unset($context);
+                return $instance;
+            }
+            $this->active_contexts[$context->getAliasWithNamespace()] = $context;
             $this->getWorkbench()->eventManager()->dispatch(new OnContextInitEvent($context));
             $this->loadContextData($context);
+            return $context;
         }
-        return $this->active_contexts[$alias];
+        return $this->active_contexts[$aliasOrSelector];
     }
     
     /**
