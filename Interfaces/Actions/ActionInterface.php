@@ -19,6 +19,7 @@ use exface\Core\Interfaces\TaskHandlerInterface;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\Interfaces\UserImpersonationInterface;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
  * Common interface for all actions.
@@ -375,18 +376,20 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
     /**
      * Returns TRUE if this action matches the given alias or inherits for the action identified by it.
      * 
-     * @param ActionInterface|string $action_or_alias
-     * @return boolean
+     * @param ActionInterface|ActionSelectorInterface|string $actionOrSelectorOrString
+     * @throws UnexpectedValueException
+     * @return bool
      */
-    public function is($action_or_alias);
+    public function is($actionOrSelectorOrString) : bool;
     
     /**
      * Returns TRUE if this action matches the given alias and FALSE otherwise.
      * 
-     * @param ActionInterface|string $action_or_alias
-     * @return boolean
+     * @param ActionInterface|ActionSelectorInterface|string $actionOrSelectorOrString
+     * @throws UnexpectedValueException
+     * @return bool
      */
-    public function isExactly($action_or_alias);
+    public function isExactly($actionOrSelectorOrString) : bool;
 
     /**
      * Returns the text for the result message if one was set in the UXON description of the action and NULL otherwise.

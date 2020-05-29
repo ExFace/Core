@@ -36,6 +36,8 @@ use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\CommonLogic\Security\Authorization\ActionAuthorizationPoint;
 use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -743,23 +745,26 @@ abstract class AbstractAction implements ActionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::isExactly()
      */
-    public function isExactly($action_or_alias)
+    public function isExactly($actionOrSelectorOrString) : bool
     {
-        if ($action_or_alias instanceof ActionInterface) {
-            $alias = $action_or_alias->getAliasWithNamespace();
+        if ($actionOrSelectorOrString instanceof ActionInterface) {
+            return strcasecmp($this->getAliasWithNamespace(), $actionOrSelectorOrString->getAliasWithNamespace()) === 0;
         } else {
-            $selector = $action_or_alias instanceof ActionSelectorInterface ? $action_or_alias : SelectorFactory::createActionSelector($this->getWorkbench(), $action_or_alias);
+            $selector = $actionOrSelectorOrString instanceof ActionSelectorInterface ? $actionOrSelectorOrString : SelectorFactory::createActionSelector($this->getWorkbench(), $actionOrSelectorOrString);
             switch (true) {
+                case $selector->isFilepath():
+                    $selectorClassPath = StringDataType::substringBefore($selector->toString(), '.' . FileSelectorInterface::PHP_FILE_EXTENSION);
+                    $actionClassPath = FilePathDataType::normalize(get_class($this));
+                    return $selectorClassPath === $actionClassPath;
+                case $selector->isClassname():
+                    return ltrim(get_class($this), "\\") === ltrim($selector->toString(), "\\");
                 case $selector->isAlias():
-                    $alias = $action_or_alias;
-                    break;
-                default:
-                    throw new UnexpectedValueException('Cannot compare action ' . $this->getAliasWithNamespace() . ' to "' . $action_or_alias . '": only instantiated actions or aliases supported!');
+                    return strcasecmp($this->getAliasWithNamespace(), $selector->toString()) === 0;
             }
             
         }
         
-        return strcasecmp($this->getAliasWithNamespace(), trim($alias)) === 0;
+        throw new UnexpectedValueException('Cannot compare action ' . $this->getAliasWithNamespace() . ' to "' . $actionOrSelectorOrString . '": only instantiated actions or valid selectors allowed!');
     }
     
     /**
@@ -767,16 +772,20 @@ abstract class AbstractAction implements ActionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::is()
      */
-    public function is($action_or_alias)
+    public function is($actionOrSelectorOrString) : bool
     {
-        if ($action_or_alias instanceof ActionInterface){
-            $class = get_class($action_or_alias);
+        if ($actionOrSelectorOrString instanceof ActionInterface){
+            $class = get_class($actionOrSelectorOrString);
             return $this instanceof $class;
-        } elseif (is_string($action_or_alias)){
-            if ($this->isExactly($action_or_alias)) {
+        } elseif (is_string($actionOrSelectorOrString)){
+            if ($this->isExactly($actionOrSelectorOrString)) {
                 return true;
             }
-            $selector = new ActionSelector($this->getWorkbench(), $action_or_alias);
+            if ($actionOrSelectorOrString instanceof ActionSelectorInterface) {
+                $selector = $actionOrSelectorOrString;
+            } else {
+                $selector = new ActionSelector($this->getWorkbench(), $actionOrSelectorOrString);
+            }
             if ($selector->isClassname()) {
                 $class_name = $selector->toString();
             } else {
@@ -784,7 +793,7 @@ abstract class AbstractAction implements ActionInterface
             }
             return $this instanceof $class_name;
         } else {
-            throw new UnexpectedValueException('Invalid value "' . gettype($action_or_alias) .'" passed to "ActionInterface::is()": instantiated action or action alias with namespace expected!');
+            throw new UnexpectedValueException('Invalid value "' . gettype($actionOrSelectorOrString) .'" passed to "ActionInterface::is()": instantiated action or action alias with namespace expected!');
         }
     }
     
