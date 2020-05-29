@@ -276,6 +276,11 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
     protected function combinePermissions(iterable $permissions, UserImpersonationInterface $userOrToken, $resource = null) : CombinedPermission
     {
         $permission = new CombinedPermission($this->getPolicyCombiningAlgorithm(), $permissions);
+        
+        if ($permission->isIndeterminate() && $e = $permission->getException()) {
+            $this->getWorkbench()->getLogger()->logException($e);
+        }
+        
         switch (true) {
             case $permission->isPermitted():
             case ($permission->isIndeterminate() || $permission->isNotApplicable()) && $this->getDefaultPolicyEffect() == PolicyEffectDataType::PERMIT:
