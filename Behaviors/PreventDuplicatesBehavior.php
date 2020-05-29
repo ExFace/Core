@@ -126,6 +126,9 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                         // have to reverse array with indices because rows in data sheet get reindexed when one is removed
                         $eventSheet->removeRow($duplRowNo);                    
                     }
+                    if ($eventSheet->isEmpty()) {
+                        $event->preventCreate();
+                    }
                     return;
                 case self::ON_DUPLICATE_UPDATE:
                     //copy the dataSheet and empty it
