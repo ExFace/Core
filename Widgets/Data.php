@@ -1073,7 +1073,7 @@ class Data
                 'TITLE' => $col->getCaption(),
                 'GROUP' => $this->translate('WIDGET.DATA.HELP.COLUMNS')
             );
-            if ($attr = $col->getAttribute()) {
+            if ($col->isBoundToAttribute() && $attr = $col->getAttribute()) {
                 $row = array_merge($row, $this->getHelpDataRowFromAttribute($attr, $col->getCellWidget()));
             }
             $data_sheet->addRow($row);
