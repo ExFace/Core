@@ -7,7 +7,6 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 
 /**
@@ -58,14 +57,7 @@ class ActionAuthorizationPoint extends AbstractAuthorizationPoint
             $userOrToken = $this->getWorkbench()->getSecurity()->getAuthenticatedToken();
         }
         
-        $page = null;
-        if ($action !== null && $action->isDefinedInWidget()) {
-            $page = $action->getWidgetDefinedIn()->getPage();
-        } elseif ($task !== null && $task->isTriggeredOnPage()) {
-            $page = $task->getPageTriggeredOn();
-        }
-        
-        $permissionsGenerator = $this->evaluatePolicies($action, $userOrToken, $page);
+        $permissionsGenerator = $this->evaluatePolicies($action, $userOrToken, $task);
         $this->combinePermissions($permissionsGenerator, $userOrToken, $action);
         return $task;
     }
@@ -87,10 +79,10 @@ class ActionAuthorizationPoint extends AbstractAuthorizationPoint
      * @param UserImpersonationInterface $userOrToken
      * @return \Generator
      */
-    protected function evaluatePolicies(ActionInterface $action, UserImpersonationInterface $userOrToken, UiMenuItemInterface $menuItem = null) : \Generator
+    protected function evaluatePolicies(ActionInterface $action, UserImpersonationInterface $userOrToken, TaskInterface $task = null) : \Generator
     {
         foreach ($this->getPolicies($userOrToken) as $policy) {
-            yield $policy->authorize($userOrToken, $action, $menuItem);
+            yield $policy->authorize($userOrToken, $action, $task);
         }
     }
     
