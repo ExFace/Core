@@ -59,7 +59,12 @@ class UiPageTree
     protected function buildStartRootNodes(array $pages) : UiPageTree
     {
         foreach ($pages as $page) {
-            $this->startRootNodes[] = UiPageTreeFactory::createNodeFromPage($page);
+            try {
+                $node = UiPageTreeFactory::createNodeFromPage($page);
+                $this->startRootNodes[] = $node;
+            } catch (AccessDeniedError $e) {
+                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+            }                      
         }
         return $this;
     }
@@ -184,7 +189,7 @@ class UiPageTree
                 $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
             }
         }
-        $this->rootNodes = $rootNodes;
+        $this->rootNodes = array_values($rootNodes);
         return $this;
     }
     

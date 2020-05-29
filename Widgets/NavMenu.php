@@ -5,7 +5,6 @@ use exface\Core\Factories\UiPageTreeFactory;
 use exface\Core\CommonLogic\Model\UiPageTreeNode;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
-use exface\Core\Exceptions\Security\AccessDeniedError;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 
 /**
@@ -82,15 +81,12 @@ class NavMenu extends AbstractWidget
         if (empty($rootSelectors) === false) {
             $rootPages = [];
             foreach ($rootSelectors as $rootSelector) {
-                try {
-                    $rootPages[] = UiPageFactory::createFromModel($this->getWorkbench(), $rootSelector);
-                } catch (AccessDeniedError $e) {
-                    // Ignore not accessible roots
-                }
+                $page = UiPageFactory::createFromModel($this->getWorkbench(), $rootSelector);
+                $rootPages[] = $page;
             }
             $tree->setRootPages($rootPages);
         }
-        if ($this->getShowRootNode() === false && count($tree->getRootNodes()) === 1) {
+        if ($this->getShowRootNode() === false && count($tree->getRootNodes()) === 1 && !empty($tree->getStartRootNodes())) {
             return $tree->getRootNodes()[0]->getChildNodes();
         } else {
             return $tree->getRootNodes();
