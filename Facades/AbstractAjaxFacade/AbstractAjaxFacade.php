@@ -57,6 +57,8 @@ use exface\Core\Actions\Login;
 use exface\Core\Widgets\LoginPrompt;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\Contexts\DebugContext;
+use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 
 /**
  * 
@@ -655,13 +657,14 @@ HTML;
     protected function isShowingErrorDetails() : bool
     {
         try {
-            $onlyAdmins = BooleanDataType::cast($this->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY'));
-            $isAdmin = $this->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAdmin();
-            return  ! $onlyAdmins || ($onlyAdmins && $isAdmin);
+            $this->getWorkbench()->getContext()->getScopeWindow()->getContext(DebugContext::class);
+            return true;
+        } catch (ContextAccessDeniedError $e) {
+            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
-            return false;
         }
+        return false;
     }
     
     /**
