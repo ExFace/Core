@@ -17,7 +17,7 @@ use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
- * Policy for access to UI pages and menu items.
+ * Policy to restrict access to UI pages and navigation (menu) items.
  * 
  * @author Andrej Kabachnik
  *

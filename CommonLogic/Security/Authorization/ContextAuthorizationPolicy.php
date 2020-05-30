@@ -14,6 +14,12 @@ use exface\Core\Factories\PermissionFactory;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 
+/**
+ * Policy to restrict access to workbench contexts.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class ContextAuthorizationPolicy implements AuthorizationPolicyInterface
 {
     use ImportUxonObjectTrait;

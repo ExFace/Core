@@ -222,6 +222,15 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
         return $this->name;
     }
     
+    /**
+     * Only apply this policy if the page where the action was triggered is known (or is not known).
+     * 
+     * @uxon-property action_trigger_page_known
+     * @uxon-type boolean
+     * 
+     * @param bool $trueOrFalse
+     * @return ActionAuthorizationPolicy
+     */
     protected function setActionTriggerPageKnown(bool $trueOrFalse) : ActionAuthorizationPolicy
     {
         $this->actionTriggerPageKnown = $trueOrFalse;
@@ -246,6 +255,16 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
         return false;
     }
     
+    /**
+     * Make this policy not applicable to one or more specific actions
+     * 
+     * @uxon-property exclude_actions
+     * @uxon-type metamodel:action
+     * @uxon-template [""]
+     * 
+     * @param UxonObject $excludes
+     * @return ActionAuthorizationPolicy
+     */
     protected function setExcludeActions(UxonObject $excludes) : ActionAuthorizationPolicy
     {
         foreach ($excludes->getPropertiesAll() as $selectorString) {
