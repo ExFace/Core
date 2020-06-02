@@ -2243,7 +2243,10 @@ JS;
     var arrayLength = {$dataJs}.length;
     var chartData = [];
     for (var i = 0; i < arrayLength; i++) {
-        var item = { value: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} , name: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} };
+        var item = { 
+            value: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} , 
+            name: {$this->buildJsLabelFormatter($this->getWidget()->getSeries()[0]->getTextDataColumn(), "{$dataJs}[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}")} 
+        };
         chartData.push(item);
     }
     
