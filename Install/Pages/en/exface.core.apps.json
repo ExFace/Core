@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-03-12 14:04:30",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-04-21 06:36:22",
+    "modified_on": "2020-06-03 17:27:34",
     "contents": {
         "object_alias": "exface.Core.APP",
         "widget_type": "DataTable",
@@ -46,26 +46,6 @@
             },
             {
                 "attribute_alias": "PACKAGE__version"
-            },
-            {
-                "attribute_alias": "MODEL_MODIFIED_ON",
-                "cell_widget": {
-                    "widget_type": "ColorIndicator",
-                    "fill": true,
-                    "color_conditions": {
-                        "> PACKAGE__model_timestamp": "yellow"
-                    }
-                }
-            },
-            {
-                "attribute_alias": "PACKAGE__model_timestamp",
-                "cell_widget": {
-                    "widget_type": "ColorIndicator",
-                    "fill": true,
-                    "color_conditions": {
-                        "< MODEL_MODIFIED_ON": "yellow"
-                    }
-                }
             },
             {
                 "attribute_alias": "PAGE__UID:COUNT",
