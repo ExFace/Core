@@ -20,7 +20,8 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UiPageGroupSelector;
-use exface\Core\Interfaces\Model\UiMenuItemInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 
 /**
  * Policy for access to actions.
@@ -47,6 +48,10 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     private $conditionUxon = null;
     
     private $effect = null;
+    
+    private $actionTriggerPageKnown = null;
+    
+    private $excludeActionSelectors = [];
     
     /**
      * 
@@ -94,7 +99,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Security\AuthorizationPolicyInterface::authorize()
      */
-    public function authorize(UserImpersonationInterface $userOrToken = null, ActionInterface $action = null, UiMenuItemInterface $menuItem = null): PermissionInterface
+    public function authorize(UserImpersonationInterface $userOrToken = null, ActionInterface $action = null, TaskInterface $task = null): PermissionInterface
     {
         $applied = false;
         try {
@@ -102,32 +107,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 throw new InvalidArgumentException('Cannot evalute action access policy: no action provided!');
             }
             
-            if ($userOrToken instanceof AuthenticationTokenInterface) {
-                $user = $this->workbench->getSecurity()->getUser($userOrToken);
-            } else {
-                $user = $userOrToken;
-            }
-            
-            if ($this->userRoleSelector !== null && $user->hasRole($this->userRoleSelector) === false) {
-                return PermissionFactory::createNotApplicable($this);
-            } else {
-                $applied = true;
-            }
-            
-            $object = $action->getMetaObject();
-            if ($object !== null) {
-                if ($this->metaObjectSelector !== null && $object->is($this->metaObjectSelector) === false) {
-                    return PermissionFactory::createNotApplicable($this);
-                } else {
-                    $applied = true;
-                }
-            }
-            if ($this->pageGroupSelector !== null && $menuItem->isInGroup($this->pageGroupSelector) === false) {
-                return PermissionFactory::createNotApplicable($this);
-            } else {
-                $applied = true;
-            }
-            
+            // Match action
             if (($selector = $this->actionSelector) !== null) {
                 switch(true) {
                     case $selector->isFilepath():
@@ -141,6 +121,73 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                     case $selector->isAlias():
                         $applied = $action->getAliasWithNamespace() === $selector->toString();
                         break;
+                }
+                if ($applied === false) {
+                    return PermissionFactory::createNotApplicable($this);
+                }
+            } else {
+                $applied = true;
+            }
+            
+            // Match user
+            if ($userOrToken instanceof AuthenticationTokenInterface) {
+                $user = $this->workbench->getSecurity()->getUser($userOrToken);
+            } else {
+                $user = $userOrToken;
+            }
+            if ($this->userRoleSelector !== null && $user->hasRole($this->userRoleSelector) === false) {
+                return PermissionFactory::createNotApplicable($this);
+            } else {
+                $applied = true;
+            }
+            
+            // See if trigger page must be known
+            if ($this->getActionTriggerPageKnownOption() !== null) {
+                $needToKnow = $this->getActionTriggerPageKnownOption();
+                $triggerKnown = $this->isActionTriggerPageKnown($action, $task);
+                switch (true) {
+                    case $needToKnow === true && $triggerKnown === false:
+                    case $needToKnow === false && $triggerKnown === true:
+                        return PermissionFactory::createNotApplicable($this);
+                    default:
+                        $applied = true;
+                }
+            }
+            
+            // Match meta object
+            if ($this->metaObjectSelector !== null) {
+                $object = $action->getMetaObject();
+                if ($object === null || $object->is($this->metaObjectSelector) === false) {
+                    return PermissionFactory::createNotApplicable($this);
+                } else {
+                    $applied = true;
+                }
+            } else {
+                $applied = true;
+            }
+            
+            // Match page
+            if ($this->pageGroupSelector !== null) {
+                if ($action !== null && $action->isDefinedInWidget()) {
+                    $page = $action->getWidgetDefinedIn()->getPage();
+                } elseif ($task !== null && $task->isTriggeredOnPage()) {
+                    $page = $task->getPageTriggeredOn();
+                } else {
+                    $page = null;
+                }
+                
+                if ($page->isInGroup($this->pageGroupSelector) === false) {
+                    return PermissionFactory::createNotApplicable($this);
+                } else {
+                    $applied = true;
+                }
+            } else {
+                $applied = true;
+            }
+            
+            foreach ($this->getExcludeActions() as $selector) {
+                if ($action->isExactly($selector)) {
+                    return PermissionFactory::createNotApplicable($this);
                 }
             }
             
@@ -173,5 +220,65 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     public function getName() : ?string
     {
         return $this->name;
+    }
+    
+    /**
+     * Only apply this policy if the page where the action was triggered is known (or is not known).
+     * 
+     * @uxon-property action_trigger_page_known
+     * @uxon-type boolean
+     * 
+     * @param bool $trueOrFalse
+     * @return ActionAuthorizationPolicy
+     */
+    protected function setActionTriggerPageKnown(bool $trueOrFalse) : ActionAuthorizationPolicy
+    {
+        $this->actionTriggerPageKnown = $trueOrFalse;
+        return $this;
+    }
+    
+    protected function getActionTriggerPageKnownOption() : ?bool
+    {
+        return $this->actionTriggerPageKnown;
+    }
+    
+    protected function isActionTriggerPageKnown(ActionInterface $action, TaskInterface $task = null) : bool
+    {
+        if ($task && $task->isTriggeredOnPage()) {
+            return true;
+        }
+        
+        if ($action->isDefinedInWidget()) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Make this policy not applicable to one or more specific actions
+     * 
+     * @uxon-property exclude_actions
+     * @uxon-type metamodel:action
+     * @uxon-template [""]
+     * 
+     * @param UxonObject $excludes
+     * @return ActionAuthorizationPolicy
+     */
+    protected function setExcludeActions(UxonObject $excludes) : ActionAuthorizationPolicy
+    {
+        foreach ($excludes->getPropertiesAll() as $selectorString) {
+            $this->excludeActionSelectors[] = new ActionSelector($this->workbench, $selectorString);
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return ActionSelectorInterface[]
+     */
+    protected function getExcludeActions() : array
+    {
+        return $this->excludeActionSelectors;
     }
 }

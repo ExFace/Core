@@ -262,7 +262,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 $qpartAttr = $qpart->getAttribute();
                 // if the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
                 // otherwise the enrichment joins won't work!
-                if ($group_by && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute())) {
+                if ($group_by && $qpartAttr->getObject()->hasUidAttribute() && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute())) {
                     $select .= ', ' . $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                     $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ');
                 } // if we are aggregating, leave only attributes, that have an aggregate function,

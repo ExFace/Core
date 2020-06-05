@@ -3,7 +3,7 @@ namespace exface\Core\CommonLogic\Selectors;
 
 use exface\Core\CommonLogic\Selectors\Traits\UidSelectorTrait;
 use exface\Core\Interfaces\Selectors\UserRoleSelectorInterface;
-use exface\Core\CommonLogic\Selectors\Traits\AliasSelectorWithOptionalNamespaceTrait;
+use exface\Core\CommonLogic\Selectors\Traits\AliasSelectorTrait;
 
 /**
  * Default implementation of the UserRoleSelectorInterface.
@@ -22,7 +22,7 @@ class UserRoleSelector extends AbstractSelector implements UserRoleSelectorInter
     
     use UidSelectorTrait;
     
-    use AliasSelectorWithOptionalNamespaceTrait;
+    use AliasSelectorTrait;
     
     /**
      * 

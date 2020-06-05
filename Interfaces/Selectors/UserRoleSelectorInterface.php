@@ -11,5 +11,5 @@ namespace exface\Core\Interfaces\Selectors;
  * @author Andrej Kabachnik
  *
  */
-interface UserRoleSelectorInterface extends AliasSelectorWithOptionalNameSpaceInterface, UidSelectorInterface
+interface UserRoleSelectorInterface extends AliasSelectorWithOptionalNamespaceInterface, UidSelectorInterface
 {}

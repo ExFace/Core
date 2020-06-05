@@ -119,7 +119,7 @@ class Workbench implements WorkbenchInterface
             throw new InvalidArgumentException('No valid model loader found in current configuration - please add a valid "MODEL_LOADER" : "file_path_or_qualified_alias_or_qualified_class_name" to your config in "' . $this->filemanager()->getPathToConfigFolder() . '"', null, $e);
         }
         
-        $model_connection = DataConnectionFactory::createFromPrototype($this, $config->getOption('METAMODEL.CONNECTOR'), $config->getOption('METAMODEL.CONNECTOR_CONFIG'));
+        $model_connection = DataConnectionFactory::createModelLoaderConnection($config);
         $model_loader->setDataConnection($model_connection);
         $this->model()->setModelLoader($model_loader);
         
