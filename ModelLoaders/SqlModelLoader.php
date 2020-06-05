@@ -85,23 +85,23 @@ class SqlModelLoader implements ModelLoaderInterface
 {
     const ATTRIBUTE_TYPE_COMPOUND = 'C';
     
-    private $data_connection = null;
+    protected $data_connection = null;
     
-    private $data_types_by_uid = [];
+    protected $data_types_by_uid = [];
     
-    private $data_type_uids = [];
+    protected $data_type_uids = [];
     
-    private $connections_loaded = [];
+    protected $connections_loaded = [];
     
-    private $selector = null;
+    protected $selector = null;
     
-    private $installer = null;
+    protected $installer = null;
     
-    private $pages_loaded = [];
+    protected $pages_loaded = [];
     
-    private $nodes_loaded = [];
+    protected $nodes_loaded = [];
     
-    private $menu_tress_loaded = [];
+    protected $menu_tress_loaded = [];
     
     
     /**
@@ -147,6 +147,19 @@ class SqlModelLoader implements ModelLoaderInterface
         $obj->setNamespace($app->getAliasWithNamespace());
         return $this->loadObject($obj);        
     }
+    
+    /**
+     * Builds a sql statement selecting a "1" as `$sqlAs` if a dataset exists in the database matching the `sqlFrom` and `sqlWhere` options.
+     * 
+     * @param string $sqlFrom
+     * @param string $sqlWhere
+     * @param string $sqlAs
+     * @return string
+     */
+    protected function buildSqlExists(string $sqlFrom, string $sqlWhere, string $sqlAs)
+    {
+        return "(CASE WHEN EXISTS (SELECT * FROM {$sqlFrom} WHERE {$sqlWhere} ) THEN 1 ELSE 0 END) AS {$sqlAs}";
+    }
 
     /**
      * Loads metamodel data into the given object
@@ -161,8 +174,9 @@ class SqlModelLoader implements ModelLoaderInterface
         if ($object->getId()) {
             $q_where = 'o.oid = ' . $object->getId();
         } else {
-            $q_where = 'a.app_alias = "' . $object->getNamespace() . '" AND o.object_alias = "' . $object->getAlias() . '"';
+            $q_where = "a.app_alias = '{$object->getNamespace()}' AND o.object_alias = '{$object->getAlias()}'";
         }
+        $exists = $this->buildSqlExists('exf_object_behaviors ob', 'ob.object_oid = o.oid', 'has_behaviors');
         $query = $this->getDataConnection()->runSql('
 				SELECT
                     o.*,
@@ -172,7 +186,7 @@ class SqlModelLoader implements ModelLoaderInterface
 					' . $this->buildSqlUuidSelector('o.parent_object_oid') . ' as parent_object_oid,
 					a.app_alias,
 					' . $this->buildSqlUuidSelector('ds.base_object_oid') . ' as base_object_oid,
-					EXISTS (SELECT 1 FROM exf_object_behaviors ob WHERE ob.object_oid = o.oid) AS has_behaviors
+					' . $exists . '
 				FROM exf_object o 
 					LEFT JOIN exf_app a ON o.app_oid = a.oid 
 					LEFT JOIN exf_data_source ds ON o.data_source_oid = ds.oid
@@ -510,6 +524,19 @@ class SqlModelLoader implements ModelLoaderInterface
         
         return $attr;
     }
+    
+    /**
+     * Builds an sql CASE WHEN-THEN-ELSE statement.
+     * 
+     * @param string $sqlWhen
+     * @param string $sqlThen
+     * @param string $sqlElse
+     * @return string
+     */
+    protected function buildSqlCaseWhenThenElse(string $sqlWhen, string $sqlThen, string $sqlElse)
+    {
+        return "(CASE WHEN {$sqlWhen} THEN {$sqlThen} ELSE {$sqlElse} END)";
+    }
 
     /**
      * 
@@ -529,7 +556,8 @@ class SqlModelLoader implements ModelLoaderInterface
                 $join_on = 'dc.oid = ' . $connectionSelector->toString();
             }
         } else {
-            $join_on = 'IF (ds.custom_connection_oid IS NOT NULL, ds.custom_connection_oid, ds.default_connection_oid) = dc.oid';
+            //$join_on = 'IF (ds.custom_connection_oid IS NOT NULL, ds.custom_connection_oid, ds.default_connection_oid) = dc.oid';
+            $join_on = "{$this->buildSqlCaseWhenThenElse('ds.custom_connection_oid IS NOT NULL', 'ds.custom_connection_oid', 'ds.default_connection_oid')} = dc.oid";
         }
         
         // If there is a user logged in, fetch his specific connctor config (credentials)
@@ -785,7 +813,7 @@ class SqlModelLoader implements ModelLoaderInterface
 
     public function loadAction(AppInterface $app, $action_alias, WidgetInterface $trigger_widget = null)
     {
-        $sql_where = 'a.app_alias = "' . $app->getAliasWithNamespace() . '" AND oa.alias = "' . $action_alias . '"';
+        $sql_where = "a.app_alias = '{$app->getAliasWithNamespace()}' AND oa.alias = '{$action_alias}'";
         $actions = $this->loadActionsFromModel(new AppActionList($app->getWorkbench(), $app), $sql_where, $trigger_widget);
         return $actions->getFirst();
     }
@@ -1017,16 +1045,34 @@ class SqlModelLoader implements ModelLoaderInterface
         return $this->loadUserData($user, $userData);
     }
     
+    /**
+     * Builds sql statement selecting and combining the values of given `sqlColumn` matching the `sqlFrom` and `sqlWhere` into one
+     * into one, comma seperated, string. 
+     * 
+     * @param string $sqlColumn
+     * @param string $sqlFrom
+     * @param string $sqlWhere
+     * @return string
+     */
+    protected function buildSqlGroupConcat(string $sqlColumn, string $sqlFrom, string $sqlWhere)
+    {
+        return <<<SQL
+        
+        SELECT GROUP_CONCAT({$sqlColumn}, ',')
+        FROM {$sqlFrom}
+        WHERE {$sqlWhere}
+SQL;
+    }
+    
     public function loadUserData(UserInterface $user, DataSheetInterface $userData = null) : UserInterface
     {
+        $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('uru.user_role_oid'), 'exf_user_role_users uru', 'uru.user_oid = u.oid');
         $sql = <<<SQL
 SELECT
     u.*,
     {$this->buildSqlUuidSelector('u.oid')} AS oid,
     (
-        SELECT GROUP_CONCAT({$this->buildSqlUuidSelector('uru.user_role_oid')}, ',')
-        FROM exf_user_role_users uru
-        WHERE uru.user_oid = u.oid
+        {$groupConcat}
     ) as role_oids
 FROM
     exf_user u
@@ -1211,6 +1257,7 @@ SQL;
             throw new UiPageNotFoundError('Unsupported page selector ' . $selector->toString() . '!');
         }
         
+        $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('pgp.page_group_oid'), 'exf_page_group_pages pgp', 'pgp.page_oid = p.oid');
         $query = $this->getDataConnection()->runSql("
             SELECT 
                 p.*,
@@ -1224,9 +1271,7 @@ SQL;
                 pt.facade_filepath, 
                 pt.facade_uxon,
                 (
-                    SELECT GROUP_CONCAT({$this->buildSqlUuidSelector('pgp.page_group_oid')}, ',')
-                    FROM exf_page_group_pages pgp
-                    WHERE pgp.page_oid = p.oid
+                    {$groupConcat}
                 ) as group_oids
             FROM exf_page p 
                 LEFT JOIN exf_page_template pt ON p.page_template_oid = pt.oid
@@ -1532,6 +1577,7 @@ SQL;
         }
         $sqlOrder = "
             ORDER BY parent_oid, menu_index";
+        $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('pgp.page_group_oid'), 'exf_page_group_pages pgp', 'pgp.page_oid = p.oid');
         $sql = "
             SELECT
                 {$this->buildSqlUuidSelector('p.oid')} as oid,
@@ -1547,9 +1593,7 @@ SQL;
                 p.modified_on,
                 {$this->buildSqlUuidSelector('p.modified_by_user_oid')} as modified_by_user_oid,
                 (
-                    SELECT GROUP_CONCAT({$this->buildSqlUuidSelector('pgp.page_group_oid')}, ',')
-                    FROM exf_page_group_pages pgp
-                    WHERE pgp.page_oid = p.oid
+                    {$groupConcat}
                 ) as group_oids
             FROM exf_page p";
                 
@@ -1575,7 +1619,7 @@ SQL;
             $sql .= $sqlWhere;
         }
         
-        $sql = "#load UiPageTree Data" . $sql . $sqlOrder;
+        $sql = "/*load UiPageTree Data*/" . $sql . $sqlOrder;
         $query = $this->getDataConnection()->runSql($sql);
         $rows = $query->getResultArray();
         return $rows;        

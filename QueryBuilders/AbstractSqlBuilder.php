@@ -837,6 +837,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // build grouping function if necessary
             $output = $this->buildSqlSelectGrouped($qpart, $select_from, $select_column, $select_as, $aggregator);
             $add_nvl = true;
+            $select_as = '';
         } else {
             // otherwise create a regular select
             if ($select_column) {
