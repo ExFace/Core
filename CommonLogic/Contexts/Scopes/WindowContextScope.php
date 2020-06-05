@@ -71,12 +71,13 @@ class WindowContextScope extends AbstractContextScope
      */
     public function getContext($aliasOrSelector) : ContextInterface
     {
-        if (!array_key_exists($aliasOrSelector, $this->getContextsLoaded())){
+        if (! $context = $this->getContextsLoaded()[$aliasOrSelector]){
             // Initialize the context in the session scope just to have it included 
             // in the next getContextsLoaded()
-            return $this->getContextManager()->getScopeSession()->getContext($aliasOrSelector);
+            $context = $this->getContextManager()->getScopeSession()->getContext($aliasOrSelector);
+            $context->setScope($this);
         }
-        return $this->getContextsLoaded()[$aliasOrSelector];
+        return $context;
     }
 
     /**
