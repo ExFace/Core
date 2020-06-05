@@ -654,7 +654,8 @@ JS;
      */
     public function addOnChangeScript($string)
     {
-        $this->on_change_script .= $string;
+        // Add a semicolon in case the $string does not end with one.
+        $this->on_change_script .= trim($string) . ';';
         return $this;
     }
 
