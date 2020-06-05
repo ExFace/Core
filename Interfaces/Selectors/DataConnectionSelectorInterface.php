@@ -18,5 +18,5 @@ namespace exface\Core\Interfaces\Selectors;
  * @author Andrej Kabachnik
  *
  */
-interface DataConnectionSelectorInterface extends AliasSelectorWithOptionalNameSpaceInterface, UidSelectorInterface
+interface DataConnectionSelectorInterface extends AliasSelectorWithOptionalNamespaceInterface, UidSelectorInterface
 {}
