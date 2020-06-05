@@ -7,7 +7,6 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
-use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ExpressionFactory;
@@ -51,6 +50,7 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
  * - metamodel:widget_link
  * - metamodel:event
  * - metamodel:aggregator
+ * - metamodel:context
  * - uxon:path - where path is a JSONpath relative to the current field
  * - [val1,val2] - enumeration of commma-separated values (in square brackets)
  * - {keyType => valueType} - object with typed keys and values

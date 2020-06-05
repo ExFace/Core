@@ -7,11 +7,11 @@ namespace exface\Core\Interfaces\Selectors;
  * @author Ralf Mulansky
  *
  */
-interface AliasSelectorWithOptionalNameSpaceInterface extends AliasSelectorInterface
+interface AliasSelectorWithOptionalNamespaceInterface extends AliasSelectorInterface
 {
     /**
      * 
      * @return bool
      */
-    public function hasNameSpace() : bool;
+    public function hasNamespace() : bool;
 }

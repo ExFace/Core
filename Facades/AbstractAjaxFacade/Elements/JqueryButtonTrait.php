@@ -10,9 +10,11 @@ use exface\Core\Actions\RefreshWidget;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Actions\iRunFacadeScript;
 use exface\Core\Actions\SendToWidget;
-use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\Actions\ResetWidget;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iUseInputWidget;
+use exface\Core\Widgets\DialogButton;
+use exface\Core\Widgets\Dialog;
 
 /**
  * 
@@ -32,30 +34,69 @@ trait JqueryButtonTrait {
      * Returns the JS code to run when refreshing/resetting widgets after the action.
      * 
      * @param Button $widget
-     * @param AbstractJqueryElement $input_element
      * @return string
      */
-    protected function buildJsInputRefresh(Button $widget, $input_element)
+    protected function buildJsInputRefresh(Button $widget)
     {
         $js = '';
         
         // Reset the input if needed (before refreshing!!!)
-        $js .= $this->buildJsResetWidgets($widget, $input_element);
+        $js .= $this->buildJsResetWidgets($widget);
         
         // Refresh the linked widget if needed
-        $js .= $this->buildJsRefreshWidgets($widget, $input_element);
+        $js .= $this->buildJsRefreshWidgets($widget);
         
         return $js;
+    }
+    
+    /**
+     * Returns the JS to refresh input widgets for all ancestor buttons.
+     * 
+     * This is usefull if you have multiple nested dialogs and need to refresh the inputs
+     * of every button that was pressed to open each of the dialogs.
+     * 
+     * For example: when adding a credential set from the user-editor, first a dialog
+     * pops up to select the data connections, etc. This dialog will refresh it's input
+     * (= credentials table) when it closes. Pressing "login" on that dialog closes it
+     * and opens another one. At this point the credentials table is refreshed, by there
+     * still is no new credential set. Only when the second dialog closes the data had
+     * changed. The cascade allows to still refresh to credentials table in this case.
+     * 
+     * @param iUseInputWidget $button
+     * @param int $depth
+     * @return string
+     */
+    protected function buildJsRefreshCascade(iUseInputWidget $button, int $depth = null) : string
+    {
+        if ($button instanceof DialogButton && $button->getCloseDialogAfterActionSucceeds()){
+            
+            $dialogWidget = $button->getInputWidget();
+            if (! $dialogWidget instanceof Dialog){
+                return '';
+            }
+            if (! $dialogWidget->hasParent()) {
+                return '';
+            }
+            
+            $dialogTrigger = $dialogWidget->getParent();
+            if ($dialogTrigger instanceof Button) {
+                $js = $this->buildJsRefreshWidgets($dialogTrigger);
+                if ($depth > 1 || $depth === null) {
+                    $js .= $this->buildJsRefreshCascade($dialogTrigger, ($depth !== null ? $depth-1 : null));
+                }
+                return $js;
+            }
+        }
+        return '';
     }
     
     /**
      * Returns the JS code to refresh all neccessary widgets after the button's action succeeds.
      * 
      * @param Button $widget
-     * @param AbstractJqueryElement $input_element
      * @return string
      */
-    protected function buildJsRefreshWidgets(Button $widget, $input_element) : string
+    protected function buildJsRefreshWidgets(Button $widget) : string
     {
         $js = '';
         foreach ($widget->getRefreshWidgetIds() as $widgetId) {
@@ -72,7 +113,7 @@ trait JqueryButtonTrait {
      * @param AbstractJqueryElement $input_element
      * @return string
      */
-    protected function buildJsResetWidgets(button $widget, $input_element) : string
+    protected function buildJsResetWidgets(Button $widget) : string
     {
         $js = '';
         foreach ($widget->getResetWidgetIds() as $id) {
@@ -203,7 +244,7 @@ JS;
         // if the button does not have a action attached, just see if the attributes of the button
         // will cause some click-behaviour and return the JS for that
         if (! $action) {
-            $output .= $this->buildJsCloseDialog($widget, $input_element) . $this->buildJsInputRefresh($widget, $input_element);
+            $output .= $this->buildJsCloseDialog($widget, $input_element) . $this->buildJsInputRefresh($widget);
             return $output;
         }
         
@@ -222,7 +263,7 @@ JS;
         } elseif ($action instanceof SendToWidget) {
             $output = $this->buildJsClickSendToWidget($action, $input_element);
         } elseif ($action instanceof ResetWidget) {
-            $output = $this->buildJsResetWidgets($widget, $input_element);
+            $output = $this->buildJsResetWidgets($widget);
         } else {
             $output = $this->buildJsClickCallServerAction($action, $input_element);
         }
@@ -280,7 +321,7 @@ JS;
                                     }
 				                   	if (response.success !== undefined){
 										" . $this->buildJsCloseDialog($widget, $input_element) . "
-										" . $this->buildJsInputRefresh($widget, $input_element) . "
+										" . $this->buildJsInputRefresh($widget) . "
 				                       	" . $this->buildJsBusyIconHide() . "
 				                       	$('#" . $this->getId() . "').trigger('" . $action->getAliasWithNamespace() . ".action.performed', [requestData, '" . $input_element->getId() . "']);
 										if (response.success !== undefined || response.undoURL){
@@ -506,10 +547,19 @@ JS;
 						if ({$input_element->buildJsValidator()}) {
                             {$targetElement->buildJsDataSetter('requestData')}
                             {$this->buildJsCloseDialog($widget, $input_element)}
-                            {$this->buildJsInputRefresh($widget, $input_element)}
+                            {$this->buildJsInputRefresh($widget)}
                         }
 
 JS;
     }
+    
+    /**
+     * If it's a `DialogButton` returns the JS code to close the dialog after the action succeeds.
+     * 
+     * @param WidgetInterface $widget
+     * @param AbstractJqueryElement $input_element
+     * @return string
+     */
+    abstract protected function buildJsCloseDialog($widget, $input_element);
 }
 ?>

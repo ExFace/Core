@@ -685,7 +685,7 @@
         },
         {
             "CREATED_ON": "2020-02-06 14:56:54",
-            "MODIFIED_ON": "2020-03-10 20:35:45",
+            "MODIFIED_ON": "2020-06-03 15:31:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea48f0e3e07b3fb2cfe4b318306b9a",
@@ -707,7 +707,7 @@
             "TYPE": "D",
             "ALIAS": "IS_FOLDER_FLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
-            "DATA_ADDRESS": "IF(EXISTS (SELECT 1 FROM exf_page [#~alias#]_kids WHERE [#~alias#]_kids.parent_oid = [#~alias#].oid), 1, 0)",
+            "DATA_ADDRESS": "(CASE WHEN EXISTS (SELECT 1 FROM exf_page [#~alias#]_kids WHERE [#~alias#]_kids.parent_oid = [#~alias#].oid) THEN 1 ELSE 0 END)",
             "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
             "FORMATTER": "",
             "DISPLAYORDER": null,

@@ -706,7 +706,7 @@ class SqlModelLoader implements ModelLoaderInterface
         if ($selector->isUid()) {
             $filter = 'dc.oid = ' . $selector->toString();
         } else {
-            if ($selector->hasNameSpace()) {
+            if ($selector->hasNamespace()) {
                 $appAlias = $selector->getAppAlias();
                 $alias = substr($selector->toString(), (strlen($appAlias)+1));
                 $filter = 'dc.alias = "' . $alias . '" AND a.app_alias = "' . $appAlias . '"';

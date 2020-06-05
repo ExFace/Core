@@ -33,6 +33,9 @@ use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 use exface\Core\Factories\UserFactory;
 use exface\Core\DataTypes\MessageTypeDataType;
+use exface\Core\DataTypes\EncryptedDataType;
+use exface\Core\Exceptions\EncryptionError;
+use exface\Core\Exceptions\UxonSyntaxError;
 
 abstract class AbstractDataConnector implements DataConnectionInterface
 {
@@ -514,7 +517,12 @@ abstract class AbstractDataConnector implements DataConnectionInterface
                 // If we are saving private credentials and the existing credential set is private
                 // too - just update it.
                 if ($isPrivate === true && $credData->getCellValue('PRIVATE', 0) == 1) {
-                    $oldUxon = UxonObject::fromJson($credData->getCellValue('DATA_CONNECTOR_CONFIG', 0));
+                    try {
+                        $oldUxon = UxonObject::fromJson(EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $credData->getCellValue('DATA_CONNECTOR_CONFIG', 0), EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT));
+                    } catch (EncryptionError|UxonSyntaxError $e) {
+                        $this->getWorkbench()->getLogger()->logException($e);
+                        $oldUxon = new UxonObject();
+                    }
                     $newUxon = $oldUxon->extend($uxon);
                     $credData->setCellValue('DATA_CONNECTOR_CONFIG', 0, $newUxon->toJson());
                     $credData->dataUpdate(false, $transaction);

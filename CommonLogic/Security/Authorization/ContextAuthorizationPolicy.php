@@ -14,6 +14,12 @@ use exface\Core\Factories\PermissionFactory;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 
+/**
+ * Policy to restrict access to workbench contexts.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class ContextAuthorizationPolicy implements AuthorizationPolicyInterface
 {
     use ImportUxonObjectTrait;
@@ -128,6 +134,10 @@ class ContextAuthorizationPolicy implements AuthorizationPolicyInterface
     }
     
     /**
+     * Alias of the context this policy applies to - e.g. `exface.Core.DebugContext`.
+     * 
+     * @uxon-property context
+     * @uxon-type metamodel:context
      * 
      * @param string $value
      * @return ContextAuthorizationPolicy
