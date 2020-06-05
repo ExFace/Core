@@ -181,7 +181,7 @@ class ContextBar extends Toolbar
      * @return string
      */
     protected function createButtonIdFromContext(ContextInterface $context){
-        return $this->getId() . UiPage::WIDGET_ID_SEPARATOR . str_replace('.', '', $context->getScope()->getName() . $context->getAliasWithNamespace());
+        return $this->getId() . UiPage::WIDGET_ID_SEPARATOR . str_replace('.', '', $context->getScope()->getName() . ucfirst($context->getAliasWithNamespace()));
     }
     
     /**
