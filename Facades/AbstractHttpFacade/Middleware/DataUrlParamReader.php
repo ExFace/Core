@@ -12,7 +12,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\Traits\TaskRequestTrait;
 use exface\Core\DataTypes\ArrayDataType;
-use exface\Core\Exceptions\Facades\FacadeRuntimeError;
+use exface\Core\Exceptions\Facades\FacadeRequestParsingError;
 
 /**
  * This PSR-15 middleware reads a DataSheet from the given URL or body parameter
@@ -130,7 +130,7 @@ class DataUrlParamReader implements MiddlewareInterface
             $row = reset($rows);
             foreach ($row as $field => $val) {
                 if (ArrayDataType::isAssociative($row) === false) {
-                    throw new FacadeRuntimeError('Cannot parse URL parameter "data": invalid row format!');
+                    throw new FacadeRequestParsingError('Cannot parse URL parameter "data": invalid row format!');
                 }
                 if ($data_sheet->getMetaObject()->hasAttribute($field)){
                     $attr = $data_sheet->getMetaObject()->getAttribute($field);
