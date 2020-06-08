@@ -9,6 +9,9 @@ use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\JsonDataType;
 
 /**
  * A query builder for Microsoft SQL.
@@ -332,6 +335,51 @@ class MsSqlBuilder extends AbstractSqlBuilder
             }
         }
         return $subselect;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlQueryUpdate($sqlSet, $sqlWhere)
+     */
+    public function buildSqlQueryUpdate(string $sqlSet, string $sqlWhere)
+    {
+        $table_alias = $this->getShortAlias($this->getMainObject()->getAlias());
+        return 'UPDATE ' . $table_alias  . $sqlSet . ' FROM ' . $this->buildSqlFrom() . $sqlWhere;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareInputValue()
+     */
+    protected function prepareInputValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
+    {
+        $value = $data_type->parse($value);
+        switch (true) {
+            case $data_type instanceof StringDataType:
+                // JSON values are strings too, but their columns should be null even if the value is an
+                // empty object or empty array (otherwise the cells would never be null)
+                if (($data_type instanceof JsonDataType) && $data_type::isValueEmpty($value) === true) {
+                    $value = 'NULL';
+                } else {
+                    $value = $value === null ? 'NULL' : "'" . $value . "'";
+                }
+                break;
+            default:
+                $value = parent::prepareInputValue($value, $data_type);;
+        }
+        return $value;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlAsForTables()
+     */
+    protected function buildSqlAsForTables(string $alias) : string
+    {
+        return ' AS ' . $alias;
     }
 }
 ?>

@@ -225,6 +225,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
     abstract function buildSqlQueryTotals();
     
+    /**
+     * Function to build an sql UPDATE query with the given SET and WHERE parts.
+     * 
+     * @param string $sqlSet
+     * @param string $sqlWhere
+     * @return string
+     */
+    public function buildSqlQueryUpdate(string $sqlSet, string $sqlWhere)
+    {
+        return 'UPDATE ' . $this->buildSqlFrom() . $sqlSet . $sqlWhere;
+    }
+    
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $query = $this->buildSqlQuerySelect();
@@ -601,14 +613,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         // Execute the main query
         foreach ($updates_by_uid as $uid => $row) {
-            $sql = 'UPDATE ' . $this->buildSqlFrom() . ' SET ' . implode(', ', $row) . ' WHERE ' . $this->getMainObject()->getUidAttribute()->getDataAddress() . '=' . $uid;
+            $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $row), ' WHERE ' . $this->getMainObject()->getUidAttribute()->getDataAddress() . '=' . $uid);
             $query = $data_connection->runSql($sql);
             $affected_rows += $query->countAffectedRows();
             $query->freeResult();
         }
         
         if (count($updates_by_filter) > 0) {
-            $sql = 'UPDATE ' . $this->buildSqlFrom() . ' SET ' . implode(', ', $updates_by_filter) . $where;
+            $sql = $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $updates_by_filter), $where);
             $query = $data_connection->runSql($sql);
             $affected_rows = $query->countAffectedRows();
             $query->freeResult();
