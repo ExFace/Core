@@ -14,7 +14,9 @@ class UiPageTreeFactory extends AbstractStaticFactory
 {
     /**
      * Creates a complete tree with the default root page as root.
-     * The `depth` property controls how many levels the tree shows.
+     * 
+     * The `depth` property controls how many levels of the tree are to be loaded
+     * (use `null` for unlimited depth).
      * 
      * To get the tree root nodes call the function `getRootNodes()` of the tree object.
      * 
@@ -48,7 +50,10 @@ class UiPageTreeFactory extends AbstractStaticFactory
     
     /**
      * Creates a complete tree with the root page, given as `rootPage` property, as root.
-     * The `depth` property controls how many levels the tree shows.
+     * 
+     * The `depth` property controls how many levels of the tree are to be loaded
+     * (use `null` for unlimited depth).
+     * 
      * To get the tree root nodes call the function `getRootNodes()` of the tree object.
      * 
      * Example with `App1` as root page:
@@ -63,15 +68,33 @@ class UiPageTreeFactory extends AbstractStaticFactory
      *     App1_ChildPage3_Child1_Child
      *
      * 
-     * @param Workbench $exface
      * @param UiPageInterface $rootPage
      * @param int $depth
      * @return UiPageTree
      */
-    public static function createFromRootPage(Workbench $exface, UiPageInterface $rootPage, int $depth = null) : UiPageTree
+    public static function createFromRootPage(UiPageInterface $rootPage, int $depth = null) : UiPageTree
     {
-        $tree = new UiPageTree($exface);
+        $tree = new UiPageTree($rootPage->getWorkbench());
         $tree->setRootPages([$rootPage]);
+        $tree->setExpandDepth($depth);
+        return $tree;
+    }
+    
+    /**
+     * Instantiates a page tree starting from multiple nodes.
+     * 
+     * The `depth` property controls how many levels of the tree are to be loaded
+     * (use `null` for unlimited depth).
+     * 
+     * @param UiPageInterface[] $rootPages
+     * @param int $depth
+     * @return UiPageTree
+     */
+    public static function createFromRootPages(array $rootPages, int $depth = null) : UiPageTree
+    {
+        $workbench = reset($rootPages)->getWorkbench();
+        $tree = new UiPageTree($workbench);
+        $tree->setRootPages($rootPages);
         $tree->setExpandDepth($depth);
         return $tree;
     }
@@ -125,6 +148,7 @@ class UiPageTreeFactory extends AbstractStaticFactory
      * @param string $description
      * @param string $intro
      * @param UiPageGroupSelectorInterface|string $pageGroupSelectors
+     * 
      * @return UiPageTreeNode
      */
     public static function createNode(
