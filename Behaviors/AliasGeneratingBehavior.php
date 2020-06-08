@@ -162,6 +162,7 @@ class AliasGeneratingBehavior extends AbstractBehavior
         }
         
         $this->generateTransliteratedAliases($eventSheet, $targetCol);
+        return;
     }
     
     /**
@@ -215,7 +216,7 @@ class AliasGeneratingBehavior extends AbstractBehavior
                 }
                 
                 if ($namespace !== null && $namespace !== '') {
-                    $srcVal = $namespace . $this->getNamespaceSeparator() . $srcVal;
+                    $srcVal = $namespace . $this->getNamespaceSeparator() . trim($srcVal);
                 }
             }
             
