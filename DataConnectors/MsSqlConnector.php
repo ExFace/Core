@@ -32,6 +32,7 @@ class MsSqlConnector extends AbstractSqlConnector
         $connectInfo = array();
         $connectInfo["Database"] = $this->getDatabase();
         $connectInfo["CharacterSet"] = $this->getCharacterSet();
+        $connectInfo['ReturnDatesAsStrings'] = true;
         if ($this->getUID()) {
             $connectInfo["UID"] = $this->getUID();
         }
@@ -102,7 +103,7 @@ class MsSqlConnector extends AbstractSqlConnector
 
     function getAffectedRowsCount(SqlDataQuery $query)
     {
-        $cnt = sqlsrv_rows_affected($this->getCurrentConnection());
+        $cnt = sqlsrv_rows_affected($query->getResultResource());
         // sqlsrv_rows_affected() can return FALSE in case of an error accoring to the docs and -1
         // if no counting was possible.
         switch (true) {
