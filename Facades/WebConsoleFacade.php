@@ -61,7 +61,10 @@ class WebConsoleFacade extends AbstractHttpFacade
             $response = new Response($statusCode, $responseTpl->getHeaders(), $this->getWorkbench()->getDebugger()->printException($e));
         }  
         
-        $this->getWorkbench()->stop();
+        // Don't stop the workbench here!!! The response might include a generator, that
+        // will still need the workbench. The workbench will be stopped automatically
+        // before it' destroyed!
+        
         return $response;
     }
     
