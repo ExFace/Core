@@ -237,6 +237,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return 'UPDATE ' . $this->buildSqlFrom() . $sqlSet . $sqlWhere;
     }
     
+    /**
+     * Function to build an sql DELETE query with the given WHERE part.
+     *
+     * @param string $sqlSet
+     * @param string $sqlWhere
+     * @return string
+     */
+    public function buildSqlQueryDelete(string $sqlWhere)
+    {
+        return 'DELETE FROM ' . $this->buildSqlFrom() . $sqlWhere;
+    }
+    
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $query = $this->buildSqlQuerySelect();
@@ -741,7 +753,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             throw new QueryBuilderException('Cannot delete all data from "' . $this->main_object->getAlias() . '". Forbidden operation!');
         }
         
-        $sql = 'DELETE FROM ' . $this->buildSqlFrom() . $where;
+        $sql = $this->buildSqlQueryDelete($where);
+        //$sql = 'DELETE FROM ' . $this->buildSqlFrom() . $where;
         $query = $data_connection->runSql($sql);
         
         return new DataQueryResultData([], $query->countAffectedRows());
