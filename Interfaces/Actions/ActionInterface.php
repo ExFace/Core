@@ -188,9 +188,18 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
     public function hasInputDataPreset() : bool;
     
     /**
+     * 
      * @return DataSheetMapperInterface[]
      */
-    public function getInputMappers();
+    public function getInputMappers() : array;
+    
+    /**
+     * Returns the mapper, that will be used for the given input object or NULL if no mapper is defined.
+     * 
+     * @param MetaObjectInterface $fromObject
+     * @return DataSheetMapperInterface|NULL
+     */
+    public function getInputMapper(MetaObjectInterface $fromObject) : ?DataSheetMapperInterface;
     
     /**
      * Returns TRUE if there is at least one input mapper defined for this action and FALSE otherwise.

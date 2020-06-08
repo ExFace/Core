@@ -38,6 +38,7 @@ use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
+use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -802,9 +803,24 @@ abstract class AbstractAction implements ActionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputMappers()
      */
-    public function getInputMappers()
+    public function getInputMappers() : array
     {
         return $this->input_mappers;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputMapper()
+     */
+    public function getInputMapper(MetaObjectInterface $fromObject) : ?DataSheetMapperInterface
+    {
+        foreach ($this->getInputMappers() as $mapper){
+            if ($mapper->getFromMetaObject()->is($fromObject)){
+                return $mapper;
+            }
+        }
+        return null;
     }
     
     /**
@@ -1003,11 +1019,8 @@ abstract class AbstractAction implements ActionInterface
         }
         
         // Apply the input mappers
-        foreach ($this->getInputMappers() as $mapper){
-            if ($mapper->getFromMetaObject()->is($sheet->getMetaObject())){
-                return $mapper->map($sheet);
-                break;
-            }
+        if ($mapper = $this->getInputMapper($sheet->getMetaObject())){
+            return $mapper->map($sheet);
         }
         
         return $this->validateInputData($sheet);
