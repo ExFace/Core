@@ -90,6 +90,38 @@
             "APP": "0x31000000000000000000000000000000",
             "USE_IN_OBJECT_BASKET_FLAG": "0",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2020-06-07 15:59:54",
+            "MODIFIED_ON": "2020-06-07 19:54:28",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eaa8d7c1d6c637bba0e4b318306b9a",
+            "OBJECT": "0x31343400000000000000000000000000",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
+            "ALIAS": "DisableUser",
+            "NAME": "Disable",
+            "SHORT_DESCRIPTION": "The user will not be able to log in anymore",
+            "CONFIG_UXON": "{\"input_rows_min\":1,\"input_object_alias\":\"exface.Core.USER\",\"icon\":\"ban\",\"input_mapper\":{\"inherit_columns\":false,\"column_to_column_mappings\":[{\"from\":\"=1\",\"to\":\"DISABLED_FLAG\"},{\"from\":\"UID\",\"to\":\"UID\"},{\"from\":\"MODIFIED_ON\",\"to\":\"MODIFIED_ON\"}]}}",
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2020-06-07 19:52:45",
+            "MODIFIED_ON": "2020-06-07 19:52:45",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eaa8f848d0cba3bba0e4b318306b9a",
+            "OBJECT": "0x31343400000000000000000000000000",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
+            "ALIAS": "EnableUser",
+            "NAME": "Enable",
+            "SHORT_DESCRIPTION": "",
+            "CONFIG_UXON": "{\"input_rows_min\":1,\"input_object_alias\":\"exface.Core.USER\",\"icon\":\"check-circle-o\",\"input_mapper\":{\"inherit_columns\":false,\"column_to_column_mappings\":[{\"from\":\"=0\",\"to\":\"DISABLED_FLAG\"},{\"from\":\"UID\",\"to\":\"UID\"},{\"from\":\"MODIFIED_ON\",\"to\":\"MODIFIED_ON\"}]}}",
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
