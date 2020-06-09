@@ -1240,16 +1240,6 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::generateUid()
-     */
-    public static function generateUid()
-    {
-        return '0x' . Uuid::uuid1()->getHex();
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::generateAlias()
      */
     public static function generateAlias($prefix)
