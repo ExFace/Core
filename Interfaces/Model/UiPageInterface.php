@@ -360,13 +360,6 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
     public function equals(UiPageInterface $page, $ignore_properties);
     
     /**
-     * Generates a UID.
-     * 
-     * @return string
-     */
-    public static function generateUid();
-    
-    /**
      * Generates a unique alias.
      * 
      * @param string $prefix
