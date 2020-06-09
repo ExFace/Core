@@ -33,7 +33,6 @@ use exface\Core\Widgets\Traits\iHaveColumnsAndColumnGroupsTrait;
 use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Interfaces\Widgets\iHaveSorters;
 use exface\Core\Widgets\Parts\DataFooter;
-use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**

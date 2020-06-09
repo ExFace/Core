@@ -6,6 +6,8 @@ use exface\Core\CommonLogic\Model\UiPageTreeNode;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Model\UiPageInterface;
 
 /**
  * A hierarchical navigation menu starting the servers index page or a given root page.
@@ -54,6 +56,17 @@ use exface\Core\CommonLogic\Selectors\UiPageSelector;
  * 
  * ```
  * 
+ * ### A full menu starting from the `index` page
+ * 
+ * ```
+ * {
+ *  "widget_type": "NavMenu",
+ *  "object_alias": "exface.Core.PAGE",
+ *  "expand_all": true
+ * }
+ * 
+ * ```
+ * 
  * @method NavMenu getWidget() 
  *
  * @author Ralf Mulansky
@@ -65,6 +78,10 @@ class NavMenu extends AbstractWidget
     
     private $rootPageSelectors = null;
     
+    private $expandPathToCurrentPage = true;
+    
+    private $expandAll = false;
+    
     /**
      * Returns an array of UiPageTreeNodes. The array contains the root nodes of the menu.
      * If the root page was set, the array contains the node belonging to that root page.
@@ -75,22 +92,38 @@ class NavMenu extends AbstractWidget
      * @return UiPageTreeNode[]
      */
     public function getMenu() : array
-    {
-        $tree = UiPageTreeFactory::createForLeafNode($this->getWorkbench(), $this->getPage());
-        $rootSelectors = $this->getRootPageSelectors();
-        if (empty($rootSelectors) === false) {
-            $rootPages = [];
-            foreach ($rootSelectors as $rootSelector) {
-                $page = UiPageFactory::createFromModel($this->getWorkbench(), $rootSelector);
-                $rootPages[] = $page;
-            }
-            $tree->setRootPages($rootPages);
+    {        
+        switch (true) {
+            case $this->getExpandAll() === false && $this->getExpandPathToCurrentPage() === true:
+                $tree = UiPageTreeFactory::createForLeafNode($this->getWorkbench(), $this->getPage());
+                $tree->setRootPages($this->getRootPages());
+                break;
+            case $this->getExpandAll() === true:
+                $tree = UiPageTreeFactory::createFromRootPages($this->getRootPages(), null);
+                break;
+            default:
+                throw new WidgetConfigurationError($this, 'Unsupported configuration for NavMenu widget');
         }
+       
         if ($this->getShowRootNode() === false && count($tree->getRootNodes()) === 1 && !empty($tree->getStartRootNodes())) {
             return $tree->getRootNodes()[0]->getChildNodes();
         } else {
             return $tree->getRootNodes();
         }
+    }
+    
+    /**
+     * 
+     * @return UiPageInterface[]
+     */
+    public function getRootPages() : array
+    {
+        $rootPages = [];
+        foreach ($this->getRootPageSelectors() as $rootSelector) {
+            $page = UiPageFactory::createFromModel($this->getWorkbench(), $rootSelector);
+            $rootPages[] = $page;
+        }
+        return $rootPages;
     }
     
     /**
@@ -156,5 +189,55 @@ class NavMenu extends AbstractWidget
     public function getShowRootNode() : bool
     {
         return $this->showRootNode;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getExpandPathToCurrentPage() : bool
+    {
+        return $this->expandPathToCurrentPage;
+    }
+    
+    /**
+     * Set to TRUE to expand the menu tree down to the current page.
+     * 
+     * @uxon-property expand_path_to_current_page
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $trueOrFalse
+     * @return NavMenu
+     */
+    public function setExpandPathToCurrentPage(bool $trueOrFalse) : NavMenu
+    {
+        $this->expandPathToCurrentPage = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getExpandAll() : bool
+    {
+        return $this->expandAll;
+    }
+    
+    /**
+     * Set to TRUE to expand the entire menu tree by default.
+     *
+     * @uxon-property expand_all
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $trueOrFalse
+     * @return NavMenu
+     */
+    public function setExpandAll(bool $trueOrFalse) : NavMenu
+    {
+        $this->expandAll = $trueOrFalse;
+        return $this;
     }
 }

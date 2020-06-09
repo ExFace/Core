@@ -48,12 +48,12 @@ class DocsFacade extends AbstractHttpFacade
         
         $requestUri = $request->getUri();
         $baseUrl = StringDataType::substringBefore($requestUri->getPath(), '/' . $this->buildUrlToFacade(true), '');
-        $baseUrl = $requestUri->getScheme() . '://' . $requestUri->getHost() . ($requestUri->getPort() ? ':' . $requestUri->getPort() : '') . $baseUrl;
+        $baseUrl = $requestUri->getScheme() . '://' . $requestUri->getAuthority() . $baseUrl;
         
         // Add router middleware
         $matcher = function(UriInterface $uri) {
             $path = $uri->getPath();
-            $url = StringDataType::substringAfter($path, '/' . $this->buildUrlToFacade(false), '');
+            $url = StringDataType::substringAfter($path, '/' . $this->buildUrlToFacade(true), '');
             $url = ltrim($url, "/");
             if ($q = $uri->getQuery()) {
                 $url .= '?' . $q;
@@ -63,7 +63,7 @@ class DocsFacade extends AbstractHttpFacade
         
         $reader = new MarkdownDocsReader($this->getWorkbench());
         $templatePath = Filemanager::pathJoin([$this->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/template.html']);
-        $template = new PlaceholderFileTemplate($templatePath, $baseUrl . '/' . $this->buildUrlToFacade(false));
+        $template = new PlaceholderFileTemplate($templatePath, $baseUrl . '/' . $this->buildUrlToFacade(true));
         $template->setBreadcrumbsRootName('Documentation');
         $handler->add(new FileRouteMiddleware($matcher, $this->getWorkbench()->filemanager()->getPathToVendorFolder(), $reader, $template));
         

@@ -18,6 +18,7 @@ use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
+use exface\Core\Interfaces\AppInterface;
 
 /**
  * This PSR-15 middleware will look for a facade responsible for the given request
@@ -73,6 +74,8 @@ class FacadeResolverMiddleware implements MiddlewareInterface
             }
         }
         
+        $this->checkBaseUrls($request, $facade);
+        
         if (! ($facade instanceof RequestHandlerInterface)) {
             throw new FacadeIncompatibleError('Facade "' . $facade->getAliasWithNamespace() . '" is cannot be used as a standard HTTP request handler - please check system configuration option FACADES.ROUTES!');
         }
@@ -117,5 +120,30 @@ class FacadeResolverMiddleware implements MiddlewareInterface
             }
         }
         throw new FacadeRoutingError('No route can be found for URL "' . $url . '" - please check system configuration option FACADES.ROUTES or reinstall your facade!');
+    }
+    
+    /**
+     * 
+     * @param ServerRequestInterface $request
+     * @param HttpFacadeInterface $facade
+     * @return FacadeResolverMiddleware
+     */
+    protected function checkBaseUrls(ServerRequestInterface $request, HttpFacadeInterface $facade) : FacadeResolverMiddleware
+    {
+        $config = $this->workbench->getConfig();
+        $baseUrls = $config->getOption('SERVER.BASE_URLS')->toArray();
+        
+        // If the configuration has no base urls yet, add the current one. This is likely to
+        // be the URL called after installation - a good value to start with.
+        if (empty($baseUrls)) {
+            $uri = $request->getUri();
+            $facadeUrl = $facade->buildUrlToFacade();
+            $base = StringDataType::substringBefore($uri->__toString(), $facadeUrl, false);
+            if ($base !== false) {
+                $baseUrls[] = rtrim($base, "/") . "/";
+                $config->setOption('SERVER.BASE_URLS', $baseUrls, AppInterface::CONFIG_SCOPE_SYSTEM);
+            }
+        }
+        return $this;
     }
 }
