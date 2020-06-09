@@ -12,6 +12,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\Traits\TaskRequestTrait;
 use exface\Core\DataTypes\ArrayDataType;
+use exface\Core\Exceptions\Facades\FacadeRequestParsingError;
 
 /**
  * This PSR-15 middleware reads a DataSheet from the given URL or body parameter
@@ -93,7 +94,7 @@ class DataUrlParamReader implements MiddlewareInterface
             // Now take care of the rows, we split off before
             if ($rows) {
                 // If there is only one row and it has a UID column, check if the only UID cell has a concatennated value
-                if (count($rows) == 1) {
+                if (count($rows) === 1) {
                     $rows = $this->splitRowsByMultivalueFields($rows, $data_sheet);
                 }
                 $data_sheet->addRows($rows);
@@ -125,9 +126,12 @@ class DataUrlParamReader implements MiddlewareInterface
     protected function splitRowsByMultivalueFields(array $rows, DataSheetInterface $data_sheet)
     {
         $result = $rows;
-        if (count($rows) == 1) {
+        if (count($rows) === 1) {
             $row = reset($rows);
             foreach ($row as $field => $val) {
+                if (ArrayDataType::isAssociative($row) === false) {
+                    throw new FacadeRequestParsingError('Cannot parse URL parameter "data": invalid row format!');
+                }
                 if ($data_sheet->getMetaObject()->hasAttribute($field)){
                     $attr = $data_sheet->getMetaObject()->getAttribute($field);
                     if (is_string($val) && ($attr->isUidForObject() || $attr->isRelation())){

@@ -1489,7 +1489,7 @@ SQL;
     protected function loadPageTreeChildNodes(UiPageTree $tree, UiPageTreeNodeInterface $node, ?int $level) : UiPageTreeNodeInterface
     {
         $depth = $tree->getExpandDepth();        
-        if ($level === null || $level < $depth) {
+        if ($level === null || $depth === null || $level < $depth) {
             $childNodes = null;
             if ($this->nodes_loaded[$node->getUid()] !== null && $this->nodes_loaded[$node->getUid()]->getChildNodesLoaded() === true) {
                 $childNodes = $this->nodes_loaded[$node->getUid()]->getChildnodes();
@@ -1527,7 +1527,7 @@ SQL;
                 $node->setChildNodesLoaded(true);
                 $childNodes = $node->getChildNodes();
             }
-            if ($level === null || $level + 1 < $depth) {                
+            if ($level === null || $depth === null || $level + 1 < $depth) {                
                 $node->resetChildNodes();
                 //build second level of child nodes
                 foreach ($childNodes as $childNode) {
