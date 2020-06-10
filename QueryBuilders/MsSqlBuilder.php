@@ -12,6 +12,7 @@ use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\JsonDataType;
+use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 
 /**
  * A query builder for Microsoft SQL.
@@ -29,6 +30,18 @@ use exface\Core\DataTypes\JsonDataType;
  */
 class MsSqlBuilder extends AbstractSqlBuilder
 {
+    /**
+     *
+     * @param QueryBuilderSelectorInterface $selector
+     */
+    public function __construct(QueryBuilderSelectorInterface $selector)
+    {
+        parent::__construct($selector);
+        $reservedWords = $this->getReservedWords();
+        $reservedWords[] = 'USER';
+        $this->setReservedWords($reservedWords);
+    }
+
     /**
      * 
      * {@inheritDoc}
