@@ -281,11 +281,13 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlSelect()
      */
     protected function buildSqlSelect(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, $aggregator = null, bool $make_groupable = null)
-    {
-        if ($aggregator || $qpart->hasAggregator()) {
-            $select_as = '';
+    {        
+        $sql = parent::buildSqlSelect($qpart, $select_from, $select_column, $select_as, $aggregator, $make_groupable);
+        $aggr = $aggregator ?? $qpart->getAggregator();
+        if ($qpart->getQuery()->isSubquery() && $qpart->getQuery()->isAggregatedBy($qpart) && $aggr && ($aggr->getFunction()->getValue() === AggregatorFunctionsDataType::LIST_DISTINCT || $aggr->getFunction()->getValue() === AggregatorFunctionsDataType::LIST_ALL)) {
+            $sql = StringDataType::substringBefore($sql, ' AS ', $sql);
         }
-        return parent::buildSqlSelect($qpart, $select_from, $select_column, $select_as, $aggregator, $make_groupable);
+        return $sql;
     }
 
     /**
