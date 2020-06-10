@@ -233,19 +233,21 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param string $sqlWhere
      * @return string
      */
-    public function buildSqlQueryUpdate(string $sqlSet, string $sqlWhere)
+    public function buildSqlQueryUpdate(string $sqlSet, string $sqlWhere) : string
     {
         return 'UPDATE ' . $this->buildSqlFrom() . $sqlSet . $sqlWhere;
     }
     
     /**
      * Function to build an sql DELETE query with the given WHERE part.
-     *
+     * 
+     * E.g. `DELETE FROM $this->buildSqlFrom() $where`
+     * 
      * @param string $sqlSet
      * @param string $sqlWhere
      * @return string
      */
-    public function buildSqlQueryDelete(string $sqlWhere)
+    public function buildSqlQueryDelete(string $sqlWhere) : string
     {
         return 'DELETE FROM ' . $this->buildSqlFrom() . $sqlWhere;
     }
@@ -473,7 +475,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // if optimized uids should be used, build them here and add them to the row
             if ($uid_qpart && $uid_qpart->hasValues() === false && $uidIsOptimizedUUID === true) {
                 $customUid = UUIDDataType::generateSqlOptimizedUuid();
-                $row[$uid_qpart->getDataAddress()] = $this->buildSqlSetCustomUid($customUid);
+                $row[$uid_qpart->getDataAddress()] = $customUid;
             }
             $sql = 'INSERT INTO ' . $mainObj->getDataAddress() . ' (' . implode(', ', $columns) . ') VALUES (' . implode(',', $row) . ')';
             $query = $data_connection->runSql($sql);
@@ -537,11 +539,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }*/
         
         return new DataQueryResultData($insertedIds, $insertedCounter);
-    }
-    
-    protected function buildSqlSetCustomUid(string $uidValue) : string
-    {
-        return "{$uidValue}";
     }
 
     /**
@@ -772,7 +769,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // filters -> WHERE
         // Relations (joins) are not supported in delete clauses, so check for them first!
         if (count($this->getFilters()->getUsedRelations()) > 0) {
-            throw new QueryBuilderException('Filters over attributes of related objects ("' . $attribute . '") are not supported in DELETE queries!');
+            throw new QueryBuilderException('Filters over attributes of related objects are not supported in DELETE queries!');
         }
         $where = $this->buildSqlWhere($this->getFilters());
         $where = $where ? "\n WHERE " . $where : '';
@@ -781,7 +778,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         $sql = $this->buildSqlQueryDelete($where);
-        //$sql = 'DELETE FROM ' . $this->buildSqlFrom() . $where;
         $query = $data_connection->runSql($sql);
         
         return new DataQueryResultData([], $query->countAffectedRows());
@@ -889,7 +885,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // build grouping function if necessary
             $output = $this->buildSqlSelectGrouped($qpart, $select_from, $select_column, $select_as, $aggregator);
             $add_nvl = true;
-            $select_as = '';
         } else {
             // otherwise create a regular select
             if ($select_column) {
