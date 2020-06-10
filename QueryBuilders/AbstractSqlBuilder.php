@@ -383,8 +383,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     public function create(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         /* @var $data_connection \exface\Core\DataConnectors\AbstractSqlConnector */
-        if (! $this->isWritable())
+        if (! $this->isWritable()) {
             return new DataQueryResultData([], 0);
+        }
+        
+        $mainObj = $this->getMainObject();
         
         $values = array();
         $columns = array();
@@ -393,7 +396,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         foreach ($this->getValues() as $qpart) {
             $attr = $qpart->getAttribute();
             if ($attr->getRelationPath()->toString()) {
-                throw new QueryBuilderException('Cannot create attribute "' . $attr->getAliasWithRelationPath() . '" of object "' . $this->getMainObject()->getAliasWithNamespace() . '". Attributes of related objects cannot be created within the same SQL query!');
+                throw new QueryBuilderException('Cannot create attribute "' . $attr->getAliasWithRelationPath() . '" of object "' . $mainObj->getAliasWithNamespace() . '". Attributes of related objects cannot be created within the same SQL query!');
                 continue;
             }
             // Ignore attributes, that do not reference an sql column (= do not have a data address at all)
@@ -419,7 +422,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // via setValues() - they will always be replaced by the 
                     // custom SQL. To allow explicitly set values too, the
                     // INSERT_SQL must include something like IF('[#~value#]'!=''...)
-                    $insert_sql = $this->replacePlaceholdersInSqlAddress($custom_insert_sql, null, ['~alias' => $this->getMainObject()->getAlias(), '~value' => $value], $this->getMainObject()->getAlias());
+                    $insert_sql = $this->replacePlaceholdersInSqlAddress($custom_insert_sql, null, ['~alias' => $mainObj->getAlias(), '~value' => $value], $mainObj->getAlias());
                 } else {
                     $insert_sql = $value;
                 }
@@ -431,9 +434,36 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // This is important because the UID will mostly not be marked as a mandatory attribute in order to preserve the
         // possibility of mixed creates and updates among multiple rows. But an empty non-required attribute will never
         // show up as a value here. Still that value is required!
-        if ($uid_qpart === null && $this->getMainObject()->getUidAttribute()->getDataAddressProperty('SQL_USE_OPTIMIZED_UID') == true) {
-            $uid_qpart = $this->addValue($this->getMainObject()->getUidAttributeAlias(), null);
-        }        
+        $uidIsOptimizedUUID = BooleanDataType::cast($mainObj->getUidAttribute()->getDataAddressProperty('SQL_USE_OPTIMIZED_UID'));
+        $uidCustomSqlInsert = $mainObj->getUidAttribute()->getDataAddressProperty('SQL_INSERT');
+        if ($uidCustomSqlInsert === '') {
+            $uidCustomSqlInsert = null;
+        }
+        if ($uid_qpart === null && ($uidIsOptimizedUUID == true || $uidCustomSqlInsert)) {
+            $uid_qpart = $this->addValue($mainObj->getUidAttributeAlias(), null);
+        }
+        
+        if ($uidIsOptimizedUUID && $uidCustomSqlInsert) {
+            throw new QueryBuilderException('Invalid SQL data address configuration for UID of object "' . $mainObj->getAliasWithNamespace() . '": Cannot use SQL_INSERT and SQL_USE_OPTIMIZED_UID at the same time!');
+        }
+        
+        // If the UID query part has a custom SQL insert statement, render it here and make sure it's saved
+        // into a variable because all sorts of last_insert_id() function will not return such a value.
+        if ($uid_qpart && $uid_qpart->hasValues() === false && $uidCustomSqlInsert) {
+            $uidCustomSqlInsert = str_replace(array(
+                '[#~alias#]',
+                '[#~value#]'
+            ), array(
+                $mainObj->getAlias(),
+                $this->prepareInputValue('', $uid_qpart->getAttribute()->getDataType(), $uid_qpart->getDataAddressProperty('SQL_DATA_TYPE'))
+            ), $uidCustomSqlInsert);
+            
+            $columns[$uid_qpart->getDataAddress()] = $uid_qpart->getDataAddress();
+            $last_uid_sql_var = '@last_uid';
+            foreach ($values as $nr => $row) {
+                $values[$nr][$uid_qpart->getDataAddress()] = $last_uid_sql_var . ' := ' . $uidCustomSqlInsert;
+            }
+        }
         
         $insertedIds = [];
         $uidAlias = $uid_qpart ? $uid_qpart->getColumnKey() : null;
@@ -441,16 +471,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         foreach ($values as $nr => $row) {
             // if optimized uids should be used, build them here and add them to the row
-            if ($uid_qpart && $uid_qpart->hasValues() === false && $this->getMainObject()->getUidAttribute()->getDataAddressProperty('SQL_USE_OPTIMIZED_UID') == true) {
+            if ($uid_qpart && $uid_qpart->hasValues() === false && $uidIsOptimizedUUID === true) {
                 $customUid = UUIDDataType::generateSqlOptimizedUuid();
                 $row[$uid_qpart->getDataAddress()] = $this->buildSqlSetCustomUid($customUid);
             }
-            $sql = 'INSERT INTO ' . $this->getMainObject()->getDataAddress() . ' (' . implode(', ', $columns) . ') VALUES (' . implode(',', $row) . ')';
+            $sql = 'INSERT INTO ' . $mainObj->getDataAddress() . ' (' . implode(', ', $columns) . ') VALUES (' . implode(',', $row) . ')';
             $query = $data_connection->runSql($sql);
             
             // Now get the primary key of the last insert.
             if ($customUid) {
                 $last_id = $customUid;
+            } elseif ($last_uid_sql_var) {
+                // If the primary key was a custom generated one, it was saved to the corresponding SQL variable.
+                // Fetch it from the data base
+                if (strcasecmp($uid_qpart->getDataAddressProperty('SQL_DATA_TYPE'), 'binary') === 0) {
+                    $last_id_q = $data_connection->runSql('SELECT CONCAT(\'0x\', LOWER(HEX(' . $last_uid_sql_var . ')))');
+                } else {
+                    $last_id_q = $data_connection->runSql('SELECT ' . $last_uid_sql_var );
+                }
+                $last_id = reset($last_id_q->getResultArray()[0]);
             } else {
                 // If the primary key was autogenerated, fetch it via built-in function
                 $last_id = $query->getLastInsertId();
@@ -478,7 +517,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $values[$nr] = implode(',', $row);
             }
         }
-        $sql = 'INSERT INTO ' . $this->getMainObject()->getDataAddress() . ' (' . implode(', ', $columns) . ') VALUES (' . implode('), (', $values) . ')';
+        $sql = 'INSERT INTO ' . $mainObj->getDataAddress() . ' (' . implode(', ', $columns) . ') VALUES (' . implode('), (', $values) . ')';
         $query = $data_connection->runSql($sql);
         
         // Now get the primary key of the last insert.
