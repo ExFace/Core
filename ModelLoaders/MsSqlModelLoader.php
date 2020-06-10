@@ -22,7 +22,7 @@ class MsSqlModelLoader extends SqlModelLoader
      */
     protected function buildSqlUuidSelector($field_name)
     {
-        return "CONVERT(VARCHAR(200), {$field_name}, 1)";
+        return "LOWER(CONVERT(VARCHAR(200), {$field_name}, 1))";
     }
     
     /**
