@@ -233,7 +233,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param string $sqlWhere
      * @return string
      */
-    public function buildSqlQueryUpdate(string $sqlSet, string $sqlWhere)
+    public function buildSqlQueryUpdate(string $sqlSet, string $sqlWhere) : string
     {
         return 'UPDATE ' . $this->buildSqlFrom() . $sqlSet . $sqlWhere;
     }
@@ -241,11 +241,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     /**
      * Function to build an sql DELETE query with the given WHERE part.
      *
+     * E.g. `DELETE FROM $this->buildSqlFrom() $where`
+     *
      * @param string $sqlSet
      * @param string $sqlWhere
      * @return string
      */
-    public function buildSqlQueryDelete(string $sqlWhere)
+    public function buildSqlQueryDelete(string $sqlWhere) : string
     {
         return 'DELETE FROM ' . $this->buildSqlFrom() . $sqlWhere;
     }
@@ -306,7 +308,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function getReadResultRows(SqlDataQuery $query) : array
     {
         if ($rows = $query->getResultArray()) {
-            
+            foreach ($this->getBinaryColumns() as $full_alias) {
+                $short_alias = $this->getShortAlias($full_alias);
+                foreach ($rows as $nr => $row) {
+                    $rows[$nr][$full_alias] = $this->decodeBinary($row[$short_alias]);
+                }
+            }
             // TODO filter away the EXFRN column!
             foreach ($this->short_aliases as $short_alias) {
                 $full_alias = $this->getFullAlias($short_alias);
@@ -315,11 +322,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         $rows[$nr][$full_alias] = $row[$short_alias];
                         unset($rows[$nr][$short_alias]);
                     }
-                }
-            }
-            foreach ($this->getBinaryColumns() as $full_alias) {
-                foreach ($rows as $nr => $row) {
-                    $rows[$nr][$full_alias] = $this->decodeBinary($row[$full_alias]);
                 }
             }
             foreach ($this->getAttributes() as $qpart) {
@@ -538,11 +540,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
          }*/
         
         return new DataQueryResultData($insertedIds, $insertedCounter);
-    }
-    
-    protected function buildSqlSetCustomUid(string $uidValue) : string
-    {
-        return "{$uidValue}";
     }
     
     /**
@@ -773,7 +770,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // filters -> WHERE
         // Relations (joins) are not supported in delete clauses, so check for them first!
         if (count($this->getFilters()->getUsedRelations()) > 0) {
-            throw new QueryBuilderException('Filters over attributes of related objects ("' . $attribute . '") are not supported in DELETE queries!');
+            throw new QueryBuilderException('Filters over attributes of related objects are not supported in DELETE queries!');
         }
         $where = $this->buildSqlWhere($this->getFilters());
         $where = $where ? "\n WHERE " . $where : '';
@@ -782,7 +779,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         $sql = $this->buildSqlQueryDelete($where);
-        //$sql = 'DELETE FROM ' . $this->buildSqlFrom() . $where;
         $query = $data_connection->runSql($sql);
         
         return new DataQueryResultData([], $query->countAffectedRows());
@@ -890,7 +886,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // build grouping function if necessary
             $output = $this->buildSqlSelectGrouped($qpart, $select_from, $select_column, $select_as, $aggregator);
             $add_nvl = true;
-            $select_as = '';
         } else {
             // otherwise create a regular select
             if ($select_column) {
