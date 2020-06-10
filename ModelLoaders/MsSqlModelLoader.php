@@ -52,8 +52,7 @@ SQL;
         if (! ($connection instanceof MsSqlConnector)) {
             throw new \RuntimeException('Incompatible connector "' . $connection->getPrototypeClassName() . '" used for the model loader "' . get_class($this) . '": expecting a MsSqlConnector or a drivative.');
         }
-        $this->data_connection = $connection;
-        return $this;
+        return parent::setDataConnection($connection);
     }
 }
 

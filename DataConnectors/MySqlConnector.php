@@ -121,7 +121,7 @@ class MySqlConnector extends AbstractSqlConnector
 
     protected function getLastError()
     {
-        return mysqli_error($this->getCurrentConnection()) . ' (Error ' . mysqli_errno($this->getCurrentConnection() . ')');
+        return mysqli_error($this->getCurrentConnection()) . ' (Error ' . mysqli_errno($this->getCurrentConnection()) . ')';
     }
 
     /**

@@ -75,6 +75,7 @@ use exface\Core\DataTypes\EncryptedDataType;
 use exface\Core\DataTypes\UxonDataType;
 use exface\Core\Exceptions\Security\AccessDeniedError;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 
 /**
  * 
@@ -85,23 +86,23 @@ class SqlModelLoader implements ModelLoaderInterface
 {
     const ATTRIBUTE_TYPE_COMPOUND = 'C';
     
-    protected $data_connection = null;
+    private $data_connection = null;
     
-    protected $data_types_by_uid = [];
+    private $data_types_by_uid = [];
     
-    protected $data_type_uids = [];
+    private $data_type_uids = [];
     
-    protected $connections_loaded = [];
+    private $connections_loaded = [];
     
-    protected $selector = null;
+    private $selector = null;
     
-    protected $installer = null;
+    private $installer = null;
     
-    protected $pages_loaded = [];
+    private $pages_loaded = [];
     
-    protected $nodes_loaded = [];
+    private $nodes_loaded = [];
     
-    protected $menu_tress_loaded = [];
+    private $menu_tress_loaded = [];
     
     
     /**
@@ -784,8 +785,8 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     public function setDataConnection(DataConnectionInterface $connection)
     {
-        if (! ($connection instanceof MySqlConnector)) {
-            throw new \RuntimeException('Incompatible connector "' . $connection->getPrototypeClassName() . '" used for the model loader "' . get_class($this) . '": expecting a MySqlConnector or a drivative.');
+        if (! ($connection instanceof SqlDataConnectorInterface)) {
+            throw new \RuntimeException('Incompatible connector "' . $connection->getPrototypeClassName() . '" used for the model loader "' . get_class($this) . '": expecting a connector implementing SqlDataConnectorInterface.');
         }
         $this->data_connection = $connection;
         return $this;
@@ -1359,7 +1360,7 @@ SQL;
             $treeRootNodes = $tree->getStartRootNodes();
             $nodes = [];
             foreach ($treeRootNodes as $rootNode) {
-                $nodes[] = $this->loadPageTreeChildNodes($tree, $rootNode, 0);
+                $nodes[] = $this->loadPageTreeNodeSubNodes($rootNode, $tree->getExpandDepth());
             }
             return $nodes;
         }
@@ -1481,81 +1482,98 @@ SQL;
     }
     
     /**
+     * Loads all subnodes for the given node till depth is reached. If depth is null, loads every subnode for given node.
      * 
      * @param UiPageTreeNodeInterface $node
      * @param UiPageTreeNodeInterface[] $childNodes
      * @return UiPageTreeNodeInterface
      */
-    protected function loadPageTreeChildNodes(UiPageTree $tree, UiPageTreeNodeInterface $node, ?int $level) : UiPageTreeNodeInterface
+    protected function loadPageTreeNodeSubNodes(UiPageTreeNodeInterface $node, ?int $depth) : UiPageTreeNodeInterface
     {
-        $depth = $tree->getExpandDepth();        
-        if ($level === null || $depth === null || $level < $depth) {
-            $childNodes = null;
-            if ($this->nodes_loaded[$node->getUid()] !== null && $this->nodes_loaded[$node->getUid()]->getChildNodesLoaded() === true) {
-                $childNodes = $this->nodes_loaded[$node->getUid()]->getChildnodes();
-                $node->resetChildNodes();
-                foreach ($childNodes as $childNode) {
-                    $childNode = $this->loadPageTreeChildNodes($tree, $childNode, $level + 1);
-                    $childNode->setParentNode($node);
-                    $node->addChildNode($childNode);                    
+        // no subnodes need to be loaded if depth is not null or greater than 0
+        if (! ($depth === null || $depth > 0)) {
+            return $node;
+        }
+        $childNodes = null;
+        if ($this->nodes_loaded[$node->getUid()] !== null && $this->nodes_loaded[$node->getUid()]->getChildNodesLoaded() === true) {
+            $childNodes = $this->nodes_loaded[$node->getUid()]->getChildnodes();
+            $node->resetChildNodes();
+            foreach ($childNodes as $childNode) {
+                //load child nodes for child node if child node level is not wanted depth yet
+                if ($depth === null || $depth - 1 > 0) {
+                    $childNode = $this->loadPageTreeNodeSubNodes($childNode, $depth != null ? ($depth - 1) : NULL);
                 }
-                $node->setChildNodesLoaded(true);
-                $this->nodes_loaded[$node->getUid()] = $node;
-                return $node;
+                $childNode->setParentNode($node);
+                $node->addChildNode($childNode);                    
+            }
+            $node->setChildNodesLoaded(true);
+            $this->nodes_loaded[$node->getUid()] = $node;
+            return $node;
+        } else {
+            // load data for 1 level of sub nodes if next sub level of the current node is wanted depth
+            if (! ($depth === null || $depth - 1 >= 0)) {
+                $rows = $this->loadPageTreeLevel($node->getUid());
             } else {
-                $rows = $this->loadPageTreeLevel($node->getUid(), true);                
-                $childIds = [];
-                foreach ($rows as $row) {
-                    //build first level child nodes
-                    if ($row['parent_oid'] === $node->getUid()  && !in_array($row['oid'], $childIds)) {
-                        if ($this->nodes_loaded[$row['oid']] !== null) {
-                            $childNode = $this->nodes_loaded[$row['oid']];                            
+                // else load data for 2 sublevels right away
+                $rows = $this->loadPageTreeLevel($node->getUid(), true);
+            }
+            $childIds = [];
+            foreach ($rows as $row) {
+                //build first level child nodes
+                if ($row['parent_oid'] === $node->getUid()  && !in_array($row['oid'], $childIds)) {
+                    if ($this->nodes_loaded[$row['oid']] !== null) {
+                        $childNode = $this->nodes_loaded[$row['oid']];                            
+                        $childIds[] = $childNode->getUid();
+                        $node->addChildNode($childNode);
+                    } else {
+                        try {
+                            $childNode = $this->loadPageTreeCreateNodeFromDbRow($row, $node);                                
                             $childIds[] = $childNode->getUid();
                             $node->addChildNode($childNode);
-                        } else {
-                            try {
-                                $childNode = $this->loadPageTreeCreateNodeFromDbRow($row, $node);                                
-                                $childIds[] = $childNode->getUid();
-                                $node->addChildNode($childNode);
-                                $this->nodes_loaded[$childNode->getUid()] = $childNode;
-                            } catch (AccessDeniedError $e) {
-                                //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
-                            }
+                            $this->nodes_loaded[$childNode->getUid()] = $childNode;
+                        } catch (AccessDeniedError $e) {
+                            //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
                         }
                     }
-                }                
-                $node->setChildNodesLoaded(true);
-                $childNodes = $node->getChildNodes();
-            }
-            if ($level === null || $depth === null || $level + 1 < $depth) {                
-                $node->resetChildNodes();
-                //build second level of child nodes
-                foreach ($childNodes as $childNode) {
-                    foreach ($rows as $row) {
-                        if ($childNode->getUid() === $row['parent_oid']) {
-                            if ($this->nodes_loaded[$row['oid']] !== null) {
-                                $childChildNode = $this->nodes_loaded[$row['oid']];
-                            } else {
-                                try {
-                                    $childChildNode = $this->loadPageTreeCreateNodeFromDbRow($row, $childNode);
-                                } catch (AccessDeniedError $e) {
-                                    //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
-                                    continue;
-                                }
-                            }
-                            //load sub levels for child child tree nodes if needed
-                            $childChildNode = $this->loadPageTreeChildNodes($tree, $childChildNode, $level + 2);
-                            $this->nodes_loaded[$childChildNode->getUid()] = $childChildNode;
-                            $childNode->addChildNode($childChildNode);
-                        }
-                    }
-                    $childNode->setChildNodesLoaded(true);
-                    $this->nodes_loaded[$childNode->getUid()] = $childNode;                    
-                    $node->addChildNode($childNode);
-                }                
-                $node->setChildNodesLoaded(true);
-            }
+                }
+            }                
+            $node->setChildNodesLoaded(true);
+            $childNodes = $node->getChildNodes();
         }
+        
+        // return node if wanted depth is level of child nodes
+        if (! ($depth === null || $depth - 1 > 0)) {
+            return $node;
+        }
+            
+        $node->resetChildNodes();
+        //build second level of child nodes
+        foreach ($childNodes as $childNode) {
+            foreach ($rows as $row) {
+                if ($childNode->getUid() === $row['parent_oid']) {
+                    if ($this->nodes_loaded[$row['oid']] !== null) {
+                        $childChildNode = $this->nodes_loaded[$row['oid']];
+                    } else {
+                        try {
+                            $childChildNode = $this->loadPageTreeCreateNodeFromDbRow($row, $childNode);
+                        } catch (AccessDeniedError $e) {
+                            //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+                            continue;
+                        }
+                    }
+                    //load sub levels for child child nodes if needed
+                    if ($depth === null || $depth - 2 > 0) {
+                        $childChildNode = $this->loadPageTreeNodeSubNodes($childChildNode, $depth != null ? ($depth - 2) : NULL);
+                    }
+                    $this->nodes_loaded[$childChildNode->getUid()] = $childChildNode;
+                    $childNode->addChildNode($childChildNode);
+                }
+            }
+            $childNode->setChildNodesLoaded(true);
+            $this->nodes_loaded[$childNode->getUid()] = $childNode;                    
+            $node->addChildNode($childNode);
+        }                
+        $node->setChildNodesLoaded(true);
         return $node;
     }
     
