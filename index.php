@@ -20,6 +20,3 @@ $response = $handler->handle(ServerRequest::fromGlobals());
 
 // Send the response
 $handler::send($response);
-
-// Stop the workbench
-$workbench->stop();

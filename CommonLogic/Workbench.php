@@ -274,9 +274,13 @@ class Workbench implements WorkbenchInterface
             $this->data()->disconnectAll();
             $this->eventManager()->dispatch(new OnStopEvent($this));
             $this->started = false;
-            $this->event_manager = null;
-            $this->context = null;
-            $this->cache = null;
+            /* TODO it would be nicer to deinitialize these things when stopping,
+             * but the logger won't be able to dump logs properly without the
+             * context manager...
+            unset($this->logger);
+            unset($this->event_manager);
+            unset($this->context);
+            unset($this->cache);*/
         }
     }
 
