@@ -564,7 +564,7 @@ class SqlModelLoader implements ModelLoaderInterface
         // If there is a user logged in, fetch his specific connctor config (credentials)
         $authToken = $exface->getSecurity()->getAuthenticatedToken();
         if ($authToken->isAnonymous() === false && $user_name = $authToken->getUsername()) {
-            $join_user_credentials = ' LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.oid = uc.data_connection_credentials_oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = "' . $user_name . '") ON dcc.data_connection_oid = dc.oid';
+            $join_user_credentials = " LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.oid = uc.data_connection_credentials_oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = '{$user_name}') ON dcc.data_connection_oid = dc.oid";
             $select_user_credentials = ', dcc.data_connector_config AS user_connector_config';
         }
         
@@ -710,16 +710,16 @@ class SqlModelLoader implements ModelLoaderInterface
             if ($selector->hasNamespace()) {
                 $appAlias = $selector->getAppAlias();
                 $alias = substr($selector->toString(), (strlen($appAlias)+1));
-                $filter = 'dc.alias = "' . $alias . '" AND a.app_alias = "' . $appAlias . '"';
+                $filter = "dc.alias = '{$alias}' AND a.app_alias = '{$appAlias}'";
             } else {
-                $filter = 'dc.alias = "' . $selector->toString() . '"';
+                $filter = "dc.alias = '{$selector->toString()}'";
             }
         }
         
         // If there is a user logged in, fetch his specific connctor config (credentials)
         $authToken = $exface->getSecurity()->getAuthenticatedToken();
         if ($authToken->isAnonymous() === false && $user_name = $authToken->getUsername()) {
-            $join_user_credentials = ' LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.oid = uc.data_connection_credentials_oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = "' . $user_name . '") ON dcc.data_connection_oid = dc.oid';
+            $join_user_credentials = " LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.oid = uc.data_connection_credentials_oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = '{$user_name}') ON dcc.data_connection_oid = dc.oid";
             $select_user_credentials = ', dcc.data_connector_config AS user_connector_config';
         }
         
