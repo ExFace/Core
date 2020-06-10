@@ -306,12 +306,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function getReadResultRows(SqlDataQuery $query) : array
     {
         if ($rows = $query->getResultArray()) {
-            foreach ($this->getBinaryColumns() as $full_alias) {
-                $short_alias = $this->getShortAlias($full_alias);
-                foreach ($rows as $nr => $row) {
-                    $rows[$nr][$full_alias] = $this->decodeBinary($row[$short_alias]);
-                }
-            }
+            
             // TODO filter away the EXFRN column!
             foreach ($this->short_aliases as $short_alias) {
                 $full_alias = $this->getFullAlias($short_alias);
@@ -320,6 +315,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         $rows[$nr][$full_alias] = $row[$short_alias];
                         unset($rows[$nr][$short_alias]);
                     }
+                }
+            }            
+            foreach ($this->getBinaryColumns() as $full_alias) {
+                foreach ($rows as $nr => $row) {
+                    $rows[$nr][$full_alias] = $this->decodeBinary($row[$full_alias]);
                 }
             }
             foreach ($this->getAttributes() as $qpart) {
@@ -433,6 +433,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // show up as a value here. Still that value is required!
         if ($uid_qpart === null && $this->getMainObject()->getUidAttribute()->getDataAddressProperty('SQL_USE_OPTIMIZED_UID') == true) {
             $uid_qpart = $this->addValue($this->getMainObject()->getUidAttributeAlias(), null);
+            $columns[$this->getMainObject()->getUidAttribute()->getDataAddress()] = $this->getMainObject()->getUidAttribute()->getDataAddress();
+            
         }        
         
         $insertedIds = [];
