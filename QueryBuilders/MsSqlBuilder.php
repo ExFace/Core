@@ -274,6 +274,19 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         return $totals_query;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlSelect()
+     */
+    protected function buildSqlSelect(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, $aggregator = null, bool $make_groupable = null)
+    {
+        if ($aggregator || $qpart->hasAggregator()) {
+            $select_as = '';
+        }
+        return parent::buildSqlSelect($qpart, $select_from, $select_column, $select_as, $aggregator, $make_groupable);
+    }
 
     /**
      * 
@@ -355,7 +368,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlQueryUpdate($sqlSet, $sqlWhere)
      */
-    public function buildSqlQueryUpdate(string $sqlSet, string $sqlWhere)
+    public function buildSqlQueryUpdate(string $sqlSet, string $sqlWhere) : string
     {
         $table_alias = $this->getShortAlias($this->getMainObject()->getAlias());
         return 'UPDATE ' . $table_alias  . $sqlSet . ' FROM ' . $this->buildSqlFrom() . $sqlWhere;
@@ -366,7 +379,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlQueryDelete()
      */
-    public function buildSqlQueryDelete(string $sqlWhere)
+    public function buildSqlQueryDelete(string $sqlWhere) : string
     {
         $table_alias = $this->getShortAlias($this->getMainObject()->getAlias());
         return 'DELETE ' . $table_alias . '  FROM ' . $this->buildSqlFrom() . $sqlWhere;
@@ -406,4 +419,3 @@ class MsSqlBuilder extends AbstractSqlBuilder
         return ' AS ' . $alias;
     }
 }
-?>

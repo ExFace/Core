@@ -352,10 +352,4 @@ class MySqlBuilder extends AbstractSqlBuilder
         
         return new DataQueryResultData([], $cnt);
     }
-    
-    public function buildSqlQueryUpdate(string $sqlSet, string $sqlWhere)
-    {
-        return 'UPDATE ' . $this->buildSqlFrom() . $sqlSet . $sqlWhere;
-    }
 }
-?>
