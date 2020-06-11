@@ -1280,7 +1280,7 @@ abstract class AbstractWidget implements WidgetInterface
      * @param string $typeName            
      * @return AbstractWidget
      */
-    public function getParentByType(string $typeName)
+    public function getParentByClass(string $typeName)
     {
         if (! array_key_exists($typeName, $this->parentByType)) {
             $widget = $this;
