@@ -11,7 +11,6 @@ use exface\Core\Exceptions\DataSheets\DataSheetMapperInvalidInputError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\DataColumnFactory;
 use exface\Core\Interfaces\DataSheets\DataColumnToFilterMappingInterface;
 use exface\Core\Interfaces\DataSheets\DataFilterToColumnMappingInterface;

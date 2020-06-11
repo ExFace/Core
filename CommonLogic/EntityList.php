@@ -147,7 +147,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
      */
     public function removeAll()
     {
-        foreach ($this->getAll() as $key => $entity) {
+        foreach (array_keys($this->getAll()) as $key) {
             $this->removeByKey($key);
         }
         // Reset the array completely after performing the remove() method for each entry.

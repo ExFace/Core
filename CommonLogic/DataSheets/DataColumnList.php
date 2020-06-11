@@ -200,13 +200,32 @@ class DataColumnList extends EntityList implements DataColumnListInterface
     public function getByExpression($expression_or_string)
     {
         if ($expression_or_string instanceof ExpressionInterface) {
-            $expression_or_string = $expression_or_string->toString();
+            $exprString = $expression_or_string->toString();
+        } else {
+            $exprString = $expression_or_string;
         }
+        
+        // First check if there is a column with exactly the same expression
         foreach ($this->getAll() as $col) {
-            if ($col->getExpressionObj()->toString() === $expression_or_string) {
+            if ($col->getExpressionObj()->toString() === $exprString) {
                 return $col;
             }
         }
+        
+        // If not, see if there is a column with a name matching what would
+        // be the name for a column with the same expression. Need to do this
+        // because sometimes the original expression is lost due to encoding
+        // or decoding data leaving only the column name. If that matches,
+        // however, it's enough to assume, that this column fits.
+        $colNameForExpression = DataColumn::sanitizeColumnName($exprString);
+        if ($colNameForExpression !== '') {
+            foreach ($this->getAll() as $col) {
+                if ($col->getName() === $colNameForExpression) {
+                    return $col;
+                }
+            }
+        }
+        
         return false;
     }
 
