@@ -55,6 +55,12 @@ class CoreApp extends App
             ->setMarkerEnd('# END ');
         $installer->addInstaller($htaccessInstaller);
         
+        $webconfigInstaller = new FileContentInstaller($this->getSelector());
+        $webconfigInstaller
+        ->setFilePath(Filemanager::pathJoin([$this->getWorkbench()->getInstallationPath(), 'Web.config']))
+        ->setFileTemplatePath('default.Web.config');
+        $installer->addInstaller($webconfigInstaller);
+        
         // Add facade installers for core facades
         
         // HTTP file server facade
