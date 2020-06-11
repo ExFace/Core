@@ -47,7 +47,7 @@ trait JqueryMasonryGridTrait {
         // Nur wenn das Panel den gesamten Container ausfuellt, darf seine Groesse nicht
         // geaendert werden. In diesem Fall wird der wrapper eingefuegt und stattdessen seine
         // Groesse geaendert. Dadurch wird der Inhalt scrollbar im Panel angezeigt.
-        $containerWidget = $widget->getParentByType('exface\\Core\\Interfaces\\Widgets\\iContainOtherWidgets');
+        $containerWidget = $widget->getParentByClass('exface\\Core\\Interfaces\\Widgets\\iContainOtherWidgets');
         if(! $widget->hasParent() || ($containerWidget && $containerWidget->countWidgetsVisible() == 1)) {
             if ($widget->countWidgetsVisible() > 1) {
                 return true;
@@ -85,7 +85,7 @@ trait JqueryMasonryGridTrait {
         // Auch das Layout des Containers wird erneuert nachdem das eigene Layout aktualisiert
         // wurde.
         $layoutWidgetScript = '';
-        if ($layoutWidget = $widget->getParentByType('exface\\Core\\Interfaces\\Widgets\\iLayoutWidgets')) {
+        if ($layoutWidget = $widget->getParentByClass('exface\\Core\\Interfaces\\Widgets\\iLayoutWidgets')) {
             $layoutWidgetScript = <<<JS
 {$this->getFacade()->getElement($layoutWidget)->buildJsLayouter()};
 JS;
