@@ -118,6 +118,46 @@ class DataSheetMapper implements DataSheetMapperInterface {
             }
         }
         return $data_sheet;
+        
+        /* IDEA Alternative version of the code, that only reads additional columns puts their values
+         * into the original sheet without potential readig risks like changing row order, etc.
+         * Not sure, which approach is better. This one is surely less tested...
+        // Only try to add new columns if the sheet has a UID column and is fresh (no values changed)
+        if ($data_sheet->hasUidColumn(true) && $data_sheet->isFresh()){
+            $additionSheet = null;
+            foreach ($this->getColumnToColumnMappings() as $map){
+                $from_expression = $map->getFromExpression();
+                if (! $data_sheet->getColumns()->getByExpression($from_expression)){
+                    if ($additionSheet === null) {
+                        $additionSheet = $data_sheet->copy();
+                        foreach ($additionSheet->getColumns() as $col) {
+                            if ($col !== $additionSheet->getUidColumn()) {
+                                $additionSheet->getColumns()->remove($addedCol);
+                            }
+                        }
+                    }
+                    $data_sheet->getColumns()->addFromExpression($from_expression);
+                    $additionSheet->getColumns()->addFromExpression($from_expression);
+                }
+            }
+            if (! $data_sheet->isFresh()){
+                $additionSheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
+                $additionSheet->dataRead();
+                $uidCol = $data_sheet->getUidColumn();
+                foreach ($additionSheet->getColumns() as $addedCol) {
+                    foreach ($additionSheet->getRows() as $row) {
+                        $uid = $row[$uidCol->getName()];
+                        $rowNo = $uidCol->findRowByValue($uid);
+                        if ($uid === null || $rowNo === false) {
+                            throw new DataSheetMapperError($this, 'Cannot load additional data in preparation for mapping!');
+                        }
+                        $data_sheet->setCellValue($addedCol->getName(), $rowNo, $row[$addedCol->getName()]);
+                    }
+                }
+            }
+        }
+        return $data_sheet;
+        */
     }
     
     /**
