@@ -51,14 +51,16 @@ class CoreApp extends App
         $htaccessInstaller
             ->setFilePath(Filemanager::pathJoin([$this->getWorkbench()->getInstallationPath(), '.htaccess']))
             ->setFileTemplatePath('default.htaccess')
-            ->setMarkerBegin("\n# BEGIN ")
-            ->setMarkerEnd('# END ');
+            ->setMarkerBegin("\n# BEGIN [#marker#]")
+            ->setMarkerEnd('# END [#marker#]');
         $installer->addInstaller($htaccessInstaller);
         
         $webconfigInstaller = new FileContentInstaller($this->getSelector());
         $webconfigInstaller
         ->setFilePath(Filemanager::pathJoin([$this->getWorkbench()->getInstallationPath(), 'Web.config']))
-        ->setFileTemplatePath('default.Web.config');
+        ->setFileTemplatePath('default.Web.config')
+        ->setMarkerBegin("\n<!-- BEGIN [#marker#] -->")
+        ->setMarkerEnd("<!-- END [#marker#] -->");
         $installer->addInstaller($webconfigInstaller);
         
         // Add facade installers for core facades
@@ -82,7 +84,7 @@ class CoreApp extends App
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(WebConsoleFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
-        $htaccessInstaller->addContent("zlib compression off for webconsole facade \n", "
+        $htaccessInstaller->addContent("zlib compression off for webconsole facade\n", "
 <If \"'%{THE_REQUEST}' =~ m#api/webconsole#\">
     php_flag zlib.output_compression Off
 </If>
