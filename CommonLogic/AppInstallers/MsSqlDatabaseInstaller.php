@@ -25,7 +25,9 @@ use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
  *
  */
 class MsSqlDatabaseInstaller extends MySqlDatabaseInstaller
-{   
+{  
+    private $sql_migrations_prefix = null;
+
     /**
      *
      * @return string
@@ -45,24 +47,17 @@ class MsSqlDatabaseInstaller extends MySqlDatabaseInstaller
         $msg = '';
         try {
             $connection->connect();
-        } catch (DataConnectionFailedError $e) {
-            $msSqlException = $e->getPrevious();
-            /*if ($msSqlException instanceof \sqlsrv_errors) {
-                if ($msSqlException->getCode() === 1049) {
-                    $dbName = $connection->getDbase();
-                    $connection->setDbase('');
-                    $connection->connect();
-                    $database_create = "CREATE DATABASE {$dbName}";
-                    $connection->runSql($database_create);
-                    $database_use = "USE {$dbName};";
-                    $connection->runSql($database_use);
-                    $connection->disconnect();
-                    $connection->setDbase($dbName);
-                    $msg = 'Database ' . $dbName . ' created! ';
-                }
-            } else {
-                throw $e;
-            }*/
+        } catch (DataConnectionFailedError $e) {            
+            $dbName = $connection->getDbase();
+            $connection->setDbase('');
+            $connection->connect();
+            $database_create = "CREATE DATABASE {$dbName}";
+            $connection->runSql($database_create);
+            $database_use = "USE {$dbName};";
+            $connection->runSql($database_use);
+            $connection->disconnect();
+            $connection->setDbase($dbName);
+            $msg = 'Database ' . $dbName . ' created! ';
         }
         return $indent . $msg;
     }
@@ -119,15 +114,27 @@ SQL;
         return parent::buildSqlMigrationTableInsert($migration_name, $up_script, $up_result_string, $down_script) . "SELECT SCOPE_IDENTITY();";
     }
     
+    
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::getMigrationsTablePrefix()
+     * Set the prefix of the SQL table to store the migration log.
+     *
+     * @return string
+     */
+    public function setMigrationsTablePrefix(string $prefix) : AbstractSqlDatabaseInstaller
+    {
+        $this->sql_migrations_prefix = $prefix;
+        return $this;
+    }
+    
+    /**
+     * Returns the prefix of the SQL table to store the migration log.
+     *
+     * @return string
      */
     public function getMigrationsTablePrefix() : ?string
     {
-        if (parent::getMigrationsTablePrefix()) {
-            return parent::getMigrationsTablePrefix();
+        if ($this->getMigrationsTablePrefix()) {
+            return $this->getMigrationsTablePrefix();
         }
         return 'dbo';
     }

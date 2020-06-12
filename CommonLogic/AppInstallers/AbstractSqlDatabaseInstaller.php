@@ -103,8 +103,6 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     
     private $sql_migrations_table = '_migrations';
     
-    private $sql_migrations_prefix = null;
-    
     private $configOptionNamePrefix = 'INSTALLER.SQLDATABASEINSTALLER.';
     
     /**
@@ -390,27 +388,6 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     public function getMigrationsTableName() : string
     {
         return $this->sql_migrations_table;
-    }
-    
-    /**
-     * Returns the prefix of the SQL table to store the migration log.
-     *
-     * @return string
-     */
-    public function getMigrationsTablePrefix() : ?string
-    {
-        return $this->sql_migrations_prefix;
-    }
-    
-    /**
-     * Set the prefix of the SQL table to store the migration log.
-     *
-     * @return string
-     */
-    public function setMigrationsTablePrefix(string $prefix) : AbstractSqlDatabaseInstaller
-    {
-        $this->sql_migrations_prefix = $prefix;
-        return $this;
     }
     
     /**
