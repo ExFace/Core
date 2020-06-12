@@ -443,6 +443,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         if ($uid_qpart === null && ($uidIsOptimizedUUID == true || $uidCustomSqlInsert)) {
             $uid_qpart = $this->addValue($mainObj->getUidAttributeAlias(), null);
+            $columns[$uid_qpart->getDataAddress()] = $uid_qpart->getDataAddress();
         }
         
         if ($uidIsOptimizedUUID && $uidCustomSqlInsert) {
