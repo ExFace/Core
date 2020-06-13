@@ -42,6 +42,14 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     
     use iHaveColorTrait;
     
+    const APPEARANCE_DEFAULT = 'default';
+    
+    const APPEARANCE_FILLED = 'filled';
+    
+    const APPEARANCE_STROKED = 'stroked';
+    
+    const APPEARANCE_LINK = 'link';
+    
     private $action_alias = null;
 
     private $action = null;
@@ -63,6 +71,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     private $resetInputWidget = null;
     
     private $hiddenIfAccessDenied = false;
+    
+    private $appearance = self::APPEARANCE_DEFAULT;
     
     /**
      * 
@@ -497,5 +507,34 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         }        
         return $this->getAction()->isAuthorized() === false;
                    
+    }
+    
+    public function getAppearance() : string
+    {
+        return $this->appearance;
+    }
+    
+    /**
+     * Change the way, how the button is displayed: `filled`, `stroked`, `link`, etc.
+     * 
+     * By default, the facade will pick an appearance automatically based on it's
+     * internal logic and the button's `visibility`.
+     * 
+     * @uxon-property appearance
+     * @uxon-type [default,link,stroked,filled]
+     * @uxon-default default
+     * 
+     * @param string $value
+     * @throws WidgetConfigurationError
+     * @return Button
+     */
+    public function setAppearance(string $value) : Button
+    {
+        $constName = 'self:APPEARANCE_' . strtoupper($value);
+        if (! defined($constName)) {
+            throw new WidgetConfigurationError('Invalid value "' . $value . '" for property `appearance` of widget "' . $this->getWidgetType() . '": expecting `default`, `link`, `filled` or `stroked`.');
+        }
+        $this->appearance = constant($constName);
+        return $this;
     }
 }
