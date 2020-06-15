@@ -45,7 +45,7 @@ class MsSqlConnector extends AbstractSqlConnector
         }
         
         if (! $conn = sqlsrv_connect($this->getServerName() . ($this->getPort() ? ', ' . $this->getPort() : ''), $connectInfo)) {
-            throw new DataConnectionFailedError($this, "Failed to create the database connection! For database: '". $this->getDatabase() . "'! " . $this->getLastError());
+            throw new DataConnectionFailedError($this, "Failed to create the database connection! " . $this->getLastError());
         } else {
             $this->setCurrentConnection($conn);
         }
@@ -77,7 +77,7 @@ class MsSqlConnector extends AbstractSqlConnector
             $sql .= '; SELECT SCOPE_IDENTITY() AS IDENTITY_COLUMN_NAME';
         }
         if (! $result = sqlsrv_query($this->getCurrentConnection(), $sql)) {
-            throw new DataQueryFailedError($query, "SQL query failed! ". $query->getSql() . $this->getLastError(), '6T2T2UI');
+            throw new DataQueryFailedError($query, "SQL query failed! " . $this->getLastError(), '6T2T2UI');
         } else {
             $query->setResultResource($result);
             return $query;
