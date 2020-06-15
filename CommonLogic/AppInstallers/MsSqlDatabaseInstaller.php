@@ -105,6 +105,7 @@ SQL;
      */
     protected function buildSqlMigrationTableCreate() : string
     {
+        $pkName = 'PK_' . parent::getMigrationsTableName() . '_id';
         return <<<SQL
         
 CREATE TABLE {$this->getMigrationsTableName()}(
@@ -116,13 +117,13 @@ CREATE TABLE {$this->getMigrationsTableName()}(
 	[down_datetime] [datetime] NULL,
 	[down_script] [nvarchar](max) NOT NULL,
 	[down_result] [nvarchar](max) NULL,
- CONSTRAINT [PK__migrations_id] PRIMARY KEY CLUSTERED 
+ CONSTRAINT [{$pkName}] PRIMARY KEY CLUSTERED 
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY];
-ALTER TABLE [dbo].[_migrations] ADD  DEFAULT (getdate()) FOR [up_datetime];
-ALTER TABLE [dbo].[_migrations] ADD  DEFAULT (NULL) FOR [down_datetime];
+ALTER TABLE {$this->getMigrationsTableName()} ADD  DEFAULT (getdate()) FOR [up_datetime];
+ALTER TABLE {$this->getMigrationsTableName()} ADD  DEFAULT (NULL) FOR [down_datetime];
 
 SQL;
     }
