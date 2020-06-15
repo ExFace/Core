@@ -81,7 +81,7 @@ SQL;
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::ensureMigrationsTableExists()
      */
-    protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : self
+    protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : SqlDataConnectorInterface
     {
         $sql = $this->buildSqlMigrationTableShow();
         if ($connection->runSql($sql)->getResultArray()[0][0] === NULL) {
