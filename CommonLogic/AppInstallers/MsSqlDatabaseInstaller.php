@@ -72,7 +72,7 @@ class MsSqlDatabaseInstaller extends MySqlDatabaseInstaller
     {
         return <<<SQL
 
-SELECT OBJECT_ID('{$this->getMigrationsTableName()}', 'U');
+SELECT OBJECT_ID('{$this->getMigrationsTableName()}', 'U') AS id;
 SQL;
     }
     
@@ -84,7 +84,8 @@ SQL;
     protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : void
     {
         $sql = $this->buildSqlMigrationTableShow();
-        if ($connection->runSql($sql)->getResultArray()[0][0] === NULL) {
+        $result = $connection->runSql($sql)->getResultArray();
+        if ($result [0]['id'] === NULL) {
             try {
                 $migrations_table_create = $this->buildSqlMigrationTableCreate();
                 $this->runSqlMultiStatementScript($connection, $migrations_table_create);
