@@ -46,7 +46,7 @@ trait JqueryLayoutTrait {
                     $this->number_of_columns = $width;
                 } else {
                     if ($this->inheritsNumberOfColumns()) {
-                        if ($layoutWidget = $widget->getParentByType('exface\\Core\\Interfaces\\Widgets\\iLayoutWidgets')) {
+                        if ($layoutWidget = $widget->getParentByClass('exface\\Core\\Interfaces\\Widgets\\iLayoutWidgets')) {
                             $parentElement = $this->getFacade()->getElement($layoutWidget);
                             if (true === method_exists($parentElement, 'getNumberOfColumns')) {
                                 $parentColumnNumber = $parentElement->getNumberOfColumns();

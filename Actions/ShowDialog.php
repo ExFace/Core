@@ -53,10 +53,12 @@ class ShowDialog extends ShowWidget implements iShowDialog
         
         if ($contained_widget) {
             $dialog->addWidget($contained_widget);
-            if (false === $contained_widget->getWidth()->isUndefined()) {
+            $width = $contained_widget->getWidth();
+            $heigth = $contained_widget->getHeight();
+            if (! $width->isUndefined() && ! $width->isMax() && $width->getValue() !== '100%') {
                 $dialog->setWidth($contained_widget->getWidth()->getValue());
             }
-            if (false === $contained_widget->getHeight()->isUndefined()) {
+            if (! $heigth->isUndefined() && ! $heigth->isMax() && $heigth->getValue() !== '100%') {
                 $dialog->setHeight($contained_widget->getHeight()->getValue());
             }
         }

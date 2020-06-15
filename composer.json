@@ -50,7 +50,8 @@
         "kabachello/fileroute": "~0.2",
         "guzzlehttp/guzzle": "^6.2.2",
         "npm-asset/workbox-sw": "^3.0.0",
-        "npm-asset/dexie": "^2.0.4"
+        "npm-asset/dexie": "^2.0.4",
+        "ramsey/uuid": "^3.0||^4.0"
     },
     "bin": [
         "Facades/ConsoleFacade/bin/action"
@@ -59,8 +60,8 @@
         "app": {
             "app_uid": "0x31000000000000000000000000000000",
             "app_alias": "exface.Core",
-            "model_md5": "17aa16dc9bd6d8a3cab71a2cc90fca0a",
-            "model_timestamp": "2020-06-10 09:18:19"
+            "model_md5": "1085f07a0d8d0be53b201121aea60985",
+            "model_timestamp": "2020-06-11 14:26:53"
         }
     },
     "autoload": {
