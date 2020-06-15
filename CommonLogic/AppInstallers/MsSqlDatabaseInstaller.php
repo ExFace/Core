@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
+use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 
 /**
  * Database AppInstaller for Apps with MsSQL Database.
@@ -73,6 +74,27 @@ class MsSqlDatabaseInstaller extends MySqlDatabaseInstaller
 
 SELECT OBJECT_ID('{$this->getMigrationsTableName()}', 'U');
 SQL;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::ensureMigrationsTableExists()
+     */
+    protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : self
+    {
+        $sql = $this->buildSqlMigrationTableShow();
+        if ($connection->runSql($sql)->getResultArray()[0][0] === NULL) {
+            try {
+                $migrations_table_create = $this->buildSqlMigrationTableCreate();
+                $this->runSqlMultiStatementScript($connection, $migrations_table_create);
+                $this->getWorkbench()->getLogger()->debug('SQL migration table' . $this->getMigrationsTableName() . ' created! ');
+            } catch (\Throwable $e) {
+                $this->getWorkbench()->getLogger()->logException($e);
+                throw new InstallerRuntimeError($this, 'Generating Migration table failed!');
+            }
+        }
+        return $this;
     }
     
     /**
