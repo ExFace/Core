@@ -48,7 +48,7 @@ class MsSqlDatabaseInstaller extends MySqlDatabaseInstaller
         try {
             $connection->connect();
         } catch (DataConnectionFailedError $e) {            
-            $dbName = $connection->getDbase();
+            $dbName = $connection->getDatabase();
             $connection->setDbase('');
             $connection->connect();
             $database_create = "CREATE DATABASE {$dbName}";
@@ -56,7 +56,7 @@ class MsSqlDatabaseInstaller extends MySqlDatabaseInstaller
             $database_use = "USE {$dbName};";
             $connection->runSql($database_use);
             $connection->disconnect();
-            $connection->setDbase($dbName);
+            $connection->setDatabase($dbName);
             $msg = 'Database ' . $dbName . ' created! ';
         }
         return $indent . $msg;
