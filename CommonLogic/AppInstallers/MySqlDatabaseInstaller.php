@@ -76,7 +76,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      * @throws InstallerRuntimeError
      * @return self
      */ 
-    protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : self
+    protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : SqlDataConnectorInterface
     {
         $sql = $this->buildSqlMigrationTableShow();
         if (empty($connection->runSql($sql)->getResultArray())) {
