@@ -81,7 +81,7 @@ SQL;
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::ensureMigrationsTableExists()
      */
-    protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : SqlDataConnectorInterface
+    protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : void
     {
         $sql = $this->buildSqlMigrationTableShow();
         if ($connection->runSql($sql)->getResultArray()[0][0] === NULL) {
@@ -94,7 +94,7 @@ SQL;
                 throw new InstallerRuntimeError($this, 'Generating Migration table failed!');
             }
         }
-        return $this;
+        return;
     }
     
     /**

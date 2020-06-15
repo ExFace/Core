@@ -74,9 +74,8 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      * 
      * @param SqlDataConnectorInterface $connection
      * @throws InstallerRuntimeError
-     * @return self
-     */ 
-    protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : SqlDataConnectorInterface
+     */
+    protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : void
     {
         $sql = $this->buildSqlMigrationTableShow();
         if (empty($connection->runSql($sql)->getResultArray())) {
@@ -89,7 +88,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
                 throw new InstallerRuntimeError($this, 'Generating Migration table failed!');
             }
         }        
-        return $this;
+        return;
     }
     
     /**
