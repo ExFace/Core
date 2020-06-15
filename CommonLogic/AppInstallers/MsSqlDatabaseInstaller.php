@@ -133,8 +133,8 @@ SQL;
      */
     public function getMigrationsTablePrefix() : ?string
     {
-        if ($this->getMigrationsTablePrefix()) {
-            return $this->getMigrationsTablePrefix();
+        if ($this->sql_migrations_prefix) {
+            return $this->sql_migrations_prefix;
         }
         return 'dbo';
     }
