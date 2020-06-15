@@ -176,7 +176,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      *
      * @param string $cell_value            
      * @param boolean $case_sensitive            
-     * @return integer
+     * @return integer|boolean
      */
     public function findRowByValue($cell_value, $case_sensitive = false);
 
