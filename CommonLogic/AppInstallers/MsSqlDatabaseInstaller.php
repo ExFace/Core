@@ -89,10 +89,10 @@ SQL;
             try {
                 $migrations_table_create = $this->buildSqlMigrationTableCreate();
                 $this->runSqlMultiStatementScript($connection, $migrations_table_create);
-                $this->getWorkbench()->getLogger()->debug('SQL migration table' . $this->getMigrationsTableName() . ' created! ');
+                $this->getWorkbench()->getLogger()->debug('SQL migration table ' . $this->getMigrationsTableName() . ' created! ');
             } catch (\Throwable $e) {
                 $this->getWorkbench()->getLogger()->logException($e);
-                throw new InstallerRuntimeError($this, 'Generating Migration table failed!');
+                throw new InstallerRuntimeError($this, "Generating Migration table '{$this->getMigrationsTableName()}' failed!");
             }
         }
         return;
