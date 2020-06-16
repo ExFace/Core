@@ -106,25 +106,9 @@ class DataSheetMapper implements DataSheetMapperInterface {
     {
         // Only try to add new columns if the sheet has a UID column and is fresh (no values changed)
         if ($data_sheet->hasUidColumn(true) && $data_sheet->isFresh()){
-            foreach ($this->getColumnToColumnMappings() as $map){
-                $from_expression = $map->getFromExpression();
-                if (! $data_sheet->getColumns()->getByExpression($from_expression)){
-                    $data_sheet->getColumns()->addFromExpression($from_expression);
-                }
-            }
-            if (! $data_sheet->isFresh()){
-                $data_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
-                $data_sheet->dataRead();
-            }
-        }
-        return $data_sheet;
-        
-        /* IDEA Alternative version of the code, that only reads additional columns puts their values
-         * into the original sheet without potential readig risks like changing row order, etc.
-         * Not sure, which approach is better. This one is surely less tested...
-        // Only try to add new columns if the sheet has a UID column and is fresh (no values changed)
-        if ($data_sheet->hasUidColumn(true) && $data_sheet->isFresh()){
             $additionSheet = null;
+            // See if any mapped columns are missing in the original data sheet. If so, add empty
+            // columns and also create a separate sheet for reading missing data.
             foreach ($this->getColumnToColumnMappings() as $map){
                 $from_expression = $map->getFromExpression();
                 if (! $data_sheet->getColumns()->getByExpression($from_expression)){
@@ -132,7 +116,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
                         $additionSheet = $data_sheet->copy();
                         foreach ($additionSheet->getColumns() as $col) {
                             if ($col !== $additionSheet->getUidColumn()) {
-                                $additionSheet->getColumns()->remove($addedCol);
+                                $additionSheet->getColumns()->remove($col);
                             }
                         }
                     }
@@ -140,6 +124,10 @@ class DataSheetMapper implements DataSheetMapperInterface {
                     $additionSheet->getColumns()->addFromExpression($from_expression);
                 }
             }
+            // If columns were added to the original sheet, that need data to be loaded,
+            // use the additional data sheet to load the data. This makes sure, the values
+            // in the original sheet (= the input values) are not overwrittten by the read
+            // operation.
             if (! $data_sheet->isFresh()){
                 $additionSheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
                 $additionSheet->dataRead();
@@ -157,7 +145,6 @@ class DataSheetMapper implements DataSheetMapperInterface {
             }
         }
         return $data_sheet;
-        */
     }
     
     /**
