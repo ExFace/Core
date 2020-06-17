@@ -15,4 +15,4 @@ In the installation directory:
 
 ## Example configuration for Apache servers
 
-In the case of an Apache server, the `.htaccess` file is a handy tool to restrict access to specific URLs. See the [default .htaccess template}(../../Install/default.htaccess) in the Core app for an example configuration.
+In the case of an Apache server, the `.htaccess` file is a handy tool to restrict access to specific URLs. See the [default .htaccess template](../../Install/default.htaccess) in the Core app for an example configuration.
