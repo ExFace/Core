@@ -427,7 +427,7 @@
         },
         {
             "CREATED_ON": "2019-07-22 10:59:20",
-            "MODIFIED_ON": "2020-06-03 17:04:15",
+            "MODIFIED_ON": "2020-06-17 12:11:12",
             "CREATED_BY_USER": "0x11e9876d60774992bb32106530e7aff7",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9ac6fd1b15c528d53106530e7aff7",
@@ -449,7 +449,7 @@
             "TYPE": "D",
             "ALIAS": "WRAP_FLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
-            "DATA_ADDRESS": "(CASE WHEN [#WRAP_PATH#] <> \"\" THEN 1 ELSE 0 END)",
+            "DATA_ADDRESS": "(CASE WHEN [#WRAP_PATH#] <> '' THEN 1 ELSE 0 END)",
             "OBJECT": "0x11e9a23da60d78a6949f106530e7aff7",
             "FORMATTER": "",
             "DISPLAYORDER": null,
