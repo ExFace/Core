@@ -1156,6 +1156,20 @@
             "UXON": "{\"widget_type\":\"Dashboard\",\"object_alias\":\"\",\"widgets\":[{\"widget_type\":\"DataTable\",\"width\":1,\"height\":10,\"columns\":[{\"attribute_alias\":\"\"}]},{\"widget_type\":\"Chart\",\"width\":1,\"height\":10,\"series\":[{\"type\":\"line\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}]}",
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2020-06-11 14:57:26",
+            "MODIFIED_ON": "2020-06-11 14:57:26",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eabe4add437650be4a0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Card with caption",
+            "DESCRIPTION": "Simple card a caption. Can be used as wrapper.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/WidgetGroup.php",
+            "UXON": "{\"widget_type\":\"Card\",\"caption\":\"\",\"widgets\":[{\"attribute_alias\":\"\"}]}",
+            "WRAP_PATH": "$.widgets[0]",
+            "UXON_SCHEMA": "widget"
         }
     ],
     "totals_rows": [],
