@@ -36,7 +36,7 @@ class IISServerInstaller extends AbstractAppInstaller
         yield $indent . $this->setPermissionsForTranslationsFolder() . PHP_EOL;                
     }
     
-    protected function setPermissionForPath(string $path): string
+    protected function setPermissionsForPath(string $path): string
     {
         $output = [];
         $user = self::IIS_USERNAME;
