@@ -91,6 +91,13 @@ class CoreApp extends App
             
 ");
         
+        $serverInstallerClass = $this->getWorkbench()->getConfig()->getOption("INSTALLER.SERVER_INSTALLER.CLASS");
+        if ($serverInstallerClass != null) {
+            $serverInstaller = new $serverInstallerClass($this->getSelector());
+            $installer->addInstaller($serverInstaller);
+        }
+        
+        
         return $installer;
     }
     
