@@ -91,7 +91,17 @@ class AliasGeneratingBehavior extends AbstractBehavior
     
     private $case = null;
     
-    private $replaceCharacters = ["Ä"=>"Ae", "Ö"=>"Oe", "Ü"=>"Ue", "ä"=>"ae", "ö"=>"oe", "ü"=>"ue", "ß"=>"ss", " "=>"_"];
+    private $replaceCharacters = [
+        "Ä"=>"Ae", 
+        "Ö"=>"Oe", 
+        "Ü"=>"Ue", 
+        "ä"=>"ae", 
+        "ö"=>"oe", 
+        "ü"=>"ue", 
+        "ß"=>"ss", 
+        " "=>"_",
+        "&" => "and"
+    ];
     
     private $namespaceCache = [];
     
