@@ -53,6 +53,11 @@ trait SplittableChartSeriesTrait
         return $this->getSplitByAttributeAlias() !== null;
     }
     
+    /**
+     * 
+     * @throws WidgetLogicError
+     * @return MetaAttributeInterface
+     */
     public function getSplitByAttribute() : MetaAttributeInterface
     {
         if ($this->isSplitByAttribute() === false) {
@@ -61,6 +66,11 @@ trait SplittableChartSeriesTrait
         return $this->getMetaObject()->getAttribute($this->getSplitByAttributeAlias());
     }
     
+    /**
+     * 
+     * @throws WidgetLogicError
+     * @return DataColumn
+     */
     public function getSplitByDataColumn() : DataColumn
     {
         if ($this->isSplitByAttribute() === false) {
