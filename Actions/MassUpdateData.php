@@ -49,9 +49,13 @@ class MassUpdateData extends UpdateData
             // Flatten to a single row with a list of UIDs in the UID column
             $data_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
             $firstRow = $data_sheet->getRow(0);
-            $firstRow[$data_sheet->getUidColumn()->getName()] = array_unique(implode($data_sheet->getUidColumn()->getAttribute()->getValueListDelimiter(), $data_sheet->getUidColumn()->getValues(false)));
+            $firstRow[$data_sheet->getUidColumn()->getName()] = implode($data_sheet->getUidColumn()->getAttribute()->getValueListDelimiter(), array_unique($data_sheet->getUidColumn()->getValues(false)));
             $data_sheet->removeRows()->addRow($firstRow);
             $task->setInputData($data_sheet);
+            
+            // Don't use context filters!!! We've got everything we need at this point.
+            // Adding context filters will lead to unexplainable behavior.
+            $this->setUseContextFilters(false);
         }
         
         // Now the 

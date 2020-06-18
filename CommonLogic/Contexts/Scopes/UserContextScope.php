@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Contexts\Scopes;
 use exface\Core\CommonLogic\Model\User;
 use exface\Core\Exceptions\SecurityException;
 use exface\Core\Interfaces\UserInterface;
+use exface\Core\CommonLogic\Filemanager;
 
 class UserContextScope extends InstallationContextScope
 {
@@ -37,7 +38,7 @@ class UserContextScope extends InstallationContextScope
     {
         $path = $this->getWorkbench()->filemanager()->getPathToUserDataFolder() . DIRECTORY_SEPARATOR . $this->getUserDataFolderName();
         if (! file_exists($path)) {
-            mkdir($path);
+            Filemanager::pathConstruct($path);
         }
         return $path;
     }

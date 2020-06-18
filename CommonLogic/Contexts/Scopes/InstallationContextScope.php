@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Contexts\Scopes;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
+use exface\Core\Exceptions\LogicException;
 
 /**
  * 
@@ -69,7 +70,15 @@ class InstallationContextScope extends AbstractContextScope
         // NOTE: if nothing was cached, than we don't need to change anything.
         if ($this->context_file_contents !== null) {
             if (! $this->context_file_contents->isEmpty()) {
-                file_put_contents($this->getFilePathAbsolute(), $this->context_file_contents->toJson());
+                $reuslt = file_put_contents($this->getFilePathAbsolute(), $this->context_file_contents->toJson());
+                if ($reuslt === false) {
+                    if (is_writable($this->getFilePathAbsolute()) === false) {
+                        $user = get_current_user() ? get_current_user() : exec('whoami');
+                        throw new LogicException('Cannot save installation context data: file "' . $this->getFilePathAbsolute() . '" not writable for user "' . $user . '"!');
+                    } else {
+                        throw new LogicException('Cannot save installation context data: unknown write error!');
+                    }
+                }
             } elseif (file_exists($this->getFilePathAbsolute())) {
                 unlink($this->getFilePathAbsolute());
             }
