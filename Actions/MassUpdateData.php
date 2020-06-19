@@ -5,6 +5,7 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Exceptions\Actions\ActionInputError;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * 
@@ -52,7 +53,9 @@ class MassUpdateData extends UpdateData
             $firstRow[$data_sheet->getUidColumn()->getName()] = implode($data_sheet->getUidColumn()->getAttribute()->getValueListDelimiter(), array_unique($data_sheet->getUidColumn()->getValues(false)));
             $data_sheet->removeRows()->addRow($firstRow);
             $task->setInputData($data_sheet);
-            
+        }
+        
+        if (! $this->isUpdateByFilter($data_sheet)) {            
             // Don't use context filters!!! We've got everything we need at this point.
             // Adding context filters will lead to unexplainable behavior.
             $this->setUseContextFilters(false);
@@ -60,6 +63,17 @@ class MassUpdateData extends UpdateData
         
         // Now the 
         return parent::perform($task, $transaction);
+    }
+    
+    /**
+     * Returns TRUE if it's a mass update for all items matching the filters and FALSE if it's a UID-based update.
+     * 
+     * @param DataSheetInterface $inputData
+     * @return bool
+     */
+    protected function isUpdateByFilter(DataSheetInterface $inputData) : bool
+    {
+        return $inputData->hasUidColumn(true) === false;
     }
     
     /**

@@ -5,6 +5,8 @@ use exface\Core\Widgets\Parts\Charts\Traits\FillableChartSeriesTrait;
 use exface\Core\Widgets\Parts\Charts\Traits\StackableChartSeriesTrait;
 use exface\Core\Widgets\Parts\Charts\Traits\XYChartSeriesTrait;
 use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
+use exface\Core\Widgets\Parts\Charts\Interfaces\SplittableChartSeriesInterface;
+use exface\Core\Widgets\Parts\Charts\Traits\SplittableChartSeriesTrait;
 
 /**
  * Line chart using a meta attributes or column references for X and Y values.
@@ -69,10 +71,11 @@ use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
  * @author Andrej kabachnik
  *
  */
-class LineChartSeries extends ChartSeries implements StackableChartSeriesInterface
+class LineChartSeries extends ChartSeries implements StackableChartSeriesInterface, SplittableChartSeriesInterface
 {
     use FillableChartSeriesTrait;
     use StackableChartSeriesTrait;
+    use SplittableChartSeriesTrait;
     use XYChartSeriesTrait;
     
     private $smooth = null;
