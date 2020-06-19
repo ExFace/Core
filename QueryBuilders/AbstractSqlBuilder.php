@@ -318,6 +318,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     }
                 }
             }
+            //convert binary
             foreach ($this->getBinaryColumns() as $full_alias) {
                 foreach ($rows as $nr => $row) {
                     $rows[$nr][$full_alias] = $this->decodeBinary($row[$full_alias]);
