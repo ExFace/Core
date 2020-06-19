@@ -10,7 +10,7 @@ use exface\Core\CommonLogic\UxonObject;
 /**
  * Maps data from one data sheet to another using mappers for columns, filters, sorters, etc.
  * 
- * TODO add mappers for filters, sorters and aggregators similarly to column mappers.
+ * TODO add mappers aggregators similarly to column, filter and sorter mappers.
  * 
  * @author Andrej Kabachnik
  *
@@ -125,5 +125,33 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
      * @return DataSheetMapperInterface
      */
     public function setExpressionMappings(UxonObject $uxon);
+    
+    /**
+     * 
+     * @param bool $trueOrFalse
+     * @return DataSheetMapperInterface
+     */
+    public function setRefreshDataAfterMapping(bool $trueOrFalse) : DataSheetMapperInterface;
+    
+    /**
+     * 
+     * @param bool $value
+     * @return DataSheetMapperInterface
+     */
+    public function setInheritColumns(bool $value) : DataSheetMapperInterface;
+
+    /**
+     * 
+     * @param bool $value
+     * @return DataSheetMapperInterface
+     */
+    public function setInheritFilters(bool $value) : DataSheetMapperInterface;
+    
+    /**
+     * 
+     * @param bool $value
+     * @return DataSheetMapperInterface
+     */
+    public function setInheritSorters(bool $value) : DataSheetMapperInterface;
    
 }

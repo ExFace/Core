@@ -45,6 +45,8 @@ class DataSheetMapper implements DataSheetMapperInterface {
     
     private $inheritSorters = null;
     
+    private $refreshDataAfterMapping = false;
+    
     public function __construct(Workbench $workbench)
     {
         $this->workbench = $workbench;
@@ -90,6 +92,11 @@ class DataSheetMapper implements DataSheetMapperInterface {
         // Map columns to columns
         foreach ($this->getMappings() as $map){
             $toSheet = $map->map($fromSheet, $toSheet);
+        }
+        
+        // Refresh data if needed
+        if ($this->getRefreshDataAfterMapping()) {
+            $toSheet->dataRead();
         }
         
         return $toSheet;
@@ -277,7 +284,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * 
      * @uxon-property column_to_filter_mappings
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataColumnToFilterMapping[]
-     * @uxon-template [{"from": "", "to": "", "comparator": "["}]
+     * @uxon-template [{"from": "", "to": "", "comparator": "="}]
      * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setColumnToFilterMappings()
      */
@@ -431,7 +438,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * 
      * @return boolean
      */
-    public function getInheritColumns() : bool
+    protected function getInheritColumns() : bool
     {
         return $this->inheritColumns ?? $this->canInheritColumns();
     }
@@ -470,7 +477,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      *
      * @return boolean
      */
-    public function getInheritFilters()
+    protected function getInheritFilters()
     {
         return $this->inheritFilters ?? $this->canInheritFilters();
     }
@@ -509,7 +516,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      *
      * @return boolean
      */
-    public function getInheritSorters()
+    protected function getInheritSorters()
     {
         return $this->inheritSorters ?? $this->canInheritSorters();
     }
@@ -566,5 +573,29 @@ class DataSheetMapper implements DataSheetMapperInterface {
     protected function canInheritSorters() : bool
     {
         return $this->canInheritColumns();
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    protected function getRefreshDataAfterMapping() : bool
+    {
+        return $this->refreshDataAfterMapping;
+    }
+    
+    /**
+     * Set to TRUE to read data after all mappings were performed.
+     * 
+     * @uxon-property refresh_data_after_mapping
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setRefreshDataAfterMapping()
+     */
+    public function setRefreshDataAfterMapping(bool $trueOrFalse) : DataSheetMapperInterface
+    {
+        $this->refreshDataAfterMapping = $trueOrFalse;
+        return $this;
     }
 }
