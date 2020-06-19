@@ -338,11 +338,19 @@ class MsSqlConnector extends AbstractSqlConnector
         return $this->setCharacterSet($value);
     }
     
+    /**
+     * 
+     * @return string|NULL
+     */
     public function getCharset() : ?string
     {
         return $this->getCharacterSet();
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function getDbase()
     {
         return $this->getDatabase();
