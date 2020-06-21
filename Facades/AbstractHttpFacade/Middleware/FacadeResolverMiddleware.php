@@ -10,14 +10,12 @@ use Psr\Http\Message\UriInterface;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Exceptions\Facades\FacadeRoutingError;
 use exface\Core\Exceptions\Facades\FacadeIncompatibleError;
-use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Factories\FacadeFactory;
 use GuzzleHttp\Psr7\Response;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\Interfaces\AppInterface;
 
 /**
@@ -70,7 +68,7 @@ class FacadeResolverMiddleware implements MiddlewareInterface
                 ->withAttribute($facade->getRequestAttributeForPage(), $page->getSelector()->__toString());
             } catch (FacadeRoutingError $ePage) {
                 $this->workbench->getLogger()->logException($eRouter)->logException($ePage);
-                return new Response(500, [], $eRouter->getMessage());
+                return new Response(404, [], $eRouter->getMessage());
             }
         }
         
