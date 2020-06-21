@@ -12,6 +12,7 @@ use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\JsonDataType;
+use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 
 /**
  * A query builder for Microsoft SQL.
@@ -29,6 +30,18 @@ use exface\Core\DataTypes\JsonDataType;
  */
 class MsSqlBuilder extends AbstractSqlBuilder
 {
+    /**
+     *
+     * @param QueryBuilderSelectorInterface $selector
+     */
+    public function __construct(QueryBuilderSelectorInterface $selector)
+    {
+        parent::__construct($selector);
+        $reservedWords = $this->getReservedWords();
+        $reservedWords[] = 'USER';
+        $this->setReservedWords($reservedWords);
+    }
+
     /**
      * 
      * {@inheritDoc}
@@ -268,11 +281,13 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlSelect()
      */
     protected function buildSqlSelect(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, $aggregator = null, bool $make_groupable = null)
-    {
-        if ($aggregator || $qpart->hasAggregator()) {
-            $select_as = '';
+    {        
+        $sql = parent::buildSqlSelect($qpart, $select_from, $select_column, $select_as, $aggregator, $make_groupable);
+        $aggr = $aggregator ?? $qpart->getAggregator();
+        if ($qpart->getQuery()->isSubquery() && $qpart->getQuery()->isAggregatedBy($qpart) && $aggr && ($aggr->getFunction()->getValue() === AggregatorFunctionsDataType::LIST_DISTINCT || $aggr->getFunction()->getValue() === AggregatorFunctionsDataType::LIST_ALL)) {
+            $sql = StringDataType::substringBefore($sql, ' AS ', $sql);
         }
-        return parent::buildSqlSelect($qpart, $select_from, $select_column, $select_as, $aggregator, $make_groupable);
+        return $sql;
     }
 
     /**
@@ -387,7 +402,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 if (($data_type instanceof JsonDataType) && $data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
                 } else {
-                    $value = $value === null ? 'NULL' : "'" . $value . "'";
+                    $value = $value === null ? 'NULL' : "'" . str_replace("'", "''", $value) . "'";
                 }
                 break;
             default:

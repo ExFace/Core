@@ -108,8 +108,8 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     {
         if (null === $this->path_to_data_folder) {
             $this->path_to_data_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_DATA;
-            if (false === is_dir($this->path_to_data_folder)) {
-                mkdir($this->path_to_data_folder);
+            if (false === is_dir($this->path_to_data_folder)) {                
+                static::pathConstruct($this->path_to_data_folder);
             }
         }
         return $this->path_to_data_folder;

@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  *
@@ -67,7 +68,7 @@ class FileContentInstaller extends AbstractAppInstaller
     }
 
     /**
-     * Creates new file with given name by either copying file template, or if no templateis given,
+     * Creates new file with given name by either copying file template, or if no template is given,
      * creating an empty file.
      * If file already exists, content that is included by given markers gets replaced with given content,
      * or if markers dont exists yet, markers and content get added to the file.
@@ -88,8 +89,8 @@ class FileContentInstaller extends AbstractAppInstaller
         $changesCnt = 0;
         foreach ($this->contentArray as $marker => $content) {
             $originalContent = $fileContent;
-            $begin = $this->getMarkerBegin() . preg_quote($marker);
-            $end = $this->getMarkerEnd() . preg_quote($marker);
+            $begin = StringDataType::replacePlaceholders($this->getMarkerBegin(), ['marker' => preg_quote($marker)]);
+            $end = StringDataType::replacePlaceholders($this->getMarkerEnd(), ['marker' => preg_quote($marker)]);
             $pattern = '/' . $begin . '.*' . $end . '/is';
             
             if (preg_match($pattern, $fileContent)) {
@@ -184,8 +185,8 @@ class FileContentInstaller extends AbstractAppInstaller
     }
         
     /**
-     * Set the beginning for the marker for the content
-     * e.g. '# BEGIN'
+     * Set the beginning for the marker for the content. Has to include placeholder [#marker#].
+     * e.g. '# BEGIN [#marker#]'
      * 
      * @param string $marker
      * @return FileContentInstaller
@@ -207,8 +208,8 @@ class FileContentInstaller extends AbstractAppInstaller
     }
     
     /**
-     * Set the ending for the marker for the content
-     * e.g. '# END'
+     * Set the ending for the marker for the content. Has to include placeholder [#marker#].
+     * e.g. '# END [#marker#]'
      * 
      * @param string $marker
      * @return FileContentInstaller
