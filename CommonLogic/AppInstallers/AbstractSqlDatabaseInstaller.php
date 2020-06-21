@@ -537,7 +537,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         $migrs = [];
         foreach ($this->getFiles($source_absolute_path, $this->getFoldersWithMigrations()) as $path) {
             $file_content = file_get_contents($path);
-            $migrs[] = new SqlMigration($this->transformFilepathToMigrationName($path), $this->getMigrationScript($file_content), $this->getMigrationScript($file_content, false));
+            $migrationName = $this->transformFilepathToMigrationName($path);
+            $migrs[] = new SqlMigration($migrationName, $this->getMigrationScript($migrationName, $file_content), $this->getMigrationScript($migrationName, $file_content, false));
         }
         return $migrs;
     }
@@ -578,7 +579,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param bool $up
      * @return string
      */
-    protected function getMigrationScript(string $src, bool $up = true) : string
+    protected function getMigrationScript(string $filename, string $src, bool $up = true) : string
     {
         $length=strlen($src);
         $cut_down=strpos($src, $this->getMarkerDown());
@@ -588,7 +589,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
                 $migstr = $src;
             } elseif ($up == FALSE){
                 $migstr = '';
-                $this->getWorkbench()->getLogger()->warning('SQL migration has now down-script! '); 
+                $this->getWorkbench()->getLogger()->warning("SQL migration {$filename} has no down-script!"); 
             }                       
         }
         else{
