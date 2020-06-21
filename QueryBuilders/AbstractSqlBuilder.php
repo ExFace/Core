@@ -35,7 +35,6 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\DataTypes\UUIDDataType;
 
 /**
