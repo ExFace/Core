@@ -124,7 +124,7 @@ class SessionContextScope extends AbstractContextScope
         }
         
         try {
-            $this->sessionOpen();
+            $this->sessionOpen(true);
         } catch (\ErrorException $e) {
             if ($e->getSeverity() === E_WARNING) {
                 $this->getWorkbench()->getLogger()->logException($e);
@@ -197,7 +197,7 @@ class SessionContextScope extends AbstractContextScope
     /**
      * Returns the id of the session, that is assotiated with this context scope
      *
-     * @return string
+     * @return string|NULL
      */
     protected function getSessionId()
     {
@@ -210,13 +210,13 @@ class SessionContextScope extends AbstractContextScope
      *
      * @return SessionContextScope
      */
-    protected function sessionOpen()
+    protected function sessionOpen(bool $ignoreHeaderWarnings = false)
     {
         if (! $this->sessionIsOpen()) {
             // If there is a session id saved in the context, this session was already loaded into it, so the next time
             // we need to open exactly the same session!
-            if ($this->getSessionId()) {
-                @session_id($this->getSessionId());
+            if ($this->getSessionId() && $this->getSessionId() !== session_id()) {
+                session_id($this->getSessionId());
             }
             
             // It is important to wrap session_start() in a try-catch-block because it can produce warnings on certain
@@ -226,11 +226,19 @@ class SessionContextScope extends AbstractContextScope
             // To prevent this, we simply catch any exception and check if the session is really open afterwards - if not,
             // a meaningfull exception is thrown.
             try {
-                @session_start();
+                if ($ignoreHeaderWarnings) {
+                    $started = @session_start();
+                } else {
+                    $started = session_start();
+                }
             } catch (\Throwable $e) {
                 if (! $this->sessionIsOpen()) {
                     throw new RuntimeException('Opening the session for the session context scope failed: ' . $e->getMessage(), null, $e);
                 }
+            }
+            // Throw an error if the session could not be started. 
+            if ($started === false && ! $ignoreHeaderWarnings) {
+                throw new RuntimeException('Opening the session for the session context scope failed: unknown error!');
             }
         } else {
             $this->setSessionId(session_id());
@@ -247,7 +255,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function sessionClose()
     {
-        if (! $this->getSessionId()) {
+        if ($this->getSessionId() === null) {
             $this->setSessionId(session_id());
         }
         session_write_close();
