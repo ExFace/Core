@@ -3,8 +3,9 @@ namespace exface\Core\Interfaces;
 
 use exface\Core\CommonLogic\Model\User;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Selectors\UserRoleSelectorInterface;
 
-interface UserInterface extends WorkbenchDependantInterface
+interface UserInterface extends UserImpersonationInterface, WorkbenchDependantInterface
 {
 
     /**
@@ -13,13 +14,6 @@ interface UserInterface extends WorkbenchDependantInterface
      * @return string
      */
     public function getUid();
-
-    /**
-     * Returns the username of the user.
-     * 
-     * @return string
-     */
-    public function getUsername();
 
     /**
      * Sets the username of the user.
@@ -108,23 +102,6 @@ interface UserInterface extends WorkbenchDependantInterface
      * @return DataSheetInterface
      */
     public function exportDataSheet();
-
-    /**
-     * Returns TRUE if the user currently logged in is an administrator and FALSE otherwise.
-     *
-     * @return boolean
-     */
-    public function isUserAdmin();
-
-    /**
-     * Returns TRUE if the user is anonymous and FALSE otherwise.
-     * 
-     * An anonymous user is returned if the currently logged in user is requested but no
-     * named user is logged in.
-     *
-     * @return boolean
-     */
-    public function isUserAnonymous();
     
     /**
      * 
@@ -145,4 +122,31 @@ interface UserInterface extends WorkbenchDependantInterface
      * @return string
      */
     public function getInitials() : string;
+    
+    /**
+     * 
+     * @param UserRoleSelectorInterface $selector
+     * @return bool
+     */
+    public function hasRole(UserRoleSelectorInterface $selector) : bool;
+    
+    /**
+     * 
+     * @param UserRoleSelectorInterface|string $selectorOrString
+     * @return UserInterface
+     */
+    public function addRoleSelector($selectorOrString) : UserInterface;
+    
+    /**
+     * 
+     * @param bool $trueOrFalse
+     * @return UserInterface
+     */
+    public function setDisabled(bool $trueOrFalse) : UserInterface;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isDisabled() : bool;
 }

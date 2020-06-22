@@ -2,7 +2,18 @@
 namespace exface\Core\Interfaces\Contexts;
 
 use exface\Core\Exceptions\Contexts\ContextScopeNotFoundError;
+use exface\Core\CommonLogic\Contexts\Scopes\WindowContextScope;
+use exface\Core\CommonLogic\Contexts\Scopes\SessionContextScope;
+use exface\Core\CommonLogic\Contexts\Scopes\ApplicationContextScope;
+use exface\Core\CommonLogic\Contexts\Scopes\UserContextScope;
+use exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope;
+use exface\Core\CommonLogic\Contexts\Scopes\InstallationContextScope;
 
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 interface ContextManagerInterface
 {
 
@@ -22,14 +33,14 @@ interface ContextManagerInterface
      *
      * @return ContextScopeInterface[]
      */
-    public function getScopes();
+    public function getScopes() : array;
 
     /**
      * Saves all contexts in all scopes
      *
      * @return ContextManagerInterface
      */
-    public function saveContexts();
+    public function saveContexts() : ContextManagerInterface;
 
     /**
      * Returns the context scope specified by the given name (e.g.
@@ -39,36 +50,41 @@ interface ContextManagerInterface
      * @throws ContextScopeNotFoundError if no context scope is found for the given name
      * @return ContextScopeInterface
      */
-    public function getScope($scope_name);
+    public function getScope($scope_name) : ContextScopeInterface;
 
     /**
      *
      * @return \exface\Core\CommonLogic\Contexts\Scopes\WindowContextScope
      */
-    public function getScopeWindow();
+    public function getScopeWindow() : WindowContextScope;
 
     /**
      *
      * @return \exface\Core\CommonLogic\Contexts\Scopes\SessionContextScope
      */
-    public function getScopeSession();
+    public function getScopeSession() : SessionContextScope;
 
     /**
      *
      * @return \exface\Core\CommonLogic\Contexts\Scopes\ApplicationContextScope
      */
-    public function getScopeApplication();
+    public function getScopeApplication() : ApplicationContextScope;
 
     /**
      *
      * @return \exface\Core\CommonLogic\Contexts\Scopes\UserContextScope
      */
-    public function getScopeUser();
+    public function getScopeUser() : UserContextScope;
+    
+    /**
+     * 
+     * @return InstallationContextScope
+     */
+    public function getScopeInstallation() : InstallationContextScope;
 
     /**
      *
      * @return \exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope
      */
-    public function getScopeRequest();
+    public function getScopeRequest() : RequestContextScope;
 }
-?>

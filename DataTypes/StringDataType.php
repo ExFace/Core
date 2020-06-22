@@ -399,5 +399,25 @@ class StringDataType extends AbstractDataType
     public static function encodeUTF8(string $string, string $originalEncoding = null) {
         return mb_convert_encoding($string, 'UTF-8', ($originalEncoding ?? mb_detect_encoding($string)));
     }
+    
+    /**
+     * 
+     * @param string $string
+     * @param int $length
+     * @param bool $stickToWords
+     * @return string
+     */
+    public static function truncate(string $string, int $length, bool $stickToWords) : string
+    {
+        if ($stickToWords === false) {
+            return mb_substr($string, 0, $length);
+        } else {
+            if (strlen($string) > $length) {
+                $string = wordwrap($string, $length);
+                $string = mb_substr($string, 0, mb_strpos($string, "\n"));
+            }
+            return $string;
+        }
+    }
 }
 ?>

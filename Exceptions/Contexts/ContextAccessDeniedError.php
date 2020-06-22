@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\Exceptions\Contexts;
 
-use exface\Core\Exceptions\SecurityException;
 use exface\Core\Interfaces\Exceptions\ContextExceptionInterface;
+use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 
 /**
  * Exception thrown if the current user has no access to a requested context.
@@ -12,12 +12,21 @@ use exface\Core\Interfaces\Exceptions\ContextExceptionInterface;
  * @author Andrej Kabachnik
  *        
  */
-class ContextAccessDeniedError extends SecurityException implements ContextExceptionInterface
+class ContextAccessDeniedError extends AccessPermissionDeniedError implements ContextExceptionInterface
 {
-    use ContextExceptionTrait;
-    
     public function getDefaultAlias()
     {
         return '6VYMG0N';
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Exceptions\ContextExceptionInterface::getContext()
+     */
+    public function getContext()
+    {
+        return $this->getObject();
     }
 }

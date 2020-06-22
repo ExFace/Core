@@ -20,6 +20,7 @@ use exface\Core\Widgets\Traits\iHaveColorTrait;
 use exface\Core\Interfaces\Widgets\iCanBeDisabled;
 use exface\Core\Interfaces\Actions\iResetWidgets;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\CommonLogic\Model\UiPage;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -41,6 +42,14 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     
     use iHaveColorTrait;
     
+    const APPEARANCE_DEFAULT = 'default';
+    
+    const APPEARANCE_FILLED = 'filled';
+    
+    const APPEARANCE_STROKED = 'stroked';
+    
+    const APPEARANCE_LINK = 'link';
+    
     private $action_alias = null;
 
     private $action = null;
@@ -60,6 +69,10 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     private $refreshWidgetIds = [];
     
     private $resetInputWidget = null;
+    
+    private $hiddenIfAccessDenied = false;
+    
+    private $appearance = self::APPEARANCE_DEFAULT;
     
     /**
      * 
@@ -352,7 +365,20 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         } else {
             throw new WidgetConfigurationError($this, 'Invalid value "' . $uxonOrArray . '" of property "refresh_widget_ids" in widget "' . $this->getWidgetType() . '": expecting PHP or UXON array!');
         }
-        $this->refreshWidgetIds = array_unique($array);
+        $array = array_unique($array);
+        
+        // If the button itself has an id space (= e.g. is inside a dialog), and the provided
+        // ids don't have an id space, we should prefix them with the id space of the button,
+        // so they will be resolved within the same space as the button itself.
+        if ($idSpace = $this->getIdSpace()) {
+            foreach ($array as $no => $id) {
+                if(strpos($id, UiPage::WIDGET_ID_SPACE_SEPARATOR) === false) {
+                    $array[$no] = $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR . $id;
+                }
+            }
+        }
+        
+        $this->refreshWidgetIds = $array;
         return $this;
     }
     
@@ -450,6 +476,65 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         }
         
         $this->resetWidgetIds = array_unique($array);
+        return $this;
+    }
+    
+    /**
+     * Set this property if the button should be hidden if a user is not allowed access to the action bound to it.
+     * 
+     * @uxon-property hidden_if_access_denied
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return Button
+     */
+    public function setHiddenIfAccessDenied(bool $trueOrFalse) : Button
+    {
+      $this->hiddenIfAccessDenied = $trueOrFalse;
+      return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::isHidden()
+     */
+    public function isHidden()
+    {
+        if ($this->hiddenIfAccessDenied === false) {
+            return parent::isHidden();
+        }        
+        return $this->getAction()->isAuthorized() === false;
+                   
+    }
+    
+    public function getAppearance() : string
+    {
+        return $this->appearance;
+    }
+    
+    /**
+     * Change the way, how the button is displayed: `filled`, `stroked`, `link`, etc.
+     * 
+     * By default, the facade will pick an appearance automatically based on it's
+     * internal logic and the button's `visibility`.
+     * 
+     * @uxon-property appearance
+     * @uxon-type [default,link,stroked,filled]
+     * @uxon-default default
+     * 
+     * @param string $value
+     * @throws WidgetConfigurationError
+     * @return Button
+     */
+    public function setAppearance(string $value) : Button
+    {
+        $constName = 'self:APPEARANCE_' . strtoupper($value);
+        if (! defined($constName)) {
+            throw new WidgetConfigurationError('Invalid value "' . $value . '" for property `appearance` of widget "' . $this->getWidgetType() . '": expecting `default`, `link`, `filled` or `stroked`.');
+        }
+        $this->appearance = constant($constName);
         return $this;
     }
 }

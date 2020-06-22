@@ -58,7 +58,7 @@ class UserFactory extends AbstractStaticFactory
      * @param string $selectorString
      * @return UserInterface
      */
-    public function createFromUsernameOrUid(WorkbenchInterface $workbench, string $selectorString) : UserInterface
+    public static function createFromUsernameOrUid(WorkbenchInterface $workbench, string $selectorString) : UserInterface
     {
         return static::createFromSelector(new UserSelector($workbench, $selectorString));
     }

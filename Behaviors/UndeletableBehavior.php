@@ -8,10 +8,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\Behaviors\DataSheetDeleteForbiddenError;
-use exface\Core\CommonLogic\Model\Attribute;
-use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Exceptions\RuntimeException;
-use Symfony\Component\Translation\Catalogue\OperationInterface;
 
 /**
  * Prevents the deletion of data if it matches the provided conditions.
@@ -149,11 +146,7 @@ class UndeletableBehavior extends AbstractBehavior
             // differenciate between multiple forms of expressions, and handle them differently
             switch (true){
                 case $expression->isMetaAttribute():
-                    try {
-                        $attribute = $dataSheet->getMetaObject()->getAttribute($condition->getAttributeAlias());
-                    } catch (\Exception $e) {
-                        continue;
-                    }
+                    $attribute = $dataSheet->getMetaObject()->getAttribute($condition->getAttributeAlias());
                     if (! $dataSheet->getColumns()->getByAttribute($attribute)){
                         $dataSheet->getColumns()->addFromAttribute($attribute);
                     }
@@ -247,23 +240,21 @@ class UndeletableBehavior extends AbstractBehavior
             }
         }
 
-        if ($result === true){
-            $errorRowDescriptor = '';
-            
+        if ($result === true) {
             // check if the regarding row has an alias for throwing in the exeption
-            if ($labelAttributeAlias !== null && $row[$labelAttributeAlias] !== null){
-                $errorRowDescriptor = '"' . $row[$labelAttributeAlias] . '"'; 
-            }
-            // if not, just use the position of the crucial datarow in the current selection
-            if ($errorRowDescriptor == ''){
-                $errorRowDescriptor = $idx + 1;
+            if ($labelAttributeAlias !== null && $row[$labelAttributeAlias] !== null){ 
+                $message = $this->translate('BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR',[
+                    '%row%' => '"' . $row[$labelAttributeAlias] . '"',
+                    '%object%' => $dataSheet->getMetaObject()->getName() 
+                ]);
+            } else {
+                $message = $this->translate('BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ROWS_ERROR',[
+                    '%row%' => $idx + 1,
+                    '%object%' => $dataSheet->getMetaObject()->getName()
+                ]);
             }
             
-            throw new DataSheetDeleteForbiddenError($dataSheet, $this->translate('BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR', 
-                                                                                    ['%row%' => $errorRowDescriptor, 
-                                                                                     '%expression%' => $errorCondition->toString(), 
-                                                                                     '%behavior%' => $this->getAlias(), 
-                                                                                     '%object%' => $dataSheet->getMetaObject()->getAlias()]));    
+            throw new DataSheetDeleteForbiddenError($dataSheet, $message);    
         }
     }
     

@@ -70,7 +70,7 @@ class Profiler implements WorkbenchDependantInterface
         try {
             $query = $event->getQuery();
             $this->stopwatch->stop($query->exportString());
-            $conn = $event->getConnection()->hasModel() ? 'Connection "' . $event->getConnection()->getAlias() . '"' : 'Connector "' . get_class($event->getConnection()) . '"';
+            $conn = 'Query "' . ($event->getConnection()->hasModel() ? $event->getConnection()->getAlias() : get_class($event->getConnection())) . '"';
             $queryString = str_replace(array("\r", "\n", "\t", "  "), '', $query->toString(false));
             $extract = substr($queryString, 0, 50) . (strlen($queryString) > 50 ? '...' : '');
             $this->getWorkbench()->getLogger()->debug($conn . ': ' . $extract, array(), $query);

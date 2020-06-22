@@ -18,6 +18,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Widgets\Traits\DataTableTrait;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * The DataImporter allows users to quickly create data by copy-pasting tabels from Excel-compatible editors.
@@ -222,7 +223,7 @@ class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGr
      *
      * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
      */
-    public function getAlternativeContainerForOrphanedSiblings()
+    public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets
     {
         return null;
     }

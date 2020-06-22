@@ -47,6 +47,7 @@ use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\DataTypes\RelationCardinalityDataType;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Model\ConditionInterface;
+use exface\Core\DataTypes\EncryptedDataType;
 
 /**
  * Default implementation of DataSheetInterface
@@ -572,6 +573,9 @@ class DataSheet implements DataSheetInterface
                 // Add filter over parent keys
                 $parentSheetKeyCol = $subsheet->getJoinKeyColumnOfParentSheet();
                 $foreign_keys = $parentSheetKeyCol->getValues(false);
+                if ($subsheet->getJoinKeyColumnOfSubsheet()->isAttribute() && $subsheet->getJoinKeyColumnOfSubsheet()->getAttribute()->isReadable() === false) {
+                    throw new DataSheetJoinError($this, 'Cannot join subsheet based on object "' . $subsheet->getMetaObject()->getName() . '" to data sheet of "' . $this->getMetaObject()->getName() . '": the subsheet\'s key column attribute "' . $subsheet->getJoinKeyColumnOfSubsheet()->getAttribute()->getName() . '" is not readable!');
+                }
                 $subsheet->getFilters()->addConditionFromString($subsheet->getJoinKeyAliasOfSubsheet(), implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
                 // Read data
                 $subsheet->dataRead();
@@ -1466,7 +1470,7 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setCounterForRowsInDataSource()
      */
-    public function setCounterForRowsInDataSource(int $count) : DataSheetInterface
+    public function setCounterForRowsInDataSource(int $count = null) : DataSheetInterface
     {
         $this->total_row_count = $count;
         return $this;
@@ -1568,7 +1572,7 @@ class DataSheet implements DataSheetInterface
         // the sheet must get marked not fresh if filters change as they have direct
         // effect on the number of rows available in the data source.
         if ($this->total_row_count === null && $this->autocount === true && $this->getMetaObject()->isReadable() === true) {
-            $this->dataCount();
+            return $this->dataCount();
         }
         return $this->total_row_count;
     }
@@ -2132,7 +2136,7 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::dataCount()
      */
-    public function dataCount() : int
+    public function dataCount() : ?int
     {
         try {
             $query = $this->dataReadInitQueryBuilder($this->getMetaObject());
@@ -2281,6 +2285,36 @@ class DataSheet implements DataSheetInterface
             return true;
         }
         return $this->aggregateAll;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getRowsDecrypted()
+     */
+    public function getRowsDecrypted($how_many = 0, $offset = 0) : array
+    {
+        $encryptedRows = $this->getRows($how_many, $offset);
+        if (empty($encryptedRows)) {
+            return $encryptedRows;
+        }
+        $rows = array_slice($encryptedRows, 0);
+        $columns = $this->getColumns();
+        foreach ($rows as $idx => $row) {                       
+            foreach ($columns as $col) {
+                $datatype = $col->getDataType();
+                if ($datatype instanceof EncryptedDataType) {
+                    $colName = $col->getName();
+                    $encrypted = $row[$colName];
+                    if ($datatype->isValueEncrypted($encrypted)) {
+                        $decrypted = EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $encrypted, $datatype->getEncryptionPrefix());
+                        $row[$colName] = $decrypted;
+                    }
+                }
+            }
+            $rows[$idx] = $row;
+        }
+        return $rows;
     }
     
 }

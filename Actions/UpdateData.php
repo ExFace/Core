@@ -95,7 +95,7 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
      * it in such a data sheet.
      * 
      * @uxon-property use_context_filters
-     * @uxon-type boolean     * 
+     * @uxon-type boolean
      * 
      * @param bool $value
      * @return \exface\Core\Actions\UpdateData

@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * A Split consists of multiple panels aligned vertically or horizontally.
@@ -168,8 +169,14 @@ class Split extends Container implements iFillEntireContainer
     }
     
     
-    public function getAlternativeContainerForOrphanedSiblings()
+    public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets
     {
-        return $this->getWidgetFirst();
+        $firstPanel = $this->getWidgetFirst();
+        if ($filler = $firstPanel->getFillerWidget()) {
+            if ($alternative = $filler->getAlternativeContainerForOrphanedSiblings()) {
+                return $alternative;
+            }
+        }
+        return $firstPanel;
     }
 }

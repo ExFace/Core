@@ -7,6 +7,12 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Selectors\FacadeSelector;
 
+/**
+ * Produces facades
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 abstract class FacadeFactory extends AbstractSelectableComponentFactory
 {
 
@@ -17,7 +23,12 @@ abstract class FacadeFactory extends AbstractSelectableComponentFactory
      */
     public static function create(FacadeSelectorInterface $selector) : FacadeInterface
     {
-        return parent::createFromSelector($selector);
+        $facade = parent::createFromSelector($selector);
+        $exface = $facade->getWorkbench();
+        if ($exface->isStarted() === false) {
+            $exface->start();
+        }
+        return $facade;
     }
 
     /**
@@ -49,7 +60,13 @@ abstract class FacadeFactory extends AbstractSelectableComponentFactory
         } else {
             throw new InvalidArgumentException('Cannot create facade from "' . get_class($selectorOrString) . '": expecting "FacadeSelector" or valid selector string!');
         }
+       
         return $facade;
+    }
+    
+    public static function createDefaultHttpFacade(WorkbenchInterface $workbench) : FacadeInterface
+    {
+        return static::createFromString(\exface\JEasyUIFacade\Facades\JEasyUIFacade::class, $workbench);
     }
 }
 ?>

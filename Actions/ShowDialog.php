@@ -10,6 +10,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Factories\UiPageFactory;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Renders a dialog with any contents specified in the widget-property.
@@ -47,15 +48,17 @@ class ShowDialog extends ShowWidget implements iShowDialog
     {
         /* @var $dialog \exface\Core\Widgets\Dialog */
         $parent_widget = $this->getWidgetDefinedIn();
-        $dialog = WidgetFactory::create($page, $this->getDefaultWidgetType(), $parent_widget);
+        $dialog = WidgetFactory::createFromUxonInParent($parent_widget, $this->addIdSpaceToWidgetUxon(new UxonObject()), $this->getDefaultWidgetType());
         $dialog->setMetaObject($this->getMetaObject());
         
         if ($contained_widget) {
             $dialog->addWidget($contained_widget);
-            if (false === $contained_widget->getWidth()->isUndefined()) {
+            $width = $contained_widget->getWidth();
+            $heigth = $contained_widget->getHeight();
+            if (! $width->isUndefined() && ! $width->isMax() && $width->getValue() !== '100%') {
                 $dialog->setWidth($contained_widget->getWidth()->getValue());
             }
-            if (false === $contained_widget->getHeight()->isUndefined()) {
+            if (! $heigth->isUndefined() && ! $heigth->isMax() && $heigth->getValue() !== '100%') {
                 $dialog->setHeight($contained_widget->getHeight()->getValue());
             }
         }
@@ -312,9 +315,15 @@ class ShowDialog extends ShowWidget implements iShowDialog
     protected function addIdSpaceToWidgetUxon(UxonObject $uxon) : UxonObject
     {
         if ($parent = $this->getWidgetDefinedIn()) {
-            $idSpace = $parent->getId();
-            if ($parentSpace = $parent->getIdSpace()) {
-                $idSpace = $parentSpace . $parent->getPage()->getWidgetIdSpaceSeparator() . $idSpace;
+            $parentId = $parent->getId();
+            $parentSpace = $parent->getIdSpace();
+            $sep = $parent->getPage()->getWidgetIdSpaceSeparator();
+            // If some of the parents already had their id spaces prepended to the ids,
+            // we should not prepend the id space again - otherwise it's doubled!
+            if ($parentSpace && StringDataType::startsWith($parentId, $parentSpace . $sep) === false) {
+                $idSpace = $parentSpace . $sep . $parentId;
+            } else {
+                $idSpace = $parentId;
             }
             $uxon->setProperty('id_space', $idSpace);
         }

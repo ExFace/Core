@@ -123,9 +123,11 @@ abstract class AbstractBehavior implements BehaviorInterface
     }
 
     /**
-     * This method does the same as enable() and disable().
-     * It is important to be able to import UXON objects.
-     *
+     * Set to TRUE to disabled this behavior
+     * 
+     * @uxon-property disabled
+     * @xuon-type boolean
+     * 
      * @param bool $value
      * @return BehaviorInterface
      */

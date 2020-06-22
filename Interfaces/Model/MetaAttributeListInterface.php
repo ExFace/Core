@@ -2,6 +2,7 @@
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\EntityListInterface;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 interface MetaAttributeListInterface extends EntityListInterface
 {
@@ -36,12 +37,13 @@ interface MetaAttributeListInterface extends EntityListInterface
     public function setMetaObject(MetaObjectInterface $meta_object) : MetaAttributeListInterface;
     
     /**
-     * Returns the attribute matching the given UID or FALSE if no such attribute is found
+     * Returns the attribute matching the given UID
      *
      * @param string $uid
-     * @return MetaAttributeInterface|boolean
+     * @throws MetaAttributeNotFoundError
+     * @return MetaAttributeInterface
      */
-    public function getByAttributeId($uid);
+    public function getByAttributeId(string $uid) : MetaAttributeInterface;
     
     /**
      * Returns a new attribute list containig only attributes marked as required

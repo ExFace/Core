@@ -10,8 +10,21 @@ use Psr\Http\Server\RequestHandlerInterface;
  */
 interface HttpFacadeInterface extends FacadeInterface, RequestHandlerInterface
 {    
+    
     /**
-     * Returns the URL to access the facade: e.g. http://www.exface.com/demo/api/docs or api/docs
+     * Returns the absolute URL to the workbench router.
+     * 
+     * E.g. https://www.mydomain.com or https://www.mydomain.com/subfolder if the workbench
+     * is installed in a subfolder.
+     * 
+     * @return string
+     */
+    public function buildUrlToSiteRoot() : string;
+    
+    /**
+     * Returns the URL to access the facade directly.
+     * 
+     * E.g. `http://www.exface.com/subfolder/api/docs` or `api/docs` for the `DocsFacade` 
      * depending on the $relativeToSiteRoot parameter.
      * 
      * @param bool $relativeToSiteRoot

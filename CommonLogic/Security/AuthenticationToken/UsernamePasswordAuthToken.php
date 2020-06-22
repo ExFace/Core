@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic\Security\AuthenticationToken;
 
 use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Security\PasswordAuthenticationTokenInterface;
 
 /**
@@ -18,8 +17,6 @@ class UsernamePasswordAuthToken implements PasswordAuthenticationTokenInterface
     private $password = null;
     
     private $facade = null;
-    
-    private $user = null;
     
     /**
      * 
@@ -62,11 +59,6 @@ class UsernamePasswordAuthToken implements PasswordAuthenticationTokenInterface
     public function getUsername() : ?string
     {
         return $this->username;
-    }
-
-    protected function getWorkbench() : WorkbenchInterface
-    {
-        return $this->getFacade()->getWorkbench();
     }
     
     /**
