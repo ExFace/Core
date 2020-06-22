@@ -70,6 +70,12 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
     public function isEmpty() : bool;
     
     /**
+     * 
+     * @return bool
+     */
+    public function isLogicalNull() : bool;
+    
+    /**
      * @return boolean
      */
     public function isReference() : bool;

@@ -38,10 +38,6 @@ class ReadPrefill extends ReadData
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        if (! $this->checkPermissions($task)) {
-            // TODO Throw exception!
-        }
-        
         // Get the prefill data from the request. 
         // TODO The logic here should ideally be the same as in ShowWidget::prefillWidget(), but at the
         // moment, there is no way to use the very same code. Perhaps trait could help...

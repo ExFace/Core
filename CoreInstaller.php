@@ -3,6 +3,7 @@ namespace exface\Core;
 
 use exface\Core\CommonLogic\AppInstallers\AbstractAppInstaller;
 use exface\Core\CommonLogic\Filemanager;
+use exface\Core\DataTypes\DateTimeDataType;
 
 /**
  *
@@ -28,6 +29,15 @@ class CoreInstaller extends AbstractAppInstaller
         // Add required files to root folder
         yield $indent . $this->createApiPhp($source_absolute_path);
         yield $indent . $this->removeLegacyFiles($source_absolute_path);
+        
+        $needRestart = $this->getWorkbench()->isInstalled() === false;
+        
+        $this->getWorkbench()->getContext()->getScopeInstallation()->setVariable('last_metamodel_install', DateTimeDataType::now());
+        
+        if ($needRestart) {
+            $this->getWorkbench()->stop();
+            $this->getWorkbench()->start();
+        }
     }
 
     /**

@@ -686,6 +686,36 @@
             "SHORT_DESCRIPTION": ""
         },
         {
+            "CREATED_ON": "2020-03-05 12:15:31",
+            "MODIFIED_ON": "2020-03-05 12:32:14",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea5edaf32d8b2db9920205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Policy Combining Algorithm",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/PolicyCombiningAlgorithmDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\"}",
+            "ALIAS": "PolicyCombningAlgorithm",
+            "SHORT_DESCRIPTION": "Combining algorithm for security policies"
+        },
+        {
+            "CREATED_ON": "2020-03-06 16:24:29",
+            "MODIFIED_ON": "2020-03-06 16:24:29",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea5fc6f57a20b9a2e30205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Policy Effect",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/PolicyEffectDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\"}",
+            "ALIAS": "PolicyEffect",
+            "SHORT_DESCRIPTION": "Effect of security policies: permit or deny"
+        },
+        {
             "CREATED_ON": "2020-03-18 13:44:31",
             "MODIFIED_ON": "2020-03-18 13:44:31",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -713,6 +743,21 @@
             "VALIDATION_ERROR": "",
             "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\"}",
             "ALIAS": "MimeType",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2020-05-19 18:49:15",
+            "MODIFIED_ON": "2020-05-19 18:51:26",
+            "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
+            "MODIFIED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
+            "UID": "0x11ea99f0acf95c54b00c025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Encrypted Data",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/EncryptedDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": null,
+            "ALIAS": "Encrypted",
             "SHORT_DESCRIPTION": ""
         }
     ],

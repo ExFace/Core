@@ -90,14 +90,6 @@ class WorkbenchCache implements WorkbenchCacheInterface
             $this->workbench->getLogger()->logException($e);
         }
         
-        // Clear CMS cache
-        try {
-            @ $this->workbench->getCMS()->clearCmsCache();
-        } catch (\Throwable $e) {
-            $ok = false;
-            $this->workbench->getLogger()->logException($e);
-        }
-        
         // Empty cache dir
         try {
             $filemanager = $this->workbench->filemanager();

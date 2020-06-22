@@ -9,8 +9,8 @@ use exface\Core\Factories\WidgetFactory;
 /**
  * Exception thrown if the entity (widget, action, etc.) represented by a UXON description cannot be instantiated due to invalid or missing properties.
  *
- * If the entity exists alread, it's class-specific exceptions (e.g. widget or action exceptions) should be preferred
- * to this general exception.
+ * If the entity exists alread, it's class-specific exceptions (e.g. widget or action exceptions) 
+ * should be preferred to this general exception.
  *
  * @author Andrej Kabachnik
  *        

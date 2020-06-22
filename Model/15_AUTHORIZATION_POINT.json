@@ -1,0 +1,184 @@
+{
+    "object_alias": "exface.Core.AUTHORIZATION_POINT",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "CLASS",
+            "attribute_alias": "CLASS"
+        },
+        {
+            "name": "DESCR",
+            "attribute_alias": "DESCR"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "TARGET_USER_ROLE_APPLICABLE",
+            "attribute_alias": "TARGET_USER_ROLE_APPLICABLE"
+        },
+        {
+            "name": "TARGET_PAGE_GROUP_APPLICABLE",
+            "attribute_alias": "TARGET_PAGE_GROUP_APPLICABLE"
+        },
+        {
+            "name": "TARGET_FACADE_APPLICABLE",
+            "attribute_alias": "TARGET_FACADE_APPLICABLE"
+        },
+        {
+            "name": "TARGET_OBJECT_APPLICABLE",
+            "attribute_alias": "TARGET_OBJECT_APPLICABLE"
+        },
+        {
+            "name": "TARGET_ACTION_APPLICABLE",
+            "attribute_alias": "TARGET_ACTION_APPLICABLE"
+        },
+        {
+            "name": "DEFAULT_EFFECT_IN_APP",
+            "attribute_alias": "DEFAULT_EFFECT_IN_APP"
+        },
+        {
+            "name": "COMBINING_ALGORITHM_IN_APP",
+            "attribute_alias": "COMBINING_ALGORITHM_IN_APP"
+        },
+        {
+            "name": "POLICY_PROTOTYPE_CLASS",
+            "attribute_alias": "POLICY_PROTOTYPE_CLASS"
+        },
+        {
+            "name": "DOCS",
+            "attribute_alias": "DOCS"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2020-03-05 12:41:34",
+            "MODIFIED_ON": "2020-05-06 16:42:32",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea5ede96e738f6b9920205857feb80",
+            "NAME": "Access to navigation menu pages",
+            "CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\UiPageAuthorizationPoint",
+            "DESCR": "",
+            "APP": "0x31000000000000000000000000000000",
+            "TARGET_USER_ROLE_APPLICABLE": "1",
+            "TARGET_PAGE_GROUP_APPLICABLE": "1",
+            "TARGET_FACADE_APPLICABLE": "0",
+            "TARGET_OBJECT_APPLICABLE": "0",
+            "TARGET_ACTION_APPLICABLE": "0",
+            "DEFAULT_EFFECT_IN_APP": "D",
+            "COMBINING_ALGORITHM_IN_APP": "deny-unless-permit",
+            "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\UiPageAuthorizationPolicy",
+            "DOCS": "exface\/Core\/Docs\/Security\/Authorization\/Authorization_points\/Page_AP.md"
+        },
+        {
+            "CREATED_ON": "2020-03-22 13:41:44",
+            "MODIFIED_ON": "2020-05-05 10:27:47",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6c42dfac007ba3480205857feb80",
+            "NAME": "Access to contexts",
+            "CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\ContextAuthorizationPoint",
+            "DESCR": null,
+            "APP": "0x31000000000000000000000000000000",
+            "TARGET_USER_ROLE_APPLICABLE": "1",
+            "TARGET_PAGE_GROUP_APPLICABLE": "0",
+            "TARGET_FACADE_APPLICABLE": "0",
+            "TARGET_OBJECT_APPLICABLE": "0",
+            "TARGET_ACTION_APPLICABLE": "0",
+            "DEFAULT_EFFECT_IN_APP": "D",
+            "COMBINING_ALGORITHM_IN_APP": "deny-unless-permit",
+            "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\ContextAuthorizationPolicy",
+            "DOCS": "exface\/Core\/Docs\/Security\/Authorization\/Authorization_points\/Context_AP.md"
+        },
+        {
+            "CREATED_ON": "2020-05-04 16:17:42",
+            "MODIFIED_ON": "2020-05-08 10:43:10",
+            "CREATED_BY_USER": "0x11ea8944856eaddaaa6e025041000001",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8e12097517b8801f025041000001",
+            "NAME": "Access to facades",
+            "CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\FacadeAuthorizationPoint",
+            "DESCR": null,
+            "APP": "0x31000000000000000000000000000000",
+            "TARGET_USER_ROLE_APPLICABLE": "1",
+            "TARGET_PAGE_GROUP_APPLICABLE": "0",
+            "TARGET_FACADE_APPLICABLE": "1",
+            "TARGET_OBJECT_APPLICABLE": "0",
+            "TARGET_ACTION_APPLICABLE": "0",
+            "DEFAULT_EFFECT_IN_APP": "P",
+            "COMBINING_ALGORITHM_IN_APP": "permit-overrides",
+            "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\FacadeAuthorizationPolicy",
+            "DOCS": "exface\/Core\/Docs\/Security\/Authorization\/Authorization_points\/Facade_AP.md"
+        },
+        {
+            "CREATED_ON": "2020-05-05 16:36:16",
+            "MODIFIED_ON": "2020-05-05 16:53:43",
+            "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
+            "MODIFIED_BY_USER": "0x11ea8944856eaddaaa6e025041000001",
+            "UID": "0x11ea8eddc766689f8ba98c04ba002958",
+            "NAME": "Access to actions",
+            "CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\ActionAuthorizationPoint",
+            "DESCR": null,
+            "APP": "0x31000000000000000000000000000000",
+            "TARGET_USER_ROLE_APPLICABLE": "1",
+            "TARGET_PAGE_GROUP_APPLICABLE": "0",
+            "TARGET_FACADE_APPLICABLE": "0",
+            "TARGET_OBJECT_APPLICABLE": "1",
+            "TARGET_ACTION_APPLICABLE": "1",
+            "DEFAULT_EFFECT_IN_APP": "P",
+            "COMBINING_ALGORITHM_IN_APP": "permit-overrides",
+            "POLICY_PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Security\\Authorization\\ActionAuthorizationPolicy",
+            "DOCS": "exface\/Core\/Docs\/Security\/Authorization\/Authorization_points\/Action_AP.md"
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.AUTHORIZATION_POINT",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.AUTHORIZATION_POINT"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

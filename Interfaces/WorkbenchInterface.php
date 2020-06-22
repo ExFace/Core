@@ -22,9 +22,15 @@ interface WorkbenchInterface extends TaskHandlerInterface
     /**
      * Returns TRUE if start() was successfully called on this workbench instance and FALSE otherwise.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isStarted();
+    public function isStarted() : bool;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isInstalled() : bool;
     
     /**
      *
@@ -41,12 +47,6 @@ interface WorkbenchInterface extends TaskHandlerInterface
      * @return ContextManagerInterface
      */
     public function getContext();
-    
-    /**
-     *
-     * @return CmsConnectorInterface
-     */
-    public function getCMS();
     
     /**
      *
@@ -152,4 +152,11 @@ interface WorkbenchInterface extends TaskHandlerInterface
      * @return SecurityManagerInterface
      */
     public function getSecurity() : SecurityManagerInterface;
+    
+    /**
+     * Returns the absolute URL of the current workbench (ending with an `/`).
+     * 
+     * @return string
+     */
+    public function getUrl() : string;
 }

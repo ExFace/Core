@@ -2,7 +2,10 @@
     "name": "exface/Core",
     "description": "Business web application plattform",
     "type": "project",
-    "license": "GPL-3.0+",
+    "license": [
+        "GPL-3.0+",
+        "proprietary"
+    ],
     "authors": [
         {
             "name": "Andrej Kabachnik",
@@ -16,7 +19,7 @@
         "issues": "https://github.com/exface/core/issues"
     },
     "require": {
-        "php": "^7.1",
+        "php": "^7.2",
         "symfony/FileSystem": "^3.1||^4.0",
         "symfony/Event-Dispatcher": "^3.1||^4.0",
         "symfony/translation": "^3.1||^4.0",
@@ -47,7 +50,8 @@
         "kabachello/fileroute": "~0.2",
         "guzzlehttp/guzzle": "^6.2.2",
         "npm-asset/workbox-sw": "^3.0.0",
-        "npm-asset/dexie": "^2.0.4"
+        "npm-asset/dexie": "^2.0.4",
+        "ramsey/uuid": "^3.0||^4.0"
     },
     "bin": [
         "Facades/ConsoleFacade/bin/action"
@@ -56,8 +60,8 @@
         "app": {
             "app_uid": "0x31000000000000000000000000000000",
             "app_alias": "exface.Core",
-            "model_md5": "e5da85a3e66e41587694e90dda0f4c5d",
-            "model_timestamp": "2020-03-19 20:28:21"
+            "model_md5": "1085f07a0d8d0be53b201121aea60985",
+            "model_timestamp": "2020-06-11 14:26:53"
         }
     },
     "autoload": {

@@ -120,6 +120,34 @@
             "READONLY": "0",
             "ALIAS": "TRANSPARENT_CONNECTION",
             "FILTER_CONTEXT": null
+        },
+        {
+            "CREATED_ON": "2020-03-30 19:53:02",
+            "MODIFIED_ON": "2020-06-05 07:55:50",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea72c00f0fadeca3480205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "LABEL": "Metamodel DB",
+            "CONNECTOR": "exface\/Core\/DataConnectors\/ModelLoaderConnector.php",
+            "CONFIG": null,
+            "READONLY": "0",
+            "ALIAS": "METAMODEL_DB",
+            "FILTER_CONTEXT": null
+        },
+        {
+            "CREATED_ON": "2020-04-24 09:26:47",
+            "MODIFIED_ON": "2020-04-24 09:26:47",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea860db216206d97940205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "LABEL": "Workbench Config",
+            "CONNECTOR": "exface\/Core\/DataConnectors\/WorkbenchConfigConnector.php",
+            "CONFIG": null,
+            "READONLY": "1",
+            "ALIAS": "WORKBENCH_CONFIG",
+            "FILTER_CONTEXT": null
         }
     ],
     "totals_rows": [],

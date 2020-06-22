@@ -1,13 +1,17 @@
 {
-    "id": "0x8f9e3238949e11e7aa5f028037ec0200",
+    "uid": "0x8f9e3238949e11e7aa5f028037ec0200",
     "alias_with_namespace": "exface.core.metamodel",
-    "menu_parent_page_alias": "exface.core.administration",
-    "menu_index": "0",
+    "menu_parent_page_selector": "0xf8310d4bba2c11e7895fe4b318306b9a",
+    "menu_index": 0,
     "menu_visible": true,
     "name": "Metamodel",
     "description": "View and edit the metamodel",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "created_on": "2013-06-20 19:20:56",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2020-05-04 08:58:35",
     "contents": {
         "extend_widget": "[exface.core.apps]"
     }

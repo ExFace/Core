@@ -2,9 +2,9 @@
 namespace exface\Core\CommonLogic\Selectors;
 
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
-use exface\Core\CommonLogic\Selectors\Traits\AliasSelectorTrait;
 use exface\Core\CommonLogic\Selectors\Traits\UidSelectorTrait;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\CommonLogic\Selectors\Traits\AliasSelectorTrait;
 
 /**
  * Default implementation of the UiPageSelectorInterface
@@ -14,13 +14,14 @@ use exface\Core\Interfaces\WorkbenchInterface;
  */
 class UiPageSelector extends AbstractSelector implements UiPageSelectorInterface
 {
-    use AliasSelectorTrait {
-        getAppAliasFromNamespace as getAppAliasFromNamespaceViaTrait;
-    }
+    use AliasSelectorTrait;
     use UidSelectorTrait;
     
-    private $isCmsId = false;
-    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param string $selectorString
+     */
     public function __construct(WorkbenchInterface $workbench, string $selectorString)
     {
         parent::__construct($workbench, $selectorString);
@@ -28,12 +29,7 @@ class UiPageSelector extends AbstractSelector implements UiPageSelectorInterface
             $this->isAlias = true;
             $this->isUid = false;
         } else {
-            if (! $this->isUid()) {
-                $this->isCmsId = $this->getWorkbench()->getCMS()->isCmsPageId($this->toString()) ? true : false;
-                $this->isAlias = ! $this->isCmsId;
-            } else {
-                $this->isAlias = false;
-            }
+            $this->isAlias = ! $this->isUid();
         }
     }
     
@@ -45,21 +41,6 @@ class UiPageSelector extends AbstractSelector implements UiPageSelectorInterface
     public function isAlias()
     {
         return $this->isAlias;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Selectors\UiPageSelectorInterface::isCmsId()
-     */
-    public function isCmsId() : bool
-    {
-        return $this->isCmsId;
-    }
-    
-    public static function getAppAliasFromNamespace($aliasWithNamespace)
-    {
-        return self::getAppAliasFromNamespaceViaTrait($aliasWithNamespace);
     }
     
     /**

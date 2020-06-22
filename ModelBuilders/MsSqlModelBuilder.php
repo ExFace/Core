@@ -4,6 +4,7 @@ namespace exface\Core\ModelBuilders;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 
 class MSSqlModelBuilder extends AbstractSqlModelBuilder
 {
@@ -104,6 +105,25 @@ class MSSqlModelBuilder extends AbstractSqlModelBuilder
             $rows[$nr]['ALIAS'] = $this->generateAlias($row['ALIAS']);
         }
         return $rows;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::findRelation()
+     */
+    protected function findRelation(string $table, string $column, SqlDataConnectorInterface $connector) : array
+    {
+        $result = parent::findRelation($table, $column, $connector);
+        
+        $tablePrefix = StringDataType::substringBefore($table, '.');
+        if ($result['table'] !== null && $tablePrefix) {
+            if (strpos($result['table'], '.') === false) {
+                $result['table'] = $tablePrefix . '.' . $result['table'];
+            }
+        }
+        
+        return $result;
     }
 }
 ?>

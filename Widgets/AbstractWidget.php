@@ -532,8 +532,8 @@ abstract class AbstractWidget implements WidgetInterface
      */
     public function getIdSpace()
     {
-        if (is_null($this->id_space)) {
-            if ($this->getParent() && $parent_id_space = $this->getParent()->getIdSpace()) {
+        if ($this->id_space === null) {
+            if ($this->hasParent() && $parent_id_space = $this->getParent()->getIdSpace()) {
                 $this->id_space = $parent_id_space;
             } else {
                 return '';
@@ -1277,32 +1277,32 @@ abstract class AbstractWidget implements WidgetInterface
      * 
      * Returns null if no such parent widget exists.
      *
-     * @param string $typeName            
-     * @return AbstractWidget
+     * @param string $classOrInterface            
+     * @return WidgetInterface|NULL
      */
-    public function getParentByType(string $typeName)
+    public function getParentByClass(string $classOrInterface) : ?WidgetInterface
     {
-        if (! array_key_exists($typeName, $this->parentByType)) {
+        if (! array_key_exists($classOrInterface, $this->parentByType)) {
             $widget = $this;
             while ($widget->getParent()) {
                 $widget = $widget->getParent();
                 
                 // Ein Filter is eher ein Wrapper als ein Container (kann nur ein Widget enthalten).
-                if (($typeName == 'exface\\Core\\Interfaces\\Widgets\\iContainOtherWidgets') && ($widget instanceof $typeName) && ($widget instanceof Filter)) {
+                if (($classOrInterface == 'exface\\Core\\Interfaces\\Widgets\\iContainOtherWidgets') && ($widget instanceof $classOrInterface) && ($widget instanceof Filter)) {
                     continue;
                 }
                 
-                if ($widget instanceof $typeName) {
-                    $this->parentByType[$typeName] = $widget;
+                if ($widget instanceof $classOrInterface) {
+                    $this->parentByType[$classOrInterface] = $widget;
                     break;
                 }
             }
             
-            if (! array_key_exists($typeName, $this->parentByType)) {
-                $this->parentByType[$typeName] = null;
+            if (! array_key_exists($classOrInterface, $this->parentByType)) {
+                $this->parentByType[$classOrInterface] = null;
             }
         }
-        return $this->parentByType[$typeName];
+        return $this->parentByType[$classOrInterface];
     }
     
     /**

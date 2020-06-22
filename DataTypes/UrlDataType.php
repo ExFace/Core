@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\DataTypes;
 
+use Psr\Http\Message\UriInterface;
+use GuzzleHttp\Psr7\Uri;
+
 class UrlDataType extends StringDataType
 {
     private $baseUrl = null;
@@ -16,6 +19,16 @@ class UrlDataType extends StringDataType
     public static function urlEncode(string $string) : string
     {
         return str_replace('.', '%2E', urlencode($string));
+    }
+    
+    /**
+     * 
+     * @param string $url
+     * @return bool
+     */
+    public static function isAbsolute(string $url) : bool
+    {
+        return StringDataType::startsWith('http', $url, false);
     }
     
     /**
@@ -44,5 +57,21 @@ class UrlDataType extends StringDataType
     {
         $this->baseUrl = $value;
         return $this;
+    }
+    
+    /**
+     * Returns the path of the given URL - e.g. `my/path` from `http://localhost/my/path`.
+     * 
+     * @param UriInterface|string $stringOrUri
+     * @return string
+     */
+    public static function findPath($stringOrUri) : string
+    {
+        if ($stringOrUri instanceof UriInterface) {
+            $uri = $stringOrUri;
+        } else {
+            $uri = new Uri($stringOrUri);
+        }
+        return $uri->getPath() ?? '';
     }
 }

@@ -21,6 +21,7 @@ use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Widgets\Traits\AttributeCaptionTrait;
 use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\DataTypes\EncryptedDataType;
 
 /**
  * The Value widget simply shows a raw (unformatted) value.
@@ -300,8 +301,11 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     }
 
     /**
+     * How to aggregate values if the widget receives multiple
      * 
-     * {@inheritDoc}
+     * @uxon-property aggregator
+     * @uxon-type metamodel:aggregator
+     * 
      * @see \exface\Core\Interfaces\Widgets\iSupportAggregators::setAggregator()
      */
     public function setAggregator($aggregator_or_string)
@@ -513,6 +517,14 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function isInTable() : bool
     {
         return $this->getParent() instanceof DataColumn;
-    }    
+    } 
+    
+    public function setValue($expression_or_string)
+    {
+        if (is_string($expression_or_string) && $this->getValueDataType() instanceof EncryptedDataType && $this->getValueDataType()->isValueEncrypted($expression_or_string)) {
+            $expression_or_string = EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $expression_or_string, $this->getValueDataType()->getEncryptionPrefix());
+        }
+        return parent::setValue($expression_or_string);
+    }
 }
 ?>

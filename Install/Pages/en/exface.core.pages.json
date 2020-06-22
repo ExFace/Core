@@ -1,16 +1,28 @@
 {
-    "id": "0xaab623e6632411e8aab30205857feb80",
+    "uid": "0xaab623e6632411e8aab30205857feb80",
     "alias_with_namespace": "exface.core.pages",
-    "menu_parent_page_alias": "exface.core.metamodel",
-    "menu_index": "8",
+    "menu_parent_page_selector": "0xf8310d4bba2c11e7895fe4b318306b9a",
+    "menu_index": 1,
     "menu_visible": true,
     "name": "Pages",
     "description": "Tabular overview for all pages",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2018-05-29 11:42:56",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2020-05-11 09:59:49",
     "contents": {
         "object_alias": "exface.Core.PAGE",
-        "widget_type": "DataTable",
+        "widget_type": "DataTree",
+        "tree_parent_id_attribute_alias": "MENU_PARENT",
+        "tree_folder_flag_attribute_alias": "IS_FOLDER_FLAG",
+        "tree_root_uid": "NULL",
+        "paginate": false,
+        "row_reorder": {
+            "order_index_attribute_alias": "MENU_POSITION",
+            "order_direction": "asc"
+        },
         "filters": [
             {
                 "attribute_alias": "NAME"
@@ -22,12 +34,28 @@
                 "attribute_alias": "MENU_PARENT"
             },
             {
+                "attribute_alias": "MENU_VISIBLE"
+            },
+            {
                 "attribute_alias": "CONTENT",
                 "widget_type": "Input",
-                "height": 1
+                "height": 1,
+                "width": 1
             },
             {
                 "attribute_alias": "APP"
+            },
+            {
+                "attribute_alias": "PAGE_GROUP_PAGES__PAGE_GROUP"
+            },
+            {
+                "attribute_alias": "PAGE_GROUP_PAGES__PAGE_GROUP__AUTHORIZATION_POLICY__TARGET_USER_ROLE"
+            },
+            {
+                "attribute_alias": "UID"
+            },
+            {
+                "attribute_alias": "PUBLISHED"
             }
         ],
         "columns": [
@@ -38,16 +66,26 @@
                 "attribute_alias": "ALIAS"
             },
             {
-                "attribute_alias": "MENU_PARENT__LABEL"
+                "attribute_alias": "PUBLISHED"
+            },
+            {
+                "attribute_alias": "MENU_VISIBLE"
+            },
+            {
+                "attribute_alias": "PAGE_GROUP_PAGES__UID:COUNT",
+                "caption": "Groups"
+            },
+            {
+                "attribute_alias": "TEMPLATE__LABEL"
+            },
+            {
+                "attribute_alias": "APP__NAME"
             },
             {
                 "attribute_alias": "MENU_POSITION"
             },
             {
-                "attribute_alias": "APP__LABEL"
-            },
-            {
-                "attribute_alias": "CMS_ID"
+                "attribute_alias": "MENU_MOVED_FLAG"
             },
             {
                 "attribute_alias": "CREATED_ON"
@@ -61,12 +99,47 @@
         ],
         "sorters": [
             {
-                "attribute_alias": "MENU_PARENT",
-                "direction": "asc"
-            },
-            {
                 "attribute_alias": "MENU_POSITION",
                 "direction": "asc"
+            }
+        ],
+        "buttons": [
+            {
+                "action": {
+                    "alias": "exface.Core.ShowObjectCreateDialog",
+                    "prefill_with_input_data": true,
+                    "input_mapper": {
+                        "column_to_column_mappings": [
+                            {
+                                "from": "UID",
+                                "to": "MENU_PARENT"
+                            }
+                        ],
+                        "inherit_columns": false
+                    }
+                }
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectCopyDialog"
+            },
+            {
+                "action": {
+                    "alias": "exface.Core.GoToPageUrl",
+                    "open_in_new_window": true
+                }
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
+            },
+            {
+                "action_alias": "exface.Core.RestorePageMenuPosition"
+            },
+            {
+                "action_alias": "exface.Core.ShowPageMassEditDialog"
             }
         ]
     }

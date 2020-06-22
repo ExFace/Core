@@ -1,16 +1,29 @@
 {
-	"MODEL_DATA_CONNECTOR": "exface/ModxCmsConnector/DataConnectors/ModxDb.php",
-	"MODEL_LOADER": "exface/Core/ModelLoaders/SqlModelLoader.php",
-	"CMS_CONNECTOR": "exface/ModxCmsConnector/CmsConnectors/Modx.php",
+	"METAMODEL.LOADER_CLASS": "\\exface\\Core\\ModelLoaders\\SqlModelLoader",
+	"METAMODEL.QUERY_BUILDER": "\\exface\\Core\\QueryBuilders\\MySqlBuilder",
+	"METAMODEL.CONNECTOR": "\\exface\\Core\\DataConnectors\\MySqlConnector",
+	"METAMODEL.CONNECTOR_CONFIG": {
+		"host": "localhost",
+		"dbase": "exface",
+		"user": "root",
+		"password": "",
+		"charset": "utf8"
+	},
 	
+	"SERVER.TITLE": "Power UI",
+	"SERVER.TITLE_HTML": "Power <b>UI</b>",
+	"SERVER.BASE_URLS": [],
+	"SERVER.ICONS": [],
+	"SERVER.INDEX_PAGE_SELECTOR" : "index",
+    "SERVER.DEFAULT_LOCALE": "en_US",
+    
 	"CACHE.ENABLED": true,
 	
 	"DEBUG.LIVE_CLASS_AUTOLOADER": true,
     "DEBUG.DISABLE_FACADE_ERROR_HANDLERS": false,
     "DEBUG.PRETTIFY_ERRORS": true,
-    "DEBUG.SHOW_REQUEST_DUMP": false,
+    "DEBUG.SHOW_REQUEST_DUMP": true,
     "DEBUG.SHOW_META_MODEL_DETAILS": true,
-    "DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY": true,
     "DEBUG.SUPPORT_EMAIL_ADDRESS": "support@mydomain.com",
     
     "LOG.MINIMUM_LEVEL_TO_LOG": "debug",
@@ -24,19 +37,52 @@
     "FOLDERS.BACKUP_PATH_ABSOLUTE": "",
     "FOLDERS.LOGS_PATH_ABSOLUTE": "",
     
-    "LOCALE.DEFAULT": "en_US",
-    
     "SECURITY.DISABLE_ANONYMOUS_ACCESS": false,
     "SECURITY.AUTHENTICATORS" : [
     	{
-    		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SymfonyAuthenticator"
-    	}, 
+    		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SymfonyAuthenticator",
+    		"id": "USER_MODEL_AUTH"
+    	},
     	{
-    		"class": "\\exface\\ModxCmsConnector\\CommonLogic\\Security\\ModxCmsAuthenticator"
-		}
+    		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\CliAuthenticator",
+    		"id": "CLI_DEFAULT_AUTH",
+    		"create_new_users": true,
+    		"create_new_users_with_roles": [
+                "exface.core.SUPERUSER"
+            ]
+    	},
+        {
+            "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\RememberMeAuthenticator",
+            "token_lifetime_seconds": 604800,
+            "id": "REMEMBERME_AUTH"
+        }
     ],
     
     "FACADES.ROUTES": {},
     
-    "FACADES.ABSTRACTPWAFACADE.WORKBOX_VENDOR_PATH": "npm-asset/workbox-sw/build/workbox-sw.js"
+    "FACADES.ABSTRACTPWAFACADE.WORKBOX_VENDOR_PATH": "npm-asset/workbox-sw/build/workbox-sw.js",
+    "FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_FILENAME": "ServiceWorker.js",
+	"FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_ROUTES": {
+		"HTML pages": {
+    		"description": "Cache all HTML files. Use cache only if offline.",
+			"matcher": "/^.*\\.html/i",
+			"strategy": "workbox.strategies.networkFirst"
+		},
+		"Static JS, CSS, fonts from vendor folder": {
+			"description": "Cache static assets. Use cache only if offlie",
+			"matcher": "/vendor\\/.*(\\.js|\\.css|\\.woff2)/i",
+			"strategy": "workbox.strategies.networkFirst",
+			"cacheName": "asset-cache",
+    		"maxAgeSeconds": 604800
+		},
+		"images": {
+			"description": "Cache images. Use cache, but update in the background.",
+			"matcher": "/.*\\.(?:png|gif|jpg|jpeg|svg)$/i",
+			"strategy": "workbox.strategies.staleWhileRevalidate",
+			"cacheName": "image-cache",
+    		"maxEntries": 50,
+    		"maxAgeSeconds": 604800
+		}
+	},
+	"FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_IMPORTS": []
 }

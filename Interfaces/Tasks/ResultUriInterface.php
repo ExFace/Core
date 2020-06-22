@@ -19,10 +19,10 @@ interface ResultUriInterface extends ResultInterface
     
     /**
      * 
-     * @param UriInterface $uri
+     * @param UriInterface|string $uri
      * @return ResultUriInterface
      */
-    public function setUri(UriInterface $uri) : ResultUriInterface;
+    public function setUri($uri) : ResultUriInterface;
     
     /**
      * 

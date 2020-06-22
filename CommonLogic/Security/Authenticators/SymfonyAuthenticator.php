@@ -18,6 +18,11 @@ use exface\Core\Interfaces\Security\PreAuthenticatedTokenInterface;
 use Symfony\Component\Security\Core\Authentication\Token\PreAuthenticatedToken;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iHaveButtons;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 
 class SymfonyAuthenticator extends AbstractAuthenticator
 {
@@ -34,13 +39,16 @@ class SymfonyAuthenticator extends AbstractAuthenticator
      */
     public function authenticate(AuthenticationTokenInterface $token): AuthenticationTokenInterface
     {
+        $this->checkAuthenticatorDisabledForUsername($token->getUsername());
         try {
             $symfonyToken = $this->createSymfonyAuthToken($token);
             $symfonyAuthenticatedToken = $this->getSymfonyAuthManager()->authenticate($symfonyToken);
+            $user = $this->getUserFromToken($token);
+            $this->logSuccessfulAuthentication($user, $token->getUsername());
             $this->authenticatedToken = $token;
             $this->authenticatedSymfonyToken = $symfonyAuthenticatedToken;
         } catch (AuthenticationException $e) {
-            throw new AuthenticationFailedError($this, $e->getMessage(), null, $e);
+            throw new AuthenticationFailedError($this, $e->getMessage(), '7AL3J9X', $e);
         }
         return $token;
     }
@@ -62,7 +70,7 @@ class SymfonyAuthenticator extends AbstractAuthenticator
      */
     protected function getNameDefault() : string
     {
-        return 'Symfony Authentication';
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.SIGN_IN');
     }
     
     protected function getSymfonyAuthManager() : AuthenticationProviderManager
@@ -126,5 +134,37 @@ class SymfonyAuthenticator extends AbstractAuthenticator
         return new AnonymousToken(
             'secret', new SymfonyUserWrapper(UserFactory::createAnonymous($this->getWorkbench()))
             );
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Security\Authenticators\AbstractAuthenticator::createLoginWidget()
+     */
+    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    {
+        $container->setWidgets(new UxonObject([
+            [
+                'attribute_alias' => 'USERNAME',
+                'required' => true
+            ],[
+                'attribute_alias' => 'PASSWORD',
+                'required' => true
+            ]
+        ]));
+        
+        if ($container instanceof iLayoutWidgets) {
+            $container->setColumnsInGrid(1);
+        }
+        
+        if ($container instanceof iHaveButtons && $container->hasButtons() === false) {
+            $container->addButton($container->createButton(new UxonObject([
+                'action_alias' => 'exface.Core.Login',
+                'align' => EXF_ALIGN_OPPOSITE,
+                'visibility' => WidgetVisibilityDataType::PROMOTED
+            ])));
+        }
+        
+        return $container;
     }
 }

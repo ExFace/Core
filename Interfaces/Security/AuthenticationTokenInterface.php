@@ -2,6 +2,7 @@
 namespace exface\Core\Interfaces\Security;
 
 use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\UserImpersonationInterface;
 
 /**
  * Tokens store authentication information and can be authenticated by whe workbench security.
@@ -12,28 +13,12 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
  * @author Andrej Kabachnik
  *
  */
-interface AuthenticationTokenInterface
+interface AuthenticationTokenInterface extends UserImpersonationInterface
 {    
-    /**
-     * 
-     * @return string|NULL
-     */
-    public function getUsername() : ?string;
-    
     /**
      * Returns the facade, that the user uses to interact with the workbench (if available).
      * 
      * @return FacadeInterface|NULL
      */
     public function getFacade() : ?FacadeInterface;
-    
-    /**
-     * Returns TRUE if the token represents an anonymous user.
-     * 
-     * This is important as different authorizantion providers treat anonymous users
-     * differently. Some may even have a username for the anonymous user!
-     * 
-     * @return bool
-     */
-    public function isAnonymous() : bool;
 }

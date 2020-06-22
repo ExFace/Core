@@ -1,126 +1,65 @@
 <?php
 namespace exface\Core\CommonLogic\Contexts\Scopes;
 
-use exface\Core\Interfaces\Contexts\ContextInterface;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Model\User;
-use exface\Core\Factories\UserFactory;
 use exface\Core\Exceptions\SecurityException;
+use exface\Core\Interfaces\UserInterface;
+use exface\Core\CommonLogic\Filemanager;
 
-class UserContextScope extends AbstractContextScope
+class UserContextScope extends InstallationContextScope
 {
-
-    const CONTEXTS_FILENAME_IN_USER_DATA = '.contexts.json';
-
-    private $user_context_file_contents = null;
-    
     private $user = null;
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::getScopeId()
+     */
     public function getScopeId()
     {
         return $this->getUsername();
     }
 
-    public function getUsername()
+    /**
+     * 
+     */
+    public function getUsername() : ?string
     {
         return $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->getUsername();
     }
 
     /**
      * Returns the absolute path to the base installation folder (e.g.
-     * c:\xampp\htdocs\exface\exface\UserData\username)
+     * c:\xampp\htdocs\exface\data\users\<username>)
      *
      * @return string
      */
-    public function getUserDataFolderAbsolutePath()
+    public function getUserDataFolderAbsolutePath() : string
     {
         $path = $this->getWorkbench()->filemanager()->getPathToUserDataFolder() . DIRECTORY_SEPARATOR . $this->getUserDataFolderName();
         if (! file_exists($path)) {
-            mkdir($path);
+            Filemanager::pathConstruct($path);
         }
         return $path;
     }
 
-    public function getUserDataFolderName()
+    /**
+     * 
+     * @return string
+     */
+    public function getUserDataFolderName() : string
     {
         return $this->getUsername() ? $this->getUsername() : '.anonymous';
     }
 
     /**
-     * TODO
-     *
-     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::loadContextData()
-     */
-    public function loadContextData(ContextInterface $context)
-    {
-        if (is_null($this->user_context_file_contents)) {
-            if (file_exists($this->getFilename())) {
-                try {
-                    $this->user_context_file_contents = UxonObject::fromAnything(file_get_contents($this->getFilename()));
-                } catch (\Throwable $e) {
-                    $this->user_context_file_contents = new UxonObject();
-                }
-            } else {
-                $this->user_context_file_contents = new UxonObject();
-            }
-        }
-        
-        if ($this->user_context_file_contents->hasProperty($context->getAliasWithNamespace())) {
-            $context->importUxonObject($this->user_context_file_contents->getProperty($context->getAliasWithNamespace()));
-        }
-        
-        return $this;
-    }
-
-    /**
-     * Contexts in the user scope get saved to the file .contexts.json in the
-     * user data folder of the current user.
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::saveContexts()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\InstallationContextScope::getFilePathAbsolute()
      */
-    public function saveContexts()
+    protected function getFilePathAbsolute() : string
     {
-        // Update the cached file contents with data from all loaded contexts
-        // If a context is not loaded, but present in the file, it had noch
-        // chance to get changed, so we just keep it in the file. If the
-        // context is loaded, but empty - then we know, it should disapear from
-        // the file.
-        foreach ($this->getContextsLoaded() as $context) {
-            $uxon = $context->exportUxonObject();
-            if (! is_null($uxon) && ! $uxon->isEmpty()) {
-                $this->user_context_file_contents->setProperty($context->getAliasWithNamespace(), $uxon);
-            } else {
-                $this->removeContext($context->getAliasWithNamespace());
-            }
-        }
-        
-        // Now save the cached version of the file.
-        // NOTE: if nothing was cached, than we don't need to change anything.
-        if (! is_null($this->user_context_file_contents)) {
-            if (! $this->user_context_file_contents->isEmpty()) {
-                file_put_contents($this->getFilename(), $this->user_context_file_contents->toJson());
-            } elseif (file_exists($this->getFilename())) {
-                unlink($this->getFilename());
-            }
-        }
-        return $this;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::removeContext()
-     */
-    public function removeContext($alias)
-    {
-        $this->user_context_file_contents->unsetProperty($alias);
-        return parent::removeContext($alias);
-    }
-
-    protected function getFilename()
-    {
-        return $this->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . static::CONTEXTS_FILENAME_IN_USER_DATA;
+        return $this->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . static::CONTEXTS_FILENAME;
     }
 
     /**
@@ -130,12 +69,12 @@ class UserContextScope extends AbstractContextScope
      * 
      * @return User
      */
-    public function getUserCurrent()
+    public function getUserCurrent() : UserInterface
     {
         $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
         // Check if the user has changed since the last access to the user scope.
         // This is not allowed as this would result in multiple users sharing the same scope!
-        if ($this->user !== null && $this->user->isUserAnonymous() === false && $this->user->getUsername() !== $user->getUsername()) {
+        if ($this->user !== null && $this->user->isAnonymous() === false && $this->user->getUsername() !== $user->getUsername()) {
             throw new SecurityException('Authenticated user changed after the user context scope was initialized!');
         }
         // Save the current user for further checks
@@ -145,4 +84,3 @@ class UserContextScope extends AbstractContextScope
         return $user;
     }
 }
-?>

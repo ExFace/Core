@@ -40,7 +40,7 @@ class Browser extends AbstractWidget implements iFillEntireContainer
     public function setUrl(string $url) : Browser
     {
         $phs = [
-            'api' => $this->getWorkbench()->getCMS()->buildUrlToRouter() . '/api'
+            'api' => $this->getWorkbench()->getUrl() . 'api'
         ];
         $this->url = StringDataType::replacePlaceholders($url, $phs);
         return $this;
@@ -69,7 +69,7 @@ class Browser extends AbstractWidget implements iFillEntireContainer
     public function setUrlBase(string $url) : Browser
     {
         $phs = [
-            'api' => $this->getWorkbench()->getCMS()->buildUrlToRouter() . '/api'
+            'api' => $this->getWorkbench()->getUrl() . 'api'
         ];
         $this->urlBase = StringDataType::replacePlaceholders($url, $phs);
         return $this;
@@ -80,15 +80,8 @@ class Browser extends AbstractWidget implements iFillEntireContainer
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
      */
-    public function getAlternativeContainerForOrphanedSiblings()
+    public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets
     {
-        if ($this->getParent() && $this->getParent() instanceof iContainOtherWidgets) {
-            return $this->getParent();
-        }
-        
-        if ($this->orphanContainer === null) {
-            $this->orphanContainer = WidgetFactory::create($this->getPage(), 'Container', $this);
-        }
-        return $this->orphanContainer;
+        return null;
     }
 }
