@@ -176,7 +176,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             $sql_update = <<<SQL
             
 UPDATE {$this->getMigrationsTableName()}
-SET down_datetime={$this->getSqlFunctionForCurrentDateTime()}, down_result='{$this->escapeSqlStringValue($down_result_string)}'
+SET down_datetime={$this->buildSqlFunctionNow()}, down_result='{$this->escapeSqlStringValue($down_result_string)}'
 WHERE id='{$id}';
 
 SQL;
@@ -271,11 +271,11 @@ SQL;
     }
     
     /**
-     * Returns the correct Sql function to get the current date and time.
+     * Returns the SQL function call to get the current date and time.
      * 
      * @return string
      */
-    protected function getSqlFunctionForCurrentDateTime() : string
+    protected function buildSqlFunctionNow() : string
     {
         return 'now()';
     }
