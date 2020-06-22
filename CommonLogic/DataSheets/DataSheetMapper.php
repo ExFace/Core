@@ -256,7 +256,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      */
     public function setToObjectAlias(string $alias_with_namespace) : DataSheetMapperInterface
     {
-        return $this->setFromMetaObject($this->getWorkbench()->model()->getObject($alias_with_namespace));
+        return $this->setToMetaObject($this->getWorkbench()->model()->getObject($alias_with_namespace));
     }
 
     /**
