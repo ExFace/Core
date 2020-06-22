@@ -7,7 +7,7 @@ use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 
 /**
- * Database AppInstaller for Apps with MsSQL Database.
+ * Database AppInstaller for Apps with Microsoft SQL Server Database.
  * 
  * ## Encoding
  * 
@@ -15,11 +15,11 @@ use exface\Core\Exceptions\Installers\InstallerRuntimeError;
  * 
  * ## Transaction handling
  * 
- * NOTE: MySQL does not support rollbacks of DDL-statements. This is why the
- * MySqlDatabaseInstaller wraps each UP/DOWN script in a transaction - this
+ * NOTE: SQL Server seems to only support DDL rollbacks in certain stuations,
+ * so (similarly to MySQL) we wrap each UP/DOWN script in a transaction - this
  * ensures, that if a script was performed successfully, all it's changes
- * are committed - DDL and DML. If not done so, DML changes might get rolled
- * back if something in the next migration script goes wrong, while DDL
+ * are committed - DDL and DML. If not done so, most changes might get rolled
+ * back if something in the next migration script goes wrong, while certain DDL
  * changes would remain due to their implicit commit.
  *
  * @author Ralf Mulansky
@@ -183,7 +183,7 @@ SQL;
         return str_replace("'", "''", $value);
     }
     
-    protected function getSqlFunctionForCurrentDateTime() : string
+    protected function buildSqlFunctionNow() : string
     {
         return 'GETDATE()';
     }
