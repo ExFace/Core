@@ -259,7 +259,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                         $uxon = new UxonObject([
                             'attribute_alias' => $this->getAttributeAlias()
                         ]);
-                        $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'InputHidden');
+                        $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Display');
                         break;
                     // If the column is editable, use the default editor widget
                     case $this->isEditable() === true:
