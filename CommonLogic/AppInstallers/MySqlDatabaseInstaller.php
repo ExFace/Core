@@ -7,6 +7,7 @@ use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use function GuzzleHttp\json_encode;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataConnectors\MySqlConnector;
 
 /**
  * Database AppInstaller for Apps with MySQL Database.
@@ -279,5 +280,17 @@ SQL;
     {
         return 'now()';
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::checkDataConnection()
+     */
+    protected function checkDataConnection(SqlDataConnectorInterface $connection) : SqlDataConnectorInterface
+    {
+        if (! $connection instanceof MySqlConnector) {
+            throw new InstallerRuntimeError($this, 'Cannot use connection "' . $connection->getAliasWithNamespace() . '" with MySQL DB installer: only instances of "MySqlConnector" supported!');
+        }
+        return $connection;
+    }
 }
-?>

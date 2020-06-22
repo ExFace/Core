@@ -5,6 +5,7 @@ namespace exface\Core\CommonLogic\AppInstallers;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
+use exface\Core\DataConnectors\MsSqlConnector;
 
 /**
  * Database AppInstaller for Apps with Microsoft SQL Server Database.
@@ -192,5 +193,18 @@ SQL;
     protected function buildSqlFunctionNow() : string
     {
         return 'GETDATE()';
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::checkDataConnection()
+     */
+    protected function checkDataConnection(SqlDataConnectorInterface $connection) : SqlDataConnectorInterface
+    {
+        if (! $connection instanceof MsSqlConnector) {
+            throw new InstallerRuntimeError($this, 'Cannot use connection "' . $connection->getAliasWithNamespace() . '" with Microsoft SQL Server DB installer: only instances of "MsSqlConnector" supported!');
+        }
+        return $connection;
     }
 }

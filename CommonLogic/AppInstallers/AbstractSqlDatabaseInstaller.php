@@ -258,13 +258,20 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
             }
             $dataSource = DataSourceFactory::createFromModel($this->getWorkbench(), $sourceSelector);
             try {
-                $this->data_connection = $dataSource->getConnection();
+                $this->data_connection = $this->checkDataConnection($dataSource->getConnection());
             } catch (DataSourceHasNoConnectionError $e) {
                 throw new InstallerRuntimeError($this, 'Cannot install SQL DB for app "' . $this->getSelectorInstalling()->toString() . '": please provide a valid connection for data source "' . $dataSource->getName() . '" and reinstall/repair the app.', '77UP8Q4', $e);
             }
         }
         return $this->data_connection;
     }
+    
+    /**
+     * 
+     * @param SqlDataConnectorInterface $connection
+     * @return SqlDataConnectorInterface
+     */
+    protected abstract function checkDataConnection(SqlDataConnectorInterface $connection) : SqlDataConnectorInterface;
     
     /**
      * Set the connection to the SQL database explicitly instead of setDataSourceSelector().
