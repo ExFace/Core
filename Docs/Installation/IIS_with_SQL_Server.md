@@ -1,17 +1,17 @@
-#IIS with SQL Server
+# IIS with SQL Server
 
-##PHP Installation with FastCGI module
+## PHP Installation with FastCGI module
 
 To run PowerUI on an IIS server with SQL, configure the IIS server and install PHP as shown in this guide: [Host PHP Applications on IIS](https://docs.microsoft.com/en-us/iis/application-frameworks/install-and-configure-php-applications-on-iis/using-fastcgi-to-host-php-applications-on-iis)
 
-##Rewrite Module Installation
+## Rewrite Module Installation
 For PowerUI to work, the support for rewrite rules needs to be enabled on the IIS server. For this the rewrite module needs to be installed.
 Download the module here:
 
 - [Download x86 Version](https://go.microsoft.com/?linkid=9722533)
 - [Download x86 Version](https://go.microsoft.com/?linkid=9722532)
 
-##WinCache Extension Installation
+## WinCache Extension Installation
 The WinCache Extension for php is required. Donwload the correct `nts` version, fitting to your php and Windows version, here:
 - [WinCache Download](https://sourceforge.net/projects/wincache/)
 
@@ -23,13 +23,13 @@ The command is `msiexec /i {WinCacheMsiPath} PHPPATH={PHPPath} IACCEPTWINDOWSCAC
 
 **Important:** The php path must end with a trailing slash!
 
-##SQL Driver Installation
+## SQL Driver Installation
 Download the driver package from the Microsoft website:
 - [SQL Driver](https://docs.microsoft.com/en-us/sql/connect/php/download-drivers-php-sql-server?view=sql-server-ver15).
 Copy the two `.ddl`-files corresponding your php version and windows version, starting with `php_pdo` and `php_sqlsrv`, into the `ext` subfolder of your `PHP` directory. The `nts` versions of those fiels are needed.
 So for a php version `7.2.18` and a windows x64 version the files `php_pdo_sqlsrv_72_nts_x64.dll` and `php_sqlsrv_72_nts_x64.dll` are needed.
 
-##php.ini Settings
+## php.ini Settings
 Their are a few settings that need to be changed or added to the `php.ini` file in your `PHP` directory.
 
 1. Deactivate memory limit:
@@ -47,4 +47,8 @@ Their are a few settings that need to be changed or added to the `php.ini` file 
 	- `zend_extension=php_opcache.dll`
 	- `opcache.enable=On`
 	- `opcache.enable_cli=On`
-	- add the settings shown [HERE](https://wiki.salt-solutions.de/pages/viewpage.action?pageId=162169402#Installation/UpdatedesWAMP-Servers-KonfigurationvonOPCache)
+	- add the settings shown [HERE](https://wiki.salt-solutions.de/pages/viewpage.action?pageId=162169402# Installation/UpdatedesWAMP-Servers-KonfigurationvonOPCache)
+	
+## Securing sesnsitive folders
+
+See [security docs](../Security/Securing_installation_folders.md) for a list of folders to restrict access to.
