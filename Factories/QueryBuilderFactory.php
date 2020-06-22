@@ -27,7 +27,7 @@ abstract class QueryBuilderFactory extends AbstractSelectableComponentFactory
     public static function create(QueryBuilderSelectorInterface $selector) : QueryBuilderInterface
     {
         if (self::isModelLoaderQueryBuilder($selector)) {
-            self::createFromString($selector->getWorkbench(), $selector->getWorkbench()->getConfig()->getOption('METAMODEL.QUERY_BUILDER'));
+            return self::createModelLoaderQueryBuilder($selector->getWorkbench());
         }
         return static::createFromSelector($selector);
     }
@@ -35,7 +35,6 @@ abstract class QueryBuilderFactory extends AbstractSelectableComponentFactory
     /**
      * Creates a new query (query builder instance) from the given identifier
      * - file path relative to the ExFace installation directory
-     * - ExFace alias with namespace
      * - class name
      *
      * @param WorkbenchInterface $workbench            
@@ -58,6 +57,17 @@ abstract class QueryBuilderFactory extends AbstractSelectableComponentFactory
         $qb = static::createFromString($object->getWorkbench(), $object->getQueryBuilder());
         $qb->setMainObject($object);
         return $qb;
+    }
+    
+    /**
+     * Instantiates the query builder used for the current metamodel storage.
+     * 
+     * @param WorkbenchInterface $workbench
+     * @return QueryBuilderInterface
+     */
+    public static function createModelLoaderQueryBuilder(WorkbenchInterface $workbench) : QueryBuilderInterface
+    {
+        return self::createFromString($workbench, $workbench->getConfig()->getOption('METAMODEL.QUERY_BUILDER'));
     }
     
     /**
