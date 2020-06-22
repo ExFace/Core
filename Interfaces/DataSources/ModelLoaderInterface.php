@@ -29,8 +29,9 @@ use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\CommonLogic\Model\UiPageTree;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Interfaces\UserImpersonationInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 
-interface ModelLoaderInterface
+interface ModelLoaderInterface extends WorkbenchDependantInterface
 {
 
     /**
@@ -210,5 +211,10 @@ interface ModelLoaderInterface
      */
     public function loadPageTree(UiPageTree $tree) : array;
     
+    /**
+     * 
+     * @param DataConnectionSelectorInterface $selector
+     * @return DataConnectionInterface
+     */
+    public function loadDataConnection(DataConnectionSelectorInterface $selector) : DataConnectionInterface;
 }
-?>

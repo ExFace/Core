@@ -46,7 +46,6 @@ use exface\Core\CommonLogic\Selectors\DataConnectorSelector;
 use exface\Core\Exceptions\DataSources\DataConnectionNotFoundError;
 use exface\Core\CommonLogic\AppInstallers\AppInstallerContainer;
 use exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller;
-use exface\Core\DataConnectors\MySqlConnector;
 use exface\Core\Exceptions\DataSources\DataSourceNotFoundError;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
@@ -74,10 +73,13 @@ use exface\Core\CommonLogic\Selectors\AuthorizationPointSelector;
 use exface\Core\DataTypes\EncryptedDataType;
 use exface\Core\DataTypes\UxonDataType;
 use exface\Core\Exceptions\Security\AccessDeniedError;
-use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 
 /**
+ * Loads metamodel entities from SQL databases supporting the MySQL dialect.
+ * 
+ * For historical reasons, this generic SQL model loader is actually MySQL
+ * oriented. Use database specific loaders if possible!
  * 
  * @author Andrej Kabachnik
  *
@@ -157,7 +159,7 @@ class SqlModelLoader implements ModelLoaderInterface
      * @param string $sqlAs
      * @return string
      */
-    protected function buildSqlExists(string $sqlFrom, string $sqlWhere, string $sqlAs)
+    protected function buildSqlExists(string $sqlFrom, string $sqlWhere, string $sqlAs) : string
     {
         return "(CASE WHEN EXISTS (SELECT * FROM {$sqlFrom} WHERE {$sqlWhere} ) THEN 1 ELSE 0 END) AS {$sqlAs}";
     }
@@ -458,6 +460,12 @@ class SqlModelLoader implements ModelLoaderInterface
         return $object;
     }
 
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @param array $row
+     * @return \exface\Core\CommonLogic\Model\CompoundAttribute|\exface\Core\CommonLogic\Model\Attribute
+     */
     protected function createAttributeFromDbRow(MetaObjectInterface $object, array $row)
     {
         if ($row['attribute_type'] === self::ATTRIBUTE_TYPE_COMPOUND) {
@@ -534,7 +542,7 @@ class SqlModelLoader implements ModelLoaderInterface
      * @param string $sqlElse
      * @return string
      */
-    protected function buildSqlCaseWhenThenElse(string $sqlWhen, string $sqlThen, string $sqlElse)
+    protected function buildSqlCaseWhenThenElse(string $sqlWhen, string $sqlThen, string $sqlElse) : string
     {
         return "(CASE WHEN {$sqlWhen} THEN {$sqlThen} ELSE {$sqlElse} END)";
     }
@@ -655,6 +663,12 @@ class SqlModelLoader implements ModelLoaderInterface
         return $data_source;
     }
     
+    /**
+     * 
+     * @param array $row
+     * @throws DataConnectionNotFoundError
+     * @return DataConnectionInterface
+     */
     protected function createDataConnectionFromDbRow(array $row) : DataConnectionInterface
     {
         try {
@@ -694,6 +708,11 @@ class SqlModelLoader implements ModelLoaderInterface
         return $connection;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadDataConnection()
+     */
     public function loadDataConnection(DataConnectionSelectorInterface $selector) : DataConnectionInterface
     {
         foreach ($this->connections_loaded as $conn) {
@@ -769,7 +788,6 @@ class SqlModelLoader implements ModelLoaderInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::getDataConnection()
      */
     public function getDataConnection()
@@ -780,7 +798,6 @@ class SqlModelLoader implements ModelLoaderInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::setDataConnection()
      */
     public function setDataConnection(DataConnectionInterface $connection)
@@ -795,7 +812,6 @@ class SqlModelLoader implements ModelLoaderInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadObjectActions()
      */
     public function loadObjectActions(MetaObjectActionListInterface $empty_list)
@@ -806,12 +822,22 @@ class SqlModelLoader implements ModelLoaderInterface
         return $this->loadActionsFromModel($empty_list, $sql_where);
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadAppActions()
+     */
     public function loadAppActions(AppActionList $empty_list)
     {
         $sql_where = 'a.app_alias = "' . $empty_list->getApp()->getAliasWithNamespace() . '"';
         return $this->loadActionsFromModel($empty_list, $sql_where);
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadAction()
+     */
     public function loadAction(AppInterface $app, $action_alias, WidgetInterface $trigger_widget = null)
     {
         $sql_where = "a.app_alias = '{$app->getAliasWithNamespace()}' AND oa.alias = '{$action_alias}'";
@@ -865,6 +891,11 @@ class SqlModelLoader implements ModelLoaderInterface
         return $action_list;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::getInstaller()
+     */
     public function getInstaller()
     {
         if ($this->installer === null) {
@@ -961,6 +992,11 @@ class SqlModelLoader implements ModelLoaderInterface
         }
     }
     
+    /**
+     * 
+     * @param DataTypeSelectorInterface $selector
+     * @return mixed
+     */
     protected function getDataTypeCache(DataTypeSelectorInterface $selector)
     {
         if ($selector->isUid()){
@@ -970,6 +1006,11 @@ class SqlModelLoader implements ModelLoaderInterface
         }
     }
     
+    /**
+     * 
+     * @param DataTypeSelectorInterface $selector
+     * @return \exface\Core\ModelLoaders\SqlModelLoader
+     */
     protected function cacheDataType(DataTypeSelectorInterface $selector)
     {
         if ($selector->isUid()){
@@ -988,26 +1029,36 @@ class SqlModelLoader implements ModelLoaderInterface
 				WHERE ' . $where);
         foreach ($query->getResultArray() as $dt) {
             $this->data_types_by_uid[$dt['oid']] = $dt;
-            $this->data_type_uids[$this->getFullAlias($dt['app_alias'], $dt['data_type_alias'])] = $dt['oid'];
+            $this->data_type_uids[$this->addNamespace($dt['app_alias'], $dt['data_type_alias'])] = $dt['oid'];
         }
         return $this;
     }
     
-    protected function getFullAlias($app_alias, $instance_alias)
+    /**
+     * 
+     * @param string $app_alias
+     * @param string $instance_alias
+     * @return string
+     */
+    protected function addNamespace(string $app_alias, string $instance_alias) : string
     {
         return $app_alias . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $instance_alias;
     }
     
-    protected function isUid($string)
-    {
-        return substr($string, 0, 2) === '0x';
-    }
-    
-    protected function getModel()
+    /**
+     * 
+     * @return ModelInterface
+     */
+    protected function getModel() : ModelInterface
     {
         return $this->getWorkbench()->model();
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
+     */
     public function getWorkbench()
     {
         return $this->selector->getWorkbench();
@@ -1055,7 +1106,7 @@ class SqlModelLoader implements ModelLoaderInterface
      * @param string $sqlWhere
      * @return string
      */
-    protected function buildSqlGroupConcat(string $sqlColumn, string $sqlFrom, string $sqlWhere)
+    protected function buildSqlGroupConcat(string $sqlColumn, string $sqlFrom, string $sqlWhere) : string
     {
         return <<<SQL
         
@@ -1065,6 +1116,11 @@ class SqlModelLoader implements ModelLoaderInterface
 SQL;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadUserData()
+     */
     public function loadUserData(UserInterface $user, DataSheetInterface $userData = null) : UserInterface
     {
         $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('uru.user_role_oid'), 'exf_user_role_users uru', 'uru.user_oid = u.oid');
@@ -1372,7 +1428,7 @@ SQL;
      * @param UiPageTreeNodeInterface $parentNode
      * @return UiPageTreeNodeInterface
      */
-    private function loadPageTreeCreateNodeFromDbRow(array $row, UiPageTreeNodeInterface $parentNode = null) : UiPageTreeNodeInterface
+    protected function loadPageTreeCreateNodeFromDbRow(array $row, UiPageTreeNodeInterface $parentNode = null) : UiPageTreeNodeInterface
     {
         $node = UiPageTreeFactory::createNode(
             $this->getWorkbench(),
@@ -1643,5 +1699,3 @@ SQL;
         return $rows;        
     }
 }
-
-?>

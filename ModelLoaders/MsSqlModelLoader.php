@@ -1,8 +1,5 @@
 <?php
-
 namespace exface\Core\ModelLoaders;
-
-
 
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\DataConnectors\MsSqlConnector;
@@ -11,6 +8,7 @@ use exface\Core\CommonLogic\AppInstallers\AppInstallerContainer;
 use exface\Core\CommonLogic\AppInstallers\MsSqlDatabaseInstaller;
 
 /**
+ * Loads metamodel entities from a Microsoft SQL Server datatabse.
  * 
  * @author Ralf Mulansky
  *
@@ -18,12 +16,11 @@ use exface\Core\CommonLogic\AppInstallers\MsSqlDatabaseInstaller;
 class MsSqlModelLoader extends SqlModelLoader
 {
     /**
-     * Ensures that binary UID fields are selected as 0xNNNNN to be compatible with the internal binary notation in ExFace
-     *
-     * @param string $field_name
-     * @return string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\ModelLoaders\SqlModelLoader::buildSqlUuidSelector()
      */
-    protected function buildSqlUuidSelector($field_name)
+    protected function buildSqlUuidSelector($field_name) : string
     {
         return "LOWER(CONVERT(VARCHAR(200), {$field_name}, 1))";
     }
@@ -33,7 +30,7 @@ class MsSqlModelLoader extends SqlModelLoader
      * {@inheritDoc}
      * @see \exface\Core\ModelLoaders\SqlModelLoader::buildSqlGroupConcat()
      */
-    protected function buildSqlGroupConcat(string $sqlColumn, string $sqlFrom, string $sqlWhere)
+    protected function buildSqlGroupConcat(string $sqlColumn, string $sqlFrom, string $sqlWhere) : string
     {
         return <<<SQL
         
@@ -58,6 +55,11 @@ SQL;
         return parent::setDataConnection($connection);
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\ModelLoaders\SqlModelLoader::getInstaller()
+     */
     public function getInstaller()
     {
         if ($this->installer === null) {
@@ -78,5 +80,3 @@ SQL;
         return $this->installer;
     }
 }
-
-?>
