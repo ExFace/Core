@@ -30,8 +30,9 @@ class MsSqlDatabaseInstaller extends MySqlDatabaseInstaller
     private $sql_migrations_prefix = null;
 
     /**
-     *
-     * @return string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::getSqlDbType()
      */
     protected function getSqlDbType() : string
     {
@@ -41,7 +42,7 @@ class MsSqlDatabaseInstaller extends MySqlDatabaseInstaller
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::installDatabase()
+     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::installDatabase()
      */
     protected function installDatabase(SqlDataConnectorInterface $connection, string $indent = '') : string
     {        
@@ -174,18 +175,22 @@ SQL;
     }
     
     /**
-     *
-     * @param string $value
-     * @return string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::escapeSqlStringValue()
      */
     protected function escapeSqlStringValue(string $value) : string
     {
         return str_replace("'", "''", $value);
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::buildSqlFunctionNow()
+     */
     protected function buildSqlFunctionNow() : string
     {
         return 'GETDATE()';
     }
 }
-?>
