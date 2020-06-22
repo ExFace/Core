@@ -11,7 +11,6 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 use exface\Core\Interfaces\QueryBuilderInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Exceptions\NotImplementedError;
