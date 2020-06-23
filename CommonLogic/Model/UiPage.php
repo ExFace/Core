@@ -713,9 +713,9 @@ class UiPage implements UiPageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::setParentPageSelector()
      */
-    public function setParentPageSelector($id_or_alias)
+    public function setParentPageSelector($idOrAliasOrNull)
     {
-        $this->menuParentPageSelector = $id_or_alias;
+        $this->menuParentPageSelector = $idOrAliasOrNull;
         return $this;
     }
 
@@ -1316,9 +1316,9 @@ class UiPage implements UiPageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::setParentPageSelectorDefault()
      */
-    public function setParentPageSelectorDefault($selectorOrString): UiPageInterface
+    public function setParentPageSelectorDefault($selectorOrStringOrNull): UiPageInterface
     {
-        $this->menuParentPageSelectorDefault = $selectorOrString;
+        $this->menuParentPageSelectorDefault = $selectorOrStringOrNull;
         return $this;
     }
 
@@ -1433,7 +1433,7 @@ class UiPage implements UiPageInterface
             'DEFAULT_MENU_PARENT' => $this->getParentPageSelectorDefault() !== null ? $this->getPageUidFromSelector($this->getParentPageSelectorDefault()) : null,
             'DESCRIPTION' => $this->getDescription(),
             'INTRO' => $this->getIntro(),
-            'MENU_PARENT' => $this->getParentPageSelector() !== null ? $this->getPageUidFromSelector($this->getParentPageSelector()) : null,
+            'MENU_PARENT' => $this->hasParent() ? $this->getPageUidFromSelector($this->getParentPageSelector()) : null,
             'MENU_POSITION' => $this->getMenuIndex(),
             'MENU_VISIBLE' => $this->getMenuVisible(),
             'NAME' => $this->getName(),

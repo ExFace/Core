@@ -172,10 +172,10 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
     
     /**
      * 
-     * @param string $id_or_alias
+     * @param string|NULL $idOrAliasOrNull
      * @return UiPageInterface
      */
-    public function setParentPageSelector($id_or_alias);
+    public function setParentPageSelector($idOrAliasOrNull);
 
     /**
      * Returns the parent page or NULL if this page has no parent.
@@ -212,10 +212,10 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
     
     /**
      * 
-     * @param string|UiPageSelectorInterface $selectorOrString
+     * @param string|UiPageSelectorInterface|NULL $selectorOrString
      * @return UiPageInterface
      */
-    public function setParentPageSelectorDefault($selectorOrString) : UiPageInterface;
+    public function setParentPageSelectorDefault($selectorOrStringOrNull) : UiPageInterface;
     
     /**
      * 
