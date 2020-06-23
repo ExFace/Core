@@ -278,7 +278,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::authenticate()
      */
-    public function authenticate(AuthenticationTokenInterface $token, bool $updateUserCredentials = true, UserInterface $credentialsOwner = null) : AuthenticationTokenInterface
+    public function authenticate(AuthenticationTokenInterface $token, bool $updateUserCredentials = true, UserInterface $credentialsOwner = null, bool $credentialsArePrivate = null) : AuthenticationTokenInterface
     {
         if (! $token instanceof UsernamePasswordAuthToken) {
             throw new InvalidArgumentException('Invalid token class "' . get_class($token) . '" for authentication via data connection "' . $this->getAliasWithNamespace() . '" - only "UsernamePasswordAuthToken" and derivatives supported!');
@@ -309,7 +309,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
                 'password' => $token->getPassword()
             ]);
             $credentialSetName = ($token->getUsername() ? $token->getUsername() : 'no username') . ' - ' . $this->getName();
-            $this->saveCredentials($uxon, $credentialSetName, $user);
+            $this->saveCredentials($uxon, $credentialSetName, $user, $credentialsArePrivate);
         }
         
         return $token;
