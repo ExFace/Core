@@ -86,7 +86,7 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
         } elseif ($this->getCreateNewUsers() === true) {
             $user = $this->createUserWithRoles($this->getWorkbench(), $token);            
             //second authentification to save credentials
-            $connector->authenticate($token, true, $user);
+            $connector->authenticate($token, true, $user, true);
         } else {            
             throw new AuthenticationFailedError($this, "Authentication failed, no PowerUI user with that username '{$token->getUsername()}' exists and none was created!", '7AL3J9X');
         }
