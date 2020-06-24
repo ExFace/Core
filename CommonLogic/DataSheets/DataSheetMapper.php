@@ -374,9 +374,9 @@ class DataSheetMapper implements DataSheetMapperInterface {
     }
     
     /**
-     * @return DataColumnToFilterMappingInterface
+     * @return DataFilterToColumnMappingInterface
      */
-    protected function createFilterToColumnMapping(UxonObject $uxon = null) : DataColumnToFilterMappingInterface
+    protected function createFilterToColumnMapping(UxonObject $uxon = null) : DataFilterToColumnMappingInterface
     {
         $mapping = new DataFilterToColumnMapping($this);
         if (!is_null($uxon)){
