@@ -9,20 +9,13 @@ use exface\Core\CommonLogic\UxonObject;
 /**
  * Renders a dialog to create a copy of the input object.
  * 
- * Dialog rendering works just like in ShowObjectEditDialog, but the save-button creates a copy
- * instead of modifying the selected object.
+ * Dialog rendering works just like in `ShowObjectEditDialog`, but the save-button creates a copy
+ * instead of modifying the selected object by calling the `CopyData` action.
  * 
- * Depending on whether a simple copy or a deep copy is required (either when action property 
- * `copy_related_objects` or when there are relation marked to get copied in the metamodel),
- * the dialog operates in different modes:
- * 
- * - *simple copy*: only the loaded object instance is copied, no dependencies. This is basically
- * the same, as the action `ShowObjectCreateDialog` but being automatically prefilled and with
- * the UID empty.
- * - *deep copy*: in addition to the loaded object instance, all related object instances from 
- * relations, listed the `copy_related_objects' will be copied to. The dialog itself behaves 
- * in this case more like `ShowObjectEditDialog` (e.g. if related objects are shown in the
- * dialog, they will be displayed), but the save-button does `CopyData` instead of `CreateData`.
+ * By default the object being shown is copied and all related objects, marked for copying in
+ * the metamodel of their relation attributes. However, you can also specify the related objects
+ * to be copied explicitly by adding their corresponding relations to  `copy_related_objects'.
+ * In this case, the `CopyData` action will perform a deep-copy.
  * 
  * @author Andrej Kabachnik
  *
@@ -40,7 +33,7 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
     {
         parent::init();
         $this->setIcon(Icons::CLONE_);
-        $this->setSaveActionAlias('exface.Core.CreateData');
+        $this->setSaveActionAlias('exface.Core.CopyData');
     }
 
     /**
@@ -117,20 +110,6 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ShowObjectEditDialog::getSaveActionAlias()
-     */
-    protected function getSaveActionAlias() : string
-    {
-        if ($this->isDeepCopy()) {
-            return 'exface.Core.CopyData';
-        } else {
-            return parent::getSaveActionAlias();
-        }
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\Actions\ShowObjectEditDialog::getSaveActionUxon()
      */
     public function getSaveActionUxon() : UxonObject
@@ -142,4 +121,3 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
         return $uxon;
     }
 }
-?>
