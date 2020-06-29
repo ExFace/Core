@@ -521,7 +521,11 @@ JS;
             if ($action instanceof iRunFacadeScript) {
                 if (mb_strtolower($action->getScriptLanguage()) === 'javascript' ) {
                     foreach ($action->getIncludes($this->getFacade()) as $path) {
-                        $tags[] = '<script src="' . $path . '"></script>';
+                        if (StringDataType::startsWith($path, '<')) {
+                            $tags[] = $path;
+                        } else {
+                            $tags[] = '<script src="' . $path . '"></script>';
+                        }
                     }
                 }
             }
