@@ -1498,14 +1498,19 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $object_alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() : $this->getMainObject()->getAlias());
         $table_alias = $this->getShortAlias($object_alias . $this->getQueryId());
         
-        // doublecheck that the attribute is known
+        // Doublecheck that the filter actually can be used
         if (! ($select || $customWhereClause) || $val === '') {
             if ($val === '') {
                 $hint = ' (the value is empty)';
             } else {
                 $hint = ' (neither a data address, nor a custom SQL_WHERE found for the attribute)';
             }
-            throw new QueryBuilderException('Illegal SQL WHERE clause for object "' . $this->getMainObject()->getName() . '" (' . $this->getMainObject()->getAlias() . '): expression "' . $qpart->getAlias() . '", Value: "' . $val . '"' . $hint);
+            // At this point we know, that the filter does not produce a WHERE clause, so the only
+            // option left is being a placeholder in the data address. If it's not the case, throw
+            // an error!
+            if (! in_array($qpart->getAlias(), StringDataType::findPlaceholders($this->getMainObject()->getDataAddress()))) {
+                throw new QueryBuilderException('Illegal SQL WHERE clause for object "' . $this->getMainObject()->getName() . '" (' . $this->getMainObject()->getAlias() . '): expression "' . $qpart->getAlias() . '", Value: "' . $val . '"' . $hint);
+            }
             return false;
         }
         
