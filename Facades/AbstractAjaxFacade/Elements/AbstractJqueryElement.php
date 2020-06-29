@@ -10,7 +10,6 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
-use exface\Core\Widgets\Container;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
