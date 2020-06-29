@@ -59,6 +59,7 @@ use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\Contexts\DebugContext;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
+use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 
 /**
  * 
@@ -904,5 +905,14 @@ HTML;
     protected function getPageFileExtension() : string
     {
         return '.html';
+    }
+    
+    public function getIconSets() : array
+    {
+        try {
+            return $this->getConfig()->getOption('ICONS.ICON_SETS');
+        } catch (ConfigOptionNotFoundError $e) {
+            return ['fa' => 'Font Awesome'];
+        }
     }
 }
