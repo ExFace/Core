@@ -107,6 +107,9 @@ class SecurityManager implements SecurityManagerInterface
                 throw $errors[0];
             default:
                 $err = new AuthenticationFailedError($this, 'Authentication failed! Tried ' . count($errors) . ' providers - see log details.' , null, null, $errors);
+                foreach ($errors as $e) {
+                    $this->getWorkbench()->getLogger()->logException($e);
+                }
                 throw $err;
         }
     }

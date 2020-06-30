@@ -951,10 +951,11 @@ JS;
                 $visualMapConfig .= $this->buildJsVisualMapConfig($s, $visualMapCount) . ',';
                 $visualMapCount++;
             }
-            
-            if ($s instanceof BarChartSeries && $s->getIndex() != 0) {
-                if ($series[$s->getIndex() - 1] instanceof BarChartSeries === false) {
-                    throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support bar charts mixed with other chart types!');
+            if ($s instanceof BarChartSeries && count($series) > 1) {
+                foreach ($series as $sOther) {
+                    if ($sOther instanceof BarChartSeries === false) {
+                        throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support bar charts mixed with other chart types!');
+                    }
                 }
             }
         }
@@ -1482,7 +1483,7 @@ JS;
             $rotate = '';
         }
         
-        if ($axisType === ChartAxis::AXIS_TYPE_CATEGORY) {
+        if ($axis->hasTicksForEveryValue()) {
             $interval = 'interval: 0';
             $axisTick = <<<JS
             

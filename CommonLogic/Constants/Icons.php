@@ -669,4 +669,23 @@ abstract class Icons
         
         return false;
     }
+    
+    /**
+     * 
+     * @param string $icon
+     * @return bool
+     */
+    public static function contains(string $icon) : bool
+    {
+        return self::isDefined($icon);
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public static function getIconSet() : string
+    {
+        return 'fa';
+    }
 }
