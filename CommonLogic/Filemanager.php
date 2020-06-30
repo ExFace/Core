@@ -8,49 +8,53 @@ use exface\Core\DataTypes\FilePathDataType;
 
 class Filemanager extends Filesystem implements WorkbenchDependantInterface
 {
-
+    
     const FOLDER_NAME_VENDOR = 'vendor';
-
-    const FOLDER_NAME_USER_DATA = 'UserData';
-
+    
+    const FOLDER_NAME_DATA = 'data';
+    
+    const FOLDER_NAME_USER_DATA = 'users';
+    
     const FOLDER_NAME_CACHE = 'cache';
-
+    
     const FOLDER_NAME_CONFIG = 'config';
-
+    
     const FOLDER_NAME_TRANSLATIONS = 'translations';
-
+    
     const FOLDER_NAME_BACKUP = 'backup';
-
+    
     const FOLDER_NAME_LOG = 'logs';
-
+    
     const FILE_NAME_CORE_LOG = '.log';
-
+    
     const FOLDER_NAME_LOG_DETAILS = 'details';
-
+    
     private $exface = null;
-
+    
     private $path_to_cache_folder = null;
-
+    
     private $path_to_config_folder = null;
-
+    
+    private $path_to_data_folder = null;
+    
     private $path_to_user_data_folder = null;
-
+    
     private $path_to_backup_folder = null;
-
+    
     private $path_to_log_folder = null;
-
+    
     private $core_log_filename = null;
-
+    
     private $path_to_log_detail_folder = null;
-
+    
     public function __construct(Workbench $exface)
     {
         $this->exface = $exface;
     }
-
+    
     /**
      * Returns the absolute path to the base installation folder (e.g.
-     * c:\xampp\htdocs\exface\exface)
+     * c:\xampp\htdocs\exface)
      *
      * @return string
      */
@@ -58,10 +62,10 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     {
         return $this->getWorkbench()->getInstallationPath();
     }
-
+    
     /**
      * Returns the absolute path to the base installation folder (e.g.
-     * c:\xampp\htdocs\exface\exface\vendor)
+     * c:\xampp\htdocs\exface\vendor)
      *
      * @return string
      */
@@ -69,10 +73,9 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     {
         return $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_VENDOR;
     }
-
+    
     /**
-     * Returns the absolute path to the base installation folder (e.g.
-     * c:\xampp\htdocs\exface\exface\UserData)
+     * Returns the absolute path to the user data folder (e.g. c:\xampp\htdocs\exface\data\users)
      *
      * @return string
      */
@@ -80,25 +83,41 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     {
         if (is_null($this->path_to_user_data_folder)) {
             /* TODO configurable userdata folder path did not work because Workbench::getConfig() also
-             * attempts to get the userdata folder to look for configs there, resulting in an infinite 
-             * loop. 
+             * attempts to get the userdata folder to look for configs there, resulting in an infinite
+             * loop.
              *
-            try {
-                $path = $this->getWorkbench()->getConfig()->getOption('FOLDERS.USERDATA_PATH_ABSOLUTE');
-            } catch (ConfigOptionNotFoundError $e) {
-                $path = '';
-            }*/
-            $this->path_to_user_data_folder = $path ? $path : $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_USER_DATA;
+             try {
+             $path = $this->getWorkbench()->getConfig()->getOption('FOLDERS.USERDATA_PATH_ABSOLUTE');
+             } catch (ConfigOptionNotFoundError $e) {
+             $path = '';
+             }*/
+            $this->path_to_user_data_folder = $path ? $path : $this->getPathToDataFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_USER_DATA;
             if (! is_dir($this->path_to_user_data_folder)) {
                 static::pathConstruct($this->path_to_user_data_folder);
             }
         }
         return $this->path_to_user_data_folder;
     }
-
+    
+    /**
+     * Returns the absolute path to the data (e.g. c:\xampp\htdocs\exface\data)
+     *
+     * @return string
+     */
+    public function getPathToDataFolder() : string
+    {
+        if (null === $this->path_to_data_folder) {
+            $this->path_to_data_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_DATA;
+            if (false === is_dir($this->path_to_data_folder)) {                
+                static::pathConstruct($this->path_to_data_folder);
+            }
+        }
+        return $this->path_to_data_folder;
+    }
+    
     /**
      * Returns the absolute path to the main cache folder (e.g.
-     * c:\xampp\htdocs\exface\exface\cache)
+     * c:\xampp\htdocs\exface\cache)
      *
      * @return string
      */
@@ -110,7 +129,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
             } catch (ConfigOptionNotFoundError $e) {
                 $path = '';
             }
-
+            
             $this->path_to_cache_folder = $path ? $path : $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_CACHE;
             if (! is_dir($this->path_to_cache_folder)) {
                 static::pathConstruct($this->path_to_cache_folder);
@@ -120,7 +139,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     }
     
     /**
-     * Returns the absolute path to the folder for temporary data (e.g. c:\xampp\htdocs\exface\exface\temp)
+     * Returns the absolute path to the folder for temporary data (e.g. c:\xampp\htdocs\exface\temp)
      *
      * @return string
      */
@@ -128,10 +147,10 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     {
         return $this->getPathToCacheFolder();
     }
-
+    
     /**
      * Returns the absolute path to the installation specific config folder (e.g.
-     * c:\xampp\htdocs\exface\exface\config)
+     * c:\xampp\htdocs\exface\config)
      *
      * @return string
      */
@@ -142,16 +161,13 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
             if (false === is_dir($this->path_to_config_folder)) {
                 mkdir($this->path_to_config_folder);
             }
-            if (false === $this->isDirSecure($this->path_to_config_folder)) {
-                $this->secureDir($this->path_to_config_folder);
-            }
         }
         return $this->path_to_config_folder;
     }
-
+    
     /**
      * Returns the absolute path to the installation specific translations folder (e.g.
-     * c:\xampp\htdocs\exface\exface\translations)
+     * c:\xampp\htdocs\exface\translations)
      *
      * @return string
      */
@@ -165,7 +181,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
         }
         return $this->path_to_translations_folder;
     }
-
+    
     /**
      * Returns the absolute path to the log folder
      *
@@ -186,7 +202,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
         }
         return $this->path_to_log_folder;
     }
-
+    
     /**
      * Returns the filename of the core log.
      *
@@ -196,7 +212,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     {
         return static::FILE_NAME_CORE_LOG;
     }
-
+    
     /**
      * Returns the absolute path to the log details folder
      *
@@ -212,7 +228,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
         }
         return $this->path_to_log_detail_folder;
     }
-
+    
     /**
      * Returns the absolute path to the main backup folder
      *
@@ -233,7 +249,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
         }
         return $this->path_to_backup_folder;
     }
-
+    
     /**
      * Copies a complete folder to a new location including all sub folders
      *
@@ -256,7 +272,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
         }
         closedir($dir);
     }
-
+    
     /**
      * Removes all files and subfolders in the given folder, leaving it empty.
      * @param string $absolutePath
@@ -267,7 +283,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
         if (substr($absolutePath, -1) !== DIRECTORY_SEPARATOR){
             $absolutePath .= DIRECTORY_SEPARATOR;
         }
-
+        
         // First empty subfolders
         if ($removeHiddenFiles){
             $subfolders = glob($absolutePath . '{,.}[!.,!..]*', GLOB_MARK|GLOB_BRACE|GLOB_ONLYDIR);
@@ -275,7 +291,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
             $subfolders = glob($absolutePath . '*', GLOB_ONLYDIR);
         }
         array_map('self::emptyDir', $subfolders);
-
+        
         // Now delete subfolders and files
         if ($removeHiddenFiles){
             $files = glob($absolutePath . '{,.}[!.,!..]*', GLOB_MARK|GLOB_BRACE);
@@ -289,10 +305,10 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
                 unlink($path);
             }
         }, $files);
-
-        return;
+            
+            return;
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -303,9 +319,9 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     {
         return $this->exface;
     }
-
+    
     /**
-     * Transforms "C:\wamp\www\exface\exface\vendor\exface\Core\CommonLogic\..\..\..\.." to "C:/wamp/www/exface/exface"
+     * Transforms "C:\wamp\www\exface\vendor\exface\Core\CommonLogic\..\..\..\.." to "C:/wamp/www/exface/exface"
      *
      * @param string $path
      * @return string
@@ -314,7 +330,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     {
         return FilePathDataType::normalize($path, $directory_separator);
     }
-
+    
     /**
      * Returns TRUE if the given string is an absolute path and FALSE otherwise
      *
@@ -328,7 +344,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
         }
         return FilePathDataType::isAbsolute($path);
     }
-
+    
     /**
      * Joins all paths given in the array and returns the resulting path
      *
@@ -339,7 +355,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     {
         return FilePathDataType::join($paths);
     }
-
+    
     /**
      * Returns the longest common base path for all given paths or NULL if there is no common base.
      *
@@ -350,7 +366,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     {
         return FilePathDataType::findCommonBase($paths);
     }
-
+    
     /**
      * Checks a path folder by folder to determine if they are present, constructs folders that aren't
      *
@@ -403,32 +419,4 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
         copy($source, $destination);
         return;
     }
-    
-    /**
-     * Returns TRUE if security measures from secureDir() were applied to given path.
-     * 
-     * @param string $pathAbsolute
-     * @return bool
-     */
-    protected function isDirSecure(string $pathAbsolute) : bool
-    {
-        return file_exists($pathAbsolute . DIRECTORY_SEPARATOR . '.htaccess');
-    }
-    
-    /**
-     * Applies security measures to given folder adding .htaccess, etc.
-     * 
-     * @param string $pathAbsolute
-     * @return Filemanager
-     */
-    protected function secureDir(string $pathAbsolute) : Filemanager
-    {
-        $htaccess = <<<HTACCESS
-order deny,allow
-deny from all
-HTACCESS;
-        file_put_contents($pathAbsolute . DIRECTORY_SEPARATOR . '.htaccess', $htaccess);
-        return $this;
-    }
 }
-?>

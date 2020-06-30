@@ -1,37 +1,19 @@
 {
-    "id": "0xb863f248949e11e7917c028037ec0200",
+    "uid": "0xb863f248949e11e7917c028037ec0200",
     "alias_with_namespace": "exface.core.data-connectors",
-    "menu_parent_page_alias": "exface.core.documentation",
-    "menu_index": "9",
+    "menu_parent_page_selector": "0xf831c595ba2c11e7895fe4b318306b9a",
+    "menu_index": 9,
     "menu_visible": true,
     "name": "Data Connectors",
     "description": "Browse available connectors and their properties",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2016-12-02 18:05:01",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2020-06-18 07:59:42",
     "contents": {
-        "object_alias": "exface.core.DATA_CONNECTOR",
-        "widget_type": "DataTable",
-        "filters": [
-            {
-                "attribute_alias": "NAME"
-            },
-            {
-                "attribute_alias": "PATHNAME_RELATIVE"
-            }
-        ],
-        "columns": [
-            {
-                "attribute_alias": "NAME"
-            },
-            {
-                "attribute_alias": "PATHNAME_RELATIVE"
-            }
-        ],
-        "buttons": [
-            {
-                "action_alias": "exface.Core.ShowObjectInfoDialog",
-                "bind_to_double_click": true
-            }
-        ]
+        "extend_widget": "[exface.core.widgets]",
+        "object_alias": "exface.core.DATA_CONNECTOR"
     }
 }

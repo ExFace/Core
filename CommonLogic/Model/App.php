@@ -28,7 +28,6 @@ use exface\Core\Exceptions\AppComponentNotFoundError;
 use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 use exface\Core\Interfaces\Selectors\BehaviorSelectorInterface;
-use exface\Core\Interfaces\CmsConnectorInterface;
 use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
 use exface\Core\Interfaces\Selectors\DataConnectorSelectorInterface;
 use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
@@ -39,13 +38,12 @@ use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\ClassSelectorInterface;
 use exface\Core\CommonLogic\Traits\AliasTrait;
-use exface\Core\CommonLogic\Selectors\DataTypeSelector;
-use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 use exface\Core\Contexts\DataContext;
 use exface\Core\Interfaces\Selectors\WidgetSelectorInterface;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\Exceptions\Actions\ActionNotFoundError;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -482,12 +480,17 @@ class App implements AppInterface
     public function getLanguageDefault() : string
     {
         try { 
-            return $this->getAppModelDataSheet()->getCellValue('DEFAULT_LANGUAGE_CODE', 0);
+            $language = $this->getAppModelDataSheet()->getCellValue('DEFAULT_LANGUAGE_CODE', 0);
+            if ($language != null) {
+                return $language;
+            } else {
+                return $this->getWorkbench()->getConfig()->getOption('SERVER.DEFAULT_LOCALE');
+            }
         } catch (DataSheetReadError $e) {
             // Catch read errors in case, the app does not yet exist in the model (this may happen
             // on rare occasions, when apps are just being installed)
             $this->getWorkbench()->getLogger()->logException($e);
-            return $this->getWorkbench()->getConfig()->getOption('LOCALE.DEFAULT');
+            return $this->getWorkbench()->getConfig()->getOption('SERVER.DEFAULT_LOCALE');
         }
     }
     
@@ -501,7 +504,13 @@ class App implements AppInterface
         $langs = [$this->getLanguageDefault()];
         foreach (glob($this->getTranslationsFolder() . DIRECTORY_SEPARATOR . "*.json") as $path) {
             $filename = pathinfo($path, PATHINFO_FILENAME);
-            $langs[] = StringDataType::substringAfter($filename, '.', false, false, true);
+            $lang = StringDataType::substringAfter($filename, '.', false, false, true);
+            $json = json_decode(file_get_contents($path), true);
+            if ($json && $locale = $json['LOCALIZATION.LOCALE']) {
+                $langs[] = $locale;
+            } else {
+                $langs[] = $lang;
+            }
         }
         return array_unique($langs);
     }
@@ -621,7 +630,7 @@ class App implements AppInterface
                     $appAlias = $this->getAliasWithNamespace();
                 }
                 $componentAlias = substr($string, (strlen($appAlias)+1));
-                $subfolder = $this->getPrototypeClasssSubfolder($selector);
+                $subfolder = $this->getPrototypeClassSubNamespace($selector);
                 $classSuffix = $this->getPrototypeClassSuffix($selector);
                 $string = $appAlias . ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR . $subfolder . ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR . $componentAlias . $classSuffix;
                 return str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR, $string);
@@ -637,7 +646,7 @@ class App implements AppInterface
         return '';
     }
     
-    protected function getPrototypeClasssSubfolder(PrototypeSelectorInterface $selector) : string
+    protected function getPrototypeClassSubNamespace(PrototypeSelectorInterface $selector) : string
     {
         switch (true) {
             case $selector instanceof ActionSelectorInterface:
@@ -646,8 +655,6 @@ class App implements AppInterface
                 return 'Facades';
             case $selector instanceof BehaviorSelectorInterface:
                 return 'Behaviors';
-            case $selector instanceof CmsConnectorInterface:
-                return 'CmsConnectors';
             case $selector instanceof ContextSelectorInterface:
                 return 'Contexts';
             case $selector instanceof DataConnectorSelectorInterface:
@@ -765,6 +772,14 @@ class App implements AppInterface
     public function getAction(ActionSelectorInterface $selector, WidgetInterface $sourceWidget = null) : ActionInterface
     {
         $class = $this->getPrototypeClass($selector);
+        if (class_exists($class) === false) {
+            switch (true) {
+                case $selector->isAlias() : $selectorDescr = 'with alias '; break;
+                case $selector->isClassname() : $selectorDescr = 'with class name '; break;
+                case $selector->isFilepath() : $selectorDescr = 'with file path '; break;
+            }
+            throw new ActionNotFoundError('Action ' . $selectorDescr . '"' . $selector->toString() . '" not found!');
+        }
         return new $class($this, $sourceWidget);
     }
     
@@ -778,4 +793,3 @@ class App implements AppInterface
         return StringDataType::substringAfter($this->getAliasWithNamespace(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER);
     }
 }
-?>

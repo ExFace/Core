@@ -5,6 +5,9 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
+use exface\Core\Interfaces\UserImpersonationInterface;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 
 /**
  * Navigates to the given page taking the selected input object as filter and an optional set of additional filters.
@@ -27,6 +30,13 @@ class GoToPage extends ShowWidget
 
     private $open_in_new_window = false;
     
+    private $hideButtonIfNoAccessToPage = false;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowWidget::init()
+     */
     protected function init()
     {
         parent::init();
@@ -117,5 +127,25 @@ class GoToPage extends ShowWidget
     {
         $this->open_in_new_window = BooleanDataType::cast($value);
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::isAuthorized()
+     */
+    public function isAuthorized(UserImpersonationInterface $userOrToken = null) : bool
+    {
+        if (parent::isAuthorized($userOrToken)) {
+            try {
+                $pageAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class);
+                $pageAP->authorize($this->getPage());
+            } catch (AuthorizationExceptionInterface $e) {
+                return false;
+            }
+            return true;
+        } else {
+            return false;
+        }
     }
 }

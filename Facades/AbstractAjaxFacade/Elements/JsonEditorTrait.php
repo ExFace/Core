@@ -16,7 +16,7 @@ use exface\Core\CommonLogic\Workbench;
  * 
  * ```
  * require: {
- *	"npm-asset/jsoneditor" : "^6.1||^7.0",
+ *	"npm-asset/jsoneditor" : "^7.0||^8.0",
  *	"npm-asset/picomodal" : "^3.0.0",
  *	"npm-asset/mobius1-selectr" : "^2.4.12"
  * }
@@ -586,8 +586,6 @@ CSS;
     {
         $includes = parent::buildHtmlHeadTags();
         $facade = $this->getFacade();
-        $includes[] = '<link href="exface/vendor/npm-asset/jsoneditor/dist/jsoneditor.min.css" rel="stylesheet">';
-        $includes[] = '<script type="text/javascript" src="exface/vendor/npm-asset/jsoneditor/dist/jsoneditor.min.js"></script>';
         $includes[] = '<link href="' . $facade->buildUrlToSource('LIBS.JSONEDITOR.CSS') . '" rel="stylesheet">';
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource("LIBS.JSONEDITOR.JS") . '"></script>';
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource("LIBS.JSONEDITOR.PICOMODAL") . '"></script>';

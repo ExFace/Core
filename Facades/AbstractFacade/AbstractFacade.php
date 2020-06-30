@@ -10,6 +10,8 @@ use exface\Core\CommonLogic\Traits\AliasTrait;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Uxon\FacadeSchema;
+use exface\Core\Exceptions\NotImplementedError;
+use exface\Core\Events\Facades\OnFacadeInitEvent;
 
 abstract class AbstractFacade implements FacadeInterface
 {
@@ -28,6 +30,8 @@ abstract class AbstractFacade implements FacadeInterface
         $this->exface = $selector->getWorkbench();
         $this->selector = $selector;
         $this->init();
+        
+        $selector->getWorkbench()->eventManager()->dispatch(new OnFacadeInitEvent($this));
     }
 
     protected function init()
@@ -60,8 +64,17 @@ abstract class AbstractFacade implements FacadeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Facades\FacadeInterface::is()
      */
-    public function is($facade_alias) : bool
+    public function is($aliasOrSelector) : bool
     {
+        if ($aliasOrSelector instanceof FacadeSelectorInterface) {
+            if ($aliasOrSelector->isAlias()) {
+                $facade_alias = $aliasOrSelector->toString();
+            } else {
+                // TODO add support for other selectors
+                throw new NotImplementedError('Cannot compare facade "' . $this->getAliasWithNamespace() . '" with selector "' . $aliasOrSelector->toString() . '": currently only alias-selectors supported!');
+            }
+        }
+        // TODO check if this facade is a derivative of the facade matching the selector
         if (strcasecmp($this->getAlias(), $facade_alias) === 0 || strcasecmp($this->getAliasWithNamespace(), $facade_alias) === 0) {
             return true;
         } else {

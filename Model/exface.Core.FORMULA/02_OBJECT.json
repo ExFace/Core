@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2017-07-11 10:59:02",
-            "MODIFIED_ON": "2017-06-05 06:05:55",
+            "MODIFIED_ON": "2020-05-05 10:24:49",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e76627e1fb554e8298e4b318306b9a",
@@ -95,7 +95,7 @@
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "0x11e6be0ad5666af88ddee4b318306b9a",
-            "DATA_ADDRESS_PROPS": null,
+            "DATA_ADDRESS_PROPS": "{\"finder_depth\":\"0\"}",
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "FORMULA",
             "DATA_ADDRESS": "*\/*\/Formulas\/*.php"
@@ -104,6 +104,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.OBJECT",
         "conditions": [
             {
                 "expression": "APP",

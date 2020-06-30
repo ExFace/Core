@@ -491,9 +491,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function setDefaultValue($value)
     {
-        if (! is_null($value) && $value !== '') {
-            $this->default_value = $value;
-        }
+        $this->default_value = $value;
     }
     
     public function hasDefaultValue() : bool
@@ -521,9 +519,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function setFixedValue($value)
     {
-        if (! is_null($value) && $value !== '') {
-            $this->fixed_value = $value;
-        }
+        $this->fixed_value = $value;
         return $this;
     }
     

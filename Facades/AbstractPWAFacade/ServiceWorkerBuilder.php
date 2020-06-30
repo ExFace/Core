@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractPWAFacade;
 
+use exface\Core\CommonLogic\UxonObject;
+
 /**
  * Generates the JS for a ServiceWorker based on the workbox toolkit.
  * 
@@ -73,6 +75,27 @@ JS;
             'maxEntries' => $maxEntries,
             'maxAgeSeconds' => $maxAgeSeconds
         ];
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param string $routeId
+     * @param UxonObject $uxon
+     * @return ServiceWorkerBuilder
+     */
+    public function addRouteFromUxon(string $routeId, UxonObject $uxon) : ServiceWorkerBuilder
+    {
+        $this->addRouteToCache(
+            $routeId,
+            $uxon->getProperty('matcher'),
+            $uxon->getProperty('strategy'),
+            $uxon->getProperty('method'),
+            $uxon->getProperty('description'),
+            $uxon->getProperty('cacheName'),
+            $uxon->getProperty('maxEntries'),
+            $uxon->getProperty('maxAgeSeconds')
+        );
         return $this;
     }
     

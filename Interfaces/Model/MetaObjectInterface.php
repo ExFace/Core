@@ -389,7 +389,7 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      */
     public function getDefaultSorters();
     
-    public function getModel();
+    public function getModel() : ModelInterface;
     
     public function getAppId();
     

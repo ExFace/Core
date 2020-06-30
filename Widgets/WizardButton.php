@@ -70,11 +70,11 @@ class WizardButton extends Button
      */
     public function setGoToStep($value) : WizardButton
     {
-        if ($value === self::GO_TO_STEP_NONE || $value === -1) {
+        if (strcasecmp($value, self::GO_TO_STEP_NONE) === 0 || $value === -1) {
             $value = -1;
-        } elseif ($value === self::GO_TO_STEP_PREVIOUS || $value === -2) {
+        } elseif (strcasecmp($value, self::GO_TO_STEP_PREVIOUS) === 0 || $value === -2) {
             $value = -2;
-        } elseif ($value === self::GO_TO_STEP_NEXT || $value === null || $value === '') {
+        } elseif (strcasecmp($value, self::GO_TO_STEP_NEXT) === 0 || $value === null || $value === '') {
             $value = null;
         } elseif (is_int($value) === false) {
             throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $value . '" for property go_to_step of widget "' . $this->getWidgetType() . '": only step numbers or keyword "none" allowed!');

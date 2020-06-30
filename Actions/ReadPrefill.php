@@ -8,6 +8,7 @@ use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Exceptions\Actions\ActionInputMissingError;
 
 /**
  * Exports the prefill data sheet for the target widget.
@@ -37,16 +38,14 @@ class ReadPrefill extends ReadData
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        if (! $this->checkPermissions($task)) {
-            // TODO Throw exception!
-        }
-        
         // Get the prefill data from the request. 
         // TODO The logic here should ideally be the same as in ShowWidget::prefillWidget(), but at the
         // moment, there is no way to use the very same code. Perhaps trait could help...
         $data_sheet = null;
-        if ($task->hasInputData() === true) {
+        try {
             $data_sheet = $this->getInputDataSheet($task);
+        } catch (ActionInputMissingError $e) {
+            // ignore missing data - continue with the next if
         }
         if ($data_sheet === null || $data_sheet->isBlank() && $task->hasPrefillData()) {
             $data_sheet = $task->getPrefillData();

@@ -22,6 +22,9 @@ use exface\Core\CommonLogic\Tasks\ResultEmpty;
 use exface\Core\CommonLogic\Tasks\ResultJSON;
 use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
 use exface\Core\CommonLogic\Tasks\ResultMessageStream;
+use exface\Core\CommonLogic\Tasks\ResultRedirect;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 
 /**
  * Creates all kinds of task results. 
@@ -135,20 +138,57 @@ class ResultFactory extends AbstractStaticFactory
     }
 
     /**
+     * This result will provide an option to follow a link.
      * 
      * @param TaskInterface $task
      * @param UriInterface|string $uriOrString
      * @return ResultUriInterface
      */
-    public static function createUriResult(TaskInterface $task, $uriOrString) : ResultUriInterface
+    public static function createUriResult(TaskInterface $task, $uriOrString, string $message = null) : ResultUriInterface
     {
         $result = new ResultUri($task);
-        if ($uriOrString instanceof UriInterface) {
-            $uri = $uriOrString;
-        } else {
-            $uri = new Uri($uriOrString);
+        $result->setUri($uriOrString);
+        if ($message !== null) {
+            $result->setMessage($message);
         }
-        $result->setUri($uri);
+        return $result;
+    }
+
+    /**
+     * This result will produce a browser redirect to the given URI.
+     * 
+     * @param TaskInterface $task
+     * @param UriInterface|string $uriOrString
+     * @param string $message
+     * @return ResultUriInterface
+     */
+    public static function createRedirectResult(TaskInterface $task, $uriOrString, string $message = null) : ResultUriInterface
+    {
+        $result = new ResultRedirect($task);
+        $result->setUri($uriOrString);
+        $result->setAutoRedirect(true);
+        if ($message !== null) {
+            $result->setMessage($message);
+        }
+        return $result;
+    }
+    
+    /**
+     * This result will produc a browser redirect to the give page.
+     * 
+     * @param TaskInterface $task
+     * @param UiPageInterface|UiPageSelectorInterface|string $pageOrSelectorOrString
+     * @param string $message
+     * @return ResultUriInterface
+     */
+    public static function createRedirectToPageResult(TaskInterface $task, $pageOrSelectorOrString, string $message = null) : ResultUriInterface
+    {
+        $result = new ResultRedirect($task);
+        $result->setTargetPageSelector($pageOrSelectorOrString);
+        $result->setAutoRedirect(true);
+        if ($message !== null) {
+            $result->setMessage($message);
+        }
         return $result;
     }
     

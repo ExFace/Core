@@ -2,7 +2,6 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iHaveFilters;
-use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Constants\Icons;
@@ -10,8 +9,9 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
-use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
 
 /**
  * The configurator for data widgets contains tabs for filters and sorters.
@@ -127,7 +127,16 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         return $this;
     }
     
-    public function createFilterWidget($attribute_alias = null, UxonObject $uxon_object = null)
+    /**
+     * Creates a `Filter` widget from the given attribute alias an/or a UXON description of a `Filter` or `Input` widget.
+     * 
+     * NOTE: the filter is NOT added to the filters-tab automatically!!!
+     * 
+     * @param string $attribute_alias
+     * @param UxonObject $uxon_object
+     * @return Filter
+     */
+    public function createFilterWidget(string $attribute_alias = null, UxonObject $uxon_object = null) : Filter
     {
         if ($uxon_object !== null) {
             // Legacy filters (before November 2019) allowed to mix filter properties and input 
@@ -184,7 +193,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
             $uxon_object->setProperty('attribute_alias', $attribute_alias);
         }
         
-        return WidgetFactory::createFromUxonInParent($this, $uxon_object, 'Filter');
+        return WidgetFactory::createFromUxonInParent($this->getFilterTab(), $uxon_object, 'Filter');
     }
     
     /**
@@ -200,7 +209,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         if ($filter_widget instanceof Filter) {
             $filter = $filter_widget;
         } else {
-            $filter = $this->getPage()->createWidget('Filter', $this->getFilterTab());
+            $filter = WidgetFactory::create($this->getPage(), 'Filter', $this->getFilterTab());
             $filter->setInputWidget($filter_widget);
         }
         
@@ -359,23 +368,48 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     }
     
     /**
-     * Creates and adds a filter based on the given relation
+     * Adds a new filter over the given relation if it does not exist yet and returns it.
+     * 
+     * NOTE: by default this method will create a simple `Input` widget (or `InputHidden` for hidden relation 
+     * attributes) and not use the default editor configuration To revert to using the default editor of the 
+     * attribute for the filter, set the second parameter to TRUE.
+     * 
+     * Using the default editor like in regular filter had repeatedly caused issues because people would simply 
+     * forget, that the filter does not really exist and would start counting ot it or suspect a bug when not
+     * founding the filter when attempting to customize it. For AJAX-autosuggests, the AJAX requests also failed 
+     * because the filter only exists when the configurator is prefilled (and not on a read-request for a possible 
+     * autosuggest or so). Also adding "normal" filters automatically does not draw the user's attention, while 
+     * adding a (mostly uncomfortable) simple input will usually require additional customizing leading to a 
+     * properly added filter.
      *
      * @param MetaRelationInterface $relation
+     * @param bool $useDefaultEditorOfAttribute
      * @return \exface\Core\Widgets\AbstractWidget
      */
-    public function createFilterFromRelation(MetaRelationInterface $relation)
+    public function addFilterFromRelation(MetaRelationInterface $relation, bool $useDefaultEditorOfAttribute = false) : Filter
     {
         $filter_widget = $this->findFilterByRelation($relation);
         // Create a new hidden filter if there is no such filter already
         if (! $filter_widget) {
             $page = $this->getPage();
             $filter_attr = $relation->getLeftKeyAttribute();
-            $filter_widget = WidgetFactory::createFromUxon($page, $filter_attr->getDefaultEditorUxon(), $this);
-            $filter_widget->setAttributeAlias($filter_attr->getAlias());
-            if ($filter_attr->isHidden() === true) {
-                $filter_widget->setHidden(true);
+            if ($useDefaultEditorOfAttribute === true) {
+                $filter_uxon = $filter_attr->getDefaultEditorUxon();
+                $filter_uxon->setProperty('attribute_alias', $filter_attr->getAliasWithRelationPath());
+                if ($filter_attr->isHidden() === true && $filter_uxon->hasProperty('visibility') === false) {
+                    $filter_uxon->setProperty('visibility', WidgetVisibilityDataType::HIDDEN);
+                }
+            } else {
+                $filter_uxon = new UxonObject([
+                    'attribute_alias' => $filter_attr->getAliasWithRelationPath(),
+                    'widget_type' => 'Filter',
+                    'comparator' => ComparatorDataType::EQUALS,
+                    'input_widget' => [
+                        'widget_type' => $filter_attr->isHidden() ? 'InputHidden' : 'Input'
+                    ]
+                ]);
             }
+            $filter_widget = WidgetFactory::createFromUxon($page, $filter_uxon, $this->getFilterTab());
             $this->addFilter($filter_widget);
         }
         return $filter_widget;

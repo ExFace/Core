@@ -5,7 +5,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Exceptions\LogicException;
-use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\UxonSyntaxError;
 
 class UxonObject implements \IteratorAggregate
 {
@@ -56,7 +56,7 @@ class UxonObject implements \IteratorAggregate
             return static::fromArray($array);
         } else {
             if ($uxon !== '' && $uxon !== null) {
-                throw new InvalidArgumentException('Cannot parse string "' . substr($uxon, 0, 50) . '" as UXON: ' . json_last_error_msg() . ' in JSON decoder!');
+                throw new UxonSyntaxError('Cannot parse string "' . substr($uxon, 0, 50) . '" as UXON: ' . json_last_error_msg() . ' in JSON decoder!');
             }
             return new self();
         }
@@ -155,7 +155,7 @@ class UxonObject implements \IteratorAggregate
     public function getPropertiesAll()
     {
         $array = [];
-        foreach ($this->array as $var => $val){
+        foreach (array_keys($this->array) as $var){
             $array[$var] = $this->getProperty($var);
         }
         return $array;
@@ -321,5 +321,33 @@ class UxonObject implements \IteratorAggregate
         throw new LogicException('Direct access to properties of a UxonObject is not supported anymore!');
     }
     
-    
+    /**
+     * Returns a copy of the UXON with certain properties removed.
+     * 
+     * @param string[] $propertyNames
+     * @return UxonObject
+     */
+    public function withPropertiesRemoved(array $propertyNames) : UxonObject
+    {
+        $array = $this->array;
+        
+        if (empty($array)) {
+            return new UxonObject();
+        }
+        
+        $result = [];
+        $propertyNames = array_map('mb_strtolower', $propertyNames);
+        
+        foreach ($array as $key => $value) {
+            if (! in_array(mb_strtolower($key), $propertyNames)) {
+                if (is_array($value)) {
+                    $result[$key] = (new UxonObject($value))->withPropertiesRemoved($propertyNames)->toArray();
+                } else {
+                    $result[$key] = $value;
+                }
+            }
+        }
+        
+        return new UxonObject($result);
+    }
 }

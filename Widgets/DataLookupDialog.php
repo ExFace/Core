@@ -45,6 +45,8 @@ class DataLookupDialog extends Dialog
 {
     private $multi_select = null;
     
+    private $dataWidget = nulL;
+    
     /**
      * 
      * {@inheritDoc}
@@ -57,6 +59,41 @@ class DataLookupDialog extends Dialog
             $data_table = WidgetFactory::create($this->getPage(), 'DataTableResponsive', $this);
             $data_table->setMetaObject($this->getMetaObject());
             $data_table->setMultiSelect($this->getMultiSelect());
+            $data_table->getPaginator()->setCountAllRows(false);
+            
+            // If the table has no columns, determine them from the model
+            if ($data_table->hasColumns() === false) {
+                $defaultDisplayAttrs = $data_table->getMetaObject()->getAttributes()->getDefaultDisplayList();
+                switch (true) {
+                    // If the object has default display attributes, use them
+                    case $defaultDisplayAttrs->isEmpty() === false:
+                        foreach ($defaultDisplayAttrs as $attr) {
+                            $data_table->addColumn($data_table->createColumnFromAttribute($attr), $attr->getDefaultDisplayOrder());
+                        }
+                        break;
+                    // Otherwise use the object's label if there is one
+                    case $data_table->getMetaObject()->hasLabelAttribute() === true:
+                        $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getLabelAttribute()));
+                        break;
+                    // If neither a label nor default-display attributes exist, see if the UID is not hidden
+                    case $defaultDisplayAttrs->isEmpty() && $data_table->getMetaObject()->hasUidAttribute() === true && $data_table->getMetaObject()->getUidAttribute()->isHidden() === false:
+                        $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getUidAttribute()));
+                        break;
+                    // Since we need columns a any case, just take the first 4 attributes if nothing else
+                    // helps
+                    default:
+                        $cnt = 0;
+                        foreach ($data_table->getMetaObject()->getAttributes() as $attr) {
+                            if ($attr->isHidden() === false) {
+                                $data_table->addColumn($data_table->createColumnFromAttribute($attr));
+                                $cnt++;
+                            }
+                            if ($cnt >= 4) {
+                                break;
+                            }
+                        }
+                }
+            }
             
             $dataConfigurator = $data_table->getConfiguratorWidget();
             foreach($data_table->getColumns() as $col) {
@@ -76,6 +113,7 @@ class DataLookupDialog extends Dialog
                 }
             }
             
+            $this->dataWidget = $data_table;
             $this->addWidget($data_table);
             
             if ($data_table->getMetaObject()->hasLabelAttribute() === true) {
@@ -105,6 +143,10 @@ class DataLookupDialog extends Dialog
     public function setMultiSelect(bool $trueOrFalse) : DataLookupDialog
     {
         $this->multi_select = $trueOrFalse;
+        $dataWidget = $this->getDataWidget();
+        if ($dataWidget instanceof iSupportMultiSelect) {
+            $dataWidget->setMultiSelect($trueOrFalse);
+        }
         return $this;
     }
     
@@ -130,6 +172,6 @@ class DataLookupDialog extends Dialog
      */
     public function getDataWidget() : Data
     {
-        return $this->getWidgetFirst();
+        return $this->dataWidget ?? $this->getWidgetFirst();
     }
 }

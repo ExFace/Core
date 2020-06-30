@@ -78,6 +78,42 @@ trait JqueryDataTableTrait {
     public function buildJsResetter() : string
     {
         $configuratorElement = $this->getFacade()->getElement($this->getWidget()->getConfiguratorWidget());
-        return $this->buildJsDataResetter() . $configuratorElement->buildJsResetter();
+        return $this->buildJsDataResetter() . ';' . $configuratorElement->buildJsResetter();
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see AbstractJqueryElement::buildJsEnabler()
+     */
+    public function buildJsEnabler()
+    {
+        $js = '';
+        $facade = $this->getFacade();
+        foreach ($this->getWidget()->getFilters() as $filter) {
+            $js .= $facade->getElement($filter)->buildJsEnabler() . ";\n";
+        }
+        foreach ($this->getWidget()->getButtons() as $btn) {
+            $js .= $facade->getElement($btn)->buildJsEnabler() . ";\n";
+        }
+        return $js;
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see AbstractJqueryElement::buildJsDisabler()
+     */
+    public function buildJsDisabler()
+    {
+        $js = '';
+        $facade = $this->getFacade();
+        foreach ($this->getWidget()->getFilters() as $filter) {
+            $js .= $facade->getElement($filter)->buildJsDisabler() . ";\n";
+        }
+        foreach ($this->getWidget()->getButtons() as $btn) {
+            $js .= $facade->getElement($btn)->buildJsDisabler() . ";\n";
+        }
+        return $js;
     }
 }

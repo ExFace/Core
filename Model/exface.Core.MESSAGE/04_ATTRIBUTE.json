@@ -82,6 +82,10 @@
             "attribute_alias": "RELATION_CARDINALITY"
         },
         {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -184,6 +188,7 @@
             "COMMENTS": "",
             "NAME": "Is part of app",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "APP",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "app_oid",
@@ -207,9 +212,9 @@
         },
         {
             "CREATED_ON": "2016-12-16 11:52:46",
-            "MODIFIED_ON": "2018-11-19 07:58:46",
+            "MODIFIED_ON": "2020-06-16 13:27:44",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
             "UID": "0x11e6c6a02e5cc611a3e40205857feb80",
             "SORTABLEFLAG": "1",
             "FILTERABLEFLAG": "1",
@@ -226,6 +231,7 @@
             "COMMENTS": "",
             "NAME": "Message Code",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "CODE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "code",
@@ -242,8 +248,8 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "Unique error code. Leave blank to generate an error code automatically.",
-            "DATA_ADDRESS_PROPS": "{\"SQL_INSERT\":\"IF([#~value#]!='', [#~value#], CONV(ROUND(UNIX_TIMESTAMP(CURTIME(4)) * 10),10,36))\"}",
-            "DEFAULT_VALUE": "",
+            "DATA_ADDRESS_PROPS": null,
+            "DEFAULT_VALUE": "=LogId()",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
         },
@@ -268,6 +274,7 @@
             "COMMENTS": "",
             "NAME": "Title",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "TITLE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "title",
@@ -310,6 +317,7 @@
             "COMMENTS": "",
             "NAME": "Description",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "DESCRIPTION",
             "DATATYPE": "0x31310000000000000000000000000000",
             "DATA_ADDRESS": "description",
@@ -352,6 +360,7 @@
             "COMMENTS": "",
             "NAME": "Error",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "LABEL",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "CONCAT([#CODE#], ' ', [#TITLE#])",
@@ -394,6 +403,7 @@
             "COMMENTS": "",
             "NAME": "Hint",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "HINT",
             "DATATYPE": "0x31310000000000000000000000000000",
             "DATA_ADDRESS": "hint",
@@ -436,6 +446,7 @@
             "COMMENTS": "",
             "NAME": "Type",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "TYPE",
             "DATATYPE": "0x11e8ebf600b07e5287f10205857feb81",
             "DATA_ADDRESS": "type",
@@ -478,6 +489,7 @@
             "COMMENTS": "",
             "NAME": "Docs path",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "DOCS",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "docs_path",
@@ -503,6 +515,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.ATTRIBUTE",
         "conditions": [
             {
                 "expression": "OBJECT__APP",

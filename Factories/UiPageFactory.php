@@ -6,7 +6,6 @@ use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
-use exface\Core\Interfaces\CmsConnectorInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 class UiPageFactory extends AbstractStaticFactory
@@ -17,22 +16,20 @@ class UiPageFactory extends AbstractStaticFactory
      * the CMS if it exists there.
      * 
      * @param UiPageSelectorInterface $selector
-     * @param CmsConnectorInterface $cms
      * 
      * @return UiPageInterface
      */
-    public static function create(UiPageSelectorInterface $selector, CmsConnectorInterface $cms = null) : UiPageInterface
+    public static function create(UiPageSelectorInterface $selector) : UiPageInterface
     {
-        $cms = is_null($cms) ? $selector->getWorkbench()->getCMS() : $cms;
         $page = null;
         if (! $selector->isEmpty()) {
             try {
-                $page = $cms->getPage($selector);
+                $page = self::createFromModel($selector->getWorkbench(), $selector);
             } catch (UiPageNotFoundError $e) {
                 // do nothing
             }
         }
-        return ! is_null($page) ? $page : new UiPage($selector, $cms);
+        return ! is_null($page) ? $page : new UiPage($selector);
     }
     
     /**
@@ -40,14 +37,13 @@ class UiPageFactory extends AbstractStaticFactory
      * 
      * @param WorkbenchInterface $workbench
      * @param UiPageSelectorInterface|string $selectorOrString
-     * @param CmsConnectorInterface $cms
      * 
      * @return UiPageInterface
      */
-    public static function createBlank(WorkbenchInterface $workbench, $selectorOrString, CmsConnectorInterface $cms = null) : UiPageInterface
+    public static function createBlank(WorkbenchInterface $workbench, $selectorOrString) : UiPageInterface
     {
         $selector = $selectorOrString instanceof UiPageSelectorInterface ? $selectorOrString : SelectorFactory::createPageSelector($workbench, $selectorOrString);
-        return new UiPage($selector, $cms);
+        return new UiPage($selector);
     }
 
     /**
@@ -70,50 +66,24 @@ class UiPageFactory extends AbstractStaticFactory
      * 
      * @param UiPageSelectorInterface $selector
      * @param string $contents
-     * @param CmsConnectorInterface $cms
      * @return UiPageInterface
      */
     public static function createFromString(UiPageSelectorInterface $selector, string $contents) : UiPageInterface
     {
-        $page = static::createBlank($selector);
+        $page = static::createBlank($selector->getWorkbench(), $selector);
         $page->setContents($contents);
         return $page;
     }
-
-    /**
-     * Creates a page which is obtained from the CMS by the passed alias.
-     * 
-     * The parameter $ignoreReplacement allows to get the exact page matching the selector
-     * even if it was replaced by another page.
-     * 
-     * @param CmsConnectorFactory $cms
-     * @param UiPageSelectorInterface|string $selectorOrString
-     * @param bool $ignoreReplacement
-     * 
-     * @throws UiPageNotFoundError
-     * 
-     * @return UiPageInterface
-     */
-    public static function createFromCmsPage(CmsConnectorInterface $cms, $selectorOrString, bool $ignoreReplacement = false) : UiPageInterface
+    
+    public static function createFromModel(WorkbenchInterface $workbench, $selectorOrString, bool $ignoreReplacement = false) : UiPageInterface
     {
         if ($selectorOrString instanceof UiPageSelectorInterface) {
             $selector = $selectorOrString;
         } else {
-            $selector = SelectorFactory::createPageSelector($cms->getWorkbench(), $selectorOrString);
+            $selector = SelectorFactory::createPageSelector($workbench, $selectorOrString);
         }
         
-        return $cms->getPage($selector, $ignoreReplacement);
-    }
-
-    /**
-     * Creates a page which is obtained from the current CMS page.
-     * 
-     * @param CmsConnectorInterface $cms
-     * @return UiPageInterface
-     */
-    public static function createFromCmsPageCurrent(CmsConnectorInterface $cms) : UiPageInterface
-    {
-        return $cms->getPageCurrent();
+        return $workbench->model()->getModelLoader()->loadPage($selector, $ignoreReplacement);
     }
 
     /**
@@ -121,14 +91,13 @@ class UiPageFactory extends AbstractStaticFactory
      * 
      * @param WorkbenchInterface $workbench
      * @param UxonObject $uxon
-     * @param CmsConnectorInterface $cms
      * @param array $skip_property_names
      * 
      * @return UiPageInterface
      */
-    public static function createFromUxon(WorkbenchInterface $workbench, UxonObject $uxon, CmsConnectorInterface $cms = null, array $skip_property_names = array())
+    public static function createFromUxon(WorkbenchInterface $workbench, UxonObject $uxon, array $skip_property_names = array())
     {
-        $page = static::createBlank($workbench, '', $cms);
+        $page = static::createBlank($workbench, '');
         $page->importUxonObject($uxon, $skip_property_names);
         return $page;
     }

@@ -155,4 +155,24 @@ interface iContainOtherWidgets extends WidgetInterface
      * @return WidgetInterface|boolean
      */
     public function findChildById($widget_id);
+    
+    /**
+     * Returns TRUE if the container is filled by a single large widget entirely.
+     * 
+     * This is the case if the only visible child implements the interface
+     * `iFillEntireContainer`. This child widget can be retrieved via 
+     * `getFillerWidget()`.
+     * 
+     * @see getFillerWidget()
+     * 
+     * @return bool
+     */
+    public function isFilledBySingleWidget() : bool;
+    
+    /**
+     * Returns the widget, that fills the container entirely if there is one.
+     * 
+     * @return iFillEntireContainer|NULL
+     */
+    public function getFillerWidget() : ?iFillEntireContainer;
 }

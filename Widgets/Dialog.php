@@ -12,6 +12,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iHaveHeader;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Widgets\Traits\iHaveToolbarsTrait;
 
 /**
  * Dialogs are pop-up forms (i.e. windows), that can be moved and/or maximized.
@@ -50,7 +51,7 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     public function addWidget(AbstractWidget $widget, $position = NULL)
     {
         if ($widget instanceof iFillEntireContainer) {
-            if ($container = $widget->getAlternativeContainerForOrphanedSiblings()) {
+            if ($this->isEmpty() === false && $container = $widget->getAlternativeContainerForOrphanedSiblings()) {
                 foreach ($this->getWidgets() as $w) {
                     $container->addWidget($w);
                 }
@@ -83,6 +84,9 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     public function setHideCloseButton($value)
     {
         $this->hide_close_button = $value;
+        if ($this->close_button !== null) {
+            $this->close_button->setHidden($value);
+        }
         return $this;
     }
 
@@ -290,7 +294,12 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
         return is_null($this->header) ? false : true;
     }
     
-    public function getHideHeader()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveHeader::getHideHeader()
+     */
+    public function getHideHeader() : ?bool
     {
         return $this->hide_header;
     }
@@ -305,9 +314,9 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
      * 
      * @see \exface\Core\Interfaces\Widgets\iHaveHeader::setHideHeader()
      */
-    public function setHideHeader($boolean)
+    public function setHideHeader(bool $boolean) : iHaveHeader
     {
-        $this->hide_header = BooleanDataType::cast($boolean);
+        $this->hide_header = $boolean;
     }
     
     /**
@@ -318,6 +327,20 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     public function getHideHelpButton($default = false) : ?bool
     {
         return $this->getHideHelpButtonViaTrait($default);
+    }
+    
+    /**
+     * Add buttons to the dialog
+     * 
+     * @uxon-property buttons
+     * @uxon-type \exface\Core\Widgets\DialogButton[]
+     * @uxon-template [{"action_alias": ""}]
+     * 
+     * @see iHaveToolbarsTrait::setButtons()
+     */
+    public function setButtons($uxonOrArray)
+    {
+        return parent::setButtons($uxonOrArray);
     }
 }
 ?>

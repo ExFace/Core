@@ -10,8 +10,6 @@ use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
-use exface\Core\Interfaces\Widgets\iHaveColorScale;
 
 /**
  * Displays the widgets value as a progress bar with a floating label text.
@@ -280,7 +278,7 @@ class ProgressBar extends Display implements iCanBeAligned
                 if (count($col->getValues(false)) > 1 && $this->getAggregator()) {
                     // TODO #OnPrefillChangeProperty
                     $valuePointer = DataPointerFactory::createFromColumn($col);
-                    $value = DataColumn::aggregateValues($col->getValues(false), $this->getAggregator());
+                    $value = $col->aggregate($this->getAggregator());
                 } else {
                     $valuePointer = DataPointerFactory::createFromColumn($col, 0);
                     $value = $valuePointer->getValue();

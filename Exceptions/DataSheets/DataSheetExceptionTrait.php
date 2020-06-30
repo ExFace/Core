@@ -14,6 +14,8 @@ use exface\Core\Factories\WidgetFactory;
  */
 trait DataSheetExceptionTrait {
     
+    #TODO function to censor columns with sensitive data
+    
     use ExceptionTrait {
 		createDebugWidget as parentCreateDebugWidget;
 	}
@@ -57,9 +59,27 @@ trait DataSheetExceptionTrait {
         $uxon_tab->setNumberOfColumns(1);
         $uxon_widget = WidgetFactory::create($page, 'Html');
         $uxon_tab->addWidget($uxon_widget);
-        $uxon_widget->setHtml('<pre>' . $this->getDataSheet()->exportUxonObject()->toJson(true) . '</pre>');
+        $uxon_widget->setHtml('<pre>' . $this->getCensoredDataSheet()->exportUxonObject()->toJson(true) . '</pre>');
         $debug_widget->addTab($uxon_tab);
         return $debug_widget;
+    }
+    
+    /**
+     * Substitues values in columns with DataType marked as sensitive with 'CENSORED'
+     * 
+     * @return DataSheetInterface
+     */
+    protected function getCensoredDataSheet() : DataSheetInterface
+    {
+        $dataSheet = $this->getDataSheet();
+        foreach ($dataSheet->getColumns() as $col) {
+            if ($col->getDataType()->isSensitiveData() === true) {
+                for ($i = 0; $i < $dataSheet->countRows(); $i++) {
+                    $col->setValue($i, 'CENSORED');
+                }
+            }
+        }
+        return $dataSheet;
     }
 }
 ?>

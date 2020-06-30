@@ -230,7 +230,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
      * @param string $value
      * @return \exface\Core\Interfaces\Actions\ActionInterface
      */
-    public function setAplicableToObjectAlias($value)
+    public function setApplicableToObjectAlias($value)
     {
         return $this->setInputObjectAlias($value);
     }

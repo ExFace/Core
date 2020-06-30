@@ -4,7 +4,6 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
-use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -34,8 +33,7 @@ use exface\Core\Widgets\Traits\iHaveColumnsAndColumnGroupsTrait;
 use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Interfaces\Widgets\iHaveSorters;
 use exface\Core\Widgets\Parts\DataFooter;
-use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -101,6 +99,8 @@ class Data
 
     /** @var boolean */
     private $is_editable = false;
+    
+    private $editable_changes_reset_on_refresh = true;
 
     /** @var WidgetLinkInterface */
     private $refresh_with_widget = null;
@@ -242,7 +242,7 @@ class Data
                 // FIXME check, if a filter on the current relation is there already, and add it only in this case
                 /* @var $rel \exface\Core\CommonLogic\Model\relation */
                 if ($rel = $thisObject->findRelation($prefillObject)) {
-                    $fltr = $this->getConfiguratorWidget()->createFilterFromRelation($rel);
+                    $fltr = $this->getConfiguratorWidget()->addFilterFromRelation($rel);
                     $data_sheet = $fltr->prepareDataSheetToPrefill($data_sheet);
                 }
             }
@@ -393,11 +393,6 @@ class Data
         return $this;
     }
 
-    public function createFilterWidget($attribute_alias = null, UxonObject $uxon_object = null)
-    {
-        return $this->getConfiguratorWidget()->createFilterWidget($attribute_alias, $uxon_object);
-    }
-
     /**
      *
      * @see \exface\Core\Widgets\AbstractWidget::prefill()
@@ -427,8 +422,8 @@ class Data
             $attr = $condition->getExpression()->getAttribute();
             $attribute_filters = $this->getConfiguratorWidget()->findFiltersByAttribute($attr);
             // If no filters are there, create one
-            if (count($attribute_filters) == 0) {
-                $filter = $this->createFilterWidget($condition->getExpression()->getAttribute()->getAliasWithRelationPath());
+            if (empty($attribute_filters) === true) {
+                $filter = $this->getConfiguratorWidget()->createFilterWidget($condition->getExpression()->getAttribute()->getAliasWithRelationPath());
                 $this->addFilter($filter);
                 $filter->setValue($condition->getValue());
                 // Disable the filter because if the user changes it, the
@@ -477,7 +472,7 @@ class Data
             // If anything goes wrong, log away the error but continue, as
             // the prefills are not critical in general.
             try {
-                $filter_widget = $this->getConfiguratorWidget()->createFilterFromRelation($rel);
+                $filter_widget = $this->getConfiguratorWidget()->addFilterFromRelation($rel);
                 $filter_widget->prefill($data_sheet);
             } catch (\Throwable $e) {
                 $this->getWorkbench()->getLogger()->logException($e);
@@ -950,6 +945,39 @@ class Data
         $this->is_editable = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getEditableChangesResetOnRefresh() : bool
+    {
+        return $this->editable_changes_reset_on_refresh;
+    }
+    
+    /**
+     * Set to FALSE to make changes in editable columns survive refreshes.
+     * 
+     * By default, any changes, that were not saved explicitly, will be lost
+     * as soon as the widget is refreshed - that is if a search is performed
+     * or the data is sorted, etc. If this `editable_changes_reset_on_refresh`
+     * is set to `false`, changes made in editable columns will "survive"
+     * refreshes. On the other hand, there will be no possibility to revert
+     * them, unless there is a dedicated reset-button (e.g. one with action
+     * `exface.Core.ResetWidget`).     * 
+     * 
+     * @uxon-property editable_changes_reset_on_refresh
+     * @uxon-type boolean
+     * @uxon-default true 
+     * 
+     * @param bool $value
+     * @return Data
+     */
+    public function setEditableChangesResetOnRefresh(bool $value) : Data
+    {
+        $this->editable_changes_reset_on_refresh = $value;
+        return $this;
+    }
 
     /**
      *
@@ -996,9 +1024,24 @@ class Data
         return $this->values_data_sheet;
     }
 
-    public function setValuesDataSheet(DataSheetInterface $data_sheet)
+    /**
+     * Set value data sheet for this widget. Parameter either can be of type DateSheetInterface or UxonObject.
+     * 
+     * @param DataSheetInterface|UxonObject $data_sheet_or_uxon
+     * @throws WidgetConfigurationError
+     * @return Data
+     */
+    public function setValuesDataSheet($data_sheet_or_uxon) : Data
     {
-        $this->values_data_sheet = $data_sheet;
+        $dataSheet = null;
+        if ($data_sheet_or_uxon instanceof UxonObject) {
+            $dataSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $data_sheet_or_uxon);
+        } elseif ($data_sheet_or_uxon instanceof DataSheetInterface) {
+            $dataSheet = $data_sheet_or_uxon;
+        } else {
+            throw new WidgetConfigurationError($this, 'Cannot set values_data_sheet for "' . $this->getWidgetType() . '": expecting DataSheet or its UXON model, received "' . gettype($data_sheet_or_uxon) . '"!');
+        }
+        $this->values_data_sheet = $dataSheet;
         return $this;
     }
 
@@ -1029,7 +1072,7 @@ class Data
                 'TITLE' => $col->getCaption(),
                 'GROUP' => $this->translate('WIDGET.DATA.HELP.COLUMNS')
             );
-            if ($attr = $col->getAttribute()) {
+            if ($col->isBoundToAttribute() && $attr = $col->getAttribute()) {
                 $row = array_merge($row, $this->getHelpDataRowFromAttribute($attr, $col->getCellWidget()));
             }
             $data_sheet->addRow($row);
@@ -1051,12 +1094,15 @@ class Data
         }
         $uxon->setProperty('aggregate_by_attribute_alias', $this->getAggregateByAttributeAlias());
         $uxon->setProperty('lazy_loading', $this->getLazyLoading());
-        $uxon->setProperty('lazy_loading_action', $this->getLazyLoadingActionAlias());
-        $uxon->setProperty('lazy_loading_group_id', $this->getLazyLoadingGroupId());
-        
-        foreach ($this->getColumnGroups() as $col_group) {
-            $uxon->appendToProperty('columns', $col_group->exportUxonObject());
+        $uxon->setProperty('lazy_loading_action', $this->getLazyLoadingActionUxon());
+        if ($this->getLazyLoadingGroupId() !== null) {
+            $uxon->setProperty('lazy_loading_group_id', $this->getLazyLoadingGroupId());
         }
+        
+        // TODO for now disabled as columns would be duplicated        
+        /*foreach ($this->getColumnGroups() as $col_group) {
+            $uxon->appendToProperty('columns', $col_group->exportUxonObject());
+        }*/
         
         // TODO export toolbars to UXON instead of buttons. Currently all
         // information about toolbars is lost.
@@ -1072,6 +1118,9 @@ class Data
         
         if ($this->getRefreshWithWidget()) {
             $uxon->setProperty('refresh_with_widget', $this->getRefreshWithWidget()->exportUxonObject());
+        }
+        if ($this->getPrefillData() !== null) {
+            $uxon->setProperty('values_data_sheet', $this->getValuesDataSheet()->exportUxonObject());
         }
         
         return $uxon;
@@ -1101,7 +1150,12 @@ class Data
         return 'DataConfigurator';
     } 
     
-    public function getHideHeader()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveHeader::getHideHeader()
+     */
+    public function getHideHeader() : ?bool
     {
         return $this->hide_header;
     }
@@ -1114,9 +1168,9 @@ class Data
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveHeader::setHideHeader()
      */
-    public function setHideHeader($value)
+    public function setHideHeader(bool $value) : iHaveHeader
     {
-        $this->hide_header = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->hide_header = $value;
         return $this;
     }
     
@@ -1256,6 +1310,9 @@ class Data
      */
     public function getQuickSearchEnabled() : ?bool
     {
+        if ($this->quickSearchEnabled === null && $this->getMetaObject()->hasLabelAttribute() === false && empty($this->getConfiguratorWidget()->getQuickSearchFilters()) === true) {
+            return false;
+        }
         return $this->quickSearchEnabled;
     }
     

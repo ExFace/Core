@@ -24,10 +24,6 @@ class ReadPreload extends ReadData
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        if (! $this->checkPermissions($task)) {
-            // TODO Throw exception!
-        }
-        
         $data_sheet = $this->getInputDataSheet($task);
         
         if ($targetWidget = $this->getWidgetToReadFor($task)) {

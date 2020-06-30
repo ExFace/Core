@@ -168,7 +168,7 @@ trait ExceptionTrait {
             $stacktrace_tab->setNumberOfColumns(1);
             $stacktrace_widget = WidgetFactory::create($page, 'Html', $stacktrace_tab);
             $stacktrace_tab->addWidget($stacktrace_widget);
-            $stacktrace_widget->setHtml($page->getWorkbench()->getCMS()->sanitizeErrorOutput($page->getWorkbench()->getDebugger()->printException($this)));
+            $stacktrace_widget->setHtml($page->getWorkbench()->getDebugger()->printException($this));
             $debug_widget->addTab($stacktrace_tab);
         }
         
@@ -311,6 +311,9 @@ trait ExceptionTrait {
      */
     public function getStatusCode()
     {
+        if ($this->getPrevious() && $this->getPrevious() instanceof ExceptionInterface && $code = $this->getPrevious()->getStatusCode()){
+            return $code;
+        } 
         return 500;
     }
 
@@ -363,7 +366,8 @@ trait ExceptionTrait {
     public function getSystemByPage(UiPageInterface $page)
     {
         if( $this->system == FALSE) {
-            $this->system = $page->getWorkbench()->getCMS()->buildUrlToSiteRoot();
+            // TODO #nocms how to get the installation name???
+            $this->system = '';
         }
         return $this->system;
     }

@@ -37,7 +37,7 @@ trait JqueryDataConfiguratorTrait
                 // Wrap the refresh in setTimeout() to make sure multiple filter can get their values before
                 // one of the actually triggers the refresh. This also solved a strange bug, where the refresh
                 // did not start with the first value change, but only with the second one an onwards.
-                $filter_element->addOnChangeScript('setTimeout(function(){' . $elementToRefresh->buildJsRefresh() . '}, 50)');
+                $filter_element->addOnChangeScript('setTimeout(function(){' . $elementToRefresh->buildJsRefresh() . '}, 50);');
             }
         }
         return;
@@ -132,6 +132,6 @@ JS;
      */
     public function buildJsResetter() : string
     {
-        return parent::buildJsResetter() . $this->getFacade()->getElement($this->getWidget()->getDataWidget())->buildJsRefresh();
+        return parent::buildJsResetter() . ';' . $this->getFacade()->getElement($this->getWidget()->getDataWidget())->buildJsRefresh();
     }
 }

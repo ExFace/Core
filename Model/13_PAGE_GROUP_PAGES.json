@@ -1,0 +1,708 @@
+{
+    "object_alias": "exface.Core.PAGE_GROUP_PAGES",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "PAGE",
+            "attribute_alias": "PAGE"
+        },
+        {
+            "name": "PAGE_GROUP",
+            "attribute_alias": "PAGE_GROUP"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2020-03-10 20:50:30",
+            "MODIFIED_ON": "2020-03-10 20:50:30",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6310c75a5ef6a2e30205857feb80",
+            "PAGE": "0xf8310d4bba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 13:16:09",
+            "MODIFIED_ON": "2020-03-12 13:16:09",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6463a2b41eaea2e30205857feb80",
+            "PAGE": "0x8f9e3238949e11e7aa5f028037ec0200",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 14:55:48",
+            "MODIFIED_ON": "2020-03-12 14:55:48",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea64718e3438e1a2e30205857feb80",
+            "PAGE": "0xa7760458949e11e7a353028037ec0200",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 14:55:48",
+            "MODIFIED_ON": "2020-03-12 14:55:48",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea64718e34b36da2e30205857feb80",
+            "PAGE": "0xa05b7202949e11e7acc3028037ec0200",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 14:55:48",
+            "MODIFIED_ON": "2020-03-12 14:55:48",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea64718e34e8a1a2e30205857feb80",
+            "PAGE": "0x57bfceca96ca11e79702028037ec0200",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 14:55:48",
+            "MODIFIED_ON": "2020-03-12 14:55:48",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea64718e351ca6a2e30205857feb80",
+            "PAGE": "0xe6ea2a1a949e11e78de5028037ec0200",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 14:55:48",
+            "MODIFIED_ON": "2020-03-12 14:55:48",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea64718e355180a2e30205857feb80",
+            "PAGE": "0x078d42f06f1611e8bb520205857feb80",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 14:55:48",
+            "MODIFIED_ON": "2020-03-12 14:55:48",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea64718e358702a2e30205857feb80",
+            "PAGE": "0xfcda43fa949e11e789c6028037ec0200",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 14:55:48",
+            "MODIFIED_ON": "2020-03-12 14:55:48",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea64718e35bd10a2e30205857feb80",
+            "PAGE": "0x2cbeb8ba628211e8b7db0205857feb80",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 14:55:48",
+            "MODIFIED_ON": "2020-03-12 14:55:48",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea64718e35f037a2e30205857feb80",
+            "PAGE": "0xe43ae9c0e42111e8b2fe0205857feb80",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 14:55:48",
+            "MODIFIED_ON": "2020-03-12 14:55:48",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea64718e362268a2e30205857feb80",
+            "PAGE": "0x25d98c16949f11e7b780028037ec0200",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 14:55:48",
+            "MODIFIED_ON": "2020-03-12 14:55:48",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea64718e3656f4a2e30205857feb80",
+            "PAGE": "0xdd41b032949e11e798a5028037ec0200",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 14:55:48",
+            "MODIFIED_ON": "2020-03-12 14:55:48",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea64718e36846ba2e30205857feb80",
+            "PAGE": "0x9d1ad1d03bda11e8934200a0c6000012",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 14:55:48",
+            "MODIFIED_ON": "2020-03-12 14:55:48",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea64718e36bac6a2e30205857feb80",
+            "PAGE": "0xb9d24bcaa23e11e9ae46106530e7aff7",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 17:32:01",
+            "MODIFIED_ON": "2020-03-12 17:32:01",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea648760eb45eda2e30205857feb80",
+            "PAGE": "0xaab623e6632411e8aab30205857feb80",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 17:32:01",
+            "MODIFIED_ON": "2020-03-12 17:32:01",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea648760ebac3ca2e30205857feb80",
+            "PAGE": "0x11ea630d9cdcc7f1a2e30205857feb80",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 17:32:01",
+            "MODIFIED_ON": "2020-03-12 17:32:01",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea648760ebccd4a2e30205857feb80",
+            "PAGE": "0xb108669020a211ea8d5600a0c6000009",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 17:32:18",
+            "MODIFIED_ON": "2020-03-12 17:32:18",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea64876b156088a2e30205857feb80",
+            "PAGE": "0x11ea648437c38ffea2e30205857feb80",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 17:32:18",
+            "MODIFIED_ON": "2020-03-12 17:32:18",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea64876b15d3a0a2e30205857feb80",
+            "PAGE": "0x43ae1e36323211ea9c330205857feb80",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-12 17:32:18",
+            "MODIFIED_ON": "2020-03-12 17:32:18",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea64876b15f9a8a2e30205857feb80",
+            "PAGE": "0x0a3e0996949f11e78ac4028037ec0200",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:40:24",
+            "MODIFIED_ON": "2020-03-26 19:40:24",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f99a2a888c6a3480205857feb80",
+            "PAGE": "0x0a3e0996949f11e78ac4028037ec0200",
+            "PAGE_GROUP": "0x11ea6f997fc61ac8a3480205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:40:24",
+            "MODIFIED_ON": "2020-03-26 19:40:24",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f99a2a8c946a3480205857feb80",
+            "PAGE": "0x11ea648437c38ffea2e30205857feb80",
+            "PAGE_GROUP": "0x11ea6f997fc61ac8a3480205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:42:02",
+            "MODIFIED_ON": "2020-03-26 19:42:02",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f99dd2e2158a3480205857feb80",
+            "PAGE": "0x43ae1e36323211ea9c330205857feb80",
+            "PAGE_GROUP": "0x11ea6f99bd1d72c4a3480205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8d593ba3480205857feb80",
+            "PAGE": "0x8f9e3238949e11e7aa5f028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8d8cc4a3480205857feb80",
+            "PAGE": "0xa7760458949e11e7a353028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8db6bda3480205857feb80",
+            "PAGE": "0xa05b7202949e11e7acc3028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8de2bea3480205857feb80",
+            "PAGE": "0x57bfceca96ca11e79702028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8e17b1a3480205857feb80",
+            "PAGE": "0xe6ea2a1a949e11e78de5028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8e5f9da3480205857feb80",
+            "PAGE": "0x078d42f06f1611e8bb520205857feb80",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8e8eeba3480205857feb80",
+            "PAGE": "0xfcda43fa949e11e789c6028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8ebcb8a3480205857feb80",
+            "PAGE": "0x2cbeb8ba628211e8b7db0205857feb80",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8eeec5a3480205857feb80",
+            "PAGE": "0xe43ae9c0e42111e8b2fe0205857feb80",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8f1b24a3480205857feb80",
+            "PAGE": "0x25d98c16949f11e7b780028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8f4943a3480205857feb80",
+            "PAGE": "0xdd41b032949e11e798a5028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8f7622a3480205857feb80",
+            "PAGE": "0x9d1ad1d03bda11e8934200a0c6000012",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8f9f93a3480205857feb80",
+            "PAGE": "0xb9d24bcaa23e11e9ae46106530e7aff7",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b8fcb57a3480205857feb80",
+            "PAGE": "0xaab623e6632411e8aab30205857feb80",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b902176a3480205857feb80",
+            "PAGE": "0x11ea630d9cdcc7f1a2e30205857feb80",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:45:07",
+            "MODIFIED_ON": "2020-03-26 19:45:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a4b905dc4a3480205857feb80",
+            "PAGE": "0xb108669020a211ea8d5600a0c6000009",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-03-26 19:45:38",
+            "MODIFIED_ON": "2020-03-26 19:45:38",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea6f9a5dc4bbc9a3480205857feb80",
+            "PAGE": "0xb90bb0b8949f11e7a605028037ec0200",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:40:44",
+            "MODIFIED_ON": "2020-05-04 09:40:44",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb358094cf97940205857feb80",
+            "PAGE": "0x11ea8de4ed64848f97940205857feb80",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:40:44",
+            "MODIFIED_ON": "2020-05-04 09:40:44",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb3580f24897940205857feb80",
+            "PAGE": "0x11ea5edc2f798596b9920205857feb80",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:40:44",
+            "MODIFIED_ON": "2020-05-04 09:40:44",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb3581265497940205857feb80",
+            "PAGE": "0x11ea6c3ffa7eaeeaa3480205857feb80",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:40:44",
+            "MODIFIED_ON": "2020-05-04 09:40:44",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb3581553b97940205857feb80",
+            "PAGE": "0x11ea860ba247621397940205857feb80",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:40:44",
+            "MODIFIED_ON": "2020-05-04 09:40:44",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb358185b597940205857feb80",
+            "PAGE": "0x11ea78b086e9cba4ac460205857feb80",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:41:11",
+            "MODIFIED_ON": "2020-05-04 09:41:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb457139a597940205857feb80",
+            "PAGE": "0xf831c595ba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:41:11",
+            "MODIFIED_ON": "2020-05-04 09:41:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb45716f9a97940205857feb80",
+            "PAGE": "0xf831c625ba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:41:11",
+            "MODIFIED_ON": "2020-05-04 09:41:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb4571943097940205857feb80",
+            "PAGE": "0x3187ce4c949f11e7b01d028037ec0200",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:41:11",
+            "MODIFIED_ON": "2020-05-04 09:41:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb4571b83697940205857feb80",
+            "PAGE": "0xb00f0326949e11e79341028037ec0200",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:41:11",
+            "MODIFIED_ON": "2020-05-04 09:41:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb4571e16997940205857feb80",
+            "PAGE": "0xd5bf319a949e11e79bd9028037ec0200",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:41:11",
+            "MODIFIED_ON": "2020-05-04 09:41:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb4572032497940205857feb80",
+            "PAGE": "0x31ea203cc0b911e8ae0a0205857feb80",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:41:11",
+            "MODIFIED_ON": "2020-05-04 09:41:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb4572214997940205857feb80",
+            "PAGE": "0xf831c47aba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:41:11",
+            "MODIFIED_ON": "2020-05-04 09:41:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb45724fd297940205857feb80",
+            "PAGE": "0xc6088850d80a11e7bc3700a0c6000012",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:41:11",
+            "MODIFIED_ON": "2020-05-04 09:41:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb45726feb97940205857feb80",
+            "PAGE": "0xcdf966ba949e11e7a875028037ec0200",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:41:11",
+            "MODIFIED_ON": "2020-05-04 09:41:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb45728dc697940205857feb80",
+            "PAGE": "0xf831b3ccba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:41:11",
+            "MODIFIED_ON": "2020-05-04 09:41:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb4572ab7f97940205857feb80",
+            "PAGE": "0xb863f248949e11e7917c028037ec0200",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:41:11",
+            "MODIFIED_ON": "2020-05-04 09:41:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb4572d73797940205857feb80",
+            "PAGE": "0xb38cface203a11ea8c920205857feb80",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:41:55",
+            "MODIFIED_ON": "2020-05-04 09:41:55",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb5ffa8e2697940205857feb80",
+            "PAGE": "0xb90bb0b8949f11e7a605028037ec0200",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:41:55",
+            "MODIFIED_ON": "2020-05-04 09:41:55",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb5ffaf85097940205857feb80",
+            "PAGE": "0xe9c7828260f811e9845bf816544f0673",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:42:17",
+            "MODIFIED_ON": "2020-05-04 09:42:17",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deb6cb91cd597940205857feb80",
+            "PAGE": "0x6179ab4000ac11ea8fb10205857feb80",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:47:12",
+            "MODIFIED_ON": "2020-05-04 09:47:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8dec1ccc03cd97940205857feb80",
+            "PAGE": "0x11ea8de4ed64848f97940205857feb80",
+            "PAGE_GROUP": "0x11ea6f997fc61ac8a3480205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:47:38",
+            "MODIFIED_ON": "2020-05-04 09:47:38",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8dec2c52f9c297940205857feb80",
+            "PAGE": "0xf8310d4bba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea6f997fc61ac8a3480205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:48:02",
+            "MODIFIED_ON": "2020-05-04 09:48:02",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8dec3abf1efe97940205857feb80",
+            "PAGE": "0xf8310d4bba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea631053f803efa2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:49:36",
+            "MODIFIED_ON": "2020-05-04 09:49:36",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8dec72d5bc5997940205857feb80",
+            "PAGE": "0x11ea8de4ed64848f97940205857feb80",
+            "PAGE_GROUP": "0x11ea6f99bd1d72c4a3480205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:49:36",
+            "MODIFIED_ON": "2020-05-04 09:49:36",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8dec72d5e73797940205857feb80",
+            "PAGE": "0x0a3e0996949f11e78ac4028037ec0200",
+            "PAGE_GROUP": "0x11ea6f99bd1d72c4a3480205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-04 09:49:59",
+            "MODIFIED_ON": "2020-05-04 09:49:59",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8dec800aa51597940205857feb80",
+            "PAGE": "0xf8310d4bba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea6f99bd1d72c4a3480205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-11 09:21:35",
+            "MODIFIED_ON": "2020-05-11 09:21:35",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea9368cf618c74a9d10205857feb80",
+            "PAGE": "0x11ea630d9cdcc7f1a2e30205857feb80",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-11 09:21:35",
+            "MODIFIED_ON": "2020-05-11 09:21:35",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea9368cf61b98ca9d10205857feb80",
+            "PAGE": "0xaab623e6632411e8aab30205857feb80",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-11 09:22:18",
+            "MODIFIED_ON": "2020-05-11 09:22:18",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea9368e8e38a3aa9d10205857feb80",
+            "PAGE": "0xf8310d4bba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea9368b0886a6fa9d10205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-11 09:24:48",
+            "MODIFIED_ON": "2020-05-11 09:24:48",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea936941fcfd9fa9d10205857feb80",
+            "PAGE": "0xb90bb0b8949f11e7a605028037ec0200",
+            "PAGE_GROUP": "0x11ea93692830bb8ba9d10205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-11 09:25:03",
+            "MODIFIED_ON": "2020-05-11 09:25:03",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea93694b22204fa9d10205857feb80",
+            "PAGE": "0xf8310d4bba2c11e7895fe4b318306b9a",
+            "PAGE_GROUP": "0x11ea93692830bb8ba9d10205857feb80"
+        },
+        {
+            "CREATED_ON": "2020-05-20 15:45:47",
+            "MODIFIED_ON": "2020-05-20 15:45:47",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea9ab0f64149d88abc0205857feb80",
+            "PAGE": "0x11ea5edc2f798596b9920205857feb80",
+            "PAGE_GROUP": "0x11ea6f997fc61ac8a3480205857feb80"
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.PAGE_GROUP_PAGES",
+        "conditions": [
+            {
+                "expression": "PAGE__APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.PAGE_GROUP_PAGES"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

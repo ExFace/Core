@@ -13,6 +13,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Parts\DataRowGrouper;
 use exface\Core\Widgets\Traits\EditableTableTrait;
 use exface\Core\Widgets\Traits\DataTableTrait;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * Renders data as a table with filters, columns, and toolbars.
@@ -119,6 +120,8 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     private $header_sort_multiple = false;
 
     private $context_menu = null;
+    
+    private $multi_select_sync_attribute = null;
 
     function hasRowDetails()
     {
@@ -437,7 +440,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *
      * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
      */
-    public function getAlternativeContainerForOrphanedSiblings()
+    public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets
     {
         return null;
     }
@@ -554,5 +557,31 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
         }
         
         return $uxon;
+    }
+    
+    /**
+     * Set the attribute alias all rows with the same value in corresponding column should be selected when one row gets selected.
+     * 
+     * @uxon-property multi_select_sync_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $value
+     * @return \exface\Core\Widgets\DataTable
+     */
+    public function setMultiSelectSyncAttributeAlias(string $value)
+    {
+        $this->setMultiSelect(true);
+        $this->multi_select_sync_attribute = $value;
+        return $this;
+    }
+    
+    /**
+     * Get the attribute alias all rows with the same value in corresponding column should be selected when one row gets selected.
+     *
+     * @return string
+     */
+    public function getMultiSelectSyncAttributeAlias()
+    {
+        return $this->multi_select_sync_attribute;
     }
 }

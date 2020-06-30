@@ -83,10 +83,14 @@ interface ConfigurationInterface extends WorkbenchDependantInterface, iCanBeConv
     /**
      * Returns TRUE if a config option matching the given key exists and FALSE otherwise.
      * 
+     * If the optional parameter $scope is set, the value is checked only inside that
+     * scope.
+     * 
      * @param string $key
+     * @param string $scope
      * @return boolean
      */
-    public function hasOption(string $key) : bool;
+    public function hasOption(string $key, string $scope = null) : bool;
 }
 
 ?>

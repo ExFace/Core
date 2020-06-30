@@ -38,6 +38,10 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * default value (see examples below). You can also mark a filter as `required` to prevent 
  * loading data if it has no value.
  * 
+ * Note, that generic inputs `Input` or `InputHidden` will automatically get `multiple_values_allowed` 
+ * set to `true`, so they can be used with in-comparators (`[`, `![`) by default. This means, you can 
+ * type "value1, value2" into a regular `Input` filter and will get an `OR`-search automatically.
+ * 
  * To create complex filter with multiple conditions, you can specify a custom `condition_group`
  * with as many conditions on different attributes as you like. Use the `[#value#]` in the
  * `value` property of a condition to get the current value from the filter's input widget.
@@ -282,8 +286,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             
             // Set a special caption for filters on relations, which is derived from the relation itself
             // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
-            if (false === $uxon->hasProperty('caption') && true === $attr->isRelation()) {
-                $uxon->setProperty('caption', $attr->getRelation()->getName());
+            if (false === $uxon->hasProperty('caption') && $attr->isRelation()) {
+                // Get the relation from the object and not $attr->getRelation() because the latter would
+                // yield the wrong relation direction in case of reverse reltions.
+                $uxon->setProperty('caption', $this->getMetaObject()->getRelation($this->getAttributeAlias())->getName());
             }
             
             // Try to use the default editor UXON of the attribute
@@ -364,6 +370,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         // Some widgets need to be transformed to be a meaningfull filter
         if ($input->is('InputCheckBox')) {
             $input = $input->transformIntoSelect();
+        }
+        
+        if ($input->getWidgetType() === 'Input' || $input->getWidgetType() === 'InputHidden') {
+            $input->setMultipleValuesAllowed(true);
         }
         
         // Set a default comparator
