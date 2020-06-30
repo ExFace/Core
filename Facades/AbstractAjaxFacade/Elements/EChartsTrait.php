@@ -1483,7 +1483,7 @@ JS;
             $rotate = '';
         }
         
-        if ($axisType === ChartAxis::AXIS_TYPE_CATEGORY) {
+        if ($axis->hasTicksForEveryValue()) {
             $interval = 'interval: 0';
             $axisTick = <<<JS
             
