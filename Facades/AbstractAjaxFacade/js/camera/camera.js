@@ -29,25 +29,27 @@
 		 */
 		_getDevices: function() {				
 			return new Promise(function (resolve, reject) {
-				navigator.mediaDevices
-				.enumerateDevices()
-				.then(function (devices) {
-					devices.forEach(function (device) {
-						if (device.kind === 'video') {
-							device.kind = 'videoinput';
-						}
-						if (device.kind === 'videoinput') {
-							camera._variables.devices.push(device.deviceId);
-							console.log('videocam: ', device.label, device.deviceId);
-						}
+				var mediaDevices = navigator.mediaDevices;
+				if (mediaDevices === undefined) {
+					reject("You need a secure 'https' connection to use the cameras of this device!");
+				} else {
+					mediaDevices.enumerateDevices()
+					.then(function (devices) {
+						devices.forEach(function (device) {
+							if (device.kind === 'video') {
+								device.kind = 'videoinput';
+							}
+							if (device.kind === 'videoinput') {
+								camera._variables.devices.push(device.deviceId);
+							}
+						});
+						resolve(camera._variables.devices.length);
+					})
+					.catch(function (err) {
+						console.error(err.name + ': ' + err.message);
+						reject("No cameras found on this device!");
 					});
-					console.log('Devices', camera._variables.devices);
-					resolve(camera._variables.devices.length);
-				})
-				.catch(function (err) {
-					console.log(err.name + ': ' + err.message);
-					reject("No devices found");
-				});
+				}
 			});
 		},
 		
@@ -73,7 +75,11 @@
 					camera._variables.hintText.parentNode.style.display = "block";
 				}
 			}, function(error) {
-				throw new Error(error);
+				camera._variables.hintText.style.color = "rgba(242, 38, 19, 1)";
+				camera._variables.hintText.parentNode.style.top = "50%";
+				camera._variables.hintText.parentNode.style.display = "block";
+				camera._variables.hintText.value = error;
+				console.error(error);
 			})			
 			return;
 		},
@@ -90,7 +96,7 @@
 			// we ask for a square resolution, it will cropped on top (landscape)
 			// or cropped at the sides (landscape)
 			var size = 1280;
-			console.log('Starting on Device', camera._variables.devices[deviceIdx]);
+			//console.log('Starting on Device', camera._variables.devices[deviceIdx]);
 			var constraints = {
 				video: { deviceId: camera._variables.devices[deviceIdx] }
 			};
@@ -180,7 +186,7 @@
 		_endStreams: function() {
 			if (window.stream) {
 				window.stream.getTracks().forEach(function (track) {
-					console.log('Stopping', track);
+					//console.log('Stopping', track);
 					track.stop();
 				});
 				}
@@ -223,9 +229,9 @@
 		
 		init: function(parentId, options) {
 			var parent = document.getElementById(parentId);
-			
 			if (parent === null) {
-				throw new Error("Parent element not found");
+				console.error("Parent element with id '" + parentId + "' not found for camera element!");
+				return;
 			}
 			
 			var defaults = {
@@ -332,7 +338,7 @@
 		
 		open: function() {
 			if (camera._variables.parent === null) {
-				console.log('Camera not initialized. Call camera.init before camera.open!');
+				console.warn('Camera not initialized. Call camera.init before camera.open!');
 				return;
 			}
 			camera._variables.parent.style.display = "inline-block";
