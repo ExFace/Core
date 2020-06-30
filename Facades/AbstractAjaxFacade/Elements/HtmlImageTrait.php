@@ -51,7 +51,7 @@ trait HtmlImageTrait
         
         switch ($this->getWidget()->getAlign()) {
             case EXF_ALIGN_CENTER:
-                $style .= 'margin-left: auto; margin-right: auto;';
+                $style .= 'margin-left: auto; margin-right: auto; display: block;';
                 break;
             case EXF_ALIGN_RIGHT:
                 $style .= 'float: right';

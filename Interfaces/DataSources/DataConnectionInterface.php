@@ -13,6 +13,8 @@ use exface\Core\Interfaces\Model\MetaModelPrototypeInterface;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Security\AuthenticationProviderInterface;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
+use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
+use exface\Core\Interfaces\UserInterface;
 
 interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeConvertedToUxon, MetaModelPrototypeInterface, AuthenticationProviderInterface
 {
@@ -165,4 +167,11 @@ interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInte
      * @return iContainOtherWidgets
      */
     public function createLoginWidget(iContainOtherWidgets $container, bool $saveCredentials = true, UserSelectorInterface $credentialsOwner = null) : iContainOtherWidgets;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticationProviderInterface::authenticate()
+     */
+    public function authenticate(AuthenticationTokenInterface $token, bool $updateUserCredentials = true, UserInterface $credentialsOwner = null, bool $credentialsArePrivate = null) : AuthenticationTokenInterface;
 }

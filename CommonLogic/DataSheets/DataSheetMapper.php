@@ -256,7 +256,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      */
     public function setToObjectAlias(string $alias_with_namespace) : DataSheetMapperInterface
     {
-        return $this->setFromMetaObject($this->getWorkbench()->model()->getObject($alias_with_namespace));
+        return $this->setToMetaObject($this->getWorkbench()->model()->getObject($alias_with_namespace));
     }
 
     /**
@@ -374,9 +374,9 @@ class DataSheetMapper implements DataSheetMapperInterface {
     }
     
     /**
-     * @return DataColumnToFilterMappingInterface
+     * @return DataFilterToColumnMappingInterface
      */
-    protected function createFilterToColumnMapping(UxonObject $uxon = null) : DataColumnToFilterMappingInterface
+    protected function createFilterToColumnMapping(UxonObject $uxon = null) : DataFilterToColumnMappingInterface
     {
         $mapping = new DataFilterToColumnMapping($this);
         if (!is_null($uxon)){

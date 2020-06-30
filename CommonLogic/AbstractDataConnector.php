@@ -364,7 +364,7 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::authenticate()
      */
-    public function authenticate(AuthenticationTokenInterface $token, bool $updateUserCredentials = true, UserInterface $credentialsOwner = null) : AuthenticationTokenInterface
+    public function authenticate(AuthenticationTokenInterface $token, bool $updateUserCredentials = true, UserInterface $credentialsOwner = null, bool $credentialsArePrivate = null) : AuthenticationTokenInterface
     {
         try {
             $this->performConnect();
@@ -473,9 +473,10 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     /**
      * Saves a credential set for this connection either with or without a user association.
      * 
-     * If a user is provided, the credential set is associated with this user automatically. If
-     * it happens to be the currently logged on user, the credential set will be marked private.
-     * In all other cases, it will be a sharable credential set.
+     * If a user is provided, the credential set is associated with this user automatically.
+     * Depending on $credentialsArePrivate the credential set will be marked private or become
+     * shareable. If $credentialsArePrivate is NULL, the set will still be treated as private
+     * if the credential set owner happens to be the user currently logged on.
      * 
      * NOTE: user-association only works for authenticated users as anonymous users can't have 
      * credential sets!
@@ -483,12 +484,13 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      * @param UxonObject $uxon
      * @param string|NULL $credentialSetName
      * @param UserInterface|NULL $user
+     * @param bool|NULL $credentialsArePrivate
      * 
      * @throws RuntimeException
      * 
      * @return AbstractDataConnector
      */
-    protected function saveCredentials(UxonObject $uxon, string $credentialSetName = null, UserInterface $user = null) : AbstractDataConnector
+    protected function saveCredentials(UxonObject $uxon, string $credentialSetName = null, UserInterface $user = null, bool $credentialsArePrivate = null) : AbstractDataConnector
     {
         if (($user !== null && $user->isAnonymous() === true) || $this->hasModel() === false || $uxon->isEmpty() === true) {
             return $this;
@@ -504,7 +506,7 @@ abstract class AbstractDataConnector implements DataConnectionInterface
             $credData->getFilters()->addConditionFromString('USER_CREDENTIALS__USER', $user->getUid(), ComparatorDataType::EQUALS);
             $credData->dataRead();
             
-            $isPrivate = $user->is($this->getWorkbench()->getSecurity()->getAuthenticatedUser());
+            $isPrivate = $credentialsArePrivate ?? $user->is($this->getWorkbench()->getSecurity()->getAuthenticatedUser());
         } else {
             $isPrivate = false;
         }
