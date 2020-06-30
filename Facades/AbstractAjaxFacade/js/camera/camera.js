@@ -224,7 +224,7 @@
 		init: function(parentId, options) {
 			var parent = document.getElementById(parentId);
 			
-			if(parent === false) {
+			if (parent === null) {
 				throw new Error("Parent element not found");
 			}
 			
@@ -331,6 +331,10 @@
 		},
 		
 		open: function() {
+			if (camera._variables.parent === null) {
+				console.log('Camera not initialized. Call camera.init before camera.open!');
+				return;
+			}
 			camera._variables.parent.style.display = "inline-block";
 			camera._initCameraUI();
 			camera._options.onOpen();
