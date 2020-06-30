@@ -2,12 +2,10 @@
 namespace exface\Core\CommonLogic\Security\Authenticators;
 
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
-use exface\Core\Interfaces\Security\SecurityManagerInterface;
 use Symfony\Component\Security\Core\Authentication\AuthenticationProviderManager;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Security\Core\User\UserChecker;
-use exface\Core\Exceptions\RuntimeException;
 use Symfony\Component\Security\Core\Authentication\Provider\DaoAuthenticationProvider;
 use exface\Core\CommonLogic\Security\Symfony\SymfonyUserProvider;
 use Symfony\Component\Security\Core\Encoder\EncoderFactory;
@@ -18,32 +16,21 @@ use exface\Core\Factories\UserFactory;
 use exface\Core\Interfaces\Security\PasswordAuthenticationTokenInterface;
 use exface\Core\Interfaces\Security\PreAuthenticatedTokenInterface;
 use Symfony\Component\Security\Core\Authentication\Token\PreAuthenticatedToken;
-use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
-use exface\Core\Interfaces\WorkbenchInterface;
-use Symfony\Component\Security\Core\Authentication\Provider\LdapBindAuthenticationProvider;
-use Symfony\Component\Ldap\Ldap;
-use Symfony\Component\Ldap\Adapter\ExtLdap\Adapter;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iHaveButtons;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 
-class SymfonyAuthenticator implements AuthenticatorInterface
+class SymfonyAuthenticator extends AbstractAuthenticator
 {
     private $authenticatedToken = null;
     
     private $authenticatedSymfonyToken = null;
     
     private $symfonyAuthManager = null;
-    
-    private $workbench = null;
-    
-    /**
-     * 
-     * @param WorkbenchInterface $workbench
-     */
-    public function __construct(WorkbenchInterface $workbench)
-    {
-        $this->workbench = $workbench;
-    }
     
     /**
      *
@@ -52,13 +39,16 @@ class SymfonyAuthenticator implements AuthenticatorInterface
      */
     public function authenticate(AuthenticationTokenInterface $token): AuthenticationTokenInterface
     {
+        $this->checkAuthenticatorDisabledForUsername($token->getUsername());
         try {
             $symfonyToken = $this->createSymfonyAuthToken($token);
             $symfonyAuthenticatedToken = $this->getSymfonyAuthManager()->authenticate($symfonyToken);
+            $user = $this->getUserFromToken($token);
+            $this->logSuccessfulAuthentication($user, $token->getUsername());
             $this->authenticatedToken = $token;
             $this->authenticatedSymfonyToken = $symfonyAuthenticatedToken;
         } catch (AuthenticationException $e) {
-            throw new AuthenticationFailedError($e->getMessage(), null, $e);
+            throw new AuthenticationFailedError($this, $e->getMessage(), '7AL3J9X', $e);
         }
         return $token;
     }
@@ -76,21 +66,11 @@ class SymfonyAuthenticator implements AuthenticatorInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getName()
+     * @see \exface\Core\CommonLogic\Security\Authenticators\AbstractAuthenticator::getNameDefault()
      */
-    public function getName() : string
+    protected function getNameDefault() : string
     {
-        return 'Symfony Authentication';
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
-     */
-    public function getWorkbench()
-    {
-        return $this->workbench;
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.SIGN_IN');
     }
     
     protected function getSymfonyAuthManager() : AuthenticationProviderManager
@@ -154,5 +134,37 @@ class SymfonyAuthenticator implements AuthenticatorInterface
         return new AnonymousToken(
             'secret', new SymfonyUserWrapper(UserFactory::createAnonymous($this->getWorkbench()))
             );
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Security\Authenticators\AbstractAuthenticator::createLoginWidget()
+     */
+    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    {
+        $container->setWidgets(new UxonObject([
+            [
+                'attribute_alias' => 'USERNAME',
+                'required' => true
+            ],[
+                'attribute_alias' => 'PASSWORD',
+                'required' => true
+            ]
+        ]));
+        
+        if ($container instanceof iLayoutWidgets) {
+            $container->setColumnsInGrid(1);
+        }
+        
+        if ($container instanceof iHaveButtons && $container->hasButtons() === false) {
+            $container->addButton($container->createButton(new UxonObject([
+                'action_alias' => 'exface.Core.Login',
+                'align' => EXF_ALIGN_OPPOSITE,
+                'visibility' => WidgetVisibilityDataType::PROMOTED
+            ])));
+        }
+        
+        return $container;
     }
 }

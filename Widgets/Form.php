@@ -12,6 +12,9 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Widgets\Traits\iShowMessageListTrait;
 
 /**
  * A Form is a Panel with buttons.
@@ -37,11 +40,12 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageList, iHaveContextualHelp
 {
     use iHaveButtonsAndToolbarsTrait;
+    use iShowMessageListTrait;
     use iHaveContextualHelpTrait {
         getHideHelpButton as getHideHelpButtonViaTrait;
     }
     
-    private $messageList = null;
+    private $autofocusFirst = true;
 
     /**
      *
@@ -80,33 +84,6 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
     public function getButtonWidgetType()
     {
         return 'Button';
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iShowMessageList::getMessageList()
-     */
-    public function getMessageList() : MessageList
-    {
-        if ($this->messageList === null) {
-            $this->messageList = WidgetFactory::create($this->getPage(), 'MessageList', $this);
-        }
-        return $this->messageList;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iShowMessageList::hasMessages()
-     */
-    public function hasMessages() : bool
-    {
-        if ($this->messageList !== null && $this->getMessageList()->isEmpty() === false) {
-            return true;
-        } 
-        
-        return false;
     }
     
     /**
@@ -197,5 +174,30 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
     public function getHideHelpButton($default = false) : ?bool
     {
         return $this->getHideHelpButtonViaTrait(null) ?? $this->hasParent() === true;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getAutofocusFirstInput() : bool
+    {
+        return $this->autofocusFirst;
+    }
+    
+    /**
+     * Set to FALSE to disable giving focus to the first visible input widget.
+     * 
+     * @uxon-property autofocus_first_input
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return Form
+     */
+    public function setAutofocusFirstInput(bool $value) : Form
+    {
+        $this->autofocusFirst = $value;
+        return $this;
     }
 }

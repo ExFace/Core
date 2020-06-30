@@ -27,6 +27,15 @@ use exface\Core\Interfaces\UserInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Widgets\Form;
+use exface\Core\Widgets\LoginPrompt;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Interfaces\Selectors\UserSelectorInterface;
+use exface\Core\Factories\UserFactory;
+use exface\Core\DataTypes\MessageTypeDataType;
+use exface\Core\DataTypes\EncryptedDataType;
+use exface\Core\Exceptions\EncryptionError;
+use exface\Core\Exceptions\UxonSyntaxError;
 
 abstract class AbstractDataConnector implements DataConnectionInterface
 {
@@ -355,13 +364,13 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::authenticate()
      */
-    public function authenticate(AuthenticationTokenInterface $token, bool $updateUserCredentials = true, UserInterface $credentialsOwner = null) : AuthenticationTokenInterface
+    public function authenticate(AuthenticationTokenInterface $token, bool $updateUserCredentials = true, UserInterface $credentialsOwner = null, bool $credentialsArePrivate = null) : AuthenticationTokenInterface
     {
         try {
             $this->performConnect();
             return $token;
         } catch (DataConnectionFailedError $e) {
-            throw new AuthenticationFailedError('Authentication failed!', null, $e);
+            throw new AuthenticationFailedError($this, 'Authentication failed!', null, $e);
         }
     }
     
@@ -370,52 +379,155 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::createLoginWidget()
      */
-    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    public function createLoginWidget(iContainOtherWidgets $container, bool $saveCredentials = true, UserSelectorInterface $credentialsOwner = null) : iContainOtherWidgets
     {
         $container->addWidget(WidgetFactory::createFromUxonInParent($container, new UxonObject([
-            'widget_type' => 'Message',
-            'type' => 'info',
-            'text' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED')
+            'widget_type' => 'Form',
+            'caption' => $this->getName(),
+            'widgets' => [
+                [
+                    'widget_type' => 'Message',
+                    'type' => MessageTypeDataType::INFO,
+                    'text' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.CONNECTIONS.AUTHENTICATION_NOT_SUPPORTED')
+                ]
+            ]
         ])));
         return $container;
     }
     
     /**
-     * Updates the user-specific connector config in the users's credential set for this connection.
+     * Creates a default login-form within a `LoginPrompt` widget with inputs common for all data sources.
      * 
-     * NOTE: this only works for authenticated users as anonymous users can't have credential sets!
+     * Use this method to quickly create a basic login form. Just add inputs specific for your
+     * authentification method (e.g. `USERNAME` and `PASSWORD` inputs) and add the form to the
+     * `LoginPrompt` or whereevery you need to display it.
      * 
-     * @param UserInterface $user
+     * The form will have disabled fields showing the current connection, the save-credentials flag
+     * and the selected user UID. It also automatically includes `RELOAD_ON_SUCCESS` = `false` if
+     * the `LoginPrompt` is placed within another widget. This means, that the entire browser tab
+     * will be refreshed for connection-login-prompts unless they are placed within another widget
+     * (e.g. a button) - in other words `LoginPrompt`s in error messages.
+     * 
+     * NOTE: The created form will not be added to the `LoginPrompt` automatically!
+     * 
+     * See AbstractSqlConnector::createLoginWidget() for example usage.
+     * 
+     * @param LoginPrompt $loginPrompt
+     * @param bool $saveCredentials
+     * @param UserSelectorInterface $saveCredentialsForUser
+     * @return Form
+     */
+    protected function createLoginForm(LoginPrompt $loginPrompt, bool $saveCredentials = true, UserSelectorInterface $saveCredentialsForUser = null) : Form
+    {
+        $loginForm = WidgetFactory::create($loginPrompt->getPage(), 'Form', $loginPrompt);
+        $loginForm->setObjectAlias('exface.Core.LOGIN_DATA');
+        
+        $userUid = null;
+        if ($saveCredentialsForUser !== null) {
+            if ($saveCredentialsForUser->isUid()) {
+                $userUid = $saveCredentialsForUser->toString();
+            } else {
+                $user = UserFactory::createFromSelector($saveCredentialsForUser);
+                $userUid = $user->getUid();
+            }
+        }
+        
+        $loginForm->setCaption($this->getName());
+        
+        $loginForm->setWidgets(new UxonObject([
+            [
+                'widget_type' => 'InputHidden',
+                'attribute_alias' => 'CONNECTION',
+                'value' => $this->getId()
+            ],[
+                'attribute_alias' => 'CONNECTION__LABEL',
+                'readonly' => true,
+                'value' => $this->getName()
+            ],[
+                'attribute_alias' => 'CONNECTION_SAVE',
+                'value' => $saveCredentials ? 1 : 0
+            ],[
+                'widget_type' => 'InputHidden',
+                'attribute_alias' => 'CONNECTION_SAVE_FOR_USER',
+                'value' => $userUid ?? ''
+            ]   
+        ]));
+        
+        if ($loginPrompt->hasParent() === true) {
+            $loginForm->addWidget(WidgetFactory::createFromUxonInParent($loginForm, new UxonObject([
+                'widget_type' => 'InputHidden',
+                'attribute_alias' => 'RELOAD_ON_SUCCESS',
+                'value' => false
+            ])));
+        }
+        
+        $loginForm->addButton($loginForm->createButton(new UxonObject([
+            'action_alias' => 'exface.Core.Login',
+            'align' => EXF_ALIGN_OPPOSITE,
+            'visibility' => WidgetVisibilityDataType::PROMOTED
+        ])));
+        
+        return $loginForm;
+    }
+    
+    /**
+     * Saves a credential set for this connection either with or without a user association.
+     * 
+     * If a user is provided, the credential set is associated with this user automatically.
+     * Depending on $credentialsArePrivate the credential set will be marked private or become
+     * shareable. If $credentialsArePrivate is NULL, the set will still be treated as private
+     * if the credential set owner happens to be the user currently logged on.
+     * 
+     * NOTE: user-association only works for authenticated users as anonymous users can't have 
+     * credential sets!
+     * 
      * @param UxonObject $uxon
+     * @param string|NULL $credentialSetName
+     * @param UserInterface|NULL $user
+     * @param bool|NULL $credentialsArePrivate
      * 
      * @throws RuntimeException
      * 
      * @return AbstractDataConnector
      */
-    protected function updateUserCredentials(UserInterface $user, UxonObject $uxon, string $credentialSetName = null) : AbstractDataConnector
+    protected function saveCredentials(UxonObject $uxon, string $credentialSetName = null, UserInterface $user = null, bool $credentialsArePrivate = null) : AbstractDataConnector
     {
-        if ($user->isUserAnonymous() === true || $this->hasModel() === false || $uxon->isEmpty() === true) {
+        if (($user !== null && $user->isAnonymous() === true) || $this->hasModel() === false || $uxon->isEmpty() === true) {
             return $this;
         }
         
         $credData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.DATA_CONNECTION_CREDENTIALS');
         $credData->getColumns()->addMultiple(['NAME', 'DATA_CONNECTION', 'DATA_CONNECTOR_CONFIG', 'PRIVATE']);
-        $credData->getFilters()->addConditionFromString('USER_CREDENTIALS__USER', $user->getUid(), ComparatorDataType::EQUALS);
         $credData->getFilters()->addConditionFromString('DATA_CONNECTION', $this->getId(), ComparatorDataType::EQUALS);
-        $credData->dataRead();
         
-        $isPrivate = $user->is($this->getWorkbench()->getSecurity()->getAuthenticatedUser());
+        // If saving credentials for a specific user, we need to see if the user already has credentials 
+        // for this connection first.
+        if ($user !== null) {
+            $credData->getFilters()->addConditionFromString('USER_CREDENTIALS__USER', $user->getUid(), ComparatorDataType::EQUALS);
+            $credData->dataRead();
+            
+            $isPrivate = $credentialsArePrivate ?? $user->is($this->getWorkbench()->getSecurity()->getAuthenticatedUser());
+        } else {
+            $isPrivate = false;
+        }
         
         $transaction = $this->getWorkbench()->data()->startTransaction();
         
-        switch ($credData->countRows()) {
-            case 1:
+        switch (true) {
+            // If our user already has a credential set for this connection, update or replace it
+            case $user !== null && $credData->countRows() === 1:
                 // If we are saving private credentials and the existing credential set is private
                 // too - just update it.
                 if ($isPrivate === true && $credData->getCellValue('PRIVATE', 0) == 1) {
-                    $oldUxon = UxonObject::fromJson($credData->getCellValue('DATA_CONNECTOR_CONFIG', 0));
+                    try {
+                        $oldUxon = UxonObject::fromJson(EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $credData->getCellValue('DATA_CONNECTOR_CONFIG', 0), EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT));
+                    } catch (EncryptionError|UxonSyntaxError $e) {
+                        $this->getWorkbench()->getLogger()->logException($e);
+                        $oldUxon = new UxonObject();
+                    }
                     $newUxon = $oldUxon->extend($uxon);
                     $credData->setCellValue('DATA_CONNECTOR_CONFIG', 0, $newUxon->toJson());
+                    $credData->dataUpdate(false, $transaction);
                     break;
                 } else {
                     // Otherwise create a new credential set and replace the old one with it
@@ -436,7 +548,8 @@ abstract class AbstractDataConnector implements DataConnectionInterface
                     // Don't forget to empty $credData, so it can be repopulated in the next step!
                     $credData->removeRows();
                 }
-            case 0:
+            // If there is no credential set yet, create one
+            case $user === null || ($user !== null && $credData->isEmpty()):
                 $credData->addRow([
                     'NAME' => $credentialSetName ?? $this->getName(),
                     'DATA_CONNECTOR_CONFIG' => $uxon->toJson(),
@@ -445,12 +558,14 @@ abstract class AbstractDataConnector implements DataConnectionInterface
                 ]);
                 $credData->dataCreate(false, $transaction);
                 
-                $credUserData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_CREDENTIALS');
-                $credUserData->addRow([
-                    'USER' => $user->getUid(),
-                    'DATA_CONNECTION_CREDENTIALS' => $credData->getUidColumn()->getCellValue(0)
-                ]);
-                $credUserData->dataCreate(false, $transaction);
+                if ($user !== null) {
+                    $credUserData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_CREDENTIALS');
+                    $credUserData->addRow([
+                        'USER' => $user->getUid(),
+                        'DATA_CONNECTION_CREDENTIALS' => $credData->getUidColumn()->getCellValue(0)
+                    ]);
+                    $credUserData->dataCreate(false, $transaction);
+                }
                 
                 break;
             default:

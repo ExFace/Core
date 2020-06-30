@@ -14,37 +14,77 @@ use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Factories\QueryBuilderFactory;
-use exface\Core\Factories\ActionFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\CommonLogic\Model\Aggregator;
-use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
 
 /**
  * An InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
  * 
- * Thus, the user can see more information about every suggested object. The InputComboTable is very often used with relations,
- * where the related object may have many more data, then merely it's id (which is the value of the relation attribute).
+ * Thus, the user can see more information about every suggested object. The `InputComboTable` is very 
+ * often used with relations, where the related object may have many more data, then merely it's UID 
+ * (which is the value of the relation attribute).
  * 
- * The DataTable for autosuggests can either be genreated automatically based on the meta object, or specified by the user via
- * UXON or even extended from any other ready-made DataTable!
+ * The `DataTable` for autosuggests can either be genreated automatically based on the meta object, or 
+ * specified by the user via UXON in the `table` property.
  * 
- * While not every UI-framework supports such a kind of widget, there are many ways to implement the main idea of the InputComboTable:
- * showing more data about a selectable object in the autosuggest. Mobile facades might use cards like in Googles material design,
- * for example.
+ * In addition to the tabluar autosuggest, the `InputComboTable` has a `lookup_action`, which will open
+ * an advanced-search dialog with even more details, filters and other options. By default, the generic
+ * `exface.Core.ShowLookupDialog` action is used, which produces a dialog automatiscally from the object's 
+ * model default display attributes, but you can customize the the action as well as it's widge by adding
+ * custom configuration to the `lookup_action` property.
  * 
- * InputComboTables support two type of live references to other objects: in the value and in the data filters. Concider the following
- * example, where we need a product selector for an order position. We order a specific product variant, but we need a two-step
- * selector, so we can select the product first and choose one of it's variants afterwards. To do this, we need an extra product
- * selector befor the actual variant selector for our order position. The product selector does not refer to an order attribute,
- * so we declare it display_only (so it will not get included in action data). Our variant selector has a filter reference to the
- * product selector. This means, that once a product is selected, only variants of that product will be displayed. If no product
- * is selected, we can search through all product variants in the system. But what happens if we select a variant and do not
- * touch the product selector (This will actually happen every time the form is prefilled). The id-reference in the product
- * selector takes care of that: It sets the value of the selector to the product id of the selected variant. Of course, if
- * the product id does not belong to the default display attributes of the variant, we need to add it to the respective combo
- * manually: just add it next to the `~DEFAULT_DISPLAY` attribute group.
+ * While not every UI-framework supports such a kind of widget, there are many ways to implement the main 
+ * idea of the `InputComboTable`: showing more data about a selectable object in the autosuggest. Mobile 
+ * facades might use cards like in Googles material design, for example. Also not all facades support the
+ * `lookup_action`.
+ * 
+ * `InputComboTable`s support two type of live references to other objects: in the value and in the data 
+ * filters. 
+ * 
+ * ## Examples
+ * 
+ * ### Custom lookup widget
+ * 
+ * ```
+ * {
+ *  "widget_type": "InputComboTable",
+ *  "lookup_action": {
+ *      "alias": "exface.Core.ShowLookupDialog",
+ *      "widget": {
+ *          "object_alias": "...",
+ *          "widget_type": "DataTable",
+ *          "filters": [
+ *              {
+ *                "attribute_alias": "..."
+ *              }
+ *          ],
+ *          "columns": [
+ *              {
+ *                "attribute_alias": "..."
+ *              }
+ *          ]
+ *      }
+ *   }
+ * }
+ * 
+ * ```
+ * 
+ * ### Live references between InputComboTables
+ * 
+ * Concider the following example, where we need a product selector for an order position. We order 
+ * a specific product variant, but we need a two-step selector, so we can select the product first and choose 
+ * one of it's variants afterwards. To do this, we need an extra product selector befor the actual variant 
+ * selector for our order position. The product selector does not refer to an order attribute, so we declare 
+ * it display_only (so it will not get included in action data). Our variant selector has a filter reference 
+ * to the product selector. This means, that once a product is selected, only variants of that product will 
+ * be displayed. If no product is selected, we can search through all product variants in the system. But what 
+ * happens if we select a variant and do not touch the product selector (This will actually happen every time 
+ * the form is prefilled). The id-reference in the product selector takes care of that: It sets the value 
+ * of the selector to the product id of the selected variant. Of course, if the product id does not belong 
+ * to the default display attributes of the variant, we need to add it to the respective combo manually: 
+ * just add it next to the `~DEFAULT_DISPLAY` attribute group.
  * 
  * ```
  * {
@@ -174,6 +214,10 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         $table->setMultiSelect($this->getMultiSelect());
         $table->setLazyLoading($this->getLazyLoading());
         $table->setLazyLoadingAction($this->getLazyLoadingActionUxon());
+        
+        // Add a quick-search filter over the text-attribute to make sure quick search works correctly
+        // even if the table object has no alias!
+        $table->addFilter($table->getConfiguratorWidget()->createFilterWidget($this->getTextAttributeAlias())->setIncludeInQuickSearch(true));
         
         $this->data_table = $table;
         
@@ -423,14 +467,23 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     {
         // If the sheet is based upon the object, that is being selected by this Combo, we can use the prefill sheet
         // values directly
+        $rowNr = $this->getMultiSelect() !== true ? 0 : null;
         if ($col = $data_sheet->getColumns()->getByAttribute($this->getValueAttribute())) {
-            $pointer = DataPointerFactory::createFromColumn($col, 0);
-            $this->setValue($pointer->getValue());
+            $pointer = DataPointerFactory::createFromColumn($col, $rowNr);
+            $value = $pointer->getValue();
+            if ($this->getMultiSelect() && is_array($value)) {
+                $value = $col->aggregate(AggregatorFunctionsDataType::LIST_ALL);
+            }
+            $this->setValue($value);
             $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $pointer));
         }
         if ($col = $data_sheet->getColumns()->getByAttribute($this->getTextAttribute())) {
-            $pointer = DataPointerFactory::createFromColumn($col, 0);
-            $this->setValueText($pointer->getValue());
+            $pointer = DataPointerFactory::createFromColumn($col, $rowNr);
+            $text = $pointer->getValue();
+            if ($this->getMultiSelect() && is_array($text)) {
+                $text = $col->aggregate(AggregatorFunctionsDataType::LIST_ALL);
+            }
+            $this->setValueText($text);
             $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value_text', $pointer));
         }
         return;
@@ -473,23 +526,27 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             return;
         }
         
-        if (! $data_sheet->isEmpty()) {
-            if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
-                $this->doPrefillWithWidgetObject($data_sheet);
-            } else {
-                // If the prefill data was loaded for another object, there are still multiple possibilities to prefill
-                if ($data_sheet->getMetaObject()->is($this->getTableObject())) {
-                    $this->doPrefillWithOptionsObject($data_sheet);
-                    return;
-                } elseif ($this->getRelation()) {
-                    $this->doPrefillWithRelationsInData($data_sheet);
-                    return;
-                }
-                // If we are still here, that means, the above checks did not work. We still can try to use the prefill data
-                // to filter the options, so just pass it to the internal data widget
-                $this->getTable()->prefill($data_sheet);
-            }
+        if ($data_sheet->isEmpty() === true) {
+            return;
         }
+        
+        if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
+            $this->doPrefillWithWidgetObject($data_sheet);
+        } else {
+            // If the prefill data was loaded for another object, there are still multiple possibilities to prefill
+            if ($data_sheet->getMetaObject()->is($this->getTableObject())) {
+                $this->doPrefillWithOptionsObject($data_sheet);
+                return;
+            } elseif ($this->getRelation()) {
+                $this->doPrefillWithRelationsInData($data_sheet);
+                return;
+            }
+            // If we are still here, that means, the above checks did not work. We still can try to use the prefill data
+            // to filter the options, so just pass it to the internal data widget
+            $this->getTable()->prefill($data_sheet);
+        }
+        
+        return;
     }
 
     /**
@@ -825,6 +882,10 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             $uxon = new UxonObject([
                 'alias' => 'exface.Core.ShowLookupDialog'
             ]);
+        }
+        
+        if ($uxon->hasProperty('object_alias') === false) {
+            $uxon->setProperty('object_alias', $this->getTableObject()->getAliasWithNamespace());
         }
         
         if ($uxon->hasProperty('target_widget_id') ===  false) {

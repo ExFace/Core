@@ -7,6 +7,12 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\CommonLogic\Selectors\DataConnectionSelector;
+use exface\Core\DataConnectors\ModelLoaderConnector;
+use exface\Core\CommonLogic\Filemanager;
+use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
+use exface\Core\Interfaces\ConfigurationInterface;
+use exface\Core\CommonLogic\Selectors\DataConnectorSelector;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
  * Produces data connections (instances of data connectors configured for a specific connection)
@@ -16,9 +22,16 @@ use exface\Core\CommonLogic\Selectors\DataConnectionSelector;
  */
 abstract class DataConnectionFactory extends AbstractSelectableComponentFactory
 {
-
+    const METAMODEL_CONNECTION_ALIAS = 'METAMODEL_DB';
+    
+    const METAMODEL_CONNECTION_ALIAS_NAMESPACE = 'exface.Core';
+    
+    const METAMODEL_CONNECTION_UID = '0x11ea72c00f0fadeca3480205857feb80';
+    
+    const METAMODEL_CONNECTION_NAME = 'Model DB';
+    
     /**
-     * Creates a data connector from the given selector and a UXON configuration
+     * Creates ready-to-use data connection from the given connector selector and a UXON configuration
      * 
      * @param DataConnectorSelectorInterface $prototypeSelector
      * @param UxonObject $config
@@ -53,18 +66,34 @@ abstract class DataConnectionFactory extends AbstractSelectableComponentFactory
     }
     
     /**
-     * Creates an instance of the connector specified by the given selector without any specific configuration.
+     * Creates a connection from a connection selector or a connector prototype selector.
      * 
-     * @return DataConnectionInterface
+     * If it's a connection, it's configuration will be loaded from the metamodel. If it's
+     * a prototype, an empty (not configured) connection will result.
+     * 
+     * @return DataConnectionInterface|DataConnectorSelectorInterface
      * 
      * @see \exface\Core\Factories\AbstractSelectableComponentFactory::createFromSelector()
      */
-    public static function createFromSelector(SelectorInterface $prototypeSelector)
+    public static function createFromSelector(SelectorInterface $connectorSelector) : DataConnectionInterface
     {
-        return parent::createFromSelector($prototypeSelector);
+        // If it's a selector for a configured connection, load it from the model
+        if ($connectorSelector instanceof DataConnectionSelectorInterface) {
+            return self::createFromModel($connectorSelector->getWorkbench(), $connectorSelector);
+        }
+        
+        // Otherwise it's a connector prototype selector
+        // Check if it's the model loader connection and return it if so. Otherwise create a blank
+        // connection from the prototype using the default logic.
+        if (self::isMetamodelConnector($connectorSelector)) {
+            return $connectorSelector->getWorkbench()->model()->getModelLoader()->getDataConnection();
+        } else {
+            return parent::createFromSelector($connectorSelector);
+        }
     }
 
     /**
+     * Creates an empty instance of the connector specified by the given selector without any specific configuration.
      * 
      * @param WorkbenchInterface $workbench
      * @param string $prototypeSelectorString
@@ -74,6 +103,9 @@ abstract class DataConnectionFactory extends AbstractSelectableComponentFactory
     public static function createFromPrototype(WorkbenchInterface $workbench, string $prototypeSelectorString, UxonObject $config = null) : DataConnectionInterface
     {
         $selector = SelectorFactory::createDataConnectorSelector($workbench, $prototypeSelectorString);
+        if (self::isMetamodelConnector($selector)) {
+            return $workbench->model()->getModelLoader()->getDataConnection();
+        }
         $instance =  static::createFromSelector($selector);
         if ($config !== null) {
             $instance->importUxonObject($config);
@@ -82,14 +114,62 @@ abstract class DataConnectionFactory extends AbstractSelectableComponentFactory
     }
     
     /**
+     * Creates a read-to-use data connection from a connection selector by loading it's model.
      * 
      * @param WorkbenchInterface $workbench
-     * @param string $uidOrAlias
+     * @param string|DataConnectionSelectorInterface $uidOrAliasOrSelector
      * @return DataConnectionInterface
      */
-    public static function createFromModel(WorkbenchInterface $workbench, string $uidOrAlias) : DataConnectionInterface
+    public static function createFromModel(WorkbenchInterface $workbench, $uidOrAliasOrSelector) : DataConnectionInterface
     {
-        $selector = new DataConnectionSelector($workbench, $uidOrAlias);
-        return $workbench->model()->getModelLoader()->loadDataConnection($selector);
+        if ($uidOrAliasOrSelector instanceof DataConnectionSelectorInterface) {
+            $selector = $uidOrAliasOrSelector;
+        } else {
+            $selector = new DataConnectionSelector($workbench, $uidOrAliasOrSelector);
+        }
+        switch (true) {
+            case $selector->isAlias() && strcasecmp($uidOrAliasOrSelector, self::METAMODEL_CONNECTION_ALIAS_NAMESPACE . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . self::METAMODEL_CONNECTION_ALIAS) === 0:
+            case $selector->isUid() && strcasecmp($uidOrAliasOrSelector, self::METAMODEL_CONNECTION_UID) === 0:
+                return $workbench->model()->getModelLoader()->getDataConnection();
+            default:
+                return $workbench->model()->getModelLoader()->loadDataConnection($selector);
+        }
+    }
+    
+    /**
+     * 
+     * @param DataConnectorSelectorInterface $selector
+     * @return bool
+     */
+    protected static function isMetamodelConnector(DataConnectorSelectorInterface $selector) : bool
+    {
+        switch (true) {
+            case $selector->isClassname() && strcasecmp($selector->toString(), '\\' . ModelLoaderConnector::class) === 0:
+            case $selector->isFilepath() && strcasecmp(Filemanager::pathNormalize($selector->toString()), Filemanager::pathNormalize(ModelLoaderConnector::class) . '.php') === 0:
+                return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Creates a new instance of the model loader connection.
+     * 
+     * NOTE: in most cases, its better to use createFromSelector() or createFromPrototype() because
+     * these will return the already instantiated connection of the model loader instead of instantiating
+     * a new one.
+     * 
+     * @param ConfigurationInterface $config
+     * @return DataConnectionInterface
+     */
+    public static function createModelLoaderConnection(ConfigurationInterface $config) : DataConnectionInterface
+    {
+        return self::create(
+            new DataConnectorSelector($config->getWorkbench(), $config->getOption('METAMODEL.CONNECTOR')), 
+            $config->getOption('METAMODEL.CONNECTOR_CONFIG'),
+            self::METAMODEL_CONNECTION_UID,
+            self::METAMODEL_CONNECTION_ALIAS,
+            self::METAMODEL_CONNECTION_ALIAS_NAMESPACE,
+            self::METAMODEL_CONNECTION_NAME
+        );
     }
 }

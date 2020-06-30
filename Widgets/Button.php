@@ -19,6 +19,8 @@ use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Traits\iHaveColorTrait;
 use exface\Core\Interfaces\Widgets\iCanBeDisabled;
 use exface\Core\Interfaces\Actions\iResetWidgets;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\CommonLogic\Model\UiPage;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -40,6 +42,14 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     
     use iHaveColorTrait;
     
+    const APPEARANCE_DEFAULT = 'default';
+    
+    const APPEARANCE_FILLED = 'filled';
+    
+    const APPEARANCE_STROKED = 'stroked';
+    
+    const APPEARANCE_LINK = 'link';
+    
     private $action_alias = null;
 
     private $action = null;
@@ -55,10 +65,20 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     private $hotkey = null;
 
     private $refresh_input = true;
-
-    private $refresh_widget_link = null;
+    
+    private $refreshWidgetIds = [];
     
     private $resetInputWidget = null;
+    
+    private $hiddenIfAccessDenied = false;
+    
+    private $appearance = self::APPEARANCE_DEFAULT;
+    
+    /**
+     * 
+     * @var string[]
+     */
+    private $resetWidgetIds = [];
 
     public function getAction()
     {
@@ -237,7 +257,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         return $icon;
     }
 
-    public function getRefreshInput()
+    public function getRefreshInput() : bool
     {
         return $this->refresh_input;
     }
@@ -251,7 +271,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      *
      * @param boolean $value            
      */
-    public function setRefreshInput($value)
+    public function setRefreshInput(bool $value) : Button
     {
         $this->refresh_input = $value;
         return $this;
@@ -288,21 +308,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     }
 
     /**
-     * Returns a link to the widget, that should be refreshed when this button is pressed.
-     *
-     * @return \exface\Core\Interfaces\Widgets\WidgetLinkInterface
-     */
-    public function getRefreshWidgetLink()
-    {
-        return $this->refresh_widget_link;
-    }
-
-    /**
-     * Sets the link to the widget to be refreshed when this button is pressed.
-     * Pass NULL to unset the link
-     *
-     * @uxon-property refresh_widget_link
-     * @uxon-type string|\exface\Core\CommonLogic\WidgetLink
+     * @deprecated use setRefreshWidgetIds() instead!
      *
      * @param WidgetLinkInterface|UxonObject|string $widget_link_or_uxon_or_string            
      * @return \exface\Core\Widgets\Button
@@ -310,16 +316,72 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     public function setRefreshWidgetLink($widget_link_or_uxon_or_string)
     {
         if ($widget_link_or_uxon_or_string === null) {
-            $this->refresh_widget_link = null;
+            $this->refreshWidgetIds = [];
         } else {
             if ($widget_link_or_uxon_or_string instanceof WidgetLinkInterface) {
-                $this->refresh_widget_link = $widget_link_or_uxon_or_string;
+                $this->refreshWidgetIds = [$widget_link_or_uxon_or_string->getTargetWidgetId()];
             } else {
-                $this->refresh_widget_link = WidgetLinkFactory::createFromWidget($this, $widget_link_or_uxon_or_string);
+                $this->refreshWidgetIds = [(WidgetLinkFactory::createFromWidget($this, $widget_link_or_uxon_or_string))->getTargetWidgetId()];
             }
         }
         return $this;
     }
+    
+    /**
+     * Returns the ids of widgets to refresh after the button's action succeeds.
+     * 
+     * By default, the result will include the id of the input widget if it must be
+     * refreshed too (i.e. `refresh_input` is `true`). Set the parameter `$includeInputWidget`
+     * to `false` to get only the additional refresh-widgets.
+     * 
+     * @param bool $includeInputWidget
+     * 
+     * @return string[]
+     */
+    public function getRefreshWidgetIds(bool $includeInputWidget = true) : array
+    {
+        if ($includeInputWidget && $this->getRefreshInput() === true) {
+            return array_merge($this->refreshWidgetIds, [$this->getInputWidget()->getId()]);
+        }
+        return $this->refreshWidgetIds;
+    }
+    
+    /**
+     * Ids of widgets to refresh after the button's action was complete successfully.
+     * 
+     * @uxon-property refresh_widget_ids
+     * @uxon-type uxon:$..id[]
+     * @uxon-template [""]
+     * 
+     * @param UxonObject|string[] $value
+     * @return Button
+     */
+    public function setRefreshWidgetIds($uxonOrArray) : Button
+    {
+        if ($uxonOrArray instanceof UxonObject) {
+            $array = $uxonOrArray->toArray();
+        } elseif (is_array($uxonOrArray)) {
+            $array = $uxonOrArray;
+        } else {
+            throw new WidgetConfigurationError($this, 'Invalid value "' . $uxonOrArray . '" of property "refresh_widget_ids" in widget "' . $this->getWidgetType() . '": expecting PHP or UXON array!');
+        }
+        $array = array_unique($array);
+        
+        // If the button itself has an id space (= e.g. is inside a dialog), and the provided
+        // ids don't have an id space, we should prefix them with the id space of the button,
+        // so they will be resolved within the same space as the button itself.
+        if ($idSpace = $this->getIdSpace()) {
+            foreach ($array as $no => $id) {
+                if(strpos($id, UiPage::WIDGET_ID_SPACE_SEPARATOR) === false) {
+                    $array[$no] = $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR . $id;
+                }
+            }
+        }
+        
+        $this->refreshWidgetIds = $array;
+        return $this;
+    }
+    
 
     /**
      *
@@ -371,6 +433,108 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     public function setResetInput(bool $value) : Button
     {
         $this->resetInputWidget = $value;
+        return $this;
+    }
+    
+    /**
+     * Returns the ids of widgets to reset after the button's action succeeds.
+     * 
+     * By default, the result will include the id of the input widget if it must be
+     * reset too (i.e. `reset_input` is `true`). Set the parameter `$includeInputWidget`
+     * to `false` to get only the additional reset-widgets.
+     * 
+     * @param bool $includeInputWidget
+     * 
+     * @return string[]
+     */
+    public function getResetWidgetIds(bool $includeInputWidget = true) : ?array
+    {
+        if ($includeInputWidget && $this->getResetInput() === true) {
+            return array_merge($this->resetWidgetIds, [$this->getInputWidget()->getId()]);
+        }
+        return $this->resetWidgetIds;
+    }
+    
+    /**
+     * Reset these widgets if the button's action is performed successfully.
+     * 
+     * @uxon-property reset_widget_ids
+     * @uxon-type uxon:$..id[]
+     * @uxon-template [""]
+     * 
+     * @param UxonObject|string[] $value
+     * @return Button
+     */
+    public function setResetWidgetIds($uxonOrArray) : Button
+    {
+        if ($uxonOrArray instanceof UxonObject) {
+            $array = $uxonOrArray->toArray();
+        } elseif (is_array($uxonOrArray)) {
+            $array = $uxonOrArray;
+        } else {
+            throw new WidgetConfigurationError($this, 'Invalid value "' . $uxonOrArray . '" of property "reset_widget_ids" in widget "' . $this->getWidgetType() . '": expecting PHP or UXON array!');
+        }
+        
+        $this->resetWidgetIds = array_unique($array);
+        return $this;
+    }
+    
+    /**
+     * Set this property if the button should be hidden if a user is not allowed access to the action bound to it.
+     * 
+     * @uxon-property hidden_if_access_denied
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return Button
+     */
+    public function setHiddenIfAccessDenied(bool $trueOrFalse) : Button
+    {
+      $this->hiddenIfAccessDenied = $trueOrFalse;
+      return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::isHidden()
+     */
+    public function isHidden()
+    {
+        if ($this->hiddenIfAccessDenied === false) {
+            return parent::isHidden();
+        }        
+        return $this->getAction()->isAuthorized() === false;
+                   
+    }
+    
+    public function getAppearance() : string
+    {
+        return $this->appearance;
+    }
+    
+    /**
+     * Change the way, how the button is displayed: `filled`, `stroked`, `link`, etc.
+     * 
+     * By default, the facade will pick an appearance automatically based on it's
+     * internal logic and the button's `visibility`.
+     * 
+     * @uxon-property appearance
+     * @uxon-type [default,link,stroked,filled]
+     * @uxon-default default
+     * 
+     * @param string $value
+     * @throws WidgetConfigurationError
+     * @return Button
+     */
+    public function setAppearance(string $value) : Button
+    {
+        $constName = 'self:APPEARANCE_' . strtoupper($value);
+        if (! defined($constName)) {
+            throw new WidgetConfigurationError('Invalid value "' . $value . '" for property `appearance` of widget "' . $this->getWidgetType() . '": expecting `default`, `link`, `filled` or `stroked`.');
+        }
+        $this->appearance = constant($constName);
         return $this;
     }
 }

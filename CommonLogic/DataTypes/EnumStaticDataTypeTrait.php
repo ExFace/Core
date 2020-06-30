@@ -73,7 +73,7 @@ trait EnumStaticDataTypeTrait {
      * Returns a value when called statically like so: MyEnum::SOME_VALUE() given SOME_VALUE is a class constant
      *
      * @param string $name
-     * @param array  $arguments
+     * @param array $arguments
      *
      * @return static
      * @throws BadMethodCallException
@@ -95,9 +95,13 @@ trait EnumStaticDataTypeTrait {
     
     public static function cast($value)
     {
-        if (static::isEmptyValue($value) === true) {
+        if (static::isValueEmpty($value) === true) {
             // Let the parent data type (e.g. string or number) handle empty values
             return parent::cast($value);
+        }
+        
+        if ($value === EXF_LOGICAL_NULL) {
+            return $value;
         }
         
         $value = parent::cast($value);
@@ -142,7 +146,7 @@ trait EnumStaticDataTypeTrait {
      */
     public static function fromValue(WorkbenchInterface $workbench, string $value)
     {
-        return DataTypeFactory::createFromPrototype($workbench, __CLASS__)->withValue(strtoupper($value));
+        return DataTypeFactory::createFromPrototype($workbench, __CLASS__)->withValue($value);
     }
     
     /**

@@ -43,6 +43,9 @@ ALTER TABLE `exf_user_credentials`
 /* If there were unused user credentials - delete them! We can't keep them as we don't know what connection they are meant for. */
 DELETE FROM exf_user_credentials WHERE data_connection_credentials_oid IS NULL;
 
+ALTER TABLE `exf_data_connection_credentials`
+	DROP COLUMN `user_credentials_oid`;
+
 -- DOWN
 
 ALTER TABLE `exf_data_connection_credentials`

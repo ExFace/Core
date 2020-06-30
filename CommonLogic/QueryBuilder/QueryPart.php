@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\QueryBuilder;
 
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\Exceptions\RuntimeException;
 
 class QueryPart
 {
@@ -12,11 +13,16 @@ class QueryPart
     private $attribute = NULL;
 
     private $alias = NULL;
+    
+    private $parentQueryPart = null;
+    
+    private $children = [];
 
-    function __construct($alias, AbstractQueryBuilder $query)
+    function __construct($alias, AbstractQueryBuilder $query, QueryPart $parentQueryPart = null)
     {
         $this->setAlias($alias);
         $this->setQuery($query);
+        $this->parentQueryPart = $parentQueryPart;
     }
 
     /**
@@ -107,6 +113,39 @@ class QueryPart
     public function getWorkbench()
     {
         return $this->getQuery()->getWorkbench();
+    }
+    
+    public function getParentQueryPart() : ?QueryPart
+    {
+        return $this->parentQueryPart;
+    }
+    
+    public function isCompound() : bool
+    {
+        return empty($this->children) === false;
+    }
+    
+    /**
+     * 
+     * @return QueryPart[]
+     */
+    public function getCompoundChildren() : array
+    {
+        return $this->children;
+    }
+    
+    public function hasParent() : bool
+    {
+        return $this->parentQueryPart !== null;
+    }
+    
+    protected function addChildQueryPart(QueryPart $qpart) : QueryPart
+    {
+        if ($qpart->getParentQueryPart() !== $this) {
+            throw new RuntimeException('Cannot add child query part "' . $qpart->getAlias() . '" to "' . $this->getAlias() . '": the child has no parent registered!');
+        }
+        $this->children[] = $qpart;
+        return $this;
     }
 }
 ?>

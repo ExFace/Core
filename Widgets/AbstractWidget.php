@@ -34,6 +34,8 @@ use exface\Core\Uxon\WidgetSchema;
 use exface\Core\Widgets\Traits\iHaveVisibilityTrait;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Parts\ConditionalProperty;
+use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Factories\SelectorFactory;
 
 /**
  * Basic ExFace widget
@@ -97,6 +99,8 @@ abstract class AbstractWidget implements WidgetInterface
     private $disabled_if = null;
 
     private $parentByType = [];
+    
+    private $facadeOptions = null;
 
     /**
      *
@@ -528,8 +532,8 @@ abstract class AbstractWidget implements WidgetInterface
      */
     public function getIdSpace()
     {
-        if (is_null($this->id_space)) {
-            if ($this->getParent() && $parent_id_space = $this->getParent()->getIdSpace()) {
+        if ($this->id_space === null) {
+            if ($this->hasParent() && $parent_id_space = $this->getParent()->getIdSpace()) {
                 $this->id_space = $parent_id_space;
             } else {
                 return '';
@@ -1273,32 +1277,32 @@ abstract class AbstractWidget implements WidgetInterface
      * 
      * Returns null if no such parent widget exists.
      *
-     * @param string $typeName            
-     * @return AbstractWidget
+     * @param string $classOrInterface            
+     * @return WidgetInterface|NULL
      */
-    public function getParentByType(string $typeName)
+    public function getParentByClass(string $classOrInterface) : ?WidgetInterface
     {
-        if (! array_key_exists($typeName, $this->parentByType)) {
+        if (! array_key_exists($classOrInterface, $this->parentByType)) {
             $widget = $this;
             while ($widget->getParent()) {
                 $widget = $widget->getParent();
                 
                 // Ein Filter is eher ein Wrapper als ein Container (kann nur ein Widget enthalten).
-                if (($typeName == 'exface\\Core\\Interfaces\\Widgets\\iContainOtherWidgets') && ($widget instanceof $typeName) && ($widget instanceof Filter)) {
+                if (($classOrInterface == 'exface\\Core\\Interfaces\\Widgets\\iContainOtherWidgets') && ($widget instanceof $classOrInterface) && ($widget instanceof Filter)) {
                     continue;
                 }
                 
-                if ($widget instanceof $typeName) {
-                    $this->parentByType[$typeName] = $widget;
+                if ($widget instanceof $classOrInterface) {
+                    $this->parentByType[$classOrInterface] = $widget;
                     break;
                 }
             }
             
-            if (! array_key_exists($typeName, $this->parentByType)) {
-                $this->parentByType[$typeName] = null;
+            if (! array_key_exists($classOrInterface, $this->parentByType)) {
+                $this->parentByType[$classOrInterface] = null;
             }
         }
-        return $this->parentByType[$typeName];
+        return $this->parentByType[$classOrInterface];
     }
     
     /**
@@ -1322,5 +1326,63 @@ abstract class AbstractWidget implements WidgetInterface
         $this->getWorkbench()->eventManager()->dispatch($event);
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WidgetInterface::getFacadeOptions()
+     */
+    public function getFacadeOptions(FacadeInterface $facade) : ?UxonObject
+    {
+        if ($this->facadeOptions === null) {
+            return null;
+        }
+        foreach ($this->facadeOptions as $facadeSelectorString => $uxon) {
+            $facadeSelector = SelectorFactory::createFacadeSelector($this->getWorkbench(), $facadeSelectorString);
+            if ($facade->is($facadeSelector)) {
+                return $uxon;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Facade-specific options for this widget defined for each facade
+     * 
+     * Example:
+     * 
+     * ```
+     * {
+     *  "facade_options": {
+     *      "exface.AdminLTEFacade.AdminLTEFacade": {
+     *          "option_1": "value_of_option_1",
+     *          "option_2": "value_of_option_2"
+     *      }
+     *  }
+     * }
+     * 
+     * ```
+     * 
+     * @uxon-property facade_options
+     * @uxon-type object
+     * @uxon-template {"": {"": ""}}
+     * 
+     * @param UxonObject $value
+     * @return AbstractWidget
+     */
+    public function setFacadeOptions(UxonObject $value) : WidgetInterface
+    {
+        $this->facadeOptions = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WidgetInterface::hasFacadeOptions()
+     */
+    public function hasFacadeOptions(FacadeInterface $facade) : bool
+    {
+        return $this->getFacadeOptions($facade) !== null;
+    }
 }
-?>

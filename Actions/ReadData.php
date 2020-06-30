@@ -33,10 +33,6 @@ class ReadData extends AbstractAction implements iReadData
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        if (! $this->checkPermissions($task)) {
-            // TODO Throw exception!
-        }
-        
         $data_sheet = $this->getInputDataSheet($task);
         $data_sheet->removeRows();
         if ($dataWidget = $this->getWidgetToReadFor($task)) {
@@ -56,14 +52,6 @@ class ReadData extends AbstractAction implements iReadData
         $result->setMessage($affected_rows . ' entries read');
         
         return $result;
-    }
-    
-    protected function checkPermissions(TaskInterface $task) : bool
-    {
-        if (! $this->isDefinedInWidget() && ! $task->isTriggeredByWidget()) {
-            throw new ActionCallingWidgetNotSpecifiedError($this, 'Security violaion! Cannot read data without a target widget in action "' . $this->getAliasWithNamespace() . '"!', '6T5DOSV');
-        }
-        return true;
     }
     
     /**

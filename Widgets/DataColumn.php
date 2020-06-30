@@ -246,23 +246,47 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function getCellWidget()
     {
         if ($this->cellWidget === null) {
+            // If the column is based on an attribute, use it's default editor/display widget to render
+            // the cells.
             if ($this->isBoundToAttribute() === true) {
                 $attr = $this->getAttribute();
-                if ($this->isEditable() === true) {
-                    $uxon = $attr->getDefaultEditorUxon();
-                    $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
-                    $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Input');
-                } else {
-                    $uxon = $attr->getDefaultDisplayUxon();
-                    $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
-                    $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Display');
+                switch (true) {
+                    // If the column is hidden, always use InputHidden widgets to avoid instantiating
+                    // complex widgets that would actually never be used. This can still be overridden
+                    // manually if a `cell_widget` is explicitly defined. This code here is just used
+                    // for autogenerating cell widgets!
+                    case $this->isHidden():
+                        $uxon = new UxonObject([
+                            'attribute_alias' => $this->getAttributeAlias()
+                        ]);
+                        $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Display');
+                        break;
+                    // If the column is editable, use the default editor widget
+                    case $this->isEditable() === true:
+                        $uxon = $attr->getDefaultEditorUxon();
+                        $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
+                        $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Input');
+                        break;
+                    // Otherwise use the default display widget
+                    default:
+                        $uxon = $attr->getDefaultDisplayUxon();
+                        $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
+                        $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Display');
+                        break;
                 } 
             } else {
-                $this->cellWidget = WidgetFactory::create($this->getPage(), 'Display', $this);
+                // If the column is not based on an attribute, use generic input/display widgets
+                // Again, remember, that this code is only taking care of autogenerating cell
+                // widgets. If a widget is ecplicitly defined, it will be used as expected.
+                $this->cellWidget = WidgetFactory::create($this->getPage(), ($this->isEditable() ? 'Input' : 'Display'), $this);
             }
             
             if ($this->cellWidget->getWidth()->isUndefined()) {
                 $this->cellWidget->setWidth($this->getWidth());
+            }
+            
+            if ($this->getValueExpression() !== null && ! $this->getValueExpression()->isEmpty()) {
+                $this->cellWidget->setValue($this->getValueExpression());
             }
             
             // Some data types require special treatment within a table to make all rows comparable.

@@ -326,9 +326,6 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
         // Create the column
         $column = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, $this->getColumnDefaultWidgetType());
         
-        // Import the UXON object eventually overriding the above presets
-        $column->importUxonObject($uxon);
-        
         return $column;
     }
 

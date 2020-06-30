@@ -115,16 +115,11 @@ class DialogButton extends Button
         $input = $this->getInputWidget();
         if ($input instanceof Dialog) {
             return $input;
-        } else {
-            $parent = $this->getParent();
-            while (! ($parent instanceof Dialog)) {
-                if (! $parent->hasParent()) {
-                    throw new WidgetConfigurationError($this, 'Widget DialogButton can only be placed inside a Dialog widget!');
-                }
-                $parent = $parent->getParent();
-            }
-            return $parent;
+        } elseif ($dialog = $this->getParentByClass(Dialog::class)) {
+            return $dialog;
         }
+        
+        throw new WidgetConfigurationError($this, 'Widget DialogButton can only be placed inside a Dialog widget!');
     }
 }
 ?>

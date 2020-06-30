@@ -3,7 +3,6 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\CommonLogic\Contexts\Scopes\WindowContextScope;
 use exface\Core\CommonLogic\Contexts\Scopes\SessionContextScope;
-use exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Contexts\Scopes\ApplicationContextScope;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -11,83 +10,119 @@ use exface\Core\CommonLogic\Contexts\Scopes\UserContextScope;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope;
 use exface\Core\Exceptions\Contexts\ContextScopeNotFoundError;
+use exface\Core\Interfaces\Contexts\ContextScopeInterface;
+use exface\Core\CommonLogic\Contexts\Scopes\InstallationContextScope;
 
+/**
+ * Default implementation of the ContextManagerInterface
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class ContextManager implements ContextManagerInterface
 {
+    private $exface = null;
 
-    private $exface = NULL;
+    private $window_scope = null;
 
-    private $window_scope = NULL;
+    private $session_scope = null;
 
-    private $session_scope = NULL;
+    private $application_scope = null;
 
-    private $application_scope = NULL;
-
-    private $user_scope = NULL;
+    private $user_scope = null;
 
     private $request_scope = null;
+    
+    private $installation_scope = null;
 
+    /**
+     * 
+     * @param \exface\Core\CommonLogic\Workbench $exface
+     */
     public function __construct(\exface\Core\CommonLogic\Workbench $exface)
     {
         $this->exface = $exface;
     }
 
     /**
-     *
-     * @return \exface\Core\CommonLogic\Contexts\Scopes\WindowContextScope
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextManagerInterface::getScopeWindow()
      */
-    public function getScopeWindow()
+    public function getScopeWindow() : WindowContextScope
     {
-        if (is_null($this->window_scope)){
+        if ($this->window_scope === null){
             $this->window_scope = new WindowContextScope($this->exface);
+            $this->window_scope->init();
         }
         return $this->window_scope;
     }
 
     /**
-     *
-     * @return \exface\Core\CommonLogic\Contexts\Scopes\SessionContextScope
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextManagerInterface::getScopeSession()
      */
-    public function getScopeSession()
+    public function getScopeSession() : SessionContextScope
     {
-        if (is_null($this->session_scope)){
+        if ($this->session_scope === null){
             $this->session_scope = new SessionContextScope($this->exface);
+            $this->session_scope->init();
         }
         return $this->session_scope;
     }
 
     /**
-     *
-     * @return \exface\Core\CommonLogic\Contexts\Scopes\ApplicationContextScope
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextManagerInterface::getScopeApplication()
      */
-    public function getScopeApplication()
+    public function getScopeApplication() : ApplicationContextScope
     {
-        if (is_null($this->application_scope)){
+        if ($this->application_scope === null){
             $this->application_scope = new ApplicationContextScope($this->exface);
+            $this->application_scope->init();
         }
         return $this->application_scope;
     }
 
     /**
-     *
-     * @return \exface\Core\CommonLogic\Contexts\Scopes\UserContextScope
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextManagerInterface::getScopeUser()
      */
-    public function getScopeUser()
+    public function getScopeUser() : UserContextScope
     {
-        if (is_null($this->user_scope)){
+        if ($this->user_scope === null){
             $this->user_scope = new UserContextScope($this->exface);
+            $this->user_scope->init();
         }
         return $this->user_scope;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextManagerInterface::getScopeInstallation()
+     */
+    public function getScopeInstallation() : InstallationContextScope
+    {
+        if ($this->installation_scope === null){
+            $this->installation_scope = new InstallationContextScope($this->exface);
+            $this->installation_scope->init();
+        }
+        return $this->installation_scope;
     }
 
     /**
      *
      * @return \exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope
      */
-    public function getScopeRequest()
+    public function getScopeRequest() : RequestContextScope
     {
-        if (is_null($this->request_scope)){
+        if ($this->request_scope === null){
             $this->request_scope = new RequestContextScope($this->exface);
+            $this->request_scope->init();
         }
         return $this->request_scope;
     }
@@ -96,16 +131,17 @@ class ContextManager implements ContextManagerInterface
      * Return an array of all existing context scopes.
      * Usefull to get a context from all scopes
      *
-     * @return AbstractContextScope[]
+     * @return ContextScopeInterface[]
      */
-    public function getScopes()
+    public function getScopes() : array
     {
         return array(
             $this->getScopeWindow(),
             $this->getScopeSession(),
             $this->getScopeApplication(),
             $this->getScopeUser(),
-            $this->getScopeRequest()
+            $this->getScopeRequest(),
+            $this->getScopeInstallation()
         );
     }
 
@@ -126,11 +162,11 @@ class ContextManager implements ContextManagerInterface
     }
 
     /**
-     * Saves all contexts in all scopes
-     *
-     * @return \exface\Core\Context
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextManagerInterface::saveContexts()
      */
-    public function saveContexts()
+    public function saveContexts() : ContextManagerInterface
     {
         foreach ($this->getScopes() as $scope) {
             $scope->saveContexts();
@@ -139,14 +175,11 @@ class ContextManager implements ContextManagerInterface
     }
 
     /**
-     * Returns the context scope specified by the given name (e.g.
-     * window, application, etc)
-     *
-     * @param string $scope_name            
-     * @throws ContextScopeNotFoundError if no context scope is found for the given name
-     * @return AbstractContextScope
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextManagerInterface::getScope()
      */
-    public function getScope($scope_name)
+    public function getScope($scope_name) : ContextScopeInterface
     {
         if (!$scope_name){
             throw new ContextScopeNotFoundError('Empty context scope name requested!', '6T5E14B');
@@ -154,12 +187,8 @@ class ContextManager implements ContextManagerInterface
         
         $getter_method = 'getScope' . ucfirst($scope_name);
         if (! method_exists($this, $getter_method)) {
-            $getter_method = 'get_scope_' . $scope_name;
-            if (! method_exists($this, $getter_method)) {
-                throw new ContextScopeNotFoundError('Context scope "' . $scope_name . '" not found!', '6T5E14B');
-            }
+            throw new ContextScopeNotFoundError('Context scope "' . $scope_name . '" not found!', '6T5E14B');
         }
         return call_user_func(get_class($this) . '::' . $getter_method);
     }
 }
-?>

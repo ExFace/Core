@@ -1,13 +1,17 @@
 {
-    "id": "0xa05b7202949e11e7acc3028037ec0200",
+    "uid": "0xa05b7202949e11e7acc3028037ec0200",
     "alias_with_namespace": "exface.core.connections",
-    "menu_parent_page_alias": "exface.core.metamodel",
-    "menu_index": "1",
+    "menu_parent_page_selector": "0x8f9e3238949e11e7aa5f028037ec0200",
+    "menu_index": 2,
     "menu_visible": true,
     "name": "Connections",
     "description": "Manage data connections on this system",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2020-03-12 14:04:30",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2020-04-07 09:20:04",
     "contents": {
         "object_alias": "exface.Core.CONNECTION",
         "widget_type": "DataTable",
@@ -33,13 +37,13 @@
         ],
         "columns": [
             {
-                "attribute_alias": "APP__LABEL"
+                "attribute_alias": "LABEL"
+            },
+            {
+                "attribute_alias": "APP__ALIAS"
             },
             {
                 "attribute_alias": "ALIAS"
-            },
-            {
-                "attribute_alias": "LABEL"
             },
             {
                 "attribute_alias": "CONNECTOR"

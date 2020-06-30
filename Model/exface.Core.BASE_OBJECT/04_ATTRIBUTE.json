@@ -82,6 +82,10 @@
             "attribute_alias": "RELATION_CARDINALITY"
         },
         {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -184,6 +188,7 @@
             "COMMENTS": "",
             "NAME": "Created on",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "CREATED_ON",
             "DATATYPE": "0x11e93b4b3d1f22188c660205857feb80",
             "DATA_ADDRESS": "created_on",
@@ -226,6 +231,7 @@
             "COMMENTS": "",
             "NAME": "Modified on",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "MODIFIED_ON",
             "DATATYPE": "0x11e93b4b3d1f22188c660205857feb80",
             "DATA_ADDRESS": "modified_on",
@@ -268,6 +274,7 @@
             "COMMENTS": "",
             "NAME": "Created by",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "CREATED_BY_USER",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "created_by_user_oid",
@@ -310,6 +317,7 @@
             "COMMENTS": "",
             "NAME": "Modified by",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "MODIFIED_BY_USER",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "modified_by_user_oid",
@@ -333,7 +341,7 @@
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2018-02-03 18:52:16",
+            "MODIFIED_ON": "2020-06-10 09:18:19",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x38310000000000000000000000000000",
@@ -346,12 +354,13 @@
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
             "DEFAULT_EDITOR_UXON": null,
-            "COPY_WITH_RELATED_OBJECT": null,
-            "DELETE_WITH_RELATED_OBJECT": null,
+            "COPY_WITH_RELATED_OBJECT": "0",
+            "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "UID",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "UID",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "oid",
@@ -368,7 +377,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "",
-            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\",\"SQL_INSERT\":\"IF([#~value#]!='', [#~value#], UNHEX(CONCAT(SUBSTR(@uid:=uuid(), 15, 4),SUBSTR(@uid, 10, 4),SUBSTR(@uid, 1, 8),SUBSTR(@uid, 20, 4),SUBSTR(@uid, 25))))\"}",
+            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\",\"SQL_USE_OPTIMIZED_UID\":\"true\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -377,6 +386,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.ATTRIBUTE",
         "conditions": [
             {
                 "expression": "OBJECT__APP",

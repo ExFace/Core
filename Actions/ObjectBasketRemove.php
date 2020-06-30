@@ -41,7 +41,7 @@ class ObjectBasketRemove extends ObjectBasketAdd
         if ($input->isEmpty()) {
             $removed = 1;
             $this->getContext($task)->removeInstancesForObjectId($object->getId());
-            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.OBJECTBASKETREMOVE.RESULT_ALL', array(
+            $message = $this->getResultMessageText() ?? $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.OBJECTBASKETREMOVE.RESULT_ALL', array(
                 '%context_name%' => $this->getContext($task)->getName(),
                 '%object_name%' => $object->getName()
             ));
@@ -51,7 +51,7 @@ class ObjectBasketRemove extends ObjectBasketAdd
                 $this->getContext($task)->removeInstance($object->getId(), $uid);
                 $removed ++;
             }
-            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.OBJECTBASKETREMOVE.RESULT', array(
+            $message = $this->getResultMessageText() ?? $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.OBJECTBASKETREMOVE.RESULT', array(
                 '%context_name%' => $this->getContext($task)->getName(),
                 '%number%' => $removed,
                 '%object_name%' => $object->getName()

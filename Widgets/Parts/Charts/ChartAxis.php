@@ -53,7 +53,11 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     
     private $grid = null;
     
+    private $gridArea = null;
+    
     private $rotate_labels = false;
+    
+    private $ticks_for_every_value = null;
 
     const POSITION_TOP = 'TOP';
 
@@ -430,6 +434,34 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
         $this->grid = $value;
         return $this;
     }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function hasGridArea() : bool
+    {
+        if($this->gridArea === null){
+            return false;
+        }
+        return $this->gridArea;
+    }
+    
+    /**
+     * Set to TRUE to make the grid areas for this axis visible or to FALSE (default) to force hiding it.
+     *
+     * @uxon-property grid_area
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return ChartAxis
+     */
+    public function setGridArea(bool $trueOrFalse) : ChartAxis
+    {
+        $this->gridArea = $trueOrFalse;
+        return $this;
+    }
 
     /**
      * 
@@ -471,6 +503,10 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
         return $this;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     public function isBoundToAttribute() : bool
     {
         if ($this->data_column !== null || $this->data_column_id !== null) {
@@ -479,6 +515,10 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
         return $this->attributeAlias !== null;
     }
     
+    /**
+     * 
+     * @return MetaAttributeInterface
+     */
     public function getAttribute() : MetaAttributeInterface
     {
         if ($this->data_column !== null || $this->data_column_id !== null) {
@@ -488,5 +528,45 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
             return $this->getChart()->getMetaObject()->getAttribute($this->attributeAlias);
         }
         return null;
+    }
+    
+    /**
+     * Set to TRUE to force the axis to have ticks and labels for every value - otherwise ticks will be distributed automatically.
+     * 
+     * By default, ticks (label-markings) on the axis are distributed automatically in an
+     * attempt to keep the axis values readable and not overcrowded. This means, some values
+     * will not be labeled if there are many values on the axis. This is perfectly OK for
+     * numeric and time axis, but will generally not work well on category-axis (those with
+     * custom text values). Indeed, if the values of the axis are names (e.g. cities, countries, 
+     * etc.) you can't just skip a name, while skipping a date in a timeline is perfectly fine.
+     * 
+     * However, sometimes you may want to force to enable or disable auto-distribution of
+     * ticks explicitly. This can be done by setting `ticks_for_every_value` to `true` or
+     * `false` respectively.
+     * 
+     * If not set explicitly, this property uses the following default values:
+     * 
+     * - `true` for category axes
+     * - `false` in all other cases
+     * 
+     * @uxon-property ticks_for_every_value
+     * @uxon-type bool
+     * 
+     * @param bool $trueOrFalse
+     * @return ChartAxis
+     */
+    public function setTicksForEveryValue(bool $trueOrFalse) : ChartAxis
+    {
+        $this->ticks_for_every_value = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasTicksForEveryValue() : bool
+    {
+        return $this->ticks_for_every_value ?? $this->getAxisType() === self::AXIS_TYPE_CATEGORY;
     }
 }

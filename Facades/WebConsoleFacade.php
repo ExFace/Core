@@ -61,7 +61,10 @@ class WebConsoleFacade extends AbstractHttpFacade
             $response = new Response($statusCode, $responseTpl->getHeaders(), $this->getWorkbench()->getDebugger()->printException($e));
         }  
         
-        $this->getWorkbench()->stop();
+        // Don't stop the workbench here!!! The response might include a generator, that
+        // will still need the workbench. The workbench will be stopped automatically
+        // before it' destroyed!
+        
         return $response;
     }
     
@@ -218,7 +221,7 @@ class WebConsoleFacade extends AbstractHttpFacade
     protected function getWidgetFromRequest(RequestInterface $request) : Console
     {
         $pageSelector = $request->getParsedBody()['page'];
-        $page = UiPageFactory::createFromCmsPage($this->getWorkbench()->getCMS(), $pageSelector);
+        $page = UiPageFactory::createFromModel($this->getWorkbench(), $pageSelector);
         $widgetId = $request->getParsedBody()['widget'];
         return $page->getWidget($widgetId);
     }

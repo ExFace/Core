@@ -5,6 +5,7 @@ use exface\Core\Interfaces\EntityListInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\Interfaces\Model\MetaAttributeListInterface;
 
 /**
  *
@@ -158,5 +159,11 @@ interface DataColumnListInterface extends EntityListInterface
      * @return DataColumnInterface|boolean
      */
     public function getByAttribute(MetaAttributeInterface $attribute);
+    
+    /**
+     * 
+     * @param MetaAttributeListInterface $group
+     * @return DataColumnListInterface
+     */
+    public function addFromAttributeGroup(MetaAttributeListInterface $group) : DataColumnListInterface;
 }
-?>

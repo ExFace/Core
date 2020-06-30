@@ -10,7 +10,7 @@ use exface\Core\CommonLogic\UxonObject;
 /**
  * Maps data from one data sheet to another using mappers for columns, filters, sorters, etc.
  * 
- * TODO add mappers for filters, sorters and aggregators similarly to column mappers.
+ * TODO add mappers aggregators similarly to column, filter and sorter mappers.
  * 
  * @author Andrej Kabachnik
  *
@@ -23,7 +23,7 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
      * @param DataSheetInterface $fromSheet
      * @return DataSheetInterface
      */
-    public function map(DataSheetInterface $fromSheet);
+    public function map(DataSheetInterface $fromSheet) : DataSheetInterface;
     
     /**
      *
@@ -31,92 +31,84 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
      * 
      * @return MetaObjectInterface
      */
-    public function getFromMetaObject();
+    public function getFromMetaObject() : MetaObjectInterface;
     
     /**
      * @param MetaObjectInterface $object
      * @return DataSheetMapperInterface
      */
-    public function setFromMetaObject(MetaObjectInterface $object);
+    public function setFromMetaObject(MetaObjectInterface $object) : DataSheetMapperInterface;
     
     /**
      *
      * @param string $alias_with_namespace
      * @return DataSheetMapperInterface
      */
-    public function setFromObjectAlias($alias_with_namespace);
+    public function setFromObjectAlias(string $alias_with_namespace) : DataSheetMapperInterface;
     
     /**
      * @return MetaObjectInterface
      */
-    public function getToMetaObject();
+    public function getToMetaObject() : MetaObjectInterface;
     
     /**
      * @param MetaObjectInterface $toMetaObject
      */
-    public function setToMetaObject(MetaObjectInterface $toMetaObject);
+    public function setToMetaObject(MetaObjectInterface $toMetaObject) : DataSheetMapperInterface;
+    
+    /**
+     * 
+     * @param string $alias_with_namespace
+     * @return DataSheetMapperInterface
+     */
+    public function setToObjectAlias(string $alias_with_namespace) : DataSheetMapperInterface;
     
     /**
      * @return DataMappingInterface[]
      */
-    public function getMappings();
-    
-    /**
-     * @return DataColumnMappingInterface[]
-     */
-    public function getColumnToColumnMappings();
+    public function getMappings() : array;
     
     /**
      *
      * @param UxonObject
      * @return DataSheetMapperInterface
      */
-    public function setColumnToColumnMappings(UxonObject $uxon);
+    public function setColumnToColumnMappings(UxonObject $uxon) : DataSheetMapperInterface;
     
     /**
      *
      * @param DataColumnMappingInterface $map
      * @return DataSheetMapperInterface
      */
-    public function addColumnToColumnMapping(DataColumnMappingInterface $map);
-    
-    /**
-     * @return DataColumnToFilterMappingInterface[]
-     */
-    public function getColumnToFilterMappings();
+    public function addColumnToColumnMapping(DataColumnMappingInterface $map) : DataSheetMapperInterface;
     
     /**
      *
      * @param UxonObject
      * @return DataSheetMapperInterface
      */
-    public function setColumnToFilterMappings(UxonObject $uxon);
+    public function setColumnToFilterMappings(UxonObject $uxon) : DataSheetMapperInterface;
     
     /**
      *
      * @param DataColumnMappingInterface $map
      * @return DataSheetMapperInterface
      */
-    public function addColumnToFilterMapping(DataColumnToFilterMappingInterface $map);
-    
-    /**
-     * @return DataFilterToColumnMappingInterface[]
-     */
-    public function getFilterToColumnMappings();
+    public function addColumnToFilterMapping(DataColumnToFilterMappingInterface $map) : DataSheetMapperInterface;
     
     /**
      *
      * @param UxonObject
      * @return DataSheetMapperInterface
      */
-    public function setFilterToColumnMappings(UxonObject $uxon);
+    public function setFilterToColumnMappings(UxonObject $uxon) : DataSheetMapperInterface;
     
     /**
      *
      * @param DataColumnMappingInterface $map
      * @return DataSheetMapperInterface
      */
-    public function addFilterToColumnMapping(DataFilterToColumnMappingInterface $map);
+    public function addFilterToColumnMapping(DataFilterToColumnMappingInterface $map) : DataSheetMapperInterface;
     
     /**
      * Creates all types of mappings, that can be derived from expressions: mappings for columns, filters, sorters, aggregators, etc.
@@ -124,6 +116,34 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
      * @param UxonObject
      * @return DataSheetMapperInterface
      */
-    public function setExpressionMappings(UxonObject $uxon);
+    public function setExpressionMappings(UxonObject $uxon) : DataSheetMapperInterface;
+    
+    /**
+     * 
+     * @param bool $trueOrFalse
+     * @return DataSheetMapperInterface
+     */
+    public function setRefreshDataAfterMapping(bool $trueOrFalse) : DataSheetMapperInterface;
+    
+    /**
+     * 
+     * @param bool $value
+     * @return DataSheetMapperInterface
+     */
+    public function setInheritColumns(bool $value) : DataSheetMapperInterface;
+
+    /**
+     * 
+     * @param bool $value
+     * @return DataSheetMapperInterface
+     */
+    public function setInheritFilters(bool $value) : DataSheetMapperInterface;
+    
+    /**
+     * 
+     * @param bool $value
+     * @return DataSheetMapperInterface
+     */
+    public function setInheritSorters(bool $value) : DataSheetMapperInterface;
    
 }

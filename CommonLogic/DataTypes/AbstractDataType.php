@@ -43,6 +43,8 @@ abstract class AbstractDataType implements DataTypeInterface
     private $validationErrorText = null;
     
     private $value = null;
+    
+    private $sensitive = false;
 
     public function __construct(DataTypeSelectorInterface $selector, $value = null, UxonObject $configuration = null)
     {
@@ -156,17 +158,27 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public static function cast($value)
     {
-        return static::isEmptyValue($value) === true ? null : $value;
+        return static::isValueEmpty($value) === true ? null : $value;
     }
     
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::isEmptyValue()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::isValueEmpty()
      */
-    public static function isEmptyValue($value) : bool
+    public static function isValueEmpty($value) : bool
     {
         return $value === null || $value === '';
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::isValueLogicalNull()
+     */
+    public static function isValueLogicalNull($value) : bool
+    {
+        return strcasecmp($value, EXF_LOGICAL_NULL) === 0;
     }
     
     /**
@@ -497,6 +509,31 @@ abstract class AbstractDataType implements DataTypeInterface
     {
         // TODO compare uxon configuration
         return $this->getValue() === $valueObject->getValue() && $this->getAliasWithNamespace() === $valueObject->getAliasWithNamespace() && get_called_class() == get_class($valueObject);
+    }
+    
+    /**
+     * Set if the data is sensitive, so it can be censored if needed, for example passwords in data sheet exceptions.
+     * 
+     * @uxon-property sensitive_data
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return AbstractDataType
+     */
+    public function setSensitiveData(bool $trueOrFalse) : AbstractDataType
+    {
+        $this->sensitive = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isSensitiveData() : bool
+    {
+        return $this->sensitive;
     }
 
 }

@@ -24,6 +24,7 @@ class ShowObjectEditDialog extends ShowObjectInfoDialog
         $this->setSaveActionAlias('exface.Core.UpdateData');
         $this->setShowOnlyEditableAttributes(true);
         $this->setDisableEditing(false);
+        $this->setDisableButtons(false);
         // Make sure, prefill with input data is enabled (otherwise there will be nothing to edit).
         $this->setPrefillWithInputData(true);
         // Disable prefills from context, so they do not interfere
@@ -65,7 +66,8 @@ class ShowObjectEditDialog extends ShowObjectInfoDialog
             ->setAlign(EXF_ALIGN_OPPOSITE);
         // Make the save button refresh the same widget as the Button showing the dialog would do
         if ($this->getWidgetDefinedIn() instanceof Button) {
-            $save_button->setRefreshWidgetLink($this->getWidgetDefinedIn()->getRefreshWidgetLink());
+            $save_button->setRefreshWidgetIds($this->getWidgetDefinedIn()->getRefreshWidgetIds(false));
+            $save_button->setResetWidgetIds($this->getWidgetDefinedIn()->getResetWidgetIds(false));
             $this->getWidgetDefinedIn()->setRefreshWidgetLink(null);
         }
         $dialog->addButton($save_button);
@@ -131,4 +133,3 @@ class ShowObjectEditDialog extends ShowObjectInfoDialog
         return $this->save_action_uxon;
     }
 }
-?>

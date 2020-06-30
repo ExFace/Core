@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Widgets\iHaveCaption;
 use exface\Core\Interfaces\Widgets\iHaveVisibility;
+use exface\Core\Interfaces\Facades\FacadeInterface;
 
 /**
  * 
@@ -425,5 +426,19 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
      * @return bool
      */
     public function hasChildren() : bool;
+    
+    /**
+     * 
+     * @param FacadeInterface $facade
+     * @return UxonObject|NULL
+     */
+    public function getFacadeOptions(FacadeInterface $facade) : ?UxonObject;
+    
+    /**
+     * 
+     * @param FacadeInterface $facade
+     * @return bool
+     */
+    public function hasFacadeOptions(FacadeInterface $facade) : bool;
 }
 ?>

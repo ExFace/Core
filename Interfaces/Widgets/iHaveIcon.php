@@ -46,4 +46,18 @@ interface iHaveIcon extends WidgetInterface
      * @return iHaveIcon
      */
     public function setShowIcon(bool $value) : iHaveIcon;
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getIconSet() : ?string;
+    
+    /**
+     * Which icon set to use (font awesome "fa" by default)
+     * 
+     * @param string $iconSetCode
+     * @return iHaveIcon
+     */
+    public function setIconSet(string $iconSetCode) : iHaveIcon;
 }

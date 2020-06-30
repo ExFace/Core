@@ -4,9 +4,68 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\FlagTreeFolderDataType;
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\Parts\DataRowReorder;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\CommonLogic\Model\RelationPath;
 
+/**
+ * A table showing a hierarchical structure (tree).
+ * 
+ * One of the columns will contain a tree with expandable/collapsible nodes, while the other
+ * columns show data for each node.
+ * 
+ * ## Examples
+ * 
+ * ### Tree with recursive keys and lazy loading levels
+ * 
+ * ```
+ * {
+ *   "object_alias": "exface.Core.PAGE",
+ *   "widget_type": "DataTree",
+ *   "tree_parent_id_attribute_alias": "MENU_PARENT",
+ *   "tree_folder_flag_attribute_alias": "IS_FOLDER_FLAG",
+ *   "tree_root_uid": "NULL",
+ *   "filters": [
+ *     { "attribute_alias": "NAME" }
+ *   ],
+ *   "columns": [
+ *     { "attribute_alias": "NAME" },
+ *     { "attribute_alias": "ALIAS" },
+ *     {  "attribute_alias": "MENU_PARENT__LABEL" }
+ *   ]
+ * }
+ * 
+ * ```
+ * 
+ * ### Category tree with item count per node
+ * 
+ * This tree has no lazy loading. It laods all available data and displays all nodes expanded.
+ * 
+ * ```
+ * {
+ *   "widget_type": "DataTree",
+ *   "object_alias": "my.App.category",
+ *   "tree_parent_id_attribute_alias": "parent",
+ *   "tree_folder_flag_attribute_alias": "has_subcategories",
+ *   "columns": [
+ *     {
+ *       "attribute_alias": "category_name"
+ *     },
+ *     {
+ *       "attribute_alias": "product__id:COUNT",
+ *       "caption": "Products"
+ *     }
+ *   ]
+ * }
+ * 
+ * ```
+ * @author Andrej Kabachnik
+ *
+ */
 class DataTree extends DataTable
 {
     private $tree_column_id = null;
@@ -24,6 +83,12 @@ class DataTree extends DataTable
     private $tree_expanded = false;
 
     private $tree_root_uid = null;
+    
+    private $row_reorder = null;
+    
+    private $lazy_load_tree_levels = null;
+    
+    private $keepExpandedPathsOnRefresh = null;
 
     protected function init()
     {
@@ -69,7 +134,7 @@ class DataTree extends DataTable
      * @param string $value   
      * @return DataTree         
      */
-    public function setTreeColumnId($value) : DataTree
+    public function setTreeColumnId(string $value) : DataTree
     {
         $this->tree_column_id = $value;
         return $this;
@@ -105,12 +170,12 @@ class DataTree extends DataTable
      * The attribute is also automatically added as a hidden column!
      * 
      * @uxon-property tree_folder_flag_attribute_alias
-     * @uxon-type string
+     * @uxon-type metamodel:attribute
      *
      * @param string $value   
      * @return DataTree         
      */
-    public function setTreeFolderFlagAttributeAlias($value) : DataTree
+    public function setTreeFolderFlagAttributeAlias(string $value) : DataTree
     {
         $this->tree_folder_flag_attribute_alias = $value;
         return $this;
@@ -123,7 +188,7 @@ class DataTree extends DataTable
      *
      * @throws WidgetConfigurationError if more than one recursive relation is found
      */
-    public function getTreeParentIdAttributeAlias()
+    public function getTreeParentRelationAlias()
     {
         // If the parent relation is not specified explicitly, we search for a relation to the object itself
         if (! $this->tree_parent_id_attribute_alias) {
@@ -133,12 +198,46 @@ class DataTree extends DataTable
                     if ($found_one === true) {
                         throw new WidgetConfigurationError($this, 'More than one recursive relations found for the treeGrid "' . $this->getId() . '". Please specify "tree_parent_id_attribute_alias" in the description of the widget!', '6T91BRG');
                     }
-                    $this->setTreeParentIdAttributeAlias($rel->getAliasWithModifier());
+                    $this->setTreeParentRelationAlias($rel->getAliasWithModifier());
                     $found_one = true;
                 }
             }
         }
         return $this->tree_parent_id_attribute_alias;
+    }
+    
+    /**
+     * Returns the attribute of the tree object, that represents the parent-relation.
+     * 
+     * @return MetaAttributeInterface
+     */
+    public function getTreeParentRelationAttribute() : MetaAttributeInterface
+    {
+        return $this->getMetaObject()->getAttribute($this->getTreeParentRelationAlias());
+    }
+    
+    /**
+     * Returns the relation to the parent level.
+     * 
+     * @return MetaRelationInterface
+     */
+    public function getTreeParentRelation() : MetaRelationInterface
+    {
+        return $this->getMetaObject()->getRelation($this->getTreeParentRelationAlias());
+    }
+    
+    /**
+     * Returns the attribute, that is the key of the parent level (= right key attribute of the parent-relation).
+     * 
+     * @return MetaAttributeInterface
+     */
+    public function getTreeParentKeyAttribute() : MetaAttributeInterface
+    {
+        $keyAlias = $this->getTreeParentRelation()->getRightKeyAttribute()->getAliasWithRelationPath();
+        if ($this->getTreeParentRelationAttribute()->isRelated()) {
+            $keyAlias = RelationPath::relationPathAdd($this->getTreeParentRelationAttribute()->getRelationPath()->toString(), $keyAlias);
+        }
+        return $this->getMetaObject()->getAttribute($keyAlias);
     }
     
     /**
@@ -188,16 +287,26 @@ class DataTree extends DataTable
      * 
      * The attribute is also automatically added as a hidden column!
      *
-     * @uxon-property tree_parent_id_attribute_alias
-     * @uxon-type string
+     * @uxon-property tree_parent_relation_alias
+     * @uxon-type metamodel:attribute
      *
      * @param string $value     
      * @return DataTree       
      */
-    public function setTreeParentIdAttributeAlias($value) : DataTree
+    public function setTreeParentRelationAlias(string $value) : DataTree
     {
         $this->tree_parent_id_attribute_alias = $value;
         return $this;
+    }
+    
+    /**
+     * @deprecated use setTreeParentRelationAlias()
+     * @param string $value
+     * @return DataTree
+     */
+    public function setTreeParentIdAttributeAlias($value) : DataTree
+    {
+        return $this->setTreeParentRelationAlias($value);
     }
 
     public function getTreeExpanded()
@@ -209,31 +318,38 @@ class DataTree extends DataTable
      * Set to TRUE to auto-expand branches, whose children had been loaded.
      * 
      * @uxon-property tree_expanded
-     * @uxon-type string
+     * @uxon-type boolean
      *
-     * @param bool|string|int $value
+     * @param bool $value
      * @return DataTree
      */
-    public function setTreeExpanded($value) : DataTree
+    public function setTreeExpanded(bool $value) : DataTree
     {
-        $this->tree_expanded = BooleanDataType::cast($value);
+        $this->tree_expanded = $value;
         return $this;
     }
 
     public function getTreeRootUid()
     {
-        // TODO need a method to determine the root node of a tree somehow. Perhaps query for a record with parent = null?
-        if (! $this->tree_root_uid) {
-            $this->tree_root_uid = 1;
+        if ($this->tree_root_uid === null) {
+            // TODO need a method to determine the root node of a tree somehow. Perhaps query for a record with parent = null?
+            //$this->tree_root_uid = 1;
         }
         return $this->tree_root_uid;
     }
 
     /**
-     * Set the UID of the root elemen to make the tree automatically load it's children.
+     * Set the UID of the root node to make the tree automatically load the first level only.
      * 
-     * If not set, the tree will first show the roots, which is not very helpful if there
-     * is just one root element.
+     * If not set, the widget will load all data (or a random portion of it if pagination is on)
+     * and attempt to build a tree from it automatically.
+     * 
+     * If loading every level lazily is required, you must set the `tree_root_uid` because there
+     * is no way to determine the first level automatically. Set it to `NULL` if nodes of the
+     * first tree level do not have a parent in the data source.
+     * 
+     * On the other hand, setting `tree_root_uid` will automatically turn on lazy loading levels.
+     * To still load the entire tree, set `lazy_load_tree_levels` to `false`.
      * 
      * @uxon-property tree_root_uid
      * @uxon-type string
@@ -260,7 +376,16 @@ class DataTree extends DataTable
         if ($this->hasTreeFolderFlag()) {
             $data_sheet->getColumns()->addFromExpression($this->getTreeFolderFlagAttributeAlias());
         }
-        $data_sheet->getColumns()->addFromExpression($this->getTreeParentIdAttributeAlias());
+        $data_sheet->getColumns()->addFromExpression($this->getTreeParentRelationAlias());
+        $data_sheet->getColumns()->addFromExpression($this->getTreeParentKeyAttribute()->getAliasWithRelationPath());
+        
+        // Automatically add a root-filter if the root UID is known and lazy_load_tree_levels is not explicitly off
+        if ($this->getTreeRootUid() !== null && $this->getLazyLoadTreeLevels() !== false && $data_sheet->getFilters()->isEmpty(true) === true && $this->getMetaObject()->is($data_sheet->getMetaObject())) {
+            $data_sheet->getFilters()->addConditionFromString($this->getTreeParentRelationAlias(), $this->getTreeRootUid(), ComparatorDataType::EQUALS);
+        }
+        if ($this->getLazyLoadTreeLevels() === true && $this->getTreeRootUid() === null) {
+            throw new WidgetConfigurationError($this, 'Cannot use `lazy_load_tree_levels` in a ' . $this->getWidgetType() . ' if no `tree_root_uid` is specified!');
+        }
         
         return $data_sheet;
     }
@@ -356,5 +481,134 @@ class DataTree extends DataTable
         
         return $this->getColumn($this->getTreeLeafIdColumnId());
     }
+    
+    /**
+     * If set, rows can be reordered manualy and their sequence will be saved automatically.
+     * 
+     * You will be able to reposition nodes within the tree moving the up or down or into 
+     * another branch. Depending on the facade used, it may be achieved via drag-and-drop
+     * or by pressing buttons. Similarly, changes may be saved to the data source automatically
+     * or when pressing a special button.
+     * 
+     * The reorder-configuration basically specifies where to save the order index
+     * (`order_index_attribute_alias`) the order index will be calculated automatically
+     * by incrementing by 1 for each node in the curent level starting with 0. 
+     * 
+     * Example:
+     *
+     * ```json
+     * {
+     *  "widget_type": "DataTree",
+     *  "row_reorder": {
+     *      "order_index_attribute_alias": "MY_ATTRIBUTE",
+     *      "order_direction": "ASC"
+     *  }
+     * }
+     *
+     * ```
+     *
+     * @uxon-property row_reorder
+     * @uxon-type \exface\Core\Widgets\Parts\DataRowReorder
+     * @uxon-template {"order_index_attribute_alias": "", "order_direction": "asc"}
+     *
+     * @param UxonObject $uxon
+     * @return DataTable
+     */
+    public function setRowReorder(UxonObject $uxon) : DataTree
+    {
+        $part = new DataRowReorder($this, $uxon);
+        $this->row_reorder = $part;
+        $this->addSorter($part->getOrderIndexAttributeAlias(), $part->getOrderDirection());
+        return $this;
+    }
+    
+    /**
+     * Returns the DataRowReorder widget if row reordering is configured or throws exception.
+     *
+     * @throws WidgetLogicError
+     * @return DataRowReorder
+     */
+    public function getRowReorder() : DataRowReorder
+    {
+        if (is_null($this->row_reorder)) {
+            throw new WidgetLogicError($this, 'Property row_reorder not set prior to reorder initialization!');
+        }
+        return $this->row_reorder;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasRowReorder() : bool
+    {
+        return $this->row_reorder !== null;
+    }
+    
+    /**
+     * Returns TRUE if row reordering is enabled for this table and FALSE otherwise.
+     *
+     * @return boolean
+     */
+    public function hasRowGroups()
+    {
+        return $this->row_grouper !== null;
+    }
+    
+    /**
+     *
+     * @return bool|NULL
+     */
+    public function getKeepExpandedPathsOnRefresh() : ?bool
+    {
+        return $this->keepExpandedPathsOnRefresh;
+    }
+    
+    /**
+     * Set to FALSE to collapse all tree nodes on refresh, search, filter, etc.
+     * 
+     * @uxon-property keep_expanded_paths_on_refresh
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return DataTree
+     */
+    public function setKeepExpandedPathsOnRefresh(bool $value) : DataTree
+    {
+        $this->keepExpandedPathsOnRefresh = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getLazyLoadTreeLevels() : ?bool
+    {
+        if ($this->lazy_load_tree_levels === null) {
+            if ($this->getTreeRootUid() !== null) {
+                return true;
+            }
+        }
+        return $this->lazy_load_tree_levels;
+    }
+    
+    /**
+     * Set to TRUE to load the tree level-by-level and to FALSE to load everything at once.
+     * 
+     * By default, the loading strategy is up to to facade used. However, setting a 
+     * `tree_root_uid` will automatically turn lazy loading on for performance reasons!
+     * 
+     * @uxon-property lazy_load_tree_levels
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return DataTree
+     */
+    public function setLazyLoadTreeLevels(bool $value) : DataTree
+    {
+        $this->lazy_load_tree_levels = $value;
+        return $this;
+    }
 }
-?>

@@ -26,6 +26,7 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iConfigureWidgets;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * A Chart widget draws a chart with upto two axis and any number of series.
@@ -96,7 +97,7 @@ class Chart extends AbstractWidget implements
     /**
      * @var bool
      */
-    private $hide_header = false;
+    private $hide_header = null;
 
     /**
      *
@@ -615,12 +616,12 @@ class Chart extends AbstractWidget implements
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveHeader::getHideHeader()
      */
-    public function getHideHeader()
+    public function getHideHeader() : ?bool
     {
         return $this->hide_header;
     }
 
-    public function setHideHeader($value)
+    public function setHideHeader(bool $value) : iHaveHeader
     {
         $this->hide_header = $value;
         return $this;
@@ -766,7 +767,7 @@ class Chart extends AbstractWidget implements
         return 'DataButton';
     }
 
-    public function getAlternativeContainerForOrphanedSiblings()
+    public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets
     {
         return null;
     }

@@ -11,7 +11,6 @@ use exface\Core\Exceptions\DataSheets\DataSheetMapperInvalidInputError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\DataColumnFactory;
 use exface\Core\Interfaces\DataSheets\DataColumnToFilterMappingInterface;
 use exface\Core\Interfaces\DataSheets\DataFilterToColumnMappingInterface;
@@ -42,6 +41,12 @@ class DataSheetMapper implements DataSheetMapperInterface {
     
     private $inheritColumns = null;
     
+    private $inheritFilters = null;
+    
+    private $inheritSorters = null;
+    
+    private $refreshDataAfterMapping = false;
+    
     public function __construct(Workbench $workbench)
     {
         $this->workbench = $workbench;
@@ -52,7 +57,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::map()
      */
-    public function map(DataSheetInterface $fromSheet)
+    public function map(DataSheetInterface $fromSheet) : DataSheetInterface
     {
         if (! $this->getFromMetaObject()->is($fromSheet->getMetaObject())){
             throw new DataSheetMapperInvalidInputError($fromSheet, $this, 'Input data sheet based on "' . $fromSheet->getMetaObject()->getAliasWithNamespace() . '" does not match the input object of the mapper "' . $this->getFromMetaObject()->getAliasWithNamespace() . '"!');
@@ -64,6 +69,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
         // Create an empty to-sheet
         $toSheet = DataSheetFactory::createFromObject($this->getToMetaObject());
         
+        // Inherit columns if neccessary
         if ($this->getInheritColumns()){
             foreach ($fromSheet->getColumns() as $fromCol){
                 $toSheet->getColumns()->add(DataColumnFactory::createFromUxon($toSheet, $fromCol->exportUxonObject()));
@@ -71,9 +77,26 @@ class DataSheetMapper implements DataSheetMapperInterface {
             $toSheet->importRows($fromSheet);
         }
         
+        // Inherit filters if neccessary
+        if ($this->getInheritFilters()){
+            $toSheet->setFilters($fromSheet->getFilters());
+        }
+        
+        // Inherit sorters if neccessary
+        if ($this->getInheritSorters()){
+            foreach ($fromSheet->getSorters()->getAll() as $sorter) {
+                $toSheet->getSorters()->add($sorter);
+            }
+        }
+        
         // Map columns to columns
         foreach ($this->getMappings() as $map){
             $toSheet = $map->map($fromSheet, $toSheet);
+        }
+        
+        // Refresh data if needed
+        if ($this->getRefreshDataAfterMapping()) {
+            $toSheet->dataRead();
         }
         
         return $toSheet;
@@ -86,19 +109,46 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * 
      * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
      */
-    protected function prepareFromSheet(DataSheetInterface $data_sheet)
+    protected function prepareFromSheet(DataSheetInterface $data_sheet) : DataSheetInterface
     {
         // Only try to add new columns if the sheet has a UID column and is fresh (no values changed)
         if ($data_sheet->hasUidColumn(true) && $data_sheet->isFresh()){
+            $additionSheet = null;
+            // See if any mapped columns are missing in the original data sheet. If so, add empty
+            // columns and also create a separate sheet for reading missing data.
             foreach ($this->getColumnToColumnMappings() as $map){
                 $from_expression = $map->getFromExpression();
                 if (! $data_sheet->getColumns()->getByExpression($from_expression)){
+                    if ($additionSheet === null) {
+                        $additionSheet = $data_sheet->copy();
+                        foreach ($additionSheet->getColumns() as $col) {
+                            if ($col !== $additionSheet->getUidColumn()) {
+                                $additionSheet->getColumns()->remove($col);
+                            }
+                        }
+                    }
                     $data_sheet->getColumns()->addFromExpression($from_expression);
+                    $additionSheet->getColumns()->addFromExpression($from_expression);
                 }
             }
+            // If columns were added to the original sheet, that need data to be loaded,
+            // use the additional data sheet to load the data. This makes sure, the values
+            // in the original sheet (= the input values) are not overwrittten by the read
+            // operation.
             if (! $data_sheet->isFresh()){
-                $data_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
-                $data_sheet->dataRead();
+                $additionSheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
+                $additionSheet->dataRead();
+                $uidCol = $data_sheet->getUidColumn();
+                foreach ($additionSheet->getColumns() as $addedCol) {
+                    foreach ($additionSheet->getRows() as $row) {
+                        $uid = $row[$uidCol->getName()];
+                        $rowNo = $uidCol->findRowByValue($uid);
+                        if ($uid === null || $rowNo === false) {
+                            throw new DataSheetMapperError($this, 'Cannot load additional data in preparation for mapping!');
+                        }
+                        $data_sheet->setCellValue($addedCol->getName(), $rowNo, $row[$addedCol->getName()]);
+                    }
+                }
             }
         }
         return $data_sheet;
@@ -121,7 +171,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::getFromMetaObject()
      */
-    public function getFromMetaObject()
+    public function getFromMetaObject() : MetaObjectInterface
     {
         if (is_null($this->fromMetaObject)){
             // TODO add error code
@@ -136,7 +186,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setFromMetaObject()
      */
-    public function setFromMetaObject(MetaObjectInterface $object)
+    public function setFromMetaObject(MetaObjectInterface $object) : DataSheetMapperInterface
     {
         $this->fromMetaObject = $object;
         return $this;
@@ -153,7 +203,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setFromObjectAlias()
      */
-    public function setFromObjectAlias($alias_with_namespace)
+    public function setFromObjectAlias(string $alias_with_namespace) : DataSheetMapperInterface
     {
         return $this->setFromMetaObject($this->getWorkbench()->model()->getObject($alias_with_namespace));
     }
@@ -173,7 +223,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::getToMetaObject()
      */
-    public function getToMetaObject()
+    public function getToMetaObject() : MetaObjectInterface
     {
         if (is_null($this->toMetaObject)){
             // TODO add error code
@@ -187,10 +237,26 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setToMetaObject()
      */
-    public function setToMetaObject(MetaObjectInterface $toMetaObject)
+    public function setToMetaObject(MetaObjectInterface $toMetaObject) : DataSheetMapperInterface
     {
         $this->toMetaObject = $toMetaObject;
         return $this;
+    }
+    
+    /**
+     * The object of the resulting data sheet (after the mapping).
+     *
+     * Only set to `to_object_alias` explicitly if really neccessary. Leave empty for the
+     * mapper owner (e.g. action) to set the target object automatically.
+     *
+     * @uxon-property to_object_alias
+     * @uxon-type metamodel:object
+     *
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setFromObjectAlias()
+     */
+    public function setToObjectAlias(string $alias_with_namespace) : DataSheetMapperInterface
+    {
+        return $this->setToMetaObject($this->getWorkbench()->model()->getObject($alias_with_namespace));
     }
 
     /**
@@ -198,7 +264,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::getColumnToColumnMappings()
      */
-    public function getColumnToColumnMappings()
+    protected function getColumnToColumnMappings() : array
     {
         return $this->columnMappings;
     }
@@ -206,7 +272,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
     /**
      * @deprecated Obsolet! Use setColumnToColumnMappings()
      */
-    public function setColumnMappings(UxonObject $uxon)
+    public function setColumnMappings(UxonObject $uxon) : DataSheetMapperInterface
     {
         return $this->setColumnToColumnMappings($uxon);
     }
@@ -220,7 +286,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setColumnToColumnMappings()
      */
-    public function setColumnToColumnMappings(UxonObject $uxon)
+    public function setColumnToColumnMappings(UxonObject $uxon) : DataSheetMapperInterface
     {
         foreach ($uxon as $instance){
             $map = $this->createColumnToColumnMapping($instance);
@@ -234,11 +300,11 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * 
      * @uxon-property column_to_filter_mappings
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataColumnToFilterMapping[]
-     * @uxon-template [{"from": "", "to": "", "comparator": "["}]
+     * @uxon-template [{"from": "", "to": "", "comparator": "="}]
      * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setColumnToFilterMappings()
      */
-    public function setColumnToFilterMappings(UxonObject $uxon)
+    public function setColumnToFilterMappings(UxonObject $uxon) : DataSheetMapperInterface
     {
         foreach ($uxon as $instance){
             $map = $this->createColumnToFilterMapping($instance);
@@ -252,7 +318,8 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::addColumnToFilterMapping()
      */
-    public function addColumnToFilterMapping(DataColumnToFilterMappingInterface $map) {
+    public function addColumnToFilterMapping(DataColumnToFilterMappingInterface $map) : DataSheetMapperInterface
+    {
         $this->columnFilterMappings[] = $map;
         return $this;
     }
@@ -262,7 +329,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::getColumnToFilterMappings()
      */
-    public function getColumnToFilterMappings()
+    protected function getColumnToFilterMappings() : array
     {
         return $this->columnFilterMappings;
     }
@@ -276,7 +343,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setFilterToColumnMappings()
      */
-    public function setFilterToColumnMappings(UxonObject $uxon)
+    public function setFilterToColumnMappings(UxonObject $uxon) : DataSheetMapperInterface
     {
         foreach ($uxon as $instance){
             $map = $this->createFilterToColumnMapping($instance);
@@ -290,7 +357,8 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::addColumnToFilterMapping()
      */
-    public function addFilterToColumnMapping(DataFilterToColumnMappingInterface $map) {
+    public function addFilterToColumnMapping(DataFilterToColumnMappingInterface $map) : DataSheetMapperInterface
+    {
         $this->filterColumnMappings[] = $map;
         return $this;
     }
@@ -300,15 +368,15 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::getColumnToFilterMappings()
      */
-    public function getFilterToColumnMappings()
+    protected function getFilterToColumnMappings() : array
     {
         return $this->filterColumnMappings;
     }
     
     /**
-     * @return DataColumnToFilterMapping
+     * @return DataFilterToColumnMappingInterface
      */
-    protected function createFilterToColumnMapping(UxonObject $uxon = null)
+    protected function createFilterToColumnMapping(UxonObject $uxon = null) : DataFilterToColumnMappingInterface
     {
         $mapping = new DataFilterToColumnMapping($this);
         if (!is_null($uxon)){
@@ -322,7 +390,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
     * {@inheritDoc}
     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::getMappings()
     */
-    public function getMappings()
+    public function getMappings() : array
     {
         return array_merge(
             $this->getColumnToColumnMappings(),
@@ -334,7 +402,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
     /**
      * @return DataColumnMappingInterface
      */
-    protected function createColumnToColumnMapping(UxonObject $uxon = null)
+    protected function createColumnToColumnMapping(UxonObject $uxon = null) : DataColumnMappingInterface
     {
         $mapping = new DataColumnMapping($this);
         if (!is_null($uxon)){
@@ -344,9 +412,9 @@ class DataSheetMapper implements DataSheetMapperInterface {
     }
     
     /**
-     * @return DataColumnToFilterMapping
+     * @return DataColumnToFilterMappingInterface
      */
-    protected function createColumnToFilterMapping(UxonObject $uxon = null)
+    protected function createColumnToFilterMapping(UxonObject $uxon = null) : DataColumnToFilterMappingInterface
     {
         $mapping = new DataColumnToFilterMapping($this);
         if (!is_null($uxon)){
@@ -360,7 +428,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
     * {@inheritDoc}
     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::addColumnToColumnMapping()
     */
-    public function addColumnToColumnMapping(DataColumnMappingInterface $map)
+    public function addColumnToColumnMapping(DataColumnMappingInterface $map) : DataSheetMapperInterface
     {
         $this->columnMappings[] = $map;
         return $this;
@@ -375,7 +443,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setExpressionMappings()
      */
-    public function setExpressionMappings(UxonObject $uxonObjects)
+    public function setExpressionMappings(UxonObject $uxonObjects) : DataSheetMapperInterface
     {
         return $this->setColumnMappings($uxonObjects);
     }
@@ -388,16 +456,9 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * 
      * @return boolean
      */
-    public function getInheritColumns()
+    protected function getInheritColumns() : bool
     {
-        if (is_null($this->inheritColumns)){
-            if ($this->canInheritColumns()){
-                return true;
-            } else {
-                return false;
-            }
-        }
-        return $this->inheritColumns;
+        return $this->inheritColumns ?? $this->canInheritColumns();
     }
     
     /**
@@ -414,10 +475,8 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * @throws DataSheetMapperError
      * @return \exface\Core\CommonLogic\DataSheets\DataSheetMapper
      */
-    public function setInheritColumns($true_or_false)
+    public function setInheritColumns(bool $value) : DataSheetMapperInterface
     {
-        $value = BooleanDataType::cast($true_or_false);
-        
         if ($value){
             if (! $this->canInheritColumns()) {
                 throw new DataSheetMapperError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit columns from sheets of "' . $this->getFromMetaObject() . '"!');
@@ -429,13 +488,132 @@ class DataSheetMapper implements DataSheetMapperInterface {
     }
     
     /**
+     * Returns TRUE if columns of the from-sheet should be inherited by the to-sheet.
+     *
+     * By default, this will be TRUE if the to-sheet is based on the same object as the
+     * from-sheet or a derivative and FALSE otherwise.
+     *
+     * @return boolean
+     */
+    protected function getInheritFilters() : bool
+    {
+        return $this->inheritFilters ?? $this->canInheritFilters();
+    }
+    
+    /**
+     * Set to FALSE to prevent the to-sheet from inheriting compatible filters from the from-sheet.
+     *
+     * If the to-sheet is based on the same object as the from-sheet or a derivative,
+     * the mapper will copy all filters by default and apply the mapping afterwards.
+     * This option can prevent this behavior.
+     *
+     * @uxon-property inherit_filters
+     * @uxon-type boolean
+     *
+     * @param boolean $true_or_false
+     * @throws DataSheetMapperError
+     * @return \exface\Core\CommonLogic\DataSheets\DataSheetMapper
+     */
+    public function setInheritFilters(bool $value) : DataSheetMapperInterface
+    {
+        if ($value){
+            if (! $this->canInheritFilters()) {
+                throw new DataSheetMapperError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit filters from sheets of "' . $this->getFromMetaObject() . '"!');
+            }
+        }
+        
+        $this->inheritFilters = $value;
+        return $this;
+    }
+    
+    /**
+     * Returns TRUE if columns of the from-sheet should be inherited by the to-sheet.
+     *
+     * By default, this will be TRUE if the to-sheet is based on the same object as the
+     * from-sheet or a derivative and FALSE otherwise.
+     *
+     * @return boolean
+     */
+    protected function getInheritSorters() : bool
+    {
+        return $this->inheritSorters ?? $this->canInheritSorters();
+    }
+    
+    /**
+     * Set to FALSE to prevent the to-sheet from inheriting compatible sorters from the from-sheet.
+     *
+     * If the to-sheet is based on the same object as the from-sheet or a derivative,
+     * the mapper will copy all sorters by default and apply the mapping afterwards.
+     * This option can prevent this behavior.
+     *
+     * @uxon-property inherit_sorters
+     * @uxon-type boolean
+     *
+     * @param boolean $true_or_false
+     * @throws DataSheetMapperError
+     * @return \exface\Core\CommonLogic\DataSheets\DataSheetMapper
+     */
+    public function setInheritSorters(bool $value) : DataSheetMapperInterface
+    {
+        if ($value){
+            if (! $this->canInheritSorters()) {
+                throw new DataSheetMapperError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit sorters from sheets of "' . $this->getFromMetaObject() . '"!');
+            }
+        }
+        
+        $this->inheritSorters = $value;
+        return $this;
+    }
+    
+    /**
      * Returns TRUE if columns of the from-sheet sheet can be inherited by the to-sheet.
      * 
      * @return boolean
      */
-    protected function canInheritColumns()
+    protected function canInheritColumns() : bool
     {
         return $this->getToMetaObject()->is($this->getFromMetaObject());
     }
     
+    /**
+     * 
+     * @return bool
+     */
+    protected function canInheritFilters() : bool
+    {
+        return $this->canInheritColumns();
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function canInheritSorters() : bool
+    {
+        return $this->canInheritColumns();
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    protected function getRefreshDataAfterMapping() : bool
+    {
+        return $this->refreshDataAfterMapping;
+    }
+    
+    /**
+     * Set to TRUE to read data after all mappings were performed.
+     * 
+     * @uxon-property refresh_data_after_mapping
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setRefreshDataAfterMapping()
+     */
+    public function setRefreshDataAfterMapping(bool $trueOrFalse) : DataSheetMapperInterface
+    {
+        $this->refreshDataAfterMapping = $trueOrFalse;
+        return $this;
+    }
 }

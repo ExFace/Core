@@ -19,6 +19,8 @@ class RequestContextScope extends AbstractContextScope
      * @var string $subrequest_id
      */
     private $subrequest_id = null;
+    
+    private $baseUrl = null;
 
     /**
      * There is nothing to load in the request context scope, as it only lives for one request
@@ -132,5 +134,24 @@ class RequestContextScope extends AbstractContextScope
     {
         return $this->getRequestId();
     }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getUrlBase() : string
+    {
+        return $this->baseUrl;
+    }
+    
+    /**
+     * 
+     * @param string $value
+     * @return RequestContextScope
+     */
+    public function setUrlBase(string $value) : RequestContextScope
+    {
+        $this->baseUrl = $value;
+        return $this;
+    }
 }
-?>

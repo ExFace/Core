@@ -135,7 +135,7 @@ class StringDataType extends AbstractDataType
      */
     public static function cast($string)
     {
-        if (is_scalar($string) === true || static::isEmptyValue($string) === true){
+        if (is_scalar($string) === true || static::isValueEmpty($string) === true){
             return $string;
         } elseif (is_array($string) === true){
             return implode(EXF_LIST_SEPARATOR, $string);
@@ -149,7 +149,8 @@ class StringDataType extends AbstractDataType
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::parse()
      */
-    public function parse($string){
+    public function parse($string)
+    {
         $value = parent::parse($string);
         
         // validate length
@@ -397,6 +398,26 @@ class StringDataType extends AbstractDataType
      */
     public static function encodeUTF8(string $string, string $originalEncoding = null) {
         return mb_convert_encoding($string, 'UTF-8', ($originalEncoding ?? mb_detect_encoding($string)));
+    }
+    
+    /**
+     * 
+     * @param string $string
+     * @param int $length
+     * @param bool $stickToWords
+     * @return string
+     */
+    public static function truncate(string $string, int $length, bool $stickToWords) : string
+    {
+        if ($stickToWords === false) {
+            return mb_substr($string, 0, $length);
+        } else {
+            if (strlen($string) > $length) {
+                $string = wordwrap($string, $length);
+                $string = mb_substr($string, 0, mb_strpos($string, "\n"));
+            }
+            return $string;
+        }
     }
 }
 ?>

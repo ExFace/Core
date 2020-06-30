@@ -36,10 +36,15 @@ class LocaleDataType extends StringDataType implements EnumDataTypeInterface
     {
         if ($this->locales === null) {
             $currentLocale = $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
-            $this->locales = [$currentLocale => $this->getLabelOfValue($currentLocale, $currentLocale)];
+            $defaultLocale = $this->getWorkbench()->getConfig()->getOption('SERVER.DEFAULT_LOCALE');
+            $this->locales = [
+                $currentLocale => $this->getLabelOfValue($currentLocale, $currentLocale),
+                $defaultLocale => $this->getLabelOfValue($defaultLocale, $currentLocale)
+            ];
             foreach ($this->getWorkbench()->getCoreApp()->getLanguages() as $locale) {
                 $this->locales[$locale] = $this->getLabelOfValue($locale, $currentLocale);
             }
+            asort($this->locales);
         }
         return $this->locales;
     }
@@ -78,5 +83,15 @@ class LocaleDataType extends StringDataType implements EnumDataTypeInterface
     public function getValues()
     {
         return array_keys($this->getLabels());
+    }
+    
+    /**
+     * Returns all locales supported by the current version of PHP
+     * 
+     * @return string[]
+     */
+    public static function getAllLocales() : array
+    {
+        return \ResourceBundle::getLocales('');
     }
 }

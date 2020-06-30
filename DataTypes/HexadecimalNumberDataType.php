@@ -20,18 +20,24 @@ class HexadecimalNumberDataType extends NumberDataType
      */
     public static function cast($string)
     {
-        if (static::isEmptyValue($string) === true) {
+        if (is_string($string) === false && $string !== null) {
+            throw new DataTypeCastingError('Cannot cast "' . gettype($string) . '" to a hexadecimal number');
+        }
+        switch (true) {
             // Return NULL for casting empty values as an empty string '' actually is not a number!
-            return null;
-        } elseif (mb_strtoupper(substr($string, 0, 2)) === '0X') {
+            case static::isValueEmpty($string) === true:
+                return null;
             // Hexadecimal numbers in '0x....'-Notation
-            /*if (ctype_xdigit(substr($string, 2)) === false) {
+            case mb_strtoupper(substr($string, 0, 2)) === '0X':
+                /*if (ctype_xdigit(substr($string, 2)) === false) {
+                    throw new DataTypeCastingError('Cannot convert "' . $string . '" to a hexadecimal number!');
+                }*/
+                return $string;
+            // Logical NULL
+            case static::isValueLogicalNull($string):
+                return $string;
+            default: 
                 throw new DataTypeCastingError('Cannot convert "' . $string . '" to a hexadecimal number!');
-            }*/
-            return $string;
-        } else {
-            throw new DataTypeCastingError('Cannot convert "' . $string . '" to a hexadecimal number!');
-            return '';
         }
     }
     

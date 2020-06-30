@@ -39,7 +39,7 @@ trait PrototypeSelectorTrait
     {
         $string = $this->toString();
         if ($this->isClassname()) {
-            $parts = explode(ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR, $string);
+            $parts = explode(ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR, ltrim($string, "\\"));
         } elseif ($this->isFilepath()) {
             $parts = explode(FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR, $string);
         } else {

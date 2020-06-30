@@ -1,37 +1,19 @@
 {
-    "id": "0xb38cface203a11ea8c920205857feb80",
+    "uid": "0xb38cface203a11ea8c920205857feb80",
     "alias_with_namespace": "exface.core.facades",
-    "menu_parent_page_alias": "exface.core.documentation",
-    "menu_index": "10",
+    "menu_parent_page_selector": "0xf831c595ba2c11e7895fe4b318306b9a",
+    "menu_index": 10,
     "menu_visible": true,
     "name": "Facades",
     "description": "Browse available facades and their properties",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2019-12-16 20:31:21",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2020-06-18 07:59:59",
     "contents": {
-        "object_alias": "exface.Core.FACADE",
-        "widget_type": "DataTable",
-        "filters": [
-            {
-                "attribute_alias": "NAME"
-            },
-            {
-                "attribute_alias": "PATHNAME_RELATIVE"
-            }
-        ],
-        "columns": [
-            {
-                "attribute_alias": "NAME"
-            },
-            {
-                "attribute_alias": "PATHNAME_RELATIVE"
-            }
-        ],
-        "buttons": [
-            {
-                "action_alias": "exface.Core.ShowObjectInfoDialog",
-                "bind_to_double_click": true
-            }
-        ]
+        "extend_widget": "[exface.core.widgets]",
+        "object_alias": "exface.core.FACADE"
     }
 }

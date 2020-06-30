@@ -1,22 +1,34 @@
 {
-    "id": "0x0a3e0996949f11e78ac4028037ec0200",
+    "uid": "0x0a3e0996949f11e78ac4028037ec0200",
     "alias_with_namespace": "exface.core.users",
-    "menu_parent_page_alias": "exface.core.administration",
-    "menu_index": "1",
+    "menu_parent_page_selector": "0x11ea5edc2f798596b9920205857feb80",
+    "menu_index": 0,
     "menu_visible": true,
     "name": "Users",
-    "description": "Manage users and credentials",
+    "description": "Manage users, assign roles",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2015-12-14 17:07:13",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2020-06-07 16:03:57",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.USER",
+        "multi_select": true,
         "filters": [
             {
                 "attribute_alias": "USERNAME"
             },
             {
-                "attribute_alias": "USER_CREDENTIALS__DATA_CONNECTION_CREDENTIALS__DATA_CONNECTION"
+                "attribute_alias": "USER_ROLE_USERS__USER_ROLE"
+            },
+            {
+                "attribute_alias": "USER_CREDENTIALS__DATA_CONNECTION_CREDENTIALS__DATA_CONNECTION",
+                "caption": "Credentials for connection"
+            },
+            {
+                "attribute_alias": "DISABLED_FLAG"
             }
         ],
         "columns": [
@@ -30,20 +42,21 @@
                 "attribute_alias": "FIRST_NAME"
             },
             {
-                "attribute_alias": "EMAIL"
+                "attribute_alias": "LOCALE"
             },
             {
-                "attribute_alias": "LOCALE"
+                "attribute_alias": "DISABLED_FLAG"
+            },
+            {
+                "attribute_alias": "USER_ROLE_USERS__USER_ROLE__LABEL:LIST_DISTINCT"
             },
             {
                 "attribute_alias": "USER_CREDENTIALS__UID:COUNT",
                 "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS')"
             },
             {
-                "attribute_alias": "USER_CREDENTIALS__NAME:LIST_DISTINCT"
-            },
-            {
-                "attribute_alias": "UID"
+                "attribute_alias": "USER_AUTHENTICATOR__LAST_AUTHENTICATED_ON:MAX",
+                "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.LAST_LOGIN')"
             }
         ],
         "sorters": [
@@ -65,6 +78,48 @@
             },
             {
                 "action_alias": "exface.Core.DeleteObject"
+            },
+            {
+                "caption": "Add User Role",
+                "action": {
+                    "alias": "exface.Core.ShowObjectCreateDialog",
+                    "object_alias": "exface.Core.USER_ROLE_USERS",
+                    "prefill_with_input_data": true,
+                    "input_rows_min": 1,
+                    "input_rows_max": null,
+                    "widget": {
+                        "widget_type": "Dialog",
+                        "object_alias": "exface.Core.USER_ROLE_USERS",
+                        "width": 1,
+                        "height": "auto",
+                        "widgets": [
+                            {
+                                "attribute_alias": "USER",
+                                "widget_type": "InputComboTable",
+                                "multi_select": true,
+                                "disabled": true,
+                                "height": 3
+                            },
+                            {
+                                "attribute_alias": "USER_ROLE"
+                            }
+                        ],
+                        "buttons": [
+                            {
+                                "action_alias": "exface.Core.CreateData",
+                                "align": "opposite",
+                                "visibility": "promoted",
+                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "action_alias": "exface.Core.DisableUser"
+            },
+            {
+                "action_alias": "exface.Core.EnableUser"
             }
         ]
     }

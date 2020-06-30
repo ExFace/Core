@@ -13,14 +13,12 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Actions\iReferenceWidget;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\ResultWidgetInterface;
-use exface\Core\CommonLogic\Tasks\ResultWidget;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Factories\UiPageFactory;
 
@@ -39,7 +37,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
 
     private $widget_id = null;
 
-    private $prefill_with_filter_context = true;
+    private $prefill_with_filter_context = false;
 
     private $prefill_with_input_data = true;
     
@@ -293,12 +291,20 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
                         // of the data sheet and change the widget to look in 
                         // columns as well as in filters...
                         try {
-                            $col = $data_sheet->getColumns()->addFromExpression($condition->getExpression());
                             // Add the value of the filter (if there) as cell value
-                            if (! is_null($condition->getValue()) && $condition->getValue() !== ''){
-                                $col->setValues(array(
-                                    $condition->getValue()
-                                ));
+                            $value = $condition->getValue();
+                            if ($value !== null && $value !== ''){
+                                $data_sheet->getFilters()->addCondition($condition);
+                                if (! $col = $data_sheet->getColumns()->getByExpression($condition->getExpression())) {
+                                    $col = $data_sheet->getColumns()->addFromExpression($condition->getExpression());
+                                }
+                                if ($col->isEmpty(true)) {
+                                    if ($data_sheet->isEmpty()) {
+                                        $col->setValues([$value]);
+                                    } else {
+                                        $col->setValueOnAllRows($value);
+                                    }
+                                }
                             }
                         } catch (\Exception $e) {
                             // Do nothing if anything goes wrong. After all the context prefills are just an attempt the help
@@ -485,7 +491,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         if ($this->isWidgetDefined()) {
             return $this->getWidget()->getPage();
         }
-        return UiPageFactory::createFromCmsPage($this->getWorkbench()->getCMS(), $this->page_alias);
+        return UiPageFactory::createFromModel($this->getWorkbench(), $this->page_alias);
     }
     
     public function getPageAlias()

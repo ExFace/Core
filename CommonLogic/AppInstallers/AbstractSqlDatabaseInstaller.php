@@ -11,6 +11,7 @@ use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use exface\Core\Factories\DataSourceFactory;
 use exface\Core\Exceptions\DataSources\DataSourceHasNoConnectionError;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\FilePathDataType;
 
 /**
  * This creates and manages SQL databases and performs SQL updates.
@@ -139,7 +140,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      */
     protected function installStaticSql(string $source_absolute_path, string $indent = '') : string
     {
-        return $indent . $this->runSqlFromFilesInFolder($source_absolute_path, $this->getFoldersWithStaticSql());
+        return $this->runSqlFromFilesInFolder($source_absolute_path, $this->getFoldersWithStaticSql(), $indent);
     }
     
     /**
@@ -258,13 +259,20 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
             }
             $dataSource = DataSourceFactory::createFromModel($this->getWorkbench(), $sourceSelector);
             try {
-                $this->data_connection = $dataSource->getConnection();
+                $this->data_connection = $this->checkDataConnection($dataSource->getConnection());
             } catch (DataSourceHasNoConnectionError $e) {
                 throw new InstallerRuntimeError($this, 'Cannot install SQL DB for app "' . $this->getSelectorInstalling()->toString() . '": please provide a valid connection for data source "' . $dataSource->getName() . '" and reinstall/repair the app.', '77UP8Q4', $e);
             }
         }
         return $this->data_connection;
     }
+    
+    /**
+     * 
+     * @param SqlDataConnectorInterface $connection
+     * @return SqlDataConnectorInterface
+     */
+    protected abstract function checkDataConnection(SqlDataConnectorInterface $connection) : SqlDataConnectorInterface;
     
     /**
      * Set the connection to the SQL database explicitly instead of setDataSourceSelector().
@@ -473,7 +481,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     protected function runSqlFromFilesInFolder(string $source_absolute_path, array $folders): string
     {
         $files = $this->getFiles($source_absolute_path, $folders);
-        $result = '';
+        $doneCnt = 0;
+        $errors = [];
         foreach ($files as $file){
             $sql = file_get_contents($file);
             $sql = $this->stripComments($sql);
@@ -481,13 +490,27 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
             try {
                 $this->runSqlMultiStatementScript($connection, $sql);
                 $this->getWorkbench()->getLogger()->debug('SQL script ' . $file . ' executed successfully ');
-                $result .= 'done.';
+                $doneCnt++;
             } catch (\Throwable $e) {
                 $this->getWorkbench()->getLogger()->logException($e);
-                $result .= 'failed.';
+                $filename = FilePathDataType::findFileName($file, true);
+                $errors[$filename] = $e;
             }
         }
-        return 'Static SQL: ' . ($result === '' ? 'not needed' : $result);
+        
+        if ($doneCnt === 0 && empty($errors)) {
+            $result = 'not needed';
+        } else {
+            $result = $doneCnt . ' successfull';
+            if (! empty($errors)) {
+                $result .= ', ' . count($errors) . ' errors: ';
+                foreach ($errors as $filename => $exception) {
+                    $result .= PHP_EOL . $indent . $indent . '- in ' . $filename . ': ' . $exception->getMessage();
+                }
+            }
+        }
+        
+        return $indent . 'Static SQL: ' . $result;
     }
        
     /**
@@ -521,7 +544,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         $migrs = [];
         foreach ($this->getFiles($source_absolute_path, $this->getFoldersWithMigrations()) as $path) {
             $file_content = file_get_contents($path);
-            $migrs[] = new SqlMigration($this->transformFilepathToMigrationName($path), $this->getMigrationScript($file_content), $this->getMigrationScript($file_content, false));
+            $migrationName = $this->transformFilepathToMigrationName($path);
+            $migrs[] = new SqlMigration($migrationName, $this->getMigrationScript($migrationName, $file_content), $this->getMigrationScript($migrationName, $file_content, false));
         }
         return $migrs;
     }
@@ -596,7 +620,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param bool $up
      * @return string
      */
-    protected function getMigrationScript(string $src, bool $up = true) : string
+    protected function getMigrationScript(string $filename, string $src, bool $up = true) : string
     {
         $length=strlen($src);
         $cut_down=strpos($src, $this->getMarkerDown());
@@ -606,7 +630,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
                 $migstr = $src;
             } elseif ($up == FALSE){
                 $migstr = '';
-                $this->getWorkbench()->getLogger()->warning('SQL migration has now down-script! '); 
+                $this->getWorkbench()->getLogger()->warning("SQL migration {$filename} has no down-script!"); 
             }                       
         }
         else{

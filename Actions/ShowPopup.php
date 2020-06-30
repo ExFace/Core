@@ -6,6 +6,9 @@ use exface\Core\Interfaces\Actions\iShowPopup;
 use exface\Core\Widgets\Container;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Factories\UiPageFactory;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * Shows a popup with any contents specified in the widget-property
@@ -24,13 +27,20 @@ class ShowPopup extends ShowWidget implements iShowPopup
      * passed widget is not a container. It creates a basic container and 
      * optionally fills it with the given content. By overriding this method,
      * you can change the way non-container widgets are handled.
+     * 
+     * @param UiPageInterface $page
+     * @param WidgetInterface $contained_widget
      *
      * @return Container
      */
-    protected function createPopupContainer(AbstractWidget $contained_widget = NULL) : iContainOtherWidgets
+    protected function createPopupContainer(UiPageInterface $page, WidgetInterface $contained_widget = NULL) : iContainOtherWidgets
     {
-        $popup = WidgetFactory::create($this->getWidgetDefinedIn()->getPage(), 'Container', $this->getWidgetDefinedIn());
-        $popup->setMetaObject($this->getMetaObject());
+        if ($this->isDefinedInWidget()) {
+            $popup = WidgetFactory::create($page, 'Container', $this->getWidgetDefinedIn());
+            $popup->setMetaObject($this->getMetaObject());
+        } else {
+            $popup = WidgetFactory::create($page, 'Container');
+        }
         
         if ($contained_widget) {
             $popup->addWidget($contained_widget);
@@ -51,8 +61,16 @@ class ShowPopup extends ShowWidget implements iShowPopup
     public function getWidget()
     {
         $widget = parent::getWidget();
-        if (! ($widget instanceof Container)) {
-            $widget = $this->createPopupContainer($widget);
+        if (is_null($widget)) {
+            try {
+                $page = $this->getWidgetDefinedIn()->getPage();
+            } catch (\Throwable $e) {
+                $page = UiPageFactory::createEmpty($this->getWorkbench());
+            }
+            $widget = $this->createPopupContainer($page);
+            $this->setWidget($widget);
+        } elseif (! ($widget instanceof Container)) {
+            $widget = $this->createPopupContainer($page, $widget);
             $this->setWidget($widget);
         }
         
@@ -68,6 +86,4 @@ class ShowPopup extends ShowWidget implements iShowPopup
     {
         return $this->getWidget();
     }
-
 }
-?>

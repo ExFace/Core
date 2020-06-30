@@ -5,7 +5,6 @@ use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -21,13 +20,28 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * editor will be directly applied to the Dialog. If another widget type is specified, it will be treated as a separate
  * widget and added to the dialog as a child widget. Thus, if the default editor is
  *
- * {"widgets": [{...}, {...}], "caption": "My caption"}
+ * ```
+ * {
+ *  "widgets": [
+ *      {"":""}, 
+ *      {"":""}
+ *  ], 
+ *  "caption": "My caption"
+ * }
+ * 
+ * ```
  *
  * the caption of the dialog will be set to "My caption" and all the widgets will get appended to the dialog. On the
  * other hand, the following default editor will produce a single tabs widget, which will be appended to the generic
  * dialog:
  *
- * {"widget_type": "Tabs", "tabs": [...]}
+ * ```
+ * {
+ *  "widget_type": "Tabs", 
+ *  "tabs": []
+ * }
+ * 
+ * ```
  *
  * If you choose to customize the dialog directly (first example), you can ommit the "widgets" array completely. This
  * will case the default editor widgets to get generated and appended to your custom dialog. This is an easy way to
@@ -42,6 +56,8 @@ class ShowObjectInfoDialog extends ShowDialog
     private $show_only_editable_attributes = false;
 
     private $disable_editing = true;
+    
+    private $disable_buttons = true;
     
     private $showSmallDialogIfLessAttributesThen = 7;
 
@@ -114,6 +130,11 @@ class ShowObjectInfoDialog extends ShowDialog
         if (! is_null($contained_widget)) {
             $dialog->addWidget($contained_widget);
         } elseif ($default_editor_uxon && false === $default_editor_uxon->isEmpty()) {
+            
+            if ($this->getDisableButtons()) {
+                $dialog_uxon = $dialog_uxon->withPropertiesRemoved(['buttons']);
+            }
+            
             // Otherwise check, if there is a default editor for an object, and instantiate it if so
             $default_editor_type = $default_editor_uxon->getProperty('widget_type');
             // If the default editor has no widget_type or it is "Dialog" or an extension of it,
@@ -222,10 +243,33 @@ class ShowObjectInfoDialog extends ShowDialog
      * @param boolean $value
      * @return \exface\Core\Actions\ShowObjectInfoDialog
      */
-    public function setDisableEditing($value) : ShowObjectInfoDialog
+    public function setDisableEditing(bool $value) : ShowObjectInfoDialog
     {
-        $this->disable_editing = BooleanDataType::cast($value);
+        $this->disable_editing = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getDisableButtons() : bool
+    {
+        return $this->disable_buttons;
+    }
+    
+    /**
+     * Set to TRUE to remove all buttons from the object's default editor.
+     *
+     * @uxon-property disable_buttons
+     * @uxon-type boolean
+     *
+     * @param boolean $value
+     * @return \exface\Core\Actions\ShowObjectInfoDialog
+     */
+    public function setDisableButtons(bool $value) : ShowObjectInfoDialog
+    {
+        $this->disable_buttons = $value;
         return $this;
     }
 }
-?>

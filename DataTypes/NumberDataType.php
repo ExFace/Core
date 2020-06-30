@@ -43,7 +43,7 @@ class NumberDataType extends AbstractDataType
         if (is_numeric($string) === true) {
             // Decimal numbers
             return $string;
-        } elseif (static::isEmptyValue($string) === true) {
+        } elseif (static::isValueEmpty($string) === true) {
             // Return NULL for casting empty values as an empty string '' actually is not a number!
             return null;
         } elseif (mb_strtoupper(substr($string, 0, 2)) === '0X') {
@@ -53,7 +53,7 @@ class NumberDataType extends AbstractDataType
             return 1;
         } elseif (strcasecmp($string, 'false') === 0) {
             return 0;
-        } elseif (strcasecmp($string, 'null') === 0) {
+        } elseif (static::isValueLogicalNull($string) === true) {
             return null;
         } else {
             $string = trim($string);

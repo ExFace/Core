@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\DataConnectors;
 
-use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionTransactionStartError;
 use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
@@ -63,11 +62,12 @@ class MySqlConnector extends AbstractSqlConnector
             }
             
             // Set the character set
-            // mysqli_query($conn, "{$this->getConnectionMethod()} {$this->getCharset()}");
-            if (function_exists('mysqli_set_charset')) {
-                mysqli_set_charset($conn, $this->getCharset());
-            } else {
-                mysqli_query($conn, "SET NAMES {$this->getCharset()}");
+            if ($this->getCharacterSet()) {
+                if (function_exists('mysqli_set_charset')) {
+                    mysqli_set_charset($conn, $this->getCharset());
+                } else {
+                    mysqli_query($conn, "SET NAMES {$this->getCharset()}");
+                }
             }
             
             $this->setCurrentConnection($conn);
@@ -121,7 +121,7 @@ class MySqlConnector extends AbstractSqlConnector
 
     protected function getLastError()
     {
-        return mysqli_error($this->getCurrentConnection()) . ' (Error ' . mysqli_errno($this->getCurrentConnection() . ')');
+        return mysqli_error($this->getCurrentConnection()) . ' (Error ' . mysqli_errno($this->getCurrentConnection()) . ')';
     }
 
     /**
@@ -214,7 +214,7 @@ class MySqlConnector extends AbstractSqlConnector
         
         try {
             return mysqli_rollback($this->getCurrentConnection());
-        } catch (\mysqli_sql_exception $e) {
+        } catch (\Throwable $e) {
             throw new DataConnectionRollbackFailedError($this, "Rollback failed: " . $e->getMessage(), '6T2T2S1', $e);
         }
         return $this;
@@ -306,9 +306,9 @@ class MySqlConnector extends AbstractSqlConnector
     }
     
 
-    public function getCharset()
+    public function getCharset() : ?string
     {
-        return $this->getCharacterSet() ?? 'utf8';
+        return $this->getCharacterSet();
     }
 
     /**

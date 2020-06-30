@@ -1,37 +1,19 @@
 {
-    "id": "0xf831b3ccba2c11e7895fe4b318306b9a",
+    "uid": "0xf831b3ccba2c11e7895fe4b318306b9a",
     "alias_with_namespace": "exface.core.formulas",
-    "menu_parent_page_alias": "exface.core.documentation",
-    "menu_index": "8",
+    "menu_parent_page_selector": "0xf831c595ba2c11e7895fe4b318306b9a",
+    "menu_index": 8,
     "menu_visible": true,
     "name": "Formulas",
     "description": "Browse available formulas and their parameters",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2017-07-11 13:03:42",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2020-06-18 07:59:20",
     "contents": {
-        "object_alias": "exface.Core.FORMULA",
-        "widget_type": "DataTable",
-        "filters": [
-            {
-                "attribute_alias": "NAME"
-            },
-            {
-                "attribute_alias": "PATHNAME_RELATIVE"
-            }
-        ],
-        "columns": [
-            {
-                "attribute_alias": "NAME"
-            },
-            {
-                "attribute_alias": "PATHNAME_RELATIVE"
-            }
-        ],
-        "buttons": [
-            {
-                "action_alias": "exface.Core.ShowObjectInfoDialog",
-                "bind_to_double_click": true
-            }
-        ]
+        "extend_widget": "[exface.core.widgets]",
+        "object_alias": "exface.core.FORMULA"
     }
 }

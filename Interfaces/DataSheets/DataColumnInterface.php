@@ -10,6 +10,8 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
+use exface\Core\Exceptions\DataSheets\DataSheetUidColumnNotFoundError;
 
 interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 {
@@ -114,10 +116,22 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     /**
      * Returns the value of the given row within this column
      *
-     * @param integer $row_number            
+     * @param int $rowNumber    
+     *         
      * @return mixed
      */
-    public function getCellValue($row_number);
+    public function getValue(int $rowNumber);
+    
+    /**
+     * Returns the value of the row identified by the given UID value.
+     * 
+     * @param string $uidValue
+     * 
+     * @throws DataSheetUidColumnNotFoundError
+     * 
+     * @return mixed
+     */
+    public function getValueByUid(string $uidValue);
 
     /**
      *
@@ -162,7 +176,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      *
      * @param string $cell_value            
      * @param boolean $case_sensitive            
-     * @return integer
+     * @return integer|boolean
      */
     public function findRowByValue($cell_value, $case_sensitive = false);
 
@@ -178,9 +192,18 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      *
      * @param string $cell_value            
      * @param boolean $case_sensitive            
-     * @return integer[]
+     * @return int[]
      */
     public function findRowsByValue($cell_value, $case_sensitive = false);
+    
+    /**
+     * Returns an array with indexes of rows, where the column has empty values (i.e. NULL or '').
+     * 
+     * Will return an empty array for empty columns!
+     * 
+     * @return int[]
+     */
+    public function findEmptyRows() : array;
 
     /**
      * Returns an array with all values of this column, which are not present in another one.
@@ -257,6 +280,13 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @return boolean
      */
     public function isEmpty($check_values = false);
+    
+    /**
+     * Returns TRUE if the column has at least one empty value (i.e. NULL or '')
+     * 
+     * @return bool
+     */
+    public function hasEmptyValues() : bool;
 
     /**
      * Applies default and fixed values defined in the meta model to this column.
@@ -305,12 +335,26 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     public function removeRows();
 
     /**
-     * Aggregates all values in this column using the given aggregator.
+     * Returns the aggregation result for all current values of the column.
+     * 
+     * The aggregation is applied in-memory to the currently loaded values. No operation is performed
+     * on the data source!
+     * 
+     * If no aggregator is specified, the a default will be determined as follows:
+     * - If the column has totals (e.g. a sum in the footer), the aggregator of the first total will
+     * be applied.
+     * - If the column is bound to a meta attribute, the attribute's default aggregate function will
+     * be used.
+     * - Otherwise a DataSheetRuntimeError will be thrown.
+     * 
+     * If LIST-aggregators are used on a column bound to a meta attribute, the default value list
+     * delimiter will be used (unless a delimiter is specified explicitly in the aggregator)
      *
-     * @param AggregatorInterface $aggregator            
-     * @return string
+     * @param AggregatorInterface|string $aggregator 
+     * @throws DataSheetRuntimeError           
+     * @return string|float
      */
-    public function aggregate(AggregatorInterface $aggregator);
+    public function aggregate($aggregatorOrString = null);
 
     /**
      * Returns the meta object of this data column

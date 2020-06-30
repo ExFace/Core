@@ -30,8 +30,9 @@ class DataManager implements DataManagerInterface
     function getDataSource($id, $data_connection_id_or_alias = NULL)
     {
         // first check the cache
-        if ($this->active_sources[$id . '-' . $data_connection_id_or_alias])
+        if ($this->active_sources[$id . '-' . $data_connection_id_or_alias]) {
             return $this->active_sources[$id . '-' . $data_connection_id_or_alias];
+        }
         
         // if it is a new source, create it here
         $data_source = DataSourceFactory::createFromModel($this->getWorkbench(), $id, $data_connection_id_or_alias);

@@ -16,6 +16,8 @@ use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Generic task implementation to create task programmatically.
@@ -211,6 +213,7 @@ class GenericTask implements TaskInterface
             }
             $this->inputData = DataSheetFactory::createFromObject($this->getMetaObject());
         }
+        
         return $this->inputData->copy();
     }
     
@@ -320,7 +323,7 @@ class GenericTask implements TaskInterface
      */
     public function isTriggeredByWidget(): bool
     {
-        return is_null($this->originWigetId) ? false : true;
+        return $this->isTriggeredOnPage() && $this->originWigetId !== null;
     }
     
     /**
@@ -330,7 +333,7 @@ class GenericTask implements TaskInterface
      */
     public function isTriggeredOnPage(): bool
     {
-        return is_null($this->originPageSelctor) ? false : true;
+        return $this->originPageSelctor !== null;
     }
 
     /**
@@ -378,10 +381,25 @@ class GenericTask implements TaskInterface
     {
         if ($selectorOrString instanceof UiPageSelectorInterface) {
             $this->originPageSelctor = $selectorOrString;
-        } else {
+        } elseif ($selectorOrString !== '') {
             $this->originPageSelctor = new UiPageSelector($this->getWorkbench(), $selectorOrString);
         }
         $this->originPage = null;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::setPage()
+     */
+    public function setPage(UiPageInterface $page) : TaskInterface
+    {
+        if ($this->isTriggeredOnPage() === true) {
+            throw new RuntimeException('Cannot change page of a task, that is triggered by another page!');
+        }
+        $this->originPage = $page;
+        $this->originPageSelctor = $page->getSelector();
         return $this;
     }
     
@@ -394,6 +412,8 @@ class GenericTask implements TaskInterface
     {
         if (is_null($this->originPage)) {
             $this->originPage = UiPageFactory::create($this->getPageSelector());
+            $pageAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class);
+            $this->originPage = $pageAP->authorize($this->originPage);
         }
         return $this->originPage;
     }

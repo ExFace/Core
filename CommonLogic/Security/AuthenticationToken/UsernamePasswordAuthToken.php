@@ -1,13 +1,15 @@
 <?php
 namespace exface\Core\CommonLogic\Security\AuthenticationToken;
 
-use exface\Core\Interfaces\UserInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
-use exface\Core\Interfaces\WorkbenchInterface;
-use exface\Core\Factories\UserFactory;
 use exface\Core\Interfaces\Security\PasswordAuthenticationTokenInterface;
 
+/**
+ * Authentication token for the typical username+password authentication.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class UsernamePasswordAuthToken implements PasswordAuthenticationTokenInterface
 {
     private $username = null;
@@ -16,8 +18,12 @@ class UsernamePasswordAuthToken implements PasswordAuthenticationTokenInterface
     
     private $facade = null;
     
-    private $user = null;
-    
+    /**
+     * 
+     * @param string $username
+     * @param string $password
+     * @param FacadeInterface $facade
+     */
     public function __construct(string $username, string $password, FacadeInterface $facade = null)
     {
         $this->facade = $facade;
@@ -25,34 +31,41 @@ class UsernamePasswordAuthToken implements PasswordAuthenticationTokenInterface
         $this->password = $password;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PasswordAuthenticationTokenInterface::getPassword()
+     */
     public function getPassword(): string
     {
         return $this->password;
     }
 
-    public function getUser(): UserInterface
-    {
-        if ($this->user === null) {
-            $this->user = UserFactory::createFromModel($this->getWorkbench(), $this->getUsername());
-        }
-        return $this->user;
-    }
-
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticationTokenInterface::getFacade()
+     */
     public function getFacade(): ?FacadeInterface
     {
         return $this->facade;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticationTokenInterface::getUsername()
+     */
     public function getUsername() : ?string
     {
         return $this->username;
     }
-
-    protected function getWorkbench() : WorkbenchInterface
-    {
-        return $this->getFacade()->getWorkbench();
-    }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticationTokenInterface::isAnonymous()
+     */
     public function isAnonymous() : bool
     {
         return false;

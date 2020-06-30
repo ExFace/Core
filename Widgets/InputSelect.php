@@ -135,7 +135,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function getMultiSelect()
     {
-        return $this->multi_select;
+        return $this->getMultipleValuesAllowed();
     }
 
     /**
@@ -149,7 +149,20 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function setMultiSelect($value)
     {
-        $this->multi_select = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        return $this->setMultipleValuesAllowed(\exface\Core\DataTypes\BooleanDataType::cast($value));
+    }
+    
+    /**
+     * Same as setMultiSelect()
+     * 
+     * Overriding this method here hides the UXON property `multiple_values_delimiter` in
+     * `InputSelect` widgets, only showing `multi_select_value_delimiter`.
+     * 
+     * @see \exface\Core\Widgets\Input::setMultipleValuesAllowed()
+     */
+    public function setMultipleValuesAllowed(bool $value) : Input
+    {
+        return parent::setMultipleValuesAllowed($value);
     }
 
     /**
@@ -863,14 +876,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function getMultiSelectValueDelimiter()
     {
-        if (is_null($this->multi_select_value_delimiter)){
-            if ($this->getAttribute()){
-                $this->multi_select_value_delimiter = $this->getAttribute()->getValueListDelimiter();
-            } else {
-                $this->multi_select_value_delimiter = EXF_LIST_SEPARATOR;
-            }
-        }
-        return $this->multi_select_value_delimiter;
+        return $this->getMultipleValuesDelimiter();
     }
 
     /**
@@ -888,8 +894,20 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function setMultiSelectValueDelimiter($value)
     {
-        $this->multi_select_value_delimiter = $value;
-        return $this;
+        return $this->setMultipleValuesDelimiter($value);
+    }
+    
+    /**
+     * Same as setMultiSelectValueDelimiter()
+     * 
+     * Overriding this method here hides the UXON property `multiple_values_delimiter` in
+     * `InputSelect` widgets, only showing `multi_select_value_delimiter`.
+     * 
+     * @see \exface\Core\Widgets\Input::setMultipleValuesDelimiter()
+     */
+    public function setMultipleValuesDelimiter(string $value) : Input
+    {
+        return parent::setMultipleValuesDelimiter($value);
     }
     
     /**
@@ -963,6 +981,16 @@ class InputSelect extends Input implements iSupportMultiSelect
             }
         }
         return parent::setValue($value);
+    }
+    
+    /**
+     * Same as isBoundToAttribute(), but for the value text.
+     * 
+     * @return bool
+     */
+    public function isTextBoundToAttribute() : bool
+    {
+        return $this->getTextAttributeAlias() ? true : false;
     }
 }
 ?>

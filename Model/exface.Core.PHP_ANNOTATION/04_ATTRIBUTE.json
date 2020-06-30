@@ -82,6 +82,10 @@
             "attribute_alias": "RELATION_CARDINALITY"
         },
         {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -184,6 +188,7 @@
             "COMMENTS": "",
             "NAME": "Description",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "FULL_DESCRIPTION",
             "DATATYPE": "0x31310000000000000000000000000000",
             "DATA_ADDRESS": "desc",
@@ -226,6 +231,7 @@
             "COMMENTS": "",
             "NAME": "Title",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "TITLE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "desc-short",
@@ -268,6 +274,7 @@
             "COMMENTS": "",
             "NAME": "Description",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "DESCRIPTION",
             "DATATYPE": "0x31310000000000000000000000000000",
             "DATA_ADDRESS": "desc-long",
@@ -310,6 +317,7 @@
             "COMMENTS": "",
             "NAME": "PHP Class",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "CLASS",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "class",
@@ -352,6 +360,7 @@
             "COMMENTS": "",
             "NAME": "Filename",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "FILENAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "filename",
@@ -394,6 +403,7 @@
             "COMMENTS": "",
             "NAME": "File",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "FILE",
             "DATATYPE": "0x11e7b93f315ab6ca84cce4b318306b9a",
             "DATA_ADDRESS": "filename-relative",
@@ -436,6 +446,7 @@
             "COMMENTS": "",
             "NAME": "UID",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "UID",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "FQSEN",
@@ -478,6 +489,7 @@
             "COMMENTS": "",
             "NAME": "Structural element name",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "FQSEN",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "FQSEN",
@@ -520,6 +532,7 @@
             "COMMENTS": "",
             "NAME": "PHP Class Name",
             "RELATION_CARDINALITY": "",
+            "TYPE": "D",
             "ALIAS": "CLASSNAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "classname",
@@ -545,6 +558,7 @@
     "totals_rows": [],
     "filters": {
         "operator": "AND",
+        "base_object_alias": "exface.Core.ATTRIBUTE",
         "conditions": [
             {
                 "expression": "OBJECT__APP",

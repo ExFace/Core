@@ -10,11 +10,12 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
-use exface\Core\Widgets\Container;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Interfaces\Widgets\iLayoutWidgets;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
 
 /**
  * Implementation for the AjaxFacadeElementInterface based on jQuery.
@@ -165,7 +166,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     protected function getHintMaxCharsInLine()
     {
         if (is_null($this->hint_max_chars_in_line)) {
-            $this->hint_max_chars_in_line = $this->getFacade()->getConfig()->getOption('HINT_MAX_CHARS_IN_LINE');
+            $this->hint_max_chars_in_line = $this->getFacade()->getConfig()->getOption('WIDGET.ALL.HINT_MAX_CHARS_IN_LINE');
         }
         return $this->hint_max_chars_in_line;
     }
@@ -228,7 +229,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
         $headers = [];
         $subrequest_id = $this->getFacade()->getWorkbench()->getContext()->getScopeRequest()->getSubrequestId();
         if ($subrequest_id) {
-            $headers['Subrequest-ID'] = $subrequest_id;
+            $headers['X-Request-ID-Subrequest'] = $subrequest_id;
         }
         return $headers;
     }
@@ -241,7 +242,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     public function buildJsFunctionPrefix()
     {
         if (is_null($this->function_prefix)) {
-            $this->function_prefix = str_replace($this->getFacade()->getConfig()->getOption('FORBIDDEN_CHARS_IN_FUNCTION_PREFIX')->toArray(), '_', $this->getId()) . '_';
+            $this->function_prefix = str_replace($this->getFacade()->getConfig()->getOption('WIDGET.ALL.FORBIDDEN_CHARS_IN_FUNCTION_PREFIX')->toArray(), '_', $this->getId()) . '_';
         }
         return $this->function_prefix;
     }
@@ -350,7 +351,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
      */
     public function cleanId($id)
     {
-        return str_replace($this->getFacade()->getConfig()->getOption('FORBIDDEN_CHARS_IN_ELEMENT_ID')->toArray(), '_', $id);
+        return str_replace($this->getFacade()->getConfig()->getOption('WIDGET.ALL.FORBIDDEN_CHARS_IN_ELEMENT_ID')->toArray(), '_', $id);
     }
 
     /**
@@ -513,7 +514,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     public function getWidthDefault()
     {
         if (is_null($this->width_default)) {
-            $this->width_default = $this->getFacade()->getConfig()->getOption('WIDTH_DEFAULT');
+            $this->width_default = $this->getFacade()->getConfig()->getOption('WIDGET.ALL.WIDTH_DEFAULT');
         }
         return $this->width_default;
     }
@@ -538,7 +539,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     public function getWidthRelativeUnit()
     {
         if (is_null($this->width_relative_unit)) {
-            $this->width_relative_unit = $this->getFacade()->getConfig()->getOption('WIDTH_RELATIVE_UNIT');
+            $this->width_relative_unit = $this->getFacade()->getConfig()->getOption('WIDGET.ALL.WIDTH_RELATIVE_UNIT');
         }
         return $this->width_relative_unit;
     }
@@ -551,7 +552,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     public function getWidthMinimum()
     {
         if (null === $this->width_minimum) {
-            $this->width_minimum = $this->getFacade()->getConfig()->getOption('WIDTH_MINIMUM');
+            $this->width_minimum = $this->getFacade()->getConfig()->getOption('WIDGET.ALL.WIDTH_MINIMUM');
             $width = $this->getWidget()->getWidth();
             if ($width->isRelative() === true && $width->isMax() === false) {
                 $this->width_minimum = round($this->width_minimum * $this->getWidget()->getWidth()->getValue(), 0);
@@ -568,7 +569,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     public function getHeightRelativeUnit()
     {
         if (is_null($this->height_relative_unit)) {
-            $this->height_relative_unit = $this->getFacade()->getConfig()->getOption('HEIGHT_RELATIVE_UNIT');
+            $this->height_relative_unit = $this->getFacade()->getConfig()->getOption('WIDGET.ALL.HEIGHT_RELATIVE_UNIT');
         }
         return $this->height_relative_unit;
     }
@@ -653,7 +654,8 @@ JS;
      */
     public function addOnChangeScript($string)
     {
-        $this->on_change_script .= $string;
+        // Add a semicolon in case the $string does not end with one.
+        $this->on_change_script .= trim($string) . ';';
         return $this;
     }
 
@@ -781,8 +783,14 @@ JS;
             $class = $this->getFacade()->getConfig()->getOption('ICON_CLASSES.' . strtoupper($icon));
             return $class;
         } catch (ConfigOptionNotFoundError $e) {
-            $defaultPrefix = $this->getFacade()->getConfig()->getOption('ICON_CLASSES.DEFAULT_CLASS_PREFIX');
-            return ($defaultPrefix !== '' && StringDataType::startsWith($icon, $defaultPrefix, false) === false ? $defaultPrefix : '') . $icon;
+            $widget = $this->getWidget();
+            if ($widget instanceof iHaveIcon && $widget->getIconSet()) {
+                $prefix = $widget->getIconSet() . ' ' . $widget->getIconSet() . '-';
+            }
+            if (! $prefix) {
+                $prefix = $this->getFacade()->getConfig()->getOption('ICON_CLASSES.DEFAULT_CLASS_PREFIX');
+            }
+            return ($prefix !== '' && StringDataType::startsWith($icon, $prefix, false) === false ? $prefix : '') . $icon;
         }
     }
     
@@ -858,9 +866,7 @@ JS;
     }
     
     /**
-     * Returns the id of the UI page of the widget represented by this element.
-     * 
-     * This is just a shortcut to calling $this->getWidget()->getPage()->getId()
+     * Returns the selector of the UI page of the widget represented by this element.
      * 
      * @return string
      */
@@ -896,14 +902,20 @@ JS;
     }
     
     /**
-     * Returns TRUE if this element is the only one visible within it's parent container and FALSE otherwise.
+     * Returns TRUE if this element is part of a grid widget and FALSE otherwise.
      *
-     * @return boolean
+     * @return bool
      */
-    protected function isOnlyVisibleElementInContainer()
+    protected function isGridItem() : bool
     {
         $widget = $this->getWidget();
-        return $widget->hasParent() && ($widget->getParent() instanceof Container) && $widget->getParent()->countWidgetsVisible() > 1 ? true : false;
+        
+        if ($widget->hasParent() === false) {
+            return false;
+        }
+        
+        $parent = $widget->getParent();
+        return ($parent instanceof iLayoutWidgets && $parent->countWidgetsVisible() > 1);
     }
     
     /**
