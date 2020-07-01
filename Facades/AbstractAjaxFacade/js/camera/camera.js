@@ -14,6 +14,7 @@
 			hideCameraButton: null,
 			switchCameraButton: null,
 			hintText: null,
+			errorText: null,
 			currentCameraIdx: 0,
 			devices: [],
 			parent: null,
@@ -60,25 +61,17 @@
 		_initCameraUI: function() {  
 			camera._variables.devices = [];
 			camera._variables.currentCameraIdx = 0;
-			camera._getDevices().then(function(count) {				    
+			camera._getDevices().then(function(count) {
 				if (count <= 1) {	
-					camera._variables.switchCameraButton.disabled = true;
-					camera._variables.switchCameraButton.style.color = 'rgba(100, 100, 100, 0.5)';
+					camera._disableSwitchCameraButton();
 				} else {
-					camera._variables.switchCameraButton.disabled = false;
-					camera._variables.switchCameraButton.style.color = 'rgba(0, 0, 0, 1)';
+					camera._enableSwitchCameraButton();
 				}
 				//start CameraStream				
-				camera._initCameraStream(camera._variables.currentCameraIdx);
-				if (camera._options.showHints === true && camera._options.hints.length !== 0) {
-					camera._variables.hintTimer = camera._cycleHints();
-					camera._variables.hintText.parentNode.style.display = "block";
-				}
+				camera._initCameraStream(null);				
 			}, function(error) {
-				camera._variables.hintText.style.color = "rgba(242, 38, 19, 1)";
-				camera._variables.hintText.parentNode.style.top = "50%";
-				camera._variables.hintText.parentNode.style.display = "block";
-				camera._variables.hintText.value = error;
+				camera._disableSwitchCameraButton();
+				camera._showErrorMessage(error);
 				console.error(error);
 			})			
 			return;
@@ -89,17 +82,24 @@
 		 * @param int deviceIdx
 		 * @return void
 		 */
-		_initCameraStream: function (deviceIdx) {
+		_initCameraStream: function (deviceIdx = null) {
 			// stop any active streams in the window
 			camera._endStreams();
-			  
-			// we ask for a square resolution, it will cropped on top (landscape)
-			// or cropped at the sides (landscape)
-			var size = 1280;
+			var constraints;
+			
 			//console.log('Starting on Device', camera._variables.devices[deviceIdx]);
-			var constraints = {
-				video: { deviceId: camera._variables.devices[deviceIdx] }
-			};
+			if (deviceIdx === null) {
+				constraints = {
+					audio: false,
+					video: {
+						facingMode: 'environment'
+					}
+				};				
+			} else {
+				constraints = {
+					video: { deviceId: camera._variables.devices[deviceIdx] }
+				};
+			}
 			
 			navigator.mediaDevices
 			.getUserMedia(constraints)
@@ -111,12 +111,23 @@
 				camera._variables.video.srcObject = stream;
 				const track = window.stream.getVideoTracks()[0];
 				const settings = track.getSettings();
-				str = JSON.stringify(settings, null, 4);
+				//str = JSON.stringify(settings, null, 4);
 				//console.log('settings ' + str);
-				camera._variables.currentCameraIdx = deviceIdx;
-				camera._options.onStreamStart(camera._variables.devices[deviceIdx]);
-			}
-			
+				var deviceId = settings.deviceId;
+				var cameraIdx = camera._variables.devices.indexOf(deviceId);
+				if (cameraIdx === -1) {
+					camera._disableSwitchCameraButton();
+					camera._endStreams();
+					camera._showErrorMessage('No camera stream found');
+					return;
+				}
+				if (camera._options.showHints === true && camera._options.hints.length !== 0) {
+					camera._variables.hintText.style.display = "block";
+					camera._variables.hintTimer = camera._cycleHints();
+				}
+				camera._variables.currentCameraIdx = cameraIdx;
+				camera._options.onStreamStart(camera._variables.devices[cameraIdx]);
+			}			
 			function handleError(error) {
 				console.error('getUserMedia() error: ', error);
 			}
@@ -173,16 +184,6 @@
 		 * @private
 		 * @return void
 		 */
-		_closeCamera: function() {
-			camera._endStreams();
-			camera._variables.parent.style.display = "none";
-			return;
-		},
-		
-		/**
-		 * @private
-		 * @return void
-		 */
 		_endStreams: function() {
 			if (window.stream) {
 				window.stream.getTracks().forEach(function (track) {
@@ -199,6 +200,9 @@
 		 * @return void
 		 */
 		_cycleHints: function() {
+			if (camera._variables.hintTimer) {
+				return camera._variables.hintTimer;
+			}
 			var amountHints = camera._options.hints.length;
 			if (amountHints === 0) {
 				return;
@@ -218,13 +222,76 @@
 		
 		/**
 		 * @private
+		 * @return void
+		 */
+		_cycleHintsStop: function () {
+			if (camera._variables.hintTimer) {
+				clearInterval(camera._variables.hintTimer);
+				camera._variables.hintTimer = null;
+			}
+			camera._variables.hintText.style.display = 'none';
+			return;
+		},
+		
+		/**
+		 * @private
 		 * @param int hintIdx
 		 * @return void
 		 */
 		_setHint: function(hintIdx) {
-			camera._variables.hintText.value = camera._options.hints[hintIdx];
+			camera._variables.hintText.innerHTML = camera._options.hints[hintIdx];
 			camera._variables.currentHintIdx = hintIdx;
 			return;
+		},
+		
+		/**
+		 * @private
+		 * @return void
+		 */
+		_cycleCamera: function () {
+			var cameraIdx;
+			var amountCameras = camera._variables.devices.length;
+			if(camera._variables.currentCameraIdx + 1 >= amountCameras) {
+				cameraIdx = 0;
+			} else {
+				cameraIdx = camera._variables.currentCameraIdx + 1;
+			}
+			onCycle = function(cameraIdx) {},
+			camera._initCameraStream(cameraIdx);
+			return;
+		},
+		
+		/**
+		 * @private
+		 * @param string message
+		 * @return void
+		 */
+		_showErrorMessage: function(message) {
+			camera._cycleHintsStop();
+			camera._variables.hintText.style.display = 'none';
+			camera._variables.errorText.style.display = 'block';
+			camera._variables.errorText.innerHTML = message;
+			return;
+		},
+		
+		/**
+		 * @private
+		 * @return void
+		 */
+		_disableSwitchCameraButton: function() {
+			camera._variables.switchCameraButton.disabled = true;
+			camera._variables.switchCameraButton.style.color = 'rgba(100, 100, 100, 0.7)';
+			return;
+		},
+		
+		/**
+		 * @private
+		 * @return void
+		 */
+		_enableSwitchCameraButton: function() {
+			camera._variables.switchCameraButton.disabled = false;
+			camera._variables.switchCameraButton.style.color = 'rgba(255, 255, 255, 1)';
+			return;			
 		},
 		
 		init: function(parentId, options) {
@@ -252,11 +319,13 @@
 			var switchCameraButtonId = 'switchCameraButton_' + parentId;
 			var hideCameraButtonId = 'hideCameraButton_' + parentId;
 			var takePhotoButtonId = 'takePhotoButton_' + parentId;
-			var hintTextId = 'hintTextArea_' + parentId;
+			var hintTextId = 'hintText_' + parentId;
+			var errorTextId = 'errorText_' + parentId;
 			
 			var html = '<div id="Cameracontainer_'+parentId+'">'+
                 '<div id="vid_container_'+parentId+'" class="vid_container">'+
-                	'<div class="hintTextDiv"><input id = "'+hintTextId+'" class="hintText" disabled></input></div>'+
+                	'<div class="hintText" id = "'+hintTextId+'"></div>'+
+                	'<div class="errorText" id = "'+errorTextId+'"></div>'+
                     '<video id="video_'+parentId+'" class="video" autoplay playsinline></video>'+
                     '<div id="video_overlay_'+parentId+'" class="video_overlay"></div>'+
                 '</div>'+
@@ -278,6 +347,7 @@
 			camera._variables.hideCameraButton = document.getElementById(hideCameraButtonId);
 			camera._variables.switchCameraButton = document.getElementById(switchCameraButtonId);
 			camera._variables.hintText = document.getElementById(hintTextId);
+			camera._variables.errorText = document.getElementById(errorTextId);
 			
 			if (camera._options.showCycleCamera === false) {
 				camera._variables.switchCameraButton.style.display = "none";
@@ -298,15 +368,7 @@
 			});
 			  
 			camera._variables.switchCameraButton.addEventListener('click', function () {
-				var cameraIdx;
-				var amountCameras = camera._variables.devices.length;
-				if(camera._variables.currentCameraIdx + 1 >= amountCameras) {
-					cameraIdx = 0;
-				} else {
-					cameraIdx = camera._variables.currentCameraIdx + 1;
-				}
-				onCycle = function(cameraIdx) {},
-				camera._initCameraStream(cameraIdx);
+				camera._cycleCamera();
 			});
 			
 			window.addEventListener(
@@ -317,8 +379,8 @@
 					if (screen.orientation) angle = screen.orientation.angle;
 					else angle = window.orientation;
 					
-					var guiControls = document.getElementById('gui_controls'+parentId).classList;
-					var vidContainer = document.getElementById('vid_container'+parentId).classList;
+					var guiControls = document.getElementById('gui_controls_'+parentId).classList;
+					var vidContainer = document.getElementById('vid_container_'+parentId).classList;
 					
 					if (angle == 270 || angle == -90) {
 						guiControls.add('left');
@@ -341,21 +403,17 @@
 				console.warn('Camera not initialized. Call camera.init before camera.open!');
 				return;
 			}
-			camera._variables.parent.style.display = "inline-block";
+			camera._variables.parent.style.display = 'inline-block';
 			camera._initCameraUI();
 			camera._options.onOpen();
 		},
 		
 		close: function() {
 			camera._options.onClose();
-			camera._closeCamera();
-			if (camera._variables.hintTimer) {
-				clearInterval(camera._variables.hintTimer);
-			}
-		},
-		
-		getCurrentDeviceId: function() {
-			return camera._variables.devices[_currentCameraIdx];
+			camera._endStreams();
+			camera._cycleHintsStop();
+			camera._variables.errorText.style.display = 'none';
+			camera._variables.parent.style.display = 'none';
 		},
 	};
 	return camera;
