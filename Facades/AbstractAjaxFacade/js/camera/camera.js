@@ -9,6 +9,7 @@
 	var camera = {			
 		_variables: {
 			video: null,
+			videoId: null,
 			videoOverlay: null,
 			takePhotoButton: null,
 			hideCameraButton: null,
@@ -61,20 +62,37 @@
 		_initCameraUI: function() {  
 			camera._variables.devices = [];
 			camera._variables.currentCameraIdx = 0;
-			camera._getDevices().then(function(count) {
-				if (count <= 1) {	
+			//intial prompt to ask for permissions to use cameras
+			navigator.mediaDevices.getUserMedia({audio: false, video: true})
+			.then(handleSuccess)
+			.catch(handleError);
+			
+			function handleSuccess(stream) {
+				stream.getTracks().forEach(function (track) {
+					track.stop();
+				});
+				camera._getDevices().then(function(count) {
+					if (count <= 1) {	
+						camera._disableSwitchCameraButton();
+					} else {
+						camera._enableSwitchCameraButton();
+					}
+					//start CameraStream
+					camera._initCameraStream(null);				
+				}, function(error) {
 					camera._disableSwitchCameraButton();
-				} else {
-					camera._enableSwitchCameraButton();
-				}
-				//start CameraStream				
-				camera._initCameraStream(null);				
-			}, function(error) {
+					camera._showErrorMessage(error);
+					console.error(error);
+				})			
+				return;
+			}
+			
+			function handleError(error) {
 				camera._disableSwitchCameraButton();
-				camera._showErrorMessage(error);
+				camera._showErrorMessage('Can not access device cameras! Grant permission to use cameras for this app!');
 				console.error(error);
-			})			
-			return;
+				return;
+			}
 		},
 		
 		/**
@@ -126,8 +144,9 @@
 					camera._variables.hintTimer = camera._cycleHints();
 				}
 				camera._variables.currentCameraIdx = cameraIdx;
-				camera._options.onStreamStart(camera._variables.devices[cameraIdx]);
-			}			
+				camera._options.onStreamStart(camera._variables.devices[cameraIdx], camera._variables.videoId);
+			}
+			
 			function handleError(error) {
 				console.error('getUserMedia() error: ', error);
 			}
@@ -190,7 +209,7 @@
 					//console.log('Stopping', track);
 					track.stop();
 				});
-				}
+			}
 			camera._options.onStreamEnd();
 			return;
 		},
@@ -309,7 +328,7 @@
 					onOpen: function() {},
 					onClose: function() {},
 					onCycle: function(cameraIdx) {},
-					onStreamStart: function(deviceId) {},
+					onStreamStart: function(deviceId, videoId) {},
 					onStreamEnd: function() {},
 					hints: []
 			}
@@ -321,12 +340,14 @@
 			var takePhotoButtonId = 'takePhotoButton_' + parentId;
 			var hintTextId = 'hintText_' + parentId;
 			var errorTextId = 'errorText_' + parentId;
+			var videoId = 'video_' + parentId;
+			camera._variables.videoId = videoId;
 			
 			var html = '<div id="Cameracontainer_'+parentId+'">'+
                 '<div id="vid_container_'+parentId+'" class="vid_container">'+
                 	'<div class="hintText" id = "'+hintTextId+'"></div>'+
                 	'<div class="errorText" id = "'+errorTextId+'"></div>'+
-                    '<video id="video_'+parentId+'" class="video" autoplay playsinline></video>'+
+                    '<video id="'+videoId+'" class="video" autoplay playsinline></video>'+
                     '<div id="video_overlay_'+parentId+'" class="video_overlay"></div>'+
                 '</div>'+
                 '<div id="gui_controls_'+parentId+'" class="gui_controls">'+	                	
