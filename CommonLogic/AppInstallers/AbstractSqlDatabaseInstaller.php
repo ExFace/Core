@@ -153,22 +153,34 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     {
         $migrationsInApp = $this->getMigrationsFromApp($source_absolute_path);
         $migrationsInDB = $this->getMigrationsFromDb($this->getDataConnection());
-        $migratedUp = 0;
-        $migratedDown = 0;
+        $migratedUpSuccess = 0;
+        $migratedUpFailed = 0;
+        $migratedDownSuccess = 0;
+        $migratedDownFailed = 0;
 
         foreach ($this->getDownMigrations($migrationsInDB, $migrationsInApp) as $migration) {
-            $this->migrateDown($migration, $this->getDataConnection());
-            $migratedDown++;
+            $success = $this->migrateDown($migration, $this->getDataConnection());
+            if ($success === true) {
+                $migratedDownSuccess++;
+            } else {
+                $migratedDownFailed++;
+            }
         }
         foreach ($this->getUpMigrations($migrationsInDB, $migrationsInApp) as $migration) {
-            $this->migrateUp($migration, $this->getDataConnection());
-            $migratedUp++;
+            $success = $this->migrateUp($migration, $this->getDataConnection());
+            if ($success === true) {
+                $migratedUpSuccess++;
+            } else {
+                $migratedUpFailed++;
+            }
         }
         
-        if ($migratedDown === 0 && $migratedUp === 0) {
+        if ($migratedDownSuccess === 0 && $migratedDownFailed === 0 && $migratedUpSuccess === 0 && $migratedUpFailed === 0) {
             $message = 'not needed';
         } else {
-            $message = ($migratedUp > 0 ? ' ' . $migratedUp . ' UP' : '') . ($migratedDown > 0 ? ' ' . $migratedDown . ' DOWN' : '');
+            $message = PHP_EOL;
+            $message .= ($migratedUpSuccess > 0 ? $indent . $migratedUpSuccess . ' UP successful' . PHP_EOL : '') . ($migratedUpFailed > 0 ? $indent . $migratedUpFailed . ' UP failed, see logs for more information' . PHP_EOL : '');
+            $message .= ($migratedDownSuccess > 0 ? $indent . $migratedUpSuccess . ' DOWN successful' . PHP_EOL : '') . ($migratedDownFailed > 0 ? $indent . $migratedDownFailed . ' DOWN failed, see logs for more information' . PHP_EOL : '');
         }
         
         return $indent . 'SQL migrations: ' . $message;
@@ -449,18 +461,18 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * 
      * @param SqlMigration $migration
      * @param SqlDataConnectorInterface $connection
-     * @return SqlMigration
+     * @return bool
      */
-    abstract protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration;
+    abstract protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection) : bool;
     
     /**
      * Function to rollback migrations in Database
      * 
      * @param SqlMigration $migration
      * @param SqlDataConnectorInterface $connection
-     * @return SqlMigration
+     * @return bool
      */
-    abstract protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection): SqlMigration;
+    abstract protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection): bool;
 
     /**
      * Function to get all on the database currently applied migrations
@@ -478,7 +490,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param string $folder_name
      * @return string
      */
-    protected function runSqlFromFilesInFolder(string $source_absolute_path, array $folders): string
+    protected function runSqlFromFilesInFolder(string $source_absolute_path, array $folders, string $indent): string
     {
         $files = $this->getFiles($source_absolute_path, $folders);
         $doneCnt = 0;

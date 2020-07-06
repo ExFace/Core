@@ -115,7 +115,7 @@ CREATE TABLE {$this->getMigrationsTableName()}(
 	[migration_name] [nvarchar](300) NOT NULL,
 	[up_datetime] [datetime] NOT NULL DEFAULT {$this->buildSqlFunctionNow()},
 	[up_script] [nvarchar](max) NOT NULL,
-	[up_result] [nvarchar](max) NOT NULL,
+	[up_result] [nvarchar](max) NULL,
 	[down_datetime] [datetime] NULL,
 	[down_script] [nvarchar](max) NOT NULL,
 	[down_result] [nvarchar](max) NULL,
@@ -141,10 +141,11 @@ SQL;
         return <<<SQL
         
 ALTER TABLE {$this->getMigrationsTableName()} ADD COLUMN(
-    `failed_flag` tinyint(1) NOT NULL DEFAULT 0,
-    `failed_message` longtext NULL,
-    `skip_flag` tinyint(1) NOT NULL DEFAULT 0
+    [failed_flag] tinyint(1) NOT NULL DEFAULT 0,
+    [failed_message] longtext NULL,
+    [skip_flag] tinyint(1) NOT NULL DEFAULT 0
 );
+ALTER TABLE {$this->getMigrationsTableName()} MODIFY [up_result] longtext;
 
 SQL;
     }
