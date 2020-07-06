@@ -73,7 +73,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-03-22 13:40:27",
-            "MODIFIED_ON": "2020-03-22 13:40:59",
+            "MODIFIED_ON": "2020-07-06 07:26:15",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea6c42b1bda91ea3480205857feb80",
@@ -85,7 +85,7 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "0x11ea6c428d7e7e9fa3480205857feb80",
             "TARGET_OBJECT": "",
-            "CONDITION_UXON": null,
+            "CONDITION_UXON": "{\"apply_to_unpublished\":true}",
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": ""
