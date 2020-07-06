@@ -136,7 +136,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::migrateUp()
      */
-    protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection): SqlMigration
+    protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection): bool
     {
         if ($migration->isUp() == TRUE) {
             throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' already up!');
@@ -149,13 +149,14 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             $sqlMigrationInsert = $this->buildSqlMigrationInsert($migration, $up_result_string);
             $connection->runSql($sqlMigrationInsert);
             $connection->transactionCommit();
-            $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ': script UP executed successfully ');            
+            $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ': script UP executed successfully ');
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
             $connection->transactionRollback();
             $migration->setFailed(true)->setFailedMessage($e->getMessage());
             $sql_script = $this->buildSqlMigrationInsertFailed($migration);
             $this->migrationFailed($migration, $connection, $sql_script);
+            return false;
             //throw new InstallerRuntimeError($this, 'Migration up ' . $migration->getMigrationName() . ' failed!', null, $e);
         }
         
@@ -168,7 +169,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         }
         $migration->setUp($select_array[0]['up_datetime'], $up_result_string);*/
         
-        return $migration;
+        return true;
     }
 
     /**
@@ -176,7 +177,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::migrateDown()
      */
-    protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection): SqlMigration
+    protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection): bool
     {
         if ($migration->isUp() == FALSE) {
             throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' already down!');
@@ -184,7 +185,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         $this->ensureMigrationsTableExists($connection);
         if (empty($migration->getDownScript())) {
             $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ': Migration has no down script');
-            return $migration;
+            return false;
         }
         try {
             $connection->transactionStart();
@@ -201,6 +202,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             $migration->setFailed(true)->setFailedMessage($e->getMessage());
             $sql_script = $this->buildSqlMigrationDownFailed($migration);
             $this->migrationFailed($migration, $connection, $sql_script);
+            return false;
             //throw new InstallerRuntimeError($this, 'Migration down ' . $migration->getMigrationName() . ' failed!');
         }
         
@@ -213,7 +215,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         }
         $migration->setDown($select_array[0]['down_datetime'], $down_result_string);*/
         
-        return $migration;
+        return true;
     }
 
     /**
@@ -230,11 +232,11 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             $connection->transactionStart();
             $connection->runSql($sql_script);
             $connection->transactionCommit();
-            $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ': wrote failed log successfully ');
+            $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ' failed. Log entry added. See migration logs for this app for further information and to fix the SQL script.');
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
             $connection->transactionRollback();
-            throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ': writing failed log failed', null, $e);
+            throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' failed. No log entry could be added.', null, $e);
         }
         return $migration;
     }
@@ -279,7 +281,7 @@ CREATE TABLE IF NOT EXISTS `{$this->getMigrationsTableName()}` (
     `migration_name` varchar(300) NOT NULL,
     `up_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `up_script` longtext NOT NULL,
-    `up_result` longtext NOT NULL,
+    `up_result` longtext,
     `down_datetime` timestamp NULL,
     `down_script` longtext NOT NULL,
     `down_result` longtext NULL,
@@ -320,6 +322,7 @@ ALTER TABLE {$this->getMigrationsTableName()} ADD COLUMN (
     `failed_message` longtext NULL,
     `skip_flag` tinyint(1) NOT NULL DEFAULT 0
 );
+ALTER TABLE {$this->getMigrationsTableName()} MODIFY `up_result` longtext;
 
 SQL;
     }
