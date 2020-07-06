@@ -124,7 +124,9 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         foreach ($migrs_db as $a) {
             $mig = new SqlMigration($a['migration_name'], $a['up_script'], $a['down_script']);
             $mig->initFromDb($a);
-            $migrs[] = $mig;
+            if ($mig->isUp()) {
+                $migrs[] = $mig;
+            }
         }
         return $migrs;
     }
@@ -313,7 +315,7 @@ SQL;
     {
         return <<<SQL
         
-ALTER TABLE {$this->getMigrationsTableName()} ADD COLUMN IF NOT EXISTS (
+ALTER TABLE {$this->getMigrationsTableName()} ADD COLUMN (
     `failed_flag` tinyint(1) NOT NULL DEFAULT 0,
     `failed_message` longtext NULL,
     `skip_flag` tinyint(1) NOT NULL DEFAULT 0
