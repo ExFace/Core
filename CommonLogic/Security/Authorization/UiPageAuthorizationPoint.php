@@ -7,9 +7,19 @@ use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
+use exface\Core\Events\Security\OnAuthorizedEvent;
 
 /**
+ * Authorizes access to UI pages and menu tree items.
  * 
+ * In addition to the regular behavior of authorization points, this one will grant
+ * access if the regular decision is `not applicable` or `indeterminate` in case
+ * the page was created by the user requesting access. This makes sure, users have
+ * access to a new page immediately after creating it. It also ensures, that a user
+ * "sees" his own unpublished pages no matter what policies apply to his or her
+ * account.
  * 
  * @method UiPageAuthorizationPolicy[] getPolicies()
  * 
@@ -45,6 +55,43 @@ class UiPageAuthorizationPoint extends AbstractAuthorizationPoint
         $permissionsGenerator = $this->evaluatePolicies($pageOrMenuNode, $userOrToken);
         $this->combinePermissions($permissionsGenerator, $userOrToken, $pageOrMenuNode);
         return $pageOrMenuNode;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Security\Authorization\AbstractAuthorizationPoint::combinePermissions()
+     */
+    protected function combinePermissions(iterable $permissions, UserImpersonationInterface $userOrToken, $resource = null) : CombinedPermission
+    {
+        try {
+            $decision = parent::combinePermissions($permissions, $userOrToken, $resource);
+        } catch (AuthorizationExceptionInterface $e) {
+            // If the decision in "not applicable", see if the current user is the creator of the
+            // page or menu item. If so, suppress the exception thus giving access.
+            if ($resource instanceof UiMenuItemInterface) {
+                if (! $decision) {
+                    $decision = $e->getPermission();
+                }
+                if ($resource->isPublished() === false && ($decision->isNotApplicable() || $decision->isIndeterminate())) {
+                    if ($userOrToken instanceof AuthenticationTokenInterface) {
+                        $user = $this->getWorkbench()->getSecurity()->getUser($userOrToken);
+                    } else {
+                        $user = $userOrToken;
+                    }
+                    $creatorSelector = $resource->getCreatedByUserSelector();
+                    switch (true) {
+                        case $creatorSelector->isUid() && $creatorSelector->toString() === $user->getUid():
+                        case $creatorSelector->isUsername() && $creatorSelector->toString() === $user->getUsername():
+                            $event = new OnAuthorizedEvent($this, $userOrToken, $resource);
+                            $this->getWorkbench()->eventManager()->dispatch($event);
+                            return $decision;
+                    }
+                }
+            }
+            throw $e;
+        }
+        return $decision;
     }
     
     /**

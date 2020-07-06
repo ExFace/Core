@@ -19,6 +19,15 @@ use exface\Core\Exceptions\InvalidArgumentException;
 /**
  * Policy to restrict access to UI pages and navigation (menu) items.
  * 
+ * By default, policies are only applied to published pages only. This results
+ * in an `not applicable` authorization decision for unpublished pages, hiding
+ * them by default. 
+ * 
+ * NOTE: the creator of a page can see it even if the policy evaluation
+ * result in `not applicable` or `indeterminate`. This also means, that unpublished
+ * pages created by the user will be visible to him or her unless other policies
+ * with `apply_to_unpublished` = `true` exist for this user!
+ * 
  * @author Andrej Kabachnik
  *
  */
@@ -38,7 +47,7 @@ class UiPageAuthorizationPolicy implements AuthorizationPolicyInterface
     
     private $effect = null;
     
-    private $hideUnpublished = true;
+    private $applyToUnpublished = false;
     
     /**
      * 
@@ -106,17 +115,11 @@ class UiPageAuthorizationPolicy implements AuthorizationPolicyInterface
                 $applied = true;
             }
             
-            // Deny access to unpublished menu items unless their author is the current user
-            if ($menuItem->isPublished() === false && $this->getHideUnpublished() === true) {
-                $creatorSelector = $menuItem->getCreatedByUserSelector();
-                switch (true) {
-                    case $creatorSelector->isUid() && $creatorSelector->toString() === $user->getUid():
-                        break;
-                    case $creatorSelector->isUsername() && $creatorSelector->toString() === $user->getUsername():
-                        break;
-                    default:
-                        return PermissionFactory::createFromPolicyEffectInverted($this->getEffect(), $this);
-                }
+            // Return unapplicable if page is not published and the policy cannot be applied to unpublished items
+            if ($menuItem->isPublished() === false && $this->isApplicableToUnpublished() === false) {
+                return PermissionFactory::createNotApplicable($this);
+            } else {
+                $applied = true;
             }
             
             if ($applied === false) {
@@ -151,27 +154,36 @@ class UiPageAuthorizationPolicy implements AuthorizationPolicyInterface
     }
     
     /**
-     * Set to FALSE to show give access to unpublished pages and menu items.
+     * Set to `TRUE` to apply this policy to unpublished pages and menu items too.
      * 
-     * By default, only the creator of an unpublished page can see it. All
-     * other users require a special policy matching that page and having
-     * `hide_unpublished` set to `true`;
+     * By default, policies are only applied to published pages only. This results
+     * in an `not applicable` authorization decision for unpublished pages, hiding
+     * them by default. 
      * 
-     * @uxon-property hide_unpublished
+     * NOTE: the creator of a page can see it even if the policy evaluation
+     * result in `not applicable` or `indeterminate`. This also means, that unpublished
+     * pages created by the user will be visible to him or her unless other policies
+     * with `apply_to_unpublished` = `true` exist for this user!
+     * 
+     * @uxon-property apply_to_unpublished
      * @uxon-type boolean
-     * @uxon-default true
+     * @uxon-default false
      * 
      * @param bool $trueOrFalse
      * @return UiPageAuthorizationPolicy
      */
-    protected function setHideUnpublished(bool $trueOrFalse) : UiPageAuthorizationPolicy
+    protected function setApplyToUnpublished(bool $trueOrFalse) : UiPageAuthorizationPolicy
     {
-        $this->hideUnpublished = $trueOrFalse;
+        $this->applyToUnpublished = $trueOrFalse;
         return $this;
     }
     
-    protected function getHideUnpublished() : bool
+    /**
+     * 
+     * @return bool
+     */
+    protected function isApplicableToUnpublished() : bool
     {
-        return $this->hideUnpublished;
+        return $this->applyToUnpublished;
     }
 }
