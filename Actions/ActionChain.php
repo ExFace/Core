@@ -126,7 +126,7 @@ class ActionChain extends AbstractAction
         } elseif ($uxon_array_or_action_list instanceof UxonObject) {
             foreach ($uxon_array_or_action_list as $nr => $action_or_uxon) {
                 if ($action_or_uxon instanceof UxonObject) {
-                    $action = ActionFactory::createFromUxon($this->getWorkbench(), $action_or_uxon);
+                    $action = ActionFactory::createFromUxon($this->getWorkbench(), $action_or_uxon, $this->getWidgetDefinedIn());
                 } elseif ($action_or_uxon instanceof ActionInterface) {
                     $action = $action_or_uxon;
                 } else {
