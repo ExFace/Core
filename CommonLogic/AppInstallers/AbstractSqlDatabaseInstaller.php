@@ -153,34 +153,24 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     {
         $migrationsInApp = $this->getMigrationsFromApp($source_absolute_path);
         $migrationsInDB = $this->getMigrationsFromDb($this->getDataConnection());
-        $migratedUpSuccess = 0;
-        $migratedUpFailed = 0;
-        $migratedDownSuccess = 0;
-        $migratedDownFailed = 0;
+        $migratedUp = 0;
+        $migratedDown = 0;
 
         foreach ($this->getDownMigrations($migrationsInDB, $migrationsInApp) as $migration) {
-            $success = $this->migrateDown($migration, $this->getDataConnection());
-            if ($success === true) {
-                $migratedDownSuccess++;
-            } else {
-                $migratedDownFailed++;
-            }
+            $this->migrateDown($migration, $this->getDataConnection());
+            $migratedDown++;
         }
         foreach ($this->getUpMigrations($migrationsInDB, $migrationsInApp) as $migration) {
-            $success = $this->migrateUp($migration, $this->getDataConnection());
-            if ($success === true) {
-                $migratedUpSuccess++;
-            } else {
-                $migratedUpFailed++;
-            }
+            $this->migrateUp($migration, $this->getDataConnection());
+            $migratedUp++;
         }
         
-        if ($migratedDownSuccess === 0 && $migratedDownFailed === 0 && $migratedUpSuccess === 0 && $migratedUpFailed === 0) {
+        if ($migratedDown === 0 && $migratedUp === 0) {
             $message = 'not needed';
         } else {
             $message = PHP_EOL;
-            $message .= ($migratedUpSuccess > 0 ? $indent . $migratedUpSuccess . ' UP successful' . PHP_EOL : '') . ($migratedUpFailed > 0 ? $indent . $migratedUpFailed . ' UP failed, see logs for more information' . PHP_EOL : '');
-            $message .= ($migratedDownSuccess > 0 ? $indent . $migratedUpSuccess . ' DOWN successful' . PHP_EOL : '') . ($migratedDownFailed > 0 ? $indent . $migratedDownFailed . ' DOWN failed, see logs for more information' . PHP_EOL : '');
+            $message .= ($migratedUp > 0 ? $indent . $indent . $migratedUp . ' UP successful' . PHP_EOL : '');
+            $message .= ($migratedDown > 0 ? $indent . $indent . $migratedDown . ' DOWN successful' . PHP_EOL : '');
         }
         
         return $indent . 'SQL migrations: ' . $message;
@@ -463,7 +453,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param SqlDataConnectorInterface $connection
      * @return bool
      */
-    abstract protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection) : bool;
+    abstract protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration;
     
     /**
      * Function to rollback migrations in Database
@@ -472,7 +462,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param SqlDataConnectorInterface $connection
      * @return bool
      */
-    abstract protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection): bool;
+    abstract protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection): SqlMigration;
 
     /**
      * Function to get all on the database currently applied migrations
@@ -580,17 +570,23 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
             foreach ($migrations_in_db as $mDb) {
                 if ($mApp->equals($mDb)) {
                     $present = true;
-                    if ($mDb->isFailed() && empty($mDb->getDownDatetime()) && !$mDb->isSkipped()) {
-                        // There was an error on the last execution of the UP-script and the script is not sKipped.
-                        $arr[] = $mDb->setUpScript($mApp->getUpScript())->setDownScript($mApp->getDownScript());
-                    }
-                    if (!$mDb->isFailed() && !empty($mDb->getDownDatetime()) && !$mDb->isSkipped()) {
-                        // Reinstallation of the migration.
-                        $arr[] = $mDb->setUpScript($mApp->getUpScript())->setDownScript($mApp->getDownScript());
+                    if (!$mDb->isSkipped()) {
+                        //if migration is not marked as skipped, evalutate further
+                        if ($mDb->isFailed() && empty($mDb->getDownDatetime())) {
+                            // There was an error on the last execution of the UP-script and the script is not skipped or downed.
+                            // Migration will be exectued again.
+                            $arr[] = $mDb->setUpScript($mApp->getUpScript())->setDownScript($mApp->getDownScript());
+                        }
+                        if (!$mDb->isFailed() && !empty($mDb->getDownDatetime())) {
+                            // Latest status of this migration is that it is down and not marked as skipped.
+                            // Reinstallation of the migration. 
+                            $arr[] = $mDb->setUpScript($mApp->getUpScript())->setDownScript($mApp->getDownScript());
+                        }
                     }
                     break;
                 }
             }
+            // if migration has no entry in database yet, UP script will be run
             if ($present === false) {
                 $arr[] = $mApp;
             }
@@ -616,7 +612,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
                     break;
                 }
             }
-            if ($present === false && !$mDb->isSkipped()) {
+            // The migration is not present in the app anymore, is `up` and is not marked as `skip` in the database.
+            // The down script will be run.
+            if ($present === false && $mDb->isUp() && !$mDb->isSkipped()) {
                 $arr[] = $mDb;
             }
         }
