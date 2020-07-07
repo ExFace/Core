@@ -85,28 +85,6 @@ SQL;
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::ensureMigrationsTableExists()
-     */
-    /*protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : void
-    {
-        $sql = $this->buildSqlMigrationTableShow();
-        $result = $connection->runSql($sql)->getResultArray();
-        if ($result[0]['id'] === NULL) {
-            try {
-                $migrations_table_create = $this->buildSqlMigrationTableCreate();
-                $this->runSqlMultiStatementScript($connection, $migrations_table_create);
-                $this->getWorkbench()->getLogger()->debug('SQL migration table ' . $this->getMigrationsTableName() . ' created! ');
-            } catch (\Throwable $e) {
-                $this->getWorkbench()->getLogger()->logException($e);
-                throw new InstallerRuntimeError($this, "Generating Migration table '{$this->getMigrationsTableName()}' failed! Error {$e}");
-            }
-        }
-        return;
-    }*/
-    
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::buildSqlCreateMigrationTable()
      */
     protected function buildSqlMigrationTableCreate() : string
