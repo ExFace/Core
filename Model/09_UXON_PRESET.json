@@ -515,7 +515,7 @@
         },
         {
             "CREATED_ON": "2019-10-01 19:09:17",
-            "MODIFIED_ON": "2019-10-02 09:01:38",
+            "MODIFIED_ON": "2020-07-07 08:14:36",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e47ef3ad6205bacde4b318306b9a",
@@ -523,7 +523,7 @@
             "NAME": "ColorIndicator with text-values and backgroud-fill",
             "DESCRIPTION": "Colors will be applied to text-background depending on the text shown: \"Pending\", \"Error\" and \"Done\" will be colored yellow, red and green, while all other texts will have transparent background.",
             "PROTOTYPE": "exface\/Core\/Widgets\/ColorIndicator.php",
-            "UXON": "{\"widget_type\":\"ColorIndicator\",\"attribute_alias\":\"\",\"fill\":true,\"color_scale\":{\"Pending\":\"yellow\",\"Error\":\"red\",\"Done\":\"green\",\"\":\"transparent\"}}",
+            "UXON": "{\"widget_type\":\"ColorIndicator\",\"attribute_alias\":\"\",\"fill\":true,\"color_only\":false,\"color_scale\":{\"Pending\":\"yellow\",\"Error\":\"red\",\"Done\":\"green\",\"\":\"transparent\"}}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget"
         },
