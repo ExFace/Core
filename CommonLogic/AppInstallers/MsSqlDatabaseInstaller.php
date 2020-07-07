@@ -74,9 +74,9 @@ class MsSqlDatabaseInstaller extends MySqlDatabaseInstaller
     {
         return <<<SQL
 
-IF OBJECT_ID('[dbo].[_dfgsfasfasf]', 'U') IS NOT NULL
+IF OBJECT_ID('{$this->getMigrationsTableName()}', 'U') IS NOT NULL
 BEGIN
- SELECT OBJECT_ID('[dbo].[_migrations]', 'U') AS id
+ SELECT OBJECT_ID('{$this->getMigrationsTableName()}', 'U') AS id
 END
 
 SQL;
@@ -146,12 +146,11 @@ SQL;
         //no check if columns exists, if so probably will give an error
         return <<<SQL
         
-ALTER TABLE {$this->getMigrationsTableName()} ADD COLUMN(
+ALTER TABLE {$this->getMigrationsTableName()} ADD
     [failed_flag] tinyint NOT NULL DEFAULT 0,
     [failed_message] [nvarchar](max) NULL,
-    [skip_flag] tinyint NOT NULL DEFAULT 0
-);
-ALTER TABLE {$this->getMigrationsTableName()} MODIFY [up_result] [nvarchar](max) NULL;
+    [skip_flag] tinyint NOT NULL DEFAULT 0;
+ALTER TABLE {$this->getMigrationsTableName()} ALTER COLUMN [up_result] [nvarchar](max) NULL;
 
 SQL;
     }
