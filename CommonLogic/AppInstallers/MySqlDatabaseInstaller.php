@@ -102,7 +102,6 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             }
             return;
         }
-
         return;
     }
 
@@ -183,7 +182,6 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             $connection->transactionStart();
             $down_result = $this->runSqlMultiStatementScript($connection, $migration->getDownScript(), false);
             $down_result_string = $this->stringifyQueryResults($down_result);
-            //da Transaction Rollback nicht korrekt funktioniert
             $sql_script = $this->buildSqlMigrationDownUpdate($migration, $down_result_string);
             $connection->runSql($sql_script);
             $connection->transactionCommit();

@@ -74,7 +74,11 @@ class MsSqlDatabaseInstaller extends MySqlDatabaseInstaller
     {
         return <<<SQL
 
-SELECT OBJECT_ID('{$this->getMigrationsTableName()}', 'U') AS id;
+IF OBJECT_ID('[dbo].[_dfgsfasfasf]', 'U') IS NOT NULL
+BEGIN
+ SELECT OBJECT_ID('[dbo].[_migrations]', 'U') AS id
+END
+
 SQL;
     }
     
@@ -83,11 +87,11 @@ SQL;
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::ensureMigrationsTableExists()
      */
-    protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : void
+    /*protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : void
     {
         $sql = $this->buildSqlMigrationTableShow();
         $result = $connection->runSql($sql)->getResultArray();
-        if ($result [0]['id'] === NULL) {
+        if ($result[0]['id'] === NULL) {
             try {
                 $migrations_table_create = $this->buildSqlMigrationTableCreate();
                 $this->runSqlMultiStatementScript($connection, $migrations_table_create);
@@ -98,7 +102,7 @@ SQL;
             }
         }
         return;
-    }
+    }*/
     
     /**
      * 
@@ -120,7 +124,7 @@ CREATE TABLE {$this->getMigrationsTableName()}(
 	[down_script] [nvarchar](max) NOT NULL,
 	[down_result] [nvarchar](max) NULL,
     [failed_flag] tinyint(1) NOT NULL DEFAULT 0,
-    [failed_messag] longtext NULL,
+    [failed_message] longtext NULL,
     [skip_flag] tinyint(1) NOT NULL DEFAULT 0    
     CONSTRAINT [{$pkName}] PRIMARY KEY CLUSTERED 
     (

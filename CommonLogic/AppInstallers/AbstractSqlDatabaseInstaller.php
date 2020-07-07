@@ -734,7 +734,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
                 $connection->transactionCommit();
             }
         } catch (\Throwable $e) {
-            $connection->transactionRollback();
+            if ($wrapInTransaction === true) {
+                $connection->transactionRollback();
+            }
             throw $e;
         }
         
