@@ -94,7 +94,7 @@ SQL;
                 $this->getWorkbench()->getLogger()->debug('SQL migration table ' . $this->getMigrationsTableName() . ' created! ');
             } catch (\Throwable $e) {
                 $this->getWorkbench()->getLogger()->logException($e);
-                throw new InstallerRuntimeError($this, "Generating Migration table '{$this->getMigrationsTableName()}' failed!");
+                throw new InstallerRuntimeError($this, "Generating Migration table '{$this->getMigrationsTableName()}' failed! Error {$e}");
             }
         }
         return;
@@ -121,12 +121,14 @@ CREATE TABLE {$this->getMigrationsTableName()}(
 	[down_result] [nvarchar](max) NULL,
     [failed_flag] tinyint(1) NOT NULL DEFAULT 0,
     [failed_messag] longtext NULL,
-    [skip_flag] tinyint(1) NOT NULL DEFAULT 0
- CONSTRAINT [{$pkName}] PRIMARY KEY CLUSTERED 
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+    [skip_flag] tinyint(1) NOT NULL DEFAULT 0    
+    CONSTRAINT [{$pkName}] PRIMARY KEY CLUSTERED 
+    (
+	   [id] ASC
+    )
+    WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY];
+
 SQL;
     }
     
