@@ -167,11 +167,11 @@ SQL;
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::buildSqlMigrationTableInsert()
+     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::buildSqlMigrationUpInsert()
      */
-    protected function buildSqlMigrationInsert(SqlMigration $migration, string $up_result_string) : string
+    protected function buildSqlMigrationUpInsert(SqlMigration $migration, string $up_result_string) : string
     {
-        return parent::buildSqlMigrationInsert($migration, $up_result_string) . "SELECT SCOPE_IDENTITY();";
+        return parent::buildSqlMigrationUpInsert($migration, $up_result_string) . "SELECT SCOPE_IDENTITY();";
     }    
     
     /**

@@ -113,8 +113,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      */
     protected function getMigrationsFromDb(SqlDataConnectorInterface $connection): array
     {
-        $this->ensureMigrationsTableExists($connection);
-        //DESC, damit Down Skripte von neuster zu ältester Version ausgeführt werden
+        $this->ensureMigrationsTableExists($connection);        
         $sql = $this->buildSqlSelectMigrationsFromDb();
         $migrs_db = $connection->runSql($sql)->getResultArray();
         $migrs = array();
@@ -124,8 +123,8 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         foreach ($migrs_db as $a) {
             $mig = new SqlMigration($a['migration_name'], $a['up_script'], $a['down_script']);
             $mig->initFromDb($a);
-            if ($mig->isUp()) {
-                $migrs[] = $mig;
+            if ($migrs[$mig->getMigrationName()] === null) {
+                $migrs[$mig->getMigrationName()] = $mig;
             }
         }
         return $migrs;
@@ -136,17 +135,14 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::migrateUp()
      */
-    protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection): bool
+    protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection): SqlMigration
     {
-        if ($migration->isUp() == TRUE) {
-            throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' already up!');
-        }
         $this->ensureMigrationsTableExists($connection);
         try {
             $connection->transactionStart();
             $up_result = $this->runSqlMultiStatementScript($connection, $migration->getUpScript(), false);
             $up_result_string = $this->stringifyQueryResults($up_result);
-            $sqlMigrationInsert = $this->buildSqlMigrationInsert($migration, $up_result_string);
+            $sqlMigrationInsert = $this->buildSqlMigrationUpInsert($migration, $up_result_string);
             $connection->runSql($sqlMigrationInsert);
             $connection->transactionCommit();
             $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ': script UP executed successfully ');
@@ -154,10 +150,9 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             $this->getWorkbench()->getLogger()->logException($e);
             $connection->transactionRollback();
             $migration->setFailed(true)->setFailedMessage($e->getMessage());
-            $sql_script = $this->buildSqlMigrationInsertFailed($migration);
+            $sql_script = $this->buildSqlMigrationUpFailed($migration);
             $this->migrationFailed($migration, $connection, $sql_script);
-            return false;
-            //throw new InstallerRuntimeError($this, 'Migration up ' . $migration->getMigrationName() . ' failed!', null, $e);
+            throw new InstallerRuntimeError($this, 'Migration up ' . $migration->getMigrationName() . ' failed! See Log filed for more information.', null, $e);
         }
         
         //not sure if still needed and if so needs refactor
@@ -169,7 +164,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         }
         $migration->setUp($select_array[0]['up_datetime'], $up_result_string);*/
         
-        return true;
+        return $migration;
     }
 
     /**
@@ -177,11 +172,8 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::migrateDown()
      */
-    protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection): bool
+    protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection): SqlMigration
     {
-        if ($migration->isUp() == FALSE) {
-            throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' already down!');
-        }
         $this->ensureMigrationsTableExists($connection);
         if (empty($migration->getDownScript())) {
             $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ': Migration has no down script');
@@ -202,8 +194,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             $migration->setFailed(true)->setFailedMessage($e->getMessage());
             $sql_script = $this->buildSqlMigrationDownFailed($migration);
             $this->migrationFailed($migration, $connection, $sql_script);
-            return false;
-            //throw new InstallerRuntimeError($this, 'Migration down ' . $migration->getMigrationName() . ' failed!');
+            throw new InstallerRuntimeError($this, 'Migration down ' . $migration->getMigrationName() . ' failed! See Log files for more information.');
         }
         
         //not sure if still needed, if so, needs rework
@@ -215,7 +206,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         }
         $migration->setDown($select_array[0]['down_datetime'], $down_result_string);*/
         
-        return true;
+        return $migration;
     }
 
     /**
@@ -336,7 +327,7 @@ SQL;
      * @param string $down_script
      * @return string
      */
-    protected function buildSqlMigrationInsert(SqlMigration $migration, string $up_result_string) : string
+    protected function buildSqlMigrationUpInsert(SqlMigration $migration, string $up_result_string) : string
     {
         if ($migration->getId()) {
          return <<<SQL
@@ -381,7 +372,7 @@ SQL;
      * @param SqlMigration $migration
      * @return string
      */
-    protected function buildSqlMigrationInsertFailed(SqlMigration $migration) :string
+    protected function buildSqlMigrationUpFailed(SqlMigration $migration) :string
     {
         if ($migration->getId()) {
         return <<<SQL
@@ -468,7 +459,8 @@ SQL;
      */
     protected function buildSqlSelectMigrationsFromDb() : string
     {
-        return "SELECT * FROM {$this->getMigrationsTableName()} ORDER BY migration_name DESC";
+        //DESC name and up_datetime, so we have the right order for down migration operations and the newest entry for a migration first
+        return "SELECT * FROM {$this->getMigrationsTableName()} ORDER BY migration_name DESC, up_datetime DESC";
     }
     
     /**
