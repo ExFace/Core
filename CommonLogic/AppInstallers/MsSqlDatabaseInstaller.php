@@ -123,9 +123,9 @@ CREATE TABLE {$this->getMigrationsTableName()}(
 	[down_datetime] [datetime] NULL,
 	[down_script] [nvarchar](max) NOT NULL,
 	[down_result] [nvarchar](max) NULL,
-    [failed_flag] tinyint(1) NOT NULL DEFAULT 0,
-    [failed_message] longtext NULL,
-    [skip_flag] tinyint(1) NOT NULL DEFAULT 0    
+    [failed_flag] tinyint NOT NULL DEFAULT 0,
+    [failed_message] [nvarchar](max) NULL,
+    [skip_flag] tinyint NOT NULL DEFAULT 0    
     CONSTRAINT [{$pkName}] PRIMARY KEY CLUSTERED 
     (
 	   [id] ASC
@@ -147,11 +147,11 @@ SQL;
         return <<<SQL
         
 ALTER TABLE {$this->getMigrationsTableName()} ADD COLUMN(
-    [failed_flag] tinyint(1) NOT NULL DEFAULT 0,
-    [failed_message] longtext NULL,
-    [skip_flag] tinyint(1) NOT NULL DEFAULT 0
+    [failed_flag] tinyint NOT NULL DEFAULT 0,
+    [failed_message] [nvarchar](max) NULL,
+    [skip_flag] tinyint NOT NULL DEFAULT 0
 );
-ALTER TABLE {$this->getMigrationsTableName()} MODIFY [up_result] longtext;
+ALTER TABLE {$this->getMigrationsTableName()} MODIFY [up_result] [nvarchar](max) NULL;
 
 SQL;
     }
