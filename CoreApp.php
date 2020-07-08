@@ -52,7 +52,31 @@ class CoreApp extends App
             ->setFilePath(Filemanager::pathJoin([$this->getWorkbench()->getInstallationPath(), '.htaccess']))
             ->setFileTemplatePath('default.htaccess')
             ->setMarkerBegin("\n# BEGIN [#marker#]")
-            ->setMarkerEnd('# END [#marker#]');
+            ->setMarkerEnd('# END [#marker#]')
+            ->addContent('Core URLs', "
+
+# API requests
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/.*$ vendor/exface/Core/index.php [L,QSA]
+
+# index request without any path
+RewriteRule ^/?$ vendor/exface/Core/index.php [L,QSA]
+
+# Requests to UI pages
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^[^/]*$ vendor/exface/Core/index.php [L,QSA]
+
+")
+            ->addContent('Core Security', "
+
+# Block requests to config, cache, backup, etc.
+RewriteRule ^(config|backup|translations|logs)/.*$ - [F]
+# Block requests to system files (starting with a dot) in the data folder
+RewriteRule ^data/\..*$ - [F]
+
+");
         $installer->addInstaller($htaccessInstaller);
         
         $webconfigInstaller = new FileContentInstaller($this->getSelector());
