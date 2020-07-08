@@ -12,8 +12,19 @@ trait iCanPreloadDataTrait {
     
     private $preloader = null;
     
+    private $preloadConfig = null;
+    
+    /**
+     * Set to `true` to preload all possible data for offline use.
+     *
+     * @uxon-property preload_data
+     * @uxon-type boolean|\exface\Core\CommonLogic\DataSheets\DataSheet
+     *
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::setPreloadData()
+     */
     public function setPreloadData($uxonOrString): iCanPreloadData
     {
+        $this->preloadConfig = $uxonOrString;
         if ($uxonOrString instanceof UxonObject) {
             $this->getPreloader()->importUxonObject($uxonOrString);
         } elseif (BooleanDataType::cast($uxonOrString) === true) {
@@ -24,16 +35,31 @@ trait iCanPreloadDataTrait {
         return $this;
     }
     
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::isPreloadDataEnabled()
+     */
     public function isPreloadDataEnabled(): bool
     {
         return $this->getPreloader()->isEnabled();
     }
     
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::prepareDataSheetToPreload()
+     */
     public function prepareDataSheetToPreload(DataSheetInterface $dataSheet): DataSheetInterface
     {
         return $this->getPreloader()->prepareDataSheetToPreload($dataSheet);
     }
     
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::getPreloader()
+     */
     public function getPreloader(): DataPreloader
     {
         if ($this->preloader === null) {

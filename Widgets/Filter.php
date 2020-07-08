@@ -157,8 +157,6 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute, iCanPreloadData
 {
 
-    use iCanPreloadDataTrait;
-    
     private $inputWidget = null;
     
     private $inputWidgetUxon = null;
@@ -186,6 +184,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     private $width = null;
     
     private $height = null;
+    
+    private $preloadConfig = null;
+    
+    private $preloader = null;
     
     /**
      * Returns TRUE if the input widget was already instantiated.
@@ -444,6 +446,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         
         if ($this->height !== null) {
             $input->setWidth($this->height);
+        }
+        
+        if ($this->preloadConfig !== null && $input instanceof iCanPreloadData) {
+            $input->setPreloadData($this->preloadConfig);
         }
         
         return $input;
@@ -1233,5 +1239,66 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         }
         $this->height = $value;
         return $this;
+    }
+    
+    /**
+     * Set to `true` to preload all possible data for offline use of the input widget(s).
+     * 
+     * @uxon-property preload_data
+     * @uxon-type boolean|\exface\Core\CommonLogic\DataSheets\DataSheet
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::setPreloadData()
+     */
+    public function setPreloadData($uxonOrString): iCanPreloadData
+    {
+        $this->preloadConfig = $uxonOrString;
+        if ($this->isInputWidgetInitialized()) {
+            $this->getInputWidget()->setPrefillData($uxonOrString);
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::isPreloadDataEnabled()
+     */
+    public function isPreloadDataEnabled(): bool
+    {
+        $input = $this->getInputWidget();
+        return $input instanceof iCanPreloadData && $input->getPreloader()->isEnabled();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::prepareDataSheetToPreload()
+     */
+    public function prepareDataSheetToPreload(DataSheetInterface $dataSheet): DataSheetInterface
+    {
+        $input = $this->getInputWidget();
+        if ($input instanceof iCanPreloadData) {
+            return $this->getPreloader()->prepareDataSheetToPreload($dataSheet);
+        } else {
+            return $dataSheet;
+        }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::getPreloader()
+     */
+    public function getPreloader(): DataPreloader
+    {
+        $input = $this->getInputWidget();
+        if ($input instanceof iCanPreloadData) {
+            return $input->getPreloader();
+        } else {
+            if ($this->preloader === null) {
+                $this->preloader = new DataPreloader($this);
+            }
+            return $this->preloader;
+        }
     }
 }
