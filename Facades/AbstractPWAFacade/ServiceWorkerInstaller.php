@@ -8,8 +8,8 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\DataTypes\FilePathDataType;
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\Selectors\AppSelector;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\UrlDataType;
 
 /**
  * This installer can be used to add code for a specific facade to the central PWA ServiceWorker.
@@ -57,7 +57,7 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
      */
     public static function fromConfig(SelectorInterface $selectorToInstall, ConfigurationInterface $config) : ServiceWorkerInstaller
     {
-        $builder = new ServiceWorkerBuilder();
+        $builder = new ServiceWorkerBuilder('vendor');
         
         foreach ($config->getOption('INSTALLER.SERVICEWORKER.ROUTES') as $id => $uxon) {
             $builder->addRouteFromUxon($id, $uxon);
@@ -65,7 +65,7 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
         
         if ($config->hasOption('INSTALLER.SERVICEWORKER.IMPORTS')) {
             foreach ($config->getOption('INSTALLER.SERVICEWORKER.IMPORTS') as $path) {
-                $builder->addImport($selectorToInstall->getWorkbench()->getUrl() . 'vendor/' . $path);
+                $builder->addImport($path);
             }
         }
         
@@ -96,13 +96,13 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
     
     protected function buildUrlToWorkbox() : string
     {
-        return $this->getWorkbench()->getUrl() . 'vendor/' . $this->getWorkbench()->getConfig()->getOption('FACADES.ABSTRACTPWAFACADE.WORKBOX_VENDOR_PATH');
+        return $this->getWorkbench()->getConfig()->getOption('FACADES.ABSTRACTPWAFACADE.WORKBOX_VENDOR_PATH');
     }
     
     protected function buildServiceWorker(ConfigurationInterface $config) : string
     {
         $workboxUrl = $this->buildUrlToWorkbox();;
-        $builder = new ServiceWorkerBuilder($workboxUrl);
+        $builder = new ServiceWorkerBuilder('vendor', $workboxUrl);
         foreach ($config->exportUxonObject() as $appAlias => $code) {
             if ($appAlias === '_IMPORTS') {
                 foreach ($code as $path) {
@@ -191,6 +191,13 @@ return $filename;
         return $config;
     }
     
+    /**
+     * 
+     * @param AppInterface $app
+     * @param ServiceWorkerBuilder $swBuilder
+     * @param ConfigurationInterface $config
+     * @return ConfigurationInterface
+     */
     protected function installToConfig(AppInterface $app, ServiceWorkerBuilder $swBuilder, ConfigurationInterface $config) : ConfigurationInterface
     {
         $config->setOption($app->getAliasWithNamespace(), $swBuilder->buildJsLogic(), $this->getConfigScope());
@@ -200,8 +207,28 @@ return $filename;
         } catch (ConfigOptionNotFoundError $e) {
             $currentImports = [];
         }
-        $imports = array_merge($currentImports, $swBuilder->getImports());
-        $config->setOption('_IMPORTS', array_unique($imports), $this->getConfigScope());
+        
+        $imports = $swBuilder->getImports();
+        
+        // Look for duplicates among the imports. If an import path matches another one partially
+        // (e.g. same library taken from different locations), keep only one of them - the one
+        // added last.
+        foreach (array_reverse($currentImports) as $currentImport) {
+            $matchFound = false;
+            foreach ($imports as $import) {
+                switch (true) {
+                    case strcasecmp($import, $currentImport) === 0:
+                    case StringDataType::endsWith($currentImport, $import, false):
+                        $matchFound = true;
+                        break 2;
+                }
+            }
+            if ($matchFound === false) {
+                array_unshift($imports, $currentImport);
+            }
+        }
+        
+        $config->setOption('_IMPORTS', $imports, $this->getConfigScope());
         
         return $this->addCommonConfig($config);
     }
@@ -214,7 +241,7 @@ return $filename;
     
     protected function addCommonConfig(ConfigurationInterface $config) : ConfigurationInterface
     {
-        $builder = new ServiceWorkerBuilder($this->buildUrlToWorkbox());
+        $builder = new ServiceWorkerBuilder('vendor', $this->buildUrlToWorkbox());
         $workbenchConfig = $this->getWorkbench()->getConfig();
         
         foreach ($workbenchConfig->getOption('FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_ROUTES') as $id => $uxon) {
