@@ -13,6 +13,8 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iHaveHeader;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Widgets\Traits\iHaveToolbarsTrait;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * Dialogs are pop-up forms (i.e. windows), that can be moved and/or maximized.
@@ -341,6 +343,22 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     public function setButtons($uxonOrArray)
     {
         return parent::setButtons($uxonOrArray);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Form::getHelpData()
+     */
+    protected function getHelpData(array $widgets, DataSheetInterface $dataSheet, string $groupName = null) : DataSheetInterface
+    {
+        $dataSheet = parent::getHelpData($widgets, $dataSheet, $groupName);
+        if ($this->hasHeader() && $widgets == $this->getWidgets()) {
+            $headerHelpData = parent::getHelpData($this->getHeader()->getWidgets(), DataSheetFactory::createFromObject($dataSheet->getMetaObject()), 'Header');
+            $bodyRows = $dataSheet->getRows();
+            $dataSheet->removeRows()->addRows(array_merge($headerHelpData->getRows(), $bodyRows));
+        }
+        return $dataSheet;
     }
 }
 ?>
