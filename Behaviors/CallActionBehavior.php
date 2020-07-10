@@ -9,6 +9,7 @@ use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\TaskFactory;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Interfaces\Events\DataTransactionEventInterface;
+use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 
 /**
  * Attachable to DataSheetEvents (exface.Core.DataSheet.*), calls any action.
@@ -106,6 +107,11 @@ class CallActionBehavior extends AbstractBehavior
     {
         if ($this->action === null) {
             $this->action = ActionFactory::createFromUxon($this->getWorkbench(), UxonObject::fromAnything($this->actionConfig));
+            try {
+                $this->action->getMetaObject();
+            } catch (ActionObjectNotSpecifiedError $e) {
+                $this->action->setMetaObject($this->getObject());
+            }
         }
         return $this->action;
     }
