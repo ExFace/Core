@@ -15,10 +15,8 @@ use exface\Core\Widgets\Display;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Widgets\DataSpreadSheet;
-use exface\Core\Widgets\Data;
 use exface\Core\Widgets\DataImporter;
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\DataSpreadSheetFooter;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Widgets\InputComboTable;
@@ -552,7 +550,7 @@ JS;
                     $srcSheet = $cellWidget->getTable()->prepareDataSheetToRead(DataSheetFactory::createFromObject($rel->getRightObject()));
                     $srcIdName = $cellWidget->getValueColumn()->getDataColumnName();
                     $srcLabelName = $cellWidget->getTextColumn()->getDataColumnName();
-                    $srcSheet->dataRead();
+                    $srcSheet->dataRead(0, 0); // Read all rows regardless of the settings in the data sheet!!!
                 } else {
                     $srcSheet = DataSheetFactory::createFromObject($rel->getRightObject());
                     
