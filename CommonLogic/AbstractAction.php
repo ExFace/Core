@@ -943,15 +943,19 @@ abstract class AbstractAction implements ActionInterface
      */
     public function setInputMapper(UxonObject $uxon)
     {
-        if ($calling_widget = $this->getWidgetDefinedIn()) {
-            if ($calling_widget instanceof iUseInputWidget) {
-                $from_object = $calling_widget->getInputWidget()->getMetaObject();
-            } else {
-                $from_object = $calling_widget->getMetaObject();
-            }
+        if ($uxon->hasProperty('from_object_alias')) {
+            $from_object = $this->getWorkbench()->model()->getObject($uxon->getProperty('from_object_alias'));
         } else {
-            $this->getWorkbench()->getLogger()->warning('Cannot initialize input mapper for action "' . $this->getAliasWithNamespace() . '": no from-object defined and no calling widget to get it from!', [], $this);
-            return $this;
+            if ($this->isDefinedInWidget() && $calling_widget = $this->getWidgetDefinedIn()) {
+                if ($calling_widget instanceof iUseInputWidget) {
+                    $from_object = $calling_widget->getInputWidget()->getMetaObject();
+                } else {
+                    $from_object = $calling_widget->getMetaObject();
+                }
+            } else {
+                $this->getWorkbench()->getLogger()->warning('Cannot initialize input mapper for action "' . $this->getAliasWithNamespace() . '": no from-object defined and no calling widget to get it from!', [], $this);
+                return $this;
+            }
         }
         $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $uxon, $from_object, $this->getMetaObject());
         return $this->addInputMapper($mapper);
