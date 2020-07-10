@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Exceptions\UnderflowException;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Basic data type for textual values.
@@ -277,6 +278,22 @@ class StringDataType extends AbstractDataType
             $replace[] = $placeholders[$ph] ?? '';
         }
         return str_replace($search, $replace, $string);
+    }
+    
+    /**
+     * 
+     * @param string $string
+     * @param string $placeholder
+     * @param mixed $value
+     * @return string
+     */
+    public static function replacePlaceholder(string $string, string $placeholder, $value) : string
+    {
+        if (! is_scalar($value)) {
+            throw new RuntimeException('Cannot replace placeholder "' . $placeholder . '" in string "' . $string . '": replacement value must be scalar, ' . gettype($value) . ' received!');
+        }
+        $search = '[#' . $placeholder . '#]';
+        return str_replace($search, $value, $string);
     }
     
     /**
