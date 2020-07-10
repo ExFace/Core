@@ -21,6 +21,7 @@ use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\DataSpreadSheetFooter;
 use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\Widgets\InputComboTable;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -547,21 +548,28 @@ JS;
             if ($cellWidget->getAttribute()->isRelation()) {
                 $rel = $cellWidget->getAttribute()->getRelation();
                 
-                $srcSheet = DataSheetFactory::createFromObject($rel->getRightObject());
-                
-                $srcIdAttr = $srcSheet->getMetaObject()->getUidAttribute();
-                $srcIdCol = $srcSheet->getColumns()->addFromAttribute($srcIdAttr);
-                $srcIdName = $srcIdCol->getName();
-                
-                $srcLabelAttr = $srcSheet->getMetaObject()->getLabelAttribute();
-                if ($srcLabelAttr->isRelation() === true && $srcLabelAttr->getRelation()->getRightObject()->hasLabelAttribute() === true) {
-                    $srcLabelCol = $srcSheet->getColumns()->addFromExpression(RelationPath::relationPathAdd($srcLabelAttr->getAlias(), 'LABEL'));
+                if ($cellWidget instanceof InputComboTable) {
+                    $srcSheet = $cellWidget->getTable()->prepareDataSheetToRead(DataSheetFactory::createFromObject($rel->getRightObject()));
+                    $srcIdName = $cellWidget->getValueColumn()->getDataColumnName();
+                    $srcLabelName = $cellWidget->getTextColumn()->getDataColumnName();
+                    $srcSheet->dataRead();
                 } else {
-                    $srcLabelCol = $srcSheet->getColumns()->addFromAttribute($srcLabelAttr);
+                    $srcSheet = DataSheetFactory::createFromObject($rel->getRightObject());
+                    
+                    $srcIdAttr = $srcSheet->getMetaObject()->getUidAttribute();
+                    $srcIdCol = $srcSheet->getColumns()->addFromAttribute($srcIdAttr);
+                    $srcIdName = $srcIdCol->getName();
+                    
+                    $srcLabelAttr = $srcSheet->getMetaObject()->getLabelAttribute();
+                    if ($srcLabelAttr->isRelation() === true && $srcLabelAttr->getRelation()->getRightObject()->hasLabelAttribute() === true) {
+                        $srcLabelCol = $srcSheet->getColumns()->addFromExpression(RelationPath::relationPathAdd($srcLabelAttr->getAlias(), 'LABEL'));
+                    } else {
+                        $srcLabelCol = $srcSheet->getColumns()->addFromAttribute($srcLabelAttr);
+                    }
+                    $srcLabelName = $srcLabelCol->getName();
+                    
+                    $srcSheet->dataRead();
                 }
-                $srcLabelName = $srcLabelCol->getName();
-                
-                $srcSheet->dataRead();
                 
                 $srcData = [];
                 foreach ($srcSheet->getRows() as $row) {
@@ -641,16 +649,23 @@ JS;
                     $relAlias = $relation->getAlias();
                 }
             }
+            
+            $configurator_element = $this->getFacade()->getElement($this->getWidget()->getConfiguratorWidget());
+            
             $data = <<<JS
     {
         oId: '{$action->getMetaObject()->getId()}',
         rows: [
             {
-                '{$relAlias}': {
-                    oId: '{$widget->getMetaObject()->getId()}',
-                    rows: {$rows}
-                }
+                '{$relAlias}': function(){
+                    var oData = {$configurator_element->buildJsDataGetter()};
+                    oData.rows = {$rows}
+                    return oData;
+                }()
             }
+        ],
+        filters: [
+            
         ]
     }
     
