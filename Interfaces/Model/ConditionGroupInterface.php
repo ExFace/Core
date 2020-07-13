@@ -107,10 +107,10 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
      * @see ExpressionInterface::rebase()
      *
      * @param string $relation_path_to_new_base_object
-     * @param callable $filter_callback
+     * @param callable $conditionFilterCallback
      * @return ConditionGroupInterface
      */
-    public function rebase(string $relation_path_to_new_base_object, callable $filter_callback = null) : ConditionGroupInterface;
+    public function rebase(string $relation_path_to_new_base_object, callable $conditionFilterCallback = null) : ConditionGroupInterface;
     
     /**
      * Removes a given condition from this condition group (not from the nested groups!)
