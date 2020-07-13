@@ -103,12 +103,20 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
     {
         $workboxUrl = $this->buildUrlToWorkbox();;
         $builder = new ServiceWorkerBuilder('vendor', $workboxUrl);
+        
+        // Add imports
+        if ($config->hasOption('_IMPORTS')) {
+            foreach ($config->getOption(_IMPORTS)->getPropertiesAll() as $path) {
+                $builder->addImport($path);
+            }
+        }
+        // Add core code first
+        if ($config->hasOption('EXFACE.CORE')) {
+            $builder->addCustomCode($config->getOption('EXFACE.CORE'), 'EXFACE.CORE');
+        }
+        // Now add all the other apps
         foreach ($config->exportUxonObject() as $appAlias => $code) {
-            if ($appAlias === '_IMPORTS') {
-                foreach ($code as $path) {
-                    $builder->addImport($path);
-                }
-            } else {
+            if ($appAlias !== '_IMPORTS' && $appAlias !== 'EXFACE.CORE') {
                 $builder->addCustomCode($code, $appAlias);
             }
         }
