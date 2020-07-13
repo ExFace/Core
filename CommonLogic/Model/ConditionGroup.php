@@ -164,7 +164,7 @@ class ConditionGroup implements ConditionGroupInterface
      * {@inheritdoc}
      * @see ConditionGroupInterface::rebase()
      */
-    public function rebase(string $relation_path_to_new_base_object, callable $filter_callback = null) : ConditionGroupInterface
+    public function rebase(string $relation_path_to_new_base_object, callable $conditionFilterCallback = null) : ConditionGroupInterface
     {
         // Do nothing, if the relation path is empty (nothing to rebase...)
         if (! $relation_path_to_new_base_object) {
@@ -178,7 +178,7 @@ class ConditionGroup implements ConditionGroupInterface
         }
         foreach ($this->getConditions() as $condition) {
             // Remove conditions not matching the filter
-            if (! is_null($filter_callback) && call_user_func($filter_callback, $condition, $relation_path_to_new_base_object) === false) {
+            if (! is_null($conditionFilterCallback) && call_user_func($conditionFilterCallback, $condition, $relation_path_to_new_base_object) === false) {
                 continue;
             }
             // Remove conditions not matching the path if required by user
@@ -201,7 +201,7 @@ class ConditionGroup implements ConditionGroupInterface
         }
         
         foreach ($this->getNestedGroups() as $group) {
-            $result->addNestedGroup($group->rebase($relation_path_to_new_base_object));
+            $result->addNestedGroup($group->rebase($relation_path_to_new_base_object, $conditionFilterCallback));
         }
         
         return $result;

@@ -48,6 +48,7 @@ use exface\Core\DataTypes\RelationCardinalityDataType;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Model\ConditionInterface;
 use exface\Core\DataTypes\EncryptedDataType;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Default implementation of DataSheetInterface
@@ -576,7 +577,16 @@ class DataSheet implements DataSheetInterface
                 if ($subsheet->getJoinKeyColumnOfSubsheet()->isAttribute() && $subsheet->getJoinKeyColumnOfSubsheet()->getAttribute()->isReadable() === false) {
                     throw new DataSheetJoinError($this, 'Cannot join subsheet based on object "' . $subsheet->getMetaObject()->getName() . '" to data sheet of "' . $this->getMetaObject()->getName() . '": the subsheet\'s key column attribute "' . $subsheet->getJoinKeyColumnOfSubsheet()->getAttribute()->getName() . '" is not readable!');
                 }
+                
+                // Make sure the subsheet inherits all the filters of this sheet that apply to
+                // the subsheet's object (= start with the relation path to the subsheet)
+                $subsheetRelPath = $subsheet->getRelationPathFromParentSheet()->toString();
+                $subsheet->setFilters($this->getFilters()->rebase($subsheetRelPath, function(ConditionInterface $condition) use ($subsheetRelPath) {
+                    return StringDataType::startsWith($condition->getAttributeAlias(), $subsheetRelPath . RelationPath::RELATION_SEPARATOR);
+                }));
+                // Also add a filter over the UIDs of this sheet for the later JOIN
                 $subsheet->getFilters()->addConditionFromString($subsheet->getJoinKeyAliasOfSubsheet(), implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+                
                 // Read data
                 $subsheet->dataRead();
                 // Do the JOIN
