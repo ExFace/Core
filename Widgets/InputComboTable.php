@@ -948,7 +948,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     public function handleWidgetLinkedEvent(WidgetLinkEventInterface $event)
     {
         $link = $event->getWidgetLink();
-        if ($link->getTargetWidget() !== $this) {
+        if ($link->getTargetWidgetId() !== $this->getId()) {
             return;
         }
         
