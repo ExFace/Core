@@ -643,7 +643,15 @@ abstract class AbstractWidget implements WidgetInterface
             // quotes for strings, but these would show up in the UI. 
             // Here is a temporary solution for the problem: tell the ExpressionFactory to treat unquoted strings
             // as strings in this case explicitly.
-            $this->value = ExpressionFactory::createFromString($this->getWorkbench(), $expression_or_string, $this->getMetaObject(), true);
+            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $expression_or_string, $this->getMetaObject(), true);
+            $this->value = $expr;
+            // If the value is a widget link, call the getter to make sure the link is instantiated
+            // thus firing OnWidgetLinkedEvent. If not done here, the event will be only fired
+            // when some other code calls $expr->getWidgetLink(), which may happen too late for
+            // possible event handlers!
+            if ($expr->isReference()) {
+                $this->getValueWidgetLink();
+            }
         }
         return $this;
     }

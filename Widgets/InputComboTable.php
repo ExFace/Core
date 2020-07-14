@@ -18,6 +18,9 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\Events\Widget\OnWidgetLinkedEvent;
+use exface\Core\Interfaces\Events\WidgetLinkEventInterface;
+use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 
 /**
  * An InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
@@ -151,6 +154,19 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     private $lookupActionUxon = null;
     
     private $lookupButton = null;
+    
+    /**
+     * 
+     * @var WidgetLinkInterface[]
+     */
+    private $incomingLinks = [];
+    
+    protected function init()
+    {
+        parent::init();
+        
+        $this->getWorkbench()->eventManager()->addListener(OnWidgetLinkedEvent::getEventName(), [$this, 'handleWidgetLinkedEvent']);
+    }
 
     /**
      * Returns the relation, this widget represents or FALSE if the widget stands for a direct attribute.
@@ -434,7 +450,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         
         // Be carefull with the value text. If the combo stands for a relation, it can be retrieved from the prefill data,
         // but if the text comes from an unrelated object, it cannot be part of the prefill data and thus we can not
-        // set it here. In most facades, setting merely the value of the combo well make the facade load the
+        // set it here. In most facades, setting merely the value of the combo will make the facade load the
         // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
         if ($this->getAttribute()->isRelation()) {
             // FIXME use $this->getTextAttributeAlias() here instead? But isn't that alias relative to the table's object?
@@ -913,5 +929,35 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         }
         return $this->lookupButton;
     }
+    
+    /**
+     * Returns an array of widget links that point to this widget
+     * 
+     * @return WidgetLinkInterface[]
+     */
+    public function getValueLinksToThisWidget() : array
+    {
+        return $this->incomingLinks;
+    }
+    
+    /**
+     * 
+     * @param WidgetLinkEventInterface $event
+     * @return void
+     */
+    public function handleWidgetLinkedEvent(WidgetLinkEventInterface $event)
+    {
+        $link = $event->getWidgetLink();
+        if ($link->getTargetWidget() !== $this) {
+            return;
+        }
+        
+        foreach ($this->incomingLinks as $existing) {
+            if ($link->getSourceWidget() === $existing->getSourceWidget() && $link->getTargetColumnId() === $existing->getTargetColumnId()) {
+                return;
+            }
+        }
+        
+        $this->incomingLinks[] = $event->getWidgetLink();
+    }
 }
-?>

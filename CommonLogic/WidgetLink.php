@@ -8,6 +8,7 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Factories\SelectorFactory;
+use exface\Core\Events\Widget\OnWidgetLinkedEvent;
 
 class WidgetLink implements WidgetLinkInterface
 {
@@ -28,11 +29,20 @@ class WidgetLink implements WidgetLinkInterface
 
     private $targetRowNumber;
 
+    /**
+     * 
+     * @param UiPageInterface $sourcePage
+     * @param WidgetInterface $sourceWidget
+     * @param string|UxonObject $stringOrUxon
+     * 
+     * @triggers \exface\Core\Events\Widget\OnWidgetLinkedEvent
+     */
     public function __construct(UiPageInterface $sourcePage, WidgetInterface $sourceWidget = null, $stringOrUxon)
     {
         $this->sourcePage = $sourcePage;
         $this->sourceWidget = $sourceWidget;
         $this->parseLink($stringOrUxon);
+        $this->getWorkbench()->eventManager()->dispatch(new OnWidgetLinkedEvent($this));
     }
 
     /**
@@ -43,10 +53,12 @@ class WidgetLink implements WidgetLinkInterface
     protected function parseLink($string_or_object) : WidgetLinkInterface
     {
         if ($string_or_object instanceof UxonObject) {
-            return $this->parseLinkUxon($string_or_object);
+            $this->parseLinkUxon($string_or_object);
         } else {
-            return $this->parseLinkString($string_or_object);
+            $this->parseLinkString($string_or_object);
         }
+        
+        return $this;
     }
 
     /**

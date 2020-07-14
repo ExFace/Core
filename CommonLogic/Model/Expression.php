@@ -42,7 +42,9 @@ class Expression implements ExpressionInterface
 
     private $formula = null;
 
-    private $widget_link = null;
+    private $widgetLinkString = null;
+    
+    private $widgetLinks = null;
 
     private $attribute_alias = null;
 
@@ -108,7 +110,8 @@ class Expression implements ExpressionInterface
                 } else {
                     // If it's neither a quoted string nor a number, it must be a widget link
                     $this->type = self::TYPE_REFERENCE;
-                    $this->widget_link = substr($expression, 1);
+                    $this->widgetLinkString = substr($expression, 1);
+                    $this->widgetLinks = null;
                 }
             }
         } else {
@@ -630,11 +633,17 @@ class Expression implements ExpressionInterface
      */
     public function getWidgetLink(WidgetInterface $sourceWidget) : WidgetLinkInterface
     {
-        if ($this->widget_link === null) {
+        if (($link = $this->widgetLinks[$sourceWidget->getId()]) !== null) {
+            return $link;
+        }
+        
+        if ($this->widgetLinkString === null) {
             throw new RuntimeException('Cannot get widget linke from expression of type "' . $this->getType() . '"!');
         }
         
-        return WidgetLinkFactory::createFromWidget($sourceWidget, $this->widget_link);
+        $link = WidgetLinkFactory::createFromWidget($sourceWidget, $this->widgetLinkString);
+        $this->widgetLinks[$sourceWidget->getId()] = $link;
+        return $link;
     }
 
     /**

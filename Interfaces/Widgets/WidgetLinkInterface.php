@@ -9,6 +9,9 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 
 /**
+ * 
+ * 
+ * @triggers \exface\Core\Events\Widget\OnWidgetLinkedEvent when created
  *
  * @author Andrej Kabachnik
  *        
