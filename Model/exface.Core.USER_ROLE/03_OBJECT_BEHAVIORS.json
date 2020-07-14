@@ -49,7 +49,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-05-19 20:21:27",
-            "MODIFIED_ON": "2020-05-20 16:13:09",
+            "MODIFIED_ON": "2020-07-14 11:36:20",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea9a0e4f8c29fd8abc0205857feb80",
@@ -57,7 +57,7 @@
             "CONFIG_UXON": "{\"condition_group\":{\"operator\":\"AND\",\"conditions\":[{\"expression\":\"UID\",\"comparator\":\"[\",\"value\":\"0x11ea6c44b4d365f6a3480205857feb80,0x11ea6fa3cab9a380a3480205857feb80,0x11ea6c428d7e7e9fa3480205857feb80\"}]}}",
             "OBJECT": "0x11ea4b0d9c862d5db2cfe4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Prevent deletion of system roles",
+            "NAME": "Prevent deleting system roles",
             "DESCRIPTION": "Core roles AUTHENTICATED, ANONYMOUS and SUPERUSER must not be deleted!"
         }
     ],
