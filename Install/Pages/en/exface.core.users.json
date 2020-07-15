@@ -11,11 +11,10 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2015-12-14 17:07:13",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-06-07 16:03:57",
+    "modified_on": "2020-07-15 09:14:55",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.USER",
-        "multi_select": true,
         "filters": [
             {
                 "attribute_alias": "USERNAME"
@@ -74,52 +73,19 @@
                 "bind_to_double_click": true
             },
             {
+                "action_alias": "exface.Core.ShowUserMassEditDialog"
+            },
+            {
                 "action_alias": "exface.Core.ShowObjectCopyDialog"
-            },
-            {
-                "action_alias": "exface.Core.DeleteObject"
-            },
-            {
-                "caption": "Add User Role",
-                "action": {
-                    "alias": "exface.Core.ShowObjectCreateDialog",
-                    "object_alias": "exface.Core.USER_ROLE_USERS",
-                    "prefill_with_input_data": true,
-                    "input_rows_min": 1,
-                    "input_rows_max": null,
-                    "widget": {
-                        "widget_type": "Dialog",
-                        "object_alias": "exface.Core.USER_ROLE_USERS",
-                        "width": 1,
-                        "height": "auto",
-                        "widgets": [
-                            {
-                                "attribute_alias": "USER",
-                                "widget_type": "InputComboTable",
-                                "multi_select": true,
-                                "disabled": true,
-                                "height": 3
-                            },
-                            {
-                                "attribute_alias": "USER_ROLE"
-                            }
-                        ],
-                        "buttons": [
-                            {
-                                "action_alias": "exface.Core.CreateData",
-                                "align": "opposite",
-                                "visibility": "promoted",
-                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')"
-                            }
-                        ]
-                    }
-                }
             },
             {
                 "action_alias": "exface.Core.DisableUser"
             },
             {
                 "action_alias": "exface.Core.EnableUser"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
             }
         ]
     }
