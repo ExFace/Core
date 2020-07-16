@@ -115,7 +115,15 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
      */
     public function isSupported(AuthenticationTokenInterface $token) : bool
     {
-        return $token instanceof DataConnectionUsernamePasswordAuthToken;
+        if (! $token instanceof DataConnectionUsernamePasswordAuthToken) {
+            return false;
+        }
+        
+        if (! in_array($token->getDataConnectionAlias(), $this->getConnectionAliases())) {
+            return false;
+        }
+        
+        return true;
     }
     
     /**
