@@ -14,11 +14,13 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\DataTypes\MessageTypeDataType;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
- * This trait enables an exception to output more usefull specific debug information.
- * It is used by all
- * ExFace-specific exceptions!
+ * This trait contains a default implementation of ExceptionInterface to be used on-top
+ * of built-in PHP exceptions.
+ * 
+ * @see ExceptionInterface
  *
  * @author Andrej Kabachnik
  *        
@@ -40,6 +42,8 @@ trait ExceptionTrait {
     private $support_mail = false;
     
     private $messageData = null;
+    
+    private $useExceptionMessageAsTitle = false;
 
     public function __construct($message, $alias = null, $previous = null)
     {
@@ -213,11 +217,17 @@ trait ExceptionTrait {
         return $debug_widget;
     }
 
-    public function getMessageModelData(Workbench $exface, $error_code)
+    /**
+     * 
+     * @param Workbench $exface
+     * @param string $error_code
+     * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
+     */
+    public function getMessageModelData(Workbench $exface, string $error_code) : DataSheetInterface
     {
         if ($this->messageData === null) {
             if ($this->getPrevious() && $this->getPrevious() instanceof ExceptionInterface){
-                $this->messageData = $this->getPrevious()->getMessageModelData($exface, $error_code);
+                $modelMessageData = $this->getPrevious()->getMessageModelData($exface, $error_code);
             } else {
                 $ds = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.MESSAGE');
                 $ds->getColumns()->addMultiple(['TITLE', 'HINT', 'DESCRIPTION', 'TYPE']);
@@ -225,12 +235,37 @@ trait ExceptionTrait {
                     $ds->getFilters()->addConditionFromString('CODE', $error_code);
                     $ds->dataRead();
                 }
-                $this->messageData = $ds;
+                $modelMessageData = $ds;
             }
+            
+            if ($this->getUseExceptionMessageAsTitle() === true) {
+                
+                $ds = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.MESSAGE');
+                if (! $descr = $modelMessageData->getCellValue('DESCRIPTION', 0)) {
+                    if (! $descr = $modelMessageData->getCellValue('TITLE', 0)) {
+                        $descr = '';
+                    }
+                }
+                $ds->addRow([
+                    'TITLE' => parent::getMessage(),
+                    'HINT' => $modelMessageData->getCellValue('HINT', 0) ?? '',
+                    'DESCRIPTION' => $descr,
+                    'TYPE' => $modelMessageData->getCellValue('TYPE', 0) ?? 'ERROR'
+                ]);
+                $modelMessageData = $ds;
+            }
+            
+            $this->messageData = $modelMessageData;
         }
+        
         return $this->messageData;
     }
     
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @return string|NULL
+     */
     public function getMessageTitle(WorkbenchInterface $workbench) : ?string
     {
         try {
@@ -241,6 +276,11 @@ trait ExceptionTrait {
         }
     }
     
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @return string|NULL
+     */
     public function getMessageHint(WorkbenchInterface $workbench) : ?string
     {
         try {
@@ -251,6 +291,11 @@ trait ExceptionTrait {
         }
     }
     
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @return string|NULL
+     */
     public function getMessageDescription(WorkbenchInterface $workbench) : ?string
     {
         try {
@@ -261,6 +306,11 @@ trait ExceptionTrait {
         }
     }
     
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @return string|NULL
+     */
     public function getMessageType(WorkbenchInterface $workbench) : ?string
     {
         try {
@@ -274,7 +324,6 @@ trait ExceptionTrait {
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getAlias()
      */
     public function getAlias()
@@ -292,7 +341,6 @@ trait ExceptionTrait {
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::setAlias()
      */
     public function setAlias($alias)
@@ -400,5 +448,30 @@ trait ExceptionTrait {
     public static function getUxonSchemaClass() : ?string
     {
         return null;
+    }
+    
+    /**
+     * Returns TRUE if exception message is to be used as error message title.
+     * 
+     * FALSE by default, thus using the message model found via error code.
+     * 
+     * @return bool
+     */
+    protected function getUseExceptionMessageAsTitle() : bool
+    {
+        return $this->useExceptionMessageAsTitle;
+    }
+    
+    /**
+     * Makes the errors displayed use the exception message as title instead of attempting to 
+     * get the title from the message metamodel via error code (alias).
+     * 
+     * @param bool $value
+     * @return ExceptionInterface
+     */
+    public function setUseExceptionMessageAsTitle(bool $value) : ExceptionInterface
+    {
+        $this->useExceptionMessageAsTitle = $value;
+        return $this;
     }
 }
