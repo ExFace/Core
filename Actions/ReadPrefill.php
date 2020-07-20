@@ -109,4 +109,14 @@ class ReadPrefill extends ReadData
         
         return parent::getWidgetToReadFor($task);
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::isTriggerWidgetRequired()
+     */
+    public function isTriggerWidgetRequired() : ?bool
+    {
+        return true;
+    }
 }

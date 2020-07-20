@@ -169,7 +169,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-03-10 19:49:25",
-            "MODIFIED_ON": "2020-05-01 15:05:20",
+            "MODIFIED_ON": "2020-07-20 10:28:02",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea63083f5902d0a2e30205857feb80",
@@ -186,7 +186,7 @@
             "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "NAME": "Name",
+            "NAME": "Policy name",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "ALIAS": "NAME",

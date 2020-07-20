@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-03-10 16:22:54",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-07-15 09:37:42",
+    "modified_on": "2020-07-16 07:24:32",
     "contents": {
         "widget_type": "SplitVertical",
         "object_alias": "exface.Core.AUTHORIZATION_POINT",
@@ -133,6 +133,20 @@
                             },
                             {
                                 "attribute_alias": "TARGET_FACADE"
+                            },
+                            {
+                                "attribute_alias": "CONDITION_FLAG"
+                            },
+                            {
+                                "attribute_alias": "CONDITION_UXON",
+                                "input_widget": {
+                                    "widget_type": "Input",
+                                    "width": 1,
+                                    "height": 1
+                                }
+                            },
+                            {
+                                "attribute_alias": "DISABLED_FLAG"
                             }
                         ],
                         "columns": [

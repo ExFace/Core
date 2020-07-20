@@ -38,7 +38,8 @@ use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
-use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -110,6 +111,8 @@ abstract class AbstractAction implements ActionInterface
     private $input_object_alias = null;
     
     private $result_object_alias = null;
+    
+    private $triggerWidgetRequired = null;
 
     /**
      *
@@ -1168,6 +1171,31 @@ abstract class AbstractAction implements ActionInterface
         } catch (AuthorizationExceptionInterface $e) {
             return false;
         }
+    }
+    
+    /**
+     * 
+     * @param TaskInterface $task
+     * @return bool|NULL
+     */
+    public function isTriggerWidgetRequired() : ?bool
+    {
+        return $this->triggerWidgetRequired;
+    }
+    
+    /**
+     * 
+     * @param bool $trueOrFalse
+     * @return ActionInterface
+     */
+    public function setInputTriggerWidgetRequired(bool $trueOrFalse) : ActionInterface
+    {
+        $currentValue = $this->isTriggerWidgetRequired();
+        if ($currentValue !== null && $currentValue !== $trueOrFalse) {
+            throw new ActionRuntimeError($this, 'Cannot set input_trigger_widet_required to ' . ($trueOrFalse ? 'true' : 'false') . ': only ' . ($currentValue ? 'true' : 'false') . ' allowed!');
+        }
+        $this->triggerWidgetRequired = $trueOrFalse;
+        return $this;
     }
 }
 ?>
