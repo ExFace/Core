@@ -664,6 +664,14 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     {
         return $this->prefill_data_preset;
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::isTriggerWidgetRequired()
+     */
+    public function isTriggerWidgetRequired() : ?bool
+    {
+        return $this->widget_uxon === null && $this->widget_id === null && $this->page_alias === null;
+    }
 }
-?>
