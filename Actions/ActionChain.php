@@ -15,6 +15,7 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\CommonLogic\Tasks\ResultData;
+use exface\Core\Interfaces\Actions\iCallOtherActions;
 
 /**
  * This action chains other actions together and performs them one after another.
@@ -45,25 +46,25 @@ use exface\Core\CommonLogic\Tasks\ResultData;
  * 
  * ```
  *
- * As a rule of thumb, the action chain will behave as the first action in the it: it will inherit it's name, input restrictions, etc.
- * Thus, in the above example, the action chain would inherit the name "Order" and "input_rows_min=0". However, there are some
- * important exceptions from this rule:
+ * As a rule of thumb, the action chain will behave as the first action in the it: it will inherit it's name, trigger widget, input
+ * restrictions, etc. Thus, in the above example, the action chain would inherit the name "Order" and `input_rows_min`=`0`. However, 
+ * there are some important exceptions from this rule:
  * 
  * - the chain has modified data if at least one of the actions modified data
  *
  * By default, all actions in the chain will be performed in a single transaction. That is, all actions will get rolled back if at least
- * one failes. Set the property "use_single_transaction" to false to make every action in the chain run in it's own transaction.
+ * one failes. Set the property `use_single_transaction` to false to make every action in the chain run in it's own transaction.
  *
  * Action chains can be nested - an action in the chain can be another chain. This way, complex processes even with multiple transactions
- * can be modeled (e.g. the root chain could have use_single_transaction disabled, while nested chains would each have a wrapping transaction).
+ * can be modeled (e.g. the root chain could have `use_single_transaction` disabled, while nested chains would each have a wrapping transaction).
  *
  * @author Andrej Kabachnik
  *        
  */
-class ActionChain extends AbstractAction
+class ActionChain extends AbstractAction implements iCallOtherActions
 {
 
-    private $actions = array();
+    private $actions = null;
 
     private $use_single_transaction = true;
 
@@ -73,6 +74,11 @@ class ActionChain extends AbstractAction
         $this->actions = new ActionList($this->getWorkbench(), $this);
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::perform()
+     */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         if ($this->getActions()->isEmpty()) {
@@ -111,22 +117,29 @@ class ActionChain extends AbstractAction
     }
 
     /**
-     *
-     * @return ActionListInterface|ActionInterface[]
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iCallOtherActions::getActions()
      */
-    public function getActions()
+    public function getActions() : ActionListInterface
     {
         return $this->actions;
     }
 
-    public function setActions($uxon_array_or_action_list)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iCallOtherActions::setActions()
+     */
+    public function setActions($uxon_array_or_action_list) : iCallOtherActions
     {
         if ($uxon_array_or_action_list instanceof ActionListInterface) {
             $this->actions = $uxon_array_or_action_list;
         } elseif ($uxon_array_or_action_list instanceof UxonObject) {
             foreach ($uxon_array_or_action_list as $nr => $action_or_uxon) {
                 if ($action_or_uxon instanceof UxonObject) {
-                    $action = ActionFactory::createFromUxon($this->getWorkbench(), $action_or_uxon);
+                    $triggerWidget = $this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null;
+                    $action = ActionFactory::createFromUxon($this->getWorkbench(), $action_or_uxon, $triggerWidget);
                 } elseif ($action_or_uxon instanceof ActionInterface) {
                     $action = $action_or_uxon;
                 } else {
@@ -141,7 +154,12 @@ class ActionChain extends AbstractAction
         return $this;
     }
 
-    public function addAction(ActionInterface $action)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iCallOtherActions::addAction()
+     */
+    public function addAction(ActionInterface $action) : iCallOtherActions
     {
         if ($action instanceof iShowWidget){
             throw new ActionConfigurationError($this, 'Actions showing widgets cannot be used within action chains!');
@@ -155,32 +173,62 @@ class ActionChain extends AbstractAction
         return $this;
     }
 
-    public function getUseSingleTransaction()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iCallOtherActions::getUseSingleTransaction()
+     */
+    public function getUseSingleTransaction() : bool
     {
         return $this->use_single_transaction;
     }
 
-    public function setUseSingleTransaction($value)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iCallOtherActions::setUseSingleTransaction()
+     */
+    public function setUseSingleTransaction(bool $value) : iCallOtherActions
     {
         $this->use_single_transaction = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::getInputRowsMin()
+     */
     public function getInputRowsMin()
     {
         return $this->getActions()->getFirst()->getInputRowsMin();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::getInputRowsMax()
+     */
     public function getInputRowsMax()
     {
         return $this->getActions()->getFirst()->getInputRowsMax();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::isUndoable()
+     */
     public function isUndoable() : bool
     {
         return false;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::getName()
+     */
     public function getName()
     {
         if (! parent::hasName() && empty($this->getActions()) === false) {
@@ -189,11 +237,21 @@ class ActionChain extends AbstractAction
         return parent::getName();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::getIcon()
+     */
     public function getIcon()
     {
         return parent::getIcon() ? parent::getIcon() : $this->getActions()->getFirst()->getIcon();
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::implementsInterface()
+     */
     public function implementsInterface($interface)
     {
         if ($this->getActions()->isEmpty()){
@@ -212,6 +270,4 @@ class ActionChain extends AbstractAction
     public function __call($method, $arguments){
         return call_user_func_array(array($this->getActions()->getFirst(), $method), $arguments);
     }
-     
 }
-?>
