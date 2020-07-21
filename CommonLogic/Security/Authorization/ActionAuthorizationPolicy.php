@@ -24,6 +24,8 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\Interfaces\Tasks\CliTaskInterface;
 use exface\Core\Interfaces\Actions\iCallOtherActions;
+use exface\Core\Actions\ShowWidget;
+use exface\Core\Actions\ReadPrefill;
 
 /**
  * Policy for access to actions.
@@ -298,19 +300,27 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
      */
     protected function isActionTriggerWidgetValid(ActionInterface $action, TaskInterface $task = null) : bool
     {
-        if ($task && $task->isTriggeredByWidget()) {
-            $widgetAction = $task->getWidgetTriggeredBy()->getAction();
-            
-            switch (true) {
-                case $widgetAction instanceof iCallOtherActions:
-                    foreach ($widgetAction->getActions() as $chainedAction) {
-                        if ($chainedAction === $action) {
-                            return true;
+        if ($task) {
+            if ($action->isExactly(ShowWidget::class) && $task->isTriggeredOnPage()) {
+                return true;
+            }
+            if ($action->isExactly(ReadPrefill::class) && $task->isTriggeredByWidget()) {
+                return true;
+            }
+            if ($task->isTriggeredByWidget()) {
+                $widgetAction = $task->getWidgetTriggeredBy()->getAction();
+                
+                switch (true) {
+                    case $widgetAction instanceof iCallOtherActions:
+                        foreach ($widgetAction->getActions() as $chainedAction) {
+                            if ($chainedAction === $action) {
+                                return true;
+                            }
                         }
-                    }
-                    return false;
-                default:
-                    return $widgetAction === $action;
+                        return false;
+                    default:
+                        return $widgetAction === $action;
+                }
             }
         }
         
