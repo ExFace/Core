@@ -441,7 +441,7 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
      * Returns TRUE or FALSE if the action requires a trigger widget in the task or not; NULL if not explicitly defined.
      * 
      * Depending on their internal logic action may or may not require a trigger widget.
-     * Some action like `exface.Core.ShowWidget` will require a trigger only on certain
+     * Some actions like `exface.Core.ShowWidget` will require a trigger only on certain
      * occasions - e.g. if no widget is explicitly defined within the action in our case.
      * 
      * Implementing this method gives the developer the possibility to control this

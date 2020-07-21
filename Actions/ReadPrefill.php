@@ -111,8 +111,8 @@ class ReadPrefill extends ReadData
     }
     
     /**
-     *
-     * {@inheritDoc}
+     * A specific prefill widget is not neccessarily required - a page is enough.
+     * 
      * @see \exface\Core\CommonLogic\AbstractAction::isTriggerWidgetRequired()
      */
     public function isTriggerWidgetRequired() : ?bool

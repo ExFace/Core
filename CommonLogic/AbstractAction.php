@@ -38,7 +38,6 @@ use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
-use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 
 /**
@@ -956,7 +955,7 @@ abstract class AbstractAction implements ActionInterface
                     $from_object = $calling_widget->getMetaObject();
                 }
             } else {
-                $this->getWorkbench()->getLogger()->warning('Cannot initialize input mapper for action "' . $this->getAliasWithNamespace() . '": no from-object defined and no calling widget to get it from!', [], $this);
+                $this->getWorkbench()->getLogger()->warning('Cannot initialize input mapper for action "' . $this->getAliasWithNamespace() . '": no from-object defined and no calling widget to get it from!', []);
                 return $this;
             }
         }
@@ -1175,8 +1174,8 @@ abstract class AbstractAction implements ActionInterface
     
     /**
      * 
-     * @param TaskInterface $task
-     * @return bool|NULL
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::isTriggerWidgetRequired()
      */
     public function isTriggerWidgetRequired() : ?bool
     {
@@ -1185,8 +1184,8 @@ abstract class AbstractAction implements ActionInterface
     
     /**
      * 
-     * @param bool $trueOrFalse
-     * @return ActionInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputTriggerWidgetRequired()
      */
     public function setInputTriggerWidgetRequired(bool $trueOrFalse) : ActionInterface
     {
