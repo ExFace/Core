@@ -15,7 +15,6 @@ use exface\Core\Widgets\Console;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Filemanager;
-use exface\Core\Facades\ConsoleFacade;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
@@ -136,9 +135,15 @@ class WebConsoleFacade extends AbstractHttpFacade
                 $stream = new IteratorStream($console->getOutputGenerator($cmd));
                 break;
             default:
-                // FIXME for some reason merging with etenv() makes git push/pull freeze...
-                //$envVars = array_merge(getenv(), $widget->getEnvironmentVars());
-                $envVars = $widget->getEnvironmentVars();
+                $envVars = [];
+                if (! empty($inheritVars = $widget->getEnvironmentVarsInherit())) {
+                    foreach (getenv() as $var => $val) {
+                        if (in_array($var, $inheritVars)) {
+                            $envVars[$var] = $val;
+                        }
+                    }
+                }
+                $envVars = array_merge($envVars, $widget->getEnvironmentVars());
                 $process = Process::fromShellCommandline($cmd, null, $envVars, null, $widget->getCommandTimeout());
                 $process->start();
                 $generator = function ($process) {
