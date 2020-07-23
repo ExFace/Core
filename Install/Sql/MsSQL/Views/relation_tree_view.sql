@@ -33,7 +33,7 @@ SELECT
     CASE WHEN rt.unambiguous_relation_flag = 0 AND rt.only_required_reverse_relation_flag = 0 THEN CONCAT(rt.relation_name, ' (', rt.attribute_name, ')') ELSE rt.relation_name END AS relation_name_short
 FROM (
 	SELECT 
-		CONCAT(LOWER(CONVERT(VARCHAR(18), a.oid, 1)), LOWER(CONVERT(VARCHAR(18), a.object_oid, 1))) AS oid,  
+		CONCAT(LOWER(CONVERT(VARCHAR(34), a.oid, 1)), LOWER(CONVERT(VARCHAR(34), a.object_oid, 1))) AS oid,  
 		a.oid as attribute_oid,
 		a.created_on,
 		a.modified_on, 
