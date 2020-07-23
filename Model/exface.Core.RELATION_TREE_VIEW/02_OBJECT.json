@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2018-06-13 14:22:59",
-            "MODIFIED_ON": "2019-06-05 15:22:48",
+            "MODIFIED_ON": "2020-07-23 08:58:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e86f154212ef249e9e0205857feb80",
@@ -98,7 +98,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "RELATION_TREE_VIEW",
-            "DATA_ADDRESS": "(\nSELECT \n    rt.*,\n    CONCAT(rt.relation_alias,rt.relation_alias_modifier) AS relation_alias_full,\n    IF (rt.unambiguous_relation_flag = 0 AND rt.only_required_reverse_relation_flag = 0, CONCAT(rt.relation_alias, rt.relation_alias_modifier), rt.relation_alias) AS relation_alias_short,\n    IF (rt.unambiguous_relation_flag = 0 AND rt.only_required_reverse_relation_flag = 0, CONCAT(rt.relation_name, ' (', rt.attribute_name, ')'), rt.relation_name) AS relation_name_short\nFROM (\n\tSELECT \n\t\tCONCAT(LOWER(HEX(a.oid)), LOWER(HEX(a.object_oid))) AS oid,  \n\t\ta.oid as attribute_oid,\n\t\ta.created_on,\n\t\ta.modified_on, \n\t\ta.created_by_user_oid, \n\t\ta.modified_by_user_oid, \n\t\ta.attribute_name,\n\t\ta.object_oid, \n\t\ta.related_object_oid, \n\t\ta.related_object_special_key_attribute_oid, \n\t\ta.object_oid as left_object_oid, \n\t\t'regular'as relation_type, \n\t\ta.related_object_oid as right_object_oid, \n\t\ta.attribute_alias as relation_alias, \n\t\ta.attribute_name as relation_name, \n\t\t'' as relation_alias_modifier,\n\t\t1 as unambiguous_relation_flag,\n\t\t0 as only_required_reverse_relation_flag\n\tFROM exf_attribute a \n\t\tLEFT JOIN exf_object ao ON ao.oid = a.object_oid\n\t\tLEFT JOIN exf_object ro ON ro.oid = a.related_object_oid\n\tWHERE \n\t\ta.related_object_oid IS NOT NULL\n\t\t\n\tUNION ALL\n\t\n\tSELECT \n\t\tCONCAT(LOWER(HEX(ar.oid)), LOWER(HEX(ar.related_object_oid))) AS oid,  \n\t\tar.oid as attribute_oid,\n\t\tar.created_on, \n\t\tar.modified_on, \n\t\tar.created_by_user_oid, \n\t\tar.modified_by_user_oid, \n\t\tar.attribute_name,\n\t\tar.object_oid, \n\t\tar.related_object_oid, \n\t\tar.related_object_special_key_attribute_oid, \n\t\tar.related_object_oid as left_object_oid, \n\t\t'reverse' as relation_type, \n\t\tar.object_oid as right_object_oid, \n\t\taor.object_alias as relation_alias, \n\t\taor.object_name as relation_name, \n\t\tCONCAT('[', ar.attribute_alias, ']') as relation_alias_modifier,\n\t\tIF(\n\t\t   (SELECT COUNT(*) FROM exf_attribute WHERE related_object_oid = ar.related_object_oid AND object_oid = ar.object_oid AND oid <> ar.oid) > 0, \n\t\t   0, 1\n\t\t) as unambiguous_relation_flag,\n\t\tIF(\n\t\t      ar.attribute_required_flag = 1 AND (SELECT COUNT(*) FROM exf_attribute WHERE related_object_oid = ar.related_object_oid AND object_oid = ar.object_oid AND oid <> ar.oid AND attribute_required_flag = 1) = 0, \n\t\t      1, 0\n\t\t) as only_required_reverse_relation_flag\n\tFROM exf_attribute ar \n\t\tLEFT JOIN exf_object aor ON aor.oid = ar.object_oid\n\t\tLEFT JOIN exf_object ror ON ror.oid = ar.related_object_oid\n\tWHERE \n\t\tar.related_object_oid IS NOT NULL \n\t) rt\n)"
+            "DATA_ADDRESS": "exf_relation_tree"
         }
     ],
     "totals_rows": [],
