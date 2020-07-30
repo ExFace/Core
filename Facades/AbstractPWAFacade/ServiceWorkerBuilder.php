@@ -19,15 +19,27 @@ class ServiceWorkerBuilder
     
     private $workboxImportPath = null;
     
-    public function __construct(string $workboxImportPath = 'workbox-sw/build/workbox-sw.js')
+    private $basePath = '';
+    
+    /**
+     * Creates a service worker builder for a specific base path (relative URL path from the
+     * service worker location to the includes location).
+     * 
+     * @param string $basePath
+     * @param string $workboxImportPath
+     */
+    public function __construct(string $basePath = '', string $workboxImportPath = 'workbox-sw/build/workbox-sw.js')
     {
         $this->workboxImportPath = $workboxImportPath;
+        if ($basePath) {
+            $this->basePath = rtrim($basePath, "/") . "/";
+        }
     }
     
     public function buildJs() : string
     {
         return <<<JS
-importScripts('{$this->workboxImportPath}');
+importScripts('{$this->basePath}{$this->workboxImportPath}');
 
 {$this->buildJsLogic()}
 JS;
@@ -36,12 +48,12 @@ JS;
     public function buildJsImports() : string
     {
         $imports = array_unique($this->imports);
-        if (! empty($imports)) {
-            $importScript = "importScripts('" . implode("'); \nimportScripts('", $imports) . "');";
+        foreach ($imports as $import) {
+            $importScript .= PHP_EOL . "importScripts('{$this->basePath}{$import}');";
         }
         
         return <<<JS
-importScripts('{$this->workboxImportPath}');
+importScripts('{$this->basePath}{$this->workboxImportPath}');
 {$importScript}
 
 JS;

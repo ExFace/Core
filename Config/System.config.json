@@ -40,7 +40,7 @@
     "SECURITY.DISABLE_ANONYMOUS_ACCESS": false,
     "SECURITY.AUTHENTICATORS" : [
     	{
-    		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SymfonyAuthenticator",
+    		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\MetamodelAuthenticator",
     		"id": "USER_MODEL_AUTH"
     	},
     	{

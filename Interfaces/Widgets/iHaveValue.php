@@ -23,7 +23,11 @@ interface iHaveValue extends WidgetInterface
 
     /**
      *
-     * @param ExpressionInterface|string $expression_or_string            
+     * @param ExpressionInterface|string $expression_or_string   
+     * 
+     * @triggers \exface\Core\Events\Widget\OnWidgetLinkedEvent
+     * 
+     * @return iHaveValue
      */
     public function setValue($value);
 

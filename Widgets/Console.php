@@ -78,6 +78,8 @@ class Console extends AbstractWidget
     
     private $environmentVars = [];
     
+    private $environmentVarsInherit = [];
+    
     private $workingDirectorySubfolder = null;
     
     private $workingDirectoyAttributeAlias = '';
@@ -368,6 +370,35 @@ class Console extends AbstractWidget
     public function getEnvironmentVars() : array
     {
         return $this->environmentVars;
+    }
+    
+    /**
+     * Names of environment variables to inherit along with `environment_vars` defined manually.
+     * 
+     * In addition to manually defined `environment_vars` your can use `environment_vars_inherit`
+     * to list variables to fetch via `getenv()` and merge with `environment_vars` defined for
+     * this widget. This is usefull to get user-specific variables like `APPDATA`, etc.
+     * 
+     * @uxon-property environment_vars_inherit
+     * @uxon-type array
+     * @uxon-template [""]
+     * 
+     * @param UxonObject $uxon
+     * @return Console
+     */
+    public function setEnvironmentVarsInherit(UxonObject $uxon) : Console
+    {
+        $this->environmentVarsInherit = $uxon->toArray();
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string[]
+     */
+    public function getEnvironmentVarsInherit() : array
+    {
+        return $this->environmentVarsInherit;
     }
     
     /**

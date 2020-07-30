@@ -20,6 +20,7 @@ use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
 
 /**
  * Common interface for all actions.
@@ -435,4 +436,35 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return bool
      */
     public function isAuthorized(UserImpersonationInterface $userOrToken = null) : bool;
+    
+    /**
+     * Returns TRUE or FALSE if the action requires a trigger widget in the task or not; NULL if not explicitly defined.
+     * 
+     * Depending on their internal logic action may or may not require a trigger widget.
+     * Some actions like `exface.Core.ShowWidget` will require a trigger only on certain
+     * occasions - e.g. if no widget is explicitly defined within the action in our case.
+     * 
+     * Implementing this method gives the developer the possibility to control this
+     * behavior.
+     * 
+     * @return bool|NULL
+     */
+    public function isTriggerWidgetRequired() : ?bool;
+    
+    /**
+     * Allows to change `isTriggerWidgetRequired()` at runtime. 
+     * 
+     * This is only possible if the action's method `isTriggerWidgetRequired()` would return
+     * NULL or the same value. In other words, you can only change the setting at runtime if
+     * it was not hardcoded previously. You can also only chage it once! This is understandable
+     * as otherwise the action's internal logic could be overridden from outside.
+     * 
+     * Requiring (or not) a trigger at runtime is usefull whenever multiple action depend on
+     * each-other - e.g. in action chains, workflows or behavoirs like `iCallAction`.
+     * 
+     * @param bool $trueOrFalse
+     * @throws ActionRuntimeError
+     * @return ActionInterface
+     */
+    public function setInputTriggerWidgetRequired(bool $trueOrFalse) : ActionInterface;
 }

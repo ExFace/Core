@@ -90,6 +90,22 @@
             "APP": "0x31000000000000000000000000000000",
             "USE_IN_OBJECT_BASKET_FLAG": "0",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2020-07-15 09:37:07",
+            "MODIFIED_ON": "2020-07-15 09:43:06",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea9914bfae1fa099140205857feb80",
+            "OBJECT": "0x11ea5edb3ee5cbe8b9920205857feb80",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
+            "ALIAS": "RestoreAuthorizationPoint",
+            "NAME": "Restore Settings",
+            "SHORT_DESCRIPTION": "Restores the settings for an authorization point according to it's app",
+            "CONFIG_UXON": "{\"icon\":\"undo\",\"input_object_alias\":\"exface.Core.AUTHORIZATION_POINT\",\"input_mapper\":{\"inherit_columns\":false,\"column_to_column_mappings\":[{\"from\":\"=\\\"\\\"\",\"to\":\"COMBINING_ALGORITHM_LOCAL\"},{\"from\":\"=\\\"\\\"\",\"to\":\"DEFAULT_EFFECT_LOCAL\"},{\"from\":\"=0\",\"to\":\"DISABLED_FLAG\"},{\"from\":\"MODIFIED_ON\",\"to\":\"MODIFIED_ON\"},{\"from\":\"UID\",\"to\":\"UID\"}]}}",
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

@@ -98,22 +98,6 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         $group_by = $group_by ? ' GROUP BY ' . substr($group_by, 2) : '';
         
-        // If there is a limit in the query, ensure there is an ORDER BY even if no sorters given.
-        if (empty($this->getSorters()) === true && $this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
-            if ($this->getMainObject()->hasUidAttribute()) {
-                // If no order is specified, sort sort over the UID of the meta object
-                $order_by .= ', ' . ($group_by ? 'EXFCOREQ' . $this->getAliasDelim() : '') . $this->getMainObject()->getAlias() . '.' . $this->getMainObject()->getUidAttribute()->getDataAddress() . ' DESC';
-            } else {
-                // If the object has no UID, sort over the first column in the query, which is not an SQL statement itself
-                foreach ($this->getAttributes() as $qpart) {
-                    if (! $this->checkForSqlStatement($qpart->getDataAddress())) {
-                        $order_by .= ', ' . $qpart->getColumnKey() . ' DESC';
-                        break;
-                    }
-                }
-            }
-        }
-        
         // SELECT
         /*	@var $qpart \exface\Core\CommonLogic\QueryBuilder\QueryPartSelect */
         foreach ($this->getAttributes() as $qpart) {
@@ -182,7 +166,30 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $join = implode(' ', $joins);
         $enrichment_join = implode(' ', $enrichment_joins);
         
+        $useEnrichment = ($group_by && ($where || $has_attributes_with_reverse_relations)) || $this->getSelectDistinct();
+        
         // ORDER BY
+        // If there is a limit in the query, ensure there is an ORDER BY even if no sorters given.
+        if (empty($this->getSorters()) === true && $this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
+            if ($this->getMainObject()->hasUidAttribute()) {
+                $orderByUidCol = ($useEnrichment ? 'EXFCOREQ' . $this->getAliasDelim() : '') . $this->getMainObject()->getAlias() . '.' . $this->getMainObject()->getUidAttribute()->getDataAddress();
+                foreach ($this->getAttributes() as $qpart) {
+                    if ($qpart->getAttribute()->isExactly($this->getMainObject()->getUidAttribute())) {
+                        $orderByUidCol = $this->getShortAlias($qpart->getColumnKey());
+                    }
+                }
+                // If no order is specified, sort sort over the UID of the meta object
+                $order_by .= ', ' . $orderByUidCol . ' DESC';
+            } else {
+                // If the object has no UID, sort over the first column in the query, which is not an SQL statement itself
+                foreach ($this->getAttributes() as $qpart) {
+                    if (! $this->checkForSqlStatement($qpart->getDataAddress())) {
+                        $order_by .= ', ' . $qpart->getColumnKey() . ' DESC';
+                        break;
+                    }
+                }
+            }
+        }
         foreach ($this->getSorters() as $qpart) {
             // A sorter can only be used, if there is no GROUP BY, or the sorted attribute has unique values within the group
             if (! $this->getAggregations() || in_array($qpart->getAttribute()->getAliasWithRelationPath(), $group_safe_attribute_aliases)) {
@@ -200,7 +207,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
             $limit = ' OFFSET ' . $this->getOffset() . ' ROWS FETCH NEXT ' . ($this->getLimit()+1) . ' ROWS ONLY';
         }
         
-        if (($group_by && ($where || $has_attributes_with_reverse_relations)) || $this->getSelectDistinct()) {
+        if ($useEnrichment) {
             if (count($this->getAttributesWithReverseRelations()) > 0) {
                 $query = "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . ") EXFCOREQ " . $enrichment_join . $group_by . $having . $order_by . $limit;
             } else {

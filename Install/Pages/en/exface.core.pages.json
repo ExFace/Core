@@ -5,13 +5,13 @@
     "menu_index": 1,
     "menu_visible": true,
     "name": "Pages",
-    "description": "Tabular overview for all pages",
+    "description": "Manage UI pages and main menu structure",
     "intro": "",
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2018-05-29 11:42:56",
-    "modified_by_user_selector": "0x11ea8c1397fdf0608c130205857feb80",
-    "modified_on": "2020-06-24 08:28:23",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2020-07-23 10:02:38",
     "contents": {
         "object_alias": "exface.Core.PAGE",
         "widget_type": "DataTree",
@@ -124,6 +124,9 @@
                 "bind_to_double_click": true
             },
             {
+                "action_alias": "exface.Core.ShowPageMassEditDialog"
+            },
+            {
                 "action": {
                     "alias": "exface.Core.ShowObjectCopyDialog",
                     "input_mapper": {
@@ -144,13 +147,10 @@
                 }
             },
             {
-                "action_alias": "exface.Core.DeleteObject"
-            },
-            {
                 "action_alias": "exface.Core.RestorePageMenuPosition"
             },
             {
-                "action_alias": "exface.Core.ShowPageMassEditDialog"
+                "action_alias": "exface.Core.DeleteObject"
             }
         ]
     }
