@@ -22,9 +22,30 @@ use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UiPageGroupSelector;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
+use exface\Core\Interfaces\Tasks\CliTaskInterface;
+use exface\Core\Interfaces\Actions\iCallOtherActions;
+use exface\Core\Actions\ShowWidget;
+use exface\Core\Actions\ReadPrefill;
 
 /**
  * Policy for access to actions.
+ * 
+ * Possible targets:
+ * 
+ * - User group
+ * - Object action - policy only applies to this particular action model
+ * - Action prototype - policy applies to all actions of this prototype
+ * - Meta object - policy applies to all actions on this meta object
+ * 
+ * Additional conditions:
+ * 
+ * - `command_line_task` - if set, policy only applies to CLI tasks (`true`) 
+ * or web tasks (`false`)
+ * - `action_trigger_widget_match` - if set, policy only applies if the task has
+ * a trigger widget and the action matches that widget's action (`true`) or not 
+ * (`false`). NOTE: such policies never apply to actions, that explicitly do not 
+ * require a trigger widget - e.g. `exface.Core.Login` or similar.
+ * - `exclude_actions` - list of action selectors not to apply this policy to
  * 
  * @author Andrej Kabachnik
  *
@@ -49,9 +70,11 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     
     private $effect = null;
     
-    private $actionTriggerPageKnown = null;
+    private $actionTriggerWidgetMatch = null;
     
     private $excludeActionSelectors = [];
+    
+    private $cliTasks = null;
     
     /**
      * 
@@ -129,6 +152,18 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 $applied = true;
             }
             
+            // See if applicable only to cli/non-cli tasks
+            if (($expectCli = $this->getCommandLineTaskOption()) !== null) {
+                $isCli = ($task instanceof CliTaskInterface);
+                switch (true) {
+                    case $expectCli === true && $isCli === false:
+                    case $expectCli === false && $isCli === true:
+                        return PermissionFactory::createNotApplicable($this);
+                    default:
+                        $applied = true;
+                }
+            }
+            
             // Match user
             if ($userOrToken instanceof AuthenticationTokenInterface) {
                 $user = $this->workbench->getSecurity()->getUser($userOrToken);
@@ -142,12 +177,15 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             }
             
             // See if trigger page must be known
-            if ($this->getActionTriggerPageKnownOption() !== null) {
-                $needToKnow = $this->getActionTriggerPageKnownOption();
-                $triggerKnown = $this->isActionTriggerPageKnown($action, $task);
+            if ($this->getActionTriggerWidgetMatch() !== null) {
+                if ($action->isTriggerWidgetRequired() === false) {
+                    return PermissionFactory::createNotApplicable($this);
+                }
+                $triggerRequired = $this->getActionTriggerWidgetMatch();
+                $triggerKnown = $this->isActionTriggerWidgetValid($action, $task);
                 switch (true) {
-                    case $needToKnow === true && $triggerKnown === false:
-                    case $needToKnow === false && $triggerKnown === true:
+                    case $triggerRequired === true && $triggerKnown === false:
+                    case $triggerRequired === false && $triggerKnown === true:
                         return PermissionFactory::createNotApplicable($this);
                     default:
                         $applied = true;
@@ -225,27 +263,65 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     /**
      * Only apply this policy if the page where the action was triggered is known (or is not known).
      * 
-     * @uxon-property action_trigger_page_known
+     * @uxon-property action_trigger_widget_known
      * @uxon-type boolean
      * 
      * @param bool $trueOrFalse
      * @return ActionAuthorizationPolicy
      */
-    protected function setActionTriggerPageKnown(bool $trueOrFalse) : ActionAuthorizationPolicy
+    protected function setActionTriggerWidgetMatch(bool $trueOrFalse) : ActionAuthorizationPolicy
     {
-        $this->actionTriggerPageKnown = $trueOrFalse;
+        $this->actionTriggerWidgetMatch = $trueOrFalse;
         return $this;
     }
     
-    protected function getActionTriggerPageKnownOption() : ?bool
+    /**
+     * @deprecated use setActionTriggerWidgetMatch() instead!
+     */
+    protected function setActionTriggerPageKnown(bool $trueOrFalse) : ActionAuthorizationPolicy
     {
-        return $this->actionTriggerPageKnown;
+        return $this->setActionTriggerWidgetMatch($trueOrFalse);
     }
     
-    protected function isActionTriggerPageKnown(ActionInterface $action, TaskInterface $task = null) : bool
+    /**
+     * 
+     * @return bool|NULL
+     */
+    protected function getActionTriggerWidgetMatch() : ?bool
     {
-        if ($task && $task->isTriggeredOnPage()) {
-            return true;
+        return $this->actionTriggerWidgetMatch;
+    }
+    
+    /**
+     * 
+     * @param ActionInterface $action
+     * @param TaskInterface $task
+     * @return bool
+     */
+    protected function isActionTriggerWidgetValid(ActionInterface $action, TaskInterface $task = null) : bool
+    {
+        if ($task) {
+            if ($action->isExactly(ShowWidget::class) && $task->isTriggeredOnPage()) {
+                return true;
+            }
+            if ($action->isExactly(ReadPrefill::class) && $task->isTriggeredByWidget()) {
+                return true;
+            }
+            if ($task->isTriggeredByWidget()) {
+                $widgetAction = $task->getWidgetTriggeredBy()->getAction();
+                
+                switch (true) {
+                    case $widgetAction instanceof iCallOtherActions:
+                        foreach ($widgetAction->getActions() as $chainedAction) {
+                            if ($chainedAction === $action) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    default:
+                        return $widgetAction === $action;
+                }
+            }
         }
         
         if ($action->isDefinedInWidget()) {
@@ -256,7 +332,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     }
     
     /**
-     * Make this policy not applicable to one or more specific actions
+     * Make this policy not applicable to one or more specific actions (exact matches!).
      * 
      * @uxon-property exclude_actions
      * @uxon-type metamodel:action
@@ -280,5 +356,31 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     protected function getExcludeActions() : array
     {
         return $this->excludeActionSelectors;
+    }
+    
+    /**
+     * Set to TRUE to apply only to command line tasks or to FALSE to exclude CLI tasks.
+     * 
+     * By default, the policy will be applied to all tasks regardless of their origin.
+     * 
+     * @uxon-property command_line_task
+     * @uxon-type boolean
+     * 
+     * @param bool $trueOrFalse
+     * @return ActionAuthorizationPolicy
+     */
+    protected function setCommandLineTask(bool $trueOrFalse) : ActionAuthorizationPolicy
+    {
+        $this->cliTasks = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function getCommandLineTaskOption() : bool
+    {
+        return $this->cliTasks;
     }
 }

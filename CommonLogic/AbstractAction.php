@@ -38,7 +38,7 @@ use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
-use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -110,6 +110,8 @@ abstract class AbstractAction implements ActionInterface
     private $input_object_alias = null;
     
     private $result_object_alias = null;
+    
+    private $triggerWidgetRequired = null;
 
     /**
      *
@@ -943,15 +945,19 @@ abstract class AbstractAction implements ActionInterface
      */
     public function setInputMapper(UxonObject $uxon)
     {
-        if ($calling_widget = $this->getWidgetDefinedIn()) {
-            if ($calling_widget instanceof iUseInputWidget) {
-                $from_object = $calling_widget->getInputWidget()->getMetaObject();
-            } else {
-                $from_object = $calling_widget->getMetaObject();
-            }
+        if ($uxon->hasProperty('from_object_alias')) {
+            $from_object = $this->getWorkbench()->model()->getObject($uxon->getProperty('from_object_alias'));
         } else {
-            $this->getWorkbench()->getLogger()->warning('Cannot initialize input mapper for action "' . $this->getAliasWithNamespace() . '": no from-object defined and no calling widget to get it from!', [], $this);
-            return $this;
+            if ($this->isDefinedInWidget() && $calling_widget = $this->getWidgetDefinedIn()) {
+                if ($calling_widget instanceof iUseInputWidget) {
+                    $from_object = $calling_widget->getInputWidget()->getMetaObject();
+                } else {
+                    $from_object = $calling_widget->getMetaObject();
+                }
+            } else {
+                $this->getWorkbench()->getLogger()->warning('Cannot initialize input mapper for action "' . $this->getAliasWithNamespace() . '": no from-object defined and no calling widget to get it from!', []);
+                return $this;
+            }
         }
         $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $uxon, $from_object, $this->getMetaObject());
         return $this->addInputMapper($mapper);
@@ -1164,6 +1170,31 @@ abstract class AbstractAction implements ActionInterface
         } catch (AuthorizationExceptionInterface $e) {
             return false;
         }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::isTriggerWidgetRequired()
+     */
+    public function isTriggerWidgetRequired() : ?bool
+    {
+        return $this->triggerWidgetRequired;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputTriggerWidgetRequired()
+     */
+    public function setInputTriggerWidgetRequired(bool $trueOrFalse) : ActionInterface
+    {
+        $currentValue = $this->isTriggerWidgetRequired();
+        if ($currentValue !== null && $currentValue !== $trueOrFalse) {
+            throw new ActionRuntimeError($this, 'Cannot set input_trigger_widet_required to ' . ($trueOrFalse ? 'true' : 'false') . ': only ' . ($currentValue ? 'true' : 'false') . ' allowed!');
+        }
+        $this->triggerWidgetRequired = $trueOrFalse;
+        return $this;
     }
 }
 ?>

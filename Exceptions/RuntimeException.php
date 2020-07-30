@@ -5,7 +5,7 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
- * Exception thrown if an error which can only be found on runtime occurs.
+ * Workbench exception thrown if an error which can only be found on runtime occurs.
  *
  * In Java-world, you have checked and runtime exceptions. Checked exceptions must always be
  * caught. The Java compiler will not compile code which does not have catch-blocks for any
@@ -15,6 +15,8 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * not have support for checked exceptions, the divide between runtime and other exceptions is
  * less strict. However, the purpose of a RuntimeException is still similar: It should be throw
  * in cases where the calling code does not necessarily have the capacity to handle it.
+ *
+ * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface for details on workbench exceptions
  *
  * @author Andrej Kabachnik
  *        

@@ -48,30 +48,17 @@
     ],
     "rows": [
         {
-            "CREATED_ON": "2019-11-19 16:42:32",
-            "MODIFIED_ON": "2019-11-19 16:44:21",
+            "CREATED_ON": "2020-07-14 12:24:57",
+            "MODIFIED_ON": "2020-07-14 12:24:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
-            "UID": "0x11ea0aeb87fc18a2be19e4b318306b9a",
-            "BEHAVIOR": "exface\/Core\/Behaviors\/PasswordHashingBehavior.php",
-            "CONFIG_UXON": "{\"password_attribute_alias\":\"PASSWORD\"}",
-            "OBJECT": "0x31343400000000000000000000000000",
-            "APP": "0x31000000000000000000000000000000",
-            "NAME": "Hash Passwords",
-            "DESCRIPTION": ""
-        },
-        {
-            "CREATED_ON": "2020-07-14 11:33:05",
-            "MODIFIED_ON": "2020-07-14 11:34:11",
-            "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
-            "UID": "0x11eab61cc92f42f2b61c0205857feb81",
+            "UID": "0x11ea8cc007a283808cc00205857feb81",
             "BEHAVIOR": "exface\/Core\/Behaviors\/UndeletableBehavior.php",
-            "CONFIG_UXON": "{\"condition_group\":{\"operator\":\"AND\",\"conditions\":[{\"expression\":\"UID\",\"comparator\":\"[\",\"value\":\"0x00000000000000000000000000000000\"}]}}",
-            "OBJECT": "0x31343400000000000000000000000000",
+            "CONFIG_UXON": "{\"condition_group\":{\"operator\":\"AND\",\"conditions\":[{\"expression\":\"UID\",\"comparator\":\"[\",\"value\":\"0x11ea8eddc766689f8ba98c04ba002958,0x11ea5ede96e738f6b9920205857feb80\"}]}}",
+            "OBJECT": "0x11ea5edb3ee5cbe8b9920205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Prevent deleting anonymous user",
-            "DESCRIPTION": ""
+            "NAME": "Prevent deleting core auth. points",
+            "DESCRIPTION": "Action and page authorization points are used within the code, so the must not be deleted!"
         }
     ],
     "totals_rows": [],

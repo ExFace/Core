@@ -165,4 +165,14 @@ class Login extends AbstractAction implements iModifyContext
         $this->reloadOnSuccess = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::isTriggerWidgetRequired()
+     */
+    public function isTriggerWidgetRequired() : ?bool
+    {
+        return false;
+    }
 }

@@ -3,7 +3,6 @@ namespace exface\Core\Facades\AbstractHttpFacade;
 
 use exface\Core\Facades\AbstractFacade\AbstractFacade;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
-use exface\Core\DataTypes\StringDataType;
 
 /**
  * Common base structure for HTTP facades.

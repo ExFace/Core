@@ -5,11 +5,13 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
- * Exception that represents an error in the program logic.
+ * Workbench exception that represents an error in the program logic.
  * This kind of exception should lead directly to a fix in your code.
  *
- * The main use for LogicException is a bit similar to DomainException � it should be used if your code (for example a calculation)
- * produces a value that it shouldn�t produce.
+ * The main use for LogicException is a bit similar to DomainException: it should be used if your code 
+ * (for example a calculation) produces a value that it shouldn't produce.
+ * 
+ * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface for details on workbench exceptions
  *
  * @author Andrej Kabachnik
  *        

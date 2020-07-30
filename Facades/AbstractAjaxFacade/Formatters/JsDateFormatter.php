@@ -86,7 +86,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      * Returns inline javascript code to format the JS Date object behind the given variable name
      * into the internal used value.
      *
-     * E.g. buildJsFormatDateObjectToInternal('new Date()') would format the current date to a format like 2019-12-31
+     * E.g. `buildJsFormatDateObjectToInternal('new Date()')` would format the current date to a format like 2019-12-31
      *
      * @param string $jsDateObject
      * @return string

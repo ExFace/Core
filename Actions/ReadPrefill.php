@@ -109,4 +109,14 @@ class ReadPrefill extends ReadData
         
         return parent::getWidgetToReadFor($task);
     }
+    
+    /**
+     * A specific prefill widget is not neccessarily required - a page is enough.
+     * 
+     * @see \exface\Core\CommonLogic\AbstractAction::isTriggerWidgetRequired()
+     */
+    public function isTriggerWidgetRequired() : ?bool
+    {
+        return true;
+    }
 }

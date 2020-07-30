@@ -290,7 +290,7 @@ class NumberDataType extends AbstractDataType
     }
 
     /**
-     * @return boolean
+     * @return int
      */
     public function getGroupLength()
     {

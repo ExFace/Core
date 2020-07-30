@@ -584,7 +584,11 @@ class UxonSchema implements UxonSchemaInterface
         $ds->dataRead();
         foreach ($ds->getRows() as $row) {
             $namespace = str_replace(['/Events', '/'], ['', $dot], $row['PATH_RELATIVE']);
-            $options[] = $namespace . $dot . $row['NAME'];
+            $alias = $namespace . $dot . $row['NAME'];
+            if (StringDataType::endsWith($alias, 'Event')) {
+                $alias = StringDataType::substringBefore($alias, 'Event', $alias, true, true);
+            }
+            $options[] = $alias;
         }
         sort($options);
         

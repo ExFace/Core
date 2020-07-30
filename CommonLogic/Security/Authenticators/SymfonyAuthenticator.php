@@ -73,6 +73,11 @@ class SymfonyAuthenticator extends AbstractAuthenticator
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.SIGN_IN');
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Security\Authenticators\AbstractAuthenticator::getSymfonyAuthManager()
+     */
     protected function getSymfonyAuthManager() : AuthenticationProviderManager
     {
         if ($this->symfonyAuthManager === null) {
@@ -84,6 +89,10 @@ class SymfonyAuthenticator extends AbstractAuthenticator
         return $this->symfonyAuthManager;
     }
     
+    /**
+     * 
+     * @return array
+     */
     protected function getSymfonyAuthProviders() : array
     {
         return [
@@ -91,6 +100,10 @@ class SymfonyAuthenticator extends AbstractAuthenticator
         ];
     }
     
+    /**
+     * 
+     * @return DaoAuthenticationProvider
+     */
     protected function getSymfonyDaoAuthenticationProvider() : DaoAuthenticationProvider
     {
         $userProvider = new SymfonyUserProvider($this->getWorkbench());
@@ -115,6 +128,11 @@ class SymfonyAuthenticator extends AbstractAuthenticator
         return $token instanceof PasswordAuthenticationTokenInterface;
     }
     
+    /**
+     * 
+     * @param AuthenticationTokenInterface $token
+     * @return \Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken|\Symfony\Component\Security\Core\Authentication\Token\PreAuthenticatedToken|\Symfony\Component\Security\Core\Authentication\Token\AnonymousToken
+     */
     protected function createSymfonyAuthToken(AuthenticationTokenInterface $token)
     {
         switch (true) {

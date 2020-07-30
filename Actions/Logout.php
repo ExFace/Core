@@ -37,4 +37,14 @@ class Logout extends AbstractAction implements iModifyContext
         $result->setContextModified(true);
         return $result;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::isTriggerWidgetRequired()
+     */
+    public function isTriggerWidgetRequired() : ?bool
+    {
+        return false;
+    }
 }
