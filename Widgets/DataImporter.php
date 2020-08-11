@@ -15,10 +15,10 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Factories\ActionFactory;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Widgets\Traits\DataTableTrait;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 
 /**
  * The DataImporter allows users to quickly create data by copy-pasting tabels from Excel-compatible editors.
@@ -113,6 +113,8 @@ class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGr
     use iHaveColumnsAndColumnGroupsTrait;
     
     use iHaveButtonsAndToolbarsTrait;
+    
+    use iHaveConfiguratorTrait;
     
     use DataTableTrait;
     
@@ -395,4 +397,13 @@ class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGr
         return $this->previewButton !== null;
     }
     
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::getConfiguratorWidgetType()
+     */
+    public function getConfiguratorWidgetType() : string
+    {
+        return 'DataConfigurator';
+    } 
 }
