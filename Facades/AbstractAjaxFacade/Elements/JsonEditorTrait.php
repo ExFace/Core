@@ -364,9 +364,9 @@ JS;
                             if(menuNodeType === "object" || menuNodeType === "root") {
                                 items.unshift(
                                 {
-                                    text : "<i class=\"fa fa-magic\"></i>{$trans['PRESETS.TITLE']}",   // the text for the menu item
+                                    text : "{$trans['PRESETS.TITLE']}",   // the text for the menu item
                                     title : "{$trans['PRESETS.TITLE']}",  // the HTML title attribute
-                                    className : "jsoneditor-no-menuicon jsoneditor-type-object active-button", // the css class name(s) for the menu item
+                                    className : "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-magic", // the css class name(s) for the menu item
                                     click: function(){ 
                                         return {$funcPrefix}_openPresetsModal(menuNode); 
                                     }
@@ -377,9 +377,9 @@ JS;
                             if(menuNodeType === "object" || menuNodeType === "root") {
                                 items.unshift(
                                 {
-                                    text : "<i class=\"fa fa-th-list\"></i>{$trans['DETAILS.TITLE']}",   // the text for the menu item
+                                    text : "{$trans['DETAILS.TITLE']}",   // the text for the menu item
                                     title : "{$trans['DETAILS.TITLE']}",  // the HTML title attribute
-                                    className : "jsoneditor-no-menuicon jsoneditor-type-object active-button", // the css class name(s) for the menu item
+                                    className : "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-th-list", // the css class name(s) for the menu item
                                     click: function(){ 
                                         return {$funcPrefix}_openDetailsModal(menuNode); 
                                     }
@@ -498,9 +498,20 @@ JS;
 
                     .jsoneditor-modal table.jsoneditor-values {width: initial;}
 
-                    .jsoneditor-no-menuicon .jsoneditor-icon {display: none;}
-                    .jsoneditor-no-menuicon .jsoneditor-text {padding-left: 4px !important;}
-                    .jsoneditor-no-menuicon i {padding: 2px; background-color: #4C4C4C; margin-right: 4px; color: white;}
+                    .jsoneditor-fa-menuicon .jsoneditor-icon {display: none;}
+                    .jsoneditor-fa-menuicon .jsoneditor-text {padding-left: 0px !important;}
+                    .jsoneditor-fa-menuicon:before {
+                        float: left;
+                        padding: 2px; margin: 4px; 
+                        background-color: #4C4C4C; 
+                        color: white;
+                        display: inline-block;
+                        font: normal normal normal 14px/1 FontAwesome;
+                        font-size: inherit;
+                        text-rendering: auto;
+                        -webkit-font-smoothing: antialiased;
+                        -moz-osx-font-smoothing: grayscale;
+                    }                    
 
                     .jsoneditor-modal .spinner {
                         display: inline-block;
