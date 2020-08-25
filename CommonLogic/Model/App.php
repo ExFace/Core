@@ -499,15 +499,19 @@ class App implements AppInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\AppInterface::getLanguages()
      */
-    public function getLanguages() : array
+    public function getLanguages(bool $forceLocale = true) : array
     {
         $langs = [$this->getLanguageDefault()];
         foreach (glob($this->getTranslationsFolder() . DIRECTORY_SEPARATOR . "*.json") as $path) {
             $filename = pathinfo($path, PATHINFO_FILENAME);
             $lang = StringDataType::substringAfter($filename, '.', false, false, true);
-            $json = json_decode(file_get_contents($path), true);
-            if ($json && $locale = $json['LOCALIZATION.LOCALE']) {
-                $langs[] = $locale;
+            if ($forceLocale) {
+                $json = json_decode(file_get_contents($path), true);
+                if ($json && $locale = $json['LOCALIZATION.LOCALE']) {
+                    $langs[] = $locale;
+                } else {
+                    $langs[] = $lang;
+                }
             } else {
                 $langs[] = $lang;
             }
