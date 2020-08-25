@@ -370,11 +370,12 @@ abstract class AbstractWidget implements WidgetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\WidgetInterface::hasChildren()
      */
-    function hasChildren() : bool
+    public function hasChildren() : bool
     {
         foreach ($this->getChildren() as $child) {
             return true;
         }
+        return false;
     }
 
     /**
