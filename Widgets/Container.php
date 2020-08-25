@@ -354,7 +354,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
             if (call_user_func($filterCallback, $child) === true) {
                 $result[] = $child;
             }
-            if (($maxDepth === null || $maxDepth > 0) && $child->hasChildren()) {
+            if (($maxDepth === null || $maxDepth > 0) && $child instanceof iContainOtherWidgets && $child->hasChildren()) {
                 $result = array_merge($result, $child->findChildrenRecursive($filterCallback, ($maxDepth !== null ? $maxDepth-1 : null)));
             }
         }
