@@ -81,9 +81,9 @@
     "rows": [
         {
             "CREATED_ON": "2016-12-16 11:48:53",
-            "MODIFIED_ON": "2020-06-16 13:27:48",
+            "MODIFIED_ON": "2020-08-25 11:16:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c3859abc5faea3e40205857feb80",
             "READABLE_FLAG": "1",
             "WRITABLE_FLAG": "1",
@@ -96,7 +96,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Form\",\"widgets\":[{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"CODE\"},{\"attribute_alias\":\"TITLE\",\"width\":\"max\"},{\"attribute_alias\":\"HINT\",\"width\":\"max\"},{\"attribute_alias\":\"DESCRIPTION\"},{\"attribute_alias\":\"TYPE\"},{\"attribute_alias\":\"DOCS\"}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"CODE\"},{\"attribute_alias\":\"TITLE\",\"width\":\"max\"},{\"attribute_alias\":\"HINT\",\"width\":\"max\"},{\"attribute_alias\":\"DESCRIPTION\"},{\"attribute_alias\":\"TYPE\"},{\"attribute_alias\":\"DOCS\"}]}",
             "ALIAS": "MESSAGE",
             "DATA_ADDRESS": "exf_message"
         }
