@@ -325,7 +325,7 @@ class App implements AppInterface
     public function getContextDataDefaultScope()
     {
         if (is_null($this->context_data_default_scope)) {
-            $this->context_data_default_scope = ContextManagerInterface::CONTEXT_SCOPE_WINDOW;
+            $this->context_data_default_scope = ContextManagerInterface::CONTEXT_SCOPE_SESSION;
         }
         return $this->context_data_default_scope;
     }
