@@ -78,7 +78,7 @@ abstract class AbstractContextScope implements ContextScopeInterface
     public function getContext($aliasOrSelector) : ContextInterface
     {
         // If no context matching the alias exists, try to create one
-        if ($this->active_contexts[$aliasOrSelector] === null) {
+        if ($this->active_contexts[(string)$aliasOrSelector] === null) {
             if ($aliasOrSelector instanceof ContextSelectorInterface) {
                 $selector = $aliasOrSelector;
             } else {
@@ -96,7 +96,7 @@ abstract class AbstractContextScope implements ContextScopeInterface
             $this->loadContextData($context);
             return $context;
         }
-        return $this->active_contexts[$aliasOrSelector];
+        return $this->active_contexts[(string)$aliasOrSelector];
     }
     
     /**
