@@ -308,7 +308,8 @@ class CopyData extends SaveData implements iCreateData
         $rels = [];
         $obj = $this->getMetaObject();
         foreach ($this->getCopyRelationAliases() as $alias) {
-            if (count(RelationPath::relationPathParse($alias)) > 1) {
+            $parsedRelationPath = RelationPath::relationPathParse($alias);
+            if ($parsedRelationPath !== false && count($parsedRelationPath) > 1) {
                 throw new ActionConfigurationError($this, 'Cannot copy related objects from relation "' . $alias . '": only direct relations supported - no paths!');
             }
             $rels[] = $obj->getRelation($alias);
