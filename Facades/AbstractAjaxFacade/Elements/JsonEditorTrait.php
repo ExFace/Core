@@ -44,42 +44,52 @@ trait JsonEditorTrait
 {
     use JqueryInputValidationTrait;
     
+    protected function buildHtmlJsonEditor() : string
+    {
+        $trans = self::getTranslations($this->getWorkbench());
+        if ($this->getWidget() instanceof InputUxon) {
+            $uxonEditorHtml = <<<HTML
+            <div class="uxoneditor-preset-hint">
+               <a href="javascript:;">
+                   <i class="fa fa-magic preset-hint-pulse" title="{$trans['PRESETS.HINT']}"></i>
+                   {$trans['PRESETS.HINT']}
+               </a>
+            </div>
+
+HTML;
+        }
+        return <<<HTML
+
+            <div id="{$this->getId()}" style="height: 100%; width: 100%;"></div>
+            $uxonEditorHtml
+
+HTML;
+    }
+    
     /**
      *
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildCssHeightDefaultValue()
      */
-    
-
     protected function buildCssHeightDefaultValue()
     {
         return ($this->getHeightRelativeUnit() * 5) . 'px';
     }
-    
+              
     /**
-     * Returns javascript code for adding UXON editor preset hint on top toolbar.
-     * Both the function call and help content URL are constructed using a given markdown file as target
-     *
+     * 
+     * @param string $uxonEditorId
+     * @param string $jsonJs
      * @return string
      */
-    protected function buildJsPresetHint(string $editorIdJs) : string
+    public static function buildJsPresetHintTrigger(string $uxonEditorId, string $jsonJs) : string
     {
-        $funcPrefix = $this->buildJsFunctionPrefix();
-        $addPresetHint = static::buildJsFunctionNameAddPresetHint($funcPrefix);
-     
+        $showJs = static::buildJsPresetHintShow($uxonEditorId);
+        $hideJs = static::buildJsPresetHintHide($uxonEditorId);
+        $editorJs = static::buildJsEditorGetter($uxonEditorId);
         return <<<JS
-        
-                 {$addPresetHint}({$editorIdJs});   
-JS;
-        
-    }
-                 
-    public static function buildJsPresetHintTrigger(string $uxonEditorIdJs, string $jsonJs) : string
-    {
-        $showJs = static::buildJsPresetHintShow($uxonEditorIdJs);
-        $hideJs = static::buildJsPresetHintHide($uxonEditorIdJs);
-        return <<<JS
-        if ($jsonJs && $jsonJs.constructor === Object && Object.keys($jsonJs).length === 0) {
+
+        if ({$editorJs}.getMode() === 'tree' && (! $jsonJs || ($jsonJs.constructor === Object && Object.keys($jsonJs).length === 0))) {
             {$showJs}
         } else {
             {$hideJs}
@@ -88,16 +98,16 @@ JS;
 JS;
     }
     
-    protected static function buildJsPresetHintHide(string $uxonEditorIdJs) : string
+    protected static function buildJsPresetHintHide(string $uxonEditorId) : string
     {
-        return "$('#' + {$uxonEditorIdJs} + ' .uxoneditor-preset-hint').hide()";
+        return "$('#{$uxonEditorId} + .uxoneditor-preset-hint').hide()";
     }
     
     protected static function buildJsPresetHintShow(string $uxonEditorId) : string
     {
         // TODO this only works if the preset hint is present. When switching editor modes, it gets removed,
         // so it would be better to remove/add the hint instead of hiding/showing it.
-        return "$('#' + {$uxonEditorId} + ' .uxoneditor-preset-hint').show()";
+        return "$('#{$uxonEditorId} + .uxoneditor-preset-hint').show()";
     }
     
     /**
@@ -140,10 +150,15 @@ JS;
             $uxonInitScripts = <<<JS
 
                     {$this->buildJsEditorAddHelpButton()}
-        			{$this->buildJsPresetHint("'{$uxonEditorId}'")}
                     setTimeout(function(){
-                        var json = {$uxonEditorId}_JSONeditor.get();
-                        {$this::buildJsPresetHintTrigger("'{$uxonEditorId}'", 'json')}
+                        $("#{$this->getId()} + .uxoneditor-preset-hint a").click( function(){
+                            var rootNode = {$this->buildJsFunctionPrefix()}_getNodeFromTarget(
+                                $("#{$this->getId()} .jsoneditor-tree tr:first-of-type td:last-of-type .jsoneditor-readonly").get()[0]
+                            );
+                            return {$this->buildJsFunctionPrefix()}_openPresetsModal(rootNode);
+                        });
+                        var json = {$this::buildJsEditorGetter($uxonEditorId)}.get();
+                        {$this::buildJsPresetHintTrigger("{$uxonEditorId}", 'json')}
                     }, 0);
 
 JS;
@@ -152,7 +167,7 @@ JS;
         }
         
         return <<<JS
-                   var {$uxonEditorId}_JSONeditor = new JSONEditor(
+                   var {$this::buildJsEditorGetter($uxonEditorId)} = new JSONEditor(
                         document.getElementById("{$uxonEditorId}"),
                         { 
                             {$this->buildJsEditorOptions()}
@@ -161,7 +176,7 @@ JS;
                         {$this->getWidget()->getValueWithDefaults()}
                     );
         
-                    {$uxonEditorId}_JSONeditor.expandAll();
+                    {$this::buildJsEditorGetter($uxonEditorId)}.expandAll();
                     $('#{$uxonEditorId}').parents('.exf-input').children('label').css('vertical-align', 'top');
                     {$uxonInitScripts}
         			
@@ -169,6 +184,10 @@ JS;
 JS;
     }
     
+    protected static function buildJsEditorGetter(string $domId) : string
+    {
+        return "{$domId}_JSONeditor";
+    }
 
     /**
      *
@@ -207,10 +226,11 @@ JS;
             $script = <<<JS
 
             if (newMode === 'tree') {
-                var json = {$uxonEditorId}_JSONeditor.get();
+                var json = {$this::buildJsEditorGetter($uxonEditorId)}.get();
                 {$this::buildJsPresetHintTrigger($uxonEditorId, 'json')}
+            } else {
+                {$this::buildJsPresetHintHide($uxonEditorId)}
             }
-            {$this::buildJsPresetHintHide($uxonEditorId)}
 
 JS;
         }
@@ -258,7 +278,7 @@ JS;
         // TODO add getOnChangeScript() somewhere here. 
         $fn = '';
         if ($this->getWidget() instanceof InputUxon) {
-            $fn .= $this->buildJsPresetHintTrigger("'{$this->getId()}'", 'json');
+            $fn .= $this->buildJsPresetHintTrigger($this->getId(), 'json');
         }
         return "function(json) { $fn }";
     }
@@ -408,7 +428,7 @@ JS;
      */
     public function buildJsValueGetter() : string
     {
-        return 'function(){var text = ' . $this->getId() . '_JSONeditor.getText(); if (text === "{}" || text === "[]") { return ""; } else { return text;}}';
+        return 'function(){var text = ' . $this::buildJsEditorGetter($this->getId()) . '.getText(); if (text === "{}" || text === "[]") { return ""; } else { return text;}}';
     }
     
     /**
@@ -418,7 +438,7 @@ JS;
      */
     public function buildJsValueSetter($value) : string
     {
-        return "(function(){var val = $value; if (val === undefined || val === null || val === '') {val = '{}'} {$this->getId()}_JSONeditor.setText(val); {$this->getId()}_JSONeditor.expandAll()})()";
+        return "(function(){var val = $value; if (val === undefined || val === null || val === '') {val = '{}'} {$this::buildJsEditorGetter($this->getId())}.setText(val); {$this::buildJsEditorGetter($this->getId())}.expandAll()})()";
     }
     
     /**
@@ -472,6 +492,15 @@ JS;
                     .jsoneditor-modal .spinner-wrapper {
                         height: 35px;
                         margin-bottom: 4px;
+                    }
+                    .jsoneditor-modal input.uxoneditor-input:not([type]),
+                    .jsoneditor-modal input.uxoneditor-input[type=text] {
+                        height: 35px !important;
+                        border: 1px solid #d3d3d3;
+                        color: #4d4d4d;
+                        border-radius: 3px;
+                        padding: 4px;
+                        box-sizing: border-box;
                     }
                     .jsoneditor-modal .selectr-selected {
                         line-height: 25px;
@@ -544,10 +573,10 @@ JS;
                         font-size: initial;
                         padding: 4px;
                         margin: 10px;
-                        width: calc(100% - 20px);
                         text-align: center;
                         position: absolute;
                         top: calc(40% - 50px);
+                        left: calc(50% - 55px);
                     }
                     .uxoneditor-preset-hint a {color: #ccc; text-decoration: none;}
                     .uxoneditor-preset-hint a:hover {color: #1a1a1a;}
@@ -656,13 +685,12 @@ CSS;
         string $rootObject,
         string $ajaxUrl,
         Workbench $workbench,
-        string $uxonEditorIdJs
+        string $uxonEditorId
         ) : string
         {
             $addHelpButtonFunction = static::buildJsFunctionNameAddHelpButton($funcPrefix);
-            $addPresetHint = static::buildJsFunctionNameAddPresetHint($funcPrefix);
             $onBlurFunctionName = static::buildJsFunctionNameOnBlur($funcPrefix);
-            $presetHintHide = static::buildJsPresetHintHide($uxonEditorIdJs);
+            $presetHintHide = static::buildJsPresetHintHide($uxonEditorId);
             $trans = static::getTranslations($workbench);
             
             return <<<JS
@@ -802,26 +830,6 @@ CSS;
                     false,
                      "jsoneditor-modal-nopadding jsoneditor-modal-maximized"
                 );
-            });
-        }
-
-        function {$addPresetHint}(editorId) {
-            var presetHint = $(
-                '<div class="uxoneditor-preset-hint">' +
-                '   <a href="javascript:;">' + 
-                '       <i class="fa fa-magic preset-hint-pulse" title="{$trans['PRESETS.HINT']}"></i>' + 
-                '       {$trans['PRESETS.HINT']}' + 
-                '   </a>' + 
-                '</div>'
-            );
-            
-            $("#" + editorId + " .jsoneditor-tree-inner").after(presetHint);
-            
-            $("#" + editorId + " .uxoneditor-preset-hint a").click( function(){
-                var rootNode = {$funcPrefix}_getNodeFromTarget(
-                    $("#" + editorId + " .jsoneditor-tree tr:first-of-type td:last-of-type .jsoneditor-readonly").get()[0]
-                );
-                return {$funcPrefix}_openPresetsModal(rootNode);
             });
         }
         
@@ -1427,13 +1435,13 @@ JS;
             $this->buildJsRootObjectGetter(),
             $this->getAjaxUrl(),
             $this->getWorkbench(),
-            "'{$uxonEditorId}'"
+            $uxonEditorId
             )
             .
             <<<JS
                 
                 $(function() {
-            		$(document).on('blur', '#{$uxonEditorId} div.jsoneditor-field[contenteditable="true"]', {jsonEditor: {$uxonEditorId}_JSONeditor }, {$funcPrefix}_onBlur);
+            		$(document).on('blur', '#{$uxonEditorId} div.jsoneditor-field[contenteditable="true"]', {jsonEditor: {$this::buildJsEditorGetter($uxonEditorId)} }, {$funcPrefix}_onBlur);
             	});
 JS;
     }
