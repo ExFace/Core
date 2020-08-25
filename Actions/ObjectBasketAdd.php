@@ -39,7 +39,7 @@ class ObjectBasketAdd extends AbstractAction implements iModifyContext
         $this->setInputRowsMax(null);
         $this->setIcon(Icons::SHOPPING_BASKET);
         $this->setContextAlias('exface.Core.ObjectBasketContext');
-        $this->setContextScope(ContextManagerInterface::CONTEXT_SCOPE_WINDOW);
+        $this->setContextScope(ContextManagerInterface::CONTEXT_SCOPE_SESSION);
     }
 
     /**
@@ -49,7 +49,7 @@ class ObjectBasketAdd extends AbstractAction implements iModifyContext
     public function getContextScope(TaskInterface $task = null) : ContextScopeInterface
     {
         if (! $this->parentGetContextScope()) {
-            $this->setContextScope(ContextManagerInterface::CONTEXT_SCOPE_WINDOW);
+            $this->setContextScope(ContextManagerInterface::CONTEXT_SCOPE_SESSION);
         }
         return $this->parentGetContextScope();
     }
