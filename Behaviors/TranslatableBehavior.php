@@ -15,6 +15,9 @@ use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\CommonLogic\Model\Behaviors\TranslatableRelation;
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\CommonLogic\Model\RelationPath;
 
 /**
  * Makes the data of certain attributes of the object translatable.
@@ -25,6 +28,8 @@ use exface\Core\DataTypes\StringDataType;
 class TranslatableBehavior extends AbstractBehavior
 {
     private $translate_attributes = [];
+    
+    private $translatable_relations = null;
     
     private $translation_subfolder = null;
     
@@ -309,18 +314,77 @@ class TranslatableBehavior extends AbstractBehavior
         $path = $dialogWidget->getPrefillData()->getCellValue('PATHNAME_RELATIVE', 0);
         $subfolder = StringDataType::substringAfter($path, 'Translations/', '');
         $subfolder = StringDataType::substringBefore($subfolder, '/', $subfolder, false, true);
+        $filename = FilePathDataType::findFileName($path);
+        $dataKey = StringDataType::substringBefore($filename, '.');
+        
+        if (! $dataKey || ! $subfolder) {
+            throw new BehaviorRuntimeError($this->getObject(), 'Invalid translation file name: "' . $path . '"!');
+        }
+        
         $behavior = $this->findBehavior($subfolder);
         
-        $keysExpected = $behavior->getTranslatableAttributeAliases();
+        $keysExpected = $this->findExpectedTranslationKeys($behavior, $dataKey);
         $keysFound = array_keys($json);
         
         foreach (array_diff($keysExpected, $keysFound) as $missingKey) {
-            $json[$missingKey] = '';
+            $json[$missingKey] = null;
         }
         
         $contentWidget->setValue(JsonDataType::encodeJson($json, true));
         
         return;
+    }
+    
+    /**
+     * 
+     * @param TranslatableBehavior $behavior
+     * @param string $dataKey
+     * @throws BehaviorRuntimeError
+     * @return string[]
+     */
+    protected function findExpectedTranslationKeys(TranslatableBehavior $behavior, string $dataKey) : array
+    {
+        $keys = [];
+        
+        foreach ($behavior->getTranslatableAttributeAliases() as $attrAlias) {
+            $keys[] = mb_strtoupper($attrAlias);
+        }
+        
+        foreach ($behavior->getTranslatableRelations() as $tRel) {
+            $relPath = $tRel->getRelationPath();
+            
+            if (! $relPath->getRelationFirst()->isReverseRelation()) {
+                throw new BehaviorRuntimeError($this->getObject(), 'Cannot get translation keys for translatable relation "' . $relPath->toString() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": only reverse relations supported!');
+            }
+            
+            $prefix = $relPath->toString();
+            $relKeys = $this->findTranslatableRelationKeys($tRel, $behavior->getTranslationFilenameAttributeAlias(), $dataKey);
+            $relAttrAliases = $tRel->getTranslatableAttributeAliases(false);
+            foreach ($relKeys as $relKey) {
+                foreach ($relAttrAliases as $attrAlias) {
+                    $keys[] = $prefix . '.' . $relKey . '.' . $attrAlias;
+                }
+            }
+        }
+        
+        return $keys;
+    }
+
+    /**
+     * 
+     * @param TranslatableRelation $transRel
+     * @param string $dataKeyAttributeAlias
+     * @param string $dataKey
+     * @return string[]
+     */
+    protected function findTranslatableRelationKeys(TranslatableRelation $transRel, string $dataKeyAttributeAlias, string $dataKey) : array
+    {
+        $ds = DataSheetFactory::createFromObject($transRel->getRelationPath()->getEndObject());
+        $col = $ds->getColumns()->addFromExpression($transRel->getRelationKeyAttributeAlias(false));
+        $filterAttrAlias = RelationPath::relationPathAdd($transRel->getRelationPath()->reverse()->toString(), $dataKeyAttributeAlias);
+        $ds->getFilters()->addConditionFromString($filterAttrAlias, $dataKey, ComparatorDataType::EQUALS);
+        $ds->dataRead();
+        return $col->getValues(false);
     }
     
     /**
@@ -353,5 +417,40 @@ class TranslatableBehavior extends AbstractBehavior
         }
         
         throw new BehaviorRuntimeError($this->getObject(), 'Cannot find translatable behavior for subfolder "' . $subfolder . '"!');
+    }
+    
+    /**
+     * Include translation keys for related data in this translation.
+     * 
+     * Each translatable relation defines a set of attributes of a reverse relation, that
+     * need to be translated inside the dictionary of the behavior's object. For example,
+     * this way the metamodel attribute names and descriptions can be translated inside the 
+     * meta object's dictionary.
+     * 
+     * Note, while all aliases need to be defined with relation paths relative to the behavior's
+     * object, they all must belong the same related object. It also must be a reverse relation.
+     * 
+     * @uxon-property translatable_relations
+     * @uxon-type \exface\Core\CommonLogic\Model\Behaviors\TranslatableRelation[]
+     * @uxon-template [{"relation_key_attribute_alias":"","translatable_attributes":[""]}]
+     * 
+     * @param UxonObject $uxonArray
+     * @return TranslatableBehavior
+     */
+    public function setTranslatableRelations(UxonObject $uxonArray) : TranslatableBehavior
+    {
+        foreach ($uxonArray->getPropertiesAll() as $uxon) {
+            $this->translatable_relations[] = new TranslatableRelation($this, $uxon);
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return TranslatableRelation[]
+     */
+    protected function getTranslatableRelations() : array
+    {
+        return $this->translatable_relations;
     }
 }
