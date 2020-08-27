@@ -198,11 +198,15 @@ class SqlModelLoader implements ModelLoaderInterface
             $row = $res[0];
             
             $object->setId($row['oid']);
-            $object->setName($row['object_name']);
             $object->setAlias($row['object_alias']);
             $object->setDataSourceId($row['data_source_oid']);
             $object->setAppId($row['app_oid']);
             $object->setNamespace($row['app_alias']);
+            
+            $translator = $object->getApp()->getTranslator();
+            $translationDomain = $row['object_alias'];
+            $object->setName($translator->translate('NAME', null, null, $translationDomain, $row['object_name']));
+            
             if ($row['has_behaviors']) {
                 $load_behaviors = true;
             }
@@ -468,6 +472,9 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     protected function createAttributeFromDbRow(MetaObjectInterface $object, array $row)
     {
+        $translator = $object->getApp()->getTranslator();
+        $translationDomain = 'Objects/' . $object->getAlias();
+        
         if ($row['attribute_type'] === self::ATTRIBUTE_TYPE_COMPOUND) {
             $attr = new CompoundAttribute($object);
         } else {
@@ -475,7 +482,7 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         $attr->setId($row['oid']);
         $attr->setAlias($row['attribute_alias']);
-        $attr->setName($row['attribute_name']);
+        $attr->setName($translator->translate('ATTRIBUTE.' . $row['attribute_alias'] . '.NAME', null, null, $translationDomain, $row['attribute_name']));
         $attr->setDataAddress($row['data']);
         $attr->setDataAddressProperties(UxonObject::fromJson($row['data_properties']));
         $attr->setRelationFlag($row['related_object_oid'] ? true : false);
@@ -529,7 +536,7 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setValueListDelimiter($row['value_list_delimiter']);
         
         // Descriptions
-        $attr->setShortDescription($row['attribute_short_description']);
+        $attr->setShortDescription($translator->translate('ATTRIBUTE.' . $row['attribute_alias'] . '.SHORT_DESCRIPTION', null, null, $translationDomain, $row['attribute_short_description']));
         
         return $attr;
     }
