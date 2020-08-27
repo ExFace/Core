@@ -319,8 +319,8 @@ class TranslatableBehavior extends AbstractBehavior
         $subfolder = StringDataType::substringAfter($path, 'Translations/', '');
         $subfolder = StringDataType::substringBefore($subfolder, '/', $subfolder, false, true);
         $filename = FilePathDataType::findFileName($path);
-        $dataKey = StringDataType::substringBefore($filename, '.');
-        $lang = StringDataType::substringAfter($filename, '.');
+        $dataKey = StringDataType::substringBefore($filename, '.', $filename, false, true);
+        $lang = StringDataType::substringAfter($filename, '.', $filename, false, true);
         
         if (! $dataKey || ! $subfolder) {
             throw new BehaviorRuntimeError($this->getObject(), 'Invalid translation file name: "' . $path . '"!');

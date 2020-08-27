@@ -48,30 +48,17 @@
     ],
     "rows": [
         {
-            "CREATED_ON": "2020-05-13 13:53:43",
-            "MODIFIED_ON": "2020-05-15 08:59:15",
-            "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
-            "MODIFIED_BY_USER": "0x11ea95ea3987fa17a9d10205857feb80",
-            "UID": "0x11ea951065280b26a66b025041000001",
-            "BEHAVIOR": "exface\/Core\/Behaviors\/AliasGeneratingBehavior.php",
-            "CONFIG_UXON": "{\"target_attribute_alias\":\"ALIAS\",\"namespace_attribute_alias\":\"APP__ALIAS\",\"source_attribute_alias\":\"NAME\",\"case\":\"Lower\",\"replace_characters\":{\" \":\"-\"}}",
-            "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
-            "APP": "0x31000000000000000000000000000000",
-            "NAME": "Generate Alias from page name",
-            "DESCRIPTION": ""
-        },
-        {
-            "CREATED_ON": "2020-08-27 19:30:23",
-            "MODIFIED_ON": "2020-08-27 19:30:23",
+            "CREATED_ON": "2020-08-27 19:21:39",
+            "MODIFIED_ON": "2020-08-27 20:22:02",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
-            "UID": "0x11eabfb1c0b2b2bebfb10205857feb80",
+            "UID": "0x11eaadf88812bfb8adf80205857feb80",
             "BEHAVIOR": "exface\/Core\/Behaviors\/TranslatableBehavior.php",
-            "CONFIG_UXON": "{\"translation_subfolder\":\"Pages\",\"translation_filename_attribute_alias\":\"ALIAS\",\"translatable_attributes\":[\"NAME\",\"DESCRIPTION\",\"INTRO\"]}",
-            "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
+            "CONFIG_UXON": "{\"translation_subfolder\":\"Actions\",\"translation_filename_attribute_alias\":\"ALIAS\",\"translatable_attributes\":[\"NAME\",\"SHORT_DESCRIPTION\"]}",
+            "OBJECT": "0x11e6e217f7f91457a3d9e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Translations",
-            "DESCRIPTION": "Makes page attributes translatable"
+            "DESCRIPTION": "Makes names and descriptions translatable"
         }
     ],
     "totals_rows": [],
