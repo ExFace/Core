@@ -72,7 +72,7 @@
         },
         {
             "CREATED_ON": "2016-11-21 10:54:08",
-            "MODIFIED_ON": "2017-05-04 11:18:36",
+            "MODIFIED_ON": "2020-08-26 07:54:48",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6afd8d2fa47e78943e4b318306b9a",
@@ -80,7 +80,7 @@
             "DEFAULT_CONNECTION": "0x11e6b09c8ccac11d8943e4b318306b9a",
             "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/FileFinderBuilder.php",
             "READABLE_FLAG": "1",
-            "WRITABLE_FLAG": "0",
+            "WRITABLE_FLAG": "1",
             "BASE_OBJECT": "0x11e6afd8efb4743f8943e4b318306b9a",
             "LABEL": "Local Vendor Folders",
             "ALIAS": "LOCAL_VENDOR_FOLDERS"

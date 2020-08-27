@@ -67,7 +67,7 @@
         },
         {
             "CREATED_ON": "2016-11-22 10:15:14",
-            "MODIFIED_ON": "2016-11-22 10:25:31",
+            "MODIFIED_ON": "2020-08-26 07:56:40",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6b09c8ccac11d8943e4b318306b9a",
@@ -75,7 +75,7 @@
             "LABEL": "Local Vendor Folders",
             "CONNECTOR": "exface\/Core\/DataConnectors\/FileFinderConnector.php",
             "CONFIG": "{\"use_vendor_folder_as_base\":\"1\"}",
-            "READONLY": "1",
+            "READONLY": "0",
             "ALIAS": "LOCAL_VENDOR_FOLDERS",
             "FILTER_CONTEXT": null
         },

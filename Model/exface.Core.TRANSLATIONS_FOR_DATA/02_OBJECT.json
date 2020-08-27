@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-08-25 10:33:57",
-            "MODIFIED_ON": "2020-08-25 14:31:32",
+            "MODIFIED_ON": "2020-08-27 14:27:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea8e2d7b9151a68e2d0205857feb80",
@@ -96,7 +96,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{\"finder_depth\":\"0\"}",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Panel\",\"widgets\":[{\"attribute_alias\":\"DATA_KEY\",\"disabled\":false},{\"attribute_alias\":\"LOCALE\",\"disabled\":false},{\"attribute_alias\":\"CONTENTS\",\"widget_type\":\"InputJson\",\"hide_caption\":true,\"height\":\"auto\"}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"columns_in_grid\":2,\"maximized\":true,\"widgets\":[{\"attribute_alias\":\"PATHNAME_RELATIVE\",\"disabled\":true,\"width\":2},{\"attribute_alias\":\"CONTENTS\",\"widget_type\":\"InputKeysValues\",\"hide_caption\":true,\"height\":\"auto\",\"width\":\"max\"}]}",
             "ALIAS": "TRANSLATIONS_FOR_DATA",
             "DATA_ADDRESS": "*\/*\/Translations\/[#SUBFOLDER#]\/*.json"
         }

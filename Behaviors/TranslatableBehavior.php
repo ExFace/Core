@@ -18,6 +18,8 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\Model\Behaviors\TranslatableRelation;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\CommonLogic\Model\RelationPath;
+use Symfony\Component\Console\Input\InputOption;
+use exface\Core\Widgets\InputKeysValues;
 
 /**
  * Makes the data of certain attributes of the object translatable.
@@ -124,10 +126,10 @@ class TranslatableBehavior extends AbstractBehavior
                                 'from' => $this->getTranslationFilenameAttributeAlias(),
                                 'to' => 'DATA_KEY'
                             ]
-                            ]
-                            ]
-                            ]
-                            ]));
+                        ]
+                    ]
+                ]
+            ]));
         
         return $editorUxon;
     }
@@ -309,13 +311,14 @@ class TranslatableBehavior extends AbstractBehavior
         if (! $value) {
             return;
         }
-        $json = json_decode($value, true);
+        $transJson = json_decode($value, true);
         
         $path = $dialogWidget->getPrefillData()->getCellValue('PATHNAME_RELATIVE', 0);
         $subfolder = StringDataType::substringAfter($path, 'Translations/', '');
         $subfolder = StringDataType::substringBefore($subfolder, '/', $subfolder, false, true);
         $filename = FilePathDataType::findFileName($path);
         $dataKey = StringDataType::substringBefore($filename, '.');
+        $lang = StringDataType::substringAfter($filename, '.');
         
         if (! $dataKey || ! $subfolder) {
             throw new BehaviorRuntimeError($this->getObject(), 'Invalid translation file name: "' . $path . '"!');
@@ -323,14 +326,21 @@ class TranslatableBehavior extends AbstractBehavior
         
         $behavior = $this->findBehavior($subfolder);
         
-        $keysExpected = $this->findExpectedTranslationKeys($behavior, $dataKey);
-        $keysFound = array_keys($json);
+        $translatables = $this->findExpectedTranslationKeys($behavior, $dataKey);
+        $keysExpected = array_keys($translatables);
+        $keysFound = array_keys($transJson);
         
         foreach (array_diff($keysExpected, $keysFound) as $missingKey) {
-            $json[$missingKey] = null;
+            $transJson[$missingKey] = null;
         }
         
-        $contentWidget->setValue(JsonDataType::encodeJson($json, true));
+        $contentWidget->setValue(JsonDataType::encodeJson($transJson, true));
+        
+        if ($contentWidget instanceof InputKeysValues) {
+            $contentWidget->setReferenceValues([$behavior->getObject()->getApp()->getLanguageDefault() => $translatables]);
+            $contentWidget->setCaptionForKeys('Translation key');
+            $contentWidget->setCaptionForValues($lang);
+        }
         
         return;
     }
@@ -346,25 +356,17 @@ class TranslatableBehavior extends AbstractBehavior
     {
         $keys = [];
         
+        $ds = DataSheetFactory::createFromObject($behavior->getObject());
+        $ds->getColumns()->addMultiple($behavior->getTranslatableAttributeAliases());
+        $ds->getFilters()->addConditionFromString($behavior->getTranslationFilenameAttributeAlias(), $dataKey, ComparatorDataType::EQUALS);
+        $ds->dataRead();
+        
         foreach ($behavior->getTranslatableAttributeAliases() as $attrAlias) {
-            $keys[] = mb_strtoupper($attrAlias);
+            $keys[mb_strtoupper($attrAlias)] = $ds->getCellValue($attrAlias, 0);
         }
         
         foreach ($behavior->getTranslatableRelations() as $tRel) {
-            $relPath = $tRel->getRelationPath();
-            
-            if (! $relPath->getRelationFirst()->isReverseRelation()) {
-                throw new BehaviorRuntimeError($this->getObject(), 'Cannot get translation keys for translatable relation "' . $relPath->toString() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": only reverse relations supported!');
-            }
-            
-            $prefix = $relPath->toString();
-            $relKeys = $this->findTranslatableRelationKeys($tRel, $behavior->getTranslationFilenameAttributeAlias(), $dataKey);
-            $relAttrAliases = $tRel->getTranslatableAttributeAliases(false);
-            foreach ($relKeys as $relKey) {
-                foreach ($relAttrAliases as $attrAlias) {
-                    $keys[] = $prefix . '.' . $relKey . '.' . $attrAlias;
-                }
-            }
+            $keys = array_merge($keys, $this->findTranslatableRelationKeys($tRel, $behavior->getTranslationFilenameAttributeAlias(), $dataKey));
         }
         
         return $keys;
@@ -379,12 +381,30 @@ class TranslatableBehavior extends AbstractBehavior
      */
     protected function findTranslatableRelationKeys(TranslatableRelation $transRel, string $dataKeyAttributeAlias, string $dataKey) : array
     {
+        $keys = [];
+        $relPath = $transRel->getRelationPath();
+        
+        if (! $relPath->getRelationFirst()->isReverseRelation()) {
+            throw new BehaviorRuntimeError($this->getObject(), 'Cannot get translation keys for translatable relation "' . $relPath->toString() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": only reverse relations supported!');
+        }
+        
         $ds = DataSheetFactory::createFromObject($transRel->getRelationPath()->getEndObject());
-        $col = $ds->getColumns()->addFromExpression($transRel->getRelationKeyAttributeAlias(false));
+        $relKeycol = $ds->getColumns()->addFromExpression($transRel->getRelationKeyAttributeAlias(false));
+        $ds->getColumns()->addMultiple($transRel->getTranslatableAttributeAliases(false));
         $filterAttrAlias = RelationPath::relationPathAdd($transRel->getRelationPath()->reverse()->toString(), $dataKeyAttributeAlias);
         $ds->getFilters()->addConditionFromString($filterAttrAlias, $dataKey, ComparatorDataType::EQUALS);
         $ds->dataRead();
-        return $col->getValues(false);
+        
+        $prefix = $relPath->toString();
+        $relAttrAliases = $transRel->getTranslatableAttributeAliases(false);
+        foreach ($ds->getRows() as $row) {
+            foreach ($relAttrAliases as $attrAlias) {
+                $key = mb_strtoupper($prefix . '.' . $row[$relKeycol->getName()] . '.' . $attrAlias);
+                $keys[$key] = $row[$attrAlias];
+            }
+        }
+        
+        return $keys;
     }
     
     /**

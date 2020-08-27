@@ -75,8 +75,6 @@ class App implements AppInterface
     
     const CONFIG_FILE_EXTENSION = '.json';
     
-    const TRANSLATIONS_FOLDER_IN_APP = 'Translations';
-    
     private $selector = null;
     
     private $uid = null;
@@ -396,63 +394,19 @@ class App implements AppInterface
      */
     public function getTranslator(string $locale = null) : TranslationInterface
     {
-        if ($locale !== null) {
-            return $this->createTranslation($locale);
-        }
-        
-        if ($this->translator === null) {
-            $this->translator = $this->createTranslation($this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale()); 
-        }
-        
-        return $this->translator;
-    }
-    
-    /**
-     * 
-     * @param string $locale
-     * @return TranslationInterface
-     */
-    protected function createTranslation(string $locale) : TranslationInterface
-    {
         $fallbackLocales = [
             'en_US'
         ];
         
-        $locales = array_unique(
-            array_merge(
-                [$locale],
-                $fallbackLocales
-            )
-        );
+        if ($locale !== null) {
+            return new Translation($this, $locale, $fallbackLocales);
+        } 
         
-        $translator = new Translation($locale, $fallbackLocales);
-        
-        foreach ($locales as $locale) {
-            $locale_suffixes = array();
-            $locale_suffixes[] = $locale;
-            $locale_suffixes[] = explode('_', $locale)[0];
-            $locale_suffixes = array_unique($locale_suffixes);
-            
-            foreach ($locale_suffixes as $suffix) {
-                $filename = $this->getAliasWithNamespace() . '.' . $suffix . '.json';
-                // Load the default translation of the app
-                $translator->addDictionaryFromFile($this->getTranslationsFolder() . DIRECTORY_SEPARATOR . $filename, $locale);
-                
-                // Load the installation specific translation of the app
-                $translator->addDictionaryFromFile($this->getWorkbench()->filemanager()->getPathToTranslationsFolder() . DIRECTORY_SEPARATOR . $filename, $locale);
-            }
+        if ($this->translator === null) {
+            $this->translator = new Translation($this, $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale(), $fallbackLocales); 
         }
         
-        
-        return $translator;
-    }
-    
-    /**
-     * @return string
-     */
-    protected function getTranslationsFolder() : string
-    {
-        return $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $this->getDirectory() . DIRECTORY_SEPARATOR . static::TRANSLATIONS_FOLDER_IN_APP;
+        return $this->translator;
     }
     
     /**
@@ -501,22 +455,7 @@ class App implements AppInterface
      */
     public function getLanguages(bool $forceLocale = true) : array
     {
-        $langs = [$this->getLanguageDefault()];
-        foreach (glob($this->getTranslationsFolder() . DIRECTORY_SEPARATOR . "*.json") as $path) {
-            $filename = pathinfo($path, PATHINFO_FILENAME);
-            $lang = StringDataType::substringAfter($filename, '.', false, false, true);
-            if ($forceLocale) {
-                $json = json_decode(file_get_contents($path), true);
-                if ($json && $locale = $json['LOCALIZATION.LOCALE']) {
-                    $langs[] = $locale;
-                } else {
-                    $langs[] = $lang;
-                }
-            } else {
-                $langs[] = $lang;
-            }
-        }
-        return array_unique($langs);
+        return $this->getTranslator()->getLanguagesAvailable($forceLocale);
     }
     
     protected function getAppModelDataSheet()
