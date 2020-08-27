@@ -31,7 +31,7 @@ class TranslatableBehavior extends AbstractBehavior
 {
     private $translate_attributes = [];
     
-    private $translatable_relations = null;
+    private $translatable_relations = [];
     
     private $translation_subfolder = null;
     
@@ -103,7 +103,8 @@ class TranslatableBehavior extends AbstractBehavior
                     ],
                     "columns" => [
                         [
-                            "attribute_alias" => "LOCALE"
+                            "attribute_alias" => "LOCALE",
+                            "caption" => 'Translation file'
                         ],
                         [
                             "attribute_alias" => "PATHNAME_RELATIVE"
@@ -111,7 +112,8 @@ class TranslatableBehavior extends AbstractBehavior
                     ],
                     "buttons" => [
                         [
-                            "action_alias" => "exface.Core.ShowObjectEditDialog"
+                            "action_alias" => "exface.Core.ShowObjectEditDialog",
+                            "bind_to_double_click" => true
                         ]
                     ]
                 ],
