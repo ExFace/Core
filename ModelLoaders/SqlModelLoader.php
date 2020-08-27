@@ -204,7 +204,7 @@ class SqlModelLoader implements ModelLoaderInterface
             $object->setNamespace($row['app_alias']);
             
             $translator = $object->getApp()->getTranslator();
-            $translationDomain = $row['object_alias'];
+            $translationDomain = 'Objects/' . $row['object_alias'];
             $object->setName($translator->translate('NAME', null, null, $translationDomain, $row['object_name']));
             
             if ($row['has_behaviors']) {
@@ -882,7 +882,11 @@ class SqlModelLoader implements ModelLoaderInterface
                 $app = $action_list->getWorkbench()->getApp($row['app_alias']);
                 $object = $action_list instanceof MetaObjectActionListInterface ? $action_list->getMetaObject() : $action_list->getWorkbench()->model()->getObjectById($row['object_oid']);
                 $a = ActionFactory::createFromModel($row['action'], $row['alias'], $app, $object, $action_uxon, $trigger_widget);
-                $a->setName($row['name']);
+                
+                $translator = $app->getTranslator();
+                $translationDomain = 'Actions/' . $row['alias'];
+                $a->setName($translator->translate('NAME', null, null, $translationDomain, $row['name']));
+                
                 $action_list->add($a);
                 
                 if ($row['use_in_object_basket_flag']) {
@@ -1352,9 +1356,13 @@ SQL;
         if ($row['app_oid']) {
             $uiPage->setApp(SelectorFactory::createAppSelector($this->getWorkbench(), $row['app_oid']));
         }
-        $uiPage->setName($row['name']);
-        $uiPage->setDescription($row['description'] ?? '');
-        $uiPage->setIntro($row['intro'] ?? '');
+        
+        $translator = ($uiPage->hasApp() ? $uiPage->getApp() : $this->getWorkbench()->getCoreApp())->getTranslator();
+        $translationDomain = $row['alias'];
+        $uiPage->setName($translator->translate('NAME', null, null, $translationDomain, $row['name']));
+        $uiPage->setDescription($translator->translate('DESCRIPTION', null, null, $translationDomain, $row['description'] ?? ''));
+        $uiPage->setIntro($translator->translate('INTRO', null, null, $translationDomain, $row['intro'] ?? ''));
+        
         $uiPage->setMenuIndex(intval($row['menu_index']));
         $uiPage->setMenuVisible($row['menu_visible'] ? true : false);
         $uiPage->setPublished($row['published'] ? true : false);
@@ -1437,15 +1445,18 @@ SQL;
      */
     protected function loadPageTreeCreateNodeFromDbRow(array $row, UiPageTreeNodeInterface $parentNode = null) : UiPageTreeNodeInterface
     {
+        $translator = ($row['app_oid'] ? $this->getWorkbench()->getApp($row['app_oid']) : $this->getWorkbench()->getCoreApp())->getTranslator();
+        $translationDomain = 'Pages/' . $row['alias'];
+        
         $node = UiPageTreeFactory::createNode(
             $this->getWorkbench(),
             $row['alias'],
-            $row['name'],
+            $translator->translate('NAME', null, null, $translationDomain, $row['name']),
             $row['oid'],
             ($row['published'] ? true : false),
             $parentNode,
-            $row['description'],
-            $row['intro'],
+            $translator->translate('DESCRIPTION', null, null, $translationDomain, $row['description']),
+            $translator->translate('INTRO', null, null, $translationDomain, $row['intro']),
             $row['group_oids'] ? explode(',', $row['group_oids']) : null
         );
         
@@ -1663,6 +1674,7 @@ SQL;
             SELECT
                 {$this->buildSqlUuidSelector('p.oid')} as oid,
                 {$this->buildSqlUuidSelector('p.parent_oid')} as parent_oid,
+                {$this->buildSqlUuidSelector('p.app_oid')} as app_oid,
                 p.name,
                 p.alias,
                 p.description,
