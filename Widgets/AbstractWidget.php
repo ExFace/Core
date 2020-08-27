@@ -468,7 +468,8 @@ abstract class AbstractWidget implements WidgetInterface
     public function getIdSpecified(bool $includeIdSpace = true) : ?string
     {
         if ($includeIdSpace === false) {
-            return StringDataType::substringAfter($this->id_specified, $this->getIdSpace() . $this->getPage()->getWidgetIdSpaceSeparator(), $this->id_specified);
+            $withNs = $this->id_specified ?? '';
+            return StringDataType::substringAfter($withNs, $this->getIdSpace() . $this->getPage()->getWidgetIdSpaceSeparator(), $withNs);
         }
         return $this->id_specified;
     }
