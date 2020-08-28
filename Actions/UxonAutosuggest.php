@@ -8,19 +8,15 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Uxon\UxonSchema;
-use exface\Core\Uxon\WidgetSchema;
-use exface\Core\Uxon\ActionSchema;
-use exface\Core\Uxon\DatatypeSchema;
-use exface\Core\Uxon\BehaviorSchema;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\SortingDirectionsDataType;
-use exface\Core\Uxon\ConnectionSchema;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Widgets\Markdown;
 use exface\Core\Interfaces\UxonSchemaInterface;
+use exface\Core\Factories\UxonSchemaFactory;
 
 /**
  * Returns autosuggest values for provided UXON objects.
@@ -54,12 +50,6 @@ use exface\Core\Interfaces\UxonSchemaInterface;
  */
 class UxonAutosuggest extends AbstractAction
 {
-    const SCHEMA_WIDGET = 'widget';
-    const SCHEMA_ACTION = 'action';
-    const SCHEMA_BEHAVIOR = 'behavior';
-    const SCHEMA_DATATYPE = 'datatype';
-    const SCHEMA_CONNECTION = 'connection';
-    
     const PARAM_TEXT = 'text';
     const PARAM_PATH = 'path';
     const PARAM_TYPE = 'input';
@@ -103,30 +93,7 @@ class UxonAutosuggest extends AbstractAction
             }
         }
         
-        switch (mb_strtolower($schema)) {
-            case self::SCHEMA_WIDGET: 
-                $schema = new WidgetSchema($this->getWorkbench());
-                break;
-            case self::SCHEMA_ACTION:
-                $schema = new ActionSchema($this->getWorkbench());
-                break;
-            case self::SCHEMA_DATATYPE:
-                $schema = new DatatypeSchema($this->getWorkbench());
-                break;
-            case self::SCHEMA_BEHAVIOR:
-                $schema = new BehaviorSchema($this->getWorkbench());
-                break;
-            case self::SCHEMA_CONNECTION:
-                $schema = new ConnectionSchema($this->getWorkbench());
-                break;
-            default:
-                if (substr($schema, 0, 1) === '\\' && class_exists($schema)) {
-                    $schema = new $schema($this->getWorkbench());
-                } else {
-                    $schema = new UxonSchema($this->getWorkbench());
-                }
-                break;
-        }
+        $schema = UxonSchemaFactory::create($this->getWorkbench(), $schema);
         
         switch (true) {
             case strcasecmp($type, self::TYPE_FIELD) === 0:

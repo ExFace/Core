@@ -447,6 +447,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      *
      * @uxon-property empty_text
      * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::setEmptyText()
      */

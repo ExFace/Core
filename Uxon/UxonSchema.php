@@ -67,6 +67,12 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
  */
 class UxonSchema implements UxonSchemaInterface
 {    
+    const SCHEMA_WIDGET = 'widget';
+    const SCHEMA_ACTION = 'action';
+    const SCHEMA_BEHAVIOR = 'behavior';
+    const SCHEMA_DATATYPE = 'datatype';
+    const SCHEMA_CONNECTION = 'connection';
+    
     private $prototypePropCache = [];
     
     private $schemaCache = [];
@@ -201,7 +207,14 @@ class UxonSchema implements UxonSchemaInterface
         
         $filepathRelative = $this->getFilenameForEntity($prototypeClass);
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_PROPERTY_ANNOTATION');
-        $ds->getColumns()->addMultiple(['PROPERTY', 'TYPE', 'TEMPLATE', 'DEFAULT']);
+        $ds->getColumns()->addMultiple([
+            'PROPERTY', 
+            'TYPE', 
+            'TEMPLATE', 
+            'DEFAULT',
+            'REQUIRED',
+            'TRANSLATABLE'
+        ]);
         $ds->getFilters()->addConditionFromString('FILE', $filepathRelative);
         try {
             $ds->dataRead();
@@ -253,6 +266,27 @@ class UxonSchema implements UxonSchemaInterface
         }
         
         return explode('|', $type);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UxonSchemaInterface::getPropertiesByAnnotation()
+     */
+    public function getPropertiesByAnnotation(string $annotation, $value, string $prototypeClass = null) : array
+    {
+        $colName = mb_strtoupper(StringDataType::substringAfter($annotation, '@uxon-', $annotation, false));
+        $ds = $this->getPropertiesSheet($prototypeClass ?? $this->getDefaultPrototypeClass());
+        if (! $col = $ds->getColumns()->get($colName)) {
+            return [];
+        }
+        
+        $props = [];
+        $rowNos = $col->findRowsByValue($value, false);
+        foreach ($rowNos as $rowNo) {
+            $props[] = $ds->getCellValue('PROPERTY', $rowNo);
+        }
+        return $props;
     }
     
     /**

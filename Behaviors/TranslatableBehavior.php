@@ -18,8 +18,14 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\Model\Behaviors\TranslatableRelation;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\CommonLogic\Model\RelationPath;
-use Symfony\Component\Console\Input\InputOption;
 use exface\Core\Widgets\InputKeysValues;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\DataTypes\UxonDataType;
+use exface\Core\Uxon\UxonSchema;
+use exface\Core\Factories\UxonSchemaFactory;
+use exface\Core\Interfaces\UxonSchemaInterface;
+use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\CommonLogic\Translation;
 
 /**
  * Makes the data of certain attributes of the object translatable.
@@ -32,6 +38,8 @@ class TranslatableBehavior extends AbstractBehavior
     private $translate_attributes = [];
     
     private $translatable_relations = [];
+    
+    private $translatable_uxon_attributes = [];
     
     private $translation_subfolder = null;
     
@@ -328,7 +336,7 @@ class TranslatableBehavior extends AbstractBehavior
         
         $behavior = $this->findBehavior($subfolder);
         
-        $translatables = $this->findExpectedTranslationKeys($behavior, $dataKey);
+        $translatables = $this->findTranslatables($behavior, $dataKey);
         $keysExpected = array_keys($translatables);
         $keysFound = array_keys($transJson);
         
@@ -354,24 +362,69 @@ class TranslatableBehavior extends AbstractBehavior
      * @throws BehaviorRuntimeError
      * @return string[]
      */
-    protected function findExpectedTranslationKeys(TranslatableBehavior $behavior, string $dataKey) : array
+    protected function findTranslatables(TranslatableBehavior $behavior, string $dataKey) : array
     {
         $keys = [];
         
         $ds = DataSheetFactory::createFromObject($behavior->getObject());
         $ds->getColumns()->addMultiple($behavior->getTranslatableAttributeAliases());
+        $ds->getColumns()->addMultiple($behavior->getTranslatableUxonAttributeAliases());
         $ds->getFilters()->addConditionFromString($behavior->getTranslationFilenameAttributeAlias(), $dataKey, ComparatorDataType::EQUALS);
         $ds->dataRead();
         
         foreach ($behavior->getTranslatableAttributeAliases() as $attrAlias) {
-            $keys[mb_strtoupper($attrAlias)] = $ds->getCellValue($attrAlias, 0);
+            $keys[Translation::buildTranslationKey([$attrAlias])] = $ds->getCellValue($attrAlias, 0);
+        }
+        
+        foreach ($behavior->getTranslatableUxonAttributeAliases() as $attrAlias) {
+            $attr = $behavior->getObject()->getAttribute($attrAlias);
+            $uxon = UxonObject::fromJson($ds->getCellValue($attrAlias, 0));
+            $keys = array_merge($keys, $this->findTranslatablesInUxon($attr, $uxon));
         }
         
         foreach ($behavior->getTranslatableRelations() as $tRel) {
-            $keys = array_merge($keys, $this->findTranslatableRelationKeys($tRel, $behavior->getTranslationFilenameAttributeAlias(), $dataKey));
+            $keys = array_merge($keys, $this->findTranslatablesInRelations($tRel, $behavior->getTranslationFilenameAttributeAlias(), $dataKey));
         }
         
         return $keys;
+    }
+    
+    protected function findTranslatablesInUxon(MetaAttributeInterface $attribute, UxonObject $uxon) : array
+    {
+        $dataType = $attribute->getDataType();
+        
+        if (! $dataType instanceof UxonDataType) {
+            throw new BehaviorRuntimeError($attribute->getObject(), 'Cannot translate UXON properties in attribute "' . $attribute->getAliasWithRelationPath() . '" of object "' . $attribute->getObject()->getAliasWithNamespace() . '": attribute is not a UXON!');
+        }
+        
+        $schemaName = $dataType->getSchema();
+        $schema = UxonSchemaFactory::create($this->getWorkbench(), $schemaName);
+        
+        return $this->findTranslatableUxonProperties($uxon, $schema, mb_strtoupper($attribute->getAlias()));
+    }
+    
+    protected function findTranslatableUxonProperties(UxonObject $uxon, UxonSchemaInterface $schema, string $keyPrefix) : array
+    {
+        $translations = [];
+        $prototypeClass = $schema->getPrototypeClass($uxon, []);
+        foreach ($schema->getPropertiesByAnnotation('@uxon-translatable', 'true', $prototypeClass) as $prop) {
+            if ($uxon->hasProperty($prop)) {
+                $val = $uxon->getProperty($prop);
+                if (! Expression::detectFormula($val)) {
+                    $key = Translation::buildTranslationKey([$keyPrefix, $prop, $val]);
+                    $translations[$key] = $val;
+                }
+            }
+        }
+        
+        foreach ($uxon->getPropertiesAll() as $prop => $val) {
+            if ($val instanceof UxonObject) {
+                $prototypeClass = $schema->getPrototypeClass($uxon, [$prop]);
+                $translations = array_merge($translations, $this->findTranslatableUxonProperties($val, $schema, $keyPrefix));
+            }
+        }
+        
+        return $translations;
     }
 
     /**
@@ -381,7 +434,7 @@ class TranslatableBehavior extends AbstractBehavior
      * @param string $dataKey
      * @return string[]
      */
-    protected function findTranslatableRelationKeys(TranslatableRelation $transRel, string $dataKeyAttributeAlias, string $dataKey) : array
+    protected function findTranslatablesInRelations(TranslatableRelation $transRel, string $dataKeyAttributeAlias, string $dataKey) : array
     {
         $keys = [];
         $relPath = $transRel->getRelationPath();
@@ -401,7 +454,7 @@ class TranslatableBehavior extends AbstractBehavior
         $relAttrAliases = $transRel->getTranslatableAttributeAliases(false);
         foreach ($ds->getRows() as $row) {
             foreach ($relAttrAliases as $attrAlias) {
-                $key = mb_strtoupper($prefix . '.' . $row[$relKeycol->getName()] . '.' . $attrAlias);
+                $key = Translation::buildTranslationKey([$prefix, $row[$relKeycol->getName()], $attrAlias]);
                 $keys[$key] = $row[$attrAlias];
             }
         }
@@ -474,5 +527,30 @@ class TranslatableBehavior extends AbstractBehavior
     protected function getTranslatableRelations() : array
     {
         return $this->translatable_relations;
+    }
+    
+    public function getTranslatableUxonAttributeAliases() : array
+    {
+        return $this->translatable_uxon_attributes;
+    }
+    /**
+     * Aliases of attributes, that contain UXON with translatable properties
+     * 
+     * @uxon-property translatable_uxon_properties
+     * @uxon-type metamodel:attribute[]
+     * @uxon-template [""]
+     * 
+     * @param UxonObject|string[] $arrayOrUxon
+     * @return TranslatableBehavior
+     */
+    public function setTranslatableUxonProperties($arrayOrUxon) : TranslatableBehavior
+    {
+        if ($arrayOrUxon instanceof UxonObject) {
+            $this->translatable_uxon_attributes = $arrayOrUxon->toArray();
+        } else {
+            $this->translatable_uxon_attributes = $arrayOrUxon;
+        }
+        
+        return $this;
     }
 }

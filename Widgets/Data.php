@@ -877,6 +877,7 @@ class Data
      *
      * @uxon-property empty_text
      * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
      *
      * @param string $value            
      * @return Data
@@ -1236,6 +1237,7 @@ class Data
      * 
      * @uxon-property autoload_disabled_hint
      * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
      * 
      * @param string $text
      * @return Data

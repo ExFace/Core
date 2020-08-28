@@ -32,6 +32,7 @@ class Text extends Display implements iShowText
      * 
      * @uxon-property text
      * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
      * 
      * @param string $value
      * @return \exface\Core\Widgets\Text

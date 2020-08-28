@@ -77,6 +77,7 @@ class InputKeysValues extends InputText
      * 
      * @uxon-property caption_for_keys
      * @uxon-type metamodel:formula|string
+     * @uxon-translatable true
      * 
      * @param string $expression
      * @return InputKeysValues
@@ -103,6 +104,7 @@ class InputKeysValues extends InputText
      * 
      * @uxon-property caption_for_values
      * @uxon-type metamodel:formula|string
+     * @uxon-translatable true
      * 
      * @param string $expression
      * @return InputKeysValues
