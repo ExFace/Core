@@ -256,6 +256,7 @@ class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGr
      *
      * @uxon-property empty_text
      * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
      *
      * @param string $value
      * @return Data

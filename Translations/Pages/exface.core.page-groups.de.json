@@ -1,0 +1,7 @@
+{
+    "NAME": "Maskengruppen",
+    "DESCRIPTION": "Gruppierung von Masken für Berechtigungen",
+    "INTRO": null,
+    "CONTENT.CAPTION.PAGES": "Masken",
+    "CONTENT.CAPTION.AUTHORIZATION_POLICIES": "Autorisierungs-Policies"
+}

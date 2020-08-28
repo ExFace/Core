@@ -177,6 +177,9 @@ class UiPage implements UiPageInterface
                 $contents = $this->getContents();
                 if (substr($contents, 0, 1) == '{' && substr($contents, - 1) == '}') {
                     $uxon = UxonObject::fromAnything($contents);
+                    if ($this->hasApp()) {
+                        $this->getApp()->getTranslator()->translateUxonProperties($uxon, 'Pages/' . $this->getAliasWithNamespace(), 'CONTENT');
+                    }
                 } else {
                     $uxon = new UxonObject();
                 }

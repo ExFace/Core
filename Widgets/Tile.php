@@ -186,6 +186,7 @@ class Tile extends Button
      * 
      * @uxon-property subtitle
      * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
      * 
      * @param mixed $subtitle
      * @return Tile

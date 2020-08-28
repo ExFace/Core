@@ -24,6 +24,7 @@ trait iHaveCaptionTrait {
      *
      * @uxon-property caption
      * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
      *
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveCaption::setCaption()

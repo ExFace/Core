@@ -1,5 +1,9 @@
 {
     "NAME": "Nutzer & Sicherheit",
     "DESCRIPTION": "Benutzerverwaltung, Rollen, Berechtigungen, usw.",
-    "INTRO": null
+    "INTRO": null,
+    "CONTENT.CAPTION.USERS": "Nutzer",
+    "CONTENT.CAPTION.ROLES": "Rollen",
+    "CONTENT.CAPTION.POLICIES": null,
+    "CONTENT.CAPTION.MORE_TOOLS": "Weitere Werkzeuge"
 }

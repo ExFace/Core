@@ -100,6 +100,7 @@ class ConsoleCommandPreset implements WidgetPartInterface, iHaveCaption, iHaveVi
      * 
      * @uxon-property hint
      * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
      * 
      * @param string $value
      * @return ConsoleCommandPreset

@@ -26,6 +26,8 @@ class Translation implements TranslationInterface
     
     private $domains = [];
     
+    private $domains_data = [];
+    
     private $app = null;
     
     private $workbench = null;
@@ -166,11 +168,22 @@ class Translation implements TranslationInterface
     public function getDictionary(string $domain = null) : array
     {
         $dict = [];
-        $cat = $this->translator->getCatalogue($this->translator->getLocale());
-        foreach ($cat->all() as $msgs) {
-            $dict = array_merge($dict, $msgs);
+        
+        if ($domain !== null) {
+            if (! $this->hasTranslationDomain($domain)) {
+                return [];
+            }
+            if ($this->domains_data[$domain] === null) {
+                $this->domains_data[$domain] = json_decode(file_get_contents($this->domains[$domain]), true);
+            }
+            return $this->domains_data[$domain];
+        } else {
+            $cat = $this->translator->getCatalogue($this->translator->getLocale());
+            foreach ($cat->all() as $msgs) {
+                $dict = array_merge($dict, $msgs);
+            }
+            return $dict;
         }
-        return $dict;
     }
     
     /**
@@ -234,5 +247,41 @@ class Translation implements TranslationInterface
             }
         }
         return array_unique($langs);
+    }
+    
+    public function translateUxonProperties(UxonObject $uxon, string $domain, string $namespace) : UxonObject
+    {
+        $uxon = $uxon->copy();
+        
+        if ($uxon->isEmpty()) {
+            return $uxon;
+        }
+        
+        if (! $this->hasTranslationDomain($domain)) {
+            return $uxon;
+        }
+        
+        foreach ($uxon->getPropertiesAll() as $prop => $val) {
+            if (is_string($val)) {
+                $key = static::buildTranslationKey([$namespace, $prop, $val]);
+                if (($trans = $this->translate($key, null, null, $domain)) !== $key) {
+                    $uxon->setProperty($prop, $trans);
+                }
+            }
+            
+            if ($val instanceof UxonObject) {
+                $uxon->setProperty($prop, $this->translateUxonProperties($val, $domain, $namespace));
+            }
+        }
+        
+        return $uxon;
+    }
+    
+    public static function buildTranslationKey(array $parts) : string
+    {
+        $key = implode('.', $parts);
+        $key = str_replace(' ', '_', $key);
+        $key = mb_strtoupper($key);
+        return $key;
     }
 }

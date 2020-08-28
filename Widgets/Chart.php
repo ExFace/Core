@@ -917,6 +917,7 @@ class Chart extends AbstractWidget implements
      *
      * @uxon-property empty_text
      * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
      *
      * @param string $value
      * @return Data
@@ -971,6 +972,7 @@ class Chart extends AbstractWidget implements
      *
      * @uxon-property autoload_disabled_hint
      * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
      *
      * @param string $text
      * @return Data

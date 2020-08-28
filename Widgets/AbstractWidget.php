@@ -974,6 +974,7 @@ abstract class AbstractWidget implements WidgetInterface
      *
      * @uxon-property hint
      * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
      *
      * {@inheritdoc}
      *
