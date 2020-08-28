@@ -21,7 +21,6 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Widgets\InputKeysValues;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\UxonDataType;
-use exface\Core\Uxon\UxonSchema;
 use exface\Core\Factories\UxonSchemaFactory;
 use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\CommonLogic\Model\Expression;
@@ -87,6 +86,7 @@ class TranslatableBehavior extends AbstractBehavior
         }
         $editorUxon->appendToProperty('buttons', new UxonObject([
             'caption' => 'Translate',
+            "icon" => "language",
             'object_alias' => 'exface.Core.TRANSLATIONS_FOR_DATA',
             'close_dialog' => false,
             'action' => [

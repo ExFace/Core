@@ -238,8 +238,8 @@ class SqlModelLoader implements ModelLoaderInterface
                     $object->setDataAddressProperties($data_address_properties);
                 }
             }
-            if ($default_editor_uxon = UxonObject::fromJson($row['default_editor_uxon'])) {
-                if (! $default_editor_uxon->isEmpty()) {
+            if ($default_editor_uxon = $row['default_editor_uxon']) {
+                if ($default_editor_uxon !== null && $default_editor_uxon !== '' && $default_editor_uxon !== '{}') {
                     $object->setDefaultEditorUxon($default_editor_uxon);
                 }
             }
