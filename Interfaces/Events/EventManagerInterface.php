@@ -4,17 +4,22 @@ namespace exface\Core\Interfaces\Events;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 
 /**
- * The event manager takes care of events in ExFace: registering listeners, dispatching events, etc.
+ * Controls events within the workbench: registers listeners, dispatches events, etc.
  *
- * This implementation uses the WildCardDispatcher by Jeremy Mikola, which in turn is a decorator for the Symfony EventDispatcher
- * component. The WildCardDispatcher adds support for listening to many events with one listener, like #.Action.Performed
- * to listen to any action being performed!
+ * There are two types of event listeners:
+ * 
+ * - regular listeners are registered at runtime (via `addListener()`)
+ * - static listeners are registered once (typically by an installer) and triggered
+ * automatically every time the event is fired. They are stored in the `System.config.json`.
+ * 
+ * @author Andrej Kabachnik
  */
 interface EventManagerInterface extends WorkbenchDependantInterface
 {
 
     /**
-     * Registers a listener for the given event name.
+     * Registers a regular listener for the given event name.
+     * 
      * The listener can be any PHP-callable.
      *
      * @param string $eventName            
@@ -22,7 +27,7 @@ interface EventManagerInterface extends WorkbenchDependantInterface
      * @param int $priority            
      * @return EventManagerInterface
      */
-    public function addListener($eventName, $listener_callable, $priority = null) : EventManagerInterface;
+    public function addListener(string $eventName, callable $listener_callable, int $priority = null) : EventManagerInterface;
 
     /**
      * Dispatches an event and returns it (eventually updated during handling).
@@ -38,27 +43,63 @@ interface EventManagerInterface extends WorkbenchDependantInterface
     public function dispatch(EventInterface $event) : EventInterface;
 
     /**
-     * Detaches the given listener from the specified event name
+     * Detaches the given regular listener from the specified event name.
      *
      * @param string $eventName            
      * @param callable $listener            
      * @return EventManagerInterface
      */
-    public function removeListener($eventName, $listener) : EventManagerInterface;
+    public function removeListener(string $eventName, callable $listener) : EventManagerInterface;
 
     /**
-     * Returns an array of listeners registered for the specified event
+     * Returns an array of all listeners registered for the specified event (incl. static listeners!)
      *
      * @param string $eventName            
      * @return callable[]
      */
-    public function getListeners($eventName) : array;
+    public function getListeners(string $eventName) : array;
 
     /**
-     * Returns TRUE if there are listeners registered for the given event name or FALSE otherwise.
-     *
-     * @param string $eventName            
+     * 
+     * @param string $eventName
+     * @return bool
      */
-    public function hasListeners($eventName) : bool;
+    public function hasListeners(string $eventName) : bool;
+    
+    /**
+     * Registers a regular listener for the given event name.
+     * 
+     * The listener MUST be a static PHP-callable: e.g. `MyClass::staticMethod` or
+     * `["myClass", "staticMethod"]`.
+     * 
+     * @param string $eventName
+     * @param callable $listener_callable
+     * @param int $priority
+     * @return EventManagerInterface
+     */
+    public function addStaticListener(string $eventName, callable $listener_callable, int $priority = null) : EventManagerInterface;
+    
+    /**
+     * Detaches the given static listener from the specified event name.
+     * 
+     * @param string $eventName
+     * @param callable $listener_callable
+     * @return EventManagerInterface
+     */
+    public function removeStaticListener(string $eventName, callable $listener_callable) : EventManagerInterface;
+    
+    /**
+     * 
+     * @param string $eventName
+     * @return bool
+     */
+    public function hasStaticListeners(string $eventName) : bool;
+    
+    /**
+     * 
+     * @param string $eventName
+     * @return array
+     */
+    public function getStaticListeners(string $eventName) : array;
 }
 ?>
