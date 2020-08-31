@@ -657,7 +657,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function isInherited()
     {
-        return is_null($this->getInheritedFromObjectId()) ? true : false;
+        return $this->getInheritedFromObjectId() !== null;
     }
 
     /**
