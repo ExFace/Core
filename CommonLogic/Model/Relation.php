@@ -268,7 +268,7 @@ class Relation implements MetaRelationInterface
      */
     public function isInherited() : bool
     {
-        return $this->inherited_from_object_id === null ? true : false;
+        return $this->inherited_from_object_id !== null;
     }
 
     /**
