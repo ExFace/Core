@@ -74,6 +74,10 @@ use exface\Core\DataTypes\EncryptedDataType;
 use exface\Core\DataTypes\UxonDataType;
 use exface\Core\Exceptions\Security\AccessDeniedError;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
+use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
+use exface\Core\Events\Model\OnMetaObjectActionLoadedEvent;
+use exface\Core\Events\Model\OnUiMenuItemLoadedEvent;
+use exface\Core\Events\Model\OnUiPageLoadedEvent;
 
 /**
  * Loads metamodel entities from SQL databases supporting the MySQL dialect.
@@ -203,9 +207,7 @@ class SqlModelLoader implements ModelLoaderInterface
             $object->setAppId($row['app_oid']);
             $object->setNamespace($row['app_alias']);
             
-            $translator = $object->getApp()->getTranslator();
-            $translationDomain = 'Objects/' . $row['object_alias'];
-            $object->setName($translator->translate('NAME', null, null, $translationDomain, $row['object_name']));
+            $object->setName($row['object_name']);
             
             if ($row['has_behaviors']) {
                 $load_behaviors = true;
@@ -392,7 +394,6 @@ class SqlModelLoader implements ModelLoaderInterface
                             $row['oid'], // relation id
                             $row['rev_relation_alias'], // relation alias
                             $row['attribute_alias'], // relation modifier: the alias of the right key attribute
-                            null, // the name cannot be specified at this point, as it depends on what other reverse relations will exist
                             $object, // left object
                             $leftKeyAttr, // left key in the main object
                             $row['object_oid'], // right object UID
@@ -427,7 +428,6 @@ class SqlModelLoader implements ModelLoaderInterface
                             $attr->getId(), // relation id
                             $attr->getAlias(), // relation alias
                             '', // alias modifier allways empty for direct regular relations
-                            $attr->getName(),
                             $object, //  left object
                             $attr, // left key attribute
                             $row['related_object_oid'], // right object UID
@@ -461,6 +461,8 @@ class SqlModelLoader implements ModelLoaderInterface
             }
         }
         
+        $this->getWorkbench()->eventManager()->dispatch(new OnMetaObjectLoadedEvent($object));
+        
         return $object;
     }
 
@@ -472,9 +474,6 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     protected function createAttributeFromDbRow(MetaObjectInterface $object, array $row)
     {
-        $translator = $object->getApp()->getTranslator();
-        $translationDomain = 'Objects/' . $object->getAlias();
-        
         if ($row['attribute_type'] === self::ATTRIBUTE_TYPE_COMPOUND) {
             $attr = new CompoundAttribute($object);
         } else {
@@ -482,7 +481,7 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         $attr->setId($row['oid']);
         $attr->setAlias($row['attribute_alias']);
-        $attr->setName($translator->translate('ATTRIBUTE.' . $row['attribute_alias'] . '.NAME', null, null, $translationDomain, $row['attribute_name']));
+        $attr->setName($row['attribute_name']);
         $attr->setDataAddress($row['data']);
         $attr->setDataAddressProperties(UxonObject::fromJson($row['data_properties']));
         $attr->setRelationFlag($row['related_object_oid'] ? true : false);
@@ -536,7 +535,7 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setValueListDelimiter($row['value_list_delimiter']);
         
         // Descriptions
-        $attr->setShortDescription($translator->translate('ATTRIBUTE.' . $row['attribute_alias'] . '.SHORT_DESCRIPTION', null, null, $translationDomain, $row['attribute_short_description']));
+        $attr->setShortDescription($row['attribute_short_description']);
         
         return $attr;
     }
@@ -882,10 +881,9 @@ class SqlModelLoader implements ModelLoaderInterface
                 $app = $action_list->getWorkbench()->getApp($row['app_alias']);
                 $object = $action_list instanceof MetaObjectActionListInterface ? $action_list->getMetaObject() : $action_list->getWorkbench()->model()->getObjectById($row['object_oid']);
                 $a = ActionFactory::createFromModel($row['action'], $row['alias'], $app, $object, $action_uxon, $trigger_widget);
+                $a->setName($row['name']);
                 
-                $translator = $app->getTranslator();
-                $translationDomain = 'Actions/' . $row['alias'];
-                $a->setName($translator->translate('NAME', null, null, $translationDomain, $row['name']));
+                $this->getWorkbench()->eventManager()->dispatch(new OnMetaObjectActionLoadedEvent($object, $a));
                 
                 $action_list->add($a);
                 
@@ -1357,11 +1355,9 @@ SQL;
             $uiPage->setApp(SelectorFactory::createAppSelector($this->getWorkbench(), $row['app_oid']));
         }
         
-        $translator = ($uiPage->hasApp() ? $uiPage->getApp() : $this->getWorkbench()->getCoreApp())->getTranslator();
-        $translationDomain = $row['alias'];
-        $uiPage->setName($translator->translate('NAME', null, null, $translationDomain, $row['name']));
-        $uiPage->setDescription($translator->translate('DESCRIPTION', null, null, $translationDomain, $row['description'] ?? ''));
-        $uiPage->setIntro($translator->translate('INTRO', null, null, $translationDomain, $row['intro'] ?? ''));
+        $uiPage->setName($row['name']);
+        $uiPage->setDescription($row['description'] ?? '');
+        $uiPage->setIntro($row['intro'] ?? '');
         
         $uiPage->setMenuIndex(intval($row['menu_index']));
         $uiPage->setMenuVisible($row['menu_visible'] ? true : false);
@@ -1399,6 +1395,9 @@ SQL;
         }
        
         $this->pages_loaded[$uiPage->getUid()] = $uiPage;
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnUiMenuItemLoadedEvent($uiPage));
+        $this->getWorkbench()->eventManager()->dispatch(new OnUiPageLoadedEvent($uiPage));
         
         return $uiPage;
     }
@@ -1445,25 +1444,25 @@ SQL;
      */
     protected function loadPageTreeCreateNodeFromDbRow(array $row, UiPageTreeNodeInterface $parentNode = null) : UiPageTreeNodeInterface
     {
-        $translator = ($row['app_oid'] ? $this->getWorkbench()->getApp($row['app_oid']) : $this->getWorkbench()->getCoreApp())->getTranslator();
-        $translationDomain = 'Pages/' . $row['alias'];
-        
         $node = UiPageTreeFactory::createNode(
             $this->getWorkbench(),
             $row['alias'],
-            $translator->translate('NAME', null, null, $translationDomain, $row['name']),
+            $row['name'],
             $row['oid'],
             ($row['published'] ? true : false),
             $parentNode,
-            $translator->translate('DESCRIPTION', null, null, $translationDomain, $row['description']),
-            $translator->translate('INTRO', null, null, $translationDomain, $row['intro']),
-            $row['group_oids'] ? explode(',', $row['group_oids']) : null
+            $row['description'],
+            $row['intro'],
+            $row['group_oids'] ? explode(',', $row['group_oids']) : null,
+            $row['app_oid']
         );
         
         $node->setCreatedOn($row['created_on']);
         $node->setCreatedByUserSelector($row['created_by_user_oid']);
         $node->setModifiedOn($row['modified_on']);
         $node->setModifiedByUserSelector($row['modified_by_user_oid']);
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnUiMenuItemLoadedEvent($node));
         
         return $node;
     }

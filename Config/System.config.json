@@ -59,7 +59,18 @@
     ],
     
     "EVENTS.STATIC_LISTENERS": {
-    	
+    	"exface.Core.Model.OnMetaObjectLoaded": [
+    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectLoadedTranslateModel"
+    	],
+    	"exface.Core.Model.OnMetaObjectActionLoaded": [
+    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onActionLoadedTranslateModel"
+    	],
+    	"exface.Core.Model.OnUiMenuItemLoaded": [
+    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onUiMenuItemLoadedTranslate"
+    	],
+    	"exface.Core.Model.OnBeforeDefaultObjectEditorInit": [
+    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectEditorInitTranslate"
+    	]
     },
     
     "FACADES.ROUTES": {},

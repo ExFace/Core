@@ -29,6 +29,7 @@ use exface\Core\Exceptions\Model\MetaObjectHasNoDataSourceError;
 use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Exceptions\Model\MetaRelationAliasAmbiguousError;
 use exface\Core\DataTypes\RelationCardinalityDataType;
+use exface\Core\Events\Model\OnBeforeDefaultObjectEditorInitEvent;
 
 /**
  * Default implementation of the MetaObjectInterface
@@ -1023,7 +1024,9 @@ class MetaObject implements MetaObjectInterface
                     $uxon->setProperty('object_alias', $this->getAliasWithNamespace());
                 }
                 
-                $this->default_editor_uxon = $this->getApp()->getTranslator()->translateUxonProperties($uxon, 'Objects/' . $this->getAlias(), 'DEFAULT_EDITOR_UXON');
+                $this->getWorkbench()->eventManager()->dispatch(new OnBeforeDefaultObjectEditorInitEvent($this, $uxon));
+                
+                $this->default_editor_uxon = $uxon;
             }
         }
         return $this->default_editor_uxon->copy();

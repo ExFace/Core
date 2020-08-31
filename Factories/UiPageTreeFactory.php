@@ -9,6 +9,8 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
 use exface\Core\Interfaces\Selectors\UiPageGroupSelectorInterface;
 use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\CommonLogic\Selectors\AppSelector;
 
 class UiPageTreeFactory extends AbstractStaticFactory
 {
@@ -147,7 +149,7 @@ class UiPageTreeFactory extends AbstractStaticFactory
      * @param UiPageTreeNodeInterface $parentNode
      * @param string $description
      * @param string $intro
-     * @param UiPageGroupSelectorInterface|string $pageGroupSelectors
+     * @param UiPageGroupSelectorInterface|string[] $pageGroupSelectors
      * 
      * @return UiPageTreeNode
      */
@@ -160,7 +162,8 @@ class UiPageTreeFactory extends AbstractStaticFactory
         UiPageTreeNodeInterface $parentNode = null,
         string $description = null,
         string $intro = null,
-        array $pageGroupSelectors = null) : UiPageTreeNode
+        array $pageGroupSelectors = null,
+        $appSelectorOrString = null) : UiPageTreeNode
     {
         $node = new UiPageTreeNode($workbench, $alias, $name, $pageUid, $parentNode);
         $node->setPublished($published);
@@ -176,8 +179,13 @@ class UiPageTreeFactory extends AbstractStaticFactory
             }
         }
         
+        if ($appSelectorOrString !== null) {
+            $node->setApp($appSelectorOrString instanceof AppSelectorInterface ? $appSelectorOrString : new AppSelector($workbench, $appSelectorOrString));
+        }
+        
         $ap = $workbench->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class);
         $ap->authorize($node);
+        
         return $node;
     }
     

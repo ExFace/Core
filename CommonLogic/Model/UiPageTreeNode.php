@@ -12,9 +12,7 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
-use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
-use exface\Core\Exceptions\Security\AccessDeniedError;
-use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\AppInterface;
 
 class UiPageTreeNode implements UiPageTreeNodeInterface
 {
@@ -83,6 +81,17 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     public function getName() : string
     {
         return $this->name;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::setName()
+     */
+    public function setName(string $name) : UiMenuItemInterface
+    {
+        $this->name = $name;
+        return $this;
     }
     
     /**
@@ -355,6 +364,5 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     public function getAlias()
     {
         return StringDataType::substringAfter($this->getPageAlias(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $this->getPageAlias(), false, true);
-    }
-    
+    }    
 }

@@ -6,6 +6,9 @@ use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\Selectors\UiPageGroupSelectorInterface;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
+use exface\Core\Interfaces\AppInterface;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 
 /**
  * Common interface for anything, that can be put into a UI menu - pages, page tree nodes, etc.
@@ -45,6 +48,13 @@ interface UiMenuItemInterface extends WorkbenchDependantInterface, AliasInterfac
      * @return string
      */
     public function getName() : string;
+    
+    /**
+     * 
+     * @param string $name
+     * @return UiMenuItemInterface
+     */
+    public function setName(string $name) : UiMenuItemInterface;
     
     /**
      * Returns the description of this page.
@@ -170,4 +180,29 @@ interface UiMenuItemInterface extends WorkbenchDependantInterface, AliasInterfac
      * @return string
      */
     public function getModifiedOn() : string;
+    
+    /**
+     * Returns the app, this page belongs to.
+     *
+     * @throws RuntimeException if the page is not part of any app
+     *
+     * @return AppInterface
+     */
+    public function getApp() : AppInterface;
+    
+    /**
+     * Makes the page become part of the app identified by the given selector
+     *
+     * @param AppSelectorInterface $selector
+     *
+     * @return UiPageInterface
+     */
+    public function setApp(AppSelectorInterface $selector) : UiMenuItemInterface;
+    
+    /**
+     * Returns TRUE if the page is part of an app and FALSE if it is not assigned to any app.
+     *
+     * @return bool
+     */
+    public function hasApp() : bool;
 }

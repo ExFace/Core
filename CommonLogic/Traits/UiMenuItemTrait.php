@@ -3,7 +3,6 @@ namespace exface\Core\CommonLogic\Traits;
 
 use exface\Core\Interfaces\Selectors\UiPageGroupSelectorInterface;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
-use exface\Core\CommonLogic\Selectors\UiPageSelector;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
@@ -12,6 +11,10 @@ use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Exceptions\UiPage\UiPageNotPartOfAppError;
+use exface\Core\Exceptions\UiPage\UiPageLoadingError;
+use exface\Core\Interfaces\AppInterface;
 
 trait UiMenuItemTrait {
     
@@ -26,6 +29,8 @@ trait UiMenuItemTrait {
     private $created_on = null;
     
     private $modified_on = null;
+    
+    private $appSelector = null;
     
     /**
      *
@@ -201,5 +206,47 @@ trait UiMenuItemTrait {
     public function isPublished() : bool
     {
         return $this->published;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::getApp()
+     */
+    public function getApp() : AppInterface
+    {
+        if (! is_null($this->appSelector)) {
+            try {
+                return $this->getWorkbench()->getApp($this->appSelector);
+            } catch (\Throwable $e) {
+                throw new UiPageLoadingError('Cannot load app "' . $this->appSelector->__toString() . '" for page "' . $this->getAliasWithNamespace() . '"!', null, $e);
+            }
+        } else {
+            throw new UiPageNotPartOfAppError('The page "' . $this->getAliasWithNamespace() . '" is not part of any app!');
+        }
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::hasApp()
+     */
+    public function hasApp() : bool
+    {
+        return $this->appSelector !== null;
+    }
+    
+    /**
+     * The app, the page or menu item belongs to (if any)
+     *
+     * @uxon-property app
+     * @uxon-type metamodel:app
+     *
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::setApp()
+     */
+    public function setApp(AppSelectorInterface $selector) : UiMenuItemInterface
+    {
+        $this->appSelector = $selector;
+        return $this;
     }
 }
