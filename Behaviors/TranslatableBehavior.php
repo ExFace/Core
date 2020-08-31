@@ -58,7 +58,7 @@ class TranslatableBehavior extends AbstractBehavior
         $obj = $this->getObject();
         
         if ($obj->isExactly('exface.Core.TRANSLATIONS_FOR_DATA')) {
-            $this->getWorkbench()->eventManager()->addListener(OnBeforeActionPerformedEvent::getEventName(), [
+            $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), [
                 $this,
                 'onReadForKeyCreateFiles'
             ]);
@@ -375,7 +375,7 @@ class TranslatableBehavior extends AbstractBehavior
      * 
      * @return void
      */
-    public function onReadForKeyCreateFiles(OnBeforeActionPerformedEvent $event)
+    public function onReadForKeyCreateFiles(OnActionPerformedEvent $event)
     {
         $action = $event->getAction();
         
@@ -389,7 +389,7 @@ class TranslatableBehavior extends AbstractBehavior
         }
         
         /* @var $dataSheet \exface\Core\Interfaces\DataSheets\DataSheetInterface */
-        $dataSheet = $event->getTask()->getInputData();
+        $dataSheet = $event->getResult()->getData();
         
         foreach ($dataSheet->getFilters()->getConditions() as $cond) {
             if ($cond->getAttributeAlias() === 'DATA_KEY') {
@@ -417,14 +417,20 @@ class TranslatableBehavior extends AbstractBehavior
             }
             $filepath = $path . $key . '.' . $lang . '.json';
             if (! file_exists($filepath)) {
-                file_put_contents($filepath, '{}');
+                //file_put_contents($filepath, '{}');
+                $dataSheet->addRow([
+                    'LOCALE' => $lang,
+                    'NAME' => $key . '.' . $lang,
+                    'DATA_KEY' => $key,
+                    'PATHNAME_RELATIVE' => $this->getTranslationBasePath($app, false) . $subfolder . DIRECTORY_SEPARATOR . $key . '.' . $lang . '.json'
+                ]);
             }
         }
     }
     
-    protected function getTranslationBasePath(AppInterface $app) : string
+    protected function getTranslationBasePath(AppInterface $app, bool $absolute = true) : string
     {
-        return $app->getDirectoryAbsolutePath() . DIRECTORY_SEPARATOR . 'Translations' . DIRECTORY_SEPARATOR;
+        return ($absolute ? $app->getDirectoryAbsolutePath() : $app->getDirectory()) . DIRECTORY_SEPARATOR . 'Translations' . DIRECTORY_SEPARATOR;
     }
     
     /**
@@ -460,7 +466,7 @@ class TranslatableBehavior extends AbstractBehavior
         
         $value = $contentWidget->getValue();
         if (! $value) {
-            return;
+            //return;
         }
         $transJson = json_decode($value, true);
         
