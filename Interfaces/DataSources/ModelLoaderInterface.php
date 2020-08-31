@@ -30,6 +30,7 @@ use exface\Core\CommonLogic\Model\UiPageTree;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
+use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
 
 interface ModelLoaderInterface extends WorkbenchDependantInterface
 {
@@ -53,6 +54,8 @@ interface ModelLoaderInterface extends WorkbenchDependantInterface
      * 
      * @throws MetaObjectNotFoundError
      * 
+     * @triggers \exface\Core\Events\Model\OnMetaObjectLoadedEvent
+     * 
      * @return MetaObjectInterface            
      */
     public function loadObjectByAlias(AppInterface $app, $object_alias);
@@ -62,6 +65,8 @@ interface ModelLoaderInterface extends WorkbenchDependantInterface
      * @param string $uid
      * 
      * @throws MetaObjectNotFoundError
+     * 
+     * @triggers \exface\Core\Events\Model\OnMetaObjectLoadedEvent
      * 
      * @return MetaObjectInterface
      */
@@ -101,6 +106,10 @@ interface ModelLoaderInterface extends WorkbenchDependantInterface
     /**
      * 
      * @param UiPageSelectorInterface $selector
+     * 
+     * @triggers \exface\Core\Events\Model\OnUiPageLoadedEvent
+     * @triggers \exface\Core\Events\Model\OnUiMenuItemLoadedEvent
+     * 
      * @return UiPageInterface
      */
     public function loadPage(UiPageSelectorInterface $selector, bool $ignoreReplacements = false) : UiPageInterface;
@@ -161,6 +170,9 @@ interface ModelLoaderInterface extends WorkbenchDependantInterface
      * @param AppInterface $app            
      * @param string $action_alias            
      * @param WidgetInterface $trigger_widget            
+     * 
+     * @triggers \exface\Core\Events\Model\OnMetaObjectActionLoadedEvent
+     * 
      * @return ActionInterface
      */
     public function loadAction(AppInterface $app, $action_alias, WidgetInterface $trigger_widget = null);
@@ -206,8 +218,10 @@ interface ModelLoaderInterface extends WorkbenchDependantInterface
     /**
      * Loads data from database and builds the tree structure for the given tree, returning an array of root nodes for the tree.
      *
+     * @triggers \exface\Core\Events\Model\OnUiMenuItemLoadedEvent for every tree node
+     * 
      * @param UiPageTree $tree
-     * @return array
+     * @return UiPageTreeNodeInterface[]
      */
     public function loadPageTree(UiPageTree $tree) : array;
     

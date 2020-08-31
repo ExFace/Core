@@ -6,8 +6,6 @@ use exface\Core\Widgets\ContextBar;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Interfaces\AppInterface;
-use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
@@ -37,14 +35,6 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      * @return UiPageSelectorInterface
      */
     public function getSelector() : UiPageSelectorInterface;
-    
-    /**
-     * Overwrites the name of the page.
-     *
-     * @param string $string
-     * @return UiPageInterface
-     */
-    public function setName($string);
 
     /**
      *
@@ -137,22 +127,6 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      * @return ContextBar
      */
     public function getContextBar();
-
-    /**
-     * Returns the app, this page belongs to.
-     * 
-     * @throws RuntimeException if the page is not part of any app
-     * 
-     * @return AppInterface
-     */
-    public function getApp();
-    
-    /**
-     * Returns TRUE if the page is part of an app and FALSE if it is not assigned to any app.
-     * 
-     * @return bool
-     */
-    public function hasApp() : bool;
 
     /**
      * Returns FALSE if the page should not be updated automatically when its
@@ -358,23 +332,6 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      * @return boolean
      */
     public function equals(UiPageInterface $page, $ignore_properties);
-    
-    /**
-     * Generates a unique alias.
-     * 
-     * @param string $prefix
-     * @return string
-     */
-    public static function generateAlias($prefix);
-    
-    /**
-     * Makes the page become part of the app identified by the given selector
-     * 
-     * @param AppSelectorInterface $selector
-     * 
-     * @return UiPageInterface
-     */
-    public function setApp(AppSelectorInterface $selector) : UiPageInterface;
     
     /**
      * 

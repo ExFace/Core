@@ -54,7 +54,6 @@ interface MetaRelationInterface extends WorkbenchDependantInterface
         string $uid, 
         string $alias, 
         string $aliasModifier = '', 
-        string $name = null, 
         MetaObjectInterface $leftObject, 
         MetaAttributeInterface $leftKeyAttribute, 
         string $rightObjectUid, 

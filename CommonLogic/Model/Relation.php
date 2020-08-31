@@ -64,7 +64,6 @@ class Relation implements MetaRelationInterface
         string $uid,
         string $alias,
         string $aliasModifier = '',
-        string $name = null,
         MetaObjectInterface $leftObject,
         MetaAttributeInterface $leftKeyAttribute,
         string $rightObjectUid,
@@ -74,7 +73,6 @@ class Relation implements MetaRelationInterface
         $this->id = $uid;
         $this->alias = $alias;
         $this->aliasModifier = $aliasModifier;
-        $this->name = $name;
         $this->leftObject = $leftObject;
         $this->leftKeyAttribute = $leftKeyAttribute;
         $this->rightObjectUid = $rightObjectUid;

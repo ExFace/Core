@@ -25,6 +25,10 @@ use exface\Core\Factories\UxonSchemaFactory;
 use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\Translation;
+use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
+use exface\Core\Events\Model\OnMetaObjectActionLoadedEvent;
+use exface\Core\Events\Model\OnUiMenuItemLoadedEvent;
+use exface\Core\Events\Model\OnBeforeDefaultObjectEditorInitEvent;
 
 /**
  * Makes the data of certain attributes of the object translatable.
@@ -66,7 +70,10 @@ class TranslatableBehavior extends AbstractBehavior
         }
         
         if ($this->hasTranslatableAttributes()) {
-            $obj->setDefaultEditorUxon($this->addTranslateButtonToEditor($obj->getDefaultEditorUxon()));
+            $this->getWorkbench()->eventManager()->addListener(OnBeforeDefaultObjectEditorInitEvent::getEventName(), [
+                $this,
+                'onObjectEditorInitAddTranslateButton'
+            ]);
         }
         
         $this->setRegistered(true);
@@ -74,16 +81,30 @@ class TranslatableBehavior extends AbstractBehavior
     }
     
     /**
+     * Adds a translate-button to the default editor of the behavior's object, so that
+     * every instance of the object can be translated. 
      * 
-     * @param UxonObject $editorUxon
+     * E.g. the translatable behavior of the core's `MESSAGE` object adds a translate-button
+     * to the editor used when the action `exface.Core.ShowObjectEditDialog` is called on
+     * a message.
+     * 
+     * @param OnBeforeDefaultObjectEditorInitEvent $event
      * @throws BehaviorRuntimeError
-     * @return UxonObject
+     * 
+     * @return void
      */
-    protected function addTranslateButtonToEditor(UxonObject $editorUxon) : UxonObject
+    public function onObjectEditorInitAddTranslateButton(OnBeforeDefaultObjectEditorInitEvent $event)
     {
+        if ($event->getObject() !== $this->getObject()) {
+            return;
+        }
+        
+        $editorUxon = $event->getDefaultEditorUxon();
+        
         if (strcasecmp($editorUxon->getProperty('widget_type'), 'Dialog') !== 0) {
             throw new BehaviorRuntimeError($this->getObject(), 'Cannot add translation-button to default editor dialog of object "' . $this->getObject()->getAliasWithNamespace() . '": the default editor must be of type "Dialog"!');
         }
+        
         $editorUxon->appendToProperty('buttons', new UxonObject([
             'caption' => 'Translate',
             "icon" => "language",
@@ -141,7 +162,7 @@ class TranslatableBehavior extends AbstractBehavior
                 ]
             ]));
         
-        return $editorUxon;
+        return;
     }
     
     /**
@@ -165,11 +186,19 @@ class TranslatableBehavior extends AbstractBehavior
         return $this;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     protected function hasTranslatableAttributes() : bool
     {
         return empty($this->translate_attributes) === false;
     }
     
+    /**
+     * 
+     * @return array
+     */
     protected function getTranslatableAttributeAliases() : array
     {
         return $this->translate_attributes;
@@ -237,8 +266,113 @@ class TranslatableBehavior extends AbstractBehavior
     }
     
     /**
+     * Translates names, descriptions, etc. of UI pages and menu items whenever they are loaded.
+     * 
+     * @param OnUiMenuItemLoadedEvent $event
+     * 
+     * @return void
+     */
+    public static function onUiMenuItemLoadedTranslate(OnUiMenuItemLoadedEvent $event)
+    {
+        $menuItem = $event->getMenuItem();
+        
+        if ($menuItem->hasApp() === false) {
+            return;
+        }
+        
+        $translator = $menuItem->getApp()->getTranslator();
+        $domain = 'Pages/' . $menuItem->getAliasWithNamespace();
+        
+        if (! $translator->hasTranslationDomain($domain)) {
+            return;
+        }
+        
+        $menuItem->setName($translator->translate('NAME', null, null, $domain, $menuItem->getName()));
+        $menuItem->setDescription($translator->translate('DESCRIPTION', null, null, $domain, $menuItem->getDescription()));
+        $menuItem->setIntro($translator->translate('INTRO', null, null, $domain, $menuItem->getIntro()));
+
+        return;
+    }
+    
+    /**
+     * Translates names and descriptions of object actions whenever they are loaded.
+     * 
+     * @param OnMetaObjectActionLoadedEvent $event
+     * 
+     * @return void
+     */
+    public static function onActionLoadedTranslateModel(OnMetaObjectActionLoadedEvent $event) 
+    {
+        $action = $event->getAction();
+        
+        $translator = $action->getApp()->getTranslator();
+        $domain = 'Actions/' . $action->getAlias();
+        
+        if (! $translator->hasTranslationDomain($domain)) {
+            return;
+        }
+        
+        $action->setName($translator->translate('NAME', null, null, $domain, $action->getName()));
+        
+        return;
+    }
+    
+    /**
+     * Translates names and descriptions of an object and it's attributes whenever the object is loaded.
+     * 
+     * @param OnMetaObjectLoadedEvent $event
+     * 
+     * @return void
+     */
+    public static function onObjectLoadedTranslateModel(OnMetaObjectLoadedEvent $event)
+    {
+        $object = $event->getObject();
+        
+        $translator = $object->getApp()->getTranslator();
+        $domain = 'Objects/' . $object->getAlias();
+        
+        if (! $translator->hasTranslationDomain($domain)) {
+            return;
+        }
+        
+        $object->setName($translator->translate('NAME', null, null, $domain, $object->getName()));
+        $object->setShortDescription($translator->translate('NAME', null, null, $domain, $object->getShortDescription()));
+        
+        foreach ($object->getAttributes() as $attr) {
+            if ($attr->isInherited()) {
+                continue;
+            }
+            
+            $ns = 'ATTRIBUTE.' . $attr->getAlias() . '.';
+            $attr->setName($translator->translate($ns . 'NAME', null, null, $domain, $attr->getName()));
+            $attr->setShortDescription($translator->translate($ns . 'SHORT_DESCRIPTION', null, null, $domain, $attr->getShortDescription()));
+        }
+        
+        return;       
+    }
+    
+    /**
+     * Translates the default editor UXON of the event's object.
+     *  
+     * @param OnBeforeDefaultObjectEditorInitEvent $event
+     * @return void
+     */
+    public static function onObjectEditorInitTranslate(OnBeforeDefaultObjectEditorInitEvent $event)
+    {
+        $object = $event->getObject();
+        $uxon = $event->getDefaultEditorUxon();
+        $translated = $object->getApp()->getTranslator()->translateUxonProperties($uxon, 'Objects/' . $object->getAlias(), 'DEFAULT_EDITOR_UXON');
+        foreach ($translated->getPropertiesAll() as $prop => $value) {
+            $uxon->setProperty($prop, $value);
+        }
+        return;
+    }
+    
+    /**
+     * Creates translation files for every language of the app on every read-operation for data translation files.
      * 
      * @param OnActionPerformedEvent $event
+     * 
      * @return void
      */
     public function onReadForKeyCreateFiles(OnBeforeActionPerformedEvent $event)
@@ -294,7 +428,14 @@ class TranslatableBehavior extends AbstractBehavior
     }
     
     /**
-     *
+     * Generates all currently relevant translation keys whenever an editor for `exface.Core.TRANSLATIONS_FOR_DATA` is rendered.
+     * 
+     * If the editor dialog uses the widget `InputKeysValues` for content, reference
+     * translations for the app's default language are shown automatically.
+     * 
+     * FIXME refactor to use the onPrefill event or similar, so that it also works
+     * with facades, that load the data separately from the widgets (views).
+     * 
      * @param OnActionPerformedEvent $event
      * @return void
      */

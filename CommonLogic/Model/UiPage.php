@@ -14,15 +14,12 @@ use exface\Core\Factories\UiPageFactory;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\NumberDataType;
-use exface\Core\Exceptions\UiPage\UiPageNotPartOfAppError;
-use Ramsey\Uuid\Uuid;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Events\Widget\OnRemoveEvent;
-use exface\Core\Exceptions\UiPage\UiPageLoadingError;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Exceptions\RuntimeException;
@@ -67,8 +64,6 @@ class UiPage implements UiPageInterface
     private $widget_root = null;
 
     private $context_bar = null;
-
-    private $appSelector = null;
 
     private $updateable = true;
 
@@ -600,48 +595,6 @@ class UiPage implements UiPageInterface
             $this->context_bar = WidgetFactory::create($this, 'ContextBar');
         }
         return $this->context_bar;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getApp()
-     */
-    public function getApp()
-    {
-        if (! is_null($this->appSelector)) {
-            try {
-                return $this->getWorkbench()->getApp($this->appSelector);
-            } catch (\Throwable $e) {
-                throw new UiPageLoadingError('Cannot load app "' . $this->appSelector->__toString() . '" for page "' . $this->getAliasWithNamespace() . '"!', null, $e);
-            }
-        } else {
-            throw new UiPageNotPartOfAppError('The page "' . $this->getAliasWithNamespace() . '" is not part of any app!');
-        }
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::hasApp()
-     */
-    public function hasApp() : bool
-    {
-        return $this->appSelector !== null;
-    }
-
-    /**
-     * The app, the page belongs to (if any)
-     * 
-     * @uxon-property app
-     * @uxon-type metamodel:app
-     * 
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setApp()
-     */
-    public function setApp(AppSelectorInterface $selector) : UiPageInterface
-    {
-        $this->appSelector = $selector;
-        return $this;
     }
 
     /**
@@ -1238,23 +1191,6 @@ class UiPage implements UiPageInterface
         }
         
         return true;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::generateAlias()
-     */
-    public static function generateAlias($prefix)
-    {
-        $characters = 'abcdefghijklmnopqrstuvwxyz';
-        $charactersLength = strlen($characters);
-        $aliasLength = 10;
-        $alias = '';
-        for ($i = 0; $i < $aliasLength; $i ++) {
-            $alias .= $characters[mt_rand(0, $charactersLength - 1)];
-        }
-        return $prefix . $alias;
     }
     
     /**
