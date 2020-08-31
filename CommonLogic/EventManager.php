@@ -5,14 +5,15 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\AppInterface;
 
 /**
- * The event manager takes care of events in ExFace: registering listeners, dispatching events, etc.
- *
- * This implementation uses the WildCardDispatcher by Jeremy Mikola, which in turn is a decorator for the Symfony EventDispatcher
- * component. The WildCardDispatcher adds support for listening to many events with one listener, like #.Action.Performed
- * to listen to any action being performed!
+ * Default implementation of the EventManagerInterface based on the Symfony EventDispatcher component.
+ * 
+ * @see EventManagerInterface
+ * 
+ * @author Andrej Kabachnik
  */
 class EventManager implements EventManagerInterface
 {
@@ -21,10 +22,15 @@ class EventManager implements EventManagerInterface
 
     private $dispatcher = null;
 
+    /**
+     * 
+     * @param WorkbenchInterface $exface
+     */
     function __construct(WorkbenchInterface $exface)
     {
         $this->exface = $exface;
         $this->dispatcher = new EventDispatcher();
+        $this->registerStaticListeners();
     }
 
     /**
@@ -32,7 +38,7 @@ class EventManager implements EventManagerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Events\EventManagerInterface::addListener()
      */
-    public function addListener($eventName, $listener_callable, $priority = null) : EventManagerInterface
+    public function addListener(string $eventName, callable $listener_callable, int $priority = null) : EventManagerInterface
     {
         $this->dispatcher->addListener($eventName, $listener_callable, $priority);
         return $this;
@@ -53,7 +59,7 @@ class EventManager implements EventManagerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Events\EventManagerInterface::removeListener()
      */
-    public function removeListener($eventName, $listener) : EventManagerInterface
+    public function removeListener(string $eventName, callable $listener) : EventManagerInterface
     {
         $this->dispatcher->removeListener($eventName, $listener);
         return $this;
@@ -64,7 +70,7 @@ class EventManager implements EventManagerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Events\EventManagerInterface::getListeners()
      */
-    public function getListeners($eventName) : array
+    public function getListeners(string $eventName) : array
     {
         return $this->dispatcher->getListeners($eventName);
     }
@@ -74,7 +80,7 @@ class EventManager implements EventManagerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Events\EventManagerInterface::hasListeners()
      */
-    public function hasListeners($eventName) : bool
+    public function hasListeners(string $eventName) : bool
     {
         return $this->dispatcher->hasListeners($eventName);
     }
@@ -89,9 +95,91 @@ class EventManager implements EventManagerInterface
         return $this->exface;
     }
     
-    public function getSymfonyDispatcher() : EventDispatcherInterface
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\EventManagerInterface::addStaticListener()
+     */
+    public function addStaticListener(string $eventName, callable $listener_callable, int $priority = null) : EventManagerInterface
     {
-        return $this->dispatcher;
+        if ((is_array($listener_callable) && ! is_string($listener_callable[0])) || ! is_string($listener_callable)) {
+            throw new InvalidArgumentException('Invalid static event callable "' . print_r($listener_callable, true) . '"!');
+        }
+        
+        $config = $this->getWorkbench()->getConfig();
+        $listeners = $config->getOption('EVENTS.STATIC_LISTENERS')->toArray();
+        $eventListeners = $listeners[$eventName];
+        if ($eventListeners) {
+            $existingPrio = array_search($listener_callable, $eventListeners, true);
+            
+            if ($existingPrio === false) {
+                $listeners[$eventName] = array_merge($eventListeners, [$listener_callable]);
+            } elseif ($existingPrio !== $priority) {
+                $this->removeListener($eventName, $listener_callable);
+                unset($eventListeners[$existingPrio]);
+                if ($priority !== null) {
+                    $listeners[$eventName] = array_splice($eventListeners, $priority, 0, $listener_callable);
+                } else {
+                    $listeners[$eventName] = array_merge($eventListeners, [$listener_callable]);
+                }
+                $this->addListener($eventName, $listener_callable, $priority);
+            }
+        }
+        
+        $config->setOption('EVENTS.STATIC_LISTENERS', new UxonObject($listeners), AppInterface::CONFIG_SCOPE_SYSTEM);
+        
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\EventManagerInterface::removeStaticListener()
+     */
+    public function removeStaticListener(string $eventName, callable $listener_callable) : EventManagerInterface
+    {
+        $config = $this->getWorkbench()->getConfig();
+        $listeners = $config->getOption('EVENTS.STATIC_LISTENERS')->toArray();
+        
+        if ($listeners[$eventName] === null || ($prio = array_search($listener_callable, $listeners[$eventName])) === false) {
+            return $this;
+        }
+        
+        unset($listeners[$eventName][$prio]);
+        
+        $config->setOption('EVENTS.STATIC_LISTENERS', new UxonObject($listeners), AppInterface::CONFIG_SCOPE_SYSTEM);
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\EventManagerInterface::getStaticListeners()
+     */
+    public function getStaticListeners(string $eventName) : array
+    {
+        return $this->getWorkbench()->getConfig()->getOption('EVENTS.STATIC_LISTENERS')->toArray()[$eventName] ?? [];
+    }
+    
+    /**
+     * @return void
+     */
+    protected function registerStaticListeners()
+    {
+        foreach ($this->getWorkbench()->getConfig()->getOption('EVENTS.STATIC_LISTENERS')->toArray() as $event => $callables) {
+            foreach ($callables as $priority => $callable)
+            $this->addListener($event, $callable, $priority);
+        }
+        return;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\EventManagerInterface::hasStaticListeners()
+     */
+    public function hasStaticListeners(string $eventName) : bool
+    {
+        return ! empty($this->getStaticListeners($eventName));
     }
 }
-?>
