@@ -13,7 +13,6 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
-use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
  * Instantiates actions

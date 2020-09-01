@@ -62,7 +62,7 @@
     	"exface.Core.Model.OnMetaObjectLoaded": [
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectLoadedTranslateModel"
     	],
-    	"exface.Core.Model.OnMetaObjectActionLoaded": [
+    	"exface.Core.Model.OnBeforeMetaObjectActionLoaded": [
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onActionLoadedTranslateModel"
     	],
     	"exface.Core.Model.OnUiMenuItemLoaded": [
