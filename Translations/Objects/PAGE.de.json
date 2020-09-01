@@ -10,7 +10,7 @@
     "DEFAULT_EDITOR_UXON.CAPTION.SECURITY_POLICIES": "Sicherheits-Policies",
     "DEFAULT_EDITOR_UXON.CAPTION.POLICIES": null,
     "ATTRIBUTE.ALIAS.NAME": "Masken-Alias \/ URL",
-    "ATTRIBUTE.ALIAS.SHORT_DESCRIPTION": null,
+    "ATTRIBUTE.ALIAS.SHORT_DESCRIPTION": "Ein eindeutiger alias der Maske, der in der URL verwendet wird. Wird automatisch generiert, wenn nicht explizit vorgegeben. Bei manueller Vergabe wird eine Notation mit Namensraum in Kleinbuchstaben empfohlen: z.B. exface.core.administration)",
     "ATTRIBUTE.APP.NAME": "Gehört zu App",
     "ATTRIBUTE.APP.SHORT_DESCRIPTION": null,
     "ATTRIBUTE.TEMPLATE.NAME": null,
