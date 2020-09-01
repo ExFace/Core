@@ -78,6 +78,7 @@ use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 use exface\Core\Events\Model\OnMetaObjectActionLoadedEvent;
 use exface\Core\Events\Model\OnUiMenuItemLoadedEvent;
 use exface\Core\Events\Model\OnUiPageLoadedEvent;
+use exface\Core\Events\Model\OnBeforeMetaObjectActionLoadedEvent;
 
 /**
  * Loads metamodel entities from SQL databases supporting the MySQL dialect.
@@ -880,8 +881,17 @@ class SqlModelLoader implements ModelLoaderInterface
                 }
                 $app = $action_list->getWorkbench()->getApp($row['app_alias']);
                 $object = $action_list instanceof MetaObjectActionListInterface ? $action_list->getMetaObject() : $action_list->getWorkbench()->model()->getObjectById($row['object_oid']);
+                
+                if (! $action_uxon->hasProperty('name')) {
+                    $action_uxon->setProperty('name', $row['name']);
+                }
+                if (! $action_uxon->hasProperty('hint')) {
+                    $action_uxon->setProperty('hint', $row['short_description']);
+                }
+                
+                $this->getWorkbench()->eventManager()->dispatch(new OnBeforeMetaObjectActionLoadedEvent($row['action'], $row['alias'], $app, $object, $action_uxon, $trigger_widget));
+                
                 $a = ActionFactory::createFromModel($row['action'], $row['alias'], $app, $object, $action_uxon, $trigger_widget);
-                $a->setName($row['name']);
                 
                 $this->getWorkbench()->eventManager()->dispatch(new OnMetaObjectActionLoadedEvent($object, $a));
                 

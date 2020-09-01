@@ -61,6 +61,8 @@ abstract class AbstractAction implements ActionInterface
     private $alias = null;
 
     private $name = null;
+    
+    private $hint = null;
 
     private $exface = null;
 
@@ -702,8 +704,11 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
+     * The name of the action; also used as default caption for buttons
+     * 
+     * @uxon-property name
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setName()
      */
     public function setName($value)
@@ -1194,6 +1199,30 @@ abstract class AbstractAction implements ActionInterface
             throw new ActionRuntimeError($this, 'Cannot set input_trigger_widet_required to ' . ($trueOrFalse ? 'true' : 'false') . ': only ' . ($currentValue ? 'true' : 'false') . ' allowed!');
         }
         $this->triggerWidgetRequired = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getHint()
+     */
+    public function getHint() : ?string
+    {
+        return $this->hint;
+    }
+    
+    /**
+     * A short description used on mouse-hover, in the contextual help, etc.
+     * 
+     * @uxon-property hint
+     * @uxon-type string
+     * 
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setHint()
+     */
+    public function setHint(string $value) : ActionInterface
+    {
+        $this->hint = $value;
         return $this;
     }
 }

@@ -366,6 +366,19 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return boolean
      */
     public function hasName();
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getHint() : ?string;
+    
+    /**
+     * 
+     * @param string $text
+     * @return ActionInterface
+     */
+    public function setHint(string $text) : ActionInterface;
 
     /**
      * Returns TRUE if the action will perform a commit on a task's data transaction after it was performed and if data was modified.
