@@ -1,0 +1,9 @@
+{
+    "NAME": "Massenbearbeitung",
+    "SHORT_DESCRIPTION": "Template ändern, Gruppen verwalten, publizieren, etc. für mehrere Masken gleichzeitig",
+    "CONFIG_UXON.CAPTION.ADD_GROUP": "Gruppe hinzufügen",
+    "CONFIG_UXON.CAPTION.REMOVE_GROUP": "Gruppe entfernen",
+    "CONFIG_UXON.CAPTION.CHANGE_TEMPLATE": "Template ändern",
+    "CONFIG_UXON.CAPTION.PUBLISH": "Publizieren",
+    "CONFIG_UXON.CAPTION.MENU_VISIBILITY": "Menü-Sichtbarkeit"
+}
