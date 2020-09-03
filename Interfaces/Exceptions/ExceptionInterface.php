@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Widgets\ErrorMessage;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 
 /**
  * This interface describes workbench exceptions. 
@@ -39,21 +40,6 @@ use exface\Core\Interfaces\WorkbenchInterface;
  */
 interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWidgets
 {
-
-    /**
-     * Returns TRUE if this exception is a warning and FALSE otherwise
-     *
-     * @return boolean
-     */
-    public function isWarning();
-
-    /**
-     * Returns TRUE if this exception is an error and FALSE otherwise
-     *
-     * @return boolean
-     */
-    public function isError();
-
     /**
      * Creates a blawidget with detailed information about this exception.
      *
@@ -135,10 +121,24 @@ interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWid
     
     /**
      * 
+     * @param string $text
+     * @return ExceptionInterface
+     */
+    public function setMessageTitle(string $text) : ExceptionInterface;
+    
+    /**
+     * 
      * @param WorkbenchInterface $workbench
      * @return string|NULL
      */
     public function getMessageHint(WorkbenchInterface $workbench) : ?string;
+    
+    /**
+     *
+     * @param string $text
+     * @return ExceptionInterface
+     */
+    public function setMessageHint(string $text) : ExceptionInterface;
     
     /**
      * 
@@ -148,11 +148,31 @@ interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWid
     public function getMessageDescription(WorkbenchInterface $workbench) : ?string;
     
     /**
+     *
+     * @param string $text
+     * @return ExceptionInterface
+     */
+    public function setMessageDescription(string $text) : ExceptionInterface;
+    
+    /**
      * 
      * @param WorkbenchInterface $workbench
      * @return string|NULL
      */
     public function getMessageType(WorkbenchInterface $workbench) : ?string;
+    
+    /**
+     *
+     * @param string $text
+     * @return ExceptionInterface
+     */
+    public function setMessageType(string $text) : ExceptionInterface;
+    
+    /**
+     * 
+     * @return AppSelectorInterface|NULL
+     */
+    public function getMessageAppSelector(WorkbenchInterface $workbench) : ?AppSelectorInterface;
     
     /**
      * Makes the errors displayed use the exception message as title instead of attempting to

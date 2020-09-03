@@ -49,12 +49,12 @@
     "rows": [
         {
             "CREATED_ON": "2020-08-27 19:21:39",
-            "MODIFIED_ON": "2020-08-27 20:22:02",
+            "MODIFIED_ON": "2020-08-31 16:11:00",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eaadf88812bfb8adf80205857feb80",
             "BEHAVIOR": "exface\/Core\/Behaviors\/TranslatableBehavior.php",
-            "CONFIG_UXON": "{\"translation_subfolder\":\"Actions\",\"translation_filename_attribute_alias\":\"ALIAS\",\"translatable_attributes\":[\"NAME\",\"SHORT_DESCRIPTION\"]}",
+            "CONFIG_UXON": "{\"translation_subfolder\":\"Actions\",\"translation_filename_attribute_alias\":\"ALIAS\",\"translatable_attributes\":[\"NAME\",\"SHORT_DESCRIPTION\"],\"translatable_uxon_properties\":[\"CONFIG_UXON\"],\"translatable_uxon_prototype_attribute\":\"ACTION_PROTOTYPE\"}",
             "OBJECT": "0x11e6e217f7f91457a3d9e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Translations",
