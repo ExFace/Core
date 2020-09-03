@@ -38,7 +38,7 @@ class OnBeforeMetaObjectActionLoadedEvent extends AbstractEvent implements MetaO
      * @param MetaObjectInterface $object
      * @param ActionInterface $action
      */
-    public function __construct(string $prototype, string $actionAlias, AppInterface $app, MetaObjectInterface $object, UxonObject $uxon = null, WidgetInterface $triggerWidget)
+    public function __construct(string $prototype, string $actionAlias, AppInterface $app, MetaObjectInterface $object, UxonObject $uxon = null, WidgetInterface $triggerWidget = null)
     {
         $this->object = $object;
         $this->actionAlias = $actionAlias;

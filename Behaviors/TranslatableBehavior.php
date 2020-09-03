@@ -30,6 +30,7 @@ use exface\Core\Events\Model\OnMetaObjectActionLoadedEvent;
 use exface\Core\Events\Model\OnUiMenuItemLoadedEvent;
 use exface\Core\Events\Model\OnBeforeDefaultObjectEditorInitEvent;
 use exface\Core\Events\Model\OnBeforeMetaObjectActionLoadedEvent;
+use exface\Core\Events\Errors\OnErrorCodeLookupEvent;
 
 /**
  * Makes the data of certain attributes of the object translatable.
@@ -298,6 +299,36 @@ class TranslatableBehavior extends AbstractBehavior
     }
     
     /**
+     * Translates messages in errors
+     * 
+     * @param OnErrorCodeLookupEvent $event
+     */
+    public static function onErrorTranslateMessage(OnErrorCodeLookupEvent $event)
+    {
+        $e = $event->getException();
+        $wb = $event->getWorkbench();
+        
+        if (($appSel = $e->getMessageAppSelector($wb)) === null) {
+            return;
+        }
+        
+        try {
+            $app = $wb->getApp($appSel);
+            $translator = $app->getTranslator();
+            $domain = 'Messages/' . $e->getAlias();
+            if (! $translator->hasTranslationDomain($domain)) {
+                return;
+            }
+            
+            $e->setMessageTitle($translator->translate('TITLE', null, null, $domain, $e->getMessageTitle($wb)));
+            $e->setMessageHint($translator->translate('HINT', null, null, $domain, $e->getMessageHint($wb)));
+            $e->setMessageDescription($translator->translate('DESCRIPTION', null, null, $domain, $e->getMessageDescription($wb)));
+        } catch (\Throwable $e2) {
+            $wb->getLogger()->logException($e2);
+        }
+    }
+    
+    /**
      * Translates names and descriptions of object actions whenever they are loaded.
      * 
      * @param OnMetaObjectActionLoadedEvent $event
@@ -414,7 +445,16 @@ class TranslatableBehavior extends AbstractBehavior
             return;
         }
         
-        $app = $this->getObject()->getApp();
+        $appSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.MESSAGE');
+        $appSheet->getColumns()->addMultiple(['APP']);
+        $appSheet->getFilters()->addConditionFromString('CODE', $key);
+        $appSheet->dataRead();
+        
+        if (($appUid = $appSheet->getCellValue('APP', 0)) === null) {
+            return;
+        }
+        
+        $app = $this->getWorkbench()->getApp($appUid);
         $path = $this->getTranslationBasePath($app) . $subfolder . DIRECTORY_SEPARATOR;
         
         if (! file_exists($path)) {
