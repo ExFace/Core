@@ -14,10 +14,11 @@ interface WorkbenchInterface extends TaskHandlerInterface
     public function start();
     
     /**
-     *
-     * @return \exface\Core\CommonLogic\Workbench
+     * 
+     * @param array $config
+     * @return WorkbenchInterface
      */
-    public static function startNewInstance();
+    public static function startNewInstance(array $config = null) : WorkbenchInterface;
     
     /**
      * Returns TRUE if start() was successfully called on this workbench instance and FALSE otherwise.

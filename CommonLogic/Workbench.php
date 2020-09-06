@@ -64,16 +64,24 @@ class Workbench implements WorkbenchInterface
     
     private $security = null;
 
-    public function __construct()
-    {        
+    public function __construct(array $config = null)
+    {   
+        $cfg = $this->getConfig();
+        
+        if ($config !== null) {
+            foreach ($config as $option => $value) {
+                $cfg->setOption($option, $value);
+            }
+        }
+        
         // If the config overrides the installation path, use the config value, otherwise go one level up from the vendor folder.
-        if ($this->getConfig()->hasOption('FOLDERS.INSTALLATION_PATH_ABSOLUTE') && $installation_path = $this->getConfig()->getOption("FOLDERS.INSTALLATION_PATH_ABSOLUTE")) {
+        if ($cfg->hasOption('FOLDERS.INSTALLATION_PATH_ABSOLUTE') && $installation_path = $cfg->getOption("FOLDERS.INSTALLATION_PATH_ABSOLUTE")) {
             $this->setInstallationPath($installation_path);
         } 
         
         // If the current config uses the live autoloader, load it right next
         // to the one from composer.
-        if ($this->getConfig()->getOption('DEBUG.LIVE_CLASS_AUTOLOADER')){
+        if ($cfg->getOption('DEBUG.LIVE_CLASS_AUTOLOADER')){
             require_once 'splClassLoader.php';
             $classLoader = new \SplClassLoader(null, array(
                 $this->getVendorDirPath()
@@ -124,7 +132,7 @@ class Workbench implements WorkbenchInterface
         $this->model()->setModelLoader($model_loader);
         
         // Load the context
-        $this->context = new ContextManager($this);
+        $this->context = new ContextManager($this, $config);
         
         $this->security = new SecurityManager($this);
         
@@ -136,12 +144,13 @@ class Workbench implements WorkbenchInterface
     }
 
     /**
-     *
-     * @return \exface\Core\CommonLogic\Workbench
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::startNewInstance()
      */
-    public static function startNewInstance()
+    public static function startNewInstance(array $config = null) : WorkbenchInterface
     {
-        $instance = new self();
+        $instance = new self($config);
         $instance->start();
         return $instance;
     }
@@ -175,8 +184,16 @@ class Workbench implements WorkbenchInterface
         return $this->getCoreApp()->getConfig();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::model()
+     */
     public function model()
     {
+        if ($this->mm === null) {
+            throw new RuntimeException('Meta model not initialized: workbench not started properly?');
+        }
         return $this->mm;
     }
 
