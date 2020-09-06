@@ -52,6 +52,24 @@ class TranslatableBehavior extends AbstractBehavior
     
     private $translation_filename_attribute_alias = null;
     
+    private $staticListeners = [
+        "exface.Core.Model.OnMetaObjectLoaded" => [
+            "\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectLoadedTranslateModel"
+        ],
+        "exface.Core.Model.OnBeforeMetaObjectActionLoaded" => [
+            "\\exface\\Core\\Behaviors\\TranslatableBehavior::onActionLoadedTranslateModel"
+        ],
+        "exface.Core.Model.OnUiMenuItemLoaded" => [
+            "\\exface\\Core\\Behaviors\\TranslatableBehavior::onUiMenuItemLoadedTranslate"
+        ],
+        "exface.Core.Model.OnBeforeDefaultObjectEditorInit" => [
+            "\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectEditorInitTranslate"
+        ],
+        "exface.Core.Errors.OnErrorCodeLookup" => [
+            "\\exface\\Core\\Behaviors\\TranslatableBehavior::onErrorTranslateMessage"
+        ]
+    ];
+    
     /**
      * 
      * {@inheritDoc}
@@ -81,6 +99,24 @@ class TranslatableBehavior extends AbstractBehavior
         }
         
         $this->setRegistered(true);
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::disable()
+     */
+    public function disable() : BehaviorInterface
+    {
+        parent::disable();
+        /*
+        $em = $this->getWorkbench()->eventManager();
+        foreach ($this->staticListeners as $eventName => $listeners) {
+            foreach ($listeners as $listener) {
+                $em->removeListener($eventName, $listener);
+            }
+        }*/
         return $this;
     }
     

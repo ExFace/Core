@@ -33,15 +33,11 @@ class SessionContextScope extends AbstractContextScope
     
     private $force_update_session_data = false;
     
-    private $sessionData = [];
-    
     public function __construct(Workbench $exface)
     {
         parent::__construct($exface);
         
         $this->sessionOpen();
-        
-        $this->sessionData = $_SESSION['exface'][$this->getInstallationFolderName()];
         
         if ($locale = $this->getSessionData(self::KEY_LOCALE)) {
             $this->setSessionLocale($locale);
