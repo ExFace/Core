@@ -195,6 +195,8 @@ class Relation implements MetaRelationInterface
             }
             $this->rightKeyAttribute = $appendRelationPath !== true ? $attr : $this->getRightAttribute($attr->getAlias());
         }
+        // FIXME $appendRelationPath should also have effect if $this->rightKeyAttribute is set. However
+        // we should check the code, that uses getRightKeyAttribute(true) first!
         return $this->rightKeyAttribute;
     }
 

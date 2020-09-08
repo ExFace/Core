@@ -388,10 +388,13 @@ class Expression implements ExpressionInterface
     }
 
     /**
-     * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Model\ExpressionInterface::setRelationPath()
+     * @deprecated use rebase()
+     * FIXME get rid of setRelationPath in favor of rebase() or so.
+     * 
+     * @param string $relation_path
+     * @return \exface\Core\CommonLogic\Model\Expression
      */
-    protected function setRelationPath($relation_path)
+    public function setRelationPath($relation_path)
     {
         // remove old relation path
         if ($this->relation_path !== '') {
