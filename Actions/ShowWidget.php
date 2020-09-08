@@ -359,7 +359,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * 
      * @uxon-property prefill_data_sheet
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
-     * @uxon-template {"object_alias": "", "rows": [{"": ""}]}
+     * @uxon-template {"object_alias": "", "columns": [{"attribute_alias":"", "formula": "="}]}
      * 
      * @see iUsePrefillData::setPrefillDataSheet()
      */
@@ -660,7 +660,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iUsePrefillData::getPrefillDataPreset()
      */
-    public function getPrefillDataPreset(): DataSheetInterface
+    public function getPrefillDataPreset(): ?DataSheetInterface
     {
         return $this->prefill_data_preset;
     }
