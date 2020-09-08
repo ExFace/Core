@@ -60,6 +60,11 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^api/.*$ vendor/exface/Core/index.php [L,QSA]
 
+# Force trailing slash on requests to the root folder of the workbench
+# E.g. me.com/exface -> me.com/exface/
+RewriteCond %{REQUEST_URI} ^$
+RewriteRule ^$ %{REQUEST_URI} [R=301]
+
 # index request without any path
 RewriteRule ^/?$ vendor/exface/Core/index.php [L,QSA]
 
