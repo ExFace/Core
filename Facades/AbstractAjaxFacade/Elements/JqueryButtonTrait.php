@@ -15,6 +15,9 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Widgets\DialogButton;
 use exface\Core\Widgets\Dialog;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
 
 /**
  * 
@@ -376,13 +379,24 @@ JS;
         $prefill_param = '';
         $filters_param = '';
         if (! $widget->getPage()->is($action->getPageAlias())) {
+            // Can't have input mappers because the server will not be able to get the mapper
+            // as it won't know the caller widget. The widget to show will be attached to the
+            // request instead.
+            // IDEA pass the caller widget as parameter of the request?
+            if ($action->hasInputMappers()) {
+                throw new ActionConfigurationError($action, 'Input mappers not supported in navigating actions as "' . $action->getAliasWithNamespace() . '"!');
+            }
+            
             $output = <<<JS
 
             {$this->buildJsRequestDataCollector($action, $input_element)}	
 
 JS;
-            if ($action->getPrefillWithPrefillData()){
-                $output .= <<<JS
+            if ($action->getPrefillWithPrefillData()) {
+                if ($prefillPreset = $action->getPrefillDataPreset()) {
+                    $prefill_param = '&prefill=\' + JSON.stringify(' . $this->buildJsPrefillDataFromPreset($prefillPreset) . ') + \'';
+                } else {
+                    $output .= <<<JS
 
 			var prefillRows = [];
 			if (requestData.rows && requestData.rows.length > 0 && requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]){
@@ -390,7 +404,8 @@ JS;
 			}
 
 JS;
-                $prefill_param = '&prefill={"meta_object_id":"'.$widget->getMetaObject()->getId().'","rows": \' + JSON.stringify(prefillRows) + \'}';
+                    $prefill_param = '&prefill={"meta_object_id":"'.$widget->getMetaObject()->getId().'","rows": \' + JSON.stringify(prefillRows) + \'}';
+                }
             } 
             
             if ($action instanceof GoToPage){
@@ -412,6 +427,36 @@ JS;
 JS;
         }
         return $output;
+    }
+    
+    /**
+     * 
+     * @param DataSheetInterface $presetSheet
+     * @throws WidgetConfigurationError
+     * @return string
+     */
+    protected function buildJsPrefillDataFromPreset(DataSheetInterface $presetSheet) : string
+    {
+        if ($presetSheet->getColumns()->isEmpty()) {
+            throw new WidgetConfigurationError($this->getWidget(), 'Cannot use empty data sheet as action `prefill_data_sheet`!');
+        }
+        foreach ($presetSheet->getColumns() as $col) {
+            if (! $formula = $col->getFormula()) {
+                throw new WidgetConfigurationError($this->getWidget(), 'Only columns with `formula` property currently supported in manually defined prefill data!');
+            }
+            if (! $col->getAttributeAlias()) {
+                throw new WidgetConfigurationError($this->getWidget(), 'Missing `attribute_alias` in manually created prefill data column!');
+            }
+            if ($formula->isReference()) {
+                $link = $formula->getWidgetLink($this->getWidget());
+                $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
+                $colsJs .= $col->getAttributeAlias() . ': ' . $linkedEl->buildJsValueGetter($link->getTargetColumnId()) . ',';
+            } else {
+                throw new WidgetConfigurationError($this->getWidget(), 'Only columns with widget links as `formula` currently supported in manually defined prefill data!');
+            }
+        }
+        
+        return '{oId: "' . $presetSheet->getMetaObject()->getId() . '", rows: [{' . $colsJs . '}]}';
     }
     
     /**
