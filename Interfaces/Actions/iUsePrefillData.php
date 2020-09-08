@@ -10,9 +10,9 @@ interface iUsePrefillData extends ActionInterface
 
     /**
      *
-     * @return DataSheetInterface
+     * @return DataSheetInterface|NULL
      */
-    public function getPrefillDataPreset() : DataSheetInterface;
+    public function getPrefillDataPreset() : ?DataSheetInterface;
 
     /**
      *
