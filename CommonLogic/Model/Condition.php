@@ -128,9 +128,7 @@ class Condition implements ConditionInterface
      * @uxon-property value
      * @uxon-type metamodel:expression
      * 
-     * @param string $value
-     * @throws RangeException
-     * @return ConditionInterface
+     * @see ConditionInterface::setValue()
      */
     public function setValue(string $value) : ConditionInterface
     {
@@ -143,6 +141,18 @@ class Condition implements ConditionInterface
             $this->unset();
         }
         $this->value = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionInterface::unsetValue()
+     */
+    public function unsetValue() : ConditionInterface
+    {
+        $this->value_set = false;
+        $this->value = null;
         return $this;
     }
 
