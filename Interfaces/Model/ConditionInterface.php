@@ -44,6 +44,13 @@ interface ConditionInterface extends ConditionalExpressionInterface
     public function setValue(string $value) : ConditionInterface;
     
     /**
+     * Removes the right side of the condition (as if it was never set).
+     * 
+     * @return ConditionInterface
+     */
+    public function unsetValue() : ConditionInterface;
+    
+    /**
      * Returns the comparison operator from this condition.
      * Normally it is one of the EXF_COMPARATOR_xxx constants.
      *
