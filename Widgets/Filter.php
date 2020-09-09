@@ -838,13 +838,22 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     }
     
     /**
+     * A filter is prefillable if it is not marked with `do_not_prefill`, it's
+     * input widget is prefillable and that widget does not have a live reference
+     * for value.
      * 
-     * {@inheritDoc}
+     * Regular input widgets are prefillable even with a live reference as value,
+     * but this does not feel right for filters: you will use live refs in filters
+     * when they explicitly depend on another control and a user will not understand
+     * why that reference would be overridden by a prefill.
+     * 
      * @see \exface\Core\Widgets\AbstractWidget::isPrefillable()
      */
     public function isPrefillable()
     {
-        return parent::isPrefillable() && $this->getInputWidget()->isPrefillable();
+        return parent::isPrefillable() 
+        && $this->getInputWidget()->isPrefillable()
+        && ! ($this->hasValue() && $this->getValueExpression()->isReference());
     }
     
     /**
@@ -1128,6 +1137,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     */
     protected function doPrefill(DataSheetInterface $data_sheet)
     {
+        if (! $this->isPrefillable()) {
+            return;
+        }
+        
         foreach ($this->getChildren() as $widget) {
             $widget->prefill($data_sheet);
         }

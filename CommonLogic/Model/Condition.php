@@ -123,7 +123,7 @@ class Condition implements ConditionInterface
     }
 
     /**
-     * The right side of the condition.
+     * Changes right side of the condition.
      * 
      * @uxon-property value
      * @uxon-type metamodel:expression
@@ -132,7 +132,7 @@ class Condition implements ConditionInterface
      * @throws RangeException
      * @return ConditionInterface
      */
-    protected function setValue(string $value) : ConditionInterface
+    public function setValue(string $value) : ConditionInterface
     {
         $this->value_set = true;
         try {

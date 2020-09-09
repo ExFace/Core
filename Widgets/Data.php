@@ -488,7 +488,7 @@ class Data
                     continue;
                     // See if there are filters in this widget, that work on the very same attribute
                     foreach ($this->getConfiguratorWidget()->findFiltersByObject($condition->getExpression()->getAttribute()->getObject()) as $fltr) {
-                        if ($fltr->getAttribute()->getObject()->is($condition->getExpression()->getAttribute()->getObject()) && $fltr->getAttribute()->getAlias() == $condition->getExpression()->getAttribute()->getAlias() && ! $fltr->getValue()) {
+                        if ($fltr->isPrefillable() && $fltr->getAttribute()->getObject()->is($condition->getExpression()->getAttribute()->getObject()) && $fltr->getAttribute()->getAlias() == $condition->getExpression()->getAttribute()->getAlias() && ! $fltr->getValue()) {
                             $fltr->setComparator($condition->getComparator());
                             $fltr->setValue($condition->getValue());
                             // TODO #OnPrefillChangePropertyEvent - same problem as in doPrefillWithDataObject()
