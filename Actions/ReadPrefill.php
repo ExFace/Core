@@ -9,6 +9,10 @@ use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\Actions\iPrefillWidget;
+use exface\Core\Actions\Traits\iPrefillWidgetTrait;
 
 /**
  * Exports the prefill data sheet for the target widget.
@@ -28,8 +32,16 @@ use exface\Core\Exceptions\Actions\ActionInputMissingError;
  * @author Andrej Kabachnik
  *
  */
-class ReadPrefill extends ReadData
+class ReadPrefill extends ReadData implements iPrefillWidget
 {
+    use iPrefillWidgetTrait {
+        getPrefillWithFilterContext as getPrefillWithFilterContextViaTrait;
+        getPrefillWithInputData as getPrefillWithInputDataViaTrait;
+        getPrefillWithPrefillData as getPrefillWithPrefillDataViaTrait;
+        getPrefillDataPreset as getPrefillDataPresetViaTrait;
+        hasPrefillDataPreset as hasPrefillDataPresetViaTrait;
+        getPrefillDataSheet as getPrefillDataSheetViaTrait;
+    }
 
     /**
      * 
@@ -57,7 +69,10 @@ class ReadPrefill extends ReadData
         // IDEA are there other ways to load more data, than use UID-filters?
         $canLoadMoreData = $data_sheet->hasUidColumn(true);
         
+        $targetWidget = $this->getWidgetToReadFor($task);
+        
         if ($data_sheet->isEmpty()) {
+            $data_sheet = $this->getPrefillDataFromFilterContext($targetWidget, $data_sheet, $task);
             return ResultFactory::createDataResult($task, $data_sheet);
         } else {
             if ($data_sheet->hasUidColumn(true)) {
@@ -68,7 +83,7 @@ class ReadPrefill extends ReadData
         }
         
         // Let widgets modify the data sheet if neccessary
-        if ($targetWidget = $this->getWidgetToReadFor($task)) {
+        if ($targetWidget) {
             $data_sheet = $targetWidget->prepareDataSheetToPrefill($data_sheet);
         }
         
@@ -97,17 +112,113 @@ class ReadPrefill extends ReadData
      */
     public function getWidgetToReadFor(TaskInterface $task) : ?WidgetInterface
     {
-        if ($task->isTriggeredByWidget()) {
-            $trigger = $task->getWidgetTriggeredBy();
-        } else {
-            $trigger = $this->getWidgetDefinedIn();
-        }
-        
-        if (($trigger instanceof iTriggerAction) && $trigger->getAction() instanceof iShowWidget) {
-            return $trigger->getAction()->getWidget();
+        if (($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
+            return $action->getWidget();
         }
         
         return parent::getWidgetToReadFor($task);
+    }
+    
+    protected function getPrefillTrigger(TaskInterface $task) : ?WidgetInterface
+    {
+        if ($task->isTriggeredByWidget()) {
+            return $task->getWidgetTriggeredBy();
+        } else {
+            return $this->getWidgetDefinedIn();
+        }
+    }
+    
+    protected function getPrefillTriggerAction(TaskInterface $task) : ?ActionInterface
+    {
+        $trigger = $this->getPrefillTrigger($task);
+        if (($trigger instanceof iTriggerAction) && $trigger->hasAction()) {
+            return $trigger->getAction();
+        }
+        return null;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\Traits\iPrefillWidgetTrait::getPrefillWithFilterContext()
+     */
+    public function getPrefillWithFilterContext(TaskInterface $task = null) : bool
+    {
+        if ($task && ($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
+            return $action->getPrefillWithFilterContext();
+        }
+        
+        return $this->getPrefillWithFilterContextViaTrait();
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\Traits\iPrefillWidgetTrait::getPrefillWithInputData()
+     */
+    public function getPrefillWithInputData(TaskInterface $task = null) : bool
+    {
+        if ($task && ($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
+            return $action->getPrefillWithInputData();
+        }
+        
+        return $this->getPrefillWithInputDataViaTrait();
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\Traits\iPrefillWidgetTrait::getPrefillWithPrefillData()
+     */
+    public function getPrefillWithPrefillData(TaskInterface $task = null) : bool
+    {
+        if ($task && ($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
+            return $action->getPrefillWithPrefillData();
+        }
+        
+        return $this->getPrefillWithPrefillDataViaTrait();
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\Traits\iPrefillWidgetTrait::getPrefillDataPreset()
+     */
+    public function getPrefillDataPreset(TaskInterface $task = null) : ?DataSheetInterface
+    {
+        if ($task && ($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
+            return $action->getPrefillDataPreset();
+        }
+        
+        return $this->getPrefillDataPresetViaTrait();
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\Traits\iPrefillWidgetTrait::hasPrefillDataPreset()
+     */
+    public function hasPrefillDataPreset(TaskInterface $task = null) : bool
+    {
+        if ($task && ($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
+            return $action->hasPrefillDataPreset();
+        }
+        
+        return $this->hasPrefillDataPresetViaTrait();
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\Traits\iPrefillWidgetTrait::getPrefillDataSheet()
+     */
+    public function getPrefillDataSheet(TaskInterface $task = null) : DataSheetInterface
+    {
+        if ($task && ($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
+            return $action->getPrefillDataSheet();
+        }
+        
+        return $this->getPrefillDataSheetViaTrait();
     }
     
     /**
