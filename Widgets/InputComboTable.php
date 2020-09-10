@@ -21,6 +21,7 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Events\Widget\OnWidgetLinkedEvent;
 use exface\Core\Interfaces\Events\WidgetLinkEventInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 
 /**
  * An InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
@@ -172,16 +173,24 @@ class InputComboTable extends InputCombo implements iCanPreloadData
      * Returns the relation, this widget represents or FALSE if the widget stands for a direct attribute.
      * This shortcut function is very handy because a InputComboTable often stands for a relation.
      *
-     * @return \exface\Core\CommonLogic\Model\relation
+     * @return MetaRelationInterface|NULL
      */
-    public function getRelation()
+    public function getRelation() : ?MetaRelationInterface
     {
-        if ($this->getAttribute()->isRelation()) {
+        if ($this->isRelation()) {
             $relAlias = DataAggregation::stripAggregator($this->getAttributeAlias());
             return $this->getMetaObject()->getRelation($relAlias);
-        } else {
-            return false;
-        }
+        } 
+        return null;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isRelation() : bool
+    {
+        return $this->isBoundToAttribute() === true && $this->getAttribute()->isRelation() === true;
     }
 
     /**
@@ -512,7 +521,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
      */
     protected function doPrefillWithRelationsInData(DataSheetInterface $data_sheet)
     {
-        if (! $this->getRelation()){
+        if (! $this->isRelation()){
             return;
         }
         
@@ -553,7 +562,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             if ($data_sheet->getMetaObject()->is($this->getTableObject())) {
                 $this->doPrefillWithOptionsObject($data_sheet);
                 return;
-            } elseif ($this->getRelation()) {
+            } elseif ($this->isRelation()) {
                 $this->doPrefillWithRelationsInData($data_sheet);
                 return;
             }
@@ -609,7 +618,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             if ($text_column_expr) {
                 $data_sheet->getColumns()->addFromExpression($text_column_expr);
             }
-        } elseif ($this->getRelation() && $this->getRelation()->getRightObject()->is($data_sheet->getMetaObject())) {
+        } elseif ($this->isRelation() && $this->getRelation()->getRightObject()->is($data_sheet->getMetaObject())) {
             $data_sheet->getColumns()->addFromAttribute($this->getRelation()->getRightKeyAttribute());
             foreach ($this->getTable()->getColumns() as $col) {
                 $data_sheet->getColumns()->addFromExpression($col->getExpression(), $col->getDataColumnName());
@@ -684,7 +693,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     public function getOptionsObject()
     {
         if (! $this->isOptionsObjectSpecified()) {
-            if ($this->isBoundToAttribute() === true && $this->getAttribute()->isRelation() === true) {
+            if ($this->isRelation()) {
                 $this->setOptionsObject($this->getRelation()->getRightObject());
             }
         }
