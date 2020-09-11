@@ -876,9 +876,7 @@ class SqlModelLoader implements ModelLoaderInterface
 				WHERE ' . $sql_where);
         if ($res = $query->getResultArray()) {
             foreach ($res as $row) {
-                if ($row['config_uxon']) {
-                    $action_uxon = UxonObject::fromAnything($row['config_uxon']);
-                }
+                $action_uxon = UxonObject::fromAnything($row['config_uxon'] ?? '{}');
                 $app = $action_list->getWorkbench()->getApp($row['app_alias']);
                 $object = $action_list instanceof MetaObjectActionListInterface ? $action_list->getMetaObject() : $action_list->getWorkbench()->model()->getObjectById($row['object_oid']);
                 
