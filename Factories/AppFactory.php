@@ -88,7 +88,7 @@ abstract class AppFactory extends AbstractSelectableComponentFactory
         if ($appDataSheet->countRows() === 0) {
             throw new AppNotFoundError('No class found for app "' . $uid . '"!', '6T5DXWP');
         }
-        return self::createFromAlias($appDataSheet->getRow(0)['ALIAS'], $exface);
+        return self::createFromAlias($appDataSheet->getCellValue('ALIAS', 0), $exface);
     }
     
     protected static function getClassname(AppSelectorInterface $selector) : string
