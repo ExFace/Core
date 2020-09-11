@@ -140,13 +140,17 @@ class TranslatableBehavior extends AbstractBehavior
         }
         
         $editorUxon = $event->getDefaultEditorUxon();
-        
         if (strcasecmp($editorUxon->getProperty('widget_type'), 'Dialog') !== 0) {
             throw new BehaviorRuntimeError($this->getObject(), 'Cannot add translation-button to default editor dialog of object "' . $this->getObject()->getAliasWithNamespace() . '": the default editor must be of type "Dialog"!');
         }
         
+        $obj = $event->getObject();
+        if (($appRel = $obj->findRelation($this->getWorkbench()->model()->getObject('exface.Core.APP'), true)) && $appRel->isForwardRelation()) {
+            $appRelAlias = $appRel->getAlias();
+        }
+        
         $editorUxon->appendToProperty('buttons', new UxonObject([
-            'caption' => 'Translate',
+            'caption' => "=TRANSLATE('exface.Core', 'BEHAVIOR.TRANSLATABLE.TRANSLATE_BUTTON_CAPTION')",
             "icon" => "language",
             'object_alias' => 'exface.Core.TRANSLATIONS_FOR_DATA',
             'close_dialog' => false,
@@ -168,15 +172,21 @@ class TranslatableBehavior extends AbstractBehavior
                             "input_widget" => [
                                 "widget_type" => "InputHidden"
                             ]
+                        ],
+                        [
+                            "attribute_alias" => "APP",
+                            "input_widget" => [
+                                "widget_type" => "InputHidden"
+                            ]
                         ]
                     ],
                     "columns" => [
                         [
-                            "attribute_alias" => "LOCALE",
-                            "caption" => 'Translation file'
+                            "attribute_alias" => "LOCALE"
                         ],
                         [
-                            "attribute_alias" => "PATHNAME_RELATIVE"
+                            "attribute_alias" => "PATHNAME_RELATIVE",
+                            "caption" => "=TRANSLATE('exface.Core', 'BEHAVIOR.TRANSLATABLE.TRANSLATION_FILE')"
                         ]
                     ],
                     "buttons" => [
@@ -192,15 +202,19 @@ class TranslatableBehavior extends AbstractBehavior
                             'from' => "='{$this->getTranlationSubfolder()}'",
                             'to' => 'SUBFOLDER',
                             'comparator' => ComparatorDataType::EQUALS
-                            ],
-                            [
-                                'from' => $this->getTranslationFilenameAttributeAlias(),
-                                'to' => 'DATA_KEY'
-                            ]
+                        ],
+                        [
+                            'from' => $this->getTranslationFilenameAttributeAlias(),
+                            'to' => 'DATA_KEY'
+                        ],
+                        [
+                            'from' => $appRelAlias,
+                            'to' => 'APP'
                         ]
                     ]
                 ]
-            ]));
+            ]
+        ]));
         
         return;
     }
@@ -475,18 +489,27 @@ class TranslatableBehavior extends AbstractBehavior
             if ($cond->getAttributeAlias() === 'SUBFOLDER') {
                 $subfolder = $cond->getValue();
             }
+            if ($cond->getAttributeAlias() === 'APP') {
+                $appUid = $cond->getValue();
+            }
         }
         
         if (! $key) {
             return;
         }
         
-        $appSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.MESSAGE');
-        $appSheet->getColumns()->addMultiple(['APP']);
-        $appSheet->getFilters()->addConditionFromString('CODE', $key);
+        /*
+        $behavior = $this->findBehavior($subfolder);
+        $appSheet = DataSheetFactory::createFromObject($behavior->getObject());
+        $appSheet->getColumns()->addMultiple(['APP', 'NAME']);
+        $appSheet->getFilters()->addConditionFromString($behavior->getTranslationFilenameAttributeAlias(), $key);
         $appSheet->dataRead();
         
         if (($appUid = $appSheet->getCellValue('APP', 0)) === null) {
+            return;
+        }*/
+        
+        if ($appUid === null) {
             return;
         }
         
@@ -508,9 +531,9 @@ class TranslatableBehavior extends AbstractBehavior
         }
     }
     
-    protected function getTranslationBasePath(AppInterface $app) : string
+    protected function getTranslationBasePath(AppInterface $app, bool $absolute = true) : string
     {
-        return $app->getDirectoryAbsolutePath() . DIRECTORY_SEPARATOR . 'Translations' . DIRECTORY_SEPARATOR;
+        return ($absolute ? $app->getDirectoryAbsolutePath() : $app->getDirectory()) . DIRECTORY_SEPARATOR . 'Translations' . DIRECTORY_SEPARATOR;
     }
     
     /**
