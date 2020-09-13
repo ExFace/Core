@@ -665,7 +665,7 @@ class TranslatableBehavior extends AbstractBehavior
         $schemaName = $dataType->getSchema();
         $schema = UxonSchemaFactory::create($this->getWorkbench(), $schemaName);
         
-        return $this->findTranslatableUxonProperties($uxon, $schema, Translation::buildTranslationKey($attribute->getAlias()), $rootPrototypeClass);
+        return $this->findTranslatableUxonProperties($uxon, $schema, Translation::buildTranslationKey([$attribute->getAlias()]), $rootPrototypeClass);
     }
     
     /**
