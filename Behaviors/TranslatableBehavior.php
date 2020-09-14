@@ -35,6 +35,14 @@ use exface\Core\Events\Errors\OnErrorCodeLookupEvent;
 /**
  * Makes the data of certain attributes of the object translatable.
  * 
+ * **IMPORTANT** notes:
+ * 
+ * - The `translation_filename_attribute_alias` MUST point to an attribute, that uniquely identifies
+ * the object! Otherwise the translation will apply to all objects with the same value of that
+ * attribute.
+ * - The `translation_subfolder` (i.e. the path inside the `Translations` folder - like `Messages` in the 
+ * built-int behavior for message models) MUST be unique among all meta objects with translatable behaviors!
+ * 
  * @author Andrej Kabachnik
  *
  */
@@ -47,6 +55,8 @@ class TranslatableBehavior extends AbstractBehavior
     private $translatable_uxon_attributes = [];
     
     private $translatable_uxon_prototype_attribute_alias = null;
+    
+    private $translation_folder = 'Translations';
     
     private $translation_subfolder = null;
     
@@ -306,6 +316,29 @@ class TranslatableBehavior extends AbstractBehavior
         return $this->translation_subfolder ?? ucfirst(mb_strtolower($this->getObject()->getAlias()));
     }
     
+    protected function getTranslationFolder() : string
+    {
+        return $this->translation_folder;
+    }
+    
+    /**
+     * Path to the folder with all translations relative to the app root - `Translations` by default.
+     * 
+     * No need to change this setting unless your app uses a custom translator!
+     * 
+     * @uxon-property translation_folder
+     * @uxon-type string
+     * @uxon-default Translations
+     * 
+     * @param string $pathRelativeToAppFolder
+     * @return TranslatableBehavior
+     */
+    public function setTranslationFolder(string $pathRelativeToAppFolder) : TranslatableBehavior
+    {
+        $this->translation_folder = $pathRelativeToAppFolder;
+        return $this;
+    }
+    
     /**
      *
      * {@inheritdoc}
@@ -420,7 +453,7 @@ class TranslatableBehavior extends AbstractBehavior
         $object = $event->getObject();
         
         $translator = $object->getApp()->getTranslator();
-        $domain = 'Objects/' . $object->getAlias();
+        $domain = 'Objects/' . $object->getAliasWithNamespace();
         
         if (! $translator->hasTranslationDomain($domain)) {
             return;
@@ -533,7 +566,7 @@ class TranslatableBehavior extends AbstractBehavior
     
     protected function getTranslationBasePath(AppInterface $app, bool $absolute = true) : string
     {
-        return ($absolute ? $app->getDirectoryAbsolutePath() : $app->getDirectory()) . DIRECTORY_SEPARATOR . 'Translations' . DIRECTORY_SEPARATOR;
+        return ($absolute ? $app->getDirectoryAbsolutePath() : $app->getDirectory()) . DIRECTORY_SEPARATOR . $this->getTranslationFolder() . DIRECTORY_SEPARATOR;
     }
     
     /**
@@ -574,7 +607,7 @@ class TranslatableBehavior extends AbstractBehavior
         $transJson = json_decode($value, true);
         
         $path = $dialogWidget->getPrefillData()->getCellValue('PATHNAME_RELATIVE', 0);
-        $subfolder = StringDataType::substringAfter($path, 'Translations/', '');
+        $subfolder = StringDataType::substringAfter($path, '/' . $this->getTranslationFolder() . '/', '');
         $subfolder = StringDataType::substringBefore($subfolder, '/', $subfolder, false, true);
         $filename = FilePathDataType::findFileName($path);
         $dataKey = StringDataType::substringBefore($filename, '.', $filename, false, true);
@@ -590,8 +623,15 @@ class TranslatableBehavior extends AbstractBehavior
         $keysExpected = array_keys($translatables);
         $keysFound = array_keys($transJson);
         
-        foreach (array_diff($keysExpected, $keysFound) as $missingKey) {
-            $transJson[$missingKey] = null;
+        $missingKeys = array_diff($keysExpected, $keysFound);
+        $obsoleteKeys = array_diff($keysFound, $keysExpected);
+        // IDEA mark new keys in nother ref-colum?
+        foreach ($missingKeys as $key) {
+            $transJson[$key] = null;
+        }
+        // IDEA mark obsolete keys in another ref-column and remove them when saving?
+        foreach ($obsoleteKeys as $key) {
+            unset($transJson[$key]);
         }
         
         $contentWidget->setValue(JsonDataType::encodeJson($transJson, true));
