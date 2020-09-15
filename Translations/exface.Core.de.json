@@ -138,6 +138,7 @@
 	
 	"BEHAVIOR.TRANSLATABLE.TRANSLATE_BUTTON_CAPTION": "Übersetzen",
 	"BEHAVIOR.TRANSLATABLE.TRANSLATION_FILE": "Datei mit Übersetzungen",
+	"BEHAVIOR.TRANSLATABLE.NO_TRANSLATIONS_FOUND": "App hat nur eine sprache. Bitte fügen Sie mind. eine Übersetzungsdatei zu der App des objektes hinzu!",
 	
 	"CONTEXT.ACTIONTEST.NAME": "ActionTest",
 	
@@ -313,7 +314,7 @@
 	"WIDGET.CONSOLE.PRESET_BTN_CANCEL": "Abbrechen",
 	"WIDGET.CONSOLE.PRESET_BTN_OK": "OK",
 	
-	"WIDGET.DATA.NO_DATA_FOUND": "Keine Daten gefunden, die zu aktuellen Filtern passen!",
+	"WIDGET.DATA.NO_DATA_FOUND": "Keine Daten gefunden!",
 	"WIDGET.DATA.HELP.FILTERS": "Filter",
 	"WIDGET.DATA.HELP.COLUMNS": "Spalten",
 	"WIDGET.DATA.NOT_LOADED": "Bitte zuerst Filter setzen und dann die Suche ausführen!",
