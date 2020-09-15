@@ -229,6 +229,7 @@ class TranslatableBehavior extends AbstractBehavior
                 'widget' => [
                     "widget_type" => "DataTable",
                     "object_alias" => "exface.Core.TRANSLATIONS_FOR_DATA",
+                    "empty_text" => "=TRANSLATE('exface.Core', 'BEHAVIOR.TRANSLATABLE.NO_TRANSLATIONS_FOUND')",
                     "filters" => [
                         [
                             "attribute_alias" => "SUBFOLDER",
