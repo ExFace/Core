@@ -8,6 +8,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
  * Event fired before a meta object's modeled action isn instantiated.
@@ -70,12 +71,20 @@ class OnBeforeMetaObjectActionLoadedEvent extends AbstractEvent implements MetaO
     
     /**
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Events\AbstractEvent::getAlias()
+     * @return string
      */
     public function getActionAlias() : string
     {
         return $this->actionAlias;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getActionAliasWithNamespace() : string
+    {
+        return $this->app->getAliasWithNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getActionAlias();
     }
     
     /**

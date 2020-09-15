@@ -857,7 +857,7 @@
         },
         {
             "CREATED_ON": "2020-09-14 13:20:32",
-            "MODIFIED_ON": "2020-09-14 13:22:42",
+            "MODIFIED_ON": "2020-09-15 08:13:33",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea90b01184bd9690b0025041000001",
@@ -892,7 +892,7 @@
             "SORTERPOS": null,
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
-            "SHORT_DESCRIPTION": "Full alias of the meta object including the app alias as namespace",
+            "SHORT_DESCRIPTION": "Full alias of the meta object including the app alias as namespace. This is what is used in UXON to identify the object.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
