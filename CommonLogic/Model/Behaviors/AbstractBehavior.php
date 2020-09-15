@@ -10,6 +10,8 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\AliasTrait;
 use exface\Core\Uxon\BehaviorSchema;
+use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 
 /**
  *
@@ -32,11 +34,14 @@ abstract class AbstractBehavior implements BehaviorInterface
     private $registered = false;
 
     private $name_resolver = false;
+    
+    private $appSelectorOrString = null;
 
-    public function __construct(BehaviorSelectorInterface $selector, MetaObjectInterface $object = null)
+    public function __construct(BehaviorSelectorInterface $selector, MetaObjectInterface $object = null, string $appSelectorOrString = null)
     {
         $this->object = $object;
         $this->selector = $selector;
+        $this->appSelectorOrString = $appSelectorOrString;
     }
 
     /**
@@ -199,5 +204,23 @@ abstract class AbstractBehavior implements BehaviorInterface
     public function copy()
     {
         return clone $this;
+    }
+    
+    public function getApp() : AppInterface
+    {
+        if ($this->appSelectorOrString === null) {
+            return $this->getObject()->getApp();
+        }
+        return $this->getWorkbench()->getApp($this->appSelectorOrString);
+    }
+    
+    /**
+     * 
+     * @param AppSelectorInterface|string $selectorOrString
+     * @return BehaviorInterface
+     */
+    public function setAppSelector($selectorOrString) : BehaviorInterface
+    {
+        $this->appSelectorOrString = $selectorOrString;
     }
 }

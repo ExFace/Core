@@ -456,7 +456,7 @@ class SqlModelLoader implements ModelLoaderInterface
 				SELECT * FROM exf_object_behaviors WHERE object_oid = ' . $object->getId());
             if ($res = $query->getResultArray()) {
                 foreach ($res as $row) {
-                    $behavior = BehaviorFactory::createFromUxon($object, $row['behavior'], UxonObject::fromJson($row['config_uxon']));
+                    $behavior = BehaviorFactory::createFromUxon($object, $row['behavior'], UxonObject::fromJson($row['config_uxon']), $row['app_oid']);
                     $object->getBehaviors()->add($behavior);
                 }
             }

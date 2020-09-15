@@ -49,12 +49,12 @@
     "rows": [
         {
             "CREATED_ON": "2020-08-25 11:07:46",
-            "MODIFIED_ON": "2020-08-25 11:07:46",
+            "MODIFIED_ON": "2020-09-15 09:22:00",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eab49534a5e540b4950205857feb80",
             "BEHAVIOR": "exface\/Core\/Behaviors\/TranslatableBehavior.php",
-            "CONFIG_UXON": "{\"translatable_attributes\":[\"TITLE\",\"HINT\",\"DESCRIPTION\"],\"translation_subfolder\":\"Messages\",\"translation_filename_attribute_alias\":\"CODE\"}",
+            "CONFIG_UXON": "{\"translatable_attributes\":[\"TITLE\",\"HINT\",\"DESCRIPTION\"],\"translation_subfolder\":\"Messages\",\"translation_filename_attribute_alias\":\"CODE\",\"translation_app_determined_by_relation\":\"APP\"}",
             "OBJECT": "0x11e6c3859abc5faea3e40205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Translations",
