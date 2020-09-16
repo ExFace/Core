@@ -1,3 +1,35 @@
+/*
+ * Toolbox for offline capabilities in apps, e.g. saving data in IndexedDB, saving offline actions and syncing them with the server.
+ * 
+ * Dependencies:
+ * - Dexie (IndexedDB wrapper)
+ * 
+ * Example in ServiceWorker.js
+ * 
+-----------------------------------------------------------
+importScripts('exface/vendor/npm-asset/dexie/dist/dexie.min.js');
+importScripts('vendor/exface/Core/Facades/AbstractPWAFacade/exf_preloader.js');
+
+self.addEventListener('sync', function(event) {
+	console.log("sync event", event);
+    if (event.tag === 'OfflineActionSync') {
+		exfPreloader.getActionQueueIds('offline')
+		.then(function(ids){
+			exfPreloader.syncActionAll(ids)
+			.then(function(){
+				console.log('all offline actions synced');
+			})
+		})
+		.catch(function(error){
+			console.error('Offline action synced failed: ', error);
+		});
+    }
+});
+-----------------------------------------------------------
+ * 
+ * @author Ralf Mulansky
+ *
+ */
 const exfPreloader = {};
 (function(){
 	
@@ -16,6 +48,9 @@ const exfPreloader = {};
 	var _preloadTable = _db.table('preloads');
 	var _actionsTable = _db.table('actionQueue');
 	
+	/**
+	 * @return exfPreloader
+	 */
 	this.addPreload = function(sAlias, aDataCols, aImageCols, sPageAlias, sWidgetId){		
 		_preloadTable
 		.get(sAlias)
@@ -39,6 +74,9 @@ const exfPreloader = {};
 		return _preloader;
 	};
 	
+	/**
+	 * @return Promise
+	 */
 	this.getPreload = function(sAlias, sPageAlias, sWidgetId) {
 		return _preloadTable.get(sAlias);
 	};
@@ -56,9 +94,6 @@ const exfPreloader = {};
 			// Can't pass a literal array, so use apply.
 			return $.when.apply($, deferreds)
 		})
-		.catch(error => {
-			exfLauncher.contextBar.getComponent().showErrorDialog('See console for details.', 'Preload sync failed!');
-		});
 	};
 	
 	/**
@@ -97,12 +132,16 @@ const exfPreloader = {};
 				return Promise.all(promises);
 			},
 			function(jqXHR, textStatus, errorThrown){
-				exfLauncher.contextBar.getComponent().showAjaxErrorDialog(jqXHR);
+				console.error(jqXHR.status + " " + jqXHR.statusText);
+				//exfLauncher.contextBar.getComponent().showAjaxErrorDialog(jqXHR);
 				return textStatus;
 			}
 		);
 	};
 	
+	/**
+	 * @return Promise|NULL
+	 */
 	this.syncImages = function (aUrls, sCacheName = 'image-cache') {
 		if (window.caches === undefined) {
 			console.error('Cannot preload images: Cache API not supported by browser!');
@@ -143,8 +182,11 @@ const exfPreloader = {};
 		});
 	};
 	
+	/**
+	 * @return Promise
+	 */
 	this.reset = function() {
-		var clear = _preloadTable.toArray()
+		return clear = _preloadTable.toArray()
 		.then(function(dbContent) {
 			var promises = [];
 			dbContent.forEach(function(element) {
@@ -157,147 +199,11 @@ const exfPreloader = {};
 			});
 			return Promise.all(promises);
 		});
-		return clear;
 	};
 	
-	this.showStorage = async function() {
-		console.log('Storage clicked');
-		//check if service worker supported
-		/*if (!('serviceWorker' in navigator)) {
-			exfLauncher.contextBar.getComponent().showErrorDialog('Service worker not available.', 'Storage quota failed!');
-			return;
-		}*/		
-		var dialog = new sap.m.Dialog({title: "Storage quota", icon: "sap-icon://unwired"});
-		var button = new sap.m.Button({
-			icon: 'sap-icon://font-awesome/close',
-            text: "Close",
-            press: function() {dialog.close();},
-        });
-		dialog.addButton(button);
-		list = new sap.m.List({});
-		//check if possible to acces storage (means https connection)
-		if (navigator.storage) {
-			var promise = navigator.storage.estimate()
-			.then(function(estimate) {				
-				list = new sap.m.List({
-					items: [
-						new sap.m.GroupHeaderListItem({
-							title: 'Overview',
-							upperCase: false
-						}),
-						new sap.m.DisplayListItem({
-							label: "Total Space",
-							value: Number.parseFloat(estimate.quota/1024/1024).toFixed(2) + ' MB'
-						}),
-						new sap.m.DisplayListItem({
-							label: "Used Space",
-							value: Number.parseFloat(estimate.usage/1024/1024).toFixed(2) + ' MB'
-						}),
-						new sap.m.DisplayListItem({
-							label: "Percentage Used",
-							value: Number.parseFloat(100/estimate.quota*estimate.usage).toFixed(2) + ' %'
-						})
-					]
-				});
-				if (estimate.usageDetails) {
-					list.addItem(new sap.m.GroupHeaderListItem({
-							title: 'Details',
-							upperCase: false
-					}));
-					Object.keys(estimate.usageDetails).forEach(function(key) {
-						list.addItem(new sap.m.DisplayListItem({
-								label: key,
-								value: Number.parseFloat(estimate.usageDetails[key]/1024/1024).toFixed(2) + ' MB'
-							})
-						);
-					});
-				}				
-			})
-			.catch(function(error) {
-				console.error(error);
-				list.addItem(new sap.m.GroupHeaderListItem({
-					title: 'Storage quota failed! See console for details.',
-					upperCase: false
-				}))
-			});
-			//wait for the promise to resolve
-			await promise;
-		} else {
-			list.addItem(new sap.m.GroupHeaderListItem({
-				title: 'Overview showing used storage space not possible!',
-				upperCase: false
-			}))
-		}
-		promise = _preloadTable.toArray()
-		.then(function(dbContent){
-			list.addItem(new sap.m.GroupHeaderListItem({
-				title: 'Synced content',
-				upperCase: false
-			}));
-			console.log('Content', dbContent);
-			var oTable = new sap.m.Table({
-				fixedLayout: false,
-				columns: [
-		            new sap.m.Column({
-		                header: new sap.m.Label({
-		                    text: 'ID'
-		                })
-		            }),
-		            new sap.m.Column({
-		                header: new sap.m.Label({
-		                    text: 'Object'
-		                })
-		            }),
-		            new sap.m.Column({
-		                header: new sap.m.Label({
-		                    text: 'WidgetID'
-		                })
-		            }),
-		            new sap.m.Column({
-		                header: new sap.m.Label({
-		                    text: 'Datasets'
-		                })
-		            }),
-		            ,
-		            new sap.m.Column({
-		                header: new sap.m.Label({
-		                    text: 'Last synced'
-		                })
-		            })
-		        ]
-			});
-			dbContent.forEach(function(element) {
-				oRow = new sap.m.ColumnListItem();
-				oRow.addCell(new sap.m.Text({text: element.id}));
-				oRow.addCell(new sap.m.Text({text: element.object}));
-				oRow.addCell(new sap.m.Text({text: element.widget}));
-				if (element.response && element.response.rows) {
-					oRow.addCell(new sap.m.Text({text: element.response.rows.length}));
-					oRow.addCell(new sap.m.Text({text: new Date(element.lastSync).toLocaleString()}));
-				} else {
-					oRow.addCell(new sap.m.Text({text: '0'}));
-
-					oRow.addCell(new sap.m.Text({text: 'not synced'}));
-				}
-				oTable.addItem(oRow);						
-			});
-			dialog.addContent(list);
-			dialog.addContent(oTable);	
-		})
-		.catch(function(error) {
-			console.error(error);
-			list.addItem(new sap.m.GroupHeaderListItem({
-				title: 'Overview showing db content not possbile! See console for details.',
-				upperCase: false
-			}))
-			dialog.addContent(list);				
-		})
-		//wait for the promise to resolve
-		await promise;
-		dialog.open();
-		return;
-	};
-	
+	/**
+	 * @return Promise
+	 */
 	this.addAction = function(offlineAction, objectAlias) {
 		var date = (+ new Date());
 		var data = {
@@ -315,13 +221,16 @@ const exfPreloader = {};
 		}
 		return _actionsTable.put(data)
 		.then(function(){
-			/*navigator.serviceWorker.ready
+			navigator.serviceWorker.ready
 			.then(registration => registration.sync.register('OfflineActionSync'))
 			.then(() => console.log("Registered background sync"))
-			.catch(err => console.error("Error registering background sync", err))*/
+			.catch(err => console.error("Error registering background sync", err))
 		});
 	};
 	
+	/**
+	 * @return Promise
+	 */
 	this.getActionQueueData = function(filter) {
 		return _actionsTable.toArray()
 		.then(function(dbContent) {
@@ -351,6 +260,9 @@ const exfPreloader = {};
 		})
 	};
 	
+	/**
+	 * @return Promise
+	 */
 	this.getActionQueueIds = function(filter) {
 		return _actionsTable.toArray()
 		.then(function(dbContent) {
@@ -369,6 +281,9 @@ const exfPreloader = {};
 		})
 	};
 	
+	/**
+	 * @return Promise
+	 */
 	this.syncActionAll = function(selectedIds) {
 		var promises = [];
 		selectedIds.forEach(function(id){
@@ -377,10 +292,13 @@ const exfPreloader = {};
 		return Promise.all(promises);
 	};
 	
+	/**
+	 * @return Promise
+	 */
 	this.syncAction = function(id) {
 		return _actionsTable.get(id)
 		.then(function(element){
-			console.log('Sync action');
+			console.log('Syncing action with id: ',element.id);
 			var params = element.request.data;
 			params = _preloader.encodeJson(params);
 			var request = fetch(element.request.url, {
@@ -394,7 +312,6 @@ const exfPreloader = {};
 				if (response.ok) {
 					return response.json()
 					.then(function(data){
-						console.log('Success:', response);
 						var date = (+ new Date());
 						return _actionsTable.update(element.id, {
 							status: 'success',
@@ -402,9 +319,9 @@ const exfPreloader = {};
 							response: data,
 							synced: new Date(date).toLocaleString()
 						})
-						.then(function (updated){					
+						.then(function (updated){
 							if (updated) {
-								console.log ("Action was updated");
+								console.log ("Action with id " + element.id + " was updated");
 							} else {
 								console.log ("Nothing was updated - there was no action with id: ", element.id);
 							}
@@ -429,12 +346,20 @@ const exfPreloader = {};
 				});
 			})
 			.catch((error) => {
-			  console.error('Error:', error);
+			  console.error('ActionID: ' + element.id + ' - Error: ' + error.message);
+			  _actionsTable.update(element.id, {
+					tries: element.tries + 1,
+					response: error.message
+				});
+			  throw(error);
 			});
 			return request;
 		});
 	};
 	
+	/**
+	 * @return String
+	 */
 	this.encodeJson = function(srcjson, parent=""){
 		if(typeof srcjson !== "object")
 		  if(typeof console !== "undefined"){
@@ -459,6 +384,9 @@ const exfPreloader = {};
 		return urljson;
 	}
 	
+	/**
+	 * @return Promise
+	 */
 	this.deleteActionAll = function(selectedIds) {
 		var promises = [];
 		selectedIds.forEach(function(id){
@@ -467,23 +395,23 @@ const exfPreloader = {};
 		return Promise.all(promises);
 	};
 	
+	/**
+	 * @return Promise
+	 */
 	this.deleteAction = function(id) {
 		return _actionsTable.delete(id)
 	}
 	
-	this.updateQueueCount = function() {
-		return exfPreloader.getActionQueueData('offline')
-		.then(function(data) {
-			var count = data.length;
-			exfLauncher.getShell().getModel().setProperty("/_network/queueCnt", count);
-			console.log('Queue count updated');
-		})
-	}
-	
+	/**
+	 * @return Dexie.Table
+	 */
 	this.getActionsTable = function() {
 		return _actionsTable;
 	}
 	
+	/**
+	 * @return Dexie.Table
+	 */
 	this.getPreloadTable = function() {
 		return _preloadTable;
 	}
