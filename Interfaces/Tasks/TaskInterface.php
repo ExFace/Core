@@ -10,13 +10,14 @@ use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
 
 /**
  * 
  * @author Andrej Kabachnik
  *
  */
-interface TaskInterface extends WorkbenchDependantInterface
+interface TaskInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon
 {    
     /**
      * 

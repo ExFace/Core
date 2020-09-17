@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
@@ -417,5 +418,28 @@ class GenericTask implements TaskInterface
         }
         return $this->originPage;
     }
+    
+    public function exportUxonObject()
+    {
+        $uxon = new UxonObject();
+        if ($this->isTriggeredOnPage()) {
+            $uxon->setProperty('page_selector', $this->getPageSelector()->toString());
+        }
+        return $uxon;
+    }
 
+    public static function getUxonSchemaClass(): ?string
+    {
+        return null;
+    }
+
+    public function importUxonObject(UxonObject $uxon)
+    {
+        foreach ($uxon->getPropertiesAll() as $prop => $val) {
+            switch ($prop) {
+                case 'page_selector': $this->setPageSelector($val); break;
+            }
+        }
+        return;
+    }
 }
