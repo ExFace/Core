@@ -301,7 +301,7 @@ const exfPreloader = {};
 			console.log('Syncing action with id: ',element.id);
 			var params = element.request.data;
 			params = _preloader.encodeJson(params);
-			var request = fetch(element.request.url, {
+			return fetch(element.request.url, {
 				method: element.request.type,
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -345,16 +345,19 @@ const exfPreloader = {};
 					});
 				});
 			})
-			.catch((error) => {
+			.catch(function(error){
 			  console.error('ActionID: ' + element.id + ' - Error: ' + error.message);
 			  _actionsTable.update(element.id, {
 					tries: element.tries + 1,
 					response: error.message
 				});
 			  throw(error);
+			  return('ActionID: ' + element.id + 'sync failed!');
 			});
-			return request;
-		});
+		})
+		.catch(function(error){
+			throw(error);
+		})
 	};
 	
 	/**
