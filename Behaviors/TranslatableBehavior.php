@@ -31,9 +31,86 @@ use exface\Core\Events\Model\OnUiMenuItemLoadedEvent;
 use exface\Core\Events\Model\OnBeforeDefaultObjectEditorInitEvent;
 use exface\Core\Events\Model\OnBeforeMetaObjectActionLoadedEvent;
 use exface\Core\Events\Errors\OnErrorCodeLookupEvent;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 
 /**
  * Makes the data of certain attributes of the object translatable.
+ * 
+ * For example, if you have a meta object for, let's say, some sort of categories, you may want
+ * to make the name and descripion of each category translatable. This behavior let's you translate
+ * them independently from the data source, saving translations in JSON files inside the app folder
+ * - see example below.
+ * 
+ * This behavior is also used in the core to make the model itself translatable (i.e. for showing
+ * attributes of actions, pages, users etc. in the correct language) - see detailed description below.
+ * 
+ * Technically this behavior adds a "translate"-button to the default editor of it's object and
+ * makes sure, the translation files are used every time data of the object is loaded.
+ * 
+ * **IMPORTANT** notes:
+ * 
+ * - The `translation_filename_attribute_alias` MUST point to an attribute, that uniquely identifies
+ * the object! Otherwise the translation will apply to all objects with the same value of that
+ * attribute.
+ * - Translation files will be saved in the folder `Translations` folder inside the app, that the behavior
+ * belongs too unless `translation_app_determined_by_relation` is set.
+ * - The `translation_subfolder` (i.e. the path inside the `Translations` folder - like `Messages` in the 
+ * built-int behavior for message models) MUST be unique among all meta objects with translatable behaviors!
+ * 
+ * ## Simple example: translating categories
+ * 
+ * To make the category-example above work, we would need the following behavior on the hypothetical
+ * category object:
+ * 
+ * ```
+ * {
+ *  "translation_filename_attribute_alias": "ID",
+ *  "translation_subfolder": "Categories",
+ *  "translatable_attributes": [
+ *      "NAME",
+ *      "DESCRIPTION"
+ *  ]
+ * }
+ * 
+ * ```
+ * 
+ * Now the default editor for categories will automatically have a translate-button, which would open
+ * a list with all languages of the app, that is the "owner" of the behavior - except the app's default
+ * language as it does not need to be translated. Once the translate-button is pressed for a category, 
+ * translation files for all languages in the list will be created for this category automatically. 
+ * 
+ * For example, if we have `de` and `ru` translations for an app with `en` as default language, the
+ * above example will produce the following file structure inside the app's folder for a category with
+ * ID=33:
+ * 
+ * ```
+ * Translations
+ *  Categories
+ *      33.de.json
+ *      33.ru.json
+ * 
+ * ```
+ * 
+ * Each file will contain a JSON with two keys: `NAME` and `DESCRIPTION`. Their values are the translations
+ * for the respective attributes of category 33. 
+ * 
+ * It is important, that the `translation_filename_attribute_alias` points to an attribute with unique
+ * values: in our case, it's the id of the category. Of course, if you have any readable unique keys like
+ * the aliases in the meta model, it is a good idea to use them instead of technical ids!
+ * 
+ * ## How does the model-translation in the core work?
+ * 
+ * This behavior is also used in the core to make the model entities themselves translatable. The behavior
+ * is attached to the following meta objects:
+ * 
+ * - `exface.Core.OBJECT` to translate names and descriptions of meta objects themselves and their attributes
+ * - `exface.Core.PAGE` to translate page names, etc. and translatable UXON properties of the widgets
+ * - `exface.Core.OBJECT_ACTION` to translate modeled actions
+ * - `exface.Core.MESSAGE` to translate message titles, hints, etc.
+ * 
+ * These behaviors use advanced configuration options. Have a look at them to get an idea, of what
+ * the behavior can do beside the things described above.
  * 
  * @author Andrej Kabachnik
  *
@@ -48,9 +125,13 @@ class TranslatableBehavior extends AbstractBehavior
     
     private $translatable_uxon_prototype_attribute_alias = null;
     
+    private $translation_folder = 'Translations';
+    
     private $translation_subfolder = null;
     
     private $translation_filename_attribute_alias = null;
+    
+    private $translation_app_determined_by_relation = null;
     
     private $staticListeners = [
         "exface.Core.Model.OnMetaObjectLoaded" => [
@@ -103,24 +184,6 @@ class TranslatableBehavior extends AbstractBehavior
     }
     
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::disable()
-     */
-    public function disable() : BehaviorInterface
-    {
-        parent::disable();
-        /*
-        $em = $this->getWorkbench()->eventManager();
-        foreach ($this->staticListeners as $eventName => $listeners) {
-            foreach ($listeners as $listener) {
-                $em->removeListener($eventName, $listener);
-            }
-        }*/
-        return $this;
-    }
-    
-    /**
      * Adds a translate-button to the default editor of the behavior's object, so that
      * every instance of the object can be translated. 
      * 
@@ -135,18 +198,29 @@ class TranslatableBehavior extends AbstractBehavior
      */
     public function onObjectEditorInitAddTranslateButton(OnBeforeDefaultObjectEditorInitEvent $event)
     {
+        if ($this->isDisabled()) {
+            return;
+        }
+        
         if ($event->getObject() !== $this->getObject()) {
             return;
         }
         
         $editorUxon = $event->getDefaultEditorUxon();
-        
         if (strcasecmp($editorUxon->getProperty('widget_type'), 'Dialog') !== 0) {
             throw new BehaviorRuntimeError($this->getObject(), 'Cannot add translation-button to default editor dialog of object "' . $this->getObject()->getAliasWithNamespace() . '": the default editor must be of type "Dialog"!');
         }
         
+        if ($this->isTranslationAppDeterminedByRelation()) {
+            $appRel = $this->getRelationToTranslationApp();
+            if (! ($appRel->getRightObject()->isExactly('exface.Core.APP') && $appRel->isForwardRelation())) {
+                throw new BehaviorConfigurationError($this->getObject(), 'Invalid `translation_app_determined_by_relation` specified in translatable dehavior of ' . $this->getObject()->getAliasWithNamespace() . ': the relation MUST point to the exface.Core.APP!');
+            }
+            $appRelAlias = $appRel->getAlias();
+        }
+        
         $editorUxon->appendToProperty('buttons', new UxonObject([
-            'caption' => 'Translate',
+            'caption' => "=TRANSLATE('exface.Core', 'BEHAVIOR.TRANSLATABLE.TRANSLATE_BUTTON_CAPTION')",
             "icon" => "language",
             'object_alias' => 'exface.Core.TRANSLATIONS_FOR_DATA',
             'close_dialog' => false,
@@ -155,6 +229,7 @@ class TranslatableBehavior extends AbstractBehavior
                 'widget' => [
                     "widget_type" => "DataTable",
                     "object_alias" => "exface.Core.TRANSLATIONS_FOR_DATA",
+                    "empty_text" => "=TRANSLATE('exface.Core', 'BEHAVIOR.TRANSLATABLE.NO_TRANSLATIONS_FOUND')",
                     "filters" => [
                         [
                             "attribute_alias" => "SUBFOLDER",
@@ -168,15 +243,21 @@ class TranslatableBehavior extends AbstractBehavior
                             "input_widget" => [
                                 "widget_type" => "InputHidden"
                             ]
+                        ],
+                        [
+                            "attribute_alias" => "APP",
+                            "input_widget" => [
+                                "widget_type" => "InputHidden"
+                            ]
                         ]
                     ],
                     "columns" => [
                         [
-                            "attribute_alias" => "LOCALE",
-                            "caption" => 'Translation file'
+                            "attribute_alias" => "LOCALE"
                         ],
                         [
-                            "attribute_alias" => "PATHNAME_RELATIVE"
+                            "attribute_alias" => "PATHNAME_RELATIVE",
+                            "caption" => "=TRANSLATE('exface.Core', 'BEHAVIOR.TRANSLATABLE.TRANSLATION_FILE')"
                         ]
                     ],
                     "buttons" => [
@@ -192,15 +273,19 @@ class TranslatableBehavior extends AbstractBehavior
                             'from' => "='{$this->getTranlationSubfolder()}'",
                             'to' => 'SUBFOLDER',
                             'comparator' => ComparatorDataType::EQUALS
-                            ],
-                            [
-                                'from' => $this->getTranslationFilenameAttributeAlias(),
-                                'to' => 'DATA_KEY'
-                            ]
+                        ],
+                        [
+                            'from' => $this->getTranslationFilenameAttributeAlias(),
+                            'to' => 'DATA_KEY'
+                        ],
+                        [
+                            'from' => $appRelAlias,
+                            'to' => 'APP'
                         ]
                     ]
                 ]
-            ]));
+            ]
+        ]));
         
         return;
     }
@@ -292,6 +377,29 @@ class TranslatableBehavior extends AbstractBehavior
         return $this->translation_subfolder ?? ucfirst(mb_strtolower($this->getObject()->getAlias()));
     }
     
+    protected function getTranslationFolder() : string
+    {
+        return $this->translation_folder;
+    }
+    
+    /**
+     * Path to the folder with all translations relative to the app root - `Translations` by default.
+     * 
+     * No need to change this setting unless your app uses a custom translator!
+     * 
+     * @uxon-property translation_folder
+     * @uxon-type string
+     * @uxon-default Translations
+     * 
+     * @param string $pathRelativeToAppFolder
+     * @return TranslatableBehavior
+     */
+    public function setTranslationFolder(string $pathRelativeToAppFolder) : TranslatableBehavior
+    {
+        $this->translation_folder = $pathRelativeToAppFolder;
+        return $this;
+    }
+    
     /**
      *
      * {@inheritdoc}
@@ -376,7 +484,7 @@ class TranslatableBehavior extends AbstractBehavior
         $app = $event->getApp();
         
         $translator = $app->getTranslator();
-        $domain = 'Actions/' . $event->getActionAlias();
+        $domain = 'Actions/' . $event->getActionAliasWithNamespace();
         
         if (! $translator->hasTranslationDomain($domain)) {
             return;
@@ -406,7 +514,7 @@ class TranslatableBehavior extends AbstractBehavior
         $object = $event->getObject();
         
         $translator = $object->getApp()->getTranslator();
-        $domain = 'Objects/' . $object->getAlias();
+        $domain = 'Objects/' . $object->getAliasWithNamespace();
         
         if (! $translator->hasTranslationDomain($domain)) {
             return;
@@ -420,7 +528,7 @@ class TranslatableBehavior extends AbstractBehavior
                 continue;
             }
             
-            $ns = 'ATTRIBUTE.' . $attr->getAlias() . '.';
+            $ns = 'ATTRIBUTE.' . Translation::buildTranslationKey([$attr->getAlias()]) . '.';
             $attr->setName($translator->translate($ns . 'NAME', null, null, $domain, $attr->getName()));
             $attr->setShortDescription($translator->translate($ns . 'SHORT_DESCRIPTION', null, null, $domain, $attr->getShortDescription()));
         }
@@ -454,6 +562,10 @@ class TranslatableBehavior extends AbstractBehavior
      */
     public function onReadForKeyCreateFiles(OnBeforeActionPerformedEvent $event)
     {
+        if ($this->isDisabled()) {
+            return;
+        }
+        
         $action = $event->getAction();
         
         if (! $action->isExactly('exface.Core.ReadData')) {
@@ -475,22 +587,16 @@ class TranslatableBehavior extends AbstractBehavior
             if ($cond->getAttributeAlias() === 'SUBFOLDER') {
                 $subfolder = $cond->getValue();
             }
+            if ($cond->getAttributeAlias() === 'APP') {
+                $appUid = $cond->getValue();
+            }
         }
         
         if (! $key) {
             return;
         }
         
-        $appSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.MESSAGE');
-        $appSheet->getColumns()->addMultiple(['APP']);
-        $appSheet->getFilters()->addConditionFromString('CODE', $key);
-        $appSheet->dataRead();
-        
-        if (($appUid = $appSheet->getCellValue('APP', 0)) === null) {
-            return;
-        }
-        
-        $app = $this->getWorkbench()->getApp($appUid);
+        $app = $appUid ? $this->getWorkbench()->getApp($appUid) : $this->getApp();
         $path = $this->getTranslationBasePath($app) . $subfolder . DIRECTORY_SEPARATOR;
         
         if (! file_exists($path)) {
@@ -508,9 +614,9 @@ class TranslatableBehavior extends AbstractBehavior
         }
     }
     
-    protected function getTranslationBasePath(AppInterface $app) : string
+    protected function getTranslationBasePath(AppInterface $app, bool $absolute = true) : string
     {
-        return $app->getDirectoryAbsolutePath() . DIRECTORY_SEPARATOR . 'Translations' . DIRECTORY_SEPARATOR;
+        return ($absolute ? $app->getDirectoryAbsolutePath() : $app->getDirectory()) . DIRECTORY_SEPARATOR . $this->getTranslationFolder() . DIRECTORY_SEPARATOR;
     }
     
     /**
@@ -527,6 +633,10 @@ class TranslatableBehavior extends AbstractBehavior
      */
     public function onEditDictPrefill(OnActionPerformedEvent $event)
     {
+        if ($this->isDisabled()) {
+            return;
+        }
+        
         $action = $event->getAction();
         
         if (! $action->isExactly('exface.Core.ShowObjectEditDialog')) {
@@ -551,7 +661,7 @@ class TranslatableBehavior extends AbstractBehavior
         $transJson = json_decode($value, true);
         
         $path = $dialogWidget->getPrefillData()->getCellValue('PATHNAME_RELATIVE', 0);
-        $subfolder = StringDataType::substringAfter($path, 'Translations/', '');
+        $subfolder = StringDataType::substringAfter($path, '/' . $this->getTranslationFolder() . '/', '');
         $subfolder = StringDataType::substringBefore($subfolder, '/', $subfolder, false, true);
         $filename = FilePathDataType::findFileName($path);
         $dataKey = StringDataType::substringBefore($filename, '.', $filename, false, true);
@@ -563,12 +673,23 @@ class TranslatableBehavior extends AbstractBehavior
         
         $behavior = $this->findBehavior($subfolder);
         
+        if ($behavior->isDisabled()) {
+            return;
+        }
+        
         $translatables = $this->findTranslatables($behavior, $dataKey);
         $keysExpected = array_keys($translatables);
         $keysFound = array_keys($transJson);
         
-        foreach (array_diff($keysExpected, $keysFound) as $missingKey) {
-            $transJson[$missingKey] = null;
+        $missingKeys = array_diff($keysExpected, $keysFound);
+        $obsoleteKeys = array_diff($keysFound, $keysExpected);
+        // IDEA mark new keys in nother ref-colum?
+        foreach ($missingKeys as $key) {
+            $transJson[$key] = null;
+        }
+        // IDEA mark obsolete keys in another ref-column and remove them when saving?
+        foreach ($obsoleteKeys as $key) {
+            unset($transJson[$key]);
         }
         
         $contentWidget->setValue(JsonDataType::encodeJson($transJson, true));
@@ -642,7 +763,7 @@ class TranslatableBehavior extends AbstractBehavior
         $schemaName = $dataType->getSchema();
         $schema = UxonSchemaFactory::create($this->getWorkbench(), $schemaName);
         
-        return $this->findTranslatableUxonProperties($uxon, $schema, mb_strtoupper($attribute->getAlias()), $rootPrototypeClass);
+        return $this->findTranslatableUxonProperties($uxon, $schema, Translation::buildTranslationKey([$attribute->getAlias()]), $rootPrototypeClass);
     }
     
     /**
@@ -820,6 +941,46 @@ class TranslatableBehavior extends AbstractBehavior
     public function setTranslatableUxonPrototypeAttribute(string $alias) : TranslatableBehavior
     {
         $this->translatable_uxon_prototype_attribute_alias = $alias;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isTranslationAppDeterminedByRelation() : bool
+    {
+        return $this->translation_app_determined_by_relation !== null;
+    }
+    
+    /**
+     * 
+     * @return MetaRelationInterface|NULL
+     */
+    protected function getRelationToTranslationApp() : ?MetaRelationInterface
+    {
+        if ($this->translation_app_determined_by_relation === null) {
+            return null;
+        }
+        return $this->getObject()->getRelation($this->translation_app_determined_by_relation);
+    }
+    
+    /**
+     * Use this relation of the behavior's object object to determin in which app to save the translations.
+     * 
+     * By default translation files are saved in the app that the behavior itself belongs to. However, if
+     * instances of the translated object can belong to different apps (= the object has a relation to
+     * exface.Core.APP), you may choose to save the translations in these apps instead. 
+     * 
+     * @uxon-property translation_app_determined_by_relation
+     * @uxon-type metamodel:relation
+     * 
+     * @param string $relationAlias
+     * @return TranslatableBehavior
+     */
+    public function setTranslationAppDeterminedByRelation(string $relationAlias) : TranslatableBehavior
+    {
+        $this->translation_app_determined_by_relation = $relationAlias;
         return $this;
     }
 }
