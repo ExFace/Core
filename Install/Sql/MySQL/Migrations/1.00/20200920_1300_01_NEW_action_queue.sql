@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS `exf_action_queue` (
 	`modified_on` datetime NOT NULL,
 	`created_by_user_oid` binary(16) DEFAULT NULL,
 	`modified_by_user_oid` binary(16) DEFAULT NULL,
+	`origin` VARCHAR(20) NOT NULL,
 	`task_uxon` longtext NOT NULL,
 	`owner` binary(16) DEFAULT NULL,
     `status` int(2) NOT NULL,
