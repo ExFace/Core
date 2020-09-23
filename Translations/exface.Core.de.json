@@ -138,7 +138,11 @@
 	
 	"BEHAVIOR.TRANSLATABLE.TRANSLATE_BUTTON_CAPTION": "Übersetzen",
 	"BEHAVIOR.TRANSLATABLE.TRANSLATION_FILE": "Datei mit Übersetzungen",
+	"BEHAVIOR.TRANSLATABLE.TRANSLATION_KEY": "Übersetzungs-Schlüssel",
 	"BEHAVIOR.TRANSLATABLE.NO_TRANSLATIONS_FOUND": "App hat nur eine sprache. Bitte fügen Sie mind. eine Übersetzungsdatei zu der App des objektes hinzu!",
+	"BEHAVIOR.TRANSLATABLE.KEY_STATUS": "Status",
+	"BEHAVIOR.TRANSLATABLE.KEY_STATUS_NEW": "Neu!",
+	"BEHAVIOR.TRANSLATABLE.KEY_STATUS_INHERITED": "Vererbt",
 	
 	"CONTEXT.ACTIONTEST.NAME": "ActionTest",
 	
