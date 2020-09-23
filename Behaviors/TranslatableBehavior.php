@@ -33,6 +33,7 @@ use exface\Core\Events\Model\OnBeforeMetaObjectActionLoadedEvent;
 use exface\Core\Events\Errors\OnErrorCodeLookupEvent;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
+use exface\Core\DataTypes\LocaleDataType;
 
 /**
  * Makes the data of certain attributes of the object translatable.
@@ -677,15 +678,28 @@ class TranslatableBehavior extends AbstractBehavior
             return;
         }
         
+        $defLang = $behavior->getObject()->getApp()->getLanguageDefault();
+        $coreTranslator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        $keyStatus = $coreTranslator->translate('BEHAVIOR.TRANSLATABLE.KEY_STATUS');
+        $keyStatusNew = $coreTranslator->translate('BEHAVIOR.TRANSLATABLE.KEY_STATUS_NEW');
+        $keyStatusInherited = $coreTranslator->translate('BEHAVIOR.TRANSLATABLE.KEY_STATUS_INHERITED');
+        
         $translatables = $this->findTranslatables($behavior, $dataKey);
+        $statuses = [];
         $keysExpected = array_keys($translatables);
         $keysFound = array_keys($transJson);
+        foreach ($transJson as $key => $val) {
+            if ($val === null) {
+                $statuses[$key] = $keyStatusInherited;
+            }
+        }
         
         $missingKeys = array_diff($keysExpected, $keysFound);
         $obsoleteKeys = array_diff($keysFound, $keysExpected);
         // IDEA mark new keys in nother ref-colum?
         foreach ($missingKeys as $key) {
-            $transJson[$key] = null;
+            $transJson = array_merge([$key => null], $transJson);
+            $statuses[$key] = $keyStatusNew;
         }
         // IDEA mark obsolete keys in another ref-column and remove them when saving?
         foreach ($obsoleteKeys as $key) {
@@ -695,9 +709,12 @@ class TranslatableBehavior extends AbstractBehavior
         $contentWidget->setValue(JsonDataType::encodeJson($transJson, true));
         
         if ($contentWidget instanceof InputKeysValues) {
-            $contentWidget->setReferenceValues([$behavior->getObject()->getApp()->getLanguageDefault() => $translatables]);
-            $contentWidget->setCaptionForKeys('Translation key');
-            $contentWidget->setCaptionForValues($lang);
+            $contentWidget->setReferenceValues([
+                $keyStatus => $statuses,
+                (LocaleDataType::getLocaleName($defLang, $coreTranslator->getLocale()) . ' - ' . $defLang) => $translatables
+            ]);
+            $contentWidget->setCaptionForKeys($coreTranslator->translate('BEHAVIOR.TRANSLATABLE.TRANSLATION_KEY'));
+            $contentWidget->setCaptionForValues(LocaleDataType::getLocaleName($lang, $coreTranslator->getLocale()) . ' - ' . $lang);
         }
         
         return;
