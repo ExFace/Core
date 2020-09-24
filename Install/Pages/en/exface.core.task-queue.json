@@ -1,0 +1,50 @@
+{
+    "uid": "0x11ea90c2c6d951ba90c28c04ba002958",
+    "alias_with_namespace": "exface.core.task-queue",
+    "menu_parent_page_selector": "0xb90bb0b8949f11e7a605028037ec0200",
+    "menu_index": 2,
+    "menu_visible": true,
+    "name": "Task Queue",
+    "description": "",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "created_on": "2020-09-24 15:20:55",
+    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "modified_on": "2020-09-24 16:01:27",
+    "contents": {
+        "widget_type": "DataTable",
+        "object_alias": "exface.Core.TASK_QUEUE",
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectInfoDialog"
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "UID"
+            },
+            {
+                "attribute_alias": "OWNER__USERNAME"
+            },
+            {
+                "attribute_alias": "STATUS"
+            },
+            {
+                "attribute_alias": "RESULT"
+            },
+            {
+                "attribute_alias": "ERROR_LOGID"
+            },
+            {
+                "attribute_alias": "ERROR_MESSAGE"
+            },
+            {
+                "attribute_alias": "ORIGIN"
+            },
+            {
+                "attribute_alias": "SYNC_FLAG"
+            }
+        ]
+    }
+}
