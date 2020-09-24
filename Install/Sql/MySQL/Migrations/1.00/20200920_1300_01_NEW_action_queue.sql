@@ -1,6 +1,6 @@
 -- UP
 
-CREATE TABLE IF NOT EXISTS `exf_action_queue` (
+CREATE TABLE IF NOT EXISTS `exf_task_queue` (
 	`oid` binary(16) NOT NULL,
 	`created_on` datetime NOT NULL,
 	`modified_on` datetime NOT NULL,
@@ -14,9 +14,10 @@ CREATE TABLE IF NOT EXISTS `exf_action_queue` (
     `error_message` longtext DEFAULT NULL,
     `error_logid` varchar(20) DEFAULT NULL,
     `parent_item_oid` binary(16) DEFAULT NULL,
+	`sync_flag` TINYINT(1) NULL DEFAULT '0',
 	PRIMARY KEY (`oid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
 
 -- DOWN
 
-DROP TABLE IF EXISTS `exf_action_queue`;
+DROP TABLE IF EXISTS `exf_task_queue`;
