@@ -205,6 +205,7 @@ const exfPreloader = {};
 	 * @return Promise
 	 */
 	this.addAction = function(offlineAction, objectAlias) {
+		offlineAction.url = 'api/task';
 		var date = (+ new Date());
 		var data = {
 			id: date,
@@ -329,11 +330,12 @@ const exfPreloader = {};
 					});
 				}
 				if (response.statusText === 'timeout' || response.status === 0 || response.status >= 500) {
-					console.log('Timeout sync action');
+					throw({message: response.statusText});
+					/*console.log('Timeout sync action');
 					return _actionsTable.update(element.id, {
 						tries: element.tries + 1,
 						response: response.statusText
-					});
+					});*/
 				}
 				return response.json()
 				.then(function(data){
@@ -352,7 +354,7 @@ const exfPreloader = {};
 					response: error.message
 				});
 			  throw(error);
-			  return('ActionID: ' + element.id + 'sync failed!');
+			  //return('ActionID: ' + element.id + 'sync failed!');
 			});
 		})
 		.catch(function(error){
