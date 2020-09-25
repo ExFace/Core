@@ -14,21 +14,24 @@ use GuzzleHttp\Psr7\Response;
 use exface\Core\Interfaces\Tasks\ResultTextContentInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\CommonLogic\Queue\TaskQueue;
+use exface\Core\DataTypes\StringDataType;
 
 class HttpTaskFacade extends AbstractAjaxFacade
 {
     protected function createResponse(ServerRequestInterface $request) : ResponseInterface
     {        
         $uri = $request->getUri();
+        $path = $uri->getPath();
+        $topics = [];
+        $topics[] = substr(StringDataType::substringAfter($path, $this->getUrlRouteDefault()), 1);
         $task = $request->getAttribute($this->getRequestAttributeForTask());
         $queue = new TaskQueue($this->getWorkbench());
         try {
-            $result = $queue->handle($task, true);
+            $result = $queue->handle($task, $this->getAliasWithNamespace(), $topics, true);
             return $this->createResponseFromTaskResult($request, $result);
         } catch (\Throwable $exception) {
             return $this->createResponseFromError($request, $exception);
-        }
-        
+        }        
     }
     
     public function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null): ResponseInterface
@@ -81,7 +84,4 @@ class HttpTaskFacade extends AbstractAjaxFacade
     {
         return '';
     }
-
-
-    
 }

@@ -8,8 +8,8 @@ interface TaskQueueInterface
 {
     /**
      * 
-     * @param TaskInterface $taks
+     * @param TaskInterface $task
      * @return ResultInterface
      */
-    public function handle(TaskInterface $task) : ResultInterface;
+    public function handle(TaskInterface $task, string $producer, $sync = false) : ResultInterface;
 }
