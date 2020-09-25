@@ -9,13 +9,14 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\InternalError;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\DataTypes\DateTimeDataType;
 
 class TaskQueue implements TaskQueueInterface
 {
     CONST QUEUE_STATUS_QUEUED = 10;
     CONST QUEUE_STATUS_INPROGRESS = 50;
     CONST QUEUE_STATUS_ERROR = 70;
-    CONST QUEUE_STATUS_DONE = 99;
+    CONST QUEUE_STATUS_DONE = 99;    
     
     private $exface = null;
     
@@ -42,15 +43,21 @@ class TaskQueue implements TaskQueueInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\TaskQueueInterface::handle()
      */
-    public function handle(TaskInterface $task, $sync = false): ResultInterface
+    public function handle(TaskInterface $task, string $producer, array $topics, $sync = false): ResultInterface
     {
         $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.TASK_QUEUE');
         $dataSheet->getColumns()->addFromUidAttribute();
+        if ($task->hasParameter('assignedOn')) {
+            $assignedOn = $task->getParameter('assignedOn');
+        } else {
+            $assignedOn = DateTimeDataType::now();
+        }
         $dataSheet->addRow([
             'TASK_UXON' => $task->exportUxonObject()->toJson(),
             'STATUS' => self::QUEUE_STATUS_QUEUED,
             'OWNER' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
-            'ORIGIN' => 'HttpTaskFacade'
+            'PRODUCER' => $producer,
+            'TASK_ASSIGNED_ON' => $assignedOn
         ]);
         $dataSheet->dataCreate();
         if ($sync === false) {
@@ -77,5 +84,5 @@ class TaskQueue implements TaskQueueInterface
             $dataSheet->dataUpdate();
             throw $e;
         }
-    }    
+    }   
 }
