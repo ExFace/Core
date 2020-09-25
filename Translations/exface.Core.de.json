@@ -71,6 +71,7 @@
 	"ACTION.GOTOURL.NAME": "Webseite anzeigen",
 	"ACTION.GOTOURL.SUCCESS": "Sie werden weitergeleitet...",
 	"ACTION.GOTOPAGE.NAME": "Anzeigen",
+	"ACTION.NAVIGATE.OPENING_NEW_WINDOW": "Ein neues Fenster/Tab wird geöffnet!",
 
 	"ACTION.SHOWMASSEDITDIALOG.NAME": "Massenbearbeitung",
 	"ACTION.SHOWMASSEDITDIALOG.EDITING_BY_FILTER": "Bearbeitung aller Objekte, die folgenden Filtern entsprechen: %filters%",

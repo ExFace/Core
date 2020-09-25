@@ -71,6 +71,7 @@
 	"ACTION.GOTOURL.NAME": "Visit URL",
 	"ACTION.GOTOURL.SUCCESS": "Redirecting...",
 	"ACTION.GOTOPAGE.NAME": "Go to",
+	"ACTION.NAVIGATE.OPENING_NEW_WINDOW": "Opening a new browser tab/window!",
 	
 	"ACTION.SHOWMASSEDITDIALOG.NAME": "Mass edit",
 	"ACTION.SHOWMASSEDITDIALOG.EDITING_BY_FILTER": "Editing all objects matching the following filters: %filters%",
