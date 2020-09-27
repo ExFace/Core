@@ -2,7 +2,7 @@
 namespace exface\Core\CommonLogic;
 
 use Symfony\Component\Translation\Translator;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\Translation\Loader\JsonFileLoader;
 use exface\Core\Interfaces\TranslationInterface;
 use exface\Core\Interfaces\AppInterface;
