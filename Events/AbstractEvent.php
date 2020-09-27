@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Events;
 
-use Symfony\Component\EventDispatcher\Event;
+use Symfony\Contracts\EventDispatcher\Event;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
