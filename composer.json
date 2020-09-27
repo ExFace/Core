@@ -1,77 +1,76 @@
 {
-    "name": "exface/Core",
-    "description": "Business web application plattform",
-    "type": "project",
-    "license": [
-        "GPL-3.0+",
-        "proprietary"
-    ],
-    "authors": [
-        {
-            "name": "Andrej Kabachnik",
-            "email": "kabachnik@gmail.com",
-            "role": "Creator"
-        }
-    ],
-    "support": {
-        "source": "https://github.com/exface/core",
-        "docs": "https://github.com/exface/core/blob/master/Docs",
-        "issues": "https://github.com/exface/core/issues"
-    },
-    "require": {
-        "php": "^7.2",
-        "symfony/FileSystem": "^3.1||^4.0",
-        "symfony/Event-Dispatcher": "^3.1||^4.0",
-        "symfony/translation": "^3.1||^4.0",
-        "symfony/config": "^3.1||^4.0",
-        "symfony/debug": "^3.3||^4.0",
-        "symfony/var-dumper": "^3.2||^4.0",
-        "symfony/finder": "^3.1.7||^4.0",
-        "symfony/StopWatch": "^3.1.2||^4.0",
-        "symfony/cache": "^3.1.2||^4.0",
-        "symfony/process": "^3.1||^4.2",
-        "symfony/console": "^3.1||^4.2",
-        "symfony/security-core": "^3.1||^4.2",
-        "symfony/ldap": "^3.1||^4.2",
-        "webmozart/path-util": "^2.3",
-        "monolog/monolog": "^1.22.1",
-        "femtopixel/monolog-csvhandler": "~0.1",
-        "psr/http-message": "^1.0.1",
-        "psr/http-server-handler": "^1.0",
-        "psr/http-server-middleware": "^1.0",
-        "psr/container": "^1.0",
-        "psr/cache": "^1.0",
-        "psr/simple-cache": "^1.0",
-        "guzzlehttp/psr7": "^1.4.2",
-        "wingu/reflection": "^1.0.5",
-        "league/csv": "^8.0",
-        "jdorn/sql-formatter": "^1.2.17",
-        "cebe/markdown": "^1.1.2",
-        "kabachello/fileroute": "~0.2",
-        "guzzlehttp/guzzle": "^6.2.2",
-        "npm-asset/workbox-sw": "^3.0.0",
-        "npm-asset/dexie": "^2.0.4",
-        "ramsey/uuid": "^3.0||^4.0"
-    },
-    "bin": [
-        "Facades/ConsoleFacade/bin/action"
-    ],
-    "extra": {
-        "app": {
-            "app_uid": "0x31000000000000000000000000000000",
-            "app_alias": "exface.Core",
-            "model_md5": "15d96de158476068189627b06c99cdf8",
-            "model_timestamp": "2020-08-28 12:48:18"
-        }
-    },
-    "autoload": {
-        "psr-4": {
-            "exface\\Core\\": ""
-        },
-        "exclude-from-classmap": [
-            "/Config/",
-            "/Translations/",
-            "/Model/"
-        ]
-    }
+	"name" : "exface/Core",
+	"description" : "Business web application plattform",
+	"type" : "project",
+	"license" : [
+		"GPL-3.0+",
+		"proprietary"
+	],
+	"authors" : [{
+			"name" : "Andrej Kabachnik",
+			"email" : "kabachnik@gmail.com",
+			"role" : "Creator"
+		}
+	],
+	"support" : {
+		"source" : "https://github.com/exface/core",
+		"docs" : "https://github.com/exface/core/blob/master/Docs",
+		"issues" : "https://github.com/exface/core/issues"
+	},
+	"require" : {
+		"php" : "^7.2",
+		"symfony/FileSystem" : "^4.0||^5.0",
+		"symfony/Event-Dispatcher" : "^4.0||^5.0",
+		"symfony/translation" : "^4.0||^5.0",
+		"symfony/config" : "^4.0||^5.0",
+		"symfony/debug" : "^4.0||^5.0",
+		"symfony/var-dumper" : "^4.0||^5.0",
+		"symfony/finder" : "^4.0||^5.0",
+		"symfony/StopWatch" : "^4.0||^5.0",
+		"symfony/cache" : "^4.0||^5.0",
+		"symfony/process" : "^4.2||^5.0",
+		"symfony/console" : "^4.2||^5.0",
+		"symfony/security-core" : "^4.2||^5.0",
+		"symfony/ldap" : "^4.2||^5.0",
+		"webmozart/path-util" : "^2.3",
+		"monolog/monolog" : "^1.22.1",
+		"femtopixel/monolog-csvhandler" : "~0.1",
+		"psr/http-message" : "^1.0.1",
+		"psr/http-server-handler" : "^1.0",
+		"psr/http-server-middleware" : "^1.0",
+		"psr/container" : "^1.0",
+		"psr/cache" : "^1.0",
+		"psr/simple-cache" : "^1.0",
+		"guzzlehttp/psr7" : "^1.4.2",
+		"wingu/reflection" : "^1.0.5",
+		"league/csv" : "^8.0",
+		"jdorn/sql-formatter" : "^1.2.17",
+		"cebe/markdown" : "^1.1.2",
+		"kabachello/fileroute" : "~0.2",
+		"guzzlehttp/guzzle" : "^6.2.2",
+		"npm-asset/workbox-sw" : "^3.0.0",
+		"npm-asset/dexie" : "^2.0.4",
+		"ramsey/uuid" : "^3.0||^4.0"
+	},
+	"bin" : [
+		"Facades/ConsoleFacade/bin/action"
+	],
+	"extra" : {
+		"app" : {
+			"app_uid" : "0x31000000000000000000000000000000",
+			"app_alias" : "exface.Core",
+			"model_md5" : "d1940db87583f7c0f439653fd64339ae",
+			"model_timestamp" : "2020-09-23 07:08:05"
+		}
+	},
+	"autoload" : {
+		"psr-4" : {
+			"exface\\Core\\" : ""
+		},
+		"exclude-from-classmap" : [
+			"/Config/",
+			"/Translations/",
+			"/Model/"
+		]
+	}
 }
