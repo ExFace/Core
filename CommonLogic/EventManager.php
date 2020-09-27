@@ -40,7 +40,7 @@ class EventManager implements EventManagerInterface
      */
     public function addListener(string $eventName, callable $listener_callable, int $priority = null) : EventManagerInterface
     {
-        $this->dispatcher->addListener($eventName, $listener_callable, $priority);
+        $this->dispatcher->addListener($eventName, $listener_callable, $priority ?? 0);
         return $this;
     }
 
@@ -51,7 +51,7 @@ class EventManager implements EventManagerInterface
      */
     public function dispatch(EventInterface $event) : EventInterface
     {
-        return $this->dispatcher->dispatch($event::getEventName(), $event);
+        return $this->dispatcher->dispatch($event, $event::getEventName());
     }
 
     /**
