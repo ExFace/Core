@@ -21,7 +21,7 @@
 		"php" : "^7.2",
 		"symfony/FileSystem" : "^4.0||^5.0",
 		"symfony/Event-Dispatcher" : "^4.0||^5.0",
-		"symfony/translation" : "^4.0||^5.0",
+		"symfony/translation" : "^4.4",
 		"symfony/config" : "^4.0||^5.0",
 		"symfony/debug" : "^4.0||^5.0",
 		"symfony/var-dumper" : "^4.0||^5.0",
