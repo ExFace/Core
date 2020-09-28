@@ -4,13 +4,13 @@ namespace exface\Core\CommonLogic;
 use exface\Core\Interfaces\WorkbenchCacheInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use Psr\SimpleCache\CacheInterface;
-use Symfony\Component\Cache\Simple\FilesystemCache;
 use Psr\Cache\CacheItemPoolInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\Exceptions\OutOfRangeException;
 use exface\Core\Exceptions\OutOfBoundsException;
 use Symfony\Component\Cache\Simple\ArrayCache;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
+use Symfony\Component\Cache\Psr16Cache;
 
 /**
  * Default implementation of the WorkbenchCacheInterface.
@@ -151,9 +151,11 @@ class WorkbenchCache implements WorkbenchCacheInterface
     public static function createDefaultPool(WorkbenchInterface $workbench, string $name = null): CacheInterface
     {
         if ($workbench->getConfig()->getOption('CACHE.ENABLED') === false) {
-            return new ArrayCache();
+            $psr6Cache = new ArrayAdapter();
+        } else {
+            $psr6Cache = new PhpFilesAdapter($name ?? '_workbench', 0, $workbench->filemanager()->getPathToCacheFolder());
         }
-        return new FilesystemCache($name ?? '_workbench', 0, $workbench->filemanager()->getPathToCacheFolder());
+        return new Psr16Cache($psr6Cache);
     }
 
     /**
