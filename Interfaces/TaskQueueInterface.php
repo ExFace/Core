@@ -11,5 +11,5 @@ interface TaskQueueInterface
      * @param TaskInterface $task
      * @return ResultInterface
      */
-    public function handle(TaskInterface $task, string $producer, $sync = false) : ResultInterface;
+    public function handle(TaskInterface $task, string $producer, array $topics, $sync = false) : ResultInterface;
 }

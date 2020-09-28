@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
     "created_on": "2020-09-24 15:20:55",
     "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2020-09-24 16:01:27",
+    "modified_on": "2020-09-28 13:10:10",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.TASK_QUEUE",
@@ -25,10 +25,16 @@
                 "attribute_alias": "UID"
             },
             {
+                "attribute_alias": "TASK_ASSIGNED_ON"
+            },
+            {
                 "attribute_alias": "OWNER__USERNAME"
             },
             {
                 "attribute_alias": "STATUS"
+            },
+            {
+                "attribute_alias": "TOPICS"
             },
             {
                 "attribute_alias": "RESULT"
@@ -40,10 +46,10 @@
                 "attribute_alias": "ERROR_MESSAGE"
             },
             {
-                "attribute_alias": "ORIGIN"
+                "attribute_alias": "PRODUCER"
             },
             {
-                "attribute_alias": "SYNC_FLAG"
+                "attribute_alias": "QUEUE_TYPE"
             }
         ]
     }

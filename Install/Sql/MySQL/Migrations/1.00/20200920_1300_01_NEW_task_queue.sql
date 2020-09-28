@@ -6,16 +6,17 @@ CREATE TABLE IF NOT EXISTS `exf_task_queue` (
 	`modified_on` datetime NOT NULL,
 	`created_by_user_oid` binary(16) DEFAULT NULL,
 	`modified_by_user_oid` binary(16) DEFAULT NULL,
-	`producer` VARCHAR(20) NOT NULL,
+	`producer` VARCHAR(50) NOT NULL,
 	`task_assigned_on` datetime NOT NULL,
 	`task_uxon` longtext NOT NULL,
-	`owner` binary(16) DEFAULT NULL,
+	`owner` binary(16) NOT NULL,
     `status` int(2) NOT NULL,
+	`topics` VARCHAR(500) DEFAULT NULL,
     `result` longtext DEFAULT NULL,
     `error_message` longtext DEFAULT NULL,
     `error_logid` varchar(20) DEFAULT NULL,
     `parent_item_oid` binary(16) DEFAULT NULL,
-	`sync_flag` TINYINT(1) NULL DEFAULT '0',
+	`queue_type` VARCHAR(50) NOT NULL,
 	PRIMARY KEY (`oid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
 

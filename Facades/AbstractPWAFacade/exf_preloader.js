@@ -205,14 +205,15 @@ const exfPreloader = {};
 	 * @return Promise
 	 */
 	this.addAction = function(offlineAction, objectAlias) {
-		offlineAction.url = 'api/task';
+		offlineAction.url = 'api/task/offlineTask';
 		var date = (+ new Date());
+		offlineAction.data.assignedOn = new Date(date).toLocaleString()
 		var data = {
 			id: date,
 			object: objectAlias,
 			action: offlineAction.data.action,
 			request: offlineAction,
-			triggered: new Date(date).toLocaleString(),
+			triggered: offlineAction.data.assignedOn,
 			status: 'offline',
 			tries: 0,
 			synced: 'not snyced'
