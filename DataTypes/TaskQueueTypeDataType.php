@@ -5,25 +5,24 @@ use exface\Core\CommonLogic\DataTypes\EnumStaticDataTypeTrait;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 /**
- * Enumeration of security policy combining algorithms: deny-overrides, etc.
- * 
- * @method PolicyEffectDataType DENY(\exface\Core\CommonLogic\Workbench $workbench)
- * @method PolicyEffectDataType PERMIT(\exface\Core\CommonLogic\Workbench $workbench)
- * 
+ * Enumeration built-in build recipies.
+ *
+ * @method BuildRecipeDataType COMPOSER_INSTALL(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method BuildRecipeDataType CLONE_LOCAL(\exface\Core\CommonLogic\Workbench $workbench)
+ * // TODO add other @method
+ *
  * @author Andrej Kabachnik
  *
  */
-class QueuedTaskStateDataType extends IntegerDataType implements EnumDataTypeInterface
+class TaskQueueTypeDataType extends StringDataType implements EnumDataTypeInterface
 {
     use EnumStaticDataTypeTrait;
     
-    CONST STATUS_QUEUED = 10;
-    CONST STATUS_INPROGRESS = 50;
-    CONST STATUS_ERROR = 70;
-    CONST STATUS_DONE = 99;
+    const TYPE_SYNC = "SYNC";
+    const TYPE_ASYNC = "ASYNC";
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getLabels()
      */
@@ -39,6 +38,4 @@ class QueuedTaskStateDataType extends IntegerDataType implements EnumDataTypeInt
         
         return $this->labels;
     }
-
 }
-?>

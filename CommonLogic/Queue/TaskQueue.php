@@ -10,6 +10,8 @@ use exface\Core\Exceptions\InternalError;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\DataTypes\QueuedTaskStateDataType;
+use exface\Core\DataTypes\TaskQueueTypeDataType;
 
 class TaskQueue implements TaskQueueInterface
 {
@@ -43,7 +45,7 @@ class TaskQueue implements TaskQueueInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\TaskQueueInterface::handle()
      */
-    public function handle(TaskInterface $task, string $producer, array $topics, $sync = false): ResultInterface
+    public function handle(TaskInterface $task, string $producer, array $topics, $sync = false) : ResultInterface
     {
         $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.TASK_QUEUE');
         $dataSheet->getColumns()->addFromUidAttribute();
@@ -54,23 +56,25 @@ class TaskQueue implements TaskQueueInterface
         }
         $dataSheet->addRow([
             'TASK_UXON' => $task->exportUxonObject()->toJson(),
-            'STATUS' => self::QUEUE_STATUS_QUEUED,
+            'STATUS' => QueuedTaskStateDataType::STATUS_QUEUED,
             'OWNER' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
             'PRODUCER' => $producer,
-            'TASK_ASSIGNED_ON' => $assignedOn
+            'TASK_ASSIGNED_ON' => $assignedOn,
+            'TOPICS' => implode(', ', $topics)
         ]);
-        $dataSheet->dataCreate();
+        //TODO choose the queue type based on the topics
         if ($sync === false) {
             throw new NotImplementedError('Async queue operations not implemented yet!');
         } else {
-            $dataSheet->setCellValue('SYNC_FLAG', 0, true);
+            $dataSheet->setCellValue('QUEUE_TYPE', 0, TaskQueueTypeDataType::TYPE_SYNC);
         }
+        $dataSheet->dataCreate();        
         try {
-            $dataSheet->setCellValue('STATUS', 0, self::QUEUE_STATUS_INPROGRESS);
+            $dataSheet->setCellValue('STATUS', 0, QueuedTaskStateDataType::STATUS_INPROGRESS);
             $dataSheet->dataUpdate();
             $result = $this->getWorkbench()->handle($task);
             $dataSheet->setCellValue('RESULT', 0, $result->getResponseCode() . ' - ' . $result->getMessage());
-            $dataSheet->setCellValue('STATUS', 0, self::QUEUE_STATUS_DONE);
+            $dataSheet->setCellValue('STATUS', 0, QueuedTaskStateDataType::STATUS_DONE);
             $dataSheet->dataUpdate();
             return $result;
         } catch (\Throwable $e) {
@@ -78,7 +82,7 @@ class TaskQueue implements TaskQueueInterface
                 $e = new InternalError($e->getMessage(), null, $e);
             }
             //$this->getWorkbench()->getLogger()->logException($e);
-            $dataSheet->setCellValue('STATUS', 0, self::QUEUE_STATUS_ERROR);
+            $dataSheet->setCellValue('STATUS', 0, QueuedTaskStateDataType::STATUS_ERROR);
             $dataSheet->setCellValue('ERROR_MESSAGE', 0, $e->getMessage());
             $dataSheet->setCellValue('ERROR_LOGID', 0, $e->getAlias());
             $dataSheet->dataUpdate();
