@@ -8,6 +8,7 @@ use exface\Core\Interfaces\DataSources\DataManagerInterface;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Security\SecurityManagerInterface;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 interface WorkbenchInterface extends TaskHandlerInterface
 {
@@ -60,9 +61,10 @@ interface WorkbenchInterface extends TaskHandlerInterface
      * Apps are cached and kept running for script (request) window
      *
      * @param AppSelectorInterface|string $appSelectorString
+     * @throws InvalidArgumentException
      * @return AppInterface
      */
-    public function getApp($selectorOrString);
+    public function getApp($selectorOrString) : AppInterface;
     
     /**
      *
