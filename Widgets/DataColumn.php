@@ -55,6 +55,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     use AttributeCaptionTrait;
     
     private $attribute_alias = null;
+    
+    private $attribute = null;
 
     private $sortable = null;
 
@@ -105,6 +107,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function setAttributeAlias($value)
     {
+        $this->attribute = null;
         $this->attribute_alias = $value;
         return $this;
     }
@@ -465,16 +468,21 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iShowSingleAttribute::getAttribute()
      */
-    function getAttribute()
+    public function getAttribute()
     {
-        try {
-            return $this->getMetaObject()->getAttribute($this->getAttributeAlias());
-        } catch (MetaAttributeNotFoundError $e) {
-            if ($this->getExpression()->isFormula()) {
-                return $this->getMetaObject()->getAttribute($this->getExpression()->getRequiredAttributes()[0]);
+        if ($this->attribute === null) {
+            try {
+                $attr = $this->getMetaObject()->getAttribute($this->getAttributeAlias());
+                $this->attribute = $attr;
+            } catch (MetaAttributeNotFoundError $e) {
+                if ($this->getExpression()->isFormula()) {
+                    $this->attribute = $this->getMetaObject()->getAttribute($this->getExpression()->getRequiredAttributes()[0]);
+                } else {
+                    throw new WidgetPropertyInvalidValueError($this, 'Attribute "' . $this->getAttributeAlias() . '" specified for widget ' . $this->getWidgetType() . ' not found for the widget\'s object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', null, $e);
+                }
             }
-            throw new WidgetPropertyInvalidValueError($this, 'Attribute "' . $this->getAttributeAlias() . '" specified for widget ' . $this->getWidgetType() . ' not found for the widget\'s object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', null, $e);
         }
+        return $this->attribute;
     }
 
     public function getAggregator() : ?AggregatorInterface
