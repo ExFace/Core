@@ -26,26 +26,42 @@ use exface\Core\Interfaces\Model\MetaRelationInterface;
 /**
  * An InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
  * 
- * Thus, the user can see more information about every suggested object. The `InputComboTable` is very 
- * often used with relations, where the related object may have many more data, then merely it's UID 
- * (which is the value of the relation attribute).
+ * This way, the user can see more information about every suggested items. The `InputComboTable` is 
+ * very handy to use with relations, where the related object often has more relevant data, then merely 
+ * it's UID or `ALIAS`.
  * 
- * The `DataTable` for autosuggests can either be genreated automatically based on the meta object, or 
- * specified by the user via UXON in the `table` property.
+ * There are multiple typical use cases for the `InputComboTable`:
+ * 
+ * - with an attribute, that is a relation. In this case, the suggestion-table automatically shows the 
+ * related objects with their default display attributes while the value of the `InputComboTable` itself 
+ * is the relation attribute (i.e. foreign key). You can define a custom `table` for the suggestions if
+ * you need additional columns as shown below.
+ * - with a relation attribute and a custom `table` definition. In this case you can configure the table
+ * completely individually as you would do for a regular `DataTable`. Keep in mind, that all attributes 
+ * and relation paths need to be relative to the table's object (= the related object).
+ * - with a regular attribute. In this case, the suggestion table will show a distinct list of previously
+ * used values of the attribute. The table will have just a single column unless you add a `table`
+ * definition manually as in the case above.
+ * - with a custom `value_attribute_alias` and a custom `table` definition. This allows to look up
+ * an value in a totally unrelated object. The `value_attribute_alias` would be the attribute of the
+ * table-object to take the value from while the widget's `attribute_alias` would be the place to use
+ * that value.
+ * 
+ * In general, the `DataTable` for autosuggests will always be genreated automatically as shown above
+ * unless it is specified by the user via UXON in the `table` property. If a custom `table` is used,
+ * all it's attributes and relations are based on the table's object. The same goes for `value_attribute_alias`
+ * and `text_attribute_alias` - they too are meant to be relative to the `table_object_alias`.
  * 
  * In addition to the tabluar autosuggest, the `InputComboTable` has a `lookup_action`, which will open
- * an advanced-search dialog with even more details, filters and other options. By default, the generic
+ * an advanced search dialog with even more details, filters and other options. By default, the generic
  * `exface.Core.ShowLookupDialog` action is used, which produces a dialog automatiscally from the object's 
- * model default display attributes, but you can customize the the action as well as it's widge by adding
- * custom configuration to the `lookup_action` property.
+ * model default display attributes, but you can customize the the action as well as it's widget within
+ * the `lookup_action` property of the `InputComboTable`.
  * 
- * While not every UI-framework supports such a kind of widget, there are many ways to implement the main 
- * idea of the `InputComboTable`: showing more data about a selectable object in the autosuggest. Mobile 
- * facades might use cards like in Googles material design, for example. Also not all facades support the
- * `lookup_action`.
- * 
- * `InputComboTable`s support two type of live references to other objects: in the value and in the data 
- * filters. 
+ * While not every UI-framework supports tabular autosuggests directly, there are many ways to implement 
+ * the idea of the `InputComboTable`: showing more data about a selectable object in the autosuggest. Mobile 
+ * facades might use cards like in Google's material design, for example. Also not all facades support the
+ * `lookup_action` - in this case the corresponding button will simply not show up.
  * 
  * ## Examples
  * 
