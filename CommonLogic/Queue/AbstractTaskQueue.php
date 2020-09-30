@@ -24,6 +24,16 @@ abstract class AbstractTaskQueue implements TaskQueueInterface, WorkbenchDependa
 {
     use ImportUxonObjectTrait;
     
+    const MATCH_OP_ONE_OF = 'one_of';
+    
+    const MATCH_OP_ALL_OF = 'all_of';
+    
+    const MATCH_OP_EXACTLY = 'exactly';
+    
+    const MATCH_OP_NONE = 'none';
+    
+    const MATCH_OP_ANY = 'any';
+    
     private $workbench = null;
     
     private $name = null;
@@ -76,7 +86,7 @@ abstract class AbstractTaskQueue implements TaskQueueInterface, WorkbenchDependa
      */
     public function getWorkbench()
     {
-        return $this->getWorkbench();
+        return $this->workbench;
     }
     
     /**
@@ -137,11 +147,13 @@ abstract class AbstractTaskQueue implements TaskQueueInterface, WorkbenchDependa
     }
     
     /**
-     * This queue will handle tasks matching these topics
+     * This queue will handle tasks matching these topics.
+     * 
+     * If no topics specified, the queue will handle a task with any set of topics
      * 
      * @uxon-property topics
      * @uxon-type object
-     * @uxon-template {"all_of": [""], "one_of": [""]}
+     * @uxon-template {"all_of": [""], "one_of": [""], "exactly": [""]}
      * 
      * @param UxonObject $uxon
      * @return TaskQueueInterface
@@ -163,11 +175,20 @@ abstract class AbstractTaskQueue implements TaskQueueInterface, WorkbenchDependa
         
         foreach ($this->topicsMatcher ?? [] as $op => $topics) {
             switch (strtolower($op)) {
-                case 'all_of': 
+                case self::MATCH_OP_ALL_OF: 
                     $result = empty(array_diff($topics, $taskTopics));
                     break;
-                case 'one_of':
+                case self::MATCH_OP_ONE_OF:
                     $result = ! empty(array_intersect($topics, $taskTopics));
+                    break;
+                case self::MATCH_OP_EXACTLY:
+                    $result = empty(array_diff($topics, $taskTopics)) && empty(array_diff($taskTopics, $topics));
+                    break;
+                case self::MATCH_OP_NONE:
+                    $result = empty($taskTopics);
+                    break;
+                case self::MATCH_OP_ANY:
+                    $result = true;
                     break;
             }
         }
@@ -194,5 +215,15 @@ abstract class AbstractTaskQueue implements TaskQueueInterface, WorkbenchDependa
     public function getAllowOtherQueuesToHandleSameTasks() : bool
     {
         return $this->allowOtherQueuesToHandleSameTasks;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\TaskQueueInterface::canHandleAnyTask()
+     */
+    public function canHandleAnyTask() : bool
+    {
+        return empty($this->topicsMatcher);
     }
 }
