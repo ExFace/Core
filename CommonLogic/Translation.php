@@ -2,7 +2,7 @@
 namespace exface\Core\CommonLogic;
 
 use Symfony\Component\Translation\Translator;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\Translation\Loader\JsonFileLoader;
 use exface\Core\Interfaces\TranslationInterface;
 use exface\Core\Interfaces\AppInterface;
@@ -13,7 +13,6 @@ use exface\Core\DataTypes\StringDataType;
  * This is the default implementation of the TranslationInterface.
  * 
  * It is basically a wrapper for the Symfony Translation Component.
- * The JSON loade is used to read files passed via addDictionaryFromFile().
  * 
  * @author Andrej Kabachnik
  *
@@ -109,12 +108,13 @@ class Translation implements TranslationInterface
      * @param string $locale
      * @return Translation
      */
-    protected function addDictionaryFromFile(string $absolute_path, string $locale, string $domain = null) : Translation
+    protected function addDictionaryFromFile(string $absolute_path, string $locale, string $domain = null) : bool
     {
         if (file_exists($absolute_path)) {
             $this->translator->addResource('json', $absolute_path, $locale, $domain);
+            return true;
         }
-        return $this;
+        return false;
     }
 
     /**
@@ -206,13 +206,11 @@ class Translation implements TranslationInterface
         }
         
         $filePath = $this->getTranslationsFolder() . DIRECTORY_SEPARATOR . $name . '.' . $this->getLanguage() . '.json';
-        if (file_exists($filePath)) {
+        $exists = $this->addDictionaryFromFile($filePath, $this->getLocale(), $name);
+        if ($exists) {
             $this->domains[$name] = $filePath;
-            $this->addDictionaryFromFile($filePath, $this->getLocale(), $name);
-            return true;
-        } else {
-            return false;
         }
+        return $exists;
     }
     
     /**

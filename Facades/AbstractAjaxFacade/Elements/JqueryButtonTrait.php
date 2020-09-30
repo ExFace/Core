@@ -471,9 +471,11 @@ JS;
     {
         $url = "{$this->getFacade()->buildUrlToPage($pageSelector)}?{$urlParams}";
         if ($newWindow === true) {
-            return "window.open('{$url}');";
+            $js = "window.open('{$url}');" . $this->buildJsShowMessageSuccess(json_encode($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.NAVIGATE.OPENING_NEW_WINDOW')));
+        } else {
+            $js = "window.location.href = '{$url}';";
         }
-        return "window.location.href = '{$url}';";
+        return $this->buildJsBusyIconHide() . ';' . $js;
     }
 
     protected function buildJsClickGoBack(ActionInterface $action, AbstractJqueryElement $input_element)

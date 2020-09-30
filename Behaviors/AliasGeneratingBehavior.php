@@ -479,7 +479,7 @@ class AliasGeneratingBehavior extends AbstractBehavior
      * If this property is not set, character cases will not be changed.
      * Allowed values are `lower` and `upper`.
      * 
-     * @uxon-property target_attribute_alias
+     * @uxon-property case
      * @uxon-type [lower,upper]
      * 
      * @param string $value
