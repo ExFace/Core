@@ -194,10 +194,10 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
     public function getCustomDataTypeUxon();
     
     /**
-     * @param UxonObject $uxon
+     * @param UxonObject|string $uxon
      * @return MetaAttributeInterface
      */
-    public function setCustomDataTypeUxon(UxonObject $uxon);
+    public function setCustomDataTypeUxon($uxonOrString) : MetaAttributeInterface;
     
     public function getFormula();
     
@@ -496,9 +496,10 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
     
     /**
      *
-     * @param UxonObject $uxon_object
+     * @param UxonObject|string $uxon_object
+     * @return MetaAttributeInterface
      */
-    public function setDefaultEditorUxon(UxonObject $uxon_object);
+    public function setDefaultEditorUxon($uxonOrString) : MetaAttributeInterface;
     
     /**
      * Returns a copy of the UXON object for the default display widget for this attribute.
@@ -514,10 +515,10 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
     
     /**
      *
-     * @param UxonObject $value
+     * @param UxonObject|string $value
      * @return MetaAttributeInterface
      */
-    public function setDefaultDisplayUxon(UxonObject $value) : MetaAttributeInterface;
+    public function setDefaultDisplayUxon($uxonOrString) : MetaAttributeInterface;
     
     /**
      * Returns TRUE if the attribute belongs to a related object an FALSE otherwise.

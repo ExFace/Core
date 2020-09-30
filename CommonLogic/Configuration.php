@@ -33,7 +33,7 @@ class Configuration implements ConfigurationInterface
      */
     protected function getConfigUxon()
     {
-        if (is_null($this->config_uxon)) {
+        if ($this->config_uxon === null) {
             $this->config_uxon = new UxonObject();
         }
         return $this->config_uxon;
@@ -54,19 +54,17 @@ class Configuration implements ConfigurationInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\ConfigurationInterface::getOption()
      */
     public function getOption(string $key)
     {
-        if (! $this->getConfigUxon()->hasProperty($key)) {
-            if ($key_found = $this->getConfigUxon()->findPropertyKey($key, false)) {
-                $key = $key_found;
-            } else {
-                throw new ConfigOptionNotFoundError($this, 'Required configuration key "' . $key . '" not found!', '6T5DZN2');
-            }
+        $key = strtoupper($key);
+        $val = $this->getConfigUxon()->getProperty($key);
+        // If the value is NULL, we need to distinguish between an intended NULL and a missing property
+        if ($val === null && $this->getConfigUxon()->hasProperty($key) === false) {
+           throw new ConfigOptionNotFoundError($this, 'Required configuration key "' . $key . '" not found!', '6T5DZN2');
         }
-        return $this->getConfigUxon()->getProperty($key);
+        return $val;
     }
     
     /**
@@ -120,7 +118,7 @@ class Configuration implements ConfigurationInterface
      */
     public function setOption(string $key, $value_or_object_or_string, string $configScope = null) : ConfigurationInterface
     {
-        $this->getConfigUxon()->setProperty(mb_strtoupper($key), $value_or_object_or_string);
+        $this->getConfigUxon()->setProperty(strtoupper($key), $value_or_object_or_string);
         
         if ($configScope !== null) {
             $config = $this->getScopeConfig($configScope);
@@ -166,7 +164,7 @@ class Configuration implements ConfigurationInterface
         if ($filename && file_exists($filename)) {
             $config = new self($this->getWorkbench());
             $config->loadConfigFile($filename);
-            file_put_contents($filename, $config->exportUxonObject()->unsetProperty(mb_strtoupper($key))->toJson(true));
+            file_put_contents($filename, $config->exportUxonObject()->unsetProperty(strtoupper($key))->toJson(true));
             $this->reloadFiles();
         }
         
@@ -209,7 +207,7 @@ class Configuration implements ConfigurationInterface
      */
     protected function readFile(string $absolute_path) : ?UxonObject
     {
-        if (file_exists($absolute_path) && $uxon = UxonObject::fromJson(file_get_contents($absolute_path))) {
+        if (file_exists($absolute_path) && $uxon = UxonObject::fromJson(file_get_contents($absolute_path), CASE_UPPER)) {
             $this->loadConfigUxon($uxon);
         }
         return $uxon;

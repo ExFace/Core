@@ -4,12 +4,49 @@ namespace exface\Core\Interfaces;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 
-interface TaskQueueInterface
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+interface TaskQueueInterface extends TaskHandlerInterface, AliasInterface, iCanBeConvertedToUxon
 {
+    /**
+     * Puts the task in the queue using it's internal handling logic.
+     * 
+     * @param TaskInterface $task
+     * @param string[] $topics
+     * @param string $producer
+     * @return ResultInterface
+     * 
+     * @see \exface\Core\Interfaces\TaskHandlerInterface::handle()
+     */
+    public function handle(TaskInterface $task, array $topics = [], string $producer = null) : ResultInterface;
+    
     /**
      * 
      * @param TaskInterface $task
-     * @return ResultInterface
+     * @param array $topics
+     * @param string $provider
+     * @return bool
      */
-    public function handle(TaskInterface $task, string $producer, array $topics, $sync = false) : ResultInterface;
+    public function canHandle(TaskInterface $task, array $topics = [], string $provider = null) : bool;
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getName() : string;
+    
+    /**
+     * 
+     * @return AppInterface|NULL
+     */
+    public function getApp() : ?AppInterface;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getAllowOtherQueuesToHandleSameTasks() : bool;
 }

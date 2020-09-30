@@ -24,7 +24,19 @@ class LocaleDataType extends StringDataType implements EnumDataTypeInterface
         if ($inLocale === null) {
             $inLocale = $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
         }
-        return \Locale::getDisplayName($value, $inLocale); 
+        return self::getLocaleName($value, $inLocale); 
+    }
+    
+    /**
+     * Returns the localized name of the locale - e.g. "German" for "de" if $inLocal is "en".
+     * 
+     * @param string $locale
+     * @param string $inLocale
+     * @return string
+     */
+    public static function getLocaleName(string $locale, string $inLocale) : string
+    {
+        return \Locale::getDisplayName($locale, $inLocale);
     }
 
     /**

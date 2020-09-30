@@ -51,6 +51,8 @@ class Workbench implements WorkbenchInterface
     private $context;
 
     private $running_apps = array();
+    
+    private $running_apps_selectors = [];
 
     private $utils = null;
 
@@ -227,23 +229,30 @@ class Workbench implements WorkbenchInterface
      * @param string $appSelectorString
      * @return AppInterface
      */
-    public function getApp($selectorOrString)
+    public function getApp($selectorOrString) : AppInterface
     {
         if ($selectorOrString instanceof AppSelectorInterface) {
+            if ($app = $this->running_apps_selectors[$selectorOrString->toString()]) {
+                return $app;
+            }
             $selector = $selectorOrString;
         } elseif (is_string($selectorOrString)) {
+            if ($app = $this->running_apps_selectors[$selectorOrString]) {
+                return $app;
+            }
             $selector = new AppSelector($this, $selectorOrString);
         } else {
             throw new InvalidArgumentException('Invalid app selector used: ' . $selectorOrString . '!');
         }
         
-        if ($app = $this->findAppRunning($selector)) {
-            return $app;
-        } else {
+        if (! $app = $this->findAppRunning($selector)) {
             $app = AppFactory::create($selector);
             $this->running_apps[] = $app;
-            return $app;
         }
+        
+        $this->running_apps_selectors[$selector->toString()] = $app;
+        
+        return $app;
     }
 
     /**
@@ -252,7 +261,7 @@ class Workbench implements WorkbenchInterface
      * @param AppSelectorInterface $selector
      * @return AppInterface|false
      */
-    protected function findAppRunning(AppSelectorInterface $selector)
+    protected function findAppRunning(AppSelectorInterface $selector) : ?AppInterface
     {
         if ($selector->isUid() && $this->model()) {
             // Die App-UID darf nur abgefragt werden, wenn tatsaechlich eine UID ueber-
@@ -264,6 +273,12 @@ class Workbench implements WorkbenchInterface
                     return $app;
                 }
             }
+        } elseif ($selector->isAlias()) {
+            foreach ($this->running_apps as $app) {
+                if (strcasecmp($app->getAliasWithNamespace(), $selector->toString()) === 0) {
+                    return $app;
+                }
+            }
         } else {
             foreach ($this->running_apps as $app) {
                 if (strcasecmp($app->getAliasWithNamespace(), $selector->getAppAlias()) === 0) {
@@ -271,7 +286,8 @@ class Workbench implements WorkbenchInterface
                 }
             }
         }
-        return false;
+        
+        return null;
     }
 
     /**

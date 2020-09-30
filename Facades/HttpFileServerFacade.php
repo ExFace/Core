@@ -28,7 +28,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
      * @param string $absolutePath
      * @return string
      */
-    public static function buildUrlForDownload(WorkbenchInterface $workbench, string $absolutePath)
+    public static function buildUrlForDownload(WorkbenchInterface $workbench, string $absolutePath, bool $relativeToSiteRoot = true)
     {
         // TODO route downloads over api/files and add an authorization point - see handle() method
         $installationPath = FilePathDataType::normalize($workbench->getInstallationPath());
@@ -37,7 +37,11 @@ class HttpFileServerFacade extends AbstractHttpFacade
             throw new FacadeRuntimeError('Cannot provide download link for file "' . $absolutePath . '"');
         }
         $relativePath = StringDataType::substringAfter($absolutePath, $installationPath);
-        return $workbench->getUrl() . ltrim($relativePath, "/");
+        if ($relativeToSiteRoot) {
+            return ltrim($relativePath, "/");
+        } else {
+            return $workbench->getUrl() . ltrim($relativePath, "/");
+        }
     }
 
     /**

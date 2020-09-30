@@ -71,6 +71,7 @@
 	"ACTION.GOTOURL.NAME": "Visit URL",
 	"ACTION.GOTOURL.SUCCESS": "Redirecting...",
 	"ACTION.GOTOPAGE.NAME": "Go to",
+	"ACTION.NAVIGATE.OPENING_NEW_WINDOW": "Opening a new browser tab/window!",
 	
 	"ACTION.SHOWMASSEDITDIALOG.NAME": "Mass edit",
 	"ACTION.SHOWMASSEDITDIALOG.EDITING_BY_FILTER": "Editing all objects matching the following filters: %filters%",
@@ -138,7 +139,11 @@
 	
 	"BEHAVIOR.TRANSLATABLE.TRANSLATE_BUTTON_CAPTION": "Übersetzen",
 	"BEHAVIOR.TRANSLATABLE.TRANSLATION_FILE": "Translation file",
+	"BEHAVIOR.TRANSLATABLE.TRANSLATION_KEY": "Translation key",
 	"BEHAVIOR.TRANSLATABLE.NO_TRANSLATIONS_FOUND": "The object's app only has a single language. Please add at least one translation file!",
+	"BEHAVIOR.TRANSLATABLE.KEY_STATUS": "Status",
+	"BEHAVIOR.TRANSLATABLE.KEY_STATUS_NEW": "New!",
+	"BEHAVIOR.TRANSLATABLE.KEY_STATUS_INHERITED": "Inherit",
 	
 	"CONTEXT.ACTIONTEST.NAME": "ActionTest",
     

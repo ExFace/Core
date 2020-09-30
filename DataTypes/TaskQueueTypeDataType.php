@@ -5,13 +5,9 @@ use exface\Core\CommonLogic\DataTypes\EnumStaticDataTypeTrait;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 /**
- * Enumeration built-in build recipies.
+ * Enumeration of task queue types
  *
- * @method BuildRecipeDataType COMPOSER_INSTALL(\exface\Core\CommonLogic\Workbench $workbench)
- * @method BuildRecipeDataType CLONE_LOCAL(\exface\Core\CommonLogic\Workbench $workbench)
- * // TODO add other @method
- *
- * @author Andrej Kabachnik
+ * @author Ralf Mulansky
  *
  */
 class TaskQueueTypeDataType extends StringDataType implements EnumDataTypeInterface

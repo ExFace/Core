@@ -44,16 +44,19 @@ class UxonObject implements \IteratorAggregate
     }
 
     /**
-     * Creates a UXON object from a JSON string
+     * Creates a UXON object from a JSON string.
+     * 
+     * The second argument can be set to CASE_UPPER or CASE_LOWER to normalize all keys.
      *
-     * @param string $uxon            
+     * @param string $uxon      
+     * @param int $normalizeKeyCase      
      * @return UxonObject
      */
-    public static function fromJson($uxon)
+    public static function fromJson($uxon, int $normalizeKeyCase = null)
     {
         $array = json_decode(trim($uxon), true);
         if (is_array($array)){
-            return static::fromArray($array);
+            return static::fromArray($array, $normalizeKeyCase);
         } else {
             if ($uxon !== '' && $uxon !== null) {
                 throw new UxonSyntaxError('Cannot parse string "' . substr($uxon, 0, 50) . '" as UXON: ' . json_last_error_msg() . ' in JSON decoder!');
@@ -64,14 +67,21 @@ class UxonObject implements \IteratorAggregate
 
     /**
      * Creates a UXON object from an array.
+     * 
+     * The second argument can be set to CASE_UPPER or CASE_LOWER to normalize all keys.
+     * 
      * The resulting UXON will be an array itself, but alle elements will get transformed
      * to UXON objects.
      *
-     * @param array $array            
+     * @param array $array   
+     * @param int $normalizeKeyCase         
      * @return UxonObject
      */
-    public static function fromArray(array $array)
+    public static function fromArray(array $array, int $normalizeKeyCase = null)
     {
+        if ($normalizeKeyCase !== null) {
+            $array = array_change_key_case($array, $normalizeKeyCase);
+        }
         return new self($array);
     }
 

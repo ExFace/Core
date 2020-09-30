@@ -5,12 +5,9 @@ use exface\Core\CommonLogic\DataTypes\EnumStaticDataTypeTrait;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 /**
- * Enumeration of security policy combining algorithms: deny-overrides, etc.
+ * Enumeration of queded tasks status
  * 
- * @method PolicyEffectDataType DENY(\exface\Core\CommonLogic\Workbench $workbench)
- * @method PolicyEffectDataType PERMIT(\exface\Core\CommonLogic\Workbench $workbench)
- * 
- * @author Andrej Kabachnik
+ * @author Ralf Mulansky
  *
  */
 class QueuedTaskStateDataType extends IntegerDataType implements EnumDataTypeInterface
