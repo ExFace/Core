@@ -34,7 +34,6 @@ class ReadData extends AbstractAction implements iReadData
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        (new TaskQueueRouter($this->getWorkbench()))->handle($task);
         $data_sheet = $this->getInputDataSheet($task);
         $data_sheet->removeRows();
         if ($dataWidget = $this->getWidgetToReadFor($task)) {
