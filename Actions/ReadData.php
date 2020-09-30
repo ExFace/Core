@@ -11,6 +11,7 @@ use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Exceptions\Actions\ActionInputError;
+use exface\Core\CommonLogic\Queue\TaskQueueRouter;
 
 /**
  * 
@@ -33,6 +34,7 @@ class ReadData extends AbstractAction implements iReadData
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
+        (new TaskQueueRouter($this->getWorkbench()))->handle($task);
         $data_sheet = $this->getInputDataSheet($task);
         $data_sheet->removeRows();
         if ($dataWidget = $this->getWidgetToReadFor($task)) {

@@ -34,6 +34,12 @@ interface TaskQueueInterface extends TaskHandlerInterface, AliasInterface, iCanB
     
     /**
      * 
+     * @return bool
+     */
+    public function canHandleAnyTask() : bool;
+    
+    /**
+     * 
      * @return string
      */
     public function getName() : string;
