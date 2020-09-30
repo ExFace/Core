@@ -44,15 +44,23 @@ class TaskQueueRouter implements TaskHandlerInterface, WorkbenchDependantInterfa
      */
     public function handle(TaskInterface $task, array $topics = [], string $producer = null): ResultInterface
     {
+        $handlers = [];
+        $fallbackHandlers = [];
         foreach ($this->getQueues() as $queue) {
-            $handlers = [];
-            if ($queue->canHandle($task, $topics, $producer)) {
-                $handlers = $queue;
+            if ($queue->canHandleAnyTask()) {
+                $fallbackHandlers[] = $queue;
+            } elseif ($queue->canHandle($task, $topics, $producer)) {
+                $handlers[] = $queue;
             }
         }
         
+        if (empty($handlers)) {
+            $handlers = $fallbackHandlers;
+        }
+        
         switch (count($handlers)) {
-            case 0: throw new RuntimeException('No queue found to handle a task from provider "' . $producer . '" with topics "' . implode(', ', $topics) . '"!');
+            case 0: 
+                throw new RuntimeException('No queue found to handle a task from provider "' . $producer . '" with topics "' . implode(', ', $topics) . '"!');
             case 1: break;
             default:
                 foreach ($handlers as $queue) {
@@ -91,7 +99,7 @@ class TaskQueueRouter implements TaskHandlerInterface, WorkbenchDependantInterfa
             
             foreach ($ds->getRows() as $row) {
                 $class = '\\' . ltrim($row['PROTOTYPE_CLASS'], "\\");
-                $uxon = $row['CONFIG_UXON'] ?? new UxonObject();
+                $uxon = UxonObject::fromJson($row['CONFIG_UXON'] ?? '{}');
                 $uxon->setProperty('allow_other_queues_to_handle_same_tasks', $row['ALLOW_MULTI_QUEUE_HANDLING']);
                 $queue = new $class($this->getWorkbench(), $row['ALIAS'], $row['APP'], $row['NAME'], $uxon);
                 $this->queues[] = $queue;
