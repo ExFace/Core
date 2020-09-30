@@ -101,7 +101,7 @@ class TaskQueueRouter implements TaskHandlerInterface, WorkbenchDependantInterfa
                 $class = '\\' . ltrim($row['PROTOTYPE_CLASS'], "\\");
                 $uxon = UxonObject::fromJson($row['CONFIG_UXON'] ?? '{}');
                 $uxon->setProperty('allow_other_queues_to_handle_same_tasks', $row['ALLOW_MULTI_QUEUE_HANDLING']);
-                $queue = new $class($this->getWorkbench(), $row['ALIAS'], $row['APP'], $row['NAME'], $uxon);
+                $queue = new $class($this->getWorkbench(), $row['UID'], $row['ALIAS'], $row['APP'], $row['NAME'], $uxon);
                 $this->queues[] = $queue;
             }
         }
