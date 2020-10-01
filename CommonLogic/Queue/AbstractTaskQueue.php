@@ -100,9 +100,9 @@ abstract class AbstractTaskQueue implements TaskQueueInterface, WorkbenchDependa
      * @param string $producer
      * @return DataSheetInterface
      */
-    protected function createQueueDataSheet(TaskInterface $task, array $topics = [], string $producer = null) : DataSheetInterface
+    protected function createQueueDataSheet(TaskInterface $task, array $topics = [], string $producer, string $messageId = null) : DataSheetInterface
     {
-        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.TASK_QUEUE');
+        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
         $dataSheet->getColumns()->addFromUidAttribute();
         if ($task->hasParameter('assignedOn')) {
             $assignedOn = $task->getParameter('assignedOn');
@@ -114,6 +114,7 @@ abstract class AbstractTaskQueue implements TaskQueueInterface, WorkbenchDependa
             'STATUS' => QueuedTaskStateDataType::STATUS_QUEUED,
             'OWNER' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
             'PRODUCER' => $producer,
+            'MESSAGE_ID' => $messageId,
             'TASK_ASSIGNED_ON' => $assignedOn,
             'TOPICS' => implode(', ', $topics),
             'QUEUE' => $this->getUid()

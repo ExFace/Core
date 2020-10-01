@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-09-30 09:19:33",
     "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2020-09-30 15:20:10",
+    "modified_on": "2020-10-01 15:22:39",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.QUEUED_TASK",
@@ -21,13 +21,22 @@
                 "attribute_alias": "TASK_ASSIGNED_ON"
             },
             {
+                "attribute_alias": "STATUS"
+            },
+            {
                 "attribute_alias": "OWNER__USERNAME"
             },
             {
                 "attribute_alias": "OBJECT_ALIAS"
             },
             {
-                "attribute_alias": "STATUS"
+                "attribute_alias": "ACTION_ALIAS"
+            },
+            {
+                "attribute_alias": "PRODUCER"
+            },
+            {
+                "attribute_alias": "MESSAGE_ID"
             },
             {
                 "attribute_alias": "QUEUE__NAME"
@@ -45,9 +54,6 @@
             }
         ],
         "columns": [
-            {
-                "attribute_alias": "UID"
-            },
             {
                 "attribute_alias": "TASK_ASSIGNED_ON"
             },
@@ -77,6 +83,9 @@
             },
             {
                 "attribute_alias": "PRODUCER"
+            },
+            {
+                "attribute_alias": "MESSAGE_ID"
             },
             {
                 "attribute_alias": "QUEUE__NAME"

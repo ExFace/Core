@@ -15,6 +15,7 @@ use exface\Core\Interfaces\Tasks\ResultTextContentInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\CommonLogic\Queue\TaskQueue;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\CommonLogic\Queue\TaskQueueRouter;
 
 class HttpTaskFacade extends AbstractAjaxFacade
 {
@@ -22,12 +23,21 @@ class HttpTaskFacade extends AbstractAjaxFacade
     {        
         $uri = $request->getUri();
         $path = $uri->getPath();
-        $topics = [];
-        $topics[] = substr(StringDataType::substringAfter($path, $this->getUrlRouteDefault()), 1);
+        $topics = explode('/',substr(StringDataType::substringAfter($path, $this->getUrlRouteDefault()), 1));
         $task = $request->getAttribute($this->getRequestAttributeForTask());
-        $queue = new TaskQueue($this->getWorkbench());
+        $router = new TaskQueueRouter($this->getWorkbench());
+        if ($request->hasHeader('X-Client-ID')) {
+            $producer = $request->getHeader('X-Client-ID')[0];
+        } else {
+            $producer = $this->getAliasWithNamespace();
+        }
+        if ($request->hasHeader('X-Request-ID')) {
+            $requestId = $request->getHeader('X-Request-ID')[0];
+        } else {
+            $requestId = null;
+        }
         try {
-            $result = $queue->handle($task, $this->getAliasWithNamespace(), $topics, true);
+            $result = $router->handle($task, $topics, $producer, $requestId);
             return $this->createResponseFromTaskResult($request, $result);
         } catch (\Throwable $exception) {
             return $this->createResponseFromError($request, $exception);

@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS `exf_queued_task` (
 	`created_by_user_oid` binary(16) DEFAULT NULL,
 	`modified_by_user_oid` binary(16) DEFAULT NULL,
 	`producer` VARCHAR(50) NOT NULL,
+	`message_id` VARCHAR(50) DEFAULT NULL,
 	`task_assigned_on` datetime NOT NULL,
 	`task_uxon` longtext NOT NULL,
 	`owner` binary(16) NOT NULL,

@@ -39,19 +39,60 @@ const exfPreloader = {};
 		var dexie = new Dexie('exf-preload');
 		dexie.version(1).stores({
 			'preloads': 'id, object',
-			'actionQueue': 'id, object, action'
+			'actionQueue': 'id, object, action',
+			'deviceId': 'id'
 		});
 		dexie.open();
 		return dexie;
 	}();
 	
+	
 	var _preloadTable = _db.table('preloads');
 	var _actionsTable = _db.table('actionQueue');
+	var _deviceIdTable = _db.table('deviceId');
+	var _topics = ['offlineTask'];
+	
+	var _deviceId;
+	
+	(function() {
+		console.log('Create deviceId');
+		_deviceIdTable.toArray()
+		.then(function(data) {
+			if (data.length !== 0) {
+				_deviceId = data[0].id;
+			} else {
+				_deviceId = _preloader.createUniqueId();
+				_deviceIdTable.put({id: _deviceId});
+			}
+		})
+	}());
+	
+	/**
+	 * @return string
+	 */
+	this.getDeviceId = function() {
+		return _deviceId;
+	}
+	
+	/**
+	 * @return void
+	 */
+	this.setTopics = function(aTopics) {
+		_topics = aTopics;
+		return;
+	}
+	
+	/**
+	 * @return array
+	 */
+	this.getTopics = function() {
+		return _topics;
+	}
 	
 	/**
 	 * @return exfPreloader
 	 */
-	this.addPreload = function(sAlias, aDataCols, aImageCols, sPageAlias, sWidgetId){		
+	this.addPreload = function(sAlias, aDataCols, aImageCols, sPageAlias, sWidgetId) {		
 		_preloadTable
 		.get(sAlias)
 		.then(item => {
@@ -205,11 +246,14 @@ const exfPreloader = {};
 	 * @return Promise
 	 */
 	this.addAction = function(offlineAction, objectAlias) {
-		offlineAction.url = 'api/task/offlineTask';
+		var topics = _preloader.getTopics();
+		offlineAction.url = 'api/task/' + topics.join('/');
+		var xRequestId = _preloader.createUniqueId();
+		console.log('Request-Id: ', xRequestId);
 		var date = (+ new Date());
 		offlineAction.data.assignedOn = new Date(date).toLocaleString()
 		var data = {
-			id: date,
+			id: _preloader.createUniqueId(),
 			object: objectAlias,
 			action: offlineAction.data.action,
 			request: offlineAction,
@@ -307,6 +351,8 @@ const exfPreloader = {};
 				method: element.request.type,
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+					'X-Request-ID': element.id,
+					'X-Client-ID': _preloader.getDeviceId()
 				},
 				body: params
 			})
@@ -420,5 +466,20 @@ const exfPreloader = {};
 	 */
 	this.getPreloadTable = function() {
 		return _preloadTable;
+	}
+	
+	/**
+	 * @return string
+	 */
+	this.createUniqueId = function (a = "", b = false) {
+	    const c = Date.now()/1000;
+	    let d = c.toString(16).split(".").join("");
+	    while(d.length < 14) d += "0";
+	    let e = "";
+	    if(b){
+	        e = ".";
+	        e += Math.round(Math.random()*100000000);
+	    }
+	    return a + d + e;
 	}
 }).apply(exfPreloader);

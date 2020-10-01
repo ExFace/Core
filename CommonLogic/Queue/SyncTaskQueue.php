@@ -20,9 +20,9 @@ class SyncTaskQueue extends AsyncTaskQueue
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Queue\AsyncTaskQueue::handle()
      */
-    public function handle(TaskInterface $task, array $topics = [], string $producer = null) : ResultInterface
+    public function handle(TaskInterface $task, array $topics = [], string $producer = null, string $messageId = null) : ResultInterface
     {
-        $dataSheet = $this->createQueueDataSheet($task, $topics, $producer);
+        $dataSheet = $this->createQueueDataSheet($task, $topics, $producer, $messageId);
         $dataSheet->setCellValue('STATUS', 0, QueuedTaskStateDataType::STATUS_INPROGRESS);
         $dataSheet->dataCreate();
         
