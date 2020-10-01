@@ -4,15 +4,15 @@ namespace exface\Core\Events\Workbench;
 /**
  * Event fired after the workbench has been stopped.
  * 
- * @event exface.Core.Workbench.OnStop
+ * @event exface.Core.Workbench.OnBeforeStop
  *
  * @author Andrej Kabachnik
  *        
  */
-class OnStopEvent extends OnStartEvent
+class OnBeforeStopEvent extends OnStartEvent
 {
     public static function getEventName() : string
     {
-        return 'exface.Core.Workbench.OnStop';
+        return 'exface.Core.Workbench.OnBeforeStop';
     }
 }
