@@ -11,4 +11,13 @@ namespace exface\Core\Events\Widget;
  */
 class OnPrefillEvent extends OnBeforePrefillEvent
 {
+    
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.Widget.OnPrefill';
+    }
 }

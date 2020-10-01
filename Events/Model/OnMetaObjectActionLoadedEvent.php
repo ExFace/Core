@@ -63,4 +63,13 @@ class OnMetaObjectActionLoadedEvent extends AbstractEvent implements MetaObjectE
     {
         return $this->action;
     }
+    
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.Model.OnMetaObjectActionLoaded';
+    }
 }

@@ -113,4 +113,13 @@ class OnBeforeMetaObjectActionLoadedEvent extends AbstractEvent implements MetaO
     {
         return $this->widget;
     }
+    
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.Model.OnBeforeMetaObjectActionLoaded';
+    }
 }

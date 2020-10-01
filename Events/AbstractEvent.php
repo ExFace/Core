@@ -9,6 +9,10 @@ use exface\Core\DataTypes\StringDataType;
 /**
  * Default implementation of the alias methods for events.
  * 
+ * NOTE: the default implementation of the static method getEventName() seems to be not
+ * very performant: it is recommended to override it with a simple method returning 
+ * a static string if the event is expected to be fired often.
+ * 
  * @author Andrej Kabachnik
  *
  */
@@ -58,8 +62,11 @@ abstract class AbstractEvent extends Event implements EventInterface
     }
     
     /**
+     * NOTE: this default implementation of this method seems to be not
+     * very performant: it is recommended to override it with a simple method returning 
+     * a static string if the event is expected to be fired often.
      * 
-     * @return string
+     * @see EventInterface::getEventName()
      */
     public static function getEventName() : string
     {
