@@ -12,6 +12,7 @@
 	- Now most components of the meta model are now translatable: meta objects, attributes, action models, pages and messages.
 	- Comfortale translation UI with complete key listing, a second reference language, etc.
 - NEW support for running the workbench on Microsoft IIS and SQL Server
+- NEW static event listeners now configurable in the `System.config.json` allowing handlers to react to events without being previously registered from PHP code.
 - FIX lot's of smaller issues
 
 ## 1.0
