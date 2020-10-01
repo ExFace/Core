@@ -3,7 +3,7 @@
 	"METAMODEL.QUERY_BUILDER": "\\exface\\Core\\QueryBuilders\\MySqlBuilder",
 	"METAMODEL.CONNECTOR": "\\exface\\Core\\DataConnectors\\MySqlConnector",
 	"METAMODEL.CONNECTOR_CONFIG": {
-		"host": "localhost",
+		"host": "127.0.0.1",
 		"dbase": "exface",
 		"user": "root",
 		"password": "",
