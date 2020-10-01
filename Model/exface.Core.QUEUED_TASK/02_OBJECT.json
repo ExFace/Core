@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-09-22 13:06:11",
-            "MODIFIED_ON": "2020-09-30 15:21:20",
+            "MODIFIED_ON": "2020-10-01 15:20:41",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ea8f3c9ff2c5e68f3c8c04ba002958",
@@ -96,7 +96,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"Info\",\"widgets\":[{\"attribute_alias\":\"STATUS\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"TASK_ASSIGNED_ON\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"OWNER__USERNAME\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"PRODUCER\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"OBJECT_ALIAS\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"ACTION_ALIAS\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"TOPICS\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"QUEUE__NAME\",\"widget_type\":\"Text\"},{\"widget_type\":\"Text\",\"attribute_alias\":\"RESULT\"},{\"widget_type\":\"Text\",\"attribute_alias\":\"ERROR_LOGID\"},{\"widget_type\":\"Text\",\"attribute_alias\":\"ERROR_MESSAGE\"}]},{\"caption\":\"Task Uxon\",\"widgets\":[{\"hide_caption\":true,\"widget_type\":\"InputUxon\",\"height\":\"100%\",\"attribute_alias\":\"TASK_UXON\"}]}]}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"Info\",\"widgets\":[{\"attribute_alias\":\"STATUS\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"TASK_ASSIGNED_ON\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"OWNER__USERNAME\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"TOPICS\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"OBJECT_ALIAS\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"ACTION_ALIAS\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"PRODUCER\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"MESSAGE_ID\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"QUEUE__NAME\",\"widget_type\":\"Text\"},{\"widget_type\":\"Text\",\"attribute_alias\":\"RESULT\"},{\"widget_type\":\"Text\",\"attribute_alias\":\"ERROR_LOGID\"},{\"widget_type\":\"Text\",\"attribute_alias\":\"ERROR_MESSAGE\"}]},{\"caption\":\"Task Uxon\",\"widgets\":[{\"hide_caption\":true,\"widget_type\":\"InputUxon\",\"height\":\"100%\",\"attribute_alias\":\"TASK_UXON\"}]}]}]}",
             "ALIAS": "QUEUED_TASK",
             "DATA_ADDRESS": "exf_queued_task"
         }
