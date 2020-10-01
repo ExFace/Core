@@ -49,4 +49,13 @@ class OnMetaObjectLoadedEvent extends AbstractEvent implements MetaObjectEventIn
     {
         return $this->object->getWorkbench();
     }
+    
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.Model.OnMetaObjectLoaded';
+    }
 }

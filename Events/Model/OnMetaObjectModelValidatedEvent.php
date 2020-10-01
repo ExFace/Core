@@ -29,6 +29,15 @@ class OnMetaObjectModelValidatedEvent extends AbstractEvent implements MetaObjec
         $this->object = $object;
     }
     
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.Model.OnMetaObjectModelValidated';
+    }
+    
     public function getMessageList() : MessageList
     {
         return $this->messageList;

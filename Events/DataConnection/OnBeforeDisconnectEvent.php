@@ -11,4 +11,12 @@ namespace exface\Core\Events\DataConnection;
  */
 class OnBeforeDisconnectEvent extends AbstractDataConnectionEvent
 {
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.DataConnection.OnBeforeDisconnect';
+    }
 }

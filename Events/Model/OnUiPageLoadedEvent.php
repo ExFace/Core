@@ -31,6 +31,15 @@ class OnUiPageLoadedEvent extends AbstractEvent implements UiPageEventInterface
     }
     
     /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.Model.OnUiPageLoaded';
+    }
+    
+    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Events\UiPageEventInterface::getPage()

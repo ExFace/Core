@@ -64,4 +64,13 @@ class OnBeforeDefaultObjectEditorInitEvent extends AbstractEvent implements Meta
     {
         return $this->uxon;
     }
+    
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.Model.OnBeforeDefaultObjectEditorInit';
+    }
 }
