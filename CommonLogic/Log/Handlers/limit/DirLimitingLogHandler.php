@@ -60,7 +60,7 @@ class DirLimitingLogHandler extends LimitingWrapper
                 if ($mtime > $limitTime) {
                     continue;
                 }
-                unlink($logFile);
+                @unlink($logFile);
             }
         }
         restore_error_handler();
