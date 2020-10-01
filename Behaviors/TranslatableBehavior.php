@@ -547,7 +547,7 @@ class TranslatableBehavior extends AbstractBehavior
     {
         $object = $event->getObject();
         $uxon = $event->getDefaultEditorUxon();
-        $translated = $object->getApp()->getTranslator()->translateUxonProperties($uxon, 'Objects/' . $object->getAlias(), 'DEFAULT_EDITOR_UXON');
+        $translated = $object->getApp()->getTranslator()->translateUxonProperties($uxon, 'Objects/' . $object->getAliasWithNamespace(), 'DEFAULT_EDITOR_UXON');
         foreach ($translated->getPropertiesAll() as $prop => $value) {
             $uxon->setProperty($prop, $value);
         }
