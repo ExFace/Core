@@ -599,7 +599,7 @@
         },
         {
             "CREATED_ON": "2020-09-15 08:13:08",
-            "MODIFIED_ON": "2020-09-15 08:13:09",
+            "MODIFIED_ON": "2020-10-02 14:36:30",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eabf274a88c2e2bf27847beb4a5184",
@@ -621,7 +621,7 @@
             "TYPE": "D",
             "ALIAS": "ALIAS_WITH_NS",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "CONCAT((SELECT [#~alias#]_nsa.app_alias FROM exf_app [#~alias#]_nsa WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), '.', [#ALIAS#])",
+            "DATA_ADDRESS": "CONCAT((SELECT [#~alias#]_nsa.app_alias FROM exf_app [#~alias#]_nsa WHERE [#~alias#]_nsa.oid = [#~alias#].action_app_oid), '.', [#ALIAS#])",
             "OBJECT": "0x11e6e217f7f91457a3d9e4b318306b9a",
             "FORMATTER": "",
             "DISPLAYORDER": null,
