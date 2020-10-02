@@ -16,12 +16,12 @@ use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Factories\QueryBuilderFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Events\Widget\OnWidgetLinkedEvent;
 use exface\Core\Interfaces\Events\WidgetLinkEventInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
-use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
 
 /**
  * An InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
@@ -186,30 +186,6 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     }
 
     /**
-     * Returns the relation, this widget represents or FALSE if the widget stands for a direct attribute.
-     * This shortcut function is very handy because a InputComboTable often stands for a relation.
-     *
-     * @return MetaRelationInterface|NULL
-     */
-    public function getRelation() : ?MetaRelationInterface
-    {
-        if ($this->isRelation()) {
-            $relAlias = DataAggregation::stripAggregator($this->getAttributeAlias());
-            return $this->getMetaObject()->getRelation($relAlias);
-        } 
-        return null;
-    }
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function isRelation() : bool
-    {
-        return $this->isBoundToAttribute() === true && $this->getAttribute()->isRelation() === true;
-    }
-
-    /**
      * Returns the DataTable, that is used for autosuggesting in a InputComboTable or false if a DataTable cannot be created
      *
      * @return \exface\Core\Widgets\DataTable|boolean
@@ -252,6 +228,13 @@ class InputComboTable extends InputCombo implements iCanPreloadData
                 }
             } elseif ($this->isBoundToAttribute()) {
                 $table->addColumn($table->createColumnFromAttribute($this->getAttribute()));
+                $table->addColumn($table->createColumnFromUxon(new UxonObject([
+                    'attribute_alias' => DataAggregation::addAggregatorToAlias(
+                        $this->getAttributeAlias(), 
+                        new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::COUNT)
+                    ),
+                    'caption' => '=TRANSLATE("exface.Core", "WIDGET.INPUTCOMBOTABLE.COLUMN_NAME_USES")'
+                ])));
             }
         }
         
