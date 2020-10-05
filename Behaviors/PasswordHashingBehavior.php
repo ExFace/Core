@@ -21,6 +21,7 @@ class PasswordHashingBehavior extends AbstractBehavior
 
     public function register() : BehaviorInterface
     {
+        $this->getPasswordAttribute()->getDataType()->setSensitiveData(true);
         // Give the event handlers a hight priority to make sure, the passwords are encoded before
         // any other behaviors get their hands on the data!
         $this->getWorkbench()->eventManager()
