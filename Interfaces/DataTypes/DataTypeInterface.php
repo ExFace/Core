@@ -231,5 +231,23 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * @return string
      */
     public function getInputFormatHint() : string;
+    
+    /**
+     * Returns TRUE if the data type represents sensitive data (e.g. passwords, secrets, etc.)
+     * 
+     * This makes sure the sensitive data is not shown as plain text!
+     * 
+     * @return bool
+     */
+    public function isSensitiveData() : bool;
+    
+    /**
+     * Set if the data is sensitive, so it can be censored if needed, for example passwords 
+     * in data sheet exceptions.
+     *
+     * @param bool $trueOrFalse
+     * @return DataTypeInterface
+     */
+    public function setSensitiveData(bool $trueOrFalse) : DataTypeInterface;
 }
 ?>
