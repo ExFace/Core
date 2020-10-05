@@ -153,6 +153,17 @@ class User implements UserInterface
         }
         return $this->lastname;
     }
+    
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::getName()
+     */
+    public function getName() : string
+    {
+        return $this->getFirstName() . ' ' . $this->getLastName();
+    }
 
     /**
      * 

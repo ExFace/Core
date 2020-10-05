@@ -65,6 +65,13 @@ interface UserInterface extends UserImpersonationInterface, WorkbenchDependantIn
      * @return User
      */
     public function setLastName($lastname);
+    
+    /**
+     * Returns the full name (first and last name) of the user.
+     * 
+     * @return string
+     */
+    public function getName() : string;
 
     /**
      * Returns the locale of the user (e.g. 'en_US').
