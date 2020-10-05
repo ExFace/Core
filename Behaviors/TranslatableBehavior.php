@@ -34,6 +34,7 @@ use exface\Core\Events\Errors\OnErrorCodeLookupEvent;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\DataTypes\LocaleDataType;
+use exface\Core\Interfaces\Model\UiPageInterface;
 
 /**
  * Makes the data of certain attributes of the object translatable.
@@ -439,6 +440,10 @@ class TranslatableBehavior extends AbstractBehavior
         $menuItem->setName($translator->translate('NAME', null, null, $domain, $menuItem->getName()));
         $menuItem->setDescription($translator->translate('DESCRIPTION', null, null, $domain, $menuItem->getDescription()));
         $menuItem->setIntro($translator->translate('INTRO', null, null, $domain, $menuItem->getIntro()));
+        
+        if ($menuItem instanceof UiPageInterface) {
+            $menuItem->setContents($translator->translateUxonProperties(UxonObject::fromAnything($menuItem->getContents()), $domain, 'CONTENT'));
+        }
 
         return;
     }
