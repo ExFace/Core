@@ -305,7 +305,8 @@
     
     "TASK.QUEUE.STATUS_QUEUED": "Queued",
     "TASK.QUEUE.STATUS_INPROGRESS": "In Progress",
-    "TASK.QUEUE.STATUS_ERROR": "Error",
+    "TASK.QUEUE.STATUS_ERROR": "Error",    
+    "TASK.QUEUE.STATUS_RESOLVED": "Resolved",
     "TASK.QUEUE.STATUS_DONE": "Done",
     "TASK.QUEUE.TYPE_SYNC": "Sync",
     "TASK.QUEUE.TYPE_ASYNC": "Async",
