@@ -21,6 +21,7 @@ use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\ResultFactory;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Performs a task that is saved in a task queue.
@@ -41,27 +42,29 @@ class RunQueuedTasks extends AbstractAction
     {
         $inputData = $this->getInputDataSheet($task);
         if ($inputData->hasUidColumn(true) === false) {
-            throw new DataSheetColumnNotFoundError($inputData, "UID column not present in data sheet with meta obejt '{$inputData->getMetaObject()->getAliasWithNamespace()}'");
+            throw new DataSheetColumnNotFoundError($inputData, "UID column not present in data sheet with meta object '{$inputData->getMetaObject()->getAliasWithNamespace()}'");
         }
         $tasksDs = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
         $tasksDs->getColumns()->addFromExpression('QUEUE');
         $tasksDs->getColumns()->addFromExpression('TASK_UXON');
-        if ($inputData->getMetaObject()->getAliasWithNamespace() === 'exface.Core.QUEUED_TASK') {
-            $tasksDs->getFilters()->addConditionFromValueArray($inputData->getUidColumn()->getAttributeAlias(), $inputData->getUidColumn()->getValues());
-            
-        } elseif ($inputData->getMetaObject()->getAliasWithNamespace() === 'exface.Core.QUEUE') {            
-            $cdGroup = ConditionGroupFactory::createEmpty($this->getWorkbench(), EXF_LOGICAL_AND, $tasksDs->getMetaObject());
-            $cdGroup->addConditionFromValueArray('QUEUE', $inputData->getUidColumn()->getValues());
-            $cdGroup->addConditionFromString('STATUS', QueuedTaskStateDataType::STATUS_QUEUED);
-            $tasksDs->getFilters()->addNestedGroup($cdGroup);
+        if ($inputData->getMetaObject()->is('exface.Core.QUEUED_TASK')) {
+            $tasksDs->getFilters()->addConditionFromValueArray($inputData->getUidColumn()->getAttributeAlias(), $inputData->getUidColumn()->getValues());            
+        } elseif ($inputData->getMetaObject()->is('exface.Core.QUEUE')) {
+            $tasksDs->getFilters()->addConditionFromValueArray('QUEUE', $inputData->getUidColumn()->getValues());
+            $tasksDs->getFilters()->addConditionFromString('STATUS', QueuedTaskStateDataType::STATUS_QUEUED);
         } else {
             throw new ActionInputInvalidObjectError($this, "Meta object '{$inputData->getMetaObject()->getAliasWithNamespace()}' is not suitable for action '{$this->getAliasWithNamespace()}'");
         }
         $tasksDs->dataRead();
-        $tasksToRunData = $this->getTasksToRunData($tasksDs);
+        $queues = $this->getQueues($tasksDs);
+        $tasks = $this->getTasksToRun($tasksDs);
+        if (count($queues) !== count($tasks)) {
+            //TODO
+            throw new RuntimeException('An error occured in the implementation!');
+        }
         $results = [];
-        foreach ($tasksToRunData as $uid => $taskData) {
-            $event = $this->getWorkbench()->eventManager()->dispatch(new OnQueueRunEvent($taskData['queue'], $taskData['task'], $uid));
+        foreach ($tasks as $uid => $task) {
+            $event = $this->getWorkbench()->eventManager()->dispatch(new OnQueueRunEvent($queues[$uid], $task, $uid));
             $results[] = $event->getResult();
         }
         $count = count($results);
@@ -69,13 +72,12 @@ class RunQueuedTasks extends AbstractAction
     }
     
     /**
-     * Returns a 3dimensional array containing the saved task in a queue and the queue responsible for that task.
-     * The array looks like that: array[uid]= ['task' => TaskObject, 'queue' => QueueObject].
+     * Returns an array containing all queue objects for the given uids in the data sheet. Keys in this array are the uids.
      * 
      * @param DataSheetInterface $ds
      * @return array
      */
-    protected function getTasksToRunData(DataSheetInterface $ds) : array
+    protected function getQueues(DataSheetInterface $ds) : array
     {
         $queueIds = $ds->getColumnValues('QUEUE');
         $taskIds = $ds->getColumnValues('UID');
@@ -91,24 +93,37 @@ class RunQueuedTasks extends AbstractAction
         ]);
         $queueDs->getFilters()->addConditionFromValueArray('UID', $queueIds);
         $queueDs->dataRead();
-        $taskData = [];
+        $queues = [];
         foreach ($taskIds as $idx => $id) {
             $queueId = $queueIds[$idx];
             $row = $queueDs->getRowByColumnValue('UID', $queueId);
             $class = '\\' . ltrim($row['PROTOTYPE_CLASS'], "\\");
             $uxon = UxonObject::fromJson($row['CONFIG_UXON'] ?? '{}');
             $uxon->setProperty('allow_other_queues_to_handle_same_tasks', $row['ALLOW_MULTI_QUEUE_HANDLING']);
-            $queue = new $class($this->getWorkbench(), $row['UID'], $row['ALIAS'], $row['APP'], $row['NAME'], $uxon);
+            $queue = new $class($this->getWorkbench(), $row['UID'], $row['ALIAS'], $row['APP'], $row['NAME'], $uxon);            
+            $queues[$id] = $queue;         
+        }
+        return $queues;
+    }
+    
+    /**
+     * Returns an array containing all tasks to run as objects for the given uids in the data sheet. Keys in this array are the uids.
+     *
+     * @param DataSheetInterface $ds
+     * @return array
+     */
+    protected function getTasksToRun(DataSheetInterface $ds) : array
+    {
+        $taskIds = $ds->getColumnValues('UID');
+        $tasks = [];
+        foreach ($taskIds as $id) {
             $taskString = $ds->getRowByColumnValue('UID', $id)['TASK_UXON'];
             $taskUxon = UxonObject::fromJson($taskString);
             $taskToRun = TaskFactory::createEmpty($this->getWorkbench());
             $taskToRun->importUxonObject($taskUxon);
-            $taskData[$id] = [
-                'task' => $taskToRun,
-                'queue' => $queue
-            ];            
+            $tasks[$id] = $taskToRun;
         }
-        return $taskData;
+        return $tasks;
     }
     
     /**
