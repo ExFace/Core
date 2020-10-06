@@ -457,7 +457,11 @@ class GenericTask implements TaskInterface
                 case 'input_data': $this->setInputData(DataSheetFactory::createFromUxon($this->getWorkbench(), $val)); break;
                 case 'prefill_data': $this->setPrefillData(DataSheetFactory::createFromUxon($this->getWorkbench(), $val)); break;
                 case 'action': $this->setActionSelector($val); break;
-                case 'parameters': $this->setParameters($val); break;
+                case 'parameters': 
+                    foreach ($val->getPropertiesAll() as $prop => $value) {
+                        $this->setParameter($prop, $value); 
+                    }
+                    break;
             }
         }
         return;

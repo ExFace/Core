@@ -308,9 +308,9 @@
     "SECURITY.POLICIES.TARGET.META_OBJECT": "Objekt",
     "SECURITY.POLICIES.TARGET.FACADE": "Fassade",
     
-    "TASK.QUEUE.STATUS_QUEUED": "In Warteschlagen",
-    "TASK.QUEUE.STATUS_INPROGRESS": "In Bearbeitung",
-    "TASK.QUEUE.STATUS_ERROR": "Fehler",
+    "TASK.QUEUE.STATUS_QUEUED": "Wartend",
+    "TASK.QUEUE.STATUS_INPROGRESS": "Verarbeitend",
+    "TASK.QUEUE.STATUS_ERROR": "Fehlerhaft",
     "TASK.QUEUE.STATUS_DONE": "Erledigt",
     "TASK.QUEUE.TYPE_SYNC": "Synchron",
     "TASK.QUEUE.TYPE_ASYNC": "Asynchron",    
