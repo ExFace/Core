@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-09-30 09:19:33",
     "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2020-10-06 15:05:58",
+    "modified_on": "2020-10-06 16:20:24",
     "contents": {
         "widget_type": "DataTable",
         "id": "TaskQueue_table",
@@ -57,14 +57,6 @@
                 "action_alias": "exface.Core.DeleteObject"
             },
             {
-                "disable_condition": {
-                    "widget_link": "TaskQueue_table!STATUS",
-                    "comparator": "!==",
-                    "value": "10"
-                },
-                "action_alias": "exface.Core.RunQueuedTasks"
-            },
-            {
                 "action": {
                     "alias": "exface.Core.CopyData",
                     "input_mappers": [
@@ -94,6 +86,36 @@
                                 {
                                     "from": "\"\"",
                                     "to": "ERROR_LOGID"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            {
+                "action_alias": "exface.Core.RunQueuedTasks",
+                "disable_condition": {
+                    "widget_link": "TaskQueue_table!STATUS",
+                    "comparator": "!==",
+                    "value": "10"
+                }
+            },
+            {
+                "caption": "Mark as resolved",
+                "disable_condition": {
+                    "widget_link": "TaskQueue_table!STATUS",
+                    "comparator": "!==",
+                    "value": "70"
+                },
+                "action": {
+                    "alias": "exface.Core.UpdateData",
+                    "input_mappers": [
+                        {
+                            "from_object_alias": "exface.Core.QUEUED_TASK",
+                            "column_to_column_mappings": [
+                                {
+                                    "from": 90,
+                                    "to": "STATUS"
                                 }
                             ]
                         }

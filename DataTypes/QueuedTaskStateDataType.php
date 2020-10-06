@@ -17,6 +17,7 @@ class QueuedTaskStateDataType extends IntegerDataType implements EnumDataTypeInt
     CONST STATUS_QUEUED = "10";
     CONST STATUS_INPROGRESS = "50";
     CONST STATUS_ERROR = "70";
+    CONST STATUS_RESOLVED = "90";
     CONST STATUS_DONE = "99";
     
     /**
