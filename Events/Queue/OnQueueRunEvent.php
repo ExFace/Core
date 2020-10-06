@@ -6,6 +6,8 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\TaskQueueInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Events\QueueRunEventInterface;
+use exface\Core\Interfaces\Events\TaskEventInterface;
 
 /**
  * Event fired when a task in a queue should be performed.
@@ -15,7 +17,7 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
  * @author Andrej Kabachnik
  *
  */
-class OnQueueRunEvent extends AbstractEvent /* TODO implements ErrorEventInterface*/
+class OnQueueRunEvent extends AbstractEvent implements QueueRunEventInterface, TaskEventInterface
 {
     
     private $queue = null;
@@ -62,7 +64,12 @@ class OnQueueRunEvent extends AbstractEvent /* TODO implements ErrorEventInterfa
         $this->result = $result;
     }
     
-    public function getResult() : ?ResultInterface
+    public function hasResult() : bool
+    {
+        return $this->result !== null;
+    }
+    
+    public function getResult() : ResultInterface
     {
         return $this->result;
     }
