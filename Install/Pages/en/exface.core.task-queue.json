@@ -11,9 +11,10 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-09-30 09:19:33",
     "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2020-10-01 15:22:39",
+    "modified_on": "2020-10-06 15:05:58",
     "contents": {
         "widget_type": "DataTable",
+        "id": "TaskQueue_table",
         "object_alias": "exface.Core.QUEUED_TASK",
         "filters": [
             {
@@ -51,9 +52,63 @@
         "buttons": [
             {
                 "action_alias": "exface.Core.ShowObjectInfoDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
+            },
+            {
+                "disable_condition": {
+                    "widget_link": "TaskQueue_table!STATUS",
+                    "comparator": "!==",
+                    "value": "10"
+                },
+                "action_alias": "exface.Core.RunQueuedTasks"
+            },
+            {
+                "action": {
+                    "alias": "exface.Core.CopyData",
+                    "input_mappers": [
+                        {
+                            "from_object_alias": "exface.Core.QUEUED_TASK",
+                            "column_to_column_mappings": [
+                                {
+                                    "from": "UID",
+                                    "to": "PARENT_ITEM_OID"
+                                },
+                                {
+                                    "from": 10,
+                                    "to": "STATUS"
+                                },
+                                {
+                                    "from": "=NOW()",
+                                    "to": "TASK_ASSIGNED_ON"
+                                },
+                                {
+                                    "from": "\"\"",
+                                    "to": "RESULT"
+                                },
+                                {
+                                    "from": "\"\"",
+                                    "to": "ERROR_MESSAGE"
+                                },
+                                {
+                                    "from": "\"\"",
+                                    "to": "ERROR_LOGID"
+                                }
+                            ]
+                        }
+                    ]
+                }
             }
         ],
         "columns": [
+            {
+                "hidden": true,
+                "attribute_alias": "TASK_UXON"
+            },
+            {
+                "attribute_alias": "UID"
+            },
             {
                 "attribute_alias": "TASK_ASSIGNED_ON"
             },
@@ -79,6 +134,7 @@
                 "attribute_alias": "ERROR_LOGID"
             },
             {
+                "hidden": true,
                 "attribute_alias": "ERROR_MESSAGE"
             },
             {
@@ -89,6 +145,9 @@
             },
             {
                 "attribute_alias": "QUEUE__NAME"
+            },
+            {
+                "attribute_alias": "PARENT_ITEM_OID"
             }
         ]
     }

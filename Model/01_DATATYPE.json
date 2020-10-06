@@ -774,21 +774,6 @@
             "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\"}",
             "ALIAS": "QueuedTaskState",
             "SHORT_DESCRIPTION": ""
-        },
-        {
-            "CREATED_ON": "2020-09-28 13:11:52",
-            "MODIFIED_ON": "2020-09-28 13:11:52",
-            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-            "UID": "0x11eb902f696975f8902f8c04ba002958",
-            "APP": "0x31000000000000000000000000000000",
-            "NAME": "Task Queue Type",
-            "PROTOTYPE": "exface\/Core\/DataTypes\/TaskQueueTypeDataType.php",
-            "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\"}",
-            "ALIAS": "TaskQueueType",
-            "SHORT_DESCRIPTION": ""
         }
     ],
     "totals_rows": [],

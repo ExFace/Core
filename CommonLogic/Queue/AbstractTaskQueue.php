@@ -109,6 +109,7 @@ abstract class AbstractTaskQueue implements TaskQueueInterface, WorkbenchDependa
         } else {
             $assignedOn = DateTimeDataType::now();
         }
+        $dataSheet->getColumns()->addFromSystemAttributes();
         $dataSheet->addRow([
             'TASK_UXON' => $task->exportUxonObject()->toJson(),
             'STATUS' => QueuedTaskStateDataType::STATUS_QUEUED,
