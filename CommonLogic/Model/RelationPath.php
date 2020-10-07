@@ -260,6 +260,10 @@ class RelationPath implements MetaRelationPathInterface
      */
     public static function relationPathReverse($relation_path, MetaObjectInterface $meta_object)
     {
+        if ($relation_path === '') {
+            return '';
+        }
+        
         $output = '';
         // Parse the relation path to get an array of relation aliases
         $relations = self::relationPathParse($relation_path);
