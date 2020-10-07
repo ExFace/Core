@@ -45,6 +45,16 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
                 'UIDFLAG' => $col['Key'] === 'PRI' ? 1 : 0
             ];
             
+            if (($def = $col['Default']) !== null) {
+                if ($def === '' && $row['REQUIREDFLAG'] === 1) {
+                    $row['REQUIREDFLAG'] = 0;
+                }
+                
+                if ($def !== '') {
+                    $row['DEFAULT_VALUE'] = is_numeric($def) ? $def : "'$def'";
+                }
+            }
+            
             $addrProps = new UxonObject();
             if (stripos($col['Type'], 'binary') !== false || stripos($col['Type'], 'blob') !== false) {
                $addrProps->setProperty('SQL_DATA_TYPE', 'binary');
