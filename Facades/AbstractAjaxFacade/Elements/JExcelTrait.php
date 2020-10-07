@@ -647,7 +647,7 @@ JS;
             if ($widget->hasParent() && $action->getMetaObject()->is($widget->getParent()->getMetaObject()) && $relPath = $widget->getObjectRelationPathFromParent()) {
                 $relAlias = $relPath->toString();
             } elseif ($relPath = $action->getMetaObject()->findRelationPath($widget->getMetaObject())) {
-                $relAlias = $relPath->getAlias();
+                $relAlias = $relPath->toString();
             }
             
             if ($relAlias === null || $relAlias === '') {
