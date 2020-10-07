@@ -651,7 +651,7 @@ JS;
             }
             
             if ($relAlias === null || $relAlias === '') {
-                throw new WidgetConfigurationError($widget, 'Cannot use data from widget "' . $widget->getId() . '" with action on object "' . $action->getMetaObject()->getAliasWithNamespace() . '": no relation can be found from widget object to action object');
+                throw new WidgetConfigurationError($widget, 'Cannot use data from widget "' . $widget->getId() . '" with action on object "' . $action->getMetaObject()->getAliasWithNamespace() . '": no relation can be found from widget object to action object', '7CYA39T');
             }
             
             $configurator_element = $this->getFacade()->getElement($this->getWidget()->getConfiguratorWidget());
