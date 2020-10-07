@@ -241,27 +241,23 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
 
     /**
      * Returns the relation path from the object of the parent widget to the object of this widget.
-     * If both widgets are based on the
-     * same object or no valid path can be found, an empty path will be returned.
+     * 
+     * If both widgets are based on the same object or no valid path can be found, 
+     * an empty path will be returned.
      *
      * @return MetaRelationPathInterface
      */
-    public function getObjectRelationPathFromParent();
-
-    /**
-     *
-     * @param string $string            
-     */
-    public function setObjectRelationPathFromParent($string);
+    public function getObjectRelationPathFromParent() : ?MetaRelationPathInterface;
 
     /**
      * Returns the relation path from the object of this widget to the object of its parent widget.
-     * If both widgets are based on the
-     * same object or no valid path can be found, an empty path will be returned.
+     * 
+     * Returns an empty relation path if both widgets are based on the same object
+     * Returns NULL if no valid path can be found.
      *
-     * @return MetaRelationPathInterface
+     * @return MetaRelationPathInterface|NULL
      */
-    public function getObjectRelationPathToParent();
+    public function getObjectRelationPathToParent() : ?MetaRelationPathInterface;
 
     /**
      *
@@ -272,9 +268,9 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
     /**
      * Returns TRUE if the meta object of this widget was not set explicitly but inherited from it's parent and FALSE otherwise.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isObjectInheritedFromParent();
+    public function isObjectInheritedFromParent() : bool;
 
     /**
      * Returns the parent widget
