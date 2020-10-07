@@ -46,7 +46,7 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
             ];
             
             if (($def = $col['Default']) !== null) {
-                if ($def === '' && $row['REQUIREDFLAG'] === 1) {
+                if ($row['REQUIREDFLAG'] === 1) {
                     $row['REQUIREDFLAG'] = 0;
                 }
                 
