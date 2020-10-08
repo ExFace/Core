@@ -435,4 +435,19 @@ class RelationPath implements MetaRelationPathInterface
     {
         return $this->getStartObject()->getAttribute(self::relationPathAdd($this->toString(), $attribute_alias));
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::containsReverseRelations()
+     */
+    public function containsReverseRelations() : bool
+    {
+        foreach ($this->getRelations() as $rel) {
+            if ($rel->isReverseRelation()) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

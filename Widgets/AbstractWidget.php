@@ -8,7 +8,6 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\WidgetDimensionFactory;
 use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
@@ -1350,5 +1349,30 @@ abstract class AbstractWidget implements WidgetInterface
     public function hasFacadeOptions(FacadeInterface $facade) : bool
     {
         return $this->getFacadeOptions($facade) !== null;
+    }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @return MetaRelationPathInterface|NULL
+     */
+    public function findRelationPathFromObject(MetaObjectInterface $object) : ?MetaRelationPathInterface
+    {
+        if ($object->is($this->getMetaObject())) {
+            return RelationPathFactory::createForObject($object);
+        }
+        
+        // If the action is based on the same object as the widget's parent, use the widget's
+        // logic to find the relation to the parent. Otherwise try to find a relation to the
+        // action's object and throw an error if this fails.
+        if ($this->hasParent() && $object->is($this->getParent()->getMetaObject()) && $relPath = $this->getObjectRelationPathFromParent()) {
+            return $relPath;
+        }
+        
+        if ($relPath = $object->findRelationPath($this->getMetaObject())) {
+            return $relPath;
+        }
+        
+        return null;
     }
 }
