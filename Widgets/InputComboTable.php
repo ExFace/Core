@@ -22,6 +22,8 @@ use exface\Core\Interfaces\Events\WidgetLinkEventInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\Factories\RelationPathFactory;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * An InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
@@ -536,12 +538,21 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         // contain selectors (UIDs) of that object. This means, we need to look for data columns showing relations
         // and see if their related object is the same as the related object of the relation represented by the combo.
         foreach ($data_sheet->getColumns()->getAll() as $column) {
-            if ($column->getAttribute() && $column->getAttribute()->isRelation()) {
-                if ($column->getAttribute()->getRelation()->getRightObject()->is($this->getRelation()->getRightObject())) {
+            if (($colAttr = $column->getAttribute()) && $colAttr->isRelation()) {
+                $colRel = $colAttr->getRelation();
+                if ($colRel->getRightObject()->is($this->getRelation()->getRightObject())) {
                     $this->setValuesFromArray($column->getValues(false));
+                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', DataPointerFactory::createFromColumn($column)));
                     $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'values', DataPointerFactory::createFromColumn($column)));
                     return;
                 }
+                /* TODO add other options to prefill from related data
+                if ($colRel->getLeftKeyAttribute()->isExactly($this->getAttribute())) {
+                    $this->setValuesFromArray($column->getValues(false));
+                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', DataPointerFactory::createFromColumn($column)));
+                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'values', DataPointerFactory::createFromColumn($column)));
+                    return;
+                }*/
             }
         }
     }
@@ -565,7 +576,8 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
             $this->doPrefillWithWidgetObject($data_sheet);
         } else {
-            // If the prefill data was loaded for another object, there are still multiple possibilities to prefill
+            // If the prefill data was loaded for another object, there are still multiple 
+            // possibilities to prefill
             if ($data_sheet->getMetaObject()->is($this->getTableObject())) {
                 $this->doPrefillWithOptionsObject($data_sheet);
                 return;
@@ -596,7 +608,9 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             return $data_sheet;
         }
         
-        if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
+        $sheetObj = $data_sheet->getMetaObject();
+        $widgetObj = $this->getMetaObject();
+        if ($sheetObj->is($widgetObj)) {
             $data_sheet->getColumns()->addFromExpression($this->getAttributeAlias());
             
             // Be carefull with the value text. If the combo stands for a relation, it can be retrieved from the prefill data,
@@ -611,27 +625,56 @@ class InputComboTable extends InputCombo implements iCanPreloadData
                 // is generally optional (see above), it is a good idea to check, if the text column
                 // can be read with the same query, as the rest of the prefill da and, if not, exclude
                 // it from the prefill.
-                $sheetObj = $data_sheet->getMetaObject();
+                $sheetObj = $sheetObj;
                 if ($sheetObj->hasAttribute($text_column_expr)) {
                     $sheetQuery = QueryBuilderFactory::createForObject($sheetObj);
                     if (! $sheetQuery->canRead($text_column_expr)) {
                         unset($text_column_expr);
                     }
                 }
-            } elseif ($this->getMetaObject()->isExactly($this->getTable()->getMetaObject())) {
+            } elseif ($widgetObj->isExactly($this->getTable()->getMetaObject())) {
                 $text_column_expr = $this->getTextColumn()->getExpression()->toString();
             } 
             
             if ($text_column_expr) {
                 $data_sheet->getColumns()->addFromExpression($text_column_expr);
             }
-        } elseif ($this->isRelation() && $this->getRelation()->getRightObject()->is($data_sheet->getMetaObject())) {
+        } elseif ($this->isRelation() && $this->getRelation()->getRightObject()->is($sheetObj)) {
             $data_sheet->getColumns()->addFromAttribute($this->getRelation()->getRightKeyAttribute());
             foreach ($this->getTable()->getColumns() as $col) {
                 $data_sheet->getColumns()->addFromExpression($col->getExpression(), $col->getDataColumnName());
             }
         } else {
-            // TODO what if the prefill object is not the one at the end of the current relation?
+            // If the prefill object is not the same as the widget object, try to find a relation
+            // path from prefill to widget. If found, we can add the required column by prefixing
+            // them with this relation. If the path contains reverse relations, the data will need
+            // to be aggregated!
+            if ($this->isBoundToAttribute() && $relPath = $this->findRelationPathFromObject($sheetObj)) {
+                $isRevRel = $relPath->containsReverseRelations();
+                $keyPrefillAlias = RelationPath::relationPathAdd($relPath->toString(), $this->getAttributeAlias());
+                if ($isRevRel) {
+                    $keyPrefillAlias = DataAggregation::addAggregatorToAlias(
+                        $keyPrefillAlias,
+                        new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::LIST_DISTINCT, [$this->getAttribute()->getValueListDelimiter()])
+                    );
+                }
+                if (! $data_sheet->getColumns()->getByExpression($keyPrefillAlias)) {
+                    $data_sheet->getColumns()->addFromExpression($keyPrefillAlias);
+                }
+                
+                if ($this->isRelation()) {
+                    $textPrefillAlias = RelationPath::relationPathAdd(DataAggregation::stripAggregator($keyPrefillAlias), $this->getTextAttributeAlias());
+                    if ($isRevRel) {
+                        $textPrefillAlias = DataAggregation::addAggregatorToAlias(
+                            $textPrefillAlias,
+                            new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::LIST_DISTINCT, [$this->getTextAttribute()->getValueListDelimiter()])
+                        );
+                    }
+                    if (! $data_sheet->getColumns()->getByExpression($textPrefillAlias)) {
+                        $data_sheet->getColumns()->addFromExpression($textPrefillAlias);
+                    }
+                }
+            }
         }
         
         return $data_sheet;
@@ -975,5 +1018,27 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         }
         
         $this->incomingLinks[] = $event->getWidgetLink();
+    }
+    
+    public function findRelationPathFromObject(MetaObjectInterface $object) : ?MetaRelationPathInterface
+    {
+        // If the object is the one at the end of the relation represented by the combo,
+        // simply return the reverse path
+        if ($this->isRelation() && $object->is($this->getMetaObject()->getRelatedObject($this->getAttributeAlias()))) {
+            return RelationPathFactory::createFromString($this->getMetaObject(), $this->getAttributeAlias())->reverse();
+        }
+        
+        // If the action is based on the same object as the widget's parent, use the widget's
+        // logic to find the relation to the parent. Otherwise try to find a relation to the
+        // action's object and throw an error if this fails.
+        if ($this->hasParent() && $object->is($this->getParent()->getMetaObject()) && $relPath = $this->getObjectRelationPathFromParent()) {
+            return $relPath;
+        }
+        
+        if ($relPath = $object->findRelationPath($this->getMetaObject())) {
+            return $relPath;
+        }
+        
+        return null;
     }
 }

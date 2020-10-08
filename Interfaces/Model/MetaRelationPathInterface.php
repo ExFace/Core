@@ -159,5 +159,11 @@ interface MetaRelationPathInterface extends \IteratorAggregate, iCanBeCopied
      * @return MetaAttributeInterface
      */
     public function getAttributeOfEndObject($attribute_alias);
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function containsReverseRelations() : bool;
 }
 

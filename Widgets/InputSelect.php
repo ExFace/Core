@@ -19,6 +19,7 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Interfaces\Widgets\iHaveValues;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * A dropdown menu to select from.
@@ -538,6 +539,10 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function setValuesFromArray(array $values) : iHaveValues
     {
+        if (empty($values)) {
+            return $this;
+        }
+        
         if ($this->getMultiSelect()) {
             $this->setValue(implode($this->getMultiSelectValueDelimiter(), $values));
         } else {

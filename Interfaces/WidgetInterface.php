@@ -436,5 +436,16 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
      * @return bool
      */
     public function hasFacadeOptions(FacadeInterface $facade) : bool;
+
+    /**
+     * Checks if the given meta object has a relation to the object of this widget and returns
+     * the corresponding relation path or NULL if no relation can be found.
+     * 
+     * If the two objects match, an empty relation path will be returned.
+     * 
+     * @param MetaObjectInterface $object
+     * @return MetaRelationPathInterface|NULL
+     */
+    public function findRelationPathFromObject(MetaObjectInterface $object) : ?MetaRelationPathInterface;
 }
 ?>
