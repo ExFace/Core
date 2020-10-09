@@ -98,14 +98,13 @@ class ShowLookupDialog extends ShowDialog
         $btnUxon = new UxonObject([
             'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.SHOWLOOKUPDIALOG.SAVE_BUTTON"),
             'visibility' => WidgetVisibilityDataType::PROMOTED,
-            'input_widget_id' => $data_table->getId(),
             'icon' => Icons::CHECK,
             'action' => [
                 'alias' => 'exface.Core.SendToWidget',
                 'target_widget_id' => $this->getTargetWidgetId()
             ]
         ]);
-        $dialog->addButton($dialog->createButton($btnUxon));
+        $dialog->addButton($dialog->createButton($btnUxon)->setInputWidget($data_table));
         
         /* TODO how to bind closing the dialog to a single click on a row for single-select lookups?
          * A table button will not close the dialog and a dialog-button cannot be bound to clicks on
