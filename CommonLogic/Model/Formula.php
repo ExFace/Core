@@ -124,7 +124,14 @@ abstract class Formula implements FormulaInterface
                 'run'
             ), $args);
         } catch (\Throwable $e) {
-            throw new FormulaError('Cannot evaluate formula "' . $this->selector->toString() . '" for row ' . $row_number . '.', null, $e);
+            $errorText = 'Cannot evaluate formula `' . $this->__toString() . '`';
+            if ($data_sheet === null) {
+                $errorText .= ' statically!';
+            } else {
+                $onRow = $row_number !== null ? ' on row ' . $row_number : '';
+                $errorText .= ' for data of ' . $data_sheet->getMetaObject()->getAliasWithNamespace() . $onRow . '!';
+            }
+            throw new FormulaError($errorText, null, $e);
         }
     }
 
@@ -244,6 +251,11 @@ abstract class Formula implements FormulaInterface
         }
         
         return true;
+    }
+    
+    public function __toString()
+    {
+        return $this->getSelector()->toString() . '(' . implode(', ', $this->getArguments()) . ')';
     }
 }
 ?>
