@@ -5,6 +5,8 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iHaveValues;
+use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 /**
  * 
@@ -81,7 +83,7 @@ trait EditableTableTrait
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::hasValue()
      */
-    public function hasValue()
+    public function hasValue() : bool
     {
         return is_null($this->getValue()) ? false : true;
     }
@@ -161,5 +163,45 @@ trait EditableTableTrait
     public function isReadonly() : bool
     {
         return $this->isEditable() === false;
+    }
+    
+    public function setValue($expressionOrString, bool $parseExpression = true)
+    {
+        // TODO
+        return $this;
+    }
+    
+    /**
+     * TODO Move to iHaveValue-Widgets or trait
+     *
+     * @return string|NULL
+     */
+    public function getValue()
+    {
+        // TODO
+        return null;
+    }
+    
+    /**
+     *
+     * @return ExpressionInterface|NULL
+     */
+    public function getValueExpression() : ?ExpressionInterface
+    {
+        return $this->value;
+    }
+    
+    /**
+     *
+     * @return WidgetLinkInterface|NULL
+     */
+    public function getValueWidgetLink() : ?WidgetLinkInterface
+    {
+        $link = null;
+        $expr = $this->getValueExpression();
+        if ($expr && $expr->isReference()) {
+            $link = $expr->getWidgetLink($this);
+        }
+        return $link;
     }
 }

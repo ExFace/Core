@@ -156,12 +156,20 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
     public function getWidgetLink(WidgetInterface $sourceWidget) : WidgetLinkInterface;
     
     /**
-     * Returns true if a string contains a formula, false otherwise.
+     * Returns true if a string seems to contain a formula and false otherwise.
      *
      * @param mixed $value
      * @return boolean
      */
     public static function detectFormula($value) : bool;
+    
+    /**
+     * Returns true if a string seems to be a reference and false otherwise.
+     * 
+     * @param mixed $value
+     * @return bool
+     */
+    public static function detectReference($value) : bool;
     
     /**
      * Returns true if a value is a quoted string (is enclosed in " or ') and false otherwise.

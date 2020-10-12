@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\WidgetInterface;
@@ -22,7 +21,6 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
-use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Events\Widget\OnBeforePrefillEvent;
 use exface\Core\Events\Widget\OnPrefillEvent;
 use exface\Core\Interfaces\Events\EventInterface;
@@ -68,8 +66,6 @@ abstract class AbstractWidget implements WidgetInterface
     private $relation_path_to_parent = null;
 
     private $object_qualified_alias = null;
-
-    private $value = null;
 
     private $disabled = NULL;
 
@@ -205,9 +201,6 @@ abstract class AbstractWidget implements WidgetInterface
         
         if ($this->hint !== null) {
             $uxon->setProperty('hint', $this->getHint());
-        }
-        if ($this->getValue() !== null) {
-            $uxon->setProperty('value', $this->getValue());
         }
         if ($this->getVisibility() !== null) {
             $uxon->setProperty('visibility', $this->getVisibility());
@@ -588,82 +581,6 @@ abstract class AbstractWidget implements WidgetInterface
     function getWidgetType()
     {
         return $this->widget_type;
-    }
-
-    /**
-     * TODO Move to iHaveValue-Widgets or trait
-     *
-     * @return string|NULL
-     */
-    public function getValue()
-    {
-        if ($this->getValueExpression()) {
-            return $this->getValueExpression()->toString();
-        }
-        return null;
-    }
-
-    /**
-     * TODO Move to iHaveValue-Widgets or trait
-     *
-     * @return ExpressionInterface|NULL
-     */
-    public function getValueExpression()
-    {
-        return $this->value;
-    }
-
-    /**
-     *
-     * @return WidgetLinkInterface|NULL
-     */
-    public function getValueWidgetLink()
-    {
-        $link = null;
-        $expr = $this->getValueExpression();
-        if ($expr && $expr->isReference()) {
-            $link = $expr->getWidgetLink($this);
-        }
-        return $link;
-    }
-
-    /**
-     * Explicitly sets the value of the widget
-     *
-     * @uxon-property value
-     * @uxon-type string|model:formula
-     *
-     * TODO Move to iHaveValue-Widgets or trait
-     *
-     * @param ExpressionInterface|string $expression_or_string            
-     */
-    public function setValue($expression_or_string)
-    {
-        if ($expression_or_string instanceof expression) {
-            $this->value = $expression_or_string;
-        } else {
-            // FIXME #expression-syntax Handling of value-expressions seems really buggy. On the one hand, 
-            // passing a string value should result in the widget showing this exact value - no matter if
-            // it included quotes or not. On the other hand, a non-quoted string would result in an Expression
-            // of UNKNOWN type, which is not static, thus widgets would not show anything unless prefilled. If
-            // we add quotes to signal, that this is a static string, they will show up in the widget even
-            // if the user did not want them. For example, many doPrefill() methods would just result in
-            // setValue($prefillValue) - no quotes, no checks for data type, althoug this clearly is a static
-            // value. Finally, if the user sets the value in UXON, the general expression syntax suggests to use 
-            // quotes for strings, but these would show up in the UI. 
-            // Here is a temporary solution for the problem: tell the ExpressionFactory to treat unquoted strings
-            // as strings in this case explicitly.
-            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $expression_or_string, $this->getMetaObject(), true);
-            $this->value = $expr;
-            // If the value is a widget link, call the getter to make sure the link is instantiated
-            // thus firing OnWidgetLinkedEvent. If not done here, the event will be only fired
-            // when some other code calls $expr->getWidgetLink(), which may happen too late for
-            // possible event handlers!
-            if ($expr->isReference()) {
-                $this->getValueWidgetLink();
-            }
-        }
-        return $this;
     }
 
     /**
