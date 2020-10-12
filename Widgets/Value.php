@@ -418,12 +418,19 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function getValueWithDefaults()
     {
-        if ($this->getValueExpression() && $this->getValueExpression()->isReference()) {
-            $value = '';
-        } else {
-            $value = $this->getValue();
+        $expr = $this->getValueExpression();
+        
+        if ($expr !== null && ! $expr->isEmpty()) {
+            switch (true) {
+                case $expr->isReference():
+                case $expr->isFormula() && ! $expr->isStatic():
+                    return '';
+                case $expr->isFormula() && $expr->isStatic():
+                    return $expr->evaluate();
+            }
         }
-        return $value;
+        
+        return $this->getValue();
     }
     
     /**
