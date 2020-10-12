@@ -462,7 +462,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         // this widgets attribute_alias, simply look for all the required attributes in the prefill data.
         if ($col = $data_sheet->getColumns()->getByExpression($this->getAttributeAlias())) {
             $valuePointer = DataPointerFactory::createFromColumn($col, 0);
-            $this->setValue($valuePointer->getValue());
+            $this->setValue($valuePointer->getValue(), false);
             $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $valuePointer));
         }
         
@@ -508,7 +508,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             if ($this->getMultiSelect() && is_array($value)) {
                 $value = $col->aggregate(AggregatorFunctionsDataType::LIST_ALL);
             }
-            $this->setValue($value);
+            $this->setValue($value, false);
             $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $pointer));
         }
         if ($col = $data_sheet->getColumns()->getByAttribute($this->getTextAttribute())) {

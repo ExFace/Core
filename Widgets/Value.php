@@ -22,6 +22,8 @@ use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Widgets\Traits\AttributeCaptionTrait;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\DataTypes\EncryptedDataType;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 
 /**
  * The Value widget simply shows a raw (unformatted) value.
@@ -54,6 +56,8 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     private $empty_text = null;
     
     private $data_column_name = null;
+    
+    private $value = null;
     
     /**
      *
@@ -273,7 +277,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
             // Ignore empty values because if value is a live-references as the ref would get overwritten 
             // even without a meaningfull prefill value
             if ($this->isBoundByReference() === false || ($value !== null && $value != '')) {
-                $this->setValue($value);
+                $this->setValue($value, false);
                 $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $valuePointer));
             }
         }
@@ -402,6 +406,10 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
+        
+        if ($this->getValue() !== null) {
+            $uxon->setProperty('value', $this->getValue());
+        }
         if ($this->isBoundToAttribute()) {
             $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
         }
@@ -508,7 +516,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::hasValue()
      */
-    public function hasValue()
+    public function hasValue() : bool
     {
         return is_null($this->getValue()) ? false : true;
     }
@@ -527,12 +535,91 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         return $this->getParent() instanceof DataColumn;
     } 
     
-    public function setValue($expression_or_string)
+    /**
+     * Explicitly sets the value of the widget.
+     *
+     * @uxon-property value
+     * @uxon-type metamodel:expression
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::setValue()
+     */
+    public function setValue($expressionOrString, bool $parseExpression = true)
     {
-        if (is_string($expression_or_string) && $this->getValueDataType() instanceof EncryptedDataType && $this->getValueDataType()->isValueEncrypted($expression_or_string)) {
-            $expression_or_string = EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $expression_or_string, $this->getValueDataType()->getEncryptionPrefix());
+        if (is_string($expressionOrString) && $this->getValueDataType() instanceof EncryptedDataType && $this->getValueDataType()->isValueEncrypted($expressionOrString)) {
+            $expressionOrString = EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $expressionOrString, $this->getValueDataType()->getEncryptionPrefix());
         }
-        return parent::setValue($expression_or_string);
+        
+        if ($expressionOrString instanceof ExpressionInterface) {
+            $this->value = $expressionOrString;
+        } else {
+            // FIXME #expression-syntax Handling of value-expressions seems really buggy. On the one hand,
+            // passing a string value should result in the widget showing this exact value - no matter if
+            // it included quotes or not. On the other hand, a non-quoted string would result in an Expression
+            // of UNKNOWN type, which is not static, thus widgets would not show anything unless prefilled. If
+            // we add quotes to signal, that this is a static string, they will show up in the widget even
+            // if the user did not want them. For example, many doPrefill() methods would just result in
+            // setValue($prefillValue) - no quotes, no checks for data type, althoug this clearly is a static
+            // value. Finally, if the user sets the value in UXON, the general expression syntax suggests to use
+            // quotes for strings, but these would show up in the UI.
+            // Here is a temporary solution for the problem: tell the ExpressionFactory to treat unquoted strings
+            // as strings in this case explicitly.
+            $couldBeCalculation = substr($expressionOrString, 0, 1) === '=' && substr($expressionOrString, 1, 1) !== '=';
+            
+            if ($parseExpression === true || $couldBeCalculation === false) {
+                $expr = ExpressionFactory::createFromString($this->getWorkbench(), $expressionOrString, $this->getMetaObject(), true);
+            } else {
+                $expr = ExpressionFactory::createFromString($this->getWorkbench(), "'" . str_replace("'", "\'", $expressionOrString) . "'", $this->getMetaObject(), true);
+            }
+            
+            $this->value = $expr;
+            // If the value is a widget link, call the getter to make sure the link is instantiated
+            // thus firing OnWidgetLinkedEvent. If not done here, the event will be only fired
+            // when some other code calls $expr->getWidgetLink(), which may happen too late for
+            // possible event handlers!
+            if ($expr->isReference()) {
+                $this->getValueWidgetLink();
+            }
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValue()
+     */
+    public function getValue()
+    {
+        if ($this->getValueExpression()) {
+            return $this->getValueExpression()->toString();
+        }
+        return null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueExpression()
+     */
+    public function getValueExpression() : ?ExpressionInterface
+    {
+        return $this->value;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueWidgetLink()
+     */
+    public function getValueWidgetLink() : ?WidgetLinkInterface
+    {
+        $link = null;
+        $expr = $this->getValueExpression();
+        if ($expr && $expr->isReference()) {
+            $link = $expr->getWidgetLink($this);
+        }
+        return $link;
     }
 }
 ?>

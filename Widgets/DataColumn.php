@@ -288,9 +288,10 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                 $this->cellWidget->setWidth($this->getWidth());
             }
             
+            /*
             if ($this->getValueExpression() !== null && ! $this->getValueExpression()->isEmpty()) {
                 $this->cellWidget->setValue($this->getValueExpression());
-            }
+            }*/
             
             // Some data types require special treatment within a table to make all rows comparable.
             $type = $this->cellWidget->getValueDataType();

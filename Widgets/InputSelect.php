@@ -518,16 +518,16 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveValues::setValues()
      */
-    public function setValues($expressionOrArrayOrDelimitedString) : iHaveValues
+    public function setValues($expressionOrArrayOrDelimitedString, bool $parseExpression = true) : iHaveValues
     {
         if ($expressionOrArrayOrDelimitedString instanceof UxonObject) {
             $expressionOrArrayOrDelimitedString = $expressionOrArrayOrDelimitedString->toArray();
         }
         
         if (is_array($expressionOrArrayOrDelimitedString) === true) {
-            $this->setValuesFromArray($expressionOrArrayOrDelimitedString);
+            $this->setValuesFromArray($expressionOrArrayOrDelimitedString, $parseExpression);
         } else {
-            $this->setValue($expressionOrArrayOrDelimitedString);
+            $this->setValue($expressionOrArrayOrDelimitedString, $parseExpression);
         }
         return $this;
     }
@@ -978,11 +978,11 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @see \exface\Core\Widgets\AbstractWidget::setValue()
      */
-    public function setValue($value)
+    public function setValue($value, bool $parseExpression = true)
     {
         if (! $this->hasOption($value) && strpos($value, $this->getMultiSelectValueDelimiter())) {
             if (! $this->getMultiSelect()) {
-                return parent::setValue(explode($this->getMultiSelectValueDelimiter(), $value)[0]);
+                return parent::setValue(explode($this->getMultiSelectValueDelimiter(), $value)[0], $parseExpression);
             }
         }
         return parent::setValue($value);

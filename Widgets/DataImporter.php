@@ -137,7 +137,7 @@ class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGr
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::hasValue()
      */
-    public function hasValue()
+    public function hasValue() : bool
     {
         return is_null($this->getValue()) ? false : true;
     }
