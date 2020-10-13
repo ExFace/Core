@@ -425,7 +425,7 @@ class Data
             if (empty($attribute_filters) === true) {
                 $filter = $this->getConfiguratorWidget()->createFilterWidget($condition->getExpression()->getAttribute()->getAliasWithRelationPath());
                 $this->addFilter($filter);
-                $filter->setValue($condition->getValue());
+                $filter->setValue($condition->getValue(), false);
                 // Disable the filter because if the user changes it, the
                 // prefill will not be consistent anymore (some prefilled
                 // widgets may have different prefill-filters than others)
@@ -436,7 +436,7 @@ class Data
                 foreach ($attribute_filters as $filter) {
                     if ($filter->getComparator() == $condition->getComparator()) {
                         if ($filter->isPrefillable()) {
-                            $filter->setValue($condition->getValue());
+                            $filter->setValue($condition->getValue(), false);
                         }
                         $prefilled = true;
                     }
@@ -444,7 +444,7 @@ class Data
                 if ($prefilled == false) {
                     $filter = $attribute_filters[0];
                     if ($filter->isPrefillable()) {
-                        $filter->setValue($condition->getValue());
+                        $filter->setValue($condition->getValue(), false);
                     }
                 }
             }
@@ -490,7 +490,7 @@ class Data
                     foreach ($this->getConfiguratorWidget()->findFiltersByObject($condition->getExpression()->getAttribute()->getObject()) as $fltr) {
                         if ($fltr->isPrefillable() && $fltr->getAttribute()->getObject()->is($condition->getExpression()->getAttribute()->getObject()) && $fltr->getAttribute()->getAlias() == $condition->getExpression()->getAttribute()->getAlias() && ! $fltr->getValue()) {
                             $fltr->setComparator($condition->getComparator());
-                            $fltr->setValue($condition->getValue());
+                            $fltr->setValue($condition->getValue(), false);
                             // TODO #OnPrefillChangePropertyEvent - same problem as in doPrefillWithDataObject()
                         }
                     }

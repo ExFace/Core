@@ -22,20 +22,25 @@ interface iHaveValue extends WidgetInterface
     public function getValueWithDefaults();
 
     /**
-     *
-     * @param ExpressionInterface|string $expression_or_string   
+     * Sets the value of the widget to a string or an instance of Expression.
+     * 
+     * If the first parameter is a string, it will be parsed into an expression unless
+     * $parseStringAsExpression is explicitly set to FALSE.
+     * 
+     * @param ExpressionInterface|string $expressionOrString   
+     * @param bool $parseStringAsExpression
      * 
      * @triggers \exface\Core\Events\Widget\OnWidgetLinkedEvent
      * 
      * @return iHaveValue
      */
-    public function setValue($value);
+    public function setValue($expressionOrString, bool $parseStringAsExpression = true);
 
     /**
      *
      * @return ExpressionInterface
      */
-    public function getValueExpression();
+    public function getValueExpression() : ?ExpressionInterface;
 
     /**
      * Returns the link to the widget, this widget's value is linked to.
@@ -45,14 +50,14 @@ interface iHaveValue extends WidgetInterface
      *
      * @return NULL|\exface\Core\Interfaces\Widgets\WidgetLinkInterface
      */
-    public function getValueWidgetLink();
+    public function getValueWidgetLink() : ?WidgetLinkInterface;
     
     /**
      * Returns TRUE if a value is set for this widget and FALSE otherwise.
      * 
      * @return boolean
      */
-    public function hasValue();
+    public function hasValue() : bool;
 
     /**
      * Returns the data type of the widget's value.
