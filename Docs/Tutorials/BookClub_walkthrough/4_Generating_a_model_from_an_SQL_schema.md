@@ -1,6 +1,6 @@
 # Generating a metamodel from an SQL schema
 
-Now that we have a [data source](3_Connecting_to_an_sql_database.md) we can start modeling the actual data. The core of the metamodel is a graph model of the business objects related to the app. This is similar to the relational model of an SQL database with the main difference being the focus on relations between these objects.
+Now that we have a [data source](3_Connecting_to_an_sql_database.md) for our [BookClub tutorial](index.md), we can start modeling the actual data. The core of the metamodel is a graph model of the business objects related to the app. This is similar to the relational model of an SQL database with the main difference being the focus on relations between these objects.
 
 For a start it is safe to assume, that every database table should become a meta object with attributes for every column of that table. The same goes for views. This stub of a model can be easily generated with a single click. 
 
@@ -71,10 +71,69 @@ Let's specify relations for `created_by_user_id` and `modified_by_user_id`:
 
 Now we have relations between the object `Language` of the BookClub app and the object `User` of the Core app. Changing the alias and the name of the attributes was only for beautification. However, removing all sorts of `_id` suffixes from the alias of relations is a good practice as it helps follow relation paths a lot as we will see further on. The model builders to it by default too if they can identify a relation automatically!
 
+### Other tabs
+
+The other tabs are empty for now. We will populate them and talk about them when needed in the upcoming chapters. 
+
+- `Default Editor` - here we can define a widget, that will be used to open the object. If no editor is defined, the workbench will attempt to generate one - which works perfectly well for smaller objects as ours.
+- `Behviors` add some typical logic patterns to an object: like the [TimeStampingBehavior](X_Adding_behaviors.md) that we will add later to save the time of creation and last update for every object.
+- `Actions` are preconfigured action models to be used with buttons: for example, showing a simple [dialog to loan a book](X_Adding_object_actions.md). 
+- `Permissions` are security policies, that apply to this object directly. There are lot's of things policies can be applied to, so tabs like this are quite common in model component editors. We will deal with [action policies](X_Configuring_security_and_permissions.md) later on as an example.
+
 ## 3. Create a base object?
 
-As mentioned above all our tables have a standard set of system columns.
+As mentioned above all our tables have a standard set of system columns, which is quite a common situation. In this case we can specify a base object for the data source to make all meta objects automatically inherit these common attributes. Not only will this save time as we won't have to configure relations for `created_by_user_id` and `modified_by_user_id` for each object as we did above, but having a base object will also allow us to add behaviors, that will affect all objects of the data source.
+
+As a rule of thumb: always create a base object _before_ importing the data source schema if 80% of the objects are going to share common columns.
+
+Let's convert our language object into a base object. We will regenerate the language afterwards.
+
+1. Go to the `Attributes` tab in the object editor 
+2. Delete the `name` attribute. Now the object only contains common attributes.
+3. Press `Quick Edit` button. It opens an excel-like editable table with all attributes of the object. We can now quickly adjust important properties by setting checkboxes and even pulling down cell values just like in Excel.
+	- Remove the `Editable` mark from all attributes. Editable means editable by the user directly in this case, whereas all these attributes are meant to be set automatically.
+	- Make all attributes `Hidden`. In most cases they are for technical use only. End users won't need technical ids, timestamps, etc.
+	- Make sure the `id` attribute is marked as `UID` and _not_ marked as `required`. Ids are auto-increment-columns in the database, so the workbench can leave them empty.
+4. Press `Save`
+5. Switch to the `General` tab of the object editor
+	- Change the name of the object to `BookClub base object`
+	- Change the alias of the object to `base_object`
+	- Empty the data address because the base object itself does not exist in the data source
+	- Uncheck `Readable` and `Writable` for the same reason
+6. Now `Save` the object
+7. Navigate back to `Administration > Metamodel > Data Sources`
+8. Open the `BookClub DB`
+9. Select the `BookClub base object` as "Base Object"
+10. Save the data source
+
+Now all meta objects of this data source will automatically inherit everything from the base object: attributes, behaviors, actions, etc.
 
 ## 4. Import the entire schema
 
-## 5. Check/Add relations
+Now that we have a base object for the common attributes, we can import the rest of the database schema.
+
+1. Remain in `Administration > Metamodel > Data Sources`
+2. Press `Generate Model` button
+3. Leave "Object Data Address Mask" empty this time. This will tell the model builder to importa all available tables and views.
+4. Press `Generate Model`
+5. Press `Objects` button once the action is complete
+
+This time meta objects were generated for all tables in our database. 
+
+Open the `language` model by double clicking it and switch to the `Attributes` tab. Note, that only a single attribute (`name`) was generated: all the common attributes are inherited from the base object of the data source. You can see the base object now in the `General` tab.
+
+## 5. Enhance the metamodel: add labels, relations, etc.
+
+Even though we've already taken care of user relations and other things for the common attributes, there are still things to enhance in the generated model.
+
+Here are some typical tasks for this phase:
+
+- Give every stand-alone object (= not merely a mapping) a label attribute by marking one of the attributes with the `Is label of object` flag. The label is the human-readable identifier of the object: e.g. the `name` of a language or a category, the `title` of a book, etc. The label will be used in things like select-widgets for the respective meta object.
+- Add relations, that were not generated automatically as we did for `created_by_user_id` and `modified_by_user_id` above.
+- Check `Editable` and `Hidden` properties of every attribute. The model builder cannot know the purpose of the attribute, so if it is meant to be an internal flag set automatically, you probably want to disable editing by users or even mark it as hidden.
+
+Read more about different metamodels in the [corresponding](../../creating_metamodels/index.md) section of the docs.
+
+## 6. Proceed with the next step
+
+Now we are set to start working on the user interface. In the [next step](5_Creating_the_apps_first_pages.md) we will create a menu for our app and some simple master data editors to add languages, categories, etc.
