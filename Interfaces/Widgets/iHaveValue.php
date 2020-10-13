@@ -25,16 +25,16 @@ interface iHaveValue extends WidgetInterface
      * Sets the value of the widget to a string or an instance of Expression.
      * 
      * If the first parameter is a string, it will be parsed into an expression unless
-     * $parseExpression is explicitly set to FALSE.
+     * $parseStringAsExpression is explicitly set to FALSE.
      * 
      * @param ExpressionInterface|string $expressionOrString   
-     * @param bool $parseExpression
+     * @param bool $parseStringAsExpression
      * 
      * @triggers \exface\Core\Events\Widget\OnWidgetLinkedEvent
      * 
      * @return iHaveValue
      */
-    public function setValue($expressionOrString, bool $parseExpression = true);
+    public function setValue($expressionOrString, bool $parseStringAsExpression = true);
 
     /**
      *

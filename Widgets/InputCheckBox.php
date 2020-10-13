@@ -24,7 +24,7 @@ class InputCheckBox extends Input
         $this->getPage()->removeWidget($this);
         $select->setId($this->getId());
         $select->setAttributeAlias($this->getAttributeAlias());
-        $select->setValue($this->getValue());
+        $select->setValue($this->getValueExpression());
         $select->setSelectableOptions(array(
             '',
             1,

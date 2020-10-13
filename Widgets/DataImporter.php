@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\DataTypes\BooleanDataType;
@@ -8,6 +9,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Widgets\Traits\iHaveColumnsAndColumnGroupsTrait;
 use exface\Core\Interfaces\Widgets\iHaveColumnGroups;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
@@ -19,6 +21,7 @@ use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Widgets\Traits\DataTableTrait;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
+use exface\Core\Exceptions\NotImplementedError;
 
 /**
  * The DataImporter allows users to quickly create data by copy-pasting tabels from Excel-compatible editors.
@@ -121,26 +124,6 @@ class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGr
     private $empty_text = null;
     
     private $previewButton = null;
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueDataType()
-     */
-    public function getValueDataType()
-    {
-        return $this->getUidColumn()->getDataType();
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveValue::hasValue()
-     */
-    public function hasValue() : bool
-    {
-        return is_null($this->getValue()) ? false : true;
-    }
     
     /**
      * Set to TRUE to force the user to fill all required fields of at least one row.
@@ -406,5 +389,65 @@ class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGr
     public function getConfiguratorWidgetType() : string
     {
         return 'DataConfigurator';
-    } 
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueDataType()
+     */
+    public function getValueDataType()
+    {
+        return $this->getUidColumn()->getDataType();
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::hasValue()
+     */
+    public function hasValue() : bool
+    {
+        return false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueExpression()
+     */
+    public function getValueExpression(): ?ExpressionInterface
+    {
+        return null;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueWidgetLink()
+     */
+    public function getValueWidgetLink(): ?WidgetLinkInterface
+    {
+        return null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValue()
+     */
+    public function getValue()
+    {
+        return null;
+    }
+
+    /**
+     * The DataImporter curretly does not have a value.
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::setValue()
+     */
+    public function setValue($expressionOrString, bool $parseStringAsExpression = true)
+    {
+        throw new NotImplementedError('Cannot set values for ' . $this->getWidgetType() . ': not implemented!');
+    }
 }

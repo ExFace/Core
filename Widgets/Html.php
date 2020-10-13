@@ -68,12 +68,12 @@ class Html extends Display
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::setValue()
      */
-    public function setValue($value, bool $parseExpression = true)
+    public function setValue($value, bool $parseStringAsExpression = true)
     {
         if ($value !== null) {
             $value = $this->rebaseRelativeLinks($value);
         }
-        return parent::setValue($value, $parseExpression);
+        return parent::setValue($value, $parseStringAsExpression);
     }
 
     /**

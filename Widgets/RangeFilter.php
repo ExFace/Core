@@ -229,7 +229,7 @@ class RangeFilter extends Filter
      * @param string $value
      * @return RangeFilter
      */
-    public function setValueFrom($expression_or_string, bool $parseExpression = true) : RangeFilter
+    public function setValueFrom($expression_or_string, bool $parseStringAsExpression = true) : RangeFilter
     {
         if ($expression_or_string instanceof ExpressionInterface) {
             $this->valueFrom = $expression_or_string;
@@ -267,7 +267,7 @@ class RangeFilter extends Filter
      * @param string|ExpressionInterface $value
      * @return RangeFilter
      */
-    public function setValueTo($expression_or_string, bool $parseExpression = true) : RangeFilter
+    public function setValueTo($expression_or_string, bool $parseStringAsExpression = true) : RangeFilter
     {
         if ($expression_or_string instanceof ExpressionInterface) {
             $this->valueTo = $expression_or_string;
@@ -321,7 +321,7 @@ class RangeFilter extends Filter
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Filter::setValue()
      */
-    public function setValue($value, bool $parseExpression = true)
+    public function setValue($value, bool $parseStringAsExpression = true)
     {
         $dots = ComparatorDataType::BETWEEN;
         if (strpos($value, $dots) === false) {
@@ -331,8 +331,8 @@ class RangeFilter extends Filter
             list($from, $to) = explode($dots, $value);
         }
         
-        $this->setValueFrom($from, $parseExpression);
-        $this->setValueTo($to, $parseExpression);
+        $this->setValueFrom($from, $parseStringAsExpression);
+        $this->setValueTo($to, $parseStringAsExpression);
         return $this;
     }
     

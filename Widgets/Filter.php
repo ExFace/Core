@@ -599,10 +599,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      * 
      * @see \exface\Core\Widgets\AbstractWidget::setValue()
      */
-    public function setValue($value, bool $parseExpression = true)
+    public function setValue($value, bool $parseStringAsExpression = true)
     {
         if ($this->isInputWidgetInitialized() === true) {
-            $this->getInputWidget()->setValue($value, $parseExpression);
+            $this->getInputWidget()->setValue($value, $parseStringAsExpression);
         }
         $this->value = $value;
         return $this;
