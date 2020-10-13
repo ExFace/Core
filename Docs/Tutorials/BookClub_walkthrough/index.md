@@ -18,19 +18,10 @@ We will also handle some advanced topics:
 - How to create a simple dashboard
 - How to look up a value in another data source
 
-## Requirements
-
-The tutorial assumes, that 
-
-- you have the workbench up and running as described in the [installation guides](../../Installation/index.md)).
-- you are logged on as a superuser (e.g. `admin/password`).
-- you have the `exface.JEasyUIFacade` as your default facade. This should be the case if you did not change anything in the installation guide.
-
-Should you use another user or facade, the screenshots may look different from what you see. The general logic remains the same!
-
 ## Table of contents
 
-1. [Preparation](1_Preparation.md)
+1. [Preparation & requirements](1_Preparation.md)
 2. [Creating a new app](2_Creating_a_new_app.md)
 3. [Setting up a data source in the model](3_Connecting_to_an_sql_database.md)
-4. [Setting up an SQL DB and a data source in the model](4_Generating_a_model_from_an_SQL_schema.md)
+4. [Generating a metamodel from an SQL schema](4_Generating_a_model_from_an_SQL_schema.md)
+6. [Creating the app's first pages](5_Creating_the_apps_first_pages.md)

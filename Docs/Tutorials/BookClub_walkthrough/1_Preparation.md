@@ -1,12 +1,19 @@
 # Things to do before the BookClub tutorial
 
-We will use a MySQL database to store all the data required for the [book club tutorial](index.md).
+## 1. Check the requirements
 
-## 1. Make sure the workbench in up and running
+The tutorial assumes, that 
 
-Follow the [installation guide](../../Installation/index.md) for your server stack.
+- you have the workbench up and running as described in the [installation guides](../../Installation/index.md)).
+- you are logged on as a superuser (e.g. `admin/password`).
+- your current language is english (either set for your user or as `SERVER.DEFAULT_LOCALE` in [System.config.json](../../Administration/Configuration/index.md).
+- you have the `exface.JEasyUIFacade` as your default facade. This should be the case if you did not change anything in the installation guide.
+
+Should you use another user or facade, the screenshots may look different from what you see. The general logic remains the same!
 
 ## 2. Create a new database for the book club
+
+We will use a MySQL database to store all the data required for the [book club tutorial](index.md).
 
 Copy&paste the following SQL to your favorite SQL management tool. It will create a database named `tutorial_bookclub`. You can change that name, of course, but you will need to keep track of it in all subsequent steps yourself!
 
