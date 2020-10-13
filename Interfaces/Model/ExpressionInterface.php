@@ -27,14 +27,6 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
 {
     /**
-     * 
-     * @param \exface\Core\CommonLogic\Workbench $exface
-     * @param string $string
-     * @param MetaObjectInterface $meta_object
-     */
-    function __construct(\exface\Core\CommonLogic\Workbench $exface, $string, MetaObjectInterface $meta_object = null);
-    
-    /**
      * @return boolean
      */
     public function isMetaAttribute() : bool;
@@ -110,8 +102,16 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
     
     /**
      * Returns the expression as string.
+     * 
      * Basically this is the opposite fo parse.
-     * Note, that in case of attributes the expression will include the relation path, aggregators, etc., whereas getAttribute->getAlias() would return only the actual alias.
+     * 
+     * For quoted strings toString() will return the string including the quotes while
+     * evaluate() will remove the quotes.
+     * 
+     * Note, that in case of attributes the expression will include the relation path, 
+     * aggregators, etc., whereas getAttribute()->getAlias() would return only the actual alias.
+     * 
+     * @see evaluate()
      *
      * @return string
      */
@@ -187,4 +187,3 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
      */
     public static function detectNumber($value) : bool;
 }
-

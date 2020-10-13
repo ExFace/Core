@@ -541,7 +541,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             if (($colAttr = $column->getAttribute()) && $colAttr->isRelation()) {
                 $colRel = $colAttr->getRelation();
                 if ($colRel->getRightObject()->is($this->getRelation()->getRightObject())) {
-                    $this->setValuesFromArray($column->getValues(false));
+                    $this->setValuesFromArray($column->getValues(false), false);
                     $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', DataPointerFactory::createFromColumn($column)));
                     $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'values', DataPointerFactory::createFromColumn($column)));
                     return;

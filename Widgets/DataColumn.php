@@ -28,6 +28,7 @@ use exface\Core\Widgets\Parts\DataFooter;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -83,6 +84,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $cell_styler_script = null;
 
     private $data_column_name = null;
+    
+    private $calculationExpr = null;
 
     public function getAttributeAlias()
     {
@@ -288,10 +291,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                 $this->cellWidget->setWidth($this->getWidth());
             }
             
-            /*
-            if ($this->getValueExpression() !== null && ! $this->getValueExpression()->isEmpty()) {
-                $this->cellWidget->setValue($this->getValueExpression());
-            }*/
+            if ($this->isCalculated() && ! $this->getCalculationExpression()->isEmpty()) {
+                $this->cellWidget->setValue($this->getCalculationExpression());
+            }
             
             // Some data types require special treatment within a table to make all rows comparable.
             $type = $this->cellWidget->getValueDataType();
@@ -634,6 +636,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     {
         $uxon = parent::exportUxonObject();
         // TODO add properties specific to this widget here
+        if ($this->isCalculated()) {
+            $uxon->setProperty('calculation', $this->getCalculationExpression()->toString());
+        }
         return $uxon;
     }
     
@@ -743,6 +748,55 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     {
         $this->widthMax = WidgetDimensionFactory::createFromAnything($this->getWorkbench(), $stringOrDimension);
         return $this;
+    }
+    
+    /**
+     * Place an expression here to calculate values for every cell of the column.
+     * 
+     * Examples:
+     * 
+     * - `=0` will make all cells display "0"
+     * - `=NOW()` will place the current date in every cell
+     * - `=some_widget_id` will place the current value of the widget with the given id in the cells
+     * 
+     * @uxon-property calculation
+     * @uxon-type metamodel:expression
+     * 
+     * @param string $expression
+     * @return DataColumn
+     */
+    public function setCalculation(string $expression) : DataColumn
+    {
+        $this->calculationExpr = ExpressionFactory::createForObject($this->getMetaObject(), $expression);
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isCalculated() : bool
+    {
+        return $this->calculationExpr !== null;
+    }
+    
+    /**
+     * 
+     * @return ExpressionInterface|NULL
+     */
+    public function getCalculationExpression() : ?ExpressionInterface
+    {
+        return $this->calculationExpr;
+    }
+    
+    /**
+     * @deprecated use setCalculation() instead!
+     * @param string $value
+     * @return DataColumn
+     */
+    protected function setValue($value) : DataColumn
+    {
+        return $this->setCalculation($value);
     }
 }
 ?>

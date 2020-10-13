@@ -407,8 +407,8 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     {
         $uxon = parent::exportUxonObject();
         
-        if ($this->getValue() !== null) {
-            $uxon->setProperty('value', $this->getValue());
+        if ($this->hasValue()) {
+            $uxon->setProperty('value', $this->getValueExpression()->toString());
         }
         if ($this->isBoundToAttribute()) {
             $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
@@ -544,7 +544,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::setValue()
      */
-    public function setValue($expressionOrString, bool $parseExpression = true)
+    public function setValue($expressionOrString, bool $parseStringAsExpression = true)
     {
         if (is_string($expressionOrString) && $this->getValueDataType() instanceof EncryptedDataType && $this->getValueDataType()->isValueEncrypted($expressionOrString)) {
             $expressionOrString = EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $expressionOrString, $this->getValueDataType()->getEncryptionPrefix());
@@ -553,23 +553,32 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         if ($expressionOrString instanceof ExpressionInterface) {
             $this->value = $expressionOrString;
         } else {
-            // FIXME #expression-syntax Handling of value-expressions seems really buggy. On the one hand,
-            // passing a string value should result in the widget showing this exact value - no matter if
-            // it included quotes or not. On the other hand, a non-quoted string would result in an Expression
-            // of UNKNOWN type, which is not static, thus widgets would not show anything unless prefilled. If
-            // we add quotes to signal, that this is a static string, they will show up in the widget even
-            // if the user did not want them. For example, many doPrefill() methods would just result in
-            // setValue($prefillValue) - no quotes, no checks for data type, althoug this clearly is a static
-            // value. Finally, if the user sets the value in UXON, the general expression syntax suggests to use
-            // quotes for strings, but these would show up in the UI.
-            // Here is a temporary solution for the problem: tell the ExpressionFactory to treat unquoted strings
-            // as strings in this case explicitly.
-            $couldBeCalculation = substr($expressionOrString, 0, 1) === '=' && substr($expressionOrString, 1, 1) !== '=';
-            
-            if ($parseExpression === true || $couldBeCalculation === false) {
+            // TODO #expression-syntax is still not 100% stable.
+            // 
+            // 1) On the one hand, passing a string value should obviously result in the widget showing this 
+            // exact string as value - no matter if it included quotes or not. 
+            // 2) On the other hand, a non-quoted string would result in an Expression of UNKNOWN type, which 
+            // is not static, thus widgets would not show anything. 
+            // 3) Yet another source of values are doPrefill() calls in widgets, that, again, use non-quoted
+            // static values. 
+            // 4) Finally, if the user sets the value in UXON, the general expression syntax suggests to use
+            // quotes for strings, but these would show up in the UI, so most users omit the quotes.
+            // 
+            // The current solution includes to control-flags: $parseStringAsExpression here and $treatUnknownAsString
+            // in the constructor of the Expression:
+            // - When the value is set from UXON $parseStringAsExpression=true, but $treatUnknownAsString=false 
+            // which leads to the possibility to use formulas and links, but unqoted strings are treated 
+            // as strings, not unknown expressions.
+            // - When values are set in doPrefill(), $parseStringAsExpression=false forces the expression to
+            // be number or string and turns off links and formulas (and unknown expressions) completely.
+            // 
+            // An issue may arise if a widget with a value is converted to UXON and back - in this case, it
+            // seams, that values starting with `=` will get treated as formulas regardless of whether it
+            // was a static string previously or not. A
+            if ($parseStringAsExpression === true) {
                 $expr = ExpressionFactory::createFromString($this->getWorkbench(), $expressionOrString, $this->getMetaObject(), true);
             } else {
-                $expr = ExpressionFactory::createFromString($this->getWorkbench(), "'" . str_replace("'", "\'", $expressionOrString) . "'", $this->getMetaObject(), true);
+                $expr = ExpressionFactory::createAsScalar($this->getWorkbench(), $expressionOrString, $this->getMetaObject());
             }
             
             $this->value = $expr;
@@ -591,8 +600,12 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function getValue()
     {
-        if ($this->getValueExpression()) {
-            return $this->getValueExpression()->toString();
+        if ($expr = $this->getValueExpression()) {
+            if ($expr->isStatic()) {
+                return $expr->evaluate();
+            } else {
+                return $expr->toString();
+            }
         }
         return null;
     }

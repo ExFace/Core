@@ -7,6 +7,8 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iHaveValues;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Factories\ExpressionFactory;
 
 /**
  * 
@@ -21,6 +23,10 @@ trait EditableTableTrait
     private $readOnly = false;
     
     private $displayOnly = false;
+    
+    private $preselectedUids = [];
+    
+    private $preselectExpression = null;
 
     /**
      *
@@ -30,41 +36,49 @@ trait EditableTableTrait
      */
     public function getValues() : array
     {
-        // TODO set selected table rows programmatically
-        /*
-         * if ($this->getValue()){
-         * return explode(EXF_LIST_SEPARATOR, $this->getValue());
-         * }
-         */
-        return array();
+        return $this->preselectedUids;
     }
     
     public function getValueWithDefaults()
     {
-        // TODO return the UID of programmatically selected row
-        return null;
+        return $this->getValue();
+    }
+    
+    protected function getValueListDelimiter() : string
+    {
+        if ($this->hasUidColumn()) {
+            $delim = $this->getUidColumn()->getAttribute()->getValueListDelimiter();
+        } else {
+            $delim = EXF_LIST_SEPARATOR;
+        }
+        return $delim;
     }
 
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iHaveValues::setValues()
      */
-    public function setValues($expressionOrArrayOrDelimitedString) : iHaveValues
+    public function setValues($expressionOrArrayOrDelimitedString, bool $parseStringAsExpression = true) : iHaveValues
     {
-        // TODO set selected table rows programmatically
+        switch (true) {
+            case is_array($expressionOrArrayOrDelimitedString):
+                return $this->setValuesFromArray($expressionOrArrayOrDelimitedString);
+            case is_string($expressionOrArrayOrDelimitedString):
+                return $this->setValuesFromArray(explode($this->getValueListDelimiter(), $expressionOrArrayOrDelimitedString));
+            default:
+                throw new InvalidArgumentException('Cannot use "' . gettype($expressionOrArrayOrDelimitedString . '" as value list for widget ' . $this->getWidgetType() . '!')); 
+        }
     }
 
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iHaveValues::setValuesFromArray()
      */
-    public function setValuesFromArray(array $values) : iHaveValues
+    public function setValuesFromArray(array $values, bool $parseStringsAsExpressions = true) : iHaveValues
     {
-        $this->setValue(implode($this->getUidColumn()->getAttribute()->getValueListDelimiter(), $values));
+        $this->preselectedUids = $values;
         return $this;
     }
     
@@ -85,7 +99,70 @@ trait EditableTableTrait
      */
     public function hasValue() : bool
     {
-        return is_null($this->getValue()) ? false : true;
+        return ! empty($this->getValues());
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::hasValue()
+     */
+    public function setValue($expressionOrString, bool $parseStringAsExpression = true)
+    {
+        switch (true) {
+            case is_array($expressionOrString):
+                $this->setValues($expressionOrString);
+                $expr = ExpressionFactory::createAsScalar($this->getWorkbench(), $this->getValue(), $this->getMetaObject());
+                break;
+            case $expressionOrString instanceof ExpressionInterface:
+                $expr = $expressionOrString;
+                break;
+            case $parseStringAsExpression === false:
+                $expr = ExpressionFactory::createAsScalar($this->getWorkbench(), $expressionOrString, $this->getMetaObject());
+                if ($expr->isStatic()) {
+                    $this->setValues($expr->evaluate());
+                }
+                break;
+            default:
+                $expr = ExpressionFactory::createForObject($this->getMetaObject, $expressionOrString);
+        }
+        $this->preselectExpression = $expr;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValue()
+     */
+    public function getValue()
+    {
+        return implode($this->getValueListDelimiter(), $this->getValues());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueExpression()
+     */
+    public function getValueExpression() : ?ExpressionInterface
+    {
+        return $this->preselectExpression;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueWidgetLink()
+     */
+    public function getValueWidgetLink() : ?WidgetLinkInterface
+    {
+        $link = null;
+        $expr = $this->getValueExpression();
+        if ($expr && $expr->isReference()) {
+            $link = $expr->getWidgetLink($this);
+        }
+        return $link;
     }
     
     /**
@@ -163,45 +240,5 @@ trait EditableTableTrait
     public function isReadonly() : bool
     {
         return $this->isEditable() === false;
-    }
-    
-    public function setValue($expressionOrString, bool $parseExpression = true)
-    {
-        // TODO
-        return $this;
-    }
-    
-    /**
-     * TODO Move to iHaveValue-Widgets or trait
-     *
-     * @return string|NULL
-     */
-    public function getValue()
-    {
-        // TODO
-        return null;
-    }
-    
-    /**
-     *
-     * @return ExpressionInterface|NULL
-     */
-    public function getValueExpression() : ?ExpressionInterface
-    {
-        return $this->value;
-    }
-    
-    /**
-     *
-     * @return WidgetLinkInterface|NULL
-     */
-    public function getValueWidgetLink() : ?WidgetLinkInterface
-    {
-        $link = null;
-        $expr = $this->getValueExpression();
-        if ($expr && $expr->isReference()) {
-            $link = $expr->getWidgetLink($this);
-        }
-        return $link;
     }
 }
