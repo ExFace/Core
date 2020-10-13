@@ -286,7 +286,7 @@ class ProgressBar extends Display implements iCanBeAligned
                 // Ignore empty values because if value is a live-references as the ref would get overwritten
                 // even without a meaningfull prefill value
                 if ($this->isBoundByReference() === false || ($value !== null && $value != '')) {
-                    $this->setValue($value);
+                    $this->setValue($value, false);
                     $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'text', $valuePointer));
                 }
             }
