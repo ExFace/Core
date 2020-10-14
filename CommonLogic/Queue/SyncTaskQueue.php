@@ -10,6 +10,10 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Events\Queue\OnQueueRunEvent;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Factories\ResultFactory;
+use exface\Core\Exceptions\LogicException;
+use exface\Core\CommonLogic\Tasks\ErrorMessage;
+use exface\Core\CommonLogic\Tasks\ResultError;
 
 /**
  * Performs the task immediately after inserting in the queue in the same transaction.
@@ -35,13 +39,16 @@ class SyncTaskQueue extends AsyncTaskQueue
         $dataSheet = $this->createQueueDataSheet($task, $topics, $producer, $messageId);
         
         $dataSheet->dataCreate();
-        
-        $event = $this->getWorkbench()->eventManager()->dispatch(new OnQueueRunEvent($this, $task, $dataSheet->getUidColumn()->getValue(0)));
-        if ($result = $event->getResult()) {
-            return $result;
-        } else {
-            // TODO
+        $uid = $dataSheet->getUidColumn()->getValue(0);
+        $event = $this->getWorkbench()->eventManager()->dispatch(new OnQueueRunEvent($this, $task, $uid));
+        if (! $event->hasResult()) {
+            throw new LogicException("Performing the task with UID '{$uid}' did not produce any result or error");
         }
+        $result = $event->getResult();
+        if ($result instanceof ResultError) {
+            throw $result->getException();
+        }
+        return $result;
     }
     
     public function onRunPerformTask(OnQueueRunEvent $event)
@@ -55,20 +62,21 @@ class SyncTaskQueue extends AsyncTaskQueue
         $dataSheet->getColumns()->addFromExpression('STATUS');
         $dataSheet->getFilters()->addConditionFromString('UID', $event->getQueueItemUid());
         $dataSheet->dataRead();
-        $dataSheet->setCellValue('STATUS', 0, QueuedTaskStateDataType::STATUS_DONE);
+        $dataSheet->setCellValue('STATUS', 0, QueuedTaskStateDataType::STATUS_INPROGRESS);
         $dataSheet->dataUpdate(false, $transaction);
         $transaction->commit();
         try {            
             $task = $event->getTask();
             $transaction = $this->getWorkbench()->data()->startTransaction();
-            $result = $this->getWorkbench()->handle($task);
+            $result = $this->getWorkbench()->handle($task);            
+            $dataSheet->getColumns()->addFromExpression('RESULT_CODE');
             $dataSheet->getColumns()->addFromExpression('RESULT');
-            $dataSheet->setCellValue('RESULT', 0, $result->getResponseCode() . ' - ' . $result->getMessage());
+            $dataSheet->setCellValue('RESULT_CODE', 0, $result->getResponseCode());
+            $dataSheet->setCellValue('RESULT', 0, $result->getMessage());
             $dataSheet->setCellValue('STATUS', 0, QueuedTaskStateDataType::STATUS_DONE);
             $dataSheet->dataUpdate(false, $transaction);
             $transaction->commit();
             $event->setResult($result);
-            return;
         } catch (\Throwable $e) {
             if (! $e instanceof ExceptionInterface){
                 $e = new InternalError($e->getMessage(), null, $e);
@@ -81,7 +89,9 @@ class SyncTaskQueue extends AsyncTaskQueue
             $dataSheet->setCellValue('ERROR_LOGID', 0, $e->getAlias());
             $dataSheet->dataUpdate(false, $transaction);
             $transaction->commit();
-            throw $e;
+            $result = ResultFactory::createErrorResult($task, $e);
+            $result->setDataModified(true);
+            $event->setResult($result);
         }
         return;
     }

@@ -22,6 +22,9 @@ use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\Actions\ActionInputError;
+use exface\Core\Exceptions\LogicException;
+use exface\Core\CommonLogic\Tasks\ResultError;
 
 /**
  * Performs a task that is saved in a task queue.
@@ -47,28 +50,48 @@ class RunQueuedTasks extends AbstractAction
         $tasksDs = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
         $tasksDs->getColumns()->addFromExpression('QUEUE');
         $tasksDs->getColumns()->addFromExpression('TASK_UXON');
+        $tasksDs->getFilters()->addConditionFromString('STATUS', QueuedTaskStateDataType::STATUS_QUEUED);
         if ($inputData->getMetaObject()->is('exface.Core.QUEUED_TASK')) {
             $tasksDs->getFilters()->addConditionFromValueArray($inputData->getUidColumn()->getAttributeAlias(), $inputData->getUidColumn()->getValues());            
         } elseif ($inputData->getMetaObject()->is('exface.Core.QUEUE')) {
             $tasksDs->getFilters()->addConditionFromValueArray('QUEUE', $inputData->getUidColumn()->getValues());
-            $tasksDs->getFilters()->addConditionFromString('STATUS', QueuedTaskStateDataType::STATUS_QUEUED);
         } else {
             throw new ActionInputInvalidObjectError($this, "Meta object '{$inputData->getMetaObject()->getAliasWithNamespace()}' is not suitable for action '{$this->getAliasWithNamespace()}'");
         }
         $tasksDs->dataRead();
+        if ($tasksDs->isEmpty()) {
+            throw new ActionInputError($this, "No queued task with the status '{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('TASK.QUEUE.STATUS_QUEUED')}' selected.");
+        }
         $queues = $this->getQueues($tasksDs);
         $tasks = $this->getTasksToRun($tasksDs);
         if (count($queues) !== count($tasks)) {
             //TODO
-            throw new RuntimeException('An error occured in the implementation!');
+            throw new RuntimeException('An error occured in the implementation! Queue count does not match the task count!');
         }
-        $results = [];
+        $success = [];
+        $failed = [];
         foreach ($tasks as $uid => $task) {
             $event = $this->getWorkbench()->eventManager()->dispatch(new OnQueueRunEvent($queues[$uid], $task, $uid));
-            $results[] = $event->getResult();
+            if (! $event->hasResult()) {
+                throw new LogicException("Performing the task with UID '{$uid}' did not produce any result or error");
+            }
+            $result = $event->getResult();
+            if ($result instanceof ResultError) {
+                $failed[] = $result;
+            } else {
+                $success[] = $event->getResult();
+            }
         }
-        $count = count($results);
-        return ResultFactory::createMessageResult($task, "{$count} Task(s) run");
+        $successCount = count($success);
+        $failedCount = count($failed);
+        $message = '';
+        if ($successCount > 0) {
+            $message .= "{$successCount} Task(s) run successfully. ";
+        }
+        if ($failedCount > 0) {
+            $message .= "{$failedCount} Task(s) failed. ";
+        }
+        return ResultFactory::createMessageResult($task, $message);
     }
     
     /**
