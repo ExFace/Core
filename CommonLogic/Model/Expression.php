@@ -596,12 +596,12 @@ class Expression implements ExpressionInterface
             } catch (MetaRelationNotFoundError $e) {
                 throw new ExpressionRebaseImpossibleError('Cannot rebase expression "' . $this->toString() . '" relative to "' . $relation_path_to_new_base_object . '" - invalid relation path given!', '6TBX1V2');
             }
-            
+            $thisStr = $this->toString();
             switch (true) {
                 // If the realtion path to the new object is just the beginning of the expression, cut it off, returning whatever is left
-                // $new_expression_string = RelationPath::relaton_path_cut($this->toString(), $relation_path_to_new_base_object);
-                case strpos($this->toString(), $relation_path_to_new_base_object) === 0:
-                    $new_expression_string = ltrim(substr($this->toString(), strlen($relation_path_to_new_base_object)), "_");
+                // $new_expression_string = RelationPath::relaton_path_cut($thisStr, $relation_path_to_new_base_object);
+                case stripos($thisStr, $relation_path_to_new_base_object . RelationPath::getRelationSeparator()) === 0:
+                    $new_expression_string = ltrim(substr($thisStr, strlen($relation_path_to_new_base_object)), "_");
                     // Double-check if the remaining string starts with a relation alias modifier. If so, check
                     // if that modifier matches the modifier of the $rel.
                     // This can happen for relations with optional modifiers, when the rebase-path has the short
@@ -619,9 +619,9 @@ class Expression implements ExpressionInterface
                         break;
                     }
                 // If the expression is the beginning of the relation path, do it the other way around
-                // $new_expression_string = RelationPath::relaton_path_cut($relation_path_to_new_base_object, $this->toString());
-                case strpos($relation_path_to_new_base_object, $this->toString()) === 0: 
-                    $new_expression_string = ltrim(substr($relation_path_to_new_base_object, strlen($this->toString())), "_");
+                // $new_expression_string = RelationPath::relaton_path_cut($relation_path_to_new_base_object, $thisStr);
+                case stripos($relation_path_to_new_base_object, $thisStr . RelationPath::getRelationSeparator()) === 0: 
+                    $new_expression_string = ltrim(substr($relation_path_to_new_base_object, strlen($thisStr)), "_");
                     break;
                 // Otherwise append the expression to the relation path (typically the expression is a direct attribute here an would need
                 // a relation path, if referenced from another object).
@@ -635,8 +635,8 @@ class Expression implements ExpressionInterface
                     // IDEA A bit awqard is rebasing "POSITION->ORDER" from ORDER to POSITION as it will result in ORDER<-POSITION->ORDER, which
                     // is a loop: first we would fetch the order, than it's positions than again all orders of thouse position, which will result in
                     // that one order we fetched in step 1 again. Not sure, if these loops can be prevented somehow...
-                    if (! ($rel->isReverseRelation() && $relation_path_to_new_base_object == $rel->getAliasWithModifier() && ($relation_path_to_new_base_object == $this->toString() || $rel->getRightKeyAttribute()->getAlias() == $this->toString()))) {
-                        $new_expression_string = RelationPath::relationPathAdd($new_expression_string, $this->toString());
+                    if (! ($rel->isReverseRelation() && $relation_path_to_new_base_object == $rel->getAliasWithModifier() && ($relation_path_to_new_base_object == $thisStr || $rel->getRightKeyAttribute()->getAlias() == $thisStr))) {
+                        $new_expression_string = RelationPath::relationPathAdd($new_expression_string, $thisStr);
                     }
             }
             // If we end up with an empty expression, this means, that the original expression pointed to the exact relation to
