@@ -878,7 +878,7 @@ class TranslatableBehavior extends AbstractBehavior
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.OBJECT_BEHAVIORS');
         $ds->getFilters()->addConditionFromString('CONFIG_UXON', '"translation_subfolder":"' . $subfolder . '"');
         $ds->getColumns()->addMultiple([
-            OBJECT__UID
+            'OBJECT__UID'
         ]);
         $ds->dataRead();
         
