@@ -193,20 +193,20 @@ class RelationPath implements MetaRelationPathInterface
     /**
      * @deprecated! Use RelationPathFactory::crate_from_string_path() instead!
      * 
-     * Checks if the given alias includes a relation path and returns an array with relations
+     * Checks if the given alias includes a relation path and returns an array with relation aliases
      *
      * @param string $col            
      * @param int $depth            
      *
-     * @return array|false
+     * @return string[]|NULL
      */
-    public static function relationPathParse($alias, $depth = 0)
+    public static function relationPathParse($alias, $depth = 0) : ?array
     {
         $depth = intval($depth);
         
         $sep = self::RELATION_SEPARATOR;
         if (strpos($alias, $sep) === false) {
-            return false;
+            return null;
         } else {
             if ($depth) {
                 return explode($sep, $alias, $depth + 1);
