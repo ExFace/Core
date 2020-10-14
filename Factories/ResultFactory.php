@@ -25,6 +25,7 @@ use exface\Core\CommonLogic\Tasks\ResultMessageStream;
 use exface\Core\CommonLogic\Tasks\ResultRedirect;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\CommonLogic\Tasks\ResultError;
 
 /**
  * Creates all kinds of task results. 
@@ -46,6 +47,17 @@ class ResultFactory extends AbstractStaticFactory
     public static function createMessageResult(TaskInterface $task, string $message) : ResultInterface
     {
         return (new ResultMessage($task))->setMessage($message);
+    }
+    
+    /**
+     * 
+     * @param TaskInterface $task
+     * @param \Throwable $e
+     * @return ResultInterface
+     */
+    public static function createErrorResult(TaskInterface $task, \Throwable $e) : ResultInterface
+    {
+        return (new ResultError($task, $e));
     }
     
     /**
