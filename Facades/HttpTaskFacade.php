@@ -13,7 +13,6 @@ use exface\Core\Interfaces\Tasks\ResultWidgetInterface;
 use GuzzleHttp\Psr7\Response;
 use exface\Core\Interfaces\Tasks\ResultTextContentInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
-use exface\Core\CommonLogic\Queue\TaskQueue;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\Queue\TaskQueueRouter;
 
