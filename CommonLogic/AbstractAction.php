@@ -39,6 +39,7 @@ use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
+use exface\Core\Events\Action\OnActionInputValidatedEvent;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -1031,10 +1032,16 @@ abstract class AbstractAction implements ActionInterface
         
         // Apply the input mappers
         if ($mapper = $this->getInputMapper($sheet->getMetaObject())){
-            return $mapper->map($sheet);
+            $inputData = $mapper->map($sheet);
+        } else {
+            $inputData = $sheet;
         }
         
-        return $this->validateInputData($sheet);
+        // Validate the input data and dispatch an event for event-based validation
+        $inputData = $this->validateInputData($inputData);
+        $this->getWorkbench()->eventManager()->dispatch(new OnActionInputValidatedEvent($this, $task, $inputData));
+        
+        return $inputData;
     }
     
     /**
@@ -1060,6 +1067,9 @@ abstract class AbstractAction implements ActionInterface
         if (true === $this->hasInputObjectRestriction() && false === $sheet->getMetaObject()->is($this->getInputObjectExpected())) {
             throw new ActionInputInvalidObjectError($this, 'Invalid input meta object for action "' . $this->getAlias() . '": exprecting "' . $this->getInputObjectExpected()->getAliasWithNamespace() . '", received "' . $sheet->getMetaObject()->getAliasWithNamespace() . '" instead!');
         }
+        
+        
+        
         return $sheet;
     }
     
