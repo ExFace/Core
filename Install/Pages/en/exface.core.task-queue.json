@@ -11,10 +11,11 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-09-30 09:19:33",
     "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2020-10-06 16:20:24",
+    "modified_on": "2020-10-15 16:03:11",
     "contents": {
         "widget_type": "DataTable",
         "id": "TaskQueue_table",
+        "multi_select": true,
         "object_alias": "exface.Core.QUEUED_TASK",
         "filters": [
             {
@@ -54,9 +55,7 @@
                 "action_alias": "exface.Core.ShowObjectInfoDialog"
             },
             {
-                "action_alias": "exface.Core.DeleteObject"
-            },
-            {
+                "caption": "Neu einstellen",
                 "action": {
                     "alias": "exface.Core.CopyData",
                     "input_mappers": [
@@ -77,6 +76,10 @@
                                 },
                                 {
                                     "from": "\"\"",
+                                    "to": "RESULT_CODE"
+                                },
+                                {
+                                    "from": "\"\"",
                                     "to": "RESULT"
                                 },
                                 {
@@ -91,6 +94,9 @@
                         }
                     ]
                 }
+            },
+            {
+                "action_alias": "exface.Core.EditAndRerunTask"
             },
             {
                 "action_alias": "exface.Core.RunQueuedTasks",
@@ -121,6 +127,10 @@
                         }
                     ]
                 }
+            },
+            {
+                "visibility": "optional",
+                "action_alias": "exface.Core.DeleteObject"
             }
         ],
         "columns": [
@@ -138,6 +148,10 @@
                 "attribute_alias": "OWNER__USERNAME"
             },
             {
+                "attribute_alias": "OWNER",
+                "hidden": true
+            },
+            {
                 "attribute_alias": "OBJECT_ALIAS"
             },
             {
@@ -148,6 +162,9 @@
             },
             {
                 "attribute_alias": "TOPICS"
+            },
+            {
+                "attribute_alias": "RESULT_CODE"
             },
             {
                 "attribute_alias": "RESULT"
@@ -167,6 +184,10 @@
             },
             {
                 "attribute_alias": "QUEUE__NAME"
+            },
+            {
+                "attribute_alias": "QUEUE",
+                "hidden": true
             },
             {
                 "attribute_alias": "PARENT_ITEM_OID"

@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS `exf_queued_task` (
 	`owner` binary(16) NOT NULL,
     `status` int(2) NOT NULL,
 	`topics` VARCHAR(500) DEFAULT NULL,
+	`result_code` int(3) DEFAULT NULL,
     `result` longtext DEFAULT NULL,
     `error_message` longtext DEFAULT NULL,
     `error_logid` varchar(20) DEFAULT NULL,
