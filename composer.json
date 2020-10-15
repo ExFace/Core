@@ -48,7 +48,7 @@
 		"cebe/markdown" : "^1.1.2",
 		"kabachello/fileroute" : "~0.2",
 		"guzzlehttp/guzzle" : "^6.2.2",
-		"npm-asset/workbox-sw" : "^3.0.0",
+		"npm-asset/workbox-sw" : "^5.1.3",
 		"npm-asset/dexie" : "^2.0.4",
 		"ramsey/uuid" : "^3.0||^4.0"
 	},
@@ -59,8 +59,8 @@
 		"app" : {
 			"app_uid" : "0x31000000000000000000000000000000",
 			"app_alias" : "exface.Core",
-			"model_md5" : "be0ec86c98eaadc51395ce1404e2fd1d",
-			"model_timestamp" : "2020-09-30 10:19:53"
+			"model_md5" : "dddbc4a2d1e9164d7438715a5f8a7ab1",
+			"model_timestamp" : "2020-10-14 16:14:25"
 		}
 	},
 	"autoload" : {
