@@ -10,19 +10,37 @@
 importScripts('exface/vendor/npm-asset/dexie/dist/dexie.min.js');
 importScripts('vendor/exface/Core/Facades/AbstractPWAFacade/exf_preloader.js');
 
+var sync = async function(){
+	var ids = await exfPreloader.getActionQueueIds('offline')
+	return exfPreloader.syncActionAll(ids);
+}
+
 self.addEventListener('sync', function(event) {
 	console.log("sync event", event);
     if (event.tag === 'OfflineActionSync') {
-		exfPreloader.getActionQueueIds('offline')
-		.then(function(ids){
-			exfPreloader.syncActionAll(ids)
+		event.waitUntil(
+			sync()
 			.then(function(){
 				console.log('all offline actions synced');
+				self.clients.matchAll()
+				.then(function(all) {
+					all.forEach(function(client) {
+						client.postMessage('Sync completed');
+					});
+				});
+				return;
 			})
-		})
-		.catch(function(error){
-			console.error('Offline action synced failed: ', error);
-		});
+			.catch(error => {
+				console.log('Could not sync completely; scheduled for the next time', error);
+				self.clients.matchAll()
+				.then(function(all) {
+					all.forEach(function(client) {
+						client.postMessage('Sync failed: ' + error);
+					});
+				});
+				return Promise.reject(error); // Alternatively, `return Promise.reject(error);`
+			})
+		)
     }
 });
 -----------------------------------------------------------
@@ -55,7 +73,6 @@ const exfPreloader = {};
 	var _deviceId;
 	
 	(function() {
-		console.log('Create deviceId');
 		_deviceIdTable.toArray()
 		.then(function(data) {
 			if (data.length !== 0) {
@@ -249,7 +266,6 @@ const exfPreloader = {};
 		var topics = _preloader.getTopics();
 		offlineAction.url = 'api/task/' + topics.join('/');
 		var xRequestId = _preloader.createUniqueId();
-		console.log('Request-Id: ', xRequestId);
 		var date = (+ new Date());
 		offlineAction.data.assignedOn = new Date(date).toLocaleString()
 		var data = {
@@ -330,24 +346,36 @@ const exfPreloader = {};
 	/**
 	 * @return Promise
 	 */
-	this.syncActionAll = function(selectedIds) {
-		var promises = [];
-		selectedIds.forEach(function(id){
-			promises.push(_preloader.syncAction(id));
-		});
-		return Promise.all(promises);
+	this.syncActionAll = async function(selectedIds) {
+		var result = true;
+		var id = null;
+		for (var i = 0; i < selectedIds.length; i++) {
+			console.log('Sync Actions');
+			var id = selectedIds[i];		
+			var result = await _preloader.syncAction(id);
+			if (result === false) {
+				break;
+			}
+		}
+		if (result === false) {
+			return Promise.reject("Syncing failed at action with id: " + id + ". Syncing aborted!");
+		}
+		return Promise.resolve('Success');
 	};
 	
 	/**
 	 * @return Promise
 	 */
-	this.syncAction = function(id) {
-		return _actionsTable.get(id)
-		.then(function(element){
-			console.log('Syncing action with id: ',element.id);
-			var params = element.request.data;
-			params = _preloader.encodeJson(params);
-			return fetch(element.request.url, {
+	this.syncAction = async function(id) {
+		element = await _actionsTable.get(id);
+		if (element === undefined) {
+			return false
+		}
+		console.log('Syncing action with id: ',element.id);
+		var params = element.request.data;
+		params = _preloader.encodeJson(params);
+		try {
+			var response = await fetch(element.request.url, {
 				method: element.request.type,
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -356,57 +384,64 @@ const exfPreloader = {};
 				},
 				body: params
 			})
-			.then(response => {
-				if (response.ok) {
-					return response.json()
-					.then(function(data){
-						var date = (+ new Date());
-						return _actionsTable.update(element.id, {
-							status: 'success',
-							tries: element.tries + 1,
-							response: data,
-							synced: new Date(date).toLocaleString()
-						})
-						.then(function (updated){
-							if (updated) {
-								console.log ("Action with id " + element.id + " was updated");
-							} else {
-								console.log ("Nothing was updated - there was no action with id: ", element.id);
-							}
-						});
-					});
-				}
-				if (response.statusText === 'timeout' || response.status === 0 || response.status >= 500) {
-					throw({message: response.statusText});
-					/*console.log('Timeout sync action');
-					return _actionsTable.update(element.id, {
-						tries: element.tries + 1,
-						response: response.statusText
-					});*/
-				}
-				return response.json()
-				.then(function(data){
-					console.log('Error Server response');
-					return _actionsTable.update(element.id, {
-						status: 'error',
-						tries: element.tries + 1,
-						response: data
-					});
-				});
-			})
-			.catch(function(error){
-			  console.error('ActionID: ' + element.id + ' - Error: ' + error.message);
-			  _actionsTable.update(element.id, {
-					tries: element.tries + 1,
-					response: error.message
-				});
-			  throw(error);
-			  //return('ActionID: ' + element.id + 'sync failed!');
+		} catch (error) {
+			console.error("Error sync action with id " + element.id + ". " + error.message);
+			var updated = await _actionsTable.update(element.id, {
+				tries: element.tries + 1,
+				response: error.message
 			});
-		})
-		.catch(function(error){
-			throw(error);
-		})
+			if (updated) {
+				console.log ("Tries for Action with id " + element.id + " increased");
+			} else {
+				console.log ("Nothing was updated - there was no action with id: ", element.id);
+			}
+			return false;			
+		}
+		var data = await response.json()
+		if (response.ok) {
+			var date = (+ new Date());
+			//await _actionsTable.delete(element.id);
+			//we update the entry now for test purposes, normally we delete it from the queue
+			var updated = await _actionsTable.update(element.id, {
+				status: 'success',
+				tries: element.tries + 1,
+				response: data,
+				synced: new Date(date).toLocaleString()
+			})				
+			if (updated) {
+				console.log ("Action with id " + element.id + " synced. Action removed from queue");
+			} else {
+				console.log ("Nothing was updated - there was no action with id: ", element.id);
+			}
+			return true;
+		}
+		if (response.statusText === 'timeout' || response.status === 0) {
+			console.log('Timeout syncing action with id: ' + element.id);
+			var updated = _actionsTable.update(element.id, {
+				tries: element.tries + 1,
+				response: response.statusText
+			});
+			if (updated) {
+				console.log ("Tries for Action with id " + element.id + " increased");
+			} else {
+				console.log ("Nothing was updated - there was no action with id: ", element.id);
+			}
+			return false;
+		}
+		console.log('Server responded with an error syncing action with id: '+ element.id);
+		//await _actionsTable.delete(element.id);
+		//we update the entry now for test purposes, normally we delete it from the queue
+		var updated = await _actionsTable.update(element.id, {
+			status: 'error',
+			tries: element.tries + 1,
+			response: data
+		});
+		if (updated) {
+			console.log ("Action with id " + element.id + " was updated");
+		} else {
+			console.log ("Nothing was updated - there was no action with id: ", element.id);
+		}
+		return false;		
 	};
 	
 	/**
