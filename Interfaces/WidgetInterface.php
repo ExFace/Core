@@ -186,16 +186,17 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
     public function getWidgetType();
 
     /**
-     *
-     * @return boolean
+     * Returns TRUE/FALSE if the widget was disabled/enabled explicitly anf NULL otherwise.
+     * 
+     * @return bool|NULL
      */
-    public function isDisabled();
+    public function isDisabled() : ?bool;
 
     /**
      *
-     * @param boolean $value            
+     * @param bool|NULL $value            
      */
-    public function setDisabled($value);
+    public function setDisabled(?bool $trueOrFalseOrNull) : WidgetInterface;
 
     /**
      * Returns a dimension object representing the height of the widget.

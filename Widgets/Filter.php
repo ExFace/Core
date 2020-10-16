@@ -411,7 +411,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         }
         
         // The filter should be enabled all the time, except for the case, when it is diabled explicitly
-        if (true !== parent::isDisabled()) {
+        // In particularly, it's disabled-state should not depend on the settings of the attribute, etc.
+        if (true === parent::isDisabled()) {
+            $input->setDisabled(true);
+        } else {
             $input->setDisabled(false);
         }
         
@@ -738,12 +741,12 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      * 
      * @see \exface\Core\Widgets\Container::setDisabled()
      */
-    public function setDisabled($value)
+    public function setDisabled(?bool $trueOrFalseOrNull) : WidgetInterface
     {
         if ($this->isInputWidgetInitialized() === true) {
-            $this->getInputWidget()->setDisabled($value);
+            $this->getInputWidget()->setDisabled($trueOrFalseOrNull);
         }
-        return parent::setDisabled($value);
+        return parent::setDisabled($trueOrFalseOrNull);
     }
     
     /**
@@ -764,7 +767,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::isDisabled()
      */
-    public function isDisabled()
+    public function isDisabled() : ?bool
     {
         return parent::isDisabled() || ($this->hasCustomInputWidget() && $this->getInputWidget()->isDisabled());
     }

@@ -287,12 +287,12 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
      *
      * @see \exface\Core\Widgets\AbstractWidget::setDisabled()
      */
-    public function setDisabled($value)
+    public function setDisabled(?bool $trueOrFalseOrNull) : WidgetInterface
     {
         foreach ($this->getChildren() as $child) {
-            $child->setDisabled($value);
+            $child->setDisabled($trueOrFalseOrNull);
         }
-        return parent::setDisabled($value);
+        return parent::setDisabled($trueOrFalseOrNull);
     }
 
     /**

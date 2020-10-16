@@ -184,7 +184,7 @@ trait iHaveContextualHelpTrait {
             $descr .= $attr->getObject()->getShortDescription() ? ' ' . rtrim($attr->getObject()->getShortDescription(), ".") . '.' : '';
         }
         
-        if ($widget !== null && ($widget instanceof iTakeInput) && $widget->isDisabled() === false) {
+        if ($widget !== null && ($widget instanceof iTakeInput) && $widget->isDisabled() !== true) {
             if ($dataTypeHint = $attr->getDataType()->getInputFormatHint()) {
                 $descr .= ($descr ? "\n\n" : '') . $this->translate('LOCALIZATION.DATATYPE.FORMAT_HINT') . $dataTypeHint;
             }
