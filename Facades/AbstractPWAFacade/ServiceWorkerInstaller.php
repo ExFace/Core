@@ -256,18 +256,14 @@ return $filename;
             $builder->addRouteFromUxon($id, $uxon);
         }
         $js = <<<JS
-var sync = async function(){
-	var ids = await exfPreloader.getActionQueueIds('offline')
-	return exfPreloader.syncActionAll(ids);
-}
-
 self.addEventListener('sync', function(event) {
-	console.log("sync event", event);
     if (event.tag === 'OfflineActionSync') {
 		event.waitUntil(
-			sync()
+			exfPreloader.getActionQueueIds('offline')
+			.then(function(ids){
+				return exfPreloader.syncActionAll(ids)
+			})
 			.then(function(){
-				console.log('all offline actions synced');
 				self.clients.matchAll()
 				.then(function(all) {
 					all.forEach(function(client) {
@@ -277,14 +273,14 @@ self.addEventListener('sync', function(event) {
 				return;
 			})
 			.catch(error => {
-				console.log('Could not sync completely; scheduled for the next time', error);
+				console.error('Could not sync completely; scheduled for the next time.', error);
 				self.clients.matchAll()
 				.then(function(all) {
 					all.forEach(function(client) {
-						client.postMessage('Sync failed: ' + error);
+						client.postMessage(error);
 					});
 				});
-				return Promise.reject(error); // Alternatively, `return Promise.reject(error);`
+				return Promise.reject(error);
 			})
 		)
     }
