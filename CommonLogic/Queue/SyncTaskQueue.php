@@ -86,7 +86,7 @@ class SyncTaskQueue extends AsyncTaskQueue
             $dataSheet->getColumns()->addFromExpression('ERROR_MESSAGE');
             $dataSheet->getColumns()->addFromExpression('ERROR_LOGID');
             $dataSheet->setCellValue('ERROR_MESSAGE', 0, $e->getMessage());
-            $dataSheet->setCellValue('ERROR_LOGID', 0, $e->getAlias());
+            $dataSheet->setCellValue('ERROR_LOGID', 0, $e->getId());
             $dataSheet->dataUpdate(false, $transaction);
             $transaction->commit();
             $result = ResultFactory::createErrorResult($task, $e);
