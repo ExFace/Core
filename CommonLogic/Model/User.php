@@ -5,8 +5,12 @@ use exface\Core\Interfaces\UserInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
+use exface\Core\Interfaces\Selectors\UserRoleSelectorInterface;
+use exface\Core\CommonLogic\Selectors\UserRoleSelector;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\CommonLogic\Selectors\UserSelector;
 
 /**
  * Representation of an Exface user.
@@ -16,7 +20,6 @@ use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
  */
 class User implements UserInterface
 {
-
     private $exface;
 
     private $dataSheet;
@@ -40,6 +43,10 @@ class User implements UserInterface
     private $modelLoader = null;
     
     private $modelLoaded = false;
+    
+    private $roleSelectors = null;
+    
+    private $disabled = false;
 
     /**
      * 
@@ -77,6 +84,9 @@ class User implements UserInterface
         if ($this->uid === null && $this->modelLoaded === false) {
             $this->loadData();
         }
+        if ($this->isAnonymous()) {
+            return UserSelector::ANONYMOUS_USER_OID;
+        }
         return $this->uid;
     }
     
@@ -91,7 +101,7 @@ class User implements UserInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\UserInterface::getUsername()
      */
-    public function getUsername()
+    public function getUsername() : ?string
     {
         return $this->username;
     }
@@ -143,6 +153,17 @@ class User implements UserInterface
         }
         return $this->lastname;
     }
+    
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::getName()
+     */
+    public function getName() : string
+    {
+        return $this->getFirstName() . ' ' . $this->getLastName();
+    }
 
     /**
      * 
@@ -167,7 +188,7 @@ class User implements UserInterface
         }
         
         if (! $this->locale) {
-            $this->locale = $this->getWorkbench()->getConfig()->getOption("LOCALE.DEFAULT");
+            $this->locale = $this->getWorkbench()->getConfig()->getOption("SERVER.DEFAULT_LOCALE");
         }
         
         return $this->locale;
@@ -267,28 +288,34 @@ class User implements UserInterface
             $userSheet->setCellValue('PASSWORD', 0, $pwd);
         }
         
+        $userSheet->getColumns()->addFromAttribute($userModel->getAttribute('DISABLED_FLAG'));
+        if ($this->isDisabled()) {
+            $userSheet->setCellValue('DISABLED_FLAG', 0, '1');
+        } else {
+            $userSheet->setCellValue('DISABLED_FLAG', 0, '0');
+        }
+        
         return $userSheet;
     }
 
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\UserInterface::isUserAdmin()
+     * @deprecated
+     * TODO #nocms remove in favor of hasRole()
      */
     public function isUserAdmin()
     {
-        if ($this->isUserAnonymous()) {
+        if ($this->isAnonymous()) {
             return false;
-        }
-        return $this->getWorkbench()->getCMS()->isUserAdmin();
+        }return true;
+        return $this->hasRole(new UserRoleSelector($this->getWorkbench(), 'exface.Core.SUPERUSER'));
     }
-
+    
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\UserInterface::isUserAnonymous()
+     * @see \exface\Core\Interfaces\UserImpersonationInterface::isAnonymous()
      */
-    public function isUserAnonymous()
+    public function isAnonymous() : bool
     {
         $this->anonymous = ($this->username === null);
         return $this->anonymous;
@@ -354,7 +381,7 @@ class User implements UserInterface
      */
     public function getInitials() : string
     {
-        if ($this->isUserAnonymous() === true) {
+        if ($this->isAnonymous() === true) {
             return 'Guest';
         }
         $firstInitial = mb_substr($this->getFirstName(), 0, 1);
@@ -365,5 +392,109 @@ class User implements UserInterface
         }
         
         return ($firstInitial ? $firstInitial . '.' : '') . ($secondInitial ? $secondInitial . '.' : '');
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::hasRole()
+     */
+    public function hasRole(UserRoleSelectorInterface $selector): bool
+    {
+        foreach ($this->getRoleSelectors() as $rs) {
+            if ($rs->__toString() === $selector->__toString()) {
+                return true;
+            }
+        }
+        
+        // If the selector is an alias and it's not one of the built-in aliases, look up the
+        // the UID and check that.
+        if ($selector->isAlias() && $selector->toString() !== UserRoleSelector::AUTHENTICATED_USER_ROLE_ALIAS) {
+            $appAlias = $selector->getAppAlias();
+            $roleAlias = StringDataType::substringAfter($selector->toString(), $appAlias . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER);
+            $roleSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE');
+            $roleSheet->getColumns()->addFromUidAttribute();
+            $roleSheet->getFilters()->addConditionFromString('ALIAS', $roleAlias);
+            $roleSheet->getFilters()->addConditionFromString('APP__ALIAS', $appAlias);
+            $roleSheet->dataRead();
+            if ($roleSheet->countRows() === 1) {
+                return $this->hasRole(new UserRoleSelector($this->getWorkbench(), $roleSheet->getUidColumn()->getCellValue(0)));
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * 
+     * @return UserRoleSelectorInterface[]
+     */
+    protected function getRoleSelectors() : array
+    {
+        if ($this->roleSelectors === null) {
+            if ($this->modelLoaded === false) {
+                $this->loadData();
+            } else {
+                $this->roleSelectors = [];
+            }
+        }
+        if (empty($this->roleSelectors) && $this->isAnonymous() === false) {
+            $this->roleSelectors = $this->addBuiltInRoles($this->roleSelectors ?? []);
+        }
+        return $this->roleSelectors;
+    }
+    
+    /**
+     * 
+     * @param UserRoleSelectorInterface[] $selectorArray
+     * @return UserRoleSelectorInterface[]
+     */
+    protected function addBuiltInRoles(array $selectorArray) : array
+    {
+        $selectorArray[] = new UserRoleSelector($this->getWorkbench(), UserRoleSelector::AUTHENTICATED_USER_ROLE_OID);
+        $selectorArray[] = new UserRoleSelector($this->getWorkbench(), UserRoleSelector::AUTHENTICATED_USER_ROLE_ALIAS);
+        return $selectorArray;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::addRoleSelector()
+     */
+    public function addRoleSelector($selectorOrString) : UserInterface
+    {
+        if (empty($this->roleSelectors)) {
+            $this->roleSelectors = $this->addBuiltInRoles($this->roleSelectors ?? []);
+        }
+        if ($selectorOrString instanceof UserRoleSelectorInterface) {
+            $this->roleSelectors[] = $selectorOrString;
+        } else {
+            $this->roleSelectors[] = new UserRoleSelector($this->getWorkbench(), $selectorOrString);
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::setDisabled()
+     */
+    public function setDisabled(bool $trueOrFalse) : UserInterface
+    {
+        $this->disabled = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::isDisabled()
+     */
+    public function isDisabled() : bool
+    {
+        if ($this->disabled === null && $this->modelLoaded === false) {
+            $this->loadData();
+        }
+        return $this->disabled;
     }
 }

@@ -78,7 +78,7 @@ class FileLimitingLogHandler extends LimitingWrapper
                 // suppress errors here as unlink() might fail if two processes
                 // are cleaning up/rotating at the same time
                 set_error_handler(function ($errno, $errstr, $errfile, $errline) {});
-                unlink($file);
+                @unlink($file);
                 restore_error_handler();
             }
         }

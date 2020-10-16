@@ -3,14 +3,21 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
-use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\SelectorFactory;
+use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Model\UiMenuItemInterface;
+use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
+use exface\Core\Interfaces\AppInterface;
 
-class UiPageTreeNode
+class UiPageTreeNode implements UiPageTreeNodeInterface
 {
+    use UiMenuItemTrait;
+    
     private $exface = null;
     
     private $tree = null;
@@ -27,18 +34,30 @@ class UiPageTreeNode
     
     private $intro = null;
     
-    private $cmsId = null;
+    private $uid = null;
     
-    private $pageAlias = null;    
+    private $pageAlias = null;
+    
+    private $childNodesLoaded = false;
+    
+    private $published = true;
     
     
-    public function __construct(WorkbenchInterface $exface, string $pageAlias, string $name, string $cmsId, UiPageTreeNode $parentNode = null)
+    /**
+     * 
+     * @param WorkbenchInterface $exface
+     * @param string $pageAlias
+     * @param string $name
+     * @param string $uid
+     * @param UiPageTreeNodeInterface $parentNode
+     */
+    public function __construct(WorkbenchInterface $exface, string $pageAlias, string $name, string $uid, UiPageTreeNodeInterface $parentNode = null)
     {
         $this->exface = $exface;
         $this->pageSelector = SelectorFactory::createPageSelector($exface, $pageAlias);
         $this->pageAlias = $pageAlias;
         $this->name = $name;
-        $this->cmsId = $cmsId;
+        $this->uid = $uid;
         if ($parentNode !== null) {
             $this->parentNode = $parentNode;
         }
@@ -66,6 +85,17 @@ class UiPageTreeNode
     
     /**
      * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::setName()
+     */
+    public function setName(string $name) : UiMenuItemInterface
+    {
+        $this->name = $name;
+        return $this;
+    }
+    
+    /**
+     * 
      * @return string
      */
     public function getPageAlias() : string
@@ -77,17 +107,17 @@ class UiPageTreeNode
      * 
      * @return string
      */
-    public function getCmsId() : string
+    public function getUid() : ?string
     {
-        return $this->cmsId;   
+        return $this->uid;   
     }
     
     /**
      * 
-     * @param UiPageTreeNode $parentNode
-     * @return UiPageTreeNode
+     * @param UiPageTreeNodeInterface $parentNode
+     * @return UiPageTreeNodeInterface
      */
-    public function setParentNode(UiPageTreeNode $parentNode) : UiPageTreeNode
+    public function setParentNode(UiPageTreeNodeInterface $parentNode) : UiPageTreeNodeInterface
     {
         $this->parentNode = $parentNode;
         return $this;
@@ -97,16 +127,16 @@ class UiPageTreeNode
      * 
      * @return bool
      */
-    public function hasParentNode() : bool
+    public function hasParent() : bool
     {
         return $this->parentNode !== null;
     }
     
     /**
      * 
-     * @return UiPageTreeNode|NULL
+     * @return UiPageTreeNodeInterface|NULL
      */
-    public function getParentNode() : ?UiPageTreeNode
+    public function getParentNode() : ?UiPageTreeNodeInterface
     {
         return $this->parentNode;   
     }
@@ -133,9 +163,9 @@ class UiPageTreeNode
     /**
      * 
      * @param string $intro
-     * @return UiPageTreeNode
+     * @return UiMenuItemInterface
      */
-    public function setIntro (string $intro) : UiPageTreeNode
+    public function setIntro (string $intro) : UiMenuItemInterface
     {
         $this->intro = $intro;
         return $this;
@@ -143,31 +173,19 @@ class UiPageTreeNode
     
     /**
      * 
-     * @return bool
-     */
-    public function hasIntro() : bool
-    {
-        return $this->intro !== null;
-    }
-    
-    /**
-     * 
      * @return string
      */
-    public function getIntro() : string
+    public function getIntro() : ?string
     {
-        if ($this->intro !== null) {
-            return $this->intro;
-        }
-        return '';
+        return $this->intro;
     }
     
     /**
      * 
      * @param string $descpription
-     * @return UiPageTreeNode
+     * @return UiMenuItemInterface
      */
-    public function setDescription (string $descpription) : UiPageTreeNode
+    public function setDescription (string $descpription) : UiMenuItemInterface
     {
         $this->description = $descpription;
         return $this;
@@ -177,12 +195,9 @@ class UiPageTreeNode
      * 
      * @return string
      */
-    public function getDescription() : string
+    public function getDescription() : ?string
     {
-        if ($this->description !== null) {
-            return $this->description;
-        }
-        return '';
+        return $this->description;
     }
     
     /**
@@ -196,7 +211,7 @@ class UiPageTreeNode
     
     /**
      * 
-     * @return array
+     * @return UiPageTreeNodeInterface[]
      */
     public function getChildNodes() : array
     {
@@ -204,13 +219,44 @@ class UiPageTreeNode
     }
     
     /**
+     *
+     * @return UiPageTreeNodeInterface
+     */
+    public function resetChildNodes() : UiPageTreeNodeInterface
+    {
+        $this->childNodes = [];
+        $this->setChildNodesLoaded(false);
+        return $this;
+    }
+    
+    /**
      * 
-     * @param UiPageTreeNode $node
+     * @param bool $trueOrFalse
+     * @return UiPageTreeNodeInterface
+     */
+    public function setChildNodesLoaded(bool $trueOrFalse) : UiPageTreeNodeInterface
+    {
+        $this->childNodesLoaded = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getChildNodesLoaded() : bool
+    {
+        return $this->childNodesLoaded;
+    }
+    
+    /**
+     * 
+     * @param UiPageTreeNodeInterface $node
      * @param int $position
      * @throws InvalidArgumentException
-     * @return UiPageTreeNode
+     * @return UiPageTreeNodeInterface
      */
-    public function addChildNode(UiPageTreeNode $node, int $position = null) : UiPageTreeNode
+    public function addChildNode(UiPageTreeNodeInterface $node, int $position = null) : UiPageTreeNodeInterface
     {
         if ($node->getParentNode() !== $this){
             throw new InvalidArgumentException("The parent node of the given node '{$node->getName()}' is not the node '{$this->getName()}' !");
@@ -233,7 +279,10 @@ class UiPageTreeNode
      */
     public function isPage(UiPageInterface $page) : bool
     {
-        return $page->is($this->getPageSelector());
+        if ($page->getUid() === $this->getUid()) {
+            return true;
+        }
+        return false;
     }
     
     /**
@@ -245,10 +294,12 @@ class UiPageTreeNode
      */
     public function isParentOf(UiPageInterface $page) : bool
     {
-        if ($page->getMenuParentPage() === null) {
-            return false;
+        foreach ($this->getChildNodes() as $childNode) {
+            if ($childNode->getUid() === $page->getUid()) {
+                return true;
+            }
         }
-        return $page->getMenuParentPage()->is($this->getPageSelector());        
+        return false;
     }
     
     /**
@@ -260,13 +311,58 @@ class UiPageTreeNode
      */
     public function isAncestorOf(UiPageInterface $page) : bool
     {
-        $checkPage = $page;
-        while ($checkPage->getMenuParentPage() !== null) {
-            if ($this->isParentOf($checkPage)) {
+        //return true;
+        while (!empty($this->getChildNodes())) {
+            if ($this->isParentOf($page)) {
                 return true;
             }
-            $checkPage = $checkPage->getMenuParentPage();            
+            foreach ($this->getChildNodes() as $childNode) {
+                if ($childNode->isAncestorOf($page)) {
+                    return true;
+                }
+            }
+            return false;
         }
         return false;          
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getAliasWithNamespace()
+     */
+    public function getAliasWithNamespace()
+    {
+        return $this->getPageAlias();
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiMenuItemInterface::getParentPageSelector()
+     */
+    public function getParentPageSelector(): ?UiPageSelectorInterface
+    {
+        return $this->getParentNode()->getPageSelector();
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
+     */
+    public function getNamespace()
+    {
+        return StringDataType::substringBefore($this->getPageAlias(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, '', false, true);
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getAlias()
+     */
+    public function getAlias()
+    {
+        return StringDataType::substringAfter($this->getPageAlias(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $this->getPageAlias(), false, true);
     }    
 }

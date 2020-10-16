@@ -5,7 +5,9 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Exceptions\Contexts\ContextNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Exceptions\UserException;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * The session context scope represents the PHP session (on server side).
@@ -17,10 +19,37 @@ use exface\Core\Exceptions\UserException;
  */
 class SessionContextScope extends AbstractContextScope
 {
+    const KEY_USERNAME = 'username';
+    
+    const KEY_USERDATA = 'user';
+    
+    const KEY_LOCALE = 'locale';
 
     private $session_id = null;
 
     private $session_locale = null;
+    
+    private $session_user_data = null;
+    
+    private $force_update_session_data = false;
+    
+    public function __construct(Workbench $exface)
+    {
+        parent::__construct($exface);
+        
+        $this->sessionOpen();
+        
+        if ($locale = $this->getSessionData(self::KEY_LOCALE)) {
+            $this->setSessionLocale($locale);
+        }
+        
+        if ($userdata = $this->getSessionData(self::KEY_USERDATA)) {
+            $this->session_user_data = $userdata;
+        }
+        
+        // It is important to save the session once we have read the data, because otherwise it will block concurrent ajax-requests
+        $this->sessionClose();
+    }
 
     /**
      * Since the session context ist stored in the $_SESSION, init() makes sure, the session is available and tries to
@@ -30,25 +59,17 @@ class SessionContextScope extends AbstractContextScope
      *
      * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::init()
      */
-    protected function init()
+    public function init()
     {
-        $this->sessionOpen();
         if ($this->getSavedContexts() instanceof UxonObject) {
             foreach ($this->getSavedContexts() as $alias => $uxon) {
                 try {
                     $this->getContext($alias);
-                } catch (ContextNotFoundError $error) {
+                } catch (ContextNotFoundError|AuthorizationExceptionInterface $error) {
                     $this->removeContext($alias);
                 }
             }
         }
-        
-        if ($locale = $this->getSessionData('locale')) {
-            $this->setSessionLocale($locale);
-        }
-        
-        // It is important to save the session once we have read the data, because otherwise it will block concurrent ajax-requests
-        $this->sessionClose();
         
         return parent::init();
     }
@@ -94,13 +115,12 @@ class SessionContextScope extends AbstractContextScope
         // In particular, this prevens unneeded session operatinos, which may have negative
         // performance impact and can even produce PHP warnings if headers were sent already
         // (e.g. by the CMS).
-        if (empty($this->getContextsLoaded()) === true) {
+        if (empty($this->getContextsLoaded()) === true && $this->force_update_session_data === false) {
             return $this;
         }
         
-        // var_dump($_SESSION);
         try {
-            $this->sessionOpen();
+            $this->sessionOpen(true);
         } catch (\ErrorException $e) {
             if ($e->getSeverity() === E_WARNING) {
                 $this->getWorkbench()->getLogger()->logException($e);
@@ -124,14 +144,15 @@ class SessionContextScope extends AbstractContextScope
         }
         
         // Save other session data
-        $this->setSessionData('locale', $this->session_locale);
+        $this->setSessionData(self::KEY_LOCALE, $this->session_locale);
+        $this->setSessionData(self::KEY_USERDATA, $this->session_user_data);
         
         // It is important to save the session once we have read the data, because otherwise it will block concurrent ajax-requests
         $this->sessionClose();
         
         return $this;
     }
-    
+        
     /**
      * 
      * {@inheritDoc}
@@ -139,7 +160,7 @@ class SessionContextScope extends AbstractContextScope
      */
     public function removeContext($alias)
     {
-        unset($_SESSION['exface']['contexts'][$alias]);
+        unset($_SESSION['exface'][$this->getInstallationFolderName()]['contexts'][$alias]);
         return parent::removeContext($alias);
     }
 
@@ -172,7 +193,7 @@ class SessionContextScope extends AbstractContextScope
     /**
      * Returns the id of the session, that is assotiated with this context scope
      *
-     * @return string
+     * @return string|NULL
      */
     protected function getSessionId()
     {
@@ -185,12 +206,12 @@ class SessionContextScope extends AbstractContextScope
      *
      * @return SessionContextScope
      */
-    protected function sessionOpen()
+    protected function sessionOpen(bool $ignoreHeaderWarnings = false)
     {
         if (! $this->sessionIsOpen()) {
             // If there is a session id saved in the context, this session was already loaded into it, so the next time
             // we need to open exactly the same session!
-            if ($this->getSessionId()) {
+            if ($this->getSessionId() && $this->getSessionId() !== session_id()) {
                 session_id($this->getSessionId());
             }
             
@@ -201,25 +222,22 @@ class SessionContextScope extends AbstractContextScope
             // To prevent this, we simply catch any exception and check if the session is really open afterwards - if not,
             // a meaningfull exception is thrown.
             try {
-                @session_start();
+                if ($ignoreHeaderWarnings) {
+                    $started = @session_start();
+                } else {
+                    $started = session_start();
+                }
             } catch (\Throwable $e) {
                 if (! $this->sessionIsOpen()) {
                     throw new RuntimeException('Opening the session for the session context scope failed: ' . $e->getMessage(), null, $e);
                 }
             }
+            // Throw an error if the session could not be started. 
+            if ($started === false && ! $ignoreHeaderWarnings) {
+                throw new RuntimeException('Opening the session for the session context scope failed: unknown error!');
+            }
         } else {
             $this->setSessionId(session_id());
-            // Check, which user data is saved in the session context scope. If it is not
-            // the same user, than the current one (= the one, that is logged on in the
-            // CMS), than clear all context data. This is important, because, when the
-            // user loggs out, the session is not changed - it's just an internal state
-            // change.
-            $currentUser = $this->getContextManager()->getScopeUser()->getUserCurrent();
-            $sessionUser = $this->getSessionData('user');
-            if ($sessionUser !== $currentUser->getUsername()) {
-                $this->clearSessionData();
-                $this->setSessionData('user', $currentUser->getUsername());
-            }
         }
         return $this;
     }
@@ -233,7 +251,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function sessionClose()
     {
-        if (! $this->getSessionId()) {
+        if ($this->getSessionId() === null) {
             $this->setSessionId(session_id());
         }
         session_write_close();
@@ -264,7 +282,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function getSessionContextData()
     {
-        return $_SESSION['exface']['contexts'];
+        return $_SESSION['exface'][$this->getInstallationFolderName()]['contexts'];
     }
 
     /**
@@ -276,7 +294,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function setSessionContextData($key, $value)
     {
-        $_SESSION['exface']['contexts'][$key] = $value;
+        $_SESSION['exface'][$this->getInstallationFolderName()]['contexts'][$key] = $value;
         return $this;
     }
     
@@ -287,7 +305,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function getSessionData(string $key)
     {
-        return $_SESSION['exface'][$key];
+        return $_SESSION['exface'][$this->getInstallationFolderName()][$key];
     }
     
     /**
@@ -298,13 +316,28 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function setSessionData(string $key, $data) : SessionContextScope
     {
-        $_SESSION['exface'][$key] = $data;
+        $_SESSION['exface'][$this->getInstallationFolderName()][$key] = $data;
         return $this;
     }
     
-    protected function clearSessionData() : SessionContextScope
+    /**
+     * 
+     * @return SessionContextScope
+     */
+    public function clearSessionData() : SessionContextScope
     {
-        unset($_SESSION['exface']);
+        unset($_SESSION['exface'][$this->getInstallationFolderName()]);
+        if (empty($_SESSION['exface'])) {
+            unset($_SESSION['exface']);
+        }
+        
+        $this->session_locale = null;
+        $this->session_user_data = null;
+        $this->force_update_session_data = true;
+        
+        foreach ($this->getContextsLoaded() as $context) {
+            $this->reloadContext($context);
+        }
         return $this;
     }
 
@@ -319,9 +352,9 @@ class SessionContextScope extends AbstractContextScope
     {
         if ($this->session_locale === null) {
             try {
-                $this->session_locale = $this->getContextManager()->getScopeUser()->getUserCurrent()->getLocale();
-            } catch (UserException $e){
-                $this->session_locale = $this->getWorkbench()->getConfig()->getOption('LOCALE.DEFAULT');
+                $this->session_locale = $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getLocale();
+            } catch (\Throwable $e){
+                $this->session_locale = $this->getWorkbench()->getConfig()->getOption('SERVER.DEFAULT_LOCALE');
             }
         }
         return $this->session_locale;
@@ -333,10 +366,44 @@ class SessionContextScope extends AbstractContextScope
      * @param string $value            
      * @return SessionContextScope
      */
-    public function setSessionLocale($value)
+    protected function setSessionLocale(string $value) : SessionContextScope
     {
         $this->session_locale = $value;
         return $this;
     }
+    
+    /**
+     * Set the session user data. 
+     * 
+     * @param string|NULL $data
+     * @return SessionContextScope
+     */
+    public function setSessionUserData(?string $data) : SessionContextScope
+    {
+        if ($data !== $this->session_user_data) {
+            $this->clearSessionData();
+            $this->session_user_data = $data;
+        }
+        return $this;
+    }
+    
+    /**
+     * Return the session user data.
+     * 
+     * @return string|NULL
+     */
+    public function getSessionUserData() : ?string
+    {
+        return $this->session_user_data;
+    }
+    
+    /**
+     * Returns installation folder name of exface instance.
+     * 
+     * @return string
+     */
+    protected function getInstallationFolderName() : string
+    {
+        return StringDataType::substringAfter($this->getWorkbench()->getInstallationPath(), DIRECTORY_SEPARATOR, false, false, true);
+    }
 }
-?>

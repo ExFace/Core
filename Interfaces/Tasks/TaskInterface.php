@@ -10,13 +10,14 @@ use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
 
 /**
  * 
  * @author Andrej Kabachnik
  *
  */
-interface TaskInterface extends WorkbenchDependantInterface
+interface TaskInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon
 {    
     /**
      * 
@@ -154,6 +155,13 @@ interface TaskInterface extends WorkbenchDependantInterface
      * @return TaskInterface
      */
     public function setPageSelector($selectorOrString) : TaskInterface;
+    
+    /**
+     * 
+     * @param UiPageInterface $page
+     * @return TaskInterface
+     */
+    public function setPage(UiPageInterface $page) : TaskInterface;
     
     /**
      * 

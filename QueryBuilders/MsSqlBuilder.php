@@ -7,6 +7,12 @@ use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\QueryBuilderException;
+use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
+use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\JsonDataType;
+use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 
 /**
  * A query builder for Microsoft SQL.
@@ -24,6 +30,18 @@ use exface\Core\Exceptions\QueryBuilderException;
  */
 class MsSqlBuilder extends AbstractSqlBuilder
 {
+    /**
+     *
+     * @param QueryBuilderSelectorInterface $selector
+     */
+    public function __construct(QueryBuilderSelectorInterface $selector)
+    {
+        parent::__construct($selector);
+        $reservedWords = $this->getReservedWords();
+        $reservedWords[] = 'USER';
+        $this->setReservedWords($reservedWords);
+    }
+
     /**
      * 
      * {@inheritDoc}
@@ -80,22 +98,6 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         $group_by = $group_by ? ' GROUP BY ' . substr($group_by, 2) : '';
         
-        // If there is a limit in the query, ensure there is an ORDER BY even if no sorters given.
-        if (empty($this->getSorters()) === true && $this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
-            if ($this->getMainObject()->hasUidAttribute()) {
-                // If no order is specified, sort sort over the UID of the meta object
-                $order_by .= ', ' . ($group_by ? 'EXFCOREQ' . $this->getAliasDelim() : '') . $this->getMainObject()->getUidAttribute()->getDataAddress() . ' DESC';
-            } else {
-                // If the object has no UID, sort over the first column in the query, which is not an SQL statement itself
-                foreach ($this->getAttributes() as $qpart) {
-                    if (! $this->checkForSqlStatement($qpart->getDataAddress())) {
-                        $order_by .= ', ' . $qpart->getColumnKey() . ' DESC';
-                        break;
-                    }
-                }
-            }
-        }
-        
         // SELECT
         /*	@var $qpart \exface\Core\CommonLogic\QueryBuilder\QueryPartSelect */
         foreach ($this->getAttributes() as $qpart) {
@@ -108,7 +110,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
             }
             // if the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
             // otherwise the enrichment joins won't work!
-            if ($group_by && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $has_attributes_with_reverse_relations && ! $qpart->getAggregator()) {
+            if ($group_by && $qpartAttr->getObject()->hasUidAttribute() && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $has_attributes_with_reverse_relations && ! $qpart->getAggregator()) {
                 $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                 $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $qpartAttr->getObject()->getUidAttributeAlias());
                 $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
@@ -164,7 +166,30 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $join = implode(' ', $joins);
         $enrichment_join = implode(' ', $enrichment_joins);
         
+        $useEnrichment = ($group_by && ($where || $has_attributes_with_reverse_relations)) || $this->getSelectDistinct();
+        
         // ORDER BY
+        // If there is a limit in the query, ensure there is an ORDER BY even if no sorters given.
+        if (empty($this->getSorters()) === true && $this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
+            if ($this->getMainObject()->hasUidAttribute()) {
+                $orderByUidCol = ($useEnrichment ? 'EXFCOREQ' . $this->getAliasDelim() : '') . $this->getMainObject()->getAlias() . '.' . $this->getMainObject()->getUidAttribute()->getDataAddress();
+                foreach ($this->getAttributes() as $qpart) {
+                    if ($qpart->getAttribute()->isExactly($this->getMainObject()->getUidAttribute())) {
+                        $orderByUidCol = $this->getShortAlias($qpart->getColumnKey());
+                    }
+                }
+                // If no order is specified, sort sort over the UID of the meta object
+                $order_by .= ', ' . $orderByUidCol . ' DESC';
+            } else {
+                // If the object has no UID, sort over the first column in the query, which is not an SQL statement itself
+                foreach ($this->getAttributes() as $qpart) {
+                    if (! $this->checkForSqlStatement($qpart->getDataAddress())) {
+                        $order_by .= ', ' . $qpart->getColumnKey() . ' DESC';
+                        break;
+                    }
+                }
+            }
+        }
         foreach ($this->getSorters() as $qpart) {
             // A sorter can only be used, if there is no GROUP BY, or the sorted attribute has unique values within the group
             if (! $this->getAggregations() || in_array($qpart->getAttribute()->getAliasWithRelationPath(), $group_safe_attribute_aliases)) {
@@ -182,7 +207,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
             $limit = ' OFFSET ' . $this->getOffset() . ' ROWS FETCH NEXT ' . ($this->getLimit()+1) . ' ROWS ONLY';
         }
         
-        if (($group_by && ($where || $has_attributes_with_reverse_relations)) || $this->getSelectDistinct()) {
+        if ($useEnrichment) {
             if (count($this->getAttributesWithReverseRelations()) > 0) {
                 $query = "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . ") EXFCOREQ " . $enrichment_join . $group_by . $having . $order_by . $limit;
             } else {
@@ -195,6 +220,11 @@ class MsSqlBuilder extends AbstractSqlBuilder
         return $query;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlQueryTotals()
+     */
     public function buildSqlQueryTotals()
     {
         $group_by = '';
@@ -251,12 +281,37 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         return $totals_query;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlSelect()
+     */
+    protected function buildSqlSelect(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, $aggregator = null, bool $make_groupable = null)
+    {        
+        $sql = parent::buildSqlSelect($qpart, $select_from, $select_column, $select_as, $aggregator, $make_groupable);
+        $aggr = $aggregator ?? $qpart->getAggregator();
+        if ($qpart->getQuery()->isSubquery() && $qpart->getQuery()->isAggregatedBy($qpart) && $aggr && ($aggr->getFunction()->getValue() === AggregatorFunctionsDataType::LIST_DISTINCT || $aggr->getFunction()->getValue() === AggregatorFunctionsDataType::LIST_ALL)) {
+            $sql = StringDataType::substringBefore($sql, ' AS ', $sql);
+        }
+        return $sql;
+    }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlSelectNullCheckFunctionName()
+     */
     protected function buildSqlSelectNullCheckFunctionName()
     {
         return 'ISNULL';
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::getReadResultRows()
+     */
     protected function getReadResultRows(SqlDataQuery $query) : array
     {
         $rows = parent::getReadResultRows($query);
@@ -278,5 +333,98 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         return $rows;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlGroupByExpression()
+     */
+    protected function buildSqlGroupByExpression(QueryPartAttribute $qpart, $sql, AggregatorInterface $aggregator){
+        $args = $aggregator->getArguments();
+        $function_name = $aggregator->getFunction()->getValue();
+        
+        switch ($function_name) {
+            case AggregatorFunctionsDataType::LIST_DISTINCT:
+            case AggregatorFunctionsDataType::LIST_ALL:
+                $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());                
+                return "STUFF(CAST(( SELECT " . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . "[text()] = " . ($args[0] ? $args[0] : "', '") . " + {$sql}";                
+            default:
+                return parent::buildSqlGroupByExpression($qpart, $sql, $aggregator);
+        }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlSelectSubselect()
+     */
+    protected function buildSqlSelectSubselect(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $select_from = null)
+    {
+        $subselect = parent::buildSqlSelectSubselect($qpart, $select_from);
+        
+        if ($qpart->hasAggregator()) {
+            $aggregator = $qpart->getAggregator();
+            $function_name = $aggregator->getFunction()->getValue();
+            if ($function_name === AggregatorFunctionsDataType::LIST_DISTINCT) {
+                $subselect = substr($subselect, 0, -1) .  "FOR XML PATH(''), TYPE) AS VARCHAR(1000)), 1, 2, ''))";
+            }
+        }
+        return $subselect;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlQueryUpdate($sqlSet, $sqlWhere)
+     */
+    public function buildSqlQueryUpdate(string $sqlSet, string $sqlWhere) : string
+    {
+        $table_alias = $this->getShortAlias($this->getMainObject()->getAlias());
+        return 'UPDATE ' . $table_alias  . $sqlSet . ' FROM ' . $this->buildSqlFrom() . $sqlWhere;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlQueryDelete()
+     */
+    public function buildSqlQueryDelete(string $sqlWhere) : string
+    {
+        $table_alias = $this->getShortAlias($this->getMainObject()->getAlias());
+        return 'DELETE ' . $table_alias . '  FROM ' . $this->buildSqlFrom() . $sqlWhere;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareInputValue()
+     */
+    protected function prepareInputValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
+    {
+        $value = $data_type->parse($value);
+        switch (true) {
+            case $data_type instanceof StringDataType:
+                // JSON values are strings too, but their columns should be null even if the value is an
+                // empty object or empty array (otherwise the cells would never be null)
+                if (($data_type instanceof JsonDataType) && $data_type::isValueEmpty($value) === true) {
+                    $value = 'NULL';
+                } else {
+                    $value = $value === null ? 'NULL' : "'" . str_replace("'", "''", $value) . "'";
+                }
+                break;
+            default:
+                $value = parent::prepareInputValue($value, $data_type);;
+        }
+        return $value;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlAsForTables()
+     */
+    protected function buildSqlAsForTables(string $alias) : string
+    {
+        return ' AS ' . $alias;
+    }
 }
-?>

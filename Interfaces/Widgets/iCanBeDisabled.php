@@ -13,7 +13,7 @@ interface iCanBeDisabled extends WidgetInterface
      *
      * @return boolean
      */
-    public function isDisabled();
+    public function isDisabled() : ?bool;
 
     /**
      * Disables the widget when set to TRUE and enables it with FALSE.
@@ -21,10 +21,10 @@ interface iCanBeDisabled extends WidgetInterface
      * but other widgets can. Disabled widgets also deliver data to actions. To prevent this, make the widget
      * readonly.
      *
-     * @param boolean $true_or_false            
+     * @param bool|NULL $trueOrFalseOrNull            
      * @return WidgetInterface
      */
-    public function setDisabled($true_or_false);
+    public function setDisabled(?bool $trueOrFalseOrNull) : WidgetInterface;
     
     /**
      * 

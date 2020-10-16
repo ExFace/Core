@@ -15,7 +15,6 @@ use exface\Core\Widgets\Console;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Filemanager;
-use exface\Core\Facades\ConsoleFacade;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
@@ -61,7 +60,10 @@ class WebConsoleFacade extends AbstractHttpFacade
             $response = new Response($statusCode, $responseTpl->getHeaders(), $this->getWorkbench()->getDebugger()->printException($e));
         }  
         
-        $this->getWorkbench()->stop();
+        // Don't stop the workbench here!!! The response might include a generator, that
+        // will still need the workbench. The workbench will be stopped automatically
+        // before it' destroyed!
+        
         return $response;
     }
     
@@ -133,9 +135,15 @@ class WebConsoleFacade extends AbstractHttpFacade
                 $stream = new IteratorStream($console->getOutputGenerator($cmd));
                 break;
             default:
-                // FIXME for some reason merging with etenv() makes git push/pull freeze...
-                //$envVars = array_merge(getenv(), $widget->getEnvironmentVars());
-                $envVars = $widget->getEnvironmentVars();
+                $envVars = [];
+                if (! empty($inheritVars = $widget->getEnvironmentVarsInherit())) {
+                    foreach (getenv() as $var => $val) {
+                        if (in_array($var, $inheritVars)) {
+                            $envVars[$var] = $val;
+                        }
+                    }
+                }
+                $envVars = array_merge($envVars, $widget->getEnvironmentVars());
                 $process = Process::fromShellCommandline($cmd, null, $envVars, null, $widget->getCommandTimeout());
                 $process->start();
                 $generator = function ($process) {
@@ -218,7 +226,7 @@ class WebConsoleFacade extends AbstractHttpFacade
     protected function getWidgetFromRequest(RequestInterface $request) : Console
     {
         $pageSelector = $request->getParsedBody()['page'];
-        $page = UiPageFactory::createFromCmsPage($this->getWorkbench()->getCMS(), $pageSelector);
+        $page = UiPageFactory::createFromModel($this->getWorkbench(), $pageSelector);
         $widgetId = $request->getParsedBody()['widget'];
         return $page->getWidget($widgetId);
     }

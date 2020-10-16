@@ -47,6 +47,9 @@ use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\DataTypes\RelationCardinalityDataType;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Model\ConditionInterface;
+use exface\Core\DataTypes\EncryptedDataType;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
  * Default implementation of DataSheetInterface
@@ -575,7 +578,16 @@ class DataSheet implements DataSheetInterface
                 if ($subsheet->getJoinKeyColumnOfSubsheet()->isAttribute() && $subsheet->getJoinKeyColumnOfSubsheet()->getAttribute()->isReadable() === false) {
                     throw new DataSheetJoinError($this, 'Cannot join subsheet based on object "' . $subsheet->getMetaObject()->getName() . '" to data sheet of "' . $this->getMetaObject()->getName() . '": the subsheet\'s key column attribute "' . $subsheet->getJoinKeyColumnOfSubsheet()->getAttribute()->getName() . '" is not readable!');
                 }
+                
+                // Make sure the subsheet inherits all the filters of this sheet that apply to
+                // the subsheet's object (= start with the relation path to the subsheet)
+                $subsheetRelPath = $subsheet->getRelationPathFromParentSheet()->toString();
+                $subsheet->setFilters($this->getFilters()->rebase($subsheetRelPath, function(ConditionInterface $condition) use ($subsheetRelPath) {
+                    return StringDataType::startsWith($condition->getAttributeAlias(), $subsheetRelPath . RelationPath::RELATION_SEPARATOR);
+                }));
+                // Also add a filter over the UIDs of this sheet for the later JOIN
                 $subsheet->getFilters()->addConditionFromString($subsheet->getJoinKeyAliasOfSubsheet(), implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+                
                 // Read data
                 $subsheet->dataRead();
                 // Do the JOIN
@@ -796,7 +808,7 @@ class DataSheet implements DataSheetInterface
             
             // If there is a relation path, but the column contains subsheets, it's data will
             // be treated in the subsheet, so we don't need to process it here.
-            if ($col->getDataType()->is(DataSheetDataType::class) === true) {
+            if ($col->getDataType() instanceof DataSheetDataType) {
                 continue;
             }
             
@@ -838,46 +850,18 @@ class DataSheet implements DataSheetInterface
             } 
             
             $columnAttr = $column->getAttribute();
-            if ($columnAttr->isWritable() === false && ($this->hasUidColumn() === true && $column === $this->getUidColumn()) === false) {
-                // Skip read-only attributes unless it is the UID column (which will be used as a filter later on)
-                continue;
-            } elseif ($column->getDataType()->is(DataSheetDataType::class)) {
-                // Update nested sheets - i.e. replace all rows in the data source, that are related to
-                // the each row of the main sheet with the nested rows here.
-                foreach ($column->getValues(false) as $rowNr => $sheetArr) {
-                    if (! $sheetArr) {
-                        continue;
-                    }
-                    
-                    $nestedSheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $sheetArr);
-                    
-                    // Use the dataReplaceByFilters() method to do the replacement. This will ensure, that
-                    // removed rows will be deleted from the data source - ultimately removing all rows
-                    // if the new nested sheet is empty.
-                    // Using dataReplaceByFilters() requires, that there is a filter over the relation to 
-                    // the main sheet and that every nested row has a value in the foreign-key column of 
-                    // that relation. The latter is actually only required if we are going to create new 
-                    // rows, but at this point, we don't know, if this is going to be neccessary. On the 
-                    // other hand, adding a key-column to every row also makes sure, they all really do belong 
-                    // the main sheet's row.
-                    $relPathToNestedSheet = RelationPathFactory::createFromString($this->getMetaObject(), $column->getAttributeAlias());
-                    $relPathFromNestedSheet = $relPathToNestedSheet->reverse();
-                    $relThisSheetKeyCol = $this->getColumns()->getByAttribute($relPathFromNestedSheet->getRelationLast()->getRightKeyAttribute());
-                    $relThisKeyVal = $relThisSheetKeyCol->getCellValue($rowNr);
-                    if (! $relThisSheetKeyCol || $relThisKeyVal === '' || $relThisKeyVal === mull) {
-                        throw new DataSheetWriteError($this, 'Cannot update nested data - missing key value in main data sheet!');
-                    }
-                    $nestedSheet->getFilters()->addConditionFromString($relPathFromNestedSheet->toString(), $relThisKeyVal, ComparatorDataType::EQUALS);
-                    if (! $relNestedSheetCol = $nestedSheet->getColumns()->getByExpression($relPathFromNestedSheet->toString())) {
-                        $relNestedSheetCol = $nestedSheet->getColumns()->addFromExpression($relPathFromNestedSheet->toString());
-                    }
-                    $relNestedSheetCol->setValues($relThisKeyVal);
-                    $nestedSheet->dataReplaceByFilters($transaction, true, false);
-                }
-                continue;                
-            } elseif (DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $column->getExpressionObj()->toString())) {
-                // Skip columns with aggregate functions
-                continue;
+            switch (true) {
+                case $columnAttr->isWritable() === false && ($this->hasUidColumn() === true && $column === $this->getUidColumn()) === false:
+                    // Skip read-only attributes unless it is the UID column (which will be used as a filter later on)
+                    continue 2;
+                case $column->getDataType() instanceof DataSheetDataType:
+                    // Update nested sheets - i.e. replace all rows in the data source, that are related to
+                    // the each row of the main sheet with the nested rows here.
+                    $this->dataUpdateNestedSheets($column, $transaction);
+                    continue 2;                
+                case DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $column->getExpressionObj()->toString()):
+                    // Skip columns with aggregate functions
+                    continue 2;
             }
             
             // If the column represents a required attribute, check if all rows have values.
@@ -962,6 +946,89 @@ class DataSheet implements DataSheetInterface
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnUpdateDataEvent($this, $transaction));
+        
+        return $counter;
+    }
+    
+    /**
+     * Update nested data for a main sheet column column with nested data sheets.
+     * 
+     * Replaces all rows in the data source, that are related to the each row of the 
+     * main sheet with the nested rows here.
+     * 
+     * @param DataColumnInterface $column
+     * @param DataTransactionInterface $transaction
+     * 
+     * @throws InvalidArgumentException
+     * @throws DataSheetWriteError
+     * 
+     * @return int
+     */
+    protected function dataUpdateNestedSheets(DataColumnInterface $column, DataTransactionInterface $transaction) : int
+    {
+        $counter = 0;
+        
+        if (! ($column->getDataType() instanceof DataSheetDataType)) {
+            throw new InvalidArgumentException('Cannot update nested data for data sheet column "' . $column->getName() . '": invalid column data type "' . $column->getDataType()->getAliasWithNamespace() . '"! Expecting type "exface.Core.DataSheet" or a derivative!');
+        }
+        
+        foreach ($column->getValues(false) as $rowNr => $sheetArr) {
+            if (! $sheetArr) {
+                continue;
+            }
+            
+            $nestedSheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $sheetArr);
+            
+            // Use the dataReplaceByFilters() method to do the replacement. This will ensure, that
+            // removed rows will be deleted from the data source - ultimately removing all rows
+            // if the new nested sheet is empty.
+            // Using dataReplaceByFilters() requires, that there is a filter over the relation to
+            // the main sheet and that every nested row has a value in the foreign-key column of
+            // that relation. The latter is actually only required if we are going to create new
+            // rows, but at this point, we don't know, if this is going to be neccessary. On the
+            // other hand, adding a key-column to every row also makes sure, they all really do belong
+            // the main sheet's row.
+            $relPathToNestedSheet = RelationPathFactory::createFromString($this->getMetaObject(), $column->getAttributeAlias());
+            $relPathFromNestedSheet = $relPathToNestedSheet->reverse();
+            $relThisSheetKeyCol = $this->getColumns()->getByAttribute($relPathFromNestedSheet->getRelationLast()->getRightKeyAttribute());
+            $relThisKeyVal = $relThisSheetKeyCol->getCellValue($rowNr);
+            if (! $relThisSheetKeyCol || $relThisKeyVal === '' || $relThisKeyVal === mull) {
+                throw new DataSheetWriteError($this, 'Cannot update nested data - missing key value in main data sheet!');
+            }
+            $nestedSheet->getFilters()->addConditionFromString($relPathFromNestedSheet->toString(), $relThisKeyVal, ComparatorDataType::EQUALS);
+            if (! $relNestedSheetCol = $nestedSheet->getColumns()->getByExpression($relPathFromNestedSheet->toString())) {
+                $relNestedSheetCol = $nestedSheet->getColumns()->addFromExpression($relPathFromNestedSheet->toString());
+            }
+            $relNestedSheetCol->setValues($relThisKeyVal);
+            
+            if (! $nestedSheet->hasUidColumn(true) && $nestedSheet->getMetaObject()->hasUidAttribute()) {
+                if (! $nestedSheet->isEmpty()) {
+                    $nestedUidSheet = $nestedSheet->copy();
+                    $nestedSheet->getColumns()->addFromUidAttribute();
+                    foreach ($nestedSheet->getColumns() as $col) {
+                        // Skip the column with the relation to the main heet because we
+                        // added filters for it in the previous step
+                        if ($relNestedSheetCol === $col) {
+                            continue;
+                        }
+                        $nestedUidSheet->getFilters()->addConditionFromColumnValues($col);
+                    }
+                    $nestedUidSheet->dataRead();
+                    $nestedUidColName = $nestedUidSheet->getUidColumnName();
+                    foreach ($nestedUidSheet->getRows() as $nestedUidRow) {
+                        $nestedUid = $nestedUidRow[$nestedUidColName];
+                        unset($nestedUidRow[$nestedUidColName]);
+                        $nestedSheetIdxs = $nestedSheet->findRowsByValues($nestedUidRow);
+                        if (count($nestedSheetIdxs) !== 1) {
+                            throw new DataSheetWriteError($this, 'Cannot process subsheet for "' . $column->getAttributeAlias() . '": UID count mismatch!');
+                        }
+                        $nestedSheet->setCellValue($nestedUidColName, $nestedSheetIdxs[0], $nestedUid);
+                    }
+                }
+            }
+            
+            $counter += $nestedSheet->dataReplaceByFilters($transaction, true, false);
+        }
         
         return $counter;
     }
@@ -1073,7 +1140,7 @@ class DataSheet implements DataSheetInterface
         
         // Create a query
         $query = QueryBuilderFactory::createForObject($thisObj);
-        $nestedSheets = [];
+        $nestedSheetCols = [];
         
         // Add values for columns based on attributes with defaults or fixed values
         foreach ($thisObj->getAttributes()->getAll() as $attr) {
@@ -1130,17 +1197,9 @@ class DataSheet implements DataSheetInterface
                 continue;
             }
             // if the column contains nested data sheets, we will need to save them after we
-            // created the data for the main sheet.
-            if ($column->getDataType()->is(DataSheetDataType::class)) {
-                foreach ($column->getValues(false) as $rowNr => $sheetArr) {
-                    if (! $sheetArr) {
-                        $nestedSheets[$rowNr][$column->getName()] = null;
-                        continue;
-                    }
-                    
-                    $nestedSheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $sheetArr);
-                    $nestedSheets[$rowNr][$column->getName()] = $nestedSheet;
-                }
+            // created the data for the main sheet - so skip them here.
+            if ($column->getDataType() instanceof DataSheetDataType) {
+                $nestedSheetCols[] = $column;
                 continue;
             } 
             
@@ -1182,46 +1241,20 @@ class DataSheet implements DataSheetInterface
             foreach ($result->getResultRows() as $row) {
                 $new_uids[] = $row[$uidKey];
             }
-        } catch (\Throwable $e) {throw $e;
+        } catch (\Throwable $e) {
             $transaction->rollback();
             $commit = false;
             throw new DataSheetWriteError($this, $e->getMessage(), null, $e);
         }
         
+        // Save the new UIDs in the data sheet
+        if (! empty($new_uids)) {
+            $this->setColumnValues($thisObj->getUidAttributeAlias(), $new_uids);
+        }
+        
         // Create data for the nested sheets
-        if (empty($nestedSheets) === false) {
-            if (count($new_uids) !== count($nestedSheets)) {
-                throw new DataSheetRuntimeError($this, 'Cannot create nested data: ' . count($nestedSheet) . ' nested data sheets found for ' . count($new_uids) . ' UID keys in the parent sheet.');
-            }
-            
-            // Since $new_uids has it's own keys (not the row numbers), we must use $uidIdx
-            // instead of $rowNr to get the correct UID
-            $uidIdx = 0;
-            foreach ($nestedSheets as $rowNestedSheets) {
-                $rowUid = $new_uids[$uidIdx];
-                $uidIdx++;
-                if ($rowUid === null || $rowUid === '') {
-                    throw new DataSheetRuntimeError($this, 'Number of created head-rows does not match the number of children rows!', '75TPT5L');
-                }
-                
-                foreach ($rowNestedSheets as $columnName => $nestedSheet) {
-                    if ($nestedSheet === null || $nestedSheet->isEmpty() === true) {
-                        continue;
-                    }
-                    $nestedCol = $this->getColumns()->get($columnName);
-                    $nestedRel = $thisObj->getRelation($nestedCol->getAttributeAlias());
-                    if ($nestedRel->getCardinality()->__toString() !== RelationCardinalityDataType::ONE_TO_N) {
-                        throw new DataSheetRuntimeError($this, 'Cannot create nested data for "' . $thisObj->getName() . '" (' . $nestedRel->getRightObject()->getAliasWithNamespace() . ') within "' . $thisObj->getRightObject()->getName() . '": only one-to-many relations allowed!');
-                    }
-                    if ($update_if_uid_found === false && $nestedSheet->hasUidColumn() === true) {
-                        $nestedSheet->getUidColumn()->setValueOnAllRows('');
-                    }
-                    $nestedFKeyAttr = $nestedRel->getRightKeyAttribute();
-                    $nestedFKeyCol = $nestedSheet->getColumns()->addFromAttribute($nestedFKeyAttr);
-                    $nestedFKeyCol->setValueOnAllRows($rowUid);
-                    $nestedSheet->dataCreate(false, $transaction);
-                }
-            }
+        foreach ($nestedSheetCols as $column) {
+            $this->dataCreateNestedSheets($column, $transaction, $update_if_uid_found);
         }
         
         if ($commit && ! $transaction->isRolledBack()) {
@@ -1234,14 +1267,71 @@ class DataSheet implements DataSheetInterface
             $this->setCounterForRowsInDataSource($this->countRows());
         }
         
-        // Save the new UIDs in the data sheet
-        if (! empty($new_uids)) {
-            $this->setColumnValues($thisObj->getUidAttributeAlias(), $new_uids);
-        }
-        
         $this->getWorkbench()->eventManager()->dispatch(new OnCreateDataEvent($this, $transaction));
         
         return $result->getAffectedRowsCounter();
+    }
+    
+    /**
+     * Creates nested data for a column of the main sheet, that contains data sheets as values.
+     * 
+     * @param DataColumnInterface $column
+     * @param bool $updateIfUidFound
+     * @param DataTransactionInterface $transaction
+     * 
+     * @throws InvalidArgumentException
+     * @throws DataSheetWriteError
+     * 
+     * @return int
+     */
+    protected function dataCreateNestedSheets(DataColumnInterface $column, DataTransactionInterface $transaction, bool $updateIfUidFound) : int
+    {
+        $thisObj = $this->getMetaObject();
+        $counter = 0;
+        
+        if (! ($column->getDataType() instanceof DataSheetDataType)) {
+            throw new InvalidArgumentException('Cannot create nested data for data sheet column "' . $column->getName() . '": invalid column data type "' . $column->getDataType()->getAliasWithNamespace() . '"! Expecting type "exface.Core.DataSheet" or a derivative!');
+        }
+        
+        $newUids = $this->getUidColumn()->getValues(false);
+        if (count($newUids) !== count($column->getValues(false))) {
+            throw new DataSheetWriteError($this, 'Cannot create nested data: ' . count($column->getValues(false)) . ' nested data sheets found for ' . count($newUids) . ' UID keys in the parent sheet.');
+        }
+        
+        foreach ($column->getValues(false) as $rowNr => $sheetArr) {
+            if (! $sheetArr) {
+                continue;
+            }
+            
+            $nestedSheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $sheetArr);
+            
+            if ($nestedSheet === null || $nestedSheet->isEmpty() === true) {
+                continue;
+            }
+            
+            $nestedRel = $thisObj->getRelation($column->getAttributeAlias());
+            
+            if ($nestedRel->getCardinality()->__toString() !== RelationCardinalityDataType::ONE_TO_N) {
+                throw new DataSheetWriteError($this, 'Cannot create nested data for "' . $thisObj->getName() . '" (' . $nestedRel->getRightObject()->getAliasWithNamespace() . ') within "' . $thisObj->getRightObject()->getName() . '": only one-to-many relations allowed!');
+            }
+            
+            $rowUid = $newUids[$rowNr];
+            
+            if ($rowUid === null || $rowUid === '') {
+                throw new DataSheetWriteError($this, 'Number of created head-rows does not match the number of children rows!', '75TPT5L');
+            }
+            
+            if ($updateIfUidFound === false && $nestedSheet->hasUidColumn() === true) {
+                $nestedSheet->getUidColumn()->setValueOnAllRows('');
+            }
+            
+            $nestedFKeyAttr = $nestedRel->getRightKeyAttribute();
+            $nestedFKeyCol = $nestedSheet->getColumns()->addFromAttribute($nestedFKeyAttr);
+            $nestedFKeyCol->setValueOnAllRows($rowUid);
+            $counter += $nestedSheet->dataCreate(false, $transaction);
+        }
+        
+        return $counter;
     }
 
     /**
@@ -1911,9 +2001,18 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::isEmpty()
      */
-    public function isEmpty() : bool
+    public function isEmpty(bool $checkValues = false) : bool
     {
-        return empty($this->rows) === true;
+        if ($checkValues === false) {
+            return empty($this->rows) === true;
+        }
+        
+        foreach ($this->getColumns() as $col) {
+            if (! $col->isEmpty(true)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -2286,4 +2385,47 @@ class DataSheet implements DataSheetInterface
         return $this->aggregateAll;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getRowsDecrypted()
+     */
+    public function getRowsDecrypted($how_many = 0, $offset = 0) : array
+    {
+        $encryptedRows = $this->getRows($how_many, $offset);
+        if (empty($encryptedRows)) {
+            return $encryptedRows;
+        }
+        $rows = array_slice($encryptedRows, 0);
+        $columns = $this->getColumns();
+        foreach ($rows as $idx => $row) {                       
+            foreach ($columns as $col) {
+                $datatype = $col->getDataType();
+                if ($datatype instanceof EncryptedDataType) {
+                    $colName = $col->getName();
+                    $encrypted = $row[$colName];
+                    if ($datatype->isValueEncrypted($encrypted)) {
+                        $decrypted = EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $encrypted, $datatype->getEncryptionPrefix());
+                        $row[$colName] = $decrypted;
+                    }
+                }
+            }
+            $rows[$idx] = $row;
+        }
+        return $rows;
+    }
+    
+    public function findRowsByValues(array $rowData) : array
+    {
+        $result = [];
+        foreach ($this->getRows() as $idx => $row) {
+            foreach ($rowData as $fld => $val) {
+                if ($row[$fld] !== $val) {
+                    continue 2;
+                }
+            }
+            $result[] = $idx;
+        }
+        return $result;
+    }
 }

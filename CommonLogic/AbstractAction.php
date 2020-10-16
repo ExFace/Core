@@ -33,6 +33,13 @@ use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 use exface\Core\Uxon\ActionSchema;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
+use exface\Core\CommonLogic\Security\Authorization\ActionAuthorizationPoint;
+use exface\Core\Interfaces\UserImpersonationInterface;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\Interfaces\Selectors\FileSelectorInterface;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
+use exface\Core\Events\Action\OnActionInputValidatedEvent;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -55,6 +62,8 @@ abstract class AbstractAction implements ActionInterface
     private $alias = null;
 
     private $name = null;
+    
+    private $hint = null;
 
     private $exface = null;
 
@@ -104,6 +113,8 @@ abstract class AbstractAction implements ActionInterface
     private $input_object_alias = null;
     
     private $result_object_alias = null;
+    
+    private $triggerWidgetRequired = null;
 
     /**
      *
@@ -286,7 +297,7 @@ abstract class AbstractAction implements ActionInterface
      * @see \exface\Core\Interfaces\Actions\ActionInterface::handle()
      */
     public final function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : ResultInterface
-    {
+    {        
         // Start a new transaction if none passed
         if (is_null($transaction)) {
             $transaction = $this->getWorkbench()->data()->startTransaction();
@@ -694,8 +705,11 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
+     * The name of the action; also used as default caption for buttons
+     * 
+     * @uxon-property name
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setName()
      */
     public function setName($value)
@@ -740,23 +754,26 @@ abstract class AbstractAction implements ActionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::isExactly()
      */
-    public function isExactly($action_or_alias)
+    public function isExactly($actionOrSelectorOrString) : bool
     {
-        if ($action_or_alias instanceof ActionInterface) {
-            $alias = $action_or_alias->getAliasWithNamespace();
+        if ($actionOrSelectorOrString instanceof ActionInterface) {
+            return strcasecmp($this->getAliasWithNamespace(), $actionOrSelectorOrString->getAliasWithNamespace()) === 0;
         } else {
-            $selector = $action_or_alias instanceof ActionSelectorInterface ? $action_or_alias : SelectorFactory::createActionSelector($this->getWorkbench(), $action_or_alias);
+            $selector = $actionOrSelectorOrString instanceof ActionSelectorInterface ? $actionOrSelectorOrString : SelectorFactory::createActionSelector($this->getWorkbench(), $actionOrSelectorOrString);
             switch (true) {
+                case $selector->isFilepath():
+                    $selectorClassPath = StringDataType::substringBefore($selector->toString(), '.' . FileSelectorInterface::PHP_FILE_EXTENSION);
+                    $actionClassPath = FilePathDataType::normalize(get_class($this));
+                    return $selectorClassPath === $actionClassPath;
+                case $selector->isClassname():
+                    return ltrim(get_class($this), "\\") === ltrim($selector->toString(), "\\");
                 case $selector->isAlias():
-                    $alias = $action_or_alias;
-                    break;
-                default:
-                    throw new UnexpectedValueException('Cannot compare action ' . $this->getAliasWithNamespace() . ' to "' . $action_or_alias . '": only instantiated actions or aliases supported!');
+                    return strcasecmp($this->getAliasWithNamespace(), $selector->toString()) === 0;
             }
             
         }
         
-        return strcasecmp($this->getAliasWithNamespace(), trim($alias)) === 0;
+        throw new UnexpectedValueException('Cannot compare action ' . $this->getAliasWithNamespace() . ' to "' . $actionOrSelectorOrString . '": only instantiated actions or valid selectors allowed!');
     }
     
     /**
@@ -764,16 +781,20 @@ abstract class AbstractAction implements ActionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::is()
      */
-    public function is($action_or_alias)
+    public function is($actionOrSelectorOrString) : bool
     {
-        if ($action_or_alias instanceof ActionInterface){
-            $class = get_class($action_or_alias);
+        if ($actionOrSelectorOrString instanceof ActionInterface){
+            $class = get_class($actionOrSelectorOrString);
             return $this instanceof $class;
-        } elseif (is_string($action_or_alias)){
-            if ($this->isExactly($action_or_alias)) {
+        } elseif (is_string($actionOrSelectorOrString)){
+            if ($this->isExactly($actionOrSelectorOrString)) {
                 return true;
             }
-            $selector = new ActionSelector($this->getWorkbench(), $action_or_alias);
+            if ($actionOrSelectorOrString instanceof ActionSelectorInterface) {
+                $selector = $actionOrSelectorOrString;
+            } else {
+                $selector = new ActionSelector($this->getWorkbench(), $actionOrSelectorOrString);
+            }
             if ($selector->isClassname()) {
                 $class_name = $selector->toString();
             } else {
@@ -781,7 +802,7 @@ abstract class AbstractAction implements ActionInterface
             }
             return $this instanceof $class_name;
         } else {
-            throw new UnexpectedValueException('Invalid value "' . gettype($action_or_alias) .'" passed to "ActionInterface::is()": instantiated action or action alias with namespace expected!');
+            throw new UnexpectedValueException('Invalid value "' . gettype($actionOrSelectorOrString) .'" passed to "ActionInterface::is()": instantiated action or action alias with namespace expected!');
         }
     }
     
@@ -790,9 +811,24 @@ abstract class AbstractAction implements ActionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputMappers()
      */
-    public function getInputMappers()
+    public function getInputMappers() : array
     {
         return $this->input_mappers;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputMapper()
+     */
+    public function getInputMapper(MetaObjectInterface $fromObject) : ?DataSheetMapperInterface
+    {
+        foreach ($this->getInputMappers() as $mapper){
+            if ($mapper->getFromMetaObject()->is($fromObject)){
+                return $mapper;
+            }
+        }
+        return null;
     }
     
     /**
@@ -915,15 +951,19 @@ abstract class AbstractAction implements ActionInterface
      */
     public function setInputMapper(UxonObject $uxon)
     {
-        if ($calling_widget = $this->getWidgetDefinedIn()) {
-            if ($calling_widget instanceof iUseInputWidget) {
-                $from_object = $calling_widget->getInputWidget()->getMetaObject();
-            } else {
-                $from_object = $calling_widget->getMetaObject();
-            }
+        if ($uxon->hasProperty('from_object_alias')) {
+            $from_object = $this->getWorkbench()->model()->getObject($uxon->getProperty('from_object_alias'));
         } else {
-            $this->getWorkbench()->getLogger()->warning('Cannot initialize input mapper for action "' . $this->getAliasWithNamespace() . '": no from-object defined and no calling widget to get it from!', [], $this);
-            return $this;
+            if ($this->isDefinedInWidget() && $calling_widget = $this->getWidgetDefinedIn()) {
+                if ($calling_widget instanceof iUseInputWidget) {
+                    $from_object = $calling_widget->getInputWidget()->getMetaObject();
+                } else {
+                    $from_object = $calling_widget->getMetaObject();
+                }
+            } else {
+                $this->getWorkbench()->getLogger()->warning('Cannot initialize input mapper for action "' . $this->getAliasWithNamespace() . '": no from-object defined and no calling widget to get it from!', []);
+                return $this;
+            }
         }
         $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $uxon, $from_object, $this->getMetaObject());
         return $this->addInputMapper($mapper);
@@ -991,14 +1031,17 @@ abstract class AbstractAction implements ActionInterface
         }
         
         // Apply the input mappers
-        foreach ($this->getInputMappers() as $mapper){
-            if ($mapper->getFromMetaObject()->is($sheet->getMetaObject())){
-                return $mapper->map($sheet);
-                break;
-            }
+        if ($mapper = $this->getInputMapper($sheet->getMetaObject())){
+            $inputData = $mapper->map($sheet);
+        } else {
+            $inputData = $sheet;
         }
         
-        return $this->validateInputData($sheet);
+        // Validate the input data and dispatch an event for event-based validation
+        $inputData = $this->validateInputData($inputData);
+        $this->getWorkbench()->eventManager()->dispatch(new OnActionInputValidatedEvent($this, $task, $inputData));
+        
+        return $inputData;
     }
     
     /**
@@ -1024,6 +1067,9 @@ abstract class AbstractAction implements ActionInterface
         if (true === $this->hasInputObjectRestriction() && false === $sheet->getMetaObject()->is($this->getInputObjectExpected())) {
             throw new ActionInputInvalidObjectError($this, 'Invalid input meta object for action "' . $this->getAlias() . '": exprecting "' . $this->getInputObjectExpected()->getAliasWithNamespace() . '", received "' . $sheet->getMetaObject()->getAliasWithNamespace() . '" instead!');
         }
+        
+        
+        
         return $sheet;
     }
     
@@ -1123,6 +1169,71 @@ abstract class AbstractAction implements ActionInterface
     public static function getUxonSchemaClass() : ?string
     {
         return ActionSchema::class;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::isAuthorized()
+     */
+    public function isAuthorized(UserImpersonationInterface $userOrToken = null) : bool
+    {
+        $actionAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class);
+        try {
+            $actionAP->authorize($this, null, $userOrToken);
+            return true;
+        } catch (AuthorizationExceptionInterface $e) {
+            return false;
+        }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::isTriggerWidgetRequired()
+     */
+    public function isTriggerWidgetRequired() : ?bool
+    {
+        return $this->triggerWidgetRequired;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputTriggerWidgetRequired()
+     */
+    public function setInputTriggerWidgetRequired(bool $trueOrFalse) : ActionInterface
+    {
+        $currentValue = $this->isTriggerWidgetRequired();
+        if ($currentValue !== null && $currentValue !== $trueOrFalse) {
+            throw new ActionRuntimeError($this, 'Cannot set input_trigger_widet_required to ' . ($trueOrFalse ? 'true' : 'false') . ': only ' . ($currentValue ? 'true' : 'false') . ' allowed!');
+        }
+        $this->triggerWidgetRequired = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getHint()
+     */
+    public function getHint() : ?string
+    {
+        return $this->hint;
+    }
+    
+    /**
+     * A short description used on mouse-hover, in the contextual help, etc.
+     * 
+     * @uxon-property hint
+     * @uxon-type string
+     * 
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setHint()
+     */
+    public function setHint(string $value) : ActionInterface
+    {
+        $this->hint = $value;
+        return $this;
     }
 }
 ?>

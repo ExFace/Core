@@ -7,7 +7,6 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ExpressionFactory;
-use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Exceptions\Contexts\ContextLoadError;
 use exface\Core\CommonLogic\Contexts\AbstractContext;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;

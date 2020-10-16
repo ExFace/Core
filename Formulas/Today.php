@@ -1,16 +1,34 @@
 <?php
 namespace exface\Core\Formulas;
 
-class Today extends \exface\Core\CommonLogic\Model\Formula
-{
+use exface\Core\DataTypes\DateDataType;
 
-    function run($format = '')
+/**
+ * Returns the current date with the option to define a specific format.
+ *
+ * Similar to `=NOW()` but returns a date without a time by default.
+ * Accepts a single optional perameter - the ICU date/time format.
+ *
+ * Examples:
+ *
+ * - `=TODAY()` = 2020-03-25 21:00:55
+ * - `=TODAY('yyyy-MM-dd')` = 2020-03-25
+ * - `=TODAY('dd.MM.yyyy')` = 25.03.2020
+ *
+ * See http://userguide.icu-project.org/formatparse/datetime for a complete guide to
+ * the ICU date format syntax.
+ *
+ * @link http://userguide.icu-project.org/formatparse/datetime
+ */
+class Today extends Now
+{
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Formulas\Now::getFormatDefault()
+     */
+    protected function getFormatDefault() : string
     {
-        $exface = $this->getWorkbench();
-        if (! $format)
-            $format = $exface->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATE_FORMAT');
-        $date = new \DateTime();
-        return $date->format($format);
+        return DateDataType::DATE_ICU_FORMAT_INTERNAL;
     }
 }
-?>

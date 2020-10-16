@@ -3,7 +3,6 @@ namespace exface\Core\Facades\AbstractHttpFacade;
 
 use exface\Core\Facades\AbstractFacade\AbstractFacade;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
-use exface\Core\DataTypes\StringDataType;
 
 /**
  * Common base structure for HTTP facades.
@@ -20,6 +19,16 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
     private $urlAbsolute = null;
     
     /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Facades\HttpFacadeInterface::buildUrlToSiteRoot()
+     */
+    public function buildUrlToSiteRoot() : string
+    {
+        return $this->getWorkbench()->getUrl();
+    }
+    
+    /**
      *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Facades\HttpFacadeInterface::buildUrlToFacade()
@@ -30,9 +39,8 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
             if (! $this->getWorkbench()->isStarted()) {
                 $this->getWorkbench()->start();
             }
-            $cms = $this->getWorkbench()->getCMS();
-            $this->urlAbsolute = $cms->buildUrlToRouter() . '/' .  $this->getUrlRouteDefault();
-            $this->urlRelative = ltrim(StringDataType::substringAfter($this->urlAbsolute, $cms->buildUrlToSiteRoot(), null) ?? $this->urlAbsolute, "/");
+            $this->urlAbsolute = $this->buildUrlToSiteRoot() . $this->getUrlRouteDefault();
+            $this->urlRelative = ltrim($this->getUrlRouteDefault(), "/");
         }
         return $relativeToSiteRoot === true ? $this->urlRelative : $this->urlAbsolute;
     }

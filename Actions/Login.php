@@ -62,7 +62,11 @@ class Login extends AbstractAction implements iModifyContext
             }
         } else {
             $this->getWorkbench()->getSecurity()->authenticate($token);
-            $result = ResultFactory::createRedirectToPageResult($task, $this->getRedirectToPageSelector(), $this->translate('RESULT'));
+            if ($redirectToSelector = $this->getRedirectToPageSelector($task)) {
+                $result = ResultFactory::createRedirectToPageResult($task, $redirectToSelector, $this->translate('RESULT'));
+            } else {
+                $result = ResultFactory::createRedirectResult($task, '#', $this->translate('RESULT'));
+            }
         }
         
         $result->setContextModified(true);
@@ -101,8 +105,12 @@ class Login extends AbstractAction implements iModifyContext
      */
     public function getRedirectToPageSelector(TaskInterface $task) : ?UiPageSelectorInterface
     {
-        if ($this->redirectToPage === null && $this->getReloadOnSuccess($task) === true && $task->isTriggeredOnPage()) {
-            return $task->getPageSelector();
+        if ($this->redirectToPage === null && $this->getReloadOnSuccess($task) === true) {
+            if ($task->isTriggeredOnPage()) {
+                return $task->getPageSelector();
+            } elseif ($this->isDefinedInWidget() && $this->getWidgetDefinedIn()->getPage()->hasModel()) {
+                return $this->getWidgetDefinedIn()->getPage();
+            }
         }
         return $this->redirectToPage;
     }
@@ -156,5 +164,15 @@ class Login extends AbstractAction implements iModifyContext
     {
         $this->reloadOnSuccess = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::isTriggerWidgetRequired()
+     */
+    public function isTriggerWidgetRequired() : ?bool
+    {
+        return false;
     }
 }

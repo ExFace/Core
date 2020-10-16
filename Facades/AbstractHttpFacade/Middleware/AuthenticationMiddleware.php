@@ -14,6 +14,7 @@ use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Interfaces\Security\PasswordAuthenticationTokenInterface;
 use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthToken;
+use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 
 /**
  * This PSR-15 middleware to handle authentication via workbench security.
@@ -53,9 +54,11 @@ class AuthenticationMiddleware implements MiddlewareInterface
     
     private $facade = null;
     
-    private $denyAnonymous = false;
+    private $denyAnonymous = null;
     
     private $tokenExtractors = [];
+    
+    private $excludePaths = [];
     
     /**
      * 
@@ -78,6 +81,12 @@ class AuthenticationMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
+        $requestPath = $request->getUri()->getPath();
+        foreach ($this->excludePaths as $pattern) {
+            if (preg_match($pattern, $requestPath) === 1) {
+                return $handler->handle($request);
+            }
+        }
         // Fire OnBeforeAuthenticationEvent for custom authenticators listening to it
         $this->workbench->eventManager()->dispatch(new OnBeforeAuthenticationEvent($this->facade));
         // If any of the custom authenticators were successfull, we would get a non-anonymous token here
@@ -100,7 +109,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
         
         // If the token is still anonymous, check if that is allowed in the configuration!
         if (true === $authenticatedToken->isAnonymous() && false === $this->isAnonymousAllowed()) {
-            return $this->createResponseAccessDenied('Access denied! Please log in first!');
+            return $this->createResponseAccessDenied($request);
         }
         
         return $handler->handle($request);
@@ -108,7 +117,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
     
     protected function isAnonymousAllowed() : bool
     {
-        return $this->denyAnonymous === false && $this->workbench->getConfig()->getOption('SECURITY.DISABLE_ANONYMOUS_ACCESS') === false;
+        return $this->denyAnonymous !== null ? $this->denyAnonymous === false : $this->workbench->getConfig()->getOption('SECURITY.DISABLE_ANONYMOUS_ACCESS') === false;
     }
     
     /**
@@ -116,9 +125,16 @@ class AuthenticationMiddleware implements MiddlewareInterface
      * @param string $content
      * @return ResponseInterface
      */
-    protected function createResponseAccessDenied(string $content) : ResponseInterface
+    protected function createResponseAccessDenied(ServerRequestInterface $request, string $content = null) : ResponseInterface
     {
-        return new Response(403, [], $content);
+        $content = $content ?? 'Anonymous access denied!';
+        $exception = new AuthenticationFailedError($this->workbench->getSecurity(), $content);
+        
+        if ($this->facade instanceof AbstractAjaxFacade) {
+            return $this->facade->createResponseFromError($request, $exception);
+        } else {
+            return new Response(403, [], $content);
+        }
     }
     
     /**
@@ -172,5 +188,11 @@ class AuthenticationMiddleware implements MiddlewareInterface
             }
         }
         return null;
+    }
+    
+    public function addExcludePath(string $regex) : AuthenticationMiddleware
+    {
+        $this->excludePaths[] = $regex;
+        return $this;
     }
 }

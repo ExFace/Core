@@ -2,6 +2,7 @@
 namespace exface\Core\Interfaces\Contexts;
 
 use exface\Core\Interfaces\WorkbenchDependantInterface;
+use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
 
 interface ContextScopeInterface extends WorkbenchDependantInterface
 {
@@ -19,10 +20,10 @@ interface ContextScopeInterface extends WorkbenchDependantInterface
      * If the context is not loaded yet, it will be initialized now and saved 
      * contexts will be loaded.
      *
-     * @param string $alias            
+     * @param string|ContextSelectorInterface $aliasOrSelector            
      * @return ContextInterface
      */
-    public function getContext($alias);
+    public function getContext($aliasOrSelector) : ContextInterface;
     
     /**
      * Refreshes the data within the context with the latest information from the scope storage.

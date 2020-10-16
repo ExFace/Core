@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
@@ -101,20 +100,6 @@ class ContextBar extends Toolbar
                 continue;
             }
             
-            if ($uxon->getProperty('restrict_only_admins') && ! $this->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAdmin()){
-                $this->getWorkbench()->getLogger()->info('Not adding context "' . $uxon->getProperty('context_scope') . ':' . $uxon->getProperty('context_alias') . '" to ContextBar: it is accessible for admins only!');
-                continue;
-            } else {
-                $uxon->unsetProperty('restrict_only_admins');
-            }
-            
-            if ($uxon->getProperty('restrict_only_authenticated') && $this->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
-                $this->getWorkbench()->getLogger()->info('Not adding context "' . $uxon->getProperty('context_scope') . ':' . $uxon->getProperty('context_alias') . '" to ContextBar: it is accessible for logged in users only!');
-                continue;
-            } else {
-                $uxon->unsetProperty('restrict_only_authenticated');
-            }
-            
             try {
                 $context = $contextManager->getScope($uxon->getProperty('context_scope'))->getContext($uxon->getProperty('context_alias'));
                 $uxon->unsetProperty('context_scope');
@@ -153,7 +138,7 @@ class ContextBar extends Toolbar
                 
                 $this->addButton($btn);
             } catch (ContextAccessDeniedError $e){
-                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::INFO);
+                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
             } catch (\Throwable $e){
                 $this->getWorkbench()->getLogger()->logException($e);
             }
@@ -196,7 +181,7 @@ class ContextBar extends Toolbar
      * @return string
      */
     protected function createButtonIdFromContext(ContextInterface $context){
-        return $this->getId() . UiPage::WIDGET_ID_SEPARATOR . str_replace('.', '', $context->getScope()->getName() . $context->getAliasWithNamespace());
+        return $this->getId() . UiPage::WIDGET_ID_SEPARATOR . str_replace('.', '', $context->getScope()->getName() . ucfirst($context->getAliasWithNamespace()));
     }
     
     /**

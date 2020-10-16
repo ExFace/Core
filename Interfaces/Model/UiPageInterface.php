@@ -4,14 +4,12 @@ namespace exface\Core\Interfaces\Model;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\ContextBar;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
-use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Interfaces\AppInterface;
-use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 
 /**
  * A page represents on screen of the UI and is basically the model for a web page in most cases.
@@ -30,7 +28,7 @@ use exface\Core\Interfaces\Selectors\AppSelectorInterface;
  * @author Andrej Kabachnik
  *
  */
-interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeConvertedToUxon
+interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
 {
     /**
      * 
@@ -131,22 +129,6 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
     public function getContextBar();
 
     /**
-     * Returns the app, this page belongs to.
-     * 
-     * @throws RuntimeException if the page is not part of any app
-     * 
-     * @return AppInterface
-     */
-    public function getApp();
-    
-    /**
-     * Returns TRUE if the page is part of an app and FALSE if it is not assigned to any app.
-     * 
-     * @return bool
-     */
-    public function hasApp() : bool;
-
-    /**
      * Returns FALSE if the page should not be updated automatically when its
      * app is updated and TRUE otherwise (default).
      * 
@@ -161,28 +143,13 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return UiPageInterface
      */
     public function setUpdateable($true_or_false);
-
-    /**
-     * Returns the alias of the parent page (the actual parent - not a page, that replaces the parent!!!).
-     * 
-     * @return string
-     */
-    public function getMenuParentPageAlias();
-
-    /**
-     * Sets the parent of the page by setting an UID or an alias.
-     * 
-     * @param string $menuParentPageAlias
-     * @return UiPageInterface
-     */
-    public function setMenuParentPageAlias($menuParentPageAlias);
     
     /**
      * 
-     * @param string $id_or_alias
+     * @param string|NULL $idOrAliasOrNull
      * @return UiPageInterface
      */
-    public function setMenuParentPageSelector($id_or_alias);
+    public function setParentPageSelector($idOrAliasOrNull);
 
     /**
      * Returns the parent page or NULL if this page has no parent.
@@ -190,31 +157,13 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
      * If there is page, that replaces the actual parent, that page is returned by
      * befault. Set $ignoreReplacement to true to get the actual parent.
      * 
-     * NOTE: getMenuParentPageAlias() always returns the alias of the actual page
+     * NOTE: getParentPageSelector() always returns the selector of the linked page
      * in contrast to this method.
      * 
      * @param bool $ignoreReplacement
      * @return UiPageInterface|null
      */
-    public function getMenuParentPage(bool $ignoreReplacement = false) : ?UiPageInterface;
-
-    /**
-     * Returns the default menu position of the page in the form 'menuParentPageAlias:menuIndex'.
-     * 
-     * @return string
-     */
-    public function getMenuDefaultPosition();
-
-    /**
-     * Sets the default menu position of the page in the form 'menuParentPageAlias:menuIndex'.
-     * 
-     * This is important to determine if the page has been moved manually. If it has been
-     * moved, the position in the tree will not be changed during an update.
-     * 
-     * @param string $menuDefaultPosition
-     * @return UiPageInterface
-     */
-    public function setMenuDefaultPosition($menuDefaultPosition);
+    public function getParentPage(bool $ignoreReplacement = false) : ?UiPageInterface;
     
     /**
      * Returns the index (position number starting with 0) of this page in the 
@@ -234,13 +183,32 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return UiPageInterface
      */
     public function setMenuIndex($number);
-
+    
     /**
-     * Returns the menu position of the page in the form 'menuParentPageAlias:menuIndex'.
-     *
-     * @return string
+     * 
+     * @param string|UiPageSelectorInterface|NULL $selectorOrString
+     * @return UiPageInterface
      */
-    public function getMenuPosition();
+    public function setParentPageSelectorDefault($selectorOrStringOrNull) : UiPageInterface;
+    
+    /**
+     * 
+     * @return UiPageSelectorInterface|NULL
+     */
+    public function getParentPageSelectorDefault() : ?UiPageSelectorInterface;
+    
+    /**
+     * 
+     * @return int|NULL
+     */
+    public function  getMenuIndexDefault() : ?int;
+    
+    /**
+     * 
+     * @param int $number
+     * @return UiPageInterface
+     */
+    public function setMenuIndexDefault(int $number) : UiPageInterface;
 
     /**
      * Returns if the page was moved in the menu tree compared to the default menu position.
@@ -265,83 +233,18 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
     public function setMenuVisible($menuVisible);
 
     /**
-     * Returns the unique id of the page.
-     * 
-     * This id is unique across all apps!
-     * 
-     * @return string
-     */
-    public function getId();
-    
-    /**
      * 
      * @param string $uid
      * @return UiPageInterface
      */
-    public function setId(string $uid) : UiPageInterface;
-
-    /**
-     * Returns the name of the page.
-     * 
-     * The name is what most facades will show as header and menu title.
-     * 
-     * @return string
-     */
-    public function getName();
-
-    /**
-     * Overwrites the name of the page.
-     * 
-     * @param string $string
-     * @return UiPageInterface
-     */
-    public function setName($string);
-    
-    /**
-     * Returns the description of this page.
-     * 
-     * The description is used as hint, tooltip or similar by most facades.
-     * It is a short text describing, what functionality the page offers:
-     * e.g. "View an manage meta object of installed apps" for the object-page
-     * in the metamodel editor.
-     * 
-     * @return string
-     */
-    public function getDescription();
-    
-    /**
-     * Overwrites the description of this page.
-     *
-     * The description is used as hint, tooltip or similar by most facades.
-     * It is a short text describing, what functionality the page offers:
-     * e.g. "View an manage meta object of installed apps" for the object-page
-     * in the metamodel editor.
-     *
-     * @return string
-     */
-    public function setDescription($string);
-
-    /**
-     * Returns an introduction text for the page to be used in contextual help, etc.
-     * 
-     * @return string
-     */
-    public function getIntro();
-
-    /**
-     * Overwrites introduction text for the page.
-     * 
-     * @param string $string
-     * @return UiPageInterface
-     */
-    public function setIntro($text);
+    public function setUid(string $uid) : UiPageInterface;
 
     /**
      * Returns the qualified alias of the page, this one should replace when resolving widget links.
      * 
      * @return string
      */
-    public function getReplacesPageAlias();
+    public function getReplacesPageSelector() : ?UiPageSelectorInterface;
 
     /**
      * Specifies the alias of the page, this one will replace when resolving widget links.
@@ -357,7 +260,7 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @param string $alias_with_namespace
      * @return UiPageInterface
      */
-    public function setReplacesPageAlias($alias_with_namespace);
+    public function setReplacesPageSelector($alias_with_namespace);
 
     /**
      * Returns the raw contents of the UI page, that is stored in the CMS (stringified UXON).
@@ -431,28 +334,17 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
     public function equals(UiPageInterface $page, $ignore_properties);
     
     /**
-     * Generates a UID.
      * 
-     * @return string
+     * @return FacadeInterface
      */
-    public static function generateUid();
+    public function getFacade() : FacadeInterface;
     
     /**
-     * Generates a unique alias.
-     * 
-     * @param string $prefix
-     * @return string
-     */
-    public static function generateAlias($prefix);
-    
-    /**
-     * Makes the page become part of the app identified by the given selector
-     * 
-     * @param AppSelectorInterface $selector
-     * 
+     *
+     * @param FacadeSelectorInterface|string $value
      * @return UiPageInterface
      */
-    public function setApp(AppSelectorInterface $selector) : UiPageInterface;
+    public function setFacadeSelector($selectorOrString) : UiPageInterface;
     
     /**
      * Returns TRUE if the page is part of the metamodel and FALSE if it was created programmatically.

@@ -33,6 +33,7 @@ use exface\Core\Widgets\Traits\iHaveColumnsAndColumnGroupsTrait;
 use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Interfaces\Widgets\iHaveSorters;
 use exface\Core\Widgets\Parts\DataFooter;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -424,7 +425,7 @@ class Data
             if (empty($attribute_filters) === true) {
                 $filter = $this->getConfiguratorWidget()->createFilterWidget($condition->getExpression()->getAttribute()->getAliasWithRelationPath());
                 $this->addFilter($filter);
-                $filter->setValue($condition->getValue());
+                $filter->setValue($condition->getValue(), false);
                 // Disable the filter because if the user changes it, the
                 // prefill will not be consistent anymore (some prefilled
                 // widgets may have different prefill-filters than others)
@@ -435,7 +436,7 @@ class Data
                 foreach ($attribute_filters as $filter) {
                     if ($filter->getComparator() == $condition->getComparator()) {
                         if ($filter->isPrefillable()) {
-                            $filter->setValue($condition->getValue());
+                            $filter->setValue($condition->getValue(), false);
                         }
                         $prefilled = true;
                     }
@@ -443,7 +444,7 @@ class Data
                 if ($prefilled == false) {
                     $filter = $attribute_filters[0];
                     if ($filter->isPrefillable()) {
-                        $filter->setValue($condition->getValue());
+                        $filter->setValue($condition->getValue(), false);
                     }
                 }
             }
@@ -487,9 +488,9 @@ class Data
                     continue;
                     // See if there are filters in this widget, that work on the very same attribute
                     foreach ($this->getConfiguratorWidget()->findFiltersByObject($condition->getExpression()->getAttribute()->getObject()) as $fltr) {
-                        if ($fltr->getAttribute()->getObject()->is($condition->getExpression()->getAttribute()->getObject()) && $fltr->getAttribute()->getAlias() == $condition->getExpression()->getAttribute()->getAlias() && ! $fltr->getValue()) {
+                        if ($fltr->isPrefillable() && $fltr->getAttribute()->getObject()->is($condition->getExpression()->getAttribute()->getObject()) && $fltr->getAttribute()->getAlias() == $condition->getExpression()->getAttribute()->getAlias() && ! $fltr->getValue()) {
                             $fltr->setComparator($condition->getComparator());
-                            $fltr->setValue($condition->getValue());
+                            $fltr->setValue($condition->getValue(), false);
                             // TODO #OnPrefillChangePropertyEvent - same problem as in doPrefillWithDataObject()
                         }
                     }
@@ -876,6 +877,7 @@ class Data
      *
      * @uxon-property empty_text
      * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
      *
      * @param string $value            
      * @return Data
@@ -1023,9 +1025,24 @@ class Data
         return $this->values_data_sheet;
     }
 
-    public function setValuesDataSheet(DataSheetInterface $data_sheet)
+    /**
+     * Set value data sheet for this widget. Parameter either can be of type DateSheetInterface or UxonObject.
+     * 
+     * @param DataSheetInterface|UxonObject $data_sheet_or_uxon
+     * @throws WidgetConfigurationError
+     * @return Data
+     */
+    public function setValuesDataSheet($data_sheet_or_uxon) : Data
     {
-        $this->values_data_sheet = $data_sheet;
+        $dataSheet = null;
+        if ($data_sheet_or_uxon instanceof UxonObject) {
+            $dataSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $data_sheet_or_uxon);
+        } elseif ($data_sheet_or_uxon instanceof DataSheetInterface) {
+            $dataSheet = $data_sheet_or_uxon;
+        } else {
+            throw new WidgetConfigurationError($this, 'Cannot set values_data_sheet for "' . $this->getWidgetType() . '": expecting DataSheet or its UXON model, received "' . gettype($data_sheet_or_uxon) . '"!');
+        }
+        $this->values_data_sheet = $dataSheet;
         return $this;
     }
 
@@ -1056,7 +1073,7 @@ class Data
                 'TITLE' => $col->getCaption(),
                 'GROUP' => $this->translate('WIDGET.DATA.HELP.COLUMNS')
             );
-            if ($attr = $col->getAttribute()) {
+            if ($col->isBoundToAttribute() && $attr = $col->getAttribute()) {
                 $row = array_merge($row, $this->getHelpDataRowFromAttribute($attr, $col->getCellWidget()));
             }
             $data_sheet->addRow($row);
@@ -1078,12 +1095,15 @@ class Data
         }
         $uxon->setProperty('aggregate_by_attribute_alias', $this->getAggregateByAttributeAlias());
         $uxon->setProperty('lazy_loading', $this->getLazyLoading());
-        $uxon->setProperty('lazy_loading_action', $this->getLazyLoadingActionAlias());
-        $uxon->setProperty('lazy_loading_group_id', $this->getLazyLoadingGroupId());
-        
-        foreach ($this->getColumnGroups() as $col_group) {
-            $uxon->appendToProperty('columns', $col_group->exportUxonObject());
+        $uxon->setProperty('lazy_loading_action', $this->getLazyLoadingActionUxon());
+        if ($this->getLazyLoadingGroupId() !== null) {
+            $uxon->setProperty('lazy_loading_group_id', $this->getLazyLoadingGroupId());
         }
+        
+        // TODO for now disabled as columns would be duplicated        
+        /*foreach ($this->getColumnGroups() as $col_group) {
+            $uxon->appendToProperty('columns', $col_group->exportUxonObject());
+        }*/
         
         // TODO export toolbars to UXON instead of buttons. Currently all
         // information about toolbars is lost.
@@ -1099,6 +1119,9 @@ class Data
         
         if ($this->getRefreshWithWidget()) {
             $uxon->setProperty('refresh_with_widget', $this->getRefreshWithWidget()->exportUxonObject());
+        }
+        if ($this->getPrefillData() !== null) {
+            $uxon->setProperty('values_data_sheet', $this->getValuesDataSheet()->exportUxonObject());
         }
         
         return $uxon;
@@ -1214,6 +1237,7 @@ class Data
      * 
      * @uxon-property autoload_disabled_hint
      * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
      * 
      * @param string $text
      * @return Data

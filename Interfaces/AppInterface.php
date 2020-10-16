@@ -10,6 +10,7 @@ use Psr\Container\ContainerInterface;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Exceptions\AppComponentNotFoundError;
 use exface\Core\Interfaces\Selectors\PrototypeSelectorInterface;
+use exface\Core\Exceptions\Actions\ActionNotFoundError;
 
 /**
  * An app bundle code, model and all kinds of configuration needed for a meaningfull application.
@@ -71,7 +72,16 @@ interface AppInterface extends WorkbenchDependantInterface, AliasInterface, Task
      * @return bool
      */
     public function has($selectorOrString, $selectorClass = null);
-    
+
+    /**
+     * 
+     * @param ActionSelectorInterface $selector
+     * @param WidgetInterface $sourceWidget
+     * 
+     * @throws ActionNotFoundError
+     * 
+     * @return ActionInterface
+     */
     public function getAction(ActionSelectorInterface $selector, WidgetInterface $sourceWidget) : ActionInterface;
 
     /**

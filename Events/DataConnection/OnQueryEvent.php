@@ -11,4 +11,13 @@ namespace exface\Core\Events\DataConnection;
  */
 class OnQueryEvent extends OnBeforeQueryEvent
 {
+    
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.DataConnection.OnQuery';
+    }
 }

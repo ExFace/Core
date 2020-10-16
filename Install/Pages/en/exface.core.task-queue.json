@@ -1,0 +1,16 @@
+{
+    "uid": "0x11eb998b0d92e38e998b847beb4a5184",
+    "alias_with_namespace": "exface.core.task-queue",
+    "menu_parent_page_selector": "0xf8310d4bba2c11e7895fe4b318306b9a",
+    "menu_index": 5,
+    "menu_visible": true,
+    "name": "Task Queue",
+    "description": "View and manage queued tasks",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2020-09-30 09:19:33",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2020-09-30 09:19:48",
+    "contents": "[]"
+}

@@ -6,32 +6,40 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Widgets\ErrorMessage;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 
 /**
- * This interface describes ExFace exceptions. They are compatible to the
- * SPL-exceptions in PHP, but include advanced features like the ability to
- * generate debug widgets.
+ * This interface describes workbench exceptions. 
+ * 
+ * They are compatible to the SPL-exceptions in PHP, but offer more options to get descriptive
+ * information: error code, user-oriented message, debug-widget, etc. 
+ * 
+ * All exceptions thrown from the workbench or it's dependants should implement this interface!
+ * 
+ * The main properties of a workbench exception are
+ * 
+ * - Message text - technical description of the specific error
+ * - Alias - message code describing the error type. This is also the link to the messages stored
+ * in the metamodel. Aliases should be used whenever the user is to be given additional information
+ * like an explanation of the error or a hint on how to repair/avoid it. Users can serach for these
+ * aliases in the documentation. Developers can use the alias to search the code for exceptions
+ * of a certain type.
+ * - Message model - optional type, title, hint and description defined as a message object in the
+ * metamodel and linked to the exception via it's alias. The message properties are more meant to
+ * be more user-friendly (translatable, etc.) than the original exception message.
+ * 
+ * When an exception is to be shown to a user, it's message model is used. The technical exception
+ * message is concidered to be an "additional detail" and can even be conceiled from less experienced
+ * users.
+ * 
+ * NOTE: should the exception message be acutally meant to be shown to the user as error text,
+ * call `setUseExceptionMessageAsTitle(true)` on an exception instance.
  * 
  * @author Andrej Kabachnik
  *
  */
 interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWidgets
 {
-
-    /**
-     * Returns TRUE if this exception is a warning and FALSE otherwise
-     *
-     * @return boolean
-     */
-    public function isWarning();
-
-    /**
-     * Returns TRUE if this exception is an error and FALSE otherwise
-     *
-     * @return boolean
-     */
-    public function isError();
-
     /**
      * Creates a blawidget with detailed information about this exception.
      *
@@ -113,10 +121,24 @@ interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWid
     
     /**
      * 
+     * @param string $text
+     * @return ExceptionInterface
+     */
+    public function setMessageTitle(string $text) : ExceptionInterface;
+    
+    /**
+     * 
      * @param WorkbenchInterface $workbench
      * @return string|NULL
      */
     public function getMessageHint(WorkbenchInterface $workbench) : ?string;
+    
+    /**
+     *
+     * @param string $text
+     * @return ExceptionInterface
+     */
+    public function setMessageHint(string $text) : ExceptionInterface;
     
     /**
      * 
@@ -126,9 +148,38 @@ interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWid
     public function getMessageDescription(WorkbenchInterface $workbench) : ?string;
     
     /**
+     *
+     * @param string $text
+     * @return ExceptionInterface
+     */
+    public function setMessageDescription(string $text) : ExceptionInterface;
+    
+    /**
      * 
      * @param WorkbenchInterface $workbench
      * @return string|NULL
      */
     public function getMessageType(WorkbenchInterface $workbench) : ?string;
+    
+    /**
+     *
+     * @param string $text
+     * @return ExceptionInterface
+     */
+    public function setMessageType(string $text) : ExceptionInterface;
+    
+    /**
+     * 
+     * @return AppSelectorInterface|NULL
+     */
+    public function getMessageAppSelector(WorkbenchInterface $workbench) : ?AppSelectorInterface;
+    
+    /**
+     * Makes the errors displayed use the exception message as title instead of attempting to
+     * get the title from the message metamodel via error code (alias).
+     *
+     * @param bool $value
+     * @return ExceptionInterface
+     */
+    public function setUseExceptionMessageAsTitle(bool $value);
 }

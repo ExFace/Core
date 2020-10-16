@@ -9,7 +9,6 @@ use exface\Core\Factories\DataSorterFactory;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
 use exface\Core\Factories\ConditionFactory;
-use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Factories\BehaviorFactory;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
@@ -19,7 +18,6 @@ use exface\Core\CommonLogic\Model\AppActionList;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\CommonLogic\AppInstallers\SqlSchemaInstaller;
 use exface\Core\CommonLogic\Model\MetaObject;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Relation;
@@ -48,17 +46,45 @@ use exface\Core\CommonLogic\Selectors\DataConnectorSelector;
 use exface\Core\Exceptions\DataSources\DataConnectionNotFoundError;
 use exface\Core\CommonLogic\AppInstallers\AppInstallerContainer;
 use exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller;
-use exface\Core\DataConnectors\MySqlConnector;
-use exface\Core\Events\Installer\OnInstallEvent;
-use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Exceptions\DataSources\DataSourceNotFoundError;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Factories\UiPageFactory;
+use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
+use exface\Core\Factories\SelectorFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 use exface\Core\Factories\UserFactory;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\CommonLogic\Model\CompoundAttribute;
+use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
+use exface\Core\CommonLogic\Model\UiPageTree;
+use exface\Core\Interfaces\Security\AuthorizationPointInterface;
+use exface\Core\DataTypes\PolicyEffectDataType;
+use exface\Core\Interfaces\UserImpersonationInterface;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\PolicyCombiningAlgorithmDataType;
+use exface\Core\DataTypes\PolicyTargetDataType;
+use exface\Core\CommonLogic\Selectors\UserRoleSelector;
+use exface\Core\CommonLogic\Selectors\UserSelector;
+use exface\Core\Factories\UiPageTreeFactory;
+use exface\Core\Factories\AuthorizationPointFactory;
+use exface\Core\CommonLogic\Selectors\AuthorizationPointSelector;
+use exface\Core\DataTypes\EncryptedDataType;
+use exface\Core\DataTypes\UxonDataType;
+use exface\Core\Exceptions\Security\AccessDeniedError;
+use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
+use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
+use exface\Core\Events\Model\OnMetaObjectActionLoadedEvent;
+use exface\Core\Events\Model\OnUiMenuItemLoadedEvent;
+use exface\Core\Events\Model\OnUiPageLoadedEvent;
+use exface\Core\Events\Model\OnBeforeMetaObjectActionLoadedEvent;
 
 /**
+ * Loads metamodel entities from SQL databases supporting the MySQL dialect.
+ * 
+ * For historical reasons, this generic SQL model loader is actually MySQL
+ * oriented. Use database specific loaders if possible!
  * 
  * @author Andrej Kabachnik
  *
@@ -78,6 +104,13 @@ class SqlModelLoader implements ModelLoaderInterface
     private $selector = null;
     
     private $installer = null;
+    
+    private $pages_loaded = [];
+    
+    private $nodes_loaded = [];
+    
+    private $menu_tress_loaded = [];
+    
     
     /**
      * 
@@ -122,6 +155,19 @@ class SqlModelLoader implements ModelLoaderInterface
         $obj->setNamespace($app->getAliasWithNamespace());
         return $this->loadObject($obj);        
     }
+    
+    /**
+     * Builds a sql statement selecting a "1" as `$sqlAs` if a dataset exists in the database matching the `sqlFrom` and `sqlWhere` options.
+     * 
+     * @param string $sqlFrom
+     * @param string $sqlWhere
+     * @param string $sqlAs
+     * @return string
+     */
+    protected function buildSqlExists(string $sqlFrom, string $sqlWhere, string $sqlAs) : string
+    {
+        return "(CASE WHEN EXISTS (SELECT * FROM {$sqlFrom} WHERE {$sqlWhere} ) THEN 1 ELSE 0 END) AS {$sqlAs}";
+    }
 
     /**
      * Loads metamodel data into the given object
@@ -136,8 +182,9 @@ class SqlModelLoader implements ModelLoaderInterface
         if ($object->getId()) {
             $q_where = 'o.oid = ' . $object->getId();
         } else {
-            $q_where = 'a.app_alias = "' . $object->getNamespace() . '" AND o.object_alias = "' . $object->getAlias() . '"';
+            $q_where = "a.app_alias = '{$object->getNamespace()}' AND o.object_alias = '{$object->getAlias()}'";
         }
+        $exists = $this->buildSqlExists('exf_object_behaviors ob', 'ob.object_oid = o.oid', 'has_behaviors');
         $query = $this->getDataConnection()->runSql('
 				SELECT
                     o.*,
@@ -147,7 +194,7 @@ class SqlModelLoader implements ModelLoaderInterface
 					' . $this->buildSqlUuidSelector('o.parent_object_oid') . ' as parent_object_oid,
 					a.app_alias,
 					' . $this->buildSqlUuidSelector('ds.base_object_oid') . ' as base_object_oid,
-					EXISTS (SELECT 1 FROM exf_object_behaviors ob WHERE ob.object_oid = o.oid) AS has_behaviors
+					' . $exists . '
 				FROM exf_object o 
 					LEFT JOIN exf_app a ON o.app_oid = a.oid 
 					LEFT JOIN exf_data_source ds ON o.data_source_oid = ds.oid
@@ -156,11 +203,13 @@ class SqlModelLoader implements ModelLoaderInterface
             $row = $res[0];
             
             $object->setId($row['oid']);
-            $object->setName($row['object_name']);
             $object->setAlias($row['object_alias']);
             $object->setDataSourceId($row['data_source_oid']);
             $object->setAppId($row['app_oid']);
             $object->setNamespace($row['app_alias']);
+            
+            $object->setName($row['object_name']);
+            
             if ($row['has_behaviors']) {
                 $load_behaviors = true;
             }
@@ -192,8 +241,8 @@ class SqlModelLoader implements ModelLoaderInterface
                     $object->setDataAddressProperties($data_address_properties);
                 }
             }
-            if ($default_editor_uxon = UxonObject::fromJson($row['default_editor_uxon'])) {
-                if (! $default_editor_uxon->isEmpty()) {
+            if ($default_editor_uxon = $row['default_editor_uxon']) {
+                if ($default_editor_uxon !== null && $default_editor_uxon !== '' && $default_editor_uxon !== '{}') {
                     $object->setDefaultEditorUxon($default_editor_uxon);
                 }
             }
@@ -346,7 +395,6 @@ class SqlModelLoader implements ModelLoaderInterface
                             $row['oid'], // relation id
                             $row['rev_relation_alias'], // relation alias
                             $row['attribute_alias'], // relation modifier: the alias of the right key attribute
-                            null, // the name cannot be specified at this point, as it depends on what other reverse relations will exist
                             $object, // left object
                             $leftKeyAttr, // left key in the main object
                             $row['object_oid'], // right object UID
@@ -381,7 +429,6 @@ class SqlModelLoader implements ModelLoaderInterface
                             $attr->getId(), // relation id
                             $attr->getAlias(), // relation alias
                             '', // alias modifier allways empty for direct regular relations
-                            $attr->getName(),
                             $object, //  left object
                             $attr, // left key attribute
                             $row['related_object_oid'], // right object UID
@@ -409,15 +456,23 @@ class SqlModelLoader implements ModelLoaderInterface
 				SELECT * FROM exf_object_behaviors WHERE object_oid = ' . $object->getId());
             if ($res = $query->getResultArray()) {
                 foreach ($res as $row) {
-                    $behavior = BehaviorFactory::createFromUxon($object, $row['behavior'], UxonObject::fromJson($row['config_uxon']));
+                    $behavior = BehaviorFactory::createFromUxon($object, $row['behavior'], UxonObject::fromJson($row['config_uxon']), $row['app_oid']);
                     $object->getBehaviors()->add($behavior);
                 }
             }
         }
         
+        $this->getWorkbench()->eventManager()->dispatch(new OnMetaObjectLoadedEvent($object));
+        
         return $object;
     }
 
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @param array $row
+     * @return \exface\Core\CommonLogic\Model\CompoundAttribute|\exface\Core\CommonLogic\Model\Attribute
+     */
     protected function createAttributeFromDbRow(MetaObjectInterface $object, array $row)
     {
         if ($row['attribute_type'] === self::ATTRIBUTE_TYPE_COMPOUND) {
@@ -439,15 +494,15 @@ class SqlModelLoader implements ModelLoaderInterface
         
         $default_editor = $row['default_editor_uxon'];
         if ($default_editor && $default_editor !== '{}'){
-            $attr->setDefaultEditorUxon(UxonObject::fromJson($default_editor));
+            $attr->setDefaultEditorUxon($default_editor);
         }
         $default_display = $row['default_display_uxon'];
         if ($default_display && $default_display !== '{}'){
-            $attr->setDefaultDisplayUxon(UxonObject::fromJson($default_display));
+            $attr->setDefaultDisplayUxon($default_display);
         }
         $custom_type = $row['custom_data_type_uxon'];
         if ($custom_type && $custom_type !== '{}') {
-            $attr->setCustomDataTypeUxon(UxonObject::fromJson($custom_type));
+            $attr->setCustomDataTypeUxon($custom_type);
         }
         
         // Control flags
@@ -467,8 +522,12 @@ class SqlModelLoader implements ModelLoaderInterface
         
         // Defaults
         $attr->setDefaultDisplayOrder($row['default_display_order']);
-        $attr->setDefaultValue($row['default_value']);
-        $attr->setFixedValue($row['fixed_value']);
+        if ($row['default_value'] !== null && $row['default_value'] !== '') {
+            $attr->setDefaultValue($row['default_value']);
+        }
+        if ($row['fixed_value'] !== null && $row['fixed_value'] !== '') {
+            $attr->setFixedValue($row['fixed_value']);
+        }
         $attr->setFormula($row['attribute_formula']);
         if ($row['default_sorter_dir']){
             $attr->setDefaultSorterDir($row['default_sorter_dir']);
@@ -480,6 +539,19 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setShortDescription($row['attribute_short_description']);
         
         return $attr;
+    }
+    
+    /**
+     * Builds an sql CASE WHEN-THEN-ELSE statement.
+     * 
+     * @param string $sqlWhen
+     * @param string $sqlThen
+     * @param string $sqlElse
+     * @return string
+     */
+    protected function buildSqlCaseWhenThenElse(string $sqlWhen, string $sqlThen, string $sqlElse) : string
+    {
+        return "(CASE WHEN {$sqlWhen} THEN {$sqlThen} ELSE {$sqlElse} END)";
     }
 
     /**
@@ -500,13 +572,14 @@ class SqlModelLoader implements ModelLoaderInterface
                 $join_on = 'dc.oid = ' . $connectionSelector->toString();
             }
         } else {
-            $join_on = 'IF (ds.custom_connection_oid IS NOT NULL, ds.custom_connection_oid, ds.default_connection_oid) = dc.oid';
+            //$join_on = 'IF (ds.custom_connection_oid IS NOT NULL, ds.custom_connection_oid, ds.default_connection_oid) = dc.oid';
+            $join_on = "{$this->buildSqlCaseWhenThenElse('ds.custom_connection_oid IS NOT NULL', 'ds.custom_connection_oid', 'ds.default_connection_oid')} = dc.oid";
         }
         
         // If there is a user logged in, fetch his specific connctor config (credentials)
         $authToken = $exface->getSecurity()->getAuthenticatedToken();
         if ($authToken->isAnonymous() === false && $user_name = $authToken->getUsername()) {
-            $join_user_credentials = ' LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.oid = uc.data_connection_credentials_oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = "' . $user_name . '") ON dcc.data_connection_oid = dc.oid';
+            $join_user_credentials = " LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.oid = uc.data_connection_credentials_oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = '{$user_name}') ON dcc.data_connection_oid = dc.oid";
             $select_user_credentials = ', dcc.data_connector_config AS user_connector_config';
         }
         
@@ -546,7 +619,7 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         $ds = $ds[0];
         
-        $data_source = DataSourceFactory::createFromSelector($selector);
+        $data_source = DataSourceFactory::createEmpty($selector);
         $data_source->setName($ds['data_source_name']);
         
         if (! is_null($ds['data_source_readable'])){
@@ -569,8 +642,10 @@ class SqlModelLoader implements ModelLoaderInterface
             }
         }
         
-        // The query builder: if not given, use the default one from the data source configuration
-        if (! $data_source->getQueryBuilderAlias()) {
+        // The query builder
+        if (strtolower($data_source->getId()) === '0x32000000000000000000000000000000') {
+            $data_source->setQueryBuilderAlias($this->getWorkbench()->getConfig()->getOption('METAMODEL.QUERY_BUILDER'));
+        } else {
             $data_source->setQueryBuilderAlias($ds['custom_query_builder'] ? $ds['custom_query_builder'] : $ds['default_query_builder']);
         }
         
@@ -595,6 +670,12 @@ class SqlModelLoader implements ModelLoaderInterface
         return $data_source;
     }
     
+    /**
+     * 
+     * @param array $row
+     * @throws DataConnectionNotFoundError
+     * @return DataConnectionInterface
+     */
     protected function createDataConnectionFromDbRow(array $row) : DataConnectionInterface
     {
         try {
@@ -603,8 +684,24 @@ class SqlModelLoader implements ModelLoaderInterface
             throw new DataConnectionNotFoundError('Invalid or missing connector prototype in data connection "' . $row['data_connection_name'] . '" (' . $row['data_connection_alias'] . ')!');
         }
         // Merge config from the connection and the user credentials
-        $config = UxonObject::fromJson($row['data_connector_config']);
-        $config = $config->extend(UxonObject::fromJson($row['user_connector_config']));
+        $datatype = DataTypeFactory::createFromString($this->getWorkbench(), 'exface.Core.Encrypted');
+        $configData = $row['data_connector_config'];
+        if ($datatype->isValueEncrypted($configData)) {
+            $configData = EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $configData, $datatype->getEncryptionPrefix());
+        }
+        $config = UxonObject::fromJson($configData);
+        if ($row['user_connector_config'] !== null && $row['user_connector_config'] !== '' ) {
+            $value = $row['user_connector_config'];
+            try {
+                if ($datatype->isValueEncrypted($value)) {
+                    $value = EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $value, $datatype->getEncryptionPrefix());
+                }
+                UxonDataType::cast($value);
+                $config = $config->extend(UxonObject::fromJson($value));
+            } catch(\Throwable $e) {                
+                $this->getWorkbench()->getLogger()->logException($e);
+            }
+        }
         // Instantiate the connection
         $connection = DataConnectionFactory::create(
             $connectorSelector,
@@ -614,10 +711,15 @@ class SqlModelLoader implements ModelLoaderInterface
             $row['data_connection_app_alias'],
             $row['data_connection_name'],
             $row['connection_read_only']
-            );
+        );
         return $connection;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadDataConnection()
+     */
     public function loadDataConnection(DataConnectionSelectorInterface $selector) : DataConnectionInterface
     {
         foreach ($this->connections_loaded as $conn) {
@@ -631,13 +733,19 @@ class SqlModelLoader implements ModelLoaderInterface
         if ($selector->isUid()) {
             $filter = 'dc.oid = ' . $selector->toString();
         } else {
-            $filter = 'dc.alias = "' . $selector->toString() . '"';
+            if ($selector->hasNamespace()) {
+                $appAlias = $selector->getAppAlias();
+                $alias = substr($selector->toString(), (strlen($appAlias)+1));
+                $filter = "dc.alias = '{$alias}' AND a.app_alias = '{$appAlias}'";
+            } else {
+                $filter = "dc.alias = '{$selector->toString()}'";
+            }
         }
         
         // If there is a user logged in, fetch his specific connctor config (credentials)
         $authToken = $exface->getSecurity()->getAuthenticatedToken();
         if ($authToken->isAnonymous() === false && $user_name = $authToken->getUsername()) {
-            $join_user_credentials = ' LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.oid = uc.data_connection_credentials_oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = "' . $user_name . '") ON dcc.data_connection_oid = dc.oid';
+            $join_user_credentials = " LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.oid = uc.data_connection_credentials_oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = '{$user_name}') ON dcc.data_connection_oid = dc.oid";
             $select_user_credentials = ', dcc.data_connector_config AS user_connector_config';
         }
         
@@ -687,7 +795,6 @@ class SqlModelLoader implements ModelLoaderInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::getDataConnection()
      */
     public function getDataConnection()
@@ -698,13 +805,12 @@ class SqlModelLoader implements ModelLoaderInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::setDataConnection()
      */
     public function setDataConnection(DataConnectionInterface $connection)
     {
-        if (! ($connection instanceof MySqlConnector)) {
-            throw new \RuntimeException('Incompatible connector "' . $connection->getPrototypeClassName() . '" used for the model loader "' . get_class($this) . '": expecting a MySqlConnector or a drivative.');
+        if (! ($connection instanceof SqlDataConnectorInterface)) {
+            throw new \RuntimeException('Incompatible connector "' . $connection->getPrototypeClassName() . '" used for the model loader "' . get_class($this) . '": expecting a connector implementing SqlDataConnectorInterface.');
         }
         $this->data_connection = $connection;
         return $this;
@@ -713,7 +819,6 @@ class SqlModelLoader implements ModelLoaderInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadObjectActions()
      */
     public function loadObjectActions(MetaObjectActionListInterface $empty_list)
@@ -724,15 +829,25 @@ class SqlModelLoader implements ModelLoaderInterface
         return $this->loadActionsFromModel($empty_list, $sql_where);
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadAppActions()
+     */
     public function loadAppActions(AppActionList $empty_list)
     {
         $sql_where = 'a.app_alias = "' . $empty_list->getApp()->getAliasWithNamespace() . '"';
         return $this->loadActionsFromModel($empty_list, $sql_where);
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadAction()
+     */
     public function loadAction(AppInterface $app, $action_alias, WidgetInterface $trigger_widget = null)
     {
-        $sql_where = 'a.app_alias = "' . $app->getAliasWithNamespace() . '" AND oa.alias = "' . $action_alias . '"';
+        $sql_where = "a.app_alias = '{$app->getAliasWithNamespace()}' AND oa.alias = '{$action_alias}'";
         $actions = $this->loadActionsFromModel(new AppActionList($app->getWorkbench(), $app), $sql_where, $trigger_widget);
         return $actions->getFirst();
     }
@@ -761,13 +876,23 @@ class SqlModelLoader implements ModelLoaderInterface
 				WHERE ' . $sql_where);
         if ($res = $query->getResultArray()) {
             foreach ($res as $row) {
-                if ($row['config_uxon']) {
-                    $action_uxon = UxonObject::fromAnything($row['config_uxon']);
-                }
+                $action_uxon = UxonObject::fromAnything($row['config_uxon'] ?? '{}');
                 $app = $action_list->getWorkbench()->getApp($row['app_alias']);
                 $object = $action_list instanceof MetaObjectActionListInterface ? $action_list->getMetaObject() : $action_list->getWorkbench()->model()->getObjectById($row['object_oid']);
+                
+                if (! $action_uxon->hasProperty('name')) {
+                    $action_uxon->setProperty('name', $row['name']);
+                }
+                if (! $action_uxon->hasProperty('hint')) {
+                    $action_uxon->setProperty('hint', $row['short_description']);
+                }
+                
+                $this->getWorkbench()->eventManager()->dispatch(new OnBeforeMetaObjectActionLoadedEvent($row['action'], $row['alias'], $app, $object, $action_uxon, $trigger_widget));
+                
                 $a = ActionFactory::createFromModel($row['action'], $row['alias'], $app, $object, $action_uxon, $trigger_widget);
-                $a->setName($row['name']);
+                
+                $this->getWorkbench()->eventManager()->dispatch(new OnMetaObjectActionLoadedEvent($object, $a));
+                
                 $action_list->add($a);
                 
                 if ($row['use_in_object_basket_flag']) {
@@ -783,6 +908,11 @@ class SqlModelLoader implements ModelLoaderInterface
         return $action_list;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::getInstaller()
+     */
     public function getInstaller()
     {
         if ($this->installer === null) {
@@ -794,75 +924,13 @@ class SqlModelLoader implements ModelLoaderInterface
             $dbInstaller = new MySqlDatabaseInstaller($coreAppSelector);
             $dbInstaller
                 ->setFoldersWithMigrations(['InitDB','Migrations'])
+                ->setFoldersWithStaticSql(['Views'])
                 ->setDataConnection($modelConnection);
             
-            $this->getWorkbench()->eventManager()->addListener(OnInstallEvent::getEventName(), [$this, 'finalizeInstallation']);
-            
-            // Also add the old SqlSchemInstaller, so that in can update existing installations
-            // upto it's last update script. After this, this installer will not do anything.
-            // DON'T USE this one, only the first one!
-            $oldInstaller = new SqlSchemaInstaller($coreAppSelector);
-            $oldInstaller
-                ->setDataConnection($this->getDataConnection())
-                ->setSqlFolderName($dbInstaller->getSqlFolderName())
-                ->setSqlUpdatesFolderName('LegacyInstallerUpdates');
-            
-            $installer->addInstaller($oldInstaller);
             $installer->addInstaller($dbInstaller);
             $this->installer = $installer;
         }
         return $this->installer;
-    }
-    
-    public function finalizeInstallation(OnInstallEvent $event)
-    {
-        if ($event->getInstaller() !== $this->getInstaller()->getInstallers()[1]) {
-            return;
-        }
-        $conn = $this->getDataConnection();
-        
-        // Make sure, the model-connection in the metamodel has the same configuration as
-        // the current connection of the model loader (= the connection, that was used to install
-        // the model DB).
-        
-        $dataSourceData = $conn->runSql('SELECT * FROM exf_data_source WHERE oid = 0x32000000000000000000000000000000')->getResultArray();
-        if ($dataSourceData[0]['custom_connection_oid'] === null) {
-            $conn->transactionStart();
-            $oid = '0x' . str_replace('-', '', UUIDDataType::generateUuidV4());
-            $connectorClassFile = str_replace('\\', '/', get_class($conn)) . '.php';
-            $sqlCreateConnection = <<<SQL
-INSERT INTO `exf_data_connection` (
-    `oid`,
-    `alias`, 
-    `app_oid`, 
-    `name`, 
-    `data_connector`, 
-    `data_connector_config`, 
-    `read_only_flag`, 
-    `filter_context_uxon`, 
-    `created_on`, 
-    `modified_on`, 
-    `created_by_user_oid`, 
-    `modified_by_user_oid`
-) VALUES (
-    {$oid}, 
-    'CORE_MODEL_CONNECTION', 
-    NULL, 
-    'Metamodel DB (autocreated)', 
-    '{$connectorClassFile}', 
-    NULL, 
-    0, 
-    '', 
-    NOW(), 
-    NOW(), 
-    0, 
-    0
-)
-SQL;
-            $conn->runSql($sqlCreateConnection);
-            $conn->runSql("UPDATE exf_data_source SET custom_connection_oid = {$oid} WHERE oid = 0x32000000000000000000000000000000");
-            $conn->transactionCommit();
-        }
     }
     
     /**
@@ -891,14 +959,14 @@ SQL;
             WHERE ac.compound_attribute_oid = {$attribute->getId()}
             ORDER BY ac.sequence_index ASC
         ");
-                foreach ($query->getResultArray() as $row) {
-                    $attribute->addComponentAttribute(
-                        $attribute->getObject()->getAttributes()->getByAttributeId($row['attribute_oid']),
-                        $row['value_prefix'] ?? '',
-                        $row['value_suffix'] ?? ''
-                        );
-                }
-                return $attribute;
+        foreach ($query->getResultArray() as $row) {
+            $attribute->addComponentAttribute(
+                $attribute->getObject()->getAttributes()->getByAttributeId($row['attribute_oid']),
+                $row['value_prefix'] ?? '',
+                $row['value_suffix'] ?? ''
+            );
+        }
+        return $attribute;
     }
     
     /**
@@ -941,6 +1009,11 @@ SQL;
         }
     }
     
+    /**
+     * 
+     * @param DataTypeSelectorInterface $selector
+     * @return mixed
+     */
     protected function getDataTypeCache(DataTypeSelectorInterface $selector)
     {
         if ($selector->isUid()){
@@ -950,6 +1023,11 @@ SQL;
         }
     }
     
+    /**
+     * 
+     * @param DataTypeSelectorInterface $selector
+     * @return \exface\Core\ModelLoaders\SqlModelLoader
+     */
     protected function cacheDataType(DataTypeSelectorInterface $selector)
     {
         if ($selector->isUid()){
@@ -968,26 +1046,36 @@ SQL;
 				WHERE ' . $where);
         foreach ($query->getResultArray() as $dt) {
             $this->data_types_by_uid[$dt['oid']] = $dt;
-            $this->data_type_uids[$this->getFullAlias($dt['app_alias'], $dt['data_type_alias'])] = $dt['oid'];
+            $this->data_type_uids[$this->addNamespace($dt['app_alias'], $dt['data_type_alias'])] = $dt['oid'];
         }
         return $this;
     }
     
-    protected function getFullAlias($app_alias, $instance_alias)
+    /**
+     * 
+     * @param string $app_alias
+     * @param string $instance_alias
+     * @return string
+     */
+    protected function addNamespace(string $app_alias, string $instance_alias) : string
     {
         return $app_alias . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $instance_alias;
     }
     
-    protected function isUid($string)
-    {
-        return substr($string, 0, 2) === '0x';
-    }
-    
-    protected function getModel()
+    /**
+     * 
+     * @return ModelInterface
+     */
+    protected function getModel() : ModelInterface
     {
         return $this->getWorkbench()->model();
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
+     */
     public function getWorkbench()
     {
         return $this->selector->getWorkbench();
@@ -1026,75 +1114,614 @@ SQL;
         return $this->loadUserData($user, $userData);
     }
     
+    /**
+     * Builds sql statement selecting and combining the values of given `sqlColumn` matching the `sqlFrom` and `sqlWhere` into one
+     * into one, comma seperated, string. 
+     * 
+     * @param string $sqlColumn
+     * @param string $sqlFrom
+     * @param string $sqlWhere
+     * @return string
+     */
+    protected function buildSqlGroupConcat(string $sqlColumn, string $sqlFrom, string $sqlWhere) : string
+    {
+        return <<<SQL
+        
+        SELECT GROUP_CONCAT({$sqlColumn}, ',')
+        FROM {$sqlFrom}
+        WHERE {$sqlWhere}
+SQL;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadUserData()
+     */
     public function loadUserData(UserInterface $user, DataSheetInterface $userData = null) : UserInterface
     {
-        $userMetaObj = $this->getWorkbench()->model()->getObject('exface.Core.USER');
-        if ($userData === null) {
-            $userData = DataSheetFactory::createFromObject($userMetaObj);
-            $userData->getFilters()->addConditionFromString('USERNAME', $user->getUsername(), EXF_COMPARATOR_EQUALS);
-        }
+        $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('uru.user_role_oid'), 'exf_user_role_users uru', 'uru.user_oid = u.oid');
+        $sql = <<<SQL
+SELECT
+    u.*,
+    {$this->buildSqlUuidSelector('u.oid')} AS oid,
+    (
+        {$groupConcat}
+    ) as role_oids
+FROM
+    exf_user u
+WHERE
+    u.username = '{$user->getUsername()}'
+SQL;
         
-        foreach ($userMetaObj->getAttributes() as $attr) {
-            $userData->getColumns()->addFromAttribute($attr);
-        }
-        if ($userData->isFresh() === false) {
-            $userData->dataRead();
-        }
+        $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
         
-        if ($userData->countRows() == 0) {
-            throw new UserNotFoundError('No user "' . $user->getUsername() . '" exists in the metamodel.');
-        } elseif ($userData->countRows() == 1) {
-            $row = $userData->getRow(0);
-            $user->setUid($row['UID']);
-            $user->setLocale($row['LOCALE']);
-            $user->setFirstName($row['FIRST_NAME']);
-            $user->setLastName($row['LAST_NAME']);
-            $user->setEmail($row['EMAIL']);
-            if ($row['PASSWORD'] !== null) {
-                $user->setPassword($row['PASSWORD']);
-            }
-        } else {
-            throw new UserNotUniqueError('More than one user exist in the metamodel for username "' . $user->getUsername() . '".');
+        switch (count($rows)) {
+            case 0:
+                throw new UserNotFoundError('No user "' . $user->getUsername() . '" exists in the metamodel.');
+            case 1:
+                $row = $rows[0];
+                $user->setUid($row['oid']);
+                $user->setLocale($row['locale']);
+                $user->setFirstName($row['first_name']);
+                $user->setLastName($row['last_name']);
+                $user->setEmail($row['email']);
+                $user->setDisabled(BooleanDataType::cast($row['disabled_flag']) ?? false);
+                if ($row['password'] !== null) {
+                    $user->setPassword($row['password']);
+                }
+                if ($row['role_oids']) {
+                    foreach (explode(',', $row['role_oids']) as $roleUid) {
+                        $user->addRoleSelector($roleUid);
+                    }
+                }
+                break;
+            default:
+                throw new UserNotUniqueError('More than one user exist in the metamodel for username "' . $user->getUsername() . '".');
         }
         
         return $user;
     }
     
     /**
-     * Creates the passed Exface user.
-     *
-     * @param UserInterface $user
-     * @return ModelLoaderInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadAuthorizationPoints()
      */
-    public function createUser(UserInterface $user) : ModelLoaderInterface
-    {
-        $user->exportDataSheet()->dataCreate();
-        return $this;
+    public function loadAuthorizationPoints() : array
+    {        
+        $sql = <<<SQL
+SELECT 
+    apt.*, 
+    {$this->buildSqlUuidSelector('apt.oid')} AS oid,
+    {$this->buildSqlUuidSelector('apt.app_oid')} AS app_oid
+FROM 
+    exf_auth_point apt
+SQL;
+        
+        $result = $this->getDataConnection()->runSql($sql)->getResultArray();
+        $array = [];
+        foreach ($result as $row) {
+            $authPoint = AuthorizationPointFactory::createFromSelector(new AuthorizationPointSelector($this->getWorkbench(), ltrim($row['class'], "\\")));
+            $authPoint
+                ->setName($row['name'])
+                ->setUid($row['oid'])
+                ->setDisabled(BooleanDataType::cast($row['disabled_flag']))
+                ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), ($row['default_effect_local'] ? $row['default_effect_local'] : $row['default_effect_in_app'])))
+                ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), ($row['combining_algorithm_local'] ? $row['combining_algorithm_local'] : $row['combining_algorithm_in_app'])));
+            $array[] = $authPoint;
+        }
+        return $array;
     }
     
     /**
-     * Updates the passed Exface user.
-     *
-     * @param UserInterface $user
-     * @return ModelLoaderInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadAuthorizationPolicies()
      */
-    public function updateUser(UserInterface $user) : ModelLoaderInterface
+    public function loadAuthorizationPolicies(AuthorizationPointInterface $authPoint, UserImpersonationInterface $userOrToken) : AuthorizationPointInterface
     {
-        $user->exportDataSheet()->dataUpdate();
-        return $this;
+        if ($userOrToken->isAnonymous()) {
+            // Load all policies of the anonymous user
+            // + all policies without a user group
+            $anonymouseUserOid = UserSelector::ANONYMOUS_USER_OID;
+            $userFilter = <<<SQL
+            
+        apol.target_user_role_oid IN (
+            SELECT
+                turu.user_role_oid
+            FROM
+                exf_user_role_users turu
+            WHERE
+                turu.user_oid = $anonymouseUserOid
+        )
+        OR
+SQL;
+        } else {
+            // Load all policies of this user's group
+            // + all policies of the built-in group exface.Core.AUTHENTICATED
+            // + all policies without a user group
+            $authenticatedGroupOid = UserRoleSelector::AUTHENTICATED_USER_ROLE_OID;
+            $userFilter = <<<SQL
+            
+        apol.target_user_role_oid IN (
+            SELECT
+                turu.user_role_oid
+            FROM
+                exf_user_role_users turu
+                INNER JOIN exf_user u ON turu.user_oid = u.oid
+            WHERE
+                u.username = '{$userOrToken->getUsername()}'
+        )
+        OR apol.target_user_role_oid = $authenticatedGroupOid
+        OR
+SQL;
+        }
+        
+        $sql = <<<SQL
+SELECT
+    apol.*,
+    {$this->buildSqlUuidSelector('apol.target_page_group_oid')} AS target_page_group_oid,
+    {$this->buildSqlUuidSelector('apol.target_user_role_oid')} AS target_user_role_oid,
+    {$this->buildSqlUuidSelector('apol.target_object_oid')} AS target_object_oid,
+    {$this->buildSqlUuidSelector('apol.target_object_action_oid')} AS target_object_action_oid,
+    baction.alias AS target_object_action_alias,
+    capp.app_alias AS target_object_action_app
+FROM
+    exf_auth_policy apol
+LEFT JOIN exf_object_action baction ON apol.target_object_action_oid = baction.oid
+LEFT JOIN exf_app capp ON baction.action_app_oid = capp.oid
+WHERE
+    apol.auth_point_oid = {$authPoint->getUid()}
+    AND apol.disabled_flag = 0
+    AND (
+        {$userFilter}
+        apol.target_user_role_oid IS NULL
+    )
+SQL;
+        foreach ($this->getDataConnection()->runSql($sql)->getResultArray() as $row) {
+            $action = null;
+            if ($row['target_object_action_oid'] !== null && $row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {
+                throw new RuntimeException('Policy cant have object action and action prototype values!');
+            }
+            if ($row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {
+                $action = $row['target_action_class_path'];
+            } else if ($row['target_object_action_oid'] !== null) {
+                $action = $row['target_object_action_app'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $row['target_object_action_alias'];
+            }
+            $authPoint->addPolicy(
+                [
+                    PolicyTargetDataType::USER_ROLE => $row['target_user_role_oid'],
+                    PolicyTargetDataType::PAGE_GROUP => $row['target_page_group_oid'],
+                    PolicyTargetDataType::META_OBJECT => $row['target_object_oid'],
+                    PolicyTargetDataType::ACTION => $action,
+                    PolicyTargetDataType::FACADE => $row['target_facade_class_path'],
+                ],
+                PolicyEffectDataType::fromValue($this->getWorkbench(), $row['effect']),
+                $row['name'],
+                UxonObject::fromAnything($row['condition_uxon'] ?? [])
+            );
+        }
+        
+        return $authPoint;
     }
     
     /**
-     * Deletes the passed Exface user.
-     *
-     * @param UserInterface $user
-     * @return ModelLoaderInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadPage()
      */
-    public function deleteUser(UserInterface $user) : ModelLoaderInterface
-    { 
-        $user->exportDataSheet()->dataDelete();
-        return $this;
+    public function loadPage(UiPageSelectorInterface $selector, bool $ignoreReplacements = false) : UiPageInterface
+    {
+        if ($selector->isAlias()) {
+            foreach ($this->pages_loaded as $uiPage) {
+                if ($uiPage->getAliasWithNamespace() === $selector->toString()) {
+                    return $uiPage;
+                }
+            }
+            $where = "p.alias = '" . $selector->toString() . "'";
+            $err = 'alias "' . $selector->toString() . '"';
+        } elseif ($selector->isUid()) {
+            if ($uiPage = $this->pages_loaded[$selector->toString()]) {
+                return $uiPage;
+            }
+            $where = "p.oid = " . $selector->toString();
+            $err = 'UID "' . $selector->toString() . '"';
+        } else {
+            throw new UiPageNotFoundError('Unsupported page selector ' . $selector->toString() . '!');
+        }
+        
+        $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('pgp.page_group_oid'), 'exf_page_group_pages pgp', 'pgp.page_oid = p.oid');
+        $query = $this->getDataConnection()->runSql("
+            SELECT 
+                p.*,
+                {$this->buildSqlUuidSelector('p.oid')} as oid,
+                {$this->buildSqlUuidSelector('p.app_oid')} as app_oid,
+                {$this->buildSqlUuidSelector('p.parent_oid')} as parent_oid,
+                {$this->buildSqlUuidSelector('p.default_menu_parent_oid')} as default_menu_parent_oid,
+                {$this->buildSqlUuidSelector('p.page_template_oid')} as page_template_oid,
+                {$this->buildSqlUuidSelector('p.created_by_user_oid')} as created_by_user_oid,
+                {$this->buildSqlUuidSelector('p.modified_by_user_oid')} as modified_by_user_oid,
+                pt.facade_filepath, 
+                pt.facade_uxon,
+                (
+                    {$groupConcat}
+                ) as group_oids
+            FROM exf_page p 
+                LEFT JOIN exf_page_template pt ON p.page_template_oid = pt.oid
+            WHERE " . $where
+            
+        );
+        $row = $query->getResultArray()[0];
+        if (empty($row) === true) {
+            throw new UiPageNotFoundError('UI Page with ' . $err . ' not found!');
+        }
+        
+        $uiPage = UiPageFactory::createBlank($this->getWorkbench(), $row['alias']);
+        $uiPage->setUid($row['oid']);
+        if ($row['app_oid']) {
+            $uiPage->setApp(SelectorFactory::createAppSelector($this->getWorkbench(), $row['app_oid']));
+        }
+        
+        $uiPage->setName($row['name']);
+        $uiPage->setDescription($row['description'] ?? '');
+        $uiPage->setIntro($row['intro'] ?? '');
+        
+        $uiPage->setMenuIndex(intval($row['menu_index']));
+        $uiPage->setMenuVisible($row['menu_visible'] ? true : false);
+        $uiPage->setPublished($row['published'] ? true : false);
+        
+        if ($row['parent_oid']) {
+            $uiPage->setParentPageSelector($row['parent_oid']);
+        }
+        
+        $uiPage->setUpdateable($row['auto_update_with_app'] ? true : false);
+        $uiPage->setReplacesPageSelector($row['replace_page_oid']);
+        $uiPage->setContents($row['content'] ?? new UxonObject());
+        
+        $uiPage->setCreatedOn($row['created_on']);
+        $uiPage->setCreatedByUserSelector($row['created_by_user_oid']);
+        $uiPage->setModifiedOn($row['modified_on']);
+        $uiPage->setModifiedByUserSelector($row['modified_by_user_oid']);
+        
+        $uiPage->setFacadeSelector($row['facade_filepath']);
+        if ($row['facade_uxon']) {
+            $uiPage->setFacadeConfig(new UxonObject(json_decode($row['facade_uxon'], true)));
+        }
+        
+        if ($row['default_menu_parent_oid'] !== null) {
+            $uiPage->setParentPageSelectorDefault($row['default_menu_parent_oid']);
+        }
+        if ($row['default_menu_index'] !== null) {
+            $uiPage->setMenuIndexDefault($row['default_menu_index']);
+        }
+        
+        if ($row['group_oids']) {
+            foreach (explode(',', $row['group_oids']) as $groupUid) {
+                $uiPage->addGroupSelector($groupUid);
+            }
+        }
+       
+        $this->pages_loaded[$uiPage->getUid()] = $uiPage;
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnUiMenuItemLoadedEvent($uiPage));
+        $this->getWorkbench()->eventManager()->dispatch(new OnUiPageLoadedEvent($uiPage));
+        
+        return $uiPage;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadPageTree()
+     */
+    public function loadPageTree(UiPageTree $tree) : array
+    {
+        if (empty($tree->getStartRootNodes())) {
+            $rows = $this->loadPageTreeLevel();
+            $nodes = [];
+            foreach ($rows as $row) {
+                try {
+                    $rootNode = $this->loadPageTreeCreateNodeFromDbRow($row);
+                    $nodes[] = $rootNode;
+                    $this->nodes_loaded[$rootNode->getUid] = $rootNode;
+                } catch (AccessDeniedError $e) {
+                    //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+                }
+            }
+            
+            $tree->setStartRootNodes($nodes);
+        }        
+        if ($tree->hasExpandPathToPage()) {            
+            return $this->loadPageTreeParentNodes($tree);
+        } else {
+            $treeRootNodes = $tree->getStartRootNodes();
+            $nodes = [];
+            foreach ($treeRootNodes as $rootNode) {
+                $nodes[] = $this->loadPageTreeNodeSubNodes($rootNode, $tree->getExpandDepth());
+            }
+            return $nodes;
+        }
+    }
+    
+    /**
+     * 
+     * @param array $row
+     * @param UiPageTreeNodeInterface $parentNode
+     * @return UiPageTreeNodeInterface
+     */
+    protected function loadPageTreeCreateNodeFromDbRow(array $row, UiPageTreeNodeInterface $parentNode = null) : UiPageTreeNodeInterface
+    {
+        $node = UiPageTreeFactory::createNode(
+            $this->getWorkbench(),
+            $row['alias'],
+            $row['name'],
+            $row['oid'],
+            ($row['published'] ? true : false),
+            $parentNode,
+            $row['description'],
+            $row['intro'],
+            $row['group_oids'] ? explode(',', $row['group_oids']) : null,
+            $row['app_oid']
+        );
+        
+        $node->setCreatedOn($row['created_on']);
+        $node->setCreatedByUserSelector($row['created_by_user_oid']);
+        $node->setModifiedOn($row['modified_on']);
+        $node->setModifiedByUserSelector($row['modified_by_user_oid']);
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnUiMenuItemLoadedEvent($node));
+        
+        return $node;
+    }
+    
+    /**
+     * Returns the root nodes for the given tree to a page set in `setExpandPathToPage` in the given tree
+     * 
+     * @param UiPageTree $tree
+     * @return array
+     */
+    protected function loadPageTreeParentNodes(UiPageTree $tree) : array
+    {
+        $treeRootNodes = $tree->getStartRootNodes();
+        $loadedtree = $this->menu_tress_loaded[$tree->getExpandPathToPage()->getUid()];
+        if ($loadedtree !== null && $loadedtree->isLoaded() === true && $loadedtree->getStartRootNodes() === $treeRootNodes) {
+            return $loadedtree->getRootNodes();
+        }
+        $nodeId = $tree->getExpandPathToPage()->getUid();
+        $oldNode = null;
+        while ($nodeId !== null) {
+            $parentNode = null;
+            $parentNodeId = null;
+            if ($this->nodes_loaded[$nodeId] !== null && $this->nodes_loaded[$nodeId]->getChildNodesLoaded() === true && $this->nodes_loaded[$nodeId]->hasParent() === true) {
+                // if node is already loaded with its childs and also has a parentNode, no need to load it again
+                $parentNode = $this->nodes_loaded[$nodeId];
+                $parentNodeId = $parentNode->getParentNode()->getUid();
+            } else {
+                // load node and its childs
+                $rows = $this->loadPageTreeLevel($nodeId);
+                foreach ($rows as $row) {
+                    if ($row['oid'] === $nodeId) {
+                        if ($this->nodes_loaded[$row['oid']] !== null) {
+                            // if node already was loaded before, take that
+                            $parentNode = $this->nodes_loaded[$row['oid']];
+                        } else {
+                            try {
+                                $parentNode = $this->loadPageTreeCreateNodeFromDbRow($row);
+                                $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
+                            } catch (AccessDeniedError $e) {
+                                //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+                                $parentNode = null;
+                            }
+                        }
+                        $parentNodeId = $row['parent_oid'];
+                        break;
+                        // when parent node was created no need to search in the rest of the rows
+                    }
+                }
+            }
+            if ($parentNode !== null && $parentNode->getChildNodesLoaded() === false) {
+                foreach ($rows as $row) {
+                    if ($parentNode !== null && $row['oid'] !== $nodeId) {
+                        if ($this->nodes_loaded[$row['oid']] !== null && $this->nodes_loaded[$row['oid']]->getChildNodesLoaded() === true) {
+                            //if the child node was already loaded before and also it's child, take that node
+                            $childNode = $this->nodes_loaded[$row['oid']];
+                            $childNode->setParentNode($parentNode);
+                        } else {
+                            try {
+                                $childNode = $this->loadPageTreeCreateNodeFromDbRow($row, $parentNode);
+                            } catch (AccessDeniedError $e) {
+                                //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+                                continue;
+                            }
+                        }
+                        $this->nodes_loaded[$childNode->getUid()] = $childNode;
+                        $parentNode->addChildNode($childNode);                        
+                        $parentNode->setChildNodesLoaded(true);
+                    }
+                }
+                $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
+            }
+            if ($parentNode !== null && $tree->nodeInRootNodes($parentNode)) {
+                $nodeId = null;
+                for ($i = 0; $i < count($treeRootNodes); $i++) {
+                    if ($treeRootNodes[$i]->getUid() === $parentNode->getUid()) {
+                        $treeRootNodes[$i] = $parentNode;
+                        break;
+                    }
+                }
+            } elseif ($parentNode === null && $oldNode !== null) {
+                $treeRootNodes[] = $oldNode;
+                $nodeId = null;
+            } else {
+                $nodeId = $parentNodeId;
+                $oldNode = $parentNode;
+            }
+        }
+        $this->menu_tress_loaded[$tree->getExpandPathToPage()->getUid()] = $tree;
+        return $treeRootNodes;
+    }
+    
+    /**
+     * Loads all subnodes for the given node till depth is reached. If depth is null, loads every subnode for given node.
+     * 
+     * @param UiPageTreeNodeInterface $node
+     * @param UiPageTreeNodeInterface[] $childNodes
+     * @return UiPageTreeNodeInterface
+     */
+    protected function loadPageTreeNodeSubNodes(UiPageTreeNodeInterface $node, ?int $depth) : UiPageTreeNodeInterface
+    {
+        // no subnodes need to be loaded if depth is not null or greater than 0
+        if (! ($depth === null || $depth > 0)) {
+            return $node;
+        }
+        $childNodes = null;
+        if ($this->nodes_loaded[$node->getUid()] !== null && $this->nodes_loaded[$node->getUid()]->getChildNodesLoaded() === true) {
+            $childNodes = $this->nodes_loaded[$node->getUid()]->getChildnodes();
+            $node->resetChildNodes();
+            foreach ($childNodes as $childNode) {
+                //load child nodes for child node if child node level is not wanted depth yet
+                if ($depth === null || $depth - 1 > 0) {
+                    $childNode = $this->loadPageTreeNodeSubNodes($childNode, $depth != null ? ($depth - 1) : NULL);
+                }
+                $childNode->setParentNode($node);
+                $node->addChildNode($childNode);                    
+            }
+            $node->setChildNodesLoaded(true);
+            $this->nodes_loaded[$node->getUid()] = $node;
+            return $node;
+        } else {
+            // load data for 1 level of sub nodes if next sub level of the current node is wanted depth
+            if (! ($depth === null || $depth - 1 >= 0)) {
+                $rows = $this->loadPageTreeLevel($node->getUid());
+            } else {
+                // else load data for 2 sublevels right away
+                $rows = $this->loadPageTreeLevel($node->getUid(), true);
+            }
+            $childIds = [];
+            foreach ($rows as $row) {
+                //build first level child nodes
+                if ($row['parent_oid'] === $node->getUid()  && !in_array($row['oid'], $childIds)) {
+                    if ($this->nodes_loaded[$row['oid']] !== null) {
+                        $childNode = $this->nodes_loaded[$row['oid']];                            
+                        $childIds[] = $childNode->getUid();
+                        $node->addChildNode($childNode);
+                    } else {
+                        try {
+                            $childNode = $this->loadPageTreeCreateNodeFromDbRow($row, $node);                                
+                            $childIds[] = $childNode->getUid();
+                            $node->addChildNode($childNode);
+                            $this->nodes_loaded[$childNode->getUid()] = $childNode;
+                        } catch (AccessDeniedError $e) {
+                            //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+                        }
+                    }
+                }
+            }                
+            $node->setChildNodesLoaded(true);
+            $childNodes = $node->getChildNodes();
+        }
+        
+        // return node if wanted depth is level of child nodes
+        if (! ($depth === null || $depth - 1 > 0)) {
+            return $node;
+        }
+            
+        $node->resetChildNodes();
+        //build second level of child nodes
+        foreach ($childNodes as $childNode) {
+            foreach ($rows as $row) {
+                if ($childNode->getUid() === $row['parent_oid']) {
+                    if ($this->nodes_loaded[$row['oid']] !== null) {
+                        $childChildNode = $this->nodes_loaded[$row['oid']];
+                    } else {
+                        try {
+                            $childChildNode = $this->loadPageTreeCreateNodeFromDbRow($row, $childNode);
+                        } catch (AccessDeniedError $e) {
+                            //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+                            continue;
+                        }
+                    }
+                    //load sub levels for child child nodes if needed
+                    if ($depth === null || $depth - 2 > 0) {
+                        $childChildNode = $this->loadPageTreeNodeSubNodes($childChildNode, $depth != null ? ($depth - 2) : NULL);
+                    }
+                    $this->nodes_loaded[$childChildNode->getUid()] = $childChildNode;
+                    $childNode->addChildNode($childChildNode);
+                }
+            }
+            $childNode->setChildNodesLoaded(true);
+            $this->nodes_loaded[$childNode->getUid()] = $childNode;                    
+            $node->addChildNode($childNode);
+        }                
+        $node->setChildNodesLoaded(true);
+        return $node;
+    }
+    
+    /**
+     * Returns data for node with given `id` and all childs of that node, if `loadTwoLevels` is true returns data for two child levels for given `id` instead.
+     * 
+     * @param string $sqlWhere
+     * @return array
+     */
+    protected function loadPageTreeLevel(string $id = null, bool $loadTwoLevels = false) : array
+    {
+        $sqlWhere = '';
+        if ($id === null) {
+            $sqlWhere = "
+            WHERE parent_oid IS NULL AND menu_visible = 1";
+        } else {
+            $sqlWhere = "
+            WHERE (oid = {$id} OR parent_oid = {$id}) AND menu_visible = 1";
+        }
+        $sqlOrder = "
+            ORDER BY parent_oid, menu_index";
+        $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('pgp.page_group_oid'), 'exf_page_group_pages pgp', 'pgp.page_oid = p.oid');
+        $sql = "
+            SELECT
+                {$this->buildSqlUuidSelector('p.oid')} as oid,
+                {$this->buildSqlUuidSelector('p.parent_oid')} as parent_oid,
+                {$this->buildSqlUuidSelector('p.app_oid')} as app_oid,
+                p.name,
+                p.alias,
+                p.description,
+                p.intro,
+                p.published,
+                p.menu_index,
+                p.created_on,
+                {$this->buildSqlUuidSelector('p.created_by_user_oid')} as created_by_user_oid,
+                p.modified_on,
+                {$this->buildSqlUuidSelector('p.modified_by_user_oid')} as modified_by_user_oid,
+                (
+                    {$groupConcat}
+                ) as group_oids
+            FROM exf_page p";
+                
+        if ($loadTwoLevels === true) {
+            $sqlUnionInnerWhere = '';
+            if ($id === null) {
+                $sqlUnionInnerWhere = $sqlWhere;
+            } else {
+                $sqlUnionInnerWhere = "
+                WHERE parent_oid = {$id} AND menu_visible = 1";
+            }
+            $sqlUnionWhere = "
+               WHERE p.parent_oid IN (SELECT
+	           oid
+	           FROM exf_page {$sqlUnionInnerWhere})";
+            $sql .= "            
+            {$sqlWhere}
+            UNION ALL
+                {$sql}
+                {$sqlUnionWhere}";
+                
+        } else {
+            $sql .= $sqlWhere;
+        }
+        
+        $sql = "/*load UiPageTree Data*/" . $sql . $sqlOrder;
+        $query = $this->getDataConnection()->runSql($sql);
+        $rows = $query->getResultArray();
+        return $rows;        
     }
 }
-
-?>

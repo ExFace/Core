@@ -59,6 +59,19 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Model validation",
             "DESCRIPTION": "This behavior makes sure, every meta object is instantiated and validated every time any editor for it's model is opened. This behavior also fires the onModelValidated event, which allows other behaviors to append their own checks or modifications for metamodel editors."
+        },
+        {
+            "CREATED_ON": "2020-08-26 08:15:53",
+            "MODIFIED_ON": "2020-09-15 09:22:35",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eab4cd5c151e1eb4cd0205857feb80",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/TranslatableBehavior.php",
+            "CONFIG_UXON": "{\"translatable_attributes\":[\"NAME\",\"SHORT_DESCRIPTION\"],\"translatable_relations\":[{\"relation_key_attribute_alias\":\"ATTRIBUTE__ALIAS\",\"translatable_attributes\":[\"ATTRIBUTE__NAME\",\"ATTRIBUTE__SHORT_DESCRIPTION\"]}],\"translatable_uxon_properties\":[\"DEFAULT_EDITOR_UXON\"],\"translation_subfolder\":\"Objects\",\"translation_filename_attribute_alias\":\"ALIAS_WITH_NS\",\"translation_app_determined_by_relation\":\"APP\"}",
+            "OBJECT": "0x31350000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Translations",
+            "DESCRIPTION": ""
         }
     ],
     "totals_rows": [],

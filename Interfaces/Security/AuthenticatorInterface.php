@@ -49,4 +49,11 @@ interface AuthenticatorInterface extends AuthenticationProviderInterface
      * @return string
      */
     public function getName() : string;
+    
+    /**
+     * Get the time a user should stayed logged in after he logged in with this authenticator.
+     *
+     * @return int|NULL
+     */
+    public function getTokenLifetime() : ?int;
 }

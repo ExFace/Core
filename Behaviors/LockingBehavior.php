@@ -259,7 +259,9 @@ class LockingBehavior extends AbstractBehavior
     
     protected function getLockAction() : ActionInterface
     {
-        return ActionFactory::createFromUxon($this->getWorkbench(), $this->getLockActionUxon());
+        $action = ActionFactory::createFromUxon($this->getWorkbench(), $this->getLockActionUxon());
+        $action->setInputTriggerWidgetRequired(false);
+        return $action;
     }
 
     /**
@@ -310,7 +312,9 @@ class LockingBehavior extends AbstractBehavior
      */
     protected function getUnlockAction() : ActionInterface
     {
-        return ActionFactory::createFromUxon($this->getWorkbench(), $this->getUnlockActionUxon());
+        $action = ActionFactory::createFromUxon($this->getWorkbench(), $this->getUnlockActionUxon());
+        $action->setInputTriggerWidgetRequired(false);
+        return $action;
     }
     
     /**

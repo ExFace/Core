@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Log\Handlers\limit;
 
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
+use exface\Core\Events\Workbench\OnBeforeStopEvent;
 
 /**
  * Abstract log handler wrapper to implement any kind of log file cleanup according to the implementation function
@@ -15,6 +16,8 @@ abstract class LimitingWrapper implements LogHandlerInterface
 
     /** @var LogHandlerInterface $handler */
     private $handler;
+    
+    private $limitPerformed = false;
 
     /**
      * LimitingWrapper constructor.
@@ -25,14 +28,49 @@ abstract class LimitingWrapper implements LogHandlerInterface
     public function __construct(LogHandlerInterface $handler)
     {
         $this->handler = $handler;
-        $this->limit();
     }
     
     
-    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Log\LogHandlerInterface::handle()
+     */
     public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
         $this->callLogger($this->handler, $level, $message, $context, $sender);
+        if ($this->limitPerformed === false && $this->getWorkbench()->isStarted()) {
+            $this->limitPerformed = true;
+            
+            // Get the time of the last cleanup. There is no need to perform the check
+            // more than once a day as the lifetime of the logs is defined in days.
+            $ctxtScope = $this->getWorkbench()->getContext()->getScopeInstallation();
+            $last_cleanup = $ctxtScope->getVariable('last_log_cleanup');
+            if (! $last_cleanup) {
+                // If there was no last cleanup value yet, just set to now and skip the rest
+                $ctxtScope->setVariable('last_log_cleanup', date("Y-m-d H:i:s"));
+                return;
+            }
+            
+            // If the last cleanup took place less then a day ago, skip the rest.
+            if (strtotime($last_cleanup) > (time()-(60*60*24))){
+                return;
+            }
+            
+            $this->limit();
+            
+            $this->getWorkbench()->eventManager()->addListener(OnBeforeStopEvent::getEventName(), [$this, 'handleOnBeforeStopEvent']);
+        }
+    }
+    
+    /**
+     * 
+     * @param OnBeforeStopEvent $event
+     */
+    public function handleOnBeforeStopEvent(OnBeforeStopEvent $event)
+    {
+        $this->getWorkbench()->getContext()->getScopeInstallation()->setVariable('last_log_cleanup', date("Y-m-d H:i:s"));
+        return;
     }
 
     /**

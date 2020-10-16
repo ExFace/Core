@@ -17,10 +17,19 @@ class AuthenticationFailedError extends RuntimeException implements Authenticati
     
     private $provider = null;
     
-    public function __construct(AuthenticationProviderInterface $authProvider, $message, $alias = null, $previous = null)
+    /**
+     * 
+     * @param AuthenticationProviderInterface $authProvider
+     * @param string $message
+     * @param string $alias
+     * @param \Throwable $previous
+     * @param AuthenticationExceptionInterface[] $nestedAuthenticatorErrors
+     */
+    public function __construct(AuthenticationProviderInterface $authProvider, $message, $alias = null, $previous = null, array $nestedAuthenticatorErrors = [])
     {
         parent::__construct($message, $alias, $previous);
         $this->provider = $authProvider;
+        $this->authErrors = $nestedAuthenticatorErrors;
     }
     
     /**
@@ -33,11 +42,6 @@ class AuthenticationFailedError extends RuntimeException implements Authenticati
         return 401;
     }
     
-    public function addSecondaryError(AuthenticationExceptionInterface $exception) : self
-    {
-        $this->authErrors[] = $exception;
-    }
-    
     /**
      * 
      * {@inheritDoc}
@@ -46,5 +50,24 @@ class AuthenticationFailedError extends RuntimeException implements Authenticati
     public function getAuthenticationProvider() : AuthenticationProviderInterface
     {
         return $this->provider;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\RuntimeException::getDefaultAlias()
+     */
+    public function getDefaultAlias()
+    {
+        return '7AL3G5P';
+    }
+    
+    /**
+     * 
+     * @return AuthenticationExceptionInterface[]
+     */
+    public function getNestedAuthenticatorErrors() : array
+    {
+        return $this->authErrors;
     }
 }

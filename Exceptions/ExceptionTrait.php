@@ -14,11 +14,17 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\DataTypes\MessageTypeDataType;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Events\Errors\OnErrorCodeLookupEvent;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\CommonLogic\Selectors\AppSelector;
+use exface\Core\Widgets\Message;
 
 /**
- * This trait enables an exception to output more usefull specific debug information.
- * It is used by all
- * ExFace-specific exceptions!
+ * This trait contains a default implementation of ExceptionInterface to be used on-top
+ * of built-in PHP exceptions.
+ * 
+ * @see ExceptionInterface
  *
  * @author Andrej Kabachnik
  *        
@@ -40,6 +46,16 @@ trait ExceptionTrait {
     private $support_mail = false;
     
     private $messageData = null;
+    
+    private $messageTitle = null;
+    
+    private $messageHint = null;
+    
+    private $messageDescription = null;
+    
+    private $messageType = null;
+    
+    private $useExceptionMessageAsTitle = false;
 
     public function __construct($message, $alias = null, $previous = null)
     {
@@ -50,31 +66,6 @@ trait ExceptionTrait {
     public function exportUxonObject()
     {
         return new UxonObject();
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::isWarning()
-     */
-    public function isWarning()
-    {
-        if ($this instanceof WarningExceptionInterface) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::isError()
-     */
-    public function isError()
-    {
-        return $this->isWarning() ? false : true;
     }
 
     /**
@@ -168,7 +159,7 @@ trait ExceptionTrait {
             $stacktrace_tab->setNumberOfColumns(1);
             $stacktrace_widget = WidgetFactory::create($page, 'Html', $stacktrace_tab);
             $stacktrace_tab->addWidget($stacktrace_widget);
-            $stacktrace_widget->setHtml($page->getWorkbench()->getCMS()->sanitizeErrorOutput($page->getWorkbench()->getDebugger()->printException($this)));
+            $stacktrace_widget->setHtml($page->getWorkbench()->getDebugger()->printException($this));
             $debug_widget->addTab($stacktrace_tab);
         }
         
@@ -213,26 +204,62 @@ trait ExceptionTrait {
         return $debug_widget;
     }
 
-    public function getMessageModelData(Workbench $exface, $error_code)
+    /**
+     * 
+     * @param Workbench $exface
+     * @param string $error_code
+     * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
+     */
+    public function getMessageModelData(Workbench $exface, string $error_code) : DataSheetInterface
     {
         if ($this->messageData === null) {
             if ($this->getPrevious() && $this->getPrevious() instanceof ExceptionInterface){
-                $this->messageData = $this->getPrevious()->getMessageModelData($exface, $error_code);
+                $modelMessageData = $this->getPrevious()->getMessageModelData($exface, $error_code);
             } else {
                 $ds = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.MESSAGE');
-                $ds->getColumns()->addMultiple(['TITLE', 'HINT', 'DESCRIPTION', 'TYPE']);
+                $ds->getColumns()->addMultiple(['TITLE', 'HINT', 'DESCRIPTION', 'TYPE', 'APP']);
                 if ($error_code) {
                     $ds->getFilters()->addConditionFromString('CODE', $error_code);
                     $ds->dataRead();
                 }
-                $this->messageData = $ds;
+                $modelMessageData = $ds;
             }
+            
+            if ($this->getUseExceptionMessageAsTitle() === true) {
+                
+                $ds = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.MESSAGE');
+                if (! $descr = $modelMessageData->getCellValue('DESCRIPTION', 0)) {
+                    if (! $descr = $modelMessageData->getCellValue('TITLE', 0)) {
+                        $descr = '';
+                    }
+                }
+                $ds->addRow([
+                    'TITLE' => parent::getMessage(),
+                    'HINT' => $modelMessageData->getCellValue('HINT', 0) ?? '',
+                    'DESCRIPTION' => $descr,
+                    'TYPE' => $modelMessageData->getCellValue('TYPE', 0) ?? 'ERROR'
+                ]);
+                $modelMessageData = $ds;
+            }
+            
+            $this->messageData = $modelMessageData;
+            
+            $exface->eventManager()->dispatch(new OnErrorCodeLookupEvent($exface, $this));
         }
+        
         return $this->messageData;
     }
     
+    /**
+     * {@inheritdoc}
+     * @see ExceptionInterface::getMessageTitle()
+     */
     public function getMessageTitle(WorkbenchInterface $workbench) : ?string
     {
+        if ($this->messageTitle !== null) {
+            return $this->messageTitle;
+        }
+        
         try {
             $ds = $this->getMessageModelData($workbench, $this->getAlias());
             return $ds->getCellValue('TITLE', 0);
@@ -241,8 +268,29 @@ trait ExceptionTrait {
         }
     }
     
+    /**
+     * {@inheritdoc}
+     * @see ExceptionInterface::setMessageTitle()
+     */
+    public function setMessageTitle(string $text) : ExceptionInterface
+    {
+        $this->messageTitle = $text;
+        if ($this->messageData !== null) {
+            $this->messageData->setCellValue('TITLE', 0, $text);
+        }
+        return $this;
+    }
+    
+    /**
+     * {@inheritdoc}
+     * @see ExceptionInterface::getMessageHint()
+     */
     public function getMessageHint(WorkbenchInterface $workbench) : ?string
     {
+        if ($this->messageHint !== null) {
+            return $this->messageHint;
+        }
+        
         try {
             $ds = $this->getMessageModelData($workbench, $this->getAlias());
             return $ds->getCellValue('HINT', 0);
@@ -251,8 +299,29 @@ trait ExceptionTrait {
         }
     }
     
+    /**
+     * {@inheritdoc}
+     * @see ExceptionInterface::setMessageHint()
+     */
+    public function setMessageHint(string $text) : ExceptionInterface
+    {
+        $this->messageHint = $text;
+        if ($this->messageData !== null) {
+            $this->messageData->setCellValue('HINT', 0, $text);
+        }
+        return $this;
+    }
+    
+    /**
+     * {@inheritdoc}
+     * @see ExceptionInterface::getMessageDescription()
+     */
     public function getMessageDescription(WorkbenchInterface $workbench) : ?string
     {
+        if ($this->messageDescription !== null) {
+            return $this->messageDescription;
+        }
+        
         try {
             $ds = $this->getMessageModelData($workbench, $this->getAlias());
             return $ds->getCellValue('DESCRIPTION', 0);
@@ -261,11 +330,57 @@ trait ExceptionTrait {
         }
     }
     
+    /**
+     * {@inheritdoc}
+     * @see ExceptionInterface::setMessageDescription()
+     */
+    public function setMessageDescription(string $text) : ExceptionInterface
+    {
+        $this->messageDescription = $text;
+        if ($this->messageData !== null) {
+            $this->messageData->setCellValue('DESCRIPTION', 0, $text);
+        }
+        return $this;
+    }
+    
+    /**
+     * {@inheritdoc}
+     * @see ExceptionInterface::setMessageDescription()
+     */
     public function getMessageType(WorkbenchInterface $workbench) : ?string
     {
+        if ($this->messageType !== null) {
+            return $this->messageType;
+        }
+        
         try {
             $ds = $this->getMessageModelData($workbench, $this->getAlias());
             return $ds->getCellValue('TYPE', 0);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+    
+    /**
+     * {@inheritdoc}
+     * @see ExceptionInterface::setMessageDescription()
+     */
+    public function setMessageType(string $text) : ExceptionInterface
+    {
+        $this->messageType = $text;
+        return $this;
+    }
+    
+    /**
+     * {@inheritdoc}
+     * @see ExceptionInterface::getMessageAppSelector()
+     */
+    public function getMessageAppSelector(WorkbenchInterface $workbench) : ?AppSelectorInterface
+    {
+        try {
+            $ds = $this->getMessageModelData($workbench, $this->getAlias());
+            $uid = $ds->getCellValue('APP', 0);
+            return $uid === null ? $uid : new AppSelector($workbench, $uid);
         } catch (\Throwable $e) {
             return null;
         }
@@ -274,7 +389,6 @@ trait ExceptionTrait {
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getAlias()
      */
     public function getAlias()
@@ -292,7 +406,6 @@ trait ExceptionTrait {
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::setAlias()
      */
     public function setAlias($alias)
@@ -366,7 +479,8 @@ trait ExceptionTrait {
     public function getSystemByPage(UiPageInterface $page)
     {
         if( $this->system == FALSE) {
-            $this->system = $page->getWorkbench()->getCMS()->buildUrlToSiteRoot();
+            // TODO #nocms how to get the installation name???
+            $this->system = '';
         }
         return $this->system;
     }
@@ -399,5 +513,30 @@ trait ExceptionTrait {
     public static function getUxonSchemaClass() : ?string
     {
         return null;
+    }
+    
+    /**
+     * Returns TRUE if exception message is to be used as error message title.
+     * 
+     * FALSE by default, thus using the message model found via error code.
+     * 
+     * @return bool
+     */
+    protected function getUseExceptionMessageAsTitle() : bool
+    {
+        return $this->useExceptionMessageAsTitle;
+    }
+    
+    /**
+     * Makes the errors displayed use the exception message as title instead of attempting to 
+     * get the title from the message metamodel via error code (alias).
+     * 
+     * @param bool $value
+     * @return ExceptionInterface
+     */
+    public function setUseExceptionMessageAsTitle(bool $value) : ExceptionInterface
+    {
+        $this->useExceptionMessageAsTitle = $value;
+        return $this;
     }
 }

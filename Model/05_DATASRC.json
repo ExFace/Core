@@ -57,22 +57,22 @@
     "rows": [
         {
             "CREATED_ON": "2011-01-01 00:00:00",
-            "MODIFIED_ON": "2018-05-29 07:49:44",
+            "MODIFIED_ON": "2020-06-03 17:25:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
-            "DEFAULT_CONNECTION": "",
-            "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/MySqlBuilder.php",
+            "DEFAULT_CONNECTION": "0x11ea72c00f0fadeca3480205857feb80",
+            "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/ModelLoaderQueryBuilder.php",
             "READABLE_FLAG": "1",
             "WRITABLE_FLAG": "1",
             "BASE_OBJECT": "0x32370000000000000000000000000000",
-            "LABEL": "Metamodel DB",
-            "ALIAS": "metamodel_db"
+            "LABEL": "Metamodel Data Source",
+            "ALIAS": "METAMODEL_SOURCE"
         },
         {
             "CREATED_ON": "2016-11-21 10:54:08",
-            "MODIFIED_ON": "2017-05-04 11:18:36",
+            "MODIFIED_ON": "2020-08-26 07:54:48",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6afd8d2fa47e78943e4b318306b9a",
@@ -80,7 +80,7 @@
             "DEFAULT_CONNECTION": "0x11e6b09c8ccac11d8943e4b318306b9a",
             "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/FileFinderBuilder.php",
             "READABLE_FLAG": "1",
-            "WRITABLE_FLAG": "0",
+            "WRITABLE_FLAG": "1",
             "BASE_OBJECT": "0x11e6afd8efb4743f8943e4b318306b9a",
             "LABEL": "Local Vendor Folders",
             "ALIAS": "LOCAL_VENDOR_FOLDERS"
@@ -129,6 +129,36 @@
             "BASE_OBJECT": "",
             "LABEL": "Local CSV file",
             "ALIAS": "LOCAL_CSV_FILE"
+        },
+        {
+            "CREATED_ON": "2020-04-24 09:27:38",
+            "MODIFIED_ON": "2020-04-24 09:27:38",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea860dd0a323c697940205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "DEFAULT_CONNECTION": "0x11ea860db216206d97940205857feb80",
+            "DEFAULT_QUERY_BUILDER": "exface\/UrlDataConnector\/QueryBuilders\/JsonUrlBuilder.php",
+            "READABLE_FLAG": "1",
+            "WRITABLE_FLAG": "0",
+            "BASE_OBJECT": "",
+            "LABEL": "Workbench Config",
+            "ALIAS": "WORKBENCH_CONFIG"
+        },
+        {
+            "CREATED_ON": "2020-04-24 09:49:54",
+            "MODIFIED_ON": "2020-04-24 09:50:24",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8610ecc0537d97940205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "DEFAULT_CONNECTION": "0x11e7d421dd76d008a3da0205857feb80",
+            "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/WorkbenchAuthenticatorsReader.php",
+            "READABLE_FLAG": "1",
+            "WRITABLE_FLAG": "0",
+            "BASE_OBJECT": "",
+            "LABEL": "Active Authenticators",
+            "ALIAS": "WORKBENCH_AUTHENTICATORS"
         }
     ],
     "totals_rows": [],

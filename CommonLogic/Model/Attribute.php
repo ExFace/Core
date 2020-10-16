@@ -14,6 +14,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
  * 
@@ -79,11 +80,17 @@ class Attribute implements MetaAttributeInterface
     /** @var UxonObject|null */
     private $default_editor_uxon = null;
     
+    private $default_editor_uxon_string = null;
+    
     /** @var UxonObject|null */
     private $default_display_uxon = null;
+    
+    private $default_display_uxon_string;
 
     /** @var UxonObject|null */
     private $custom_data_type_uxon = null;
+    
+    private $custom_data_type_string = null;
 
     /** @var MetaRelationPathInterface|null */
     private $relation_path;
@@ -491,9 +498,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function setDefaultValue($value)
     {
-        if (! is_null($value) && $value !== '') {
-            $this->default_value = $value;
-        }
+        $this->default_value = $value;
     }
     
     public function hasDefaultValue() : bool
@@ -521,9 +526,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function setFixedValue($value)
     {
-        if (! is_null($value) && $value !== '') {
-            $this->fixed_value = $value;
-        }
+        $this->fixed_value = $value;
         return $this;
     }
     
@@ -661,7 +664,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function isInherited()
     {
-        return is_null($this->getInheritedFromObjectId()) ? true : false;
+        return $this->getInheritedFromObjectId() !== null;
     }
 
     /**
@@ -949,8 +952,12 @@ class Attribute implements MetaAttributeInterface
      */
     public function getCustomDataTypeUxon()
     {
-        if (is_null($this->custom_data_type_uxon)){
-            return new UxonObject();
+        if ($this->custom_data_type_uxon === null){
+            if ($this->custom_data_type_uxon_string !== null) {
+                $this->custom_data_type_uxon = UxonObject::fromJson($this->custom_data_type_uxon_string);
+            } else {
+                return new UxonObject();
+            }
         }
         return $this->custom_data_type_uxon->copy();
     }
@@ -960,9 +967,17 @@ class Attribute implements MetaAttributeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setCustomDataTypeUxon()
      */
-    public function setCustomDataTypeUxon(UxonObject $uxon)
+    public function setCustomDataTypeUxon($uxonOrString) : MetaAttributeInterface
     {
-        $this->custom_data_type_uxon = $uxon;
+        if ($uxonOrString instanceof UxonObject) {
+            $this->custom_data_type_uxon = $uxonOrString;
+            $this->custom_data_type_uxon_string = null;
+        } elseif (is_string($uxonOrString)) {
+            $this->custom_data_type_uxon_string = $uxonOrString;
+            $this->custom_data_type_uxon = null;
+        } else {
+            throw new InvalidArgumentException('Invalid custom data type UXON for attribute ' . $this->getAlias() . ' of object ' . $this->getObject()->getAliasWithNamespace() . ': expecting string or UXON object!');
+        }
         $this->resetDataType();
         return $this;
     }
@@ -992,13 +1007,17 @@ class Attribute implements MetaAttributeInterface
     {
         // If there is no default widget uxon defined, use the UXON from the data type
         if ($this->default_editor_uxon === null) {
-            // Relations do not use the data type widget, but rather the special relation widget type from the config,
-            // which will be set set later on. Setting it here would not work if a default editor is specified, but
-            // no widget_type is set explicitly (why should a user do that if a decent type is selected by default?)
-            if ($this->isRelation()) {
-                $this->default_editor_uxon = new UxonObject();
+            if ($this->default_editor_uxon_string !== null) {
+                $this->default_editor_uxon = UxonObject::fromJson($this->default_editor_uxon_string);
             } else {
-                $this->default_editor_uxon = $this->getDataType()->getDefaultEditorUxon()->copy();
+                // Relations do not use the data type widget, but rather the special relation widget type from the config,
+                // which will be set set later on. Setting it here would not work if a default editor is specified, but
+                // no widget_type is set explicitly (why should a user do that if a decent type is selected by default?)
+                if ($this->isRelation()) {
+                    $this->default_editor_uxon = new UxonObject();
+                } else {
+                    $this->default_editor_uxon = $this->getDataType()->getDefaultEditorUxon()->copy();
+                }
             }
         }
         
@@ -1021,9 +1040,17 @@ class Attribute implements MetaAttributeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultEditorUxon()
      */
-    public function setDefaultEditorUxon(UxonObject $uxon)
+    public function setDefaultEditorUxon($uxonOrString) : MetaAttributeInterface
     {
-        $this->default_editor_uxon = $uxon;
+        if ($uxonOrString instanceof UxonObject) {
+            $this->default_editor_uxon = $uxonOrString;
+            $this->default_editor_uxon_string = null;
+        } elseif (is_string($uxonOrString)) {
+            $this->default_editor_uxon_string = $uxonOrString;
+            $this->default_editor_uxon = null;
+        } else {
+            throw new InvalidArgumentException('Invalid default editor UXON for attribute ' . $this->getAlias() . ' of object ' . $this->getObject()->getAliasWithNamespace() . ': expecting string or UXON object!');
+        }
         return $this;
     }
     
@@ -1036,7 +1063,11 @@ class Attribute implements MetaAttributeInterface
     {
         // If there is no default widget uxon defined, use the UXON from the data type
         if ($this->default_display_uxon === null) {
-            $this->default_display_uxon = new UxonObject(['widget_type' => 'Display']);
+            if ($this->default_display_uxon_string !== null) {
+                $this->default_display_uxon = UxonObject::fromJson($this->default_display_uxon_string);
+            } else {
+                $this->default_display_uxon = new UxonObject(['widget_type' => 'Display']);
+            }
         }
         
         $uxon = $this->default_display_uxon->copy();
@@ -1056,9 +1087,17 @@ class Attribute implements MetaAttributeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultDisplayUxon()
      */
-    public function setDefaultDisplayUxon(UxonObject $value) : MetaAttributeInterface
+    public function setDefaultDisplayUxon($uxonOrString) : MetaAttributeInterface
     {
-        $this->default_display_uxon = $value;
+        if ($uxonOrString instanceof UxonObject) {
+            $this->default_display_uxon = $uxonOrString;
+            $this->default_display_uxon_string = null;
+        } elseif (is_string($uxonOrString)) {
+            $this->default_display_uxon_string = $uxonOrString;
+            $this->default_display_uxon = null;
+        } else {
+            throw new InvalidArgumentException('Invalid default display UXON for attribute ' . $this->getAlias() . ' of object ' . $this->getObject()->getAliasWithNamespace() . ': expecting string or UXON object!');
+        }
         return $this;
     }
     

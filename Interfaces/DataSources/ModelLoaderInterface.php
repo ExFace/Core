@@ -22,10 +22,17 @@ use exface\Core\Exceptions\UserNotFoundError;
 use exface\Core\Exceptions\UserNotUniqueError;
 use exface\Core\Interfaces\Selectors\DataSourceSelectorInterface;
 use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
+use exface\Core\CommonLogic\Model\UiPageTree;
+use exface\Core\Interfaces\Security\AuthorizationPointInterface;
+use exface\Core\Interfaces\UserImpersonationInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
+use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
 
-interface ModelLoaderInterface
+interface ModelLoaderInterface extends WorkbenchDependantInterface
 {
 
     /**
@@ -47,6 +54,8 @@ interface ModelLoaderInterface
      * 
      * @throws MetaObjectNotFoundError
      * 
+     * @triggers \exface\Core\Events\Model\OnMetaObjectLoadedEvent
+     * 
      * @return MetaObjectInterface            
      */
     public function loadObjectByAlias(AppInterface $app, $object_alias);
@@ -56,6 +65,8 @@ interface ModelLoaderInterface
      * @param string $uid
      * 
      * @throws MetaObjectNotFoundError
+     * 
+     * @triggers \exface\Core\Events\Model\OnMetaObjectLoadedEvent
      * 
      * @return MetaObjectInterface
      */
@@ -91,6 +102,17 @@ interface ModelLoaderInterface
      * @return MetaRelationInterface
      */
     public function loadRelation(MetaObjectInterface $object, $relation_alias);
+    
+    /**
+     * 
+     * @param UiPageSelectorInterface $selector
+     * 
+     * @triggers \exface\Core\Events\Model\OnUiPageLoadedEvent
+     * @triggers \exface\Core\Events\Model\OnUiMenuItemLoadedEvent
+     * 
+     * @return UiPageInterface
+     */
+    public function loadPage(UiPageSelectorInterface $selector, bool $ignoreReplacements = false) : UiPageInterface;
 
     /**
      * Loads the models for the data source and the corresponding connection and returns the resulting instances.
@@ -148,6 +170,9 @@ interface ModelLoaderInterface
      * @param AppInterface $app            
      * @param string $action_alias            
      * @param WidgetInterface $trigger_widget            
+     * 
+     * @triggers \exface\Core\Events\Model\OnMetaObjectActionLoadedEvent
+     * 
      * @return ActionInterface
      */
     public function loadAction(AppInterface $app, $action_alias, WidgetInterface $trigger_widget = null);
@@ -159,6 +184,24 @@ interface ModelLoaderInterface
      */
     public function getInstaller();
     
+    /**
+     * 
+     * @return AuthorizationPointInterface[]
+     */
+    public function loadAuthorizationPoints() : array;
+    
+    /**
+     * 
+     * @param AuthorizationPointInterface $authPoint
+     * @param UserImpersonationInterface $userOrToken
+     * @return AuthorizationPointInterface
+     */
+    public function loadAuthorizationPolicies(AuthorizationPointInterface $authPoint, UserImpersonationInterface $userOrToken) : AuthorizationPointInterface;
+    
+    /**
+     * 
+     * @param UserSelectorInterface $selector
+     */
     public function loadUser(UserSelectorInterface $selector) : UserInterface;
     
     /**
@@ -173,27 +216,19 @@ interface ModelLoaderInterface
     public function loadUserData(UserInterface $user) : UserInterface;
     
     /**
-     * Creates the passed Exface user.
+     * Loads data from database and builds the tree structure for the given tree, returning an array of root nodes for the tree.
      *
-     * @param UserInterface $user
-     * @return ModelLoaderInterface
+     * @triggers \exface\Core\Events\Model\OnUiMenuItemLoadedEvent for every tree node
+     * 
+     * @param UiPageTree $tree
+     * @return UiPageTreeNodeInterface[]
      */
-    public function createUser(UserInterface $user) : ModelLoaderInterface;
+    public function loadPageTree(UiPageTree $tree) : array;
     
     /**
-     * Updates the passed Exface user.
-     *
-     * @param UserInterface $user
-     * @return ModelLoaderInterface
+     * 
+     * @param DataConnectionSelectorInterface $selector
+     * @return DataConnectionInterface
      */
-    public function updateUser(UserInterface $user) : ModelLoaderInterface;
-    
-    /**
-     * Deletes the passed Exface user.
-     *
-     * @param UserInterface $user
-     * @return ModelLoaderInterface
-     */
-    public function deleteUser(UserInterface $user) : ModelLoaderInterface;
+    public function loadDataConnection(DataConnectionSelectorInterface $selector) : DataConnectionInterface;
 }
-?>

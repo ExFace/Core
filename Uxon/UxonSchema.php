@@ -7,7 +7,6 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
-use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ExpressionFactory;
@@ -51,6 +50,7 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
  * - metamodel:widget_link
  * - metamodel:event
  * - metamodel:aggregator
+ * - metamodel:context
  * - uxon:path - where path is a JSONpath relative to the current field
  * - [val1,val2] - enumeration of commma-separated values (in square brackets)
  * - {keyType => valueType} - object with typed keys and values
@@ -67,6 +67,12 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
  */
 class UxonSchema implements UxonSchemaInterface
 {    
+    const SCHEMA_WIDGET = 'widget';
+    const SCHEMA_ACTION = 'action';
+    const SCHEMA_BEHAVIOR = 'behavior';
+    const SCHEMA_DATATYPE = 'datatype';
+    const SCHEMA_CONNECTION = 'connection';
+    
     private $prototypePropCache = [];
     
     private $schemaCache = [];
@@ -201,7 +207,14 @@ class UxonSchema implements UxonSchemaInterface
         
         $filepathRelative = $this->getFilenameForEntity($prototypeClass);
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_PROPERTY_ANNOTATION');
-        $ds->getColumns()->addMultiple(['PROPERTY', 'TYPE', 'TEMPLATE', 'DEFAULT']);
+        $ds->getColumns()->addMultiple([
+            'PROPERTY', 
+            'TYPE', 
+            'TEMPLATE', 
+            'DEFAULT',
+            'REQUIRED',
+            'TRANSLATABLE'
+        ]);
         $ds->getFilters()->addConditionFromString('FILE', $filepathRelative);
         try {
             $ds->dataRead();
@@ -253,6 +266,27 @@ class UxonSchema implements UxonSchemaInterface
         }
         
         return explode('|', $type);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UxonSchemaInterface::getPropertiesByAnnotation()
+     */
+    public function getPropertiesByAnnotation(string $annotation, $value, string $prototypeClass = null) : array
+    {
+        $colName = mb_strtoupper(StringDataType::substringAfter($annotation, '@uxon-', $annotation, false));
+        $ds = $this->getPropertiesSheet($prototypeClass ?? $this->getDefaultPrototypeClass());
+        if (! $col = $ds->getColumns()->get($colName)) {
+            return [];
+        }
+        
+        $props = [];
+        $rowNos = $col->findRowsByValue($value, false);
+        foreach ($rowNos as $rowNo) {
+            $props[] = $ds->getCellValue('PROPERTY', $rowNo);
+        }
+        return $props;
     }
     
     /**
@@ -452,7 +486,7 @@ class UxonSchema implements UxonSchemaInterface
      */
     protected function getMetamodelAttributeAliases(MetaObjectInterface $object, string $search = null) : array
     {
-        $rels = $search !== null ? RelationPath::relationPathParse($search) : [];
+        $rels = $search !== null ? (RelationPath::relationPathParse($search) ?? []) : [];
         $search = array_pop($rels) ?? '';
         $relPath = null;
         if (! empty($rels)) {
@@ -584,7 +618,11 @@ class UxonSchema implements UxonSchemaInterface
         $ds->dataRead();
         foreach ($ds->getRows() as $row) {
             $namespace = str_replace(['/Events', '/'], ['', $dot], $row['PATH_RELATIVE']);
-            $options[] = $namespace . $dot . $row['NAME'];
+            $alias = $namespace . $dot . $row['NAME'];
+            if (StringDataType::endsWith($alias, 'Event')) {
+                $alias = StringDataType::substringBefore($alias, 'Event', $alias, true, true);
+            }
+            $options[] = $alias;
         }
         sort($options);
         

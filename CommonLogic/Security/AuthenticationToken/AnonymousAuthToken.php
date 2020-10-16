@@ -15,8 +15,6 @@ class AnonymousAuthToken implements AuthenticationTokenInterface
 {
     private $workbench = null;
     
-    private $user = null;
-    
     /**
      * 
      * @param WorkbenchInterface $workbench

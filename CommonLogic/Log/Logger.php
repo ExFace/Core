@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic\Log;
 
 use exface\Core\CommonLogic\Log\Helpers\LogHelper;
-use exface\Core\Exceptions\UnderflowException;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Log\LogHandlerInterface;

@@ -8,6 +8,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * A wizard with multiple forms (steps) to be filled out one-after-another.
@@ -303,9 +304,15 @@ class Wizard extends Container implements iFillEntireContainer, iHaveToolbars, i
      *
      * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
      */
-    public function getAlternativeContainerForOrphanedSiblings()
+    public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets
     {
-        return $this->getStepOne();
+        $firstStep = $this->getStepOne();
+        if ($filler = $firstStep->getFillerWidget()) {
+            if ($alternative = $filler->getAlternativeContainerForOrphanedSiblings()) {
+                return $alternative;
+            }
+        }
+        return $firstStep;
     }
     
     /**

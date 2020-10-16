@@ -8,23 +8,31 @@ use exface\Core\Interfaces\DataSources\DataManagerInterface;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Security\SecurityManagerInterface;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 interface WorkbenchInterface extends TaskHandlerInterface
 {
     public function start();
     
     /**
-     *
-     * @return \exface\Core\CommonLogic\Workbench
+     * 
+     * @param array $config
+     * @return WorkbenchInterface
      */
-    public static function startNewInstance();
+    public static function startNewInstance(array $config = null) : WorkbenchInterface;
     
     /**
      * Returns TRUE if start() was successfully called on this workbench instance and FALSE otherwise.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isStarted();
+    public function isStarted() : bool;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isInstalled() : bool;
     
     /**
      *
@@ -44,12 +52,6 @@ interface WorkbenchInterface extends TaskHandlerInterface
     
     /**
      *
-     * @return CmsConnectorInterface
-     */
-    public function getCMS();
-    
-    /**
-     *
      * @return DataManagerInterface
      */
     public function data();
@@ -59,9 +61,10 @@ interface WorkbenchInterface extends TaskHandlerInterface
      * Apps are cached and kept running for script (request) window
      *
      * @param AppSelectorInterface|string $appSelectorString
+     * @throws InvalidArgumentException
      * @return AppInterface
      */
-    public function getApp($selectorOrString);
+    public function getApp($selectorOrString) : AppInterface;
     
     /**
      *
@@ -77,6 +80,13 @@ interface WorkbenchInterface extends TaskHandlerInterface
      */
     public function getCoreApp();
     
+    /**
+     * 
+     * @triggers \exface\Core\Events\Workbench\OnBeforeStopEvent
+     * @triggers \exface\Core\Events\Workbench\OnStopEvent
+     * 
+     * @return void;
+     */
     public function stop();
     
     /**
@@ -152,4 +162,11 @@ interface WorkbenchInterface extends TaskHandlerInterface
      * @return SecurityManagerInterface
      */
     public function getSecurity() : SecurityManagerInterface;
+    
+    /**
+     * Returns the absolute URL of the current workbench (ending with an `/`).
+     * 
+     * @return string
+     */
+    public function getUrl() : string;
 }

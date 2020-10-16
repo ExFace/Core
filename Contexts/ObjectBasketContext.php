@@ -136,7 +136,7 @@ class ObjectBasketContext extends AbstractContext
      */
     public function getDefaultScope()
     {
-        return $this->getWorkbench()->getContext()->getScopeWindow();
+        return $this->getWorkbench()->getContext()->getScopeSession();
     }
 
     /**

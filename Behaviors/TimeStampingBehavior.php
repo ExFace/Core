@@ -12,6 +12,21 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 
+/**
+ * Prevents concurrent writes using a timestamp updated with every crate/update operation.
+ * 
+ * ## Example
+ * 
+ * ```
+ * {
+ *  "updated_on_attribute_alias": "UPDATED_ON"
+ * }
+ * 
+ * ```
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class TimeStampingBehavior extends AbstractBehavior
 {
 
@@ -143,7 +158,7 @@ class TimeStampingBehavior extends AbstractBehavior
         if (! $updated_column) {
             throw new DataSheetColumnNotFoundError($data_sheet, 'Cannot check for potential update conflicts in TimeStamping behavior: column "' . $this->getUpdatedOnAttributeAlias() . '" not found in given data sheet!');
         }
-        $update_nr = count($updated_column->getValues());
+        $update_qty = count($updated_column->getValues());
         
         $conflict_rows = array();
         // See, if the UndoAction is performed currently. It needs special treatment
@@ -158,9 +173,9 @@ class TimeStampingBehavior extends AbstractBehavior
             // Check the current update timestamp in the data source
             $check_sheet = $this->readCurrentData($data_sheet);
             $check_column = $check_sheet->getColumns()->getByAttribute($this->getUpdatedOnAttribute());
-            $check_nr = count($check_column->getValues());
+            $check_qty = count($check_column->getValues());
             
-            if ($check_nr == $update_nr) {
+            if ($check_qty === $update_qty) {
                 // beim Bearbeiten eines einzelnen Objektes ueber einfaches Bearbeiten, Massenupdate in Tabelle, Massenupdate
                 // ueber Knopf, ueber Knopf mit Filtern $check_nr == 1, $update_nr == 1
                 // beim Bearbeiten mehrerer Objekte ueber Massenupdate in Tabelle $check_nr == $update_nr > 1
@@ -176,17 +191,6 @@ class TimeStampingBehavior extends AbstractBehavior
                         }
                         $updated_date = new \DateTime($updated_val);
                         $check_date = new \DateTime($check_val);
-                        /*
-                         * FIXME These commented out lines were a workaround for a problem of oracle SQL delivering an other date format by default
-                         * (with milliseconds). This would cause the Check to fail, if the attribute with the timestamp had a formatter. The
-                         * formatter would change the timestamp in the GUI, thus the comparison would naturally fail. This should not be
-                         * neccessary as long as timestamping attributes do not use formatters. The lines should be removed after some testing.
-                         * $format = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT');
-                         * $v_date = new \DateTime($val);
-                         * $val_date = new \DateTime($v_date->format($format));
-                         * $c_date = new \DateTime($check_val);
-                         * $check_date = new \DateTime($c_date->format($format));
-                         */
                     } catch (\Exception $e) {
                         $updated_date = 0;
                         $check_date = 0;
@@ -196,7 +200,7 @@ class TimeStampingBehavior extends AbstractBehavior
                         $conflict_rows[] = $row_nr;
                     }
                 }
-            } else if ($check_nr > 1 && $update_nr == 1) {
+            } else if ($check_qty > 1 && $update_qty == 1) {
                 // beim Bearbeiten mehrerer Objekte ueber Massenupdate ueber Knopf, mehrerer Objekte ueber Knopf mit Filtern
                 // $check_nr > 1, $update_nr == 1
                 $updated_val = $updated_column->getValues()[0];
@@ -240,7 +244,7 @@ class TimeStampingBehavior extends AbstractBehavior
             } else {
                 $reason = count($conflict_rows) === 1 ? 'the object' : count($conflict_rows) . ' objects'; 
             }
-            $reason .= ' changed by another user!';
+            $reason .= ' changed in the meantime!';
             throw new ConcurrentWriteError($data_sheet, 'Cannot update ' . $data_sheet->getMetaObject()->getName() . ' (' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '): ' . $reason);
         }
     }

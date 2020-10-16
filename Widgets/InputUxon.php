@@ -120,6 +120,7 @@ class InputUxon extends InputJson
      * @uxon-type string
      * 
      * @param string $value
+     * @triggers \exface\Core\Events\Widget\OnWidgetLinkedEvent
      * @return InputUxon
      */
     public function setRootPrototype(string $value) : InputUxon
@@ -129,6 +130,13 @@ class InputUxon extends InputJson
             throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $value . '" for property root_prototype of widget ' . $this->getWidgetType() . ': expecting an object selector string or a widget link!');
         }
         $this->prototype = $expr;
+        // If the expression is a widget link, call the getter to make sure the link is instantiated
+        // thus firing OnWidgetLinkedEvent. If not done here, the event will be only fired
+        // when some other code calls $expr->getWidgetLink(), which may happen too late for
+        // possible event handlers!
+        if ($expr->isReference()) {
+            $expr->getWidgetLink($this);
+        }
         return $this;
     }
     
@@ -151,6 +159,7 @@ class InputUxon extends InputJson
      * @uxon-type metamodel:object|metamodel:widget_link
      * 
      * @param string $value
+     * @triggers \exface\Core\Events\Widget\OnWidgetLinkedEvent
      * @return InputUxon
      */
     public function setRootObject(string $value) : InputUxon
@@ -160,6 +169,13 @@ class InputUxon extends InputJson
             throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $value . '" for property root_object of widget ' . $this->getWidgetType() . ': expecting an object selector string or a widget link!');
         }
         $this->rootObjectSelector = $expr;
+        // If the expression is a widget link, call the getter to make sure the link is instantiated
+        // thus firing OnWidgetLinkedEvent. If not done here, the event will be only fired
+        // when some other code calls $expr->getWidgetLink(), which may happen too late for
+        // possible event handlers!
+        if ($expr->isReference()) {
+            $expr->getWidgetLink($this);
+        }
         return $this;
     }
 }

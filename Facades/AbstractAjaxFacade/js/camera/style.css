@@ -1,0 +1,193 @@
+body {
+	margin: 0px;
+	padding: 0px;
+background: #000;
+}
+
+.vid_container {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 2000;
+	background-color: rgba(0, 0, 0, 1);
+}
+
+.video {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	z-index: 2001;
+}
+
+.gui_controls {
+	position: fixed;
+	background-color: rgba(0, 0, 0, 1);
+	z-index: 2006;
+	bottom: 0;
+}
+
+.video_overlay {
+	position: fixed;
+	display: none;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	
+	z-index: 2005;
+	background-color: rgba(0, 0, 0, 0.7);
+}
+
+/*  Button style from: 
+    https://googlesamples.github.io/web-fundamentals/fundamentals/media/mobile-web-video-playback.html */
+
+.cameraButton {
+	outline: none;
+	position: absolute;
+	color: rgba(255, 255, 255, 1);
+	display: block;
+	opacity: 1;
+	background: transparent;
+	border: solid 2px;
+	padding: 0;
+	pointer-events: auto;
+z-index: 2007;
+}
+
+.takePhotoButton {
+	left: calc(50% - 40px);
+	top: calc(50% - 40px);
+	width: 80px;
+	height: 80px;
+border-radius: 50%;
+}
+
+.takePhotoButton:active {
+	background-color: #fff;
+}
+
+.hideCameraButton {
+	display: block;
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+}
+
+.switchCameraButton {
+	display: block;
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+}
+
+.hintText {
+	position: absolute;
+	display: none;
+	color: rgba(255,255,255, 1);
+	background-color: rgba(0, 0, 0, 0.7);
+	border-radius: 50px;
+    box-sizing: border-box;
+    border: 5px solid transparent;
+    padding: 2px 5px;
+    text-align: center;
+    z-index: 2003;
+}
+
+.errorText {
+	position: absolute;
+	top: 50%;
+	display: none;
+	color: rgba(242, 38, 19, 1);
+	background-color: rgba(0, 0, 0, 0.7);
+	border-radius: 50px;
+    box-sizing: border-box;
+    border: 5px solid transparent;
+    padding: 2px 5px;
+    text-align: center;
+    z-index: 2003;
+}
+
+@media screen and (orientation: portrait) {
+  /* portrait-specific styles */
+
+  /* video_container (video) doesn't respect height... 
+       so we will fill it in completely in portrait mode
+    */
+  .vid_container {
+    width: 100%;
+    height: 80%;
+  }
+
+  .gui_controls {
+    width: 100%;
+    height: 20%;
+    left: 0;
+  }
+
+  .switchCameraButton {
+    left: calc(20% - 32px);
+    top: calc(50% - 32px);
+  }
+
+  .hideCameraButton {
+    left: calc(80% - 32px);
+    top: calc(50% - 32px);
+  }
+  
+  .hintText {
+  	bottom: 20px;
+  	left: 10px;
+  	width: calc(100% - 20px);
+  }
+  
+  .errorText {
+  	left: 10px;
+  	width: calc(100% - 20px);
+  }
+}
+
+@media screen and (orientation: landscape) {
+  .vid_container {
+    width: 80%;
+    height: 100%;
+  }
+
+  .vid_container.left {
+    left: 20%;
+  }
+
+  /* we default to right */
+  .gui_controls {
+    width: 20%;
+    height: 100%;
+    right: 0;
+  }
+
+  /* for the lefties */
+  .gui_controls.left {
+    left: 0;
+  }
+
+  .switchCameraButton {
+    left: calc(50% - 32px);
+    top: calc(18% - 32px);
+  }
+
+  .hideCameraButton {
+    left: calc(50% - 32px);
+    top: calc(82% - 32px);
+  }
+  
+  .hintText {
+  	top: 10px;
+  	left: 50px;
+  	width: calc(100% - 100px);
+  }
+  
+  .errorText {
+  	left: 50px;
+  	width: calc(100% - 100px);
+  }
+}

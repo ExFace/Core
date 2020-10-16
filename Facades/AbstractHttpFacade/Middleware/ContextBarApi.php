@@ -49,7 +49,11 @@ class ContextBarApi implements MiddlewareInterface
         if (StringDataType::endsWith($uri, $this->contextRoute)) {
             $uriParts = explode('/', $uri);
             $pageAlias = $uriParts[(count($uriParts) - 2)];
-            $page = UiPageFactory::createFromCmsPage($this->facade->getWorkbench()->getCMS(), $pageAlias);
+            if ($pageAlias) {
+                $page = UiPageFactory::createFromModel($this->facade->getWorkbench(), $pageAlias);
+            } else {
+                $page = UiPageFactory::createEmpty($this->facade->getWorkbench());
+            }
             $json = $this->facade->getElement($page->getContextBar())->buildJsonContextBarUpdate();
             return new Response(200, [], $this->facade->encodeData($json));
         }

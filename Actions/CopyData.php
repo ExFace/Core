@@ -20,8 +20,35 @@ use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\DataTypes\DataSheetDataType;
 
 /**
- * Copies all input objects in the input data including dependent objects defined via copy_related_objects.
+ * Copies all objects in the input data completely, including dependent objects.
  * 
+ * The result will contain a new data sheet with the copied data including new UIDs
+ * of the result objects. The result data may contain more columns than the input
+ * data as it will copy objects completely regardless of what the input contained.
+ * Attributes, that were missing in the input data will be read automatically before
+ * copy.
+ * 
+ * This action will also copy dependant objects with relations marked to copy:
+ * 
+ * - Objects with relations to the copied object, where the relaiton is marked to be 
+ * copied with the head object in the model of the relation attribute (the foreign key
+ * in the related object), will be copied automatically.
+ * - Additionally you can define relations to copy manually via `copy_related_objects`
+ * property of this action.
+ * 
+ * If you need to copy selected attributes only, use `CreateData` with an `input_mapper`
+ * instead of this action.
+ * 
+ * **NOTE:** the action will copy all data of **editable** attributes - eventually reading
+ * those not present in input data right before copying. 
+ * 
+ * **NOTE:** attributes with a **fixed value** in their model will get freshly calculated values
+ * when being copied. However attributes with a **default value** will inherit the value from
+ * from the copied object __unless__ they are not editable and thus won't be copied at all.
+ * 
+ * **NOTE:** the action requires every input row to have a UID value - otherwise neither
+ * additional data nor related objects can be loaded.
+ *  
  * @author Andrej Kabachnik
  *
  */
@@ -52,19 +79,18 @@ class CopyData extends SaveData implements iCreateData
         
         $copiedSheets = $this->copyWithRelatedObjects($inputSheet, $this->getCopyRelations(), $transaction);
         
-        $copyCounter = $copiedSheets['']->countRows();
+        $mainCopiedSheet = $copiedSheets[''];
+        $copyCounter = $mainCopiedSheet->countRows();
         $dependencyCounter = 0;
-        foreach ($copiedSheets as $path => $sheet) {
-            if ($path === '') {
-                continue;
+        foreach ($copiedSheets as $sheet) {
+            if ($sheet !== $mainCopiedSheet) {
+                $dependencyCounter += $sheet->countRows();
             }
-            
-            $dependencyCounter += $sheet->countRows();
         }
         
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         $message = $this->getResultMessageText() ?? $translator->translate('ACTION.COPYDATA.RESULT', ['%number%' => $copyCounter], $copyCounter) . ' ' . $translator->translate('ACTION.COPYDATA.RESULT_DEPENDENCIES', ['%number%' => $dependencyCounter], $dependencyCounter);
-        $result = ResultFactory::createDataResult($task, $inputSheet, $message);
+        $result = ResultFactory::createDataResult($task, $mainCopiedSheet, $message);
         
         if ($copyCounter > 0) {
             $result->setDataModified(true);
@@ -308,7 +334,8 @@ class CopyData extends SaveData implements iCreateData
         $rels = [];
         $obj = $this->getMetaObject();
         foreach ($this->getCopyRelationAliases() as $alias) {
-            if (count(RelationPath::relationPathParse($alias)) > 1) {
+            $parsedRelationPath = RelationPath::relationPathParse($alias);
+            if ($parsedRelationPath !== null && count($parsedRelationPath) > 1) {
                 throw new ActionConfigurationError($this, 'Cannot copy related objects from relation "' . $alias . '": only direct relations supported - no paths!');
             }
             $rels[] = $obj->getRelation($alias);

@@ -43,6 +43,13 @@ use exface\Core\Exceptions\QueryBuilderException;
  * `myfolder/[#FOLDER_NAME#]/*` will mean, that a filter for the folder name
  * is required and  
  * 
+ * #### Data address options
+ * 
+ * - `finder_depth` - Restrict the depth of traversing folders - see [depth()](https://symfony.com/doc/current/components/finder.html#directory-depth)
+ * method of the Symfony Finder Component. By default the depth is unlimited.
+ * Set `finder_depth` to `0` to ignore subfolders completely, `1` will only allow
+ * immediate subfolders, etc. Complex expressions like `> 2, < 5` are possible).
+ * 
  * ### Attributes 
  * 
  * Attributes are file properties. The following data addresses are available:
@@ -70,6 +77,8 @@ use exface\Core\Exceptions\QueryBuilderException;
  */
 class FileFinderBuilder extends AbstractQueryBuilder
 {
+    const PROP_FINDER_DEPTH = 'finder_depth';
+    
     /**
      *
      * @return FileFinderDataQuery
@@ -99,9 +108,18 @@ class FileFinderBuilder extends AbstractQueryBuilder
             }
         }
         
-        if (! is_null($filename) && $filename !== '') {
-            $query->getFinder()->name($filename)->depth(0);
+        $depth = $this->getMainObject()->getDataAddressProperty(self::PROP_FINDER_DEPTH);
+        if (strpos($depth, ',') !== false) {
+            $depth = explode(',', $depth);
         }
+        if ($depth !== null) {
+            $query->getFinder()->depth($depth);
+        }
+        
+        if (! is_null($filename) && $filename !== '') {
+            $query->getFinder()->name($filename);
+        }
+        
         $query->addFolder($path_relative);
         
         return $query;

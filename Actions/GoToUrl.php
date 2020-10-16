@@ -12,6 +12,7 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Factories\FacadeFactory;
 
 /**
  * This action opens a URL for a given object instance.
@@ -83,9 +84,6 @@ class GoToUrl extends AbstractAction implements iShowUrl
         
         $result = str_replace($vars, $vals, $this->getUrl());
         $result = filter_var($result, FILTER_SANITIZE_STRING);
-        if (substr($result, 0, 4) !== 'http') {
-            $result = $this->getWorkbench()->getCMS()->buildUrlToFile($result);
-        }
         
         $result = ResultFactory::createUriResult($task, $result);
         $result->setMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.GOTOURL.SUCCESS'));

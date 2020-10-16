@@ -4,7 +4,6 @@ namespace exface\Core\Facades\AbstractAjaxFacade;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement;
-use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
@@ -44,24 +43,31 @@ use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsTimeFormatter;
 use exface\Core\Interfaces\Widgets\CustomWidgetInterface;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpTaskFacade;
+use Psr\Http\Message\RequestInterface;
+use exface\Core\Facades\AbstractAjaxFacade\Templates\FacadePageTemplateRenderer;
+use exface\Core\CommonLogic\Selectors\UiPageSelector;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
-use exface\Core\Factories\WidgetFactory;
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\DataSources\DataSourceInterface;
-use exface\Core\Interfaces\DataSources\DataConnectionInterface;
-use exface\Core\CommonLogic\Selectors\UserSelector;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Facades\HtmlPageFacadeInterface;
+use exface\Core\CommonLogic\Tasks\ResultRedirect;
+use function GuzzleHttp\Psr7\uri_for;
+use exface\Core\Factories\ActionFactory;
+use exface\Core\Actions\Login;
+use exface\Core\Widgets\LoginPrompt;
+use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\Contexts\DebugContext;
+use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
+use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 
 /**
  * 
  * @author Andrej Kabachnik
  *
  */
-abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade
+abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade implements HtmlPageFacadeInterface
 {
-    const MODE_HEAD = 'HEAD';
-    const MODE_BODY = 'BODY';
-    const MODE_FULL = '';
-
     private $elements = [];
     
     private $requestIdCache = [];
@@ -77,6 +83,8 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade
     private $class_namespace = '';
     
     private $data_type_formatters = [];
+    
+    private $pageTemplateFilePath = null;
 
     /**
      *
@@ -318,13 +326,32 @@ HTML;
 
     /**
      * 
-     * @param string $page_or_id_or_alias
+     * @param UiPageInterface|UiPageSelectorInterface|string $pageOrSelectorOrString
      * @param string $url_params
      * @return string
      */
-    public function buildUrlToPage($page_or_id_or_alias, $url_params = '')
+    public function buildUrlToPage($pageOrSelectorOrString, string $url_params = '') : string
     {
-        return $this->getWorkbench()->getCMS()->buildUrlToPage($page_or_id_or_alias, $url_params);
+        switch (true) {
+            case $pageOrSelectorOrString instanceof UiPageInterface:
+                $alias = $pageOrSelectorOrString->getAliasWithNamespace();
+                break;
+            case is_string($pageOrSelectorOrString):
+                $pageOrSelectorOrString = new UiPageSelector($this->getWorkbench(), $pageOrSelectorOrString);
+                // Don't break here: continue with the selector-logic
+            case $pageOrSelectorOrString instanceof UiPageSelectorInterface:
+                if ($pageOrSelectorOrString->isAlias()) {
+                    $alias = $pageOrSelectorOrString->toString();
+                } else {
+                    $alias = UiPageFactory::createFromModel($this->getWorkbench(), $pageOrSelectorOrString)->getAliasWithNamespace();
+                }
+                break;
+            default:
+                throw new InvalidArgumentException('Cannot create URL for page "' . $pageOrSelectorOrString . '": invalid type of input!');
+        } 
+        $url = mb_strtolower($alias) . $this->getPageFileExtension();
+        $params = ltrim($url_params, "?");
+        return $url . ($params ? '?' . $params : '');
     }
 
     /**
@@ -419,40 +446,28 @@ HTML;
             $this->requestIdCache[$cacheKey] = $result;
         }
         
-        $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
-        
         /* @var $headers array [header_name => array_of_values] */
         $headers = $this->buildHeadersAccessControl();
         /* @var $status_code int */
         $status_code = $result->getResponseCode();
         
         if ($result->isEmpty()) {
-            // Empty results must still produce output if rendering HTML HEAD - the common includes must still
-            // be there for the facade to work.
-            if ($mode === static::MODE_HEAD) {
-                $body = implode("\n", $this->buildHtmlHeadCommonIncludes());
-            } else {
-                $body = null;
-            }
-            return new Response($status_code, $headers, $body);
+            return new Response($status_code, $headers);
         }
         
         switch (true) {
             case $result instanceof ResultDataInterface:
-                $json = $this->buildResponseData($result->getData(), $result->getTask()->getWidgetTriggeredBy());
+                $json = $this->buildResponseData($result->getData(), ($result->getTask()->isTriggeredByWidget() ? $result->getTask()->getWidgetTriggeredBy() : null));
                 $json["success"] = $result->getMessage();
                 break;
                 
             case $result instanceof ResultWidgetInterface:
                 $widget = $result->getWidget();
-                switch ($mode) {
-                    case static::MODE_HEAD:
-                        $body = $this->buildHtmlHead($widget, true);
+                switch (true) {
+                    case $this->isRequestFrontend($request) === true:
+                        $body = $this->buildHtmlPage($widget);
                         break;
-                    case static::MODE_BODY:
-                        $body = $this->buildHtmlBody($widget);
-                        break;
-                    case static::MODE_FULL:
+                    //case $this->isRequestAjax($request) === true:
                     default:
                         $body = $this->buildHtmlHead($widget) . "\n" . $this->buildHtmlBody($widget);
                 }
@@ -470,10 +485,16 @@ HTML;
                 break;   
                 
             case $result instanceof ResultUriInterface:
-                $uri = $result->getUri();
+                if ($result instanceof ResultRedirect && $result->hasTargetPage()) {
+                    $uri = uri_for($this->buildUrlToPage($result->getTargetPageSelector()));
+                } else {
+                    $uri = $result->getUri();
+                }
+                
                 if ($result->getOpenInNewWindow()) {
                     $uri = $uri->withQuery($uri->getQuery() ."target=_blank");
                 }
+                
                 $json = [
                     "success" => $result->getMessage(),
                     "redirect" => $uri->__toString()
@@ -538,14 +559,20 @@ HTML;
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::createResponseFromError()
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpTaskFacade::createResponseFromError()
      */
-    protected function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface 
+    public function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface 
     {
         if ($exception instanceof ExceptionInterface) {
             $status_code = is_numeric($exception->getStatusCode()) ? $exception->getStatusCode() : 500;
         } else {
             $status_code = 500;
+        }
+        
+        // If the user is not logged on an the permission is denied, wrap the error in an
+        // AuthenticationFailedError to tell the facade to handle it as an unauthorized-error
+        if ($exception instanceof AuthorizationExceptionInterface && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous()) {
+            $exception = new AuthenticationFailedError($this->getWorkbench()->getSecurity(), $exception->getMessage(), null, $exception);
         }
         
         // If the error goes back to failed authorization (HTTP status 401), see if a login-prompt should be shown.
@@ -554,10 +581,10 @@ HTML;
             // it originates from a login form, so we don't need another one.
             /* @var $task \exface\Core\CommonLogic\Tasks\HttpTask */
             $task = $request->getAttribute($this->getRequestAttributeForTask());
-            if (strcasecmp($task->getActionSelector()->toString(), 'exface.Core.Login') !== 0) {
+            if (! $task || ($task->getActionSelector() && ! (ActionFactory::create($task->getActionSelector()) instanceof Login))) {
                 // See if the method createResponseUnauthorized() can handle this exception.
                 // If not, continue with the regular error handling.
-                $response = $this->createResponseUnauthorized($exception, $page);
+                $response = $this->createResponseUnauthorized($request, $exception, $page);
                 if ($response !== null) {
                     return $response;
                 }
@@ -567,26 +594,24 @@ HTML;
         $headers = $this->buildHeadersAccessControl();
         $body = '';
         
-        $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
-        if ($mode === static::MODE_HEAD) {
-            $headers['Content-Type'] = ['text/html;charset=utf-8'];
-            $body = $this->buildHtmlHeadError($exception);
-        } elseif ($this->isShowingErrorDetails() === true) {
-            // If details needed, render a widget
-            $body = $this->buildHtmlFromError($request, $exception, $page);
-            $headers['Content-Type'] = ['text/html;charset=utf-8'];
-        } else {
-            if ($request->getAttribute($this->getRequestAttributeForAction()) === 'exface.Core.ShowWidget') {
-                // If we were rendering a widget, return HTML even for non-detail cases
+        switch (true) {
+            case $this->isShowingErrorDetails() === true:
+            case $exception instanceof AuthorizationExceptionInterface && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous():
+                // If details needed, render a widget
                 $body = $this->buildHtmlFromError($request, $exception, $page);
                 $headers['Content-Type'] = ['text/html;charset=utf-8'];
-            } else {
-                // Otherwise render error data, so the JS can interpret it.
-                $body = $this->encodeData($this->buildResponseDataError($exception));
-                $headers['Content-Type'] = ['application/json;charset=utf-8'];
-            }
-        }
-        
+                break;
+            default:
+                if ($this->isRequestAjax($request)) {
+                    // Render error data for AJAX requests, so the JS can interpret it.
+                    $body = $this->encodeData($this->buildResponseDataError($exception));
+                    $headers['Content-Type'] = ['application/json;charset=utf-8'];
+                } else {
+                    // If we were rendering a widget, return HTML even for non-detail cases
+                    $body = $this->buildHtmlFromError($request, $exception, $page);
+                    $headers['Content-Type'] = ['text/html;charset=utf-8'];
+                }
+        }     
         
         $this->getWorkbench()->getLogger()->logException($exception);
         
@@ -606,41 +631,23 @@ HTML;
      * @param UiPageInterface $page
      * @return ResponseInterface
      */
-    protected function createResponseUnauthorized(\Throwable $exception, UiPageInterface $page = null) : ?ResponseInterface
+    protected function createResponseUnauthorized(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ?ResponseInterface
     {
         $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench());
         
-        $authErr = $exception;
-        while (! ($authErr instanceof AuthenticationFailedError)) {
-            $authErr = $authErr->getPrevious();
+        try {
+            $loginPrompt = LoginPrompt::createFromException($page, $exception);
+        } catch (\Throwable $e) {
+            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+            return null;
         }
-        if ($authErr !== null) {
-            $this->getWorkbench()->getLogger()->logException($exception);
-            /* @var $loginPrompt \exface\Core\Widgets\LoginPrompt */
-            $loginPrompt = WidgetFactory::create($page, 'LoginPrompt');
-            $loginPrompt->setObjectAlias('exface.Core.LOGIN_DATA');
-            $loginFormCreated = false;
-            
-            $provider = $authErr->getAuthenticationProvider();
-            if ($provider instanceof DataConnectionInterface) {
-                // Saving connection credentials is only possible if a user is authenticated!
-                if ($this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous() === false) {
-                    $loginPrompt = $provider->createLoginWidget($loginPrompt, true, new UserSelector($this->getWorkbench(), $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->getUsername()));
-                    $loginPrompt->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.CONNECTIONS.LOGIN_TITLE'));
-                    $loginPrompt->getMessageList()->addError($authErr->getMessage());
-                    $loginFormCreated = true;
-                }
-            } else {
-                $loginPrompt = $provider->createLoginWidget($loginPrompt);
-                $loginFormCreated = true;
-            }
-                  
-            if ($loginFormCreated === true) {
-                $body = $this->buildHtmlHead($loginPrompt) . "\n" . $this->buildHtmlBody($loginPrompt);
-                return new Response(401, $this->buildHeadersAccessControl(), $body);
-            }
+        
+        if ($this->isRequestAjax($request)) {
+            $responseBody = $this->buildHtmlHead($loginPrompt) . "\n" . $this->buildHtmlBody($loginPrompt);
+        } else {
+            $responseBody = $this->buildHtmlPage($loginPrompt, $this->getPageTemplateFilePathForUnauthorized());
         }
-        return null;
+        return new Response(401, $this->buildHeadersAccessControl(), $responseBody);
     }
     
     /**
@@ -651,11 +658,14 @@ HTML;
     protected function isShowingErrorDetails() : bool
     {
         try {
-            return $this->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY') && $this->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAdmin();
+            $this->getWorkbench()->getContext()->getScopeWindow()->getContext(DebugContext::class);
+            return true;
+        } catch (ContextAccessDeniedError $e) {
+            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
-            return false;
         }
+        return false;
     }
     
     /**
@@ -674,15 +684,11 @@ HTML;
         
         try {
             $debug_widget = $exception->createWidget($page);
-            $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
-            switch ($mode) {
-                case static::MODE_HEAD:
-                    $body = $this->buildHtmlHead($debug_widget, true);
+            switch (true) {
+                case $this->isRequestFrontend($request) === true:
+                    $body = $this->buildHtmlPage($debug_widget);
                     break;
-                case static::MODE_BODY:
-                    $body = $this->buildHtmlBody($debug_widget);
-                    break;
-                case static::MODE_FULL:
+                // case $this->isRequestAjax($request) === true:
                 default:
                     $body = $this->buildHtmlHead($debug_widget) . "\n" . $this->buildHtmlBody($debug_widget);
             }
@@ -743,6 +749,11 @@ HTML;
         return 'filter_';
     }
     
+    public function buildUrlToVendorFile(string $pathInVendorFolder) : string
+    {
+        return 'vendor/' . $pathInVendorFolder;
+    }
+    
     /**
      * 
      * @param string $configOption
@@ -754,7 +765,7 @@ HTML;
         if (StringDataType::startsWith($path, 'https:', false) || StringDataType::startsWith($path, 'http:', false)) {
             return $path;
         } else {
-            return $this->getWorkbench()->getCMS()->buildUrlToInclude($path);
+            return $this->buildUrlToVendorFile($path);
         }
     }
     
@@ -781,7 +792,7 @@ HTML;
     protected function buildHtmlHeadIcons() : array
     {
         $tags = [];
-        $icons = $this->getWorkbench()->getCMS()->getFavIcons();
+        $icons = $this->getWorkbench()->getConfig()->getOption('SERVER.ICONS')->toArray();
         $favicon = $icons[0];
         if (is_array($favicon)) {
             $tags[] = '<link rel="shortcut icon" href="' . $favicon['src'] . '">';
@@ -804,5 +815,104 @@ HTML;
     {
         return $this->getConfig()->getOption('FACADE.AJAX.BASE_URL');
     }
+    
+    /**
+     * Returns the path to the default template file to render a page (absolute or relative to the vendor folder)
+     * 
+     * @return string
+     */
+    protected abstract function getPageTemplateFilePathDefault() : string;
+    
+    /**
+     * Returns the path to the unauthorized-page template file (absolute or relative to the vendor folder)
+     *
+     * @return string
+     */
+    protected function getPageTemplateFilePathForUnauthorized() : string
+    {
+        return $this->getPageTemplateFilePathDefault();
+    }
+    
+    /**
+     * Returns the path to the unauthorized-page template file (absolute or relative to the vendor folder)
+     *
+     * @return string
+     */
+    protected function getPageTemplateFilePathForErrors() : string
+    {
+        return $this->getPageTemplateFilePathDefault();
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    protected function getPageTemplateFilePath() : string
+    {
+        if (! $path = $this->pageTemplateFilePath) {
+            return $this->getPageTemplateFilePathDefault();
+        }
+        return $path;
+    }
+    
+    /**
+     * Use a specific template file to render pages.
+     * 
+     * The path can either be absolute or relative to the `vendor` folder.
+     * 
+     * @uxon-property page_template_file_path
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return AbstractAjaxFacade
+     */
+    public function setPageTemplateFilePath(string $value) : AbstractAjaxFacade
+    {
+        $this->pageTemplateFilePath = $value;
+        return $this;
+    }
+    
+    protected function buildHtmlPage(WidgetInterface $widget, string $pagetTemplateFilePath = null) : string
+    {
+        $pagetTemplateFilePath = $pagetTemplateFilePath ?? $this->getPageTemplateFilePath();
+        $renderer = new FacadePageTemplateRenderer($this, $pagetTemplateFilePath, $widget);
+        return $renderer->render();
+    }
+    
+    /**
+     * Returns TRUE if the given request is an AJAX-request, that came over the API.
+     * 
+     * @return bool
+     */
+    protected function isRequestAjax(RequestInterface $request) : bool
+    {
+        return stripos($request->getUri()->getPath(), 'api/') !== false;
+    }
+    
+    /**
+     * 
+     * @param RequestInterface $request
+     * @return bool
+     */
+    protected function isRequestFrontend(RequestInterface $request) : bool
+    {
+        return $this->isRequestAjax($request) === false;
+    }
+    
+    /**
+     * 
+     */
+    protected function getPageFileExtension() : string
+    {
+        return '.html';
+    }
+    
+    public function getIconSets() : array
+    {
+        try {
+            return $this->getConfig()->getOption('ICONS.ICON_SETS');
+        } catch (ConfigOptionNotFoundError $e) {
+            return ['fa' => 'Font Awesome'];
+        }
+    }
 }
-?>

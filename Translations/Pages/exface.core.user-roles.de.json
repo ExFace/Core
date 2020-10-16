@@ -1,0 +1,7 @@
+{
+    "NAME": "Rollen",
+    "DESCRIPTION": "Gruppieren von Nutzern für Berechtigungen",
+    "INTRO": null,
+    "CONTENT.CAPTION.USERS": "Benutzer",
+    "CONTENT.CAPTION.POLICIES": null
+}

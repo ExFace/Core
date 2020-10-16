@@ -33,6 +33,9 @@ use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 use exface\Core\Factories\UserFactory;
 use exface\Core\DataTypes\MessageTypeDataType;
+use exface\Core\DataTypes\EncryptedDataType;
+use exface\Core\Exceptions\EncryptionError;
+use exface\Core\Exceptions\UxonSyntaxError;
 
 abstract class AbstractDataConnector implements DataConnectionInterface
 {
@@ -361,7 +364,7 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::authenticate()
      */
-    public function authenticate(AuthenticationTokenInterface $token, bool $updateUserCredentials = true, UserInterface $credentialsOwner = null) : AuthenticationTokenInterface
+    public function authenticate(AuthenticationTokenInterface $token, bool $updateUserCredentials = true, UserInterface $credentialsOwner = null, bool $credentialsArePrivate = null) : AuthenticationTokenInterface
     {
         try {
             $this->performConnect();
@@ -470,9 +473,10 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     /**
      * Saves a credential set for this connection either with or without a user association.
      * 
-     * If a user is provided, the credential set is associated with this user automatically. If
-     * it happens to be the currently logged on user, the credential set will be marked private.
-     * In all other cases, it will be a sharable credential set.
+     * If a user is provided, the credential set is associated with this user automatically.
+     * Depending on $credentialsArePrivate the credential set will be marked private or become
+     * shareable. If $credentialsArePrivate is NULL, the set will still be treated as private
+     * if the credential set owner happens to be the user currently logged on.
      * 
      * NOTE: user-association only works for authenticated users as anonymous users can't have 
      * credential sets!
@@ -480,14 +484,15 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      * @param UxonObject $uxon
      * @param string|NULL $credentialSetName
      * @param UserInterface|NULL $user
+     * @param bool|NULL $credentialsArePrivate
      * 
      * @throws RuntimeException
      * 
      * @return AbstractDataConnector
      */
-    protected function saveCredentials(UxonObject $uxon, string $credentialSetName = null, UserInterface $user = null) : AbstractDataConnector
+    protected function saveCredentials(UxonObject $uxon, string $credentialSetName = null, UserInterface $user = null, bool $credentialsArePrivate = null) : AbstractDataConnector
     {
-        if (($user !== null && $user->isUserAnonymous() === true) || $this->hasModel() === false || $uxon->isEmpty() === true) {
+        if (($user !== null && $user->isAnonymous() === true) || $this->hasModel() === false || $uxon->isEmpty() === true) {
             return $this;
         }
         
@@ -501,7 +506,7 @@ abstract class AbstractDataConnector implements DataConnectionInterface
             $credData->getFilters()->addConditionFromString('USER_CREDENTIALS__USER', $user->getUid(), ComparatorDataType::EQUALS);
             $credData->dataRead();
             
-            $isPrivate = $user->is($this->getWorkbench()->getSecurity()->getAuthenticatedUser());
+            $isPrivate = $credentialsArePrivate ?? $user->is($this->getWorkbench()->getSecurity()->getAuthenticatedUser());
         } else {
             $isPrivate = false;
         }
@@ -514,7 +519,12 @@ abstract class AbstractDataConnector implements DataConnectionInterface
                 // If we are saving private credentials and the existing credential set is private
                 // too - just update it.
                 if ($isPrivate === true && $credData->getCellValue('PRIVATE', 0) == 1) {
-                    $oldUxon = UxonObject::fromJson($credData->getCellValue('DATA_CONNECTOR_CONFIG', 0));
+                    try {
+                        $oldUxon = UxonObject::fromJson(EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $credData->getCellValue('DATA_CONNECTOR_CONFIG', 0), EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT));
+                    } catch (EncryptionError|UxonSyntaxError $e) {
+                        $this->getWorkbench()->getLogger()->logException($e);
+                        $oldUxon = new UxonObject();
+                    }
                     $newUxon = $oldUxon->extend($uxon);
                     $credData->setCellValue('DATA_CONNECTOR_CONFIG', 0, $newUxon->toJson());
                     $credData->dataUpdate(false, $transaction);

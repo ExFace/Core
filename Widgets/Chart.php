@@ -26,6 +26,7 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iConfigureWidgets;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * A Chart widget draws a chart with upto two axis and any number of series.
@@ -766,7 +767,7 @@ class Chart extends AbstractWidget implements
         return 'DataButton';
     }
 
-    public function getAlternativeContainerForOrphanedSiblings()
+    public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets
     {
         return null;
     }
@@ -916,6 +917,7 @@ class Chart extends AbstractWidget implements
      *
      * @uxon-property empty_text
      * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
      *
      * @param string $value
      * @return Data
@@ -970,6 +972,7 @@ class Chart extends AbstractWidget implements
      *
      * @uxon-property autoload_disabled_hint
      * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
      *
      * @param string $text
      * @return Data

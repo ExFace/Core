@@ -28,6 +28,7 @@ use exface\Core\Widgets\Parts\DataFooter;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -55,6 +56,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     use AttributeCaptionTrait;
     
     private $attribute_alias = null;
+    
+    private $attribute = null;
 
     private $sortable = null;
 
@@ -81,6 +84,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $cell_styler_script = null;
 
     private $data_column_name = null;
+    
+    private $calculationExpr = null;
 
     public function getAttributeAlias()
     {
@@ -105,6 +110,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function setAttributeAlias($value)
     {
+        $this->attribute = null;
         $this->attribute_alias = $value;
         return $this;
     }
@@ -246,27 +252,47 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function getCellWidget()
     {
         if ($this->cellWidget === null) {
+            // If the column is based on an attribute, use it's default editor/display widget to render
+            // the cells.
             if ($this->isBoundToAttribute() === true) {
                 $attr = $this->getAttribute();
-                if ($this->isEditable() === true) {
-                    $uxon = $attr->getDefaultEditorUxon();
-                    $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
-                    $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Input');
-                } else {
-                    $uxon = $attr->getDefaultDisplayUxon();
-                    $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
-                    $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Display');
+                switch (true) {
+                    // If the column is hidden, always use InputHidden widgets to avoid instantiating
+                    // complex widgets that would actually never be used. This can still be overridden
+                    // manually if a `cell_widget` is explicitly defined. This code here is just used
+                    // for autogenerating cell widgets!
+                    case $this->isHidden():
+                        $uxon = new UxonObject([
+                            'attribute_alias' => $this->getAttributeAlias()
+                        ]);
+                        $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Display');
+                        break;
+                    // If the column is editable, use the default editor widget
+                    case $this->isEditable() === true:
+                        $uxon = $attr->getDefaultEditorUxon();
+                        $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
+                        $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Input');
+                        break;
+                    // Otherwise use the default display widget
+                    default:
+                        $uxon = $attr->getDefaultDisplayUxon();
+                        $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
+                        $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Display');
+                        break;
                 } 
             } else {
-                $this->cellWidget = WidgetFactory::create($this->getPage(), 'Display', $this);
+                // If the column is not based on an attribute, use generic input/display widgets
+                // Again, remember, that this code is only taking care of autogenerating cell
+                // widgets. If a widget is ecplicitly defined, it will be used as expected.
+                $this->cellWidget = WidgetFactory::create($this->getPage(), ($this->isEditable() ? 'Input' : 'Display'), $this);
             }
             
             if ($this->cellWidget->getWidth()->isUndefined()) {
                 $this->cellWidget->setWidth($this->getWidth());
             }
             
-            if ($this->getValueExpression() !== null && ! $this->getValueExpression()->isEmpty()) {
-                $this->cellWidget->setValue($this->getValueExpression());
+            if ($this->isCalculated() && ! $this->getCalculationExpression()->isEmpty()) {
+                $this->cellWidget->setValue($this->getCalculationExpression());
             }
             
             // Some data types require special treatment within a table to make all rows comparable.
@@ -445,16 +471,21 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iShowSingleAttribute::getAttribute()
      */
-    function getAttribute()
+    public function getAttribute()
     {
-        try {
-            return $this->getMetaObject()->getAttribute($this->getAttributeAlias());
-        } catch (MetaAttributeNotFoundError $e) {
-            if ($this->getExpression()->isFormula()) {
-                return $this->getMetaObject()->getAttribute($this->getExpression()->getRequiredAttributes()[0]);
+        if ($this->attribute === null) {
+            try {
+                $attr = $this->getMetaObject()->getAttribute($this->getAttributeAlias());
+                $this->attribute = $attr;
+            } catch (MetaAttributeNotFoundError $e) {
+                if ($this->getExpression()->isFormula()) {
+                    $this->attribute = $this->getMetaObject()->getAttribute($this->getExpression()->getRequiredAttributes()[0]);
+                } else {
+                    throw new WidgetPropertyInvalidValueError($this, 'Attribute "' . $this->getAttributeAlias() . '" specified for widget ' . $this->getWidgetType() . ' not found for the widget\'s object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', null, $e);
+                }
             }
-            throw new WidgetPropertyInvalidValueError($this, 'Attribute "' . $this->getAttributeAlias() . '" specified for widget ' . $this->getWidgetType() . ' not found for the widget\'s object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', null, $e);
         }
+        return $this->attribute;
     }
 
     public function getAggregator() : ?AggregatorInterface
@@ -605,6 +636,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     {
         $uxon = parent::exportUxonObject();
         // TODO add properties specific to this widget here
+        if ($this->isCalculated()) {
+            $uxon->setProperty('calculation', $this->getCalculationExpression()->toString());
+        }
         return $uxon;
     }
     
@@ -714,6 +748,55 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     {
         $this->widthMax = WidgetDimensionFactory::createFromAnything($this->getWorkbench(), $stringOrDimension);
         return $this;
+    }
+    
+    /**
+     * Place an expression here to calculate values for every cell of the column.
+     * 
+     * Examples:
+     * 
+     * - `=0` will make all cells display "0"
+     * - `=NOW()` will place the current date in every cell
+     * - `=some_widget_id` will place the current value of the widget with the given id in the cells
+     * 
+     * @uxon-property calculation
+     * @uxon-type metamodel:expression
+     * 
+     * @param string $expression
+     * @return DataColumn
+     */
+    public function setCalculation(string $expression) : DataColumn
+    {
+        $this->calculationExpr = ExpressionFactory::createForObject($this->getMetaObject(), $expression);
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isCalculated() : bool
+    {
+        return $this->calculationExpr !== null;
+    }
+    
+    /**
+     * 
+     * @return ExpressionInterface|NULL
+     */
+    public function getCalculationExpression() : ?ExpressionInterface
+    {
+        return $this->calculationExpr;
+    }
+    
+    /**
+     * @deprecated use setCalculation() instead!
+     * @param string $value
+     * @return DataColumn
+     */
+    protected function setValue($value) : DataColumn
+    {
+        return $this->setCalculation($value);
     }
 }
 ?>

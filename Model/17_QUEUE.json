@@ -1,0 +1,102 @@
+{
+    "object_alias": "exface.Core.QUEUE",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "PROTOTYPE_CLASS",
+            "attribute_alias": "PROTOTYPE_CLASS"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "ALLOW_MULTI_QUEUE_HANDLING",
+            "attribute_alias": "ALLOW_MULTI_QUEUE_HANDLING"
+        },
+        {
+            "name": "CONFIG_UXON",
+            "attribute_alias": "CONFIG_UXON"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2020-09-30 09:26:31",
+            "MODIFIED_ON": "2020-09-30 09:28:33",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb929e06cb3708929e847beb4a5184",
+            "PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Queue\\AsyncTaskQueue",
+            "APP": "0x31000000000000000000000000000000",
+            "ALIAS": "DEFAULT_QUEUE",
+            "ALLOW_MULTI_QUEUE_HANDLING": "0",
+            "CONFIG_UXON": null,
+            "NAME": "Default queue"
+        },
+        {
+            "CREATED_ON": "2020-09-30 09:30:20",
+            "MODIFIED_ON": "2020-09-30 10:19:53",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb97a58f71991c97a5847beb4a5184",
+            "PROTOTYPE_CLASS": "\\exface\\Core\\CommonLogic\\Queue\\SyncTaskQueue",
+            "APP": "0x31000000000000000000000000000000",
+            "ALIAS": "IMMEDIATE_EXECUTION",
+            "ALLOW_MULTI_QUEUE_HANDLING": "0",
+            "CONFIG_UXON": "{\"topics\":{\"all_of\":[\"immediate\"]}}",
+            "NAME": "Immediate execution"
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.QUEUE",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.QUEUE"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

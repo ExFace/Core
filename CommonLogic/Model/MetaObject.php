@@ -29,6 +29,7 @@ use exface\Core\Exceptions\Model\MetaObjectHasNoDataSourceError;
 use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Exceptions\Model\MetaRelationAliasAmbiguousError;
 use exface\Core\DataTypes\RelationCardinalityDataType;
+use exface\Core\Events\Model\OnBeforeDefaultObjectEditorInitEvent;
 
 /**
  * Default implementation of the MetaObjectInterface
@@ -94,6 +95,8 @@ class MetaObject implements MetaObjectInterface
     private $short_description = '';
 
     private $default_editor_uxon = null;
+    
+    private $default_editor_raw = null;
 
     private $attribute_groups = array();
 
@@ -612,7 +615,7 @@ class MetaObject implements MetaObjectInterface
             $result = false;
             foreach ($this->getRelations() as $rel) {
                 $possible_path = $path->copy();
-                if ($result = $this->findRelationPath($related_object, $max_depth - 1, $possible_path->addRelation($rel))) {
+                if ($result = $this->findRelationPath($related_object, $max_depth - 1, $possible_path->appendRelation($rel))) {
                     return $result;
                 }
             }
@@ -1007,10 +1010,24 @@ class MetaObject implements MetaObjectInterface
      */
     public function getDefaultEditorUxon()
     {
-        if (is_null($this->default_editor_uxon)) {
-            $this->default_editor_uxon = new UxonObject();
-        } elseif (! ($this->default_editor_uxon instanceof UxonObject)) {
-            $this->default_editor_uxon = UxonObject::fromJson($this->default_editor_uxon);
+        if ($this->default_editor_uxon === null) {
+            if ($this->default_editor_raw === null) {
+                $this->default_editor_uxon = new UxonObject();
+            } else {
+                if ($this->default_editor_raw instanceof UxonObject) {
+                    $uxon = $this->default_editor_raw;
+                } else {
+                    $uxon = UxonObject::fromJson($this->default_editor_raw);
+                }
+                
+                if (! $uxon->isEmpty() && ! $uxon->getProperty('object_alias')) {
+                    $uxon->setProperty('object_alias', $this->getAliasWithNamespace());
+                }
+                
+                $this->getWorkbench()->eventManager()->dispatch(new OnBeforeDefaultObjectEditorInitEvent($this, $uxon));
+                
+                $this->default_editor_uxon = $uxon;
+            }
         }
         return $this->default_editor_uxon->copy();
     }
@@ -1019,15 +1036,16 @@ class MetaObject implements MetaObjectInterface
      * Sets the UXON description for the default editor widget for this object (e.g.
      * to build the ShowObjectEditDialog)
      *
-     * @param UxonObject $value            
+     * @param UxonObject|string $value            
      * @return MetaObjectInterface
      */
-    public function setDefaultEditorUxon(UxonObject $value)
+    public function setDefaultEditorUxon($value)
     {
-        if (! $value->isEmpty() && ! $value->getProperty('object_alias')) {
-            $value->setProperty('object_alias', $this->getAliasWithNamespace());
-        }
-        $this->default_editor_uxon = $value;
+        // Do not parse the JSON here because it won't be needed in most cases, when
+        // the object is just loaded to get it's name, some attributes, or similar.
+        // Postpone the parsing till getDefaultEditor() is actually called.
+        $this->default_editor_raw = $value;
+        $this->default_editor_uxon = null;
         return $this;
     }
 

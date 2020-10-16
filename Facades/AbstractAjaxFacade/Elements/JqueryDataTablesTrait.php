@@ -130,7 +130,7 @@ HTML;
 			row.child('<div id="detail'+row.data().{$widget->getMetaObject()->getUidAttributeAlias()}+'"></div>').show();
             // Fetch content
             var headers = {$headers};
-            headers['Subrequest-ID'] = row.data().{$widget->getMetaObject()->getUidAttributeAlias()};
+            headers['X-Request-ID-Subrequest'] = row.data().{$widget->getMetaObject()->getUidAttributeAlias()};
 			$.ajax({
 				url: '{$this->getAjaxUrl()}',
 				method: 'post',

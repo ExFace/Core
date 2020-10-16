@@ -51,32 +51,81 @@ class CoreApp extends App
         $htaccessInstaller
             ->setFilePath(Filemanager::pathJoin([$this->getWorkbench()->getInstallationPath(), '.htaccess']))
             ->setFileTemplatePath('default.htaccess')
-            ->setMarkerBegin("\n# BEGIN ")
-            ->setMarkerEnd('# END ');
+            ->setMarkerBegin("\n# BEGIN [#marker#]")
+            ->setMarkerEnd('# END [#marker#]')
+            ->addContent('Core URLs', "
+
+# API requests
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/.*$ vendor/exface/Core/index.php [L,QSA]
+
+# Force trailing slash on requests to the root folder of the workbench
+# E.g. me.com/exface -> me.com/exface/
+RewriteCond %{REQUEST_URI} ^$
+RewriteRule ^$ %{REQUEST_URI} [R=301]
+
+# index request without any path
+RewriteRule ^/?$ vendor/exface/Core/index.php [L,QSA]
+
+# Requests to UI pages
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^[^/]*$ vendor/exface/Core/index.php [L,QSA]
+
+")
+            ->addContent('Core Security', "
+
+# Block requests to config, cache, backup, etc.
+RewriteRule ^(config|backup|translations|logs)/.*$ - [F]
+# Block requests to system files (starting with a dot) in the data folder
+RewriteRule ^data/\..*$ - [F]
+
+");
         $installer->addInstaller($htaccessInstaller);
         
+        $webconfigInstaller = new FileContentInstaller($this->getSelector());
+        $webconfigInstaller
+        ->setFilePath(Filemanager::pathJoin([$this->getWorkbench()->getInstallationPath(), 'Web.config']))
+        ->setFileTemplatePath('default.Web.config')
+        ->setMarkerBegin("\n<!-- BEGIN [#marker#] -->")
+        ->setMarkerEnd("<!-- END [#marker#] -->");
+        $installer->addInstaller($webconfigInstaller);
+        
         // Add facade installers for core facades
+        
+        // HTTP file server facade
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(HttpFileServerFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
         
+        // Docs facade
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(DocsFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
         
+        // Proxy facade
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(ProxyFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
         
+        // Web console facade
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(WebConsoleFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
-        $htaccessInstaller->addContent("zlib compression off for webconsole facade \n", "
+        $htaccessInstaller->addContent("zlib compression off for webconsole facade\n", "
 <If \"'%{THE_REQUEST}' =~ m#api/webconsole#\">
     php_flag zlib.output_compression Off
 </If>
             
 ");
+        
+        $serverInstallerClass = $this->getWorkbench()->getConfig()->getOption("INSTALLER.SERVER_INSTALLER.CLASS");
+        if ($serverInstallerClass != null) {
+            $serverInstaller = new $serverInstallerClass($this->getSelector());
+            $installer->addInstaller($serverInstaller);
+        }
+        
         
         return $installer;
     }

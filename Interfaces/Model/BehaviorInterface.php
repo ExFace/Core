@@ -3,10 +3,10 @@ namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\Selectors\BehaviorSelectorInterface;
+use exface\Core\Interfaces\AppInterface;
 
 interface BehaviorInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon, AliasInterface, iCanBeCopied
 {
@@ -23,6 +23,13 @@ interface BehaviorInterface extends WorkbenchDependantInterface, iCanBeConverted
      * @return BehaviorInterface
      */
     public function setObject(MetaObjectInterface $value) : BehaviorInterface;
+    
+    /**
+     * Returns the app, that the behavior belongs to.
+     * 
+     * @return AppInterface
+     */
+    public function getApp() : AppInterface;
 
     /**
      *

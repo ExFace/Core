@@ -1,13 +1,17 @@
 {
-    "id": "0xf831c595ba2c11e7895fe4b318306b9a",
+    "uid": "0xf831c595ba2c11e7895fe4b318306b9a",
     "alias_with_namespace": "exface.core.documentation",
-    "menu_parent_page_alias": "exface.core.administration",
-    "menu_index": "2",
+    "menu_parent_page_selector": "0xf8310d4bba2c11e7895fe4b318306b9a",
+    "menu_index": 3,
     "menu_visible": true,
     "name": "Documentation",
     "description": "Browse available widgets, actions, data connectors, etc.",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2017-10-23 14:42:50",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2020-09-30 09:19:48",
     "contents": {
         "widget_type": "NavTiles",
         "object_alias": "exface.Core.PAGE"

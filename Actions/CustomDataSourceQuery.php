@@ -200,7 +200,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
      * @param string $value
      * @return \exface\Core\Interfaces\Actions\ActionInterface
      */
-    public function setAplicableToObjectAlias($value)
+    public function setApplicableToObjectAlias($value)
     {
         return $this->setInputObjectAlias($value);
     }
@@ -227,7 +227,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
                 // Replace the placeholder for each row and save each resulting query into
                 // an array.
                 foreach ($col->getValues(false) as $rowNr => $val) {
-                    $queryRuns[$rowNr] = StringDataType::replacePlaceholders($queryRuns[$rowNr] ?? $query, [$ph => $val], false);
+                    $queryRuns[$rowNr] = StringDataType::replacePlaceholder($queryRuns[$rowNr] ?? $query, $ph, $val);
                 }
             }
             

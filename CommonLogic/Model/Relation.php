@@ -64,7 +64,6 @@ class Relation implements MetaRelationInterface
         string $uid,
         string $alias,
         string $aliasModifier = '',
-        string $name = null,
         MetaObjectInterface $leftObject,
         MetaAttributeInterface $leftKeyAttribute,
         string $rightObjectUid,
@@ -74,7 +73,6 @@ class Relation implements MetaRelationInterface
         $this->id = $uid;
         $this->alias = $alias;
         $this->aliasModifier = $aliasModifier;
-        $this->name = $name;
         $this->leftObject = $leftObject;
         $this->leftKeyAttribute = $leftKeyAttribute;
         $this->rightObjectUid = $rightObjectUid;
@@ -197,6 +195,8 @@ class Relation implements MetaRelationInterface
             }
             $this->rightKeyAttribute = $appendRelationPath !== true ? $attr : $this->getRightAttribute($attr->getAlias());
         }
+        // FIXME $appendRelationPath should also have effect if $this->rightKeyAttribute is set. However
+        // we should check the code, that uses getRightKeyAttribute(true) first!
         return $this->rightKeyAttribute;
     }
 
@@ -268,7 +268,7 @@ class Relation implements MetaRelationInterface
      */
     public function isInherited() : bool
     {
-        return $this->inherited_from_object_id === null ? true : false;
+        return $this->inherited_from_object_id !== null;
     }
 
     /**

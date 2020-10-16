@@ -15,6 +15,7 @@ use exface\Core\CommonLogic\Traits\AliasTrait;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Traits\MetaModelPrototypeTrait;
 use exface\Core\Uxon\DatatypeSchema;
+use exface\Core\Exceptions\SecurityException;
 
 abstract class AbstractDataType implements DataTypeInterface
 {
@@ -512,25 +513,29 @@ abstract class AbstractDataType implements DataTypeInterface
     }
     
     /**
-     * Set if the data is sensitive, so itcan be censored if needed, for example passwords in data sheet exceptions.
+     * Set if the data is sensitive, so it can be censored if needed, for example passwords 
+     * in data sheet exceptions.
      * 
      * @uxon-property sensitive_data
      * @uxon-type boolean
      * @uxon-default false
      * 
      * @param bool $trueOrFalse
-     * @return AbstractDataType
+     * @return DataTypeInterface
      */
-    public function setSensitiveData(bool $trueOrFalse) : AbstractDataType
+    public function setSensitiveData(bool $trueOrFalse) : DataTypeInterface
     {
+        if ($trueOrFalse === false && $this->isSensitiveData() === true) {
+            throw new SecurityException('Cannot programmatically change a data type with sensitive data to non-sensitive - security violation!');
+        }
         $this->sensitive = $trueOrFalse;
         return $this;
     }
     
     /**
      * 
-     * 
-     * @return bool
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::isSensitiveData()
      */
     public function isSensitiveData() : bool
     {

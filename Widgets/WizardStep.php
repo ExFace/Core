@@ -253,6 +253,7 @@ class WizardStep extends Form implements iHaveIcon
      * 
      * @uxon-property intro
      * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
      * 
      * @param string $value
      * @return WizardStep
