@@ -291,7 +291,7 @@
         },
         {
             "CREATED_ON": "2019-09-16 14:03:13",
-            "MODIFIED_ON": "2019-09-16 14:03:13",
+            "MODIFIED_ON": "2020-10-14 09:16:22",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9d88a5a8524a2ad7fe4b318306b9a",
@@ -299,7 +299,7 @@
             "NAME": "Centered KPI-Tiles",
             "DESCRIPTION": "Several tiles in the middle of the screen. This can be a good starting point for a set of dashboards, where each tile navigates to a dashboard.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Tiles.php",
-            "UXON": "{\"widget_type\":\"Tiles\",\"object_alias\":\"\",\"center_content\":true,\"widgets\":[{\"widget_type\":\"Tile\",\"title\":\"\",\"subtitle\":\"\",\"action\":{\"alias\":\"exface.Core.GoToPage\",\"page_alias\":\"\"},\"display_widget\":{\"widget_type\":\"KPI\"}},{\"widget_type\":\"Tile\",\"title\":\"\",\"subtitle\":\"\",\"action\":{\"alias\":\"exface.Core.GoToPage\",\"page_alias\":\"\"},\"display_widget\":{\"widget_type\":\"KPI\"}}]}",
+            "UXON": "{\"widget_type\":\"Tiles\",\"object_alias\":\"\",\"center_content\":true,\"widgets\":[{\"widget_type\":\"Tile\",\"title\":\"\",\"subtitle\":\"\",\"action\":{\"alias\":\"exface.Core.GoToPage\",\"page_alias\":\"\"},\"display_widget\":{\"widget_type\":\"KPI\",\"attribute_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}]}}},{\"widget_type\":\"Tile\",\"title\":\"\",\"subtitle\":\"\",\"action\":{\"alias\":\"exface.Core.GoToPage\",\"page_alias\":\"\"},\"display_widget\":{\"widget_type\":\"KPI\"}}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget"
         },
@@ -1212,6 +1212,34 @@
             "UXON": "{\"alias\":\"exface.Core.ShowMassEditDialog\",\"widget\":{\"widget_type\":\"Dialog\",\"columns_in_grid\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"\"}]}}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action"
+        },
+        {
+            "CREATED_ON": "2020-10-14 09:18:47",
+            "MODIFIED_ON": "2020-10-14 09:18:47",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba5d544149a32a5d5025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "KPI tile",
+            "DESCRIPTION": "Use an aggregation in `attribute_alias` like `id:COUNT` and the tile will display a counter, total, etc. You can also add filters and aggregations in the `data` section.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Tile.php",
+            "UXON": "{\"widget_type\":\"KPI\",\"object_alias\":\"\",\"attribute_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}]}}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2020-10-14 09:20:53",
+            "MODIFIED_ON": "2020-10-14 09:20:53",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb87a88eafdb8887a8025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Container (invisible)",
+            "DESCRIPTION": "Use simple containers to place multiple widgets one-after-another. The container itself is not visible in most cases - it's just there for concatennation.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Container.php",
+            "UXON": "{\"widget_type\":\"Container\",\"object_alias\":\"\",\"widgets\":[{\"widget_type\":\"\"}]}",
+            "WRAP_PATH": "$.widgets[0]",
+            "UXON_SCHEMA": "widget"
         }
     ],
     "totals_rows": [],

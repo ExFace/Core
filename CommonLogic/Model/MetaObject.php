@@ -615,7 +615,7 @@ class MetaObject implements MetaObjectInterface
             $result = false;
             foreach ($this->getRelations() as $rel) {
                 $possible_path = $path->copy();
-                if ($result = $this->findRelationPath($related_object, $max_depth - 1, $possible_path->addRelation($rel))) {
+                if ($result = $this->findRelationPath($related_object, $max_depth - 1, $possible_path->appendRelation($rel))) {
                     return $result;
                 }
             }

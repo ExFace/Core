@@ -26,6 +26,15 @@ class OnWidgetLinkedEvent extends AbstractEvent implements WidgetLinkEventInterf
     {
         $this->link = $widgetLink;
     }
+    
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.Widget.OnWidgetLinked';
+    }
 
     /**
      * 

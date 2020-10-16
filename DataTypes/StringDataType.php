@@ -193,7 +193,7 @@ class StringDataType extends AbstractDataType
      */
     public function getLengthMin()
     {
-        return $this->lengthin;
+        return $this->lengthMin;
     }
 
     /**
@@ -207,7 +207,7 @@ class StringDataType extends AbstractDataType
      */
     public function setLengthMin($number)
     {
-        $this->lengthin = $number;
+        $this->lengthMin = $number;
         return $this;
     }
 

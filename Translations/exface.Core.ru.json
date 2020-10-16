@@ -7,7 +7,7 @@
 	"ACTION.CREATEDATA.RESULT": "%number% объект создан.|%number% объекта созданы.|%number% объектов создано.",
 	"ACTION.CREATEDATA.NAME": "Создать",
 	"ACTION.COPYDATA.RESULT": "Скопирован %number% объект|Скопировано %number% объекта|Скопировано %number% объектов",
-	"ACTION.COPYDATA.RESULT_DEPENDENCIES": " including %number% dependency| including %number% dependencies",
+	"ACTION.COPYDATA.RESULT_DEPENDENCIES": " включая %number% дополнение|включая %number% дополнения|включая %number% дополнений",
 	"ACTION.COPYDATA.NAME": "Копировать данные",
 	"ACTION.SHOWOBJECTCREATEDIALOG.NAME": "Создать",
 	
@@ -380,6 +380,7 @@
 	"WIDGET.INPUT.VALIDATION_MUST": "Must",
 	"WIDGET.INPUT.VALIDATION_LENGTH_CONDITION": "have %condition% characters",
 	"WIDGET.INPUT.VALIDATION_AND": "and",
+	"WIDGET.INPUTCOMBOTABLE.COLUMN_NAME_USES": "Использовано",
 	
 	"WIDGET.WIZARD.NEXT_STEP_BUTTON_CAPTION": "Next", 
 	"WIDGET.WIZARD.PREV_STEP_BUTTON_CAPTION": "Back", 

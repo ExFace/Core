@@ -31,6 +31,15 @@ class OnUiMenuItemLoadedEvent extends AbstractEvent implements UiMenuItemEventIn
     }
     
     /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.Model.OnUiMenuItemLoaded';
+    }
+    
+    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Events\UiMenuItemEventInterface::getMenuItem()

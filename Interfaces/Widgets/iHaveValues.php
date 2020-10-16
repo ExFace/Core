@@ -14,13 +14,19 @@ interface iHaveValues extends iHaveValue
 
     /**
      *
-     * @param ExpressionInterface|array|string $expression_or_delimited_list            
+     * @param ExpressionInterface|array|string $expression_or_delimited_list    
+     * @param bool $parseStringAsExpression
+     * 
+     * @return iHaveValues        
      */
-    public function setValues($expressionOrArrayOrDelimitedString) : iHaveValues;
+    public function setValues($expressionOrArrayOrDelimitedString, bool $parseStringAsExpression = true) : iHaveValues;
 
     /**
-     *
-     * @param array $values            
+     * 
+     * @param array $values
+     * @param bool $parseStringsAsExpressions
+     * 
+     * @return iHaveValues
      */
-    public function setValuesFromArray(array $values) : iHaveValues;
+    public function setValuesFromArray(array $values, bool $parseStringsAsExpressions = true) : iHaveValues;
 }

@@ -11,4 +11,13 @@ namespace exface\Core\Events\Widget;
  */
 class OnRemoveEvent extends AbstractWidgetEvent
 {
+    
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.Widget.OnRemove';
+    }
 }

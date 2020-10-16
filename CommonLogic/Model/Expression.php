@@ -21,6 +21,8 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\Exceptions\MetaRelationResolverExceptionInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * 
@@ -63,23 +65,50 @@ class Expression implements ExpressionInterface
     private $meta_object = null;
 
     /**
-     * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Model\ExpressionInterface::__constuct()
+     * @deprecated use ExpressionFactory instead!
+     * 
+     * @param \exface\Core\CommonLogic\Workbench $exface
+     * @param string $string
+     * @param MetaObjectInterface $meta_object
+     * @param bool $parseString
+     * @param bool $treatUnknownAsString
      */
-    function __construct(\exface\Core\CommonLogic\Workbench $exface, $string, MetaObjectInterface $meta_object = null, $treatUnquotedAsString = false)
+    public function __construct(WorkbenchInterface $exface, string $string = null, MetaObjectInterface $meta_object = null, bool $parseString = true, bool $treatUnknownAsString = false)
     {
         $this->exface = $exface;
         $this->meta_object = $meta_object;
-        $this->parse($string, $treatUnquotedAsString);
         $this->originalString = $string;
+        if ($parseString === true) {
+            $this->parse($string, $treatUnknownAsString);
+        } else {
+            $this->parseScalar($string);
+        }
+    }
+    
+    /**
+     * Parses a string as a scalar (number or string) without attempting to parse formulas, etc.
+     * 
+     * @param string $string
+     * @return void
+     */
+    protected function parseScalar(string $string = null)
+    {
+        if (self::detectNumber($string)) {
+            $this->type = self::TYPE_NUMBER;
+        } else {
+            $this->type = self::TYPE_STRING;
+        }
+        $this->value = $string;
+        return;
     }
 
     /**
-     * Parses an ExFace expression and returns it's type
+     * Parses an ExFace expression
      *
-     * @param string $expression
+     * @param string|NULL $expression
+     * @return void
      */
-    protected function parse($expression, $treatUnquotedAsString = false)
+    protected function parse(string $expression = null, $treatUnknownAsString = false)
     {
         $expression = trim($expression);
         // see, what type of expression it is. Depending on the type, the evaluate() method will give different results.
@@ -138,16 +167,17 @@ class Expression implements ExpressionInterface
                 // sheet, it might just be some column id used to add a faked column. If it comes from a widget's setValue()
                 // it is surely a string value - see AbstractWidget::setValue(). This is really a mess, that should be cleaned
                 // up! There is a lot of testing neede, though.
-                if ($treatUnquotedAsString === true) {
+                if ($treatUnknownAsString === true) {
                     $this->type = self::TYPE_STRING;
+                    $this->value = $expression;
                 } else {
                     $this->type = self::TYPE_UNKNOWN;
+                    $this->value = $str === false ? '' : $str;
                 }
-                $this->value = $str === false ? '' : $str;
             }
         }
         
-        return $this->getType();
+        return;
     }
 
     /**
@@ -229,11 +259,15 @@ class Expression implements ExpressionInterface
         return $this->type === SELF::TYPE_REFERENCE;
     }
 
+    /**
+     * 
+     * @param string|NULL $expression
+     * @return string|bool
+     */
     protected function parseQuotedString($expression)
     {
         if ($this::detectQuotedString($expression)) {
-            // FIXME #expression-syntax need to unescape the quotes inside the string somehow here.
-            return trim($expression, '"\'');
+            return self::unquote($expression);
         } else {
             return false;
         }
@@ -442,6 +476,10 @@ class Expression implements ExpressionInterface
         return $this->originalString;
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function __toString()
     {
         return $this->toString();
@@ -558,12 +596,12 @@ class Expression implements ExpressionInterface
             } catch (MetaRelationNotFoundError $e) {
                 throw new ExpressionRebaseImpossibleError('Cannot rebase expression "' . $this->toString() . '" relative to "' . $relation_path_to_new_base_object . '" - invalid relation path given!', '6TBX1V2');
             }
-            
+            $thisStr = $this->toString();
             switch (true) {
                 // If the realtion path to the new object is just the beginning of the expression, cut it off, returning whatever is left
-                // $new_expression_string = RelationPath::relaton_path_cut($this->toString(), $relation_path_to_new_base_object);
-                case strpos($this->toString(), $relation_path_to_new_base_object) === 0:
-                    $new_expression_string = ltrim(substr($this->toString(), strlen($relation_path_to_new_base_object)), "_");
+                // $new_expression_string = RelationPath::relaton_path_cut($thisStr, $relation_path_to_new_base_object);
+                case stripos($thisStr, $relation_path_to_new_base_object . RelationPath::getRelationSeparator()) === 0:
+                    $new_expression_string = ltrim(substr($thisStr, strlen($relation_path_to_new_base_object)), "_");
                     // Double-check if the remaining string starts with a relation alias modifier. If so, check
                     // if that modifier matches the modifier of the $rel.
                     // This can happen for relations with optional modifiers, when the rebase-path has the short
@@ -581,9 +619,9 @@ class Expression implements ExpressionInterface
                         break;
                     }
                 // If the expression is the beginning of the relation path, do it the other way around
-                // $new_expression_string = RelationPath::relaton_path_cut($relation_path_to_new_base_object, $this->toString());
-                case strpos($relation_path_to_new_base_object, $this->toString()) === 0: 
-                    $new_expression_string = ltrim(substr($relation_path_to_new_base_object, strlen($this->toString())), "_");
+                // $new_expression_string = RelationPath::relaton_path_cut($relation_path_to_new_base_object, $thisStr);
+                case stripos($relation_path_to_new_base_object, $thisStr . RelationPath::getRelationSeparator()) === 0: 
+                    $new_expression_string = ltrim(substr($relation_path_to_new_base_object, strlen($thisStr)), "_");
                     break;
                 // Otherwise append the expression to the relation path (typically the expression is a direct attribute here an would need
                 // a relation path, if referenced from another object).
@@ -597,8 +635,8 @@ class Expression implements ExpressionInterface
                     // IDEA A bit awqard is rebasing "POSITION->ORDER" from ORDER to POSITION as it will result in ORDER<-POSITION->ORDER, which
                     // is a loop: first we would fetch the order, than it's positions than again all orders of thouse position, which will result in
                     // that one order we fetched in step 1 again. Not sure, if these loops can be prevented somehow...
-                    if (! ($rel->isReverseRelation() && $relation_path_to_new_base_object == $rel->getAliasWithModifier() && ($relation_path_to_new_base_object == $this->toString() || $rel->getRightKeyAttribute()->getAlias() == $this->toString()))) {
-                        $new_expression_string = RelationPath::relationPathAdd($new_expression_string, $this->toString());
+                    if (! ($rel->isReverseRelation() && $relation_path_to_new_base_object == $rel->getAliasWithModifier() && ($relation_path_to_new_base_object == $thisStr || $rel->getRightKeyAttribute()->getAlias() == $thisStr))) {
+                        $new_expression_string = RelationPath::relationPathAdd($new_expression_string, $thisStr);
                     }
             }
             // If we end up with an empty expression, this means, that the original expression pointed to the exact relation to
@@ -658,7 +696,9 @@ class Expression implements ExpressionInterface
     public function copy()
     {
         $copy = clone $this;
-        $copy->parse($this->toString());
+        if ($this->isConstant() === false) {
+            $copy->parse($this->toString());
+        }
         return $copy;
     }
     
@@ -687,7 +727,21 @@ class Expression implements ExpressionInterface
     public static function detectFormula($value) : bool
     {
         $value = trim($value);
-        if ($value && substr($value, 0, 1) === '=' && substr($value, 1, 2) !== '=' && strpos($value, '(') > 0) {
+        if ($value && substr($value, 0, 1) === '=' && substr($value, 1, 1) !== '=' && substr($value, 1, 2) !== '=' && strpos($value, '(') > 0) {
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::detectReference()
+     */
+    public static function detectReference($value) : bool
+    {
+        $value = trim($value);
+        if ($value && substr($value, 0, 1) === '=' && substr($value, 1, 1) !== '=' && ! self::detectFormula($value)) {
             return true;
         }
         return false;
@@ -743,6 +797,53 @@ class Expression implements ExpressionInterface
         }
         
         return $this->formula;
+    }
+    
+    /**
+     * 
+     * @param string $string
+     * @param string $quote
+     * @throws UnexpectedValueException
+     * @return string
+     */
+    public static function enquote(string $string, string $quote = '"') : string
+    {
+        switch ($quote) {
+            case '"':
+                return json_encode($string);
+            case "'": 
+                return "'" . str_replace("'", "\\'", $string);
+            default:
+                throw new UnexpectedValueException('Invalid quote character "' . $quote . '" used to enquote expression!');
+        }
+    }
+    
+    /**
+     * 
+     * @param string $quotedString
+     * @param string $quote
+     * @throws UnexpectedValueException
+     * @return string
+     */
+    public static function unquote(string $quotedString, string $quote = null) : string
+    {
+        $quotedString = trim($quotedString);
+        
+        if ($quotedString === '') {
+            return $quotedString;
+        }
+        
+        if ($quote === null) {
+            $quote = mb_substr($quotedString, 0, 1);
+        }
+        
+        switch ($quote) {
+            case '"':
+                return json_decode($quotedString);
+            case "'":
+                return trim(str_replace("\\'", "'", $quotedString), "'");
+        }
+        return $quotedString;
     }
 }
 ?>

@@ -23,6 +23,8 @@ use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 
 /**
  * A filter for data widgets, etc - consists of a logical comparator and an input widget.
@@ -561,6 +563,16 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueWidgetLink()
+     */
+    public function getValueWidgetLink() : ?WidgetLinkInterface
+    {
+        return $this->getInputWidget()->getValueWidgetLink();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueWithDefaults()
      */
     public function getValueWithDefaults()
@@ -574,7 +586,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      *
      * @see \exface\Core\Widgets\AbstractWidget::getValueExpression()
      */
-    public function getValueExpression()
+    public function getValueExpression() : ?ExpressionInterface
     {
         return $this->getInputWidget()->getValueExpression();
     }
@@ -587,10 +599,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      * 
      * @see \exface\Core\Widgets\AbstractWidget::setValue()
      */
-    public function setValue($value)
+    public function setValue($value, bool $parseStringAsExpression = true)
     {
         if ($this->isInputWidgetInitialized() === true) {
-            $this->getInputWidget()->setValue($value);
+            $this->getInputWidget()->setValue($value, $parseStringAsExpression);
         }
         $this->value = $value;
         return $this;
@@ -832,7 +844,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::hasValue()
      */
-    public function hasValue()
+    public function hasValue() : bool
     {
         return $this->getInputWidget()->hasValue();
     }

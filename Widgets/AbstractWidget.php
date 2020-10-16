@@ -1,14 +1,12 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\WidgetDimensionFactory;
 use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
@@ -23,7 +21,6 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
-use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Events\Widget\OnBeforePrefillEvent;
 use exface\Core\Events\Widget\OnPrefillEvent;
 use exface\Core\Interfaces\Events\EventInterface;
@@ -36,6 +33,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Parts\ConditionalProperty;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Factories\SelectorFactory;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * Basic ExFace widget
@@ -63,13 +61,11 @@ abstract class AbstractWidget implements WidgetInterface
 
     private $object_alias = null;
 
-    private $object_relation_path_to_parent = null;
-
-    private $object_relation_path_from_parent = null;
+    private $relation_path_to_parent_string = null;
+    
+    private $relation_path_to_parent = null;
 
     private $object_qualified_alias = null;
-
-    private $value = null;
 
     private $disabled = NULL;
 
@@ -205,9 +201,6 @@ abstract class AbstractWidget implements WidgetInterface
         
         if ($this->hint !== null) {
             $uxon->setProperty('hint', $this->getHint());
-        }
-        if ($this->getValue() !== null) {
-            $uxon->setProperty('value', $this->getValue());
         }
         if ($this->getVisibility() !== null) {
             $uxon->setProperty('visibility', $this->getVisibility());
@@ -421,13 +414,20 @@ abstract class AbstractWidget implements WidgetInterface
      */
     function getMetaObject()
     {
-        if (is_null($this->meta_object)) {
-            if ($this->getObjectQualifiedAlias()) {
-                $obj = $this->getWorkbench()->model()->getObject($this->getObjectQualifiedAlias());
-            } elseif ($this->getParent()) {
-                $obj = $this->getParent()->getMetaObject();
-            } else {
-                throw new WidgetHasNoMetaObjectError($this, 'A widget must have either an object_id, an object_alias or a parent widget with an object reference!');
+        if ($this->meta_object === null) {
+            switch (true) {
+                case $this->object_qualified_alias:
+                    $obj = $this->getWorkbench()->model()->getObject($this->object_qualified_alias);
+                    break;
+                case $this->hasParent():
+                    $obj = $this->getParent()->getMetaObject();
+                    if ($this->relation_path_to_parent_string !== null) {
+                        $relPath = RelationPathFactory::createFromString($obj, $this->relation_path_to_parent_string);
+                        $obj = $relPath->getEndObject();
+                    }
+                    break;
+                default:
+                    throw new WidgetHasNoMetaObjectError($this, 'A widget must have either an object_id, an object_alias or a parent widget with an object reference!');
             }
             $this->setMetaObject($obj);
         }
@@ -443,6 +443,7 @@ abstract class AbstractWidget implements WidgetInterface
     function setMetaObject(MetaObjectInterface $object)
     {
         $this->meta_object = $object;
+        $this->relation_path_to_parent = null;
         return $this;
     }
 
@@ -583,82 +584,6 @@ abstract class AbstractWidget implements WidgetInterface
     }
 
     /**
-     * TODO Move to iHaveValue-Widgets or trait
-     *
-     * @return string|NULL
-     */
-    public function getValue()
-    {
-        if ($this->getValueExpression()) {
-            return $this->getValueExpression()->toString();
-        }
-        return null;
-    }
-
-    /**
-     * TODO Move to iHaveValue-Widgets or trait
-     *
-     * @return ExpressionInterface|NULL
-     */
-    public function getValueExpression()
-    {
-        return $this->value;
-    }
-
-    /**
-     *
-     * @return WidgetLinkInterface|NULL
-     */
-    public function getValueWidgetLink()
-    {
-        $link = null;
-        $expr = $this->getValueExpression();
-        if ($expr && $expr->isReference()) {
-            $link = $expr->getWidgetLink($this);
-        }
-        return $link;
-    }
-
-    /**
-     * Explicitly sets the value of the widget
-     *
-     * @uxon-property value
-     * @uxon-type string|model:formula
-     *
-     * TODO Move to iHaveValue-Widgets or trait
-     *
-     * @param ExpressionInterface|string $expression_or_string            
-     */
-    public function setValue($expression_or_string)
-    {
-        if ($expression_or_string instanceof expression) {
-            $this->value = $expression_or_string;
-        } else {
-            // FIXME #expression-syntax Handling of value-expressions seems really buggy. On the one hand, 
-            // passing a string value should result in the widget showing this exact value - no matter if
-            // it included quotes or not. On the other hand, a non-quoted string would result in an Expression
-            // of UNKNOWN type, which is not static, thus widgets would not show anything unless prefilled. If
-            // we add quotes to signal, that this is a static string, they will show up in the widget even
-            // if the user did not want them. For example, many doPrefill() methods would just result in
-            // setValue($prefillValue) - no quotes, no checks for data type, althoug this clearly is a static
-            // value. Finally, if the user sets the value in UXON, the general expression syntax suggests to use 
-            // quotes for strings, but these would show up in the UI. 
-            // Here is a temporary solution for the problem: tell the ExpressionFactory to treat unquoted strings
-            // as strings in this case explicitly.
-            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $expression_or_string, $this->getMetaObject(), true);
-            $this->value = $expr;
-            // If the value is a widget link, call the getter to make sure the link is instantiated
-            // thus firing OnWidgetLinkedEvent. If not done here, the event will be only fired
-            // when some other code calls $expr->getWidgetLink(), which may happen too late for
-            // possible event handlers!
-            if ($expr->isReference()) {
-                $this->getValueWidgetLink();
-            }
-        }
-        return $this;
-    }
-
-    /**
      *
      * {@inheritdoc}
      *
@@ -762,15 +687,6 @@ abstract class AbstractWidget implements WidgetInterface
     }
 
     /**
-     * Returns the full alias of the main meta object (prefixed by the app namespace - e.g.
-     * CRM.CUSTOMER)
-     */
-    public function getObjectQualifiedAlias()
-    {
-        return $this->object_qualified_alias;
-    }
-
-    /**
      * Sets the alias of the main object of the widget.
      * Use qualified aliases (with namespace)!
      *
@@ -799,8 +715,12 @@ abstract class AbstractWidget implements WidgetInterface
             $this->object_alias = $full_or_object_alias;
             $this->object_qualified_alias = $ns . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->object_alias;
         }
-        // IMPORTANT: unset the meta_object of this class, because it may already have been initialized previously.
-        unset($this->meta_object);
+        
+        // IMPORTANT: unset the meta_object of this class, because it may already have been 
+        // initialized previously. Do the same for the relation path to the parent widget
+        $this->meta_object = null;
+        $this->relation_path_to_parent = null;
+        
         return $this;
     }
 
@@ -810,55 +730,9 @@ abstract class AbstractWidget implements WidgetInterface
      *
      * @see \exface\Core\Interfaces\WidgetInterface::getObjectRelationPathFromParent()
      */
-    public function getObjectRelationPathFromParent()
+    public function getObjectRelationPathFromParent() : ? MetaRelationPathInterface
     {
-        if (is_null($this->object_relation_path_from_parent)) {
-            // If there is no relation to the parent set yet, see if there is a parent.
-            // If not, do not do anything - maybe there will be some parent when the method is called the next time
-            if ($this->getParent()) {
-                // If there is no relation path yet, create one
-                $this->object_relation_path_from_parent = RelationPathFactory::createForObject($this->getParent()->getMetaObject());
-                // If the parent is based on another object, search for a relation to it - append it to the path if found
-                if (! $this->getParent()->getMetaObject()->is($this->getMetaObject())) {
-                    if ($this->object_relation_path_to_parent) {
-                        // If we already know the path from this widgets object to the parent, just reverse it
-                        $this->object_relation_path_from_parent = $this->getObjectRelationPathToParent()->reverse();
-                    } elseif ($rel = $this->getParent()->getMetaObject()->findRelation($this->getMetaObject(), true)) {
-                        // Otherwise, try to find a path automatically
-                        $this->object_relation_path_from_parent->appendRelation($rel);
-                    }
-                }
-            }
-        } elseif (! ($this->object_relation_path_from_parent instanceof RelationPath)) {
-            $this->object_relation_path_from_parent = RelationPathFactory::createFromString($this->getParent()->getMetaObject(), $this->object_relation_path_from_parent);
-        } else {
-            // If there is a relation path already built, check if it still fits to the current parent widget (which might have changed)
-            // If not, removed the cached path and runt the getter again to try to find a new path
-            if (! $this->getParent()->getMetaObject()->is($this->object_relation_path_from_parent->getStartObject())) {
-                $this->object_relation_path_from_parent = null;
-                return $this->getObjectRelationPathFromParent();
-            }
-        }
-        return $this->object_relation_path_from_parent;
-    }
-
-    /**
-     * Sets the relation path from the parent widget's object to this widget's object
-     *
-     * @uxon-property object_relation_path_from_parent
-     * @uxon-type metamodel:relation
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\WidgetInterface::setObjectRelationPathFromParent()
-     */
-    public function setObjectRelationPathFromParent($string)
-    {
-        $this->object_relation_path_from_parent = $string;
-        if ($this->isObjectInheritedFromParent()) {
-            $this->setObjectAlias($this->getParent()->getMetaObject()->getRelatedObject($string)->getAliasWithNamespace());
-        }
-        return $this;
+        return $this->getObjectRelationPathToParent()->reverse();
     }
 
     /**
@@ -867,9 +741,9 @@ abstract class AbstractWidget implements WidgetInterface
      *
      * @see \exface\Core\Interfaces\WidgetInterface::isObjectInheritedFromParent()
      */
-    public function isObjectInheritedFromParent()
+    public function isObjectInheritedFromParent() : bool
     {
-        return null !== $this->object_qualified_alias;
+        return $this->object_qualified_alias === null && $this->relation_path_to_parent_string === null;
     }
 
     /**
@@ -878,36 +752,32 @@ abstract class AbstractWidget implements WidgetInterface
      *
      * @see \exface\Core\Interfaces\WidgetInterface::getObjectRelationPathToParent()
      */
-    public function getObjectRelationPathToParent()
+    public function getObjectRelationPathToParent() : ?MetaRelationPathInterface
     {
-        if (is_null($this->object_relation_path_to_parent)) {
-            // If there is no relation to the parent set yet, see if there is a parent.
-            // If not, do not do anything - maybe there will be some parent when the method is called the next time
-            if ($this->getParent()) {
-                // If there is no relation path yet, create one
-                $this->object_relation_path_to_parent = RelationPathFactory::createForObject($this->getMetaObject());
-                // If the parent is based on another object, search for a relation to it - append it to the path if found
-                if (! $this->getParent()->getMetaObject()->is($this->getMetaObject())) {
-                    if ($this->object_relation_path_from_parent) {
-                        // If we already know the path from the parents object to this widget, just reverse it
-                        $this->object_relation_path_to_parent = $this->getObjectRelationPathToParent()->reverse();
-                    } elseif ($rel = $this->getMetaObject()->findRelation($this->getParent()->getMetaObject(), true)) {
-                        $this->object_relation_path_to_parent->appendRelation($rel);
+        if ($this->relation_path_to_parent === null) {
+            switch (true) {
+                // If there is was a path provided as a string, instantiate it as a path object
+                case $this->relation_path_to_parent_string !== null:
+                    $this->relation_path_to_parent = RelationPathFactory::createFromString($this->getMetaObject(), $this->relation_path_to_parent_string);
+                    break;
+                // If there is no parent or the parent widget has the same object as this one,
+                // return an empty relation path
+                case ! $this->hasParent():
+                case $this->isObjectInheritedFromParent():
+                case $this->getMetaObject()->isExactly($this->getParent()->getMetaObject()):
+                    $this->relation_path_to_parent = RelationPathFactory::createForObject($this->getMetaObject());
+                    break;
+                // If no path is known and the objects are not the same (checked above), attempt
+                // to find a path. Return NULL if this fails.
+                case $this->relation_path_to_parent_string === null:
+                    if ($path = $this->getMetaObject()->findRelationPath($this->getParent()->getMetaObject())) {
+                        $this->relation_path_to_parent = $path;
+                    } else {
+                        return null;
                     }
-                }
-            }
-        } elseif (! ($this->object_relation_path_to_parent instanceof RelationPath)) {
-            // If there is a path, but it is a string (e.g. it was just set via UXON import), create an object from it
-            $this->object_relation_path_to_parent = RelationPathFactory::createFromString($this->getMetaObject(), $this->object_relation_path_to_parent);
-        } else {
-            // If there is a relation path already built, check if it still fits to the current parent widget (which might have changed)
-            // If not, removed the cached path and runt the getter again to try to find a new path
-            if (! $this->getParent()->getMetaObject()->is($this->object_relation_path_to_parent->getEndObject())) {
-                $this->object_relation_path_to_parent = null;
-                return $this->getObjectRelationPathToParent();
             }
         }
-        return $this->object_relation_path_to_parent;
+        return $this->relation_path_to_parent;
     }
 
     /**
@@ -922,7 +792,8 @@ abstract class AbstractWidget implements WidgetInterface
      */
     public function setObjectRelationPathToParent($string)
     {
-        $this->object_relation_path_to_parent = $string;
+        $this->relation_path_to_parent_string = $string;
+        $this->meta_object = null;
         return $this;
     }
 
@@ -1395,5 +1266,30 @@ abstract class AbstractWidget implements WidgetInterface
     public function hasFacadeOptions(FacadeInterface $facade) : bool
     {
         return $this->getFacadeOptions($facade) !== null;
+    }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @return MetaRelationPathInterface|NULL
+     */
+    public function findRelationPathFromObject(MetaObjectInterface $object) : ?MetaRelationPathInterface
+    {
+        if ($object->is($this->getMetaObject())) {
+            return RelationPathFactory::createForObject($object);
+        }
+        
+        // If the action is based on the same object as the widget's parent, use the widget's
+        // logic to find the relation to the parent. Otherwise try to find a relation to the
+        // action's object and throw an error if this fails.
+        if ($this->hasParent() && $object->is($this->getParent()->getMetaObject()) && $relPath = $this->getObjectRelationPathFromParent()) {
+            return $relPath;
+        }
+        
+        if ($relPath = $object->findRelationPath($this->getMetaObject())) {
+            return $relPath;
+        }
+        
+        return null;
     }
 }

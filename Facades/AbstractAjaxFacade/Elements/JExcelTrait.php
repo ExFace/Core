@@ -20,6 +20,8 @@ use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 use exface\Core\Widgets\Parts\DataSpreadSheetFooter;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Widgets\InputComboTable;
+use exface\Core\Exceptions\Facades\FacadeRuntimeError;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -634,18 +636,22 @@ JS;
     {
         $widget = $this->getWidget();
         $rows = $this->buildJsConvertArrayToData("{$this->buildJsJqueryElement()}.jexcel('getData', false)");
-            
-        if ($widget->isEditable() && $action && ! $action->getMetaObject()->is($widget->getMetaObject()) === true) {
-            // If the data is intended for another object, make it a nested data sheet
-            if ($relPath = $widget->getObjectRelationPathFromParent()) {
+        
+        // If we have an action, that is based on another object and does not have an input mapper for
+        // the widgets's object, the data should become a subsheet. Otherwise we just return the data
+        // as-is.
+        if ($widget->isEditable() && $action && ! $action->getMetaObject()->is($widget->getMetaObject()) && $action->getInputMapper($widget->getMetaObject()) === null) {
+            // If the action is based on the same object as the widget's parent, use the widget's
+            // logic to find the relation to the parent. Otherwise try to find a relation to the
+            // action's object and throw an error if this fails.
+            if ($widget->hasParent() && $action->getMetaObject()->is($widget->getParent()->getMetaObject()) && $relPath = $widget->getObjectRelationPathFromParent()) {
                 $relAlias = $relPath->toString();
-            } else {
-                if ($relPath = $widget->getObjectRelationPathToParent()) {
-                    $relAlias = $relPath->reverse()->toString();
-                } else {
-                    $relation = $action->getMetaObject()->findRelation($widget->getMetaObject(), true);
-                    $relAlias = $relation->getAlias();
-                }
+            } elseif ($relPath = $action->getMetaObject()->findRelationPath($widget->getMetaObject())) {
+                $relAlias = $relPath->toString();
+            }
+            
+            if ($relAlias === null || $relAlias === '') {
+                throw new WidgetConfigurationError($widget, 'Cannot use data from widget "' . $widget->getId() . '" with action on object "' . $action->getMetaObject()->getAliasWithNamespace() . '": no relation can be found from widget object to action object', '7CYA39T');
             }
             
             $configurator_element = $this->getFacade()->getElement($this->getWidget()->getConfiguratorWidget());
