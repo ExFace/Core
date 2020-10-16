@@ -23,6 +23,15 @@ class OnContextInitEvent extends AbstractEvent implements ContextEventInterface
     }
     
     /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.Facades.OnContextInit';
+    }
+    
+    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()

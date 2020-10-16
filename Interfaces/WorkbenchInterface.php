@@ -80,6 +80,13 @@ interface WorkbenchInterface extends TaskHandlerInterface
      */
     public function getCoreApp();
     
+    /**
+     * 
+     * @triggers \exface\Core\Events\Workbench\OnBeforeStopEvent
+     * @triggers \exface\Core\Events\Workbench\OnStopEvent
+     * 
+     * @return void;
+     */
     public function stop();
     
     /**

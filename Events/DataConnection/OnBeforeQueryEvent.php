@@ -29,6 +29,15 @@ class OnBeforeQueryEvent extends AbstractDataConnectionEvent implements DataQuer
     }
     
     /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.DataConnection.OnBeforeQuery';
+    }
+    
+    /**
      *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Events\DataQueryEventInterface::getQuery()

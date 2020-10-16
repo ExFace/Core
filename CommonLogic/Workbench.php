@@ -31,6 +31,7 @@ use exface\Core\Events\Workbench\OnStartEvent;
 use exface\Core\Events\Workbench\OnStopEvent;
 use exface\Core\Interfaces\Security\SecurityManagerInterface;
 use exface\Core\CommonLogic\Security\SecurityManager;
+use exface\Core\Events\Workbench\OnBeforeStopEvent;
 
 class Workbench implements WorkbenchInterface
 {
@@ -300,9 +301,15 @@ class Workbench implements WorkbenchInterface
         return $this->getApp('exface.Core');
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::stop()
+     */
     public function stop()
     {
         if ($this->isStarted()) {
+            $this->eventManager()->dispatch(new OnBeforeStopEvent($this));
             $this->getContext()->saveContexts();
             $this->data()->disconnectAll();
             $this->eventManager()->dispatch(new OnStopEvent($this));

@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Log\Handlers\limit;
 
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
+use exface\Core\Events\Workbench\OnBeforeStopEvent;
 
 /**
  * Abstract log handler wrapper to implement any kind of log file cleanup according to the implementation function
@@ -58,8 +59,18 @@ abstract class LimitingWrapper implements LogHandlerInterface
             
             $this->limit();
             
-            $ctxtScope->setVariable('last_log_cleanup', date("Y-m-d H:i:s"));
+            $this->getWorkbench()->eventManager()->addListener(OnBeforeStopEvent::getEventName(), [$this, 'handleOnBeforeStopEvent']);
         }
+    }
+    
+    /**
+     * 
+     * @param OnBeforeStopEvent $event
+     */
+    public function handleOnBeforeStopEvent(OnBeforeStopEvent $event)
+    {
+        $this->getWorkbench()->getContext()->getScopeInstallation()->setVariable('last_log_cleanup', date("Y-m-d H:i:s"));
+        return;
     }
 
     /**

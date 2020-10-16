@@ -11,4 +11,8 @@ namespace exface\Core\Events\Workbench;
  */
 class OnStopEvent extends OnStartEvent
 {
+    public static function getEventName() : string
+    {
+        return 'exface.Core.Workbench.OnStop';
+    }
 }

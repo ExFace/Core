@@ -4,9 +4,9 @@ An app is, as the name suggests, an application running on the plattform. In oth
 
 These are typical components of an app:
 
-- The metamodel describing it's business objects and logic
-- The UI-Model describing the user's interaction with the application
-- Program code for custom model prototypes (e.g. for actions, behaviors, data connectors, etc.)
+- The metamodel describing it's business objects and logic: objects, attributes, actions, behaviors, user roles, policies, etc.
+- The UI-Model describing the user's interaction with the application: the UI pages and the menu structure
+- Program code for custom model prototypes (e.g. for actions, behaviors, data connectors, etc.) - see [developer's docs](../../developer_docs/app_as_container.md) for more details on apps as dependecy injection containers.
 - Translation files
 - Documentation
 - Anything else needed: facades, other program code (i.e. dependencies), etc.

@@ -19,6 +19,7 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Interfaces\Widgets\iHaveValues;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * A dropdown menu to select from.
@@ -517,16 +518,16 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveValues::setValues()
      */
-    public function setValues($expressionOrArrayOrDelimitedString) : iHaveValues
+    public function setValues($expressionOrArrayOrDelimitedString, bool $parseStringAsExpression = true) : iHaveValues
     {
         if ($expressionOrArrayOrDelimitedString instanceof UxonObject) {
             $expressionOrArrayOrDelimitedString = $expressionOrArrayOrDelimitedString->toArray();
         }
         
         if (is_array($expressionOrArrayOrDelimitedString) === true) {
-            $this->setValuesFromArray($expressionOrArrayOrDelimitedString);
+            $this->setValuesFromArray($expressionOrArrayOrDelimitedString, $parseStringAsExpression);
         } else {
-            $this->setValue($expressionOrArrayOrDelimitedString);
+            $this->setValue($expressionOrArrayOrDelimitedString, $parseStringAsExpression);
         }
         return $this;
     }
@@ -536,12 +537,16 @@ class InputSelect extends Input implements iSupportMultiSelect
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValues::setValuesFromArray()
      */
-    public function setValuesFromArray(array $values) : iHaveValues
+    public function setValuesFromArray(array $values, bool $parseStringsAsExpressions = true) : iHaveValues
     {
+        if (empty($values)) {
+            return $this;
+        }
+        
         if ($this->getMultiSelect()) {
-            $this->setValue(implode($this->getMultiSelectValueDelimiter(), $values));
+            $this->setValue(implode($this->getMultiSelectValueDelimiter(), $values), $parseStringsAsExpressions);
         } else {
-            $this->setValue(reset($values));
+            $this->setValue(reset($values), $parseStringsAsExpressions);
         }
         return $this;
     }
@@ -973,14 +978,14 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @see \exface\Core\Widgets\AbstractWidget::setValue()
      */
-    public function setValue($value)
+    public function setValue($value, bool $parseStringAsExpression = true)
     {
         if (! $this->hasOption($value) && strpos($value, $this->getMultiSelectValueDelimiter())) {
             if (! $this->getMultiSelect()) {
-                return parent::setValue(explode($this->getMultiSelectValueDelimiter(), $value)[0]);
+                return parent::setValue(explode($this->getMultiSelectValueDelimiter(), $value)[0], $parseStringAsExpression);
             }
         }
-        return parent::setValue($value);
+        return parent::setValue($value, $parseStringAsExpression);
     }
     
     /**

@@ -24,6 +24,15 @@ class OnBeforePrefillEvent extends AbstractWidgetEvent implements DataSheetEvent
     }
     
     /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.Widget.OnBeforePrefill';
+    }
+    
+    /**
      * 
      * @return DataSheetInterface
      */

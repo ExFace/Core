@@ -486,7 +486,7 @@ class UxonSchema implements UxonSchemaInterface
      */
     protected function getMetamodelAttributeAliases(MetaObjectInterface $object, string $search = null) : array
     {
-        $rels = $search !== null ? RelationPath::relationPathParse($search) : [];
+        $rels = $search !== null ? (RelationPath::relationPathParse($search) ?? []) : [];
         $search = array_pop($rels) ?? '';
         $relPath = null;
         if (! empty($rels)) {

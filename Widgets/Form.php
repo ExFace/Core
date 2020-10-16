@@ -7,14 +7,12 @@ use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Widgets\Traits\iHaveContextualHelpTrait;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Interfaces\Widgets\iShowMessageList;
-use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\Traits\iShowMessageListTrait;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
 
 /**
  * A Form is a Panel with buttons.
@@ -199,5 +197,38 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
     {
         $this->autofocusFirst = $value;
         return $this;
+    }
+    
+    /**
+     * Returns the button with the primary action of the form: e.g. the one for submit-on-enter.
+     * 
+     * The primary button is
+     * - the first button with `promoted` visibility if there are promoted buttons
+     * - the first button with `normal` visibility if there are no promoted buttons
+     * - none otherwise
+     * 
+     * @return Button|NULL
+     */
+    public function getButtonWithPrimaryAction() : ?Button
+    {
+        $promotedButtons = [];
+        $regularButtons = [];
+        foreach ($this->getButtons() as $btn) {
+            if ($btn->getVisibility() == WidgetVisibilityDataType::PROMOTED) {
+                $promotedButtons[] = $btn;
+            }
+            if ($btn->getVisibility() == WidgetVisibilityDataType::NORMAL) {
+                $regularButtons[] = $btn;
+            }
+        }
+        
+        $defaultBtn = null;
+        if (count($promotedButtons) === 1) {
+            $defaultBtn = $promotedButtons[0];
+        } elseif (empty($promotedButtons) && count($regularButtons) === 1) {
+            $defaultBtn = $regularButtons[0];
+        }
+        
+        return $defaultBtn;
     }
 }

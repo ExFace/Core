@@ -34,6 +34,7 @@ use exface\Core\Events\Errors\OnErrorCodeLookupEvent;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\DataTypes\LocaleDataType;
+use exface\Core\Interfaces\Model\UiPageInterface;
 
 /**
  * Makes the data of certain attributes of the object translatable.
@@ -439,6 +440,10 @@ class TranslatableBehavior extends AbstractBehavior
         $menuItem->setName($translator->translate('NAME', null, null, $domain, $menuItem->getName()));
         $menuItem->setDescription($translator->translate('DESCRIPTION', null, null, $domain, $menuItem->getDescription()));
         $menuItem->setIntro($translator->translate('INTRO', null, null, $domain, $menuItem->getIntro()));
+        
+        if ($menuItem instanceof UiPageInterface) {
+            $menuItem->setContents($translator->translateUxonProperties(UxonObject::fromAnything($menuItem->getContents()), $domain, 'CONTENT'));
+        }
 
         return;
     }
@@ -547,7 +552,7 @@ class TranslatableBehavior extends AbstractBehavior
     {
         $object = $event->getObject();
         $uxon = $event->getDefaultEditorUxon();
-        $translated = $object->getApp()->getTranslator()->translateUxonProperties($uxon, 'Objects/' . $object->getAlias(), 'DEFAULT_EDITOR_UXON');
+        $translated = $object->getApp()->getTranslator()->translateUxonProperties($uxon, 'Objects/' . $object->getAliasWithNamespace(), 'DEFAULT_EDITOR_UXON');
         foreach ($translated->getPropertiesAll() as $prop => $value) {
             $uxon->setProperty($prop, $value);
         }
@@ -659,7 +664,7 @@ class TranslatableBehavior extends AbstractBehavior
         if (! $value) {
             return;
         }
-        $transJson = json_decode($value, true);
+        $transJsonOld = json_decode($value, true);
         
         $path = $dialogWidget->getPrefillData()->getCellValue('PATHNAME_RELATIVE', 0);
         $subfolder = StringDataType::substringAfter($path, '/' . $this->getTranslationFolder() . '/', '');
@@ -684,30 +689,43 @@ class TranslatableBehavior extends AbstractBehavior
         $keyStatusNew = $coreTranslator->translate('BEHAVIOR.TRANSLATABLE.KEY_STATUS_NEW');
         $keyStatusInherited = $coreTranslator->translate('BEHAVIOR.TRANSLATABLE.KEY_STATUS_INHERITED');
         
+        // Find all keys currently required and their default values
         $translatables = $this->findTranslatables($behavior, $dataKey);
         $statuses = [];
+        
         $keysExpected = array_keys($translatables);
-        $keysFound = array_keys($transJson);
+        $keysFound = array_keys($transJsonOld);
+        $missingKeys = array_diff($keysExpected, $keysFound);
+        $obsoleteKeys = array_diff($keysFound, $keysExpected);
+        
+        // Create an array with current keys and values from the existing translation file
+        $transJson = [];
+        foreach ($keysExpected as $key) {
+            $transJson[$key] = $transJsonOld[$key];
+        }
+        
+        // Mark keys inherited from the default language
         foreach ($transJson as $key => $val) {
             if ($val === null) {
                 $statuses[$key] = $keyStatusInherited;
             }
         }
         
-        $missingKeys = array_diff($keysExpected, $keysFound);
-        $obsoleteKeys = array_diff($keysFound, $keysExpected);
-        // IDEA mark new keys in nother ref-colum?
-        foreach ($missingKeys as $key) {
-            $transJson = array_merge([$key => null], $transJson);
+        // Mark new keys (not presen in the $transJsonOld)
+        foreach (array_reverse($missingKeys) as $key) {
             $statuses[$key] = $keyStatusNew;
         }
+        
+        // Remove keys not required anymore
         // IDEA mark obsolete keys in another ref-column and remove them when saving?
-        foreach ($obsoleteKeys as $key) {
+        foreach (array_reverse($obsoleteKeys) as $key) {
             unset($transJson[$key]);
         }
         
+        // Give the widget the computed JSON as value
         $contentWidget->setValue(JsonDataType::encodeJson($transJson, true));
         
+        // Add statuses and a second language if widget supports it
         if ($contentWidget instanceof InputKeysValues) {
             $contentWidget->setReferenceValues([
                 $keyStatus => $statuses,
@@ -744,6 +762,10 @@ class TranslatableBehavior extends AbstractBehavior
             $keys[Translation::buildTranslationKey([$attrAlias])] = $ds->getCellValue($attrAlias, 0);
         }
         
+        foreach ($behavior->getTranslatableRelations() as $tRel) {
+            $keys = array_merge($keys, $this->findTranslatablesInRelations($tRel, $behavior->getTranslationFilenameAttributeAlias(), $dataKey));
+        }
+        
         foreach ($behavior->getTranslatableUxonAttributeAliases() as $attrAlias) {
             $attr = $behavior->getObject()->getAttribute($attrAlias);
             $uxon = UxonObject::fromJson($ds->getCellValue($attrAlias, 0));
@@ -753,10 +775,6 @@ class TranslatableBehavior extends AbstractBehavior
                 $prototype = '\\' . substr($prototype, 0, -4);
             }
             $keys = array_merge($keys, $this->findTranslatablesInUxon($attr, $uxon, $prototype));
-        }
-        
-        foreach ($behavior->getTranslatableRelations() as $tRel) {
-            $keys = array_merge($keys, $this->findTranslatablesInRelations($tRel, $behavior->getTranslationFilenameAttributeAlias(), $dataKey));
         }
         
         return $keys;
@@ -860,7 +878,7 @@ class TranslatableBehavior extends AbstractBehavior
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.OBJECT_BEHAVIORS');
         $ds->getFilters()->addConditionFromString('CONFIG_UXON', '"translation_subfolder":"' . $subfolder . '"');
         $ds->getColumns()->addMultiple([
-            OBJECT__UID
+            'OBJECT__UID'
         ]);
         $ds->dataRead();
         

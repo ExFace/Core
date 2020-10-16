@@ -16,36 +16,54 @@ use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Factories\QueryBuilderFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Events\Widget\OnWidgetLinkedEvent;
 use exface\Core\Interfaces\Events\WidgetLinkEventInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
-use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\Factories\RelationPathFactory;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * An InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
  * 
- * Thus, the user can see more information about every suggested object. The `InputComboTable` is very 
- * often used with relations, where the related object may have many more data, then merely it's UID 
- * (which is the value of the relation attribute).
+ * This way, the user can see more information about every suggested items. The `InputComboTable` is 
+ * very handy to use with relations, where the related object often has more relevant data, then merely 
+ * it's UID or `ALIAS`.
  * 
- * The `DataTable` for autosuggests can either be genreated automatically based on the meta object, or 
- * specified by the user via UXON in the `table` property.
+ * There are multiple typical use cases for the `InputComboTable`:
+ * 
+ * - with an attribute, that is a relation. In this case, the suggestion-table automatically shows the 
+ * related objects with their default display attributes while the value of the `InputComboTable` itself 
+ * is the relation attribute (i.e. foreign key). You can define a custom `table` for the suggestions if
+ * you need additional columns as shown below.
+ * - with a relation attribute and a custom `table` definition. In this case you can configure the table
+ * completely individually as you would do for a regular `DataTable`. Keep in mind, that all attributes 
+ * and relation paths need to be relative to the table's object (= the related object).
+ * - with a regular attribute. In this case, the suggestion table will show a distinct list of previously
+ * used values of the attribute. The table will have just a single column unless you add a `table`
+ * definition manually as in the case above.
+ * - with a custom `value_attribute_alias` and a custom `table` definition. This allows to look up
+ * an value in a totally unrelated object. The `value_attribute_alias` would be the attribute of the
+ * table-object to take the value from while the widget's `attribute_alias` would be the place to use
+ * that value.
+ * 
+ * In general, the `DataTable` for autosuggests will always be genreated automatically as shown above
+ * unless it is specified by the user via UXON in the `table` property. If a custom `table` is used,
+ * all it's attributes and relations are based on the table's object. The same goes for `value_attribute_alias`
+ * and `text_attribute_alias` - they too are meant to be relative to the `table_object_alias`.
  * 
  * In addition to the tabluar autosuggest, the `InputComboTable` has a `lookup_action`, which will open
- * an advanced-search dialog with even more details, filters and other options. By default, the generic
+ * an advanced search dialog with even more details, filters and other options. By default, the generic
  * `exface.Core.ShowLookupDialog` action is used, which produces a dialog automatiscally from the object's 
- * model default display attributes, but you can customize the the action as well as it's widge by adding
- * custom configuration to the `lookup_action` property.
+ * model default display attributes, but you can customize the the action as well as it's widget within
+ * the `lookup_action` property of the `InputComboTable`.
  * 
- * While not every UI-framework supports such a kind of widget, there are many ways to implement the main 
- * idea of the `InputComboTable`: showing more data about a selectable object in the autosuggest. Mobile 
- * facades might use cards like in Googles material design, for example. Also not all facades support the
- * `lookup_action`.
- * 
- * `InputComboTable`s support two type of live references to other objects: in the value and in the data 
- * filters. 
+ * While not every UI-framework supports tabular autosuggests directly, there are many ways to implement 
+ * the idea of the `InputComboTable`: showing more data about a selectable object in the autosuggest. Mobile 
+ * facades might use cards like in Google's material design, for example. Also not all facades support the
+ * `lookup_action` - in this case the corresponding button will simply not show up.
  * 
  * ## Examples
  * 
@@ -170,30 +188,6 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     }
 
     /**
-     * Returns the relation, this widget represents or FALSE if the widget stands for a direct attribute.
-     * This shortcut function is very handy because a InputComboTable often stands for a relation.
-     *
-     * @return MetaRelationInterface|NULL
-     */
-    public function getRelation() : ?MetaRelationInterface
-    {
-        if ($this->isRelation()) {
-            $relAlias = DataAggregation::stripAggregator($this->getAttributeAlias());
-            return $this->getMetaObject()->getRelation($relAlias);
-        } 
-        return null;
-    }
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function isRelation() : bool
-    {
-        return $this->isBoundToAttribute() === true && $this->getAttribute()->isRelation() === true;
-    }
-
-    /**
      * Returns the DataTable, that is used for autosuggesting in a InputComboTable or false if a DataTable cannot be created
      *
      * @return \exface\Core\Widgets\DataTable|boolean
@@ -236,6 +230,13 @@ class InputComboTable extends InputCombo implements iCanPreloadData
                 }
             } elseif ($this->isBoundToAttribute()) {
                 $table->addColumn($table->createColumnFromAttribute($this->getAttribute()));
+                $table->addColumn($table->createColumnFromUxon(new UxonObject([
+                    'attribute_alias' => DataAggregation::addAggregatorToAlias(
+                        $this->getAttributeAlias(), 
+                        new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::COUNT)
+                    ),
+                    'caption' => '=TRANSLATE("exface.Core", "WIDGET.INPUTCOMBOTABLE.COLUMN_NAME_USES")'
+                ])));
             }
         }
         
@@ -461,7 +462,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         // this widgets attribute_alias, simply look for all the required attributes in the prefill data.
         if ($col = $data_sheet->getColumns()->getByExpression($this->getAttributeAlias())) {
             $valuePointer = DataPointerFactory::createFromColumn($col, 0);
-            $this->setValue($valuePointer->getValue());
+            $this->setValue($valuePointer->getValue(), false);
             $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $valuePointer));
         }
         
@@ -507,7 +508,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             if ($this->getMultiSelect() && is_array($value)) {
                 $value = $col->aggregate(AggregatorFunctionsDataType::LIST_ALL);
             }
-            $this->setValue($value);
+            $this->setValue($value, false);
             $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $pointer));
         }
         if ($col = $data_sheet->getColumns()->getByAttribute($this->getTextAttribute())) {
@@ -537,12 +538,21 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         // contain selectors (UIDs) of that object. This means, we need to look for data columns showing relations
         // and see if their related object is the same as the related object of the relation represented by the combo.
         foreach ($data_sheet->getColumns()->getAll() as $column) {
-            if ($column->getAttribute() && $column->getAttribute()->isRelation()) {
-                if ($column->getAttribute()->getRelation()->getRightObject()->is($this->getRelation()->getRightObject())) {
-                    $this->setValuesFromArray($column->getValues(false));
+            if (($colAttr = $column->getAttribute()) && $colAttr->isRelation()) {
+                $colRel = $colAttr->getRelation();
+                if ($colRel->getRightObject()->is($this->getRelation()->getRightObject())) {
+                    $this->setValuesFromArray($column->getValues(false), false);
+                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', DataPointerFactory::createFromColumn($column)));
                     $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'values', DataPointerFactory::createFromColumn($column)));
                     return;
                 }
+                /* TODO add other options to prefill from related data
+                if ($colRel->getLeftKeyAttribute()->isExactly($this->getAttribute())) {
+                    $this->setValuesFromArray($column->getValues(false));
+                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', DataPointerFactory::createFromColumn($column)));
+                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'values', DataPointerFactory::createFromColumn($column)));
+                    return;
+                }*/
             }
         }
     }
@@ -566,7 +576,8 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
             $this->doPrefillWithWidgetObject($data_sheet);
         } else {
-            // If the prefill data was loaded for another object, there are still multiple possibilities to prefill
+            // If the prefill data was loaded for another object, there are still multiple 
+            // possibilities to prefill
             if ($data_sheet->getMetaObject()->is($this->getTableObject())) {
                 $this->doPrefillWithOptionsObject($data_sheet);
                 return;
@@ -597,7 +608,9 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             return $data_sheet;
         }
         
-        if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
+        $sheetObj = $data_sheet->getMetaObject();
+        $widgetObj = $this->getMetaObject();
+        if ($sheetObj->is($widgetObj)) {
             $data_sheet->getColumns()->addFromExpression($this->getAttributeAlias());
             
             // Be carefull with the value text. If the combo stands for a relation, it can be retrieved from the prefill data,
@@ -612,27 +625,56 @@ class InputComboTable extends InputCombo implements iCanPreloadData
                 // is generally optional (see above), it is a good idea to check, if the text column
                 // can be read with the same query, as the rest of the prefill da and, if not, exclude
                 // it from the prefill.
-                $sheetObj = $data_sheet->getMetaObject();
+                $sheetObj = $sheetObj;
                 if ($sheetObj->hasAttribute($text_column_expr)) {
                     $sheetQuery = QueryBuilderFactory::createForObject($sheetObj);
                     if (! $sheetQuery->canRead($text_column_expr)) {
                         unset($text_column_expr);
                     }
                 }
-            } elseif ($this->getMetaObject()->isExactly($this->getTable()->getMetaObject())) {
+            } elseif ($widgetObj->isExactly($this->getTable()->getMetaObject())) {
                 $text_column_expr = $this->getTextColumn()->getExpression()->toString();
             } 
             
             if ($text_column_expr) {
                 $data_sheet->getColumns()->addFromExpression($text_column_expr);
             }
-        } elseif ($this->isRelation() && $this->getRelation()->getRightObject()->is($data_sheet->getMetaObject())) {
+        } elseif ($this->isRelation() && $this->getRelation()->getRightObject()->is($sheetObj)) {
             $data_sheet->getColumns()->addFromAttribute($this->getRelation()->getRightKeyAttribute());
             foreach ($this->getTable()->getColumns() as $col) {
                 $data_sheet->getColumns()->addFromExpression($col->getExpression(), $col->getDataColumnName());
             }
         } else {
-            // TODO what if the prefill object is not the one at the end of the current relation?
+            // If the prefill object is not the same as the widget object, try to find a relation
+            // path from prefill to widget. If found, we can add the required column by prefixing
+            // them with this relation. If the path contains reverse relations, the data will need
+            // to be aggregated!
+            if ($this->isBoundToAttribute() && $relPath = $this->findRelationPathFromObject($sheetObj)) {
+                $isRevRel = $relPath->containsReverseRelations();
+                $keyPrefillAlias = RelationPath::relationPathAdd($relPath->toString(), $this->getAttributeAlias());
+                if ($isRevRel) {
+                    $keyPrefillAlias = DataAggregation::addAggregatorToAlias(
+                        $keyPrefillAlias,
+                        new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::LIST_DISTINCT, [$this->getAttribute()->getValueListDelimiter()])
+                    );
+                }
+                if (! $data_sheet->getColumns()->getByExpression($keyPrefillAlias)) {
+                    $data_sheet->getColumns()->addFromExpression($keyPrefillAlias);
+                }
+                
+                if ($this->isRelation()) {
+                    $textPrefillAlias = RelationPath::relationPathAdd(DataAggregation::stripAggregator($keyPrefillAlias), $this->getTextAttributeAlias());
+                    if ($isRevRel) {
+                        $textPrefillAlias = DataAggregation::addAggregatorToAlias(
+                            $textPrefillAlias,
+                            new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::LIST_DISTINCT, [$this->getTextAttribute()->getValueListDelimiter()])
+                        );
+                    }
+                    if (! $data_sheet->getColumns()->getByExpression($textPrefillAlias)) {
+                        $data_sheet->getColumns()->addFromExpression($textPrefillAlias);
+                    }
+                }
+            }
         }
         
         return $data_sheet;
@@ -976,5 +1018,27 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         }
         
         $this->incomingLinks[] = $event->getWidgetLink();
+    }
+    
+    public function findRelationPathFromObject(MetaObjectInterface $object) : ?MetaRelationPathInterface
+    {
+        // If the object is the one at the end of the relation represented by the combo,
+        // simply return the reverse path
+        if ($this->isRelation() && $object->is($this->getMetaObject()->getRelatedObject($this->getAttributeAlias()))) {
+            return RelationPathFactory::createFromString($this->getMetaObject(), $this->getAttributeAlias())->reverse();
+        }
+        
+        // If the action is based on the same object as the widget's parent, use the widget's
+        // logic to find the relation to the parent. Otherwise try to find a relation to the
+        // action's object and throw an error if this fails.
+        if ($this->hasParent() && $object->is($this->getParent()->getMetaObject()) && $relPath = $this->getObjectRelationPathFromParent()) {
+            return $relPath;
+        }
+        
+        if ($relPath = $object->findRelationPath($this->getMetaObject())) {
+            return $relPath;
+        }
+        
+        return null;
     }
 }
