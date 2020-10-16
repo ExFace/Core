@@ -100,6 +100,10 @@ trait EnumStaticDataTypeTrait {
             return parent::cast($value);
         }
         
+        if ($value === EXF_LOGICAL_NULL) {
+            return $value;
+        }
+        
         $value = parent::cast($value);
         
         if (! static::isValidStaticValue($value)){
@@ -142,7 +146,7 @@ trait EnumStaticDataTypeTrait {
      */
     public static function fromValue(WorkbenchInterface $workbench, string $value)
     {
-        return DataTypeFactory::createFromPrototype($workbench, __CLASS__)->withValue(strtoupper($value));
+        return DataTypeFactory::createFromPrototype($workbench, __CLASS__)->withValue($value);
     }
     
     /**

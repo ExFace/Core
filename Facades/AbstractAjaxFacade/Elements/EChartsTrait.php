@@ -26,6 +26,7 @@ use exface\Core\Widgets\Parts\Charts\GraphChartSeries;
 use exface\Core\Widgets\DataButton;
 use exface\Core\Widgets\Parts\Charts\HeatmapChartSeries;
 use exface\Core\Widgets\Parts\Charts\VisualMapChartPart;
+use exface\Core\Widgets\Parts\Charts\Interfaces\SplittableChartSeriesInterface;
 
 /**
  * Trait to use for implementation of charts into a facade using echarts library (https://www.echartsjs.com/en/index.html).
@@ -942,7 +943,7 @@ JS;
             if ($s instanceof HeatmapChartSeries && count($series) > 1) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support heatmap charts with multiple series!');
             }
-            if (($s instanceof LineChartSeries || $s instanceof ColumnChartSeries) && count($series) > 1 && $s->getSplitByAttributeAlias() !== null) {
+            if (($s instanceof LineChartSeries || $s instanceof ColumnChartSeries) && count($series) > 1 && $s->isSplitByAttribute()) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support split by attribute with multiple series!');
             }
             $seriesConfig .= $this->buildJsChartSeriesConfig($s) . ',';
@@ -950,10 +951,11 @@ JS;
                 $visualMapConfig .= $this->buildJsVisualMapConfig($s, $visualMapCount) . ',';
                 $visualMapCount++;
             }
-            
-            if ($s instanceof BarChartSeries && $s->getIndex() != 0) {
-                if ($series[$s->getIndex() - 1] instanceof BarChartSeries === false) {
-                    throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support bar charts mixed with other chart types!');
+            if ($s instanceof BarChartSeries && count($series) > 1) {
+                foreach ($series as $sOther) {
+                    if ($sOther instanceof BarChartSeries === false) {
+                        throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support bar charts mixed with other chart types!');
+                    }
                 }
             }
         }
@@ -1481,7 +1483,7 @@ JS;
             $rotate = '';
         }
         
-        if ($axisType === ChartAxis::AXIS_TYPE_CATEGORY) {
+        if ($axis->hasTicksForEveryValue()) {
             $interval = 'interval: 0';
             $axisTick = <<<JS
             
@@ -1990,6 +1992,13 @@ JS;
             }
         }
         
+        if ($this->getWidget()->getSeries()[0] instanceof SplittableChartSeriesInterface && $this->getWidget()->getSeries()[0]->isSplitByAttribute()) {
+            $splitByDataColumnName = "'{$this->getWidget()->getSeries()[0]->getSplitByDataColumn()->getDataColumnName()}'";
+        } else {
+            $splitByDataColumnName = "undefined";
+        }
+        
+        
         return <<<JS
 
     
@@ -2086,7 +2095,7 @@ JS;
     newOptions.grid = gridmargin;    
     {$this->buildJsEChartsVar()}.setOption(newOptions);
     
-    var split = "{$this->getWidget()->getSeries()[0]->getSplitByAttributeAlias()}" || undefined
+    var split = {$splitByDataColumnName};
     if (split === undefined) {
         {$this->buildJsSplitCheck()}
     } 
@@ -2243,7 +2252,10 @@ JS;
     var arrayLength = {$dataJs}.length;
     var chartData = [];
     for (var i = 0; i < arrayLength; i++) {
-        var item = { value: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} , name: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} };
+        var item = { 
+            value: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} , 
+            name: {$this->buildJsLabelFormatter($this->getWidget()->getSeries()[0]->getTextDataColumn(), "{$dataJs}[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}")} 
+        };
         chartData.push(item);
     }
     
@@ -2477,7 +2489,7 @@ JS;
             $margin += $this->baseAxisNameGap() * $countAxisRight;
         }
         
-        if ($this->legendHidden() === false && ($widget->getLegendPosition() === 'top' || $widget->getLegendPosition() === null)) {
+        if ($this->isLegendHidden() === false && ($widget->getLegendPosition() === 'top' || $widget->getLegendPosition() === null)) {
             $margin += $this->baseLegendOffset();
         }
         return $margin;
@@ -2524,7 +2536,7 @@ JS;
                 $count++;
             }
         }
-        if ($this->legendHidden() === false && $widget->getLegendPosition() === 'bottom') {
+        if ($this->isLegendHidden() === false && $widget->getLegendPosition() === 'bottom') {
             $margin += $this->baseLegendOffset();
         }
         $hasVisualMap = false;
@@ -2753,7 +2765,7 @@ JS;
         $widget = $this->getWidget();
         $firstSeries = $widget->getSeries()[0];
         $position = $widget->getLegendPosition();
-        if ($this->legendHidden() === true) {
+        if ($this->isLegendHidden() === true) {
             $positionJs = "show: false";
         } elseif ($position == 'top' ) {
             $positionJs = "top: 'top',";
@@ -2768,7 +2780,7 @@ JS;
             $padding = 'padding: [20,10,20,10],';
         }
         
-        if ($this->legendHidden() === true) {
+        if ($this->isLegendHidden() === true) {
             $show = 'show: false,';
         } else {
             $show = '';
@@ -2914,7 +2926,7 @@ JS;
      *
      * @return bool
      */
-    protected function legendHidden() : bool
+    protected function isLegendHidden() : bool
     {
         $widget = $this->getWidget();
         if ($widget->getLegendPosition() !== null) {
@@ -2924,8 +2936,13 @@ JS;
             return true;
         }
         $firstSeries = $widget->getSeries()[0];
-        if (count($widget->getSeries()) == 1 && (($firstSeries instanceof PieChartSeries) === false || $firstSeries instanceof GraphChartSeries === false)) {
+        if (count($widget->getSeries()) === 1 && (($firstSeries instanceof PieChartSeries) === false || $firstSeries instanceof GraphChartSeries === false)) {
             if ($firstSeries->getValueDataColumn() === $firstSeries->getValueAxis()->getDataColumn()){
+                if ($firstSeries instanceof SplittableChartSeriesInterface) {
+                    if ($firstSeries->isSplitByAttribute()) {
+                        return false;
+                    }
+                }
                 return true;
             } else {
                 return false;

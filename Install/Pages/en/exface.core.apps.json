@@ -1,13 +1,17 @@
 {
-    "id": "0xa7760458949e11e7a353028037ec0200",
+    "uid": "0xa7760458949e11e7a353028037ec0200",
     "alias_with_namespace": "exface.core.apps",
-    "menu_parent_page_alias": "exface.core.metamodel",
-    "menu_index": "0",
+    "menu_parent_page_selector": "0x8f9e3238949e11e7aa5f028037ec0200",
+    "menu_index": 1,
     "menu_visible": true,
     "name": "Apps",
     "description": "Create, install, repair and backup apps",
     "intro": "",
-    "replaces_page_alias": null,
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2020-03-12 14:04:30",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2020-06-07 15:51:44",
     "contents": {
         "object_alias": "exface.Core.APP",
         "widget_type": "DataTable",
@@ -44,24 +48,8 @@
                 "attribute_alias": "PACKAGE__version"
             },
             {
-                "attribute_alias": "MODEL_MODIFIED_ON",
-                "cell_widget": {
-                    "widget_type": "ColorIndicator",
-                    "fill": true,
-                    "color_conditions": {
-                        "> PACKAGE__model_timestamp": "yellow"
-                    }
-                }
-            },
-            {
-                "attribute_alias": "PACKAGE__model_timestamp",
-                "cell_widget": {
-                    "widget_type": "ColorIndicator",
-                    "fill": true,
-                    "color_conditions": {
-                        "< MODEL_MODIFIED_ON": "yellow"
-                    }
-                }
+                "attribute_alias": "PAGE__UID:COUNT",
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.PAGES')"
             },
             {
                 "attribute_alias": "OBJECT__UID:COUNT",
@@ -74,6 +62,14 @@
             {
                 "attribute_alias": "CONNECTION__UID:COUNT",
                 "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.CONNECTIONS')"
+            },
+            {
+                "attribute_alias": "USER_ROLE__UID:COUNT",
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ROLES')"
+            },
+            {
+                "attribute_alias": "AUTHORIZATION_POLICY__UID:COUNT",
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.POLICIES')"
             }
         ],
         "buttons": [

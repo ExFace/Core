@@ -4,9 +4,7 @@ namespace exface\Core\CommonLogic;
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'autoload.php';
 
 use exface\Core\CommonLogic\Log\Log;
-use exface\Core\Interfaces\CmsConnectorInterface;
 use exface\Core\Factories\DataConnectionFactory;
-use exface\Core\Factories\CmsConnectorFactory;
 use exface\Core\Factories\AppFactory;
 use exface\Core\Factories\ModelLoaderFactory;
 use exface\Core\Interfaces\Events\EventManagerInterface;
@@ -26,7 +24,6 @@ use exface\Core\CommonLogic\Selectors\AppSelector;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Exceptions\AppNotFoundError;
-use exface\Core\CommonLogic\Selectors\CmsConnectorSelector;
 use exface\Core\CommonLogic\Selectors\ModelLoaderSelector;
 use exface\Core\Exceptions\AppComponentNotFoundError;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
@@ -34,14 +31,13 @@ use exface\Core\Events\Workbench\OnStartEvent;
 use exface\Core\Events\Workbench\OnStopEvent;
 use exface\Core\Interfaces\Security\SecurityManagerInterface;
 use exface\Core\CommonLogic\Security\SecurityManager;
+use exface\Core\Events\Workbench\OnBeforeStopEvent;
 
 class Workbench implements WorkbenchInterface
 {
     private $started = false;
 
     private $data;
-
-    private $cms;
 
     private $mm;
 
@@ -56,6 +52,8 @@ class Workbench implements WorkbenchInterface
     private $context;
 
     private $running_apps = array();
+    
+    private $running_apps_selectors = [];
 
     private $utils = null;
 
@@ -69,16 +67,24 @@ class Workbench implements WorkbenchInterface
     
     private $security = null;
 
-    public function __construct()
-    {        
+    public function __construct(array $config = null)
+    {   
+        $cfg = $this->getConfig();
+        
+        if ($config !== null) {
+            foreach ($config as $option => $value) {
+                $cfg->setOption($option, $value);
+            }
+        }
+        
         // If the config overrides the installation path, use the config value, otherwise go one level up from the vendor folder.
-        if ($this->getConfig()->hasOption('FOLDERS.INSTALLATION_PATH_ABSOLUTE') && $installation_path = $this->getConfig()->getOption("FOLDERS.INSTALLATION_PATH_ABSOLUTE")) {
+        if ($cfg->hasOption('FOLDERS.INSTALLATION_PATH_ABSOLUTE') && $installation_path = $cfg->getOption("FOLDERS.INSTALLATION_PATH_ABSOLUTE")) {
             $this->setInstallationPath($installation_path);
         } 
         
         // If the current config uses the live autoloader, load it right next
         // to the one from composer.
-        if ($this->getConfig()->getOption('DEBUG.LIVE_CLASS_AUTOLOADER')){
+        if ($cfg->getOption('DEBUG.LIVE_CLASS_AUTOLOADER')){
             require_once 'splClassLoader.php';
             $classLoader = new \SplClassLoader(null, array(
                 $this->getVendorDirPath()
@@ -103,16 +109,13 @@ class Workbench implements WorkbenchInterface
         // Start the error handler
         $dbg = new Debugger($this->logger);
         $this->setDebugger($dbg);
-        if ($this->getConfig()->getOption('DEBUG.PRETTIFY_ERRORS')) {
+        $config = $this->getConfig();
+        if ($config->getOption('DEBUG.PRETTIFY_ERRORS')) {
             $dbg->setPrettifyErrors(true);
         }
 
-        // start the event dispatcher
-        $this->event_manager = new EventManager($this);
-        $this->event_manager->dispatch(new OnStartEvent($this));
+        $this->eventManager()->dispatch(new OnStartEvent($this));
         
-        // load the CMS connector
-        $this->cms = CmsConnectorFactory::create(new CmsConnectorSelector($this, $this->getConfig()->getOption('CMS_CONNECTOR')));
         // init data module
         $this->data = new DataManager($this);
         
@@ -120,18 +123,19 @@ class Workbench implements WorkbenchInterface
         $this->mm = new \exface\Core\CommonLogic\Model\Model($this);
         
         // Init the ModelLoader
-        $model_loader_selector = new ModelLoaderSelector($this, $this->getConfig()->getOption('MODEL_LOADER'));
+        $model_loader_selector = new ModelLoaderSelector($this, $config->getOption('METAMODEL.LOADER_CLASS'));
         try {
             $model_loader = ModelLoaderFactory::create($model_loader_selector);
         } catch (AppComponentNotFoundError $e) {
             throw new InvalidArgumentException('No valid model loader found in current configuration - please add a valid "MODEL_LOADER" : "file_path_or_qualified_alias_or_qualified_class_name" to your config in "' . $this->filemanager()->getPathToConfigFolder() . '"', null, $e);
         }
-        $model_connection = DataConnectionFactory::createFromPrototype($this, $this->getConfig()->getOption('MODEL_DATA_CONNECTOR'));
+        
+        $model_connection = DataConnectionFactory::createModelLoaderConnection($config);
         $model_loader->setDataConnection($model_connection);
         $this->model()->setModelLoader($model_loader);
         
         // Load the context
-        $this->context = new ContextManager($this);
+        $this->context = new ContextManager($this, $config);
         
         $this->security = new SecurityManager($this);
         
@@ -143,24 +147,35 @@ class Workbench implements WorkbenchInterface
     }
 
     /**
-     *
-     * @return \exface\Core\CommonLogic\Workbench
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::startNewInstance()
      */
-    public static function startNewInstance()
+    public static function startNewInstance(array $config = null) : WorkbenchInterface
     {
-        $instance = new self();
+        $instance = new self($config);
         $instance->start();
         return $instance;
     }
 
     /**
-     * Returns TRUE if start() was successfully called on this workbench instance and FALSE otherwise.
-     *
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::isStarted()
      */
-    public function isStarted()
+    public function isStarted() : bool
     {
         return $this->started;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::isInstalled()
+     */
+    public function isInstalled() : bool
+    {
+        return $this->getContext()->getScopeInstallation()->getVariable('last_metamodel_install') ? true : false;
     }
 
     /**
@@ -172,8 +187,16 @@ class Workbench implements WorkbenchInterface
         return $this->getCoreApp()->getConfig();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::model()
+     */
     public function model()
     {
+        if ($this->mm === null) {
+            throw new RuntimeException('Meta model not initialized: workbench not started properly?');
+        }
         return $this->mm;
     }
 
@@ -193,15 +216,6 @@ class Workbench implements WorkbenchInterface
 
     /**
      *
-     * @return CmsConnectorInterface
-     */
-    public function getCMS()
-    {
-        return $this->cms;
-    }
-
-    /**
-     *
      * @return DataManagerInterface
      */
     public function data()
@@ -216,23 +230,30 @@ class Workbench implements WorkbenchInterface
      * @param string $appSelectorString
      * @return AppInterface
      */
-    public function getApp($selectorOrString)
+    public function getApp($selectorOrString) : AppInterface
     {
         if ($selectorOrString instanceof AppSelectorInterface) {
+            if ($app = $this->running_apps_selectors[$selectorOrString->toString()]) {
+                return $app;
+            }
             $selector = $selectorOrString;
         } elseif (is_string($selectorOrString)) {
+            if ($app = $this->running_apps_selectors[$selectorOrString]) {
+                return $app;
+            }
             $selector = new AppSelector($this, $selectorOrString);
         } else {
             throw new InvalidArgumentException('Invalid app selector used: ' . $selectorOrString . '!');
         }
         
-        if ($app = $this->findAppRunning($selector)) {
-            return $app;
-        } else {
+        if (! $app = $this->findAppRunning($selector)) {
             $app = AppFactory::create($selector);
             $this->running_apps[] = $app;
-            return $app;
         }
+        
+        $this->running_apps_selectors[$selector->toString()] = $app;
+        
+        return $app;
     }
 
     /**
@@ -241,7 +262,7 @@ class Workbench implements WorkbenchInterface
      * @param AppSelectorInterface $selector
      * @return AppInterface|false
      */
-    protected function findAppRunning(AppSelectorInterface $selector)
+    protected function findAppRunning(AppSelectorInterface $selector) : ?AppInterface
     {
         if ($selector->isUid() && $this->model()) {
             // Die App-UID darf nur abgefragt werden, wenn tatsaechlich eine UID ueber-
@@ -253,6 +274,12 @@ class Workbench implements WorkbenchInterface
                     return $app;
                 }
             }
+        } elseif ($selector->isAlias()) {
+            foreach ($this->running_apps as $app) {
+                if (strcasecmp($app->getAliasWithNamespace(), $selector->toString()) === 0) {
+                    return $app;
+                }
+            }
         } else {
             foreach ($this->running_apps as $app) {
                 if (strcasecmp($app->getAliasWithNamespace(), $selector->getAppAlias()) === 0) {
@@ -260,7 +287,8 @@ class Workbench implements WorkbenchInterface
                 }
             }
         }
-        return false;
+        
+        return null;
     }
 
     /**
@@ -273,13 +301,26 @@ class Workbench implements WorkbenchInterface
         return $this->getApp('exface.Core');
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::stop()
+     */
     public function stop()
     {
         if ($this->isStarted()) {
+            $this->eventManager()->dispatch(new OnBeforeStopEvent($this));
             $this->getContext()->saveContexts();
             $this->data()->disconnectAll();
             $this->eventManager()->dispatch(new OnStopEvent($this));
             $this->started = false;
+            /* TODO it would be nicer to deinitialize these things when stopping,
+             * but the logger won't be able to dump logs properly without the
+             * context manager...
+            unset($this->logger);
+            unset($this->event_manager);
+            unset($this->context);
+            unset($this->cache);*/
         }
     }
 
@@ -290,6 +331,9 @@ class Workbench implements WorkbenchInterface
      */
     public function eventManager()
     {
+        if ($this->event_manager === null) {
+            $this->event_manager = new EventManager($this);
+        }
         return $this->event_manager;
     }
 
@@ -466,5 +510,19 @@ class Workbench implements WorkbenchInterface
         }
         return $this->cache;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::getUrl()
+     */
+    public function getUrl() : string
+    {
+        $url = $this->getConfig()->getOption('SERVER.BASE_URLS')->toArray()[0];
+        if ($url !== null) {
+            return $url;
+        }
+        
+        return '';
+    }
 }
-?>

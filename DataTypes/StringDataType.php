@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Exceptions\UnderflowException;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Basic data type for textual values.
@@ -192,7 +193,7 @@ class StringDataType extends AbstractDataType
      */
     public function getLengthMin()
     {
-        return $this->lengthin;
+        return $this->lengthMin;
     }
 
     /**
@@ -206,7 +207,7 @@ class StringDataType extends AbstractDataType
      */
     public function setLengthMin($number)
     {
-        $this->lengthin = $number;
+        $this->lengthMin = $number;
         return $this;
     }
 
@@ -277,6 +278,22 @@ class StringDataType extends AbstractDataType
             $replace[] = $placeholders[$ph] ?? '';
         }
         return str_replace($search, $replace, $string);
+    }
+    
+    /**
+     * 
+     * @param string $string
+     * @param string $placeholder
+     * @param mixed $value
+     * @return string
+     */
+    public static function replacePlaceholder(string $string, string $placeholder, $value) : string
+    {
+        if (! is_scalar($value)) {
+            throw new RuntimeException('Cannot replace placeholder "' . $placeholder . '" in string "' . $string . '": replacement value must be scalar, ' . gettype($value) . ' received!');
+        }
+        $search = '[#' . $placeholder . '#]';
+        return str_replace($search, $value, $string);
     }
     
     /**
@@ -398,6 +415,26 @@ class StringDataType extends AbstractDataType
      */
     public static function encodeUTF8(string $string, string $originalEncoding = null) {
         return mb_convert_encoding($string, 'UTF-8', ($originalEncoding ?? mb_detect_encoding($string)));
+    }
+    
+    /**
+     * 
+     * @param string $string
+     * @param int $length
+     * @param bool $stickToWords
+     * @return string
+     */
+    public static function truncate(string $string, int $length, bool $stickToWords) : string
+    {
+        if ($stickToWords === false) {
+            return mb_substr($string, 0, $length);
+        } else {
+            if (strlen($string) > $length) {
+                $string = wordwrap($string, $length);
+                $string = mb_substr($string, 0, mb_strpos($string, "\n"));
+            }
+            return $string;
+        }
     }
 }
 ?>

@@ -4,12 +4,21 @@ namespace exface\Core\Factories;
 use exface\Core\CommonLogic\Model\UiPageTree;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\CommonLogic\Model\UiPageTreeNode;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
+use exface\Core\Interfaces\Selectors\UiPageGroupSelectorInterface;
+use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\CommonLogic\Selectors\AppSelector;
 
 class UiPageTreeFactory extends AbstractStaticFactory
 {
     /**
      * Creates a complete tree with the default root page as root.
-     * The `depth` property controls how many levels the tree shows.
+     * 
+     * The `depth` property controls how many levels of the tree are to be loaded
+     * (use `null` for unlimited depth).
      * 
      * To get the tree root nodes call the function `getRootNodes()` of the tree object.
      * 
@@ -43,7 +52,10 @@ class UiPageTreeFactory extends AbstractStaticFactory
     
     /**
      * Creates a complete tree with the root page, given as `rootPage` property, as root.
-     * The `depth` property controls how many levels the tree shows.
+     * 
+     * The `depth` property controls how many levels of the tree are to be loaded
+     * (use `null` for unlimited depth).
+     * 
      * To get the tree root nodes call the function `getRootNodes()` of the tree object.
      * 
      * Example with `App1` as root page:
@@ -58,15 +70,33 @@ class UiPageTreeFactory extends AbstractStaticFactory
      *     App1_ChildPage3_Child1_Child
      *
      * 
-     * @param Workbench $exface
      * @param UiPageInterface $rootPage
      * @param int $depth
      * @return UiPageTree
      */
-    public static function createFromRootPage(Workbench $exface, UiPageInterface $rootPage, int $depth = null) : UiPageTree
+    public static function createFromRootPage(UiPageInterface $rootPage, int $depth = null) : UiPageTree
     {
-        $tree = new UiPageTree($exface);
+        $tree = new UiPageTree($rootPage->getWorkbench());
         $tree->setRootPages([$rootPage]);
+        $tree->setExpandDepth($depth);
+        return $tree;
+    }
+    
+    /**
+     * Instantiates a page tree starting from multiple nodes.
+     * 
+     * The `depth` property controls how many levels of the tree are to be loaded
+     * (use `null` for unlimited depth).
+     * 
+     * @param UiPageInterface[] $rootPages
+     * @param int $depth
+     * @return UiPageTree
+     */
+    public static function createFromRootPages(array $rootPages, int $depth = null) : UiPageTree
+    {
+        $workbench = reset($rootPages)->getWorkbench();
+        $tree = new UiPageTree($workbench);
+        $tree->setRootPages($rootPages);
         $tree->setExpandDepth($depth);
         return $tree;
     }
@@ -78,7 +108,7 @@ class UiPageTreeFactory extends AbstractStaticFactory
      * as well as all ancestor pages, and all pages on the same level as the ancestor pages,
      * till the root page.
      *  
-     * The root page can also be set by calling the `setRootPages` function of the tree object and giving the root page as an array.
+     * The root page can also be set by calling the `setRootPages` function of the tree object.
      * 
      * To get the tree root nodes call the function `getRootNodes()` of the tree object.
      * 
@@ -100,7 +130,7 @@ class UiPageTreeFactory extends AbstractStaticFactory
      */
     public static function createForLeafNode(Workbench $exface, UiPageInterface $leafPage, UiPageInterface $rootPage = null) : UiPageTree
     {
-        $tree = new UiPageTree($exface);
+        $tree = new UiPageTree($exface);        
         $tree->setExpandPathToPage($leafPage);
         if ($rootPage !== null) {
             $tree->setRootPages([$rootPage]);
@@ -109,36 +139,71 @@ class UiPageTreeFactory extends AbstractStaticFactory
     }
     
     /**
-     * /**
-     * Creates a tree with the as `rootPage` property given root page as root, 
-     * if no root page is given the default root page is used as root.
-     * The tree shows all ancestor pages of the leaf page, given as `leafPage` property, till the root page.
-     * That type of tree is also called breadcrumbs.
-     *  
-     * The root page can also be set by calling the `setRootPages` function of the tree object and giving the root page as an array.
+     * Creates a page tree node from it's properties
      * 
-     * To get the tree root nodes call the function `getRootNodes()` of the tree object.
+     * @param WorkbenchInterface $workbench
+     * @param string $alias
+     * @param string $name
+     * @param string $pageUid
+     * @param bool $published
+     * @param UiPageTreeNodeInterface $parentNode
+     * @param string $description
+     * @param string $intro
+     * @param UiPageGroupSelectorInterface|string[] $pageGroupSelectors
      * 
-     * Example with `App1_ChildPage3_Child1` as leaf page:
-     * 
-     * App1
-     *   App1_ChildPage3
-     *      App1_ChildPage3_Child1
-     *          App1_ChildPage3_Child1_Child
-     * 
-     * @param Workbench $exface
-     * @param UiPageInterface $page 
-     * @param UiPageInterface $rootPage
-     * @return UiPageTree
+     * @return UiPageTreeNode
      */
-    public static function createBreadcrumbsToPage(Workbench $exface, UiPageInterface $page, UiPageInterface $rootPage = null) : UiPageTree
+    public static function createNode(
+        WorkbenchInterface $workbench, 
+        string $alias, 
+        string $name, 
+        string $pageUid,
+        bool $published,
+        UiPageTreeNodeInterface $parentNode = null,
+        string $description = null,
+        string $intro = null,
+        array $pageGroupSelectors = null,
+        $appSelectorOrString = null) : UiPageTreeNode
     {
-        $tree = new UiPageTree($exface);
-        $tree->setExpandPathToPage($page);
-        if ($rootPage !== null) {
-            $tree->setRootPages([$rootPage]);
+        $node = new UiPageTreeNode($workbench, $alias, $name, $pageUid, $parentNode);
+        $node->setPublished($published);
+        if ($description !== null) {
+            $node->setDescription($description);
         }
-        $tree->setExpandPathOnly(true);
-        return $tree;
+        if ($intro !== null) {
+            $node->setIntro($intro);
+        }
+        if ($pageGroupSelectors !== null) {
+            foreach ($pageGroupSelectors as $selectorOrString) {
+                $node->addGroupSelector($selectorOrString);
+            }
+        }
+        
+        if ($appSelectorOrString !== null) {
+            $node->setApp($appSelectorOrString instanceof AppSelectorInterface ? $appSelectorOrString : new AppSelector($workbench, $appSelectorOrString));
+        }
+        
+        $ap = $workbench->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class);
+        $ap->authorize($node);
+        
+        return $node;
+    }
+    
+    /**
+     * 
+     * @param UiPageInterface $page
+     * @return UiPageTreeNode
+     */
+    public static function createNodeFromPage(UiPageInterface $page) : UiPageTreeNode
+    {
+        $node = new UiPageTreeNode($page->getWorkbench(), $page->getAliasWithNamespace(), $page->getName(), $page->getUid());
+        $node->setDescription($page->getDescription());
+        $node->setIntro($page->getIntro());
+        foreach ($page->getGroupSelectors() as $groupSel) {
+            $node->addGroupSelector($groupSel);
+        }
+        $ap = $node->getWorkbench()->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class);
+        $ap->authorize($node);
+        return $node;
     }
 }

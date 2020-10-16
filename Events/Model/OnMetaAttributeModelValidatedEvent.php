@@ -63,4 +63,13 @@ class OnMetaAttributeModelValidatedEvent extends AbstractEvent implements MetaOb
     {
         return $this->attribute->getWorkbench();
     }
+    
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.Model.OnMetaAttributeModelValidated';
+    }
 }

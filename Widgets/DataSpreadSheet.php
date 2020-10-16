@@ -10,6 +10,7 @@ use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\Parts\DataSpreadSheetFooter;
 use exface\Core\Widgets\Traits\DataTableTrait;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * An Excel-like table with editable cells.
@@ -62,7 +63,7 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput
      *
      * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
      */
-    public function getAlternativeContainerForOrphanedSiblings()
+    public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets
     {
         return null;
     }

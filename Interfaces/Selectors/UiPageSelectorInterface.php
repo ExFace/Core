@@ -2,19 +2,17 @@
 namespace exface\Core\Interfaces\Selectors;
 
 /**
+ * Interface for UI page selectors.
+ * 
+ * A UI page is identified by
+ * - a UID
+ * - a unique alias with an optional namespace (app alias)
  * 
  * @author Andrej Kabachnik
  *
  */
-interface UiPageSelectorInterface extends AliasSelectorInterface, UidSelectorInterface
-{
-    /**
-     * Returns TRUE if this selector is a CMS specific page id.
-     * 
-     * @return bool
-     */
-    public function isCmsId() : bool;
-    
+interface UiPageSelectorInterface extends AliasSelectorWithOptionalNamespaceInterface, UidSelectorInterface
+{    
     /**
      * Return TRUE if the selector is empty (neither alias nor UID) and FALSE otherwise.
      * 

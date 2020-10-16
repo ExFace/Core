@@ -186,16 +186,17 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
     public function getWidgetType();
 
     /**
-     *
-     * @return boolean
+     * Returns TRUE/FALSE if the widget was disabled/enabled explicitly anf NULL otherwise.
+     * 
+     * @return bool|NULL
      */
-    public function isDisabled();
+    public function isDisabled() : ?bool;
 
     /**
      *
-     * @param boolean $value            
+     * @param bool|NULL $value            
      */
-    public function setDisabled($value);
+    public function setDisabled(?bool $trueOrFalseOrNull) : WidgetInterface;
 
     /**
      * Returns a dimension object representing the height of the widget.
@@ -241,27 +242,23 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
 
     /**
      * Returns the relation path from the object of the parent widget to the object of this widget.
-     * If both widgets are based on the
-     * same object or no valid path can be found, an empty path will be returned.
+     * 
+     * If both widgets are based on the same object or no valid path can be found, 
+     * an empty path will be returned.
      *
      * @return MetaRelationPathInterface
      */
-    public function getObjectRelationPathFromParent();
-
-    /**
-     *
-     * @param string $string            
-     */
-    public function setObjectRelationPathFromParent($string);
+    public function getObjectRelationPathFromParent() : ?MetaRelationPathInterface;
 
     /**
      * Returns the relation path from the object of this widget to the object of its parent widget.
-     * If both widgets are based on the
-     * same object or no valid path can be found, an empty path will be returned.
+     * 
+     * Returns an empty relation path if both widgets are based on the same object
+     * Returns NULL if no valid path can be found.
      *
-     * @return MetaRelationPathInterface
+     * @return MetaRelationPathInterface|NULL
      */
-    public function getObjectRelationPathToParent();
+    public function getObjectRelationPathToParent() : ?MetaRelationPathInterface;
 
     /**
      *
@@ -272,9 +269,9 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
     /**
      * Returns TRUE if the meta object of this widget was not set explicitly but inherited from it's parent and FALSE otherwise.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isObjectInheritedFromParent();
+    public function isObjectInheritedFromParent() : bool;
 
     /**
      * Returns the parent widget
@@ -440,5 +437,16 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
      * @return bool
      */
     public function hasFacadeOptions(FacadeInterface $facade) : bool;
+
+    /**
+     * Checks if the given meta object has a relation to the object of this widget and returns
+     * the corresponding relation path or NULL if no relation can be found.
+     * 
+     * If the two objects match, an empty relation path will be returned.
+     * 
+     * @param MetaObjectInterface $object
+     * @return MetaRelationPathInterface|NULL
+     */
+    public function findRelationPathFromObject(MetaObjectInterface $object) : ?MetaRelationPathInterface;
 }
 ?>

@@ -101,7 +101,7 @@ class MySqlBuilder extends AbstractSqlBuilder
                 $this->addBinaryColumn($qpart->getAlias());
             }
             
-            if ($group_by && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $qpart->getAggregator()) {
+            if ($group_by && $qpartAttr->getObject()->hasUidAttribute() && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $qpart->getAggregator()) {
                 // If the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
                 // otherwise the enrichment joins won't work! Be carefull to apply this rule only to the plain UID column, not to columns
                 // using the UID with aggregate functions
@@ -353,4 +353,3 @@ class MySqlBuilder extends AbstractSqlBuilder
         return new DataQueryResultData([], $cnt);
     }
 }
-?>

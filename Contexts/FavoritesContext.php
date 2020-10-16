@@ -15,13 +15,6 @@ use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
  */
 class FavoritesContext extends ObjectBasketContext
 {
-    public function __construct(ContextSelectorInterface $selector){
-        parent::__construct($selector);
-        if ($selector->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
-            throw new ContextAccessDeniedError($this, 'The favorites context cannot be used for anonymous users!');
-        }
-    }
-
     /**
      * The favorites context resides in the user scope.
      * 

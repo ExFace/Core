@@ -8,6 +8,28 @@ use exface\Core\Interfaces\Widgets\iLayoutWidgets;
  * 
  * In particular, it can be used to determine the number of columns in the grid.
  * 
+ * ## How to use
+ * 
+ * Make sure to include masonry in the dependecies of the facade - e.g. via composer:
+ * 
+ * ```
+ * {
+ *  "require": {
+ *      "bower-asset/masonry" : "^4"
+ *  }
+ * }
+ * 
+ * ```
+ * 
+ * If your facade is based on the `AbstractAjaxFacade`, add these configuration options
+ * to the facade config file. Make sure, each config option points to an existing
+ * inlcude file!
+ * 
+ * ```
+ *  "LIBS.MASONRY": "bower-asset/masonry/dist/masonry.pkgd.min.js",
+	
+ * ```
+ * 
  * @author Andrej Kabachnik
  * 
  * @method iLayoutWidgets getWidget()
@@ -25,7 +47,7 @@ trait JqueryMasonryGridTrait {
         // Nur wenn das Panel den gesamten Container ausfuellt, darf seine Groesse nicht
         // geaendert werden. In diesem Fall wird der wrapper eingefuegt und stattdessen seine
         // Groesse geaendert. Dadurch wird der Inhalt scrollbar im Panel angezeigt.
-        $containerWidget = $widget->getParentByType('exface\\Core\\Interfaces\\Widgets\\iContainOtherWidgets');
+        $containerWidget = $widget->getParentByClass('exface\\Core\\Interfaces\\Widgets\\iContainOtherWidgets');
         if(! $widget->hasParent() || ($containerWidget && $containerWidget->countWidgetsVisible() == 1)) {
             if ($widget->countWidgetsVisible() > 1) {
                 return true;
@@ -37,7 +59,7 @@ trait JqueryMasonryGridTrait {
     public function buildHtmlHeadTags()
     {
         $includes = parent::buildHtmlHeadTags();
-        $includes[] = '<script type="text/javascript" src="exface/vendor/bower-asset/masonry/dist/masonry.pkgd.min.js"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $this->getFacade()->buildUrlToSource('LIBS.MASONRY') . '"></script>';
         return $includes;
     }
     
@@ -63,7 +85,7 @@ trait JqueryMasonryGridTrait {
         // Auch das Layout des Containers wird erneuert nachdem das eigene Layout aktualisiert
         // wurde.
         $layoutWidgetScript = '';
-        if ($layoutWidget = $widget->getParentByType('exface\\Core\\Interfaces\\Widgets\\iLayoutWidgets')) {
+        if ($layoutWidget = $widget->getParentByClass('exface\\Core\\Interfaces\\Widgets\\iLayoutWidgets')) {
             $layoutWidgetScript = <<<JS
 {$this->getFacade()->getElement($layoutWidget)->buildJsLayouter()};
 JS;

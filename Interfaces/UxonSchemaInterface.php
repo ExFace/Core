@@ -52,6 +52,15 @@ interface UxonSchemaInterface extends WorkbenchDependantInterface
     public function getPropertiesTemplates(string $prototypeClass) : array;
     
     /**
+     * 
+     * @param string $annotation
+     * @param mixed $value
+     * @param string|NULL $prototypeClass
+     * @return string[]
+     */
+    public function getPropertiesByAnnotation(string $annotation, $value, string $prototypeClass = null) : array;
+    
+    /**
      * Returns an array of UXON types valid for the given prototype class property.
      *
      * The result is an array, because a property may accept multiple types

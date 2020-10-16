@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * Tabbed container with one or more tabs.
@@ -312,9 +313,15 @@ class Tabs extends Container implements iFillEntireContainer
      *
      * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
      */
-    public function getAlternativeContainerForOrphanedSiblings()
+    public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets
     {
-        return $this->getDefaultTab();
+        $defaultTab = $this->getDefaultTab();
+        if ($filler = $defaultTab->getFillerWidget()) {
+            if ($alternative = $filler->getAlternativeContainerForOrphanedSiblings()) {
+                return $alternative;
+            }
+        }
+        return $defaultTab;
     }
     
     /**

@@ -1,0 +1,136 @@
+{
+    "object_alias": "exface.Core.OBJECT_ACTION",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        },
+        {
+            "name": "ACTION_PROTOTYPE",
+            "attribute_alias": "ACTION_PROTOTYPE"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "SHORT_DESCRIPTION",
+            "attribute_alias": "SHORT_DESCRIPTION"
+        },
+        {
+            "name": "CONFIG_UXON",
+            "attribute_alias": "CONFIG_UXON"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "USE_IN_OBJECT_BASKET_FLAG",
+            "attribute_alias": "USE_IN_OBJECT_BASKET_FLAG"
+        },
+        {
+            "name": "DOCS",
+            "attribute_alias": "DOCS"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2020-04-28 10:56:00",
+            "MODIFIED_ON": "2020-09-01 10:27:45",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea893ec83627e097940205857feb80",
+            "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/GoToUrl.php",
+            "ALIAS": "GoToPageUrl",
+            "NAME": "Open Page",
+            "SHORT_DESCRIPTION": "Opens the UI page in a new browser window",
+            "CONFIG_UXON": "{\"input_object_alias\":\"exface.Core.PAGE\",\"url\":\"[#ALIAS#].html\"}",
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2020-05-04 10:14:44",
+            "MODIFIED_ON": "2020-05-04 10:14:44",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea8deff52a8f4f97940205857feb80",
+            "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
+            "ALIAS": "RestorePageMenuPosition",
+            "NAME": "Restore Menu Position",
+            "SHORT_DESCRIPTION": "Moves the page to it's original position according to the app configuration",
+            "CONFIG_UXON": "{\"icon\":\"list-ol\",\"input_object_alias\":\"exface.Core.PAGE\",\"input_mapper\":{\"inherit_columns\":false,\"column_to_column_mappings\":[{\"from\":\"DEFAULT_MENU_INDEX\",\"to\":\"MENU_POSITION\"},{\"from\":\"DEFAULT_MENU_PARENT\",\"to\":\"MENU_PARENT\"},{\"from\":\"MODIFIED_ON\",\"to\":\"MODIFIED_ON\"},{\"from\":\"UID\",\"to\":\"UID\"}]}}",
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2020-05-11 09:59:27",
+            "MODIFIED_ON": "2020-09-01 10:14:09",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea936e192716e4a9d10205857feb80",
+            "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "ALIAS": "ShowPageMassEditDialog",
+            "NAME": "Mass Edit",
+            "SHORT_DESCRIPTION": "Change template, add\/remove groups, publish multiple pages at once.",
+            "CONFIG_UXON": "{\"icon\":\"list\",\"prefill_with_filter_context\":false,\"prefill_with_input_data\":false,\"widget\":{\"widget_type\":\"Dialog\",\"widgets\":[{\"object_alias\":\"exface.Core.PAGE\",\"widget_type\":\"DataTree\",\"tree_parent_id_attribute_alias\":\"MENU_PARENT\",\"tree_folder_flag_attribute_alias\":\"IS_FOLDER_FLAG\",\"tree_root_uid\":\"NULL\",\"paginate\":false,\"multi_select\":true,\"filters\":[{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"MENU_PARENT\"},{\"attribute_alias\":\"MENU_VISIBLE\"},{\"attribute_alias\":\"CONTENT\",\"widget_type\":\"Input\",\"height\":1,\"width\":1},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"PAGE_GROUP_PAGES__PAGE_GROUP\"},{\"attribute_alias\":\"PAGE_GROUP_PAGES__PAGE_GROUP__AUTHORIZATION_POLICY__TARGET_USER_ROLE\"},{\"attribute_alias\":\"UID\"},{\"attribute_alias\":\"PUBLISHED\"}],\"columns\":[{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"PUBLISHED\"},{\"attribute_alias\":\"MENU_VISIBLE\"},{\"attribute_alias\":\"PAGE_GROUP_PAGES__UID:COUNT\",\"caption\":\"=TRANSLATE('exface.Core', 'GLOBAL.MODEL.PAGE_GROUPS')\"},{\"attribute_alias\":\"TEMPLATE__LABEL\"},{\"attribute_alias\":\"APP__NAME\"}],\"sorters\":[{\"attribute_alias\":\"MENU_POSITION\",\"direction\":\"asc\"}],\"buttons\":[{\"caption\":\"Add group\",\"icon\":\"plus-circle\",\"action\":{\"alias\":\"exface.Core.ShowDialog\",\"input_rows_min\":1,\"widget\":{\"widget_type\":\"Dialog\",\"object_alias\":\"exface.Core.PAGE_GROUP_PAGES\",\"columns_in_grid\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"PAGE\",\"widget_type\":\"InputComboTable\",\"multi_select\":true,\"disabled\":true},{\"attribute_alias\":\"PAGE_GROUP\"}],\"buttons\":[{\"action_alias\":\"exface.Core.CreateData\",\"visibility\":\"promoted\",\"align\":\"opposite\",\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')\",\"icon\":\"plus\"}]}}},{\"caption\":\"Remove group\",\"icon\":\"minus-circle\",\"action\":{\"alias\":\"exface.Core.ShowDialog\",\"input_rows_min\":1,\"widget\":{\"widget_type\":\"Dialog\",\"object_alias\":\"exface.Core.PAGE_GROUP_PAGES\",\"columns_in_grid\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"PAGE\",\"widget_type\":\"InputComboTable\",\"multi_select\":true,\"disabled\":true},{\"attribute_alias\":\"PAGE_GROUP\"}],\"buttons\":[{\"visibility\":\"promoted\",\"align\":\"opposite\",\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')\",\"icon\":\"minus\",\"action\":{\"alias\":\"exface.Core.DeleteObject\",\"object_alias\":\"exface.Core.PAGE_GROUP_PAGES\",\"input_mapper\":{\"column_to_filter_mappings\":[{\"from\":\"PAGE\",\"to\":\"PAGE\",\"comparator\":\"[\"},{\"from\":\"PAGE_GROUP\",\"to\":\"PAGE_GROUP\",\"comparator\":\"==\"}]}}}]}}},{\"caption\":\"Change template\",\"icon\":\"pencil-square-o\",\"action\":{\"alias\":\"exface.Core.ShowMassEditDialog\",\"widget\":{\"widget_type\":\"Dialog\",\"columns_in_grid\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"TEMPLATE\"}]}}},{\"caption\":\"Publish\",\"icon\":\"pencil-square-o\",\"action\":{\"alias\":\"exface.Core.ShowMassEditDialog\",\"widget\":{\"widget_type\":\"Dialog\",\"columns_in_grid\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"PUBLISHED\"}]}}},{\"caption\":\"Menu visibility\",\"icon\":\"pencil-square-o\",\"action\":{\"alias\":\"exface.Core.ShowMassEditDialog\",\"widget\":{\"widget_type\":\"Dialog\",\"columns_in_grid\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"MENU_VISIBLE\"}]}}}]}]}}",
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "DOCS": ""
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.OBJECT_ACTION",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.OBJECT_ACTION"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

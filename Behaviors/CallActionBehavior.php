@@ -9,6 +9,8 @@ use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\TaskFactory;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Interfaces\Events\DataTransactionEventInterface;
+use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
+use exface\Core\Interfaces\Events\TaskEventInterface;
 
 /**
  * Attachable to DataSheetEvents (exface.Core.DataSheet.*), calls any action.
@@ -106,6 +108,11 @@ class CallActionBehavior extends AbstractBehavior
     {
         if ($this->action === null) {
             $this->action = ActionFactory::createFromUxon($this->getWorkbench(), UxonObject::fromAnything($this->actionConfig));
+            try {
+                $this->action->getMetaObject();
+            } catch (ActionObjectNotSpecifiedError $e) {
+                $this->action->setMetaObject($this->getObject());
+            }
         }
         return $this->action;
     }
@@ -148,7 +155,15 @@ class CallActionBehavior extends AbstractBehavior
         }
         
         if ($action = $this->getAction()) {
-            $task = TaskFactory::createFromDataSheet($data_sheet);
+            if ($event instanceof TaskEventInterface) {
+                $task = $event->getTask();
+                $task->setInputData($data_sheet);
+            } else {
+                // We never have an input widget here, so tell the action it won't get one
+                // and let it deal with it.
+                $action->setInputTriggerWidgetRequired(false);
+                $task = TaskFactory::createFromDataSheet($data_sheet);
+            }
             if ($event instanceof DataTransactionEventInterface) {
                 $action->handle($task, $event->getTransaction());
             } else {

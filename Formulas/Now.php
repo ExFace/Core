@@ -23,8 +23,12 @@ use exface\Core\Factories\DataTypeFactory;
  */
 class Now extends \exface\Core\CommonLogic\Model\Formula
 {
-
-    function run($format = '')
+    /**
+     * 
+     * @param string $format
+     * @return string
+     */
+    public function run($format = '')
     {
         if ($format === 'Y-m-d') {
             $format = 'yyyy-MM-dd';
@@ -37,9 +41,20 @@ class Now extends \exface\Core\CommonLogic\Model\Formula
         $dataType = DataTypeFactory::createFromPrototype($this->getWorkbench(), DateTimeDataType::class);
         if ($format) {
             $dataType->setFormat($format);
+        } else {
+            $dataType->setFormat($this->getFormatDefault());
         }
         
         return $dataType->formatDate($date);
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getFormatDefault() : string
+    {
+        return DateTimeDataType::DATETIME_ICU_FORMAT_INTERNAL;
     }
 }
 ?>

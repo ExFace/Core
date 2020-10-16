@@ -14,6 +14,8 @@ use exface\Core\CommonLogic\Selectors\Traits\UidSelectorTrait;
  */
 class UserSelector extends AbstractSelector implements UserSelectorInterface
 {
+    const ANONYMOUS_USER_OID = '0x00000000000000000000000000000000';
+    
     use UidSelectorTrait;
     
     /**

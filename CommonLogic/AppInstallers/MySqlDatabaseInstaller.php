@@ -7,6 +7,7 @@ use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use function GuzzleHttp\json_encode;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataConnectors\MySqlConnector;
 
 /**
  * Database AppInstaller for Apps with MySQL Database.
@@ -38,10 +39,10 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         return 'MySQL';
     }
     
-    /***
+    /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::ensureDbExists()
+     * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::installDatabase()
      */
     protected function installDatabase(SqlDataConnectorInterface $connection, string $indent = '') : string
     {        
@@ -71,35 +72,16 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
     }
     
     /**
-     * Checks if migrations table already exist, if not creates the table
-     *
+     * 
      * @param SqlDataConnectorInterface $connection
-     * @return MySqlDatabaseInstaller
-     */  
-    protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : MySqlDatabaseInstaller
+     * @throws InstallerRuntimeError
+     */
+    protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : void
     {
-        $sql = <<<SQL
-
-SHOW tables LIKE "{$this->getMigrationsTableName()}";
-
-SQL;
+        $sql = $this->buildSqlMigrationTableShow();
         if (empty($connection->runSql($sql)->getResultArray())) {
             try {
-                $migrations_table_create = <<<SQL
-
-CREATE TABLE IF NOT EXISTS `{$this->getMigrationsTableName()}` (
-`id` int(8) NOT NULL AUTO_INCREMENT,
-`migration_name` varchar(300) NOT NULL,
-`up_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-`up_script` longtext NOT NULL,
-`up_result` longtext NOT NULL,
-`down_datetime` timestamp NULL,
-`down_script` longtext NOT NULL,
-`down_result` longtext NULL,
-PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
-
-SQL;
+                $migrations_table_create = $this->buildSqlMigrationTableCreate();
                 $this->runSqlMultiStatementScript($connection, $migrations_table_create);
                 $this->getWorkbench()->getLogger()->debug('SQL migration table' . $this->getMigrationsTableName() . ' created! ');
             } catch (\Throwable $e) {
@@ -107,7 +89,7 @@ SQL;
                 throw new InstallerRuntimeError($this, 'Generating Migration table failed!');
             }
         }        
-        return $this;
+        return;
     }
     
     /**
@@ -151,27 +133,11 @@ SQL;
             $up_result_string = $this->stringifyQueryResults($up_result);            
             $migration_name = $migration->getMigrationName();
             $down_script = $migration->getDownScript();
-            $sql_insert = <<<SQL
-
-INSERT INTO {$this->getMigrationsTableName()} 
-    (
-        migration_name, 
-        up_script, 
-        up_result, 
-        down_script
-    )
-    VALUES (
-        "{$this->escapeSqlStringValue($migration_name)}", 
-        "{$this->escapeSqlStringValue(StringDataType::encodeUTF8($up_script))}", 
-        "{$this->escapeSqlStringValue($up_result_string)}", 
-        "{$this->escapeSqlStringValue(StringDataType::encodeUTF8($down_script))}"
-    );
-
-SQL;
+            $sql_insert = $this->buildSqlMigrationTableInsert($migration_name, $up_script, $up_result_string, $down_script);
             $query_insert = $connection->runSql($sql_insert);
             $id = intval($query_insert->getLastInsertId());
             $connection->transactionCommit();
-            $this->getWorkbench()->getLogger()->debug('SQL ' . $migration_name . ': script UP executed successfully ');            
+            $this->getWorkbench()->getLogger()->debug('SQL ' . $migration_name . ': script UP executed successfully.');            
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
             $connection->transactionRollback();
@@ -211,8 +177,8 @@ SQL;
             $sql_update = <<<SQL
             
 UPDATE {$this->getMigrationsTableName()}
-SET down_datetime=now(), down_result="{$this->escapeSqlStringValue($down_result_string)}"
-WHERE id='$id';
+SET down_datetime={$this->buildSqlFunctionNow()}, down_result='{$this->escapeSqlStringValue($down_result_string)}'
+WHERE id='{$id}';
 
 SQL;
             $connection->runSql($sql_update);
@@ -241,5 +207,90 @@ SQL;
     {
         return addslashes($value);
     }
+    
+    /**
+     * Returns SQL statement to check if migration table exists.
+     * 
+     * @return string
+     */
+    protected function buildSqlMigrationTableShow() : string
+    {
+        return "SHOW tables LIKE '{$this->getMigrationsTableName()}'";
+    }
+    
+    /**
+     * Returns SQL statement to create migrations table.
+     * 
+     * @return string
+     */
+    protected function buildSqlMigrationTableCreate() : string
+    {
+        return <<<SQL
+        
+CREATE TABLE IF NOT EXISTS `{$this->getMigrationsTableName()}` (
+`id` int(8) NOT NULL AUTO_INCREMENT,
+`migration_name` varchar(300) NOT NULL,
+`up_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`up_script` longtext NOT NULL,
+`up_result` longtext NOT NULL,
+`down_datetime` timestamp NULL,
+`down_script` longtext NOT NULL,
+`down_result` longtext NULL,
+PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+SQL;
+    }
+    
+    /**
+     * 
+     * @param string $migration_name
+     * @param string $up_script
+     * @param string $up_result_string
+     * @param string $down_script
+     * @return string
+     */
+    protected function buildSqlMigrationTableInsert(string $migration_name, string $up_script, string $up_result_string, string $down_script) : string
+    {
+        return <<<SQL
+    
+INSERT INTO {$this->getMigrationsTableName()}
+    (
+        migration_name,
+        up_script,
+        up_result,
+        down_script
+    )
+    VALUES (
+        '{$this->escapeSqlStringValue($migration_name)}',
+        '{$this->escapeSqlStringValue(StringDataType::encodeUTF8($up_script))}',
+        '{$this->escapeSqlStringValue($up_result_string)}',
+        '{$this->escapeSqlStringValue(StringDataType::encodeUTF8($down_script))}'
+    );
+    
+SQL;
+    }
+    
+    /**
+     * Returns the SQL function call to get the current date and time.
+     * 
+     * @return string
+     */
+    protected function buildSqlFunctionNow() : string
+    {
+        return 'now()';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::checkDataConnection()
+     */
+    protected function checkDataConnection(SqlDataConnectorInterface $connection) : SqlDataConnectorInterface
+    {
+        if (! $connection instanceof MySqlConnector) {
+            throw new InstallerRuntimeError($this, 'Cannot use connection "' . $connection->getAliasWithNamespace() . '" with MySQL DB installer: only instances of "MySqlConnector" supported!');
+        }
+        return $connection;
+    }
 }
-?>

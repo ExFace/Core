@@ -1,0 +1,89 @@
+{
+    "object_alias": "exface.Core.OBJECT_BEHAVIORS",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "BEHAVIOR",
+            "attribute_alias": "BEHAVIOR"
+        },
+        {
+            "name": "CONFIG_UXON",
+            "attribute_alias": "CONFIG_UXON"
+        },
+        {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "DESCRIPTION",
+            "attribute_alias": "DESCRIPTION"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2020-04-28 13:14:36",
+            "MODIFIED_ON": "2020-05-11 12:13:35",
+            "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ea894171ce99a9aa6e025041000001",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
+            "CONFIG_UXON": "{\"on_duplicate_multi_row\":\"update\",\"on_duplicate_single_row\":\"update\",\"compare_attributes\":[\"USER\",\"AUTHENTICATOR\"]}",
+            "OBJECT": "0x11ea8619c8d1453697940205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "PreventDuplicates",
+            "DESCRIPTION": ""
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.OBJECT_BEHAVIORS",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.OBJECT_BEHAVIORS"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

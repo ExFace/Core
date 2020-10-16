@@ -20,10 +20,11 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Widgets\iCanPreloadData;
-use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 
 /**
  * A filter for data widgets, etc - consists of a logical comparator and an input widget.
@@ -157,8 +158,6 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute, iCanPreloadData
 {
 
-    use iCanPreloadDataTrait;
-    
     private $inputWidget = null;
     
     private $inputWidgetUxon = null;
@@ -186,6 +185,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     private $width = null;
     
     private $height = null;
+    
+    private $preloadConfig = null;
+    
+    private $preloader = null;
     
     /**
      * Returns TRUE if the input widget was already instantiated.
@@ -286,8 +289,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             
             // Set a special caption for filters on relations, which is derived from the relation itself
             // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
-            if (false === $uxon->hasProperty('caption') && true === $attr->isRelation()) {
-                $uxon->setProperty('caption', $attr->getRelation()->getName());
+            if (false === $uxon->hasProperty('caption') && $attr->isRelation()) {
+                // Get the relation from the object and not $attr->getRelation() because the latter would
+                // yield the wrong relation direction in case of reverse reltions.
+                $uxon->setProperty('caption', $this->getMetaObject()->getRelation($this->getAttributeAlias())->getName());
             }
             
             // Try to use the default editor UXON of the attribute
@@ -406,7 +411,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         }
         
         // The filter should be enabled all the time, except for the case, when it is diabled explicitly
-        if (true !== parent::isDisabled()) {
+        // In particularly, it's disabled-state should not depend on the settings of the attribute, etc.
+        if (true === parent::isDisabled()) {
+            $input->setDisabled(true);
+        } else {
             $input->setDisabled(false);
         }
         
@@ -442,6 +450,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         
         if ($this->height !== null) {
             $input->setWidth($this->height);
+        }
+        
+        if ($this->preloadConfig !== null && $input instanceof iCanPreloadData) {
+            $input->setPreloadData($this->preloadConfig);
         }
         
         return $input;
@@ -554,6 +566,16 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueWidgetLink()
+     */
+    public function getValueWidgetLink() : ?WidgetLinkInterface
+    {
+        return $this->getInputWidget()->getValueWidgetLink();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueWithDefaults()
      */
     public function getValueWithDefaults()
@@ -567,7 +589,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      *
      * @see \exface\Core\Widgets\AbstractWidget::getValueExpression()
      */
-    public function getValueExpression()
+    public function getValueExpression() : ?ExpressionInterface
     {
         return $this->getInputWidget()->getValueExpression();
     }
@@ -580,10 +602,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      * 
      * @see \exface\Core\Widgets\AbstractWidget::setValue()
      */
-    public function setValue($value)
+    public function setValue($value, bool $parseStringAsExpression = true)
     {
         if ($this->isInputWidgetInitialized() === true) {
-            $this->getInputWidget()->setValue($value);
+            $this->getInputWidget()->setValue($value, $parseStringAsExpression);
         }
         $this->value = $value;
         return $this;
@@ -719,12 +741,12 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      * 
      * @see \exface\Core\Widgets\Container::setDisabled()
      */
-    public function setDisabled($value)
+    public function setDisabled(?bool $trueOrFalseOrNull) : WidgetInterface
     {
         if ($this->isInputWidgetInitialized() === true) {
-            $this->getInputWidget()->setDisabled($value);
+            $this->getInputWidget()->setDisabled($trueOrFalseOrNull);
         }
-        return parent::setDisabled($value);
+        return parent::setDisabled($trueOrFalseOrNull);
     }
     
     /**
@@ -745,7 +767,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::isDisabled()
      */
-    public function isDisabled()
+    public function isDisabled() : ?bool
     {
         return parent::isDisabled() || ($this->hasCustomInputWidget() && $this->getInputWidget()->isDisabled());
     }
@@ -825,19 +847,28 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::hasValue()
      */
-    public function hasValue()
+    public function hasValue() : bool
     {
         return $this->getInputWidget()->hasValue();
     }
     
     /**
+     * A filter is prefillable if it is not marked with `do_not_prefill`, it's
+     * input widget is prefillable and that widget does not have a live reference
+     * for value.
      * 
-     * {@inheritDoc}
+     * Regular input widgets are prefillable even with a live reference as value,
+     * but this does not feel right for filters: you will use live refs in filters
+     * when they explicitly depend on another control and a user will not understand
+     * why that reference would be overridden by a prefill.
+     * 
      * @see \exface\Core\Widgets\AbstractWidget::isPrefillable()
      */
     public function isPrefillable()
     {
-        return parent::isPrefillable() && $this->getInputWidget()->isPrefillable();
+        return parent::isPrefillable() 
+        && $this->getInputWidget()->isPrefillable()
+        && ! ($this->hasValue() && $this->getValueExpression()->isReference());
     }
     
     /**
@@ -1121,6 +1152,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     */
     protected function doPrefill(DataSheetInterface $data_sheet)
     {
+        if (! $this->isPrefillable()) {
+            return;
+        }
+        
         foreach ($this->getChildren() as $widget) {
             $widget->prefill($data_sheet);
         }
@@ -1231,5 +1266,66 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         }
         $this->height = $value;
         return $this;
+    }
+    
+    /**
+     * Set to `true` to preload all possible data for offline use of the input widget(s).
+     * 
+     * @uxon-property preload_data
+     * @uxon-type boolean|\exface\Core\CommonLogic\DataSheets\DataSheet
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::setPreloadData()
+     */
+    public function setPreloadData($uxonOrString): iCanPreloadData
+    {
+        $this->preloadConfig = $uxonOrString;
+        if ($this->isInputWidgetInitialized()) {
+            $this->getInputWidget()->setPrefillData($uxonOrString);
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::isPreloadDataEnabled()
+     */
+    public function isPreloadDataEnabled(): bool
+    {
+        $input = $this->getInputWidget();
+        return $input instanceof iCanPreloadData && $input->getPreloader()->isEnabled();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::prepareDataSheetToPreload()
+     */
+    public function prepareDataSheetToPreload(DataSheetInterface $dataSheet): DataSheetInterface
+    {
+        $input = $this->getInputWidget();
+        if ($input instanceof iCanPreloadData) {
+            return $this->getPreloader()->prepareDataSheetToPreload($dataSheet);
+        } else {
+            return $dataSheet;
+        }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::getPreloader()
+     */
+    public function getPreloader(): DataPreloader
+    {
+        $input = $this->getInputWidget();
+        if ($input instanceof iCanPreloadData) {
+            return $input->getPreloader();
+        } else {
+            if ($this->preloader === null) {
+                $this->preloader = new DataPreloader($this);
+            }
+            return $this->preloader;
+        }
     }
 }

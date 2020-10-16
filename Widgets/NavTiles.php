@@ -3,14 +3,12 @@ namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\Model\UiPageTreeNode;
 use exface\Core\Factories\UiPageTreeFactory;
+use exface\Core\Factories\UiPageFactory;
 
 /**
  * NavTiles show a hierarchical navigational tile menu starting from a given parent page.
@@ -101,10 +99,13 @@ class NavTiles extends WidgetGrid
     public function getWidgets(callable $filter = null)
     {
         if ($this->tilesBuilt === false) {
-            $tree = UiPageTreeFactory::createFromRootPage($this->getWorkbench(), $this->getWorkbench()->getCMS()->getPage($this->getRootPageSelector()), $this->getDepth());
+            $tree = UiPageTreeFactory::createFromRootPage(UiPageFactory::createFromModel($this->getWorkbench(), $this->getRootPageSelector()), $this->getDepth());
             $nodes = $tree->getRootNodes();
-            $this->createTileGroupFromNodes($nodes, $this->getWorkbench()->getCMS()->getPage($this->getRootPageSelector())->getName());
-            
+            foreach ($nodes as $node) {
+                if ($node->hasChildNodes()) {
+                    $this->createTileGroupFromNodes($node->getChildNodes(), $node->getName());
+                }
+            }            
             $this->tilesBuilt = true;
             
         }
@@ -152,7 +153,7 @@ class NavTiles extends WidgetGrid
         $tile->setTitle($node->getName());
         $tile->setSubtitle($node->getDescription());
         $tile->setWidth('0.5');
-        $hint = $node->hasIntro() ? $node->getIntro() : $node->getDescription();
+        $hint = $node->getIntro() ?? $node->getDescription();
         $tile->setHint($node->getName() . ($hint ? ":\n" . $hint : ''));
         $tile->setAction(new UxonObject([
             'alias' => 'exface.Core.GoToPage',

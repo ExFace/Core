@@ -7,10 +7,11 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
-use exface\Core\Exceptions\Actions\ActionCallingWidgetNotSpecifiedError;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
+use exface\Core\Exceptions\Actions\ActionInputError;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * 
@@ -33,13 +34,12 @@ class ReadData extends AbstractAction implements iReadData
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        if (! $this->checkPermissions($task)) {
-            // TODO Throw exception!
-        }
-        
         $data_sheet = $this->getInputDataSheet($task);
         $data_sheet->removeRows();
         if ($dataWidget = $this->getWidgetToReadFor($task)) {
+            if (! $dataWidget->getMetaObject()->is($data_sheet->getMetaObject())) {
+                throw new ActionInputError($this, 'Invalid input object "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '" for ReadData-action: it must be compatible witht the object of the widget being read for!');
+            }
             $data_sheet = $dataWidget->prepareDataSheetToRead($data_sheet);
         }
         $affected_rows = $data_sheet->dataRead();
@@ -56,14 +56,6 @@ class ReadData extends AbstractAction implements iReadData
         $result->setMessage($affected_rows . ' entries read');
         
         return $result;
-    }
-    
-    protected function checkPermissions(TaskInterface $task) : bool
-    {
-        if (! $this->isDefinedInWidget() && ! $task->isTriggeredByWidget()) {
-            throw new ActionCallingWidgetNotSpecifiedError($this, 'Security violaion! Cannot read data without a target widget in action "' . $this->getAliasWithNamespace() . '"!', '6T5DOSV');
-        }
-        return true;
     }
     
     /**

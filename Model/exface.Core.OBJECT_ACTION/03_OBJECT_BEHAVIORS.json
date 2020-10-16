@@ -1,0 +1,89 @@
+{
+    "object_alias": "exface.Core.OBJECT_BEHAVIORS",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "BEHAVIOR",
+            "attribute_alias": "BEHAVIOR"
+        },
+        {
+            "name": "CONFIG_UXON",
+            "attribute_alias": "CONFIG_UXON"
+        },
+        {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "DESCRIPTION",
+            "attribute_alias": "DESCRIPTION"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2020-08-27 19:21:39",
+            "MODIFIED_ON": "2020-09-15 09:20:54",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eaadf88812bfb8adf80205857feb80",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/TranslatableBehavior.php",
+            "CONFIG_UXON": "{\"translation_subfolder\":\"Actions\",\"translation_filename_attribute_alias\":\"ALIAS_WITH_NS\",\"translation_app_determined_by_relation\":\"APP\",\"translatable_attributes\":[\"NAME\",\"SHORT_DESCRIPTION\"],\"translatable_uxon_properties\":[\"CONFIG_UXON\"],\"translatable_uxon_prototype_attribute\":\"ACTION_PROTOTYPE\"}",
+            "OBJECT": "0x11e6e217f7f91457a3d9e4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Translations",
+            "DESCRIPTION": "Makes names and descriptions translatable"
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.OBJECT_BEHAVIORS",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.OBJECT_BEHAVIORS"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

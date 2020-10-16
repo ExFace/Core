@@ -24,7 +24,19 @@ class LocaleDataType extends StringDataType implements EnumDataTypeInterface
         if ($inLocale === null) {
             $inLocale = $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
         }
-        return \Locale::getDisplayName($value, $inLocale); 
+        return self::getLocaleName($value, $inLocale); 
+    }
+    
+    /**
+     * Returns the localized name of the locale - e.g. "German" for "de" if $inLocal is "en".
+     * 
+     * @param string $locale
+     * @param string $inLocale
+     * @return string
+     */
+    public static function getLocaleName(string $locale, string $inLocale) : string
+    {
+        return \Locale::getDisplayName($locale, $inLocale);
     }
 
     /**
@@ -36,10 +48,15 @@ class LocaleDataType extends StringDataType implements EnumDataTypeInterface
     {
         if ($this->locales === null) {
             $currentLocale = $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
-            $this->locales = [$currentLocale => $this->getLabelOfValue($currentLocale, $currentLocale)];
+            $defaultLocale = $this->getWorkbench()->getConfig()->getOption('SERVER.DEFAULT_LOCALE');
+            $this->locales = [
+                $currentLocale => $this->getLabelOfValue($currentLocale, $currentLocale),
+                $defaultLocale => $this->getLabelOfValue($defaultLocale, $currentLocale)
+            ];
             foreach ($this->getWorkbench()->getCoreApp()->getLanguages() as $locale) {
                 $this->locales[$locale] = $this->getLabelOfValue($locale, $currentLocale);
             }
+            asort($this->locales);
         }
         return $this->locales;
     }
@@ -78,5 +95,15 @@ class LocaleDataType extends StringDataType implements EnumDataTypeInterface
     public function getValues()
     {
         return array_keys($this->getLabels());
+    }
+    
+    /**
+     * Returns all locales supported by the current version of PHP
+     * 
+     * @return string[]
+     */
+    public static function getAllLocales() : array
+    {
+        return \ResourceBundle::getLocales('');
     }
 }

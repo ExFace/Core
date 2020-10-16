@@ -18,6 +18,9 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\TaskHandlerInterface;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
+use exface\Core\Interfaces\UserImpersonationInterface;
+use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
 
 /**
  * Common interface for all actions.
@@ -186,9 +189,18 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
     public function hasInputDataPreset() : bool;
     
     /**
+     * 
      * @return DataSheetMapperInterface[]
      */
-    public function getInputMappers();
+    public function getInputMappers() : array;
+    
+    /**
+     * Returns the mapper, that will be used for the given input object or NULL if no mapper is defined.
+     * 
+     * @param MetaObjectInterface $fromObject
+     * @return DataSheetMapperInterface|NULL
+     */
+    public function getInputMapper(MetaObjectInterface $fromObject) : ?DataSheetMapperInterface;
     
     /**
      * Returns TRUE if there is at least one input mapper defined for this action and FALSE otherwise.
@@ -354,6 +366,19 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return boolean
      */
     public function hasName();
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getHint() : ?string;
+    
+    /**
+     * 
+     * @param string $text
+     * @return ActionInterface
+     */
+    public function setHint(string $text) : ActionInterface;
 
     /**
      * Returns TRUE if the action will perform a commit on a task's data transaction after it was performed and if data was modified.
@@ -374,18 +399,20 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
     /**
      * Returns TRUE if this action matches the given alias or inherits for the action identified by it.
      * 
-     * @param ActionInterface|string $action_or_alias
-     * @return boolean
+     * @param ActionInterface|ActionSelectorInterface|string $actionOrSelectorOrString
+     * @throws UnexpectedValueException
+     * @return bool
      */
-    public function is($action_or_alias);
+    public function is($actionOrSelectorOrString) : bool;
     
     /**
      * Returns TRUE if this action matches the given alias and FALSE otherwise.
      * 
-     * @param ActionInterface|string $action_or_alias
-     * @return boolean
+     * @param ActionInterface|ActionSelectorInterface|string $actionOrSelectorOrString
+     * @throws UnexpectedValueException
+     * @return bool
      */
-    public function isExactly($action_or_alias);
+    public function isExactly($actionOrSelectorOrString) : bool;
 
     /**
      * Returns the text for the result message if one was set in the UXON description of the action and NULL otherwise.
@@ -398,10 +425,10 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
      * Overrides the auto-generated result message with the given text.
      * The text can contain placeholders.
      *
-     * Placeholders can be used for any column in the result data sheet of this action: e.g. for a CreateObject action
-     * a the follwoing text could be used: "Object [#LABEL#] with id [#UID#] created". If the result sheet contains
-     * multiple rows, the message text will be repeated for every row with the placeholders being replaced from that
-     * row.
+     * Placeholders can be used for any column in the result data sheet of this action: 
+     * e.g. for a CreateObject action a the follwoing text could be used: "Object [#LABEL#] 
+     * with id [#UID#] created". If the result sheet contains multiple rows, the message text 
+     * will be repeated for every row with the placeholders being replaced from that row.
      *
      * @param string $value
      * @return \exface\Core\CommonLogic\AbstractAction
@@ -414,4 +441,43 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return ActionSelectorInterface
      */
     public function getSelector() : ActionSelectorInterface;
+    
+    /**
+     * Returns TRUE if the action is allowed for the given (or currently loggen on) user and FALSE otherwise.
+     * 
+     * @param UserImpersonationInterface $userOrToken
+     * @return bool
+     */
+    public function isAuthorized(UserImpersonationInterface $userOrToken = null) : bool;
+    
+    /**
+     * Returns TRUE or FALSE if the action requires a trigger widget in the task or not; NULL if not explicitly defined.
+     * 
+     * Depending on their internal logic action may or may not require a trigger widget.
+     * Some actions like `exface.Core.ShowWidget` will require a trigger only on certain
+     * occasions - e.g. if no widget is explicitly defined within the action in our case.
+     * 
+     * Implementing this method gives the developer the possibility to control this
+     * behavior.
+     * 
+     * @return bool|NULL
+     */
+    public function isTriggerWidgetRequired() : ?bool;
+    
+    /**
+     * Allows to change `isTriggerWidgetRequired()` at runtime. 
+     * 
+     * This is only possible if the action's method `isTriggerWidgetRequired()` would return
+     * NULL or the same value. In other words, you can only change the setting at runtime if
+     * it was not hardcoded previously. You can also only chage it once! This is understandable
+     * as otherwise the action's internal logic could be overridden from outside.
+     * 
+     * Requiring (or not) a trigger at runtime is usefull whenever multiple action depend on
+     * each-other - e.g. in action chains, workflows or behavoirs like `iCallAction`.
+     * 
+     * @param bool $trueOrFalse
+     * @throws ActionRuntimeError
+     * @return ActionInterface
+     */
+    public function setInputTriggerWidgetRequired(bool $trueOrFalse) : ActionInterface;
 }

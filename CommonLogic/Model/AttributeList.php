@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaAttributeListInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 /**
  *
@@ -67,14 +68,15 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
      * {@inheritdoc}
      * @see MetaAttributeListInterface::getByAttributeId()
      */
-    public function getByAttributeId($uid)
+    public function getByAttributeId(string $uid) : MetaAttributeInterface
     {
         foreach ($this->getAll() as $attr) {
-            if (strcasecmp($attr->getId(), $uid) == 0) {
+            if (strcasecmp($attr->getId(), $uid) === 0) {
                 return $attr;
             }
         }
-        return false;
+        
+        throw new MetaAttributeNotFoundError($this->getMetaObject(), 'Attribute with UID "' . $uid . '" not found in object "' . $this->getMetaObject()->getName() . '" (alias ' . $this->getMetaObject()->getAliasWithNamespace() . ')');
     }
 
     /**

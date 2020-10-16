@@ -10,9 +10,14 @@ use exface\Core\Actions\RefreshWidget;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Actions\iRunFacadeScript;
 use exface\Core\Actions\SendToWidget;
-use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\Actions\ResetWidget;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iUseInputWidget;
+use exface\Core\Widgets\DialogButton;
+use exface\Core\Widgets\Dialog;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
 
 /**
  * 
@@ -32,30 +37,69 @@ trait JqueryButtonTrait {
      * Returns the JS code to run when refreshing/resetting widgets after the action.
      * 
      * @param Button $widget
-     * @param AbstractJqueryElement $input_element
      * @return string
      */
-    protected function buildJsInputRefresh(Button $widget, $input_element)
+    protected function buildJsInputRefresh(Button $widget)
     {
         $js = '';
         
         // Reset the input if needed (before refreshing!!!)
-        $js .= $this->buildJsResetWidgets($widget, $input_element);
+        $js .= $this->buildJsResetWidgets($widget);
         
         // Refresh the linked widget if needed
-        $js .= $this->buildJsRefreshWidgets($widget, $input_element);
+        $js .= $this->buildJsRefreshWidgets($widget);
         
         return $js;
+    }
+    
+    /**
+     * Returns the JS to refresh input widgets for all ancestor buttons.
+     * 
+     * This is usefull if you have multiple nested dialogs and need to refresh the inputs
+     * of every button that was pressed to open each of the dialogs.
+     * 
+     * For example: when adding a credential set from the user-editor, first a dialog
+     * pops up to select the data connections, etc. This dialog will refresh it's input
+     * (= credentials table) when it closes. Pressing "login" on that dialog closes it
+     * and opens another one. At this point the credentials table is refreshed, by there
+     * still is no new credential set. Only when the second dialog closes the data had
+     * changed. The cascade allows to still refresh to credentials table in this case.
+     * 
+     * @param iUseInputWidget $button
+     * @param int $depth
+     * @return string
+     */
+    protected function buildJsRefreshCascade(iUseInputWidget $button, int $depth = null) : string
+    {
+        if ($button instanceof DialogButton && $button->getCloseDialogAfterActionSucceeds()){
+            
+            $dialogWidget = $button->getInputWidget();
+            if (! $dialogWidget instanceof Dialog){
+                return '';
+            }
+            if (! $dialogWidget->hasParent()) {
+                return '';
+            }
+            
+            $dialogTrigger = $dialogWidget->getParent();
+            if ($dialogTrigger instanceof Button) {
+                $js = $this->buildJsRefreshWidgets($dialogTrigger);
+                if ($depth > 1 || $depth === null) {
+                    $js .= $this->buildJsRefreshCascade($dialogTrigger, ($depth !== null ? $depth-1 : null));
+                }
+                return $js;
+            }
+        }
+        return '';
     }
     
     /**
      * Returns the JS code to refresh all neccessary widgets after the button's action succeeds.
      * 
      * @param Button $widget
-     * @param AbstractJqueryElement $input_element
      * @return string
      */
-    protected function buildJsRefreshWidgets(Button $widget, $input_element) : string
+    protected function buildJsRefreshWidgets(Button $widget) : string
     {
         $js = '';
         foreach ($widget->getRefreshWidgetIds() as $widgetId) {
@@ -72,7 +116,7 @@ trait JqueryButtonTrait {
      * @param AbstractJqueryElement $input_element
      * @return string
      */
-    protected function buildJsResetWidgets(button $widget, $input_element) : string
+    protected function buildJsResetWidgets(Button $widget) : string
     {
         $js = '';
         foreach ($widget->getResetWidgetIds() as $id) {
@@ -203,7 +247,7 @@ JS;
         // if the button does not have a action attached, just see if the attributes of the button
         // will cause some click-behaviour and return the JS for that
         if (! $action) {
-            $output .= $this->buildJsCloseDialog($widget, $input_element) . $this->buildJsInputRefresh($widget, $input_element);
+            $output .= $this->buildJsCloseDialog($widget, $input_element) . $this->buildJsInputRefresh($widget);
             return $output;
         }
         
@@ -222,7 +266,7 @@ JS;
         } elseif ($action instanceof SendToWidget) {
             $output = $this->buildJsClickSendToWidget($action, $input_element);
         } elseif ($action instanceof ResetWidget) {
-            $output = $this->buildJsResetWidgets($widget, $input_element);
+            $output = $this->buildJsResetWidgets($widget);
         } else {
             $output = $this->buildJsClickCallServerAction($action, $input_element);
         }
@@ -280,7 +324,7 @@ JS;
                                     }
 				                   	if (response.success !== undefined){
 										" . $this->buildJsCloseDialog($widget, $input_element) . "
-										" . $this->buildJsInputRefresh($widget, $input_element) . "
+										" . $this->buildJsInputRefresh($widget) . "
 				                       	" . $this->buildJsBusyIconHide() . "
 				                       	$('#" . $this->getId() . "').trigger('" . $action->getAliasWithNamespace() . ".action.performed', [requestData, '" . $input_element->getId() . "']);
 										if (response.success !== undefined || response.undoURL){
@@ -335,13 +379,24 @@ JS;
         $prefill_param = '';
         $filters_param = '';
         if (! $widget->getPage()->is($action->getPageAlias())) {
+            // Can't have input mappers because the server will not be able to get the mapper
+            // as it won't know the caller widget. The widget to show will be attached to the
+            // request instead.
+            // IDEA pass the caller widget as parameter of the request?
+            if ($action->hasInputMappers()) {
+                throw new ActionConfigurationError($action, 'Input mappers not supported in navigating actions as "' . $action->getAliasWithNamespace() . '"!');
+            }
+            
             $output = <<<JS
 
             {$this->buildJsRequestDataCollector($action, $input_element)}	
 
 JS;
-            if ($action->getPrefillWithPrefillData()){
-                $output .= <<<JS
+            if ($action->getPrefillWithPrefillData()) {
+                if ($prefillPreset = $action->getPrefillDataPreset()) {
+                    $prefill_param = '&prefill=\' + JSON.stringify(' . $this->buildJsPrefillDataFromPreset($prefillPreset) . ') + \'';
+                } else {
+                    $output .= <<<JS
 
 			var prefillRows = [];
 			if (requestData.rows && requestData.rows.length > 0 && requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]){
@@ -349,7 +404,8 @@ JS;
 			}
 
 JS;
-                $prefill_param = '&prefill={"meta_object_id":"'.$widget->getMetaObject()->getId().'","rows": \' + JSON.stringify(prefillRows) + \'}';
+                    $prefill_param = '&prefill={"meta_object_id":"'.$widget->getMetaObject()->getId().'","rows": \' + JSON.stringify(prefillRows) + \'}';
+                }
             } 
             
             if ($action instanceof GoToPage){
@@ -374,6 +430,36 @@ JS;
     }
     
     /**
+     * 
+     * @param DataSheetInterface $presetSheet
+     * @throws WidgetConfigurationError
+     * @return string
+     */
+    protected function buildJsPrefillDataFromPreset(DataSheetInterface $presetSheet) : string
+    {
+        if ($presetSheet->getColumns()->isEmpty()) {
+            throw new WidgetConfigurationError($this->getWidget(), 'Cannot use empty data sheet as action `prefill_data_sheet`!');
+        }
+        foreach ($presetSheet->getColumns() as $col) {
+            if (! $formula = $col->getFormula()) {
+                throw new WidgetConfigurationError($this->getWidget(), 'Only columns with `formula` property currently supported in manually defined prefill data!');
+            }
+            if (! $col->getAttributeAlias()) {
+                throw new WidgetConfigurationError($this->getWidget(), 'Missing `attribute_alias` in manually created prefill data column!');
+            }
+            if ($formula->isReference()) {
+                $link = $formula->getWidgetLink($this->getWidget());
+                $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
+                $colsJs .= $col->getAttributeAlias() . ': ' . $linkedEl->buildJsValueGetter($link->getTargetColumnId()) . ',';
+            } else {
+                throw new WidgetConfigurationError($this->getWidget(), 'Only columns with widget links as `formula` currently supported in manually defined prefill data!');
+            }
+        }
+        
+        return '{oId: "' . $presetSheet->getMetaObject()->getId() . '", rows: [{' . $colsJs . '}]}';
+    }
+    
+    /**
      * Generates the JS code to navigate to another UI page.
      * 
      * @param string $pageSelector
@@ -385,9 +471,11 @@ JS;
     {
         $url = "{$this->getFacade()->buildUrlToPage($pageSelector)}?{$urlParams}";
         if ($newWindow === true) {
-            return "window.open('{$url}');";
+            $js = "window.open('{$url}');" . $this->buildJsShowMessageSuccess(json_encode($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.NAVIGATE.OPENING_NEW_WINDOW')));
+        } else {
+            $js = "window.location.href = '{$url}';";
         }
-        return "window.location.href = '{$url}';";
+        return $this->buildJsBusyIconHide() . ';' . $js;
     }
 
     protected function buildJsClickGoBack(ActionInterface $action, AbstractJqueryElement $input_element)
@@ -480,7 +568,11 @@ JS;
             if ($action instanceof iRunFacadeScript) {
                 if (mb_strtolower($action->getScriptLanguage()) === 'javascript' ) {
                     foreach ($action->getIncludes($this->getFacade()) as $path) {
-                        $tags[] = '<script src="' . $path . '"></script>';
+                        if (StringDataType::startsWith($path, '<')) {
+                            $tags[] = $path;
+                        } else {
+                            $tags[] = '<script src="' . $path . '"></script>';
+                        }
                     }
                 }
             }
@@ -506,10 +598,19 @@ JS;
 						if ({$input_element->buildJsValidator()}) {
                             {$targetElement->buildJsDataSetter('requestData')}
                             {$this->buildJsCloseDialog($widget, $input_element)}
-                            {$this->buildJsInputRefresh($widget, $input_element)}
+                            {$this->buildJsInputRefresh($widget)}
                         }
 
 JS;
     }
+    
+    /**
+     * If it's a `DialogButton` returns the JS code to close the dialog after the action succeeds.
+     * 
+     * @param WidgetInterface $widget
+     * @param AbstractJqueryElement $input_element
+     * @return string
+     */
+    abstract protected function buildJsCloseDialog($widget, $input_element);
 }
 ?>

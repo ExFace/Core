@@ -159,7 +159,25 @@
 	return {		
 		date: {
 			/**
-			 * @return Date
+			 * Parses a string date into a JS Date object.
+			 * 
+			 * Accepts as input:
+		     * - empty values,
+		     * - numbers (seconds)
+		     * - parsable string dates (ISO string, human-readable string)
+		     * - relative dates (+/-1d, etc.)
+		     *
+		     * Examples:
+		     * - "31.12.2019" -> 2019-12-31
+		     * - "31.12" -> 2019-12-31
+		     * - "now" -> 2019-12-31
+		     * - "-2w" -> 2019-12-17
+		     * 
+			 * @param {string|NULL} [sDate]
+			 * @param {string} [dateFormat]
+			 * @param {Object} [ParseParams]
+			 * 
+			 * @returns {Date}
 			 */
 			parse: function(sDate, dateFormat, ParseParams) {
 				// date ist ein String und wird zu einem date-Objekt geparst
@@ -268,7 +286,7 @@
 				output = null;
 				if (!dateParsed && (match !== null)) {
 					output = moment();
-					var key = null;;
+					var key = null;
 					var exp = match[2];
 					var number = Number(match[1]);
 					if (number !== 0 && exp === '') {
@@ -335,7 +353,12 @@
 			},
 			
 			/**
-			 * @return string
+			 * Formats the given normalized date string or JS Date object according to the given ICU format
+			 * 
+			 * @param {string|Date} sDate
+			 * @param {string} [sICUFormat]
+			 * 
+			 * @return {string}
 			 */
 			format: function(sDate, sICUFormat) {
 				if (sDate !== null && sDate !== undefined && sDate !== '') {
@@ -355,7 +378,7 @@
 		time: {
 			/**
 			 * 
-			 * @return string
+			 * @returns {string}
 			 */
 			parse: function(sTime, timeFormat) {
 				// sTime ist ein String und wird zu einem date-Objekt geparst

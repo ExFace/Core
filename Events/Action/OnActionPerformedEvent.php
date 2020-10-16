@@ -63,4 +63,13 @@ class OnActionPerformedEvent extends AbstractActionEvent implements TaskEventInt
     {
         return $this->transaction;
     }
+
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.Action.OnActionPerformed';
+    }
 }

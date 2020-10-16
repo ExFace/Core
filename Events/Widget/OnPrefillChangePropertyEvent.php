@@ -68,6 +68,15 @@ class OnPrefillChangePropertyEvent extends AbstractWidgetEvent implements DataSh
     }
     
     /**
+     * {@inheritdoc}
+     * @see \exface\Core\Events\AbstractEvent::getEventName()
+     */
+    public static function getEventName() : string
+    {
+        return 'exface.Core.Widget.OnPrefillChangeProperty';
+    }
+    
+    /**
      * Returns the name of the UXON property of the widget, that is being changed.
      * 
      * @return string

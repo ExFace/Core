@@ -11,6 +11,7 @@ use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\CommonLogic\AbstractActionShowDynamicDialog;
 use exface\Core\Widgets\Dialog;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
 
 /**
  * Shows a login dialog.

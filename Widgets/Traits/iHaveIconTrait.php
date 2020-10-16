@@ -2,10 +2,13 @@
 namespace exface\Core\Widgets\Traits;
 
 use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\CommonLogic\Constants\Icons;
 
 trait iHaveIconTrait {
     
     private $icon = null;
+    
+    private $iconSet = null;
     
     private $showIcon = null;
     
@@ -66,5 +69,29 @@ trait iHaveIconTrait {
     {
         $this->showIcon = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see iHaveIcon::getIconSet()
+     */
+    public function getIconSet() : ?string
+    {
+        return $this->iconSet;
+    }
+    
+    /**
+     * Which icon set to use (if not set, the facade's default will be used)
+     *
+     * @uxon-property icon-set
+     * @uxon-type string
+     * @uxon-default fa
+     *
+     * @see iHaveIcon::setIconSet()
+     */
+    public function setIconSet(string $iconSetCode) : iHaveIcon
+    {
+        return $this->iconSet;
     }
 }

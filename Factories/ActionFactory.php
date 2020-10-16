@@ -13,7 +13,6 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
-use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
  * Instantiates actions
@@ -25,7 +24,10 @@ abstract class ActionFactory extends AbstractStaticFactory
 {
 
     /**
-     * Instantiates a new action from the given selector
+     * Instantiates a new action from the given selector.
+     * 
+     * If the app determined from the selector can supply a prototype, it will be used. If not,
+     * a search over object actions in the metamodel will be performed.
      *
      * @param ActionSelectorInterface $selector            
      * @return ActionInterface
@@ -34,7 +36,7 @@ abstract class ActionFactory extends AbstractStaticFactory
     {
         $app = $selector->getWorkbench()->getApp($selector->getAppSelector());
         if ($app->has($selector)) {
-            $action = static::createEmpty($selector, $app, $trigger_widget);
+            $action = static::createFromPrototype($selector, $app, $trigger_widget);
         } else {
             $actionAlias = substr($selector->toString(), (strlen($selector->getAppAlias())+1));
             $action = $selector->getWorkbench()->model()->getModelLoader()->loadAction($app, $actionAlias, $trigger_widget);
@@ -80,13 +82,18 @@ abstract class ActionFactory extends AbstractStaticFactory
     }
 
     /**
-     *
+     * Instantiates an action based on the selector for a prototype (= PHP class). 
+     * 
+     * NOTE: This method does not search for object actions or any other action models. It assumes,
+     * that the given selector fits a prototype and attempts to get the action from the app
+     * determined from the selector directly.
+     * 
      * @param ActionSelectorInterface $selector            
-     * @param AppInterface $app            
-     * @throws ActionNotFoundError if the class name cannot be resolved
+     * @param AppInterface $app
+     * 
      * @return ActionInterface
      */
-    public static function createEmpty(ActionSelectorInterface $selector, AppInterface $app = null, WidgetInterface $trigger_widget = null) : ActionInterface
+    public static function createFromPrototype(ActionSelectorInterface $selector, AppInterface $app = null, WidgetInterface $trigger_widget = null) : ActionInterface
     {
         $app = $app ? $app : $selector->getWorkbench()->getApp($selector->getAppSelector());
         return $app->getAction($selector, $trigger_widget);
@@ -105,7 +112,7 @@ abstract class ActionFactory extends AbstractStaticFactory
     public static function createFromModel($prototype_alias, $action_alias, AppInterface $app, MetaObjectInterface $object, UxonObject $uxon_description = null, WidgetInterface $trigger_widget = null) : ActionInterface
     {
         $selector = new ActionSelector($app->getWorkbench(), $prototype_alias);
-        $action = static::createEmpty($selector, $app, $trigger_widget);
+        $action = static::createFromPrototype($selector, $app, $trigger_widget);
         $action->setAlias($action_alias);
         $action->setMetaObject($object);
         if (! is_null($uxon_description)) {
@@ -113,18 +120,4 @@ abstract class ActionFactory extends AbstractStaticFactory
         }
         return $action;
     }
-    
-    /**
-     * 
-     * @param AppInterface $app
-     * @param string $alias
-     * @param WidgetInterface $trigger_widget
-     * @return ActionInterface
-     */
-    public static function createFromAlias(AppInterface $app, string $alias, WidgetInterface $trigger_widget = null) : ActionInterface
-    {
-        $qualifiedAlias = $app->getAliasWithNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $alias;
-        return static::createFromString($app->getWorkbench(), $qualifiedAlias, $trigger_widget);
-    }
 }
-?>

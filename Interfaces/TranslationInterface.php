@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Interfaces;
 
+use exface\Core\CommonLogic\UxonObject;
+
 /**
  * Interface for a translation implementation of an app.
  * 
@@ -20,18 +22,33 @@ interface TranslationInterface
      * @param float $plural_number            
      * @return string
      */
-    public function translate(string $message_id, array $placeholder_values = null, $plural_number = null) : string;
+    public function translate(string $message_id, array $placeholder_values = null, $plural_number = null, string $domain = null, string $fallback = null) : string;
 
+    /**
+     * 
+     * @param UxonObject $uxon
+     * @param string $domain
+     * @param string $namespace
+     * @return UxonObject
+     */
+    public function translateUxonProperties(UxonObject $uxon, string $domain, string $namespace) : UxonObject;
+    
     /**
      *
      * @return string
      */
     public function getLocale() : string;
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getLanguage() : string;
 
     /**
      * Returns an array of fallback locales
      *
-     * @return array
+     * @return string[]
      */
     public function getFallbackLocales() : array;
 
@@ -41,10 +58,24 @@ interface TranslationInterface
      * @param string $message_id            
      * @return boolean
      */
-    public function hasTranslation($message_id) : bool;
+    public function hasTranslation($message_id, string $domain = null) : bool;
     
     /**
      * @return string[]
      */
-    public function getDictionary() : array;
+    public function getDictionary(string $domain = null) : array;
+    
+    /**
+     * 
+     * @param string $name
+     * @return bool
+     */
+    public function hasTranslationDomain(string $name) : bool;
+    
+    /**
+     * 
+     * @param bool $forceLocale
+     * @return string[]
+     */
+    public function getLanguagesAvailable(bool $forceLocale = true) : array;
 }

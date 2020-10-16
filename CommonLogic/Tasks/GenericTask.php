@@ -11,11 +11,14 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Generic task implementation to create task programmatically.
@@ -389,14 +392,54 @@ class GenericTask implements TaskInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::setPage()
+     */
+    public function setPage(UiPageInterface $page) : TaskInterface
+    {
+        if ($this->isTriggeredOnPage() === true) {
+            throw new RuntimeException('Cannot change page of a task, that is triggered by another page!');
+        }
+        $this->originPage = $page;
+        $this->originPageSelctor = $page->getSelector();
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Tasks\TaskInterface::getPageTriggeredOn()
      */
     public function getPageTriggeredOn() : UiPageInterface
     {
         if (is_null($this->originPage)) {
             $this->originPage = UiPageFactory::create($this->getPageSelector());
+            $pageAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class);
+            $this->originPage = $pageAP->authorize($this->originPage);
         }
         return $this->originPage;
     }
+    
+    public function exportUxonObject()
+    {
+        $uxon = new UxonObject();
+        if ($this->isTriggeredOnPage()) {
+            $uxon->setProperty('page_selector', $this->getPageSelector()->toString());
+        }
+        return $uxon;
+    }
 
+    public static function getUxonSchemaClass(): ?string
+    {
+        return null;
+    }
+
+    public function importUxonObject(UxonObject $uxon)
+    {
+        foreach ($uxon->getPropertiesAll() as $prop => $val) {
+            switch ($prop) {
+                case 'page_selector': $this->setPageSelector($val); break;
+            }
+        }
+        return;
+    }
 }

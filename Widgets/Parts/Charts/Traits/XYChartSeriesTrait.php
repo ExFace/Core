@@ -10,6 +10,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\Charts\ChartAxis;
 use exface\Core\Widgets\Parts\Charts\ChartSeries;
 use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
+use exface\Core\Widgets\Parts\Charts\Interfaces\SplittableChartSeriesInterface;
 
 trait XYChartSeriesTrait
 {
@@ -64,12 +65,6 @@ trait XYChartSeriesTrait
      * @var DataColumn
      */
     private $yColumn = null;
-    
-    /**
-     * 
-     * @var string
-     */
-    private $split_by_attribute_alias = null;
     
     /**
      * Returns the color of this series or NULL if no color explicitly defined.
@@ -279,6 +274,15 @@ trait XYChartSeriesTrait
         }
         $this->yAxis = $axis;
         
+        if ($this instanceof SplittableChartSeriesInterface && $this->isSplitByAttribute()) {
+            if (! $col = $dataWidget->getColumnByAttributeAlias($this->getSplitByAttributeAlias())) {
+                $col = $dataWidget->createColumnFromUxon(new UxonObject([
+                    'attribute_alias' => $this->getSplitByAttributeAlias()
+                ]));
+                $dataWidget->addColumn($col);
+            }
+        }
+        
         return $this;
     }
     
@@ -471,32 +475,4 @@ trait XYChartSeriesTrait
     {
         return $this->getValueColumnDimension() === Chart::AXIS_X ? $this->getXAxis() : $this->getYAxis();
     }
-    
-    /**
-     * Set this attribute when you want to split the dataset into parts and get a series for
-     * each value that attribute has.
-     * For example you want to see the sales of different stores over time, you split the dataset
-     * by the store attribute and will get a chart with different series for each store
-     *
-     * @uxon-property split_by_attribute_alias
-     * @uxon-type metamodel:attribute
-     *
-     * @param string $value
-     * @return ChartSeries
-     */
-    public function setSplitByAttributeAlias(string $value) : ChartSeries
-    {
-        $this->split_by_attribute_alias = $value;
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return string|NULL
-     */
-    public function getSplitByAttributeAlias() : ?string
-    {
-        return $this->split_by_attribute_alias;
-    }
-    
 }
