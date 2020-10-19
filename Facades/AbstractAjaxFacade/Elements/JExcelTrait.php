@@ -20,7 +20,6 @@ use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 use exface\Core\Widgets\Parts\DataSpreadSheetFooter;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Widgets\InputComboTable;
-use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
@@ -31,7 +30,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * ```
  * {
  *  "require": {
- *      "npm-asset/jexcel" : "^3.2.0"
+ *      "npm-asset/jexcel" : "^4.4.1"
  *  }
  * }
  * 
