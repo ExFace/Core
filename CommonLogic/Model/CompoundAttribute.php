@@ -82,7 +82,7 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
         }
         
         if ($toSplit !== null && $toSplit !== '') {
-            throw new RuntimeException('Failed to split value "' . $value . '" of compound attribute "' . $this->getAliasWithRelationPath() . '": non-empty remainder "' . $toSplit . '" after processing all components', '79G9JUB');
+            throw new RuntimeException('Failed to split value "' . $value . '" of compound attribute "' . $this->getAliasWithRelationPath() . '" from object "' . $this->getObject()->getAliasWithNamespace() . '": non-empty remainder "' . $toSplit . '" after processing all components', '79G9JUB');
         }
         
         return $values;
@@ -125,7 +125,7 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
     {
         $components = $this->getComponents();
         if (count($values) !== count($components)) {
-            throw new RuntimeException("Cannont merge values for compound attribute '{$this->getAliasWithRelationPath()}'. Different amount of values given than attribute has components!", '79G9JUB');
+            throw new RuntimeException("Cannont merge values for compound attribute '{$this->getAliasWithRelationPath()}' from object '{$this->getObject()->getAliasWithNamespace()}'. Different amount of values given than attribute has components!", '79G9JUB');
         }
         $mergedValue = '';
         foreach ($components as $idx => $comp) {
@@ -142,7 +142,7 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
     public function splitCondition(ConditionInterface $condition) : ConditionGroupInterface
     {
         if ($condition->getExpression()->isMetaAttribute() === false || $condition->getExpression()->getAttribute()->is($this) === false) {
-            throw new InvalidArgumentException('Cannot split condition "' . $condition->toString() . '" for compound attribute "' . $this->getName() . '" (alias ' . $this->getAliasWithRelationPath() . '): the condition is not based on this compound attribute!');
+            throw new InvalidArgumentException('Cannot split condition "' . $condition->toString() . '" for compound attribute "' . $this->getName() . '" (alias ' . $this->getAliasWithRelationPath() . ') from object "' . $this->getObject()->getAliasWithNamespace() . '": the condition is not based on this compound attribute!');
         }
         
         $group = ConditionGroupFactory::createEmpty($this->getWorkbench(), EXF_LOGICAL_AND, $this->getObject());
@@ -173,7 +173,7 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
                 // TODO transform IN-conditions into lot's of ANDs and ORs
                 //break;
             default:
-                throw new RuntimeException('Cannot split condition "' . $condition->toString() . '" for compound attribute "' . $this->getAliasWithRelationPath() . '": a generic split is not possible for comparator "' . $condition->getComparator() . '"!');
+                throw new RuntimeException('Cannot split condition "' . $condition->toString() . '" for compound attribute "' . $this->getAliasWithRelationPath() . '" from object "' . $this->getObject()->getAliasWithNamespace() . '": a generic split is not possible for comparator "' . $condition->getComparator() . '"!');
         }
         
         return $group;
@@ -188,9 +188,8 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
     {
         $comp = $this->getComponents()[$index];
         if ($comp === null) {
-            throw new MetaAttributeNotFoundError($this->getObject(), 'Component "' . $index . '" not found for compound attribute "' . $this->getName() . '" (alias ' . $this->getAliasWithRelationPath() . ')!');
+            throw new MetaAttributeNotFoundError($this->getObject(), 'Component "' . $index . '" not found for compound attribute "' . $this->getName() . '" (alias ' . $this->getAliasWithRelationPath() . ') from object "' . $this->getObject()->getAliasWithNamespace() . '"!');
         }
         return $comp;
     }
-
 }
