@@ -108,7 +108,7 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
             if ($delim !== '') {
                 $delims[] = $delim;
             } else {
-                throw new RuntimeException('Cannot split values of compound attribute "' . $this->getAliasWithRelationPath() . '": could not find delimiter for compound component with sequence index ' . $idx, '79G9JUB');
+                throw new RuntimeException("Cannot split values of compound attribute '{$this->getAliasWithRelationPath()}' from object '{$this->getObject()->getAliasWithNamespace()}': could not find delimiter for compound component with sequence index {$idx}", '79G9JUB');
             }
         }
         return $delims;
