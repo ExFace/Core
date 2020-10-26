@@ -378,6 +378,8 @@ JS;
 
                             var val = menuNode.getValue();
                             var menuNodeType = {$funcPrefix}_getNodeType(menuNode);
+
+                            var editMenu;
                             
                             // Add preset button if applicable
                             // ist objekt oder wert === leer                            
@@ -415,6 +417,44 @@ JS;
                                     return {$funcPrefix}_openJsonPathViewModal(menuNode); 
                                 }
                             });
+
+                            // Add edit-submenu
+                            editMenu = {
+                                text: "{$trans['CONTEXT_MENU.EDIT.TITLE']}",   // the text for the menu item
+                                title: "{$trans['CONTEXT_MENU.EDIT.TITLE']}",  // the HTML title attribute
+                                className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-clipboard",
+                                submenuTitle: "{$trans['CONTEXT_MENU.EDIT.HINT']}",
+                                submenu: [
+                                    {
+                                        text: "{$trans['CONTEXT_MENU.EDIT.COPY']}",
+                                        title: "{$trans['CONTEXT_MENU.EDIT.COPY_HINT']}",
+                                        className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-files-o",
+                                        click: function() {
+                                            exfTools.clipboard.copyText(JSON.stringify(menuNode.getValue()));
+                                        }
+                                    },
+                                    {
+                                        text: "{$trans['CONTEXT_MENU.EDIT.PASTE']}",
+                                        title: "{$trans['CONTEXT_MENU.EDIT.PASTE_HINT']}",
+                                        className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-clipboard",
+                                        click: function() {
+                                            var sPasted, json;
+                                            try {
+                                                sPasted = exfTools.clipboard.pasteText();
+                                                try {
+                                                    json = JSON.parse(sPasted);
+                                                    menuNode.setValue(json);
+                                                } catch (e) {
+                                                    menuNode.setValue(sPasted);
+                                                }
+                                            } catch (e) {
+                                                {$funcPrefix}_openPasteModal(menuNode);
+                                            }
+                                        }
+                                    }
+                                ]
+                            };
+                            items.push(editMenu);
                             
                             return items;
                         } // onCreateMenu
@@ -908,6 +948,38 @@ CSS;
                 "jsoneditor-modal jsonPathView",
                 function(modal) {
                     {$funcPrefix}_loadJsonPathView(modal, node);
+                }
+            );
+        }
+
+        function {$funcPrefix}_openPasteModal(node) {
+            return {$funcPrefix}_openModal(
+                "{$trans['CONTEXT_MENU.EDIT.PASTE_DIALOG_TITLE']}",
+                '<div>' +
+                '   <textarea class="uxoneditor-input"></textarea>' +
+                '</div>',
+                false,
+                "jsoneditor-modal jsonPathView",
+                function(modal) {
+                    var oModalElem = modal.modalElem();
+                    var menuNode = node;
+                    var jqTextArea = $(oModalElem).find('textarea').first();
+                    setTimeout(function() {
+                        jqTextArea.focus();
+                    }, 0);
+                    oModalElem.addEventListener("paste", function() {
+                        setTimeout(function() {
+                            var sPasted = jqTextArea.val();
+                            try {
+                                json = JSON.parse(sPasted);
+                                menuNode.setValue(json);
+                                menuNode.editor.expandAll(false)
+                            } catch (e) {
+                                menuNode.setValue(sPasted);
+                            }
+                            modal.close();
+                        }, 0);
+                    });
                 }
             );
         }
