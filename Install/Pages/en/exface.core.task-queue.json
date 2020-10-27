@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-09-30 09:19:33",
     "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2020-10-15 16:03:11",
+    "modified_on": "2020-10-16 15:48:26",
     "contents": {
         "widget_type": "DataTable",
         "id": "TaskQueue_table",
@@ -137,9 +137,6 @@
             {
                 "hidden": true,
                 "attribute_alias": "TASK_UXON"
-            },
-            {
-                "attribute_alias": "UID"
             },
             {
                 "attribute_alias": "TASK_ASSIGNED_ON"
