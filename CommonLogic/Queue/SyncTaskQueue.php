@@ -81,6 +81,7 @@ class SyncTaskQueue extends AsyncTaskQueue
             if (! $e instanceof ExceptionInterface){
                 $e = new InternalError($e->getMessage(), null, $e);
             }
+            $this->getWorkbench()->getLogger()->logException($e);
             $transaction = $this->getWorkbench()->data()->startTransaction();
             $dataSheet->setCellValue('STATUS', 0, QueuedTaskStateDataType::STATUS_ERROR);
             $dataSheet->getColumns()->addFromExpression('ERROR_MESSAGE');
