@@ -12,7 +12,6 @@ use exface\Core\Events\Queue\OnQueueRunEvent;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Exceptions\LogicException;
-use exface\Core\CommonLogic\Tasks\ErrorMessage;
 use exface\Core\CommonLogic\Tasks\ResultError;
 
 /**
