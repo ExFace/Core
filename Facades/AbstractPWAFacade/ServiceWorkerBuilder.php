@@ -63,8 +63,8 @@ JS;
     {
         return <<<JS
 
-{$this->buildJsRoutesToCache()}
 {$this->buildJsCustomCode()}
+{$this->buildJsRoutesToCache()}
 JS;
     }
     
@@ -130,7 +130,7 @@ JS;
                 $params[] = 'maxEntries: ' . $route['maxEntries'];
             }
             if (! empty($params)) {
-                $plugins .= "new workbox.expiration.Plugin({" . implode(', ', $params) . "})\n            ";
+                $plugins .= "new workbox.expiration.ExpirationPlugin({" . implode(', ', $params) . "})\n            ";
             }
             
             $cacheName = $route['cacheName'] ? 'cacheName : "' . $route['cacheName'] . '",' : '';
@@ -138,7 +138,7 @@ JS;
             if (substr($route['strategy'], 0, strlen('workbox.strategies.')) === 'workbox.strategies.') {
                 $handler = <<<JS
                 
-    {$route['strategy']}({
+    new {$route['strategy']}({
         {$cacheName}
         plugins: [
             {$plugins}

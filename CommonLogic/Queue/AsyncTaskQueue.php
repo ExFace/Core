@@ -18,7 +18,7 @@ class AsyncTaskQueue extends AbstractTaskQueue
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\TaskQueueInterface::handle()
      */
-    public function handle(TaskInterface $task, array $topics = [], string $producer = null): ResultInterface
+    public function handle(TaskInterface $task, array $topics = [], string $producer = null, string $messageId = null): ResultInterface
     {
         $dataSheet = $this->createQueueDataSheet($task, $topics, $producer);
         $dataSheet->dataCreate();

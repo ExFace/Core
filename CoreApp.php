@@ -13,6 +13,7 @@ use exface\Core\Facades\ProxyFacade;
 use exface\Core\Facades\WebConsoleFacade;
 use exface\Core\CommonLogic\AppInstallers\FileContentInstaller;
 use exface\Core\CommonLogic\Filemanager;
+use exface\Core\Facades\HttpTaskFacade;
 
 class CoreApp extends App
 {
@@ -119,6 +120,11 @@ RewriteRule ^data/\..*$ - [F]
 </If>
             
 ");
+        
+        // HttpTask facade
+        $tplInstaller = new HttpFacadeInstaller($this->getSelector());
+        $tplInstaller->setFacade(FacadeFactory::createFromString(HttpTaskFacade::class, $this->getWorkbench()));
+        $installer->addInstaller($tplInstaller);
         
         $serverInstallerClass = $this->getWorkbench()->getConfig()->getOption("INSTALLER.SERVER_INSTALLER.CLASS");
         if ($serverInstallerClass != null) {

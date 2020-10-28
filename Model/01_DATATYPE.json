@@ -759,6 +759,21 @@
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "Encrypted",
             "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2020-09-28 13:11:25",
+            "MODIFIED_ON": "2020-09-28 13:11:25",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11eb98f85960395898f88c04ba002958",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Queued Task State",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/QueuedTaskStateDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\"}",
+            "ALIAS": "QueuedTaskState",
+            "SHORT_DESCRIPTION": ""
         }
     ],
     "totals_rows": [],
