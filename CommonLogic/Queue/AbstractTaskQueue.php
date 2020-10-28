@@ -13,6 +13,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\DataTypes\QueuedTaskStateDataType;
 
 /**
  * Base class for default queue prototypes
@@ -38,6 +39,8 @@ abstract class AbstractTaskQueue implements TaskQueueInterface, WorkbenchDependa
     
     private $name = null;
     
+    private $uid = null;
+    
     private $alias = null;
     
     private $appSelector = null;
@@ -56,9 +59,10 @@ abstract class AbstractTaskQueue implements TaskQueueInterface, WorkbenchDependa
      * @param string $name
      * @param UxonObject $configUxon
      */
-    public function __construct(WorkbenchInterface $workbench, string $alias, $appSelector = null, string $name = null, UxonObject $configUxon = null)
+    public function __construct(WorkbenchInterface $workbench, string $uid, string $alias, $appSelector = null, string $name = null, UxonObject $configUxon = null)
     {
         $this->workbench = $workbench;
+        $this->uid = $uid;
         $this->alias = $alias;
         $this->appSelector = $appSelector;
         $this->name = $name;
@@ -96,22 +100,25 @@ abstract class AbstractTaskQueue implements TaskQueueInterface, WorkbenchDependa
      * @param string $producer
      * @return DataSheetInterface
      */
-    protected function createQueueDataSheet(TaskInterface $task, array $topics = [], string $producer = null) : DataSheetInterface
+    protected function createQueueDataSheet(TaskInterface $task, array $topics = [], string $producer, string $messageId = null) : DataSheetInterface
     {
-        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.TASK_QUEUE');
+        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
         $dataSheet->getColumns()->addFromUidAttribute();
         if ($task->hasParameter('assignedOn')) {
             $assignedOn = $task->getParameter('assignedOn');
         } else {
             $assignedOn = DateTimeDataType::now();
         }
+        $dataSheet->getColumns()->addFromSystemAttributes();
         $dataSheet->addRow([
             'TASK_UXON' => $task->exportUxonObject()->toJson(),
-            'STATUS' => 10, // TODO QueuedTaskStateDataType::STATUS_QUEUED,
+            'STATUS' => QueuedTaskStateDataType::STATUS_QUEUED,
             'OWNER' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
             'PRODUCER' => $producer,
+            'MESSAGE_ID' => $messageId,
             'TASK_ASSIGNED_ON' => $assignedOn,
-            'TOPICS' => implode(', ', $topics)
+            'TOPICS' => implode(', ', $topics),
+            'QUEUE' => $this->getUid()
         ]);
         return $dataSheet;
     }
@@ -144,6 +151,11 @@ abstract class AbstractTaskQueue implements TaskQueueInterface, WorkbenchDependa
     public function getApp() : ?AppInterface
     {
         return $this->getWorkbench()->getApp($this->appSelector);
+    }
+    
+    public function getUid() : string
+    {
+        return $this->uid;
     }
     
     /**

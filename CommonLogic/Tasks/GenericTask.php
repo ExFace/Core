@@ -425,6 +425,21 @@ class GenericTask implements TaskInterface
         if ($this->isTriggeredOnPage()) {
             $uxon->setProperty('page_selector', $this->getPageSelector()->toString());
         }
+        if ($this->hasMetaObject()) {
+            $uxon->setProperty('meta_object', $this->getMetaObject()->getAliasWithNamespace());
+        }
+        if ($this->hasInputData()) {
+            $uxon->setProperty('input_data', $this->getInputData()->exportUxonObject());
+        }
+        if ($this->hasPrefillData()) {
+            $uxon->setProperty('prefill_data', $this->getPrefillData()->exportUxonObject());
+        }
+        if ($this->hasAction()) {
+            $uxon->setProperty('action', $this->getActionSelector()->toString());
+        }
+        if (!empty($this->getParameters())) {
+            $uxon->setProperty('parameters', $this->getParameters());
+        }
         return $uxon;
     }
 
@@ -438,6 +453,15 @@ class GenericTask implements TaskInterface
         foreach ($uxon->getPropertiesAll() as $prop => $val) {
             switch ($prop) {
                 case 'page_selector': $this->setPageSelector($val); break;
+                case 'meta_object': $this->setMetaObjectSelector($val); break;
+                case 'input_data': $this->setInputData(DataSheetFactory::createFromUxon($this->getWorkbench(), $val)); break;
+                case 'prefill_data': $this->setPrefillData(DataSheetFactory::createFromUxon($this->getWorkbench(), $val)); break;
+                case 'action': $this->setActionSelector($val); break;
+                case 'parameters': 
+                    foreach ($val->getPropertiesAll() as $prop => $value) {
+                        $this->setParameter($prop, $value); 
+                    }
+                    break;
             }
         }
         return;
