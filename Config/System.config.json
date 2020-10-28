@@ -84,23 +84,27 @@
 		"HTML pages": {
     		"description": "Cache all HTML files. Use cache only if offline.",
 			"matcher": "/^.*\\.html/i",
-			"strategy": "workbox.strategies.networkFirst"
+			"strategy": "workbox.strategies.NetworkFirst"
 		},
 		"Static JS, CSS, fonts from vendor folder": {
 			"description": "Cache static assets. Use cache only if offlie",
 			"matcher": "/vendor\\/.*(\\.js|\\.css|\\.woff2)/i",
-			"strategy": "workbox.strategies.networkFirst",
+			"strategy": "workbox.strategies.NetworkFirst",
 			"cacheName": "asset-cache",
     		"maxAgeSeconds": 604800
 		},
 		"images": {
 			"description": "Cache images. Use cache, but update in the background.",
 			"matcher": "/.*\\.(?:png|gif|jpg|jpeg|svg)$/i",
-			"strategy": "workbox.strategies.staleWhileRevalidate",
+			"strategy": "workbox.strategies.StaleWhileRevalidate",
 			"cacheName": "image-cache",
     		"maxEntries": 50,
     		"maxAgeSeconds": 604800
 		}
 	},
-	"FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_IMPORTS": []
+	"FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_IMPORTS": [
+		"npm-asset/dexie/dist/dexie.min.js",
+    	"exface/Core/Facades/AbstractPWAFacade/sw_tools.js",
+    	"exface/Core/Facades/AbstractPWAFacade/exf_preloader.js"
+    ]
 }

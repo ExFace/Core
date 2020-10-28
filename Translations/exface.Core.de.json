@@ -308,6 +308,14 @@
     "SECURITY.POLICIES.TARGET.META_OBJECT": "Objekt",
     "SECURITY.POLICIES.TARGET.FACADE": "Fassade",
     
+    "TASK.QUEUE.STATUS_QUEUED": "Wartend",
+    "TASK.QUEUE.STATUS_INPROGRESS": "Verarbeitend",
+    "TASK.QUEUE.STATUS_ERROR": "Fehlerhaft",
+    "TASK.QUEUE.STATUS_RESOLVED": "Behoben",
+    "TASK.QUEUE.STATUS_DONE": "Erledigt",
+    "TASK.QUEUE.TYPE_SYNC": "Synchron",
+    "TASK.QUEUE.TYPE_ASYNC": "Asynchron",    
+    
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",
 	"WIDGET.SELECT_NO": "Nein",

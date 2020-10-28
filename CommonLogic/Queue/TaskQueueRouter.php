@@ -42,7 +42,7 @@ class TaskQueueRouter implements TaskHandlerInterface, WorkbenchDependantInterfa
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\TaskHandlerInterface::handle()
      */
-    public function handle(TaskInterface $task, array $topics = [], string $producer = null): ResultInterface
+    public function handle(TaskInterface $task, array $topics = [], string $producer = null, string $messageId = null): ResultInterface
     {
         $handlers = [];
         $fallbackHandlers = [];
@@ -73,7 +73,7 @@ class TaskQueueRouter implements TaskHandlerInterface, WorkbenchDependantInterfa
         // TODO what is the result of putting the task into multiple queues? Currently it would
         // be the result of the last queue.
         foreach ($handlers as $queue) {
-            $result = $queue->handle($task, $topics, $producer);
+            $result = $queue->handle($task, $topics, $producer, $messageId);
         }
         
         return $result;
@@ -101,7 +101,7 @@ class TaskQueueRouter implements TaskHandlerInterface, WorkbenchDependantInterfa
                 $class = '\\' . ltrim($row['PROTOTYPE_CLASS'], "\\");
                 $uxon = UxonObject::fromJson($row['CONFIG_UXON'] ?? '{}');
                 $uxon->setProperty('allow_other_queues_to_handle_same_tasks', $row['ALLOW_MULTI_QUEUE_HANDLING']);
-                $queue = new $class($this->getWorkbench(), $row['ALIAS'], $row['APP'], $row['NAME'], $uxon);
+                $queue = new $class($this->getWorkbench(), $row['UID'], $row['ALIAS'], $row['APP'], $row['NAME'], $uxon);
                 $this->queues[] = $queue;
             }
         }
