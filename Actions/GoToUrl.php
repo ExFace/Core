@@ -45,6 +45,7 @@ use exface\Core\DataTypes\BooleanDataType;
  * {
  *  "alias": "exface.Core.GoToUrl",
  *  "url": "[#url#]",
+ *  "urlencode_placeholders": false,
  *  "open_in_new_window": true
  * }
  * 
