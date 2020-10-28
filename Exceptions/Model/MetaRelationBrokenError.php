@@ -29,5 +29,14 @@ class MetaRelationBrokenError extends RuntimeException implements MetaObjectExce
         $this->setAlias($alias);
         $this->setMetaObject($relation_left_object);
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\RuntimeException::getDefaultAlias()
+     */
+    public function getDefaultAlias(){
+        return '7D97VLN';
+    }
 }
 ?>
