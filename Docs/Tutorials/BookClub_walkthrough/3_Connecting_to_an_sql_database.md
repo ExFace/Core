@@ -28,13 +28,15 @@ Let's create a data connection to our new DB:
 4. Press the big magic-wand-icon in the middle of the configuration area
 5. Select `MySQL connection with relation matcher` from the list of available presets and press the `Replace` button at the bottom of the dialog
 6. Fill the configuration values as follows:
-	- host: `127.0.0.1`
+	- host: `127.0.0.1` (using an IP is faster than a network name in most cases!)
 	- dbase: `tutorial_bookclub`
 	- charset: `utf8`
 	- user: the username to connect to the MySQL server
 	- password: the password for the user above
 	- relation_matcher: leave as is (see explanation below)
 7. Press `Save`
+
+![Data Connection](Images/connection.png)
 
 Our new connection should now appear at the top of the list.
 
@@ -53,6 +55,8 @@ Now that we have a connection, we can use it in a data source:
 	- Default Connection: `BookClub SQL DB localhost`
 	- Default Query Builder: `MySqlBuilder`
 4. Press `Save`
+
+![Data Connection](Images/datasource.png)
 
 Now we have a data source in the model of the app `tutorial.BookClub` which uses our database as it's default connection.
 
