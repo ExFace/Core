@@ -10,7 +10,185 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-09-30 09:19:33",
-    "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-09-30 09:19:48",
-    "contents": "[]"
+    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "modified_on": "2020-10-16 15:48:26",
+    "contents": {
+        "widget_type": "DataTable",
+        "id": "TaskQueue_table",
+        "multi_select": true,
+        "object_alias": "exface.Core.QUEUED_TASK",
+        "filters": [
+            {
+                "comparator": "<=",
+                "attribute_alias": "TASK_ASSIGNED_ON"
+            },
+            {
+                "attribute_alias": "STATUS"
+            },
+            {
+                "attribute_alias": "OWNER__USERNAME"
+            },
+            {
+                "attribute_alias": "OBJECT_ALIAS"
+            },
+            {
+                "attribute_alias": "ACTION_ALIAS"
+            },
+            {
+                "attribute_alias": "PRODUCER"
+            },
+            {
+                "attribute_alias": "MESSAGE_ID"
+            },
+            {
+                "attribute_alias": "QUEUE__NAME"
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "TASK_ASSIGNED_ON",
+                "direction": "desc"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectInfoDialog"
+            },
+            {
+                "caption": "Neu einstellen",
+                "action": {
+                    "alias": "exface.Core.CopyData",
+                    "input_mappers": [
+                        {
+                            "from_object_alias": "exface.Core.QUEUED_TASK",
+                            "column_to_column_mappings": [
+                                {
+                                    "from": "UID",
+                                    "to": "PARENT_ITEM_OID"
+                                },
+                                {
+                                    "from": 10,
+                                    "to": "STATUS"
+                                },
+                                {
+                                    "from": "=NOW()",
+                                    "to": "TASK_ASSIGNED_ON"
+                                },
+                                {
+                                    "from": "\"\"",
+                                    "to": "RESULT_CODE"
+                                },
+                                {
+                                    "from": "\"\"",
+                                    "to": "RESULT"
+                                },
+                                {
+                                    "from": "\"\"",
+                                    "to": "ERROR_MESSAGE"
+                                },
+                                {
+                                    "from": "\"\"",
+                                    "to": "ERROR_LOGID"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            {
+                "action_alias": "exface.Core.EditAndRerunTask"
+            },
+            {
+                "action_alias": "exface.Core.RunQueuedTasks",
+                "disable_condition": {
+                    "widget_link": "TaskQueue_table!STATUS",
+                    "comparator": "!==",
+                    "value": "10"
+                }
+            },
+            {
+                "caption": "Mark as resolved",
+                "disable_condition": {
+                    "widget_link": "TaskQueue_table!STATUS",
+                    "comparator": "!==",
+                    "value": "70"
+                },
+                "action": {
+                    "alias": "exface.Core.UpdateData",
+                    "input_mappers": [
+                        {
+                            "from_object_alias": "exface.Core.QUEUED_TASK",
+                            "column_to_column_mappings": [
+                                {
+                                    "from": 90,
+                                    "to": "STATUS"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            {
+                "visibility": "optional",
+                "action_alias": "exface.Core.DeleteObject"
+            }
+        ],
+        "columns": [
+            {
+                "hidden": true,
+                "attribute_alias": "TASK_UXON"
+            },
+            {
+                "attribute_alias": "TASK_ASSIGNED_ON"
+            },
+            {
+                "attribute_alias": "OWNER__USERNAME"
+            },
+            {
+                "attribute_alias": "OWNER",
+                "hidden": true
+            },
+            {
+                "attribute_alias": "OBJECT_ALIAS"
+            },
+            {
+                "attribute_alias": "ACTION_ALIAS"
+            },
+            {
+                "attribute_alias": "STATUS"
+            },
+            {
+                "attribute_alias": "TOPICS"
+            },
+            {
+                "attribute_alias": "RESULT_CODE"
+            },
+            {
+                "attribute_alias": "RESULT"
+            },
+            {
+                "attribute_alias": "ERROR_LOGID"
+            },
+            {
+                "hidden": true,
+                "attribute_alias": "ERROR_MESSAGE"
+            },
+            {
+                "attribute_alias": "PRODUCER"
+            },
+            {
+                "attribute_alias": "MESSAGE_ID"
+            },
+            {
+                "attribute_alias": "QUEUE__NAME"
+            },
+            {
+                "attribute_alias": "QUEUE",
+                "hidden": true
+            },
+            {
+                "attribute_alias": "PARENT_ITEM_OID"
+            }
+        ]
+    }
 }

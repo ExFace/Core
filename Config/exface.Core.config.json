@@ -6,8 +6,15 @@
 	"FACADES.DEFAULT_UI_FACADE": "exface.JEasyUIFacade.JEasyUIFacade",
     "FACADES.DEFAULT_WIDGET_FOR_UNKNOWN_DATA_TYPES" : "Input",
     "FACADES.DEFAULT_WIDGET_FOR_RELATIONS" : "InputComboTable",
-    
-    "INSTALLER.SQL_UPDATE_LAST_PERFORMED_ID": 29,
+    "FACADE.AJAX.ACCESS_CONTROL_HEADERS" : {
+		"Access-Control-Allow-Origin": "",
+		"Access-Control-Allow-Credentials": "true",
+		"Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE",
+		"Access-Control-Allow-Headers": "",
+		"Access-Control-Expose-Headers": ""
+	},
+	
+	"INSTALLER.SQL_UPDATE_LAST_PERFORMED_ID": 29,
     "INSTALLER.SERVER_INSTALLER.CLASS": "",
 	
 	"WIDGET.CONTEXTBAR": {

@@ -17,11 +17,12 @@ interface TaskQueueInterface extends TaskHandlerInterface, AliasInterface, iCanB
      * @param TaskInterface $task
      * @param string[] $topics
      * @param string $producer
+     * @param string $messageId
      * @return ResultInterface
      * 
      * @see \exface\Core\Interfaces\TaskHandlerInterface::handle()
      */
-    public function handle(TaskInterface $task, array $topics = [], string $producer = null) : ResultInterface;
+    public function handle(TaskInterface $task, array $topics = [], string $producer = null, string $messageId = null) : ResultInterface;
     
     /**
      * 

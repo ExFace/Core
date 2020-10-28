@@ -255,6 +255,38 @@ return $filename;
         foreach ($workbenchConfig->getOption('FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_ROUTES') as $id => $uxon) {
             $builder->addRouteFromUxon($id, $uxon);
         }
+        $js = <<<JS
+self.addEventListener('sync', function(event) {
+    if (event.tag === 'OfflineActionSync') {
+		event.waitUntil(
+			exfPreloader.getActionQueueIds('offline')
+			.then(function(ids){
+				return exfPreloader.syncActionAll(ids)
+			})
+			.then(function(){
+				self.clients.matchAll()
+				.then(function(all) {
+					all.forEach(function(client) {
+						client.postMessage('Sync completed');
+					});
+				});
+				return;
+			})
+			.catch(error => {
+				console.error('Could not sync completely; scheduled for the next time.', error);
+				self.clients.matchAll()
+				.then(function(all) {
+					all.forEach(function(client) {
+						client.postMessage(error);
+					});
+				});
+				return Promise.reject(error);
+			})
+		)
+    }
+});
+JS;
+        $builder->addCustomCode($js, 'Handle OfflineActionSync Event');
         $config->setOption($this->getWorkbench()->getCoreApp()->getAliasWithNamespace(), $builder->buildJsLogic(), $this->getConfigScope());
         
         try {
