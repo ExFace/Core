@@ -136,7 +136,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      *
      * @see \exface\Core\Widgets\AbstractWidget::isDisabled()
      */
-    public function isDisabled()
+    public function isDisabled() : ?bool
     {
         if ($this->isReadonly()) {
             return true;
@@ -176,9 +176,9 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::setDisabled()
      */
-    public function setDisabled($value)
+    public function setDisabled(?bool $trueOrFalseOrNull) : WidgetInterface
     {
-        return parent::setDisabled($value);
+        return parent::setDisabled($trueOrFalseOrNull);
     }
 
     /**

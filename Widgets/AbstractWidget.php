@@ -589,13 +589,14 @@ abstract class AbstractWidget implements WidgetInterface
      *
      * @see \exface\Core\Interfaces\WidgetInterface::isDisabled()
      */
-    public function isDisabled()
+    public function isDisabled() : ?bool
     {
         return $this->disabled;
     }
 
     /**
      * Set to TRUE to disable the widget.
+     * 
      * Disabled widgets cannot accept input or interact with the user in any other way.
      *
      * @uxon-property disabled
@@ -604,9 +605,9 @@ abstract class AbstractWidget implements WidgetInterface
      * 
      * @see \exface\Core\Interfaces\WidgetInterface::setDisabled()
      */
-    public function setDisabled($value)
+    public function setDisabled(?bool $trueOrFalseOrNull) : WidgetInterface
     {
-        $this->disabled = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->disabled = $trueOrFalseOrNull;
         return $this;
     }
 
