@@ -2262,6 +2262,20 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2020-10-28 16:21:35",
+            "MODIFIED_ON": "2020-10-28 16:21:35",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebae85a5e2f470ae85847beb4a5184",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7D97VLN",
+            "TITLE": "Broken relation model detected!",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

@@ -899,7 +899,7 @@ abstract class AbstractAction implements ActionInterface
      * mapper for the current input object and use it.
      * 
      * @uxon-property input_mappers
-     * @uxon-type \exface\Core\CommonLogic\DataSheet\DataSheetMapper[]
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheetMapper[]
      * @uxon-template [{"from_object_alias": "", "column_to_column_mappings": [{"from": "", "to": ""}]}]
      * 
      * {@inheritDoc}

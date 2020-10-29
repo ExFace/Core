@@ -22,6 +22,10 @@ class TaskQueueRouter implements TaskHandlerInterface, WorkbenchDependantInterfa
     
     private $queues = null;
     
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     */
     public function __construct(WorkbenchInterface $workbench)
     {
         $this->workbench = $workbench;

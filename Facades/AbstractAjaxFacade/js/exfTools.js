@@ -157,6 +157,12 @@
 	}
 	
 	return {		
+		/**
+		 * Working with date strings and objects
+		 * 
+		 * 
+		 * 
+		 */
 		date: {
 			/**
 			 * Parses a string date into a JS Date object.
@@ -375,6 +381,13 @@
 				return true;						
 			}
 		},
+		
+		/**
+		 * Working with time strings
+		 * 
+		 * 
+		 * 
+		 */
 		time: {
 			/**
 			 * 
@@ -482,9 +495,94 @@
 				return true;
 			}
 		},
+		
+		/**
+		 * Utilities for JS data sheets
+		 * 
+		 * 
+		 * 
+		 * 
+		 */
 		data: {
 			compareRows: function(row1, row2) {
 				return _dataRowsCompare(row1, row2);
+			}
+		},
+		
+		/**
+		 * Clipboard interaction
+		 * 
+		 * 
+		 * 
+		 */
+		clipboard: {
+			_fallbackCreateTextarea: function(value) {
+				var oTextArea = document.createElement("textarea");
+			  
+				// Avoid scrolling to bottom
+			 	oTextArea.style.top = "0";
+			 	oTextArea.style.left = "0";
+			 	oTextArea.style.position = "fixed";
+			 	
+			 	return oTextArea;
+			},
+			
+			_fallbackCopyTextToClipboard: function(text) {
+				var bSuccess;
+				var oTextArea = this._fallbackCreateTextarea();
+
+				oTextArea.value = text;
+				document.body.appendChild(oTextArea);
+				oTextArea.focus();
+				oTextArea.select();
+
+				bSuccess = document.execCommand('copy');
+				if (bSuccess === false) {
+					throw 'Copy not supported!';
+				}
+
+				document.body.removeChild(oTextArea);
+			},
+			
+			_fallbackPasteTextFromClipboard: function() {
+				var sValue, bSuccess;
+				var oTextArea = this._fallbackCreateTextarea();
+				
+				document.body.appendChild(oTextArea);
+				oTextArea.focus();
+				
+				bSuccess = document.execCommand("paste");
+				if (bSuccess === false) {
+					throw 'Paste not supported!';
+				} else {
+					sValue = oTextArea.textContent;
+				}
+
+				document.body.removeChild(oTextArea);
+				return sValue;
+			},
+			
+			copyText: function(text) {
+			  if (!navigator.clipboard) {
+			    this._fallbackCopyTextToClipboard(text);
+			    return;
+			  }
+			  navigator.clipboard.writeText(text).then(function() {
+			    //console.log('Async: Copying to clipboard was successful!');
+			  }, function(err) {
+			    throw err;
+			  });
+			},
+			
+			pasteText: function(text) {
+				if (!navigator.clipboard) {
+				    return this._fallbackPasteTextFromClipboard();
+				}
+				navigator.clipboard.writeText(text).then(function() {
+				    //console.log('Async: Pasting to clipboard was successful!');
+				}, function(err) {
+					throw err;
+				});
 			}
 		}
 	}
