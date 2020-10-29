@@ -56,9 +56,12 @@ const exfPreloader = {};
 	var _db = function() {
 		var dexie = new Dexie('exf-preload');
 		dexie.version(1).stores({
-			'preloads': 'id, object',
-			'actionQueue': 'id, object, action',
-			'deviceId': 'id'
+			'preloads': 'id, object'
+		});
+		dexie.version(2).stores({
+            'preloads': 'id, object',
+            'actionQueue': 'id, object, action',
+            'deviceId': 'id'
 		});
 		dexie.open();
 		return dexie;
@@ -321,6 +324,29 @@ const exfPreloader = {};
 			return [];
 		})
 	};
+	
+	/**
+	 * @return array
+	 */
+	this.getActionObjectData = async function(objectUid) {
+		var dbContent = await _actionsTable.toArray();
+		var actionRows = [];
+		dbContent.forEach(function(element) {
+			if (element.status !== 'offline' ) {
+				return;
+			}
+			if (element.request == undefined && element.request.data == undefined && element.request.data.object !== objectUid) {
+				return;
+			}
+			if (element.request.data.data == undefined && element.request.data.data.rows == undefined) {
+				return;
+			}
+			element.request.data.data.rows.forEach(function(row) {
+				actionRows.push(row);	
+			})
+		})
+		return actionRows;
+	}
 	
 	/**
 	 * @return Promise
