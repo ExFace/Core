@@ -11,6 +11,8 @@ use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Exceptions\Model\MetaRelationAliasAmbiguousError;
 use exface\Core\DataTypes\RelationCardinalityDataType;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
+use exface\Core\Exceptions\Model\MetaRelationBrokenError;
 
 class Relation implements MetaRelationInterface
 {
@@ -165,7 +167,11 @@ class Relation implements MetaRelationInterface
     public function getRightObject() : MetaObjectInterface
     {
         if ($this->rightObject === null) {
-            $this->rightObject = $this->getModel()->getObjectById($this->rightObjectUid);
+            try {
+                $this->rightObject = $this->getModel()->getObjectById($this->rightObjectUid);
+            } catch (MetaObjectNotFoundError $e) {
+                throw new MetaRelationBrokenError($this->getLeftObject(), 'Relation "' . $this->getAlias() . '" of object "' . $this->getLeftObject()->getAliasWithNamespace() . '" broken: right object not found! ' . $e->getMessage(), '7D97VLN', $e);
+            }
         }
         return $this->rightObject;
     }

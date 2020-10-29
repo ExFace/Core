@@ -12,13 +12,44 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\Factories\FacadeFactory;
 
 /**
- * This action opens a URL for a given object instance.
- * The URL can contain placeholders, that will
- * ber replaced by attribute values of the instance. This is usefull in tables, where a URL needs
- * to be opened for a specific row. Any value from that row can be passed to the URL vial placeholder [#column_id#]
+ * Opens a URL optionally filling placeholders with input data.
+ * 
+ * The URL defined in the `url` parameter can contain placeholders, that will be replaced 
+ * by values from input data columns with the same names: e.g. the placeholder `[#PATH#]`,
+ * will be replaced by the value of the `PATH` column in the first row of the action's 
+ * input data. Placeholder values are url-encoded automatically unless you set
+ * `urlencode_placeholders` to `false` - e.g. if the entire URL comes from the placeholder.
+ * 
+ * Additionally you can use `open_in_new_window` to force opening an new browser tab or
+ * window.
+ * 
+ * ## Examples
+ * 
+ * Open an URL with input data parameter (e.g. from the selected row of a table). The input
+ * data of the action should have a column with attribute alias `owner` of course - otherwise
+ * the placeholder will be replaced by an empty value.
+ * 
+ * ```
+ * {
+ *  "alias": "exface.Core.GoToUrl",
+ *  "url": "https://github.com/[#owner#]"
+ * }
+ * 
+ * ```
+ * 
+ * Open an URL contained in the input data in a new window.
+ * 
+ * ```
+ * {
+ *  "alias": "exface.Core.GoToUrl",
+ *  "url": "[#url#]",
+ *  "urlencode_placeholders": false,
+ *  "open_in_new_window": true
+ * }
+ * 
+ * ```
  *
  * @author Andrej Kabachnik
  *        
@@ -146,6 +177,13 @@ class GoToUrl extends AbstractAction implements iShowUrl
         return $this;
     }
     
+    /**
+     * 
+     * @param DataSheetInterface $data_sheet
+     * @param int $row_nr
+     * @throws ActionRuntimeError
+     * @return mixed
+     */
     public function buildUrlFromDataSheet(DataSheetInterface $data_sheet, $row_nr = 0)
     {
         $url = $this->getUrl();

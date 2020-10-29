@@ -10,9 +10,37 @@ use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iShowData;
 
 /**
- * A master-detail widget showing a data widget and a container or form working on the same data set.
+ * A master-detail widget showing a data widget and a detail-container (e.g. Form) working on the same data.
  * 
- * This widget consists of 
+ * The user can cycle through the items in the data widget viewing details or making changes in the
+ * detail-container. Changes will immediately have affect on the data widget, but will remain local
+ * until the entire data is sent to the data source. 
+ * 
+ * This carousel consists of a `data_widget` (typically a `DataTableResponsive`) and a `details_widget`,
+ * that is positioned next to the data as specified in `details_position`. 
+ * 
+ * The width/height of each area can be simply controlled by setting `width` or `height` of the respecitve
+ * child widget.
+ * 
+ * ## Example
+ * 
+ * ```
+ * {
+ *  "widget_type": "DataCarousel",
+ *  "data_widget": {
+ *      "widget_type": "DataTableResponsive"
+ *  },
+ *  "details_widget": {
+ *      "widget_type": "Form"
+ *  }
+ * 
+ * ```
+ * 
+ * ## Responsive behavior
+ * 
+ * On small screens, data and details won't fit on the screen at once, so the widget will show the
+ * data first and swith to the details once an item is select. This behavior may be slightly different
+ * depending on the facade used.
  * 
  * ## Similar widgets and alternatives
  * 
@@ -39,8 +67,6 @@ class DataCarousel extends Split
     private $dataWidget = null;
     
     private $detailsWidget = null;
-    
-    private $showDetails = null;
     
     private $detailPosition = null;
 
@@ -129,26 +155,6 @@ class DataCarousel extends Split
         $widget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Form');
         $this->addWidget($widget, 1);
         $this->setDetailsWidget($widget);
-        return $this;
-    }
-
-    /**
-     *
-     * @return bool
-     */
-    public function getShowDetails() : bool
-    {
-        return $this->showDetails;
-    }
-    
-    /**
-     *
-     * @param bool $value
-     * @return ImageCarousel
-     */
-    public function setShowDetails(bool $value) : ImageCarousel
-    {
-        $this->showDetails = $value;
         return $this;
     }
     

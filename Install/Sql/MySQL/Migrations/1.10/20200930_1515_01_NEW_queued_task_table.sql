@@ -24,4 +24,4 @@ CREATE TABLE IF NOT EXISTS `exf_queued_task` (
 
 -- DOWN
 
-DROP TABLE IF EXISTS `exf_task_queue`;
+DROP TABLE IF EXISTS `exf_queued_task`;
