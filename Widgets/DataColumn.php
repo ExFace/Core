@@ -279,12 +279,16 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                         $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
                         $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Display');
                         break;
-                } 
+                }
             } else {
                 // If the column is not based on an attribute, use generic input/display widgets
                 // Again, remember, that this code is only taking care of autogenerating cell
                 // widgets. If a widget is ecplicitly defined, it will be used as expected.
                 $this->cellWidget = WidgetFactory::create($this->getPage(), ($this->isEditable() ? 'Input' : 'Display'), $this);
+            }
+            
+            if ($this->getDataColumnName() !== '') {
+                $this->cellWidget->setDataColumnName($this->getDataColumnName());
             }
             
             if ($this->cellWidget->getWidth()->isUndefined()) {
