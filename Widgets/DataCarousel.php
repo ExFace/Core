@@ -8,6 +8,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * A master-detail widget showing a data widget and a detail-container (e.g. Form) working on the same data.
@@ -16,8 +18,10 @@ use exface\Core\Interfaces\Widgets\iShowData;
  * detail-container. Changes will immediately have affect on the data widget, but will remain local
  * until the entire data is sent to the data source. 
  * 
- * This carousel consists of a `data_widget` (typically a `DataTableResponsive`) and a `details_widget`,
- * that is positioned next to the data as specified in `details_position`. 
+ * The carousel consists of a `data` widget (typically a `DataTableResponsive`) and a `details` widget,
+ * (typically a `Form`), that is positioned next to the data and gets filled once a data item is selected. 
+ * Whether the details are displayed left, right, on top or below the data is controlled by the 
+ * `details_position` property.
  * 
  * The width/height of each area can be simply controlled by setting `width` or `height` of the respecitve
  * child widget.
@@ -27,10 +31,10 @@ use exface\Core\Interfaces\Widgets\iShowData;
  * ```
  * {
  *  "widget_type": "DataCarousel",
- *  "data_widget": {
+ *  "data": {
  *      "widget_type": "DataTableResponsive"
  *  },
- *  "details_widget": {
+ *  "details": {
  *      "widget_type": "Form"
  *  }
  * 
@@ -66,9 +70,20 @@ class DataCarousel extends Split
     
     private $dataWidget = null;
     
+    private $dataWidgetInitialized = false;
+    
     private $detailsWidget = null;
     
     private $detailPosition = null;
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasDataWidget() : bool
+    {
+        return $this->dataWidget !== null;
+    }
 
     /**
      * 
@@ -77,26 +92,37 @@ class DataCarousel extends Split
     public function getDataWidget() : iShowData
     {
         if ($this->dataWidget === null) {
-            $defaultData = WidgetFactory::create($this->getPage(), $this->getDefaultDataWidgetType(), $this);
-            $this->setDataWidget($defaultData);
+            try {
+                $widget = parent::getWidget(0);
+            } catch (WidgetChildNotFoundError $e) {
+                throw new WidgetConfigurationError($this, 'No data widget in widget "' . $this->getWidgetType() . '": please fill the `data` property!', '7DA4MW9');
+            }
+            if ($widget instanceof iUseData) {
+                $widget = $widget->getData();
+            } 
+            if (! ($widget instanceof Data)) {
+                throw new WidgetConfigurationError($this, 'Invalid type of data widget "' . $widget->getWidgetType() . '" inside widget "' . $this->getWidgetType() . '": expecting a data widget like `DataTableResponsive`!', '7DA4MW9');
+            }
+            $this->setDataWidget($widget);
+        }
+        if ($this->dataWidgetInitialized === false) {
+           $this->initDataWidget($this->dataWidget);
         }
         return $this->dataWidget;
     }
     
     protected function initDataWidget(iShowData $widget) : iShowData
     {
-        $details = $this->getDetailsWidget();
-        foreach ($details->getChildrenRecursive() as $child) {
-            if ($child instanceof iShowSingleAttribute && $child->isBoundToAttribute()) {
-                $widget->addColumn($widget->createColumnFromAttribute($child->getAttribute(), null, true));
+        if ($this->hasDetailsWidget()) {
+            $details = $this->getDetailsWidget();
+            foreach ($details->getChildrenRecursive() as $child) {
+                if ($child instanceof iShowSingleAttribute && $child->isBoundToAttribute()) {
+                    $widget->addColumn($widget->createColumnFromAttribute($child->getAttribute(), null, true));
+                }
             }
+            $this->dataWidgetInitialized = true;
         }
         return $widget;
-    }
-    
-    protected function isDataInitialized() : bool
-    {
-        return $this->dataWidget !== null;
     }
 
     /**
@@ -106,10 +132,23 @@ class DataCarousel extends Split
      */
     protected function setDataWidget(iShowData $dataWidget) : DataCarousel
     {
-        $this->dataWidget = $this->initDataWidget($dataWidget);
+        $dataWidget = $this->initDataWidget($dataWidget);
+        $this->dataWidget = $dataWidget;
+        $this->addWidget($dataWidget, 0);
         return $this;
     }
     
+    /**
+     * Widget to select the desired data item to show in the details - e.g. a `DataTableResponsive`.
+     * 
+     * @uxon-property data
+     * @uxon-type \exface\Core\Widgets\Data
+     * @uxon-template {"widget_type": "DataTableResponsive", "": ""}
+     * @uxon-required true
+     * 
+     * @param UxonObject $uxon
+     * @return DataCarousel
+     */
     public function setData(UxonObject $uxon) : DataCarousel
     {
         $widget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, $this->getDefaultDataWidgetType());
@@ -118,13 +157,12 @@ class DataCarousel extends Split
         } else {
             $this->setDataWidget($widget);
         }
-        $this->addWidget($widget, 0);
         return $this;
     }
     
-    public function getMasterWidget() : WidgetInterface
+    protected function hasDetailsWidget() : bool
     {
-        return $this->getWidget(0);
+        return $this->detailsWidget !== null;
     }
 
     /**
@@ -134,7 +172,15 @@ class DataCarousel extends Split
     public function getDetailsWidget() : iContainOtherWidgets
     {
         if ($this->detailsWidget === null) {
-            $this->detailsWidget = WidgetFactory::create($this->getPage(), 'Container', $this);
+            try {
+                $widget = parent::getWidget(1);
+            } catch (WidgetChildNotFoundError $e) {
+                throw new WidgetConfigurationError($this, 'No details widget in widget "' . $this->getWidgetType() . '": please fill the `details` property!', '7DA4MW9');
+            }
+            if (! ($widget instanceof iContainOtherWidgets)) {
+                throw new WidgetConfigurationError($this, 'Invalid type of details widget "' . $widget->getWidgetType() . '" inside widget "' . $this->getWidgetType() . '": expecting a container widget like `Form`!', '7DA4MW9');
+            }
+            $this->setDetailsWidget($widget);
         }
         return $this->detailsWidget;
     }
@@ -147,30 +193,41 @@ class DataCarousel extends Split
     public function setDetailsWidget(iContainOtherWidgets $container) : DataCarousel
     {
         $this->detailsWidget = $container;
+        $this->addWidget($container, 1);
+        
+        // Make sure to re-init the data widget since it depends on the details!
+        if ($this->dataWidget !== null) {
+            $this->initDataWidget($this->dataWidget);
+        }
+        
         return $this;
     }
     
+    /**
+     * Container to display the details for the item selected in the data widget - e.g. a `Form`.
+     * 
+     * @uxon-property details
+     * @uxon-type \exface\Core\Widgets\Container
+     * @uxon-template {"widget_type": "Form", "":""}
+     * @uxon-required true
+     * 
+     * @param UxonObject $uxon
+     * @return DataCarousel
+     */
     public function setDetails(UxonObject $uxon) : DataCarousel
     {
         $widget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Form');
-        $this->addWidget($widget, 1);
         $this->setDetailsWidget($widget);
         return $this;
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function getDefaultDataWidgetType() : string
     {
-        return 'DataList';
-    }
-    
-    public function getChildren() : \Iterator
-    {
-        foreach(parent::getChildren() as $child) {
-            yield $child;
-        }
-        
-        yield $this->getDataWidget();
-        yield $this->getDetailsWidget();
+        return 'DataTableResponsive';
     }
     
     /**
@@ -225,5 +282,15 @@ class DataCarousel extends Split
     {
         $this->detailPosition = $value;
         return $this;
+    }
+    
+    /**
+     * @deprecated use setData() and setDetails() instead!
+     * 
+     * @see \exface\Core\Widgets\Split::setWidgets()
+     */
+    public function setWidgets($widget_or_uxon_array)
+    {
+        throw new WidgetConfigurationError($this, 'Cannot set widget of ' . $this->getWidgetType() . ' directly: pleasy use `data` and `details` to define the widgets inside!', '7DA4MW9');
     }
 }
