@@ -513,7 +513,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      *
      * @return MetaAttributeInterface
      */
-    public function getAttribute()
+    public function getAttribute() : ?MetaAttributeInterface
     {
         return $this->getInputWidget()->getAttribute();
     }
@@ -834,7 +834,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iShowSingleAttribute::isBoundToAttribute()
      */
-    public function isBoundToAttribute()
+    public function isBoundToAttribute() : bool
     {
         if ($this->isInputWidgetInitialized() === true) {
             return $this->getInputWidget()->isBoundToAttribute();

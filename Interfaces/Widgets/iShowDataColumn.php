@@ -12,6 +12,13 @@ interface iShowDataColumn extends WidgetInterface
      * @return string
      */
     public function getDataColumnName();
+    
+    /**
+     * Returns TRUE if this widget is actually bound to a data column.
+     * 
+     * @return bool
+     */
+    public function isBoundToDataColumn() : bool;
 
     /**
      * Sets the name of the corresponding column of the data sheet shown
