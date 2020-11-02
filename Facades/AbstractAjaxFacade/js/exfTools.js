@@ -575,7 +575,7 @@
 			},
 			
 			pasteText: async function(text) {
-				if (!navigator.clipboard) {
+				if (true /*!navigator.clipboard*/) {
 				    return this._fallbackPasteTextFromClipboard();
 				}
 				return await navigator.clipboard.readText();
