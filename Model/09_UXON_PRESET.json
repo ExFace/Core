@@ -81,7 +81,7 @@
         },
         {
             "CREATED_ON": "2019-09-03 15:12:00",
-            "MODIFIED_ON": "2019-10-02 09:08:01",
+            "MODIFIED_ON": "2020-11-02 20:10:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9ce5d1703444dad7fe4b318306b9a",
@@ -89,7 +89,7 @@
             "NAME": "Editor-Dialog with multiple widget groups",
             "DESCRIPTION": "The first widget group has no caption, so it will not be visible as a group. The other two have captions. If wrapping, the content will be placed inside the first group.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
-            "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"code\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Group 1\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Group 2\",\"widgets\":[{\"attribute_alias\":\"\"}]}]}",
+            "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Group 1\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Group 2\",\"widgets\":[{\"attribute_alias\":\"\"}]}]}",
             "WRAP_PATH": "$.widgets[1].widgets[0]",
             "UXON_SCHEMA": "widget"
         },
@@ -809,7 +809,7 @@
         },
         {
             "CREATED_ON": "2019-12-15 20:30:21",
-            "MODIFIED_ON": "2019-12-15 20:30:55",
+            "MODIFIED_ON": "2020-11-02 13:41:33",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea1f79b55cdb53aa030205857feb80",
@@ -818,7 +818,7 @@
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/Widgets\/Wizard.php",
             "UXON": "{\"widget_type\":\"Wizard\",\"object_alias\":\"\",\"steps\":[{\"caption\":\"Step 1\",\"intro\":\"Please fill out the form!\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}]},{\"caption\":\"Step 2\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}],\"buttons\":[{\"action_alias\":\"exface.Core.CreateData\",\"visibility\":\"promoted\"},{\"go_to_step\":\"previous\"}]}]}",
-            "WRAP_PATH": "",
+            "WRAP_PATH": "$.steps[0].widgets[0]",
             "UXON_SCHEMA": "widget"
         },
         {
