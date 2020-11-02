@@ -574,12 +574,15 @@
 			  });
 			},
 			
-			pasteText: async function(text) {
-				if (true /*!navigator.clipboard*/) {
+			pasteText: function(text) {
+				return this._fallbackPasteTextFromClipboard();
+			}
+				/*async function(text) {
+				if (! navigator.clipboard) {
 				    return this._fallbackPasteTextFromClipboard();
 				}
 				return await navigator.clipboard.readText();
-			}
+			}*/
 		}
 	}
 })));
