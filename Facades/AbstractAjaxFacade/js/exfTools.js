@@ -578,11 +578,7 @@
 				if (!navigator.clipboard) {
 				    return this._fallbackPasteTextFromClipboard();
 				}
-				navigator.clipboard.writeText(text).then(function() {
-				    //console.log('Async: Pasting to clipboard was successful!');
-				}, function(err) {
-					throw err;
-				});
+				return await navigator.clipboard.readText();
 			}
 		}
 	}
