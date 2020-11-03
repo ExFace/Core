@@ -112,10 +112,11 @@ const exfPreloader = {};
 	/**
 	 * @return exfPreloader
 	 */
-	this.addPreload = function(sAlias, aDataCols, aImageCols, sPageAlias, sWidgetId) {		
+	this.addPreload = function(sAlias, aDataCols, aImageCols, sPageAlias, sWidgetId, sUidAlias) {		
 		_preloadTable
 		.get(sAlias)
 		.then(item => {
+			console.log('Add Preload');
 			var data = {
 				id: sAlias,
 				object: sAlias
@@ -125,6 +126,7 @@ const exfPreloader = {};
 			if (aImageCols) { data.imageCols = aImageCols; }
 			if (sPageAlias) { data.page = sPageAlias; }
 			if (sWidgetId) { data.widget = sWidgetId; }
+			if (sUidAlias) {data.uidAlias = sUidAlias}
 			
 			if (item === undefined) {
 				_preloadTable.put(data);
@@ -142,25 +144,26 @@ const exfPreloader = {};
 		return _preloadTable.get(sAlias);
 	};
 	
-	this.syncAll = function(fnCallback) {
+	this.syncAll = async function(fnCallback) {
 		var deferreds = [];
 		return _preloadTable.toArray()
 		.then(data => {
-			$.each(data, function(idx, item){
+			data.forEach(function(item){
 				deferreds.push(
 			    	_preloader
-			    	.sync(item.object, item.page, item.widget, item.imageCols)
+			    	.sync(item, true)
 			    );
 			});
 			// Can't pass a literal array, so use apply.
-			return $.when.apply($, deferreds)
+			//return $.when.apply($, deferreds)
+			return Promise.all(deferreds);
 		})
 	};
 	
 	/**
 	 * @return jqXHR
 	 */
-	this.sync = function(sObjectAlias, sPageAlias, sWidgetId, aImageCols) {
+	this.syncOld = function(sObjectAlias, sPageAlias, sWidgetId, aImageCols) {
 		console.log('Syncing preload for object "' + sObjectAlias + '", widget "' + sWidgetId + '" on page "' + sPageAlias + '"');
 		if (! sPageAlias || ! sWidgetId) {
 			throw {"message": "Cannot sync preload for object " + sObjectAlias + ": incomplete preload configuration!"};
@@ -200,16 +203,109 @@ const exfPreloader = {};
 		);
 	};
 	
+	this.sync = async function(item, bSyncImages, aUid) {
+		var sObjectAlias = item.object;
+		var sPageAlias = item.page;
+		var sWidgetId = item.widget;
+		var aImageCols = item.imageCols;
+		var sUidAlias = item.uidAlias
+		aUid
+		console.log('Syncing preload for object "' + sObjectAlias + '", widget "' + sWidgetId + '" on page "' + sPageAlias + '"');
+		if (! sPageAlias || ! sWidgetId) {
+			throw {"message": "Cannot sync preload for object " + sObjectAlias + ": incomplete preload configuration!"};
+		}
+		var requestData = {
+				action: 'exface.Core.ReadPreload',
+				resource: sPageAlias,
+				element: sWidgetId
+			};
+		if (aUid && sUidAlias) {
+			var filters = {
+					operator: "OR"
+			}
+			conditions = []
+			aUid.forEach(function(sUid) {
+				var cond = {
+						expression: sUidAlias,
+						comparator: "==",
+						value: sUid,
+						object_alias: sObjectAlias
+				}
+				conditions.push(cond);
+			})
+			filters.conditions = conditions;
+			requestData.data = {
+					oId: sObjectAlias,
+					filters: filters
+					};
+		}
+		params = _preloader.encodeJson(requestData);
+		try {
+			var response = await fetch('api/ui5', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+				},
+				body: params
+			})
+		} catch(error) {
+			console.error(error);
+			return error.message;
+		}
+		if (!response.ok) {
+			return 'Fetch failed for object ' + sObjectAlias;
+		} else {		
+			responseData = await response.json()
+			var saveData = responseData;
+			if (requestData.data && requestData.data.filters && item.response) {
+				saveData.rows = _preloader.mergeRows(item.response.rows, responseData.rows, sUidAlias);
+			}
+			var promises = [];
+			promises.push(
+				_preloadTable.update(sObjectAlias, {
+					response: responseData,
+					lastSync: (+ new Date())
+				})
+			);
+			if (bSyncImages === true && aImageCols && aImageCols.length > 0) {
+				for (i in aImageCols) {
+					var urls = responseData.rows.map(function(value,index) { return value[aImageCols[i]]; });
+					promises.push(_preloader.syncImages(urls));
+				}
+			}
+			return Promise.all(promises);
+		}
+	};
+	
+	this.mergeRows = function (aOldRows, aNewRows, sUidAlias) {
+		for (var i = 0; i < aNewRows.length; i++) {
+			var rowUpdated = false;
+			for (var j = 0; j < aOldRows.length; j++) {
+				if (aNewRows[i][sUidAlias] == aOldRows[j][sUidAlias]) {
+					aOldRows[j] = aNewRows[i];
+					rowUpdated = true;
+					break;
+				}
+			}
+			//add Row to preload if it wasnt there before/wasnt updated
+			if (rowUpdated === false) {
+				aOldRows.push(aNewRows[i]);
+			}
+		}
+		return aOldRows;
+	}
+	
 	/**
 	 * @return Promise|NULL
 	 */
 	this.syncImages = function (aUrls, sCacheName = 'image-cache') {
-		if (window.caches === undefined) {
+		console.log('Sync images');
+		if (caches === undefined) {
 			console.error('Cannot preload images: Cache API not supported by browser!');
 			return;
 		}
 		
-		return window.caches
+		return caches
 		.open(sCacheName)
 		.then(cache => {
 			// Remove duplicates
@@ -296,15 +392,18 @@ const exfPreloader = {};
 	/**
 	 * @return Promise
 	 */
-	this.getActionQueueData = function(filter) {
+	this.getActionQueueData = function(status, objectAlias) {
 		return _actionsTable.toArray()
 		.then(function(dbContent) {
 			var data = [];
 			dbContent.forEach(function(element) {
-				if (element.status != filter) {
+				if (status && element.status != status) {
 					return;
 				}
-				item = {
+				if (objectAlias && element.object != objectAlias) {
+					return;
+				}
+				/*item = {
 						id: element.id,
 						action_alias: element.action,
 						object: element.object,
@@ -314,8 +413,8 @@ const exfPreloader = {};
 				}
 				if (element.response) {
 					item.response = element.response;
-				}
-				data.push(item);
+				}*/
+				data.push(element);
 				return;
 			})
 			return data;
@@ -383,6 +482,7 @@ const exfPreloader = {};
 				break;
 			}
 		}
+		await _preloader.updatePreloadData();
 		if (result === false) {
 			return Promise.reject("Syncing failed at action with id: " + id + ". Syncing aborted!");
 		}
@@ -427,13 +527,11 @@ const exfPreloader = {};
 		if (response.ok) {
 			var date = (+ new Date());
 			//await _actionsTable.delete(element.id);
-			//we update the entry now for test purposes, normally we delete it from the queue
-			var updated = await _actionsTable.update(element.id, {
-				status: 'success',
-				tries: element.tries + 1,
-				response: data,
-				synced: new Date(date).toLocaleString()
-			})				
+			updatedElement = element;
+			updatedElement.status = 'synced';
+			updatedElement.response = data;
+			updatedElement.synced = new Date(date).toLocaleString();
+			var updated = await _actionsTable.update(element.id, updatedElement);				
 			if (updated) {
 				console.log ("Action with id " + element.id + " synced. Action removed from queue");
 			} else {
@@ -542,5 +640,42 @@ const exfPreloader = {};
 	        e += Math.round(Math.random()*100000000);
 	    }
 	    return a + d + e;
+	}
+	
+	this.updatePreloadData = async function() {
+		console.log('UpdatePreload');
+		var preloads = await _preloadTable.toArray();
+		if (preloads.length == 0) {
+			return;
+		}
+		var promises = []
+		preloads.forEach(async function(preloadItem) {
+			var syncedActions = await _preloader.getActionQueueData('synced', preloadItem.object);
+			if (syncedActions.length === 0) {
+				return;
+			}
+			var uidAlias = preloadItem.uidAlias;
+			if (!uidAlias) {
+				return;
+			}
+			var uidValues = [];
+			syncedActions.forEach(function(action) {
+				if (!(action.request && action.request.data && action.request.data.data && action.request.data.data.rows)) {
+					return;
+				}
+				action.request.data.data.rows.forEach(function(row) {
+					uidValues.push(row[uidAlias]);
+				})								
+			})			
+			promises.push(
+				_preloader.sync(preloadItem, true, uidValues)
+				.then(function() {
+					syncedActions.forEach(function(action) {
+						_actionsTable.delete(action.id);
+					})
+				})
+			)		
+		})
+		return Promise.all(promises);		
 	}
 }).apply(exfPreloader);
