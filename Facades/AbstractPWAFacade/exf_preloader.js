@@ -10,18 +10,15 @@
 importScripts('exface/vendor/npm-asset/dexie/dist/dexie.min.js');
 importScripts('vendor/exface/Core/Facades/AbstractPWAFacade/exf_preloader.js');
 
-var sync = async function(){
-	var ids = await exfPreloader.getActionQueueIds('offline')
-	return exfPreloader.syncActionAll(ids);
-}
-
+// Handle OfflineActionSync Event
 self.addEventListener('sync', function(event) {
-	console.log("sync event", event);
     if (event.tag === 'OfflineActionSync') {
 		event.waitUntil(
-			sync()
+			exfPreloader.getActionQueueIds('offline')
+			.then(function(ids){
+				return exfPreloader.syncActionAll(ids)
+			})
 			.then(function(){
-				console.log('all offline actions synced');
 				self.clients.matchAll()
 				.then(function(all) {
 					all.forEach(function(client) {
@@ -31,14 +28,14 @@ self.addEventListener('sync', function(event) {
 				return;
 			})
 			.catch(error => {
-				console.log('Could not sync completely; scheduled for the next time', error);
+				console.error('Could not sync completely; scheduled for the next time.', error);
 				self.clients.matchAll()
 				.then(function(all) {
 					all.forEach(function(client) {
-						client.postMessage('Sync failed: ' + error);
+						client.postMessage(error);
 					});
 				});
-				return Promise.reject(error); // Alternatively, `return Promise.reject(error);`
+				return Promise.reject(error);
 			})
 		)
     }
@@ -144,6 +141,9 @@ const exfPreloader = {};
 		return _preloadTable.get(sAlias);
 	};
 	
+	/**
+	 * @return Promise
+	 */
 	this.syncAll = async function(fnCallback) {
 		var deferreds = [];
 		return _preloadTable.toArray()
@@ -156,53 +156,22 @@ const exfPreloader = {};
 			});
 			// Can't pass a literal array, so use apply.
 			//return $.when.apply($, deferreds)
-			return Promise.all(deferreds);
+			return Promise.all(deferreds)
+			.then(function() {
+				//delete all actions with status "synced" from actionQueue
+				_preloader.getActionQueueData('synced')
+				.then(function(data) {
+					data.forEach(function(item) {
+						_actionsTable.delete(item.id);
+					})
+				})
+			});
 		})
 	};
 	
 	/**
-	 * @return jqXHR
+	 * @return Promise
 	 */
-	this.syncOld = function(sObjectAlias, sPageAlias, sWidgetId, aImageCols) {
-		console.log('Syncing preload for object "' + sObjectAlias + '", widget "' + sWidgetId + '" on page "' + sPageAlias + '"');
-		if (! sPageAlias || ! sWidgetId) {
-			throw {"message": "Cannot sync preload for object " + sObjectAlias + ": incomplete preload configuration!"};
-		}
-		return $.ajax({
-			type: 'POST',
-			url: 'api/ui5',
-			dataType: 'json',
-			data: {
-				action: 'exface.Core.ReadPreload',
-				resource: sPageAlias,
-				element: sWidgetId
-			}
-		})
-		.then(
-			function(data, textStatus, jqXHR) {
-				var promises = [];
-				promises.push(
-					_preloadTable.update(sObjectAlias, {
-						response: data,
-						lastSync: (+ new Date())
-					})
-				);
-				if (aImageCols && aImageCols.length > 0) {
-					for (i in aImageCols) {
-						var urls = data.rows.map(function(value,index) { return value[aImageCols[i]]; });
-						promises.push(_preloader.syncImages(urls));
-					}
-				}
-				return Promise.all(promises);
-			},
-			function(jqXHR, textStatus, errorThrown){
-				console.error(jqXHR.status + " " + jqXHR.statusText);
-				//exfLauncher.contextBar.getComponent().showAjaxErrorDialog(jqXHR);
-				return textStatus;
-			}
-		);
-	};
-	
 	this.sync = async function(item, bSyncImages, aUid) {
 		var sObjectAlias = item.object;
 		var sPageAlias = item.page;
@@ -250,10 +219,10 @@ const exfPreloader = {};
 			})
 		} catch(error) {
 			console.error(error);
-			return error.message;
+			return Promise.reject(error.message);
 		}
 		if (!response.ok) {
-			return 'Fetch failed for object ' + sObjectAlias;
+			return Promise.reject('Fetch failed for object ' + sObjectAlias);
 		} else {		
 			responseData = await response.json()
 			var saveData = responseData;
@@ -277,6 +246,9 @@ const exfPreloader = {};
 		}
 	};
 	
+	/**
+	 * @return array
+	 */
 	this.mergeRows = function (aOldRows, aNewRows, sUidAlias) {
 		for (var i = 0; i < aNewRows.length; i++) {
 			var rowUpdated = false;
@@ -530,6 +502,7 @@ const exfPreloader = {};
 			updatedElement = element;
 			updatedElement.status = 'synced';
 			updatedElement.response = data;
+			updatedElement.tries = updatedElement.tries + 1;
 			updatedElement.synced = new Date(date).toLocaleString();
 			var updated = await _actionsTable.update(element.id, updatedElement);				
 			if (updated) {
@@ -642,6 +615,9 @@ const exfPreloader = {};
 	    return a + d + e;
 	}
 	
+	/**
+	 * @return Promise
+	 */
 	this.updatePreloadData = async function() {
 		console.log('UpdatePreload');
 		var preloads = await _preloadTable.toArray();
@@ -673,6 +649,8 @@ const exfPreloader = {};
 					syncedActions.forEach(function(action) {
 						_actionsTable.delete(action.id);
 					})
+				}, function(error){
+					//console.error(error);
 				})
 			)		
 		})
