@@ -113,7 +113,6 @@ const exfPreloader = {};
 		_preloadTable
 		.get(sAlias)
 		.then(item => {
-			console.log('Add Preload');
 			var data = {
 				id: sAlias,
 				object: sAlias
@@ -271,13 +270,13 @@ const exfPreloader = {};
 	 * @return Promise|NULL
 	 */
 	this.syncImages = function (aUrls, sCacheName = 'image-cache') {
-		console.log('Sync images');
-		if (caches === undefined) {
+		var cachesApi = window !== undefined ? window.caches : caches;
+		if (cachesApi === undefined) {
 			console.error('Cannot preload images: Cache API not supported by browser!');
 			return;
 		}
 		
-		return caches
+		return cachesApi
 		.open(sCacheName)
 		.then(cache => {
 			// Remove duplicates
@@ -447,7 +446,6 @@ const exfPreloader = {};
 		var result = true;
 		var id = null;
 		for (var i = 0; i < selectedIds.length; i++) {
-			console.log('Sync Actions');
 			var id = selectedIds[i];		
 			var result = await _preloader.syncAction(id);
 			if (result === false) {
@@ -469,7 +467,6 @@ const exfPreloader = {};
 		if (element === undefined) {
 			return false
 		}
-		console.log('Syncing action with id: ',element.id);
 		var params = element.request.data;
 		params = _preloader.encodeJson(params);
 		try {
@@ -619,7 +616,6 @@ const exfPreloader = {};
 	 * @return Promise
 	 */
 	this.updatePreloadData = async function() {
-		console.log('UpdatePreload');
 		var preloads = await _preloadTable.toArray();
 		if (preloads.length == 0) {
 			return;
@@ -655,5 +651,50 @@ const exfPreloader = {};
 			)		
 		})
 		return Promise.all(promises);		
+	}
+	
+	this.loadErrorData = function() {
+		var body = {
+			action: "exface.Core.ReadData",
+			resource: "0x11ebaf708ef99298af708c04ba002958",
+			object: "0x11ea8f3c9ff2c5e68f3c8c04ba002958",
+			sort: "TASK_ASSIGNED_ON",
+			order: "asc",
+			data: {
+				oId: "0x11ea8f3c9ff2c5e68f3c8c04ba002958",
+				filters: {
+					operator: "AND",
+					conditions:  [
+						{
+							expression: "STATUS",
+							comparator: "==",
+							value: "70",
+							object_alias: "exface.Core.QUEUED_TASK"
+						},{
+							expression: "PRODUCER",
+							comparator: "==",
+							value: exfPreloader.getDeviceId(),
+							object_alias: "exface.Core.QUEUED_TASK"
+						}
+					]
+				}
+			}
+		};
+		
+		return fetch('api/ui5?' + $.param(body), {
+			method: 'GET'
+		})
+		.then(function(response){
+			if (response.ok) {
+				return response.json();
+			}
+			else {
+				return {};
+			}
+		})
+		.catch(function(error){
+			console.error('Cannot read sync errors from server:', error);
+			return {};
+		})
 	}
 }).apply(exfPreloader);
