@@ -46,7 +46,7 @@ class TaskQueueRouter implements TaskHandlerInterface, WorkbenchDependantInterfa
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\TaskHandlerInterface::handle()
      */
-    public function handle(TaskInterface $task, array $topics = [], string $producer = null, string $messageId = null): ResultInterface
+    public function handle(TaskInterface $task, array $topics = [], string $producer = null, string $messageId = null, string $userAgent = null): ResultInterface
     {
         $handlers = [];
         $fallbackHandlers = [];
@@ -77,7 +77,7 @@ class TaskQueueRouter implements TaskHandlerInterface, WorkbenchDependantInterfa
         // TODO what is the result of putting the task into multiple queues? Currently it would
         // be the result of the last queue.
         foreach ($handlers as $queue) {
-            $result = $queue->handle($task, $topics, $producer, $messageId);
+            $result = $queue->handle($task, $topics, $producer, $messageId, $userAgent);
         }
         
         return $result;

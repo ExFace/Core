@@ -35,8 +35,13 @@ class HttpTaskFacade extends AbstractAjaxFacade
         } else {
             $requestId = null;
         }
+        if ($request->hasHeader('User-Agent')) {
+            $userAgent = $request->getHeader('User-Agent')[0];
+        } else {
+            $userAgent = null;
+        }
         try {
-            $result = $router->handle($task, $topics, $producer, $requestId);
+            $result = $router->handle($task, $topics, $producer, $requestId, $userAgent);
             return $this->createResponseFromTaskResult($request, $result);
         } catch (\Throwable $exception) {
             return $this->createResponseFromError($request, $exception);
