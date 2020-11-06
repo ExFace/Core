@@ -346,7 +346,7 @@ const exfPreloader = {};
 			triggered: offlineAction.data.assignedOn,
 			status: 'offline',
 			tries: 0,
-			synced: 'not snyced'
+			synced: 'not synced'
 		};
 		if (offlineAction.headers) {
 			data.headers = offlineAction.headers
@@ -653,11 +653,15 @@ const exfPreloader = {};
 		return Promise.all(promises);		
 	}
 	
+	/**
+	 * @return object
+	 */
 	this.loadErrorData = function() {
 		var body = {
 			action: "exface.Core.ReadData",
 			resource: "0x11ebaf708ef99298af708c04ba002958",
 			object: "0x11ea8f3c9ff2c5e68f3c8c04ba002958",
+			element: "TaskQueue_table",
 			sort: "TASK_ASSIGNED_ON",
 			order: "asc",
 			data: {
@@ -696,5 +700,48 @@ const exfPreloader = {};
 			console.error('Cannot read sync errors from server:', error);
 			return {};
 		})
+	}
+	
+	/**
+	 * 
+	 * @param aIds
+	 * @return array 
+	 */
+	this.getActionsData = function(aIds) {		
+		return _preloader.getActionQueueData('offline')
+		.then(function(actionsData) {
+			var data = {deviceId: _preloader.getDeviceId()};
+			var selectedActions = [];
+			actionsData.forEach(function(action) {
+				if (aIds.includes(action.id)) {
+					selectedActions.push(action);
+				}
+			})
+			data.actions = selectedActions;
+			return data;
+		})
+		
+	}
+	
+	/**
+	 * @return void
+	 */
+	this.download = function (data, filename, type) {
+	    var file = new Blob([data], {type: type});
+	    if (window.navigator.msSaveOrOpenBlob) // IE10+
+	        window.navigator.msSaveOrOpenBlob(file, filename);
+	    else { // Others
+	        var a = document.createElement("a"),
+	                url = URL.createObjectURL(file);
+	        a.href = url;
+	        a.download = filename;
+	        document.body.appendChild(a);
+	        a.click();
+	        setTimeout(function() {
+	            document.body.removeChild(a);
+	            window.URL.revokeObjectURL(url);  
+	        }, 0); 
+	    }
+	    return;
 	}
 }).apply(exfPreloader);
