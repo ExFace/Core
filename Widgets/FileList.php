@@ -6,6 +6,10 @@ use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\Widgets\Parts\Uploader;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Factories\ActionFactory;
+use exface\Core\Actions\CreateData;
+use exface\Core\Interfaces\Actions\ActionInterface;
 
 /**
  * Lists files and associated data with optional upload and download.
@@ -160,6 +164,8 @@ class FileList extends DataTable
     
     private $download = false;
     
+    private $uploadAction = null;
+    
     /**
      * 
      * @throws WidgetConfigurationError
@@ -270,21 +276,23 @@ class FileList extends DataTable
     /**
      * 
      * @throws WidgetConfigurationError
-     * @return DataColumn
+     * @return MetaAttributeInterface
      */
-    public function getFileContentColumn() : DataColumn
+    public function getFileContentAttribute() : MetaAttributeInterface
     {
-        if ($this->fileContentColumn !== null) {
-            return $this->fileContentColumn;
-        } else {
-            foreach ($this->getColumns() as $col) {
-                if ($col->getDataType() instanceof BinaryDataType) {
-                    $this->fileContentColumn = $col;
-                    return $col;
-                }
-            }
+        if ($this->fileContentAttributeAlias === null) {
+            throw new WidgetConfigurationError($this, 'No `file_content_attribute_alias` defined for widget "' . $this->getWidgetType() . '"!');
         }
-        throw new WidgetConfigurationError($this, 'No data column with file contents found!');
+        return $this->getMetaObject()->getAttribute($this->fileContentAttributeAlias);
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getFileContentColumnName() : string
+    {
+        return \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getFileContentAttribute()->getAlias());
     }
     
     /**
@@ -301,9 +309,6 @@ class FileList extends DataTable
     public function setFileContentAttributeAlias(string $value) : FileList
     {
         $this->fileContentAttributeAlias = $value;
-        $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
-        $this->addColumn($col);
-        $this->fileContentColumn = $col;
         return $this;
     }
 
@@ -431,7 +436,7 @@ class FileList extends DataTable
             if ($fileNameType instanceof StringDataType && $fileNameType->getLengthMax() !== null) {
                 $uxon->setProperty('max_filename_length', $fileNameType->getLengthMax());
             }
-            $contentType = $this->getFileContentColumn()->getDataType();
+            $contentType = $this->getFileContentAttribute()->getDataType();
             if ($contentType instanceof BinaryDataType && $contentType->getMaxSizeInMB() !== null) {
                 $uxon->setProperty('max_file_size_mb', $contentType->getMaxSizeInMB());
             }
@@ -481,5 +486,17 @@ class FileList extends DataTable
     {
         $this->download = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * @return ActionInterface|NULL
+     */
+    public function getUploadAction() : ?ActionInterface
+    {
+        if ($this->uploadAction === null && $this->isUploadEnabled()) {
+            $this->uploadAction = ActionFactory::createFromString($this->getWorkbench(), CreateData::class, $this);
+        }
+        return $this->uploadAction;
     }
 }
