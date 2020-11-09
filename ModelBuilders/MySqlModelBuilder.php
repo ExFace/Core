@@ -2,11 +2,10 @@
 namespace exface\Core\ModelBuilders;
 
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\DataConnectors\MySqlConnector;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\BinaryDataType;
 
 /**
  * 
@@ -158,6 +157,12 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
             case $source_data_type === 'LONGTEXT':
                 $uxon->setProperty('length_max', 4294967295);
                 break;
+        }
+        
+        // Tell the data type, that the binary data will be encoded as HEX,
+        // because that's what the query builder will do by default.
+        if ($type instanceof BinaryDataType && StringDataType::endsWith($source_data_type, 'BLOB')) {
+            $uxon->setProperty('encoding', BinaryDataType::ENCODING_HEX);
         }
         
         return $uxon;
