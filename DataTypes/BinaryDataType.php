@@ -16,6 +16,7 @@ class BinaryDataType extends StringDataType
 {
     const ENCODING_BASE64 = 'base64';
     const ENCODING_HEX = 'hex';
+    const ENCODING_BINARY = 'binary';
     
     private $encoding = self::ENCODING_BASE64;
     
@@ -40,6 +41,11 @@ class BinaryDataType extends StringDataType
                 break;
             case self::ENCODING_HEX:
                 return HexadecimalNumberDataType::cast($string);
+            case self::ENCODING_BINARY:
+                if (is_numeric($string) === false) {
+                    throw new DataTypeValidationError($this, 'Invalid binary string!');
+                }
+                break;
         }
         return $string;
     }
@@ -57,7 +63,7 @@ class BinaryDataType extends StringDataType
      * The encoding used for binary data: base64 or hex.
      * 
      * @uxon-property encoding
-     * @uxon-type [base64,hex]
+     * @uxon-type [base64,hex,binary]
      * @uxon-default base64
      * 
      * @param string $value
@@ -209,6 +215,7 @@ class BinaryDataType extends StringDataType
         switch ($this->getEncoding()) {
             case self::ENCODING_BASE64: return $value;
             case self::ENCODING_HEX: return self::convertHexToBase64($value);
+            case self::ENCODING_BINARY: return self::convertBinaryToBase64($value);
             default:
                 throw new RuntimeException('Cannot convert binary data in ' . $this->getEncoding() . ' to Base64!');
         }
@@ -231,6 +238,7 @@ class BinaryDataType extends StringDataType
         switch ($this->getEncoding()) {
             case self::ENCODING_BASE64: return self::convertBase64ToHex($value, $addPrefixX);
             case self::ENCODING_HEX: ($addPrefixX ? 'x' : '') . ltrim($value, "xX");
+            case self::ENCODING_BINARY: self::convertBinaryToHex($value, $addPrefixX);
             default:
                 throw new RuntimeException('Cannot convert binary data in ' . $this->getEncoding() . ' to a hexadecimal number!');
         }
@@ -250,6 +258,7 @@ class BinaryDataType extends StringDataType
             return $value;
         }
         switch ($this->getEncoding()) {
+            case self::ENCODING_BINARY: return $value;
             case self::ENCODING_BASE64: return self::convertBase64ToBinary($value);
             case self::ENCODING_HEX: return self::convertHexToBinary($value);
             default:
