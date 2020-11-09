@@ -868,11 +868,16 @@ class DataColumn implements DataColumnInterface
      */
     public static function aggregateValues(array $row_array, AggregatorInterface $aggregator = null)
     {
-        $func = $aggregator->getFunction();
-        $args = $aggregator->getArguments();
+        if ($aggregator === null) {
+            $func = AggregatorFunctionsDataType::LIST_DISTINCT;
+            $args = [];
+        } else {
+            $func = $aggregator->getFunction()->getValue();
+            $args = $aggregator->getArguments();
+        }
         
         $output = '';
-        switch ($func->getValue()) {
+        switch ($func) {
             case AggregatorFunctionsDataType::LIST_ALL:
                 $output = implode(($args[0] ? $args[0] : EXF_LIST_SEPARATOR), $row_array);
                 break;
