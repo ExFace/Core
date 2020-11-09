@@ -16,6 +16,7 @@ use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\QueryBuilderException;
+use exface\Core\DataTypes\FilePathDataType;
 
 /**
  * Lists files and folders using Symfony Finder Component.
@@ -62,6 +63,11 @@ use exface\Core\Exceptions\QueryBuilderException;
  * of the connector
  * - `mtime` - last modification time
  * - `ctime` - creation time
+ * - `line(n)` - n-th line of the file starting with 1: e.g. `line(1)` to get the first line
+ * - `subpath(start,length)` - extracts a subset of the folder path (excl. the filenam): e.g.
+ * `subpath(0,2)` from the path `exface/Core/Translations/Objects` would yield `exface/Core`,
+ * while `subpath(0,-1)` would produce `exface/Core/Translations`, `subpath(2)` - `Translations/Objects`
+ * and `subpath(-1)` - `Objects`
  * - Any getter-methods of the class `SplFileInfo` can be called by using the method 
  * name withoug the get-prefix as data address: e.g. `extension` for `SplFileInfo::getExtension()`
  * 
@@ -397,11 +403,20 @@ class FileFinderBuilder extends AbstractQueryBuilder
                     if ($line_nr === 1) {
                         $value = $file->openFile()->fgets();
                     } else {
-                        // TODO
+                        $fileObject = $file->openFile();
+                        $fileObject->seek(($line_nr-1));
+                        $value = $fileObject->current();
                     }
                 } elseif (substr($field, 0, 7) === 'subpath') {
-                    // list($start_pos, $end_pos) = explode(',', trim(substr($field, 7), '()'));
-                    // TODO
+                    list($start, $length) = explode(',', trim(substr($field, 7), '()'));
+                    $start = trim($start);
+                    $length = trim($length);
+                    if (! is_numeric($start) || ($length !== null && ! is_numeric($length))) {
+                        throw new QueryBuilderException('Cannot query "' . $field . '" on file path "' . $file->getPathname() . '": invalid start or length condition!');
+                    }
+                    $pathParts = explode('/', $this->getPathRelative($file->getPath(), $query));
+                    $subParts = array_slice($pathParts, $start, $length);
+                    $value = implode('/', $subParts);
                 } else {
                     $method_name = 'get' . ucfirst($field);
                     if (method_exists($file, $method_name)) {
@@ -420,23 +435,39 @@ class FileFinderBuilder extends AbstractQueryBuilder
 
     protected function getDataFromFile(SplFileInfo $file, FileFinderDataQuery $query)
     {
-        $base_path = $query->getBasePath() ? $query->getBasePath() . '/' : '';
         $path = Filemanager::pathNormalize($file->getPath());
         $pathname = Filemanager::pathNormalize($file->getPathname());
-        $pathname_relative = $base_path ? str_replace($base_path, '', $pathname) : $pathname;
         $folder_name = StringDataType::substringAfter(rtrim($path, "/"), '/', '', false, true);
         
         $file_data = array(
             'name' => $file->getExtension() ? str_replace('.' . $file->getExtension(), '', $file->getFilename()) : $file->getFilename(),
-            'path_relative' => $base_path ? str_replace($base_path, '', $path) : $path,
+            'path_relative' => $this->getPathRelative($path, $query, false),
             'pathname_absolute' => $file->getRealPath(),
-            'pathname_relative' => $pathname_relative,
+            'pathname_relative' => $this->getPathRelative($pathname, $query, false),
             'mtime' => TimestampDataType::cast('@' . $file->getMTime()),
             'ctime' => TimestampDataType::cast('@' . $file->getCTime()),
             'folder_name' => $folder_name
         );
         
         return $file_data;
+    }
+    
+    /**
+     * Makes $fullPath relative to the query's base path
+     * 
+     * @param string $fullPath
+     * @param FileFinderDataQuery $query
+     * @param bool $normalize
+     * @param string $normalDirectorySep
+     * @return string
+     */
+    protected function getPathRelative(string $fullPath, FileFinderDataQuery $query, bool $normalize = true, string $normalDirectorySep = '/') : string
+    {
+        if ($normalize) {
+            $fullPath = FilePathDataType::normalize($fullPath, $normalDirectorySep);
+        }
+        $base_path = $query->getBasePath() ? $query->getBasePath() . $normalDirectorySep : '';
+        return $base_path !== '' ? str_replace($base_path, '', $fullPath) : $fullPath;
     }
     
     /**
