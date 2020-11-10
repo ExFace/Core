@@ -9,6 +9,20 @@ use exface\Core\Exceptions\RuntimeException;
 /**
  * Data type for binary data (e.g. media file contents, etc.).
  * 
+ * The data type supports different encodings for binary data as string:
+ * 
+ * - `base64` - e.g. "dGVzdA==" for the word "test"
+ * - `hex` - e.g. "0x74657374" or "74657374" for the word "test"
+ * - `binary`- e.g. "01110100011001010111001101110100" for the word "test"
+ * 
+ * Be sure to set the corrent encoding whereever you use the data type. If
+ * no encoding is set explictly, `base64` will be assumed as the most common
+ * way to send binary data over the web.
+ * 
+ * **NOTE**: hex data will be prefixed `0x` internally to distinguish it from
+ * the other encodings and standardise values within the workbench. Widgets 
+ * and query builders may of course remove this prefix for their needs.
+ * 
  * @author Andrej Kabachnik
  *
  */
@@ -115,16 +129,16 @@ class BinaryDataType extends StringDataType
     }
     
     /**
-     * Converts a given string from Base64 to a hexadecimal number like `xf1a23` - the `x` being the optional prefix
+     * Converts a given string from Base64 to a hexadecimal number like `0xf1a23` - the `x` being the optional prefix
      * 
      * @param string $base64String
-     * @param bool $addPrefixX
+     * @param bool $addPrefix0x
      * 
      * @return string
      */
-    public static function convertBase64ToHex(string $base64String, bool $addPrefixX = true) : string
+    public static function convertBase64ToHex(string $base64String, bool $addPrefix0x = true) : string
     {
-        return static::convertBinaryToHex(static::convertBase64ToBinary($base64String), $addPrefixX);
+        return static::convertBinaryToHex(static::convertBase64ToBinary($base64String), $addPrefix0x);
     }
     
     /**
@@ -159,13 +173,13 @@ class BinaryDataType extends StringDataType
      * Converts a given binary string to a hexadecimal number like `xf1a23` - the `x` being the optional prefix
      * 
      * @param string $binaryString
-     * @param bool $addPrefixX
+     * @param bool $addPrefix0x
      * 
      * @return string
      */
-    public static function convertBinaryToHex(string $binaryString, bool $addPrefixX = true) : string
+    public static function convertBinaryToHex(string $binaryString, bool $addPrefix0x = true) : string
     {
-        return ($addPrefixX ? 'x' : '') . bin2hex($binaryString);
+        return ($addPrefix0x ? HexadecimalNumberDataType::HEX_PREFIX : '') . bin2hex($binaryString);
     }
     
     /**
@@ -191,7 +205,7 @@ class BinaryDataType extends StringDataType
      */
     public static function convertHexToBinary(string $hexString) : string
     {
-        $hexString = ltrim($hexString, "xX");
+        $hexString = stripos($hexString, HexadecimalNumberDataType::HEX_PREFIX) === 0 ? substr($hexString, 2) : $hexString;
         $binary = hex2bin($hexString, true);
         if ($binary === false) {
             throw new DataTypeCastingError('Cannot convert hexadecimal to binary: invalid hexadecimal number!');
@@ -225,20 +239,21 @@ class BinaryDataType extends StringDataType
      * Converts the given data from the current encoding to hexadecimal.
      * 
      * @param string $value
-     * @param bool $addPrefixX
+     * @param bool $addPrefix0x
      * @throws RuntimeException
      * @return string|NULL
      */
-    public function convertToHex(string $value = null, bool $addPrefixX = true) : ?string
+    public function convertToHex(string $value = null, bool $addPrefix0x = true) : ?string
     {
         $value = $value ?? $this->getValue();
         if ($value === null) {
             return $value;
         }
+        $value = trim($value);
         switch ($this->getEncoding()) {
-            case self::ENCODING_BASE64: return self::convertBase64ToHex($value, $addPrefixX);
-            case self::ENCODING_HEX: ($addPrefixX ? 'x' : '') . ltrim($value, "xX");
-            case self::ENCODING_BINARY: self::convertBinaryToHex($value, $addPrefixX);
+            case self::ENCODING_BASE64: return self::convertBase64ToHex($value, $addPrefix0x);
+            case self::ENCODING_HEX: ($addPrefix0x ? HexadecimalNumberDataType::HEX_PREFIX : '') . (stripos($value, HexadecimalNumberDataType::HEX_PREFIX) === 0 ? substr($value, 2) : $value);
+            case self::ENCODING_BINARY: self::convertBinaryToHex($value, $addPrefix0x);
             default:
                 throw new RuntimeException('Cannot convert binary data in ' . $this->getEncoding() . ' to a hexadecimal number!');
         }
