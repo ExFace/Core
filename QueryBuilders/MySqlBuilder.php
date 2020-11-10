@@ -283,7 +283,11 @@ class MySqlBuilder extends AbstractSqlBuilder
                     if ($data_type->getEncoding() === BinaryDataType::ENCODING_BINARY) {
                         $value = $data_type->convertToHex($value, true);
                     }
-                    return "UNHEX(" . $value . ")";
+                    if (stripos($value, '0x') === 0) {
+                        return $value;
+                    } else {
+                        return "UNHEX(" . $value . ")";
+                    }
                 default:
                     throw new QueryBuilderException('Cannot convert value to binary data: invalid encoding "' . $data_type->getEncoding() . '"!');
             }

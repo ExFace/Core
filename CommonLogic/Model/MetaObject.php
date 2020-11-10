@@ -30,6 +30,7 @@ use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Exceptions\Model\MetaRelationAliasAmbiguousError;
 use exface\Core\DataTypes\RelationCardinalityDataType;
 use exface\Core\Events\Model\OnBeforeDefaultObjectEditorInitEvent;
+use exface\Core\DataTypes\HexadecimalNumberDataType;
 
 /**
  * Default implementation of the MetaObjectInterface
@@ -1125,7 +1126,7 @@ class MetaObject implements MetaObjectInterface
             if ($object_or_alias_or_id->getId() === $this->getId()) {
                 return true;
             }
-        } elseif (mb_stripos($object_or_alias_or_id, '0x') === 0) {
+        } elseif (mb_stripos($object_or_alias_or_id, HexadecimalNumberDataType::HEX_PREFIX) === 0) {
             if ($this->getId() == $object_or_alias_or_id) {
                 return true;
             }
