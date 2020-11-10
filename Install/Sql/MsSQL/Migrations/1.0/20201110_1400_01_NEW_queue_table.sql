@@ -11,7 +11,7 @@ CREATE TABLE [dbo].[exf_queue] (
   [prototype_class] [nvarchar](200) NOT NULL,
   [app_oid] [binary](16) DEFAULT NULL,
   [allow_multi_queue_handling] [int] NOT NULL DEFAULT '0',
-  [config_uxon] [nvarcahr](max),
+  [config_uxon] [nvarchar](max),
 	CONSTRAINT [PK_exf_queue_oid] PRIMARY KEY CLUSTERED
 (
 	[oid] ASC
