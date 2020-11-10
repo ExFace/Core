@@ -145,27 +145,25 @@ const exfPreloader = {};
 	 */
 	this.syncAll = async function(fnCallback) {
 		var deferreds = [];
-		return _preloadTable.toArray()
-		.then(data => {
-			data.forEach(function(item){
-				deferreds.push(
-			    	_preloader
-			    	.sync(item, true)
-			    );
-			});
-			// Can't pass a literal array, so use apply.
-			//return $.when.apply($, deferreds)
-			return Promise.all(deferreds)
-			.then(function() {
-				//delete all actions with status "synced" from actionQueue
-				_preloader.getActionQueueData('synced')
-				.then(function(data) {
-					data.forEach(function(item) {
-						_actionsTable.delete(item.id);
-					})
+		var data = await _preloadTable.toArray();		
+		data.forEach(function(item){
+			deferreds.push(
+		    	_preloader
+		    	.sync(item, true)
+		    );
+		});
+		// Can't pass a literal array, so use apply.
+		//return $.when.apply($, deferreds)
+		return Promise.all(deferreds)
+		.then(function() {
+			//delete all actions with status "synced" from actionQueue
+			_preloader.getActionQueueData('synced')
+			.then(function(data) {
+				data.forEach(function(item) {
+					_actionsTable.delete(item.id);
 				})
-			});
-		})
+			})
+		});
 	};
 	
 	/**
@@ -178,7 +176,7 @@ const exfPreloader = {};
 		var aImageCols = item.imageCols;
 		var sUidAlias = item.uidAlias
 		aUid
-		console.log('Syncing preload for object "' + sObjectAlias + '", widget "' + sWidgetId + '" on page "' + sPageAlias + '"');
+		//console.log('Syncing preload for object "' + sObjectAlias + '", widget "' + sWidgetId + '" on page "' + sPageAlias + '"');
 		if (! sPageAlias || ! sWidgetId) {
 			throw {"message": "Cannot sync preload for object " + sObjectAlias + ": incomplete preload configuration!"};
 		}
@@ -207,14 +205,9 @@ const exfPreloader = {};
 					filters: filters
 					};
 		}
-		params = _preloader.encodeJson(requestData);
-		try {
-			var response = await fetch('api/ui5', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				},
-				body: params
+		try {			
+			var response = await fetch('api/ui5?' + encodeURI(_preloader.getUrlString(requestData)), {
+				method: 'GET',
 			})
 		} catch(error) {
 			console.error(error);
@@ -222,16 +215,19 @@ const exfPreloader = {};
 		}
 		if (!response.ok) {
 			return Promise.reject('Fetch failed for object ' + sObjectAlias);
-		} else {		
+		} else {
+			var promises = [];
 			responseData = await response.json()
 			var saveData = responseData;
-			if (requestData.data && requestData.data.filters && item.response) {
+			if (requestData.data !== undefined && requestData.data.filters !== undefined && item.response !== undefined && item.response.rows !== undefined) {
 				saveData.rows = _preloader.mergeRows(item.response.rows, responseData.rows, sUidAlias);
 			}
-			var promises = [];
+			if (requestData.data !== undefined && requestData.data.filters !== undefined && (item.response === undefined || item.response.rows === undefined)) {
+				saveData = {};
+			}			
 			promises.push(
 				_preloadTable.update(sObjectAlias, {
-					response: responseData,
+					response: saveData,
 					lastSync: (+ new Date())
 				})
 			);
@@ -270,7 +266,12 @@ const exfPreloader = {};
 	 * @return Promise|NULL
 	 */
 	this.syncImages = function (aUrls, sCacheName = 'image-cache') {
-		var cachesApi = window !== undefined ? window.caches : caches;
+		if (typeof window !== 'undefined') {
+			var cachesApi = window.caches;
+		} else {
+			var cachesApi = caches;
+		}
+		//var cachesApi = window !== undefined ? window.caches : caches;
 		if (cachesApi === undefined) {
 			console.error('Cannot preload images: Cache API not supported by browser!');
 			return;
@@ -355,7 +356,7 @@ const exfPreloader = {};
 		.then(function(){
 			navigator.serviceWorker.ready
 			.then(registration => registration.sync.register('OfflineActionSync'))
-			.then(() => console.log("Registered background sync"))
+			//.then(() => console.log("Registered background sync"))
 			.catch(err => console.error("Error registering background sync", err))
 		});
 	};
@@ -486,9 +487,9 @@ const exfPreloader = {};
 				response: error.message
 			});
 			if (updated) {
-				console.log ("Tries for Action with id " + element.id + " increased");
+				//console.log ("Tries for Action with id " + element.id + " increased");
 			} else {
-				console.log ("Nothing was updated - there was no action with id: ", element.id);
+				//console.log ("Nothing was updated - there was no action with id: ", element.id);
 			}
 			return false;			
 		}
@@ -503,22 +504,22 @@ const exfPreloader = {};
 			updatedElement.synced = new Date(date).toLocaleString();
 			var updated = await _actionsTable.update(element.id, updatedElement);				
 			if (updated) {
-				console.log ("Action with id " + element.id + " synced. Action removed from queue");
+				//console.log ("Action with id " + element.id + " synced. Action removed from queue");
 			} else {
-				console.log ("Nothing was updated - there was no action with id: ", element.id);
+				//console.log ("Nothing was updated - there was no action with id: ", element.id);
 			}
 			return true;
 		}
 		if (response.statusText === 'timeout' || response.status === 0) {
-			console.log('Timeout syncing action with id: ' + element.id);
+			//console.log('Timeout syncing action with id: ' + element.id);
 			var updated = _actionsTable.update(element.id, {
 				tries: element.tries + 1,
 				response: response.statusText
 			});
 			if (updated) {
-				console.log ("Tries for Action with id " + element.id + " increased");
+				//console.log ("Tries for Action with id " + element.id + " increased");
 			} else {
-				console.log ("Nothing was updated - there was no action with id: ", element.id);
+				//console.log ("Nothing was updated - there was no action with id: ", element.id);
 			}
 			return false;
 		}
@@ -531,9 +532,9 @@ const exfPreloader = {};
 			response: data
 		});
 		if (updated) {
-			console.log ("Action with id " + element.id + " was updated");
+			//console.log ("Action with id " + element.id + " was updated");
 		} else {
-			console.log ("Nothing was updated - there was no action with id: ", element.id);
+			//console.log ("Nothing was updated - there was no action with id: ", element.id);
 		}
 		return false;		
 	};
@@ -544,7 +545,7 @@ const exfPreloader = {};
 	this.encodeJson = function(srcjson, parent=""){
 		if(typeof srcjson !== "object")
 		  if(typeof console !== "undefined"){
-			console.log("\"srcjson\" is not a JSON object");
+			//console.log("\"srcjson\" is not a JSON object");
 			return null;
 		}
 		let u = encodeURIComponent;
@@ -564,6 +565,36 @@ const exfPreloader = {};
 
 		return urljson;
 	}
+	this.getUrlString = function(params, keys = [], isArray = false) {
+		  const p = Object.keys(params).map(key => {
+		    let val = params[key]
+
+		    if ("[object Object]" === Object.prototype.toString.call(val) || Array.isArray(val)) {
+		      if (Array.isArray(params)) {
+		        keys.push(key)
+		      } else {
+		        keys.push(key)
+		      }
+		      return _preloader.getUrlString(val, keys, Array.isArray(val))
+		    } else {
+		      let tKey = key
+
+		      if (keys.length > 0) {
+		        const tKeys = isArray ? keys : [...keys, key]
+		        tKey = tKeys.reduce((str, k) => { return "" === str ? k : `${str}[${k}]` }, "")
+		      }
+		      if (isArray) {
+		        return `${ tKey }[]=${ val }`
+		      } else {
+		        return `${ tKey }=${ val }`
+		      }
+
+		    }
+		  }).join('&')
+
+		  keys.pop()
+		  return p
+		}
 	
 	/**
 	 * @return Promise
@@ -646,7 +677,7 @@ const exfPreloader = {};
 						_actionsTable.delete(action.id);
 					})
 				}, function(error){
-					//console.error(error);
+					console.error(error);
 				})
 			)		
 		})
