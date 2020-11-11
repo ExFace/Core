@@ -22,13 +22,13 @@ interface iShowSingleAttribute extends WidgetInterface
 
     /**
      *
-     * @return MetaAttributeInterface
+     * @return MetaAttributeInterface|NULL
      */
-    public function getAttribute();
+    public function getAttribute() : ?MetaAttributeInterface;
 
     /**
      *
-     * @return string
+     * @return string|NULL
      */
     public function getAttributeAlias();
     
@@ -39,5 +39,5 @@ interface iShowSingleAttribute extends WidgetInterface
      * 
      * @return boolean
      */
-    public function isBoundToAttribute();
+    public function isBoundToAttribute() : bool;
 }

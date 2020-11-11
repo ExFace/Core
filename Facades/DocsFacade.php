@@ -50,6 +50,13 @@ class DocsFacade extends AbstractHttpFacade
         $baseUrl = StringDataType::substringBefore($requestUri->getPath(), '/' . $this->buildUrlToFacade(true), '');
         $baseUrl = $requestUri->getScheme() . '://' . $requestUri->getAuthority() . $baseUrl;
         
+        $baseRewriteRules = $this->getWorkbench()->getConfig()->getOption('FACADES.DOCSFACADE.BASE_URL_REWRITE');
+        if (! $baseRewriteRules->isEmpty()) {
+            foreach ($baseRewriteRules->getPropertiesAll() as $pattern => $replace) {
+                $baseUrl = preg_replace($pattern, $replace, $baseUrl);
+            }
+        }
+        
         // Add router middleware
         $matcher = function(UriInterface $uri) {
             $path = $uri->getPath();

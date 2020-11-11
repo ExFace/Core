@@ -18,13 +18,11 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Exceptions\Widgets\WidgetHasNoMetaObjectError;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Events\Widget\OnBeforePrefillEvent;
 use exface\Core\Events\Widget\OnPrefillEvent;
 use exface\Core\Interfaces\Events\EventInterface;
-use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
 use exface\Core\Uxon\WidgetSchema;
@@ -97,6 +95,11 @@ abstract class AbstractWidget implements WidgetInterface
     private $parentByType = [];
     
     private $facadeOptions = null;
+    
+    /**
+     * @var string|UxonObject
+     */
+    private $extendedFrom = null;
 
     /**
      *
@@ -1292,5 +1295,21 @@ abstract class AbstractWidget implements WidgetInterface
         }
         
         return null;
+    }
+    
+    /**
+     * Inherits all properties of the given widget except the `id`.
+     * 
+     * @uxon-property extend_widget
+     * @uxon-type \exface\Core\CommonLogic\WidgetLink|metamodel:widget_link
+     * @uxon-template {"page_alias": ""}
+     * 
+     * @param string|UxonObject $stringOrUxonWidgetLink
+     * @return WidgetInterface
+     */
+    protected function setExtendWidget($stringOrUxonWidgetLink) : WidgetInterface
+    {
+        $this->extendedFrom = $stringOrUxonWidgetLink;
+        return $this;
     }
 }

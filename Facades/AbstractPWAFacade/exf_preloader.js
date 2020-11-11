@@ -57,10 +57,12 @@ const exfPreloader = {};
 		});
 		dexie.version(2).stores({
             'preloads': 'id, object',
-            'actionQueue': 'id, object, action',
+            'actionQueue': '&id, object, action',
             'deviceId': 'id'
 		});
-		dexie.open();
+		dexie.open().catch(function (e) {
+		    console.error("Preloader error: " + e.stack);
+		});
 		return dexie;
 	}();
 	

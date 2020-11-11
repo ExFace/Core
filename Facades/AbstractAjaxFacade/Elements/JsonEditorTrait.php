@@ -438,15 +438,15 @@ JS;
                                         title: "{$trans['CONTEXT_MENU.EDIT.PASTE_HINT']}",
                                         className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-clipboard",
                                         click: function() {
-                                            var sPasted, json;
+                                            var sPasted, oJson;
                                             try {
                                                 sPasted = exfTools.clipboard.pasteText();
                                                 try {
-                                                    json = JSON.parse(sPasted);
-                                                    menuNode.setValue(json);
+                                                    oJson = JSON.parse(sPasted);
                                                 } catch (e) {
-                                                    menuNode.setValue(sPasted);
+                                                    // ignore errors
                                                 }
+                                                menuNode.setValue((oJson || sPasted));
                                             } catch (e) {
                                                 {$funcPrefix}_openPasteModal(menuNode);
                                             }

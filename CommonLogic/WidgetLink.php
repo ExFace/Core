@@ -141,8 +141,11 @@ class WidgetLink implements WidgetLinkInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
+     * The id of the target widget.
+     * 
+     * @uxon-property widget_id
+     * @uxon-type uxon:..id
+     * 
      * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setWidgetId()
      */
     protected function setWidgetId($value)
@@ -175,6 +178,10 @@ class WidgetLink implements WidgetLinkInterface
     }
 
     /**
+     * Selector of the page of the target widget
+     * 
+     * @uxon-property page_alias
+     * @uxon-type metamodel:page
      * 
      * @param string $pageAlias
      * @return \exface\Core\CommonLogic\WidgetLink

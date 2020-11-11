@@ -29,6 +29,8 @@ use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -279,12 +281,16 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                         $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
                         $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Display');
                         break;
-                } 
+                }
             } else {
                 // If the column is not based on an attribute, use generic input/display widgets
                 // Again, remember, that this code is only taking care of autogenerating cell
                 // widgets. If a widget is ecplicitly defined, it will be used as expected.
                 $this->cellWidget = WidgetFactory::create($this->getPage(), ($this->isEditable() ? 'Input' : 'Display'), $this);
+            }
+            
+            if ($this->getDataColumnName() !== '') {
+                $this->cellWidget->setDataColumnName($this->getDataColumnName());
             }
             
             if ($this->cellWidget->getWidth()->isUndefined()) {
@@ -471,7 +477,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iShowSingleAttribute::getAttribute()
      */
-    public function getAttribute()
+    public function getAttribute() : ?MetaAttributeInterface
     {
         if ($this->attribute === null) {
             try {
@@ -688,9 +694,19 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      *
      * @return boolean
      */
-    public function isBoundToAttribute()
+    public function isBoundToAttribute() : bool
     {
         return $this->getAttributeAlias() !== null && $this->getAttributeAlias() !== '' ? true : false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowDataColumn::isBoundToDataColumn()
+     */
+    public function isBoundToDataColumn() : bool
+    {
+        return $this->getDataColumnName() !== '';
     }
     
     /**

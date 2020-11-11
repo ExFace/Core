@@ -14,6 +14,7 @@ use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\BinaryDataType;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * A query builder for MySQL.
@@ -276,8 +277,17 @@ class MySqlBuilder extends AbstractSqlBuilder
             switch ($data_type->getEncoding()) {
                 case BinaryDataType::ENCODING_BASE64:
                     return "FROM_BASE64(" . $value . ")";
+                case BinaryDataType::ENCODING_BINARY:
                 case BinaryDataType::ENCODING_HEX:
-                    return "UNHEX(" . trim($value, "'") . ")";
+                    $value = trim($value, "'");
+                    if ($data_type->getEncoding() === BinaryDataType::ENCODING_BINARY) {
+                        $value = $data_type->convertToHex($value, true);
+                    }
+                    if (stripos($value, '0x') === 0) {
+                        return $value;
+                    } else {
+                        return "UNHEX(" . $value . ")";
+                    }
                 default:
                     throw new QueryBuilderException('Cannot convert value to binary data: invalid encoding "' . $data_type->getEncoding() . '"!');
             }
