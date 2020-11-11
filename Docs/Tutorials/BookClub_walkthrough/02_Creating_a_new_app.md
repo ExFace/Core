@@ -1,5 +1,7 @@
 # Creating a new app in the metamodel
 
+#### [< Previous](01_Preparation.md) | [BookClub tutorial](index.md) | [Next >](03_Connecting_to_an_sql_database.md)
+
 First of all we will need a new app in our metamodel. It is important to create an app in the metamodel for every application you will create. The app acts as a container for all meta objects, UI pages, security rules, actions, etc. related to it. 
 
 You can export an app into a folder on your file system and put it in a version control system like Git or transfert it to another server. 
@@ -21,6 +23,4 @@ The default language of the app is the language we are going to use for descript
 
 Read more about apps [here](../../understanding_the_metamodel/App_metamodel.md).
 
-## Proceed with the next step
-
-Add a data source to the app in the [next step](4_Generating_a_model_from_an_SQL_schema.md) we will use a model builder to generate meta objects from the information stored in the database schema.
+### [< Previous](01_Preparation.md) | [BookClub tutorial](index.md) | [Next >](03_Connecting_to_an_sql_database.md)

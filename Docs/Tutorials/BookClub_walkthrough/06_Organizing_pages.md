@@ -1,8 +1,4 @@
-# Creating the app's first pages
-
-Now that we have a [metamodel](4_Generating_a_model_from_an_SQL_schema.md) for the [BookClub tutorial app](index.md), we can start building it's user interface. 
-
-The UI consists of pages - after all, we are in the world of web apps, aren't we? Pages are organized hierarchically in the main menu. Although you are free to place pages anywhere, Most apps have their own submenus right below the home page (main root of the menu).
+# Organizing pages in the menu
 
 ## 1. Create a submenu for the app
 
@@ -17,4 +13,3 @@ The first thing to do is creating the root page for our app:
 	- Published: yes
 	- Is part of app: `tutorial.BookClub`
 5. Switch to tab `Widget`
-

@@ -1,5 +1,7 @@
 # Things to do before the BookClub tutorial
 
+#### < Previous | [BookClub tutorial](index.md) | [Next >](02_Creating_a_new_app.md)
+
 ## 1. Check the requirements
 
 The tutorial assumes, that 
@@ -8,6 +10,7 @@ The tutorial assumes, that
 - you are logged on as a superuser (e.g. `admin/password`).
 - your current language is english (either set for your user or as `SERVER.DEFAULT_LOCALE` in [System.config.json](../../Administration/Configuration/index.md).
 - you have the `exface.JEasyUIFacade` as your default facade. This should be the case if you did not change anything in the installation guide.
+- you have the `exface.UI5Facade` installed. This is actually not a must, but the example app will be rendered using the SAP OpenUI5 JavaScript framework as a good example for responsive design.
 
 Should you use another user or facade, the screenshots may look different from what you see. The general logic remains the same!
 
@@ -25,10 +28,10 @@ USE `tutorial_bookclub`;
 
 CREATE TABLE IF NOT EXISTS `book` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `created_on` datetime NOT NULL,
-  `created_by_user_id` binary(16) NOT NULL,
-  `modified_on` datetime NOT NULL,
-  `modified_by_user_id` binary(16) NOT NULL,
+  `created_on` datetime DEFAULT NULL,
+  `created_by_user_id` binary(16) DEFAULT NULL,
+  `modified_on` datetime DEFAULT NULL,
+  `modified_by_user_id` binary(16) DEFAULT NULL,
   `title` varchar(50) NOT NULL,
   `series` varchar(50) DEFAULT NULL,
   `author` varchar(200) DEFAULT NULL,
@@ -50,10 +53,10 @@ CREATE TABLE IF NOT EXISTS `book` (
 
 CREATE TABLE IF NOT EXISTS `book_category` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `created_on` datetime NOT NULL,
-  `created_by_user_id` binary(16) NOT NULL,
-  `modified_on` datetime NOT NULL,
-  `modified_by_user_id` binary(16) NOT NULL,
+  `created_on` datetime DEFAULT NULL,
+  `created_by_user_id` binary(16) DEFAULT NULL,
+  `modified_on` datetime DEFAULT NULL,
+  `modified_by_user_id` binary(16) DEFAULT NULL,
   `category_id` int(11) NOT NULL,
   `book_id` int(11) NOT NULL,
   PRIMARY KEY (`id`) USING BTREE
@@ -63,10 +66,10 @@ CREATE TABLE IF NOT EXISTS `book_category` (
 
 CREATE TABLE IF NOT EXISTS `category` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `created_on` datetime NOT NULL,
-  `created_by_user_id` binary(16) NOT NULL,
-  `modified_on` datetime NOT NULL,
-  `modified_by_user_id` binary(16) NOT NULL,
+  `created_on` datetime DEFAULT NULL,
+  `created_by_user_id` binary(16) DEFAULT NULL,
+  `modified_on` datetime DEFAULT NULL,
+  `modified_by_user_id` binary(16) DEFAULT NULL,
   `name` varchar(50) NOT NULL,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
@@ -75,10 +78,10 @@ CREATE TABLE IF NOT EXISTS `category` (
 
 CREATE TABLE IF NOT EXISTS `language` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `created_on` datetime NOT NULL,
-  `created_by_user_id` binary(16) NOT NULL,
-  `modified_on` datetime NOT NULL,
-  `modified_by_user_id` binary(16) NOT NULL,
+  `created_on` datetime DEFAULT NULL,
+  `created_by_user_id` binary(16) DEFAULT NULL,
+  `modified_on` datetime DEFAULT NULL,
+  `modified_by_user_id` binary(16) DEFAULT NULL,
   `name` varchar(50) NOT NULL,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
@@ -87,10 +90,10 @@ CREATE TABLE IF NOT EXISTS `language` (
 
 CREATE TABLE IF NOT EXISTS `loan` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `created_on` datetime NOT NULL,
-  `created_by_user_id` binary(16) NOT NULL,
-  `modified_on` datetime NOT NULL,
-  `modified_by_user_id` binary(16) NOT NULL,
+  `created_on` datetime DEFAULT NULL,
+  `created_by_user_id` binary(16) DEFAULT NULL,
+  `modified_on` datetime DEFAULT NULL,
+  `modified_by_user_id` binary(16) DEFAULT NULL,
   `member_id` int(11) NOT NULL,
   `book_id` int(11) NOT NULL,
   `taken` date NOT NULL,
@@ -103,10 +106,10 @@ CREATE TABLE IF NOT EXISTS `loan` (
 
 CREATE TABLE IF NOT EXISTS `member` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `created_on` datetime NOT NULL,
-  `created_by_user_id` binary(16) NOT NULL,
-  `modified_on` datetime NOT NULL,
-  `modified_by_user_id` binary(16) NOT NULL,
+  `created_on` datetime DEFAULT NULL,
+  `created_by_user_id` binary(16) DEFAULT NULL,
+  `modified_on` datetime DEFAULT NULL,
+  `modified_by_user_id` binary(16) DEFAULT NULL,
   `name` varchar(50) NOT NULL,
   `user_oid` binary(16) DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
@@ -117,4 +120,6 @@ COMMIT;
 
 ## 3. Proceed with the next step
 
-Start a new metamodel by [creating an app](2_Creating_a_new_app.md).
+Start a new metamodel by [creating an app](02_Creating_a_new_app.md).
+
+### < Previous | [BookClub tutorial](index.md) | [Next >](02_Creating_a_new_app.md)
