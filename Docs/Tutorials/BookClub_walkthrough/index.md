@@ -8,7 +8,7 @@ We will create a simple distributed library, where any member can list his or he
 
 In this tutorial you will learn:
 
-- [How to set up a meta model for an SQL database](3_Connecting_to_an_sql_database.md)
+- [How to set up a meta model for an SQL database](03_Connecting_to_an_sql_database.md)
 - How to create UI pages for for managing data in a database with the help of built-in actions
 - How to use built-in behaviors to configure common application logic like optimistic locking, duplication prevention, etc.
 - How give other users access to your app by configuring security policies
@@ -20,8 +20,8 @@ We will also handle some advanced topics:
 
 ## Table of contents
 
-1. [Preparation & requirements](1_Preparation.md)
-2. [Creating a new app](2_Creating_a_new_app.md)
-3. [Setting up a data source in the model](3_Connecting_to_an_sql_database.md)
-4. [Generating a metamodel from an SQL schema](4_Generating_a_model_from_an_SQL_schema.md)
-6. [Creating the app's first pages](5_Creating_the_apps_first_pages.md)
+1. [Preparation & requirements](01_Preparation.md)
+2. [Creating a new app](02_Creating_a_new_app.md)
+3. [Setting up a data source in the model](03_Connecting_to_an_sql_database.md)
+4. [Generating a metamodel from an SQL schema](04_Generating_a_model_from_an_SQL_schema.md)
+6. [Creating the app's first pages](05_Creating_the_apps_first_pages.md)

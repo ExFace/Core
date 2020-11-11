@@ -1,6 +1,8 @@
 # Setting up an SQL DB and a data source in the model
 
-Now that we have an [app](2_Creating_a_new_app.md), we need to let the workbench know, that our [newly created database](1_Preparation.md) is a data source this app can access. 
+#### [< Previous](02_Creating_a_new_app.md) | [BookClub tutorial](index.md) | [Next >](04_Generating_a_model_from_an_SQL_schema.md)
+
+Now that we have an [app](02_Creating_a_new_app.md), we need to let the workbench know, that our [newly created database](01_Preparation.md) is a data source this app can access. 
 
 A data source basically consists of two things:
 - a data connection, which contains all the information required to establish a connection
@@ -42,6 +44,8 @@ Our new connection should now appear at the top of the list.
 
 The `MySqlConnector` prototype, that we use here works for MySQL databases as the name suggests. It's configuration (host, dbase, etc.) is also specific to MySQL and may look very different for another data source or even another database engine. You can find the documentation for all available connectors in the main menu at `Administratyion > Documentation > Data Connectors`.
 
+The idea of prototypes with their specific hierarchical configuration is a central concept. There are prototypes for a lot of things: widgets, actions, data types, etc. The configuration is done via our modeling language called [UXON](../../Creating_UIs/UXON/index.md) (User eXperience Object Notation) in special [editors](../../Creating_UIs/UXON/Introduction_to_the_UXON_editor.md), that provide autosuggest, presets (the magic wand above), quick refference, etc. The editor knows, what configurable properties each prototype has and can even suggest possible values in many cases.
+
 ## 2. Create a data source
 
 Now that we have a connection, we can use it in a data source:
@@ -64,6 +68,4 @@ Note, that apart from the default connection and query builder (that we have fil
 
 Read more about data sources and connections in the [model docs](../../creating_metamodels/data_sources/index.md).
 
-## 3. Proceed with importing the schema
-
-In the [next step](4_Generating_a_model_from_an_SQL_schema.md) we will import the database schema into the metamodel creating a base set of business objects and relations.
+### [< Previous](02_Creating_a_new_app.md) | [BookClub tutorial](index.md) | [Next >](04_Generating_a_model_from_an_SQL_schema.md)
