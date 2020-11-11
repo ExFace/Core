@@ -1296,6 +1296,34 @@
             "UXON": "{\"alias\":\"exface.Core.GoToUrl\",\"url\":\"[#url#]\",\"urlencode_placeholders\":false,\"input_rows_min\":1,\"input_rows_max\":1}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action"
+        },
+        {
+            "CREATED_ON": "2020-11-11 07:56:39",
+            "MODIFIED_ON": "2020-11-11 07:58:53",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb98a6e7986e2b98a025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "PDF viewer with download option",
+            "DESCRIPTION": "NOTE: the `attribute_alias` should point to the attribute, containing the PDF binary",
+            "PROTOTYPE": "exface\/Core\/Widgets\/PDFViewer.php",
+            "UXON": "{\"widget_type\":\"PDFViewer\",\"attribute_alias\":\"\",\"download_enabled\":true,\"filename_attribute_alias\":\"\"}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2020-11-11 07:58:16",
+            "MODIFIED_ON": "2020-11-11 07:58:16",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba56aa82792a8a56a025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Open PDF in dialog",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "UXON": "{\"maximize\":true,\"input_rows_min\":1,\"input_rows_max\":1,\"widget\":{\"widget_type\":\"PDFViewer\",\"attribute_alias\":\"\",\"download_enabled\":true,\"filename_attribute_alias\":\"\"}}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action"
         }
     ],
     "totals_rows": [],
