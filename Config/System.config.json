@@ -106,5 +106,7 @@
 		"npm-asset/dexie/dist/dexie.min.js",
     	"exface/Core/Facades/AbstractPWAFacade/sw_tools.js",
     	"exface/Core/Facades/AbstractPWAFacade/exf_preloader.js"
-    ]
+    ],
+    
+    "FACADES.DOCSFACADE.BASE_URL_REWRITE": {}
 }

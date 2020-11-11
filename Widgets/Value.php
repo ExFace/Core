@@ -24,6 +24,7 @@ use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\DataTypes\EncryptedDataType;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * The Value widget simply shows a raw (unformatted) value.
@@ -328,7 +329,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * 
      * @return boolean
      */
-    public function isBoundToAttribute()
+    public function isBoundToAttribute() : bool
     {
         return $this->getAttributeAlias() ? true : false;
     }
@@ -339,9 +340,9 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      *
      * @see \exface\Core\Interfaces\Widgets\iShowSingleAttribute::getAttribute()
      */
-    public function getAttribute()
+    public function getAttribute() : ?MetaAttributeInterface
     {
-        if (! $this->getAttributeAlias()) {
+        if ($this->getAttributeAlias() === null || $this->getAttributeAlias() === '') {
             return null;
         }
         
@@ -355,6 +356,16 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         }
         
         return $this->getMetaObject()->getAttribute($this->getAttributeAlias());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowDataColumn::isBoundToDataColumn()
+     */
+    public function isBoundToDataColumn() : bool
+    {
+        return $this->getDataColumnName() !== '';
     }
     
     /**

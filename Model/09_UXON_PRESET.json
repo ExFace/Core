@@ -81,7 +81,7 @@
         },
         {
             "CREATED_ON": "2019-09-03 15:12:00",
-            "MODIFIED_ON": "2019-10-02 09:08:01",
+            "MODIFIED_ON": "2020-11-02 20:10:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9ce5d1703444dad7fe4b318306b9a",
@@ -89,7 +89,7 @@
             "NAME": "Editor-Dialog with multiple widget groups",
             "DESCRIPTION": "The first widget group has no caption, so it will not be visible as a group. The other two have captions. If wrapping, the content will be placed inside the first group.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
-            "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"code\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Group 1\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Group 2\",\"widgets\":[{\"attribute_alias\":\"\"}]}]}",
+            "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Group 1\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Group 2\",\"widgets\":[{\"attribute_alias\":\"\"}]}]}",
             "WRAP_PATH": "$.widgets[1].widgets[0]",
             "UXON_SCHEMA": "widget"
         },
@@ -809,7 +809,7 @@
         },
         {
             "CREATED_ON": "2019-12-15 20:30:21",
-            "MODIFIED_ON": "2019-12-15 20:30:55",
+            "MODIFIED_ON": "2020-11-02 13:41:33",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea1f79b55cdb53aa030205857feb80",
@@ -818,7 +818,7 @@
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/Widgets\/Wizard.php",
             "UXON": "{\"widget_type\":\"Wizard\",\"object_alias\":\"\",\"steps\":[{\"caption\":\"Step 1\",\"intro\":\"Please fill out the form!\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}]},{\"caption\":\"Step 2\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}],\"buttons\":[{\"action_alias\":\"exface.Core.CreateData\",\"visibility\":\"promoted\"},{\"go_to_step\":\"previous\"}]}]}",
-            "WRAP_PATH": "",
+            "WRAP_PATH": "$.steps[0].widgets[0]",
             "UXON_SCHEMA": "widget"
         },
         {
@@ -1294,6 +1294,34 @@
             "DESCRIPTION": "The input data here is expected to have a column named `url`. Since the URL contains special characters, we need to disable url-encoding in this case!",
             "PROTOTYPE": "exface\/Core\/Actions\/GoToUrl.php",
             "UXON": "{\"alias\":\"exface.Core.GoToUrl\",\"url\":\"[#url#]\",\"urlencode_placeholders\":false,\"input_rows_min\":1,\"input_rows_max\":1}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action"
+        },
+        {
+            "CREATED_ON": "2020-11-11 07:56:39",
+            "MODIFIED_ON": "2020-11-11 07:58:53",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb98a6e7986e2b98a025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "PDF viewer with download option",
+            "DESCRIPTION": "NOTE: the `attribute_alias` should point to the attribute, containing the PDF binary",
+            "PROTOTYPE": "exface\/Core\/Widgets\/PDFViewer.php",
+            "UXON": "{\"widget_type\":\"PDFViewer\",\"attribute_alias\":\"\",\"download_enabled\":true,\"filename_attribute_alias\":\"\"}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2020-11-11 07:58:16",
+            "MODIFIED_ON": "2020-11-11 07:58:16",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba56aa82792a8a56a025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Open PDF in dialog",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "UXON": "{\"maximize\":true,\"input_rows_min\":1,\"input_rows_max\":1,\"widget\":{\"widget_type\":\"PDFViewer\",\"attribute_alias\":\"\",\"download_enabled\":true,\"filename_attribute_alias\":\"\"}}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action"
         }

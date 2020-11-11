@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-03-10 16:22:54",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-07-16 07:24:32",
+    "modified_on": "2020-11-08 21:15:47",
     "contents": {
         "widget_type": "SplitVertical",
         "object_alias": "exface.Core.AUTHORIZATION_POINT",
@@ -117,10 +117,10 @@
                                 "attribute_alias": "APP"
                             },
                             {
-                                "attribute_alias": "TARGET_USER_ROLE"
+                                "attribute_alias": "TARGET_PAGE_GROUP"
                             },
                             {
-                                "attribute_alias": "TARGET_PAGE_GROUP"
+                                "attribute_alias": "TARGET_USER_ROLE"
                             },
                             {
                                 "attribute_alias": "TARGET_OBJECT"

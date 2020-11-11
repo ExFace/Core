@@ -2,7 +2,6 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
-use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 
 /**
  * Data type for Hexadecimal numbers.
@@ -12,6 +11,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
  */
 class HexadecimalNumberDataType extends NumberDataType
 {
+    const HEX_PREFIX = '0x';
     
     /**
      *
@@ -28,7 +28,7 @@ class HexadecimalNumberDataType extends NumberDataType
             case static::isValueEmpty($string) === true:
                 return null;
             // Hexadecimal numbers in '0x....'-Notation
-            case mb_strtoupper(substr($string, 0, 2)) === '0X':
+            case stripos($string, self::HEX_PREFIX) === 0:
                 /*if (ctype_xdigit(substr($string, 2)) === false) {
                     throw new DataTypeCastingError('Cannot convert "' . $string . '" to a hexadecimal number!');
                 }*/
@@ -37,7 +37,7 @@ class HexadecimalNumberDataType extends NumberDataType
             case static::isValueLogicalNull($string):
                 return $string;
             default: 
-                throw new DataTypeCastingError('Cannot convert "' . $string . '" to a hexadecimal number!');
+                throw new DataTypeCastingError('Cannot convert "' . (strlen($string) > 30 ? substr($string, 0, 30) . '...' : $string) . '" to a hexadecimal number!');
         }
     }
     

@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-03-12 14:04:30",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-06-07 15:51:44",
+    "modified_on": "2020-11-09 09:21:33",
     "contents": {
         "object_alias": "exface.Core.APP",
         "widget_type": "DataTable",
@@ -80,8 +80,14 @@
                 "action_alias": "exface.Core.ShowObjectEditDialog"
             },
             {
+                "action_alias": "exface.Core.AppInspectDialog"
+            },
+            {
                 "action_alias": "exface.Core.DeleteObject",
                 "visibility": "optional"
+            },
+            {
+                "action_alias": "exface.Core.ShowAppRelationGraph"
             },
             {
                 "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.OBJECTS')",
@@ -91,9 +97,6 @@
                     "input_rows_min": 1,
                     "input_rows_max": 1
                 }
-            },
-            {
-                "action_alias": "exface.Core.ShowAppRelationGraph"
             },
             {
                 "action_alias": "axenox.PackageManager.ExportAppModel"

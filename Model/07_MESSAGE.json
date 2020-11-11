@@ -2276,6 +2276,20 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2020-10-30 10:48:29",
+            "MODIFIED_ON": "2020-10-30 10:48:29",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebbfc6729879aebfc6847beb4a5184",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7DA4MW9",
+            "TITLE": "Invalid configuration of DataCarousel widget",
+            "DESCRIPTION": "The carousel consists of a `data` widget (typically a `DataTableResponsive`) and a `details` widget,\n * (typically a `Form`), that is positioned next to the data and gets filled once a data item is selected. \n\nThis error indicates, that one of them is not set or has an invalid `widget_type`: \n- The `data` can be any data widget or a widget using data (e.g. a `Chart`)\n- The `details` can be any container widget (e.g. `Panel`, `Form`, etc.)",
+            "HINT": "Make sure `data` and `details` properties of the widget are set correctly!",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2018-04-09 11:44:35",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-03-10 20:24:56",
+    "modified_on": "2020-11-09 08:18:22",
     "contents": {
         "object_alias": "exface.core.TRANSLATIONS",
         "widget_type": "DataTable",
@@ -21,6 +21,9 @@
             },
             {
                 "attribute_alias": "PATHNAME_RELATIVE"
+            },
+            {
+                "attribute_alias": "APP"
             }
         ],
         "columns": [
