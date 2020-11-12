@@ -10,7 +10,7 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 /**
  * Aggregators are special expressions to define data aggregation like `SUM`, `AVG`, but also `COUNT_IF(condition)`.
  * 
- * Aggregators consist of a function name and (sometimes) optional parameters in braces. 
+ * Aggregators consist of a function name and (sometimes) optional parameters in parentheses. 
  * 
  * @author Andrej Kabachnik
  *
