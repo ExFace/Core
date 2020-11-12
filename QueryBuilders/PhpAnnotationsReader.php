@@ -298,7 +298,7 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
      */
     protected function prepareCommentText($string)
     {
-        $string = preg_replace('/([^\r\n])\R([^{}\s\r\n#=-])/', '$1$2', $string);
+        $string = preg_replace('/([^\r\n])\R([^{}\s\r\n#=-])/', '$1 $2', $string);
         return $string;
     }
 
