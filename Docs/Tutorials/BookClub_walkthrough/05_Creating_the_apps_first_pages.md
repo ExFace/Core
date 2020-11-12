@@ -43,9 +43,11 @@ The widget configuration above is another example of the [UXON](../../Creating_U
 
 The `object_alias` tells the table to display languages, while `attribute_group_alias` makes it show a column for every attribute in the group. There are some built-in attribute groups starting with `~` and `~VISIBLE` obviously contains all visible attributes. In our case it's only the `name` attribute because we've marked all the other attributes as hidden in the [previous step](04_Generating_a_model_from_an_SQL_schema.md).
 
-There are lot's of widgets available and each has numerous configurable properties. The presets behind the magic-wand contain pre-configured typical use-cases for many of them.
+Similarly, the `action_alias` inside the buttons are references to actions. The actions used here are built-in generic actions, but we can also create custom action models as we will see later.
 
-All the widget properties, that were not explicitly set, will be configured automatically by the workbench based on it's internal logic and the information from the metamodel. For example, we did not really specify, how the editor for a language should look like. The workbench chose chose a small dialog with a single (required) input field for the name of the language - which is perfectly fine to start with.
+There are lot's of widgets and actions available and each has numerous configurable properties. The presets behind the magic-wand contain pre-configured typical use-cases for many of them.
+
+All the widget and action properties, that were not explicitly set, will be configured automatically by the workbench based on it's internal logic and the information from the metamodel. For example, we did not really specify, how the editor for a language should look like. The workbench chose chose a small dialog with a single (required) input field for the name of the language - which is perfectly fine to start with.
 
 ## 2. Customize the widget
 
