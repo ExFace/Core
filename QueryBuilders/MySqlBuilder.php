@@ -14,11 +14,12 @@ use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\BinaryDataType;
-use exface\Core\DataTypes\StringDataType;
 
 /**
  * A query builder for MySQL.
  *
+ * Supported dialect tags in multi-dialect statements (in order of priority): `@MySQL:`, `@OTHER:`.
+ * 
  * See `AbstractSqlBuilder` for available data address options!
  * 
  * @see AbstractSqlBuilder
@@ -28,6 +29,16 @@ use exface\Core\DataTypes\StringDataType;
  */
 class MySqlBuilder extends AbstractSqlBuilder
 {
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::getSqlDialects()
+     */
+    protected function getSqlDialects() : array
+    {
+        return array_merge(['MySQL'], parent::getSqlDialects());
+    }
+    
     /**
      * 
      * {@inheritDoc}
@@ -123,7 +134,7 @@ class MySqlBuilder extends AbstractSqlBuilder
                     $first_rel = reset($rels);
                     $first_rel_qpart = $this->addAttribute($first_rel->getAliasWithModifier());
                     // IDEA this does not support relations based on custom sql. Perhaps this needs to change
-                    $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
+                    $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $this->buildSqlDataAddress($first_rel_qpart->getAttribute()), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                 }
                 $enrichment_selects[] = $this->buildSqlSelect($qpart);
                 $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
@@ -354,7 +365,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         if (! $where)
             throw new QueryBuilderException('Cannot perform update on all objects "' . $this->main_object->getAlias() . '"! Forbidden operation!');
         
-        $sql = 'DELETE FROM ' . $this->getMainObject()->getDataAddress() . str_replace($this->getMainObject()->getAlias() . $this->getAliasDelim(), '', $where);
+        $sql = 'DELETE FROM ' . $this->buildSqlDataAddress($this->getMainObject()) . str_replace($this->getMainObject()->getAlias() . $this->getAliasDelim(), '', $where);
         $query = $data_connection->runSql($sql);
         $cnt = $query->countAffectedRows();
         
