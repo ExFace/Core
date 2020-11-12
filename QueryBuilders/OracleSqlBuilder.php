@@ -1,9 +1,7 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
-use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Exceptions\QueryBuilderException;
-use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\TimestampDataType;
 use exface\Core\DataTypes\NumberDataType;
@@ -13,15 +11,15 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\RelationTypeDataType;
-use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
-use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 
 /**
  * A query builder for Oracle SQL. 
+ * 
+ * Supported dialect tags in multi-dialect statements (in order of priority): `@PL/SQL:`, `@Oracle:`, `@OTHER:`.
  * 
  * See `AbstractSqlBuilder` for available data address options!
  * 
@@ -43,6 +41,16 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         $reservedWords = $this->getReservedWords();
         $reservedWords[] = 'COMMENT';
         $this->setReservedWords($reservedWords);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::getSqlDialects()
+     */
+    protected function getSqlDialects() : array
+    {
+        return array_merge(['PL/SQL', 'Oracle'], parent::getSqlDialects());
     }
 
     /**
@@ -142,7 +150,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     }
                     // also skip selects based on custom sql substatements if not being grouped over
                     // they should be done after pagination as they are potentially very time consuming
-                    if ($this->checkForSqlStatement($qpartAttr->getDataAddress()) && (! $group_by || ! $qpart->getAggregator())) {
+                    if ($this->checkForSqlStatement($this->buildSqlDataAddress($qpartAttr)) && (! $group_by || ! $qpart->getAggregator())) {
                         continue;
                     } elseif ($qpart->getUsedRelations(RelationTypeDataType::REVERSE) && ! $this->getAggregation($qpart->getAlias()) && $this->isQpartRelatedToAggregator($qpart)) {
                         // Also skip selects with reverse relations that can be joined later in the enrichment.                      
@@ -182,7 +190,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     if ($first_rel->isForwardRelation()) {
                         $first_rel_qpart = $this->addAttribute($first_rel->getAlias());
                         // IDEA this does not support relations based on custom sql. Perhaps this needs to change
-                        $core_selects[$first_rel_qpart->getAttribute()->getDataAddress()] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
+                        $core_selects[$this->buildSqlDataAddress($first_rel_qpart->getAttribute())] = $this->buildSqlSelect($first_rel_qpart, null, null, $this->buildSqlDataAddress($first_rel_qpart->getAttribute()), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                     }
                 }
                 
@@ -277,7 +285,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                         $first_rel = reset($rels);
                         $first_rel_qpart = $this->addAttribute($first_rel->getAliasWithModifier());
                         // IDEA this does not support relations based on custom sql. Perhaps this needs to change
-                        $select .= ', ' . $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
+                        $select .= ', ' . $this->buildSqlSelect($first_rel_qpart, null, null, $this->buildSqlDataAddress($first_rel_qpart->getAttribute()), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                     }
                     $enrichment_select .= ', ' . $this->buildSqlSelect($qpart);
                     $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
@@ -423,7 +431,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         // If there is no primary key sequence defined, try adding '_SEQ' to the table name. This seems to be a wide spread approach.
         // If this does not work, we will get an SQL error
         if (! $sequence = $this->getMainObject()->getDataAddressProperty('PKEY_SEQUENCE')) {
-            $sequence = $this->getMainObject()->getDataAddress() . '_SEQ';
+            $sequence = $this->buildSqlDataAddress($this->getMainObject()) . '_SEQ';
         }
         return $sequence;
     }
@@ -489,14 +497,15 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 continue;
             }
             // Ignore attributes, that do not reference an sql column (= do not have a data address at all)
-            if (! $qpart->getDataAddressProperty('SQL_INSERT') && (! $attr->getDataAddress() || $this->checkForSqlStatement($attr->getDataAddress()))) {
+            $qpartAddress = $this->buildSqlDataAddress($qpart);
+            if (! $qpart->getDataAddressProperty('SQL_INSERT') && (! $qpartAddress || $this->checkForSqlStatement($qpartAddress))) {
                 continue;
             }
             // Save the query part for later processing if it is the object's UID
             if ($attr->isUidForObject()) {
                 $uid_qpart = $qpart;
             }
-            $column = $qpart->getDataAddressProperty('SQL_INSERT_DATA_ADDRESS') ? $qpart->getDataAddressProperty('SQL_INSERT_DATA_ADDRESS') : $attr->getDataAddress();
+            $column = $qpart->getDataAddressProperty('SQL_INSERT_DATA_ADDRESS') ? $qpart->getDataAddressProperty('SQL_INSERT_DATA_ADDRESS') : $qpartAddress;
             $columns[$column] = $column;
             $custom_insert_sql = $qpart->getDataAddressProperty('SQL_INSERT');
             foreach ($qpart->getValues() as $row => $value) {
@@ -511,7 +520,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                         $value
                     ), $custom_insert_sql);
                 } else {
-                    $values[$row][$attr->getDataAddress()] = $value;
+                    $values[$row][$qpartAddress] = $value;
                 }
             }
         }
@@ -523,14 +532,14 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             // show up as a value here. Still that value is required!
             if ($uid_generator = $this->getMainObject()->getUidAttribute()->getDataAddressProperty('SQL_INSERT')) {
                 $last_uid_sql_var = '@last_uid';
-                $columns[] = $this->getMainObject()->getUidAttribute()->getDataAddress();
+                $columns[] = $this->buildSqlDataAddress($this->getMainObject()->getUidAttribute());
                 foreach ($values as $nr => $row) {
                     $values[$nr][] = $last_uid_sql_var . ' := ' . $uid_generator;
                 }
             } else {
-                $columns[] = $this->getMainObject()->getUidAttribute()->getDataAddress();
+                $columns[] = $this->buildSqlDataAddress($this->getMainObject()->getUidAttribute());
                 foreach ($values as $nr => $row) {
-                    $values[$nr][$this->getMainObject()->getUidAttribute()->getDataAddress()] = $this->getPrimaryKeySequence() . $this->getAliasDelim() . 'NEXTVAL';
+                    $values[$nr][$this->buildSqlDataAddress($this->getMainObject()->getUidAttribute())] = $this->getPrimaryKeySequence() . $this->getAliasDelim() . 'NEXTVAL';
                 }
             }
         }
@@ -546,7 +555,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         $uidAlias = $this->getMainObject()->getUidAttribute()->getAlias();
         if (count($values) > 1) {
             foreach ($values as $nr => $vals) {
-                $sql = 'INSERT INTO ' . $this->getMainObject()->getDataAddress() . ' (' . implode(', ', $columns) . ') VALUES (' . $vals . ')' . "\n";
+                $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($this->getMainObject()) . ' (' . implode(', ', $columns) . ') VALUES (' . $vals . ')' . "\n";
                 $query = $data_connection->runSql($sql);
                 
                 // Now get the primary key of the last insert.
@@ -567,7 +576,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 }
             }
         } else {
-            $sql = 'INSERT INTO ' . $this->getMainObject()->getDataAddress() . ' (' . implode(', ', $columns) . ') VALUES (' . implode('), (', $values) . ')';
+            $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($this->getMainObject()) . ' (' . implode(', ', $columns) . ') VALUES (' . implode('), (', $values) . ')';
             $query = $data_connection->runSql($sql);
             // Now get the primary key of the last insert.
             if ($last_uid_sql_var) {

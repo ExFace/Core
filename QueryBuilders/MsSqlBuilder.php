@@ -16,8 +16,12 @@ use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 
 /**
  * A query builder for Microsoft SQL.
+ * 
+ * Supported dialect tags in multi-dialect statements (in order of priority): `@T-SQL:`, `@MSSQL:`, `@OTHER:`.
  *
  * ## Data source options
+ * 
+ * See `AbstractSqlBuilder` for available data address options!
  * 
  * ### On object level
  * 
@@ -40,6 +44,16 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $reservedWords = $this->getReservedWords();
         $reservedWords[] = 'USER';
         $this->setReservedWords($reservedWords);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::getSqlDialects()
+     */
+    protected function getSqlDialects() : array
+    {
+        return array_merge(['T-SQL', 'MSSQL'], parent::getSqlDialects());
     }
 
     /**
@@ -127,7 +141,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                     $first_rel = reset($rels);
                     $first_rel_qpart = $this->addAttribute($first_rel->getAliasWithModifier());
                     // IDEA this does not support relations based on custom sql. Perhaps this needs to change
-                    $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
+                    $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $this->buildSqlDataAddress($first_rel_qpart->getAttribute()), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                 }
                 $enrichment_selects[] = $this->buildSqlSelect($qpart);
                 $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
@@ -172,7 +186,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         // If there is a limit in the query, ensure there is an ORDER BY even if no sorters given.
         if (empty($this->getSorters()) === true && $this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
             if ($this->getMainObject()->hasUidAttribute()) {
-                $orderByUidCol = ($useEnrichment ? 'EXFCOREQ' . $this->getAliasDelim() : '') . $this->getMainObject()->getAlias() . '.' . $this->getMainObject()->getUidAttribute()->getDataAddress();
+                $orderByUidCol = ($useEnrichment ? 'EXFCOREQ' . $this->getAliasDelim() : '') . $this->getMainObject()->getAlias() . '.' . $this->buildSqlDataAddress($this->getMainObject()->getUidAttribute());
                 foreach ($this->getAttributes() as $qpart) {
                     if ($qpart->getAttribute()->isExactly($this->getMainObject()->getUidAttribute())) {
                         $orderByUidCol = $this->getShortAlias($qpart->getColumnKey());
@@ -183,7 +197,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
             } else {
                 // If the object has no UID, sort over the first column in the query, which is not an SQL statement itself
                 foreach ($this->getAttributes() as $qpart) {
-                    if (! $this->checkForSqlStatement($qpart->getDataAddress())) {
+                    if (! $this->checkForSqlStatement($this->buildSqlDataAddress($qpart))) {
                         $order_by .= ', ' . $qpart->getColumnKey() . ' DESC';
                         break;
                     }
