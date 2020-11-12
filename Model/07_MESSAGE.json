@@ -2290,6 +2290,20 @@
             "HINT": "Make sure `data` and `details` properties of the widget are set correctly!",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2020-11-12 09:03:48",
+            "MODIFIED_ON": "2020-11-12 09:04:04",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba8e8fa7b1f16a8e8847beb4a5184",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7DGRY8R",
+            "TITLE": "Multi-dialect SQL statement does not include a supported dialect",
+            "DESCRIPTION": "Multi-dialect SQL statements can be used to place custom SQL in data addresses of meta objects or attributes with different syntax for different SQL dialects. Each dialect is identified by a special tag like `@T-SQL:`, `@PL\/SQL:`, etc. \n\nSQL query builders search for tags they support. This error indicates, that no supported dialect-tag was found!\n\nHere is an example with different syntax in MySQL and Microsoft's T-SQL:\n\n```\n@MySQL: JSON_UNQUOTE(JSON_EXTRACT([#~alias#].task_uxon, '$.action'))\n@T-SQL: JSON_VALUE([#~alias#].task_uxon, '$.action')\n\n```\n\nMulti-dialect statements MUST start with an `@`. Every dialect-tag (e.g. `@T-SQL:`)\n MUST be placed at the beginning of a new line. Everything until the next dialect-tag or the end of the field is concidered to be the data address in this dialect. \n\nThe default dialect-tag and `@OTHER:` can be used to define a fallback for all\ndialects not explicitly addressed.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
