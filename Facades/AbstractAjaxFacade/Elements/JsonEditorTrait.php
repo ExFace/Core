@@ -615,8 +615,9 @@ JS;
                         margin: 10px;
                         text-align: center;
                         position: absolute;
-                        top: calc(40% - 50px);
-                        left: calc(50% - 55px);
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
                     }
                     .uxoneditor-preset-hint a {color: #ccc; text-decoration: none;}
                     .uxoneditor-preset-hint a:hover {color: #1a1a1a;}
