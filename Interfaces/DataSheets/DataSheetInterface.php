@@ -551,11 +551,13 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
 
     /**
      * Merges the current data sheet with another one.
-     * Values of the other sheet will overwrite values of identical columns of the current one!
+     * 
+     * If $overwriteValues=true, values of the other sheet will overwrite those of identical columns in 
+     * the current sheet - otherwise current sheet values will prevale!
      *
      * @param DataSheetInterface $other_sheet            
      */
-    public function merge(DataSheetInterface $other_sheet);
+    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true);
 
     public function getMetaObjectRelationPath(MetaObjectInterface $related_object);
 
