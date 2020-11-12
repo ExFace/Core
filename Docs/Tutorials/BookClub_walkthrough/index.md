@@ -24,4 +24,5 @@ We will also handle some advanced topics:
 2. [Creating a new app](02_Creating_a_new_app.md)
 3. [Setting up a data source in the model](03_Connecting_to_an_sql_database.md)
 4. [Generating a metamodel from an SQL schema](04_Generating_a_model_from_an_SQL_schema.md)
-6. [Creating the app's first pages](05_Creating_the_apps_first_pages.md)
+5. [Creating the app's first pages](05_Creating_the_apps_first_pages.md)
+6. [Organizing pages and navigation](06_Organizing_pages.md) 
