@@ -145,6 +145,17 @@ Here are some typical tasks for this phase:
 - Check `Editable` and `Hidden` properties of every attribute. The model builder cannot know the purpose of the attribute, so if it is meant to be an internal flag set automatically, you probably want to disable editing by users or even mark it as hidden.
 - Describe non-intuitive objects and attributes by filling the respecitve `Description` fields. This information will automatically be used to generate context-sensitive help dialogs. 
 
+For our tutorial, we will need the following enhancements for now:
+
+- Object `member`
+	- Mark attribute `name` as object label
+	- Transform attribute `user_oid` to a relation `user` pointing to the object `exface.Core.USER`
+- Object `category`
+	- Mark attribute `name` as object label
+- Object `Book`
+	- Mark attribute `title` as object label
+	- Transform attribute `owner_id` to a relation `owner` pointing to the object `tutorial.BookClub.member`
+	
 Read more about different metamodels in the [corresponding](../../creating_metamodels/index.md) section of the docs.
 
 ### [< Previous](03_Connecting_to_an_sql_database.md) | [BookClub tutorial](index.md) | [Next >](05_Creating_the_apps_first_pages.md)
