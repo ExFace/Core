@@ -143,7 +143,7 @@ trait JqueryButtonTrait {
      * @param string $string_with_placeholders
      *            - e.g. http://localhost/pages/[#placeholder#]
      * @param string $js_sanitizer_function
-     *            - a Javascript function to be applied to each value (e.g. encodeURIComponent) - without braces!!!
+     *            - a Javascript function to be applied to each value (e.g. encodeURIComponent) - without parentheses!!!
      * @return string - e.g. result = result.replace('[#placeholder#]', values['placeholder']);
      */
     protected function buildJsPlaceholderReplacer($js_var, $js_values_object, $string_with_placeholders, $js_sanitizer_function = null)

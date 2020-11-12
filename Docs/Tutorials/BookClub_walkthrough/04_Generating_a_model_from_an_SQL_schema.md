@@ -54,7 +54,7 @@ The first tab we see contains general information about the meta object. As most
 
 The alias of our object is `language` - the model builder simply used the name of the table. This is a good idea since it helps people who know the database schema to get around. Since the object is part of the app `tutorial.BookClub`, it's fully qualified alias will be `tutorial.BookClub.language` which is unique among all apps that could possible have language-objects.
 
-Perhaps the most important for a meta object is it's data address. This section contains information about where to find the data in the object's data source. The data address depends on the query builder used in the data source. For SQL query builders like our `MySqlBuilder` you can use table names here or any valid SQL select statement put in parenthes. Most query builders allow to add more information than merely a textual address - this is where the data source configuration below comes into play. We don't need that for a simple SQL table though. 
+Perhaps the most important for a meta object is it's data address. This section contains information about where to find the data in the object's data source. The data address depends on the query builder used in the data source. For SQL query builders like our `MySqlBuilder` you can use table names here or any valid SQL SELECT statement put in parentheses. Most query builders allow to add more information than merely a textual address - this is where the data source configuration below comes into play. We don't need that for a simple SQL table though. 
 
 You can also explicitly disable reading or writing operations for the object here.
 
