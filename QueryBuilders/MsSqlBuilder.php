@@ -415,9 +415,9 @@ class MsSqlBuilder extends AbstractSqlBuilder
      */
     protected function prepareInputValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
-        $value = $data_type->parse($value);
         switch (true) {
             case $data_type instanceof StringDataType:
+                $value = $data_type->parse($value);
                 // JSON values are strings too, but their columns should be null even if the value is an
                 // empty object or empty array (otherwise the cells would never be null)
                 if (($data_type instanceof JsonDataType) && $data_type::isValueEmpty($value) === true) {
