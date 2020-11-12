@@ -82,8 +82,17 @@ trait iPrefillWidgetTrait
         if ($data_sheet && $data_sheet->countRows() > 0 && $data_sheet->hasUidColumn(true)) {
             $data_sheet = $widget->prepareDataSheetToPrefill($data_sheet);
             if (! $data_sheet->isFresh()) {
-                $data_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
-                $data_sheet->dataRead();
+                // Load fresh data, but make sure only those columns of the original sheet are
+                // updated, that do not have any values. This is important, as the prefill sheet
+                // can also have modified data, that differs from the data source. That data should
+                // not be overwritten. For example, when copying pages in exface.Core.pages, the
+                // ALIAS is removed explicitly. Since the copy-action requires more colums, than
+                // the input data has, their values will be read here - including the current value
+                // of the ALIAS. However, it must not overwrite the explicitly set empty value!
+                $freshData = $data_sheet->copy();
+                $freshData->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
+                $freshData->dataRead();
+                $data_sheet->merge($freshData, false);
             }
         }
         

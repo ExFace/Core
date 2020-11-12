@@ -2098,20 +2098,22 @@ class DataSheet implements DataSheetInterface
      * @param DataSheet $other_sheet            
      * @return DataSheet
      */
-    public function merge(DataSheetInterface $other_sheet)
+    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true)
     {
         // Ignore empty other sheets
         if ($other_sheet->isEmpty() && $other_sheet->getFilters()->isEmpty()) {
             return $this;
         }
-        // Chek if both sheets are identical
+        // Check if both sheets are identical
         if ($this === $other_sheet) {
             return $this;
         }
+        
         // Check if the sheets are based on the same object
         if ($this->getMetaObject()->getId() !== $other_sheet->getMetaObject()->getId()) {
             throw new DataSheetMergeError($this, 'Cannot merge non-empty data sheets for different objects ("' . $this->getMetaObject()->getAliasWithNamespace() . '" and "' . $other_sheet->getMetaObject()->getAliasWithNamespace() . '"): not implemented!', '6T5E8GM');
         }
+        
         // Check if both sheets have UID columns if they are not empty
         if ((! $this->isEmpty() && ! $this->getUidColumn()) || (! $other_sheet->isEmpty() && ! $other_sheet->getUidColumn())) {
             if ($this->countRows() == $other_sheet->countRows()) {
@@ -2126,7 +2128,14 @@ class DataSheet implements DataSheetInterface
         // to dublicate them!
         
         // Merge columns
-        $this->joinLeft($other_sheet, $this->getMetaObject()->getUidAttributeAlias(), $this->getMetaObject()->getUidAttributeAlias());
+        $joinKey = $this->getMetaObject()->getUidAttributeAlias();
+        if ($overwriteValues) {
+            $this->joinLeft($other_sheet, $joinKey, $joinKey);
+        } else {
+            $baseSheet = $other_sheet->copy();
+            $baseSheet->joinLeft($this, $joinKey, $joinKey);
+            $this->removeRows()->addRows($baseSheet->getRows());
+        }
         
         return $this;
     }
