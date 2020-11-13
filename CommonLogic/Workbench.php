@@ -104,10 +104,10 @@ class Workbench implements WorkbenchInterface
     public function start()
     {
         // Init logger
-        $this->getLogger();
+        $logger = $this->getLogger();
 
         // Start the error handler
-        $dbg = new Debugger($this->logger);
+        $dbg = new Debugger($logger);
         $this->setDebugger($dbg);
         $config = $this->getConfig();
         if ($config->getOption('DEBUG.PRETTIFY_ERRORS')) {
