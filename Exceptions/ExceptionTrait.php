@@ -3,7 +3,6 @@ namespace exface\Core\Exceptions;
 
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Exceptions\WarningExceptionInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Widgets\ErrorMessage;
@@ -19,6 +18,7 @@ use exface\Core\Events\Errors\OnErrorCodeLookupEvent;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\CommonLogic\Selectors\AppSelector;
 use exface\Core\Widgets\Message;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * This trait contains a default implementation of ExceptionInterface to be used on-top
@@ -41,9 +41,9 @@ trait ExceptionTrait {
 
     private $exception_widget = null;
 
-    private $system = false;
+    private $systemName = null;
 
-    private $support_mail = false;
+    private $support_mail = null;
     
     private $messageData = null;
     
@@ -142,11 +142,7 @@ trait ExceptionTrait {
                 $error_tab->addWidget($error_heading);
             }
             
-            /** @var Message $support_hint */
-            $support_hint = WidgetFactory::create($page, 'Message', $error_tab);
-
-            $support_hint->setText($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.SUPPORT_HINT', ['%error_id%' => 'LOG-'.$this->getId(), '%system_name%' => $this->getSystemByPage($page), '%support_mail%' => $this->getSupportMailByPage($page)]));
-            $error_tab->addWidget($support_hint);
+            $error_tab->addWidget($this->createDebugSupportHint($error_tab));
             
             $debug_widget->addTab($error_tab);
         }
@@ -202,6 +198,36 @@ trait ExceptionTrait {
         }
         
         return $debug_widget;
+    }
+    
+    /**
+     * 
+     * @param WidgetInterface $parentWidget
+     * @return WidgetInterface
+     */
+    protected function createDebugSupportHint(WidgetInterface $parentWidget) : WidgetInterface
+    {
+        $hintWidget = null;
+        $wb = $parentWidget->getWorkbench();
+        $wbName = $wb->getUrl();
+        $email = $wb->getConfig()->getOption("DEBUG.SUPPORT_EMAIL_ADDRESS");
+        if ($email) {
+            $hintMessage = $wb->getCoreApp()->getTranslator()->translate('ERROR.SUPPORT_HINT_WITH_EMAIL', [
+                '%log_id%' => 'LOG-'.$this->getId(), 
+                '%system_name%' => $wbName, 
+                '%support_mail%' => $email
+            ]);
+        } else {
+            $hintMessage = $wb->getCoreApp()->getTranslator()->translate('ERROR.SUPPORT_HINT', [
+                '%log_id%' => 'LOG-'.$this->getId()
+            ]);
+        }
+        /** @var Message $hintWidget */
+        $hintWidget = WidgetFactory::createFromUxonInParent($parentWidget, new UxonObject([
+            'text' => $hintMessage
+        ]), 'Message');
+        
+        return $hintWidget;
     }
 
     /**
@@ -474,35 +500,6 @@ trait ExceptionTrait {
     {
         $this->logLevel = $logLevel;
         return $this;
-    }
-
-    public function getSystemByPage(UiPageInterface $page)
-    {
-        if( $this->system == FALSE) {
-            // TODO #nocms how to get the installation name???
-            $this->system = '';
-        }
-        return $this->system;
-    }
-
-    public function getSupportMailByPage(UiPageInterface $page)
-    {
-        if( $this->support_mail == FALSE) {
-            $this->support_mail = $this->getConfigValueByPage($page, "DEBUG.SUPPORT_EMAIL_ADDRESS");
-        }
-        return $this->support_mail;
-    }
-
-    protected function getConfigValueByPage(UiPageInterface $page, $option) {
-        $app = $page->getWorkbench()->getApp("exface.Core");
-        if(!$app ) {
-            return null;
-        }
-        $config = $app->getConfig();
-        if(!$config ) {
-            return null;
-        }
-        return $config->getOption($option);
     }
     
     /**
