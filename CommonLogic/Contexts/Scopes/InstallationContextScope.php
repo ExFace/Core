@@ -109,33 +109,36 @@ class InstallationContextScope extends AbstractContextScope
      * 
      * @param string $name
      * @param mixed $value
+     * @param string $namespace
      * @return ContextScopeInterface
      */
-    public function setVariable(string $name, $value) : ContextScopeInterface
+    public function setVariable(string $name, $value, string $namespace = null) : ContextScopeInterface
     {
-        $this->getContextsUxon()->setProperty('_' . $name, $value);
+        $this->getContextsUxon()->setProperty('_' . ($namespace !== null ? $namespace . '_' : '') . $name, $value);
         return $this;
     }
     
     /**
      * 
      * @param string $name
+     * @param string $namespace
      * @return ContextScopeInterface
      */
-    public function unsetVariable(string $name) : ContextScopeInterface
+    public function unsetVariable(string $name, string $namespace = null) : ContextScopeInterface
     {
-        $this->getContextsUxon()->unsetProperty('_' . $name);
+        $this->getContextsUxon()->unsetProperty('_' . ($namespace !== null ? $namespace . '_' : '') . $name);
         return $this;
     }
     
     /**
      * 
      * @param string $name
+     * @param string $namespace
      * @return mixed
      */
-    public function getVariable(string $name)
+    public function getVariable(string $name, string $namespace = null)
     {
-        return $this->getContextsUxon()->getProperty('_' . $name);
+        return $this->getContextsUxon()->getProperty('_' . ($namespace !== null ? $namespace . '_' : '') . $name);
     }
     
     /**
