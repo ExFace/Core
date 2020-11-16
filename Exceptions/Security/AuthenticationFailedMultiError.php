@@ -4,16 +4,17 @@ namespace exface\Core\Exceptions\Security;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
 use exface\Core\Interfaces\Security\AuthenticationProviderInterface;
-use exface\Core\Events\Security\OnAuthenticationFailedEvent;
 
 /**
- * Exception thrown if an authentication attempt fails
+ * Exception thrown if a multi-provider authentication attempt fails
  *
  * @author Andrej Kabachnik
  *        
  */
-class AuthenticationFailedError extends RuntimeException implements AuthenticationExceptionInterface
+class AuthenticationFailedMultiError extends RuntimeException implements AuthenticationExceptionInterface
 {
+    private $authErrors = [];
+    
     private $provider = null;
     
     /**
@@ -21,16 +22,13 @@ class AuthenticationFailedError extends RuntimeException implements Authenticati
      * @param AuthenticationProviderInterface $authProvider
      * @param string $message
      * @param string $alias
-     * @param \Throwable $previous
-     * 
-     * @triggers \exface\Core\Events\Security\OnAuthenticationFailedEvent
-     * 
+     * @param AuthenticationExceptionInterface[] $nestedAuthenticatorErrors
      */
-    public function __construct(AuthenticationProviderInterface $authProvider, $message, $alias = null, $previous = null)
+    public function __construct(AuthenticationProviderInterface $authProvider, $message, $alias = null, array $nestedAuthenticatorErrors = [])
     {
-        parent::__construct($message, $alias, $previous);
+        parent::__construct($message, $alias);
         $this->provider = $authProvider;
-        $authProvider->getWorkbench()->eventManager()->dispatch(new OnAuthenticationFailedEvent($authProvider->getWorkbench(), $this));
+        $this->authErrors = $nestedAuthenticatorErrors;
     }
     
     /**
@@ -61,5 +59,14 @@ class AuthenticationFailedError extends RuntimeException implements Authenticati
     public function getDefaultAlias()
     {
         return '7AL3G5P';
+    }
+    
+    /**
+     * 
+     * @return AuthenticationExceptionInterface[]
+     */
+    public function getNestedAuthenticatorErrors() : array
+    {
+        return $this->authErrors;
     }
 }

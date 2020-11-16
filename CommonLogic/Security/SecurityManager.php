@@ -28,6 +28,7 @@ use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\CoreApp;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\Security\AuthenticationFailedMultiError;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -106,7 +107,7 @@ class SecurityManager implements SecurityManagerInterface
             case 1:
                 throw $errors[0];
             default:
-                $err = new AuthenticationFailedError($this, 'Authentication failed! Tried ' . count($errors) . ' providers - see log details.' , null, null, $errors);
+                $err = new AuthenticationFailedMultiError($this, 'Authentication failed! Tried ' . count($errors) . ' providers - see log details.' , null, $errors);
                 foreach ($errors as $e) {
                     $this->getWorkbench()->getLogger()->logException($e);
                 }
