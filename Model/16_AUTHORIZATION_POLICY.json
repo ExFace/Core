@@ -488,6 +488,25 @@
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": ""
+        },
+        {
+            "CREATED_ON": "2020-11-17 09:09:19",
+            "MODIFIED_ON": "2020-11-17 09:09:19",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb88ba938a3bdc88ba025041000001",
+            "NAME": "Access to public pages",
+            "DESCRIPTION": "",
+            "EFFECT": "P",
+            "APP": "0x31000000000000000000000000000000",
+            "AUTHORIZATION_POINT": "0x11ea5ede96e738f6b9920205857feb80",
+            "TARGET_PAGE_GROUP": "0x11ebbfd8ee958ff0bfd8025041000001",
+            "TARGET_USER_ROLE": "",
+            "TARGET_OBJECT": "",
+            "CONDITION_UXON": null,
+            "TARGET_ACTION_MODEL": "",
+            "TARGET_ACTION_PROTOTYPE": "",
+            "TARGET_FACADE": ""
         }
     ],
     "totals_rows": [],
