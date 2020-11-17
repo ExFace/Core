@@ -2187,7 +2187,6 @@ JS;
             break
         }
     }
-    console.log('Split: ',split)
 
 JS;
         
