@@ -1,0 +1,176 @@
+{
+    "uid": "0x11ebb1630a28048ab163025041000001",
+    "alias_with_namespace": "exface.core.monitor",
+    "menu_parent_page_selector": "0xf8310d4bba2c11e7895fe4b318306b9a",
+    "menu_index": 6,
+    "menu_visible": true,
+    "name": "Monitor",
+    "description": "Browse app usage reports if monitoring is enabled",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2020-11-17 13:30:20",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2020-11-17 17:27:22",
+    "contents": {
+        "widget_type": "SplitVertical",
+        "object_alias": "exface.Core.MONITOR_ACTION",
+        "panels": [
+            {
+                "height": "40%",
+                "widgets": [
+                    {
+                        "widget_type": "SplitHorizontal",
+                        "panels": [
+                            {
+                                "caption": "User Activity",
+                                "width": "33%",
+                                "widgets": [
+                                    {
+                                        "widget_type": "Chart",
+                                        "id": "user_chart",
+                                        "data": {
+                                            "sorters": [
+                                                {
+                                                    "attribute_alias": "UID:COUNT",
+                                                    "direction": "desc"
+                                                }
+                                            ],
+                                            "columns": [
+                                                {
+                                                    "attribute_alias": "USER"
+                                                }
+                                            ],
+                                            "aggregate_by_attribute_alias": [
+                                                "USER"
+                                            ]
+                                        },
+                                        "series": [
+                                            {
+                                                "type": "column",
+                                                "x_attribute_alias": "USER__USERNAME",
+                                                "y_attribute_alias": "UID:COUNT"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "caption": "Pages",
+                                "widgets": [
+                                    {
+                                        "widget_type": "Chart",
+                                        "id": "page_chart",
+                                        "data": {
+                                            "aggregate_by_attribute_alias": [
+                                                "PAGE"
+                                            ],
+                                            "columns": [
+                                                {
+                                                    "attribute_alias": "PAGE"
+                                                }
+                                            ]
+                                        },
+                                        "series": [
+                                            {
+                                                "type": "pie",
+                                                "value_attribute_alias": "UID:COUNT",
+                                                "text_attribute_alias": "PAGE__LABEL"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "caption": "Activity per day",
+                                "width": "33%",
+                                "widgets": [
+                                    {
+                                        "widget_type": "Chart",
+                                        "id": "date_chart",
+                                        "data": {
+                                            "sorters": [
+                                                {
+                                                    "attribute_alias": "DATE",
+                                                    "direction": "asc"
+                                                }
+                                            ],
+                                            "aggregate_by_attribute_alias": [
+                                                "DATE"
+                                            ]
+                                        },
+                                        "series": [
+                                            {
+                                                "type": "line",
+                                                "x_attribute_alias": "DATE",
+                                                "y_attribute_alias": "UID:COUNT"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "caption": "Activity",
+                "widgets": [
+                    {
+                        "widget_type": "DataTable",
+                        "empty_text": "No activity found. Make sure the monitor is enabled in System.config.js (MONITOR.ENABLED)",
+                        "filters": [
+                            {
+                                "attribute_alias": "USER",
+                                "value": "=user_chart!USER",
+                                "apply_on_change": true
+                            },
+                            {
+                                "attribute_alias": "PAGE",
+                                "value": "=page_chart!PAGE",
+                                "apply_on_change": true
+                            },
+                            {
+                                "attribute_alias": "DATE",
+                                "value": "=date_chart!DATE",
+                                "apply_on_change": true
+                            },
+                            {
+                                "attribute_alias": "ACTION_NAME"
+                            },
+                            {
+                                "attribute_alias": "WIDGET_NAME"
+                            }
+                        ],
+                        "columns": [
+                            {
+                                "attribute_alias": "TIME"
+                            },
+                            {
+                                "attribute_alias": "PAGE__LABEL"
+                            },
+                            {
+                                "attribute_alias": "WIDGET_NAME"
+                            },
+                            {
+                                "attribute_alias": "ACTION_NAME"
+                            },
+                            {
+                                "attribute_alias": "USER__USERNAME"
+                            },
+                            {
+                                "attribute_alias": "ACTION_ALIAS"
+                            }
+                        ],
+                        "sorters": [
+                            {
+                                "attribute_alias": "TIME",
+                                "direction": "desc"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
