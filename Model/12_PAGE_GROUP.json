@@ -104,6 +104,16 @@
             "NAME": "Logs (runtime only)",
             "APP": "0x31000000000000000000000000000000",
             "DESCRIPTION": "Allows to view runtime logs. Useful for model and UI devs"
+        },
+        {
+            "CREATED_ON": "2020-11-17 09:04:42",
+            "MODIFIED_ON": "2020-11-17 09:09:53",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebbfd8ee958ff0bfd8025041000001",
+            "NAME": "Public",
+            "APP": "0x31000000000000000000000000000000",
+            "DESCRIPTION": "Public pages visible to anybody"
         }
     ],
     "totals_rows": [],
