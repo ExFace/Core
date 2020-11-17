@@ -14,9 +14,9 @@ use exface\Core\CommonLogic\Log\Handlers\DebugMessageFileHandler;
 use exface\Core\Actions\ShowContextPopup;
 use exface\Core\Actions\ContextApi;
 use exface\Core\CommonLogic\Log\Handlers\BufferingHandler;
-use exface\Core\CommonLogic\Profiler;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
+use exface\Core\CommonLogic\Tracer;
 
 /**
  * This context offers usefull debugging tools right in the GUI.
@@ -36,9 +36,7 @@ class DebugContext extends AbstractContext
 {
     private $is_debugging = false;
     
-    private $log_handlers = array();
-    
-    private $profiler = null;
+    private $tracer = null;
     
     /**
      * Returns TRUE if the debugger is active and FALSE otherwise
@@ -71,50 +69,23 @@ class DebugContext extends AbstractContext
     public function startDebugging()
     {
         $this->is_debugging = true;
-        $this->startProfiler();
+        $this->startTracer();
         
-        // Log everything
-        $workbench = $this->getWorkbench();
-        $this->log_handlers = [
-            new BufferingHandler(
-                new LogfileHandler("exface", $this->getTraceFileName(), $workbench, LoggerInterface::DEBUG)
-            ),
-            new BufferingHandler(
-                new DebugMessageFileHandler($workbench, $workbench->filemanager()->getPathToLogDetailsFolder(), ".json", LoggerInterface::DEBUG)
-            )
-        ];
-        foreach ($this->log_handlers as $handler){
-            $workbench->getLogger()->appendHandler($handler);
-        }
-        
-        $workbench->eventManager()->addListener(OnBeforeActionPerformedEvent::getEventName(), array(
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeActionPerformedEvent::getEventName(), array(
             $this,
-            'skipSystemActionsEventHanlder'
+            'skipContextActionsEventHanlder'
         ));
         
         return $this;
     }
     
-    public function skipSystemActionsEventHanlder(OnBeforeActionPerformedEvent $e)
+    public function skipContextActionsEventHanlder(OnBeforeActionPerformedEvent $e)
     {
         $action = $e->getAction();
         if ((($action instanceof ShowContextPopup) && $action->getContext() === $this)
         || $action instanceof ContextApi && $action->getContext() === $this){
-            foreach ($this->log_handlers as $handler){
-                $handler->setDisabled(true);
-            }
+            $this->getTracer()->disable();
         }
-    }
-    
-    /**
-     * 
-     * @return string
-     */
-    protected function getTraceFileName(){
-        $workbench = $this->getWorkbench();
-        $now = \DateTime::createFromFormat('U.u', microtime(true));
-        $time = $now->format("Y-m-d H-i-s-u");
-        return $workbench->filemanager()->getPathToLogFolder() . DIRECTORY_SEPARATOR . 'traces' . DIRECTORY_SEPARATOR . $time . '.csv';
     }
     
     /**
@@ -282,17 +253,17 @@ class DebugContext extends AbstractContext
     }
     
     /**
-     * @return Profiler
+     * @return Tracer
      */
-    public function getProfiler() : Profiler
+    public function getTracer() : Tracer
     {
-        return $this->profiler;
+        return $this->tracer;
     }    
     
-    protected function startProfiler() : Profiler
+    protected function startTracer() : Tracer
     {
-        $this->profiler = new Profiler($this->getWorkbench());
-        return $this->profiler;
+        $this->tracer = new Tracer($this->getWorkbench());
+        return $this->tracer;
     }
 }
 ?>
