@@ -91,6 +91,8 @@
 	"ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_SHOW_CHANGES": "Status",
 	"ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_SHOW_CHANGES_HINT": "Show differences between local and repo",
 
+	"ACTION.SHOWWIDGET.NAME": "Show",
+	
 	"ACTION.OBJECTBASKET": "Object basket",
     "ACTION.OBJECTBASKETADD.NAME": "Add to object basket",
     "ACTION.OBJECTBASKETADD.RESULT": "%number% objects added to object basket.",

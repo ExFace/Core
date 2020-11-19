@@ -91,6 +91,8 @@
 	"ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_SHOW_CHANGES": "Status",
 	"ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_SHOW_CHANGES_HINT": "Änderungen gegenüber Git-Repo anzeigen",
 
+	"ACTION.SHOWWIDGET.NAME": "Anzeigen",
+	
 	"ACTION.OBJECTBASKET": "Objektkorb",
     "ACTION.OBJECTBASKETADD.NAME": "In den Objektkorb",
     "ACTION.OBJECTBASKETADD.RESULT": "%number% Objekt zum Objektkorb hinzugefügt.|%context_name%: %number% Objekte zum Objektkorb hinzugefügt.",
