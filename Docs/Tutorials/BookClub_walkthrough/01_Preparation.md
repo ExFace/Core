@@ -32,9 +32,10 @@ CREATE TABLE IF NOT EXISTS `book` (
   `created_by_user_id` binary(16) DEFAULT NULL,
   `modified_on` datetime DEFAULT NULL,
   `modified_by_user_id` binary(16) DEFAULT NULL,
-  `title` varchar(50) NOT NULL,
-  `series` varchar(50) DEFAULT NULL,
+  `title` varchar(100) NOT NULL,
+  `series` varchar(100) DEFAULT NULL,
   `author` varchar(200) DEFAULT NULL,
+  `description_toc` TEXT NULL,
   `isbn` varchar(13) DEFAULT NULL,
   `publisher` varchar(50) DEFAULT NULL,
   `book_size` varchar(10) NULL DEFAULT '',
@@ -44,7 +45,7 @@ CREATE TABLE IF NOT EXISTS `book` (
   `pages` int(11) DEFAULT NULL,
   `language_id` int(11) DEFAULT NULL,
   `owner_id` int(11) NOT NULL,
-  `owner_comment` varchar(200) DEFAULT NULL,
+  `owner_comment` TEXT NULL,
   `owner_rating` int(1) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
