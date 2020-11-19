@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-11-17 13:30:20",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-11-17 17:27:22",
+    "modified_on": "2020-11-18 11:11:37",
     "contents": {
         "widget_type": "SplitVertical",
         "object_alias": "exface.Core.MONITOR_ACTION",
@@ -29,6 +29,7 @@
                                     {
                                         "widget_type": "Chart",
                                         "id": "user_chart",
+                                        "hide_header": true,
                                         "data": {
                                             "sorters": [
                                                 {
@@ -61,6 +62,7 @@
                                     {
                                         "widget_type": "Chart",
                                         "id": "page_chart",
+                                        "hide_header": true,
                                         "data": {
                                             "aggregate_by_attribute_alias": [
                                                 "PAGE"
@@ -88,6 +90,7 @@
                                     {
                                         "widget_type": "Chart",
                                         "id": "date_chart",
+                                        "hide_header": true,
                                         "data": {
                                             "sorters": [
                                                 {
