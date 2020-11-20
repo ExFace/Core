@@ -308,9 +308,10 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * Replaces the value of this column in all rows by the given one.
      * 
      * @param mixed $value
+     * @param bool $overwrite
      * @return DataColumnInterface
      */
-    public function setValueOnAllRows($value) : DataColumnInterface;
+    public function setValueOnAllRows($value, bool $overwrite = true) : DataColumnInterface;
 
     /**
      * Returns TRUE if setting fixed values from the meta model is disabled for this column and FALSE otherwise
