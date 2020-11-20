@@ -1324,6 +1324,20 @@
             "UXON": "{\"maximize\":true,\"input_rows_min\":1,\"input_rows_max\":1,\"widget\":{\"widget_type\":\"PDFViewer\",\"attribute_alias\":\"\",\"download_enabled\":true,\"filename_attribute_alias\":\"\"}}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action"
+        },
+        {
+            "CREATED_ON": "2020-11-19 15:49:30",
+            "MODIFIED_ON": "2020-11-19 15:49:30",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb00bd018fd10b00b025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Inline input group for a range",
+            "DESCRIPTION": "Displays min\/max-attributes as \"caption: [min] - [max]\"",
+            "PROTOTYPE": "exface\/Core\/Widgets\/InlineGroup.php",
+            "UXON": "{\"widget_type\":\"InlineGroup\",\"caption\":\"\",\"separator\":\"-\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}]}",
+            "WRAP_PATH": "$.widgets[0]",
+            "UXON_SCHEMA": "widget"
         }
     ],
     "totals_rows": [],
