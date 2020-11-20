@@ -169,7 +169,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2019-12-05 11:21:12",
+            "MODIFIED_ON": "2020-11-20 15:26:07",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e5e053e0770234b1c10205857feb80",
@@ -206,13 +206,13 @@
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_VALUE": "=NOW('Y-m-d H:i:s')",
+            "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2019-12-05 11:20:57",
+            "MODIFIED_ON": "2020-11-20 15:26:16",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e5e053e0770637b1c10205857feb80",
@@ -250,12 +250,12 @@
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
-            "FIXED_VALUE": "=NOW('Y-m-d H:i:s')",
+            "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2018-10-06 18:53:17",
+            "MODIFIED_ON": "2020-11-20 15:26:28",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e5e053e077072eb1c10205857feb80",
@@ -292,13 +292,13 @@
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
-            "DEFAULT_VALUE": "=USER('id')",
+            "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2018-10-06 18:53:27",
+            "MODIFIED_ON": "2020-11-20 15:26:37",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e5e053e0770813b1c10205857feb80",
@@ -336,7 +336,7 @@
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
-            "FIXED_VALUE": "=USER('id')",
+            "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
         },
         {

@@ -115,6 +115,16 @@ abstract class AbstractBehavior implements BehaviorInterface
      * @see \exface\Core\Interfaces\Model\BehaviorInterface::activate()
      */
     abstract public function register() : BehaviorInterface;
+    
+    protected function registerEventListeners() : BehaviorInterface
+    {
+        return $this;
+    }
+    
+    protected function unregisterEventListeners() : BehaviorInterface
+    {
+        return $this;
+    }
 
     /**
      *
@@ -136,9 +146,13 @@ abstract class AbstractBehavior implements BehaviorInterface
      * @param bool $value
      * @return BehaviorInterface
      */
-    public function setDisabled($value) : BehaviorInterface
+    public function setDisabled(bool $value) : BehaviorInterface
     {
-        $this->disabled = $value;
+        if ($value === true) {
+            $this->disable();
+        } else {
+            $this->enable();
+        }
         return $this;
     }
 
@@ -150,6 +164,7 @@ abstract class AbstractBehavior implements BehaviorInterface
      */
     public function disable() : BehaviorInterface
     {
+        $this->unregisterEventListeners();
         $this->disabled = true;
         return $this;
     }
@@ -164,6 +179,8 @@ abstract class AbstractBehavior implements BehaviorInterface
     {
         if (! $this->isRegistered()) {
             $this->register();
+        } else {
+            $this->registerEventListeners();
         }
         $this->disabled = false;
         return $this;

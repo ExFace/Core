@@ -1338,6 +1338,34 @@
             "UXON": "{\"widget_type\":\"InlineGroup\",\"caption\":\"\",\"separator\":\"-\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget"
+        },
+        {
+            "CREATED_ON": "2020-11-20 12:47:12",
+            "MODIFIED_ON": "2020-11-20 15:24:44",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb974421194ec09744025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Create\/update time tracking + optimistic locking",
+            "DESCRIPTION": "Save create\/update time and check if update time changed before modifying data",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/TimeStampingBehavior.php",
+            "UXON": "{\"created_on_attribute_alias\":\"\",\"updated_on_attribute_alias\":\"\",\"check_for_conflicts_on_update\":true}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior"
+        },
+        {
+            "CREATED_ON": "2020-11-20 12:48:18",
+            "MODIFIED_ON": "2020-11-20 12:48:18",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebbe134829ba4abe13025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Create\/update time and user tracking + optimistic locking",
+            "DESCRIPTION": "Save create\/update time and user UID and check if update time changed before modifying data",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/TimeStampingBehavior.php",
+            "UXON": "{\"created_on_attribute_alias\":\"\",\"created_by_attribute_alias\":\"\",\"updated_on_attribute_alias\":\"\",\"updated_by_attribute_alias\":\"\",\"check_for_conflicts_on_update\":true}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior"
         }
     ],
     "totals_rows": [],

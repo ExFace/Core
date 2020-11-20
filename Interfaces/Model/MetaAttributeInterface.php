@@ -211,7 +211,7 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
      */
     public function getDefaultValue();
     
-    public function setDefaultValue($value);
+    public function setDefaultValue($value) : MetaAttributeInterface;
     
     /**
      * Returns TRUE if the attribute has a defaultvalue and FALSE otherwise.
@@ -230,9 +230,9 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
     
     /**
      * 
-     * @param ExpressionInterface|string $value
+     * @param ExpressionInterface|string|NULL $value
      */
-    public function setFixedValue($value);
+    public function setFixedValue($value) : MetaAttributeInterface;
     
     /**
      * Returns TRUE if the attribute has a fixed value and FALSE otherwise.

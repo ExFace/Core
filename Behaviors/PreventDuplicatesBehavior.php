@@ -264,7 +264,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         $checkSheet = $eventSheet->copy();
         $checkSheet->removeRows();
         
-        // Add add columns even for attributes that are not present in the original event sheet
+        // Add columns even for attributes that are not present in the original event sheet
         foreach ($missingAttrs as $attr) {
             $checkSheet->getColumns()->addFromAttribute($attr);
         }
