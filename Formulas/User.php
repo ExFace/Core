@@ -55,11 +55,7 @@ class User extends \exface\Core\CommonLogic\Model\Formula
                     if ($attr->getDataType()->isSensitiveData()) {
                         throw new FormulaError('Cannot show user property "' . $property . '" - it is concidered sensitive data!');
                     }
-                    $ds = DataSheetFactory::createFromObject($userObj);
-                    $ds->getColumns()->addFromExpression($property);
-                    $ds->getFilters()->addConditionFromString($userObj->getUidAttributeAlias(), $user->getUid(), ComparatorDataType::EQUALS);
-                    $ds->dataRead();
-                    return $ds->getCellValue($property, 0);
+                    return $user->getAttribute($property);
                 } else {
                     $getter ='get' . StringDataType::convertCaseUnderscoreToPascal($property);
                     if (method_exists($user, $getter)) {
