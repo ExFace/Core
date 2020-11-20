@@ -350,7 +350,7 @@ class DataColumn implements DataColumnInterface
             $this->setValues($expression->evaluate($this->getDataSheet()));
         } else {
             foreach ($this->getValues(false) as $row => $val) {
-                if (! is_null($val) && $val !== '') {
+                if ($val !== null && $val !== '') {
                     $this->setValue($row, $expression->evaluate($this->getDataSheet(), $row));
                 }
             }
@@ -774,10 +774,12 @@ class DataColumn implements DataColumnInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setValueOnAllRows()
      */
-    public function setValueOnAllRows($value) : DataColumnInterface
+    public function setValueOnAllRows($value, bool $overwrite = true) : DataColumnInterface
     {
-        foreach (array_keys($this->getDataSheet()->getRows()) as $row_number) {
-            $this->setValue($row_number, $value);
+        foreach ($this->getDataSheet()->getRows() as $row_number => $val) {
+            if ($overwrite === true || $val === null || $val === '') {
+                $this->setValue($row_number, $value);
+            }
         }
         return $this;
     }
