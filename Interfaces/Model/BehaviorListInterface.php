@@ -2,8 +2,6 @@
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\Interfaces\EntityListInterface;
 
 interface BehaviorListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
 {
