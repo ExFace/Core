@@ -72,6 +72,19 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Translations",
             "DESCRIPTION": "Makes page attributes translatable"
+        },
+        {
+            "CREATED_ON": "2020-11-20 21:04:43",
+            "MODIFIED_ON": "2020-11-20 21:04:43",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb2aea15f1b1ab2ae025041000001",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/CacheClearingBehavior.php",
+            "CONFIG_UXON": null,
+            "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Clear cache on save",
+            "DESCRIPTION": ""
         }
     ],
     "totals_rows": [],

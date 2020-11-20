@@ -48,16 +48,16 @@
     ],
     "rows": [
         {
-            "CREATED_ON": "2016-04-25 13:34:50",
-            "MODIFIED_ON": "2020-11-20 12:36:28",
+            "CREATED_ON": "2020-11-20 21:04:29",
+            "MODIFIED_ON": "2020-11-20 21:04:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
-            "UID": "0x11e60ad972bdb21689840050568905af",
-            "BEHAVIOR": "exface\/Core\/Behaviors\/TimeStampingBehavior.php",
-            "CONFIG_UXON": "{\"created_on_attribute_alias\":\"CREATED_ON\",\"created_by_attribute_alias\":\"CREATED_BY_USER\",\"updated_on_attribute_alias\":\"MODIFIED_ON\",\"updated_by_attribute_alias\":\"MODIFIED_BY_USER\"}",
-            "OBJECT": "0x32370000000000000000000000000000",
+            "UID": "0x11eb866298f22c428662025041000001",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/CacheClearingBehavior.php",
+            "CONFIG_UXON": null,
+            "OBJECT": "0x32350000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Create\/Update tracking + optimistic locking",
+            "NAME": "Clear cache on save",
             "DESCRIPTION": ""
         }
     ],

@@ -48,6 +48,19 @@
     ],
     "rows": [
         {
+            "CREATED_ON": "2017-06-05 06:43:28",
+            "MODIFIED_ON": "2020-11-20 21:03:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e749ba34408e51b797e4b318306b9a",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/CacheClearingBehavior.php",
+            "CONFIG_UXON": null,
+            "OBJECT": "0x31350000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Clear cache on save",
+            "DESCRIPTION": ""
+        },
+        {
             "CREATED_ON": "2018-11-11 20:51:01",
             "MODIFIED_ON": "2018-11-11 20:54:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
