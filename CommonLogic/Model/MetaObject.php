@@ -436,29 +436,20 @@ class MetaObject implements MetaObjectInterface
     {
         return $modifier === '' ? 0 : $modifier;
     }
-
+    
     /**
-     * Inherits all attributes, relations and actions from the given parent object.
-     * Parts of the parent
-     * can be overridden in the extended object by creating an attribute, relation, etc. with the same alias,
-     * as the parent has.
-     *
-     * Inherited elements become property of the extende object and loose any connection to their parents
-     * (i.e. changing an attribute on the parent object at window will not effect the respective inherited
-     * attribute of the extended object). However, using the method getInheritedFromObjectId() of an
-     * inherited element, it can be determined, whether the element is inherited and from which object.
-     *
-     * @param string $parent_object_id            
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::extendFromObject()
      */
-    public function extendFromObjectId($parent_object_id)
+    public function extendFromObject(MetaObjectInterface $parent)
     {
         // Do nothing, if trying to extend itself
-        if ($parent_object_id == $this->getId())
+        if ($parent->getId() === $this->getId()) {
             return;
+        }
         
-        // Otherwise clone all attributes and relations of the parent and add them to this object
-        $parent = $this->getModel()->getObject($parent_object_id);
-        $this->addParentObjectId($parent_object_id);
+        $this->addParentObjectId($parent->getId());
         
         // Inherit data address
         $this->setDataAddress($parent->getDataAddress());
@@ -492,7 +483,7 @@ class MetaObject implements MetaObjectInterface
             $attr_clone = $attr->copy();
             
             // Save the object, we are inheriting from in the attribute
-            $attr_clone->setInheritedFromObjectId($parent_object_id);
+            $attr_clone->setInheritedFromObjectId($parent->getId());
             
             // IDEA Is it a good idea to set the object of the inheridted attribute to the inheriting object? Would it be
             // better, if we only do this for objects, that do not have their own data address and merely are containers for attributes?
@@ -517,7 +508,7 @@ class MetaObject implements MetaObjectInterface
             $rel_clone = clone $rel;
             // Save the parent's id, if there isn't one already (that would mean, that the parent inherited the attribute too)
             if (is_null($rel->getInheritedFromObjectId())) {
-                $rel_clone->setInheritedFromObjectId($parent_object_id);
+                $rel_clone->setInheritedFromObjectId($parent->getId());
             }
             $this->addRelation($rel_clone);
         }
@@ -529,6 +520,8 @@ class MetaObject implements MetaObjectInterface
         }
         
         // TODO Inherit actions here as soon as actions can be defined in the model
+        
+        return;
     }
 
     /**

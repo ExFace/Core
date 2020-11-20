@@ -214,13 +214,24 @@ class SqlModelLoader implements ModelLoaderInterface
                 $load_behaviors = true;
             }
             
-            // find all parents
-            // When loading a data source base object, make sure not to inherit from itself to avoid recursion.
-            if ($row['base_object_oid'] && $row['base_object_oid'] != $object->getId() && ($row['inherit_data_source_base_object'] ?? 1)) {
-                $object->extendFromObjectId($row['base_object_oid']);
+            // Take care of inheritance: first the data source base object, than the
+            // explicit parent if specified. Also avoid reccurrance with self-inheritance.
+            // If an explicit parent is specified, load it first
+            if ($row['parent_object_oid'] && $row['parent_object_oid'] !== $object->getId()) {
+                $parent = $this->getModel()->getObject($row['parent_object_oid']);
+            } else {
+                $parent = null;
             }
-            if ($row['parent_object_oid']) {
-                $object->extendFromObjectId($row['parent_object_oid']);
+            // See if the data source has a base object. If so, double-check 
+            // - that it was not already inherited by the parent object (should not inherit twice as this would register all behaviors twice too!) 
+            // - that base inheritance is not turned off for this particular object 
+            if ($row['base_object_oid'] && $row['base_object_oid'] !== $object->getId() && ! ($parent && $parent->isExtendedFrom($row['base_object_oid'])) && ($row['inherit_data_source_base_object'] ?? 1)) {
+                $baseObject = $this->getModel()->getObject($row['base_object_oid']);
+                $object->extendFromObject($baseObject);
+            }
+            // Now that we handled the base object, we can extend from the explicit parent.
+            if ($parent) {
+                $object->extendFromObject($parent);
             }
             
             // Overwrite inherited properties
