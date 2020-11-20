@@ -11,6 +11,7 @@ use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UserSelector;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * Representation of an Exface user.
@@ -496,5 +497,30 @@ class User implements UserInterface
             $this->loadData();
         }
         return $this->disabled;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::getAttribute()
+     */
+    public function getAttribute(string $alias)
+    {
+        switch (mb_strtoupper($alias)) {
+            case "ID":
+            case "UID":
+                return $this->getUid();
+            case "USERNAME":
+                return $this->getUsername();
+            case "FULL_NAME":
+            case "NAME":
+                return $this->getName();
+        }
+        $userObj = $this->getWorkbench()->model()->getObject('exface.Core.USER');
+        $ds = DataSheetFactory::createFromObject($userObj);
+        $ds->getColumns()->addFromExpression($alias, $alias);
+        $ds->getFilters()->addConditionFromString($userObj->getUidAttributeAlias(), $this->getUid(), ComparatorDataType::EQUALS);
+        $ds->dataRead();
+        return $ds->getCellValue($alias, 0);
     }
 }

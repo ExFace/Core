@@ -156,4 +156,12 @@ interface UserInterface extends UserImpersonationInterface, WorkbenchDependantIn
      * @return bool
      */
     public function isDisabled() : bool;
+    
+    /**
+     * Returns any attribute of the current user or related to it.
+     * 
+     * @param string $alias
+     * @return mixed|NULL
+     */
+    public function getAttribute(string $alias);
 }
