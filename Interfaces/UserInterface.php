@@ -158,7 +158,10 @@ interface UserInterface extends UserImpersonationInterface, WorkbenchDependantIn
     public function isDisabled() : bool;
     
     /**
-     * Returns any attribute of the current user or related to it.
+     * Returns the value of any attribute of user's metamodel - relations supported.
+     * 
+     * E.g. `$user->getAttribute('CREATED_BY__USERNAME')` would return the username of
+     * the creator of the current user.
      * 
      * @param string $alias
      * @return mixed|NULL

@@ -496,9 +496,10 @@ class Attribute implements MetaAttributeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultValue()
      */
-    public function setDefaultValue($value)
+    public function setDefaultValue($value) : MetaAttributeInterface
     {
         $this->default_value = $value;
+        return $this;
     }
     
     public function hasDefaultValue() : bool
@@ -524,7 +525,7 @@ class Attribute implements MetaAttributeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setFixedValue()
      */
-    public function setFixedValue($value)
+    public function setFixedValue($value) : MetaAttributeInterface
     {
         $this->fixed_value = $value;
         return $this;

@@ -11,6 +11,11 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
+use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\Events\Model\OnMetaAttributeModelValidatedEvent;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 
 /**
  * Prevents concurrent writes using a timestamp updated with every crate/update operation.
@@ -30,25 +35,78 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
 class TimeStampingBehavior extends AbstractBehavior
 {
 
-    private $created_on_attribute_alias = null;
+    private $createdOnAttributeAlias = null;
+    
+    private $createdByAttributeAlias = null;
+    
+    private $createdByValueUserAttributeAlias = null;
 
-    private $updated_on_attribute_alias = null;
+    private $updatedOnAttributeAlias = null;
+    
+    private $updatedByAttributeAlias = null;
+    
+    private $updatedByValueUserAttributeAlias = null;
 
     private $check_for_conflicts_on_update = true;
 
     public function register() : BehaviorInterface
     {
-        $this->getUpdatedOnAttribute()->setSystem(true)->setDefaultAggregateFunction('MAX');
-        if ($this->getCheckForConflictsOnUpdate()) {
-            $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'checkForConflictsOnUpdate']);
+        if ($this->hasCreatedByAttribute()) {
+            $this->getCreatedByAttribute()->setFixedValue(null)->setDefaultValue(null);
         }
+        if ($this->hasCreatedOnAttribute()) {
+            $this->getCreatedOnAttribute()->setFixedValue(null)->setDefaultValue(null);
+        }
+        if ($this->hasUpdatedByAttribute()) {
+            $this->getUpdatedByAttribute()->setFixedValue(null)->setDefaultValue(null);
+        }
+        if ($this->hasUpdatedOnAttribute()) {
+            $this->getUpdatedOnAttribute()->setFixedValue(null)->setDefaultValue(null);
+            if ($this->getCheckForConflictsOnUpdate()) {
+                $this->getUpdatedOnAttribute()->setSystem(true)->setDefaultAggregateFunction('MAX');
+            }
+        }
+        
+        $this->registerEventListeners();
         $this->setRegistered(true);
         return $this;
     }
-
-    public function getCreatedOnAttributeAlias()
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
+     */
+    protected function registerEventListeners() : BehaviorInterface
     {
-        return $this->created_on_attribute_alias;
+        $this->getWorkbench()->eventManager()
+            ->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'onCreateSetValues'])
+            ->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onUpdateSetValuesAndCheckConflicts'])
+            ->addListener(OnMetaAttributeModelValidatedEvent::getEventName(), [$this, 'onAttributeValidatedDisableFields']);
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     */
+    protected function unregisterEventListeners() : BehaviorInterface
+    {
+        $this->getWorkbench()->eventManager()
+            ->removeListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'onCreateSetValues'])
+            ->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onUpdateSetValuesAndCheckConflicts'])
+            ->removeListener(OnMetaAttributeModelValidatedEvent::getEventName(), [$this, 'onAttributeValidatedDisableFields']);
+        return $this;
+    }
+
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getCreatedOnAttributeAlias() : ?string
+    {
+        return $this->createdOnAttributeAlias;
     }
 
     /**
@@ -62,13 +120,17 @@ class TimeStampingBehavior extends AbstractBehavior
      */
     public function setCreatedOnAttributeAlias(string $value) : TimeStampingBehavior
     {
-        $this->created_on_attribute_alias = $value;
+        $this->createdOnAttributeAlias = $value;
         return $this;
     }
 
-    public function getUpdatedOnAttributeAlias()
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getUpdatedOnAttributeAlias() : ?string
     {
-        return $this->updated_on_attribute_alias;
+        return $this->updatedOnAttributeAlias;
     }
 
     /**
@@ -82,11 +144,15 @@ class TimeStampingBehavior extends AbstractBehavior
      */
     public function setUpdatedOnAttributeAlias(string $value) : TimeStampingBehavior
     {
-        $this->updated_on_attribute_alias = $value;
+        $this->updatedOnAttributeAlias = $value;
         return $this;
     }
 
-    public function getCheckForConflictsOnUpdate()
+    /**
+     * 
+     * @return bool
+     */
+    protected function getCheckForConflictsOnUpdate() : bool
     {
         return $this->check_for_conflicts_on_update;
     }
@@ -106,22 +172,48 @@ class TimeStampingBehavior extends AbstractBehavior
         $this->check_for_conflicts_on_update = $value;
         return $this;
     }
-
+    
     /**
-     *
-     * @return MetaAttributeInterface
+     * 
+     * @return bool
      */
-    public function getCreatedOnAttribute()
+    protected function hasCreatedOnAttribute() : bool
     {
-        return $this->getObject()->getAttribute($this->getCreatedOnAttributeAlias());
+        return $this->createdOnAttributeAlias !== null;
     }
 
     /**
-     *
+     * 
+     * @throws BehaviorConfigurationError
      * @return MetaAttributeInterface
      */
-    public function getUpdatedOnAttribute()
+    protected function getCreatedOnAttribute() : MetaAttributeInterface
     {
+        if (! $this->hasCreatedOnAttribute()) {
+            throw new BehaviorConfigurationError($this->getObject(), 'Property `created_on_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
+        }
+        return $this->getObject()->getAttribute($this->getCreatedOnAttributeAlias());
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasUpdatedOnAttribute() : bool
+    {
+        return $this->updatedOnAttributeAlias !== null;
+    }
+
+    /**
+     * 
+     * @throws BehaviorConfigurationError
+     * @return MetaAttributeInterface|NULL
+     */
+    protected function getUpdatedOnAttribute() : ?MetaAttributeInterface
+    {
+        if (! $this->hasUpdatedOnAttribute()) {
+            throw new BehaviorConfigurationError($this->getObject(), 'Property `updated_on_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
+        }
         return $this->getObject()->getAttribute($this->getUpdatedOnAttributeAlias());
     }
 
@@ -136,15 +228,157 @@ class TimeStampingBehavior extends AbstractBehavior
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('created_on_attribute_alias', $this->getCreatedOnAttributeAlias());
         $uxon->setProperty('updated_on_attribute_alias', $this->getUpdatedOnAttributeAlias());
+        $uxon->setProperty('created_by_attribute_alias', $this->getCreatedOnAttributeAlias());
+        $uxon->setProperty('updated_by_attribute_alias', $this->getUpdatedOnAttributeAlias());
         $uxon->setProperty('check_for_conflicts_on_update', $this->getCheckForConflictsOnUpdate());
         return $uxon;
     }
-
-    public function checkForConflictsOnUpdate(OnBeforeUpdateDataEvent $event)
+    
+    /**
+     * 
+     * @param DataSheetInterface $sheet
+     * @param MetaAttributeInterface $attribute
+     * @param mixed $normalizedValue
+     * @param bool $overwrite
+     * 
+     * @return void
+     */
+    protected function setAttributeValues(DataSheetInterface $sheet, MetaAttributeInterface $attribute, $normalizedValue, bool $overwrite = true)
     {
-        if ($this->isDisabled())
-            return;
+        if (! ($col = $sheet->getColumns()->getByAttribute($attribute))) {
+            $col = $sheet->getColumns()->addFromAttribute($attribute);
+        }
+        $col->setValueOnAllRows($normalizedValue, $overwrite);
+        return;
+    }
+    
+    /**
+     * 
+     * @param OnBeforeCreateDataEvent $event
+     * @return void
+     */
+    public function onCreateSetValues(OnBeforeCreateDataEvent $event)
+    {
+        $data_sheet = $event->getDataSheet();
         
+        // Do not do anything, if the base object of the data sheet is not the object with the behavior and is not
+        // extended from it.
+        if (! $data_sheet->getMetaObject()->isExactly($this->getObject())) {
+            return;
+        }
+        
+        $now = DateTimeDataType::now();
+        $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
+        if ($this->hasCreatedOnAttribute()) {
+            $this->setAttributeValues($data_sheet, $this->getCreatedOnAttribute(), $now);
+        }
+        if ($this->hasUpdatedOnAttribute()) {
+            $this->setAttributeValues($data_sheet, $this->getUpdatedOnAttribute(), $now);
+        }
+        if ($this->hasCreatedByAttribute()) {
+            if ($userValAttr = $this->getCreatedByValueUserAttributeAlias()) {
+                $userVal = $user->getAttribute($userValAttr);
+            } else {
+                $userVal = $user->getUid();
+            }
+            $this->setAttributeValues($data_sheet, $this->getCreatedByAttribute(), $userVal);
+        }
+        if ($this->hasUpdatedByAttribute()) {
+            if ($userValAttr = $this->getUpdatedByValueUserAttributeAlias()) {
+                $userVal = $user->getAttribute($userValAttr);
+            } else {
+                $userVal = $user->getUid();
+            }
+            $this->setAttributeValues($data_sheet, $this->getUpdatedByAttribute(), $userVal);
+        }
+    }
+    
+    /**
+     * 
+     * @param OnBeforeUpdateDataEvent $event
+     * @return void
+     */
+    public function onUpdateSetValuesAndCheckConflicts(OnBeforeUpdateDataEvent $event)
+    {
+        $data_sheet = $event->getDataSheet();
+        
+        // Do not do anything, if the base object of the data sheet is not the object with the behavior and is not
+        // extended from it.
+        if (! $data_sheet->getMetaObject()->isExactly($this->getObject())) {
+            return;
+        }
+        
+        if ($this->getCheckForConflictsOnUpdate()) {
+            $this->onUpdateCheckForConflicts($event);
+        }
+        
+        $now = DateTimeDataType::now();
+        $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
+        if ($this->hasUpdatedOnAttribute()) {
+            $this->setAttributeValues($data_sheet, $this->getUpdatedOnAttribute(), $now);
+        }
+        if ($this->hasUpdatedByAttribute()) {
+            if ($userValAttr = $this->getUpdatedByValueUserAttributeAlias()) {
+                $userVal = $user->getAttribute($userValAttr);
+            } else {
+                $userVal = $user->getUid();
+            }
+            $this->setAttributeValues($data_sheet, $this->getUpdatedByAttribute(), $userVal);
+        }
+    }
+    
+    /**
+     * 
+     * @param OnMetaAttributeModelValidatedEvent $event
+     * @return void
+     */
+    public function onAttributeValidatedDisableFields(OnMetaAttributeModelValidatedEvent $event) {
+        $eventAttr = $event->getAttribute();
+        if ( ! (
+               ($this->hasCreatedByAttribute() && $eventAttr->isExactly($this->getCreatedByAttribute()))
+            || ($this->hasCreatedOnAttribute() && $eventAttr->isExactly($this->getCreatedOnAttribute()))
+            || ($this->hasUpdatedByAttribute() && $eventAttr->isExactly($this->getUpdatedByAttribute()))
+            || ($this->hasUpdatedOnAttribute() && $eventAttr->isExactly($this->getUpdatedOnAttribute()))
+            )) {
+            return;
+        }
+        
+        $widget = $event->getMessageList()->getParent();
+        $disabledDefaultValue = false;
+        $disabledFixedValue = false;
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        foreach ($widget->getChildrenRecursive() as $child) {
+            if ($child instanceof iShowSingleAttribute) {
+                if ($child->getAttributeAlias() === 'DEFAULT_VALUE') {
+                    $child->setValue(null);
+                    $child->setDisabled(true);
+                    $child->setHint($translator->translate('BEHAVIOR.ALL.PROPERTY_HINT_AUTOGENERATED_BY', ['%behavior%' => $this->getAlias()]) . "\n" . $child->getHint());
+                    $disabledDefaultValue = true;
+                } elseif ($child->getAttributeAlias() === 'FIXED_VALUE') {
+                    $child->setValue(null);
+                    $child->setDisabled(true);
+                    $child->setHint($translator->translate('BEHAVIOR.ALL.PROPERTY_HINT_AUTOGENERATED_BY', ['%behavior%' => $this->getAlias()]) . "\n"  . $child->getHint());
+                    $disabledFixedValue = true;
+                }
+            }
+            if ($disabledDefaultValue && $disabledFixedValue) {
+                break;
+            }
+        }
+    }
+
+    /**
+     * 
+     * @param OnBeforeUpdateDataEvent $event
+     * 
+     * @throws DataSheetColumnNotFoundError
+     * @throws ConcurrentWritesCannotBePreventedWarning
+     * @throws ConcurrentWriteError
+     * 
+     * @return void
+     */
+    public function onUpdateCheckForConflicts(OnBeforeUpdateDataEvent $event)
+    {
         $data_sheet = $event->getDataSheet();
         
         // Do not do anything, if the base object of the data sheet is not the object with the behavior and is not
@@ -266,10 +500,127 @@ class TimeStampingBehavior extends AbstractBehavior
         return $check_sheet;
     }
     
+    /**
+     * 
+     * @return \exface\Core\Interfaces\Actions\ActionInterface
+     */
     protected function getCurrentAction()
     {
         return $this->getWorkbench()->getContext()->getScopeWindow()->getActionContext()->getCurrentAction();
     }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getCreatedByAttributeAlias() : ?string
+    {
+        return $this->createdByAttributeAlias;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasCreatedByAttribute() : bool
+    {
+        return $this->createdByAttributeAlias !== null;
+    }
+    
+    /**
+     * 
+     * @throws BehaviorConfigurationError
+     * @return MetaAttributeInterface
+     */
+    protected function getCreatedByAttribute() : MetaAttributeInterface
+    {
+        if (! $this->hasCreatedByAttribute()) {
+            throw new BehaviorConfigurationError($this->getObject(), 'Property `created_by_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
+        }
+        return $this->getObject()->getAttribute($this->getCreatedByAttributeAlias());
+    }
+    
+    /**
+     * The attribute where the UID of the creator user is to be saved
+     * 
+     * @uxon-property created_by_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $value
+     * @return TimeStampingBehavior
+     */
+    public function setCreatedByAttributeAlias(string $value) : TimeStampingBehavior
+    {
+        $this->createdByAttributeAlias = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getUpdatedByAttributeAlias() : ?string
+    {
+        return $this->updatedByAttributeAlias;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasUpdatedByAttribute() : bool
+    {
+        return $this->updatedByAttributeAlias !== null;
+    }
+    
+    /**
+     * 
+     * @throws BehaviorConfigurationError
+     * @return MetaAttributeInterface
+     */
+    protected function getUpdatedByAttribute() : MetaAttributeInterface
+    {
+        if (! $this->hasUpdatedByAttribute()) {
+            throw new BehaviorConfigurationError($this->getObject(), 'Property `updated_by_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
+        }
+        return $this->getObject()->getAttribute($this->getUpdatedByAttributeAlias());
+    }
+    
+    /**
+     * The attribute where the UID of the last updater user is to be saved
+     * 
+     * @uxon-property updated_by_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $value
+     * @return TimeStampingBehavior
+     */
+    public function setUpdatedByAttributeAlias(string $value) : TimeStampingBehavior
+    {
+        $this->updatedByAttributeAlias = $value;
+        return $this;
+    }
+    
+    protected function getCreatedByValueUserAttributeAlias() : ?string
+    {
+        return $this->createdByValueUserAttributeAlias;
+    }
+    
+    public function setCreatedByValueUserAttributeAlias(string $value) : TimeStampingBehavior
+    {
+        $this->createdByValueUserAttributeAlias = $value;
+        return $this;
+    }
+    
+    protected function getUpdatedByValueUserAttributeAlias() : ?string
+    {
+        return $this->updatedByValueUserAttributeAlias;
+    }
+    
+    public function setUpdatedByValueUserAttributeAlias(string $value) : TimeStampingBehavior
+    {
+        $this->updatedByValueUserAttributeAlias = $value;
+        return $this;
+    }
 }
-
 ?>
