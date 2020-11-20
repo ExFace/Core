@@ -18,13 +18,55 @@ use exface\Core\Events\Model\OnMetaAttributeModelValidatedEvent;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 
 /**
- * Prevents concurrent writes using a timestamp updated with every crate/update operation.
+ * Tracks time and users that created/changed objects and prevents concurrent writes comparing the update-times.
  * 
- * ## Example
+ * Automatically saves the current date and time and the user in specified attributes of
+ * the object. 
+ * 
+ * If `updated_on_attribute_alias` is set, conflict detection (optimistic locking) will be performed
+ * automatically. The attribute will be marked as "system" causing it's value to be loaded automatically
+ * in all widgets, that can perform actions. This ensures, any action has the last update time in it's
+ * input data. The behavior than hooks into every update operation on the data source and checks if the 
+ * current updated-on in the data source is another value than that of the input data (= the object was 
+ * modified in the mean time). If so, an error is thrown.
+ * 
+ * The optimistic locking can be explicitly disabled by setting `check_for_conflicts_on_update` to `false`.
+ * 
+ * ## Examples
+ * 
+ * ### Just track the last updated timestamp and prevent concurrent writes
  * 
  * ```
  * {
  *  "updated_on_attribute_alias": "UPDATED_ON"
+ * }
+ * 
+ * ```
+ * 
+ * ### Track times and users
+ * 
+ * ```
+ * {
+ *  "created_on_attribute_alias": "CREATED_ON",
+ *  "created_by_attribute_alias": "CREATED_BY",
+ *  "updated_on_attribute_alias": "MODIFIED_ON",
+ *  "updated_by_attribute_alias": "MODIFIED_BY"
+ * }
+ * 
+ * ```
+ * 
+ * ### Track usernames instead of UIDs
+ * 
+ * In this example, there is no `updated_on_attribute_alias` so we need to turn off
+ * conflict checks - otherwise there will be an error on model validation!
+ * 
+ * ```
+ * {
+ *  "created_by_attribute_alias": "CREATED_BY",
+ *  "created_by_value_user_attribute_alias": "USERNAME",
+ *  "updated_by_attribute_alias": "MODIFIED_BY",
+ *  "updated_by_value_user_attribute_alias": "USERNAME",
+ *  "check_for_conflicts_on_update": false
  * }
  * 
  * ```
@@ -159,6 +201,8 @@ class TimeStampingBehavior extends AbstractBehavior
 
     /**
      * Set to FALSE to disable automatic race condition prevention.
+     * 
+     * This option requires `updated_on_attribute_alias`!
      *
      * @uxon-property check_for_conflicts_on_update
      * @uxon-type bool
@@ -541,7 +585,10 @@ class TimeStampingBehavior extends AbstractBehavior
     }
     
     /**
-     * The attribute where the UID of the creator user is to be saved
+     * The attribute where the the user, that created the object, is to be tracked.
+     *  
+     * By default, the behavior will save the UID of the user in this attribute.
+     * If you need another value (e.g. the username) - use `created_by_value_user_attribute_alias`. 
      * 
      * @uxon-property created_by_attribute_alias
      * @uxon-type metamodel:attribute
@@ -587,7 +634,10 @@ class TimeStampingBehavior extends AbstractBehavior
     }
     
     /**
-     * The attribute where the UID of the last updater user is to be saved
+     * The attribute where the the user, that performed the last change, is to be tracked
+     * 
+     * By default, the behavior will save the UID of the user in this attribute.
+     * If you need another value (e.g. the username) - use `updated_by_value_user_attribute_alias`. 
      * 
      * @uxon-property updated_by_attribute_alias
      * @uxon-type metamodel:attribute
@@ -601,22 +651,64 @@ class TimeStampingBehavior extends AbstractBehavior
         return $this;
     }
     
+    /**
+     * 
+     * @return string|NULL
+     */
     protected function getCreatedByValueUserAttributeAlias() : ?string
     {
         return $this->createdByValueUserAttributeAlias;
     }
     
+    /**
+     * The alias of the user attribute to be saved in `created_by_attribute_alias`.
+     * 
+     * By default, the behavior will save the UID of the user in the created-by
+     * and updated-by attributes. Use this property to specify another attribute
+     * of the user, e.g.:
+     * 
+     * - `USERNAME` to save the username
+     * - `OTHER_OBJECT__SOMETHING_ELSE` - to save a value from a related object
+     * 
+     * @uxon-property created_by_value_user_attribute_alias
+     * @uxon-type string
+     * @uxon-default UID
+     * 
+     * @param string $value
+     * @return TimeStampingBehavior
+     */
     public function setCreatedByValueUserAttributeAlias(string $value) : TimeStampingBehavior
     {
         $this->createdByValueUserAttributeAlias = $value;
         return $this;
     }
     
+    /**
+     * 
+     * @return string|NULL
+     */
     protected function getUpdatedByValueUserAttributeAlias() : ?string
     {
         return $this->updatedByValueUserAttributeAlias;
     }
     
+    /**
+     * The alias of the user attribute to be saved in `updated_by_attribute_alias`.
+     *
+     * By default, the behavior will save the UID of the user in the created-by
+     * and updated-by attributes. Use this property to specify another attribute
+     * of the user, e.g.:
+     * 
+     * - `USERNAME` to save the username
+     * - `OTHER_OBJECT__SOMETHING_ELSE` - to save a value from a related object
+     * 
+     * @uxon-property updated_by_value_user_attribute_alias
+     * @uxon-type string
+     * @uxon-default UID
+     *
+     * @param string $value
+     * @return TimeStampingBehavior
+     */
     public function setUpdatedByValueUserAttributeAlias(string $value) : TimeStampingBehavior
     {
         $this->updatedByValueUserAttributeAlias = $value;
