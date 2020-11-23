@@ -592,16 +592,6 @@ JS;
                         animation: spin 1s ease-in-out infinite;
                         -webkit-animation: spin 1s ease-in-out infinite;
                     }
-                    .jsoneditor-modal .spinner-wrapper {
-                        position: absolute;
-                        width: 100%;
-                        background-color: #f5f5f5;
-                        border: 1px solid #d3d3d3;
-                        border-radius: 3px;
-                        z-index: 100;
-                        text-align: center;
-                        padding: 4px 0 0 0;
-                    }
                     @keyframes spin {
                         to { -webkit-transform: rotate(360deg); }
                     }
@@ -622,6 +612,13 @@ JS;
                     .uxoneditor-preset-hint a {color: #ccc; text-decoration: none;}
                     .uxoneditor-preset-hint a:hover {color: #1a1a1a;}
                     .uxoneditor-preset-hint i {display: block; font-size: 400%; margin-bottom: 15px;}
+                    .uxoneditor-preset-cards {width: 100%; height: calc(100% - 28px); overflow-y: auto;}
+                    .uxoneditor-preset-card {width: 213px; height: calc(136px + 7px + 2.3rem); border: 1px dashed gray; margin: 5px 10px 5px 0; float: left; overflow: hidden; cursor: pointer;}
+                    .uxoneditor-preset-card:hover, .uxoneditor-preset-card.selected {border-style: solid; border-color: #3883fa;}
+                    .uxoneditor-preset-name {text-align: center; padding: 0 10px 7px 10px; height: 2.3rem}
+                    .uxoneditor-preset-card.text-only {position: relative;}
+                    .uxoneditor-preset-card.text-only .uxoneditor-preset-name {padding: 0 10px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: calc(100% - 20px);}
+                   
 
                     .uxoneditor-checkbox {-webkit-appearance: checkbox; -moz-appearance: checkbox;}
                     .uxoneditor-details-table {margin-bottom: 20px}
@@ -1054,27 +1051,31 @@ CSS;
         }
         
         function {$funcPrefix}_getPresetsBtnContent(node){
-            return  '   <div class="jsoneditor-jmespath-block uxoneditor-preset-selector" style="position: relative">' +
-                    '      <div class="spinner-wrapper">' +
-                    '          <div class="spinner"></div>' +
-                    '      </div>' +
-                    '      <select class="jsoneditor-jmespath-select-fields"></select>' +
-                    '   </div>' +
-                    '   <div class="jsoneditor-jmespath-block">' +
-                    '      <textarea id="uxonPresetDescription" class="uxoneditor-input" style="height: 90px;" readonly></textarea>' +
-                    '   </div>' +
-                    '   <div class="jsoneditor-jmespath-label">{$trans['PRESETS.PREVIEW']} </div>' +
-                    '   <div class="jsoneditor-jmespath-block" style="height: calc(100% - 35px - 10px - 90px - 10px - 18px - 25px - 18px - 25px - 35px - 4px)">' +
-                    '     <div class="uxoneditor-preset-preview" style="height: 100%"> </div>' +
+            return  '   <div class="jsoneditor-jmespath-block" style="width: 100%; height: calc(100% - 18px - 25px - 35px - 4px)">' +
+                    '       <div style="height: 100%; width: calc(70% - 15px); float: left; margin-right: 15px">' +
+                    '           <input class="uxoneditor-input" id="uxonPresetSearch"></input>' +
+                    '           <div class="spinner"></div>' +
+                    '           <div id="uxonPresetCards" class="uxoneditor-preset-cards">' +
+                    '           </div>' +
+                    '       </div>' +
+                    '       <div style="width: 30%; height: 100%; display: inline-block">' +
+                    '          <div class="jsoneditor-jmespath-label">{$trans['PRESETS.PREVIEW']} </div>' +
+                    '          <div class="jsoneditor-jmespath-block">' +
+                    '              <textarea id="uxonPresetDescription" class="uxoneditor-input" style="height: 180px;" readonly></textarea>' +
+                    '          </div>' +
+                    '          <div class="jsoneditor-jmespath-block" style="height: calc(100% - 10px - 188px - 25px - 10px)">' +
+                    '              <div class="uxoneditor-preset-preview" style="height: 100%"> </div>' +
+                    '          </div>' +
+                    '       </div>' +
                     '   </div>' +
                     '   <div class="jsoneditor-jmespath-label">{$trans['PRESETS.USE_PRESET_AT']} </div>' +
                     '   <div class="jsoneditor-jmespath-block jsoneditor-modal-actions">' +
                     '       <input class="uxoneditor-input" id="uxonPresetPath" style="margin-right: 4px;" readonly></input>' +
                     '       <div class="action-buttons">' +
                     '         <input class="uxoneditor-input uxoneditor-preset-replace" autofocus disabled type="submit" value="{$trans['PRESETS.BUTTON_REPLACE']}"/>' +
+                    '         <input class="uxoneditor-input uxoneditor-preset-wrap" disabled type="submit" value="{$trans['PRESETS.BUTTON_WRAP']}"   />' +
                     '         <input class="uxoneditor-input uxoneditor-preset-prepend" disabled type="submit" value="{$trans['PRESETS.BUTTON_PREPEND']}"/>' +
                     '         <input class="uxoneditor-input uxoneditor-preset-append" disabled type="submit" value="{$trans['PRESETS.BUTTON_APPEND']}" />' +
-                    '         <input class="uxoneditor-input uxoneditor-preset-wrap" disabled type="submit" value="{$trans['PRESETS.BUTTON_WRAP']}"   />' +
                     '         <input class="uxoneditor-input uxoneditor-preset-cancel" type="submit" value="{$trans['BUTTON_CANCEL']}" />' +
                     '       </div>' +
                     '   </div>';
@@ -1098,6 +1099,7 @@ CSS;
             var nodeType = {$funcPrefix}_getNodeType(node);
             var parentNodeType = {$funcPrefix}_getNodeType(node.parent);
             var nodeIsWrappingTarget;
+            var aPresetData = [];
             var wrapData = {};
             
             // Wrap button enabled if node type is object
@@ -1132,84 +1134,89 @@ CSS;
             .done(function(data, textStatus, jqXHR) {
                 // Fill path textarea
                 var elem = modal.modalElem();
-                
-                var aPresetData = data;
                 var aPresetOptions = [];
-                var lastOption = {};
-                var row;
-                var length = aPresetData.length;
-                for(var i = 0; i < length; i++){
-                    row = aPresetData[i];
-                    if (! row['PROTOTYPE__LABEL']) {
-                       row['PROTOTYPE__LABEL'] = "{$trans['PRESET_GROUP_GENERAL']}";
-                    }
-                    if (lastOption['text'] === row['PROTOTYPE__LABEL']) {
-                         lastOption['children'].push({
-                             text: row['NAME'],
-                             value: row['UID']
-                         });
-                     } else {
-                         if (lastOption['children'] && lastOption['children'].length > 0) {
-                            aPresetOptions.push(lastOption);
-                         }
-                         lastOption = {
-                             text: row['PROTOTYPE__LABEL'],
-                             children: [
-                                 {
-                                     text: row['NAME'],
-                                     value: row['UID']
-                                 }
-                             ]
-                         };
-                     }
-                }
-                aPresetOptions.push(lastOption);
-                var oPresetSelector = modal.modalElem().querySelector('.uxoneditor-preset-selector select');
-                var oSelectrPresets = new Selectr(
-                    oPresetSelector,
-                    {   clearable: true,
-                        defaultSelected: false,
-                        placeholder: 'Select a preset...',
-                        data: aPresetOptions
-                    }
-                ); // new Selectr()
-                oSelectrPresets.open();
+                var sGroupName = '';
+                var length = data.length;
+                var jqTileContainer = $(elem.querySelector('#uxonPresetCards'));
                 
-                modal.modalElem().querySelector('.uxoneditor-preset-selector .spinner-wrapper').remove();
-                oSelectrPresets.on('selectr.select', function(option) {
-                    var uid = option.value;
-                    var oPresetWrapBtn = document.getElementById("presetWrap");
-                    
-                    
-                    for (var i in aPresetData) {
-                        var oRow = aPresetData[i];
-                        if (oRow['UID'] === uid) {
-                            oPreviewEditor.setText(oRow['UXON']);
-                            
-                            document.getElementById('uxonPresetDescription').value = oRow['DESCRIPTION'];
-                            oPreviewEditor.expandAll(true);
-                            modal.modalElem().querySelector(".uxoneditor-preset-replace").disabled = false;
-                            
-                            // Check if clicked editor node is object and preset is a wrapper
-                            if ( oRow.WRAP_FLAG === "1" && nodeIsWrappingTarget ) {
-                                modal.modalElem().querySelector(".uxoneditor-preset-wrap").disabled = false;
-                                wrapData = oRow;
-                            } else {
-                                modal.modalElem().querySelector(".uxoneditor-preset-wrap").disabled = true;
-                            }
-                            modal.modalElem().querySelector(".uxoneditor-preset-replace").disabled = false;
-                            
-                            if(hasArrayContext) {
-                                modal.modalElem().querySelector(".uxoneditor-preset-prepend").disabled = false;
-                                modal.modalElem().querySelector(".uxoneditor-preset-append").disabled = false;
-                            } else{
-                                modal.modalElem().querySelector(".uxoneditor-preset-prepend").disabled = true;
-                                modal.modalElem().querySelector(".uxoneditor-preset-append").disabled = true;
-                            }
-                            return;
+                var fnListTiles = function(aPresetData, jqTileContainer, fnClick, sSearch) {
+                    sSearch = sSearch === undefined ? '' : sSearch.toLowerCase();
+
+                    jqTileContainer.empty().prev('.spinner').show();
+
+                    aPresetData.forEach(function(oRow){
+                        if (! oRow['PROTOTYPE__LABEL']) {
+                           oRow['PROTOTYPE__LABEL'] = "{$trans['PRESET_GROUP_GENERAL']}";
                         }
+
+                        if (sSearch !== '') {
+                            if (! oRow['NAME'].toLowerCase().includes(sSearch) && ! oRow['PROTOTYPE__LABEL'].toLowerCase().includes(sSearch)) {
+                                return;
+                            }
+                        }
+                        
+                        if (sGroupName !== oRow['PROTOTYPE__LABEL']) {
+                            $('<div class="uxoneditor-preset-group" style="clear: both; width: 100%; font-weight: bold; font-size: 120%; padding: 10px 0 5px 0;">' + oRow['PROTOTYPE__LABEL'] + '</div>').appendTo(jqTileContainer);
+                            sGroupName = oRow['PROTOTYPE__LABEL'];
+                        }
+    
+                        if (oRow['THUMBNAIL']) {
+                            $(  '<div class="uxoneditor-preset-card">' +
+                                '   <img class="uxoneditor-preset-pic" src="vendor/' + oRow['THUMBNAIL'] + '"></img>' +
+                                '   <div class="uxoneditor-preset-name">' + oRow['NAME'] + '</div>' +
+                                '</div>'
+                            ).data('presetData', oRow).appendTo(jqTileContainer);
+                        } else {
+                            $(  '<div class="uxoneditor-preset-card text-only">' +
+                                '   <div class="uxoneditor-preset-name">' + oRow['NAME'] + '</div>' +
+                                '</div>'
+                            ).data('presetData', oRow).appendTo(jqTileContainer);
+                        }
+                    });
+
+                    jqTileContainer.children().click(function(event) {fnClick(event, this, $(this).data('presetData'));});
+
+                    jqTileContainer.prev('.spinner').hide();
+                }
+
+                var fnClickTile = function(event, card, oPresetData) {
+                    var jqCard = $(card);
+                    var oPresetWrapBtn = document.getElementById("presetWrap");
+
+                    jqTileContainer.children().removeClass('selected');
+                    jqCard.addClass('selected');
+
+                    oPreviewEditor.setText(oPresetData['UXON']);
+                    
+                    document.getElementById('uxonPresetDescription').value = oPresetData['DESCRIPTION'];
+                    oPreviewEditor.expandAll(true);
+                    modal.modalElem().querySelector(".uxoneditor-preset-replace").disabled = false;
+                    
+                    // Check if clicked editor node is object and preset is a wrapper
+                    if ( oPresetData.WRAP_FLAG === "1" && nodeIsWrappingTarget ) {
+                        modal.modalElem().querySelector(".uxoneditor-preset-wrap").disabled = false;
+                        wrapData = oPresetData;
+                    } else {
+                        modal.modalElem().querySelector(".uxoneditor-preset-wrap").disabled = true;
                     }
-                }); // on selectr.select
+                    modal.modalElem().querySelector(".uxoneditor-preset-replace").disabled = false;
+                    
+                    if(hasArrayContext) {
+                        modal.modalElem().querySelector(".uxoneditor-preset-prepend").disabled = false;
+                        modal.modalElem().querySelector(".uxoneditor-preset-append").disabled = false;
+                    } else{
+                        modal.modalElem().querySelector(".uxoneditor-preset-prepend").disabled = true;
+                        modal.modalElem().querySelector(".uxoneditor-preset-append").disabled = true;
+                    }
+                };
+                
+                aPresetData = data;
+                fnListTiles(aPresetData, jqTileContainer, fnClickTile);
+                $('#uxonPresetSearch').focus().on('input', function(){
+                    var sSearch = $(this).val();
+                    fnListTiles(aPresetData, jqTileContainer, fnClickTile, sSearch);
+                });
+                
             }) // done
             .fail( function (jqXHR, textStatus, errorThrown) {
                 console.warn("{$trans['ERROR.SERVER_ERROR']}", jqXHR);
@@ -1268,7 +1275,6 @@ CSS;
         }        
 
         function {$funcPrefix}_getDetailsBtnContent(node){
-// here
 
             return  '   <p class="uxoneditor-object-details-title" style="display:none"></p>' + 
                     '   <div class="uxoneditor-object-details-description" style="display:none"></div>' +

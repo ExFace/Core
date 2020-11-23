@@ -774,6 +774,21 @@
             "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\"}",
             "ALIAS": "QueuedTaskState",
             "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2020-11-23 11:17:11",
+            "MODIFIED_ON": "2020-11-23 11:17:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb7da0cfecd88b7da847beb4a5184",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Image Path",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/FilePathDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Input\"}",
+            "ALIAS": "ImagePath",
+            "SHORT_DESCRIPTION": "File path to an image"
         }
     ],
     "totals_rows": [],

@@ -48,12 +48,16 @@
         {
             "name": "UXON_SCHEMA",
             "attribute_alias": "UXON_SCHEMA"
+        },
+        {
+            "name": "THUMBNAIL",
+            "attribute_alias": "THUMBNAIL"
         }
     ],
     "rows": [
         {
             "CREATED_ON": "2019-07-11 15:11:07",
-            "MODIFIED_ON": "2019-09-03 15:06:40",
+            "MODIFIED_ON": "2020-11-23 15:54:48",
             "CREATED_BY_USER": "0x11e9876d60774992bb32106530e7aff7",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9a3ee1c889204b6f7106530e7aff7",
@@ -63,7 +67,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/SplitVertical.php",
             "UXON": "{\"object_alias\":\"\",\"widget_type\":\"SplitVertical\",\"panels\":[{\"caption\":\"\",\"height\":\"50%\",\"widgets\":[{\"\":\"\"}]},{\"caption\":\"\",\"widgets\":[{\"\":\"\"}]}]}",
             "WRAP_PATH": "$.panels[0].widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/split_top_bottom.gif"
         },
         {
             "CREATED_ON": "2019-09-01 19:11:24",
@@ -77,7 +82,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/NavTiles.php",
             "UXON": "{\"widget_type\":\"NavTiles\",\"object_alias\":\"exface.Core.PAGE\"}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-03 15:12:00",
@@ -91,7 +97,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
             "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Group 1\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Group 2\",\"widgets\":[{\"attribute_alias\":\"\"}]}]}",
             "WRAP_PATH": "$.widgets[1].widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-03 15:13:25",
@@ -105,7 +112,8 @@
             "PROTOTYPE": "exface\/Core\/Behaviors\/StateMachineBehavior.php",
             "UXON": "{\"state_attribute_alias\":\"\",\"states\":{\"10\":{\"name\":\"Planned\"},\"50\":{\"name\":\"Active\"},\"99\":{\"name\":\"Inactive\"}}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "behavior"
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-03 15:26:41",
@@ -119,7 +127,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
             "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"columns\":[{\"attribute_group_alias\":\"~VISIBLE\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"visibility\":\"optional\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-03 15:29:40",
@@ -133,7 +142,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
             "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\"}],\"columns\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"visibility\":\"optional\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-03 15:48:44",
@@ -147,7 +157,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
             "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"aggregate_by_attribute_alias\":[\"\"],\"filters\":[{\"attribute_alias\":\"\"}],\"columns\":[{\"attribute_alias\":\"non_aggregated_attribute\"},{\"attribute_alias\":\"aggregated_attribute:SUM\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-04 13:49:57",
@@ -161,7 +172,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Tabs.php",
             "UXON": "{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"caption\":\"\",\"widgets\":[{\"attribute_alias\":\"\"}]}]}",
             "WRAP_PATH": "$.tabs[0].widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-04 15:43:09",
@@ -175,7 +187,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
             "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"General\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"caption\":\"Details\",\"widgets\":[{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO MASTER OBJECT\",\"comparator\":\"==\",\"required\":true,\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_alias\":\"\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"visibility\":\"optional\"}]}]}]}]}",
             "WRAP_PATH": "$.widgets[0].tabs[0].widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-04 16:50:45",
@@ -189,7 +202,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTableResponsive.php",
             "UXON": "{\"widget_type\":\"DataTableResponsive\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\"}],\"columns\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"visibility\":\"optional\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-04 16:52:32",
@@ -203,7 +217,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
             "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"paginate\":false,\"columns\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-04 16:54:01",
@@ -217,7 +232,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
             "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"paginator\":{\"count_all_rows\":false},\"columns\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-04 16:57:20",
@@ -231,11 +247,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/NavTiles.php",
             "UXON": "{\"widget_type\":\"NavTiles\",\"object_alias\":\"exface.Core.PAGE\",\"depth\":1}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-04 19:42:28",
-            "MODIFIED_ON": "2019-09-04 19:42:28",
+            "MODIFIED_ON": "2020-11-23 15:56:42",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9cf4c02ea3e06ad7fe4b318306b9a",
@@ -245,11 +262,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/SplitHorizontal.php",
             "UXON": "{\"object_alias\":\"\",\"widget_type\":\"SplitHorizontal\",\"panels\":[{\"caption\":\"\",\"width\":\"50%\",\"widgets\":[{\"\":\"\"}]},{\"caption\":\"\",\"widgets\":[{\"\":\"\"}]}]}",
             "WRAP_PATH": "$.panels[0].widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/split_left_right.gif"
         },
         {
             "CREATED_ON": "2019-09-04 19:43:15",
-            "MODIFIED_ON": "2019-09-04 19:43:16",
+            "MODIFIED_ON": "2020-11-23 15:57:01",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9cf4c1f0cf784ad7fe4b318306b9a",
@@ -259,11 +277,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/SplitHorizontal.php",
             "UXON": "{\"object_alias\":\"\",\"widget_type\":\"SplitHorizontal\",\"panels\":[{\"caption\":\"\",\"width\":\"33%\",\"widgets\":[{\"\":\"\"}]},{\"caption\":\"\",\"widgets\":[{\"\":\"\"}]},{\"caption\":\"\",\"width\":\"33%\",\"widgets\":[{\"\":\"\"}]}]}",
             "WRAP_PATH": "$.panels[0].widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/split_left_center_right.gif"
         },
         {
             "CREATED_ON": "2019-09-04 19:43:40",
-            "MODIFIED_ON": "2019-09-04 19:43:40",
+            "MODIFIED_ON": "2020-11-23 15:55:02",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9cf4c2dc4e980ad7fe4b318306b9a",
@@ -273,7 +292,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/SplitVertical.php",
             "UXON": "{\"object_alias\":\"\",\"widget_type\":\"SplitVertical\",\"panels\":[{\"caption\":\"\",\"height\":\"33%\",\"widgets\":[{\"\":\"\"}]},{\"caption\":\"\",\"widgets\":[{\"\":\"\"}]},{\"caption\":\"\",\"height\":\"33%\",\"widgets\":[{\"\":\"\"}]}]}",
             "WRAP_PATH": "$.panels[0].widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/split_top_center_bottom.gif"
         },
         {
             "CREATED_ON": "2019-09-16 13:58:24",
@@ -287,7 +307,8 @@
             "PROTOTYPE": "",
             "UXON": "{\"extend_widget\":{\"page_alias\":\"\"}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-16 14:03:13",
@@ -301,7 +322,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Tiles.php",
             "UXON": "{\"widget_type\":\"Tiles\",\"object_alias\":\"\",\"center_content\":true,\"widgets\":[{\"widget_type\":\"Tile\",\"title\":\"\",\"subtitle\":\"\",\"action\":{\"alias\":\"exface.Core.GoToPage\",\"page_alias\":\"\"},\"display_widget\":{\"widget_type\":\"KPI\",\"attribute_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}]}}},{\"widget_type\":\"Tile\",\"title\":\"\",\"subtitle\":\"\",\"action\":{\"alias\":\"exface.Core.GoToPage\",\"page_alias\":\"\"},\"display_widget\":{\"widget_type\":\"KPI\"}}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-16 14:08:11",
@@ -315,7 +337,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Tiles.php",
             "UXON": "{\"widget_type\":\"Tiles\",\"object_alias\":\"\",\"tiles\":[{\"icon\":\"\",\"show_icon\":true,\"action\":{\"alias\":\"\"}},{\"caption\":\"\",\"subtitle\":\"\",\"icon\":\"\",\"show_icon\":true,\"action\":{\"alias\":\"\"}}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-24 16:53:26",
@@ -329,7 +352,8 @@
             "PROTOTYPE": "exface\/UrlDataConnector\/Actions\/CallWebService.php",
             "UXON": "{\"alias\":\"exface.UrlDataConnector.CallWebService\",\"data_source_alias\":\"\",\"url\":\"\",\"method\":\"GET\",\"parameters\":[{\"name\":\"\",\"required\":true,\"data_type\":{\"alias\":\"exface.core.String\"}},{\"name\":\"\",\"data_type\":{\"alias\":\"exface.core.String\"}}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "action"
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-24 18:48:34",
@@ -343,7 +367,8 @@
             "PROTOTYPE": "exface\/UrlDataConnector\/Actions\/CallWebService.php",
             "UXON": "{\"alias\":\"exface.UrlDataConnector.CallWebService\",\"data_source_alias\":\"\",\"url\":\"\",\"method\":\"POST\",\"content_type\":\"application\\\/x-www-form-urlencoded\",\"parameters\":[{\"name\":\"\",\"required\":true,\"data_type\":{\"alias\":\"exface.core.String\"}},{\"name\":\"\",\"data_type\":{\"alias\":\"exface.core.String\"}}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "action"
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-24 19:00:05",
@@ -357,7 +382,8 @@
             "PROTOTYPE": "exface\/UrlDataConnector\/Actions\/CallWebService.php",
             "UXON": "{\"alias\":\"exface.UrlDataConnector.CallWebService\",\"data_source_alias\":\"\",\"url\":\"\",\"method\":\"POST\",\"content_type\":\"application\\\/json\",\"parameters\":[{\"name\":\"\",\"required\":true,\"data_type\":{\"alias\":\"exface.core.String\"}},{\"name\":\"\",\"data_type\":{\"alias\":\"exface.core.String\"}}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "action"
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-24 19:34:12",
@@ -371,7 +397,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/SplitVertical.php",
             "UXON": "{\"object_alias\":\"\",\"widget_type\":\"SplitVertical\",\"panels\":[{\"height\":\"50%\",\"widgets\":[{\"widget_type\":\"DataTable\",\"id\":\"master_table\",\"columns\":[{\"attribute_group_alias\":\"~VISIBLE\"}]}]},{\"widgets\":[{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\\\/\\\/ relation to master-table!\",\"comparator\":\"==\",\"value\":\"=master_table\",\"apply_on_change\":true,\"required\":true,\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_group_alias\":\"~VISIBLE\"}]}]}]}",
             "WRAP_PATH": "$.panels[0].widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-29 21:02:28",
@@ -385,7 +412,8 @@
             "PROTOTYPE": "exface\/Core\/DataConnectors\/MsSqlConnector.php",
             "UXON": "{\"serverName\":\"\",\"database\":\"\",\"CharacterSet\":\"UTF-8\",\"UID\":\"\",\"PWD\":\"\"}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "connection"
+            "UXON_SCHEMA": "connection",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-30 09:39:37",
@@ -399,7 +427,8 @@
             "PROTOTYPE": "exface\/Core\/DataConnectors\/MySqlConnector.php",
             "UXON": "{\"host\":\"\",\"dbase\":\"\",\"charset\":\"utf8\",\"user\":\"\",\"password\":\"\",\"relation_matcher\":\"\\\/(?<alias>(?<table>.*))_(?<key>id)\\\/i\"}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "connection"
+            "UXON_SCHEMA": "connection",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-30 09:48:35",
@@ -413,7 +442,8 @@
             "PROTOTYPE": "exface\/Core\/DataConnectors\/MySqlConnector.php",
             "UXON": "{\"host\":\"\",\"dbase\":\"\",\"charset\":\"utf8\",\"user\":\"\",\"password\":\"\"}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "connection"
+            "UXON_SCHEMA": "connection",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-09-30 09:50:15",
@@ -427,7 +457,8 @@
             "PROTOTYPE": "exface\/Core\/DataConnectors\/OracleSqlConnector.php",
             "UXON": "{\"host\":\"\",\"port\":\"\",\"sid\":\"\",\"user\":\"\",\"password\":\"\",\"character_set\":\"AL32UTF8\"}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "connection"
+            "UXON_SCHEMA": "connection",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-10-01 09:19:15",
@@ -441,7 +472,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
             "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"\",\"widgets\":[{\"widget_type\":\"\"}]},{\"caption\":\"\",\"widgets\":[{\"widget_type\":\"\"}]}]}]}",
             "WRAP_PATH": "$.widgets[0].tabs[0].widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-10-01 09:32:08",
@@ -455,7 +487,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/WidgetGroup.php",
             "UXON": "{\"widget_type\":\"WidgetGroup\",\"caption\":\"\",\"widgets\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-10-01 09:32:43",
@@ -469,7 +502,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/WidgetGroup.php",
             "UXON": "{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-10-01 09:33:31",
@@ -483,7 +517,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/WidgetGroup.php",
             "UXON": "{\"widget_type\":\"WidgetGroup\",\"width\":2,\"columns_in_grid\":2,\"widgets\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-10-01 19:05:45",
@@ -497,7 +532,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/ColorIndicator.php",
             "UXON": "{\"widget_type\":\"ColorIndicator\",\"attribute_alias\":\"\",\"color_scale\":{\"10\":\"red\",\"20\":\"yellow\",\"99\":\"\",\"100\":\"green\"}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-10-01 19:07:02",
@@ -511,7 +547,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/ColorIndicator.php",
             "UXON": "{\"widget_type\":\"ColorIndicator\",\"attribute_alias\":\"\",\"color_only\":true,\"color_scale\":{\"99\":\"green\",\"299\":\"yellow\",\"300\":\"red\"}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-10-01 19:09:17",
@@ -525,7 +562,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/ColorIndicator.php",
             "UXON": "{\"widget_type\":\"ColorIndicator\",\"attribute_alias\":\"\",\"fill\":true,\"color_only\":false,\"color_scale\":{\"Pending\":\"yellow\",\"Error\":\"red\",\"Done\":\"green\",\"\":\"transparent\"}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-10-02 09:05:10",
@@ -539,7 +577,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
             "UXON": "{\"widget_type\":\"Dialog\",\"object_alias\":\"\",\"width\":1,\"columns_in_grid\":1,\"height\":\"auto\",\"maximized\":false,\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}],\"buttons\":[{\"action_alias\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-10-18 08:25:33",
@@ -553,7 +592,8 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/StringDataType.php",
             "UXON": "{\"length_min\":\"\",\"length_max\":\"\"}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "datatype"
+            "UXON_SCHEMA": "datatype",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-10-24 10:17:49",
@@ -567,11 +607,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
             "UXON": "{\"widget_type\":\"Dialog\",\"object_alias\":\"\",\"widgets\":[{\"\":\"\"}],\"buttons\":[{\"\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-11-06 15:44:24",
-            "MODIFIED_ON": "2019-11-06 15:44:24",
+            "MODIFIED_ON": "2020-11-23 15:43:35",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea00ac099a5d5fb7580205857feb80",
@@ -581,7 +622,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Console.php",
             "UXON": "{\"disabled\":true,\"widget_type\":\"Console\",\"start_commands\":[\"\"],\"working_directory_path\":\"\"}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/console.gif"
         },
         {
             "CREATED_ON": "2019-11-07 12:47:26",
@@ -595,11 +637,12 @@
             "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
             "UXON": "{\"icon\":\"fa fa-terminal\",\"widget\":{\"widgets\":[{\"disabled\":true,\"widget_type\":\"Console\",\"start_commands\":[\"\"],\"working_directory_path\":\"\"}]}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "action"
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-11-08 10:19:42",
-            "MODIFIED_ON": "2020-07-06 10:17:02",
+            "MODIFIED_ON": "2020-11-23 15:57:19",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea0210f85935adb7580205857feb80",
@@ -609,11 +652,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/SplitHorizontal.php",
             "UXON": "{\"object_alias\":\"\",\"widget_type\":\"SplitHorizontal\",\"panels\":[{\"width\":\"60%\",\"widgets\":[{\"widget_type\":\"SplitVertical\",\"panels\":[{\"height\":\"218px\",\"widgets\":[{\"widget_type\":\"Tiles\",\"tiles\":[{\"widget_type\":\"Tile\",\"title\":\"\",\"display_widget\":{\"attribute_alias\":\"\",\"widget_type\":\"KPI\"}}]}]},{\"height\":\"33%\",\"caption\":\"Table or Chart\",\"widgets\":[]},{\"caption\":\"Table or Chart\",\"widgets\":[]}]}]},{\"widgets\":[{\"widget_type\":\"SplitVertical\",\"panels\":[{\"caption\":\"Chart 1\",\"height\":\"33%\",\"widgets\":[[]]},{\"caption\":\"Chart 2\",\"height\":\"33%\",\"widgets\":[]},{\"caption\":\"Chart 3\",\"widgets\":[]}]}]}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/split_dashboard_tiles.gif"
         },
         {
             "CREATED_ON": "2019-11-08 16:03:44",
-            "MODIFIED_ON": "2020-07-06 10:14:43",
+            "MODIFIED_ON": "2020-11-23 15:55:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea0241063df806b7580205857feb80",
@@ -623,11 +667,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/SplitVertical.php",
             "UXON": "{\"object_alias\":\"\",\"widget_type\":\"SplitVertical\",\"panels\":[{\"height\":\"50%\",\"widgets\":[{\"widget_type\":\"SplitHorizontal\",\"panels\":[{\"width\":\"33%\",\"widgets\":[]},{\"widgets\":[]},{\"width\":\"33%\",\"widgets\":[]}]}]},{\"widgets\":[{\"widget_type\":\"SplitHorizontal\",\"panels\":[{\"width\":\"33%\",\"widgets\":[]},{\"widgets\":[]},{\"width\":\"33%\",\"widgets\":[]}]}]}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/split_3x2.gif"
         },
         {
             "CREATED_ON": "2019-11-08 16:06:18",
-            "MODIFIED_ON": "2019-11-08 16:13:54",
+            "MODIFIED_ON": "2020-11-23 15:31:42",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea02416230aefeb7580205857feb80",
@@ -637,11 +682,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
             "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}]},\"series\":[{\"type\":\"column\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_column.gif"
         },
         {
             "CREATED_ON": "2019-11-08 16:06:43",
-            "MODIFIED_ON": "2019-11-08 16:13:40",
+            "MODIFIED_ON": "2020-11-23 11:51:43",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea024170f83054b7580205857feb80",
@@ -651,11 +697,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
             "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}]},\"series\":[{\"type\":\"bar\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_bar.gif"
         },
         {
             "CREATED_ON": "2019-11-08 16:10:24",
-            "MODIFIED_ON": "2019-11-08 16:13:47",
+            "MODIFIED_ON": "2020-11-23 11:52:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea0241f45acb2cb7580205857feb80",
@@ -665,11 +712,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
             "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"series\":[{\"type\":\"bar\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}],\"axis_y\":[{\"attribute_alias\":\"\",\"hide_caption\":true}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_bar_no_caption.gif"
         },
         {
             "CREATED_ON": "2019-11-08 16:12:46",
-            "MODIFIED_ON": "2019-11-08 16:12:46",
+            "MODIFIED_ON": "2020-11-23 15:16:32",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea0242493a2ec8b7580205857feb80",
@@ -679,11 +727,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
             "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"series\":[{\"type\":\"column\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\",\"stacked\":true},{\"type\":\"column\",\"y_attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_column_stacked.gif"
         },
         {
             "CREATED_ON": "2019-11-08 16:14:46",
-            "MODIFIED_ON": "2019-11-08 16:16:11",
+            "MODIFIED_ON": "2020-11-23 15:12:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea024290d02d53b7580205857feb80",
@@ -693,11 +742,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
             "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}]},\"series\":[{\"type\":\"pie\",\"value_attribute_alias\":\"\",\"text_attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_pie.gif"
         },
         {
             "CREATED_ON": "2019-11-08 16:16:00",
-            "MODIFIED_ON": "2019-11-08 16:18:46",
+            "MODIFIED_ON": "2020-11-23 15:12:33",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea0242bcb1af1cb7580205857feb80",
@@ -707,11 +757,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
             "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"hide_header\":true,\"hide_footer\":true,\"data\":{\"filters\":[{\"attribute_alias\":\"\"}]},\"series\":[{\"type\":\"pie\",\"value_attribute_alias\":\"\",\"text_attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_pie_no_header.gif"
         },
         {
             "CREATED_ON": "2019-11-08 16:18:24",
-            "MODIFIED_ON": "2019-11-08 16:18:24",
+            "MODIFIED_ON": "2020-11-23 15:12:46",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea02431295d6cab7580205857feb80",
@@ -721,7 +772,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
             "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"aggregate_by_attribute_alias\":[\"\"]},\"series\":[{\"type\":\"pie\",\"value_attribute_alias\":\"\",\"text_attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_pie.gif"
         },
         {
             "CREATED_ON": "2019-11-26 13:47:30",
@@ -735,7 +787,8 @@
             "PROTOTYPE": "exface\/Core\/Behaviors\/CallActionBehavior.php",
             "UXON": "{\"event_alias\":\"\",\"action\":{\"alias\":\"\"}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "behavior"
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-11-26 13:57:41",
@@ -749,7 +802,8 @@
             "PROTOTYPE": "exface\/Core\/Actions\/CustomDataSourceQuery.php",
             "UXON": "{\"alias\":\"exface.Core.CustomDataSourceQuery\",\"data_source\":\"my_sql_source_alias\",\"queries\":[\"UPDATE table1 WHERE ...\",\"UPDATE table2 WHERE ...\"]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "action"
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-11-26 14:01:48",
@@ -763,7 +817,8 @@
             "PROTOTYPE": "exface\/Core\/Actions\/CustomDataSourceQuery.php",
             "UXON": "{\"alias\":\"exface.Core.CustomDataSourceQuery\",\"data_source\":\"\",\"input_object_alias\":\"\",\"queries\":[\"UPDATE table1 WHERE id = [#ID#]\",\"UPDATE table2 WHERE foreign_key = [#ID#]\"]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "action"
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-12-09 13:17:55",
@@ -777,7 +832,8 @@
             "PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
             "UXON": "{\"input_object_alias\":\"\",\"icon\":\"\",\"input_data_sheet\":{\"object_alias\":\"\",\"columns\":[{\"attribute_alias\":\"\",\"formula\":\"=1\"},{\"attribute_alias\":\"\",\"formula\":\"=NOW()\"}]}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "action"
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-12-09 13:19:14",
@@ -791,7 +847,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Filter.php",
             "UXON": "{\"attribute_alias\":\"\"}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-12-09 13:21:19",
@@ -805,7 +862,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Filter.php",
             "UXON": "{\"caption\":\"\",\"condition_group\":{\"operator\":\"OR\",\"conditions\":[{\"expression\":\"\",\"value\":\"[#value#]\",\"comparator\":\"=\"},{\"expression\":\"\",\"value\":99,\"comparator\":\"==\"}]}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-12-15 20:30:21",
@@ -819,11 +877,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Wizard.php",
             "UXON": "{\"widget_type\":\"Wizard\",\"object_alias\":\"\",\"steps\":[{\"caption\":\"Step 1\",\"intro\":\"Please fill out the form!\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}]},{\"caption\":\"Step 2\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}],\"buttons\":[{\"action_alias\":\"exface.Core.CreateData\",\"visibility\":\"promoted\"},{\"go_to_step\":\"previous\"}]}]}",
             "WRAP_PATH": "$.steps[0].widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2019-12-25 22:35:15",
-            "MODIFIED_ON": "2019-12-25 22:35:15",
+            "MODIFIED_ON": "2020-11-23 15:31:24",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea2766d0d491679442e4b318306b9a",
@@ -833,11 +892,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/InlineGroup.php",
             "UXON": "{\"widget_type\":\"InlineGroup\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\",\"width\":\"25%\"}]}",
             "WRAP_PATH": "$.widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/inline_value_unit.gif"
         },
         {
             "CREATED_ON": "2019-12-25 22:38:58",
-            "MODIFIED_ON": "2019-12-25 22:38:59",
+            "MODIFIED_ON": "2020-11-23 15:25:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea2767560c809b9442e4b318306b9a",
@@ -847,11 +907,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/InlineGroup.php",
             "UXON": "{\"widget_type\":\"InlineGroup\",\"caption\":\"\",\"separator\":\"x\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/inline_dimensions.gif"
         },
         {
             "CREATED_ON": "2020-01-14 10:54:12",
-            "MODIFIED_ON": "2020-01-14 10:54:12",
+            "MODIFIED_ON": "2020-11-23 15:16:16",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea36bc24652a25b32f0205857feb80",
@@ -861,11 +922,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
             "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}]},\"series\":[{\"type\":\"line\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_line.gif"
         },
         {
             "CREATED_ON": "2020-01-14 10:54:40",
-            "MODIFIED_ON": "2020-01-14 10:54:40",
+            "MODIFIED_ON": "2020-11-23 15:06:19",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea36bc35720aa3b32f0205857feb80",
@@ -875,11 +937,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
             "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}]},\"series\":[{\"type\":\"area\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_area.gif"
         },
         {
             "CREATED_ON": "2020-01-14 10:55:12",
-            "MODIFIED_ON": "2020-01-14 10:55:12",
+            "MODIFIED_ON": "2020-11-23 15:16:05",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea36bc4843e2cfb32f0205857feb80",
@@ -889,7 +952,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
             "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}]},\"series\":[{\"type\":\"spline\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_spline.gif"
         },
         {
             "CREATED_ON": "2020-01-20 09:20:12",
@@ -903,7 +967,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
             "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO MASTER OBJECT\",\"comparator\":\"==\",\"required\":true,\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-02-08 09:33:38",
@@ -917,7 +982,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTree.php",
             "UXON": "{\"widget_type\":\"DataTree\",\"object_alias\":\"\",\"tree_parent_id_attribute_alias\":\"\",\"tree_folder_flag_attribute_alias\":\"\",\"lazy_load_tree_levels\":true,\"tree_root_uid\":\"NULL\",\"filters\":[{\"attribute_alias\":\"\"}],\"columns\":[{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-02-08 09:48:43",
@@ -931,11 +997,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTree.php",
             "UXON": "{\"widget_type\":\"DataTree\",\"object_alias\":\"\",\"tree_parent_id_attribute_alias\":\"\",\"tree_folder_flag_attribute_alias\":\"\",\"paginate\":false,\"lazy_load_tree_levels\":false,\"columns\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-02-11 08:02:21",
-            "MODIFIED_ON": "2020-02-11 08:42:24",
+            "MODIFIED_ON": "2020-11-23 12:13:12",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4ca4c340f1a8b2cfe4b318306b9a",
@@ -945,11 +1012,12 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
             "UXON": "{\"object_alias\":\"\",\"widget_type\":\"Chart\",\"hide_legend\":true,\"data\":{\"paginate\":false},\"axis_y\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"axis_x\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"series\":[{\"type\":\"heatmap\",\"value_attribute_alias\":\"\",\"x_axis_no\":0,\"y_axis_no\":0,\"color_scale\":{\"colors\":[\"#36a832\",\"#ffe921\",\"red\"]}}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_heatmap.gif"
         },
         {
             "CREATED_ON": "2020-02-11 08:40:03",
-            "MODIFIED_ON": "2020-02-11 08:40:03",
+            "MODIFIED_ON": "2020-11-23 12:13:24",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4caa070de1e9b2cfe4b318306b9a",
@@ -959,7 +1027,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
             "UXON": "{\"object_alias\":\"\",\"widget_type\":\"Chart\",\"hide_legend\":true,\"data\":{\"paginate\":false},\"axis_y\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"axis_x\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"series\":[{\"type\":\"heatmap\",\"value_attribute_alias\":\"\",\"x_axis_no\":0,\"y_axis_no\":0,\"color_scale\":{\"use_color_groups\":2,\"min\":0,\"max\":20,\"colors\":[\"#36a832\",\"#ffe921\",\"red\"]}}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_heatmap_discrete.gif"
         },
         {
             "CREATED_ON": "2020-02-11 08:41:19",
@@ -973,7 +1042,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
             "UXON": "{\"object_alias\":\"\",\"widget_type\":\"Chart\",\"hide_legend\":true,\"data\":{\"paginate\":false},\"axis_y\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"axis_x\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"series\":[{\"type\":\"heatmap\",\"value_attribute_alias\":\"\",\"x_axis_no\":0,\"y_axis_no\":0,\"color_scale\":{\"colors\":[\"#36a832\",\"#ffe921\",\"red\"]}}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-03-19 17:44:59",
@@ -987,7 +1057,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/FileList.php",
             "UXON": "{\"widget_type\":\"FileList\",\"object_alias\":\"\",\"filename_attribute_alias\":\"\",\"mime_type_attribute_alias\":\"\"}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-03-19 17:46:03",
@@ -1001,7 +1072,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/FileList.php",
             "UXON": "{\"widget_type\":\"FileList\",\"object_alias\":\"\",\"filename_attribute_alias\":\"\",\"mime_type_attribute_alias\":\"\",\"file_content_attribute_alias\":\"\",\"upload_enabled\":true,\"upload_options\":{\"allowed_mime_types\":[\"application\\\/pdf\"]}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-03-19 20:23:49",
@@ -1015,7 +1087,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/FileList.php",
             "UXON": "{\"widget_type\":\"FileList\",\"object_alias\":\"\",\"filename_attribute_alias\":\"\",\"mime_type_attribute_alias\":\"\",\"file_content_attribute_alias\":\"\",\"upload_enabled\":true,\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO MASTER OBJECT!\",\"required\":true,\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO MASTER OBJECT!\",\"hidden\":true,\"value\":\"=widget_link_to_id_of_master_object\"}]}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-04-21 07:13:34",
@@ -1029,7 +1102,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
             "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE with UID of main object\",\"id\":\"uid_field\"},{\"attribute_alias\":\"\"},{\"caption\":\"\\\/\\\/ REPLACE with table caption\",\"widget_type\":\"DataTableResponsive\",\"object_alias\":\"\\\/\\\/ REPLACE with child object alias\",\"width\":\"max\",\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE with relation to main object\",\"required\":true,\"value\":\"=uid_field\",\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_group_alias\":\"~VISIBLE\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\",\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')\"}]}]}",
             "WRAP_PATH": "$.widgets[1]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-05-15 09:35:39",
@@ -1043,7 +1117,8 @@
             "PROTOTYPE": "exface\/Core\/Behaviors\/AliasGeneratingBehavior.php",
             "UXON": "{\"source_attribute_alias\":\"\",\"target_attribute_alias\":\"\"}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "behavior"
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-05-15 09:37:06",
@@ -1057,7 +1132,8 @@
             "PROTOTYPE": "exface\/Core\/Behaviors\/AliasGeneratingBehavior.php",
             "UXON": "{\"target_attribute_alias\":\"\",\"namespace_attribute_alias\":\"\",\"source_attribute_alias\":\"\",\"case\":\"lower\",\"replace_characters\":{\" \":\"-\"}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "behavior"
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-05-20 13:07:56",
@@ -1071,7 +1147,8 @@
             "PROTOTYPE": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
             "UXON": "{\"compare_attributes\":[\"\"],\"on_duplicate_single_row\":\"update\",\"on_duplicate_multi_row\":\"update\"}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "behavior"
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-05-20 13:10:49",
@@ -1085,7 +1162,8 @@
             "PROTOTYPE": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
             "UXON": "{\"compare_attributes\":[\"\"],\"duplicate_error_code\":\"\"}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "behavior"
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-05-20 13:12:46",
@@ -1099,7 +1177,8 @@
             "PROTOTYPE": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
             "UXON": "{\"compare_attributes\":[\"\"],\"on_duplicate_single_row\":\"error\",\"on_duplicate_multi_row\":\"ignore\"}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "behavior"
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-05-20 16:17:53",
@@ -1113,7 +1192,8 @@
             "PROTOTYPE": "exface\/Core\/Behaviors\/UndeletableBehavior.php",
             "UXON": "{\"condition_group\":{\"operator\":\"AND\",\"conditions\":[{\"expression\":\"UID\",\"comparator\":\"[\",\"value\":\"\"}]}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "behavior"
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-05-20 16:21:59",
@@ -1127,7 +1207,8 @@
             "PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
             "UXON": "{\"input_rows_min\":1,\"icon\":\"\",\"input_mapper\":{\"column_to_column_mappings\":[{\"from\":\"=0\",\"to\":\"\"}]}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "action"
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-05-22 10:45:03",
@@ -1141,7 +1222,8 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/EncryptedDataType.php",
             "UXON": "{\"inner_data_type\":\"\"}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "datatype"
+            "UXON_SCHEMA": "datatype",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-06-11 14:26:10",
@@ -1155,21 +1237,23 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Dashboard.php",
             "UXON": "{\"widget_type\":\"Dashboard\",\"object_alias\":\"\",\"widgets\":[{\"widget_type\":\"DataTable\",\"width\":1,\"height\":10,\"columns\":[{\"attribute_alias\":\"\"}]},{\"widget_type\":\"Chart\",\"width\":1,\"height\":10,\"series\":[{\"type\":\"line\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}]}",
             "WRAP_PATH": "$.widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-06-11 14:57:26",
-            "MODIFIED_ON": "2020-06-11 14:57:26",
+            "MODIFIED_ON": "2020-11-23 16:00:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eabe4add437650be4a0205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Card with caption",
             "DESCRIPTION": "Simple card a caption. Can be used as wrapper.",
-            "PROTOTYPE": "exface\/Core\/Widgets\/WidgetGroup.php",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Card.php",
             "UXON": "{\"widget_type\":\"Card\",\"caption\":\"\",\"widgets\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": ""
         },
         {
             "CREATED_ON": "2020-07-15 09:53:13",
@@ -1183,7 +1267,8 @@
             "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
             "UXON": "{\"alias\":\"exface.Core.ShowDialog\",\"input_rows_min\":1,\"widget\":{\"widget_type\":\"Dialog\",\"object_alias\":\"\",\"columns_in_grid\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE with relation to input object - e.g. USER\",\"widget_type\":\"InputComboTable\",\"multi_select\":true,\"disabled\":true},{\"attribute_alias\":\"\\\/\\\/ REPLACE with relation to other object - e.g. ROLE\"}],\"buttons\":[{\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')\",\"icon\":\"plus\",\"action_alias\":\"exface.Core.CreateData\",\"visibility\":\"promoted\",\"align\":\"opposite\"}]}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "action"
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-07-15 09:56:38",
@@ -1197,7 +1282,8 @@
             "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
             "UXON": "{\"alias\":\"exface.Core.ShowDialog\",\"input_rows_min\":1,\"widget\":{\"widget_type\":\"Dialog\",\"object_alias\":\"\",\"columns_in_grid\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE with relation to input object - e.g. USER\",\"widget_type\":\"InputComboTable\",\"multi_select\":true,\"disabled\":true},{\"attribute_alias\":\"\\\/\\\/ REPLACE with relation to other object - e.g. ROLE\"}],\"buttons\":[{\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')\",\"icon\":\"minus\",\"visibility\":\"promoted\",\"align\":\"opposite\",\"action\":{\"alias\":\"exface.Core.DeleteObject\",\"object_alias\":\"exface.Core.PAGE_GROUP_PAGES\",\"input_mapper\":{\"column_to_filter_mappings\":[{\"from\":\"\\\/\\\/ REPLACE with relation to input object - e.g. USER\",\"to\":\"\\\/\\\/ REPLACE with relation to input object - e.g. USER\",\"comparator\":\"[\"},{\"from\":\"\\\/\\\/ REPLACE with relation to other object - e.g. ROLE\",\"to\":\"\\\/\\\/ REPLACE with relation to other object - e.g. ROLE\",\"comparator\":\"==\"}]}}}]}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "action"
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-07-15 09:59:35",
@@ -1211,7 +1297,8 @@
             "PROTOTYPE": "exface\/Core\/Actions\/ShowMassEditDialog.php",
             "UXON": "{\"alias\":\"exface.Core.ShowMassEditDialog\",\"widget\":{\"widget_type\":\"Dialog\",\"columns_in_grid\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"\"}]}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "action"
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-10-14 09:18:47",
@@ -1225,7 +1312,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Tile.php",
             "UXON": "{\"widget_type\":\"KPI\",\"object_alias\":\"\",\"attribute_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}]}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-10-14 09:20:53",
@@ -1239,7 +1327,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/Container.php",
             "UXON": "{\"widget_type\":\"Container\",\"object_alias\":\"\",\"widgets\":[{\"widget_type\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-10-27 07:51:05",
@@ -1253,7 +1342,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/DataCarousel.php",
             "UXON": "{\"widget_type\":\"DataCarousel\",\"data\":{\"widget_type\":\"DataTableResponsive\",\"paginate\":false,\"columns\":[{\"attribute_alias\":\"\"}]},\"details\":{\"widget_type\":\"Form\",\"widgets\":[{\"attribute_alias\":\"\"}]}}",
             "WRAP_PATH": "$.data",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-10-28 15:53:12",
@@ -1267,7 +1357,8 @@
             "PROTOTYPE": "exface\/Core\/Actions\/GoToUrl.php",
             "UXON": "{\"alias\":\"exface.Core.GoToUrl\",\"url\":\"https:\\\/\\\/yourdomain.com\\\/[#your_data_column#]\",\"input_rows_min\":1,\"input_rows_max\":1}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "action"
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-10-28 15:54:36",
@@ -1281,7 +1372,8 @@
             "PROTOTYPE": "exface\/Core\/Actions\/GoToUrl.php",
             "UXON": "{\"alias\":\"exface.Core.GoToUrl\",\"url\":\"\",\"open_in_new_window\":true}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "action"
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-10-28 15:59:54",
@@ -1295,7 +1387,8 @@
             "PROTOTYPE": "exface\/Core\/Actions\/GoToUrl.php",
             "UXON": "{\"alias\":\"exface.Core.GoToUrl\",\"url\":\"[#url#]\",\"urlencode_placeholders\":false,\"input_rows_min\":1,\"input_rows_max\":1}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "action"
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-11-11 07:56:39",
@@ -1309,7 +1402,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/PDFViewer.php",
             "UXON": "{\"widget_type\":\"PDFViewer\",\"attribute_alias\":\"\",\"download_enabled\":true,\"filename_attribute_alias\":\"\"}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-11-11 07:58:16",
@@ -1323,11 +1417,12 @@
             "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
             "UXON": "{\"maximize\":true,\"input_rows_min\":1,\"input_rows_max\":1,\"widget\":{\"widget_type\":\"PDFViewer\",\"attribute_alias\":\"\",\"download_enabled\":true,\"filename_attribute_alias\":\"\"}}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "action"
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-11-19 15:49:30",
-            "MODIFIED_ON": "2020-11-19 15:49:30",
+            "MODIFIED_ON": "2020-11-23 15:25:20",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebb00bd018fd10b00b025041000001",
@@ -1337,7 +1432,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/InlineGroup.php",
             "UXON": "{\"widget_type\":\"InlineGroup\",\"caption\":\"\",\"separator\":\"-\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
-            "UXON_SCHEMA": "widget"
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/inline_range.gif"
         },
         {
             "CREATED_ON": "2020-11-20 12:47:12",
@@ -1351,7 +1447,8 @@
             "PROTOTYPE": "exface\/Core\/Behaviors\/TimeStampingBehavior.php",
             "UXON": "{\"created_on_attribute_alias\":\"\",\"updated_on_attribute_alias\":\"\",\"check_for_conflicts_on_update\":true}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "behavior"
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": null
         },
         {
             "CREATED_ON": "2020-11-20 12:48:18",
@@ -1365,7 +1462,8 @@
             "PROTOTYPE": "exface\/Core\/Behaviors\/TimeStampingBehavior.php",
             "UXON": "{\"created_on_attribute_alias\":\"\",\"created_by_attribute_alias\":\"\",\"updated_on_attribute_alias\":\"\",\"updated_by_attribute_alias\":\"\",\"check_for_conflicts_on_update\":true}",
             "WRAP_PATH": "",
-            "UXON_SCHEMA": "behavior"
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": null
         }
     ],
     "totals_rows": [],
