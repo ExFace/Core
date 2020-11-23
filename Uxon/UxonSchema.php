@@ -875,7 +875,7 @@ class UxonSchema implements UxonSchemaInterface
         $presets = [];
         
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.' . strtoupper($this::getSchemaName()) . '_PRESET');
-        $ds->getColumns()->addMultiple(['UID','NAME', 'PROTOTYPE__LABEL', 'DESCRIPTION', 'PROTOTYPE', 'UXON' , 'WRAP_PATH', 'WRAP_FLAG']);
+        $ds->getColumns()->addMultiple(['UID','NAME', 'PROTOTYPE__LABEL', 'DESCRIPTION', 'PROTOTYPE', 'UXON' , 'WRAP_PATH', 'WRAP_FLAG', 'THUMBNAIL']);
         $ds->getFilters()->addConditionFromString('UXON_SCHEMA', $this::getSchemaName());
         $ds->getSorters()
         ->addFromString('PROTOTYPE', SortingDirectionsDataType::ASC)
