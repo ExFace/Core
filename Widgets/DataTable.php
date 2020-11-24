@@ -161,7 +161,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *
      * @uxon-property row_details
      * @uxon-type \exface\Core\Widgets\Container
-     * @uxon-template {"height": "", "widgets": [{"widget_type": ""}]}
+     * @uxon-template {"height": "", "widgets": [{"": ""}]}
      *
      * @param UxonObject $detail_widget
      * @return boolean
