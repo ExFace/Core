@@ -72,7 +72,7 @@
         },
         {
             "CREATED_ON": "2019-09-01 19:11:24",
-            "MODIFIED_ON": "2019-09-01 19:11:24",
+            "MODIFIED_ON": "2020-11-24 09:55:44",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9ccec3bd87a27ad7fe4b318306b9a",
@@ -83,7 +83,7 @@
             "UXON": "{\"widget_type\":\"NavTiles\",\"object_alias\":\"exface.Core.PAGE\"}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/tile_menu_2.gif"
         },
         {
             "CREATED_ON": "2019-09-03 15:12:00",
@@ -117,7 +117,7 @@
         },
         {
             "CREATED_ON": "2019-09-03 15:26:41",
-            "MODIFIED_ON": "2019-09-24 11:57:02",
+            "MODIFIED_ON": "2020-11-24 10:10:38",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9ce5f241fc2d5ad7fe4b318306b9a",
@@ -128,11 +128,11 @@
             "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"columns\":[{\"attribute_group_alias\":\"~VISIBLE\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"visibility\":\"optional\"}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_simple.gif"
         },
         {
             "CREATED_ON": "2019-09-03 15:29:40",
-            "MODIFIED_ON": "2019-09-04 16:54:15",
+            "MODIFIED_ON": "2020-11-24 10:10:52",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9ce5f8e5aed6dad7fe4b318306b9a",
@@ -143,7 +143,7 @@
             "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\"}],\"columns\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"visibility\":\"optional\"}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_filters_sorters_buttons.gif"
         },
         {
             "CREATED_ON": "2019-09-03 15:48:44",
@@ -177,7 +177,7 @@
         },
         {
             "CREATED_ON": "2019-09-04 15:43:09",
-            "MODIFIED_ON": "2020-04-21 07:00:56",
+            "MODIFIED_ON": "2020-11-24 09:54:48",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9cf2a95a0bf9aad7fe4b318306b9a",
@@ -188,7 +188,7 @@
             "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"General\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"caption\":\"Details\",\"widgets\":[{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO MASTER OBJECT\",\"comparator\":\"==\",\"required\":true,\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_alias\":\"\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"visibility\":\"optional\"}]}]}]}]}",
             "WRAP_PATH": "$.widgets[0].tabs[0].widgets[0]",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/dialog_with_child_tabs.gif"
         },
         {
             "CREATED_ON": "2019-09-04 16:50:45",
@@ -207,7 +207,7 @@
         },
         {
             "CREATED_ON": "2019-09-04 16:52:32",
-            "MODIFIED_ON": "2019-09-04 16:54:08",
+            "MODIFIED_ON": "2020-11-24 10:12:49",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9cf344661cdbead7fe4b318306b9a",
@@ -218,11 +218,11 @@
             "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"paginate\":false,\"columns\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_no_pagination.gif"
         },
         {
             "CREATED_ON": "2019-09-04 16:54:01",
-            "MODIFIED_ON": "2019-09-04 16:54:01",
+            "MODIFIED_ON": "2020-11-24 10:13:01",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9cf347b7473a8ad7fe4b318306b9a",
@@ -233,11 +233,11 @@
             "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"paginator\":{\"count_all_rows\":false},\"columns\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_no_count.gif"
         },
         {
             "CREATED_ON": "2019-09-04 16:57:20",
-            "MODIFIED_ON": "2019-09-04 16:57:20",
+            "MODIFIED_ON": "2020-11-24 09:55:54",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9cf34f228ce94ad7fe4b318306b9a",
@@ -248,7 +248,7 @@
             "UXON": "{\"widget_type\":\"NavTiles\",\"object_alias\":\"exface.Core.PAGE\",\"depth\":1}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/tile_menu_1.gif"
         },
         {
             "CREATED_ON": "2019-09-04 19:42:28",
@@ -312,7 +312,7 @@
         },
         {
             "CREATED_ON": "2019-09-16 14:03:13",
-            "MODIFIED_ON": "2020-10-14 09:16:22",
+            "MODIFIED_ON": "2020-11-24 09:55:16",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9d88a5a8524a2ad7fe4b318306b9a",
@@ -323,11 +323,11 @@
             "UXON": "{\"widget_type\":\"Tiles\",\"object_alias\":\"\",\"center_content\":true,\"widgets\":[{\"widget_type\":\"Tile\",\"title\":\"\",\"subtitle\":\"\",\"action\":{\"alias\":\"exface.Core.GoToPage\",\"page_alias\":\"\"},\"display_widget\":{\"widget_type\":\"KPI\",\"attribute_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}]}}},{\"widget_type\":\"Tile\",\"title\":\"\",\"subtitle\":\"\",\"action\":{\"alias\":\"exface.Core.GoToPage\",\"page_alias\":\"\"},\"display_widget\":{\"widget_type\":\"KPI\"}}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/tiles_kpi_centered.gif"
         },
         {
             "CREATED_ON": "2019-09-16 14:08:11",
-            "MODIFIED_ON": "2019-09-16 14:19:59",
+            "MODIFIED_ON": "2020-11-24 09:55:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9d88b0c200e3ead7fe4b318306b9a",
@@ -338,7 +338,7 @@
             "UXON": "{\"widget_type\":\"Tiles\",\"object_alias\":\"\",\"tiles\":[{\"icon\":\"\",\"show_icon\":true,\"action\":{\"alias\":\"\"}},{\"caption\":\"\",\"subtitle\":\"\",\"icon\":\"\",\"show_icon\":true,\"action\":{\"alias\":\"\"}}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/tile_menu_custom.gif"
         },
         {
             "CREATED_ON": "2019-09-24 16:53:26",
@@ -462,7 +462,7 @@
         },
         {
             "CREATED_ON": "2019-10-01 09:19:15",
-            "MODIFIED_ON": "2020-04-21 07:00:46",
+            "MODIFIED_ON": "2020-11-23 21:51:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e42c876a28ddbacde4b318306b9a",
@@ -473,7 +473,7 @@
             "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"\",\"widgets\":[{\"widget_type\":\"\"}]},{\"caption\":\"\",\"widgets\":[{\"widget_type\":\"\"}]}]}]}",
             "WRAP_PATH": "$.widgets[0].tabs[0].widgets[0]",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/dialog_with_tabs.gif"
         },
         {
             "CREATED_ON": "2019-10-01 09:32:08",
@@ -522,7 +522,7 @@
         },
         {
             "CREATED_ON": "2019-10-01 19:05:45",
-            "MODIFIED_ON": "2019-10-02 09:01:25",
+            "MODIFIED_ON": "2020-11-23 17:51:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e47e7544f531bacde4b318306b9a",
@@ -533,11 +533,11 @@
             "UXON": "{\"widget_type\":\"ColorIndicator\",\"attribute_alias\":\"\",\"color_scale\":{\"10\":\"red\",\"20\":\"yellow\",\"99\":\"\",\"100\":\"green\"}}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/colorindicator_num.gif"
         },
         {
             "CREATED_ON": "2019-10-01 19:07:02",
-            "MODIFIED_ON": "2019-10-01 19:20:38",
+            "MODIFIED_ON": "2020-11-23 17:51:36",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e47ea3a711a9bacde4b318306b9a",
@@ -548,11 +548,11 @@
             "UXON": "{\"widget_type\":\"ColorIndicator\",\"attribute_alias\":\"\",\"color_only\":true,\"color_scale\":{\"99\":\"green\",\"299\":\"yellow\",\"300\":\"red\"}}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/colorindicator_color.gif"
         },
         {
             "CREATED_ON": "2019-10-01 19:09:17",
-            "MODIFIED_ON": "2020-07-07 08:14:36",
+            "MODIFIED_ON": "2020-11-23 17:51:46",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e47ef3ad6205bacde4b318306b9a",
@@ -563,11 +563,11 @@
             "UXON": "{\"widget_type\":\"ColorIndicator\",\"attribute_alias\":\"\",\"fill\":true,\"color_only\":false,\"color_scale\":{\"Pending\":\"yellow\",\"Error\":\"red\",\"Done\":\"green\",\"\":\"transparent\"}}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/colorindicator_text.gif"
         },
         {
             "CREATED_ON": "2019-10-02 09:05:10",
-            "MODIFIED_ON": "2019-10-24 10:17:08",
+            "MODIFIED_ON": "2020-11-23 21:51:42",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e4f3b8943b99bacde4b318306b9a",
@@ -578,7 +578,7 @@
             "UXON": "{\"widget_type\":\"Dialog\",\"object_alias\":\"\",\"width\":1,\"columns_in_grid\":1,\"height\":\"auto\",\"maximized\":false,\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}],\"buttons\":[{\"action_alias\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/dialog_small.gif"
         },
         {
             "CREATED_ON": "2019-10-18 08:25:33",
@@ -597,7 +597,7 @@
         },
         {
             "CREATED_ON": "2019-10-24 10:17:49",
-            "MODIFIED_ON": "2019-10-24 10:18:14",
+            "MODIFIED_ON": "2020-11-23 21:53:05",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9f6477e587f6fb2ce0205857feb80",
@@ -608,7 +608,7 @@
             "UXON": "{\"widget_type\":\"Dialog\",\"object_alias\":\"\",\"widgets\":[{\"\":\"\"}],\"buttons\":[{\"\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/dialog_empty.gif"
         },
         {
             "CREATED_ON": "2019-11-06 15:44:24",
@@ -957,7 +957,7 @@
         },
         {
             "CREATED_ON": "2020-01-20 09:20:12",
-            "MODIFIED_ON": "2020-04-21 07:00:25",
+            "MODIFIED_ON": "2020-11-24 18:44:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea3b65ec22ef96b32f0205857feb80",
@@ -968,7 +968,7 @@
             "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO MASTER OBJECT\",\"comparator\":\"==\",\"required\":true,\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_child.gif"
         },
         {
             "CREATED_ON": "2020-02-08 09:33:38",
@@ -1002,7 +1002,7 @@
         },
         {
             "CREATED_ON": "2020-02-11 08:02:21",
-            "MODIFIED_ON": "2020-11-23 12:13:12",
+            "MODIFIED_ON": "2020-11-24 10:05:35",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4ca4c340f1a8b2cfe4b318306b9a",
@@ -1032,7 +1032,7 @@
         },
         {
             "CREATED_ON": "2020-02-11 08:41:19",
-            "MODIFIED_ON": "2020-02-11 08:42:07",
+            "MODIFIED_ON": "2020-11-24 10:05:43",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4caa348980beb2cfe4b318306b9a",
@@ -1043,7 +1043,7 @@
             "UXON": "{\"object_alias\":\"\",\"widget_type\":\"Chart\",\"hide_legend\":true,\"data\":{\"paginate\":false},\"axis_y\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"axis_x\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"series\":[{\"type\":\"heatmap\",\"value_attribute_alias\":\"\",\"x_axis_no\":0,\"y_axis_no\":0,\"color_scale\":{\"colors\":[\"#36a832\",\"#ffe921\",\"red\"]}}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_heatmap_auto.gif"
         },
         {
             "CREATED_ON": "2020-03-19 17:44:59",
@@ -1092,7 +1092,7 @@
         },
         {
             "CREATED_ON": "2020-04-21 07:13:34",
-            "MODIFIED_ON": "2020-04-21 07:13:34",
+            "MODIFIED_ON": "2020-11-23 21:52:02",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea839eaf1f208e8ee80205857feb80",
@@ -1103,7 +1103,7 @@
             "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE with UID of main object\",\"id\":\"uid_field\"},{\"attribute_alias\":\"\"},{\"caption\":\"\\\/\\\/ REPLACE with table caption\",\"widget_type\":\"DataTableResponsive\",\"object_alias\":\"\\\/\\\/ REPLACE with child object alias\",\"width\":\"max\",\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE with relation to main object\",\"required\":true,\"value\":\"=uid_field\",\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_group_alias\":\"~VISIBLE\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\",\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')\"}]}]}",
             "WRAP_PATH": "$.widgets[1]",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/dialog_with_child_table.gif"
         },
         {
             "CREATED_ON": "2020-05-15 09:35:39",
@@ -1227,7 +1227,7 @@
         },
         {
             "CREATED_ON": "2020-06-11 14:26:10",
-            "MODIFIED_ON": "2020-06-11 14:26:53",
+            "MODIFIED_ON": "2020-11-24 10:00:21",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea929a7f548380929a0205857feb80",
@@ -1238,11 +1238,11 @@
             "UXON": "{\"widget_type\":\"Dashboard\",\"object_alias\":\"\",\"widgets\":[{\"widget_type\":\"DataTable\",\"width\":1,\"height\":10,\"columns\":[{\"attribute_alias\":\"\"}]},{\"widget_type\":\"Chart\",\"width\":1,\"height\":10,\"series\":[{\"type\":\"line\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}]}",
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/dashboard.gif"
         },
         {
             "CREATED_ON": "2020-06-11 14:57:26",
-            "MODIFIED_ON": "2020-11-23 16:00:04",
+            "MODIFIED_ON": "2020-11-23 17:51:05",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eabe4add437650be4a0205857feb80",
@@ -1253,7 +1253,7 @@
             "UXON": "{\"widget_type\":\"Card\",\"caption\":\"\",\"widgets\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": ""
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/card.gif"
         },
         {
             "CREATED_ON": "2020-07-15 09:53:13",
@@ -1302,7 +1302,7 @@
         },
         {
             "CREATED_ON": "2020-10-14 09:18:47",
-            "MODIFIED_ON": "2020-10-14 09:18:47",
+            "MODIFIED_ON": "2020-11-24 09:55:35",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eba5d544149a32a5d5025041000001",
@@ -1313,7 +1313,7 @@
             "UXON": "{\"widget_type\":\"KPI\",\"object_alias\":\"\",\"attribute_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}]}}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/tile_kpi.gif"
         },
         {
             "CREATED_ON": "2020-10-14 09:20:53",
@@ -1464,6 +1464,36 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
             "THUMBNAIL": null
+        },
+        {
+            "CREATED_ON": "2020-11-24 18:48:19",
+            "MODIFIED_ON": "2020-11-24 18:48:19",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb8f543d456b7e8f54025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Table with expandable row details",
+            "DESCRIPTION": "Rows can be expanded to show a container details for this row. The detail-container will be prefilled with the row data asynchronously.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
+            "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"columns\":[{\"attribute_alias\":\"\"}],\"row_details\":{\"height\":\"\",\"widgets\":[{\"\":\"\"}]}}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_row_details.gif"
+        },
+        {
+            "CREATED_ON": "2020-11-24 18:51:46",
+            "MODIFIED_ON": "2020-11-24 18:51:46",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb918b8af151cb918025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Table with row groups",
+            "DESCRIPTION": "All rows with the same value of the group-attribute will be grouped together under a mutual header showing the value of this attribute and an optional counter. Row groups can be collapsible. If there is a column with the same attribute, it will be hidden automatically.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
+            "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"columns\":[{\"attribute_alias\":\"\"}],\"row_grouper\":{\"group_by_attribute_alias\":\"\",\"show_counter\":false}}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_row_groups.gif"
         }
     ],
     "totals_rows": [],
