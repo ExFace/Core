@@ -94,16 +94,28 @@ class TimeStampingBehavior extends AbstractBehavior
     public function register() : BehaviorInterface
     {
         if ($this->hasCreatedByAttribute()) {
-            $this->getCreatedByAttribute()->setFixedValue(null)->setDefaultValue(null);
+            $this->getCreatedByAttribute()
+            ->setFixedValue(null)
+            ->setDefaultValue(null)
+            ->setRequired(false);
         }
         if ($this->hasCreatedOnAttribute()) {
-            $this->getCreatedOnAttribute()->setFixedValue(null)->setDefaultValue(null);
+            $this->getCreatedOnAttribute()
+            ->setFixedValue(null)
+            ->setDefaultValue(null)
+            ->setRequired(false);
         }
         if ($this->hasUpdatedByAttribute()) {
-            $this->getUpdatedByAttribute()->setFixedValue(null)->setDefaultValue(null);
+            $this->getUpdatedByAttribute()
+            ->setFixedValue(null)
+            ->setDefaultValue(null)
+            ->setRequired(false);
         }
         if ($this->hasUpdatedOnAttribute()) {
-            $this->getUpdatedOnAttribute()->setFixedValue(null)->setDefaultValue(null);
+            $this->getUpdatedOnAttribute()
+            ->setFixedValue(null)
+            ->setDefaultValue(null)
+            ->setRequired(false);
             if ($this->getCheckForConflictsOnUpdate()) {
                 $this->getUpdatedOnAttribute()->setSystem(true)->setDefaultAggregateFunction('MAX');
             }
