@@ -660,8 +660,6 @@ CSS;
         $includes[] = '<link href="' . $facade->buildUrlToSource('LIBS.JSONEDITOR.CSS') . '" rel="stylesheet">';
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource("LIBS.JSONEDITOR.JS") . '"></script>';
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource("LIBS.JSONEDITOR.PICOMODAL") . '"></script>';
-        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource("LIBS.JSONEDITOR.SELECTR.JS")  . '"></script>';
-        $includes[] = '<link href="' . $facade->buildUrlToSource('LIBS.JSONEDITOR.SELECTR.CSS') . '" rel="stylesheet"/>';
         $includes[] = '<style type=' . '"text/css"' . '>' . $this::buildCssModalStyles() . '</style>';
         
         return $includes; 
