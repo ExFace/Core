@@ -17,8 +17,7 @@ use exface\Core\CommonLogic\Workbench;
  * ```
  * require: {
  *	"npm-asset/jsoneditor" : "^7.0||^8.0||^9.0",
- *	"npm-asset/picomodal" : "^3.0.0",
- *	"npm-asset/mobius1-selectr" : "^2.4.12"
+ *	"npm-asset/picomodal" : "^3.0.0"
  * }
  * 
  * ```
@@ -29,8 +28,6 @@ use exface\Core\CommonLogic\Workbench;
  *  "LIBS.JSONEDITOR.JS": "npm-asset/jsoneditor/dist/jsoneditor.min.js",
  *  "LIBS.JSONEDITOR.CSS": "npm-asset/jsoneditor/dist/jsoneditor.min.css",
  *  "LIBS.JSONEDITOR.PICOMODAL": "npm-asset/picomodal/src/picoModal.js",
- *  "LIBS.JSONEDITOR.SELECTR.JS": "npm-asset/mobius1-selectr/src/selectr.js",
- *  "LIBS.JSONEDITOR.SELECTR.CSS": "npm-asset/mobius1-selectr/src/selectr.css",
  *  
  * ```
  * 
@@ -528,7 +525,6 @@ JS;
                         box-sizing: border-box;
                     }
                     .jsoneditor-modal .uxoneditor-input,
-                    .jsoneditor-modal .selectr-selected,
                     .jsoneditor-modal .spinner-wrapper {
                         height: 35px;
                         margin-bottom: 4px;
@@ -541,9 +537,6 @@ JS;
                         border-radius: 3px;
                         padding: 4px;
                         box-sizing: border-box;
-                    }
-                    .jsoneditor-modal .selectr-selected {
-                        line-height: 25px;
                     }
                     .jsoneditor-modal .jsoneditor input {
                         padding: inherit;
