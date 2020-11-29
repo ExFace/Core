@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Contexts\ContextRuntimeError;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Factories\DataSheetFactory;
 
 /**
  * The UserContext shows the logged in User and some user-related controls like a logout button.
@@ -53,12 +54,12 @@ class UserContext extends AbstractContext
      */
     public function getContextBarPopup(Container $container)
     {       
-        $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
+        $token = $this->getWorkbench()->getSecurity()->getAuthenticatedToken();
         $uxon = null;
         $coreApp = $this->getWorkbench()->getCoreApp();
         
         //when user is logged in, build context with user details and logout button
-        if ($user->isAnonymous() === false){
+        if ($token->isAnonymous() === false){
             $uxon = [
               "widget_type" => "Form",
               "height" => "100%",
@@ -67,38 +68,33 @@ class UserContext extends AbstractContext
               "widgets" => [
                   [
                       "widget_type" => "Message",
-                      "value" => "You are logged in.",
+                      "value" => $coreApp->getTranslator()->translate('CONTEXT.USER.LOGGED_IN_HINT'),
                       "width" => "100%"
                   ],
                   [
                       "widget_type" => "InputHidden",
-                      "attribute_alias" => "UID",
-                      "value" => $user->getUid()
+                      "attribute_alias" => "UID"
                   ],
                   [
                       "widget_type" => "Display",
                       "attribute_alias" => "USERNAME",
-                      "width" => "100%",
-                      "value" => $user->getUsername()
+                      "width" => "100%"
                   ],
                   [
                       "widget_type" => "Display",
                       "attribute_alias" => "FIRST_NAME",
-                      "width" => "100%",
-                      "value" => $user->getFirstName()
+                      "width" => "100%"
                   ],
                   [
                       "widget_type" => "Display",
                       "attribute_alias" => "LAST_NAME",
-                      "width" => "100%",
-                      "value" => $user->getLastName()
+                      "width" => "100%"
                   ],
                   [
                       "widget_type" => "Display",
                       "caption" => "Language",
                       "attribute_alias" => "LOCALE",
-                      "width" => "100%",
-                      "value" => $user->getLocale()
+                      "width" => "100%"
                   ]
               ],
               "buttons" => [
@@ -112,6 +108,13 @@ class UserContext extends AbstractContext
                   ]
                 ]
             ];
+            
+            // Use prefill instead of hard-coded values to allow behaviors to hook in and
+            // add fields to the context widget. Reading data for the prefill is done below
+            // after the IF.
+            $prefillData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER');
+            $prefillData->getFilters()->addConditionFromString('USERNAME', $token->getUsername());
+            
         // when user is not logged in, build context with login button and message that user is not logged in    
         } else {
             $uxon = [
@@ -127,7 +130,7 @@ class UserContext extends AbstractContext
                         "caption" => "Language",
                         "attribute_alias" => "LOCALE",
                         "width" => "100%",
-                        "value" => $user->getLocale()
+                        "value" => $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale()
                     ]
               ],
               "buttons" => [
@@ -147,10 +150,16 @@ class UserContext extends AbstractContext
                 ]
               ]
             ];
+            $prefillData = null;
         }
         
         $uxon_object = UxonObject::fromAnything($uxon);
-        $form = WidgetFactory::createFromUxonInParent($container, $uxon_object);      
+        $form = WidgetFactory::createFromUxonInParent($container, $uxon_object);  
+        if ($prefillData !== null) {
+            $prefillData = $form->prepareDataSheetToPrefill($prefillData);
+            $prefillData->dataRead();
+            $form->prefill($prefillData);
+        }
         
         $container->addWidget($form);
         
