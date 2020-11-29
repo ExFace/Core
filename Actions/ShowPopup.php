@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Actions;
 
-use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Actions\iShowPopup;
 use exface\Core\Widgets\Container;
 use exface\Core\Factories\WidgetFactory;
