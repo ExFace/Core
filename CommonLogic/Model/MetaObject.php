@@ -31,6 +31,8 @@ use exface\Core\Exceptions\Model\MetaRelationAliasAmbiguousError;
 use exface\Core\DataTypes\RelationCardinalityDataType;
 use exface\Core\Events\Model\OnBeforeDefaultObjectEditorInitEvent;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
+use exface\Core\Interfaces\Model\BehaviorListInterface;
+use exface\Core\Interfaces\AppInterface;
 
 /**
  * Default implementation of the MetaObjectInterface
@@ -83,7 +85,7 @@ class MetaObject implements MetaObjectInterface
 
     private $data_connection_alias = null;
 
-    private $parent_objects_ids = array();
+    private $parent_objects = [];
 
     private $default_sorters = null;
 
@@ -449,7 +451,8 @@ class MetaObject implements MetaObjectInterface
             return;
         }
         
-        $this->addParentObjectId($parent->getId());
+        // Save UIDs of all objects this on extends from or it's parents extend from.
+        $this->parent_objects[] = $parent; 
         
         // Inherit data address
         $this->setDataAddress($parent->getDataAddress());
@@ -887,45 +890,47 @@ class MetaObject implements MetaObjectInterface
     }
 
     /**
-     *
-     * @return array
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getParentObjectsIds()
      */
-    public function getParentObjectsIds()
+    public function getParentObjectsIds(int $depth = null) : array
     {
-        return $this->parent_objects_ids;
-    }
-
-    /**
-     * Returns all objects, this one inherits from as an array
-     *
-     * @return MetaObjectInterface[]
-     */
-    public function getParentObjects()
-    {
-        $result = array();
-        foreach ($this->parent_objects_ids as $id) {
-            $result[] = $this->getModel()->getObject($id);
+        $ids = [];
+        foreach ($this->getParentObjects($depth) as $obj) {
+            $ids[] = $obj->getId();
         }
-        return $result;
-    }
-
-    public function setParentObjectsIds($value)
-    {
-        $this->parent_objects_ids = $value;
-    }
-
-    public function addParentObjectId($object_id)
-    {
-        $this->parent_objects_ids[] = $object_id;
+        return array_unique($ids);
     }
 
     /**
-     * TODO
-     *
-     * @param string $object_alias            
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getParentObjects()
      */
-    public function getParentObject($object_alias)
-    {}
+    public function getParentObjects(int $depth = null) : array
+    {
+        if ($depth === 1) {
+            return $this->parent_objects;
+        }
+        
+        if ($depth === 0) {
+            $depth = null;
+        }
+        
+        // Create a unique list of UIDs of parent objects upto the defined depth
+        $objects = $this->parent_objects;
+        foreach ($this->parent_objects as $obj) {
+            foreach ($obj->getParentObjects(($depth === null ? null : $depth-1)) as $objParent) {
+                // Can't just use array_unique here because it requires all elements
+                // to be convertable to strings!
+                if (! in_array($objParent, $objects)) {
+                    $objects[] = $objParent;
+                }
+            }
+        }
+        return $objects;
+    }
 
     /**
      * Returns all objects, that inherit from the current one as an array.
@@ -1132,16 +1137,11 @@ class MetaObject implements MetaObjectInterface
     }
 
     /**
-     * Returns TRUE if this object is extended from the given object identifier.
-     * The identifier may be a qualified alias, a UID or an instantiated object.
-     *
-     * @param MetaObjectInterface|string $object_or_alias_or_id            
-     * @return boolean
-     *
-     * @see is_exactly()
-     * @see is()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::isExtendedFrom()
      */
-    public function isExtendedFrom($object_or_alias_or_id)
+    public function isExtendedFrom($object_or_alias_or_id) : bool
     {
         foreach ($this->getParentObjects() as $parent) {
             if ($parent->isExactly($object_or_alias_or_id)) {
@@ -1151,7 +1151,12 @@ class MetaObject implements MetaObjectInterface
         return false;
     }
 
-    public function getBehaviors()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getBehaviors()
+     */
+    public function getBehaviors() : BehaviorListInterface
     {
         return $this->behaviors;
     }
@@ -1160,7 +1165,7 @@ class MetaObject implements MetaObjectInterface
      *
      * @return MetaObjectActionListInterface|ActionInterface[]
      */
-    public function getActions()
+    public function getActions() : MetaObjectActionListInterface
     {
         if (! ($this->actions instanceof MetaObjectActionListInterface)) {
             $this->actions = $this->getModel()->getModelLoader()->loadObjectActions(new MetaObjectActionList($this->getWorkbench(), $this));
@@ -1173,7 +1178,7 @@ class MetaObject implements MetaObjectInterface
      *
      * @return \exface\Core\Interfaces\AppInterface
      */
-    public function getApp()
+    public function getApp() : AppInterface
     {
         return $this->getWorkbench()->getApp($this->getNamespace());
     }
