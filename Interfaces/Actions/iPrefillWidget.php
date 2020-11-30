@@ -3,9 +3,18 @@ namespace exface\Core\Interfaces\Actions;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
 
 interface iPrefillWidget extends ActionInterface
 {
+    const REFRESH_AUTO = 'auto';
+    
+    const REFRESH_ALWAYS = 'always';
+    
+    const REFRESH_NEVER = 'never';
+    
+    const REFRESH_ONLY_MISSING_VALUES = 'only_missing_values';
+    
     /**
      * Returns TRUE, if the input data of the action should be used to prefill the widget shown, or FALSE otherwise
      *
@@ -88,4 +97,18 @@ interface iPrefillWidget extends ActionInterface
      * @return iPrefillWidget
      */
     public function setPrefillWithPrefillData($true_or_false) : iPrefillWidget;
+    
+    /**
+     *
+     * @param string $value
+     * @throws ActionConfigurationError
+     * @return iPrefillWidget
+     */
+    public function setPrefillDataRefresh(string $value) : iPrefillWidget;
+    
+    /**
+     *
+     * @return string
+     */
+    public function getPrefillDataRefresh() : string;
 }

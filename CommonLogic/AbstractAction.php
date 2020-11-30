@@ -82,6 +82,8 @@ abstract class AbstractAction implements ActionInterface
     private $input_data_preset = null;
     
     private $input_mappers = [];
+    
+    private $input_mappers_used = [];
 
     /**
      * @var string
@@ -725,7 +727,9 @@ abstract class AbstractAction implements ActionInterface
      */
     public function copy()
     {
-        return clone $this;
+        $copy = clone $this;
+        $copy->input_mappers_used = [];
+        return $copy;
     }
     
     /**
@@ -1033,6 +1037,7 @@ abstract class AbstractAction implements ActionInterface
         // Apply the input mappers
         if ($mapper = $this->getInputMapper($sheet->getMetaObject())){
             $inputData = $mapper->map($sheet);
+            $this->input_mappers_used[] = [$inputData, $mapper];
         } else {
             $inputData = $sheet;
         }
@@ -1042,6 +1047,25 @@ abstract class AbstractAction implements ActionInterface
         $this->getWorkbench()->eventManager()->dispatch(new OnActionInputValidatedEvent($this, $task, $inputData));
         
         return $inputData;
+    }
+    
+    /**
+     * If the given $inputData was processed by an input mapper, returns that mapper.
+     * 
+     * This method allows action code to determine if the result of `getInputDataSheet()` was actually
+     * processed by a mapper and even to get the specific mapper instance.
+     * 
+     * @param DataSheetInterface $inputData
+     * @return DataSheetMapperInterface|NULL
+     */
+    protected function getInputMapperUsed(DataSheetInterface $inputData) : ?DataSheetMapperInterface
+    {
+        foreach ($this->input_mappers_used as $pair) {
+            if ($pair[0] === $inputData) {
+                return $pair[1];
+            }
+        }
+        return null;
     }
     
     /**
