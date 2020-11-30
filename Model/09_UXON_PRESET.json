@@ -147,18 +147,18 @@
         },
         {
             "CREATED_ON": "2019-09-03 15:48:44",
-            "MODIFIED_ON": "2019-09-03 15:48:44",
+            "MODIFIED_ON": "2020-11-26 10:55:22",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9ce62384a8871ad7fe4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Aggregated table",
-            "DESCRIPTION": "",
+            "DESCRIPTION": "Aggregates data for each value of the listed aggregate-by-attributes (like GROUP BY in SQL). Each column can either show an aggregate-by-attribute, an attribute related to it or an attribute with an aggregate-function like `:SUM`, `:LIST`, etc. Filters will be applied to aggregated values if possible.",
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
-            "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"aggregate_by_attribute_alias\":[\"\"],\"filters\":[{\"attribute_alias\":\"\"}],\"columns\":[{\"attribute_alias\":\"non_aggregated_attribute\"},{\"attribute_alias\":\"aggregated_attribute:SUM\"}]}",
+            "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"aggregate_by_attribute_alias\":[\"\"],\"filters\":[{\"attribute_alias\":\"\"}],\"columns\":[{\"attribute_alias\":\"\\\/\\\/aggregated_by_attribute\"},{\"attribute_alias\":\"\\\/\\\/aggregated_by_relation__some_attribute\"},{\"attribute_alias\":\"\\\/\\\/aggregated_attribute:SUM\"}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_aggregation.gif"
         },
         {
             "CREATED_ON": "2019-09-04 13:49:57",
