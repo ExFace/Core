@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Actions;
 
-use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Tasks\TaskInterface;
@@ -9,8 +8,6 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Factories\WidgetFactory;
-use exface\Core\Factories\TaskFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\RuntimeException;
 

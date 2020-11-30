@@ -536,7 +536,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     public function setAppearance(string $value) : Button
     {
-        $constName = 'self:APPEARANCE_' . strtoupper($value);
+        $constName = 'self::APPEARANCE_' . strtoupper($value);
         if (! defined($constName)) {
             throw new WidgetConfigurationError('Invalid value "' . $value . '" for property `appearance` of widget "' . $this->getWidgetType() . '": expecting `default`, `link`, `filled` or `stroked`.');
         }
