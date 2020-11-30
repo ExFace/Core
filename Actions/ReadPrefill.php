@@ -26,8 +26,11 @@ use exface\Core\Actions\Traits\iPrefillWidgetTrait;
  * - Allow the user to navigate to the next/previos object right in an detail
  * widget via buttons
  * 
- * Technically, this action passes it's input data to prepareDataSheetToPrefill() of
- * it's target widget, reads the resulting sheet and returns it.
+ * The prefill data is fetched in the same way, as a `ShowWidget` action would do.
+ * This action also has the the same `prefill_xxx` properties. Refer to the documentation
+ * of `ShowWidget` for more details.
+ * 
+ * @see ShowWidget
  * 
  * @author Andrej Kabachnik
  *

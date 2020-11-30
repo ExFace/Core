@@ -23,6 +23,24 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 /**
  * The ShowWidget action is the base for all actions, that render widgets.
  * 
+ * The action will attempt to prefill the widget with data if it receives input or prefill data.
+ * How the prefill data is determined is controlled by the `prefill_xxx` properties:
+ * 
+ * - `prefill_with_input_data` - use input data as prefill or not
+ * - `prefill_with_prefill_data` - use special prefill data from the task (apart from input) or not
+ * - `prefill_with_data_from_widget_link` - use data of another widget as prefill data
+ * - `prefill_with_filter_context` - use the filter context for prefill or not
+ * - `prefill_data_sheet` - a static preset for the prefill data
+ * - `prefill_data_refresh` - when to refresh the input/prefill data before actually using it
+ * - `prefill_disabled` - disable prefill completely
+ * 
+ * The action will compute the structure of the prefill data based on what input/prefill parameters
+ * it has and what the widget requires. Then it will read the data from the data source if required
+ * by `prefill_data_refresh` and pass this data to the widget.
+ * 
+ * There is also a separate action `exface.Core.ReadPrefill` to get the prefill data only - without
+ * "feeding" it into the widget.
+ * 
  * @author Andrej Kabachnik
  *        
  */

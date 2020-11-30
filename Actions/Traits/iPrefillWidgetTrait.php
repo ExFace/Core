@@ -8,7 +8,14 @@ use exface\Core\Exceptions\DataSheets\DataSheetMergeError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Exceptions\Actions\ActionInputMissingError;
 
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 trait iPrefillWidgetTrait 
 {
     private $prefill_with_filter_context = false;
@@ -22,7 +29,7 @@ trait iPrefillWidgetTrait
     /** @var DataSheetInterface */
     private $prefill_data_preset = null;
     
-    
+    private $prefill_data_refresh = iPrefillWidget::REFRESH_AUTO;
     
     /**
      * Prefills the widget of this action with any available data: the action's input data, prefill data from the request and filter contexts.
@@ -45,7 +52,7 @@ trait iPrefillWidgetTrait
             $data_sheet = $widget->getPrefillData();
         }
         
-        // Prefill with input data if not turned off
+        // Add (merge) input data if not explicitly disabled
         if ($this->getPrefillWithInputData() === true && ($task->hasInputData() === true || $this->hasInputDataPreset() === true)) {
             $input_data = $this->getInputDataSheet($task);
             if (! $data_sheet || $data_sheet->isEmpty()) {
@@ -61,7 +68,8 @@ trait iPrefillWidgetTrait
             }
         }
         
-        // Now prefill with prefill data.
+        // Add (merge) prefill data if not explicitly disabled. The prefill data is a merge from the
+        // task's prefill data and the `prefill_data` preset from the action's config.
         if ($this->getPrefillWithPrefillData() && ($prefill_data = $this->getPrefillDataSheet($task)) && ! $prefill_data->isBlank()) {
             // Try to merge prefill data and any data already gathered. If the merge does not work, ignore the prefill data
             // for now and use it for a secondary prefill later.
@@ -78,25 +86,64 @@ trait iPrefillWidgetTrait
             }
         }
         
-        // See if the widget requires any other columns to be prefilled. If so, add them and check if data needs to be read.
-        if ($data_sheet && $data_sheet->countRows() > 0 && $data_sheet->hasUidColumn(true)) {
+        // See if the data should be re-read from the data source
+        if ($data_sheet) {
             $data_sheet = $widget->prepareDataSheetToPrefill($data_sheet);
-            if (! $data_sheet->isFresh()) {
-                // Load fresh data, but make sure only those columns of the original sheet are
-                // updated, that do not have any values. This is important, as the prefill sheet
-                // can also have modified data, that differs from the data source. That data should
-                // not be overwritten. For example, when copying pages in exface.Core.pages, the
-                // ALIAS is removed explicitly. Since the copy-action requires more colums, than
-                // the input data has, their values will be read here - including the current value
-                // of the ALIAS. However, it must not overwrite the explicitly set empty value!
-                $freshData = $data_sheet->copy();
-                $freshData->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
-                $freshData->dataRead();
-                $data_sheet->merge($freshData, false);
+            $refresh = $this->getPrefillDataRefresh();
+            
+            // If `prefill_data_refresh` is set to `auto`, pick one of the other options
+            // according to the current situation.
+            if ($refresh === iPrefillWidget::REFRESH_AUTO) {
+                switch (true) {
+                    // Silently ignore empty prefills and those without UIDs
+                    case $data_sheet->countRows() === 0 || ! $data_sheet->hasUidColumn(true):
+                    // Don't read the data source if we have all data required. This is a controlversal
+                    // decision, but that's the way it was done in former versions. On the one hand,
+                    // this saves us a data source read that probably won't give us any new data (which
+                    // is good for high-latency sources like web services). On the other hand, we may
+                    // end up with potentially outdated data if the input data was not refreshed recently.
+                    // Of course, from the point of view of a human, a widget (e.g. Form) with data implies,
+                    // that that data was correct at the time when the widget was displayed, but reality
+                    // the input data is relatively fresh for simple objects while more complex objects
+                    // will probably require additional fields causing a refresh anyway. So this option
+                    // basically saves a data source request for simple use-cases.
+                    case $data_sheet->isFresh():
+                        $refresh = iPrefillWidget::REFRESH_NEVER;
+                        break;
+                    // Only refresh missing values if input data was used and a mapper was applied.
+                    // In this case the user intended to change certain columns, so we should not
+                    // overwrite them with data source values, but we should still read missing
+                    // values because the user was probably too lazy to mapp all required columns.
+                    case $input_data && $this->getInputMapperUsed($input_data) !== null:
+                        $refresh = iPrefillWidget::REFRESH_ONLY_MISSING_VALUES;
+                        break;
+                    // Refresh in all other cases
+                    default:
+                        $refresh = iPrefillWidget::REFRESH_ALWAYS;
+                        break;
+                }
+            }
+            
+            // Refresh data if required
+            switch ($refresh) {
+                // Refresh in any case on `always`
+                case iPrefillWidget::REFRESH_ALWAYS:
+                // Refresh if not fresh on `only_missing_values` (= empty columns were added)
+                case iPrefillWidget::REFRESH_ONLY_MISSING_VALUES && ! $data_sheet->isFresh():
+                    if (! $data_sheet->hasUidColumn(true)) {
+                        throw new ActionInputMissingError($this, 'Cannot refresh prefill data for action "' . $this->getAliaswithNamespace() . '": UID values for every prefill row required!');
+                    }
+                    $freshData = $data_sheet->copy();
+                    $freshData->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
+                    $freshData->dataRead();
+                    // Merge and overwrite existing values unless refresh `only_missing_values`
+                    $data_sheet->merge($freshData, $refresh !== iPrefillWidget::REFRESH_ONLY_MISSING_VALUES);
+                    break;
             }
         }
         
-        // Prefill widget using the filter contexts if the widget does not have any prefill data yet
+        // Add data from the filter contexts if possible. 
+        // Do this AFTER the refresh because otherwise the filter values will get eventually overwritten!
         $data_sheet = $this->getPrefillDataFromFilterContext($widget, $data_sheet);
         
         if ($data_sheet) {
@@ -394,5 +441,66 @@ trait iPrefillWidgetTrait
     public function getPrefillDataPreset(): ?DataSheetInterface
     {
         return $this->prefill_data_preset;
+    }
+    
+    /**
+     * Controls when data should be re-read from the data source before being used as prefill.
+     * 
+     * The prefill data structure is computed first from the input data, prefill data, various presets, 
+     * etc. Right before the widget is actually prefilled, the resulting data sheet may or may not
+     * be read from the data source. By default (`auto`) a best-fit scenario is determined depending
+     * on whether values are missing (e.g. the input data is less, than required by the widget), an
+     * input mapper was used, etc. This option allows to override this for a specific action:
+     * 
+     * - `always` - The data is refreshed completely based on the UID column. Any values in the
+     * input/prefill data other than the UID will be overwritten with their current values from
+     * the data source. This makes sure, the data in the widget is as up-to-date as possible, but
+     * makes it impossible to pass changed values with the input data.
+     * - `never` - The input/prefill data is not refreshed at all. This prevents additional queries
+     * to the data source, but eventually missing values remain empty possibly causing inconsistent
+     * data in the prefilled widget.
+     * - `only_missing_values` - reads only those values from the data source, that a required for
+     * the prefilled widget, but are not present in the passed input/prefill data. This means, any
+     * changes in the input data remain and do not get overwritten by the data source while the
+     * autoloading of missing values can still be used. This handy to use with input mappers, that
+     * set default values, etc. but may produce inconsistent data in the widget if not used carefully.
+     * - `auto` - **default** - one of the above options is selected as follows:
+     *      - Empty input/prefill data is silently ignored => `never`
+     *      - Prefill data without UIDs (more precisely if a UID is missing in at least one row) is used as-is => `never`
+     *      - If the input/prefill data is enough to prefill the widget, it will not be refreshed => `never`
+     *      - If an input mapper was used (and none of the above apply), `only_missing_values` will be
+     *  refreshed
+     *      - Otherwise the data will be refreshed before being used for prefill => `always`.
+     * 
+     * **NOTE:** a refresh is only possible if the input/prefill data includes UID values. If this is not
+     * the case, `auto` and `never` will silently leave the data as-is, while all other options will
+     * produce errors.
+     * 
+     * @uxon-property prefill_data_refresh
+     * @uxon-type [auto,always,never,all_if_values_missing,only_missing_values]
+     * @uxon-default auto
+     * 
+     * @see \exface\Core\Interfaces\Actions\iPrefillWidget::setPrefillDataRefresh()
+     */
+    public function setPrefillDataRefresh(string $value) : iPrefillWidget
+    {
+        $const = iPrefillWidget::class . '\\REFRESH_' . strtoupper($value);
+        
+        if (! defined($const)) {
+            throw new ActionConfigurationError($this, 'Invalid value "' . $value . '" for property "prefill_data_refresh" in action "' . $this->getAliasWithNamespace() . '"!');
+        }
+        
+        $this->prefill_data_refresh = constant($const);
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iPrefillWidget::getPrefillDataRefresh()
+     */
+    public function getPrefillDataRefresh() : string
+    {
+        return $this->prefill_data_refresh;
     }
 }
