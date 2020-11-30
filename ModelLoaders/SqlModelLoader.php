@@ -344,6 +344,7 @@ class SqlModelLoader implements ModelLoaderInterface
             }
             
             // Now populate the relations of the object 
+            $parentObjIds = $object->getParentObjectsIds();
             foreach ($relation_attrs as $data) {
                 $attr = $data['attr'];
                 $row = $data['row'];
@@ -352,7 +353,7 @@ class SqlModelLoader implements ModelLoaderInterface
                 // object is not being extended from. Otherwise it's a normal n-1 relation.
                 $thisObjId = $object->getId();
                 $attrObjId = $row['object_oid'];
-                $attrBelongsToOtherObj = ($thisObjId !== $attrObjId && false === in_array($attrObjId, $object->getParentObjectsIds()));
+                $attrBelongsToOtherObj = ($thisObjId !== $attrObjId && false === in_array($attrObjId, $parentObjIds));
                 $attrIsSelfRelation = ($attrObjId === $row['related_object_oid']);
                 
                 // IDEA What if we also create relations between parent and inheriting objects. The 

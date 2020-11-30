@@ -2,7 +2,6 @@
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\WorkbenchDependantInterface;
-use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
@@ -353,28 +352,38 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
     public function setDataAddressProperties(UxonObject $uxon);
     
     /**
-     *
-     * @return array
+     * Returns the UIDs of all objects, this one inherits from as an array.
+     * 
+     * If the $depth is a positive integer, the inheritance path is followed
+     * at for $depth number of steps at most: e.g. `getParentObjectIds(1)`
+     * will yield the UIDs of the immediate parent objects.
+     * 
+     * Each UID is included only once!
+     * 
+     * @see getParentObjects()
+     * 
+     * @param int $depth
+     * @return string[]
      */
-    public function getParentObjectsIds();
+    public function getParentObjectsIds(int $depth = null) : array;
     
     /**
-     * Returns all objects, this one inherits from as an array
+     * Returns all objects, this one inherits from as an array.
+     * 
+     * If the $depth is a positive integer, the inheritance path is followed
+     * at for $depth number of steps at most: e.g. `getParentObjectIds(1)`
+     * will yield the immediate parent objects.
+     * 
+     * Multiple inheritance is possible. A typical example would be an object
+     * ihneriting the model of it's actual parent and that of the base object
+     * of it's data source. In this case, if $depth is not set, the result will
+     * contain the parent, all of it's parents, the base and all of the base's
+     * parents.
      *
+     * @param int $depth
      * @return MetaObjectInterface[]
      */
-    public function getParentObjects();
-    
-    public function setParentObjectsIds($value);
-    
-    public function addParentObjectId($object_id);
-    
-    /**
-     * 
-     * @param string $object_alias
-     * @return MetaObjectInterface
-     */
-    public function getParentObject($object_alias);
+    public function getParentObjects(int $depth = null) : array;
     
     /**
      * Returns all objects, that inherit from the current one as an array.
@@ -487,22 +496,26 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * @see is_exactly()
      * @see is()
      */
-    public function isExtendedFrom($object_or_alias_or_id);
+    public function isExtendedFrom($object_or_alias_or_id) : bool;
     
-    public function getBehaviors();
+    /**
+     * 
+     * @return BehaviorListInterface|BehaviorInterface[]
+     */
+    public function getBehaviors() : BehaviorListInterface;
     
     /**
      *
      * @return MetaObjectActionListInterface|ActionInterface[]
      */
-    public function getActions();
+    public function getActions() : MetaObjectActionListInterface;
     
     /**
      * Returns the currently running instance of the app, this object belongs to.
      *
      * @return AppInterface
      */
-    public function getApp();
+    public function getApp() : AppInterface;
     
     /**
      * Returns TRUE if writing operations on the data source of the object are allowed 
