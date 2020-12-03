@@ -621,12 +621,12 @@ class InputComboTable extends InputCombo implements iCanPreloadData
                 // FIXME use $this->getTextAttributeAlias() here instead? But isn't that alias relative to the table's object?
                 $text_column_expr = RelationPath::relationPathAdd($this->getAttribute()->getAliasWithRelationPath(), $this->getTextColumn()->getAttributeAlias());
                 // When the text for a combo comes from another data source, reading it in advance
-                // might have a serious performance impact. Since addint the text column to the prefill
+                // might have a serious performance impact. Since adding the text column to the prefill
                 // is generally optional (see above), it is a good idea to check, if the text column
                 // can be read with the same query, as the rest of the prefill da and, if not, exclude
                 // it from the prefill.
                 $sheetObj = $sheetObj;
-                if ($sheetObj->hasAttribute($text_column_expr)) {
+                if ($sheetObj->isReadable() && $sheetObj->hasAttribute($text_column_expr)) {
                     $sheetQuery = QueryBuilderFactory::createForObject($sheetObj);
                     if (! $sheetQuery->canRead($text_column_expr)) {
                         unset($text_column_expr);
