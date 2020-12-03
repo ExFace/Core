@@ -88,48 +88,56 @@ trait iPrefillWidgetTrait
         
         // See if the data should be re-read from the data source
         if ($data_sheet) {
-            $data_sheet = $widget->prepareDataSheetToPrefill($data_sheet);
             $refresh = $this->getPrefillDataRefresh();
             
             // If `prefill_data_refresh` is set to `auto`, pick one of the other options
             // according to the current situation.
             if ($refresh === iPrefillWidget::REFRESH_AUTO) {
-                switch (true) {
-                    // Silently ignore empty prefills and those without UIDs
-                    case $data_sheet->countRows() === 0 || ! $data_sheet->hasUidColumn(true):
-                    // Don't read the data source if we have all data required. This is a controlversal
-                    // decision, but that's the way it was done in former versions. On the one hand,
-                    // this saves us a data source read that probably won't give us any new data (which
-                    // is good for high-latency sources like web services). On the other hand, we may
-                    // end up with potentially outdated data if the input data was not refreshed recently.
-                    // Of course, from the point of view of a human, a widget (e.g. Form) with data implies,
-                    // that that data was correct at the time when the widget was displayed, but reality
-                    // the input data is relatively fresh for simple objects while more complex objects
-                    // will probably require additional fields causing a refresh anyway. So this option
-                    // basically saves a data source request for simple use-cases.
-                    case $data_sheet->isFresh():
-                        $refresh = iPrefillWidget::REFRESH_NEVER;
-                        break;
-                    // Only refresh missing values if input data was used and a mapper was applied.
-                    // In this case the user intended to change certain columns, so we should not
-                    // overwrite them with data source values, but we should still read missing
-                    // values because the user was probably too lazy to mapp all required columns.
-                    case $input_data && $this->getInputMapperUsed($input_data) !== null:
-                        $refresh = iPrefillWidget::REFRESH_ONLY_MISSING_VALUES;
-                        break;
-                    // Refresh in all other cases
-                    default:
-                        $refresh = iPrefillWidget::REFRESH_ALWAYS;
-                        break;
-                }
+                // Silently ignore empty prefills, those without UIDs and non-readable data
+                if ($data_sheet->countRows() === 0 || ! $data_sheet->hasUidColumn(true) || ! $data_sheet->getMetaObject()->isReadable()) {
+                    $refresh = iPrefillWidget::REFRESH_NEVER;
+                } else {
+                    // Ask the widget for expected data to see if a refresh is required
+                    $data_sheet = $widget->prepareDataSheetToPrefill($data_sheet);
+                    switch (true) {
+                        // Don't read the data source if we have all data required. This is a controlversal
+                        // decision, but that's the way it was done in former versions. On the one hand,
+                        // this saves us a data source read that probably won't give us any new data (which
+                        // is good for high-latency sources like web services). On the other hand, we may
+                        // end up with potentially outdated data if the input data was not refreshed recently.
+                        // Of course, from the point of view of a human, a widget (e.g. Form) with data implies,
+                        // that that data was correct at the time when the widget was displayed, but reality
+                        // the input data is relatively fresh for simple objects while more complex objects
+                        // will probably require additional fields causing a refresh anyway. So this option
+                        // basically saves a data source request for simple use-cases.
+                        case $data_sheet->isFresh():
+                            $refresh = iPrefillWidget::REFRESH_NEVER;
+                            break;
+                        // Only refresh missing values if input data was used and a mapper was applied.
+                        // In this case the user intended to change certain columns, so we should not
+                        // overwrite them with data source values, but we should still read missing
+                        // values because the user was probably too lazy to mapp all required columns.
+                        case $input_data && $this->getInputMapperUsed($input_data) !== null:
+                            $refresh = iPrefillWidget::REFRESH_ONLY_MISSING_VALUES;
+                            break;
+                        // Refresh in all other cases
+                        default:
+                            $refresh = iPrefillWidget::REFRESH_ALWAYS;
+                            break;
+                    }
+                } 
+            } elseif ($refresh !== iPrefillWidget::REFRESH_NEVER) {
+                // If $refresh is not `auto` and not explicitly disabled, ask the widget for
+                // expected data
+                $data_sheet = $widget->prepareDataSheetToPrefill($data_sheet);
             }
             
             // Refresh data if required
-            switch ($refresh) {
+            switch (true) {
                 // Refresh in any case on `always`
-                case iPrefillWidget::REFRESH_ALWAYS:
+                case $refresh === iPrefillWidget::REFRESH_ALWAYS:
                 // Refresh if not fresh on `only_missing_values` (= empty columns were added)
-                case iPrefillWidget::REFRESH_ONLY_MISSING_VALUES && ! $data_sheet->isFresh():
+                case $refresh === iPrefillWidget::REFRESH_ONLY_MISSING_VALUES && ! $data_sheet->isFresh():
                     if (! $data_sheet->hasUidColumn(true)) {
                         throw new ActionInputMissingError($this, 'Cannot refresh prefill data for action "' . $this->getAliaswithNamespace() . '": UID values for every prefill row required!');
                     }
