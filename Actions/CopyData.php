@@ -89,7 +89,13 @@ class CopyData extends SaveData implements iCreateData
         }
         
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
-        $message = $this->getResultMessageText() ?? $translator->translate('ACTION.COPYDATA.RESULT', ['%number%' => $copyCounter], $copyCounter) . ' ' . $translator->translate('ACTION.COPYDATA.RESULT_DEPENDENCIES', ['%number%' => $dependencyCounter], $dependencyCounter);
+        if (($message = $this->getResultMessageText()) === null) {
+            $message = $translator->translate('ACTION.COPYDATA.RESULT', ['%number%' => $copyCounter], $copyCounter);
+            if ($dependencyCounter > 0) {
+                $message .= ' ' . $translator->translate('ACTION.COPYDATA.RESULT_DEPENDENCIES', ['%number%' => $dependencyCounter], $dependencyCounter);
+            }
+        }
+        
         $result = ResultFactory::createDataResult($task, $mainCopiedSheet, $message);
         
         if ($copyCounter > 0) {
