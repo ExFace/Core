@@ -34,6 +34,7 @@ use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Interfaces\Widgets\iHaveSorters;
 use exface\Core\Widgets\Parts\DataFooter;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -145,15 +146,21 @@ class Data
         // Columns & Totals
         if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
             foreach ($this->getColumns() as $col) {
+                $cellWidget = $col->getCellWidget();
                 // Only add columns, that actually have content. The other columns exist only in the widget
                 // TODO This check will get more complicated, once the content can be specified not only via attribute_alias
                 // but also with properties like formula, etc.
-                if (! $col->getAttributeAlias()) {
+                if (! ($cellWidget instanceof iShowSingleAttribute && $cellWidget->isBoundToAttribute())) {
                     continue;
                 }
-                $data_column = $data_sheet->getColumns()->addFromExpression($col->getAttributeAlias(), $col->getDataColumnName(), $col->isHidden());
+                
+                // Let the cell widget tell the sheet, what it needs. Some widgets may need multiple
+                // attributes - like a ProgressBar with custom labels.
+                $cellWidget->prepareDataSheetToRead($data_sheet);
+                
                 // Add a total to the data sheet, if the column has a footer
-                if ($col->hasFooter() === true && $col->getFooter()->hasAggregator() === true) {
+                if ($col->getAttributeAlias() && $col->hasFooter() === true && $col->getFooter()->hasAggregator() === true) {
+                    $data_column = $data_sheet->getColumns()->getByExpression($col->getAttributeAlias());
                     $total = DataColumnTotalsFactory::createFromString($data_column, $col->getFooter()->getAggregator()->exportString());
                     $data_column->getTotals()->add($total);
                 }
