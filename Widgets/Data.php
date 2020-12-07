@@ -1304,12 +1304,17 @@ class Data
      */
     public function getQuickSearchPlaceholder() : string
     {
-        $quick_search_fields = $this->getMetaObject()->getLabelAttribute() ? $this->getMetaObject()->getLabelAttribute()->getName() : '';
-        foreach ($this->getConfiguratorWidget()->getQuickSearchFilters() as $qfltr) {
-            $quick_search_fields .= ($quick_search_fields ? ', ' : '') . $qfltr->getCaption();
+        $texts = [];
+        
+        if ($labelName = $this->getMetaObject()->getLabelAttribute() ? $this->getMetaObject()->getLabelAttribute()->getName() : '') {
+            $texts[] = $labelName;
         }
         
-        return $quick_search_fields;
+        foreach ($this->getConfiguratorWidget()->getQuickSearchFilters() as $qfltr) {
+            $texts[] = $qfltr->getCaption();
+        }
+        
+        return implode(', ', array_unique($texts));
     }
     
     /**
