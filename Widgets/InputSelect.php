@@ -19,7 +19,6 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Interfaces\Widgets\iHaveValues;
-use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * A dropdown menu to select from.
@@ -105,6 +104,21 @@ class InputSelect extends Input implements iSupportMultiSelect
     private $use_prefill_to_filter_options = true;
 
     private $use_prefill_values_as_options = false;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::importUxonObject()
+     */
+    public function importUxonObject(UxonObject $uxon)
+    {
+        // Make sure to set muti-select option first as many other things like treating
+        // values depend on it.
+        if ($uxon->hasProperty('multi_select')) {
+            $this->setMultiSelect($uxon->getProperty('multi_select'));
+        }
+        return parent::importUxonObject($uxon);
+    }
 
     /**
      *
