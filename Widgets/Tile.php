@@ -222,6 +222,7 @@ class Tile extends Button
      * 
      * @uxon-property display_widget
      * @uxon-type \exface\Core\Widgets\Display
+     * @uxon-template {"":""}
      * 
      * @param UxonObject|iDisplayValue $displayWidget
      * @throws WidgetConfigurationError
