@@ -8,6 +8,7 @@ use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Traits\iHaveColorTrait;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * A Tile is basically a big fancy button, that can display additional information (KPIs, etc.).
@@ -254,5 +255,33 @@ class Tile extends Button
             return false;
         }
         return true;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToPrefill()
+     */
+    public function prepareDataSheetToPrefill(DataSheetInterface $dataSheet = null) : DataSheetInterface
+    {
+        $sheet = parent::prepareDataSheetToPrefill($dataSheet);
+        if ($this->hasDisplayWidget()) {
+            $sheet = $this->getDisplayWidget()->prepareDataSheetToPrefill($sheet);
+        }
+        return $sheet;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::doPrefill()
+     */
+    protected function doPrefill(DataSheetInterface $dataSheet)
+    {
+        if ($this->hasDisplayWidget()) {
+            $this->getDisplayWidget()->prefill($dataSheet);
+        }
+        
+        return parent::doPrefill($dataSheet);
     }
 }
