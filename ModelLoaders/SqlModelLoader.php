@@ -1720,7 +1720,7 @@ SQL;
             $sqlUnionWhere = "
                WHERE p.parent_oid IN (SELECT
 	           oid
-	           FROM exf_page {$sqlUnionInnerWhere})";
+	           FROM exf_page {$sqlUnionInnerWhere}) AND menu_visible = 1";
             $sql .= "            
             {$sqlWhere}
             UNION ALL
