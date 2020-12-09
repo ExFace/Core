@@ -2304,6 +2304,20 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2020-12-09 12:21:32",
+            "MODIFIED_ON": "2020-12-09 12:21:32",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb8458b10a6dd68458025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7DUPQZE",
+            "TITLE": "Workbench not installed correctly",
+            "DESCRIPTION": "It seems, the workbench is not fully installed. This can occur if:\n\n1) The core app was not installed\n2) The installation context file (`\/data\/.contexts`) is corrupted or missing\n\nIn any case, restoring the contexts file mentioned above from a backup or reinstalling the core via command line (`vendor\/bin\/action axenox.PackageManager:InstallApp exface.Core`) should help. ",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

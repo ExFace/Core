@@ -345,7 +345,11 @@ class SecurityManager implements SecurityManagerInterface
         }
         
         if (! $ap) {
-            throw new SecurityException('Authorization point "' . (string) $selectorOrString . '" not found!');
+            if (! $this->getWorkbench()->isInstalled()) {
+                throw new SecurityException('Cannot initialize security system: the workbench is not installed correctly!', '7DUPQZE');
+            } else {
+                throw new SecurityException('Authorization point "' . (string) $selectorOrString . '" not found!');
+            }
         }
         
         return $ap;
