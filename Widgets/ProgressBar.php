@@ -46,7 +46,7 @@ class ProgressBar extends Display implements iCanBeAligned
     /**
      * Sets the minimum (leftmost) value  - 0 by defaul
      * 
-     * @uxon-property max
+     * @uxon-property min
      * @uxon-type number
      * @uxon-default 0
      * 
