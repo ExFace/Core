@@ -438,6 +438,18 @@ JS;
                                     }
                                 });
                             }
+
+                            // Add item to open larger editor for string nodes
+                            if (menuNode.type === 'auto' || menuNode.type === 'string') {
+                                items.push({
+                                    text: "{$trans['CONTEXT_MENU.EDITOR.TITLE']}",
+                                    title: "{$trans['CONTEXT_MENU.EDITOR.HINT']}",
+                                    className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-pencil" ,
+                                    click : function() { 
+                                        return {$funcPrefix}_openAceModal(menuNode); 
+                                    }
+                                });
+                            }
                             
                             // Add menu item for copying current JSON path always
                         	items.push({
@@ -451,22 +463,22 @@ JS;
 
                             // Add clipboard-submenu
                             editMenu = {
-                                text: "{$trans['CONTEXT_MENU.EDIT.TITLE']}",   // the text for the menu item
-                                title: "{$trans['CONTEXT_MENU.EDIT.TITLE']}",  // the HTML title attribute
+                                text: "{$trans['CONTEXT_MENU.CLIPBOARD.TITLE']}",   // the text for the menu item
+                                title: "{$trans['CONTEXT_MENU.CLIPBOARD.TITLE']}",  // the HTML title attribute
                                 className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-clipboard",
-                                submenuTitle: "{$trans['CONTEXT_MENU.EDIT.HINT']}",
+                                submenuTitle: "{$trans['CONTEXT_MENU.CLIPBOARD.HINT']}",
                                 submenu: [
                                     {
-                                        text: "{$trans['CONTEXT_MENU.EDIT.COPY']}",
-                                        title: "{$trans['CONTEXT_MENU.EDIT.COPY_HINT']}",
+                                        text: "{$trans['CONTEXT_MENU.CLIPBOARD.COPY']}",
+                                        title: "{$trans['CONTEXT_MENU.CLIPBOARD.COPY_HINT']}",
                                         className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-files-o",
                                         click: function() {
                                             exfTools.clipboard.copyText(JSON.stringify(menuNode.getValue()));
                                         }
                                     },
                                     {
-                                        text: "{$trans['CONTEXT_MENU.EDIT.PASTE']}",
-                                        title: "{$trans['CONTEXT_MENU.EDIT.PASTE_HINT']}",
+                                        text: "{$trans['CONTEXT_MENU.CLIPBOARD.PASTE']}",
+                                        title: "{$trans['CONTEXT_MENU.CLIPBOARD.PASTE_HINT']}",
                                         className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-clipboard",
                                         click: function() {
                                             var sPasted, oJson;
@@ -977,7 +989,7 @@ CSS;
 
         function {$funcPrefix}_openPasteModal(node) {
             return {$funcPrefix}_openModal(
-                "{$trans['CONTEXT_MENU.EDIT.PASTE_DIALOG_TITLE']}",
+                "{$trans['CONTEXT_MENU.CLIPBOARD.PASTE_DIALOG_TITLE']}",
                 '<div>' +
                 '   <textarea class="uxoneditor-input"></textarea>' +
                 '</div>',
@@ -1003,6 +1015,34 @@ CSS;
                             modal.close();
                         }, 0);
                     });
+                }
+            );
+        }
+
+        function {$funcPrefix}_openAceModal(node) {
+            return {$funcPrefix}_openModal(
+                "{$trans['CONTEXT_MENU.EDITOR.WINDOW']}",
+                '   <div id="{$funcPrefix}_value_editor" style="height: calc(100% - 40px)">' + node.getValue() + '</div>' +
+                '   <div class="jsoneditor-jmespath-block jsoneditor-modal-actions">' +
+                '      <div class="action-buttons">' +
+                '          <input class="uxoneditor-input uxoneditor-btn-ok" autofocus type="submit" value="{$trans['BUTTON_OK']}"/>' +
+                '          <input class="uxoneditor-input uxoneditor-btn-cancel" type="submit" value="{$trans['BUTTON_CANCEL']}" />' +
+                '      </div>' +
+                '   </div>',
+                false,
+                "jsoneditor-modal jsoneditor-modal-maximized",
+                function(modal) {
+                    var editor = ace.edit('{$funcPrefix}_value_editor');
+
+                    modal.modalElem().querySelector(".uxoneditor-btn-ok").onclick = function() {
+                        node.setValue(editor.getValue());
+                        node.focus('value');
+                        modal.close();
+                    };
+        
+                    modal.modalElem().querySelector(".uxoneditor-btn-cancel").onclick = function() {
+                        modal.close();
+                    };
                 }
             );
         }
