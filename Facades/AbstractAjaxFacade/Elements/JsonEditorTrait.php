@@ -377,6 +377,40 @@ JS;
                             var menuNodeType = {$funcPrefix}_getNodeType(menuNode);
 
                             var editMenu;
+
+                            // Change append/insert behavoir
+                            // - Append/insert object will result in {"": ""} instead of an empty object
+                            // - Append/insert auto inside an array - also
+                            items.forEach(function(oItem){
+                                var fnClick = oItem.click;
+                                if (oItem.className === "jsoneditor-insert" && oItem.submenu) {        
+                                    var fnOnAppend = menuNode._onAppend;
+                                    var fnOnInsertBefore = menuNode._onInsertBefore;
+                                    var bAutoObject = (menuNode.parent && menuNode.parent.type === 'array');
+                                    menuNode._onAppend = function(field, value, type) {
+                                        if (value && typeof value === 'object' && JSON.stringify(value) === '{}') {
+                                            value = {"":""};
+                                        }
+                                        if (bAutoObject === true && ! value && type === 'auto') {
+                                            value = {"":""};
+                                            type = 'object';
+                                        }
+                                        fnOnAppend.call(menuNode, field, value, type);
+                                        {$funcPrefix}_focusFirstChildValue((menuNode.parent ? menuNode.parent : menuNode), true);
+                                    }
+                                    menuNode._onInsertBefore = function(field, value, type) {
+                                        if (value && typeof value === 'object' && JSON.stringify(value) === '{}') {
+                                            value = {"":""};
+                                        }
+                                        if (bAutoObject === true && ! value && type === 'auto') {
+                                            value = {"":""};
+                                            type = 'object';
+                                        }
+                                        fnOnInsertBefore.call(menuNode, field, value, type);
+                                        {$funcPrefix}_focusFirstChildValue((menuNode.parent ? menuNode.parent : menuNode), true);
+                                    }
+                                }
+                            });
                             
                             // Add preset button if applicable
                             // ist objekt oder wert === leer                            
@@ -415,7 +449,7 @@ JS;
                                 }
                             });
 
-                            // Add edit-submenu
+                            // Add clipboard-submenu
                             editMenu = {
                                 text: "{$trans['CONTEXT_MENU.EDIT.TITLE']}",   // the text for the menu item
                                 title: "{$trans['CONTEXT_MENU.EDIT.TITLE']}",  // the HTML title attribute
