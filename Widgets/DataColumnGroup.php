@@ -298,7 +298,8 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      * Defines the DataColumns within this group: an array of respecitve UXON objects.
      *
      * @uxon-property columns
-     * @uxon-type DataColumn[]
+     * @uxon-type \exface\Core\Widgets\DataColumn[]
+     * @uxon-template [{"attribute_alias": ""}]
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::setColumns()
      */

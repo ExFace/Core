@@ -87,7 +87,7 @@
         },
         {
             "CREATED_ON": "2019-09-03 15:12:00",
-            "MODIFIED_ON": "2020-11-02 20:10:55",
+            "MODIFIED_ON": "2020-12-10 10:16:56",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9ce5d1703444dad7fe4b318306b9a",
@@ -98,7 +98,7 @@
             "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Group 1\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Group 2\",\"widgets\":[{\"attribute_alias\":\"\"}]}]}",
             "WRAP_PATH": "$.widgets[1].widgets[0]",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/dialog_with_widget_groups.gif"
         },
         {
             "CREATED_ON": "2019-09-03 15:13:25",
@@ -162,7 +162,7 @@
         },
         {
             "CREATED_ON": "2019-09-04 13:49:57",
-            "MODIFIED_ON": "2019-09-04 13:51:34",
+            "MODIFIED_ON": "2020-12-09 19:07:46",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9cf1ac55bcc8dad7fe4b318306b9a",
@@ -173,7 +173,7 @@
             "UXON": "{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"caption\":\"\",\"widgets\":[{\"attribute_alias\":\"\"}]}]}",
             "WRAP_PATH": "$.tabs[0].widgets[0]",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/tabs.gif"
         },
         {
             "CREATED_ON": "2019-09-04 15:43:09",
@@ -192,7 +192,7 @@
         },
         {
             "CREATED_ON": "2019-09-04 16:50:45",
-            "MODIFIED_ON": "2019-09-04 16:50:45",
+            "MODIFIED_ON": "2020-12-10 10:39:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9cf340674dde2ad7fe4b318306b9a",
@@ -203,7 +203,7 @@
             "UXON": "{\"widget_type\":\"DataTableResponsive\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\"}],\"columns\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"visibility\":\"optional\"}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_responsive.gif"
         },
         {
             "CREATED_ON": "2019-09-04 16:52:32",
@@ -312,12 +312,12 @@
         },
         {
             "CREATED_ON": "2019-09-16 14:03:13",
-            "MODIFIED_ON": "2020-11-24 09:55:16",
+            "MODIFIED_ON": "2020-12-09 19:29:24",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9d88a5a8524a2ad7fe4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Centered KPI-Tiles",
+            "NAME": "Centered KPI tiles",
             "DESCRIPTION": "Several tiles in the middle of the screen. This can be a good starting point for a set of dashboards, where each tile navigates to a dashboard.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Tiles.php",
             "UXON": "{\"widget_type\":\"Tiles\",\"object_alias\":\"\",\"center_content\":true,\"widgets\":[{\"widget_type\":\"Tile\",\"title\":\"\",\"subtitle\":\"\",\"action\":{\"alias\":\"exface.Core.GoToPage\",\"page_alias\":\"\"},\"display_widget\":{\"widget_type\":\"KPI\",\"attribute_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}]}}},{\"widget_type\":\"Tile\",\"title\":\"\",\"subtitle\":\"\",\"action\":{\"alias\":\"exface.Core.GoToPage\",\"page_alias\":\"\"},\"display_widget\":{\"widget_type\":\"KPI\"}}]}",
@@ -387,7 +387,7 @@
         },
         {
             "CREATED_ON": "2019-09-24 19:34:12",
-            "MODIFIED_ON": "2020-04-21 06:59:28",
+            "MODIFIED_ON": "2020-12-10 10:23:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9df0248f5b89898360205857feb80",
@@ -398,7 +398,7 @@
             "UXON": "{\"object_alias\":\"\",\"widget_type\":\"SplitVertical\",\"panels\":[{\"height\":\"50%\",\"widgets\":[{\"widget_type\":\"DataTable\",\"id\":\"master_table\",\"columns\":[{\"attribute_group_alias\":\"~VISIBLE\"}]}]},{\"widgets\":[{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\\\/\\\/ relation to master-table!\",\"comparator\":\"==\",\"value\":\"=master_table\",\"apply_on_change\":true,\"required\":true,\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_group_alias\":\"~VISIBLE\"}]}]}]}",
             "WRAP_PATH": "$.panels[0].widgets[0]",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/split_master_detail_tables.gif"
         },
         {
             "CREATED_ON": "2019-09-29 21:02:28",
@@ -477,7 +477,7 @@
         },
         {
             "CREATED_ON": "2019-10-01 09:32:08",
-            "MODIFIED_ON": "2019-10-01 09:32:08",
+            "MODIFIED_ON": "2020-12-10 10:12:35",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e42e53cc2440bacde4b318306b9a",
@@ -488,11 +488,11 @@
             "UXON": "{\"widget_type\":\"WidgetGroup\",\"caption\":\"\",\"widgets\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/widget_group_with_caption.gif"
         },
         {
             "CREATED_ON": "2019-10-01 09:32:43",
-            "MODIFIED_ON": "2019-10-01 09:32:43",
+            "MODIFIED_ON": "2020-12-10 10:12:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e42e687ad9e1bacde4b318306b9a",
@@ -503,11 +503,11 @@
             "UXON": "{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/widget_group.gif"
         },
         {
             "CREATED_ON": "2019-10-01 09:33:31",
-            "MODIFIED_ON": "2019-10-01 09:33:31",
+            "MODIFIED_ON": "2020-12-10 10:13:00",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e42e856792d6bacde4b318306b9a",
@@ -518,11 +518,11 @@
             "UXON": "{\"widget_type\":\"WidgetGroup\",\"width\":2,\"columns_in_grid\":2,\"widgets\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/widget_group_2_cols.gif"
         },
         {
             "CREATED_ON": "2019-10-01 19:05:45",
-            "MODIFIED_ON": "2020-11-23 17:51:25",
+            "MODIFIED_ON": "2020-12-10 10:04:31",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e47e7544f531bacde4b318306b9a",
@@ -533,11 +533,11 @@
             "UXON": "{\"widget_type\":\"ColorIndicator\",\"attribute_alias\":\"\",\"color_scale\":{\"10\":\"red\",\"20\":\"yellow\",\"99\":\"\",\"100\":\"green\"}}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/colorindicator_num.gif"
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/colorindicator_num.gif"
         },
         {
             "CREATED_ON": "2019-10-01 19:07:02",
-            "MODIFIED_ON": "2020-11-23 17:51:36",
+            "MODIFIED_ON": "2020-12-10 10:04:38",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e47ea3a711a9bacde4b318306b9a",
@@ -548,11 +548,11 @@
             "UXON": "{\"widget_type\":\"ColorIndicator\",\"attribute_alias\":\"\",\"color_only\":true,\"color_scale\":{\"99\":\"green\",\"299\":\"yellow\",\"300\":\"red\"}}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/colorindicator_color.gif"
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/colorindicator_color.gif"
         },
         {
             "CREATED_ON": "2019-10-01 19:09:17",
-            "MODIFIED_ON": "2020-11-23 17:51:46",
+            "MODIFIED_ON": "2020-12-10 10:04:48",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e47ef3ad6205bacde4b318306b9a",
@@ -563,7 +563,7 @@
             "UXON": "{\"widget_type\":\"ColorIndicator\",\"attribute_alias\":\"\",\"fill\":true,\"color_only\":false,\"color_scale\":{\"Pending\":\"yellow\",\"Error\":\"red\",\"Done\":\"green\",\"\":\"transparent\"}}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/colorindicator_text.gif"
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/colorindicator_text.gif"
         },
         {
             "CREATED_ON": "2019-10-02 09:05:10",
@@ -867,18 +867,18 @@
         },
         {
             "CREATED_ON": "2019-12-15 20:30:21",
-            "MODIFIED_ON": "2020-11-02 13:41:33",
+            "MODIFIED_ON": "2020-12-10 10:29:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea1f79b55cdb53aa030205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Simple Wizard",
-            "DESCRIPTION": "",
+            "DESCRIPTION": "You can add buttons to each step or to the wizard as a whole (shown on every step). A step without buttons will automatically show navigation buttons.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Wizard.php",
             "UXON": "{\"widget_type\":\"Wizard\",\"object_alias\":\"\",\"steps\":[{\"caption\":\"Step 1\",\"intro\":\"Please fill out the form!\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}]},{\"caption\":\"Step 2\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}],\"buttons\":[{\"action_alias\":\"exface.Core.CreateData\",\"visibility\":\"promoted\"},{\"go_to_step\":\"previous\"}]}]}",
             "WRAP_PATH": "$.steps[0].widgets[0]",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/wizard.gif"
         },
         {
             "CREATED_ON": "2019-12-25 22:35:15",
@@ -972,7 +972,7 @@
         },
         {
             "CREATED_ON": "2020-02-08 09:33:38",
-            "MODIFIED_ON": "2020-02-08 09:33:38",
+            "MODIFIED_ON": "2020-12-10 10:20:01",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4a560b505cb9b2cfe4b318306b9a",
@@ -983,11 +983,11 @@
             "UXON": "{\"widget_type\":\"DataTree\",\"object_alias\":\"\",\"tree_parent_id_attribute_alias\":\"\",\"tree_folder_flag_attribute_alias\":\"\",\"lazy_load_tree_levels\":true,\"tree_root_uid\":\"NULL\",\"filters\":[{\"attribute_alias\":\"\"}],\"columns\":[{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatree_lazy.gif"
         },
         {
             "CREATED_ON": "2020-02-08 09:48:43",
-            "MODIFIED_ON": "2020-02-08 09:49:17",
+            "MODIFIED_ON": "2020-12-10 10:20:12",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4a5827419f81b2cfe4b318306b9a",
@@ -998,7 +998,7 @@
             "UXON": "{\"widget_type\":\"DataTree\",\"object_alias\":\"\",\"tree_parent_id_attribute_alias\":\"\",\"tree_folder_flag_attribute_alias\":\"\",\"paginate\":false,\"lazy_load_tree_levels\":false,\"columns\":[{\"attribute_alias\":\"\"}]}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatree_expanded.gif"
         },
         {
             "CREATED_ON": "2020-02-11 08:02:21",
@@ -1302,18 +1302,18 @@
         },
         {
             "CREATED_ON": "2020-10-14 09:18:47",
-            "MODIFIED_ON": "2020-11-24 09:55:35",
+            "MODIFIED_ON": "2020-12-09 18:40:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eba5d544149a32a5d5025041000001",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "KPI tile",
-            "DESCRIPTION": "Use an aggregation in `attribute_alias` like `id:COUNT` and the tile will display a counter, total, etc. You can also add filters and aggregations in the `data` section.",
-            "PROTOTYPE": "exface\/Core\/Widgets\/Tile.php",
-            "UXON": "{\"widget_type\":\"KPI\",\"object_alias\":\"\",\"attribute_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}]}}",
+            "NAME": "KPI with semantic color scale",
+            "DESCRIPTION": "Use an aggregation in `attribute_alias` like `id:COUNT` and the tile will display a counter, total, etc. You can also add filters and aggregations in the `data` section. In the color scale you can also replace the semantic colors with regular CSS colors like `red`, `#ccc` etc.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/KPI.php",
+            "UXON": "{\"widget_type\":\"KPI\",\"object_alias\":\"\",\"attribute_alias\":\"\",\"color_scale\":{\"0\":\"\",\"10\":\"~WARNING\",\"20\":\"~ERROR\"},\"data\":{\"filters\":[{\"attribute_alias\":\"\"}]}}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/tile_kpi.gif"
+            "THUMBNAIL": ""
         },
         {
             "CREATED_ON": "2020-10-14 09:20:53",
@@ -1332,7 +1332,7 @@
         },
         {
             "CREATED_ON": "2020-10-27 07:51:05",
-            "MODIFIED_ON": "2020-10-27 07:51:05",
+            "MODIFIED_ON": "2020-12-10 10:34:28",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebb0e22b0e8efab0e2025041000001",
@@ -1343,7 +1343,7 @@
             "UXON": "{\"widget_type\":\"DataCarousel\",\"data\":{\"widget_type\":\"DataTableResponsive\",\"paginate\":false,\"columns\":[{\"attribute_alias\":\"\"}]},\"details\":{\"widget_type\":\"Form\",\"widgets\":[{\"attribute_alias\":\"\"}]}}",
             "WRAP_PATH": "$.data",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datacarousel.gif"
         },
         {
             "CREATED_ON": "2020-10-28 15:53:12",
@@ -1392,7 +1392,7 @@
         },
         {
             "CREATED_ON": "2020-11-11 07:56:39",
-            "MODIFIED_ON": "2020-11-11 07:58:53",
+            "MODIFIED_ON": "2020-12-09 18:36:47",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebb98a6e7986e2b98a025041000001",
@@ -1403,7 +1403,7 @@
             "UXON": "{\"widget_type\":\"PDFViewer\",\"attribute_alias\":\"\",\"download_enabled\":true,\"filename_attribute_alias\":\"\"}",
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/pdf_viewer.gif"
         },
         {
             "CREATED_ON": "2020-11-11 07:58:16",
@@ -1509,6 +1509,111 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_child.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-09 18:27:02",
+            "MODIFIED_ON": "2020-12-09 18:36:35",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb8246c00904ea8246025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "PDF viewer",
+            "DESCRIPTION": "NOTE: the `attribute_alias` should point to the attribute, containing the PDF binary",
+            "PROTOTYPE": "exface\/Core\/Widgets\/PDFViewer.php",
+            "UXON": "{\"widget_type\":\"PDFViewer\",\"attribute_alias\":\"\"}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/pdf_viewer.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-09 19:25:25",
+            "MODIFIED_ON": "2020-12-09 19:28:09",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba523e81ce3aea523025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "KPI tile menu",
+            "DESCRIPTION": "Multiple KPI tiles suitable as an entry point for an app. Use an aggregation in `attribute_alias` of each tile like `id:COUNT` and the tiles will display counters, totals, etc. Use `color_scale` on a KPI to emphasize the meaning of it's values.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Tiles.php",
+            "UXON": "{\"widget_type\":\"Tiles\",\"object_alias\":\"\",\"tiles\":[{\"title\":\"\",\"subtitle\":\"\",\"display_widget\":{\"widget_type\":\"KPI\",\"object_alias\":\"\",\"attribute_alias\":\"\",\"color_scale\":{\"0\":\"lightgreen\",\"1\":\"yellow\",\"20\":\"darkorange\"},\"data\":{\"filters\":[{\"attribute_alias\":\"\",\"value\":\"\",\"comparator\":\"==\"}]}},\"action\":{\"alias\":\"\"}}],\"tiles (copy)\":[{\"title\":\"\",\"subtitle\":\"\",\"display_widget\":{\"widget_type\":\"KPI\",\"object_alias\":\"\",\"attribute_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\",\"value\":\"\",\"comparator\":\"==\"}]}},\"action\":{\"alias\":\"\"}}]}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/tiles_kpi_menu.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-10 09:47:59",
+            "MODIFIED_ON": "2020-12-10 10:04:56",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb3aa6818e080b3aa847beb4a5184",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Colored values with color scale",
+            "DESCRIPTION": "Text\/number colored depending on it's value",
+            "PROTOTYPE": "exface\/Core\/Widgets\/ColorIndicator.php",
+            "UXON": "{\"widget_type\":\"ColorIndicator\",\"attribute_alias\":\"\",\"color_only\":true,\"fill\":false,\"color_scale\":{\"Good\":\"lightgreen\",\"Warning\":\"yellow\",\"Critical\":\"red\"}}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/colorindicator_text_only.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-10 09:55:38",
+            "MODIFIED_ON": "2020-12-10 10:03:51",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb870c79a97322870c847beb4a5184",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Progressbar",
+            "DESCRIPTION": "Simple progress bar with automatic min- and max-values",
+            "PROTOTYPE": "exface\/Core\/Widgets\/ProgressBar.php",
+            "UXON": "{\"widget_type\":\"ProgressBar\",\"attribute_alias\":\"\"}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/progressbar.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-10 09:56:18",
+            "MODIFIED_ON": "2020-12-10 10:41:52",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb8ffd910fa7e88ffd847beb4a5184",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Progressbar with text froma separate attribute",
+            "DESCRIPTION": "Progress bar with text based on another attribute.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/ProgressBar.php",
+            "UXON": "{\"widget_type\":\"ProgressBar\",\"attribute_alias\":\"\",\"text_attribute_alias\":\"\"}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/progressbar_with_text.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-10 09:58:48",
+            "MODIFIED_ON": "2020-12-10 10:41:01",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb84a2eac8d46c84a2847beb4a5184",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Progressbar with value-text-map",
+            "DESCRIPTION": "Progress bar with text based on a value-map. In this example, values up-to `10` will be displayed as `Pending`, up-to `20` as `In Progress` and of `100` or more - as `Finished`.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/ProgressBar.php",
+            "UXON": "{\"widget_type\":\"ProgressBar\",\"attribute_alias\":\"\",\"text_map\":{\"10\":\"Pending\",\"20\":\"In Progress\",\"90\":\"Canceled\",\"100\":\"Finished\"}}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/progressbar_with_text.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-10 10:03:30",
+            "MODIFIED_ON": "2020-12-10 10:42:04",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb9557931d8c529557847beb4a5184",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Progressbar with custom color scale",
+            "DESCRIPTION": "Progress bar with custom colors for values.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/ProgressBar.php",
+            "UXON": "{\"widget_type\":\"ProgressBar\",\"attribute_alias\":\"\",\"color_scale\":{\"0\":\"lightgray\",\"10\":\"red\",\"20\":\"yellow\",\"100\":\"green\"}}",
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/progressbar_colorscale.gif"
         }
     ],
     "totals_rows": [],
