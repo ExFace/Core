@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-11-17 13:30:20",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-11-18 11:11:37",
+    "modified_on": "2020-12-11 18:39:08",
     "contents": {
         "widget_type": "SplitVertical",
         "object_alias": "exface.Core.MONITOR_ACTION",
@@ -37,6 +37,16 @@
                                                     "direction": "desc"
                                                 }
                                             ],
+                                            "filters": [
+                                                {
+                                                    "attribute_alias": "DATE",
+                                                    "value": -30,
+                                                    "comparator": ">=",
+                                                    "input_widget": {
+                                                        "widget_type": "InputHidden"
+                                                    }
+                                                }
+                                            ],
                                             "columns": [
                                                 {
                                                     "attribute_alias": "USER"
@@ -48,9 +58,22 @@
                                         },
                                         "series": [
                                             {
-                                                "type": "column",
-                                                "x_attribute_alias": "USER__USERNAME",
-                                                "y_attribute_alias": "UID:COUNT"
+                                                "type": "bar",
+                                                "y_attribute_alias": "USER__USERNAME",
+                                                "x_attribute_alias": "UID:COUNT",
+                                                "caption": "Actions"
+                                            }
+                                        ],
+                                        "axis_y": [
+                                            {
+                                                "attribute_alias": "USER__USERNAME",
+                                                "hide_caption": true
+                                            }
+                                        ],
+                                        "axis_x": [
+                                            {
+                                                "attribute_alias": "UID:COUNT",
+                                                "hide_caption": true
                                             }
                                         ]
                                     }
@@ -64,6 +87,16 @@
                                         "id": "page_chart",
                                         "hide_header": true,
                                         "data": {
+                                            "filters": [
+                                                {
+                                                    "attribute_alias": "DATE",
+                                                    "value": -30,
+                                                    "comparator": ">=",
+                                                    "input_widget": {
+                                                        "widget_type": "InputHidden"
+                                                    }
+                                                }
+                                            ],
                                             "aggregate_by_attribute_alias": [
                                                 "PAGE"
                                             ],
@@ -92,6 +125,16 @@
                                         "id": "date_chart",
                                         "hide_header": true,
                                         "data": {
+                                            "filters": [
+                                                {
+                                                    "attribute_alias": "DATE",
+                                                    "value": -30,
+                                                    "comparator": ">=",
+                                                    "input_widget": {
+                                                        "widget_type": "InputHidden"
+                                                    }
+                                                }
+                                            ],
                                             "sorters": [
                                                 {
                                                     "attribute_alias": "DATE",
@@ -106,7 +149,14 @@
                                             {
                                                 "type": "line",
                                                 "x_attribute_alias": "DATE",
-                                                "y_attribute_alias": "UID:COUNT"
+                                                "y_attribute_alias": "UID:COUNT",
+                                                "caption": "Actions"
+                                            }
+                                        ],
+                                        "axis_x": [
+                                            {
+                                                "attribute_alias": "DATE",
+                                                "hide_caption": true
                                             }
                                         ]
                                     }
@@ -117,12 +167,20 @@
                 ]
             },
             {
-                "caption": "Activity",
+                "caption": "Activity of the last 30 days",
                 "widgets": [
                     {
                         "widget_type": "DataTable",
                         "empty_text": "No activity found. Make sure the monitor is enabled in System.config.js (MONITOR.ENABLED)",
                         "filters": [
+                            {
+                                "attribute_alias": "DATE",
+                                "value": -30,
+                                "comparator": ">=",
+                                "input_widget": {
+                                    "widget_type": "InputHidden"
+                                }
+                            },
                             {
                                 "attribute_alias": "USER",
                                 "value": "=user_chart!USER",
