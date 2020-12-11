@@ -18,7 +18,7 @@ abstract class ChartSeries extends AbstractChartPart implements iHaveCaption
 {
     use ImportUxonObjectTrait;
     use iHaveCaptionTrait {
-        getCaption as getCaptionViaTrait;
+        getCaption as getCaptionSetExplicitly;
     }
     
     private $type = null;
@@ -69,10 +69,10 @@ abstract class ChartSeries extends AbstractChartPart implements iHaveCaption
      */
     public function getCaption() : ?string
     {
-        if ($this->getCaptionViaTrait() === null) {
+        if ($this->getCaptionSetExplicitly() === null) {
             $this->setCaption($this->getValueDataColumn()->getCaption());
         }
-        return $this->getCaptionViaTrait();
+        return $this->getCaptionSetExplicitly();
     }
     
     public function getIndex() : int
