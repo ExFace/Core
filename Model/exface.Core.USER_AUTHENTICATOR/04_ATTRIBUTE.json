@@ -380,7 +380,9 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{\"length_max\":\"100\"}"
+            "CUSTOM_DATA_TYPE": {
+                "length_max": "100"
+            }
         }
     ],
     "totals_rows": [],

@@ -54,7 +54,11 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb874fd50d795c874f847beb4a5184",
             "BEHAVIOR": "exface\/Core\/Behaviors\/AliasGeneratingBehavior.php",
-            "CONFIG_UXON": "{\"source_attribute_alias\":\"NAME\",\"target_attribute_alias\":\"ALIAS\",\"case\":\"upper\"}",
+            "CONFIG_UXON": {
+                "source_attribute_alias": "NAME",
+                "target_attribute_alias": "ALIAS",
+                "case": "upper"
+            },
             "OBJECT": "0x11eb83a866a06a1a83a8847beb4a5184",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Generate queue alias from name",

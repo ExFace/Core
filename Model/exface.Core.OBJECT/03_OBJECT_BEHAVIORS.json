@@ -80,7 +80,27 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eab4cd5c151e1eb4cd0205857feb80",
             "BEHAVIOR": "exface\/Core\/Behaviors\/TranslatableBehavior.php",
-            "CONFIG_UXON": "{\"translatable_attributes\":[\"NAME\",\"SHORT_DESCRIPTION\"],\"translatable_relations\":[{\"relation_key_attribute_alias\":\"ATTRIBUTE__ALIAS\",\"translatable_attributes\":[\"ATTRIBUTE__NAME\",\"ATTRIBUTE__SHORT_DESCRIPTION\"]}],\"translatable_uxon_properties\":[\"DEFAULT_EDITOR_UXON\"],\"translation_subfolder\":\"Objects\",\"translation_filename_attribute_alias\":\"ALIAS_WITH_NS\",\"translation_app_determined_by_relation\":\"APP\"}",
+            "CONFIG_UXON": {
+                "translatable_attributes": [
+                    "NAME",
+                    "SHORT_DESCRIPTION"
+                ],
+                "translatable_relations": [
+                    {
+                        "relation_key_attribute_alias": "ATTRIBUTE__ALIAS",
+                        "translatable_attributes": [
+                            "ATTRIBUTE__NAME",
+                            "ATTRIBUTE__SHORT_DESCRIPTION"
+                        ]
+                    }
+                ],
+                "translatable_uxon_properties": [
+                    "DEFAULT_EDITOR_UXON"
+                ],
+                "translation_subfolder": "Objects",
+                "translation_filename_attribute_alias": "ALIAS_WITH_NS",
+                "translation_app_determined_by_relation": "APP"
+            },
             "OBJECT": "0x31350000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Translations",

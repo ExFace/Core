@@ -96,7 +96,88 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"Info\",\"widgets\":[{\"attribute_alias\":\"STATUS\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"TASK_ASSIGNED_ON\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"OWNER__USERNAME\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"TOPICS\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"OBJECT_ALIAS\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"ACTION_ALIAS\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"PRODUCER\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"MESSAGE_ID\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"USER_AGENT\",\"widget_type\":\"Text\"},{\"attribute_alias\":\"QUEUE__NAME\",\"widget_type\":\"Text\"},{\"widget_type\":\"Text\",\"attribute_alias\":\"RESULT_CODE\"},{\"widget_type\":\"Text\",\"attribute_alias\":\"RESULT\"},{\"widget_type\":\"Text\",\"attribute_alias\":\"ERROR_LOGID\"},{\"widget_type\":\"Text\",\"attribute_alias\":\"ERROR_MESSAGE\"}]},{\"caption\":\"Task Uxon\",\"widgets\":[{\"hide_caption\":true,\"widget_type\":\"InputUxon\",\"height\":\"100%\",\"attribute_alias\":\"TASK_UXON\"}]}]}]}",
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Dialog",
+                "widgets": [
+                    {
+                        "widget_type": "Tabs",
+                        "tabs": [
+                            {
+                                "caption": "Info",
+                                "widgets": [
+                                    {
+                                        "attribute_alias": "STATUS",
+                                        "widget_type": "Text"
+                                    },
+                                    {
+                                        "attribute_alias": "TASK_ASSIGNED_ON",
+                                        "widget_type": "Text"
+                                    },
+                                    {
+                                        "attribute_alias": "OWNER__USERNAME",
+                                        "widget_type": "Text"
+                                    },
+                                    {
+                                        "attribute_alias": "TOPICS",
+                                        "widget_type": "Text"
+                                    },
+                                    {
+                                        "attribute_alias": "OBJECT_ALIAS",
+                                        "widget_type": "Text"
+                                    },
+                                    {
+                                        "attribute_alias": "ACTION_ALIAS",
+                                        "widget_type": "Text"
+                                    },
+                                    {
+                                        "attribute_alias": "PRODUCER",
+                                        "widget_type": "Text"
+                                    },
+                                    {
+                                        "attribute_alias": "MESSAGE_ID",
+                                        "widget_type": "Text"
+                                    },
+                                    {
+                                        "attribute_alias": "USER_AGENT",
+                                        "widget_type": "Text"
+                                    },
+                                    {
+                                        "attribute_alias": "QUEUE__NAME",
+                                        "widget_type": "Text"
+                                    },
+                                    {
+                                        "widget_type": "Text",
+                                        "attribute_alias": "RESULT_CODE"
+                                    },
+                                    {
+                                        "widget_type": "Text",
+                                        "attribute_alias": "RESULT"
+                                    },
+                                    {
+                                        "widget_type": "Text",
+                                        "attribute_alias": "ERROR_LOGID"
+                                    },
+                                    {
+                                        "widget_type": "Text",
+                                        "attribute_alias": "ERROR_MESSAGE"
+                                    }
+                                ]
+                            },
+                            {
+                                "caption": "Task Uxon",
+                                "widgets": [
+                                    {
+                                        "hide_caption": true,
+                                        "widget_type": "InputUxon",
+                                        "height": "100%",
+                                        "attribute_alias": "TASK_UXON"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
             "ALIAS": "QUEUED_TASK",
             "DATA_ADDRESS": "exf_queued_task"
         }

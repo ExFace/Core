@@ -54,7 +54,14 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea6e9ceb53742c8f3f8c04ba002958",
             "BEHAVIOR": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
-            "CONFIG_UXON": "{\"on_duplicate_multi_row\":\"ignore\",\"on_duplicate_single_row\":\"error\",\"compare_attributes\":[\"PAGE_GROUP\",\"PAGE\"]}",
+            "CONFIG_UXON": {
+                "on_duplicate_multi_row": "ignore",
+                "on_duplicate_single_row": "error",
+                "compare_attributes": [
+                    "PAGE_GROUP",
+                    "PAGE"
+                ]
+            },
             "OBJECT": "0x11ea4aba642f3fdeb2cfe4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Prevent Duplicates",

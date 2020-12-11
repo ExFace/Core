@@ -54,7 +54,18 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea8cc007a283808cc00205857feb81",
             "BEHAVIOR": "exface\/Core\/Behaviors\/UndeletableBehavior.php",
-            "CONFIG_UXON": "{\"condition_group\":{\"operator\":\"AND\",\"conditions\":[{\"expression\":\"UID\",\"comparator\":\"[\",\"value\":\"0x11ea8eddc766689f8ba98c04ba002958,0x11ea5ede96e738f6b9920205857feb80\"}]}}",
+            "CONFIG_UXON": {
+                "condition_group": {
+                    "operator": "AND",
+                    "conditions": [
+                        {
+                            "expression": "UID",
+                            "comparator": "[",
+                            "value": "0x11ea8eddc766689f8ba98c04ba002958,0x11ea5ede96e738f6b9920205857feb80"
+                        }
+                    ]
+                }
+            },
             "OBJECT": "0x11ea5edb3ee5cbe8b9920205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Prevent deleting core auth. points",

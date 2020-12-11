@@ -96,7 +96,21 @@
             "SHORT_DESCRIPTION": "Custom datam connection configurations for users: user specific passwords, API keys, user ids or other data connection settings. Each set of credentials can be used for multiple connections.",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"width\":1,\"columns_in_grid\":1,\"height\":\"auto\",\"maximized\":false,\"widgets\":[{\"attribute_alias\":\"USER\"},{\"attribute_alias\":\"DATA_CONNECTION_CREDENTIALS\"}]}",
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Dialog",
+                "width": 1,
+                "columns_in_grid": 1,
+                "height": "auto",
+                "maximized": false,
+                "widgets": [
+                    {
+                        "attribute_alias": "USER"
+                    },
+                    {
+                        "attribute_alias": "DATA_CONNECTION_CREDENTIALS"
+                    }
+                ]
+            },
             "ALIAS": "USER_CREDENTIALS",
             "DATA_ADDRESS": "exf_user_credentials"
         }

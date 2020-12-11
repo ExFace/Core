@@ -96,7 +96,68 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Form\",\"widgets\":[{\"attribute_alias\":\"UXON_SCHEMA\",\"id\":\"uxon_schema_field\",\"widget_type\":\"InputHidden\"},{\"attribute_alias\":\"NAME\"},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Use as wrapper\",\"widgets\":[{\"attribute_alias\":\"WRAP_FLAG\",\"id\":\"wrap_flag\",\"disabled\":false,\"widget_type\":\"InputCheckBox\",\"display_only\":true},{\"attribute_alias\":\"WRAP_PATH\",\"widget_type\":\"Input\",\"disable_condition\":{\"widget_link\":\"wrap_flag\",\"comparator\":\"==\",\"value\":0}}]},{\"attribute_alias\":\"PROTOTYPE\",\"id\":\"uxon_prototype_field\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"THUMBNAIL\"},{\"attribute_alias\":\"DESCRIPTION\",\"width\":2},{\"attribute_alias\":\"UXON\",\"widget_type\":\"InputHidden\"},{\"attribute_alias\":\"UXON\",\"width\":2,\"height\":20,\"hide_caption\":true,\"widget_type\":\"InputUxon\",\"root_prototype\":\"=uxon_prototype_field\",\"schema\":\"=uxon_schema_field\"}]}",
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Form",
+                "widgets": [
+                    {
+                        "attribute_alias": "UXON_SCHEMA",
+                        "id": "uxon_schema_field",
+                        "widget_type": "InputHidden"
+                    },
+                    {
+                        "attribute_alias": "NAME"
+                    },
+                    {
+                        "widget_type": "WidgetGroup",
+                        "caption": "Use as wrapper",
+                        "widgets": [
+                            {
+                                "attribute_alias": "WRAP_FLAG",
+                                "id": "wrap_flag",
+                                "disabled": false,
+                                "widget_type": "InputCheckBox",
+                                "display_only": true
+                            },
+                            {
+                                "attribute_alias": "WRAP_PATH",
+                                "widget_type": "Input",
+                                "disable_condition": {
+                                    "widget_link": "wrap_flag",
+                                    "comparator": "==",
+                                    "value": 0
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "attribute_alias": "PROTOTYPE",
+                        "id": "uxon_prototype_field"
+                    },
+                    {
+                        "attribute_alias": "APP"
+                    },
+                    {
+                        "attribute_alias": "THUMBNAIL"
+                    },
+                    {
+                        "attribute_alias": "DESCRIPTION",
+                        "width": 2
+                    },
+                    {
+                        "attribute_alias": "UXON",
+                        "widget_type": "InputHidden"
+                    },
+                    {
+                        "attribute_alias": "UXON",
+                        "width": 2,
+                        "height": 20,
+                        "hide_caption": true,
+                        "widget_type": "InputUxon",
+                        "root_prototype": "=uxon_prototype_field",
+                        "schema": "=uxon_schema_field"
+                    }
+                ]
+            },
             "ALIAS": "UXON_PRESET",
             "DATA_ADDRESS": "exf_uxon_preset"
         }

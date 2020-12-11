@@ -54,7 +54,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e60ad972bdb21689840050568905af",
             "BEHAVIOR": "exface\/Core\/Behaviors\/TimeStampingBehavior.php",
-            "CONFIG_UXON": "{\"created_on_attribute_alias\":\"CREATED_ON\",\"created_by_attribute_alias\":\"CREATED_BY_USER\",\"updated_on_attribute_alias\":\"MODIFIED_ON\",\"updated_by_attribute_alias\":\"MODIFIED_BY_USER\"}",
+            "CONFIG_UXON": {
+                "created_on_attribute_alias": "CREATED_ON",
+                "created_by_attribute_alias": "CREATED_BY_USER",
+                "updated_on_attribute_alias": "MODIFIED_ON",
+                "updated_by_attribute_alias": "MODIFIED_BY_USER"
+            },
             "OBJECT": "0x32370000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Create\/Update tracking + optimistic locking",

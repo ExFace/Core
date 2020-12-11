@@ -96,7 +96,10 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{\"DELIMITER\":\",\",\"ENCLOSURE\":\"'\",\"HAS_HEADER_ROW\":\"0\"}",
-            "DEFAULT_EDITOR_UXON": "{\"object_alias\":\"exface.Core.LOG_DETAILS\",\"widget_type\":\"DataTable\"}",
+            "DEFAULT_EDITOR_UXON": {
+                "object_alias": "exface.Core.LOG_DETAILS",
+                "widget_type": "DataTable"
+            },
             "ALIAS": "LOG_ENTRY",
             "DATA_ADDRESS": "[#logfile#]"
         }

@@ -70,7 +70,13 @@
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "IMMEDIATE_EXECUTION",
             "ALLOW_MULTI_QUEUE_HANDLING": "0",
-            "CONFIG_UXON": "{\"topics\":{\"all_of\":[\"immediate\"]}}",
+            "CONFIG_UXON": {
+                "topics": {
+                    "all_of": [
+                        "immediate"
+                    ]
+                }
+            },
             "NAME": "Immediate execution"
         }
     ],

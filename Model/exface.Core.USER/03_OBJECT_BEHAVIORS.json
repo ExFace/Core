@@ -54,7 +54,9 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea0aeb87fc18a2be19e4b318306b9a",
             "BEHAVIOR": "exface\/Core\/Behaviors\/PasswordHashingBehavior.php",
-            "CONFIG_UXON": "{\"password_attribute_alias\":\"PASSWORD\"}",
+            "CONFIG_UXON": {
+                "password_attribute_alias": "PASSWORD"
+            },
             "OBJECT": "0x31343400000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Hash Passwords",
@@ -67,7 +69,18 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eab61cc92f42f2b61c0205857feb81",
             "BEHAVIOR": "exface\/Core\/Behaviors\/UndeletableBehavior.php",
-            "CONFIG_UXON": "{\"condition_group\":{\"operator\":\"AND\",\"conditions\":[{\"expression\":\"UID\",\"comparator\":\"[\",\"value\":\"0x00000000000000000000000000000000\"}]}}",
+            "CONFIG_UXON": {
+                "condition_group": {
+                    "operator": "AND",
+                    "conditions": [
+                        {
+                            "expression": "UID",
+                            "comparator": "[",
+                            "value": "0x00000000000000000000000000000000"
+                        }
+                    ]
+                }
+            },
             "OBJECT": "0x31343400000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Prevent deleting anonymous user",

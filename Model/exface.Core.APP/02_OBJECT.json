@@ -96,7 +96,22 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"width\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"DEFAULT_LANGUAGE_CODE\"}]}",
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Dialog",
+                "width": 1,
+                "height": "auto",
+                "widgets": [
+                    {
+                        "attribute_alias": "ALIAS"
+                    },
+                    {
+                        "attribute_alias": "NAME"
+                    },
+                    {
+                        "attribute_alias": "DEFAULT_LANGUAGE_CODE"
+                    }
+                ]
+            },
             "ALIAS": "APP",
             "DATA_ADDRESS": "exf_app"
         }

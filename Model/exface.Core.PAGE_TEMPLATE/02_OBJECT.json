@@ -96,7 +96,35 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"object_alias\":\"exface.Core.PAGE_TEMPLATE\",\"widgets\":[{\"attribute_alias\":\"NAME\",\"width\":\"max\"},{\"attribute_alias\":\"DESCRIPTION\",\"width\":\"max\"},{\"attribute_alias\":\"FACADE\",\"id\":\"prototype_selector\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"FACADE_UXON\",\"widget_type\":\"InputUxon\",\"hide_caption\":true,\"width\":\"max\",\"height\":16,\"root_prototype\":\"=prototype_selector\"}]}",
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Dialog",
+                "object_alias": "exface.Core.PAGE_TEMPLATE",
+                "widgets": [
+                    {
+                        "attribute_alias": "NAME",
+                        "width": "max"
+                    },
+                    {
+                        "attribute_alias": "DESCRIPTION",
+                        "width": "max"
+                    },
+                    {
+                        "attribute_alias": "FACADE",
+                        "id": "prototype_selector"
+                    },
+                    {
+                        "attribute_alias": "APP"
+                    },
+                    {
+                        "attribute_alias": "FACADE_UXON",
+                        "widget_type": "InputUxon",
+                        "hide_caption": true,
+                        "width": "max",
+                        "height": 16,
+                        "root_prototype": "=prototype_selector"
+                    }
+                ]
+            },
             "ALIAS": "PAGE_TEMPLATE",
             "DATA_ADDRESS": "exf_page_template"
         }

@@ -54,7 +54,15 @@
             "MODIFIED_BY_USER": "0x11ea95ea3987fa17a9d10205857feb80",
             "UID": "0x11ea951065280b26a66b025041000001",
             "BEHAVIOR": "exface\/Core\/Behaviors\/AliasGeneratingBehavior.php",
-            "CONFIG_UXON": "{\"target_attribute_alias\":\"ALIAS\",\"namespace_attribute_alias\":\"APP__ALIAS\",\"source_attribute_alias\":\"NAME\",\"case\":\"Lower\",\"replace_characters\":{\" \":\"-\"}}",
+            "CONFIG_UXON": {
+                "target_attribute_alias": "ALIAS",
+                "namespace_attribute_alias": "APP__ALIAS",
+                "source_attribute_alias": "NAME",
+                "case": "Lower",
+                "replace_characters": {
+                    " ": "-"
+                }
+            },
             "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Generate Alias from page name",
@@ -67,7 +75,19 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eabfb1c0b2b2bebfb10205857feb80",
             "BEHAVIOR": "exface\/Core\/Behaviors\/TranslatableBehavior.php",
-            "CONFIG_UXON": "{\"translation_subfolder\":\"Pages\",\"translation_filename_attribute_alias\":\"ALIAS\",\"translation_app_determined_by_relation\":\"APP\",\"translatable_attributes\":[\"NAME\",\"DESCRIPTION\",\"INTRO\"],\"translatable_uxon_properties\":[\"CONTENT\"]}",
+            "CONFIG_UXON": {
+                "translation_subfolder": "Pages",
+                "translation_filename_attribute_alias": "ALIAS",
+                "translation_app_determined_by_relation": "APP",
+                "translatable_attributes": [
+                    "NAME",
+                    "DESCRIPTION",
+                    "INTRO"
+                ],
+                "translatable_uxon_properties": [
+                    "CONTENT"
+                ]
+            },
             "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Translations",

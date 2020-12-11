@@ -96,7 +96,39 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"attribute_alias\":\"LABEL\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"READONLY\"},{\"attribute_alias\":\"CONNECTOR\",\"id\":\"connector_selector\"},{\"attribute_alias\":\"CONFIG\",\"width\":\"max\",\"height\":11,\"widget_type\":\"InputUxon\",\"root_prototype\":\"=connector_selector\"},{\"attribute_alias\":\"FILTER_CONTEXT\",\"width\":\"max\",\"height\":8}]}",
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Dialog",
+                "widgets": [
+                    {
+                        "attribute_alias": "LABEL"
+                    },
+                    {
+                        "attribute_alias": "APP"
+                    },
+                    {
+                        "attribute_alias": "ALIAS"
+                    },
+                    {
+                        "attribute_alias": "READONLY"
+                    },
+                    {
+                        "attribute_alias": "CONNECTOR",
+                        "id": "connector_selector"
+                    },
+                    {
+                        "attribute_alias": "CONFIG",
+                        "width": "max",
+                        "height": 11,
+                        "widget_type": "InputUxon",
+                        "root_prototype": "=connector_selector"
+                    },
+                    {
+                        "attribute_alias": "FILTER_CONTEXT",
+                        "width": "max",
+                        "height": 8
+                    }
+                ]
+            },
             "ALIAS": "CONNECTION",
             "DATA_ADDRESS": "exf_data_connection"
         }

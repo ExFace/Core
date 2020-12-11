@@ -251,7 +251,9 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{\"inner_data_type\":\"exface.Core.UxonDataConnection\"}"
+            "CUSTOM_DATA_TYPE": {
+                "inner_data_type": "exface.Core.UxonDataConnection"
+            }
         },
         {
             "CREATED_ON": "2020-01-08 16:50:29",

@@ -70,7 +70,28 @@
             "ALIAS": "DisableAuthorizationPoint",
             "NAME": "Disable",
             "SHORT_DESCRIPTION": "",
-            "CONFIG_UXON": "{\"input_rows_min\":1,\"input_object_alias\":\"exface.Core.AUTHORIZATION_POINT\",\"icon\":\"ban\",\"input_mapper\":{\"inherit_columns\":false,\"column_to_column_mappings\":[{\"from\":\"=1\",\"to\":\"DISABLED_FLAG\"},{\"from\":\"UID\",\"to\":\"UID\"},{\"from\":\"MODIFIED_ON\",\"to\":\"MODIFIED_ON\"}]}}",
+            "CONFIG_UXON": {
+                "input_rows_min": 1,
+                "input_object_alias": "exface.Core.AUTHORIZATION_POINT",
+                "icon": "ban",
+                "input_mapper": {
+                    "inherit_columns": false,
+                    "column_to_column_mappings": [
+                        {
+                            "from": "=1",
+                            "to": "DISABLED_FLAG"
+                        },
+                        {
+                            "from": "UID",
+                            "to": "UID"
+                        },
+                        {
+                            "from": "MODIFIED_ON",
+                            "to": "MODIFIED_ON"
+                        }
+                    ]
+                }
+            },
             "APP": "0x31000000000000000000000000000000",
             "USE_IN_OBJECT_BASKET_FLAG": "0",
             "DOCS": ""
@@ -86,7 +107,28 @@
             "ALIAS": "EnableAuthorizationPoint",
             "NAME": "Enable",
             "SHORT_DESCRIPTION": "",
-            "CONFIG_UXON": "{\"input_rows_min\":1,\"input_object_alias\":\"exface.Core.AUTHORIZATION_POINT\",\"icon\":\"check-circle-o\",\"input_mapper\":{\"inherit_columns\":false,\"column_to_column_mappings\":[{\"from\":\"=0\",\"to\":\"DISABLED_FLAG\"},{\"from\":\"UID\",\"to\":\"UID\"},{\"from\":\"MODIFIED_ON\",\"to\":\"MODIFIED_ON\"}]}}",
+            "CONFIG_UXON": {
+                "input_rows_min": 1,
+                "input_object_alias": "exface.Core.AUTHORIZATION_POINT",
+                "icon": "check-circle-o",
+                "input_mapper": {
+                    "inherit_columns": false,
+                    "column_to_column_mappings": [
+                        {
+                            "from": "=0",
+                            "to": "DISABLED_FLAG"
+                        },
+                        {
+                            "from": "UID",
+                            "to": "UID"
+                        },
+                        {
+                            "from": "MODIFIED_ON",
+                            "to": "MODIFIED_ON"
+                        }
+                    ]
+                }
+            },
             "APP": "0x31000000000000000000000000000000",
             "USE_IN_OBJECT_BASKET_FLAG": "0",
             "DOCS": ""
@@ -102,7 +144,35 @@
             "ALIAS": "RestoreAuthorizationPoint",
             "NAME": "Restore Settings",
             "SHORT_DESCRIPTION": "Restores the settings for an authorization point according to it's app",
-            "CONFIG_UXON": "{\"icon\":\"undo\",\"input_object_alias\":\"exface.Core.AUTHORIZATION_POINT\",\"input_mapper\":{\"inherit_columns\":false,\"column_to_column_mappings\":[{\"from\":\"=\\\"\\\"\",\"to\":\"COMBINING_ALGORITHM_LOCAL\"},{\"from\":\"=\\\"\\\"\",\"to\":\"DEFAULT_EFFECT_LOCAL\"},{\"from\":\"=0\",\"to\":\"DISABLED_FLAG\"},{\"from\":\"MODIFIED_ON\",\"to\":\"MODIFIED_ON\"},{\"from\":\"UID\",\"to\":\"UID\"}]}}",
+            "CONFIG_UXON": {
+                "icon": "undo",
+                "input_object_alias": "exface.Core.AUTHORIZATION_POINT",
+                "input_mapper": {
+                    "inherit_columns": false,
+                    "column_to_column_mappings": [
+                        {
+                            "from": "=\"\"",
+                            "to": "COMBINING_ALGORITHM_LOCAL"
+                        },
+                        {
+                            "from": "=\"\"",
+                            "to": "DEFAULT_EFFECT_LOCAL"
+                        },
+                        {
+                            "from": "=0",
+                            "to": "DISABLED_FLAG"
+                        },
+                        {
+                            "from": "MODIFIED_ON",
+                            "to": "MODIFIED_ON"
+                        },
+                        {
+                            "from": "UID",
+                            "to": "UID"
+                        }
+                    ]
+                }
+            },
             "APP": "0x31000000000000000000000000000000",
             "USE_IN_OBJECT_BASKET_FLAG": "0",
             "DOCS": ""

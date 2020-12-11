@@ -96,7 +96,43 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"attribute_alias\":\"NAME\",\"width\":\"max\"},{\"attribute_alias\":\"PROTOTYPE_CLASS\",\"width\":\"max\",\"id\":\"prototype_field\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"ALLOW_MULTI_QUEUE_HANDLING\"},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Configuration\",\"width\":\"max\",\"widgets\":[{\"attribute_alias\":\"CONFIG_UXON\",\"widget_type\":\"InputUxon\",\"root_prototype\":\"=prototype_field\",\"hide_caption\":true,\"height\":12}]}]}",
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Dialog",
+                "widgets": [
+                    {
+                        "attribute_alias": "NAME",
+                        "width": "max"
+                    },
+                    {
+                        "attribute_alias": "PROTOTYPE_CLASS",
+                        "width": "max",
+                        "id": "prototype_field"
+                    },
+                    {
+                        "attribute_alias": "ALIAS"
+                    },
+                    {
+                        "attribute_alias": "APP"
+                    },
+                    {
+                        "attribute_alias": "ALLOW_MULTI_QUEUE_HANDLING"
+                    },
+                    {
+                        "widget_type": "WidgetGroup",
+                        "caption": "Configuration",
+                        "width": "max",
+                        "widgets": [
+                            {
+                                "attribute_alias": "CONFIG_UXON",
+                                "widget_type": "InputUxon",
+                                "root_prototype": "=prototype_field",
+                                "hide_caption": true,
+                                "height": 12
+                            }
+                        ]
+                    }
+                ]
+            },
             "ALIAS": "QUEUE",
             "DATA_ADDRESS": "exf_queue"
         }

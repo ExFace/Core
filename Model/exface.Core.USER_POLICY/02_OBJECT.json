@@ -96,7 +96,68 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "0x11ea63083a80f8c8a2e30205857feb80",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"AUTHORIZATION_POINT\"},{\"attribute_alias\":\"EFFECT\"},{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"DESCRIPTION\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Targets\",\"widgets\":[{\"attribute_alias\":\"TARGET_USER_ROLE\"},{\"attribute_alias\":\"TARGET_PAGE_GROUP\"},{\"attribute_alias\":\"TARGET_OBJECT\"},{\"attribute_alias\":\"TARGET_ACTION_MODEL\"},{\"attribute_alias\":\"TARGET_ACTION_PROTOTYPE\"},{\"attribute_alias\":\"TARGET_FACADE\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Additional conditions\",\"width\":\"max\",\"widgets\":[{\"attribute_alias\":\"CONDITION_UXON\",\"height\":12,\"width\":\"max\",\"hide_caption\":true}]}]}",
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Dialog",
+                "widgets": [
+                    {
+                        "widget_type": "WidgetGroup",
+                        "widgets": [
+                            {
+                                "attribute_alias": "AUTHORIZATION_POINT"
+                            },
+                            {
+                                "attribute_alias": "EFFECT"
+                            },
+                            {
+                                "attribute_alias": "NAME"
+                            },
+                            {
+                                "attribute_alias": "APP"
+                            },
+                            {
+                                "attribute_alias": "DESCRIPTION"
+                            }
+                        ]
+                    },
+                    {
+                        "widget_type": "WidgetGroup",
+                        "caption": "Targets",
+                        "widgets": [
+                            {
+                                "attribute_alias": "TARGET_USER_ROLE"
+                            },
+                            {
+                                "attribute_alias": "TARGET_PAGE_GROUP"
+                            },
+                            {
+                                "attribute_alias": "TARGET_OBJECT"
+                            },
+                            {
+                                "attribute_alias": "TARGET_ACTION_MODEL"
+                            },
+                            {
+                                "attribute_alias": "TARGET_ACTION_PROTOTYPE"
+                            },
+                            {
+                                "attribute_alias": "TARGET_FACADE"
+                            }
+                        ]
+                    },
+                    {
+                        "widget_type": "WidgetGroup",
+                        "caption": "Additional conditions",
+                        "width": "max",
+                        "widgets": [
+                            {
+                                "attribute_alias": "CONDITION_UXON",
+                                "height": 12,
+                                "width": "max",
+                                "hide_caption": true
+                            }
+                        ]
+                    }
+                ]
+            },
             "ALIAS": "USER_POLICY",
             "DATA_ADDRESS": "exf_user_policy"
         }
