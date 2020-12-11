@@ -74,7 +74,9 @@
             "APP": "0x31000000000000000000000000000000",
             "LABEL": "Local Vendor Folders",
             "CONNECTOR": "exface\/Core\/DataConnectors\/FileFinderConnector.php",
-            "CONFIG": "{\"use_vendor_folder_as_base\":\"1\"}",
+            "CONFIG": {
+                "use_vendor_folder_as_base": "1"
+            },
             "READONLY": "0",
             "ALIAS": "LOCAL_VENDOR_FOLDERS",
             "FILTER_CONTEXT": null

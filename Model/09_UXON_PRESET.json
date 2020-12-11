@@ -65,7 +65,29 @@
             "NAME": "Split Top-Bottom",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/Widgets\/SplitVertical.php",
-            "UXON": "{\"object_alias\":\"\",\"widget_type\":\"SplitVertical\",\"panels\":[{\"caption\":\"\",\"height\":\"50%\",\"widgets\":[{\"\":\"\"}]},{\"caption\":\"\",\"widgets\":[{\"\":\"\"}]}]}",
+            "UXON": {
+                "object_alias": "",
+                "widget_type": "SplitVertical",
+                "panels": [
+                    {
+                        "caption": "",
+                        "height": "50%",
+                        "widgets": [
+                            {
+                                "": ""
+                            }
+                        ]
+                    },
+                    {
+                        "caption": "",
+                        "widgets": [
+                            {
+                                "": ""
+                            }
+                        ]
+                    }
+                ]
+            },
             "WRAP_PATH": "$.panels[0].widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/split_top_bottom.gif"
@@ -80,7 +102,10 @@
             "NAME": "Tile menu with 2 levels",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/Widgets\/NavTiles.php",
-            "UXON": "{\"widget_type\":\"NavTiles\",\"object_alias\":\"exface.Core.PAGE\"}",
+            "UXON": {
+                "widget_type": "NavTiles",
+                "object_alias": "exface.Core.PAGE"
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/tile_menu_2.gif"
@@ -95,7 +120,37 @@
             "NAME": "Editor-Dialog with multiple widget groups",
             "DESCRIPTION": "The first widget group has no caption, so it will not be visible as a group. The other two have captions. If wrapping, the content will be placed inside the first group.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
-            "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Group 1\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Group 2\",\"widgets\":[{\"attribute_alias\":\"\"}]}]}",
+            "UXON": {
+                "widget_type": "Dialog",
+                "widgets": [
+                    {
+                        "widget_type": "WidgetGroup",
+                        "widgets": [
+                            {
+                                "attribute_alias": ""
+                            }
+                        ]
+                    },
+                    {
+                        "widget_type": "WidgetGroup",
+                        "caption": "Group 1",
+                        "widgets": [
+                            {
+                                "attribute_alias": ""
+                            }
+                        ]
+                    },
+                    {
+                        "widget_type": "WidgetGroup",
+                        "caption": "Group 2",
+                        "widgets": [
+                            {
+                                "attribute_alias": ""
+                            }
+                        ]
+                    }
+                ]
+            },
             "WRAP_PATH": "$.widgets[1].widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/dialog_with_widget_groups.gif"
@@ -110,7 +165,20 @@
             "NAME": "Precentual state machine without transition restrictions",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/Behaviors\/StateMachineBehavior.php",
-            "UXON": "{\"state_attribute_alias\":\"\",\"states\":{\"10\":{\"name\":\"Planned\"},\"50\":{\"name\":\"Active\"},\"99\":{\"name\":\"Inactive\"}}}",
+            "UXON": {
+                "state_attribute_alias": "",
+                "states": {
+                    "10": {
+                        "name": "Planned"
+                    },
+                    "50": {
+                        "name": "Active"
+                    },
+                    "99": {
+                        "name": "Inactive"
+                    }
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
             "THUMBNAIL": null
@@ -125,7 +193,31 @@
             "NAME": "Simple master data table",
             "DESCRIPTION": "A DataTable with all visible attributes as columns and buttons to create, edit, copy and delete.",
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
-            "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"columns\":[{\"attribute_group_alias\":\"~VISIBLE\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"visibility\":\"optional\"}]}",
+            "UXON": {
+                "widget_type": "DataTable",
+                "object_alias": "",
+                "columns": [
+                    {
+                        "attribute_group_alias": "~VISIBLE"
+                    }
+                ],
+                "buttons": [
+                    {
+                        "action_alias": "exface.Core.ShowObjectCreateDialog"
+                    },
+                    {
+                        "action_alias": "exface.Core.ShowObjectEditDialog",
+                        "bind_to_double_click": true
+                    },
+                    {
+                        "action_alias": "exface.Core.ShowObjectCopyDialog"
+                    },
+                    {
+                        "action_alias": "exface.Core.DeleteObject",
+                        "visibility": "optional"
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_simple.gif"
@@ -140,7 +232,45 @@
             "NAME": "Table with filters, sorters and buttons",
             "DESCRIPTION": "A DataTable with placeholder for columns, filters and sorters and buttons to create, edit, copy and delete.",
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
-            "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\"}],\"columns\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"visibility\":\"optional\"}]}",
+            "UXON": {
+                "widget_type": "DataTable",
+                "object_alias": "",
+                "filters": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ],
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "attribute_alias": ""
+                    }
+                ],
+                "sorters": [
+                    {
+                        "attribute_alias": "",
+                        "direction": "asc"
+                    }
+                ],
+                "buttons": [
+                    {
+                        "action_alias": "exface.Core.ShowObjectCreateDialog"
+                    },
+                    {
+                        "action_alias": "exface.Core.ShowObjectEditDialog",
+                        "bind_to_double_click": true
+                    },
+                    {
+                        "action_alias": "exface.Core.ShowObjectCopyDialog"
+                    },
+                    {
+                        "action_alias": "exface.Core.DeleteObject",
+                        "visibility": "optional"
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_filters_sorters_buttons.gif"
@@ -155,7 +285,29 @@
             "NAME": "Aggregated table",
             "DESCRIPTION": "Aggregates data for each value of the listed aggregate-by-attributes (like GROUP BY in SQL). Each column can either show an aggregate-by-attribute, an attribute related to it or an attribute with an aggregate-function like `:SUM`, `:LIST`, etc. Filters will be applied to aggregated values if possible.",
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
-            "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"aggregate_by_attribute_alias\":[\"\"],\"filters\":[{\"attribute_alias\":\"\"}],\"columns\":[{\"attribute_alias\":\"\\\/\\\/aggregated_by_attribute\"},{\"attribute_alias\":\"\\\/\\\/aggregated_by_relation__some_attribute\"},{\"attribute_alias\":\"\\\/\\\/aggregated_attribute:SUM\"}]}",
+            "UXON": {
+                "widget_type": "DataTable",
+                "object_alias": "",
+                "aggregate_by_attribute_alias": [
+                    ""
+                ],
+                "filters": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ],
+                "columns": [
+                    {
+                        "attribute_alias": "\/\/aggregated_by_attribute"
+                    },
+                    {
+                        "attribute_alias": "\/\/aggregated_by_relation__some_attribute"
+                    },
+                    {
+                        "attribute_alias": "\/\/aggregated_attribute:SUM"
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_aggregation.gif"
@@ -170,7 +322,27 @@
             "NAME": "Simple Tabs",
             "DESCRIPTION": "Two tabs. If used as wrapper, the wrapped content will be added to the first tab",
             "PROTOTYPE": "exface\/Core\/Widgets\/Tabs.php",
-            "UXON": "{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"\",\"widgets\":[{\"attribute_alias\":\"\"}]},{\"caption\":\"\",\"widgets\":[{\"attribute_alias\":\"\"}]}]}",
+            "UXON": {
+                "widget_type": "Tabs",
+                "tabs": [
+                    {
+                        "caption": "",
+                        "widgets": [
+                            {
+                                "attribute_alias": ""
+                            }
+                        ]
+                    },
+                    {
+                        "caption": "",
+                        "widgets": [
+                            {
+                                "attribute_alias": ""
+                            }
+                        ]
+                    }
+                ]
+            },
             "WRAP_PATH": "$.tabs[0].widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/tabs.gif"
@@ -185,7 +357,79 @@
             "NAME": "Editor-Dialog with tabs for child objects",
             "DESCRIPTION": "Tabbed dialog for master-detail object showing a \"General\" tab with an editor for the master object and a \"Details\" tab with a table of details objects. Wrapped content will be placed in the \"General\" tab.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
-            "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"General\",\"widgets\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE with the UID of the main object\",\"widget_type\":\"InputHidden\",\"id\":\"uid_field\"},{\"attribute_alias\":\"\"}]},{\"caption\":\"Details\",\"widgets\":[{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO MASTER OBJECT\",\"comparator\":\"==\",\"required\":true,\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_alias\":\"\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\",\"disabled_if\":{\"operator\":\"AND\",\"conditions\":[{\"value_left\":\"=uid_field\",\"comparator\":\"==\",\"value_right\":\"\"}]}},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"visibility\":\"optional\"}]}]}]}]}",
+            "UXON": {
+                "widget_type": "Dialog",
+                "widgets": [
+                    {
+                        "widget_type": "Tabs",
+                        "tabs": [
+                            {
+                                "caption": "General",
+                                "widgets": [
+                                    {
+                                        "attribute_alias": "\/\/ REPLACE with the UID of the main object",
+                                        "widget_type": "InputHidden",
+                                        "id": "uid_field"
+                                    },
+                                    {
+                                        "attribute_alias": ""
+                                    }
+                                ]
+                            },
+                            {
+                                "caption": "Details",
+                                "widgets": [
+                                    {
+                                        "widget_type": "DataTable",
+                                        "object_alias": "",
+                                        "filters": [
+                                            {
+                                                "attribute_alias": "\/\/ REPLACE WITH RELATION TO MASTER OBJECT",
+                                                "comparator": "==",
+                                                "required": true,
+                                                "input_widget": {
+                                                    "widget_type": "InputHidden"
+                                                }
+                                            }
+                                        ],
+                                        "columns": [
+                                            {
+                                                "attribute_alias": ""
+                                            }
+                                        ],
+                                        "buttons": [
+                                            {
+                                                "action_alias": "exface.Core.ShowObjectCreateDialog",
+                                                "disabled_if": {
+                                                    "operator": "AND",
+                                                    "conditions": [
+                                                        {
+                                                            "value_left": "=uid_field",
+                                                            "comparator": "==",
+                                                            "value_right": ""
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "action_alias": "exface.Core.ShowObjectEditDialog",
+                                                "bind_to_double_click": true
+                                            },
+                                            {
+                                                "action_alias": "exface.Core.ShowObjectCopyDialog"
+                                            },
+                                            {
+                                                "action_alias": "exface.Core.DeleteObject",
+                                                "visibility": "optional"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
             "WRAP_PATH": "$.widgets[0].tabs[0].widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/dialog_with_child_tabs.gif"
@@ -200,7 +444,45 @@
             "NAME": "Responsive table with filters, sorters and buttons",
             "DESCRIPTION": "A responsive table with placeholder for columns, filters and sorters and buttons to create, edit, copy and delete.",
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTableResponsive.php",
-            "UXON": "{\"widget_type\":\"DataTableResponsive\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\"}],\"columns\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\",\"visibility\":\"optional\"}]}",
+            "UXON": {
+                "widget_type": "DataTableResponsive",
+                "object_alias": "",
+                "filters": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ],
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "attribute_alias": ""
+                    }
+                ],
+                "sorters": [
+                    {
+                        "attribute_alias": "",
+                        "direction": "asc"
+                    }
+                ],
+                "buttons": [
+                    {
+                        "action_alias": "exface.Core.ShowObjectCreateDialog"
+                    },
+                    {
+                        "action_alias": "exface.Core.ShowObjectEditDialog",
+                        "bind_to_double_click": true
+                    },
+                    {
+                        "action_alias": "exface.Core.ShowObjectCopyDialog"
+                    },
+                    {
+                        "action_alias": "exface.Core.DeleteObject",
+                        "visibility": "optional"
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_responsive.gif"
@@ -215,7 +497,16 @@
             "NAME": "Table without pagination",
             "DESCRIPTION": "A simple table without pagination (showing all items at once)",
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
-            "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"paginate\":false,\"columns\":[{\"attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "DataTable",
+                "object_alias": "",
+                "paginate": false,
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_no_pagination.gif"
@@ -230,7 +521,18 @@
             "NAME": "Table with pagination, but without total count",
             "DESCRIPTION": "Not counting all items matching the current filters may greatly improve performance on large data sets",
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
-            "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"paginator\":{\"count_all_rows\":false},\"columns\":[{\"attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "DataTable",
+                "object_alias": "",
+                "paginator": {
+                    "count_all_rows": false
+                },
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_no_count.gif"
@@ -245,7 +547,11 @@
             "NAME": "Tile menu with 1 level",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/Widgets\/NavTiles.php",
-            "UXON": "{\"widget_type\":\"NavTiles\",\"object_alias\":\"exface.Core.PAGE\",\"depth\":1}",
+            "UXON": {
+                "widget_type": "NavTiles",
+                "object_alias": "exface.Core.PAGE",
+                "depth": 1
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/tile_menu_1.gif"
@@ -260,7 +566,29 @@
             "NAME": "Split Left-Right",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/Widgets\/SplitHorizontal.php",
-            "UXON": "{\"object_alias\":\"\",\"widget_type\":\"SplitHorizontal\",\"panels\":[{\"caption\":\"\",\"width\":\"50%\",\"widgets\":[{\"\":\"\"}]},{\"caption\":\"\",\"widgets\":[{\"\":\"\"}]}]}",
+            "UXON": {
+                "object_alias": "",
+                "widget_type": "SplitHorizontal",
+                "panels": [
+                    {
+                        "caption": "",
+                        "width": "50%",
+                        "widgets": [
+                            {
+                                "": ""
+                            }
+                        ]
+                    },
+                    {
+                        "caption": "",
+                        "widgets": [
+                            {
+                                "": ""
+                            }
+                        ]
+                    }
+                ]
+            },
             "WRAP_PATH": "$.panels[0].widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/split_left_right.gif"
@@ -275,7 +603,38 @@
             "NAME": "Split Left-Center-Right",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/Widgets\/SplitHorizontal.php",
-            "UXON": "{\"object_alias\":\"\",\"widget_type\":\"SplitHorizontal\",\"panels\":[{\"caption\":\"\",\"width\":\"33%\",\"widgets\":[{\"\":\"\"}]},{\"caption\":\"\",\"widgets\":[{\"\":\"\"}]},{\"caption\":\"\",\"width\":\"33%\",\"widgets\":[{\"\":\"\"}]}]}",
+            "UXON": {
+                "object_alias": "",
+                "widget_type": "SplitHorizontal",
+                "panels": [
+                    {
+                        "caption": "",
+                        "width": "33%",
+                        "widgets": [
+                            {
+                                "": ""
+                            }
+                        ]
+                    },
+                    {
+                        "caption": "",
+                        "widgets": [
+                            {
+                                "": ""
+                            }
+                        ]
+                    },
+                    {
+                        "caption": "",
+                        "width": "33%",
+                        "widgets": [
+                            {
+                                "": ""
+                            }
+                        ]
+                    }
+                ]
+            },
             "WRAP_PATH": "$.panels[0].widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/split_left_center_right.gif"
@@ -290,7 +649,38 @@
             "NAME": "Split Top-Center-Bottom",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/Widgets\/SplitVertical.php",
-            "UXON": "{\"object_alias\":\"\",\"widget_type\":\"SplitVertical\",\"panels\":[{\"caption\":\"\",\"height\":\"33%\",\"widgets\":[{\"\":\"\"}]},{\"caption\":\"\",\"widgets\":[{\"\":\"\"}]},{\"caption\":\"\",\"height\":\"33%\",\"widgets\":[{\"\":\"\"}]}]}",
+            "UXON": {
+                "object_alias": "",
+                "widget_type": "SplitVertical",
+                "panels": [
+                    {
+                        "caption": "",
+                        "height": "33%",
+                        "widgets": [
+                            {
+                                "": ""
+                            }
+                        ]
+                    },
+                    {
+                        "caption": "",
+                        "widgets": [
+                            {
+                                "": ""
+                            }
+                        ]
+                    },
+                    {
+                        "caption": "",
+                        "height": "33%",
+                        "widgets": [
+                            {
+                                "": ""
+                            }
+                        ]
+                    }
+                ]
+            },
             "WRAP_PATH": "$.panels[0].widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/split_top_center_bottom.gif"
@@ -305,7 +695,11 @@
             "NAME": "Reuse\/extend a page",
             "DESCRIPTION": "Places the main widget of a page inside another widget or another page",
             "PROTOTYPE": "",
-            "UXON": "{\"extend_widget\":{\"page_alias\":\"\"}}",
+            "UXON": {
+                "extend_widget": {
+                    "page_alias": ""
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": null
@@ -320,7 +714,45 @@
             "NAME": "Centered KPI tiles",
             "DESCRIPTION": "Several tiles in the middle of the screen. This can be a good starting point for a set of dashboards, where each tile navigates to a dashboard.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Tiles.php",
-            "UXON": "{\"widget_type\":\"Tiles\",\"object_alias\":\"\",\"center_content\":true,\"widgets\":[{\"widget_type\":\"Tile\",\"title\":\"\",\"subtitle\":\"\",\"action\":{\"alias\":\"exface.Core.GoToPage\",\"page_alias\":\"\"},\"display_widget\":{\"widget_type\":\"KPI\",\"attribute_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}]}}},{\"widget_type\":\"Tile\",\"title\":\"\",\"subtitle\":\"\",\"action\":{\"alias\":\"exface.Core.GoToPage\",\"page_alias\":\"\"},\"display_widget\":{\"widget_type\":\"KPI\"}}]}",
+            "UXON": {
+                "widget_type": "Tiles",
+                "object_alias": "",
+                "center_content": true,
+                "widgets": [
+                    {
+                        "widget_type": "Tile",
+                        "title": "",
+                        "subtitle": "",
+                        "action": {
+                            "alias": "exface.Core.GoToPage",
+                            "page_alias": ""
+                        },
+                        "display_widget": {
+                            "widget_type": "KPI",
+                            "attribute_alias": "",
+                            "data": {
+                                "filters": [
+                                    {
+                                        "attribute_alias": ""
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "widget_type": "Tile",
+                        "title": "",
+                        "subtitle": "",
+                        "action": {
+                            "alias": "exface.Core.GoToPage",
+                            "page_alias": ""
+                        },
+                        "display_widget": {
+                            "widget_type": "KPI"
+                        }
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/tiles_kpi_centered.gif"
@@ -335,7 +767,28 @@
             "NAME": "Custom tile menu",
             "DESCRIPTION": "Navigation menu with manually defined tiles. In contrast to NavTiles, each tile can have separate action, icon, etc.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Tiles.php",
-            "UXON": "{\"widget_type\":\"Tiles\",\"object_alias\":\"\",\"tiles\":[{\"icon\":\"\",\"show_icon\":true,\"action\":{\"alias\":\"\"}},{\"caption\":\"\",\"subtitle\":\"\",\"icon\":\"\",\"show_icon\":true,\"action\":{\"alias\":\"\"}}]}",
+            "UXON": {
+                "widget_type": "Tiles",
+                "object_alias": "",
+                "tiles": [
+                    {
+                        "icon": "",
+                        "show_icon": true,
+                        "action": {
+                            "alias": ""
+                        }
+                    },
+                    {
+                        "caption": "",
+                        "subtitle": "",
+                        "icon": "",
+                        "show_icon": true,
+                        "action": {
+                            "alias": ""
+                        }
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/tile_menu_custom.gif"
@@ -350,7 +803,27 @@
             "NAME": "Simple GET Webservice (JSON)",
             "DESCRIPTION": "Parameters will be sent in the URL. Use relative URLs to retrieve the host from the current connection of the data source. If the data source is not defined, the source of the action's object will be used.",
             "PROTOTYPE": "exface\/UrlDataConnector\/Actions\/CallWebService.php",
-            "UXON": "{\"alias\":\"exface.UrlDataConnector.CallWebService\",\"data_source_alias\":\"\",\"url\":\"\",\"method\":\"GET\",\"parameters\":[{\"name\":\"\",\"required\":true,\"data_type\":{\"alias\":\"exface.core.String\"}},{\"name\":\"\",\"data_type\":{\"alias\":\"exface.core.String\"}}]}",
+            "UXON": {
+                "alias": "exface.UrlDataConnector.CallWebService",
+                "data_source_alias": "",
+                "url": "",
+                "method": "GET",
+                "parameters": [
+                    {
+                        "name": "",
+                        "required": true,
+                        "data_type": {
+                            "alias": "exface.core.String"
+                        }
+                    },
+                    {
+                        "name": "",
+                        "data_type": {
+                            "alias": "exface.core.String"
+                        }
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": null
@@ -365,7 +838,28 @@
             "NAME": "Simple POST Webservice (Form)",
             "DESCRIPTION": "Parameters will be sent as form data. Use relative URLs to retrieve the host from the current connection of the data source. If the data source is not defined, the source of the action's object will be used.",
             "PROTOTYPE": "exface\/UrlDataConnector\/Actions\/CallWebService.php",
-            "UXON": "{\"alias\":\"exface.UrlDataConnector.CallWebService\",\"data_source_alias\":\"\",\"url\":\"\",\"method\":\"POST\",\"content_type\":\"application\\\/x-www-form-urlencoded\",\"parameters\":[{\"name\":\"\",\"required\":true,\"data_type\":{\"alias\":\"exface.core.String\"}},{\"name\":\"\",\"data_type\":{\"alias\":\"exface.core.String\"}}]}",
+            "UXON": {
+                "alias": "exface.UrlDataConnector.CallWebService",
+                "data_source_alias": "",
+                "url": "",
+                "method": "POST",
+                "content_type": "application\/x-www-form-urlencoded",
+                "parameters": [
+                    {
+                        "name": "",
+                        "required": true,
+                        "data_type": {
+                            "alias": "exface.core.String"
+                        }
+                    },
+                    {
+                        "name": "",
+                        "data_type": {
+                            "alias": "exface.core.String"
+                        }
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": null
@@ -380,7 +874,28 @@
             "NAME": "Simple POST Webservice (JSON)",
             "DESCRIPTION": "Parameters will be sent JSON-object. Use relative URLs to retrieve the host from the current connection of the data source. If the data source is not defined, the source of the action's object will be used.",
             "PROTOTYPE": "exface\/UrlDataConnector\/Actions\/CallWebService.php",
-            "UXON": "{\"alias\":\"exface.UrlDataConnector.CallWebService\",\"data_source_alias\":\"\",\"url\":\"\",\"method\":\"POST\",\"content_type\":\"application\\\/json\",\"parameters\":[{\"name\":\"\",\"required\":true,\"data_type\":{\"alias\":\"exface.core.String\"}},{\"name\":\"\",\"data_type\":{\"alias\":\"exface.core.String\"}}]}",
+            "UXON": {
+                "alias": "exface.UrlDataConnector.CallWebService",
+                "data_source_alias": "",
+                "url": "",
+                "method": "POST",
+                "content_type": "application\/json",
+                "parameters": [
+                    {
+                        "name": "",
+                        "required": true,
+                        "data_type": {
+                            "alias": "exface.core.String"
+                        }
+                    },
+                    {
+                        "name": "",
+                        "data_type": {
+                            "alias": "exface.core.String"
+                        }
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": null
@@ -395,7 +910,51 @@
             "NAME": "Master-detail tables",
             "DESCRIPTION": "The detail-table (bottom) is populated when a row in the master-table (top) is selected. Set the attribute_alias of the required filter in the detail-table to the relation to the master-table. If it does not point to the UID of the master-object, add a column to the value-property of the filter: e.g. master_table!key_column.",
             "PROTOTYPE": "exface\/Core\/Widgets\/SplitVertical.php",
-            "UXON": "{\"object_alias\":\"\",\"widget_type\":\"SplitVertical\",\"panels\":[{\"height\":\"50%\",\"widgets\":[{\"widget_type\":\"DataTable\",\"id\":\"master_table\",\"columns\":[{\"attribute_group_alias\":\"~VISIBLE\"}]}]},{\"widgets\":[{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\\\/\\\/ relation to master-table!\",\"comparator\":\"==\",\"value\":\"=master_table\",\"apply_on_change\":true,\"required\":true,\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_group_alias\":\"~VISIBLE\"}]}]}]}",
+            "UXON": {
+                "object_alias": "",
+                "widget_type": "SplitVertical",
+                "panels": [
+                    {
+                        "height": "50%",
+                        "widgets": [
+                            {
+                                "widget_type": "DataTable",
+                                "id": "master_table",
+                                "columns": [
+                                    {
+                                        "attribute_group_alias": "~VISIBLE"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "widgets": [
+                            {
+                                "widget_type": "DataTable",
+                                "object_alias": "",
+                                "filters": [
+                                    {
+                                        "attribute_alias": "\/\/ relation to master-table!",
+                                        "comparator": "==",
+                                        "value": "=master_table",
+                                        "apply_on_change": true,
+                                        "required": true,
+                                        "input_widget": {
+                                            "widget_type": "InputHidden"
+                                        }
+                                    }
+                                ],
+                                "columns": [
+                                    {
+                                        "attribute_group_alias": "~VISIBLE"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
             "WRAP_PATH": "$.panels[0].widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/split_master_detail_tables.gif"
@@ -410,7 +969,13 @@
             "NAME": "MS SQL Server Connection",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/DataConnectors\/MsSqlConnector.php",
-            "UXON": "{\"serverName\":\"\",\"database\":\"\",\"CharacterSet\":\"UTF-8\",\"UID\":\"\",\"PWD\":\"\"}",
+            "UXON": {
+                "serverName": "",
+                "database": "",
+                "CharacterSet": "UTF-8",
+                "UID": "",
+                "PWD": ""
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "connection",
             "THUMBNAIL": null
@@ -425,7 +990,14 @@
             "NAME": "MySQL Connection with relation matcher",
             "DESCRIPTION": "The relation matcher attempts to create relations by looking for column names matching a regex to extract the related column (e.g. something like other_table_id in the example below)",
             "PROTOTYPE": "exface\/Core\/DataConnectors\/MySqlConnector.php",
-            "UXON": "{\"host\":\"\",\"dbase\":\"\",\"charset\":\"utf8\",\"user\":\"\",\"password\":\"\",\"relation_matcher\":\"\\\/(?<alias>(?<table>.*))_(?<key>id)\\\/i\"}",
+            "UXON": {
+                "host": "",
+                "dbase": "",
+                "charset": "utf8",
+                "user": "",
+                "password": "",
+                "relation_matcher": "\/(?<alias>(?<table>.*))_(?<key>id)\/i"
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "connection",
             "THUMBNAIL": null
@@ -440,7 +1012,13 @@
             "NAME": "MySQL Connection",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/DataConnectors\/MySqlConnector.php",
-            "UXON": "{\"host\":\"\",\"dbase\":\"\",\"charset\":\"utf8\",\"user\":\"\",\"password\":\"\"}",
+            "UXON": {
+                "host": "",
+                "dbase": "",
+                "charset": "utf8",
+                "user": "",
+                "password": ""
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "connection",
             "THUMBNAIL": null
@@ -455,7 +1033,14 @@
             "NAME": "Oracle SQL Connection",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/DataConnectors\/OracleSqlConnector.php",
-            "UXON": "{\"host\":\"\",\"port\":\"\",\"sid\":\"\",\"user\":\"\",\"password\":\"\",\"character_set\":\"AL32UTF8\"}",
+            "UXON": {
+                "host": "",
+                "port": "",
+                "sid": "",
+                "user": "",
+                "password": "",
+                "character_set": "AL32UTF8"
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "connection",
             "THUMBNAIL": null
@@ -470,7 +1055,32 @@
             "NAME": "Dialog with tabs",
             "DESCRIPTION": "A dialog with two tabs. If used as wrapper, the content will be added to the first tab.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
-            "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"\",\"widgets\":[{\"widget_type\":\"\"}]},{\"caption\":\"\",\"widgets\":[{\"widget_type\":\"\"}]}]}]}",
+            "UXON": {
+                "widget_type": "Dialog",
+                "widgets": [
+                    {
+                        "widget_type": "Tabs",
+                        "tabs": [
+                            {
+                                "caption": "",
+                                "widgets": [
+                                    {
+                                        "widget_type": ""
+                                    }
+                                ]
+                            },
+                            {
+                                "caption": "",
+                                "widgets": [
+                                    {
+                                        "widget_type": ""
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
             "WRAP_PATH": "$.widgets[0].tabs[0].widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/dialog_with_tabs.gif"
@@ -485,7 +1095,15 @@
             "NAME": "Widget Group with caption",
             "DESCRIPTION": "Simple widget group with a caption. Can be used as wrapper.",
             "PROTOTYPE": "exface\/Core\/Widgets\/WidgetGroup.php",
-            "UXON": "{\"widget_type\":\"WidgetGroup\",\"caption\":\"\",\"widgets\":[{\"attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "WidgetGroup",
+                "caption": "",
+                "widgets": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/widget_group_with_caption.gif"
@@ -500,7 +1118,14 @@
             "NAME": "Widget Group without caption",
             "DESCRIPTION": "Simple widget group without a caption\/title. Can be used as wrapper.",
             "PROTOTYPE": "exface\/Core\/Widgets\/WidgetGroup.php",
-            "UXON": "{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "WidgetGroup",
+                "widgets": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/widget_group.gif"
@@ -515,7 +1140,16 @@
             "NAME": "Widget Group with 2 columns",
             "DESCRIPTION": "Wide widget group with two columns. Can be used as wrapper.",
             "PROTOTYPE": "exface\/Core\/Widgets\/WidgetGroup.php",
-            "UXON": "{\"widget_type\":\"WidgetGroup\",\"width\":2,\"columns_in_grid\":2,\"widgets\":[{\"attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "WidgetGroup",
+                "width": 2,
+                "columns_in_grid": 2,
+                "widgets": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/widget_group_2_cols.gif"
@@ -530,7 +1164,16 @@
             "NAME": "ColorIndicator with a scale for numeric values",
             "DESCRIPTION": "The text show will be colored as follows: values <= 10 will be red, values > 10 and <= 20 will be colored yellow, those > 20 and <= 99 will have no special color and values starting with 100 (actually > 99) will be green.",
             "PROTOTYPE": "exface\/Core\/Widgets\/ColorIndicator.php",
-            "UXON": "{\"widget_type\":\"ColorIndicator\",\"attribute_alias\":\"\",\"color_scale\":{\"10\":\"red\",\"20\":\"yellow\",\"99\":\"\",\"100\":\"green\"}}",
+            "UXON": {
+                "widget_type": "ColorIndicator",
+                "attribute_alias": "",
+                "color_scale": {
+                    "10": "red",
+                    "20": "yellow",
+                    "99": "",
+                    "100": "green"
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/colorindicator_num.gif"
@@ -545,7 +1188,16 @@
             "NAME": "ColorIndicator without text (streelight)",
             "DESCRIPTION": "Simple color-icon: green up-to 99, yellow up-to 299, red for 300 and up.",
             "PROTOTYPE": "exface\/Core\/Widgets\/ColorIndicator.php",
-            "UXON": "{\"widget_type\":\"ColorIndicator\",\"attribute_alias\":\"\",\"color_only\":true,\"color_scale\":{\"99\":\"green\",\"299\":\"yellow\",\"300\":\"red\"}}",
+            "UXON": {
+                "widget_type": "ColorIndicator",
+                "attribute_alias": "",
+                "color_only": true,
+                "color_scale": {
+                    "99": "green",
+                    "299": "yellow",
+                    "300": "red"
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/colorindicator_color.gif"
@@ -560,7 +1212,18 @@
             "NAME": "ColorIndicator with text-values and backgroud-fill",
             "DESCRIPTION": "Colors will be applied to text-background depending on the text shown: \"Pending\", \"Error\" and \"Done\" will be colored yellow, red and green, while all other texts will have transparent background.",
             "PROTOTYPE": "exface\/Core\/Widgets\/ColorIndicator.php",
-            "UXON": "{\"widget_type\":\"ColorIndicator\",\"attribute_alias\":\"\",\"fill\":true,\"color_only\":false,\"color_scale\":{\"Pending\":\"yellow\",\"Error\":\"red\",\"Done\":\"green\",\"\":\"transparent\"}}",
+            "UXON": {
+                "widget_type": "ColorIndicator",
+                "attribute_alias": "",
+                "fill": true,
+                "color_only": false,
+                "color_scale": {
+                    "Pending": "yellow",
+                    "Error": "red",
+                    "Done": "green",
+                    "": "transparent"
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/colorindicator_text.gif"
@@ -575,7 +1238,27 @@
             "NAME": "Small dialog",
             "DESCRIPTION": "A small dialog with only two input inputs in a single column. Setting maximized=false, height=auto, etc. explicitly forces alle facades to behave the same instead of using their dialog-defaults.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
-            "UXON": "{\"widget_type\":\"Dialog\",\"object_alias\":\"\",\"width\":1,\"columns_in_grid\":1,\"height\":\"auto\",\"maximized\":false,\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}],\"buttons\":[{\"action_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "Dialog",
+                "object_alias": "",
+                "width": 1,
+                "columns_in_grid": 1,
+                "height": "auto",
+                "maximized": false,
+                "widgets": [
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "attribute_alias": ""
+                    }
+                ],
+                "buttons": [
+                    {
+                        "action_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/dialog_small.gif"
@@ -590,7 +1273,10 @@
             "NAME": "String with min\/max length",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/DataTypes\/StringDataType.php",
-            "UXON": "{\"length_min\":\"\",\"length_max\":\"\"}",
+            "UXON": {
+                "length_min": "",
+                "length_max": ""
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "datatype",
             "THUMBNAIL": null
@@ -605,7 +1291,20 @@
             "NAME": "Simple empty dialog",
             "DESCRIPTION": "A simple empty dialog with placeholders for widgets and buttons",
             "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
-            "UXON": "{\"widget_type\":\"Dialog\",\"object_alias\":\"\",\"widgets\":[{\"\":\"\"}],\"buttons\":[{\"\":\"\"}]}",
+            "UXON": {
+                "widget_type": "Dialog",
+                "object_alias": "",
+                "widgets": [
+                    {
+                        "": ""
+                    }
+                ],
+                "buttons": [
+                    {
+                        "": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/dialog_empty.gif"
@@ -620,7 +1319,14 @@
             "NAME": "Console for a single command",
             "DESCRIPTION": "A Console that executes a command when loaded and does not permit to enter any other commands - good to display the output of a preconfigured command or action.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Console.php",
-            "UXON": "{\"disabled\":true,\"widget_type\":\"Console\",\"start_commands\":[\"\"],\"working_directory_path\":\"\"}",
+            "UXON": {
+                "disabled": true,
+                "widget_type": "Console",
+                "start_commands": [
+                    ""
+                ],
+                "working_directory_path": ""
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/console.gif"
@@ -635,7 +1341,21 @@
             "NAME": "Console output dialog for CLI command",
             "DESCRIPTION": "Opens a readonly console window and executes a command",
             "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
-            "UXON": "{\"icon\":\"fa fa-terminal\",\"widget\":{\"widgets\":[{\"disabled\":true,\"widget_type\":\"Console\",\"start_commands\":[\"\"],\"working_directory_path\":\"\"}]}}",
+            "UXON": {
+                "icon": "fa fa-terminal",
+                "widget": {
+                    "widgets": [
+                        {
+                            "disabled": true,
+                            "widget_type": "Console",
+                            "start_commands": [
+                                ""
+                            ],
+                            "working_directory_path": ""
+                        }
+                    ]
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": null
@@ -650,7 +1370,74 @@
             "NAME": "Split-Dashboard Tiles + 1x2 + 1x3",
             "DESCRIPTION": "2 columns with 3 slots each. First slog (upper left) good for KPI-tiles. Adjust the height of the Tile-Panel to match the number of tile rows.",
             "PROTOTYPE": "exface\/Core\/Widgets\/SplitHorizontal.php",
-            "UXON": "{\"object_alias\":\"\",\"widget_type\":\"SplitHorizontal\",\"panels\":[{\"width\":\"60%\",\"widgets\":[{\"widget_type\":\"SplitVertical\",\"panels\":[{\"height\":\"218px\",\"widgets\":[{\"widget_type\":\"Tiles\",\"tiles\":[{\"widget_type\":\"Tile\",\"title\":\"\",\"display_widget\":{\"attribute_alias\":\"\",\"widget_type\":\"KPI\"}}]}]},{\"height\":\"33%\",\"caption\":\"Table or Chart\",\"widgets\":[]},{\"caption\":\"Table or Chart\",\"widgets\":[]}]}]},{\"widgets\":[{\"widget_type\":\"SplitVertical\",\"panels\":[{\"caption\":\"Chart 1\",\"height\":\"33%\",\"widgets\":[[]]},{\"caption\":\"Chart 2\",\"height\":\"33%\",\"widgets\":[]},{\"caption\":\"Chart 3\",\"widgets\":[]}]}]}]}",
+            "UXON": {
+                "object_alias": "",
+                "widget_type": "SplitHorizontal",
+                "panels": [
+                    {
+                        "width": "60%",
+                        "widgets": [
+                            {
+                                "widget_type": "SplitVertical",
+                                "panels": [
+                                    {
+                                        "height": "218px",
+                                        "widgets": [
+                                            {
+                                                "widget_type": "Tiles",
+                                                "tiles": [
+                                                    {
+                                                        "widget_type": "Tile",
+                                                        "title": "",
+                                                        "display_widget": {
+                                                            "attribute_alias": "",
+                                                            "widget_type": "KPI"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "height": "33%",
+                                        "caption": "Table or Chart",
+                                        "widgets": []
+                                    },
+                                    {
+                                        "caption": "Table or Chart",
+                                        "widgets": []
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "widgets": [
+                            {
+                                "widget_type": "SplitVertical",
+                                "panels": [
+                                    {
+                                        "caption": "Chart 1",
+                                        "height": "33%",
+                                        "widgets": [
+                                            []
+                                        ]
+                                    },
+                                    {
+                                        "caption": "Chart 2",
+                                        "height": "33%",
+                                        "widgets": []
+                                    },
+                                    {
+                                        "caption": "Chart 3",
+                                        "widgets": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/split_dashboard_tiles.gif"
@@ -665,7 +1452,53 @@
             "NAME": "Split-Dashboard 3x2",
             "DESCRIPTION": "2 rows of equal height with 3 slots each. All slots have equal size.",
             "PROTOTYPE": "exface\/Core\/Widgets\/SplitVertical.php",
-            "UXON": "{\"object_alias\":\"\",\"widget_type\":\"SplitVertical\",\"panels\":[{\"height\":\"50%\",\"widgets\":[{\"widget_type\":\"SplitHorizontal\",\"panels\":[{\"width\":\"33%\",\"widgets\":[]},{\"widgets\":[]},{\"width\":\"33%\",\"widgets\":[]}]}]},{\"widgets\":[{\"widget_type\":\"SplitHorizontal\",\"panels\":[{\"width\":\"33%\",\"widgets\":[]},{\"widgets\":[]},{\"width\":\"33%\",\"widgets\":[]}]}]}]}",
+            "UXON": {
+                "object_alias": "",
+                "widget_type": "SplitVertical",
+                "panels": [
+                    {
+                        "height": "50%",
+                        "widgets": [
+                            {
+                                "widget_type": "SplitHorizontal",
+                                "panels": [
+                                    {
+                                        "width": "33%",
+                                        "widgets": []
+                                    },
+                                    {
+                                        "widgets": []
+                                    },
+                                    {
+                                        "width": "33%",
+                                        "widgets": []
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "widgets": [
+                            {
+                                "widget_type": "SplitHorizontal",
+                                "panels": [
+                                    {
+                                        "width": "33%",
+                                        "widgets": []
+                                    },
+                                    {
+                                        "widgets": []
+                                    },
+                                    {
+                                        "width": "33%",
+                                        "widgets": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/split_3x2.gif"
@@ -680,7 +1513,30 @@
             "NAME": "Column chart",
             "DESCRIPTION": "Simple column chart with filters and sorters",
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
-            "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}]},\"series\":[{\"type\":\"column\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "Chart",
+                "object_alias": "",
+                "data": {
+                    "filters": [
+                        {
+                            "attribute_alias": ""
+                        }
+                    ],
+                    "sorters": [
+                        {
+                            "attribute_alias": "",
+                            "direction": "asc"
+                        }
+                    ]
+                },
+                "series": [
+                    {
+                        "type": "column",
+                        "x_attribute_alias": "",
+                        "y_attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_column.gif"
@@ -695,7 +1551,30 @@
             "NAME": "Bar chart",
             "DESCRIPTION": "Simple bar chart with filters and sorters",
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
-            "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}]},\"series\":[{\"type\":\"bar\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "Chart",
+                "object_alias": "",
+                "data": {
+                    "filters": [
+                        {
+                            "attribute_alias": ""
+                        }
+                    ],
+                    "sorters": [
+                        {
+                            "attribute_alias": "",
+                            "direction": "asc"
+                        }
+                    ]
+                },
+                "series": [
+                    {
+                        "type": "bar",
+                        "x_attribute_alias": "",
+                        "y_attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_bar.gif"
@@ -710,7 +1589,23 @@
             "NAME": "Bar chart without axis caption",
             "DESCRIPTION": "The Y-axis has not caption to save space. Make sure, y_attribute_alias of the series and attribute_alias of the axis match!",
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
-            "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"series\":[{\"type\":\"bar\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}],\"axis_y\":[{\"attribute_alias\":\"\",\"hide_caption\":true}]}",
+            "UXON": {
+                "widget_type": "Chart",
+                "object_alias": "",
+                "series": [
+                    {
+                        "type": "bar",
+                        "x_attribute_alias": "",
+                        "y_attribute_alias": ""
+                    }
+                ],
+                "axis_y": [
+                    {
+                        "attribute_alias": "",
+                        "hide_caption": true
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_bar_no_caption.gif"
@@ -725,7 +1620,22 @@
             "NAME": "Stacked column chart",
             "DESCRIPTION": "To stack bars or columns, create multiple series and set stacked=tue for the first one in the stack. Theoretically, you can mix stacked and regular columns by giving each of them a separate stacked property.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
-            "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"series\":[{\"type\":\"column\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\",\"stacked\":true},{\"type\":\"column\",\"y_attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "Chart",
+                "object_alias": "",
+                "series": [
+                    {
+                        "type": "column",
+                        "x_attribute_alias": "",
+                        "y_attribute_alias": "",
+                        "stacked": true
+                    },
+                    {
+                        "type": "column",
+                        "y_attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_column_stacked.gif"
@@ -740,7 +1650,24 @@
             "NAME": "Pie chart",
             "DESCRIPTION": "Simple pie chart with filters",
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
-            "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}]},\"series\":[{\"type\":\"pie\",\"value_attribute_alias\":\"\",\"text_attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "Chart",
+                "object_alias": "",
+                "data": {
+                    "filters": [
+                        {
+                            "attribute_alias": ""
+                        }
+                    ]
+                },
+                "series": [
+                    {
+                        "type": "pie",
+                        "value_attribute_alias": "",
+                        "text_attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_pie.gif"
@@ -755,7 +1682,26 @@
             "NAME": "Pie chart without header\/footer",
             "DESCRIPTION": "Just a pie - no header\/footer",
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
-            "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"hide_header\":true,\"hide_footer\":true,\"data\":{\"filters\":[{\"attribute_alias\":\"\"}]},\"series\":[{\"type\":\"pie\",\"value_attribute_alias\":\"\",\"text_attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "Chart",
+                "object_alias": "",
+                "hide_header": true,
+                "hide_footer": true,
+                "data": {
+                    "filters": [
+                        {
+                            "attribute_alias": ""
+                        }
+                    ]
+                },
+                "series": [
+                    {
+                        "type": "pie",
+                        "value_attribute_alias": "",
+                        "text_attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_pie_no_header.gif"
@@ -770,7 +1716,22 @@
             "NAME": "Pie chart with aggregation",
             "DESCRIPTION": "Pie chart over aggregated values - i.e. order types by number of orders. Make sure to aggregate over the text attribute! And give the value attribute an aggregator like `:SUM`.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
-            "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"aggregate_by_attribute_alias\":[\"\"]},\"series\":[{\"type\":\"pie\",\"value_attribute_alias\":\"\",\"text_attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "Chart",
+                "object_alias": "",
+                "data": {
+                    "aggregate_by_attribute_alias": [
+                        ""
+                    ]
+                },
+                "series": [
+                    {
+                        "type": "pie",
+                        "value_attribute_alias": "",
+                        "text_attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_pie.gif"
@@ -785,7 +1746,12 @@
             "NAME": "Call action on event",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/Behaviors\/CallActionBehavior.php",
-            "UXON": "{\"event_alias\":\"\",\"action\":{\"alias\":\"\"}}",
+            "UXON": {
+                "event_alias": "",
+                "action": {
+                    "alias": ""
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
             "THUMBNAIL": null
@@ -800,7 +1766,14 @@
             "NAME": "Run custom static SQL",
             "DESCRIPTION": "Just perform some SQL queries on the current connection of a data source when the action is triggered",
             "PROTOTYPE": "exface\/Core\/Actions\/CustomDataSourceQuery.php",
-            "UXON": "{\"alias\":\"exface.Core.CustomDataSourceQuery\",\"data_source\":\"my_sql_source_alias\",\"queries\":[\"UPDATE table1 WHERE ...\",\"UPDATE table2 WHERE ...\"]}",
+            "UXON": {
+                "alias": "exface.Core.CustomDataSourceQuery",
+                "data_source": "my_sql_source_alias",
+                "queries": [
+                    "UPDATE table1 WHERE ...",
+                    "UPDATE table2 WHERE ..."
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": null
@@ -815,7 +1788,15 @@
             "NAME": "Run custom SQL with placeholders",
             "DESCRIPTION": "Run custom SQL with placeholders to be filled from input data of the action - i.e. [#ID#] will be replaced by the value in column \"ID\" of the input data. Multiple rows will trigger each query multiple times!",
             "PROTOTYPE": "exface\/Core\/Actions\/CustomDataSourceQuery.php",
-            "UXON": "{\"alias\":\"exface.Core.CustomDataSourceQuery\",\"data_source\":\"\",\"input_object_alias\":\"\",\"queries\":[\"UPDATE table1 WHERE id = [#ID#]\",\"UPDATE table2 WHERE foreign_key = [#ID#]\"]}",
+            "UXON": {
+                "alias": "exface.Core.CustomDataSourceQuery",
+                "data_source": "",
+                "input_object_alias": "",
+                "queries": [
+                    "UPDATE table1 WHERE id = [#ID#]",
+                    "UPDATE table2 WHERE foreign_key = [#ID#]"
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": null
@@ -830,7 +1811,23 @@
             "NAME": "Update selected attributes with fixed values or formulas",
             "DESCRIPTION": "Use `=1` for fixed numeric values, `='string'` for strings and formulas for calculated values.",
             "PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
-            "UXON": "{\"input_object_alias\":\"\",\"icon\":\"\",\"input_data_sheet\":{\"object_alias\":\"\",\"columns\":[{\"attribute_alias\":\"\",\"formula\":\"=1\"},{\"attribute_alias\":\"\",\"formula\":\"=NOW()\"}]}}",
+            "UXON": {
+                "input_object_alias": "",
+                "icon": "",
+                "input_data_sheet": {
+                    "object_alias": "",
+                    "columns": [
+                        {
+                            "attribute_alias": "",
+                            "formula": "=1"
+                        },
+                        {
+                            "attribute_alias": "",
+                            "formula": "=NOW()"
+                        }
+                    ]
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": null
@@ -845,7 +1842,9 @@
             "NAME": "Simple filter",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/Widgets\/Filter.php",
-            "UXON": "{\"attribute_alias\":\"\"}",
+            "UXON": {
+                "attribute_alias": ""
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": null
@@ -860,7 +1859,24 @@
             "NAME": "OR-Filter with a custom condition",
             "DESCRIPTION": "The placeholder [#value#] will be replaced by the input value of the filter. You can use it in multiple conditions.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Filter.php",
-            "UXON": "{\"caption\":\"\",\"condition_group\":{\"operator\":\"OR\",\"conditions\":[{\"expression\":\"\",\"value\":\"[#value#]\",\"comparator\":\"=\"},{\"expression\":\"\",\"value\":99,\"comparator\":\"==\"}]}}",
+            "UXON": {
+                "caption": "",
+                "condition_group": {
+                    "operator": "OR",
+                    "conditions": [
+                        {
+                            "expression": "",
+                            "value": "[#value#]",
+                            "comparator": "="
+                        },
+                        {
+                            "expression": "",
+                            "value": 99,
+                            "comparator": "=="
+                        }
+                    ]
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": null
@@ -875,7 +1891,44 @@
             "NAME": "Simple Wizard",
             "DESCRIPTION": "You can add buttons to each step or to the wizard as a whole (shown on every step). A step without buttons will automatically show navigation buttons.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Wizard.php",
-            "UXON": "{\"widget_type\":\"Wizard\",\"object_alias\":\"\",\"steps\":[{\"caption\":\"Step 1\",\"intro\":\"Please fill out the form!\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}]},{\"caption\":\"Step 2\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}],\"buttons\":[{\"action_alias\":\"exface.Core.CreateData\",\"visibility\":\"promoted\"},{\"go_to_step\":\"previous\"}]}]}",
+            "UXON": {
+                "widget_type": "Wizard",
+                "object_alias": "",
+                "steps": [
+                    {
+                        "caption": "Step 1",
+                        "intro": "Please fill out the form!",
+                        "widgets": [
+                            {
+                                "attribute_alias": ""
+                            },
+                            {
+                                "attribute_alias": ""
+                            }
+                        ]
+                    },
+                    {
+                        "caption": "Step 2",
+                        "widgets": [
+                            {
+                                "attribute_alias": ""
+                            },
+                            {
+                                "attribute_alias": ""
+                            }
+                        ],
+                        "buttons": [
+                            {
+                                "action_alias": "exface.Core.CreateData",
+                                "visibility": "promoted"
+                            },
+                            {
+                                "go_to_step": "previous"
+                            }
+                        ]
+                    }
+                ]
+            },
             "WRAP_PATH": "$.steps[0].widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/wizard.gif"
@@ -890,7 +1943,18 @@
             "NAME": "Inline input group for value + currency",
             "DESCRIPTION": "The caption will be inherited from the value-attribute",
             "PROTOTYPE": "exface\/Core\/Widgets\/InlineGroup.php",
-            "UXON": "{\"widget_type\":\"InlineGroup\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\",\"width\":\"25%\"}]}",
+            "UXON": {
+                "widget_type": "InlineGroup",
+                "widgets": [
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "attribute_alias": "",
+                        "width": "25%"
+                    }
+                ]
+            },
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/inline_value_unit.gif"
@@ -905,7 +1969,22 @@
             "NAME": "Inline input group for dimensions (LxWxH)",
             "DESCRIPTION": "Equal-width inputs for length, width and heigth",
             "PROTOTYPE": "exface\/Core\/Widgets\/InlineGroup.php",
-            "UXON": "{\"widget_type\":\"InlineGroup\",\"caption\":\"\",\"separator\":\"x\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "InlineGroup",
+                "caption": "",
+                "separator": "x",
+                "widgets": [
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/inline_dimensions.gif"
@@ -920,7 +1999,30 @@
             "NAME": "Line chart",
             "DESCRIPTION": "Simple line chart with filters and sorters",
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
-            "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}]},\"series\":[{\"type\":\"line\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "Chart",
+                "object_alias": "",
+                "data": {
+                    "filters": [
+                        {
+                            "attribute_alias": ""
+                        }
+                    ],
+                    "sorters": [
+                        {
+                            "attribute_alias": "",
+                            "direction": "asc"
+                        }
+                    ]
+                },
+                "series": [
+                    {
+                        "type": "line",
+                        "x_attribute_alias": "",
+                        "y_attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_line.gif"
@@ -935,7 +2037,30 @@
             "NAME": "Area chart",
             "DESCRIPTION": "Simple area chart with filters and sorters",
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
-            "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}]},\"series\":[{\"type\":\"area\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "Chart",
+                "object_alias": "",
+                "data": {
+                    "filters": [
+                        {
+                            "attribute_alias": ""
+                        }
+                    ],
+                    "sorters": [
+                        {
+                            "attribute_alias": "",
+                            "direction": "asc"
+                        }
+                    ]
+                },
+                "series": [
+                    {
+                        "type": "area",
+                        "x_attribute_alias": "",
+                        "y_attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_area.gif"
@@ -950,7 +2075,30 @@
             "NAME": "Smoothed line chart",
             "DESCRIPTION": "Smoothed line chart (spline) with filters and sorters",
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
-            "UXON": "{\"widget_type\":\"Chart\",\"object_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}]},\"series\":[{\"type\":\"spline\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "Chart",
+                "object_alias": "",
+                "data": {
+                    "filters": [
+                        {
+                            "attribute_alias": ""
+                        }
+                    ],
+                    "sorters": [
+                        {
+                            "attribute_alias": "",
+                            "direction": "asc"
+                        }
+                    ]
+                },
+                "series": [
+                    {
+                        "type": "spline",
+                        "x_attribute_alias": "",
+                        "y_attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_spline.gif"
@@ -965,7 +2113,25 @@
             "NAME": "Child-object table with static filter",
             "DESCRIPTION": "DataTable showing dependants (detail or child objects) based on an invisible filter. Use this preset when the parent object cannot be changed via user interaction - i.e. in detail tabs of editors where the parent object is part of the prefill data. If parent can be set\/selected, use a similar preset with a \"synced filter\".",
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
-            "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE with relation to master object\",\"comparator\":\"==\",\"required\":true,\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "DataTable",
+                "object_alias": "",
+                "filters": [
+                    {
+                        "attribute_alias": "\/\/ REPLACE with relation to master object",
+                        "comparator": "==",
+                        "required": true,
+                        "input_widget": {
+                            "widget_type": "InputHidden"
+                        }
+                    }
+                ],
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_child.gif"
@@ -980,7 +2146,30 @@
             "NAME": "DataTree with lazy loading",
             "DESCRIPTION": "The tree will show only the root level initially, lazy loading every level when it's parent is expanded. Nodes of the root level are expected to have NULL values (tree_root_uid) in their parent-id-attributes.",
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTree.php",
-            "UXON": "{\"widget_type\":\"DataTree\",\"object_alias\":\"\",\"tree_parent_id_attribute_alias\":\"\",\"tree_folder_flag_attribute_alias\":\"\",\"lazy_load_tree_levels\":true,\"tree_root_uid\":\"NULL\",\"filters\":[{\"attribute_alias\":\"\"}],\"columns\":[{\"attribute_alias\":\"\"}],\"sorters\":[{\"attribute_alias\":\"\",\"direction\":\"asc\"}]}",
+            "UXON": {
+                "widget_type": "DataTree",
+                "object_alias": "",
+                "tree_parent_id_attribute_alias": "",
+                "tree_folder_flag_attribute_alias": "",
+                "lazy_load_tree_levels": true,
+                "tree_root_uid": "NULL",
+                "filters": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ],
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ],
+                "sorters": [
+                    {
+                        "attribute_alias": "",
+                        "direction": "asc"
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatree_lazy.gif"
@@ -995,7 +2184,19 @@
             "NAME": "Fully expanded DataTree without lazy loading",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTree.php",
-            "UXON": "{\"widget_type\":\"DataTree\",\"object_alias\":\"\",\"tree_parent_id_attribute_alias\":\"\",\"tree_folder_flag_attribute_alias\":\"\",\"paginate\":false,\"lazy_load_tree_levels\":false,\"columns\":[{\"attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "DataTree",
+                "object_alias": "",
+                "tree_parent_id_attribute_alias": "",
+                "tree_folder_flag_attribute_alias": "",
+                "paginate": false,
+                "lazy_load_tree_levels": false,
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatree_expanded.gif"
@@ -1010,7 +2211,43 @@
             "NAME": "Heatmap with custom colors",
             "DESCRIPTION": "Plots color-highlighted values for every x\/y coordinate. The color depends on the `value_attribute_alias` and will be calculated automatically using a gradient between the provided `colors`.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
-            "UXON": "{\"object_alias\":\"\",\"widget_type\":\"Chart\",\"hide_legend\":true,\"data\":{\"paginate\":false},\"axis_y\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"axis_x\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"series\":[{\"type\":\"heatmap\",\"value_attribute_alias\":\"\",\"x_axis_no\":0,\"y_axis_no\":0,\"color_scale\":{\"colors\":[\"#36a832\",\"#ffe921\",\"red\"]}}]}",
+            "UXON": {
+                "object_alias": "",
+                "widget_type": "Chart",
+                "hide_legend": true,
+                "data": {
+                    "paginate": false
+                },
+                "axis_y": [
+                    {
+                        "zoomable": false,
+                        "grid_area": false,
+                        "attribute_alias": ""
+                    }
+                ],
+                "axis_x": [
+                    {
+                        "zoomable": false,
+                        "grid_area": false,
+                        "attribute_alias": ""
+                    }
+                ],
+                "series": [
+                    {
+                        "type": "heatmap",
+                        "value_attribute_alias": "",
+                        "x_axis_no": 0,
+                        "y_axis_no": 0,
+                        "color_scale": {
+                            "colors": [
+                                "#36a832",
+                                "#ffe921",
+                                "red"
+                            ]
+                        }
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_heatmap.gif"
@@ -1025,7 +2262,46 @@
             "NAME": "Heatmap with discrete color groups",
             "DESCRIPTION": "Plots color-highlighted values for every x\/y coordinate. The color depends on the `value_attribute_alias`. The property `use_color_groups` of the `color_scale` results in 2 color groups between the `min` and `max` scale values along with automatic \"above\" and \"below\" color groups.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
-            "UXON": "{\"object_alias\":\"\",\"widget_type\":\"Chart\",\"hide_legend\":true,\"data\":{\"paginate\":false},\"axis_y\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"axis_x\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"series\":[{\"type\":\"heatmap\",\"value_attribute_alias\":\"\",\"x_axis_no\":0,\"y_axis_no\":0,\"color_scale\":{\"use_color_groups\":2,\"min\":0,\"max\":20,\"colors\":[\"#36a832\",\"#ffe921\",\"red\"]}}]}",
+            "UXON": {
+                "object_alias": "",
+                "widget_type": "Chart",
+                "hide_legend": true,
+                "data": {
+                    "paginate": false
+                },
+                "axis_y": [
+                    {
+                        "zoomable": false,
+                        "grid_area": false,
+                        "attribute_alias": ""
+                    }
+                ],
+                "axis_x": [
+                    {
+                        "zoomable": false,
+                        "grid_area": false,
+                        "attribute_alias": ""
+                    }
+                ],
+                "series": [
+                    {
+                        "type": "heatmap",
+                        "value_attribute_alias": "",
+                        "x_axis_no": 0,
+                        "y_axis_no": 0,
+                        "color_scale": {
+                            "use_color_groups": 2,
+                            "min": 0,
+                            "max": 20,
+                            "colors": [
+                                "#36a832",
+                                "#ffe921",
+                                "red"
+                            ]
+                        }
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_heatmap_discrete.gif"
@@ -1040,7 +2316,43 @@
             "NAME": "Simple heatmap with autom. continuos color scale",
             "DESCRIPTION": "Plots color-highlighted values for every x\/y coordinate. The color depends on the `value_attribute_alias` and will be calculated automatically.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
-            "UXON": "{\"object_alias\":\"\",\"widget_type\":\"Chart\",\"hide_legend\":true,\"data\":{\"paginate\":false},\"axis_y\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"axis_x\":[{\"zoomable\":false,\"grid_area\":false,\"attribute_alias\":\"\"}],\"series\":[{\"type\":\"heatmap\",\"value_attribute_alias\":\"\",\"x_axis_no\":0,\"y_axis_no\":0,\"color_scale\":{\"colors\":[\"#36a832\",\"#ffe921\",\"red\"]}}]}",
+            "UXON": {
+                "object_alias": "",
+                "widget_type": "Chart",
+                "hide_legend": true,
+                "data": {
+                    "paginate": false
+                },
+                "axis_y": [
+                    {
+                        "zoomable": false,
+                        "grid_area": false,
+                        "attribute_alias": ""
+                    }
+                ],
+                "axis_x": [
+                    {
+                        "zoomable": false,
+                        "grid_area": false,
+                        "attribute_alias": ""
+                    }
+                ],
+                "series": [
+                    {
+                        "type": "heatmap",
+                        "value_attribute_alias": "",
+                        "x_axis_no": 0,
+                        "y_axis_no": 0,
+                        "color_scale": {
+                            "colors": [
+                                "#36a832",
+                                "#ffe921",
+                                "red"
+                            ]
+                        }
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/chart_heatmap_auto.gif"
@@ -1055,7 +2367,12 @@
             "NAME": "FileList read-only",
             "DESCRIPTION": "This widget will just show a list of files. The `mime_type_attribute_alias` enables facades to display icons for file types if possible.",
             "PROTOTYPE": "exface\/Core\/Widgets\/FileList.php",
-            "UXON": "{\"widget_type\":\"FileList\",\"object_alias\":\"\",\"filename_attribute_alias\":\"\",\"mime_type_attribute_alias\":\"\"}",
+            "UXON": {
+                "widget_type": "FileList",
+                "object_alias": "",
+                "filename_attribute_alias": "",
+                "mime_type_attribute_alias": ""
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": null
@@ -1070,7 +2387,19 @@
             "NAME": "FileList with upload",
             "DESCRIPTION": "To upload files the `upload` must be set to `true` and a `file_content_attribute_alias` must be specified (otherwise there's no place to upload). Use `upload_options` to apply restrictions to file size, type, name length, etc.",
             "PROTOTYPE": "exface\/Core\/Widgets\/FileList.php",
-            "UXON": "{\"widget_type\":\"FileList\",\"object_alias\":\"\",\"filename_attribute_alias\":\"\",\"mime_type_attribute_alias\":\"\",\"file_content_attribute_alias\":\"\",\"upload_enabled\":true,\"upload_options\":{\"allowed_mime_types\":[\"application\\\/pdf\"]}}",
+            "UXON": {
+                "widget_type": "FileList",
+                "object_alias": "",
+                "filename_attribute_alias": "",
+                "mime_type_attribute_alias": "",
+                "file_content_attribute_alias": "",
+                "upload_enabled": true,
+                "upload_options": {
+                    "allowed_mime_types": [
+                        "application\/pdf"
+                    ]
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": null
@@ -1085,7 +2414,30 @@
             "NAME": "FileList to upload attachments to master-object",
             "DESCRIPTION": "Use this with master-detail widgets. The hidden column with a widget-link for value makes sure all newly uploaded files automatically get the id of the master object.",
             "PROTOTYPE": "exface\/Core\/Widgets\/FileList.php",
-            "UXON": "{\"widget_type\":\"FileList\",\"object_alias\":\"\",\"filename_attribute_alias\":\"\",\"mime_type_attribute_alias\":\"\",\"file_content_attribute_alias\":\"\",\"upload_enabled\":true,\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO MASTER OBJECT!\",\"required\":true,\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE WITH RELATION TO MASTER OBJECT!\",\"hidden\":true,\"value\":\"=widget_link_to_id_of_master_object\"}]}",
+            "UXON": {
+                "widget_type": "FileList",
+                "object_alias": "",
+                "filename_attribute_alias": "",
+                "mime_type_attribute_alias": "",
+                "file_content_attribute_alias": "",
+                "upload_enabled": true,
+                "filters": [
+                    {
+                        "attribute_alias": "\/\/ REPLACE WITH RELATION TO MASTER OBJECT!",
+                        "required": true,
+                        "input_widget": {
+                            "widget_type": "InputHidden"
+                        }
+                    }
+                ],
+                "columns": [
+                    {
+                        "attribute_alias": "\/\/ REPLACE WITH RELATION TO MASTER OBJECT!",
+                        "hidden": true,
+                        "value": "=widget_link_to_id_of_master_object"
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": null
@@ -1100,7 +2452,61 @@
             "NAME": "Editor-Dialog with table for simple child objects",
             "DESCRIPTION": "Suitable for relatively simple object with few dependents (e.g. tags, groups, etc.). Instead of placing dependents in separate tabs, put tables with them inside the main editor screen.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
-            "UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE with UID of main object\",\"id\":\"uid_field\",\"widget_type\":\"InputHidden\"},{\"attribute_alias\":\"\"},{\"widget_type\":\"DataTableResponsive\",\"caption\":\"\\\/\\\/ REPLACE with table caption\",\"object_alias\":\"\\\/\\\/ REPLACE with child object alias\",\"hide_header\":true,\"width\":\"max\",\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE with relation to main object\",\"required\":true,\"value\":\"=uid_field\",\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_group_alias\":\"~VISIBLE\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\",\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')\",\"disabled_if\":{\"operator\":\"AND\",\"conditions\":[{\"value_left\":\"=uid_field\",\"comparator\":\"==\",\"value_right\":\"\"}]}},{\"action_alias\":\"exface.Core.DeleteObject\",\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')\"}]}]}",
+            "UXON": {
+                "widget_type": "Dialog",
+                "widgets": [
+                    {
+                        "attribute_alias": "\/\/ REPLACE with UID of main object",
+                        "id": "uid_field",
+                        "widget_type": "InputHidden"
+                    },
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "widget_type": "DataTableResponsive",
+                        "caption": "\/\/ REPLACE with table caption",
+                        "object_alias": "\/\/ REPLACE with child object alias",
+                        "hide_header": true,
+                        "width": "max",
+                        "filters": [
+                            {
+                                "attribute_alias": "\/\/ REPLACE with relation to main object",
+                                "required": true,
+                                "value": "=uid_field",
+                                "input_widget": {
+                                    "widget_type": "InputHidden"
+                                }
+                            }
+                        ],
+                        "columns": [
+                            {
+                                "attribute_group_alias": "~VISIBLE"
+                            }
+                        ],
+                        "buttons": [
+                            {
+                                "action_alias": "exface.Core.ShowObjectCreateDialog",
+                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=uid_field",
+                                            "comparator": "==",
+                                            "value_right": ""
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "action_alias": "exface.Core.DeleteObject",
+                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')"
+                            }
+                        ]
+                    }
+                ]
+            },
             "WRAP_PATH": "$.widgets[1]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/dialog_with_child_table.gif"
@@ -1115,7 +2521,10 @@
             "NAME": "Generate an alias from a name",
             "DESCRIPTION": "Will \"sluggify\" the first attribute and put it into the second one",
             "PROTOTYPE": "exface\/Core\/Behaviors\/AliasGeneratingBehavior.php",
-            "UXON": "{\"source_attribute_alias\":\"\",\"target_attribute_alias\":\"\"}",
+            "UXON": {
+                "source_attribute_alias": "",
+                "target_attribute_alias": ""
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
             "THUMBNAIL": null
@@ -1130,7 +2539,15 @@
             "NAME": "Generate an alias with namespace and custom character replacement",
             "DESCRIPTION": "In addition to the simples case, a namespace will be appended, the result will be lowercased and whitespaces will be replaced by `-` instead of the default `_`.",
             "PROTOTYPE": "exface\/Core\/Behaviors\/AliasGeneratingBehavior.php",
-            "UXON": "{\"target_attribute_alias\":\"\",\"namespace_attribute_alias\":\"\",\"source_attribute_alias\":\"\",\"case\":\"lower\",\"replace_characters\":{\" \":\"-\"}}",
+            "UXON": {
+                "target_attribute_alias": "",
+                "namespace_attribute_alias": "",
+                "source_attribute_alias": "",
+                "case": "lower",
+                "replace_characters": {
+                    " ": "-"
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
             "THUMBNAIL": null
@@ -1145,7 +2562,13 @@
             "NAME": "Update on duplicates",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
-            "UXON": "{\"compare_attributes\":[\"\"],\"on_duplicate_single_row\":\"update\",\"on_duplicate_multi_row\":\"update\"}",
+            "UXON": {
+                "compare_attributes": [
+                    ""
+                ],
+                "on_duplicate_single_row": "update",
+                "on_duplicate_multi_row": "update"
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
             "THUMBNAIL": null
@@ -1160,7 +2583,12 @@
             "NAME": "Error on duplicates",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
-            "UXON": "{\"compare_attributes\":[\"\"],\"duplicate_error_code\":\"\"}",
+            "UXON": {
+                "compare_attributes": [
+                    ""
+                ],
+                "duplicate_error_code": ""
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
             "THUMBNAIL": null
@@ -1175,7 +2603,13 @@
             "NAME": "Ignore duplicates (e.g. for mappings)",
             "DESCRIPTION": "Will ignore duplicate rows on multi-row create. This is handy for creating mappings between objects en-masse, where you only need to be sure, there is a mapping.",
             "PROTOTYPE": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
-            "UXON": "{\"compare_attributes\":[\"\"],\"on_duplicate_single_row\":\"error\",\"on_duplicate_multi_row\":\"ignore\"}",
+            "UXON": {
+                "compare_attributes": [
+                    ""
+                ],
+                "on_duplicate_single_row": "error",
+                "on_duplicate_multi_row": "ignore"
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
             "THUMBNAIL": null
@@ -1190,7 +2624,18 @@
             "NAME": "Prevent delete of rows with certain ids",
             "DESCRIPTION": "Place comma-separated list of ids in the `value` property. Replace `UID` with the id of your UID attribute",
             "PROTOTYPE": "exface\/Core\/Behaviors\/UndeletableBehavior.php",
-            "UXON": "{\"condition_group\":{\"operator\":\"AND\",\"conditions\":[{\"expression\":\"UID\",\"comparator\":\"[\",\"value\":\"\"}]}}",
+            "UXON": {
+                "condition_group": {
+                    "operator": "AND",
+                    "conditions": [
+                        {
+                            "expression": "UID",
+                            "comparator": "[",
+                            "value": ""
+                        }
+                    ]
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
             "THUMBNAIL": null
@@ -1205,7 +2650,18 @@
             "NAME": "Set flag on an object (e.g. disable\/enable)",
             "DESCRIPTION": "Replace the `0` in the `from` property with your desired value. Place the alias of the target attribute in the `to` property. Note: the input data MUST be based on the target meta object!",
             "PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
-            "UXON": "{\"input_rows_min\":1,\"icon\":\"\",\"input_mapper\":{\"column_to_column_mappings\":[{\"from\":\"=0\",\"to\":\"\"}]}}",
+            "UXON": {
+                "input_rows_min": 1,
+                "icon": "",
+                "input_mapper": {
+                    "column_to_column_mappings": [
+                        {
+                            "from": "=0",
+                            "to": ""
+                        }
+                    ]
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": null
@@ -1220,7 +2676,9 @@
             "NAME": "Encrypted data",
             "DESCRIPTION": "Will encrypt any data before sending to data source and decrypt it before showing. Just specify the the type of the raw (decrypted) data.",
             "PROTOTYPE": "exface\/Core\/DataTypes\/EncryptedDataType.php",
-            "UXON": "{\"inner_data_type\":\"\"}",
+            "UXON": {
+                "inner_data_type": ""
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "datatype",
             "THUMBNAIL": null
@@ -1235,7 +2693,34 @@
             "NAME": "Dashboard with data widgets",
             "DESCRIPTION": "Masonry-layout dashboard with a table and a chart. Add further widgets and change width and height as needed.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Dashboard.php",
-            "UXON": "{\"widget_type\":\"Dashboard\",\"object_alias\":\"\",\"widgets\":[{\"widget_type\":\"DataTable\",\"width\":1,\"height\":10,\"columns\":[{\"attribute_alias\":\"\"}]},{\"widget_type\":\"Chart\",\"width\":1,\"height\":10,\"series\":[{\"type\":\"line\",\"x_attribute_alias\":\"\",\"y_attribute_alias\":\"\"}]}]}",
+            "UXON": {
+                "widget_type": "Dashboard",
+                "object_alias": "",
+                "widgets": [
+                    {
+                        "widget_type": "DataTable",
+                        "width": 1,
+                        "height": 10,
+                        "columns": [
+                            {
+                                "attribute_alias": ""
+                            }
+                        ]
+                    },
+                    {
+                        "widget_type": "Chart",
+                        "width": 1,
+                        "height": 10,
+                        "series": [
+                            {
+                                "type": "line",
+                                "x_attribute_alias": "",
+                                "y_attribute_alias": ""
+                            }
+                        ]
+                    }
+                ]
+            },
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/dashboard.gif"
@@ -1250,7 +2735,15 @@
             "NAME": "Card with caption",
             "DESCRIPTION": "Simple card a caption. Can be used as wrapper.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Card.php",
-            "UXON": "{\"widget_type\":\"Card\",\"caption\":\"\",\"widgets\":[{\"attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "Card",
+                "caption": "",
+                "widgets": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/card.gif"
@@ -1265,7 +2758,36 @@
             "NAME": "Add mapping to multiple (dialog+combo)",
             "DESCRIPTION": "A dialog to create mappings for multiple selected objects: e.g. map user to roles, etc. The dialog's object should be that of the mapping to create. Add `PreventDuplicatesBehavior` to mapping object to avoid errors.",
             "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
-            "UXON": "{\"alias\":\"exface.Core.ShowDialog\",\"input_rows_min\":1,\"widget\":{\"widget_type\":\"Dialog\",\"object_alias\":\"\",\"columns_in_grid\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE with relation to input object - e.g. USER\",\"widget_type\":\"InputComboTable\",\"multi_select\":true,\"disabled\":true},{\"attribute_alias\":\"\\\/\\\/ REPLACE with relation to other object - e.g. ROLE\"}],\"buttons\":[{\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')\",\"icon\":\"plus\",\"action_alias\":\"exface.Core.CreateData\",\"visibility\":\"promoted\",\"align\":\"opposite\"}]}}",
+            "UXON": {
+                "alias": "exface.Core.ShowDialog",
+                "input_rows_min": 1,
+                "widget": {
+                    "widget_type": "Dialog",
+                    "object_alias": "",
+                    "columns_in_grid": 1,
+                    "height": "auto",
+                    "widgets": [
+                        {
+                            "attribute_alias": "\/\/ REPLACE with relation to input object - e.g. USER",
+                            "widget_type": "InputComboTable",
+                            "multi_select": true,
+                            "disabled": true
+                        },
+                        {
+                            "attribute_alias": "\/\/ REPLACE with relation to other object - e.g. ROLE"
+                        }
+                    ],
+                    "buttons": [
+                        {
+                            "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                            "icon": "plus",
+                            "action_alias": "exface.Core.CreateData",
+                            "visibility": "promoted",
+                            "align": "opposite"
+                        }
+                    ]
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": null
@@ -1280,7 +2802,53 @@
             "NAME": "Remove mapping from multiple (dialog+combo)",
             "DESCRIPTION": "A dialog to remove mappings for multiple selected objects: e.g. remove roles from users, etc. The dialog's object should be that of the mapping to create. Will remove all mappings matching selected values of the two relations!",
             "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
-            "UXON": "{\"alias\":\"exface.Core.ShowDialog\",\"input_rows_min\":1,\"widget\":{\"widget_type\":\"Dialog\",\"object_alias\":\"\",\"columns_in_grid\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE with relation to input object - e.g. USER\",\"widget_type\":\"InputComboTable\",\"multi_select\":true,\"disabled\":true},{\"attribute_alias\":\"\\\/\\\/ REPLACE with relation to other object - e.g. ROLE\"}],\"buttons\":[{\"caption\":\"=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')\",\"icon\":\"minus\",\"visibility\":\"promoted\",\"align\":\"opposite\",\"action\":{\"alias\":\"exface.Core.DeleteObject\",\"object_alias\":\"exface.Core.PAGE_GROUP_PAGES\",\"input_mapper\":{\"column_to_filter_mappings\":[{\"from\":\"\\\/\\\/ REPLACE with relation to input object - e.g. USER\",\"to\":\"\\\/\\\/ REPLACE with relation to input object - e.g. USER\",\"comparator\":\"[\"},{\"from\":\"\\\/\\\/ REPLACE with relation to other object - e.g. ROLE\",\"to\":\"\\\/\\\/ REPLACE with relation to other object - e.g. ROLE\",\"comparator\":\"==\"}]}}}]}}",
+            "UXON": {
+                "alias": "exface.Core.ShowDialog",
+                "input_rows_min": 1,
+                "widget": {
+                    "widget_type": "Dialog",
+                    "object_alias": "",
+                    "columns_in_grid": 1,
+                    "height": "auto",
+                    "widgets": [
+                        {
+                            "attribute_alias": "\/\/ REPLACE with relation to input object - e.g. USER",
+                            "widget_type": "InputComboTable",
+                            "multi_select": true,
+                            "disabled": true
+                        },
+                        {
+                            "attribute_alias": "\/\/ REPLACE with relation to other object - e.g. ROLE"
+                        }
+                    ],
+                    "buttons": [
+                        {
+                            "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                            "icon": "minus",
+                            "visibility": "promoted",
+                            "align": "opposite",
+                            "action": {
+                                "alias": "exface.Core.DeleteObject",
+                                "object_alias": "exface.Core.PAGE_GROUP_PAGES",
+                                "input_mapper": {
+                                    "column_to_filter_mappings": [
+                                        {
+                                            "from": "\/\/ REPLACE with relation to input object - e.g. USER",
+                                            "to": "\/\/ REPLACE with relation to input object - e.g. USER",
+                                            "comparator": "["
+                                        },
+                                        {
+                                            "from": "\/\/ REPLACE with relation to other object - e.g. ROLE",
+                                            "to": "\/\/ REPLACE with relation to other object - e.g. ROLE",
+                                            "comparator": "=="
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": null
@@ -1295,7 +2863,19 @@
             "NAME": "Mass editor for selected attributes",
             "DESCRIPTION": "Small dialog to change set the value of one or more attributes for multiple input objects. The dialog will display an info message with the number of edited objects or the selection criteria (if editing for a set of filters)",
             "PROTOTYPE": "exface\/Core\/Actions\/ShowMassEditDialog.php",
-            "UXON": "{\"alias\":\"exface.Core.ShowMassEditDialog\",\"widget\":{\"widget_type\":\"Dialog\",\"columns_in_grid\":1,\"height\":\"auto\",\"widgets\":[{\"attribute_alias\":\"\"}]}}",
+            "UXON": {
+                "alias": "exface.Core.ShowMassEditDialog",
+                "widget": {
+                    "widget_type": "Dialog",
+                    "columns_in_grid": 1,
+                    "height": "auto",
+                    "widgets": [
+                        {
+                            "attribute_alias": ""
+                        }
+                    ]
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": null
@@ -1310,7 +2890,23 @@
             "NAME": "KPI with semantic color scale",
             "DESCRIPTION": "Use an aggregation in `attribute_alias` like `id:COUNT` and the tile will display a counter, total, etc. You can also add filters and aggregations in the `data` section. In the color scale you can also replace the semantic colors with regular CSS colors like `red`, `#ccc` etc.",
             "PROTOTYPE": "exface\/Core\/Widgets\/KPI.php",
-            "UXON": "{\"widget_type\":\"KPI\",\"object_alias\":\"\",\"attribute_alias\":\"\",\"color_scale\":{\"0\":\"\",\"10\":\"~WARNING\",\"20\":\"~ERROR\"},\"data\":{\"filters\":[{\"attribute_alias\":\"\"}]}}",
+            "UXON": {
+                "widget_type": "KPI",
+                "object_alias": "",
+                "attribute_alias": "",
+                "color_scale": {
+                    "0": "",
+                    "10": "~WARNING",
+                    "20": "~ERROR"
+                },
+                "data": {
+                    "filters": [
+                        {
+                            "attribute_alias": ""
+                        }
+                    ]
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": ""
@@ -1325,7 +2921,15 @@
             "NAME": "Container (invisible)",
             "DESCRIPTION": "Use simple containers to place multiple widgets one-after-another. The container itself is not visible in most cases - it's just there for concatennation.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Container.php",
-            "UXON": "{\"widget_type\":\"Container\",\"object_alias\":\"\",\"widgets\":[{\"widget_type\":\"\"}]}",
+            "UXON": {
+                "widget_type": "Container",
+                "object_alias": "",
+                "widgets": [
+                    {
+                        "widget_type": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": null
@@ -1340,7 +2944,26 @@
             "NAME": "Master-detail carousel",
             "DESCRIPTION": "A responsive table as master widget and a form showing details for the selected row. Both can have separate buttons. Changes in the form immediately affect the table - even without being saved to the data source.",
             "PROTOTYPE": "exface\/Core\/Widgets\/DataCarousel.php",
-            "UXON": "{\"widget_type\":\"DataCarousel\",\"data\":{\"widget_type\":\"DataTableResponsive\",\"paginate\":false,\"columns\":[{\"attribute_alias\":\"\"}]},\"details\":{\"widget_type\":\"Form\",\"widgets\":[{\"attribute_alias\":\"\"}]}}",
+            "UXON": {
+                "widget_type": "DataCarousel",
+                "data": {
+                    "widget_type": "DataTableResponsive",
+                    "paginate": false,
+                    "columns": [
+                        {
+                            "attribute_alias": ""
+                        }
+                    ]
+                },
+                "details": {
+                    "widget_type": "Form",
+                    "widgets": [
+                        {
+                            "attribute_alias": ""
+                        }
+                    ]
+                }
+            },
             "WRAP_PATH": "$.data",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datacarousel.gif"
@@ -1355,7 +2978,12 @@
             "NAME": "Open URL with placeholder",
             "DESCRIPTION": "Your input data must have a column named `your_data_column`.",
             "PROTOTYPE": "exface\/Core\/Actions\/GoToUrl.php",
-            "UXON": "{\"alias\":\"exface.Core.GoToUrl\",\"url\":\"https:\\\/\\\/yourdomain.com\\\/[#your_data_column#]\",\"input_rows_min\":1,\"input_rows_max\":1}",
+            "UXON": {
+                "alias": "exface.Core.GoToUrl",
+                "url": "https:\/\/yourdomain.com\/[#your_data_column#]",
+                "input_rows_min": 1,
+                "input_rows_max": 1
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": null
@@ -1370,7 +2998,11 @@
             "NAME": "Open URL in new window",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/Actions\/GoToUrl.php",
-            "UXON": "{\"alias\":\"exface.Core.GoToUrl\",\"url\":\"\",\"open_in_new_window\":true}",
+            "UXON": {
+                "alias": "exface.Core.GoToUrl",
+                "url": "",
+                "open_in_new_window": true
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": null
@@ -1385,7 +3017,13 @@
             "NAME": "Open URL contained in input data",
             "DESCRIPTION": "The input data here is expected to have a column named `url`. Since the URL contains special characters, we need to disable url-encoding in this case!",
             "PROTOTYPE": "exface\/Core\/Actions\/GoToUrl.php",
-            "UXON": "{\"alias\":\"exface.Core.GoToUrl\",\"url\":\"[#url#]\",\"urlencode_placeholders\":false,\"input_rows_min\":1,\"input_rows_max\":1}",
+            "UXON": {
+                "alias": "exface.Core.GoToUrl",
+                "url": "[#url#]",
+                "urlencode_placeholders": false,
+                "input_rows_min": 1,
+                "input_rows_max": 1
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": null
@@ -1400,7 +3038,12 @@
             "NAME": "PDF viewer with download option",
             "DESCRIPTION": "NOTE: the `attribute_alias` should point to the attribute, containing the PDF binary",
             "PROTOTYPE": "exface\/Core\/Widgets\/PDFViewer.php",
-            "UXON": "{\"widget_type\":\"PDFViewer\",\"attribute_alias\":\"\",\"download_enabled\":true,\"filename_attribute_alias\":\"\"}",
+            "UXON": {
+                "widget_type": "PDFViewer",
+                "attribute_alias": "",
+                "download_enabled": true,
+                "filename_attribute_alias": ""
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/pdf_viewer.gif"
@@ -1415,7 +3058,17 @@
             "NAME": "Open PDF in dialog",
             "DESCRIPTION": "",
             "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
-            "UXON": "{\"maximize\":true,\"input_rows_min\":1,\"input_rows_max\":1,\"widget\":{\"widget_type\":\"PDFViewer\",\"attribute_alias\":\"\",\"download_enabled\":true,\"filename_attribute_alias\":\"\"}}",
+            "UXON": {
+                "maximize": true,
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "widget": {
+                    "widget_type": "PDFViewer",
+                    "attribute_alias": "",
+                    "download_enabled": true,
+                    "filename_attribute_alias": ""
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": null
@@ -1430,7 +3083,19 @@
             "NAME": "Inline input group for a range",
             "DESCRIPTION": "Displays min\/max-attributes as \"caption: [min] - [max]\"",
             "PROTOTYPE": "exface\/Core\/Widgets\/InlineGroup.php",
-            "UXON": "{\"widget_type\":\"InlineGroup\",\"caption\":\"\",\"separator\":\"-\",\"widgets\":[{\"attribute_alias\":\"\"},{\"attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "InlineGroup",
+                "caption": "",
+                "separator": "-",
+                "widgets": [
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/inline_range.gif"
@@ -1445,7 +3110,11 @@
             "NAME": "Create\/update time tracking + optimistic locking",
             "DESCRIPTION": "Save create\/update time and check if update time changed before modifying data",
             "PROTOTYPE": "exface\/Core\/Behaviors\/TimeStampingBehavior.php",
-            "UXON": "{\"created_on_attribute_alias\":\"\",\"updated_on_attribute_alias\":\"\",\"check_for_conflicts_on_update\":true}",
+            "UXON": {
+                "created_on_attribute_alias": "",
+                "updated_on_attribute_alias": "",
+                "check_for_conflicts_on_update": true
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
             "THUMBNAIL": null
@@ -1460,7 +3129,13 @@
             "NAME": "Create\/update time and user tracking + optimistic locking",
             "DESCRIPTION": "Save create\/update time and user UID and check if update time changed before modifying data",
             "PROTOTYPE": "exface\/Core\/Behaviors\/TimeStampingBehavior.php",
-            "UXON": "{\"created_on_attribute_alias\":\"\",\"created_by_attribute_alias\":\"\",\"updated_on_attribute_alias\":\"\",\"updated_by_attribute_alias\":\"\",\"check_for_conflicts_on_update\":true}",
+            "UXON": {
+                "created_on_attribute_alias": "",
+                "created_by_attribute_alias": "",
+                "updated_on_attribute_alias": "",
+                "updated_by_attribute_alias": "",
+                "check_for_conflicts_on_update": true
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
             "THUMBNAIL": null
@@ -1475,7 +3150,23 @@
             "NAME": "Table with expandable row details",
             "DESCRIPTION": "Rows can be expanded to show a container details for this row. The detail-container will be prefilled with the row data asynchronously.",
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
-            "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"columns\":[{\"attribute_alias\":\"\"}],\"row_details\":{\"height\":\"\",\"widgets\":[{\"\":\"\"}]}}",
+            "UXON": {
+                "widget_type": "DataTable",
+                "object_alias": "",
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ],
+                "row_details": {
+                    "height": "",
+                    "widgets": [
+                        {
+                            "": ""
+                        }
+                    ]
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_row_details.gif"
@@ -1490,7 +3181,19 @@
             "NAME": "Table with row groups",
             "DESCRIPTION": "All rows with the same value of the group-attribute will be grouped together under a mutual header showing the value of this attribute and an optional counter. Row groups can be collapsible. If there is a column with the same attribute, it will be hidden automatically.",
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
-            "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"columns\":[{\"attribute_alias\":\"\"}],\"row_grouper\":{\"group_by_attribute_alias\":\"\",\"show_counter\":false}}",
+            "UXON": {
+                "widget_type": "DataTable",
+                "object_alias": "",
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ],
+                "row_grouper": {
+                    "group_by_attribute_alias": "",
+                    "show_counter": false
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_row_groups.gif"
@@ -1505,7 +3208,27 @@
             "NAME": "Child-object table with live sync filter",
             "DESCRIPTION": "DataTable showing dependants (detail or child objects) based on an invisible filter. Use this preset when the parent is not fixed via context or prefill data, but can be  actively selected by the user - e.g. in a master table. The value of the inivisible filter must therefore be bound to a widget containing the parent object's key.",
             "PROTOTYPE": "exface\/Core\/Widgets\/DataTable.php",
-            "UXON": "{\"widget_type\":\"DataTable\",\"object_alias\":\"\",\"filters\":[{\"attribute_alias\":\"\\\/\\\/ REPLACE with relation to master object\",\"comparator\":\"==\",\"required\":true,\"input_widget\":{\"widget_type\":\"InputHidden\"},\"apply_on_change\":true,\"value\":\"\\\/\\\/ REPLACE with widget link to value-widget with the id of the master object - e.g. `=master_table!id`\"}],\"columns\":[{\"attribute_alias\":\"\"}]}",
+            "UXON": {
+                "widget_type": "DataTable",
+                "object_alias": "",
+                "filters": [
+                    {
+                        "attribute_alias": "\/\/ REPLACE with relation to master object",
+                        "comparator": "==",
+                        "required": true,
+                        "input_widget": {
+                            "widget_type": "InputHidden"
+                        },
+                        "apply_on_change": true,
+                        "value": "\/\/ REPLACE with widget link to value-widget with the id of the master object - e.g. `=master_table!id`"
+                    }
+                ],
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datatable_child.gif"
@@ -1520,10 +3243,88 @@
             "NAME": "PDF viewer",
             "DESCRIPTION": "NOTE: the `attribute_alias` should point to the attribute, containing the PDF binary",
             "PROTOTYPE": "exface\/Core\/Widgets\/PDFViewer.php",
-            "UXON": "{\"widget_type\":\"PDFViewer\",\"attribute_alias\":\"\"}",
+            "UXON": {
+                "widget_type": "PDFViewer",
+                "attribute_alias": ""
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/pdf_viewer.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-09 18:58:50",
+            "MODIFIED_ON": "2020-12-11 14:20:50",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb10231b198a6b102025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Scheduler with resources",
+            "DESCRIPTION": "Scheduler with swimlanes for resources\/people\/categories. Don't use pagination if not really needed - it may cause confusion because it is not clear, where the border of the loaded data lies.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Scheduler.php",
+            "UXON": {
+                "widget_type": "Scheduler",
+                "object_alias": "",
+                "paginate": false,
+                "filters": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ],
+                "items": {
+                    "start_time": "",
+                    "title": "",
+                    "subtitle": "",
+                    "default_duration_hours": 1
+                },
+                "resources": {
+                    "title": "shipment_category__LABEL"
+                },
+                "buttons": [
+                    {
+                        "action_alias": "",
+                        "bind_to_double_click": true
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/scheduler_with_resources.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-09 19:03:24",
+            "MODIFIED_ON": "2020-12-11 14:20:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb96d5d49aa53a96d5025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Scheduler",
+            "DESCRIPTION": "Simple scheduler. Don't use pagination if not really needed - it may cause confusion because it is not clear, where the border of the loaded data lies. ",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Scheduler.php",
+            "UXON": {
+                "widget_type": "Scheduler",
+                "object_alias": "",
+                "paginate": false,
+                "filters": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ],
+                "items": {
+                    "start_time": "",
+                    "title": "",
+                    "subtitle": "",
+                    "default_duration_hours": 1
+                },
+                "buttons": [
+                    {
+                        "action_alias": "",
+                        "bind_to_double_click": true
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/scheduler.gif"
         },
         {
             "CREATED_ON": "2020-12-09 19:25:25",
@@ -1535,10 +3336,105 @@
             "NAME": "KPI tile menu",
             "DESCRIPTION": "Multiple KPI tiles suitable as an entry point for an app. Use an aggregation in `attribute_alias` of each tile like `id:COUNT` and the tiles will display counters, totals, etc. Use `color_scale` on a KPI to emphasize the meaning of it's values.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Tiles.php",
-            "UXON": "{\"widget_type\":\"Tiles\",\"object_alias\":\"\",\"tiles\":[{\"title\":\"\",\"subtitle\":\"\",\"display_widget\":{\"widget_type\":\"KPI\",\"object_alias\":\"\",\"attribute_alias\":\"\",\"color_scale\":{\"0\":\"lightgreen\",\"1\":\"yellow\",\"20\":\"darkorange\"},\"data\":{\"filters\":[{\"attribute_alias\":\"\",\"value\":\"\",\"comparator\":\"==\"}]}},\"action\":{\"alias\":\"\"}}],\"tiles (copy)\":[{\"title\":\"\",\"subtitle\":\"\",\"display_widget\":{\"widget_type\":\"KPI\",\"object_alias\":\"\",\"attribute_alias\":\"\",\"data\":{\"filters\":[{\"attribute_alias\":\"\",\"value\":\"\",\"comparator\":\"==\"}]}},\"action\":{\"alias\":\"\"}}]}",
+            "UXON": {
+                "widget_type": "Tiles",
+                "object_alias": "",
+                "tiles": [
+                    {
+                        "title": "",
+                        "subtitle": "",
+                        "display_widget": {
+                            "widget_type": "KPI",
+                            "object_alias": "",
+                            "attribute_alias": "",
+                            "color_scale": {
+                                "0": "lightgreen",
+                                "1": "yellow",
+                                "20": "darkorange"
+                            },
+                            "data": {
+                                "filters": [
+                                    {
+                                        "attribute_alias": "",
+                                        "value": "",
+                                        "comparator": "=="
+                                    }
+                                ]
+                            }
+                        },
+                        "action": {
+                            "alias": ""
+                        }
+                    }
+                ],
+                "tiles (copy)": [
+                    {
+                        "title": "",
+                        "subtitle": "",
+                        "display_widget": {
+                            "widget_type": "KPI",
+                            "object_alias": "",
+                            "attribute_alias": "",
+                            "data": {
+                                "filters": [
+                                    {
+                                        "attribute_alias": "",
+                                        "value": "",
+                                        "comparator": "=="
+                                    }
+                                ]
+                            }
+                        },
+                        "action": {
+                            "alias": ""
+                        }
+                    }
+                ]
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/tiles_kpi_menu.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-09 19:26:28",
+            "MODIFIED_ON": "2020-12-11 14:19:56",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebbefb0d949744befb025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "KPI tile",
+            "DESCRIPTION": "A tile with an aggregated value inside. Use an aggregation in `attribute_alias` of the tile like `id:COUNT` and it will display a counter, total, etc. Use a `color_scale` to add semantic colors to the KPI.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Tile.php",
+            "UXON": {
+                "widget_type": "KPI",
+                "title": "",
+                "subtitle": "",
+                "display_widget": {
+                    "widget_type": "KPI",
+                    "object_alias": "",
+                    "attribute_alias": "",
+                    "color_scale": {
+                        "0": "lightgreen",
+                        "1": "yellow",
+                        "20": "darkorange"
+                    },
+                    "data": {
+                        "filters": [
+                            {
+                                "attribute_alias": "",
+                                "value": "",
+                                "comparator": "=="
+                            }
+                        ]
+                    }
+                },
+                "action": {
+                    "alias": ""
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/tile_kpi.gif"
         },
         {
             "CREATED_ON": "2020-12-10 09:47:59",
@@ -1550,7 +3446,17 @@
             "NAME": "Colored values with color scale",
             "DESCRIPTION": "Text\/number colored depending on it's value",
             "PROTOTYPE": "exface\/Core\/Widgets\/ColorIndicator.php",
-            "UXON": "{\"widget_type\":\"ColorIndicator\",\"attribute_alias\":\"\",\"color_only\":true,\"fill\":false,\"color_scale\":{\"Good\":\"lightgreen\",\"Warning\":\"yellow\",\"Critical\":\"red\"}}",
+            "UXON": {
+                "widget_type": "ColorIndicator",
+                "attribute_alias": "",
+                "color_only": true,
+                "fill": false,
+                "color_scale": {
+                    "Good": "lightgreen",
+                    "Warning": "yellow",
+                    "Critical": "red"
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/colorindicator_text_only.gif"
@@ -1565,7 +3471,10 @@
             "NAME": "Progressbar",
             "DESCRIPTION": "Simple progress bar with automatic min- and max-values",
             "PROTOTYPE": "exface\/Core\/Widgets\/ProgressBar.php",
-            "UXON": "{\"widget_type\":\"ProgressBar\",\"attribute_alias\":\"\"}",
+            "UXON": {
+                "widget_type": "ProgressBar",
+                "attribute_alias": ""
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/progressbar.gif"
@@ -1580,7 +3489,11 @@
             "NAME": "Progressbar with text froma separate attribute",
             "DESCRIPTION": "Progress bar with text based on another attribute.",
             "PROTOTYPE": "exface\/Core\/Widgets\/ProgressBar.php",
-            "UXON": "{\"widget_type\":\"ProgressBar\",\"attribute_alias\":\"\",\"text_attribute_alias\":\"\"}",
+            "UXON": {
+                "widget_type": "ProgressBar",
+                "attribute_alias": "",
+                "text_attribute_alias": ""
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/progressbar_with_text.gif"
@@ -1595,7 +3508,16 @@
             "NAME": "Progressbar with value-text-map",
             "DESCRIPTION": "Progress bar with text based on a value-map. In this example, values up-to `10` will be displayed as `Pending`, up-to `20` as `In Progress` and of `100` or more - as `Finished`.",
             "PROTOTYPE": "exface\/Core\/Widgets\/ProgressBar.php",
-            "UXON": "{\"widget_type\":\"ProgressBar\",\"attribute_alias\":\"\",\"text_map\":{\"10\":\"Pending\",\"20\":\"In Progress\",\"90\":\"Canceled\",\"100\":\"Finished\"}}",
+            "UXON": {
+                "widget_type": "ProgressBar",
+                "attribute_alias": "",
+                "text_map": {
+                    "10": "Pending",
+                    "20": "In Progress",
+                    "90": "Canceled",
+                    "100": "Finished"
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/progressbar_with_text.gif"
@@ -1610,10 +3532,100 @@
             "NAME": "Progressbar with custom color scale",
             "DESCRIPTION": "Progress bar with custom colors for values.",
             "PROTOTYPE": "exface\/Core\/Widgets\/ProgressBar.php",
-            "UXON": "{\"widget_type\":\"ProgressBar\",\"attribute_alias\":\"\",\"color_scale\":{\"0\":\"lightgray\",\"10\":\"red\",\"20\":\"yellow\",\"100\":\"green\"}}",
+            "UXON": {
+                "widget_type": "ProgressBar",
+                "attribute_alias": "",
+                "color_scale": {
+                    "0": "lightgray",
+                    "10": "red",
+                    "20": "yellow",
+                    "100": "green"
+                }
+            },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/progressbar_colorscale.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-10 10:48:36",
+            "MODIFIED_ON": "2020-12-11 14:21:20",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb19fdfb6fe6cb19f847beb4a5184",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Date-time data column showing only the date",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataColumn.php",
+            "UXON": {
+                "attribute_alias": "",
+                "cell_widget": {
+                    "widget_type": "Display",
+                    "value_data_type": "exface.Core.Date"
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datacolumn.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-10 10:49:50",
+            "MODIFIED_ON": "2020-12-11 14:21:29",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb3a70ba8e8a0b3a7847beb4a5184",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Data column with custom cell widget",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataColumn.php",
+            "UXON": {
+                "attribute_alias": "",
+                "cell_widget": {
+                    "widget_type": "ProgressBar"
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datacolumn_progressbar.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-10 10:51:39",
+            "MODIFIED_ON": "2020-12-11 14:21:09",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba83e4ce62f8aa83e847beb4a5184",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Data column with total row (footer)",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataColumn.php",
+            "UXON": {
+                "attribute_alias": "",
+                "footer": "SUM"
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datacolumn_total.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-10 10:55:00",
+            "MODIFIED_ON": "2020-12-11 14:21:00",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb247c49adeaeb247847beb4a5184",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Data column group with nested headers",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataColumnGroup.php",
+            "UXON": {
+                "caption": "",
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "$.columns[0]",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datacolumn_group.gif"
         }
     ],
     "totals_rows": [],

@@ -638,7 +638,9 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{\"length_max\":\"255\"}"
+            "CUSTOM_DATA_TYPE": {
+                "length_max": "255"
+            }
         },
         {
             "CREATED_ON": "2020-03-21 13:52:00",
@@ -681,7 +683,9 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{\"length_max\":\"255\"}"
+            "CUSTOM_DATA_TYPE": {
+                "length_max": "255"
+            }
         },
         {
             "CREATED_ON": "2020-04-07 06:01:22",

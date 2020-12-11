@@ -208,7 +208,9 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{\"length_max\":\"200\"}"
+            "CUSTOM_DATA_TYPE": {
+                "length_max": "200"
+            }
         },
         {
             "CREATED_ON": "2020-09-30 09:14:53",
@@ -294,7 +296,9 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{\"length_max\":\"50\"}"
+            "CUSTOM_DATA_TYPE": {
+                "length_max": "50"
+            }
         },
         {
             "CREATED_ON": "2020-09-30 09:14:53",
@@ -380,7 +384,9 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{\"length_max\":4294967295}"
+            "CUSTOM_DATA_TYPE": {
+                "length_max": 4294967295
+            }
         },
         {
             "CREATED_ON": "2020-09-30 09:14:53",
@@ -423,7 +429,9 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{\"length_max\":\"50\"}"
+            "CUSTOM_DATA_TYPE": {
+                "length_max": "50"
+            }
         }
     ],
     "totals_rows": [],

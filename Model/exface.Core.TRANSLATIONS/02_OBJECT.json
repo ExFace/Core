@@ -96,7 +96,97 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{\"finder_depth\":\"0\"}",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"App\",\"widgets\":[{\"attribute_alias\":\"PATHNAME_ABSOLUTE\",\"width\":\"100%\",\"disabled\":false},{\"attribute_alias\":\"CONTENTS\",\"widget_type\":\"InputJson\",\"hide_caption\":true,\"height\":\"auto\"}]},{\"caption\":\"Objects\",\"widgets\":[{\"widget_type\":\"DataTable\",\"object_alias\":\"exface.Core.TRANSLATIONS_FOR_DATA\",\"filters\":[{\"attribute_alias\":\"SUBFOLDER\",\"value\":\"Objects\",\"comparator\":\"==\",\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_alias\":\"DATA_KEY\"},{\"attribute_alias\":\"LOCALE\"},{\"attribute_alias\":\"PATHNAME_RELATIVE\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectEditDialog\"}]}]},{\"caption\":\"Messages\",\"widgets\":[{\"widget_type\":\"DataTable\",\"object_alias\":\"exface.Core.TRANSLATIONS_FOR_DATA\",\"filters\":[{\"attribute_alias\":\"SUBFOLDER\",\"value\":\"Messages\",\"comparator\":\"==\",\"input_widget\":{\"widget_type\":\"InputHidden\"}}],\"columns\":[{\"attribute_alias\":\"DATA_KEY\"},{\"attribute_alias\":\"LOCALE\"},{\"attribute_alias\":\"PATH_RELATIVE\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectEditDialog\"}]}]}]}",
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Tabs",
+                "tabs": [
+                    {
+                        "caption": "App",
+                        "widgets": [
+                            {
+                                "attribute_alias": "PATHNAME_ABSOLUTE",
+                                "width": "100%",
+                                "disabled": false
+                            },
+                            {
+                                "attribute_alias": "CONTENTS",
+                                "widget_type": "InputJson",
+                                "hide_caption": true,
+                                "height": "auto"
+                            }
+                        ]
+                    },
+                    {
+                        "caption": "Objects",
+                        "widgets": [
+                            {
+                                "widget_type": "DataTable",
+                                "object_alias": "exface.Core.TRANSLATIONS_FOR_DATA",
+                                "filters": [
+                                    {
+                                        "attribute_alias": "SUBFOLDER",
+                                        "value": "Objects",
+                                        "comparator": "==",
+                                        "input_widget": {
+                                            "widget_type": "InputHidden"
+                                        }
+                                    }
+                                ],
+                                "columns": [
+                                    {
+                                        "attribute_alias": "DATA_KEY"
+                                    },
+                                    {
+                                        "attribute_alias": "LOCALE"
+                                    },
+                                    {
+                                        "attribute_alias": "PATHNAME_RELATIVE"
+                                    }
+                                ],
+                                "buttons": [
+                                    {
+                                        "action_alias": "exface.Core.ShowObjectEditDialog"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "caption": "Messages",
+                        "widgets": [
+                            {
+                                "widget_type": "DataTable",
+                                "object_alias": "exface.Core.TRANSLATIONS_FOR_DATA",
+                                "filters": [
+                                    {
+                                        "attribute_alias": "SUBFOLDER",
+                                        "value": "Messages",
+                                        "comparator": "==",
+                                        "input_widget": {
+                                            "widget_type": "InputHidden"
+                                        }
+                                    }
+                                ],
+                                "columns": [
+                                    {
+                                        "attribute_alias": "DATA_KEY"
+                                    },
+                                    {
+                                        "attribute_alias": "LOCALE"
+                                    },
+                                    {
+                                        "attribute_alias": "PATH_RELATIVE"
+                                    }
+                                ],
+                                "buttons": [
+                                    {
+                                        "action_alias": "exface.Core.ShowObjectEditDialog"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
             "ALIAS": "TRANSLATIONS",
             "DATA_ADDRESS": "*\/*\/Translations\/*.json"
         }

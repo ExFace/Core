@@ -96,7 +96,167 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"AUTHORIZATION_POINT\",\"widget_type\":\"InputComboTable\",\"id\":\"auth_point_combo\",\"table\":{\"object_alias\":\"exface.Core.AUTHORIZATION_POINT\",\"columns\":[{\"attribute_group_alias\":\"~DEFAULT_DISPLAY\"},{\"attribute_alias\":\"POLICY_PROTOTYPE_CLASS\",\"hidden\":true},{\"attribute_alias\":\"TARGET_USER_ROLE_APPLICABLE\",\"hidden\":true},{\"attribute_alias\":\"TARGET_PAGE_GROUP_APPLICABLE\",\"hidden\":true},{\"attribute_alias\":\"TARGET_OBJECT_APPLICABLE\",\"hidden\":true},{\"attribute_alias\":\"TARGET_ACTION_APPLICABLE\",\"hidden\":true},{\"attribute_alias\":\"TARGET_FACADE_APPLICABLE\",\"hidden\":true}]}},{\"attribute_alias\":\"EFFECT\"},{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"DISABLED_FLAG\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"DESCRIPTION\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Targets\",\"widgets\":[{\"attribute_alias\":\"TARGET_USER_ROLE\",\"disabled_if\":{\"operator\":\"AND\",\"conditions\":[{\"value_left\":\"=auth_point_combo!TARGET_USER_ROLE_APPLICABLE\",\"comparator\":\"==\",\"value_right\":0}]}},{\"attribute_alias\":\"TARGET_PAGE_GROUP\",\"disabled_if\":{\"operator\":\"AND\",\"conditions\":[{\"value_left\":\"=auth_point_combo!TARGET_PAGE_GROUP_APPLICABLE\",\"comparator\":\"==\",\"value_right\":0}]}},{\"attribute_alias\":\"TARGET_OBJECT\",\"disabled_if\":{\"operator\":\"AND\",\"conditions\":[{\"value_left\":\"=auth_point_combo!TARGET_OBJECT_APPLICABLE\",\"comparator\":\"==\",\"value_right\":0}]}},{\"attribute_alias\":\"TARGET_ACTION_MODEL\",\"disabled_if\":{\"operator\":\"AND\",\"conditions\":[{\"value_left\":\"=auth_point_combo!TARGET_ACTION_APPLICABLE\",\"comparator\":\"==\",\"value_right\":0}]}},{\"attribute_alias\":\"TARGET_ACTION_PROTOTYPE\",\"disabled_if\":{\"operator\":\"AND\",\"conditions\":[{\"value_left\":\"=auth_point_combo!TARGET_ACTION_APPLICABLE\",\"comparator\":\"==\",\"value_right\":0}]}},{\"attribute_alias\":\"TARGET_FACADE\",\"disabled_if\":{\"operator\":\"AND\",\"conditions\":[{\"value_left\":\"=auth_point_combo!TARGET_FACADE_APPLICABLE\",\"comparator\":\"==\",\"value_right\":0}]}}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Additional conditions\",\"width\":\"max\",\"widgets\":[{\"attribute_alias\":\"CONDITION_UXON\",\"widget_type\":\"InputUxon\",\"root_prototype\":\"=auth_point_combo!POLICY_PROTOTYPE_CLASS\",\"height\":12,\"width\":\"max\",\"hide_caption\":true}]}]}",
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Dialog",
+                "widgets": [
+                    {
+                        "widget_type": "WidgetGroup",
+                        "widgets": [
+                            {
+                                "attribute_alias": "AUTHORIZATION_POINT",
+                                "widget_type": "InputComboTable",
+                                "id": "auth_point_combo",
+                                "table": {
+                                    "object_alias": "exface.Core.AUTHORIZATION_POINT",
+                                    "columns": [
+                                        {
+                                            "attribute_group_alias": "~DEFAULT_DISPLAY"
+                                        },
+                                        {
+                                            "attribute_alias": "POLICY_PROTOTYPE_CLASS",
+                                            "hidden": true
+                                        },
+                                        {
+                                            "attribute_alias": "TARGET_USER_ROLE_APPLICABLE",
+                                            "hidden": true
+                                        },
+                                        {
+                                            "attribute_alias": "TARGET_PAGE_GROUP_APPLICABLE",
+                                            "hidden": true
+                                        },
+                                        {
+                                            "attribute_alias": "TARGET_OBJECT_APPLICABLE",
+                                            "hidden": true
+                                        },
+                                        {
+                                            "attribute_alias": "TARGET_ACTION_APPLICABLE",
+                                            "hidden": true
+                                        },
+                                        {
+                                            "attribute_alias": "TARGET_FACADE_APPLICABLE",
+                                            "hidden": true
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "attribute_alias": "EFFECT"
+                            },
+                            {
+                                "attribute_alias": "NAME"
+                            },
+                            {
+                                "attribute_alias": "DISABLED_FLAG"
+                            },
+                            {
+                                "attribute_alias": "APP"
+                            },
+                            {
+                                "attribute_alias": "DESCRIPTION"
+                            }
+                        ]
+                    },
+                    {
+                        "widget_type": "WidgetGroup",
+                        "caption": "Targets",
+                        "widgets": [
+                            {
+                                "attribute_alias": "TARGET_USER_ROLE",
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=auth_point_combo!TARGET_USER_ROLE_APPLICABLE",
+                                            "comparator": "==",
+                                            "value_right": 0
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "attribute_alias": "TARGET_PAGE_GROUP",
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=auth_point_combo!TARGET_PAGE_GROUP_APPLICABLE",
+                                            "comparator": "==",
+                                            "value_right": 0
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "attribute_alias": "TARGET_OBJECT",
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=auth_point_combo!TARGET_OBJECT_APPLICABLE",
+                                            "comparator": "==",
+                                            "value_right": 0
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "attribute_alias": "TARGET_ACTION_MODEL",
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=auth_point_combo!TARGET_ACTION_APPLICABLE",
+                                            "comparator": "==",
+                                            "value_right": 0
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "attribute_alias": "TARGET_ACTION_PROTOTYPE",
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=auth_point_combo!TARGET_ACTION_APPLICABLE",
+                                            "comparator": "==",
+                                            "value_right": 0
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "attribute_alias": "TARGET_FACADE",
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=auth_point_combo!TARGET_FACADE_APPLICABLE",
+                                            "comparator": "==",
+                                            "value_right": 0
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "widget_type": "WidgetGroup",
+                        "caption": "Additional conditions",
+                        "width": "max",
+                        "widgets": [
+                            {
+                                "attribute_alias": "CONDITION_UXON",
+                                "widget_type": "InputUxon",
+                                "root_prototype": "=auth_point_combo!POLICY_PROTOTYPE_CLASS",
+                                "height": 12,
+                                "width": "max",
+                                "hide_caption": true
+                            }
+                        ]
+                    }
+                ]
+            },
             "ALIAS": "AUTHORIZATION_POLICY",
             "DATA_ADDRESS": "exf_auth_policy"
         }

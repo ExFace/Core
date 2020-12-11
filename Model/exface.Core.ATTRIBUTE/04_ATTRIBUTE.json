@@ -783,7 +783,13 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\",\"selectable_options\":[\"ASC\",\"DESC\"]}",
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "InputSelect",
+                "selectable_options": [
+                    "ASC",
+                    "DESC"
+                ]
+            },
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,
@@ -869,7 +875,10 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": "{\"height\":4,\"widget_type\":\"InputText\"}",
+            "DEFAULT_EDITOR_UXON": {
+                "height": 4,
+                "widget_type": "InputText"
+            },
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,
@@ -912,7 +921,10 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": "{\"height\":2,\"widget_type\":\"InputPropertyTable\"}",
+            "DEFAULT_EDITOR_UXON": {
+                "height": 2,
+                "widget_type": "InputPropertyTable"
+            },
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,
@@ -1213,7 +1225,19 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\",\"selectable_options\":{\"AVG\":\"AVG\",\"MAX\":\"MAX\",\"MIN\":\"MIN\",\"SUM\":\"SUM\",\"LIST\":\"LIST\",\"COUNT\":\"COUNT\",\"LIST_DISTINCT\":\"LIST_DISTINCT\",\"COUNT_DISTINCT\":\"COUNT_DISTINCT\"}}",
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "InputSelect",
+                "selectable_options": {
+                    "AVG": "AVG",
+                    "MAX": "MAX",
+                    "MIN": "MIN",
+                    "SUM": "SUM",
+                    "LIST": "LIST",
+                    "COUNT": "COUNT",
+                    "LIST_DISTINCT": "LIST_DISTINCT",
+                    "COUNT_DISTINCT": "COUNT_DISTINCT"
+                }
+            },
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,
@@ -1713,7 +1737,14 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{\"show_values\":false,\"values\":{\"11\":\"1-to-1\",\"\":\"n-to-1 (regular relation)\",\"NM\":\"n-to-m\"}}"
+            "CUSTOM_DATA_TYPE": {
+                "show_values": false,
+                "values": {
+                    "11": "1-to-1",
+                    "": "n-to-1 (regular relation)",
+                    "NM": "n-to-m"
+                }
+            }
         },
         {
             "CREATED_ON": "2020-01-30 18:12:29",

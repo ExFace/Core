@@ -54,7 +54,14 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea894171ce99a9aa6e025041000001",
             "BEHAVIOR": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
-            "CONFIG_UXON": "{\"on_duplicate_multi_row\":\"update\",\"on_duplicate_single_row\":\"update\",\"compare_attributes\":[\"USER\",\"AUTHENTICATOR\"]}",
+            "CONFIG_UXON": {
+                "on_duplicate_multi_row": "update",
+                "on_duplicate_single_row": "update",
+                "compare_attributes": [
+                    "USER",
+                    "AUTHENTICATOR"
+                ]
+            },
             "OBJECT": "0x11ea8619c8d1453697940205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "PreventDuplicates",

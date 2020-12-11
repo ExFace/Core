@@ -85,7 +85,9 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "0x11ea6c428d7e7e9fa3480205857feb80",
             "TARGET_OBJECT": "",
-            "CONDITION_UXON": "{\"apply_to_unpublished\":true}",
+            "CONDITION_UXON": {
+                "apply_to_unpublished": true
+            },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": ""
@@ -123,7 +125,9 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "",
             "TARGET_OBJECT": "",
-            "CONDITION_UXON": "{\"context\":\"exface.Core.UserContext\"}",
+            "CONDITION_UXON": {
+                "context": "exface.Core.UserContext"
+            },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": ""
@@ -142,7 +146,9 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "",
             "TARGET_OBJECT": "",
-            "CONDITION_UXON": "{\"context\":\"exface.Core.FilterContext\"}",
+            "CONDITION_UXON": {
+                "context": "exface.Core.FilterContext"
+            },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": ""
@@ -161,7 +167,9 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "",
             "TARGET_OBJECT": "",
-            "CONDITION_UXON": "{\"context\":\"exface.Core.ActionContext\"}",
+            "CONDITION_UXON": {
+                "context": "exface.Core.ActionContext"
+            },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": ""
@@ -180,7 +188,9 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "",
             "TARGET_OBJECT": "",
-            "CONDITION_UXON": "{\"context\":\"exface.Core.ObjectBasketContext\"}",
+            "CONDITION_UXON": {
+                "context": "exface.Core.ObjectBasketContext"
+            },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": ""
@@ -199,7 +209,9 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "0x11ea6fa3cab9a380a3480205857feb80",
             "TARGET_OBJECT": "",
-            "CONDITION_UXON": "{\"context\":\"exface.Core.FavoritesContext\"}",
+            "CONDITION_UXON": {
+                "context": "exface.Core.FavoritesContext"
+            },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": ""
@@ -218,7 +230,9 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "0x11ea70397cb072cca3480205857feb80",
             "TARGET_OBJECT": "",
-            "CONDITION_UXON": "{\"context\":\"exface.Core.DebugContext\"}",
+            "CONDITION_UXON": {
+                "context": "exface.Core.DebugContext"
+            },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": ""
@@ -237,7 +251,9 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "0x11ea6fa3cab9a380a3480205857feb80",
             "TARGET_OBJECT": "",
-            "CONDITION_UXON": "{\"context\":\"exface.Core.DataContext\"}",
+            "CONDITION_UXON": {
+                "context": "exface.Core.DataContext"
+            },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": ""
@@ -370,7 +386,9 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "0x11ea6485db053e93a2e30205857feb80",
             "TARGET_OBJECT": "",
-            "CONDITION_UXON": "{\"context\":\"exface.Core.DebugContext\"}",
+            "CONDITION_UXON": {
+                "context": "exface.Core.DebugContext"
+            },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": ""
@@ -389,7 +407,9 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "0x11ea6485efba5d88a2e30205857feb80",
             "TARGET_OBJECT": "",
-            "CONDITION_UXON": "{\"context\":\"exface.Core.DebugContext\"}",
+            "CONDITION_UXON": {
+                "context": "exface.Core.DebugContext"
+            },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": ""
@@ -465,7 +485,9 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "0x11ea938770438c9ca9d10205857feb80",
             "TARGET_OBJECT": "",
-            "CONDITION_UXON": "{\"context\":\"exface.Core.DebugContext\"}",
+            "CONDITION_UXON": {
+                "context": "exface.Core.DebugContext"
+            },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": ""
@@ -484,7 +506,14 @@
             "TARGET_PAGE_GROUP": "",
             "TARGET_USER_ROLE": "",
             "TARGET_OBJECT": "",
-            "CONDITION_UXON": "{\"action_trigger_widget_match\":false,\"command_line_task\":false,\"exclude_actions\":[\"exface.Core.Login\",\"exface.Core.Logout\"]}",
+            "CONDITION_UXON": {
+                "action_trigger_widget_match": false,
+                "command_line_task": false,
+                "exclude_actions": [
+                    "exface.Core.Login",
+                    "exface.Core.Logout"
+                ]
+            },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": ""

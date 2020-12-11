@@ -267,7 +267,9 @@
             "READABLEFLAG": "0",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputPassword\"}",
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "InputPassword"
+            },
             "COPY_WITH_RELATED_OBJECT": "0",
             "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,

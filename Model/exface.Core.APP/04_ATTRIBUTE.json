@@ -208,7 +208,10 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{\"validator_regex\":\"\\\/^[a-zA-Z0-9_]+\\\\.{1}[a-zA-Z0-9_]+$\\\/\",\"validation_error_code\":\"74W2U4X\"}"
+            "CUSTOM_DATA_TYPE": {
+                "validator_regex": "\/^[a-zA-Z0-9_]+\\.{1}[a-zA-Z0-9_]+$\/",
+                "validation_error_code": "74W2U4X"
+            }
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",

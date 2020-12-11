@@ -96,7 +96,145 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Tabs\",\"object_alias\":\"exface.Core.UXON_ENTITY_ANNOTATION\",\"tabs\":[{\"caption\":\"General\",\"widgets\":[{\"attribute_alias\":\"ENTITY\",\"widget_type\":\"TextHeading\",\"heading_level\":1,\"width\":\"max\"},{\"attribute_alias\":\"CLASS\",\"width\":\"max\"},{\"attribute_alias\":\"FULL_DESCRIPTION\",\"widget_type\":\"Markdown\",\"width\":\"max\",\"hide_caption\":true},{\"attribute_alias\":\"FILE\",\"hidden\":true,\"id\":\"prototype_class_field\"}]},{\"caption\":\"Properties\",\"widgets\":[{\"object_alias\":\"exface.core.UXON_PROPERTY_ANNOTATION\",\"widget_type\":\"DataTable\",\"filters\":[{\"attribute_alias\":\"FILE\",\"widget_type\":\"InputHidden\"},{\"attribute_alias\":\"PROPERTY\"},{\"attribute_alias\":\"TITLE\"}],\"columns\":[{\"attribute_alias\":\"PROPERTY\"},{\"attribute_alias\":\"TITLE\"},{\"attribute_alias\":\"TYPE\"}],\"sorters\":[{\"attribute_alias\":\"PROPERTY\",\"direction\":\"desc\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectInfoDialog\",\"bind_to_double_click\":true}]}]},{\"caption\":\"Presets\",\"widgets\":[{\"widget_type\":\"DataTable\",\"object_alias\":\"exface.Core.UXON_PRESET\",\"filters\":[{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"PROTOTYPE\",\"widget_type\":\"InputHidden\",\"value\":\"=prototype_class_field\"},{\"attribute_alias\":\"WRAP_FLAG\"}],\"columns\":[{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"DESCRIPTION\"},{\"attribute_alias\":\"WRAP_FLAG\"},{\"attribute_alias\":\"APP__LABEL\"},{\"attribute_alias\":\"CREATED_ON\"}],\"sorters\":[{\"attribute_alias\":\"NAME\",\"direction\":\"desc\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\"}]}]}]}",
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Tabs",
+                "object_alias": "exface.Core.UXON_ENTITY_ANNOTATION",
+                "tabs": [
+                    {
+                        "caption": "General",
+                        "widgets": [
+                            {
+                                "attribute_alias": "ENTITY",
+                                "widget_type": "TextHeading",
+                                "heading_level": 1,
+                                "width": "max"
+                            },
+                            {
+                                "attribute_alias": "CLASS",
+                                "width": "max"
+                            },
+                            {
+                                "attribute_alias": "FULL_DESCRIPTION",
+                                "widget_type": "Markdown",
+                                "width": "max",
+                                "hide_caption": true
+                            },
+                            {
+                                "attribute_alias": "FILE",
+                                "hidden": true,
+                                "id": "prototype_class_field"
+                            }
+                        ]
+                    },
+                    {
+                        "caption": "Properties",
+                        "widgets": [
+                            {
+                                "object_alias": "exface.core.UXON_PROPERTY_ANNOTATION",
+                                "widget_type": "DataTable",
+                                "filters": [
+                                    {
+                                        "attribute_alias": "FILE",
+                                        "widget_type": "InputHidden"
+                                    },
+                                    {
+                                        "attribute_alias": "PROPERTY"
+                                    },
+                                    {
+                                        "attribute_alias": "TITLE"
+                                    }
+                                ],
+                                "columns": [
+                                    {
+                                        "attribute_alias": "PROPERTY"
+                                    },
+                                    {
+                                        "attribute_alias": "TITLE"
+                                    },
+                                    {
+                                        "attribute_alias": "TYPE"
+                                    }
+                                ],
+                                "sorters": [
+                                    {
+                                        "attribute_alias": "PROPERTY",
+                                        "direction": "desc"
+                                    }
+                                ],
+                                "buttons": [
+                                    {
+                                        "action_alias": "exface.Core.ShowObjectInfoDialog",
+                                        "bind_to_double_click": true
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "caption": "Presets",
+                        "widgets": [
+                            {
+                                "widget_type": "DataTable",
+                                "object_alias": "exface.Core.UXON_PRESET",
+                                "filters": [
+                                    {
+                                        "attribute_alias": "NAME"
+                                    },
+                                    {
+                                        "attribute_alias": "APP"
+                                    },
+                                    {
+                                        "attribute_alias": "PROTOTYPE",
+                                        "widget_type": "InputHidden",
+                                        "value": "=prototype_class_field"
+                                    },
+                                    {
+                                        "attribute_alias": "WRAP_FLAG"
+                                    }
+                                ],
+                                "columns": [
+                                    {
+                                        "attribute_alias": "NAME"
+                                    },
+                                    {
+                                        "attribute_alias": "DESCRIPTION"
+                                    },
+                                    {
+                                        "attribute_alias": "WRAP_FLAG"
+                                    },
+                                    {
+                                        "attribute_alias": "APP__LABEL"
+                                    },
+                                    {
+                                        "attribute_alias": "CREATED_ON"
+                                    }
+                                ],
+                                "sorters": [
+                                    {
+                                        "attribute_alias": "NAME",
+                                        "direction": "desc"
+                                    }
+                                ],
+                                "buttons": [
+                                    {
+                                        "action_alias": "exface.Core.ShowObjectCreateDialog"
+                                    },
+                                    {
+                                        "action_alias": "exface.Core.ShowObjectEditDialog",
+                                        "bind_to_double_click": true
+                                    },
+                                    {
+                                        "action_alias": "exface.Core.ShowObjectCopyDialog"
+                                    },
+                                    {
+                                        "action_alias": "exface.Core.DeleteObject"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
             "ALIAS": "UXON_ENTITY_PHP_FILE",
             "DATA_ADDRESS": ""
         }

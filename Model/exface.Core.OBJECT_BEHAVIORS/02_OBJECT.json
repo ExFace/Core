@@ -96,7 +96,39 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Panel\",\"widgets\":[{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"OBJECT\",\"id\":\"object_selector\"},{\"attribute_alias\":\"BEHAVIOR\",\"id\":\"prototype_selector\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"DESCRIPTION\",\"width\":\"max\",\"height\":2},{\"attribute_alias\":\"CONFIG_UXON\",\"hide_caption\":true,\"widget_type\":\"InputUxon\",\"schema\":\"behavior\",\"height\":18,\"root_object\":\"=object_selector\",\"root_prototype\":\"=prototype_selector\"}]}",
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Panel",
+                "widgets": [
+                    {
+                        "attribute_alias": "NAME"
+                    },
+                    {
+                        "attribute_alias": "OBJECT",
+                        "id": "object_selector"
+                    },
+                    {
+                        "attribute_alias": "BEHAVIOR",
+                        "id": "prototype_selector"
+                    },
+                    {
+                        "attribute_alias": "APP"
+                    },
+                    {
+                        "attribute_alias": "DESCRIPTION",
+                        "width": "max",
+                        "height": 2
+                    },
+                    {
+                        "attribute_alias": "CONFIG_UXON",
+                        "hide_caption": true,
+                        "widget_type": "InputUxon",
+                        "schema": "behavior",
+                        "height": 18,
+                        "root_object": "=object_selector",
+                        "root_prototype": "=prototype_selector"
+                    }
+                ]
+            },
             "ALIAS": "OBJECT_BEHAVIORS",
             "DATA_ADDRESS": "exf_object_behaviors"
         }

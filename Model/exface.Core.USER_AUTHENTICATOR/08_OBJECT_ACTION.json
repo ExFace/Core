@@ -70,7 +70,28 @@
             "ALIAS": "DisableUserAuthenticator",
             "NAME": "Disable",
             "SHORT_DESCRIPTION": "The user will not be able to use this authenticator",
-            "CONFIG_UXON": "{\"input_rows_min\":1,\"input_object_alias\":\"exface.Core.USER_AUTHENTICATOR\",\"icon\":\"ban\",\"input_mapper\":{\"inherit_columns\":false,\"column_to_column_mappings\":[{\"from\":\"=1\",\"to\":\"DISABLED_FLAG\"},{\"from\":\"UID\",\"to\":\"UID\"},{\"from\":\"MODIFIED_ON\",\"to\":\"MODIFIED_ON\"}]}}",
+            "CONFIG_UXON": {
+                "input_rows_min": 1,
+                "input_object_alias": "exface.Core.USER_AUTHENTICATOR",
+                "icon": "ban",
+                "input_mapper": {
+                    "inherit_columns": false,
+                    "column_to_column_mappings": [
+                        {
+                            "from": "=1",
+                            "to": "DISABLED_FLAG"
+                        },
+                        {
+                            "from": "UID",
+                            "to": "UID"
+                        },
+                        {
+                            "from": "MODIFIED_ON",
+                            "to": "MODIFIED_ON"
+                        }
+                    ]
+                }
+            },
             "APP": "0x31000000000000000000000000000000",
             "USE_IN_OBJECT_BASKET_FLAG": "0",
             "DOCS": ""
@@ -86,7 +107,28 @@
             "ALIAS": "EnableUserAuthenticator",
             "NAME": "Enable",
             "SHORT_DESCRIPTION": "",
-            "CONFIG_UXON": "{\"input_rows_min\":1,\"input_object_alias\":\"exface.Core.USER_AUTHENTICATOR\",\"icon\":\"check-circle-o\",\"input_mapper\":{\"inherit_columns\":false,\"column_to_column_mappings\":[{\"from\":\"=0\",\"to\":\"DISABLED_FLAG\"},{\"from\":\"UID\",\"to\":\"UID\"},{\"from\":\"MODIFIED_ON\",\"to\":\"MODIFIED_ON\"}]}}",
+            "CONFIG_UXON": {
+                "input_rows_min": 1,
+                "input_object_alias": "exface.Core.USER_AUTHENTICATOR",
+                "icon": "check-circle-o",
+                "input_mapper": {
+                    "inherit_columns": false,
+                    "column_to_column_mappings": [
+                        {
+                            "from": "=0",
+                            "to": "DISABLED_FLAG"
+                        },
+                        {
+                            "from": "UID",
+                            "to": "UID"
+                        },
+                        {
+                            "from": "MODIFIED_ON",
+                            "to": "MODIFIED_ON"
+                        }
+                    ]
+                }
+            },
             "APP": "0x31000000000000000000000000000000",
             "USE_IN_OBJECT_BASKET_FLAG": "0",
             "DOCS": ""

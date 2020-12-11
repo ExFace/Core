@@ -310,7 +310,18 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\",\"selectable_options\":{\"100\":\"DEBUG\",\"200\":\"INFO\",\"250\":\"NOTICE\",\"300\":\"WARNING\",\"400\":\"ERROR\",\"500\":\"CRITICAL\",\"600\":\"EMERGENCY\"}}",
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "InputSelect",
+                "selectable_options": {
+                    "100": "DEBUG",
+                    "200": "INFO",
+                    "250": "NOTICE",
+                    "300": "WARNING",
+                    "400": "ERROR",
+                    "500": "CRITICAL",
+                    "600": "EMERGENCY"
+                }
+            },
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,

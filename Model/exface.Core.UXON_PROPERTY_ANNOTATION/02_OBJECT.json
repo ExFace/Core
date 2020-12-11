@@ -96,7 +96,36 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "0x11e6bae2326c99b59ee0e4b318306b9a",
             "DATA_ADDRESS_PROPS": "{\"annotation_level\":\"method\",\"ignore_comments_without_matching_tags\":\"true\"}",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Panel\",\"widgets\":[{\"attribute_alias\":\"PROPERTY\",\"widget_type\":\"TextHeading\",\"heading_level\":1},{\"attribute_alias\":\"FULL_DESCRIPTION\",\"width\":\"max\",\"hide_caption\":true,\"widget_type\":\"Markdown\"},{\"attribute_alias\":\"TYPE\"},{\"attribute_alias\":\"DEFAULT\"},{\"attribute_alias\":\"FILENAME\",\"width\":\"max\"},{\"attribute_alias\":\"CLASS\",\"width\":\"max\"}]}",
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Panel",
+                "widgets": [
+                    {
+                        "attribute_alias": "PROPERTY",
+                        "widget_type": "TextHeading",
+                        "heading_level": 1
+                    },
+                    {
+                        "attribute_alias": "FULL_DESCRIPTION",
+                        "width": "max",
+                        "hide_caption": true,
+                        "widget_type": "Markdown"
+                    },
+                    {
+                        "attribute_alias": "TYPE"
+                    },
+                    {
+                        "attribute_alias": "DEFAULT"
+                    },
+                    {
+                        "attribute_alias": "FILENAME",
+                        "width": "max"
+                    },
+                    {
+                        "attribute_alias": "CLASS",
+                        "width": "max"
+                    }
+                ]
+            },
             "ALIAS": "UXON_PROPERTY_ANNOTATION",
             "DATA_ADDRESS": "[#FILE#]"
         }
