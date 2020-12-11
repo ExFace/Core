@@ -244,6 +244,11 @@ trait XYChartSeriesTrait
                 ]));
                 $this->xColumn = $col;
                 $dataWidget->addColumn($col);
+                // If the column is created automatically, make sure it has the same
+                // caption as the series. This way, if the user sets a series caption
+                // and omits the column (which happens most of the time), the column
+                // and thus the axis will get the caption of the series.
+                $col->setCaption($this->getCaption());
             }
         } 
         
@@ -259,6 +264,11 @@ trait XYChartSeriesTrait
                 ]));
                 $this->yColumn = $col;
                 $dataWidget->addColumn($col);
+                // If the column is created automatically, make sure it has the same
+                // caption as the series. This way, if the user sets a series caption
+                // and omits the column (which happens most of the time), the column
+                // and thus the axis will get the caption of the series.
+                $col->setCaption($this->getCaption());
             }
         } 
         

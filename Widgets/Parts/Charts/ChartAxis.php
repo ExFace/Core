@@ -28,7 +28,7 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
 class ChartAxis extends AbstractChartPart implements iHaveCaption
 {
     use iHaveCaptionTrait {
-        getCaption as getCaptionViaTrait;
+        getCaption as getCaptionSetExplicitly;
     }
 
     private $axis_type = null;
@@ -261,10 +261,10 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      */
     public function getCaption() : ?string
     {
-        if ($this->getCaptionViaTrait() === null) {
+        if ($this->getCaptionSetExplicitly() === null) {
             $this->setCaption($this->getDataColumn()->getCaption());
         }
-        return $this->getCaptionViaTrait();
+        return $this->getCaptionSetExplicitly();
     }
     
     /**
