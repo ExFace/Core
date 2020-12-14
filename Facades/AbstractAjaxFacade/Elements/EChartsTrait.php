@@ -29,45 +29,61 @@ use exface\Core\Widgets\Parts\Charts\VisualMapChartPart;
 use exface\Core\Widgets\Parts\Charts\Interfaces\SplittableChartSeriesInterface;
 
 /**
- * Trait to use for implementation of charts into a facade using echarts library (https://www.echartsjs.com/en/index.html).
+ * Trait to use for implementation of charts into a facade using echarts library.
  * 
- * A custom build echarts javascript file is used.
- * The echarts website provides a tool to build a custom version of their library: https://www.echartsjs.com/en/builder.html
- * It is possible that the tool does not work correctly with the Google Chrome browser (it stops during the .js file creation),
- * if that happens use Firefox to create the custom .js file.
- * The current custom file includes the following chart types, coordinate systems, components and other parts:
+ * ## How to use
  * 
- * Charts:
- * Bar, Line, Pie, Scatter, Heatmap, Sunburst, Graph, Gauge
+ * 1. Add the following line to the config of the facade:
+ * `"LIBS.ECHARTS.ECHARTS_JS": "exface/Core/Facades/AbstractAjaxFacade/js/echarts/echarts.custom.min.js",`
+ * 2. Use the trait in a facade element - see examples in \exface\JEasyUIFacade\Facades\Elements\euiChart.php
+ * or \exface\UI5Facade\Facades\Elements\UI5Chart.php.
+ * 3. It is recommended to add eCharts as a composer dependency to make it appear in the list of
+ * installed packages and licenses. Add `"npm-asset/echarts" : "^5"` to the `require` section of 
+ * the facade's `composer.json`.
  * 
- * Coordinate Systems:
- * Grid, Polar, SingleAxis
+ * To use the EChartsTrait in a facade add in the function where the HTML for the site is created 
+ * the following function `addChartButtons()` to add the buttons to change the chart type to your 
+ * site. Also you should add a resize script which, at one point, calls the `buildJsEChartsResize()` 
+ * function from the trait. Generating the javascript for the site call the following functions from 
+ * the trait:
  * 
- * Components:
- * Title, Legend, Tooltip, MarkPoint, MarkLine, MarkArea, DataZoom, VisualMap
+ * - `buildJsEChartsVar()` -> generate a js variable the echarts component will be accessable on
+ * - `buildJsFunctions()` -> to build and add all the javascript function needed for echarts to work 
+ * correctly
+ * - `buildJsEChartsInit()` -> initialize the echarts component (possible custom implementation is 
+ * needed for the facade)
+ * - `buildJsRefresh()` -> add the function to refresh the chart
  * 
- * Others:
- * Utilities, CodeCompression
+ * Its also necessary to implement the function buildJsDataLoadFunctionBody which should provide a 
+ * javascript function the provides/loads the data for the chart.
  * 
+ * Its recommended to implement a function like `buildJsDataLoaderOnLoaded()` which gets called after 
+ * data fetching from a server or such was succesful. This function should call the EChartsTrait function 
+ * `buildJsRedraw()`, with the data rows als parameter, to redraw the chart with the new data.
  * 
- * To use the EChartsTrait in a facade add in the function where the HTML for the site is created the following function
- * `addChartButtons()` to add the buttons to change the chart type to your site.
- * Also you should add a resize script which, at one point, calls the `buildJsEChartsResize()` function from the trait.
- * Generating the javascript for the site call the following functions from the trait:
- * `buildJsEChartsVar()` -> generate a js variable the echarts component will be accessable on
- * `buildJsFunctions()` -> to build and add all the javascript function needed for echarts to work correctly
- * `buildJsEChartsInit()` -> initialize the echarts component (possible custom implementation is neede for the facade)
- * `buildJsRefresh()` -> add the function to refresh the chart
+ * The trait also provides the functions `buildJsEChartsShowLoading()` and `buildJsEChartsHideLoading()` 
+ * which might be called when the site is busy loading data, and when its finished loading data.
  * 
- * Its also necessary to implement the function buildJsDataLoadFunctionBody which should provide a javascript function the provides/loads the 
- * data for the chart.
- * Its recommended to implement a function like `buildJsDataLoaderOnLoaded()` which gets called after data fetching from a server or such was succesful.
- * This function should call the EChartsTrait function `buildJsRedraw()`, with the data rows als parameter, to redraw the chart with the new data.
- * The trait also provides the functions `buildJsEChartsShowLoading()` and `buildJsEChartsHideLoading()` which might be called when the site is busy loading data,
- * and when its finished loading data.
+ * For an example of how to use the ECahrtsTrait in a facade, see the file 
+ * `exface\JEasyUIFacade\Facades\Elements\EuiChart.php` which shows the implamantation for the JeasyUI Facade.
  * 
- * For an example of how to use the ECahrtsTrait in a facade, see the file `exface\JEasyUIFacade\Facades\Elements\EuiChart.php` which shows the implamantation for the JeasyUI Facade.
+ * It is recommended to add
+ * 
+ * ## Updating the custom ECharts build
+ * 
+ * A custom build echarts javascript file is used. The echarts website provides a 
+ * tool to build a custom version of their library: https://www.echartsjs.com/en/builder.html
+ * It is possible that the tool does not work correctly with the Google Chrome browser 
+ * (it stops during the .js file creation), if that happens use Firefox to create the custom 
+ * .js file. The current custom file includes the following chart types, coordinate systems, 
+ * components and other parts:
+ * 
+ * - Charts: Bar, Line, Pie, Scatter, Heatmap, Sunburst, Graph, Gauge
+ * - Coordinate Systems: Grid, Polar, SingleAxis
+ * - Components: Title, Legend, Tooltip, MarkPoint, MarkLine, MarkArea, DataZoom, VisualMap
+ * - Others: Utilities, CodeCompression
  *
+ * @link https://www.echartsjs.com/en/index.html
  *
  * @method Chart getWidget()
  * @author Ralf Mulansky
@@ -698,21 +714,21 @@ JS;
             // if already slected piepart gets clicked again
             if ({$this->buildJsRowCompare('echart._oldSelection', 'dataRow')} == true) {
                 // deselect the pie part
-                {$this->buildJsCallEChartsAction('echart', 'pieUnSelect', 'params.seriesIndex', 'params.dataIndex')}
+                {$this->buildJsCallEChartsAction('echart', 'unselect', 'params.seriesIndex', 'params.dataIndex')}
                 {$this->buildJsSelect()}
             // if different part then already selected part gets clicked
             } else {
                 // deselect old pie part
                 var name = echart._oldSelection.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
-                {$this->buildJsCallEChartsAction('echart', 'pieUnSelect', 'params.seriesIndex', null, 'name')}
+                {$this->buildJsCallEChartsAction('echart', 'unselect', 'params.seriesIndex', null, 'name')}
                 // select clicked pie part
-                {$this->buildJsCallEChartsAction('echart', 'pieSelect', 'params.seriesIndex', 'params.dataIndex')}
+                {$this->buildJsCallEChartsAction('echart', 'select', 'params.seriesIndex', 'params.dataIndex')}
                 {$this->buildJsSelect('dataRow')}
             }
         // if no pie part was selected
         } else {
             // select clicked pie part
-            {$this->buildJsCallEChartsAction('echart', 'pieSelect', 'params.seriesIndex', 'params.dataIndex')}
+            {$this->buildJsCallEChartsAction('echart', 'select', 'params.seriesIndex', 'params.dataIndex')}
             {$this->buildJsSelect('dataRow')}
         }
 
@@ -1283,7 +1299,6 @@ JS;
 	height: '50%',
 	name: 'Graph',
     type: 'graph',
-	hoverAnimation: true,
 	animationEasing: 'backOut',
 	layout: '{$type}',
 	edgeSymbol: ['none', 'arrow'],
@@ -1298,7 +1313,6 @@ JS;
 		layoutAnimation: false,
 	}, 
     roam: true,
-    focusNodeAdjacency: true,
     itemStyle: {     
         normal: {
             color: '{$color}',           
@@ -1316,6 +1330,8 @@ JS;
         {$curveness}
     },
     emphasis: {
+        scale: true,
+        focus: 'adjacency',
         lineStyle: {
             width: 3
         }
