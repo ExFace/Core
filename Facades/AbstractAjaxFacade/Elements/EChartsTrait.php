@@ -269,9 +269,9 @@ JS;
             var options= {};
             options.series = {
                 layout: 'circular',
-                lineStyle: {
+                /*lineStyle: {
                     curveness: 0.2
-                },
+                },*/
             };
             echart.setOption(options);
             echart.resize();
@@ -1301,6 +1301,7 @@ JS;
     type: 'graph',
 	animationEasing: 'backOut',
 	layout: '{$type}',
+    //autoCurveness: 20,
 	edgeSymbol: ['none', 'arrow'],
 	circular: { 
 		rotateLabel: true,
