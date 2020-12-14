@@ -714,21 +714,21 @@ JS;
             // if already slected piepart gets clicked again
             if ({$this->buildJsRowCompare('echart._oldSelection', 'dataRow')} == true) {
                 // deselect the pie part
-                {$this->buildJsCallEChartsAction('echart', 'unselect', 'params.seriesIndex', 'params.dataIndex')}
+                {$this->buildJsCallEChartsAction('echart', 'pieUnSelect', 'params.seriesIndex', 'params.dataIndex')}
                 {$this->buildJsSelect()}
             // if different part then already selected part gets clicked
             } else {
                 // deselect old pie part
                 var name = echart._oldSelection.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
-                {$this->buildJsCallEChartsAction('echart', 'unselect', 'params.seriesIndex', null, 'name')}
+                {$this->buildJsCallEChartsAction('echart', 'pieUnSelect', 'params.seriesIndex', null, 'name')}
                 // select clicked pie part
-                {$this->buildJsCallEChartsAction('echart', 'select', 'params.seriesIndex', 'params.dataIndex')}
+                {$this->buildJsCallEChartsAction('echart', 'pieSelect', 'params.seriesIndex', 'params.dataIndex')}
                 {$this->buildJsSelect('dataRow')}
             }
         // if no pie part was selected
         } else {
             // select clicked pie part
-            {$this->buildJsCallEChartsAction('echart', 'select', 'params.seriesIndex', 'params.dataIndex')}
+            {$this->buildJsCallEChartsAction('echart', 'pieSelect', 'params.seriesIndex', 'params.dataIndex')}
             {$this->buildJsSelect('dataRow')}
         }
 
@@ -1299,6 +1299,7 @@ JS;
 	height: '50%',
 	name: 'Graph',
     type: 'graph',
+	hoverAnimation: true,
 	animationEasing: 'backOut',
 	layout: '{$type}',
     //autoCurveness: 20,
@@ -1314,6 +1315,7 @@ JS;
 		layoutAnimation: false,
 	}, 
     roam: true,
+    focusNodeAdjacency: true,
     itemStyle: {     
         normal: {
             color: '{$color}',           
