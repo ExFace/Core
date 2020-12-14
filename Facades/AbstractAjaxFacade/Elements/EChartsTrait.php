@@ -72,7 +72,7 @@ use exface\Core\Widgets\Parts\Charts\Interfaces\SplittableChartSeriesInterface;
  * ## Updating the custom ECharts build
  * 
  * A custom build echarts javascript file is used. The echarts website provides a 
- * tool to build a custom version of their library: https://www.echartsjs.com/en/builder.html
+ * tool to build a custom version of their library: https://echarts.apache.org/en/builder.html
  * It is possible that the tool does not work correctly with the Google Chrome browser 
  * (it stops during the .js file creation), if that happens use Firefox to create the custom 
  * .js file. The current custom file includes the following chart types, coordinate systems, 
