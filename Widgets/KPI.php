@@ -8,10 +8,8 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Factories\WidgetLinkFactory;
-use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
-use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 
 /**
  * The KPI widget shows a numeric value with a unit and a scale - especially usefull in dashboards.
@@ -94,7 +92,9 @@ class KPI extends Display implements iUseData
                     throw new WidgetConfigurationError($this, 'Error instantiating KPI data. ' . $e->getMessage(), null, $e);
                 }
             } else {
-                $this->data = WidgetFactory::createFromUxonInParent($this, new UxonObject(['columns_auto_add_default_display_attributes' => false]), 'Data');
+                $this->data = WidgetFactory::createFromUxonInParent($this, new UxonObject([
+                    'columns_auto_add_default_display_attributes' => false
+                ]), 'Data');
             }
             
             // Add data column for the attribute_alias of the KPI
@@ -225,7 +225,13 @@ class KPI extends Display implements iUseData
      */
     public function hasData() : bool
     {
-        return ! $this->getUsePrefillData();
+        return ! $this->getUsePrefillData() 
+            && ! $this->hasValue() 
+            && ! (
+                $this->data === null 
+                && $this->data_widget_link === null 
+                && ! $this->isBoundToAttribute()
+            );
     }
     
     /**
@@ -299,7 +305,7 @@ class KPI extends Display implements iUseData
     /**
      * Set to TRUE to get the value from the input or prefill data like a regular Display widget.
      * 
-     * By default, the `KPI` uses it's own `data` or a `data_widget_linke` to load it's values. This
+     * By default, the `KPI` uses it's own `data` or a `data_widget_link` to load it's values. This
      * makes it possible to load any data - regardless of what the rest of the UI shows. On the other
      * hand, it produces extra queries to the data source. Setting `use_prefill_data` to `TRUE` will
      * make the `KPI` behave just like any other `Display` widget: it will try to get it's values from
