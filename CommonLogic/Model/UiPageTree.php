@@ -5,12 +5,27 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
-use Symfony\Component\Config\Definition\Exception\ForbiddenOverwriteException;
 use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
 use exface\Core\Exceptions\Security\AccessDeniedError;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Factories\UiPageTreeFactory;
+use exface\Core\Exceptions\RuntimeException;
 
+/**
+ * A menu-tree with nodes for every page placed in the menu.
+ * 
+ * TODO #ui-page-tree #bookmarks #custom-menus - allow arbitrary page tree structures. 
+ * Rerefactor UiPageTree and UiPageTreeNode to make the tree responsible for the entire 
+ * structure (parent-child relationsships, etc.) and the nodes to represent the page 
+ * only - without knowing its children, level, etc. While nodes might have a `getTree()` 
+ * method the tree should have, `getChildrenOf($node)`, `hasChildren($node)`, `getLevelOf($node)`
+ * , etc. This would allow to create trees with a different structure than that of the
+ * main menu - like a bookmarks tree , a custom menu - maybe even
+ * configured by a user via UXON.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class UiPageTree
 {
     private $exface = null;
@@ -23,6 +38,10 @@ class UiPageTree
     
     private $expandPathToNode = null;
     
+    /**
+     * 
+     * @param WorkbenchInterface $exface
+     */
     public function __construct(WorkbenchInterface $exface)
     {
         $this->exface = $exface;
@@ -74,7 +93,7 @@ class UiPageTree
         if (empty($this->startRootNodes)) {
             $this->startRootNodes = $nodes;
         } else {
-            throw new ForbiddenOverwriteException('Starting root nodes for this UiPageTree are set already, either by giving a root page or loading root nodes from database. Overwriting those root nodes is not permitted!');
+            throw new RuntimeException('Starting root nodes for this UiPageTree are set already, either by giving a root page or loading root nodes from database. Overwriting those root nodes is not permitted!');
         }
         return $this;
     }
