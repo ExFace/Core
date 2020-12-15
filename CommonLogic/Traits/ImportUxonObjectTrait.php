@@ -23,19 +23,13 @@ trait ImportUxonObjectTrait {
      */
     public function importUxonObject(UxonObject $uxon, array $skip_property_names = array())
     {
-        if (! $uxon)
-            return;
         foreach ($uxon->getPropertiesAll() as $var => $val) {
             // Skip properties listed in the skip array
-            $skip = false;
             foreach ($skip_property_names as $skip_name) {
                 if (strcasecmp($var, $skip_name) === 0) {
-                    $skip = true;
-                    break;
+                    continue 2;
                 }
             }
-            if ($skip)
-                continue;
             
             $setterCamelCased = 'set' . StringDataType::convertCaseUnderscoreToPascal($var);
             if (method_exists($this, $setterCamelCased)) {
