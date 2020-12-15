@@ -1162,36 +1162,6 @@ class UiPage implements UiPageInterface
         
         throw new RuntimeException('Cannot compare page "' . $this->getAliasWithNamespace() . '" to selector "' . $selector->toString() . '": unknown selector type!');
     }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::equals()
-     */
-    public function equals(UiPageInterface $page, $ignore_properties = [])
-    {
-        $ignore_properties = array_map('strtolower', $ignore_properties);
-        
-        switch (true) {
-            // TODO add all fields here or even better - compare UXONs
-            case $this->getUid() != $page->getUid() && ! in_array('uid', $ignore_properties) && ! in_array('id', $ignore_properties):
-            case $this->getAliasWithNamespace() != $page->getAliasWithNamespace():
-            case $this->hasParent() !== $page->hasParent() && ! in_array('menu_parent_page_selector', $ignore_properties):
-            case $this->hasParent() && $page->hasParent() && $this->getParentPageSelector()->toString() != $page->getParentPageSelector()->toString() && ! in_array('menu_parent_page_selector', $ignore_properties):
-            case $this->getMenuIndex() != $page->getMenuIndex() && ! in_array('menu_index', $ignore_properties):
-            case $this->getMenuVisible() != $page->getMenuVisible() && ! in_array('menu_visible', $ignore_properties):
-            case $this->getName() != $page->getName() && ! in_array('name', $ignore_properties):
-            case $this->getDescription() != $page->getDescription() && ! in_array('description', $ignore_properties):
-            case $this->getIntro() != $page->getIntro() && ! in_array('intro', $ignore_properties):
-            case $this->getReplacesPageSelector() != $page->getReplacesPageSelector() && ! in_array('replaces_page_selector', $ignore_properties):
-            case $this->getContents() != $page->getContents() && ! in_array('contents', $ignore_properties):
-            case $this->hasApp() !== $page->hasApp() && ! in_array('app', $ignore_properties):
-            case $this->hasApp() && $page->hasApp() && $this->getApp()->getAliasWithNamespace() !== $page->getApp()->getAliasWithNamespace() && ! in_array('app', $ignore_properties):
-                return false;
-        }
-        
-        return true;
-    }
     
     /**
      * 

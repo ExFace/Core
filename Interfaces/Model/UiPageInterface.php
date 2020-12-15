@@ -322,18 +322,6 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
     public function isExactly($pageOrSelectorOrString) : bool;
     
     /**
-     * Compares two pages by their attributes.
-     * 
-     * The attributes with names contained in the $ignore_properties array are ignored in
-     * the comparison.
-     * 
-     * @param UiPageInterface $page
-     * @param string[] $ignore_properties
-     * @return boolean
-     */
-    public function equals(UiPageInterface $page, $ignore_properties);
-    
-    /**
      * 
      * @return FacadeInterface
      */
