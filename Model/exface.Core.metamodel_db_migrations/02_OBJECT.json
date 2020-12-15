@@ -96,75 +96,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": {
-                "widget_type": "Tabs",
-                "tabs": [
-                    {
-                        "caption": "Migration",
-                        "widgets": [
-                            {
-                                "attribute_alias": "migration_name",
-                                "width": "max"
-                            },
-                            {
-                                "widget_type": "WidgetGroup",
-                                "caption": "Up",
-                                "width": "max",
-                                "widgets": [
-                                    {
-                                        "attribute_alias": "up_datetime"
-                                    },
-                                    {
-                                        "attribute_alias": "up_script",
-                                        "width": "max",
-                                        "height": 10
-                                    }
-                                ]
-                            },
-                            {
-                                "widget_type": "WidgetGroup",
-                                "caption": "Down",
-                                "width": "max",
-                                "widgets": [
-                                    {
-                                        "attribute_alias": "is_down"
-                                    },
-                                    {
-                                        "attribute_alias": "down_datetime"
-                                    },
-                                    {
-                                        "attribute_alias": "down_script",
-                                        "width": "max",
-                                        "height": 10
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "caption": "Up Result",
-                        "widgets": [
-                            {
-                                "attribute_alias": "up_result",
-                                "hide_caption": true,
-                                "width": "100%",
-                                "height": "100%"
-                            }
-                        ]
-                    },
-                    {
-                        "caption": "Down Result",
-                        "widgets": [
-                            {
-                                "attribute_alias": "down_result",
-                                "hide_caption": true,
-                                "width": "100%",
-                                "height": "100%"
-                            }
-                        ]
-                    }
-                ]
-            },
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"Migration\",\"widgets\":[{\"attribute_alias\":\"migration_name\",\"width\":\"max\"},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Up\",\"width\":\"max\",\"widgets\":[{\"attribute_alias\":\"up_datetime\"},{\"attribute_alias\":\"up_script\",\"width\":\"max\",\"height\":10}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"Down\",\"width\":\"max\",\"widgets\":[{\"attribute_alias\":\"is_down\"},{\"attribute_alias\":\"down_datetime\"},{\"attribute_alias\":\"down_script\",\"width\":\"max\",\"height\":10}]}]},{\"caption\":\"Up Result\",\"widgets\":[{\"attribute_alias\":\"up_result\",\"hide_caption\":true,\"width\":\"100%\",\"height\":\"100%\"}]},{\"caption\":\"Down Result\",\"widgets\":[{\"attribute_alias\":\"down_result\",\"hide_caption\":true,\"width\":\"100%\",\"height\":\"100%\"}]},{\"caption\":\"Error\",\"widgets\":[{\"attribute_alias\":\"failed_flag\"},{\"attribute_alias\":\"skip_flag\"},{\"attribute_alias\":\"failed_message\",\"width\":\"max\",\"height\":10}]}]}",
             "ALIAS": "metamodel_db_migrations",
             "DATA_ADDRESS": "_migrations"
         }
