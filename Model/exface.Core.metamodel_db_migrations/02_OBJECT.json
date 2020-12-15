@@ -81,9 +81,9 @@
     "rows": [
         {
             "CREATED_ON": "2019-04-17 08:24:59",
-            "MODIFIED_ON": "2019-04-17 13:38:16",
+            "MODIFIED_ON": "2020-01-28 09:48:29",
             "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
-            "MODIFIED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
+            "MODIFIED_BY_USER": "0x11ea3d3574183104ab831065307a9232",
             "UID": "0x11e960ea52c375a6afc2ecf4bb639fc6",
             "READABLE_FLAG": "1",
             "WRITABLE_FLAG": "1",
@@ -160,6 +160,22 @@
                                 "hide_caption": true,
                                 "width": "100%",
                                 "height": "100%"
+                            }
+                        ]
+                    },
+                    {
+                        "caption": "Error",
+                        "widgets": [
+                            {
+                                "attribute_alias": "failed_flag"
+                            },
+                            {
+                                "attribute_alias": "skip_flag"
+                            },
+                            {
+                                "attribute_alias": "failed_message",
+                                "width": "max",
+                                "height": 10
                             }
                         ]
                     }
