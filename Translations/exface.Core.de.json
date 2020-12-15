@@ -399,6 +399,8 @@
 	"WIDGET.INPUT.VALIDATION_AND": "und",
 	"WIDGET.INPUTCOMBOTABLE.COLUMN_NAME_USES": "Verwendungen",
 	
+	"WIDGET.NAVTILES.EMPTY": "Dieses Menü is leer oder Sie haben keine Berechtigungen für die Menüpunkte",
+	
 	"WIDGET.WIZARD.NEXT_STEP_BUTTON_CAPTION": "Weiter", 
 	"WIDGET.WIZARD.PREV_STEP_BUTTON_CAPTION": "Zurück", 
 	
