@@ -28,11 +28,11 @@ Note how the autosuggest in the UXON editor suggests attributes and relations (w
 
 Attribute aliases with relations (like `owner__LABEL` or `owner__user__USERNAME`) are called relation paths. Relation paths can be followed in both directions! The workbench will automatically determine where the foreign keys of the relations are located. This means, you can also use `book__title` as an attribute_alias of the object `member`, which would resolve to "titles of all books of the member". Read more about relation paths [here](../../Creating_UIs/UXON/aliases.md). We will come back to this in later chapters too!
 
-Now `Save` the page, select it and press `Open page` to see it in action. 
+Now `Save` the page, select it and press the button `Open page` to see it in action. 
 
 Note how the workbench created a relation-select filter for the owner automatically: click it and press space to list available values, start typing to get suggestions or press the icon on the right to open a selection widget. The workbench tries to find the best suitable widget for every constellation in the metamodel - you don't need to specify widget types explicitly in most cases. You can, however, override the widget if needed. We will use this feature to add autosuggests to authors and series [later on](08_Using_custom_widgets_and_data_types_in_the_model.md).
 
-If you catalogue page does not work, here is the full UXON to copy/paste (just call the node-menu of the root node in the UXON editor and select `Edit > Paste`):
+If your catalogue page does not work, here is the full UXON to copy/paste (just call the node-menu of the root node in the UXON editor and select `Edit > Paste`):
 
 ```
 {
@@ -93,7 +93,7 @@ If you catalogue page does not work, here is the full UXON to copy/paste (just c
 
 ## 2. Define a default editor for the object
 
-Our table already has buttons to add, edit, copy and delete a book. Try to create a book pressing the `+ New` button: type a title and select the owner by pressing the `space` button inside the respective field to list all available members (if you did not create any previously, head to `Book Club > Admin-Area > Members` and add a member linked to your workbench user).
+Our table already has buttons to add, edit, copy and delete a book. Try to create a book pressing the `+ New` button: type a title and select the owner by pressing `space` on your keyboard inside the respective field to list all available members (if you did not create any previously, head to `Book Club > Admin-Area > Members` and add a member linked to your workbench user).
 
 As you can see, the auto-generated editor technically works for complex objects too, but it does not look nice as the workbench cannot know how to order the inputs properly. This is what the `default editor` configuration for a meta object is for. It's a UXON widget configuration that is used automatically when actions like `exface.Core.ShowObjectCreateDialog`, `exface.Core.ShowObjectEditDialog`, etc. are called.
 
@@ -167,9 +167,7 @@ This configuration will now be used in all actions/buttons, that produce a book 
 
 ## 3. Group widgets to improve form layout
 
-There are still way too many fields simply following one another. The editor still looks as chaos. An easy way to cope with this is grouping inputs.
-
-Let's separate the most important fields (title, author, description and owner) from the others and place the two groups side-by-side.
+There are still way too many fields simply following one another. A typical improvement in this case is grouping inputs. Let's separate the most important fields (title, author, description and owner) from the others and place the two groups side-by-side.
 
 1. Open the object editor for `book` and switch to the `Default Editor` tab.
 2. Open the node menu for the `title` widget - make sure to hit the menu for the whole widget and not that for the `attribute_alias`!
@@ -184,7 +182,7 @@ The `widget_group` is a widget itself, so you can give it additional properties 
 
 ## 4. Use inline groups for ranges or value-unit inputs
 
-Another typical usecase for widget groups is placing logically connected inputs next to each other. For example, let's display the `age_min` and `age_max` as a min-max-range.
+Another common usecase for widget groups is placing logically connected inputs next to each other. For example, let's display the `age_min` and `age_max` as a min-max-range.
 
 1. Wrap the `age_min` widget in the preset called `Inline input group for a range`
 2. Drag the `age_max` widget into the group
@@ -193,6 +191,8 @@ Another typical usecase for widget groups is placing logically connected inputs 
 `Save` the book object and try the new editor. Much better now, isn't it?
 
 ![Object editor with widget groups](Images/book_editor_1.png)
+
+## Final editor widget
 
 Here is a copy-paste version of the resulting UXON - just in case.
 
