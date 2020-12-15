@@ -1088,11 +1088,9 @@ abstract class AbstractAction implements ActionInterface
         if ($this->getInputRowsMax() !== null && $sheet->countRows() > $this->getInputRowsMax()) {
             throw new ActionInputError($this, 'Too many rows of input data for action ' . $this->getAliasWithNamespace() . ': max. ' . $this->getInputRowsMax() . ' allowed, received ' . $sheet->countRows() . ' instead.');
         }
-        if (true === $this->hasInputObjectRestriction() && false === $sheet->getMetaObject()->is($this->getInputObjectExpected())) {
+        if (true === $this->hasInputObjectRestriction() && ! $sheet->isBlank() && false === $sheet->getMetaObject()->is($this->getInputObjectExpected())) {
             throw new ActionInputInvalidObjectError($this, 'Invalid input meta object for action "' . $this->getAlias() . '": exprecting "' . $this->getInputObjectExpected()->getAliasWithNamespace() . '", received "' . $sheet->getMetaObject()->getAliasWithNamespace() . '" instead!');
         }
-        
-        
         
         return $sheet;
     }
