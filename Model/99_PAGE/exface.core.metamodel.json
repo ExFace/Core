@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
     "created_on": "2013-06-20 19:20:56",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-05-04 08:58:35",
+    "modified_on": "2020-12-11 14:41:00",
     "contents": {
         "extend_widget": "[exface.core.apps]"
     }
