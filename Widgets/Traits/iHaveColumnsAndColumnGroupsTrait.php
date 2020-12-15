@@ -141,7 +141,7 @@ trait iHaveColumnsAndColumnGroupsTrait
     public function getColumns() : array
     {
         // If no columns explicitly specified, add the default columns
-        if (count($this->getColumnGroups()) == 1 && $this->getColumnGroupMain()->isEmpty()) {
+        if ($this->getColumnsAutoAddDefaultDisplayAttributes() && ! $this->hasColumnsExplicitlyDefined()) {
             foreach ($this->createDefaultColumns() as $col) {
                 $this->addColumn($col);
             }
@@ -201,6 +201,17 @@ trait iHaveColumnsAndColumnGroupsTrait
             }
         }
         return false;
+    }
+    
+    /**
+     * Returns FALSE if no columns were defined - even if hasColumns() would return TRUE because
+     * of default columns.
+     * 
+     * @return bool
+     */
+    protected function hasColumnsExplicitlyDefined() : bool
+    {
+        return (count($this->getColumnGroups()) <= 1 && $this->getColumnGroupMain()->isEmpty()) === false;
     }
     
     /**
@@ -413,7 +424,7 @@ trait iHaveColumnsAndColumnGroupsTrait
     /**
      * Set to FALSE to disable autogeneration of columns from default display attributes.
      * 
-     * @uxon-property columns_auto_add_from_default_display_attributes
+     * @uxon-property columns_auto_add_default_display_attributes
      * @uxon-type boolean
      * @uxon-default false
      * 
