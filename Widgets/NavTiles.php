@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\Model\UiPageTreeNode;
 use exface\Core\Factories\UiPageTreeFactory;
 use exface\Core\Factories\UiPageFactory;
+use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 
 /**
  * NavTiles show a hierarchical navigational tile menu starting from a given parent page.
@@ -34,7 +35,6 @@ use exface\Core\Factories\UiPageFactory;
  * The visual representation, as allways, depends on the facade. A typical visualization
  * is something like the Windows 8 start menu: tiles are organized in groups.
  * 
- * @method Tiles[] getWidgets()
  * @method Tiles getWidgetFirst()
  * @method Tiles getWidget() 
  *
@@ -43,6 +43,8 @@ use exface\Core\Factories\UiPageFactory;
  */
 class NavTiles extends WidgetGrid
 {
+    use TranslatablePropertyTrait;
+    
     private $rootPageSelector = null;
     
     private $tilesBuilt = false;
@@ -50,6 +52,10 @@ class NavTiles extends WidgetGrid
     private $depth = 2;
     
     private $parentTileIds = [];
+    
+    private $emptyText = null;
+    
+    private $hiddenIfEmpty = false;
     
     /**
      * Specifies the alias of the root page of the menu (i.e. tiles for it's children will be generated).
@@ -95,6 +101,7 @@ class NavTiles extends WidgetGrid
      * 
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Container::getWidgets()
+     * @return Tiles[]
      */
     public function getWidgets(callable $filter = null)
     {
@@ -105,12 +112,22 @@ class NavTiles extends WidgetGrid
                 if ($node->hasChildNodes()) {
                     $this->createTileGroupFromNodes($node->getChildNodes(), $node->getName());
                 }
-            }            
+            }         
             $this->tilesBuilt = true;
             
         }
         return parent::getWidgets();
-    }    
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Container::isEmpty()
+     */
+    public function isEmpty()
+    {
+        return empty($this->getTiles());
+    }
         
     /**
      *
@@ -222,5 +239,65 @@ class NavTiles extends WidgetGrid
     public function getUpperLevelTile(Tile $tile) : ?Tile
     {
         return $this->parentTileIds[$tile->getId()];
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getEmptyText() : ?string
+    {
+        return $this->emptyText ?? $this->translate('WIDGET.NAVTILES.EMPTY');
+    }
+    
+    /**
+     * Text to be displayed if no tiles are found.
+     * 
+     * @uxon-property empty_text
+     * @uxon-type string|formula
+     * @uxon-translatable true
+     * 
+     * @param string $value
+     * @return NavTiles
+     */
+    public function setEmptyText(string $value) : NavTiles
+    {
+        $this->emptyText = $this->evaluatePropertyExpression($value);
+        return $this;
+    }
+    
+    /**
+     * Returns the number of tiles accross all groups/levels.
+     * 
+     * @return int
+     */
+    public function countTiles() : int
+    {
+        return count($this->getTiles());
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isHiddenIfEmpty() : bool
+    {
+        return $this->hiddenIfEmpty;
+    }
+    
+    /**
+     * Set to TRUE to hide the widget completely from users that won't see any tiles.
+     * 
+     * @uxon-property hidden_if_empty
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return NavTiles
+     */
+    public function setHiddenIfEmpty(bool $value) : NavTiles
+    {
+        $this->hiddenIfEmpty = $value;
+        return $this;
     }
 }

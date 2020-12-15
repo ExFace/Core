@@ -19,6 +19,10 @@ class Message extends Text
 
     private $type = NULL;
 
+    /**
+     * 
+     * @return MessageTypeDataType
+     */
     public function getType() : MessageTypeDataType
     {
         if ($this->type === null) {
