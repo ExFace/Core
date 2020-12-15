@@ -10,9 +10,10 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "1970-01-01 01:00:00",
-    "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2019-04-23 17:44:12",
+    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "modified_on": "2020-07-07 19:55:50",
     "contents": {
+        "id": "MigrationsTable",
         "widget_type": "DataTable",
         "object_alias": "exface.Core.metamodel_db_migrations",
         "columns": [
@@ -23,16 +24,151 @@
                 "attribute_alias": "up_datetime"
             },
             {
+                "attribute_alias": "up_script",
+                "hidden": true
+            },
+            {
                 "attribute_alias": "is_down"
             },
             {
                 "attribute_alias": "down_datetime"
+            },
+            {
+                "attribute_alias": "down_script",
+                "hidden": true
+            },
+            {
+                "attribute_alias": "failed_flag"
+            },
+            {
+                "attribute_alias": "skip_flag"
             }
         ],
         "buttons": [
             {
                 "action_alias": "exface.Core.ShowObjectInfoDialog",
                 "bind_to_double_click": true
+            },
+            {
+                "caption": "Skip\/Unskip",
+                "action": {
+                    "alias": "exface.Core.UpdateData",
+                    "input_rows_min": 1,
+                    "input_rows_max": 1,
+                    "input_mapper": {
+                        "column_to_column_mappings": [
+                            {
+                                "from": "=not(skip_flag)",
+                                "to": "skip_flag"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "caption": "Run UP",
+                "disabled_if": {
+                    "operator": "AND",
+                    "conditions": [
+                        {
+                            "value_left": "=MigrationsTable!skip_flag",
+                            "comparator": "==",
+                            "value_right": 1
+                        }
+                    ]
+                },
+                "action": {
+                    "alias": "exface.Core.ActionChain",
+                    "actions": [
+                        {
+                            "alias": "exface.Core.CustomDataSourceQuery",
+                            "query_attribute_alias": "up_script",
+                            "input_rows_min": 1,
+                            "input_rows_max": 1
+                        },
+                        {
+                            "alias": "exface.Core.UpdateData",
+                            "input_mapper": {
+                                "column_to_column_mappings": [
+                                    {
+                                        "from": "=now()",
+                                        "to": "up_datetime"
+                                    },
+                                    {
+                                        "from": "=nullValue()",
+                                        "to": "up_result"
+                                    },
+                                    {
+                                        "from": "=nullValue()",
+                                        "to": "down_datetime"
+                                    },
+                                    {
+                                        "from": "=nullValue()",
+                                        "to": "down_result"
+                                    },
+                                    {
+                                        "from": 0,
+                                        "to": "failed_flag"
+                                    },
+                                    {
+                                        "from": "=nullValue()",
+                                        "to": "failed_message"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "caption": "Run DOWN",
+                "disabled_if": {
+                    "operator": "AND",
+                    "conditions": [
+                        {
+                            "value_left": "=MigrationsTable!skip_flag",
+                            "comparator": "==",
+                            "value_right": 1
+                        }
+                    ]
+                },
+                "action": {
+                    "alias": "exface.Core.ActionChain",
+                    "actions": [
+                        {
+                            "alias": "exface.Core.CustomDataSourceQuery",
+                            "query_attribute_alias": "down_script",
+                            "input_rows_min": 1,
+                            "input_rows_max": 1
+                        },
+                        {
+                            "alias": "exface.Core.UpdateData",
+                            "input_mapper": {
+                                "column_to_column_mappings": [
+                                    {
+                                        "from": "=now()",
+                                        "to": "down_datetime"
+                                    },
+                                    {
+                                        "from": "=nullValue()",
+                                        "to": "down_result"
+                                    },
+                                    {
+                                        "from": 0,
+                                        "to": "failed_flag"
+                                    },
+                                    {
+                                        "from": "=nullValue()",
+                                        "to": "failed_message"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "action_alias": "axenox.PackageManager.ShowPackageManagerConsole"
             }
         ],
         "sorters": [
@@ -50,8 +186,7 @@
                 "attribute_alias": "migration_name"
             },
             {
-                "attribute_alias": "is_down",
-                "value": 0
+                "attribute_alias": "is_down"
             },
             {
                 "attribute_alias": "up_datetime",
@@ -68,6 +203,12 @@
             {
                 "attribute_alias": "down_datetime",
                 "comparator": "<="
+            },
+            {
+                "attribute_alias": "failed_flag"
+            },
+            {
+                "attribute_alias": "skip_flag"
             }
         ]
     }

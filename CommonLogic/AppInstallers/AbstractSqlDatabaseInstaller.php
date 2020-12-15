@@ -144,8 +144,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
-     * 
+     *
      * @param string $source_absolute_path
+     * @param string $indent
      * @return string
      */
     protected function installMigrations(string $source_absolute_path, string $indent = '') : string
@@ -154,12 +155,12 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         $migrationsInDB = $this->getMigrationsFromDb($this->getDataConnection());
         $migratedUp = 0;
         $migratedDown = 0;
-        
-        foreach ($this->diffMigrations($migrationsInDB, $migrationsInApp) as $migration) {
+
+        foreach ($this->getDownMigrations($migrationsInDB, $migrationsInApp) as $migration) {
             $this->migrateDown($migration, $this->getDataConnection());
             $migratedDown++;
         }
-        foreach ($this->diffMigrations($migrationsInApp, $migrationsInDB) as $migration) {
+        foreach ($this->getUpMigrations($migrationsInDB, $migrationsInApp) as $migration) {
             $this->migrateUp($migration, $this->getDataConnection());
             $migratedUp++;
         }
@@ -167,7 +168,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         if ($migratedDown === 0 && $migratedUp === 0) {
             $message = 'not needed';
         } else {
-            $message = ($migratedUp > 0 ? ' ' . $migratedUp . ' UP' : '') . ($migratedDown > 0 ? ' ' . $migratedDown . ' DOWN' : '');
+            $message = PHP_EOL;
+            $message .= ($migratedUp > 0 ? $indent . $indent . $migratedUp . ' UP successful' . PHP_EOL : '');
+            $message .= ($migratedDown > 0 ? $indent . $indent . $migratedDown . ' DOWN successful' . PHP_EOL : '');
         }
         
         return $indent . 'SQL migrations: ' . $message;
@@ -448,7 +451,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * 
      * @param SqlMigration $migration
      * @param SqlDataConnectorInterface $connection
-     * @return SqlMigration
+     * @return bool
      */
     abstract protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration;
     
@@ -457,18 +460,17 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * 
      * @param SqlMigration $migration
      * @param SqlDataConnectorInterface $connection
-     * @return SqlMigration
+     * @return bool
      */
-    abstract protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection) : SqlMigration;
-    
+    abstract protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection): SqlMigration;
+
     /**
      * Function to get all on the database currently applied migrations
      *
      * @param SqlDataConnectorInterface $connection
      * @return SqlMigration[]
      */
-    abstract protected function getMigrationsFromDb(SqlDataConnectorInterface $connection) : array;
-               
+    abstract protected function getMigrationsFromDb(SqlDataConnectorInterface $connection): array;
 
     /**
      * Iterates through the files in "%source_absolute_path%/%install_folder_name%/%sql_folder_name%/%SqlDbType%/%folders%"
@@ -477,8 +479,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param string $source_absolute_path
      * @param string $folder_name
      * @return string
-     */    
-    protected function runSqlFromFilesInFolder(string $source_absolute_path, array $folders, string $indent = '') : string
+     */
+    protected function runSqlFromFilesInFolder(string $source_absolute_path, array $folders, string $indent): string
     {
         $files = $this->getFiles($source_absolute_path, $folders);
         $doneCnt = 0;
@@ -539,7 +541,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param string $source_absolute_path
      * @return SqlMigration[]
      */
-    protected function getMigrationsFromApp(string $source_absolute_path) : array
+    protected function getMigrationsFromApp(string $source_absolute_path): array
     {
         $migrs = [];
         foreach ($this->getFiles($source_absolute_path, $this->getFoldersWithMigrations()) as $path) {
@@ -549,39 +551,81 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         }
         return $migrs;
     }
-    
+
     /**
-     * Builds an array containing items that are in $migrations_base but are not in $migrations_substract
-     * 
-     * @param SqlMigration[] $migrations_base
-     * @param SqlMigration[] $migrations_substract
+     * Builds an array containing items that are in the App but not in the DB.
+     *
+     * @param SqlMigration[] $migrations_in_db
+     * @param SqlMigration[] $migrations_in_app
      * @return SqlMigration[]
      */
-    protected function diffMigrations(array $migrations_base, array $migrations_substract) : array
-    {        
-        if (empty($migrations_substract)){
-            return $migrations_base;
+    protected function getUpMigrations(array $migrations_in_db, array $migrations_in_app): array
+    {
+        if (empty($migrations_in_db)) {
+            return $migrations_in_app;
         }
-        $arr = array ();
-        foreach ($migrations_base as $mB) {
-            $check = false;
-            foreach ($migrations_substract as $mS) {
-                if ($mB->equals($mS)) {
-                    $check = true;
+        $arr = array();
+        foreach ($migrations_in_app as $mApp) {
+            $present = false;
+            foreach ($migrations_in_db as $mDb) {
+                if ($mApp->equals($mDb)) {
+                    $present = true;
+                    if (!$mDb->isSkipped()) {
+                        //if migration is not marked as skipped, evalutate further
+                        if ($mDb->isFailed() && empty($mDb->getDownDatetime())) {
+                            // There was an error on the last execution of the UP-script and the script is not skipped or downed.
+                            // Migration will be exectued again.
+                            $arr[] = $mDb->setUpScript($mApp->getUpScript())->setDownScript($mApp->getDownScript());
+                        }
+                        if (!$mDb->isFailed() && !empty($mDb->getDownDatetime())) {
+                            // Latest status of this migration is that it is down and not marked as skipped.
+                            // Reinstallation of the migration. 
+                            $arr[] = $mDb->setUpScript($mApp->getUpScript())->setDownScript($mApp->getDownScript());
+                        }
+                    }
+                    break;
                 }
             }
-            if ($check === false){
-                $arr[] = $mB;
+            // if migration has no entry in database yet, UP script will be run
+            if ($present === false) {
+                $arr[] = $mApp;
             }
         }
         return $arr;
     }
-    
+
+    /**
+     * Builds an array containing items that are in the DB but not in the App.
+     *
+     * @param SqlMigration[] $migrations_in_db
+     * @param SqlMigration[] $migrations_in_app
+     * @return SqlMigration[]
+     */
+    protected function getDownMigrations(array $migrations_in_db, array $migrations_in_app): array
+    {
+        $arr = array();
+        foreach ($migrations_in_db as $mDb) {
+            $present = false;
+            foreach ($migrations_in_app as $mApp) {
+                if ($mDb->equals($mApp)) {
+                    $present = true;
+                    break;
+                }
+            }
+            // The migration is not present in the app anymore, is `up` and is not marked as `skip` in the database.
+            // The down script will be run.
+            if ($present === false && $mDb->isUp() && !$mDb->isSkipped()) {
+                $arr[] = $mDb;
+            }
+        }
+        return $arr;
+    }
+
     /**
      * Cuts the input string at the down-marker occurence
      * and gives back either the part before that or from that point on
      * if there is no down-marker occurence gives back the whole script
-     * 
+     *
      * @param string $src
      * @param bool $up
      * @return string
@@ -690,7 +734,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
                 $connection->transactionCommit();
             }
         } catch (\Throwable $e) {
-            $connection->transactionRollback();
+            if ($wrapInTransaction === true) {
+                $connection->transactionRollback();
+            }
             throw $e;
         }
         

@@ -74,30 +74,12 @@ class MsSqlDatabaseInstaller extends MySqlDatabaseInstaller
     {
         return <<<SQL
 
-SELECT OBJECT_ID('{$this->getMigrationsTableName()}', 'U') AS id;
+IF OBJECT_ID('{$this->getMigrationsTableName()}', 'U') IS NOT NULL
+BEGIN
+ SELECT OBJECT_ID('{$this->getMigrationsTableName()}', 'U') AS id
+END
+
 SQL;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::ensureMigrationsTableExists()
-     */
-    protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : void
-    {
-        $sql = $this->buildSqlMigrationTableShow();
-        $result = $connection->runSql($sql)->getResultArray();
-        if ($result [0]['id'] === NULL) {
-            try {
-                $migrations_table_create = $this->buildSqlMigrationTableCreate();
-                $this->runSqlMultiStatementScript($connection, $migrations_table_create);
-                $this->getWorkbench()->getLogger()->debug('SQL migration table ' . $this->getMigrationsTableName() . ' created! ');
-            } catch (\Throwable $e) {
-                $this->getWorkbench()->getLogger()->logException($e);
-                throw new InstallerRuntimeError($this, "Generating Migration table '{$this->getMigrationsTableName()}' failed!");
-            }
-        }
-        return;
     }
     
     /**
@@ -113,19 +95,21 @@ SQL;
 CREATE TABLE {$this->getMigrationsTableName()}(
 	[id] [int] IDENTITY(40,1) NOT NULL,
 	[migration_name] [nvarchar](300) NOT NULL,
-	[up_datetime] [datetime] NOT NULL,
+	[up_datetime] [datetime] NOT NULL DEFAULT {$this->buildSqlFunctionNow()},
 	[up_script] [nvarchar](max) NOT NULL,
-	[up_result] [nvarchar](max) NOT NULL,
+	[up_result] [nvarchar](max) NULL,
 	[down_datetime] [datetime] NULL,
 	[down_script] [nvarchar](max) NOT NULL,
 	[down_result] [nvarchar](max) NULL,
- CONSTRAINT [{$pkName}] PRIMARY KEY CLUSTERED 
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+    [failed_flag] tinyint NOT NULL DEFAULT 0,
+    [failed_message] [nvarchar](max) NULL,
+    [skip_flag] tinyint NOT NULL DEFAULT 0    
+    CONSTRAINT [{$pkName}] PRIMARY KEY CLUSTERED 
+    (
+	   [id] ASC
+    )
+    WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY];
-ALTER TABLE {$this->getMigrationsTableName()} ADD  DEFAULT (getdate()) FOR [up_datetime];
-ALTER TABLE {$this->getMigrationsTableName()} ADD  DEFAULT (NULL) FOR [down_datetime];
 
 SQL;
     }
@@ -133,13 +117,45 @@ SQL;
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::buildSqlMigrationTableInsert()
+     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::buildSqlMigrationTableAtler()
      */
-    protected function buildSqlMigrationTableInsert(string $migration_name, string $up_script, string $up_result_string, string $down_script) : string
+    protected function buildSqlMigrationTableAtler() : string
     {
-        return parent::buildSqlMigrationTableInsert($migration_name, $up_script, $up_result_string, $down_script) . "SELECT SCOPE_IDENTITY();";
+        //no check if columns exists, if so probably will give an error
+        return <<<SQL
+        
+ALTER TABLE {$this->getMigrationsTableName()} ADD
+    [failed_flag] tinyint NOT NULL DEFAULT 0,
+    [failed_message] [nvarchar](max) NULL,
+    [skip_flag] tinyint NOT NULL DEFAULT 0;
+ALTER TABLE {$this->getMigrationsTableName()} ALTER COLUMN [up_result] [nvarchar](max) NULL;
+
+SQL;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::buildSqlShowColumnFailed()
+     */
+    protected function buildSqlShowColumnFailed() : string
+    {
+        return <<<SQL
+        
+SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'{$this->getMigrationsTableName()}') AND name LIKE '%failed%';
+
+SQL;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::buildSqlMigrationUpInsert()
+     */
+    protected function buildSqlMigrationUpInsert(SqlMigration $migration, string $up_result_string) : string
+    {
+        return parent::buildSqlMigrationUpInsert($migration, $up_result_string) . "SELECT SCOPE_IDENTITY();";
+    }    
     
     /**
      * Set the prefix of the SQL table to store the migration log.
@@ -157,7 +173,7 @@ SQL;
      *
      * @return string
      */
-    public function getMigrationsTablePrefix() : ?string
+    protected function getMigrationsTablePrefix() : ?string
     {
         if ($this->sql_migrations_prefix) {
             return $this->sql_migrations_prefix;
