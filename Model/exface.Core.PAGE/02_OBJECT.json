@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2018-05-29 07:48:36",
-            "MODIFIED_ON": "2020-07-23 10:06:42",
+            "MODIFIED_ON": "2020-12-15 13:21:59",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e86314af5caf7f971b0205857feb80",
@@ -258,7 +258,7 @@
                                                                 "icon": "minus"
                                                             },
                                                             {
-                                                                "bind_to_double_click": "",
+                                                                "bind_to_double_click": true,
                                                                 "action": {
                                                                     "alias": "exface.Core.ShowObjectInfoDialog",
                                                                     "object_alias": "exface.Core.PAGE_GROUP",
@@ -270,6 +270,28 @@
                                                                             }
                                                                         ]
                                                                     }
+                                                                }
+                                                            },
+                                                            {
+                                                                "caption": "Edit group",
+                                                                "action": {
+                                                                    "alias": "exface.Core.ShowObjectEditDialog",
+                                                                    "object_alias": "exface.Core.PAGE_GROUP",
+                                                                    "input_mapper": {
+                                                                        "column_to_column_mappings": [
+                                                                            {
+                                                                                "from": "PAGE_GROUP",
+                                                                                "to": "UID"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            },
+                                                            {
+                                                                "caption": "Create new group",
+                                                                "action": {
+                                                                    "alias": "exface.Core.ShowObjectCreateDialog",
+                                                                    "object_alias": "exface.Core.PAGE_GROUP"
                                                                 }
                                                             }
                                                         ]
