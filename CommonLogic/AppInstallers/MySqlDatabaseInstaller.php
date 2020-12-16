@@ -8,6 +8,7 @@ use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use function GuzzleHttp\json_encode;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataConnectors\MySqlConnector;
+use exface\Core\DataTypes\DateTimeDataType;
 
 /**
  * Database AppInstaller for Apps with MySQL Database.
@@ -44,7 +45,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::installDatabase()
      */
-    protected function installDatabase(SqlDataConnectorInterface $connection, string $indent = '') : string
+    protected function installDatabase(SqlDataConnectorInterface $connection, string $indent = '') : \Iterator
     {        
         $msg = '';
         try {
@@ -68,7 +69,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
                 throw $e;
             }
         }
-        return $indent . $msg;
+        yield $indent . $msg . PHP_EOL;
     }
     
     /**
@@ -120,8 +121,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             return $migrs;
         }
         foreach ($migrs_db as $a) {
-            $mig = new SqlMigration($a['migration_name'], $a['up_script'], $a['down_script']);
-            $mig->initFromDb($a);
+            $mig = SqlMigration::constructFromDb($a);
             if ($migrs[$mig->getMigrationName()] === null) {
                 $migrs[$mig->getMigrationName()] = $mig;
             }
@@ -141,27 +141,16 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             $connection->transactionStart();
             $up_result = $this->runSqlMultiStatementScript($connection, $migration->getUpScript(), false);
             $up_result_string = $this->stringifyQueryResults($up_result);
-            $sqlMigrationInsert = $this->buildSqlMigrationUpInsert($migration, $up_result_string);
+            $time = new \DateTime();
+            $sqlMigrationInsert = $this->buildSqlMigrationUpInsert($migration, $up_result_string, $time);
             $connection->runSql($sqlMigrationInsert);
             $connection->transactionCommit();
+            $migration->setUp(DateTimeDataType::formatDateNormalized($time), $up_result_string);
             $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ': script UP executed successfully ');
         } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logException($e);
             $connection->transactionRollback();
-            $migration->setFailed(true)->setFailedMessage($e->getMessage());
-            $sql_script = $this->buildSqlMigrationUpFailed($migration);
-            $this->migrationFailed($migration, $connection, $sql_script);
-            throw new InstallerRuntimeError($this, 'Migration up ' . $migration->getMigrationName() . ' failed! See Log filed for more information.', null, $e);
+            throw $e;
         }
-        
-        //not sure if still needed and if so needs refactor
-        /*$sql_select = "SELECT * FROM {$this->getMigrationsTableName()} WHERE id='{$migration->getId()}'";
-        $select_array = $connection->runSql($sql_select)->getResultArray();
-        if (empty($select_array)) {
-            $this->migrationFailed($migration, $connection, 'Migration up ' . $migration->getMigrationName() . ' failed to write into migrations table!');
-            throw new InstallerRuntimeError($this, 'Migration up ' . $migration->getMigrationName() . ' failed to write into migrations table!');
-        }
-        $migration->setUp($select_array[0]['up_datetime'], $up_result_string);*/
         
         return $migration;
     }
@@ -175,57 +164,50 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
     {
         $this->ensureMigrationsTableExists($connection);
         if (empty($migration->getDownScript())) {
-            $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ': Migration has no down script');
+            $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ' has no down script');
             return false;
         }
         try {
             $connection->transactionStart();
             $down_result = $this->runSqlMultiStatementScript($connection, $migration->getDownScript(), false);
             $down_result_string = $this->stringifyQueryResults($down_result);
-            $sql_script = $this->buildSqlMigrationDownUpdate($migration, $down_result_string);
+            $time = DateTimeDataType::now();
+            $sql_script = $this->buildSqlMigrationDownUpdate($migration, $down_result_string, $time);
             $connection->runSql($sql_script);
             $connection->transactionCommit();
-            $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ': script DOWN executed successfully ');
+            $migration->setDown(DateTimeDataType::formatDateNormalized($time), $down_result_string);
+            $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ' DOWN script executed successfully ');
         } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logException($e);
             $connection->transactionRollback();
-            $migration->setFailed(true)->setFailedMessage($e->getMessage());
-            $sql_script = $this->buildSqlMigrationDownFailed($migration);
-            $this->migrationFailed($migration, $connection, $sql_script);
-            throw new InstallerRuntimeError($this, 'Migration down ' . $migration->getMigrationName() . ' failed! See Log files for more information.');
+            throw $e;
         }
-        
-        //not sure if still needed, if so, needs rework
-        /*$sql_select = "SELECT * FROM {$this->getMigrationsTableName()} WHERE id='{$migration->getId()}'";
-        $select_array = $connection->runSql($sql_select)->getResultArray();
-        if (empty($select_array)) {
-            $this->migrationFailed($migration, $connection, 'Something went very wrong');
-            throw new InstallerRuntimeError($this, 'Something went very wrong');
-        }
-        $migration->setDown($select_array[0]['down_datetime'], $down_result_string);*/
         
         return $migration;
     }
-
+    
     /**
-     * Runs the passed SQL-script to write error logs to the DB.
-     *
-     * @param SqlMigration $migration
-     * @param SqlDataConnectorInterface $connection
-     * @param string $sql_script
-     * @return SqlMigration
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::migrateFail()
      */
-    protected function migrationFailed(SqlMigration $migration, SqlDataConnectorInterface $connection, string $sql_script): SqlMigration
+    protected function migrateFail(SqlMigration $migration, SqlDataConnectorInterface $connection, bool $up, \Throwable $exception) : SqlMigration
     {
         try {
+            $migration->setFailed(true)->setFailedMessage($exception->getMessage());
+            if ($up) {
+                $sql_script = $this->buildSqlMigrationUpFailed($migration, new \DateTime());
+            } else {
+                $sql_script = $this->buildSqlMigrationDownFailed($migration, new \DateTime());
+            }
+            
             $connection->transactionStart();
             $connection->runSql($sql_script);
             $connection->transactionCommit();
-            $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ' failed. Log entry added. See migration logs for this app for further information and to fix the SQL script.');
+            
         } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logException($e);
             $connection->transactionRollback();
-            throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' failed. No log entry could be added.', null, $e);
+            $this->getWorkbench()->getLogger()->logException($e);
+            throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' failure log error: ' . $e->getMessage(), null, $e);
         }
         return $migration;
     }
@@ -235,9 +217,19 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      * @param string $value
      * @return string
      */
-    protected function escapeSqlStringValue(string $value): string
+    protected function escapeSqlStringValue(string $value) : string
     {
         return addslashes($value);
+    }
+    
+    /**
+     * 
+     * @param \DateTime $time
+     * @return string
+     */
+    protected function escapeSqlDateTimeValue(\DateTime $time) : string
+    {
+        return "'" . DateTimeDataType::formatDateNormalized($time) . "'";
     }
     
     /**
@@ -325,14 +317,14 @@ SQL;
      * @param string $down_script
      * @return string
      */
-    protected function buildSqlMigrationUpInsert(SqlMigration $migration, string $up_result_string) : string
+    protected function buildSqlMigrationUpInsert(SqlMigration $migration, string $up_result_string, \DateTime $time) : string
     {
         if ($migration->getId()) {
          return <<<SQL
         
 UPDATE {$this->getMigrationsTableName()}
 SET
-    up_datetime={$this->buildSqlFunctionNow()},
+    up_datetime={$this->escapeSqlDateTimeValue($time)},
     up_script='{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getUpScript()))}',
     up_result='{$this->escapeSqlStringValue($up_result_string)}',
     down_datetime=NULL,
@@ -368,16 +360,17 @@ SQL;
      * Sql statement to insert/update a failed migration in the migration table
      * 
      * @param SqlMigration $migration
+     * @param \DateTime $time
      * @return string
      */
-    protected function buildSqlMigrationUpFailed(SqlMigration $migration) :string
+    protected function buildSqlMigrationUpFailed(SqlMigration $migration, \DateTime $time) :string
     {
         if ($migration->getId()) {
         return <<<SQL
         
 UPDATE {$this->getMigrationsTableName()}
 SET
-    up_datetime={$this->buildSqlFunctionNow()},
+    up_datetime={$this->escapeSqlDateTimeValue($time)},
     up_script='{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getUpScript()))}',
     up_result=NULL,
     down_datetime=NULL,
@@ -416,15 +409,16 @@ SQL;
      * 
      * @param SqlMigration $migration
      * @param string $down_result_string
+     * @param \DateTime $time
      * @return string
      */
-    protected function buildSqlMigrationDownUpdate(SqlMigration $migration, string $down_result_string) :string
+    protected function buildSqlMigrationDownUpdate(SqlMigration $migration, string $down_result_string, \DateTime $time) :string
     {
         return <<<SQL
         
 UPDATE {$this->getMigrationsTableName()}
 SET
-    down_datetime={$this->buildSqlFunctionNow()},
+    down_datetime={$this->escapeSqlDateTimeValue($time)},
     down_script='{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}',
     down_result='{$this->escapeSqlStringValue($down_result_string)}',
     failed_flag=0,
@@ -434,13 +428,19 @@ WHERE id='{$migration->getId()}';
 SQL;
     }
     
-    protected function buildSqlMigrationDownFailed(SqlMigration $migration) : string
+    /**
+     * 
+     * @param SqlMigration $migration
+     * @param \DateTime $time
+     * @return string
+     */
+    protected function buildSqlMigrationDownFailed(SqlMigration $migration, \DateTime $time) : string
     {
         return <<<SQL
         
 UPDATE {$this->getMigrationsTableName()}
 SET
-    down_datetime={$this->buildSqlFunctionNow()},
+    down_datetime={$this->escapeSqlDateTimeValue($time)},
     down_script='{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}',
     down_result=NULL,
     failed_flag=1,
@@ -459,16 +459,6 @@ SQL;
     {
         //DESC name and up_datetime, so we have the right order for down migration operations and the newest entry for a migration first
         return "SELECT * FROM {$this->getMigrationsTableName()} ORDER BY migration_name DESC, up_datetime DESC";
-    }
-    
-    /**
-     * Returns the SQL function call to get the current date and time.
-     * 
-     * @return string
-     */
-    protected function buildSqlFunctionNow() : string
-    {
-        return 'now()';
     }
     
     /**

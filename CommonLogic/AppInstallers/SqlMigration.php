@@ -52,26 +52,27 @@ class SqlMigration
     /**
      * Init the SqlMigration from a database array containing the necessary data.
      *
-     * @param array $data
+     * @param array $row
      * @return SqlMigration
      */
-    public function initFromDb(array $data): SqlMigration
+    public static function constructFromDb(array $row): SqlMigration
     {
-        $this->id = $data['id'];
-        $this->migration_name = !empty($data['migration_name']) ? $data['migration_name'] : '';
-        $this->up_datetime = !empty($data['up_datetime']) ? $data['up_datetime'] : '';
-        $this->up_script = !empty($data['up_script']) ? $data['up_script'] : '';
-        $this->up_result = !empty($data['up_result']) ? $data['up_result'] : '';
-        $this->down_datetime = !empty($data['down_datetime']) ? $data['down_datetime'] : '';
-        $this->down_script = !empty($data['down_script']) ? $data['down_script'] : '';
-        $this->down_result = !empty($data['down_result']) ? $data['down_result'] : '';
-        $this->is_up =
-            (!(bool)$data['down_datetime'] && !(bool)$data['failed_flag']) ||
-            ((bool)$data['down_datetime'] && (bool)$data['failed_flag']);
-        $this->failed_flag = (bool)$data['failed_flag'];
-        $this->failed_message = !empty($data['failed_message']) ? $data['failed_message'] : '';
-        $this->skip_flag = (bool)$data['skip_flag'];
-        return $this;
+        $instance = new self($row['migration_name'], $row['up_script'], $row['down_script']);
+        $instance->id = $row['id'];
+        $instance->migration_name = !empty($row['migration_name']) ? $row['migration_name'] : '';
+        $instance->up_datetime = !empty($row['up_datetime']) ? $row['up_datetime'] : '';
+        $instance->up_script = !empty($row['up_script']) ? $row['up_script'] : '';
+        $instance->up_result = !empty($row['up_result']) ? $row['up_result'] : '';
+        $instance->down_datetime = !empty($row['down_datetime']) ? $row['down_datetime'] : '';
+        $instance->down_script = !empty($row['down_script']) ? $row['down_script'] : '';
+        $instance->down_result = !empty($row['down_result']) ? $row['down_result'] : '';
+        $instance->is_up =
+            (!(bool)$row['down_datetime'] && !(bool)$row['failed_flag']) ||
+            ((bool)$row['down_datetime'] && (bool)$row['failed_flag']);
+        $instance->failed_flag = (bool)$row['failed_flag'];
+        $instance->failed_message = !empty($row['failed_message']) ? $row['failed_message'] : '';
+        $instance->skip_flag = (bool)$row['skip_flag'];
+        return $instance;
     }
 
     /**
@@ -198,6 +199,16 @@ class SqlMigration
     public function isUp(): bool
     {
         return $this->is_up;
+    }
+    
+    /**
+     * Returns TRUE if migration was teared down and FALSE otherwise
+     * 
+     * @return bool
+     */
+    public function isDown() : bool
+    {
+        return empty($this->getDownDatetime()) === false;
     }
 
     /**
