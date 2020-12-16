@@ -120,17 +120,13 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
             yield $indent . 'SQL installer:' . PHP_EOL;
         }
         
-        if ($res = $this->installDatabase($this->getDataConnection(), $indent.$indent)) {
-            yield $res . PHP_EOL;
-        }
-        if ($res = $this->installMigrations($source_absolute_path, $indent.$indent)) {
-            yield $res . PHP_EOL;
-        }
-        if ($res = $this->installStaticSql($source_absolute_path, $indent.$indent)) {
-            yield $res . PHP_EOL;
-        }
+        yield from $this->installDatabase($this->getDataConnection(), $indent.$indent);
+        yield from $this->installMigrations($source_absolute_path, $indent.$indent);
+        yield from $this->installStaticSql($source_absolute_path, $indent.$indent);
         
         $this->getWorkbench()->eventManager()->dispatch(new OnInstallEvent($this));
+        
+        return;
     }
     
     /**
@@ -138,9 +134,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param string $source_absolute_path
      * @return string
      */
-    protected function installStaticSql(string $source_absolute_path, string $indent = '') : string
+    protected function installStaticSql(string $source_absolute_path, string $indent = '') : \Iterator
     {
-        return $this->runSqlFromFilesInFolder($source_absolute_path, $this->getFoldersWithStaticSql(), $indent);
+        yield from $this->runSqlFromFilesInFolder($source_absolute_path, $this->getFoldersWithStaticSql(), $indent);
     }
     
     /**
@@ -149,31 +145,46 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param string $indent
      * @return string
      */
-    protected function installMigrations(string $source_absolute_path, string $indent = '') : string
+    protected function installMigrations(string $source_absolute_path, string $indent = '') : \Iterator
     {
+        yield $indent . 'SQL migrations:';
+        
+        $indent2 = PHP_EOL . $indent . $this->getOutputIndentation();
+        $connection = $this->getDataConnection();
         $migrationsInApp = $this->getMigrationsFromApp($source_absolute_path);
-        $migrationsInDB = $this->getMigrationsFromDb($this->getDataConnection());
-        $migratedUp = 0;
-        $migratedDown = 0;
+        $migrationsInDB = $this->getMigrationsFromDb($connection);
+        $cnt = 0;
 
         foreach ($this->getDownMigrations($migrationsInDB, $migrationsInApp) as $migration) {
-            $this->migrateDown($migration, $this->getDataConnection());
-            $migratedDown++;
+            try {
+                $this->migrateDown($migration, $connection);
+                $cnt++;
+                yield $indent2 . 'DOWN migration ' . $migration->getMigrationName();
+            } catch (\Throwable $e) {
+                $this->migrateFail($migration, $connection, false, $e);
+                yield $indent2 . 'FAILED DOWN migration ' . $migration->getMigrationName() . ' failed! ' . $e->getMessage() . ' - see SQL migration logs for troubleshooting.' . PHP_EOL;
+                throw new InstallerRuntimeError($this, 'SQL migration ' . $migration->getMigrationName() . ' failed! ' . $e->getMessage() . ' - see SQL migration logs for troubleshooting.', null, $e);
+            }
         }
         foreach ($this->getUpMigrations($migrationsInDB, $migrationsInApp) as $migration) {
-            $this->migrateUp($migration, $this->getDataConnection());
-            $migratedUp++;
+            try {
+                $this->migrateUp($migration, $connection);
+                $cnt++;
+                yield $indent2 . 'UP migration ' . $migration->getMigrationName();
+            } catch (\Throwable $e) {
+                $this->migrateFail($migration, $connection, true, $e);
+                yield  $indent2 . 'FAILED UP migration ' . $migration->getMigrationName() . ' failed! ' . $e->getMessage() . ' - see SQL migration logs for troubleshooting.' . PHP_EOL;
+                throw new InstallerRuntimeError($this, 'SQL migration ' . $migration->getMigrationName() . ' failed! ' . $e->getMessage() . ' - see SQL migration logs for troubleshooting.', null, $e);
+            }
         }
         
-        if ($migratedDown === 0 && $migratedUp === 0) {
-            $message = 'not needed';
-        } else {
-            $message = PHP_EOL;
-            $message .= ($migratedUp > 0 ? $indent . $indent . $migratedUp . ' UP successful' . PHP_EOL : '');
-            $message .= ($migratedDown > 0 ? $indent . $indent . $migratedDown . ' DOWN successful' . PHP_EOL : '');
+        if ($cnt === 0) {
+            yield ' not needed';
         }
         
-        return $indent . 'SQL migrations: ' . $message;
+        yield PHP_EOL;
+        
+        return;
     }
     
     /**
@@ -205,7 +216,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param SqlDataConnectorInterface
      * @return string
      */
-    abstract protected function installDatabase(SqlDataConnectorInterface $connection, string $indent = '') : string;
+    abstract protected function installDatabase(SqlDataConnectorInterface $connection, string $indent = '') : \Iterator;
     
     /**
      * Returns foldername containing subfolders for SQL Database Types.
@@ -465,6 +476,17 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     abstract protected function migrateUp(SqlMigration $migration, SqlDataConnectorInterface $connection): SqlMigration;
 
     /**
+     * 
+     * 
+     * @param SqlMigration $migration
+     * @param SqlDataConnectorInterface $connection
+     * @param bool $up
+     * @param \Throwable $exception
+     * @return SqlMigration
+     */
+    abstract protected function migrateFail(SqlMigration $migration, SqlDataConnectorInterface $connection, bool $up, \Throwable $exception) : SqlMigration;
+    
+    /**
      * Function to get all on the database currently applied migrations
      *
      * @param SqlDataConnectorInterface $connection
@@ -480,11 +502,13 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param string $folder_name
      * @return string
      */
-    protected function runSqlFromFilesInFolder(string $source_absolute_path, array $folders, string $indent): string
+    protected function runSqlFromFilesInFolder(string $source_absolute_path, array $folders, string $indent): \Iterator
     {
+        yield $indent . 'Static SQL:';
+        
+        $indent2 = PHP_EOL . $indent . $this->getOutputIndentation();
+        
         $files = $this->getFiles($source_absolute_path, $folders);
-        $doneCnt = 0;
-        $errors = [];
         foreach ($files as $file){
             $sql = file_get_contents($file);
             $sql = $this->stripComments($sql);
@@ -492,27 +516,21 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
             try {
                 $this->runSqlMultiStatementScript($connection, $sql);
                 $this->getWorkbench()->getLogger()->debug('SQL script ' . $file . ' executed successfully ');
-                $doneCnt++;
+                yield $indent2 . 'UP ' . FilePathDataType::findFileName($file, true);
             } catch (\Throwable $e) {
                 $this->getWorkbench()->getLogger()->logException($e);
                 $filename = FilePathDataType::findFileName($file, true);
-                $errors[$filename] = $e;
+                yield $indent2 . 'ERROR in ' . $filename . ': ' . $e->getMessage();
             }
         }
         
-        if ($doneCnt === 0 && empty($errors)) {
-            $result = 'not needed';
-        } else {
-            $result = $doneCnt . ' successfull';
-            if (! empty($errors)) {
-                $result .= ', ' . count($errors) . ' errors: ';
-                foreach ($errors as $filename => $exception) {
-                    $result .= PHP_EOL . $indent . $indent . '- in ' . $filename . ': ' . $exception->getMessage();
-                }
-            }
+        if (empty($files)) {
+            yield ' not needed';
         }
         
-        return $indent . 'Static SQL: ' . $result;
+        yield PHP_EOL;
+        
+        return;
     }
        
     /**
@@ -572,12 +590,12 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
                     $present = true;
                     if (!$mDb->isSkipped()) {
                         //if migration is not marked as skipped, evalutate further
-                        if ($mDb->isFailed() && empty($mDb->getDownDatetime())) {
+                        if ($mDb->isFailed() && ! $mDb->isDown()) {
                             // There was an error on the last execution of the UP-script and the script is not skipped or downed.
                             // Migration will be exectued again.
                             $arr[] = $mDb->setUpScript($mApp->getUpScript())->setDownScript($mApp->getDownScript());
                         }
-                        if (!$mDb->isFailed() && !empty($mDb->getDownDatetime())) {
+                        if (!$mDb->isFailed() && $mDb->isDown()) {
                             // Latest status of this migration is that it is down and not marked as skipped.
                             // Reinstallation of the migration. 
                             $arr[] = $mDb->setUpScript($mApp->getUpScript())->setDownScript($mApp->getDownScript());
@@ -713,7 +731,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @param SqlDataConnectorInterface $connection
      * @param string $script
      * @param bool $wrapInTransaction
-     * @throws Throwable
+     * @throws \Throwable
      * @return array
      */
     protected function runSqlMultiStatementScript (SqlDataConnectorInterface $connection, string $script, bool $wrapInTransaction = false) : array

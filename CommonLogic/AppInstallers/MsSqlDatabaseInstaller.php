@@ -6,6 +6,7 @@ use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use exface\Core\DataConnectors\MsSqlConnector;
+use exface\Core\DataTypes\DateTimeDataType;
 
 /**
  * Database AppInstaller for Apps with Microsoft SQL Server Database.
@@ -45,7 +46,7 @@ class MsSqlDatabaseInstaller extends MySqlDatabaseInstaller
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::installDatabase()
      */
-    protected function installDatabase(SqlDataConnectorInterface $connection, string $indent = '') : string
+    protected function installDatabase(SqlDataConnectorInterface $connection, string $indent = '') : \Iterator
     {        
         $msg = '';
         try {
@@ -62,7 +63,7 @@ class MsSqlDatabaseInstaller extends MySqlDatabaseInstaller
             $connection->setDatabase($dbName);
             $msg = 'Database ' . $dbName . ' created! ';
         }
-        return $indent . $msg;
+        yield $indent . $msg . PHP_EOL;
     }
     
     /**
@@ -95,7 +96,7 @@ SQL;
 CREATE TABLE {$this->getMigrationsTableName()}(
 	[id] [int] IDENTITY(40,1) NOT NULL,
 	[migration_name] [nvarchar](300) NOT NULL,
-	[up_datetime] [datetime] NOT NULL DEFAULT {$this->buildSqlFunctionNow()},
+	[up_datetime] [datetime] NOT NULL,
 	[up_script] [nvarchar](max) NOT NULL,
 	[up_result] [nvarchar](max) NULL,
 	[down_datetime] [datetime] NULL,
@@ -202,16 +203,6 @@ SQL;
     }
     
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::buildSqlFunctionNow()
-     */
-    protected function buildSqlFunctionNow() : string
-    {
-        return 'GETDATE()';
-    }
-    
-    /**
      *
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::checkDataConnection()
@@ -222,5 +213,15 @@ SQL;
             throw new InstallerRuntimeError($this, 'Cannot use connection "' . $connection->getAliasWithNamespace() . '" with Microsoft SQL Server DB installer: only instances of "MsSqlConnector" supported!');
         }
         return $connection;
+    }
+    
+    /**
+     *
+     * @param \DateTime $time
+     * @return string
+     */
+    protected function escapeSqlDateTimeValue(\DateTime $time) : string
+    {
+        return "CAST('" . DateTimeDataType::formatDateNormalized($time) . "' AS DATETIME)";
     }
 }

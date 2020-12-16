@@ -10,38 +10,61 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "1970-01-01 01:00:00",
-    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2020-07-07 19:55:50",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2020-12-16 15:21:19",
     "contents": {
         "id": "MigrationsTable",
         "widget_type": "DataTable",
         "object_alias": "exface.Core.metamodel_db_migrations",
+        "filters": [
+            {
+                "attribute_alias": "migration_name"
+            },
+            {
+                "attribute_alias": "state"
+            },
+            {
+                "attribute_alias": "up_datetime",
+                "widget_type": "RangeFilter"
+            },
+            {
+                "attribute_alias": "down_datetime",
+                "widget_type": "RangeFilter"
+            }
+        ],
         "columns": [
             {
                 "attribute_alias": "migration_name"
             },
             {
+                "attribute_alias": "state"
+            },
+            {
                 "attribute_alias": "up_datetime"
             },
             {
-                "attribute_alias": "up_script",
-                "hidden": true
-            },
-            {
-                "attribute_alias": "is_down"
-            },
-            {
                 "attribute_alias": "down_datetime"
+            },
+            {
+                "attribute_alias": "failed_message"
             },
             {
                 "attribute_alias": "down_script",
                 "hidden": true
             },
             {
-                "attribute_alias": "failed_flag"
+                "attribute_alias": "up_script",
+                "hidden": true
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "up_datetime",
+                "direction": "DESC"
             },
             {
-                "attribute_alias": "skip_flag"
+                "attribute_alias": "id",
+                "direction": "DESC"
             }
         ],
         "buttons": [
@@ -50,7 +73,28 @@
                 "bind_to_double_click": true
             },
             {
-                "caption": "Skip\/Unskip",
+                "caption": "Disable\/Enable",
+                "icon": "eye-slash",
+                "disabled_if": {
+                    "operator": "AND",
+                    "conditions": [
+                        {
+                            "value_left": "=MigrationsTable!state",
+                            "comparator": "!==",
+                            "value_right": "FAILED_UP"
+                        },
+                        {
+                            "value_left": "=MigrationsTable!state",
+                            "comparator": "!==",
+                            "value_right": "FAILED_DOWN"
+                        },
+                        {
+                            "value_left": "=MigrationsTable!state",
+                            "comparator": "!==",
+                            "value_right": "DISABLED"
+                        }
+                    ]
+                },
                 "action": {
                     "alias": "exface.Core.UpdateData",
                     "input_rows_min": 1,
@@ -66,14 +110,20 @@
                 }
             },
             {
-                "caption": "Run UP",
+                "caption": "Up",
+                "icon": "cogs",
                 "disabled_if": {
                     "operator": "AND",
                     "conditions": [
                         {
-                            "value_left": "=MigrationsTable!skip_flag",
-                            "comparator": "==",
-                            "value_right": 1
+                            "value_left": "=MigrationsTable!state",
+                            "comparator": "!==",
+                            "value_right": "FAILED_UP"
+                        },
+                        {
+                            "value_left": "=MigrationsTable!state",
+                            "comparator": "!==",
+                            "value_right": "DISABLED"
                         }
                     ]
                 },
@@ -111,6 +161,10 @@
                                         "to": "failed_flag"
                                     },
                                     {
+                                        "from": 0,
+                                        "to": "skip_flag"
+                                    },
+                                    {
                                         "from": "=nullValue()",
                                         "to": "failed_message"
                                     }
@@ -121,14 +175,20 @@
                 }
             },
             {
-                "caption": "Run DOWN",
+                "caption": "Down",
+                "icon": "ban",
                 "disabled_if": {
                     "operator": "AND",
                     "conditions": [
                         {
-                            "value_left": "=MigrationsTable!skip_flag",
-                            "comparator": "==",
-                            "value_right": 1
+                            "value_left": "=MigrationsTable!state",
+                            "comparator": "!==",
+                            "value_right": "FAILED_UP"
+                        },
+                        {
+                            "value_left": "=MigrationsTable!state",
+                            "comparator": "!==",
+                            "value_right": "DISABLED"
                         }
                     ]
                 },
@@ -158,6 +218,10 @@
                                         "to": "failed_flag"
                                     },
                                     {
+                                        "from": 0,
+                                        "to": "skip_flag"
+                                    },
+                                    {
                                         "from": "=nullValue()",
                                         "to": "failed_message"
                                     }
@@ -169,46 +233,6 @@
             },
             {
                 "action_alias": "axenox.PackageManager.ShowPackageManagerConsole"
-            }
-        ],
-        "sorters": [
-            {
-                "attribute_alias": "up_datetime",
-                "direction": "DESC"
-            },
-            {
-                "attribute_alias": "id",
-                "direction": "DESC"
-            }
-        ],
-        "filters": [
-            {
-                "attribute_alias": "migration_name"
-            },
-            {
-                "attribute_alias": "is_down"
-            },
-            {
-                "attribute_alias": "up_datetime",
-                "comparator": ">="
-            },
-            {
-                "attribute_alias": "up_datetime",
-                "comparator": "<="
-            },
-            {
-                "attribute_alias": "down_datetime",
-                "comparator": ">="
-            },
-            {
-                "attribute_alias": "down_datetime",
-                "comparator": "<="
-            },
-            {
-                "attribute_alias": "failed_flag"
-            },
-            {
-                "attribute_alias": "skip_flag"
             }
         ]
     }
