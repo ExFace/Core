@@ -1298,10 +1298,19 @@ abstract class AbstractWidget implements WidgetInterface
     }
     
     /**
-     * Inherits all properties of the given widget except the `id`.
+     * Inherits all properties of the given widget.
+     * 
+     * Specify the `page_alias` only to inherit the configuration of the root widget of the page
+     * or add a `widget_id` to inherit from a specific widget. Use jsut a `widget_id` to inherit
+     * from a widget on the same page.
+     * 
+     * **NOTE**: if the inherited widget is located on the same page and has a custom id (i.e.
+     * has an `id` property in it's configuration), that id will not be inherited because widget
+     * ids must be unique within a page! However, you can explicitly control this behavior via
+     * `keep_widget_id`.
      * 
      * @uxon-property extend_widget
-     * @uxon-type \exface\Core\CommonLogic\WidgetLink|metamodel:widget_link
+     * @uxon-type \exface\Core\Widgets\Parts\WidgetInheriter|string
      * @uxon-template {"page_alias": ""}
      * 
      * @param string|UxonObject $stringOrUxonWidgetLink

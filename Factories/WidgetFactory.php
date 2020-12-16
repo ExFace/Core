@@ -16,6 +16,8 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Interfaces\Widgets\iCanBeDisabled;
 use exface\Core\DataTypes\MessageTypeDataType;
+use exface\Core\Widgets\Parts\WidgetInheritance;
+use exface\Core\Widgets\Parts\WidgetInheriter;
 
 /**
  * 
@@ -76,11 +78,8 @@ abstract class WidgetFactory extends AbstractStaticFactory
         
         // If the widget is supposed to be extended from another one, merge the uxon descriptions before doing anything else
         if ($uxon_object->hasProperty('extend_widget')) {
-            $linked_object = WidgetLinkFactory::createFromPage($page, $uxon_object->getProperty('extend_widget'))->getTargetWidgetUxon();
-            // Remove the id from the new widget, because otherwise it would be identical to the id of the widget extended from
-            $linked_object->unsetProperty('id');
-            // Extend the linked object by the original one. Thus any properties of the original uxon will override those from the linked widget
-            $uxon_object = $linked_object->extend(UxonObject::fromAnything($uxon_object));
+            $inheriter = new WidgetInheriter($page, $uxon_object->getProperty('extend_widget'), $parent_widget);
+            $uxon_object = $inheriter->getWidgetUxon($uxon_object);
             // Remove the extend widget property to prevent problems when importing UXON
             $uxon_object->unsetProperty('extend_widget');
         }
