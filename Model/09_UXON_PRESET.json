@@ -436,7 +436,7 @@
         },
         {
             "CREATED_ON": "2019-09-04 16:50:45",
-            "MODIFIED_ON": "2020-12-10 10:39:26",
+            "MODIFIED_ON": "2020-12-16 21:05:35",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9cf340674dde2ad7fe4b318306b9a",
@@ -468,18 +468,7 @@
                 ],
                 "buttons": [
                     {
-                        "action_alias": "exface.Core.ShowObjectCreateDialog"
-                    },
-                    {
-                        "action_alias": "exface.Core.ShowObjectEditDialog",
-                        "bind_to_double_click": true
-                    },
-                    {
-                        "action_alias": "exface.Core.ShowObjectCopyDialog"
-                    },
-                    {
-                        "action_alias": "exface.Core.DeleteObject",
-                        "visibility": "optional"
+                        "": ""
                     }
                 ]
             },
@@ -1087,12 +1076,12 @@
         },
         {
             "CREATED_ON": "2019-10-01 09:32:08",
-            "MODIFIED_ON": "2020-12-10 10:12:35",
+            "MODIFIED_ON": "2020-12-17 15:31:02",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e42e53cc2440bacde4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Widget Group with caption",
+            "NAME": "Widget group with caption",
             "DESCRIPTION": "Simple widget group with a caption. Can be used as wrapper.",
             "PROTOTYPE": "exface\/Core\/Widgets\/WidgetGroup.php",
             "UXON": {
@@ -1110,12 +1099,12 @@
         },
         {
             "CREATED_ON": "2019-10-01 09:32:43",
-            "MODIFIED_ON": "2020-12-10 10:12:45",
+            "MODIFIED_ON": "2020-12-17 15:30:48",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e42e687ad9e1bacde4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Widget Group without caption",
+            "NAME": "Widget group without caption",
             "DESCRIPTION": "Simple widget group without a caption\/title. Can be used as wrapper.",
             "PROTOTYPE": "exface\/Core\/Widgets\/WidgetGroup.php",
             "UXON": {
@@ -1132,12 +1121,12 @@
         },
         {
             "CREATED_ON": "2019-10-01 09:33:31",
-            "MODIFIED_ON": "2020-12-10 10:13:00",
+            "MODIFIED_ON": "2020-12-17 15:30:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e42e856792d6bacde4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Widget Group with 2 columns",
+            "NAME": "Widget group with 2 columns",
             "DESCRIPTION": "Wide widget group with two columns. Can be used as wrapper.",
             "PROTOTYPE": "exface\/Core\/Widgets\/WidgetGroup.php",
             "UXON": {
@@ -2936,13 +2925,13 @@
         },
         {
             "CREATED_ON": "2020-10-27 07:51:05",
-            "MODIFIED_ON": "2020-12-10 10:34:28",
+            "MODIFIED_ON": "2020-12-17 15:01:49",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebb0e22b0e8efab0e2025041000001",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Master-detail carousel",
-            "DESCRIPTION": "A responsive table as master widget and a form showing details for the selected row. Both can have separate buttons. Changes in the form immediately affect the table - even without being saved to the data source.",
+            "NAME": "Master-detail carousel with editable form",
+            "DESCRIPTION": "A responsive table as master widget and a form showing\/editing details for the selected row. Both can have separate buttons. Changes in the form immediately affect the table - without being saved to the data source. The user can cycle through the details of each data item and save alle changes en block.\n\nWriting back to the data source must be triggered separately - e.g. by a button inside the data table or anywhere else with the data table as input widget. \n\nSince changes are kept in the table's data, pagination should not be used as it would discard any changes when leaving a page.",
             "PROTOTYPE": "exface\/Core\/Widgets\/DataCarousel.php",
             "UXON": {
                 "widget_type": "DataCarousel",
@@ -2952,6 +2941,11 @@
                     "columns": [
                         {
                             "attribute_alias": ""
+                        }
+                    ],
+                    "buttons": [
+                        {
+                            "": ""
                         }
                     ]
                 },
@@ -3626,6 +3620,112 @@
             "WRAP_PATH": "$.columns[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datacolumn_group.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-17 15:07:56",
+            "MODIFIED_ON": "2020-12-17 15:19:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb89e64362b87689e6025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Master-detail carousel with read-only details",
+            "DESCRIPTION": "A responsive table as master widget and a read-only form showing details for the selected row. Both can have separate buttons. \n\nThis is a good alternative for tables with lot's of columns: place most important columns in the master table and organize all the secondary fields in widget groups inside the detail-form.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataCarousel.php",
+            "UXON": {
+                "widget_type": "DataCarousel",
+                "data": {
+                    "widget_type": "DataTableResponsive",
+                    "paginate": false,
+                    "columns": [
+                        {
+                            "attribute_alias": ""
+                        }
+                    ],
+                    "buttons": [
+                        {
+                            "": ""
+                        }
+                    ]
+                },
+                "details": {
+                    "widget_type": "Form",
+                    "readonly": true,
+                    "widgets": [
+                        {
+                            "widget_type": "WidgetGroup",
+                            "caption": "",
+                            "widgets": [
+                                {
+                                    "attribute_alias": ""
+                                }
+                            ]
+                        },
+                        {
+                            "widget_type": "WidgetGroup",
+                            "caption": "",
+                            "widgets": [
+                                {
+                                    "attribute_alias": ""
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "$.data",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datacarousel_readonly.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-17 15:20:52",
+            "MODIFIED_ON": "2020-12-17 15:31:19",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb9d9c11675d5c9d9c025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Inline display group (read-only)",
+            "DESCRIPTION": "Making the group `readonly` will automatically generate display widgets for each inner widget without an explicit widget typ. ",
+            "PROTOTYPE": "exface\/Core\/Widgets\/InlineGroup.php",
+            "UXON": {
+                "widget_type": "InlineGroup",
+                "readonly": true,
+                "widgets": [
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "attribute_alias": "",
+                        "width": "25%"
+                    }
+                ]
+            },
+            "WRAP_PATH": "$.widgets[0]",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/inline_display.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-17 15:30:41",
+            "MODIFIED_ON": "2020-12-17 15:30:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb8d7f70b028f68d7f025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Widget group read-only",
+            "DESCRIPTION": "Making the group `readonly` will automatically generate display widgets for each inner widget without an explicit widget typ. ",
+            "PROTOTYPE": "exface\/Core\/Widgets\/WidgetGroup.php",
+            "UXON": {
+                "widget_type": "WidgetGroup",
+                "caption": "",
+                "readonly": true,
+                "widgets": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "$.widgets[0]",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/widget_group_readonly.gif"
         }
     ],
     "totals_rows": [],

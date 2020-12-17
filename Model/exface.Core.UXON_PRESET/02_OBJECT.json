@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2019-07-09 11:35:26",
-            "MODIFIED_ON": "2020-11-23 11:16:19",
+            "MODIFIED_ON": "2020-12-17 15:03:28",
             "CREATED_BY_USER": "0x11e9876d60774992bb32106530e7aff7",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9a23da60d78a6949f106530e7aff7",
@@ -141,7 +141,8 @@
                     },
                     {
                         "attribute_alias": "DESCRIPTION",
-                        "width": 2
+                        "width": "max",
+                        "height": 4
                     },
                     {
                         "attribute_alias": "UXON",
