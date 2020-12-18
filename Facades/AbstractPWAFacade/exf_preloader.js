@@ -371,23 +371,15 @@ const exfPreloader = {};
 		.then(function(dbContent) {
 			var data = [];
 			dbContent.forEach(function(element) {
+				//if an element got stuck in the proccessing state, check here if that sync attempt was already more than 5 minutes ago, if so, change the state of that element to offline again
+				element = _preloader.updateProccessingState(element);
+				
 				if (status && element.status != status) {
 					return;
 				}
 				if (objectAlias && element.object != objectAlias) {
 					return;
-				}
-				/*item = {
-						id: element.id,
-						action_alias: element.action,
-						object: element.object,
-						triggered: element.triggered,
-						status: element.status,
-						tries: element.tries
-				}
-				if (element.response) {
-					item.response = element.response;
-				}*/
+				}				
 				data.push(element);
 				return;
 			})
@@ -429,6 +421,9 @@ const exfPreloader = {};
 		.then(function(dbContent) {
 			var ids = [];
 			dbContent.forEach(function(element) {
+				//if an element got stuck in the proccessing state, check here if that sync attempt was already more than 5 minutes ago, if so, change the state of that element to offline again
+				element = _preloader.updateProccessingState(element);
+				
 				if (element.status != filter) {
 					return;
 				}
@@ -441,6 +436,18 @@ const exfPreloader = {};
 			return [];
 		})
 	};
+	
+	/**
+	 * If element is in proccessing state and last sync attempt was more than 5 minutes ago, change it's state to 'offline'
+	 * @return object
+	 */
+	this.updateProccessingState = function(element) {
+		if (element.status === 'proccessing' && element.lastSyncAttempt !== undefined && element.lastSyncAttempt + 3000 < (+ new Date())) {
+			element.status = 'offline';		
+			_actionsTable.update(element.id, element);
+		}
+		return element;
+	}
 	
 	/**
 	 * @return Promise
