@@ -13,6 +13,16 @@ interface UxonSchemaInterface extends WorkbenchDependantInterface
     public static function getSchemaName() : string;
     
     /**
+     * 
+     * @param UxonObject $uxon
+     * @param array $path
+     * @param string $search
+     * @param string $rootPrototypeClass
+     * @return string|NULL
+     */
+    public function getUxonType(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : ?string;
+    
+    /**
      * Returns the prototype class for a given path.
      *
      * @param UxonObject $uxon
