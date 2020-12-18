@@ -62,6 +62,7 @@ class UxonAutosuggest extends AbstractAction
     const TYPE_VALUE = 'value';
     const TYPE_PRESET = 'preset';
     const TYPE_DETAILS = 'details';
+    const TYPE_MODEL_BROWSER = 'modelbrowser';
     
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
@@ -105,6 +106,9 @@ class UxonAutosuggest extends AbstractAction
             case strcasecmp($type, self::TYPE_DETAILS) === 0:
                 $options = $this->suggestDetails($schema, $uxon, $path, $rootPrototypeClass);
                 break;
+            case strcasecmp($type, self::TYPE_MODEL_BROWSER) === 0:
+                $options = $this->suggestModelBrowser($schema, $uxon, $path, $currentText, $rootPrototypeClass, $rootObject);
+                break;
             default:
                 $options = $this->suggestPropertyValues($schema, $uxon, $path, $currentText, $rootPrototypeClass, $rootObject);
                 break;
@@ -123,6 +127,54 @@ class UxonAutosuggest extends AbstractAction
     protected function suggestPresets(UxonSchemaInterface $schema, UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
     {
         return $schema->getPresets($uxon, $path, $rootPrototypeClass);
+    }
+    
+    protected function suggestModelBrowser(UxonSchemaInterface $schema, UxonObject $uxon, array $path, string $search, string $rootPrototypeClass = null, MetaObjectInterface $rootObject = null) : array
+    {
+        $type = $schema->getUxonType($uxon, $path, $rootPrototypeClass);
+        
+        try {
+            $object = $schema->getMetaObject($uxon, $path, $rootObject);
+        } catch (MetaObjectNotFoundError $e) {
+            return [];
+        }
+        
+        $data = [];
+        switch (strtolower($type)) {
+            case 'metamodel:attribute':
+            default:
+                $data = [
+                    '_TYPE' => 'object',
+                    '_BASE_OBJECT_NAME' => $object->getName(),
+                    '_BASE_OBJECT_ALIAS_NS' => $object->getAliasWithNamespace(),
+                    '_BASE_OBJECT_ALIAS' => $object->getAlias()
+                ];
+                foreach ($schema->getValidValues($uxon, $path, $search, $rootPrototypeClass, $rootObject) as $suggest) {
+                    $alias = rtrim($suggest, "_");
+                    if ($alias !== $suggest) {
+                        $rel = $object->getRelation($alias);
+                        $data['ATTRIBUTES'][] = [
+                            'NAME' => $rel->getName(),
+                            'ALIAS' => $alias,
+                            '_SUGGEST' => $suggest,
+                            '_RELATION' => true,
+                            '_RELATION_TO' => $rel->getRightObject()->getName(),
+                            'DESCRIPTION' => $rel->isForwardRelation() && $object->hasAttribute($alias) ? $object->getAttribute($alias)->getShortDescription() : ''
+                        ];
+                    } else {
+                        $attr = $object->getAttribute($alias);
+                        $data['ATTRIBUTES'][] = [
+                            'NAME' => $attr->getName(),
+                            'ALIAS' => $alias,
+                            '_SUGGEST' => $suggest,
+                            'DESCRIPTION' => $attr->getShortDescription()
+                        ];
+                    }
+                }
+                break;
+        }
+        
+        return $data;
     }
     
     /**

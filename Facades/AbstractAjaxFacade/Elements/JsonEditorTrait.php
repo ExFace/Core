@@ -439,6 +439,18 @@ JS;
                                 });
                             }
 
+                            // Add item to open model browser
+                            if (menuNode.type === 'auto' || menuNode.type === 'string') {
+                                items.push({
+                                    text: "{$trans['MODELBROWSER.TITLE']}",
+                                    title: "{$trans['MODELBROWSER.HINT']}",
+                                    className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-search" ,
+                                    click : function() { 
+                                        return {$funcPrefix}_openModelModal(menuNode); 
+                                    }
+                                });
+                            }
+
                             // Add item to open larger editor for string nodes
                             if (menuNode.type === 'auto' || menuNode.type === 'string') {
                                 items.push({
@@ -571,11 +583,38 @@ JS;
                         box-sizing: border-box;
                     }
                     .jsoneditor-modal .uxoneditor-input,
+                    .jsoneditor-modal .uxoneditor-btn,
                     .jsoneditor-modal .spinner-wrapper {
                         height: 35px;
                         margin-bottom: 4px;
                     }
-                    .jsoneditor-modal input.uxoneditor-input:not([type]),
+                    .jsoneditor-modal button {
+                        width: initial;
+                        background: #f5f5f5;
+                        cursor: pointer;
+                        font-size: 10pt;
+                        box-sizing: border-box;
+                        box-shadow: none;
+                        border: 1px solid #d3d3d3;
+                        color: #4d4d4d;
+                        border-radius: 3px;
+                        vertical-align: top;
+                    }
+                    .jsoneditor-modal div.uxoneditor-input {
+                        width: initial;
+                        font-size: 10pt;
+                        box-sizing: border-box;
+                        box-shadow: none;
+                        border: 1px solid #d3d3d3;
+                        color: #4d4d4d;
+                        border-radius: 3px;
+                        vertical-align: top;
+                        line-height: 27px;
+                        font-family: inherit;
+                        background-color: #f5f5f5;
+                        display: inline-block;
+                    }
+                    .jsoneditor-modal .uxoneditor-input:not([type]),
                     .jsoneditor-modal input.uxoneditor-input[type=text] {
                         height: 35px !important;
                         border: 1px solid #d3d3d3;
@@ -596,12 +635,33 @@ JS;
                         background-color:  #f5f5f5;
                     }
                     .jsoneditor-modal input[type="submit"],
-                    .jsoneditor-modal input[type="button"] {
+                    .jsoneditor-modal input[type="button"] 
+                    .jsoneditor-model button {
                         width: auto;
                         font-family: inherit;
                     }
                     .jsoneditor-modal .action-buttons {
                         float: right;
+                    }
+
+                    .uxoneditor-btn-group {display: inline-block; vertical-align: top}
+                    .uxoneditor-btn-group > input,
+                    .uxoneditor-btn-group > button,
+                    .uxoneditor-btn-group > div.uxoneditor-input {
+                        border-radius: 0 !important;
+                        margin-left: 0;
+                        margin-right: 0;
+                        width: initial;
+                        border-right-width: 0;
+                    }
+                    .uxoneditor-btn-group > *:last-child {
+                        border-top-right-radius: 3px !important;
+                        border-bottom-right-radius: 3px !important;
+                        border-right-width: 1px;
+                    }
+                    .uxoneditor-btn-group > *:first-child {
+                        border-top-left-radius: 3px !important;
+                        border-bottom-left-radius: 3px !important;
                     }
 
                     .jsoneditor-modal table.jsoneditor-values {width: initial;}
@@ -660,18 +720,22 @@ JS;
                    
 
                     .uxoneditor-checkbox {-webkit-appearance: checkbox; -moz-appearance: checkbox;}
-                    .uxoneditor-details-table {margin-bottom: 20px}
-                    .uxoneditor-details-table th {font-weight: bold !important; padding: 3px !important; border-bottom: 1px solid #3883fa}
-                    .uxoneditor-details-table td {padding: 3px !important;}
-                    .uxoneditor-details-table p {margin: 0.3em 0 0.7em 0;}
-                    .uxoneditor-details-table code {
+                    .uxoneditor-table {margin-bottom: 20px}
+                    .uxoneditor-table-selectable tr:hover {background-color: #3883fa;}
+                    .uxoneditor-table-selectable tr {cursor: pointer;}
+                    .uxoneditor-table th {font-weight: bold !important; padding: 3px !important; border-bottom: 1px solid #3883fa}
+                    .uxoneditor-table td {padding: 3px !important;}
+                    .uxoneditor-table tr.selected {background-color: #3883fa;}
+                    .uxoneditor-table tr.selected > td {color: white;}
+                    .uxoneditor-table p {margin: 0.3em 0 0.7em 0;}
+                    .uxoneditor-table code {
                         padding: 0.2em 0.4em;
                         margin: 0;
                         font-size: 85%;
                         background-color: rgba(27,31,35,0.05);
                         border-radius: 3px;
                     }
-                    .uxoneditor-details-table pre {
+                    .uxoneditor-table pre {
                         padding: 16px;
                         overflow: auto;
                         font-size: 85%;
@@ -679,7 +743,7 @@ JS;
                         background-color: #f6f8fa;
                         border-radius: 3px;
                     }
-                    .uxoneditor-details-table pre code {
+                    .uxoneditor-table pre code {
                         display: inline;
                         max-width: auto;
                         padding: 0;
@@ -891,7 +955,7 @@ CSS;
         }
           function {$addHelpButtonFunction}($, editorId, url, title) {
             var helpBtn = $(
-                '<button type="button" title="{$trans['HELP']}" style="background: transparent;"><i ' +
+                '<button title="{$trans['HELP']}" style="background: transparent;"><i ' +
                 'class="fa fa-question-circle-o" style="font-size: 22px"></i></button>'
             );
            
@@ -1177,10 +1241,10 @@ CSS;
             
             var hasArrayContext = (node.parent !== null && node.parent.childs)? true : false;
            
-            var oPresetPathElem = document.getElementById('uxonPresetPath');
-            {$funcPrefix}_autoWidth(oPresetPathElem);
-            oPresetPathElem.value = {$funcPrefix}_convertToJsonPath(path);
-            oPresetPathElem.title = node.editor.options.name + (path.length > 0 ? ' > ' : '') + path.join(' > ');
+            var oNodePathElem = document.getElementById('uxonPresetPath');
+            {$funcPrefix}_autoWidth(oNodePathElem);
+            oNodePathElem.value = {$funcPrefix}_convertToJsonPath(path);
+            oNodePathElem.title = node.editor.options.name + (path.length > 0 ? ' > ' : '') + path.join(' > ');
             
             $.ajax( {
                 type: 'POST',
@@ -1343,7 +1407,7 @@ CSS;
 
             return  '   <p class="uxoneditor-object-details-title" style="display:none"></p>' + 
                     '   <div class="uxoneditor-object-details-description" style="display:none"></div>' +
-                    '   <table class="uxoneditor-details-table">' +
+                    '   <table class="uxoneditor-table">' +
                     '       <thead>' +
                     '           <tr>' +
                     '               <th style="text-align: center"><i class="fa fa-eye"></i></th>' +
@@ -1374,12 +1438,12 @@ CSS;
             
             var path = node.getPath();
             
-            var oPresetPathElem = document.getElementById('uxonPresetPath');
-            {$funcPrefix}_autoWidth(oPresetPathElem);
-            oPresetPathElem.value = {$funcPrefix}_convertToJsonPath(path);
-            oPresetPathElem.title = node.editor.options.name + (path.length > 0 ? ' > ' : '') + path.join(' > ');
+            var oNodePathElem = document.getElementById('uxonPresetPath');
+            {$funcPrefix}_autoWidth(oNodePathElem);
+            oNodePathElem.value = {$funcPrefix}_convertToJsonPath(path);
+            oNodePathElem.title = node.editor.options.name + (path.length > 0 ? ' > ' : '') + path.join(' > ');
             
-            var jqTableBody = $(modal.modalElem().querySelector('.uxoneditor-details-table > tbody'));
+            var jqTableBody = $(modal.modalElem().querySelector('.uxoneditor-table > tbody'));
             $.ajax( {
                 type: 'POST',
                 url: '{$ajaxUrl}',
@@ -1453,7 +1517,7 @@ CSS;
                     if(oRow['DESCRIPTION'] == ""){
                         sBtnRowDetails = '   <td></td>';
                     } else {
-                        sBtnRowDetails =        '   <td><a href="javascript:;" class="btn-row-description"><i class="fa fa-info-circle" aria-hidden="true"></i></a></td>';
+                        sBtnRowDetails =        '   <td><button class="btn-row-description"><i class="fa fa-info-circle" aria-hidden="true"></i></button></td>';
                     }             
 
 
@@ -1508,7 +1572,185 @@ CSS;
 
         }
 
+        function {$funcPrefix}_openModelModal(node){
+            return {$funcPrefix}_openModal(
+                "{$trans['MODERBROWSER']}",
+                '   <div class="uxoneditor-btn-group">' +
+                        '<div class="uxoneditor-input" id="uxonModelBrowserBase" style="border-right: none;"></div>' + 
+                        '<div class="uxoneditor-input" id="uxonModelBrowserPath" style="border-left: none;"></div>' + 
+                        '<button class="uxoneditor-btn" id="uxonModelBrowserBack" title="{$trans['MODELBROWSER.RELATION_BACK']}" /><i class="fa fa-step-backward" aria-hidden="true"></i></button>' +
+                    '</div>' +
+                '   <input class="uxoneditor-input" id="uxonModelBrowserSearch" style="width: initial;"></input>' + 
+                '   <table class="uxoneditor-table uxoneditor-table-selectable">' +
+                '       <thead>' +
+                '           <tr>' +
+                '               <th>{$trans['MODELBROWSER.NAME']}</th>' +
+                '               <th>{$trans['MODELBROWSER.DESCRIPTION']}</th>' +
+                '               <th>{$trans['MODELBROWSER.SUGGESTION']}</th>' +
+                '           </tr>' +
+                '       </thead>' +
+                '       <tbody>' +
+                '       </tbody>' +
+                '   </table>' +
+                '   <div style="width: calc(100% - 20px); padding: 0 0 20px 0; text-align: center;">' +
+                '       <div class="spinner" style="width: 32px; height: 32px"></div>' +
+                '   </div>' +
+                '   <div class="jsoneditor-jmespath-block jsoneditor-modal-actions">' +
+                '      <input class="uxoneditor-input" id="uxonPresetPath" style="margin-right: 4px;" readonly></input>' +
+                '      <div class="action-buttons">' +
+                '          <input class="uxoneditor-input uxoneditor-btn-ok" autofocus type="submit" value="{$trans['BUTTON_OK']}"/>' +
+                '          <input class="uxoneditor-input uxoneditor-btn-cancel" type="submit" value="{$trans['BUTTON_CANCEL']}" />' +
+                '      </div>' +
+                '   </div>',
+                false,
+                'jsoneditor-modal jsoneditor-modal-maximized',
+                function(modal) {
+                    return {$funcPrefix}_loadModelBrowser(modal, node);
+                }
+            );
+        }
 
+        function {$funcPrefix}_loadModelBrowser(modal, node) {
+            var path = node.getPath();
+            var sPath = node.getValue();
+            var sSearch = '';
+            var sDelim = '__';
+            var iSplitPos = -1;
+            var oNodePathElem = document.getElementById('uxonPresetPath');
+            var jqTableBody = $(modal.modalElem().querySelector('.uxoneditor-table > tbody'));
+            var oCache = {};
+
+            iSplitPos = sPath.lastIndexOf(sDelim);
+            if (iSplitPos > -1) {
+                sPath = sPath.substring(0, iSplitPos + sDelim.length);
+            } else {
+                sPath = '';
+            }
+
+            iSplitPos = sSearch.lastIndexOf(':');
+            if (iSplitPos > -1) {
+                sSearch = sSearch.substring(0, iSplitPos);
+            }
+            
+            {$funcPrefix}_autoWidth(oNodePathElem);
+
+            oNodePathElem.value = {$funcPrefix}_convertToJsonPath(path);
+            oNodePathElem.title = node.editor.options.name + (path.length > 0 ? ' > ' : '') + path.join(' > ');
+            
+            $('#uxonModelBrowserBack').click(function(){
+                var sPath = $('#uxonModelBrowserPath').text();
+                var aPath = sPath.split(sDelim);
+                if (aPath.length > 0) {
+                    sPath = aPath.slice(0, -2).join(sDelim);
+                    if (sPath !== '') {
+                        sPath += sDelim;
+                    }
+                    fnSearch(jqTableBody, '',  sPath);
+                }
+            });
+
+            var fnLoad = function(sPath) {
+                return $.ajax( {
+                    type: 'POST',
+                    url: '{$ajaxUrl}',
+                    dataType: 'json',
+                    data: {
+                        action: 'exface.Core.UxonAutosuggest',
+                        path: JSON.stringify(path),
+                        input: 'modelbrowser',
+                        text: sPath,
+                        schema: {$uxonSchema},
+                        prototype: {$rootPrototype},
+                        uxon: node.editor.getText()
+                    }, // data
+                    
+                }) // ajax POST request
+                .done(function(oResponse, sTextStatus, jqXHR) {
+                    var oData = oResponse || {};
+                    var aRows = [];
+                    var sTitle = '';
+                    var sDescription = '';
+
+                    switch (oData['_TYPE']) {
+                        case 'object': 
+                            sTitle = oData._BASE_OBJECT_NAME + ' (' + oData._BASE_OBJECT_ALIAS_NS + ')';
+                            sDescription = oResponse.DESCRIPTION;
+                            aRows = (oData.ATTRIBUTES || []);
+                            oCache[sPath] = aRows;
+                    }
+
+                    modal.modalElem().querySelector('.pico-modal-header').innerHTML = sTitle;
+                    $('#uxonModelBrowserBase').html(oData._BASE_OBJECT_ALIAS + ':');
+
+                    return aRows;
+                }) // done
+                .fail( function (jqXHR, textStatus, errorThrown) {
+                    console.warn("{$trans['ERROR.SERVER_ERROR']}", jqXHR);
+                    modal.modalElem().querySelector('.spinner').parentNode.style.display = 'none';
+                    return [];
+                } ); // fail
+            };
+
+            var fnSearch = function(jqTableBody, sSearch, sPath) {console.log('search', sPath, sSearch);
+                var aData = oCache[sPath];
+                jqTableBody.empty();
+                $('#uxonModelBrowserSearch').val(sSearch);
+                $('#uxonModelBrowserPath').text(sPath);
+                if (aData === undefined) {
+                    modal.modalElem().querySelector('.spinner').parentNode.style.display = 'block';
+                    fnLoad(sPath).then(function() {
+                        modal.modalElem().querySelector('.spinner').parentNode.style.display = 'none';
+                        fnSearch(jqTableBody, sSearch, sPath);
+                    });
+                } else {
+                    aData.forEach(function(oRow) {
+                        if (sSearch !== '') {
+                            sSearch = sSearch.toLowerCase();
+                            if (! oRow['NAME'].toLowerCase().includes(sSearch) && ! oRow['ALIAS'].toLowerCase().includes(sSearch)) {
+                                return;
+                            }
+                        }
+    
+                        jqTableBody.append($(
+                            '<tr data-suggest="' + oRow['_SUGGEST'] + '">' + 
+                            '   <td>' + oRow['NAME'] + (oRow['_RELATION'] ? ' <button class="uxoneditor-follow-relation" title="{$trans['MODELBROWSER.RELATION_FOLLOW']}" data-relation="' + oRow['_SUGGEST'] + '"/><i class="fa fa-step-forward" aria-hidden="true"></i></button>' : '') + '</td>' + 
+                            '   <td>' + (oRow['DESCRIPTION'] || '') + '</td>' + 
+                            '   <td>' + oRow['_SUGGEST'] + '</td>' + 
+                            '</tr>'
+                        ));
+                    });
+
+                    jqTableBody.find('button.uxoneditor-follow-relation').click(function() {
+                        var sPath = $(this).data('relation');console.log('follow', sPath);
+                        fnSearch(jqTableBody, '', sPath);
+                    });
+
+                    jqTableBody.find('tr').click(function() {
+                        jqTableBody.find('tr').removeClass('selected');
+                        $(this).addClass('selected');
+                    });
+                }
+            }
+
+            fnSearch(jqTableBody, sSearch, sPath);
+
+            $('#uxonModelBrowserSearch').focus().on('input', function(){
+                fnSearch(jqTableBody, $(this).val(), $('#uxonModelBrowserPath').text());
+            });
+            
+            modal.modalElem().querySelector(".uxoneditor-btn-ok").onclick = function() {
+                var sSelected = jqTableBody.find('tr.selected').data('suggest');
+                if (sSelected) {
+                    node.setValue(sSelected);
+                }
+                modal.close();
+            };
+
+            modal.modalElem().querySelector(".uxoneditor-btn-cancel").onclick = function() {
+                modal.close();
+            };
+
+        }
 	
     
 JS;

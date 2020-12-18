@@ -306,6 +306,23 @@ class UxonSchema implements UxonSchemaInterface
      */
     public function getValidValues(UxonObject $uxon, array $path, string $search = null, string $rootPrototypeClass = null, MetaObjectInterface $rootObject = null) : array
     {
+        $firstType = $this->getUxonType($uxon, $path, $rootPrototypeClass);
+        
+        try {
+            $object = $this->getMetaObject($uxon, $path, $rootObject);
+        } catch (MetaObjectNotFoundError $e) {
+            // TODO better error handling to tell apart invalid object alias and no object alias.
+            if ($rootObject !== null) {
+                $this->getWorkbench()->getLogger()->logException($e);
+            }
+            $object = null;
+        }
+        
+        return $this->getValidValuesForType($firstType, $search, $object);
+    }
+    
+    public function getUxonType(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : ?string
+    {
         $prop = mb_strtolower(end($path));
         if (true === is_numeric($prop)) {
             // If we are in an array, use the data from the parent property (= the array)
@@ -322,17 +339,7 @@ class UxonSchema implements UxonSchemaInterface
             $firstType = trim($propertyTypes[0]);
         }
         
-        try {
-            $object = $this->getMetaObject($uxon, $path, $rootObject);
-        } catch (MetaObjectNotFoundError $e) {
-            // TODO better error handling to tell apart invalid object alias and no object alias.
-            if ($rootObject !== null) {
-                $this->getWorkbench()->getLogger()->logException($e);
-            }
-            $object = null;
-        }
-        
-        return $this->getValidValuesForType($firstType, $search, $object);
+        return $firstType;
     }
     
     protected function getValidValuesForType(string $type, string $search = null, MetaObjectInterface $object = null) : array
