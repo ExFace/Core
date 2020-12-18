@@ -510,6 +510,28 @@ JS;
                                 ]
                             };
                             items.push(editMenu);
+
+                            // Add clear button if applicable
+                            if(menuNodeType === "object" || menuNodeType === "root" || menuNodeType === "array") {
+                                items.push({
+                                    text : "{$trans['CONTEXT_MENU.CLEAR.TITLE']}",   // the text for the menu item
+                                    title : "{$trans['CONTEXT_MENU.CLEAR.HINT']}",  // the HTML title attribute
+                                    className : "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-eraser",
+                                    click: function(){ 
+                                        switch (menuNodeType) {
+                                            case "root":
+                                                menuNode.editor.set({"":""});
+                                                break;
+                                            case "array":
+                                                menuNode.setValue([]);
+                                                break;
+                                            case "object":
+                                                menuNode.setValue({"":""});
+                                                break;
+                                        }
+                                    }
+                                });
+                            }
                             
                             return items;
                         } // onCreateMenu
@@ -712,8 +734,8 @@ JS;
                     .uxoneditor-preset-hint a:hover {color: #1a1a1a;}
                     .uxoneditor-preset-hint i {display: block; font-size: 400%; margin-bottom: 15px;}
                     .uxoneditor-preset-cards {width: 100%; height: calc(100% - 28px); overflow-y: auto;}
-                    .uxoneditor-preset-card {width: 213px; height: calc(136px + 7px + 2.3rem); border: 1px dashed gray; margin: 5px 10px 5px 0; float: left; overflow: hidden; cursor: pointer;}
-                    .uxoneditor-preset-card:hover, .uxoneditor-preset-card.selected {border-style: solid; border-color: #3883fa;}
+                    .uxoneditor-preset-card {width: 221px; height: calc(136px + 7px + 2.3rem); border: 1px dashed gray; margin: 5px 10px 5px 0; padding: 3px; float: left; overflow: hidden; cursor: pointer;}
+                    .uxoneditor-preset-card:hover, .uxoneditor-preset-card.selected {border-style: solid; border-color: #3883fa; border-width: 4px; padding: 0;}
                     .uxoneditor-preset-name {text-align: center; padding: 0 10px 7px 10px; height: 2.3rem}
                     .uxoneditor-preset-card.text-only {position: relative;}
                     .uxoneditor-preset-card.text-only .uxoneditor-preset-name {padding: 0 10px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: calc(100% - 20px);}
@@ -1190,7 +1212,7 @@ CSS;
                     '       <div style="width: 30%; height: 100%; display: inline-block">' +
                     '          <div class="jsoneditor-jmespath-label">{$trans['PRESETS.PREVIEW']} </div>' +
                     '          <div class="jsoneditor-jmespath-block">' +
-                    '              <textarea id="uxonPresetDescription" class="uxoneditor-input" style="height: 180px;" readonly></textarea>' +
+                    '              <div id="uxonPresetDescription" style="height: 180px;"></div>' +
                     '          </div>' +
                     '          <div class="jsoneditor-jmespath-block" style="height: calc(100% - 10px - 188px - 25px - 10px)">' +
                     '              <div class="uxoneditor-preset-preview" style="height: 100%"> </div>' +
@@ -1317,7 +1339,7 @@ CSS;
 
                     oPreviewEditor.setText(oPresetData['UXON']);
                     
-                    document.getElementById('uxonPresetDescription').value = oPresetData['DESCRIPTION'];
+                    document.getElementById('uxonPresetDescription').innerHTML = oPresetData['DESCRIPTION'];
                     oPreviewEditor.expandAll(true);
                     modal.modalElem().querySelector(".uxoneditor-preset-replace").disabled = false;
                     
@@ -1691,7 +1713,7 @@ CSS;
                 } ); // fail
             };
 
-            var fnSearch = function(jqTableBody, sSearch, sPath) {console.log('search', sPath, sSearch);
+            var fnSearch = function(jqTableBody, sSearch, sPath) {
                 var aData = oCache[sPath];
                 jqTableBody.empty();
                 $('#uxonModelBrowserSearch').val(sSearch);
@@ -1721,7 +1743,7 @@ CSS;
                     });
 
                     jqTableBody.find('button.uxoneditor-follow-relation').click(function() {
-                        var sPath = $(this).data('relation');console.log('follow', sPath);
+                        var sPath = $(this).data('relation');
                         fnSearch(jqTableBody, '', sPath);
                     });
 
