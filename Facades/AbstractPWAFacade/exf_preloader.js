@@ -470,6 +470,23 @@ const exfPreloader = {};
 		if (element === undefined) {
 			return false
 		}
+		//if item was already synced or tried to synced since it was added to list of items to be synced, skip it, continue with next one
+		if (element.status !== 'offline' && element.satus !== 'proccessing') {
+			return true
+		}
+		//if item is in the proccess of syncing or the last try is fewer than 5 minutes ago and still ongoing, skip it
+		if (element.status === 'proccessing' && element.lastSync !== undefined && element.lastSyncAttempt + 3000 > (+ new Date())) {
+			return true
+		}
+		
+		// update Element so it has the processing state, therefor no other sync Attempt tries to sync it aswell.
+		var updatedElement = {
+				lastSyncAttempt: (+ new Date()),
+				status: 'proccessing',
+				tries: element.tries + 1
+		};		
+		var updated = await _actionsTable.update(element.id, updatedElement);
+		
 		var params = element.request.data;
 		params = _preloader.encodeJson(params);
 		try {
@@ -485,8 +502,8 @@ const exfPreloader = {};
 		} catch (error) {
 			console.error("Error sync action with id " + element.id + ". " + error.message);
 			var updated = await _actionsTable.update(element.id, {
-				tries: element.tries + 1,
-				response: error.message
+				response: error.message,
+				status: 'offline'
 			});
 			if (updated) {
 				//console.log ("Tries for Action with id " + element.id + " increased");
@@ -499,10 +516,9 @@ const exfPreloader = {};
 		if (response.ok) {
 			var date = (+ new Date());
 			//await _actionsTable.delete(element.id);
-			updatedElement = element;
+			//updatedElement = element;
 			updatedElement.status = 'synced';
 			updatedElement.response = data;
-			updatedElement.tries = updatedElement.tries + 1;
 			updatedElement.synced = new Date(date).toLocaleString();
 			var updated = await _actionsTable.update(element.id, updatedElement);				
 			if (updated) {
@@ -514,10 +530,10 @@ const exfPreloader = {};
 		}
 		if (response.statusText === 'timeout' || response.status === 0) {
 			//console.log('Timeout syncing action with id: ' + element.id);
-			var updated = _actionsTable.update(element.id, {
-				tries: element.tries + 1,
-				response: response.statusText
-			});
+			//updatedElement = element;
+			updatedElement.response = response.statusText;
+			updatedElement.status = 'offline';
+			var updated = _actionsTable.update(element.id, updatedElement);
 			if (updated) {
 				//console.log ("Tries for Action with id " + element.id + " increased");
 			} else {
@@ -528,11 +544,9 @@ const exfPreloader = {};
 		console.log('Server responded with an error syncing action with id: '+ element.id);
 		//await _actionsTable.delete(element.id);
 		//we update the entry now for test purposes, normally we delete it from the queue
-		var updated = await _actionsTable.update(element.id, {
-			status: 'error',
-			tries: element.tries + 1,
-			response: data
-		});
+		updatedElement.status = 'error';
+		updatedElement.response = data;
+		var updated = await _actionsTable.update(element.id, updatedElement);
 		if (updated) {
 			//console.log ("Action with id " + element.id + " was updated");
 		} else {
