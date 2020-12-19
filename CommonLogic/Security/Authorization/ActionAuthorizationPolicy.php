@@ -176,16 +176,18 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 $applied = true;
             }
             
-            // See if trigger page must be known
+            // See if trigger widget must be validatable
             if ($this->getActionTriggerWidgetMatch() !== null) {
+                // If the specific action does not require a trigger widget,
+                // don't apply the policy nevertheless
                 if ($action->isTriggerWidgetRequired() === false) {
                     return PermissionFactory::createNotApplicable($this);
                 }
                 $triggerRequired = $this->getActionTriggerWidgetMatch();
-                $triggerKnown = $this->isActionTriggerWidgetValid($action, $task);
+                $triggerValidated = $this->isActionTriggerWidgetValid($action, $task);
                 switch (true) {
-                    case $triggerRequired === true && $triggerKnown === false:
-                    case $triggerRequired === false && $triggerKnown === true:
+                    case $triggerRequired === true && $triggerValidated === false:
+                    case $triggerRequired === false && $triggerValidated === true:
                         return PermissionFactory::createNotApplicable($this);
                     default:
                         $applied = true;
@@ -261,9 +263,24 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     }
     
     /**
-     * Only apply this policy if the page where the action was triggered is known (or is not known).
+     * Only apply this policy if the action is defined in the same widget it is called from (or not).
      * 
-     * @uxon-property action_trigger_widget_known
+     * This only has effect on action prototypes, that require a trigger widget
+     * by default.
+     * 
+     * By default, policies do not check, if their actions are defined in a widget,
+     * if that widget exists and if it's really the widget, that calls the action.
+     * This option allows to explicitly address actions getting called from the
+     * widget they are defined in (= `true`) and action that are not defined in
+     * any widget (= `false`) although the action prototype normally requires a
+     * trigger widget.
+     * 
+     * **NOTE** there are some exceptions:
+     * 
+     * - action `ShowWidget` can be performed for every widget regardless of it's trigger
+     * - action `ReadPrefill` can be performed for every widget regardless of it's trigger
+     * 
+     * @uxon-property action_trigger_widget_match
      * @uxon-type boolean
      * 
      * @param bool $trueOrFalse
