@@ -158,7 +158,7 @@ class Profiler implements WorkbenchDependantInterface
         $lapId = array_search($subject, $this->lapIds);
         if ($lapId === false) {
             $this->lapIds[] = $subject;
-            $lapId = count($this->lapIds);
+            $lapId = count($this->lapIds) - 1;
         }
         return $lapId;
     }
