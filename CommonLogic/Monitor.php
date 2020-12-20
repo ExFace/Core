@@ -101,7 +101,7 @@ class Monitor extends Profiler
         
         $ms = $this->stop($event->getAction());
         $this->addRowFromAction($event->getAction(), $event->getTask(), $ms);
-        
+        return;
     }
     
     /**
