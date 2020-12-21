@@ -522,12 +522,10 @@ const exfPreloader = {};
 		var data = await response.json()
 		if (response.ok) {
 			var date = (+ new Date());
-			//await _actionsTable.delete(element.id);
-			//updatedElement = element;
 			updatedElement.status = 'synced';
 			updatedElement.response = data;
 			updatedElement.synced = new Date(date).toLocaleString();
-			var updated = await _actionsTable.update(element.id, updatedElement);				
+			var updated = await _actionsTable.update(element.id, updatedElement);			
 			if (updated) {
 				//console.log ("Action with id " + element.id + " synced. Action removed from queue");
 			} else {
@@ -537,7 +535,6 @@ const exfPreloader = {};
 		}
 		if (response.statusText === 'timeout' || response.status === 0) {
 			//console.log('Timeout syncing action with id: ' + element.id);
-			//updatedElement = element;
 			updatedElement.response = response.statusText;
 			updatedElement.status = 'offline';
 			var updated = _actionsTable.update(element.id, updatedElement);
@@ -550,7 +547,7 @@ const exfPreloader = {};
 		}
 		console.log('Server responded with an error syncing action with id: '+ element.id);
 		//await _actionsTable.delete(element.id);
-		//we update the entry now for test purposes, normally we delete it from the queue
+		//update the entry now for test purposes, normally it gets deleted from the queue
 		updatedElement.status = 'error';
 		updatedElement.response = data;
 		var updated = await _actionsTable.update(element.id, updatedElement);
@@ -671,9 +668,9 @@ const exfPreloader = {};
 	 */
 	this.updatePreloadData = async function() {
 		var preloads = await _preloadTable.toArray();
-		if (preloads.length == 0) {
+		/*if (preloads.length == 0) {
 			return;
-		}
+		}*/
 		var promises = []
 		preloads.forEach(async function(preloadItem) {
 			var syncedActions = await _preloader.getActionQueueData('synced', preloadItem.object);
@@ -695,14 +692,25 @@ const exfPreloader = {};
 			})			
 			promises.push(
 				_preloader.sync(preloadItem, true, uidValues)
-				.then(function() {
+				.catch (function(error){
+					console.error(error);
+				})
+				/*.then(function() {
 					syncedActions.forEach(function(action) {
 						_actionsTable.delete(action.id);
 					})
 				}, function(error){
 					console.error(error);
-				})
+				})*/
 			)		
+		})
+		
+		//after preloads are updated, delete all actiosn with status 'synced' from the IndexedDB
+		var syncedIds = await _preloader.getActionQueueIds('synced');
+		syncedIds.forEach(function(id){
+			promises.push(
+				_actionsTable.delete(id)
+			)
 		})
 		return Promise.all(promises);		
 	}
