@@ -11,7 +11,6 @@ use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Exceptions\Actions\ActionInputError;
-use exface\Core\Exceptions\RuntimeException;
 
 /**
  * 
