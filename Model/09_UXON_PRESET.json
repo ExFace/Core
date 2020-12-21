@@ -2657,7 +2657,7 @@
         },
         {
             "CREATED_ON": "2020-05-22 10:45:03",
-            "MODIFIED_ON": "2020-05-22 10:45:03",
+            "MODIFIED_ON": "2020-12-21 12:23:13",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea9c194578004e8abc0205857feb80",
@@ -2666,11 +2666,13 @@
             "DESCRIPTION": "Will encrypt any data before sending to data source and decrypt it before showing. Just specify the the type of the raw (decrypted) data.",
             "PROTOTYPE": "exface\/Core\/DataTypes\/EncryptedDataType.php",
             "UXON": {
-                "inner_data_type": ""
+                "inner_data_type": {
+                    "alias": ""
+                }
             },
-            "WRAP_PATH": "",
+            "WRAP_PATH": "$.inner_data_type",
             "UXON_SCHEMA": "datatype",
-            "THUMBNAIL": null
+            "THUMBNAIL": ""
         },
         {
             "CREATED_ON": "2020-06-11 14:26:10",

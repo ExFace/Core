@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\DataTypes;
 
-use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Factories\DataTypeFactory;
@@ -9,6 +8,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Exceptions\EncryptionError;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * Allows to encrypt any other data using the widespread libsodium encryption library.
@@ -33,7 +33,9 @@ use exface\Core\Exceptions\EncryptionError;
  * 
  * ```
  * {
- *  "inner_data_type": "exface.Core.UxonDataConnection"
+ *  "inner_data_type": {
+ *      "alias": "exface.Core.UxonDataConnection"
+ *  }
  * }
  * 
  * ```
@@ -41,7 +43,7 @@ use exface\Core\Exceptions\EncryptionError;
  * @author Ralf Mulansky
  *
  */
-class EncryptedDataType extends AbstractDataType
+class EncryptedDataType extends StringDataType
 {
     public const ENCRYPTION_PREFIX_DEFAULT = '$$~~';
     
@@ -154,34 +156,46 @@ class EncryptedDataType extends AbstractDataType
      * Set the inner datatype
      *
      * @uxon-property inner_data_type
-     * @uxon-type metamodel:datatype
+     * @uxon-type \exface\Core\CommonLogic\DataTypes\AbstractDataType
+     * @uxon-template {"alias": ""}
      * 
      * @param $data_type_or_string
      * @return EncryptedDataType
      */
-    public function setInnerDataType($data_type_or_string) : EncryptedDataType
+    public function setInnerDataType($dataTypeOrUxonOrString) : EncryptedDataType
     {
-        if ($data_type_or_string instanceof EncryptedDataType) {
-            throw new DataTypeConfigurationError($this, 'Cannot set inner datatype "' . $data_type_or_string . '"! Inner datatype cannot be of type :"'. $this->getAliasWithNamespace(). '" !');
+        switch (true) {
+            case $dataTypeOrUxonOrString instanceof UxonObject:
+                if (! $dataTypeOrUxonOrString->hasProperty('alias')) {
+                    $datatype = DataTypeFactory::createBaseDataType($this->getWorkbench());
+                    $datatype->importUxonObject($dataTypeOrUxonOrString);
+                } else {
+                    $datatype = DataTypeFactory::createFromUxon($this->getWorkbench(), $dataTypeOrUxonOrString);
+                }
+                break;
+            case is_string($dataTypeOrUxonOrString):
+                $datatype = DataTypeFactory::createFromString($this->getWorkbench(), $dataTypeOrUxonOrString);
+                break;
+            case $dataTypeOrUxonOrString instanceof DataTypeInterface:
+                $datatype = $dataTypeOrUxonOrString;
+                break;
+            default: 
+                throw new DataTypeConfigurationError($this, 'Cannot set inner data type of "' . $this->getAliasWithNamespace() . '": expecting an instantiated data type, a selector string or a UXON model, got ' . gettype($dataTypeOrUxonOrString) . '" instead!');
         }
-        if ($data_type_or_string instanceof DataTypeInterface) {
-            $this->innerDatatype = $data_type_or_string;
-        } elseif (is_string($data_type_or_string)) {
-            $datatype = DataTypeFactory::createFromString($this->getWorkbench(), $data_type_or_string);
-            if ($datatype instanceof EncryptedDataType) {
-                throw new DataTypeConfigurationError($this, 'Cannot set inner datatype "' . $data_type_or_string . '"! Inner datatype cannot be of type :"'. $this->getAliasWithNamespace(). '" !');
-            }
-            $this->innerDatatype = $datatype;
-        } else {
-            throw new DataTypeConfigurationError($this, 'Cannot set inner datatype "' . $data_type_or_string . '"! ' . gettype($data_type_or_string) . '" given - expecting an instantiated data type or a string selector!');
+        
+        if ($datatype instanceof EncryptedDataType) {
+            throw new DataTypeConfigurationError($this, 'Cannot use an encrypted data type as inner type of "' . $this->getAliasWithNamespace() . '": please specify a regular inner data type!');
         }
+        
+        $this->innerDatatype = $datatype;
+        
         return $this;
     }
     
     protected function getInnerDataType() : DataTypeInterface
     {
         if ($this->innerDatatype === null) {
-            throw new DataTypeConfigurationError($this, 'No inner datatype set for: "' . $this->getAliasWithNamespace() . '" !');
+            $this->innerDatatype = DataTypeFactory::createBaseDataType($this->getWorkbench());
         }
         return $this->innerDatatype;
     }
@@ -241,5 +255,70 @@ class EncryptedDataType extends AbstractDataType
             $ctxtScope->setVariable("sodium", $key);
         }
         return $key;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\DataTypes\StringDataType::getValidatorRegex()
+     */
+    public function getValidatorRegex() : ?string
+    {
+        return parent::getValidatorRegex() ?? ($this->getInnerDataType() instanceof StringDataType ? $this->getInnerDataType()->getValidatorRegex() : null);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getValidationErrorCode()
+     */
+    public function getValidationErrorCode() : ?string
+    {
+        return parent::getValidationErrorCode() ?? $this->getInnerDataType()->getValidationErrorCode();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getValidationErrorText()
+     */
+    public function getValidationErrorText() : ?string
+    {
+        return parent::getValidationErrorText() ?? $this->getInnerDataType()->getValidationErrorText();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\DataTypes\StringDataType::getLengthMax()
+     */
+    public function getLengthMax()
+    {
+        return parent::getLengthMax() ?? $this->getInnerDataType() instanceof StringDataType ? $this->getInnerDataType()->getLengthMax() : null;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\DataTypes\StringDataType::getLengthMin()
+     */
+    public function getLengthMin()
+    {
+        $innerMin = $this->getInnerDataType() instanceof StringDataType ? $this->getInnerDataType()->getLengthMin() : 0;
+        return parent::getLengthMin() === 0 ? $innerMin : parent::getLengthMin();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getDefaultEditorUxon()
+     */
+    public function getDefaultEditorUxon() : UxonObject
+    {
+        $uxon = parent::getDefaultEditorUxon();
+        if ($uxon->isEmpty() || $uxon->countProperties() === 1 && $uxon->getProperty('widget_type') === $this->getWorkbench()->getConfig()->getOption('FACADES.DEFAULT_WIDGET_FOR_UNKNOWN_DATA_TYPES')) {
+            return $this->getInnerDataType()->getDefaultEditorUxon();
+        }
+        return $uxon;
     }
 }
