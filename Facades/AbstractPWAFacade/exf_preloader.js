@@ -668,9 +668,6 @@ const exfPreloader = {};
 	 */
 	this.updatePreloadData = async function() {
 		var preloads = await _preloadTable.toArray();
-		/*if (preloads.length == 0) {
-			return;
-		}*/
 		var promises = []
 		preloads.forEach(async function(preloadItem) {
 			var syncedActions = await _preloader.getActionQueueData('synced', preloadItem.object);
@@ -705,7 +702,7 @@ const exfPreloader = {};
 			)		
 		})
 		
-		//after preloads are updated, delete all actiosn with status 'synced' from the IndexedDB
+		//after preloads are updated, delete all actions with status 'synced' from the IndexedDB
 		var syncedIds = await _preloader.getActionQueueIds('synced');
 		syncedIds.forEach(function(id){
 			promises.push(
