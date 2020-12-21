@@ -371,23 +371,15 @@ const exfPreloader = {};
 		.then(function(dbContent) {
 			var data = [];
 			dbContent.forEach(function(element) {
+				//if an element got stuck in the proccessing state, check here if that sync attempt was already more than 5 minutes ago, if so, change the state of that element to offline again
+				element = _preloader.updateProccessingState(element);
+				
 				if (status && element.status != status) {
 					return;
 				}
 				if (objectAlias && element.object != objectAlias) {
 					return;
-				}
-				/*item = {
-						id: element.id,
-						action_alias: element.action,
-						object: element.object,
-						triggered: element.triggered,
-						status: element.status,
-						tries: element.tries
-				}
-				if (element.response) {
-					item.response = element.response;
-				}*/
+				}				
 				data.push(element);
 				return;
 			})
@@ -429,6 +421,9 @@ const exfPreloader = {};
 		.then(function(dbContent) {
 			var ids = [];
 			dbContent.forEach(function(element) {
+				//if an element got stuck in the proccessing state, check here if that sync attempt was already more than 5 minutes ago, if so, change the state of that element to offline again
+				element = _preloader.updateProccessingState(element);
+				
 				if (element.status != filter) {
 					return;
 				}
@@ -441,6 +436,18 @@ const exfPreloader = {};
 			return [];
 		})
 	};
+	
+	/**
+	 * If element is in proccessing state and last sync attempt was more than 5 minutes ago, change it's state to 'offline'
+	 * @return object
+	 */
+	this.updateProccessingState = function(element) {
+		if (element.status === 'proccessing' && element.lastSyncAttempt !== undefined && element.lastSyncAttempt + 3000 < (+ new Date())) {
+			element.status = 'offline';		
+			_actionsTable.update(element.id, element);
+		}
+		return element;
+	}
 	
 	/**
 	 * @return Promise
@@ -470,6 +477,23 @@ const exfPreloader = {};
 		if (element === undefined) {
 			return false
 		}
+		//if item was already synced or tried to synced since it was added to list of items to be synced, skip it, continue with next one
+		if (element.status !== 'offline' && element.satus !== 'proccessing') {
+			return true
+		}
+		//if item is in the proccess of syncing or the last try is fewer than 5 minutes ago and still ongoing, skip it
+		if (element.status === 'proccessing' && element.lastSync !== undefined && element.lastSyncAttempt + 3000 > (+ new Date())) {
+			return true
+		}
+		
+		// update Element so it has the processing state, therefor no other sync Attempt tries to sync it aswell.
+		var updatedElement = {
+				lastSyncAttempt: (+ new Date()),
+				status: 'proccessing',
+				tries: element.tries + 1
+		};		
+		var updated = await _actionsTable.update(element.id, updatedElement);
+		
 		var params = element.request.data;
 		params = _preloader.encodeJson(params);
 		try {
@@ -485,8 +509,8 @@ const exfPreloader = {};
 		} catch (error) {
 			console.error("Error sync action with id " + element.id + ". " + error.message);
 			var updated = await _actionsTable.update(element.id, {
-				tries: element.tries + 1,
-				response: error.message
+				response: error.message,
+				status: 'offline'
 			});
 			if (updated) {
 				//console.log ("Tries for Action with id " + element.id + " increased");
@@ -498,13 +522,10 @@ const exfPreloader = {};
 		var data = await response.json()
 		if (response.ok) {
 			var date = (+ new Date());
-			//await _actionsTable.delete(element.id);
-			updatedElement = element;
 			updatedElement.status = 'synced';
 			updatedElement.response = data;
-			updatedElement.tries = updatedElement.tries + 1;
 			updatedElement.synced = new Date(date).toLocaleString();
-			var updated = await _actionsTable.update(element.id, updatedElement);				
+			var updated = await _actionsTable.update(element.id, updatedElement);			
 			if (updated) {
 				//console.log ("Action with id " + element.id + " synced. Action removed from queue");
 			} else {
@@ -514,10 +535,9 @@ const exfPreloader = {};
 		}
 		if (response.statusText === 'timeout' || response.status === 0) {
 			//console.log('Timeout syncing action with id: ' + element.id);
-			var updated = _actionsTable.update(element.id, {
-				tries: element.tries + 1,
-				response: response.statusText
-			});
+			updatedElement.response = response.statusText;
+			updatedElement.status = 'offline';
+			var updated = _actionsTable.update(element.id, updatedElement);
 			if (updated) {
 				//console.log ("Tries for Action with id " + element.id + " increased");
 			} else {
@@ -527,12 +547,10 @@ const exfPreloader = {};
 		}
 		console.log('Server responded with an error syncing action with id: '+ element.id);
 		//await _actionsTable.delete(element.id);
-		//we update the entry now for test purposes, normally we delete it from the queue
-		var updated = await _actionsTable.update(element.id, {
-			status: 'error',
-			tries: element.tries + 1,
-			response: data
-		});
+		//update the entry now for test purposes, normally it gets deleted from the queue
+		updatedElement.status = 'error';
+		updatedElement.response = data;
+		var updated = await _actionsTable.update(element.id, updatedElement);
 		if (updated) {
 			//console.log ("Action with id " + element.id + " was updated");
 		} else {
@@ -650,9 +668,6 @@ const exfPreloader = {};
 	 */
 	this.updatePreloadData = async function() {
 		var preloads = await _preloadTable.toArray();
-		if (preloads.length == 0) {
-			return;
-		}
 		var promises = []
 		preloads.forEach(async function(preloadItem) {
 			var syncedActions = await _preloader.getActionQueueData('synced', preloadItem.object);
@@ -674,14 +689,25 @@ const exfPreloader = {};
 			})			
 			promises.push(
 				_preloader.sync(preloadItem, true, uidValues)
-				.then(function() {
+				.catch (function(error){
+					console.error(error);
+				})
+				/*.then(function() {
 					syncedActions.forEach(function(action) {
 						_actionsTable.delete(action.id);
 					})
 				}, function(error){
 					console.error(error);
-				})
+				})*/
 			)		
+		})
+		
+		//after preloads are updated, delete all actions with status 'synced' from the IndexedDB
+		var syncedIds = await _preloader.getActionQueueIds('synced');
+		syncedIds.forEach(function(id){
+			promises.push(
+				_actionsTable.delete(id)
+			)
 		})
 		return Promise.all(promises);		
 	}
