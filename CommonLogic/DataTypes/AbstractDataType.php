@@ -91,7 +91,7 @@ abstract class AbstractDataType implements DataTypeInterface
      *
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getName()
      */
-    public function getName()
+    public function getName() : string
     {
         if (is_null($this->name)) {
             $name = substr(get_class($this), (strrpos(get_class($this), "\\") + 1));
@@ -218,7 +218,7 @@ abstract class AbstractDataType implements DataTypeInterface
      *
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::isValidValue()
      */
-    public function isValidValue($string)
+    public function isValidValue($string) : bool
     {
         try {
             static::cast($string);
@@ -302,7 +302,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getApp()
      */
-    public function getApp()
+    public function getApp() : AppInterface
     {
         return is_null($this->app) ? $this->getWorkbench()->getApp($this->selector->getAppSelector()) : $this->app;
     }
@@ -351,7 +351,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getShortDescription()
      */
-    public function getShortDescription()
+    public function getShortDescription() : ?string
     {
         return $this->shortDescription;
     }
@@ -361,7 +361,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setShortDescription()
      */
-    public function setShortDescription($shortDescription)
+    public function setShortDescription(string $shortDescription) : DataTypeInterface
     {
         $this->shortDescription = $shortDescription;
         return $this;
@@ -372,7 +372,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getDefaultEditorUxon()
      */
-    public function getDefaultEditorUxon()
+    public function getDefaultEditorUxon() : UxonObject
     {
         if (is_null($this->defaultEditorUxon)) {
             $this->defaultEditorUxon = new UxonObject();
@@ -393,7 +393,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setDefaultEditorUxon()
      */
-    public function setDefaultEditorUxon(UxonObject $defaultEditorUxon)
+    public function setDefaultEditorUxon(UxonObject $defaultEditorUxon) : DataTypeInterface
     {
         $this->defaultEditorUxon = $defaultEditorUxon;
         return $this;
@@ -404,7 +404,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setDefaultEditorWidget()
      */
-    public function setDefaultEditorWidget(UxonObject $uxon)
+    public function setDefaultEditorWidget(UxonObject $uxon) : DataTypeInterface
     {
         return $this->setDefaultEditorUxon($uxon);
     }
@@ -414,7 +414,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getValidationErrorCode()
      */
-    public function getValidationErrorCode()
+    public function getValidationErrorCode() : ?string
     {
         return $this->validationErrorCode;
     }
@@ -427,7 +427,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * 
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setValidationErrorCode()
      */
-    public function setValidationErrorCode($validationErrorCode)
+    public function setValidationErrorCode(string $validationErrorCode) : DataTypeInterface
     {
         $this->validationErrorCode = $validationErrorCode;
         return $this;
@@ -438,7 +438,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getValidationErrorText()
      */
-    public function getValidationErrorText()
+    public function getValidationErrorText() : ?string
     {
         return $this->validationErrorText;
     }
@@ -451,7 +451,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * 
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setValidationErrorText()
      */
-    public function setValidationErrorText($string)
+    public function setValidationErrorText(string $string) : DataTypeInterface
     {
         $this->validationErrorText = $string;
         return $this;

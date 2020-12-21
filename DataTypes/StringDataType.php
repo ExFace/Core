@@ -1,11 +1,8 @@
 <?php
 namespace exface\Core\DataTypes;
 
-use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
-use exface\Core\Exceptions\UnderflowException;
 use exface\Core\Exceptions\RangeException;
-use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Exceptions\RuntimeException;
 
 /**
@@ -28,7 +25,7 @@ class StringDataType extends AbstractDataType
     /**
      * @return string|null
      */
-    public function getValidatorRegex()
+    public function getValidatorRegex() : ?string
     {
         return $this->regexValidator;
     }
@@ -189,7 +186,7 @@ class StringDataType extends AbstractDataType
         return SortingDirectionsDataType::ASC($this->getWorkbench());
     }
     /**
-     * @return integer
+     * @return int|float
      */
     public function getLengthMin()
     {
@@ -202,17 +199,17 @@ class StringDataType extends AbstractDataType
      * @uxon-property length_min
      * @uxon-type integer
      * 
-     * @param integer $number
+     * @param int|float $number
      * @return StringDataType
      */
-    public function setLengthMin($number)
+    public function setLengthMin($number) : StringDataType
     {
         $this->lengthMin = $number;
         return $this;
     }
 
     /**
-     * @return integer
+     * @return int|float|NULL
      */
     public function getLengthMax()
     {
@@ -223,12 +220,12 @@ class StringDataType extends AbstractDataType
      * Maximum legnth of the string in characters.
      * 
      * @uxon-property length_max
-     * @uxon-type integer
+     * @uxon-type int|float
      * 
      * @param integer $number
      * @return StringDataType
      */
-    public function setLengthMax($number)
+    public function setLengthMax($number) : StringDataType
     {
         $this->lengthMax = $number;
         return $this;

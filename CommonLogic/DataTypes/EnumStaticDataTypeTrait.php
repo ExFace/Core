@@ -113,7 +113,12 @@ trait EnumStaticDataTypeTrait {
         return $value;
     }    
     
-    public function isValidValue($value)
+    /**
+     * 
+     * @param unknown $value
+     * @return bool
+     */
+    public function isValidValue($value) : bool
     {
         return static::isValidStaticValue($value);
     }

@@ -470,7 +470,7 @@
         },
         {
             "CREATED_ON": "2020-12-19 16:29:09",
-            "MODIFIED_ON": "2020-12-19 16:30:27",
+            "MODIFIED_ON": "2020-12-21 14:08:07",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb9bcff0bd7fbc9bcf025041000001",
@@ -482,7 +482,9 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "InputText"
+            },
             "COPY_WITH_RELATED_OBJECT": "0",
             "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,
@@ -491,26 +493,29 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "ALIAS": "COMMENTS",
-            "DATATYPE": "0x31310000000000000000000000000000",
+            "DATATYPE": "0x11ea99f0acf95c54b00c025041000001",
             "DATA_ADDRESS": "comments",
             "OBJECT": "0x31343400000000000000000000000000",
             "FORMATTER": "",
             "DISPLAYORDER": null,
             "LABELFLAG": "0",
             "UIDFLAG": "0",
-            "HIDDENFLAG": "0",
+            "HIDDENFLAG": "1",
             "EDITABLEFLAG": "1",
             "REQUIREDFLAG": "0",
             "RELATED_OBJ": "",
             "SORTERPOS": null,
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
-            "SHORT_DESCRIPTION": "Internal comment not visible to the user itself.",
+            "SHORT_DESCRIPTION": "Internal comment not visible to the user itself - just for user admins. This information is stored encrypted!",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": {
-                "length_max": 65535
+                "length_max": 65535,
+                "inner_data_type": {
+                    "alias": "exface.Core.Text"
+                }
             }
         }
     ],
