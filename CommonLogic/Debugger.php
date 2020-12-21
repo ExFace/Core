@@ -19,6 +19,12 @@ class Debugger implements DebuggerInterface
     function __construct(LoggerInterface $logger)
     {
         $this->logger = $logger;
+        
+        // register logger
+        $handler = new \Monolog\ErrorHandler($this->logger);
+        $handler->registerErrorHandler([], false);
+        $handler->registerExceptionHandler();
+        $handler->registerFatalHandler();
     }
 
     /**
@@ -74,22 +80,11 @@ HTML;
     {
         $this->prettify_errors = \exface\Core\DataTypes\BooleanDataType::cast($value);
         if ($this->prettify_errors) {
-            $this->registerHandler();
+            // Debug::enable(E_ALL & ~E_NOTICE);
+            DebuggerExceptionHandler::register();
+            ErrorHandler::register();
         }
         return $this;
-    }
-
-    protected function registerHandler()
-    {
-        // Debug::enable(E_ALL & ~E_NOTICE);
-        DebuggerExceptionHandler::register();
-        ErrorHandler::register();
-        
-        // register logger
-        $handler = new \Monolog\ErrorHandler($this->logger);
-        $handler->registerErrorHandler([], false);
-        $handler->registerExceptionHandler();
-        $handler->registerFatalHandler();
     }
 
     /**
