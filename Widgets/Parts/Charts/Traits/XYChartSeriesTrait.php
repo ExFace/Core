@@ -248,7 +248,7 @@ trait XYChartSeriesTrait
                 // caption as the series. This way, if the user sets a series caption
                 // and omits the column (which happens most of the time), the column
                 // and thus the axis will get the caption of the series.
-                if ($this->hasCaption()) {
+                if ($this->hasCaption() && $this->getValueColumnDimension() == Chart::AXIS_X) {
                     $col->setCaption($this->getCaption());
                 }
             }
@@ -270,7 +270,7 @@ trait XYChartSeriesTrait
                 // caption as the series. This way, if the user sets a series caption
                 // and omits the column (which happens most of the time), the column
                 // and thus the axis will get the caption of the series.
-                if ($this->hasCaption()) {
+                if ($this->hasCaption() && $this->getValueColumnDimension() == Chart::AXIS_Y) {
                     $col->setCaption($this->getCaption());
                 }
             }
