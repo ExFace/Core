@@ -2886,8 +2886,14 @@ JS;
         
                 function(){
                     var data = '';
-                    if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
-                        var selectedRow = {$this->buildJsEChartsVar()}._oldSelection;
+                    try {
+                        var oldSelection = {$this->buildJsEChartsVar()}._oldSelection;
+                    } catch (e) {
+                        console.warn('Cannot get value of chart:', e);
+                        return '';
+                    }
+                    if (oldSelection != undefined) {
+                        var selectedRow = oldSelection;
                         if (selectedRow && '{$key}' in selectedRow) {
                             data = selectedRow["{$key}"];
                         }
