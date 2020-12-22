@@ -100,7 +100,8 @@ class AliasGeneratingBehavior extends AbstractBehavior
         "ü"=>"ue", 
         "ß"=>"ss", 
         " "=>"_",
-        "&" => "and"
+        "&" => "_and_",
+        "." => '' // remove dots as they are normally used as alias namespace delimiters
     ];
     
     private $namespaceCache = [];
