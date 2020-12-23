@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Formulas;
 
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\Factories\DataTypeFactory;
+
 class Round extends \exface\Core\CommonLogic\Model\Formula
 {
 
@@ -16,5 +19,14 @@ class Round extends \exface\Core\CommonLogic\Model\Formula
             return $number;
         }
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::getDataType()
+     */
+    public function getDataType()
+    {
+        return DataTypeFactory::createFromPrototype($this->getWorkbench(), NumberDataType::class);
+    }
 }
-?>
