@@ -929,6 +929,23 @@
             },
             "ALIAS": "ImagePath",
             "SHORT_DESCRIPTION": "File path to an image"
+        },
+        {
+            "CREATED_ON": "2020-12-23 16:50:22",
+            "MODIFIED_ON": "2020-12-23 16:51:16",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba058909b49cca058025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Percent",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/PercentDataType.php",
+            "CONFIG_UXON": {
+                "": ""
+            },
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": null,
+            "ALIAS": "Percent",
+            "SHORT_DESCRIPTION": ""
         }
     ],
     "totals_rows": [],
