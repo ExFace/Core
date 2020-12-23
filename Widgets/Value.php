@@ -83,6 +83,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function setAttributeAlias($value)
     {
         $this->attribute_alias = $value;
+        $this->data_type = null;
         return $this;
     }
 
@@ -107,9 +108,9 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
          * } else
          */
         
-        if ($this->isBoundToAttribute() === true) {
-            $prefillExpr = $this->getPrefillExpression($data_sheet, $this->getAttributeAlias());
-            if ($prefillExpr !== null) {
+        if ($this->isBoundToDataColumn() || $this->isBoundToAttribute()) {
+            $prefillExpr = $this->getPrefillExpression($data_sheet, $this->getAttributeAlias() ?? $this->getDataColumnName());
+            if ($prefillExpr !== null && ! $data_sheet->getColumns()->getByExpression($prefillExpr)) {
                 $data_sheet->getColumns()->addFromExpression($prefillExpr);
             }
         }
@@ -137,7 +138,6 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         
         $widget_object = $this->getMetaObject();
         $prefill_object = $prefillData->getMetaObject();
-        $attribute = $this->getMetaObject()->getAttribute($expression);
         
         // See if we are prefilling with the same object as the widget is based
          // on (or a derivative). E.g. if we are prefilling a widget based on FILE,
@@ -147,7 +147,8 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
          if ($prefill_object->is($widget_object)) {
              // If we are looking for attributes of the object of this widget, then just return the attribute_alias
              return $expression;
-         } else {
+         } elseif ($widget_object->hasAttribute($expression)) {
+             $attribute = $this->getMetaObject()->getAttribute($expression);
              // If not, we are dealing with a prefill with data of another object. It only makes sense to try to prefill here,
              // if the widgets shows an attribute, because then we have a chance to find a relation between the widget's object
              // and the prefill object
@@ -326,12 +327,14 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     
     /**
      * Returns TRUE if this widget references a meta attribute and FALSE otherwise.
-     * 
+     *
      * @return boolean
      */
     public function isBoundToAttribute() : bool
     {
-        return $this->getAttributeAlias() ? true : false;
+        $alias = $this->getAttributeAlias();
+        return $alias !== null
+            && $alias !== '';
     }
 
     /**
@@ -379,12 +382,23 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function getValueDataType()
     {
-        if (is_null($this->data_type)) {
+        if ($this->data_type === null) {
             $expr = $this->getValueExpression();
-            if (! $expr || $expr->isEmpty() || ($expr->isConstant() && $this->isBoundToAttribute())) {
-                $expr = ExpressionFactory::createFromString($this->getWorkbench(), $this->getAttributeAlias(), $this->getMetaObject());
-            }
-            $this->data_type = $expr->getDataType();
+            if ($expr && ! $expr->isEmpty() && ! $expr->isConstant()) {
+                $this->data_type = $expr->getDataType();
+            } else {
+                switch (true) {
+                    case $this->isBoundToAttribute():
+                        $this->data_type = ExpressionFactory::createFromString($this->getWorkbench(), $this->getAttributeAlias(), $this->getMetaObject())->getDataType();
+                        break;
+                    case $expr:
+                        $this->data_type = $expr->getDataType();
+                        break;
+                    default:
+                        $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
+                        break;
+                }
+            } 
         }
         return $this->data_type;
     }
@@ -490,10 +504,17 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function getDataColumnName()
     {
-        if (is_null($this->data_column_name)) {
-            $this->data_column_name = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getAttributeAlias());
+        if ($this->data_column_name === null) {
+            if ($this->isBoundToAttribute()) {
+                $this->data_column_name = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getAttributeAlias());
+            } elseif ($this->hasValue()) {
+                $expr = $this->getValueExpression();
+                if (! $expr->isEmpty() && ! $expr->isReference()) {
+                    $this->data_column_name = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($expr->toString());
+                }
+            }
         }
-        return $this->data_column_name;
+        return $this->data_column_name ?? '';
     }
     
     /**
@@ -601,6 +622,10 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                 $this->getValueWidgetLink();
             }
         }
+        
+        // Reset cached data type to make sure it is recomputed with the new value expression.
+        $this->data_type = null;
+        
         return $this;
     }
     
