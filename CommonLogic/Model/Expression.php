@@ -726,11 +726,21 @@ class Expression implements ExpressionInterface
      */
     public static function detectFormula($value) : bool
     {
-        $value = trim($value);
-        if ($value && substr($value, 0, 1) === '=' && substr($value, 1, 1) !== '=' && substr($value, 1, 2) !== '=' && strpos($value, '(') > 0) {
-            return true;
+        return self::detectCalculation($value) && strpos($value, '(') > 0;
+    }
+    
+     /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::detectCalculation()
+     */
+    public static function detectCalculation($value) : bool
+    {
+        if (! is_string($value)) {
+            return false;
         }
-        return false;
+        $value = trim($value);
+        return $value && substr($value, 0, 1) === '=' && substr($value, 1, 1) !== '=';
     }
     
     /**
@@ -740,11 +750,7 @@ class Expression implements ExpressionInterface
      */
     public static function detectReference($value) : bool
     {
-        $value = trim($value);
-        if ($value && substr($value, 0, 1) === '=' && substr($value, 1, 1) !== '=' && ! self::detectFormula($value)) {
-            return true;
-        }
-        return false;
+        return self::detectCalculation($value) && ! self::detectFormula($value);
     }
     
     /**

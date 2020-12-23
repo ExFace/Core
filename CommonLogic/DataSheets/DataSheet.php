@@ -597,12 +597,16 @@ class DataSheet implements DataSheetInterface
         
         // Look for columns, that need calculation and perform that calculation
         foreach ($this->getColumns() as $name => $col) {
-            if ($col->getExpressionObj()->isFormula() === true) {
-                $expr = $col->getExpressionObj();
-            } elseif ($col->getFormatter() !== null && $col->getFormatter()->isFormula() === true) {
-                $expr = $col->getFormatter();
-            } else {
-                continue;
+            switch (true) {
+                case $col->getExpressionObj()->isFormula() === true:
+                case $col->getExpressionObj()->isStatic() === true:
+                    $expr = $col->getExpressionObj();
+                    break;
+                case $col->getFormatter() !== null && $col->getFormatter()->isFormula() === true:
+                    $expr = $col->getFormatter();
+                    break;
+                default:
+                    continue 2;
             }
             
             $vals = $expr->evaluate($this);

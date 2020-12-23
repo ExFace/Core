@@ -31,6 +31,7 @@ use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\CommonLogic\Model\Expression;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -100,10 +101,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * The attribute_alias can contain a relation path and/or an optional aggregator: e.g.
      * "attribute_alias": "ORDER__POSITION__VALUE:SUM"
      *
-     * WARNING: This field currently also accepts formulas and strings. However, this feature
-     * is not quite stable and it is not guaranteed for it to remain in future (it is more
-     * likely that formulas and widget links will be moved to a new generalized property of the
-     * DataColumn - presumabely "expression")
+     * **WARNING:** In earlier versions this field used to accept calculated values like formulas.
+     * Don't do this anymore: use `calculation` instead. For the sake of backwards compatibility
+     * some calculations will still work in the `attribute_alias` but this fallback is not stable!
      *
      * @uxon-property attribute_alias
      * @uxon-type metamodel:attribute
@@ -113,7 +113,11 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function setAttributeAlias($value)
     {
         $this->attribute = null;
-        $this->attribute_alias = $value;
+        if (Expression::detectCalculation($value)) {
+            $this->setCalculation($value);
+        } else {
+            $this->attribute_alias = $value;
+        }
         return $this;
     }
     
@@ -287,9 +291,15 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                 // Again, remember, that this code is only taking care of autogenerating cell
                 // widgets. If a widget is ecplicitly defined, it will be used as expected.
                 $this->cellWidget = WidgetFactory::create($this->getPage(), ($this->isEditable() ? 'Input' : 'Display'), $this);
+                
+                // In older versions, formulas could be placed in `attribute_alias`. This is fallback
+                // to support these older UXON models. Currently, this should never happen.
+                if ($this->getAttributeAlias() && $this->cellWidget instanceof iShowSingleAttribute) {
+                    $this->cellWidget->setAttributeAlias($this->getAttributeAlias());
+                }
             }
             
-            if ($this->getDataColumnName() !== '') {
+            if ($this->isBoundToDataColumn() && $this->cellWidget instanceof iShowDataColumn) {
                 $this->cellWidget->setDataColumnName($this->getDataColumnName());
             }
             
@@ -297,8 +307,11 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                 $this->cellWidget->setWidth($this->getWidth());
             }
             
-            if ($this->isCalculated() && ! $this->getCalculationExpression()->isEmpty()) {
-                $this->cellWidget->setValue($this->getCalculationExpression());
+            if ($this->isCalculated()) {
+                $expr = $this->getCalculationExpression();
+                if (! $expr->isEmpty()) {
+                    $this->cellWidget->setValue($expr);
+                }
             }
             
             // Some data types require special treatment within a table to make all rows comparable.
@@ -497,6 +510,12 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function getAggregator() : ?AggregatorInterface
     {
         if ($this->aggregate_function === null) {
+            if ($this->isCalculated()) {
+                return null;
+            }
+            if (! $this->isBoundToAttribute()) {
+                return null;
+            }
             if ($aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $this->getAttributeAlias())) {
                 $this->setAggregator($aggr);
             }
@@ -600,10 +619,17 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function getDataColumnName()
     {
-        if (is_null($this->data_column_name)) {
-            $this->data_column_name = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getAttributeAlias());
+        if ($this->data_column_name === null) {
+            switch (true) {
+                case $alias = $this->getAttributeAlias():
+                    $this->data_column_name = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($alias);
+                    break;
+                case $this->isCalculated() && ! $this->getCalculationExpression()->isEmpty() && ! $this->getCalculationExpression()->isReference():
+                    $this->data_column_name = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getCalculationExpression()->toString());
+                    break;
+            }
         }
-        return $this->data_column_name;
+        return $this->data_column_name ?? '';
     }
 
     /**
@@ -696,7 +722,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function isBoundToAttribute() : bool
     {
-        return $this->getAttributeAlias() !== null && $this->getAttributeAlias() !== '' ? true : false;
+        $alias = $this->getAttributeAlias();
+        return $alias !== null 
+            && $alias !== '';
     }
     
     /**
@@ -774,6 +802,10 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * - `=0` will make all cells display "0"
      * - `=NOW()` will place the current date in every cell
      * - `=some_widget_id` will place the current value of the widget with the given id in the cells
+     * 
+     * NOTE: `calculation` can be used used without an `attribute_alias` producing a calculated column,
+     * that does not affect subsequent actions or in addition to an `attribute_alias`, which will place
+     * the calculated value in the attribute's column for further processing.
      * 
      * @uxon-property calculation
      * @uxon-type metamodel:expression

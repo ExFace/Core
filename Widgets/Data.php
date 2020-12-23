@@ -34,7 +34,7 @@ use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Interfaces\Widgets\iHaveSorters;
 use exface\Core\Widgets\Parts\DataFooter;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\Interfaces\Widgets\iShowDataColumn;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -146,11 +146,15 @@ class Data
         // Columns & Totals
         if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
             foreach ($this->getColumns() as $col) {
+                // If it's a calculated column, add the corresponding expression column
+                if ($col->isCalculated() && ! $col->getCalculationExpression()->isEmpty() && ! $col->getCalculationExpression()->isReference()) {
+                    $data_sheet->getColumns()->addFromExpression($col->getCalculationExpression());
+                }
+                
                 $cellWidget = $col->getCellWidget();
-                // Only add columns, that actually have content. The other columns exist only in the widget
-                // TODO This check will get more complicated, once the content can be specified not only via attribute_alias
-                // but also with properties like formula, etc.
-                if (! ($cellWidget instanceof iShowSingleAttribute && $cellWidget->isBoundToAttribute())) {
+                
+                // Don't add anything to the data sheet if the widget cannot even use it
+                if (! ($cellWidget instanceof iShowDataColumn && $cellWidget->isBoundToDataColumn())) {
                     continue;
                 }
                 
@@ -165,11 +169,25 @@ class Data
                     $data_column->getTotals()->add($total);
                 }
             }
-        }
-        
-        // Aggregations
-        foreach ($this->getAggregations() as $attr) {
-            $data_sheet->getAggregations()->addFromString($attr);
+            
+            // Aggregations
+            foreach ($this->getAggregations() as $attr) {
+                $data_sheet->getAggregations()->addFromString($attr);
+            }
+            
+            // Filters and sorters only if lazy loading is disabled!
+            if (! $this->getLazyLoading()) {
+                // Add filters if they have values
+                foreach ($this->getFilters() as $filter_widget) {
+                    if ($filter_widget->getValue()) {
+                        $data_sheet->getFilters()->addConditionFromString($filter_widget->getAttributeAlias(), $filter_widget->getValue(), $filter_widget->getComparator());
+                    }
+                }
+                // Add sorters
+                foreach ($this->getSorters() as $sorter_obj) {
+                    $data_sheet->getSorters()->addFromString($sorter_obj->getProperty('attribute_alias'), $sorter_obj->getProperty('direction'));
+                }
+            }
         }
         
         // Pagination
@@ -178,20 +196,6 @@ class Data
         }
         if ($this->getPaginator()->getCountAllRows() === false) {
             $data_sheet->setAutoCount(false);
-        }
-        
-        // Filters and sorters only if lazy loading is disabled!
-        if (! $this->getLazyLoading()) {
-            // Add filters if they have values
-            foreach ($this->getFilters() as $filter_widget) {
-                if ($filter_widget->getValue()) {
-                    $data_sheet->getFilters()->addConditionFromString($filter_widget->getAttributeAlias(), $filter_widget->getValue(), $filter_widget->getComparator());
-                }
-            }
-            // Add sorters
-            foreach ($this->getSorters() as $sorter_obj) {
-                $data_sheet->getSorters()->addFromString($sorter_obj->getProperty('attribute_alias'), $sorter_obj->getProperty('direction'));
-            }
         }
         
         return $data_sheet;
