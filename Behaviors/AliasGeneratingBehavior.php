@@ -100,8 +100,7 @@ class AliasGeneratingBehavior extends AbstractBehavior
         "ü"=>"ue", 
         "ß"=>"ss", 
         " "=>"_",
-        "&" => "_and_",
-        //"." => '' // remove dots as they are normally used as alias namespace delimiters
+        "&" => "_and_"
     ];
     
     private $namespaceCache = [];
@@ -227,7 +226,9 @@ class AliasGeneratingBehavior extends AbstractBehavior
                 }
                 
                 if ($namespace !== null && $namespace !== '') {
-                    $srcVal = $namespace . $this->getNamespaceSeparator() . trim($srcVal);
+                    // Make sure the alias itself does not have any namespace separators!
+                    $srcVal = str_replace($this->getNamespaceSeparator(), '', trim($srcVal));
+                    $srcVal = $namespace . $this->getNamespaceSeparator() . $srcVal;
                 }
             }
             
