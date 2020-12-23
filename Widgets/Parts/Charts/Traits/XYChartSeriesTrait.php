@@ -356,14 +356,19 @@ trait XYChartSeriesTrait
                         
                 }
                 break;
-            //when no attribute_alias or axisNo given, check if already axes exist and if so, take the first
-            case empty($chart->getAxes($dimension)) === false:
-                $axis = $chart->getAxes($dimension)[0];
-                break;
-            //when columnId given, create axis base on that columnId
+            // when columnId given, create axis base on that columnId
             case $columnId !== null:
                 $axis = $chart->createAxisFromColumnId($columnId);
+                $axis->setPosition($secondaryAxisPosition);
+                if ($this->hasCaption()) {
+                    $axis->setCaption($this->getCaption());
+                }
                 $chart->addAxis($dimension, $axis);
+                break;
+            // when no attribute_alias or columnId or axisNo given, check if 
+            // already axes exist and if so, take the first
+            case empty($chart->getAxes($dimension)) === false:
+                $axis = $chart->getAxes($dimension)[0];
                 break;
         }
         return $axis;

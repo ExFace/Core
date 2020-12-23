@@ -2,7 +2,6 @@
 namespace exface\Core\Widgets\Parts\Charts;
 
 use exface\Core\DataTypes\DateDataType;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\TimestampDataType;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
@@ -262,7 +261,9 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     public function getCaption() : ?string
     {
         if ($this->getCaptionSetExplicitly() === null) {
-            $this->setCaption($this->getDataColumn()->getCaption());
+            if (($colCaption = $this->getDataColumn()->getCaption()) !== null) {
+                $this->setCaption($colCaption);
+            }
         }
         return $this->getCaptionSetExplicitly();
     }
@@ -513,6 +514,18 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
             return $this->getDataColumn()->isBoundToAttribute();
         }
         return $this->attributeAlias !== null;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isBoundToDataColumn() : bool
+    {
+        if ($this->data_column !== null || $this->data_column_id !== null) {
+            return $this->getDataColumn()->isBoundToDataColumn();
+        }
+        return $this->isBoundToAttribute();
     }
     
     /**
