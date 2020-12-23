@@ -2,6 +2,7 @@
 namespace exface\Core\Formulas;
 
 use exface\Core\DataTypes\DateDataType;
+use exface\Core\Factories\DataTypeFactory;
 
 /**
  * Returns the current date with the option to define a specific format.
@@ -30,5 +31,15 @@ class Today extends Now
     protected function getFormatDefault() : string
     {
         return DateDataType::DATE_ICU_FORMAT_INTERNAL;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Formulas\Now::getDataType()
+     */
+    public function getDataType()
+    {
+        return DataTypeFactory::createFromPrototype($this->getWorkbench(), DateDataType::class);
     }
 }

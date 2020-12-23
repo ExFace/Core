@@ -2,23 +2,37 @@
 namespace exface\Core\Formulas;
 
 use exface\Core\CommonLogic\Model\Formula;
-use exface\Core\DataTypes\DateDataType;
 use exface\Core\Factories\DataTypeFactory;
+use exface\Core\DataTypes\DateTimeDataType;
 
 class Adddays extends Formula
 {
-
-    function run($date, $days_to_add = null)
+    /**
+     * 
+     * @param string $date
+     * @param int $days_to_add
+     * @return string
+     */
+    function run($date, int $days_to_add = null)
     {
-        if (! $date)
+        if (! $date) {
             return;
-        
-        $date = new \DateTime($date);
+        }
+        $date = new Date(DateTimeDataType::cast($date));
         $interval = ($days_to_add < 0 ? 'N' : 'P') . intval($days_to_add) . 'D';
         $date->add(new \DateInterval($interval));
-        $dataType = DataTypeFactory::createFromPrototype($this->getWorkbench(), DateDataType::class);
                 
-        return $dataType->formatDate($date);
+        return DateTimeDataType::formatDateNormalized($date);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::getDataType()
+     */
+    public function getDataType()
+    {
+        return DataTypeFactory::createFromPrototype($this->getWorkbench(), DateTimeDataType::class);
     }
 }
 ?>

@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Formulas;
 
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\Factories\DataTypeFactory;
+
 /**
  * Sums all its arguments.
  * Analogous to Excel's SUM() function.
@@ -19,6 +22,16 @@ class Sum extends \exface\Core\CommonLogic\Model\Formula
             $return += func_get_arg($i);
         }
         return $return;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::getDataType()
+     */
+    public function getDataType()
+    {
+        return DataTypeFactory::createFromPrototype($this->getWorkbench(), NumberDataType::class);
     }
 }
 ?>
