@@ -1570,13 +1570,13 @@
         },
         {
             "CREATED_ON": "2019-11-08 16:10:24",
-            "MODIFIED_ON": "2020-11-23 11:52:08",
+            "MODIFIED_ON": "2020-12-28 12:43:10",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea0241f45acb2cb7580205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Bar chart without axis caption",
-            "DESCRIPTION": "The Y-axis has not caption to save space. Make sure, y_attribute_alias of the series and attribute_alias of the axis match!",
+            "DESCRIPTION": "The Y-axis has no caption to save space - in most cases it is pretty obvious, what the Y-axis shows because it's values are mostly descriptions or names. Make sure, y_attribute_alias of the series and attribute_alias of the axis match!",
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
             "UXON": {
                 "widget_type": "Chart",
@@ -2127,7 +2127,7 @@
         },
         {
             "CREATED_ON": "2020-02-08 09:33:38",
-            "MODIFIED_ON": "2020-12-10 10:20:01",
+            "MODIFIED_ON": "2020-12-28 12:41:46",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4a560b505cb9b2cfe4b318306b9a",
@@ -2138,7 +2138,7 @@
             "UXON": {
                 "widget_type": "DataTree",
                 "object_alias": "",
-                "tree_parent_id_attribute_alias": "",
+                "tree_parent_relation_alias": "",
                 "tree_folder_flag_attribute_alias": "",
                 "lazy_load_tree_levels": true,
                 "tree_root_uid": "NULL",
@@ -2165,7 +2165,7 @@
         },
         {
             "CREATED_ON": "2020-02-08 09:48:43",
-            "MODIFIED_ON": "2020-12-10 10:20:12",
+            "MODIFIED_ON": "2020-12-28 12:41:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4a5827419f81b2cfe4b318306b9a",
@@ -2176,7 +2176,7 @@
             "UXON": {
                 "widget_type": "DataTree",
                 "object_alias": "",
-                "tree_parent_id_attribute_alias": "",
+                "tree_parent_relation_alias": "",
                 "tree_folder_flag_attribute_alias": "",
                 "paginate": false,
                 "lazy_load_tree_levels": false,
@@ -3728,6 +3728,23 @@
             "WRAP_PATH": "$.widgets[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/widget_group_readonly.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-23 17:06:54",
+            "MODIFIED_ON": "2020-12-23 17:06:54",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebadeee06af086adee025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Calculated data column with formula",
+            "DESCRIPTION": "Use a formula (e.g. `=Now()`) or a widget link (e.g. `=widget_id!column` for `calculation`. \n\nYou can also an `attribute_alias` to place the calculated value in place of an attribute in the resulting data - e.g. the input data for an action. The combination of `attribute_alias` and `calculation` can be used to calculate default values in editable table.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataColumn.php",
+            "UXON": {
+                "calculation": "="
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datacolumn_calculated.gif"
         }
     ],
     "totals_rows": [],
