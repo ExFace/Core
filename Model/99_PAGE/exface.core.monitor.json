@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-11-17 13:30:20",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-12-21 17:06:37",
+    "modified_on": "2020-12-28 12:07:15",
     "contents": {
         "widget_type": "SplitVertical",
         "object_alias": "exface.Core.MONITOR_ACTION",
@@ -156,7 +156,7 @@
                                                 "type": "line",
                                                 "x_attribute_alias": "DATE",
                                                 "y_attribute_alias": "DURATION:AVG",
-                                                "caption": "Latency"
+                                                "caption": "\u00d8 Dur. (ms)"
                                             }
                                         ],
                                         "axis_x": [
