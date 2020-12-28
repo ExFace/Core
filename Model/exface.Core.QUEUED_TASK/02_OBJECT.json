@@ -81,9 +81,9 @@
     "rows": [
         {
             "CREATED_ON": "2020-09-22 13:06:11",
-            "MODIFIED_ON": "2020-11-04 13:36:19",
+            "MODIFIED_ON": "2020-12-28 13:14:32",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea8f3c9ff2c5e68f3c8c04ba002958",
             "READABLE_FLAG": "1",
             "WRITABLE_FLAG": "1",
@@ -104,62 +104,122 @@
                         "tabs": [
                             {
                                 "caption": "Info",
+                                "readonly": true,
                                 "widgets": [
                                     {
-                                        "attribute_alias": "STATUS",
-                                        "widget_type": "Text"
+                                        "widget_type": "WidgetGroup",
+                                        "caption": "Message",
+                                        "widgets": [
+                                            {
+                                                "attribute_alias": "TASK_ASSIGNED_ON"
+                                            },
+                                            {
+                                                "attribute_alias": "OWNER__USERNAME"
+                                            },
+                                            {
+                                                "attribute_alias": "PRODUCER"
+                                            },
+                                            {
+                                                "attribute_alias": "MESSAGE_ID",
+                                                "id": "message_id_field"
+                                            },
+                                            {
+                                                "attribute_alias": "TOPICS"
+                                            },
+                                            {
+                                                "attribute_alias": "USER_AGENT",
+                                                "widget_type": "Text"
+                                            }
+                                        ]
                                     },
                                     {
-                                        "attribute_alias": "TASK_ASSIGNED_ON",
-                                        "widget_type": "Text"
+                                        "widget_type": "WidgetGroup",
+                                        "caption": "Task summary",
+                                        "widgets": [
+                                            {
+                                                "attribute_alias": "OBJECT_ALIAS"
+                                            },
+                                            {
+                                                "attribute_alias": "ACTION_ALIAS"
+                                            }
+                                        ]
                                     },
                                     {
-                                        "attribute_alias": "OWNER__USERNAME",
-                                        "widget_type": "Text"
+                                        "widget_type": "WidgetGroup",
+                                        "caption": "Execution",
+                                        "widgets": [
+                                            {
+                                                "attribute_alias": "QUEUE__NAME"
+                                            },
+                                            {
+                                                "attribute_alias": "STATUS"
+                                            },
+                                            {
+                                                "attribute_alias": "RESULT_CODE"
+                                            },
+                                            {
+                                                "attribute_alias": "RESULT"
+                                            },
+                                            {
+                                                "attribute_alias": "ERROR_LOGID"
+                                            },
+                                            {
+                                                "attribute_alias": "ERROR_MESSAGE"
+                                            }
+                                        ]
                                     },
                                     {
-                                        "attribute_alias": "TOPICS",
-                                        "widget_type": "Text"
-                                    },
-                                    {
-                                        "attribute_alias": "OBJECT_ALIAS",
-                                        "widget_type": "Text"
-                                    },
-                                    {
-                                        "attribute_alias": "ACTION_ALIAS",
-                                        "widget_type": "Text"
-                                    },
-                                    {
-                                        "attribute_alias": "PRODUCER",
-                                        "widget_type": "Text"
-                                    },
-                                    {
-                                        "attribute_alias": "MESSAGE_ID",
-                                        "widget_type": "Text"
-                                    },
-                                    {
-                                        "attribute_alias": "USER_AGENT",
-                                        "widget_type": "Text"
-                                    },
-                                    {
-                                        "attribute_alias": "QUEUE__NAME",
-                                        "widget_type": "Text"
-                                    },
-                                    {
-                                        "widget_type": "Text",
-                                        "attribute_alias": "RESULT_CODE"
-                                    },
-                                    {
-                                        "widget_type": "Text",
-                                        "attribute_alias": "RESULT"
-                                    },
-                                    {
-                                        "widget_type": "Text",
-                                        "attribute_alias": "ERROR_LOGID"
-                                    },
-                                    {
-                                        "widget_type": "Text",
-                                        "attribute_alias": "ERROR_MESSAGE"
+                                        "widget_type": "WidgetGroup",
+                                        "width": "max",
+                                        "caption": "History",
+                                        "widgets": [
+                                            {
+                                                "widget_type": "DataTree",
+                                                "height": 10,
+                                                "object_alias": "exface.Core.QUEUED_TASK",
+                                                "tree_parent_relation_alias": "PARENT_ITEM",
+                                                "tree_folder_flag_attribute_alias": "HAS_SUCCESSOR",
+                                                "paginate": false,
+                                                "lazy_load_tree_levels": false,
+                                                "filters": [
+                                                    {
+                                                        "attribute_alias": "MESSAGE_ID",
+                                                        "value": "=message_id_field",
+                                                        "required": true,
+                                                        "input_widget": {
+                                                            "widget_type": "InputHidden"
+                                                        }
+                                                    }
+                                                ],
+                                                "sorters": [
+                                                    {
+                                                        "attribute_alias": "CREATED_ON",
+                                                        "direction": "asc"
+                                                    }
+                                                ],
+                                                "columns": [
+                                                    {
+                                                        "attribute_alias": "ENQUEUED_ON",
+                                                        "align": "left"
+                                                    },
+                                                    {
+                                                        "attribute_alias": "CREATED_BY_USER__LABEL"
+                                                    },
+                                                    {
+                                                        "attribute_alias": "QUEUE__LABEL"
+                                                    },
+                                                    {
+                                                        "attribute_alias": "STATUS"
+                                                    },
+                                                    {
+                                                        "attribute_alias": "RESULT"
+                                                    },
+                                                    {
+                                                        "attribute_alias": "ERROR_MESSAGE"
+                                                    }
+                                                ]
+                                            }
+                                        ]
                                     }
                                 ]
                             },
