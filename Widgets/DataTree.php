@@ -129,7 +129,7 @@ class DataTree extends DataTable
      * If not specified, the first visible column will be used automatically.
      * 
      * @uxon-property tree_column_id
-     * @uxon-type string
+     * @uxon-type uxon:$..id
      *
      * @param string $value   
      * @return DataTree         
@@ -145,17 +145,6 @@ class DataTree extends DataTable
      */
     public function getTreeFolderFlagAttributeAlias()
     {
-        if (! $this->tree_folder_flag_attribute_alias) {
-            $flags = $this->getMetaObject()->getAttributes()->filter(function(MetaAttributeInterface $attr){
-                return $attr->getDataType()->is(FlagTreeFolderDataType::getPrototypeClassName());
-            });
-            if ($flags->count() == 1) {
-                $flag = $flags->getFirst();
-                $this->setTreeFolderFlagAttributeAlias($flag->getAlias());
-            } else {
-                throw new WidgetConfigurationError($this, 'More than one tree folder flag found for the treeGrid "' . $this->getId() . '". Please specify "tree_folder_flag_attribute_alias" in the description of the widget!', '6T91BRG');
-            }
-        }
         return $this->tree_folder_flag_attribute_alias;
     }
     
@@ -177,7 +166,9 @@ class DataTree extends DataTable
      */
     public function setTreeFolderFlagAttributeAlias(string $value) : DataTree
     {
-        $this->tree_folder_flag_attribute_alias = $value;
+        if ($value !== '') {
+            $this->tree_folder_flag_attribute_alias = $value;
+        }
         return $this;
     }
 
@@ -288,7 +279,7 @@ class DataTree extends DataTable
      * The attribute is also automatically added as a hidden column!
      *
      * @uxon-property tree_parent_relation_alias
-     * @uxon-type metamodel:attribute
+     * @uxon-type metamodel:relation
      *
      * @param string $value     
      * @return DataTree       
