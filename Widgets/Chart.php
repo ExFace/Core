@@ -105,6 +105,8 @@ class Chart extends AbstractWidget implements
      */
     private $hide_footer = false;
     
+    private $hide_axes = null;
+    
     /**
      * @var bool
      */
@@ -253,6 +255,10 @@ class Chart extends AbstractWidget implements
     {
         $var = 'axes_' . $x_or_y;
         array_push($this->$var, $axis);
+        /*
+        if ($this->hide_axes !== null) {
+            $axis->setHidden($this->hide_axes);
+        }*/
         return $this;
     }
     
@@ -591,6 +597,7 @@ class Chart extends AbstractWidget implements
      */
     public function setHideAxes(bool $trueOrFalse) : Chart
     {
+        $this->hide_axes = $trueOrFalse;
         if ($trueOrFalse === true) {
             foreach ($this->getAxes() as $axis) {
                 $axis->setHidden(true);
