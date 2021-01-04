@@ -1548,8 +1548,12 @@ JS;
         {$nameLocation}
         {$inverse}
         type: '{$axisTypeLower}',
-        splitLine: { show: $grid },
-        splitArea: {show: $gridArea},
+        splitLine: {
+            show: $grid 
+        },
+        splitArea: {
+            show: $gridArea
+        },
         position: '{$position}',
         show: false,
         nameGap: {$nameGap},
@@ -1994,7 +1998,7 @@ JS;
         position: "{$postion}",
         index: "{$axis->getIndex()}",
         name: "{$axis->getDataColumn()->getDataColumnName()}",
-        rotation : {$rotated},
+        rotation: {$rotated},
     };
     
 JS;
@@ -2450,7 +2454,9 @@ JS;
     }
     
     /**
-     * function to build overlay and show given message
+     * Returns a JS snippet (with a trailing `;`) to show an overlay with a given message
+     * 
+     * The method can be overridden in facade-specific implementations.
      *
      * @param string $message
      * @return string
@@ -2465,7 +2471,7 @@ JS;
     }
     
     /**
-     * function to hide overlay message
+     * Returns a JS snippet to hide overlay message
      *
      * @return string
      */
