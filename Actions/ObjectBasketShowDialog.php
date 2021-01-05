@@ -34,11 +34,7 @@ class ObjectBasketShowDialog extends ShowDialog
         $this->setInputRowsMax(1);
         $this->setInputRowsMin(1);
         $this->setContextAlias('exface.Core.ObjectBasketContext');
-        // Never use the context for prefill because the ObjectBasket can be called on any page,
-        // so the context does not really have anything to do with the ObjectBasket
-        $this->setPrefillWithFilterContext(false);
-        $this->setPrefillWithInputData(false);
-        $this->setPrefillWithPrefillData(false);
+        $this->setPrefillDisabled(true);
     }
     
     /**
@@ -78,6 +74,25 @@ class ObjectBasketShowDialog extends ShowDialog
         $table->getConfiguratorWidget()->addFilter(
             $table->getConfiguratorWidget()->createFilterWidget($table->getMetaObject()->getUidAttributeAlias(), UxonObject::fromArray(['widget_type' => 'InputHidden']))
         );
+        
+        // If the table has no columns, try to generate some: either use the UID column
+        // if there is a UID attribute and that is visible or just take the first 10
+        // visible attributes.
+        if (empty($table->getColumns())) {
+            if ($table->getMetaObject()->hasUidAttribute() && ! $table->getMetaObject()->getUidAttribute()->isHidden()) {
+                $table->addColumn($table->createColumnFromAttribute($table->getMetaObject()->getUidAttribute()));
+            } else {
+                $cnt = 1;
+                foreach ($table->getMetaObject()->getAttributeGroup('~VISIBLE') as $attr) {
+                    $table->addColumn($table->createColumnFromAttribute($attr));
+                    if ($cnt >= 10) {
+                        break;
+                    } else {
+                        $cnt++;
+                    }
+                }
+            }
+        }
         $dialog->addWidget($table);
         
         // Prefill table
