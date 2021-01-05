@@ -2865,8 +2865,8 @@ JS;
     /**
      * build function to get value of a selected data row
      *
-     * @param unknown $column
-     * @param unknown $row
+     * @param string $column
+     * @param int $row
      * @throws FacadeOutputError
      * @return string
      */
