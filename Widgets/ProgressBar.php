@@ -10,6 +10,7 @@ use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 /**
  * Displays the widgets value as a progress bar with a floating label text.
@@ -200,7 +201,7 @@ class ProgressBar extends Display implements iCanBeAligned
             return $this->getAlignViaTrait();
         }
         
-        if ($this->hasTextScale() === false && ($this->getValueDataType() instanceof NumberDataType)) {
+        if ($this->hasTextScale() === false && ($this->getValueDataType() instanceof NumberDataType) && ! ($this->getValueDataType() instanceof EnumDataTypeInterface)) {
             return EXF_ALIGN_OPPOSITE;
         }
         
