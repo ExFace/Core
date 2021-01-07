@@ -32,6 +32,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -459,13 +460,19 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function getAlign()
     {
+        $type = $this->getDataType();
         if (! $this->isAlignSet()) {
-            if ($this->getDataType() instanceof NumberDataType || $this->getDataType() instanceof PriceDataType || $this->getDataType() instanceof DateDataType) {
-                $this->setAlign(EXF_ALIGN_OPPOSITE);
-            } elseif ($this->getDataType() instanceof BooleanDataType) {
-                $this->setAlign(EXF_ALIGN_CENTER);
-            } else {
-                $this->setAlign(EXF_ALIGN_DEFAULT);
+            switch (true) {
+                case $type instanceof NumberDataType && ! ($type instanceof EnumDataTypeInterface):
+                case $type instanceof DateDataType:
+                    $this->setAlign(EXF_ALIGN_OPPOSITE);
+                    break;
+                case $type instanceof BooleanDataType:
+                    $this->setAlign(EXF_ALIGN_CENTER);
+                    break;
+                default:
+                    $this->setAlign(EXF_ALIGN_DEFAULT);
+                    break;
             }
         }
         return $this->getAlignDefault();
