@@ -356,10 +356,12 @@ const exfPreloader = {};
 		}
 		return _actionsTable.put(data)
 		.then(function(){
-			navigator.serviceWorker.ready
-			.then(registration => registration.sync.register('OfflineActionSync'))
-			//.then(() => console.log("Registered background sync"))
-			.catch(err => console.error("Error registering background sync", err))
+			if (navigator.serviceWorker) {
+				navigator.serviceWorker.ready
+				.then(registration => registration.sync.register('OfflineActionSync'))
+				//.then(() => console.log("Registered background sync"))
+				.catch(err => console.error("Error registering background sync", err))
+			}
 		});
 	};
 	
