@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-09-30 09:19:33",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-12-28 13:14:14",
+    "modified_on": "2021-01-08 15:43:42",
     "contents": {
         "widget_type": "SplitVertical",
         "object_alias": "exface.Core.QUEUED_TASK",
@@ -32,8 +32,8 @@
                                         "filters": [
                                             {
                                                 "attribute_alias": "STATUS",
-                                                "value": 70,
-                                                "comparator": "==",
+                                                "value": "20,70",
+                                                "comparator": "[",
                                                 "input_widget": {
                                                     "widget_type": "InputHidden"
                                                 }
@@ -50,10 +50,21 @@
                                                 "attribute_alias": "OWNER__LABEL"
                                             },
                                             {
+                                                "attribute_alias": "STATUS"
+                                            },
+                                            {
                                                 "attribute_alias": "ERROR_MESSAGE"
                                             },
                                             {
                                                 "attribute_alias": "TASK_ASSIGNED_ON"
+                                            },
+                                            {
+                                                "attribute_alias": "MESSAGE_ID",
+                                                "hidden": true
+                                            },
+                                            {
+                                                "attribute_alias": "PRODUCER",
+                                                "hidden": true
                                             }
                                         ],
                                         "sorters": [
@@ -155,15 +166,6 @@
                         "multi_select": true,
                         "filters": [
                             {
-                                "attribute_alias": "UID",
-                                "comparator": "==",
-                                "apply_on_change": true,
-                                "value": "=errors_table!UID",
-                                "input_widget": {
-                                    "widget_type": "InputHidden"
-                                }
-                            },
-                            {
                                 "attribute_alias": "QUEUE",
                                 "value": "=queues_chart!QUEUE",
                                 "apply_on_change": true
@@ -181,10 +183,14 @@
                                 "apply_on_change": true
                             },
                             {
-                                "attribute_alias": "PRODUCER"
+                                "attribute_alias": "PRODUCER",
+                                "value": "=errors_table!PRODUCER",
+                                "apply_on_change": true
                             },
                             {
-                                "attribute_alias": "MESSAGE_ID"
+                                "attribute_alias": "MESSAGE_ID",
+                                "value": "=errors_table!MESSAGE_ID",
+                                "apply_on_change": true
                             },
                             {
                                 "attribute_alias": "ERROR_LOGID"
@@ -198,7 +204,7 @@
                         ],
                         "sorters": [
                             {
-                                "attribute_alias": "CREATED_ON",
+                                "attribute_alias": "ENQUEUED_ON",
                                 "direction": "desc"
                             },
                             {
@@ -244,13 +250,13 @@
                                 "attribute_alias": "TOPICS"
                             },
                             {
+                                "attribute_alias": "CHANNEL"
+                            },
+                            {
                                 "attribute_alias": "USER_AGENT"
                             },
                             {
                                 "attribute_alias": "ERROR_LOGID"
-                            },
-                            {
-                                "attribute_alias": "PARENT_ITEM"
                             }
                         ],
                         "buttons": [
@@ -258,33 +264,106 @@
                                 "action_alias": "exface.Core.ShowObjectInfoDialog"
                             },
                             {
-                                "action_alias": "exface.Core.QueueReinsert"
+                                "action_alias": "exface.Core.QueueReinsert",
+                                "disabled_if": {
+                                    "operator": "OR",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": ">=",
+                                            "value_right": 90
+                                        },
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": "==",
+                                            "value_right": ""
+                                        }
+                                    ]
+                                }
                             },
                             {
-                                "action_alias": "exface.Core.QueueReinsertDialog"
+                                "action_alias": "exface.Core.QueueReinsertDialog",
+                                "disabled_if": {
+                                    "operator": "OR",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": ">=",
+                                            "value_right": 90
+                                        },
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": "==",
+                                            "value_right": ""
+                                        }
+                                    ]
+                                }
                             },
                             {
-                                "action_alias": "exface.Core.QueueReroute"
+                                "action_alias": "exface.Core.QueueReroute",
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": "==",
+                                            "value_right": ""
+                                        }
+                                    ]
+                                }
                             },
                             {
                                 "action_alias": "exface.Core.RunQueuedTasks",
-                                "disable_condition": {
-                                    "widget_link": "TaskQueue_table!STATUS",
-                                    "comparator": "!==",
-                                    "value": "10"
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": "!==",
+                                            "value_right": 30
+                                        }
+                                    ]
                                 }
                             },
                             {
                                 "action_alias": "exface.Core.QueueTaskMarkResolved",
-                                "disable_condition": {
-                                    "widget_link": "TaskQueue_table!STATUS",
-                                    "comparator": "!==",
-                                    "value": "70"
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": "![",
+                                            "value_right": "20,70"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "action_alias": "exface.Core.QueueTaskCancel",
+                                "disabled_if": {
+                                    "operator": "OR",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": ">=",
+                                            "value_right": 90
+                                        },
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": "==",
+                                            "value_right": ""
+                                        }
+                                    ]
                                 }
                             },
                             {
                                 "visibility": "optional",
                                 "action_alias": "exface.Core.DeleteObject"
+                            },
+                            {
+                                "caption": "Repeat",
+                                "visibility": "optional",
+                                "action_alias": "exface.Core.QueueReinsertDialog"
                             }
                         ]
                     }

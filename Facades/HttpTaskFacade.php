@@ -14,7 +14,8 @@ use GuzzleHttp\Psr7\Response;
 use exface\Core\Interfaces\Tasks\ResultTextContentInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\CommonLogic\Queue\TaskQueueRouter;
+use exface\Core\CommonLogic\Queue\TaskQueueBroker;
+use exface\Core\DataTypes\PhpClassDataType;
 
 class HttpTaskFacade extends AbstractAjaxFacade
 {
@@ -24,7 +25,7 @@ class HttpTaskFacade extends AbstractAjaxFacade
         $path = $uri->getPath();
         $topics = explode('/',substr(StringDataType::substringAfter($path, $this->getUrlRouteDefault()), 1));
         $task = $request->getAttribute($this->getRequestAttributeForTask());
-        $router = new TaskQueueRouter($this->getWorkbench());
+        $router = new TaskQueueBroker($this->getWorkbench());
         if ($request->hasHeader('X-Client-ID')) {
             $producer = $request->getHeader('X-Client-ID')[0];
         } else {
@@ -35,13 +36,8 @@ class HttpTaskFacade extends AbstractAjaxFacade
         } else {
             $requestId = null;
         }
-        if ($request->hasHeader('User-Agent')) {
-            $userAgent = $request->getHeader('User-Agent')[0];
-        } else {
-            $userAgent = null;
-        }
         try {
-            $result = $router->handle($task, $topics, $producer, $requestId, $userAgent);
+            $result = $router->handle($task, $topics, $producer, $requestId, PhpClassDataType::findClassNameWithoutNamespace($this));
             return $this->createResponseFromTaskResult($request, $result);
         } catch (\Throwable $exception) {
             return $this->createResponseFromError($request, $exception);
