@@ -2,11 +2,10 @@
 
 ALTER TABLE `exf_queued_task`
 	CHANGE COLUMN `owner` `owner_oid` BINARY(16) NOT NULL AFTER `task_uxon`,
-	CHANGE COLUMN `queue` `queue_oid` BINARY(16) NOT NULL AFTER `parent_item_oid`,
+	CHANGE COLUMN `queue` `queue_oid` BINARY(16) NULL AFTER `parent_item_oid`,
 	ADD COLUMN `channel` VARCHAR(50) NULL DEFAULT NULL AFTER `message_id`,
-	ADD COLUMN `processed_on` DATETIME NULL AFTER `queue_oid`,
-	ADD COLUMN `duration_ms` DECIMAL(10,2) NULL DEFAULT NULL AFTER `processed_on`,
-	CHANGE COLUMN `queue_oid` `queue_oid` BINARY(16) NULL AFTER `parent_item_oid`;
+	ADD COLUMN `processed_on` DATETIME NULL AFTER `queue`,
+	ADD COLUMN `duration_ms` DECIMAL(10,2) NULL DEFAULT NULL AFTER `processed_on`;
 	
 UPDATE `exf_queued_task` exf_queued_task SET `status` = 30 WHERE `status` = 10;
 UPDATE `exf_queued_task` exf_queued_task SET `status` = 98 WHERE `status` = 90;
@@ -30,4 +29,4 @@ ALTER TABLE `exf_queue`
 	DROP COLUMN `description`;
 	
 ALTER TABLE `exf_queued_task`
-	CHANGE COLUMN `queue_oid` `queue_oid` BINARY(16) NOT NULL AFTER `parent_item_oid`;
+	CHANGE COLUMN `queue` `queue` BINARY(16) NOT NULL AFTER `parent_item_oid`;
