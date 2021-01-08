@@ -3745,6 +3745,64 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datacolumn_calculated.gif"
+        },
+        {
+            "CREATED_ON": "2021-01-07 13:45:08",
+            "MODIFIED_ON": "2021-01-07 18:27:48",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb9fc02cba65449fc0025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Action chain",
+            "DESCRIPTION": "Perform multiple actions one-after-another. The result data of every action is passed as input to the next one.",
+            "PROTOTYPE": "exface\/Core\/Actions\/ActionChain.php",
+            "UXON": {
+                "alias": "exface.Core.ActionChain",
+                "actions": [
+                    {
+                        "alias": ""
+                    },
+                    {
+                        "alias": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "$.actions[0]",
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2021-01-07 13:48:32",
+            "MODIFIED_ON": "2021-01-07 18:28:02",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb98b6a65f1f5c98b6025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Action chain with data transformation (mappers)",
+            "DESCRIPTION": "The result data of the first action will be mapped from it's object to the object of the second action by an `input_mapper`. If both actions have the same object, the mapper can be used to change values, add columns, etc.",
+            "PROTOTYPE": "exface\/Core\/Actions\/ActionChain.php",
+            "UXON": {
+                "alias": "exface.Core.ActionChain",
+                "actions": [
+                    {
+                        "alias": ""
+                    },
+                    {
+                        "alias": "",
+                        "input_mapper": {
+                            "column_to_column_mappings": [
+                                {
+                                    "from": "",
+                                    "to": ""
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "WRAP_PATH": "$.actions[0]",
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": ""
         }
     ],
     "totals_rows": [],
