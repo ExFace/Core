@@ -434,9 +434,9 @@ abstract class AbstractAction implements ActionInterface
         // $this->getApp()->getWorkbench()->getContext()->getScopeWindow()->getActionContext()->addAction($this);
         
         // Commit the transaction if autocommit is on and the action COULD have modified data
-        // We cannot rely on $result->isDataModified() at this point as it is not allways possible to determine
-        // it within the action (some data source simply do give relieable feedback).
-        if ($this->getAutocommit() && ($this instanceof iModifyData)) {
+        // We cannot rely on $result->isDataModified() at this point as it is not allways possible 
+        // to determine it within the action (some data source simply do not give relieable feedback).
+        if ($this->getAutocommit() && (($this instanceof iModifyData) || $result->isDataModified())) {
             $transaction->commit();
         }
         
