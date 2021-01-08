@@ -9,14 +9,12 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
-use exface\Core\DataTypes\QueuedTaskStateDataType;
 
 /**
- * Base class for default queue prototypes
+ * Base class for queue prototypes with implementations for UXON configuration and topic matching.
+ * 
+ * This class has nothing to do with how or even if the queue ist persisted. 
  * 
  * @author Andrej Kabachnik
  *
@@ -50,6 +48,8 @@ abstract class AbstractTaskQueue implements TaskQueueInterface, WorkbenchDependa
     private $topicsMatcher = null;
     
     private $allowOtherQueuesToHandleSameTasks = false;
+    
+    private $messageIdsUniquePerProducer = true;
     
     /**
      * 
@@ -91,37 +91,6 @@ abstract class AbstractTaskQueue implements TaskQueueInterface, WorkbenchDependa
     public function getWorkbench()
     {
         return $this->workbench;
-    }
-    
-    /**
-     * 
-     * @param TaskInterface $task
-     * @param string[] $topics
-     * @param string $producer
-     * @return DataSheetInterface
-     */
-    protected function createQueueDataSheet(TaskInterface $task, array $topics = [], string $producer, string $messageId = null, string $userAgent = null) : DataSheetInterface
-    {
-        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
-        $dataSheet->getColumns()->addFromUidAttribute();
-        if ($task->hasParameter('assignedOn')) {
-            $assignedOn = $task->getParameter('assignedOn');
-        } else {
-            $assignedOn = DateTimeDataType::now();
-        }
-        $dataSheet->getColumns()->addFromSystemAttributes();
-        $dataSheet->addRow([
-            'TASK_UXON' => $task->exportUxonObject()->toJson(),
-            'STATUS' => QueuedTaskStateDataType::STATUS_QUEUED,
-            'OWNER' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
-            'PRODUCER' => $producer,
-            'MESSAGE_ID' => $messageId,
-            'TASK_ASSIGNED_ON' => $assignedOn,
-            'TOPICS' => implode(', ', $topics),
-            'USER_AGENT' => $userAgent,
-            'QUEUE' => $this->getUid()
-        ]);
-        return $dataSheet;
     }
     
     public function getName(): string
@@ -238,5 +207,33 @@ abstract class AbstractTaskQueue implements TaskQueueInterface, WorkbenchDependa
     public function canHandleAnyTask() : bool
     {
         return empty($this->topicsMatcher);
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getMessageIdsUniquePerProducer() : bool
+    {
+        return $this->messageIdsUniquePerProducer;
+    }
+    
+    /**
+     * Set to FALSE to allow multiple messages with the same id and producer.
+     * 
+     * By default, a message is only processed if there is no other message from
+     * the same producer with the same message id, that was processed previously.
+     * 
+     * @uxon-property message_ids_unique_per_producer
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return AbstractTaskQueue
+     */
+    public function setMessageIdsUniquePerProducer(bool $value) : AbstractTaskQueue
+    {
+        $this->messageIdsUniquePerProducer = $value;
+        return $this;
     }
 }

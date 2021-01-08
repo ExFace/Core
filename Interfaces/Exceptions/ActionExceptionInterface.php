@@ -20,12 +20,4 @@ Interface ActionExceptionInterface
      * @return ActionInterface
      */
     public function getAction();
-
-    /**
-     *
-     * @param ActionInterface $sheet            
-     * @return ActionExceptionInterface
-     */
-    public function setAction(ActionInterface $action);
 }
-?>

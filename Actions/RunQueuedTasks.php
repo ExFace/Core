@@ -7,24 +7,17 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\DataTypes\QueuedTaskStateDataType;
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
-use exface\Core\Exceptions\InternalError;
 use exface\Core\Factories\TaskFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Events\Queue\OnQueueRunEvent;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\CommonLogic\Model\Condition;
-use exface\Core\Factories\ConditionFactory;
-use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
-use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\ResultFactory;
-use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\CommonLogic\Tasks\ResultError;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
 
 /**
  * Performs a task that is saved in a task queue.
@@ -34,6 +27,11 @@ use exface\Core\CommonLogic\Tasks\ResultError;
  */
 class RunQueuedTasks extends AbstractAction
 {    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::init()
+     */
     protected function init()
     {
         parent::init();
@@ -41,16 +39,23 @@ class RunQueuedTasks extends AbstractAction
         $this->setName('Run Task(s)');
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::perform()
+     */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $inputData = $this->getInputDataSheet($task);
+        
         if ($inputData->hasUidColumn(true) === false) {
             throw new DataSheetColumnNotFoundError($inputData, "UID column not present in data sheet with meta object '{$inputData->getMetaObject()->getAliasWithNamespace()}'");
         }
+        
         $tasksDs = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
         $tasksDs->getColumns()->addFromExpression('QUEUE');
         $tasksDs->getColumns()->addFromExpression('TASK_UXON');
-        $tasksDs->getFilters()->addConditionFromString('STATUS', QueuedTaskStateDataType::STATUS_QUEUED);
+        $tasksDs->getFilters()->addConditionFromValueArray('STATUS', [QueuedTaskStateDataType::STATUS_RECEIVED, QueuedTaskStateDataType::STATUS_QUEUED]);
         if ($inputData->getMetaObject()->is('exface.Core.QUEUED_TASK')) {
             $tasksDs->getFilters()->addConditionFromValueArray($inputData->getUidColumn()->getAttributeAlias(), $inputData->getUidColumn()->getValues());            
         } elseif ($inputData->getMetaObject()->is('exface.Core.QUEUE')) {
@@ -59,17 +64,17 @@ class RunQueuedTasks extends AbstractAction
             throw new ActionInputInvalidObjectError($this, "Meta object '{$inputData->getMetaObject()->getAliasWithNamespace()}' is not suitable for action '{$this->getAliasWithNamespace()}'");
         }
         $tasksDs->dataRead();
-        if ($tasksDs->isEmpty()) {
-            throw new ActionInputError($this, "No queued task with the status '{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('TASK.QUEUE.STATUS_QUEUED')}' selected.");
-        }
+        
         $queues = $this->getQueues($tasksDs);
         $tasks = $this->getTasksToRun($tasksDs);
+        
         if (count($queues) !== count($tasks)) {
-            //TODO
-            throw new RuntimeException('An error occured in the implementation! Queue count does not match the task count!');
+            throw new ActionRuntimeError('Cannot find queues for all pending tasks!');
         }
+        
         $success = [];
         $failed = [];
+        
         foreach ($tasks as $uid => $task) {
             $event = $this->getWorkbench()->eventManager()->dispatch(new OnQueueRunEvent($queues[$uid], $task, $uid));
             if (! $event->hasResult()) {
@@ -82,6 +87,7 @@ class RunQueuedTasks extends AbstractAction
                 $success[] = $event->getResult();
             }
         }
+        
         $successCount = count($success);
         $failedCount = count($failed);
         $message = '';

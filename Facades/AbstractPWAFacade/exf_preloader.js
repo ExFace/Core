@@ -732,8 +732,8 @@ const exfPreloader = {};
 					conditions:  [
 						{
 							expression: "STATUS",
-							comparator: "==",
-							value: "70",
+							comparator: "[",
+							value: "20,70",
 							object_alias: "exface.Core.QUEUED_TASK"
 						},{
 							expression: "PRODUCER",

@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-09-22 13:06:11",
-            "MODIFIED_ON": "2020-12-28 13:14:32",
+            "MODIFIED_ON": "2021-01-08 14:47:50",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea8f3c9ff2c5e68f3c8c04ba002958",
@@ -127,6 +127,9 @@
                                                 "attribute_alias": "TOPICS"
                                             },
                                             {
+                                                "attribute_alias": "CHANNEL"
+                                            },
+                                            {
                                                 "attribute_alias": "USER_AGENT",
                                                 "widget_type": "Text"
                                             }
@@ -155,6 +158,9 @@
                                                 "attribute_alias": "STATUS"
                                             },
                                             {
+                                                "attribute_alias": "PROCESSED_ON"
+                                            },
+                                            {
                                                 "attribute_alias": "RESULT_CODE"
                                             },
                                             {
@@ -165,13 +171,16 @@
                                             },
                                             {
                                                 "attribute_alias": "ERROR_MESSAGE"
+                                            },
+                                            {
+                                                "attribute_alias": "DURATION_MS"
                                             }
                                         ]
                                     },
                                     {
                                         "widget_type": "WidgetGroup",
                                         "width": "max",
-                                        "caption": "History",
+                                        "caption": "Message History",
                                         "widgets": [
                                             {
                                                 "widget_type": "DataTree",
