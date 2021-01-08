@@ -166,4 +166,10 @@ interface DataColumnListInterface extends EntityListInterface
      * @return DataColumnListInterface
      */
     public function addFromAttributeGroup(MetaAttributeListInterface $group) : DataColumnListInterface;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasSystemColumns() : bool;
 }

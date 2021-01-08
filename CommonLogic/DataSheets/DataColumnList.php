@@ -323,5 +323,19 @@ class DataColumnList extends EntityList implements DataColumnListInterface
         }
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::hasSystemColumns()
+     */
+    public function hasSystemColumns() : bool
+    {
+        foreach ($this->getDataSheet()->getMetaObject()->getAttributes()->getSystem() as $attr) {
+            if (! $this->getByAttribute($attr)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
-?>
