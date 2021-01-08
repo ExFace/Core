@@ -66,7 +66,7 @@ trait EnumStaticDataTypeTrait {
      */
     public static function isValidStaticValue($value)
     {
-        return in_array($value, static::getValuesStatic(), true);
+        return in_array($value, static::getValuesStatic());
     }
     
     /**
