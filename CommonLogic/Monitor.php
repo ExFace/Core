@@ -113,6 +113,11 @@ class Monitor extends Profiler
     {
         if (! empty($this->rowObjects)) {
             try {
+                foreach ($this->data()->getTransactions() as $tx) {
+                    if ($tx->isOpen()) {
+                        $tx->rollBack();
+                    }
+                }
                 $this->saveData();
             } catch (\Throwable $e) {
                 $this->getWorkbench()->getLogger()->logException($e);

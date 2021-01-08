@@ -37,6 +37,12 @@ interface DataManagerInterface extends WorkbenchDependantInterface
      *
      * @return DataTransactionInterface
      */
-    public function startTransaction();
+    public function startTransaction() : DataTransactionInterface;
+    
+    /**
+     * 
+     * @return array
+     */
+    public function getTransactions() : array;
 }
 ?>

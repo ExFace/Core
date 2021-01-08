@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\DataSources\DataManagerInterface;
 use exface\Core\Factories\DataSourceFactory;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 
 class DataManager implements DataManagerInterface
 {
@@ -11,6 +12,8 @@ class DataManager implements DataManagerInterface
     private $cache;
 
     private $exface;
+    
+    private $transactions = [];
 
     /**
      *
@@ -95,11 +98,22 @@ class DataManager implements DataManagerInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataManagerInterface::startTransaction()
      */
-    public function startTransaction()
+    public function startTransaction() : DataTransactionInterface
     {
         $transaction = new DataTransaction($this);
         $transaction->start();
+        $this->transactions[] = $transaction;
         return $transaction;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataManagerInterface::getTransactions()
+     */
+    public function getTransactions() : array
+    {
+        return $this->transactions;
     }
 
     /**
