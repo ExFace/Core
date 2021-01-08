@@ -24,45 +24,51 @@ interface DataTransactionInterface extends WorkbenchDependantInterface
      *
      * @return DataManagerInterface
      */
-    public function getDataManager();
+    public function getDataManager() : DataManagerInterface;
 
     /**
      *
      * @return DataTransactionInterface
      */
-    public function start();
+    public function start() : DataTransactionInterface;
 
     /**
      * Physically commits transactions in all data sources assotiated with this transaction
      *
      * @return DataTransactionInterface
      */
-    public function commit();
+    public function commit() : DataTransactionInterface;
 
     /**
      * Physically rolls back transactions in all data sources assotiated with this transaction
      *
      * @return DataTransactionInterface
      */
-    public function rollback();
+    public function rollback() : DataTransactionInterface;
 
     /**
      *
      * @return boolean
      */
-    public function isStarted();
+    public function isStarted() : bool;
 
     /**
      *
      * @return boolean
      */
-    public function isRolledBack();
+    public function isRolledBack() : bool;
 
     /**
      *
      * @return boolean
      */
-    public function isCommitted();
+    public function isCommitted() : bool;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isOpen() : bool;
 
     /**
      * Assotiates this transaction with a given connection starting a physical transaction there.
@@ -72,13 +78,13 @@ interface DataTransactionInterface extends WorkbenchDependantInterface
      * @param DataConnectionInterface $connection            
      * @return DataTransactionInterface
      */
-    public function addDataConnection(DataConnectionInterface $connection);
+    public function addDataConnection(DataConnectionInterface $connection) : DataTransactionInterface;
 
     /**
      * Returns all connections assotiated with this transaction
      *
      * @return DataConnectionInterface[]
      */
-    public function getDataConnections();
+    public function getDataConnections() : array;
 }
 ?>

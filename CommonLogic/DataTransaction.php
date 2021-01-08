@@ -33,7 +33,7 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::getDataManager()
      */
-    public function getDataManager()
+    public function getDataManager() : DataManagerInterface
     {
         return $this->data_manager;
     }
@@ -44,7 +44,7 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::start()
      */
-    public function start()
+    public function start() : DataTransactionInterface
     {
         $this->is_started = true;
         return $this;
@@ -56,7 +56,7 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::commit()
      */
-    public function commit()
+    public function commit() : DataTransactionInterface
     {
         if ($this->isRolledBack()) {
             throw new DataTransactionCommitError('Cannot commit a transaction, that has already been rolled back!', '6T5VIIA');
@@ -80,7 +80,7 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::rollback()
      */
-    public function rollback()
+    public function rollback() : DataTransactionInterface
     {
         if ($this->isCommitted()) {
             throw new DataTransactionRollbackError('Cannot roll back a transaction, that has already been committed!', '6T5VIT8');
@@ -103,7 +103,7 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::isStarted()
      */
-    public function isStarted()
+    public function isStarted() : bool
     {
         return $this->is_started;
     }
@@ -114,7 +114,7 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::isRolledBack()
      */
-    public function isRolledBack()
+    public function isRolledBack() : bool
     {
         return $this->is_rolled_back;
     }
@@ -125,9 +125,19 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::isCommitted()
      */
-    public function isCommitted()
+    public function isCommitted() : bool
     {
         return $this->is_committed;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::isOpen()
+     */
+    public function isOpen() : bool
+    {
+        return $this->isStarted() && ! $this->isCommitted() && ! $this->isRolledBack() && ! empty($this->getDataConnections());
     }
 
     /**
@@ -136,7 +146,7 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::addDataConnection()
      */
-    public function addDataConnection(DataConnectionInterface $connection)
+    public function addDataConnection(DataConnectionInterface $connection) : DataTransactionInterface
     {
         if (! $this->isStarted()) {
             $this->start();
@@ -175,7 +185,7 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::getDataConnections()
      */
-    public function getDataConnections()
+    public function getDataConnections() : array
     {
         return $this->connections;
     }
