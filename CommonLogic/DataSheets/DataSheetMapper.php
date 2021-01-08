@@ -41,6 +41,8 @@ class DataSheetMapper implements DataSheetMapperInterface {
     
     private $inheritColumns = null;
     
+    private $inheritColumnsOnlySystem = false;
+    
     private $inheritFilters = null;
     
     private $inheritSorters = null;
@@ -72,6 +74,9 @@ class DataSheetMapper implements DataSheetMapperInterface {
         // Inherit columns if neccessary
         if ($this->getInheritColumns()){
             foreach ($fromSheet->getColumns() as $fromCol){
+                if ($this->getInheritColumnsOnlyForSystemAttributes() && (! $fromCol->isAttribute() || ! $fromCol->getAttribute()->isSystem())) {
+                    continue;
+                }
                 $toSheet->getColumns()->add(DataColumnFactory::createFromUxon($toSheet, $fromCol->exportUxonObject()));
             }
             $toSheet->importRows($fromSheet);
@@ -486,6 +491,38 @@ class DataSheetMapper implements DataSheetMapperInterface {
         $this->inheritColumns = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getInheritColumnsOnlyForSystemAttributes() : bool
+    {
+        return $this->inheritColumnsOnlySystem;
+    }
+    
+    /**
+     * Set to TRUE to inherit only system columns
+     * 
+     * @uxon-property inherit_columns_only_for_system_attributes
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return DataSheetMapper
+     */
+    public function setInheritColumnsOnlyForSystemAttributes(bool $value) : DataSheetMapper
+    {
+        if ($value) {
+            if (! $this->canInheritColumns()) {
+                throw new DataSheetMapperError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit columns from sheets of "' . $this->getFromMetaObject() . '"!');
+            }
+            $this->setInheritColumns(true);
+        }
+        $this->inheritColumnsOnlySystem = $value;
+        return $this;
+    }
+    
     
     /**
      * Returns TRUE if columns of the from-sheet should be inherited by the to-sheet.
