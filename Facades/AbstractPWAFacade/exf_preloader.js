@@ -521,8 +521,12 @@ const exfPreloader = {};
 			}
 			return false;			
 		}
-		var data = await response.json()
-		if (response.ok) {
+		try {
+			var data = await response.json();
+		} catch (e) {
+			// Do nothing here. It will result in an error because there is no data.
+		}
+		if (response.ok && data) {
 			var date = (+ new Date());
 			updatedElement.status = 'synced';
 			updatedElement.response = data;
@@ -752,8 +756,7 @@ const exfPreloader = {};
 		.then(function(response){
 			if (response.ok) {
 				return response.json();
-			}
-			else {
+			} else {
 				return {};
 			}
 		})
