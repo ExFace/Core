@@ -96,7 +96,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
      * @throws QueueRuntimeError
      * @return DataSheetInterface
      */
-    protected function saveError(DataSheetInterface $dataSheet, ExceptionInterface $exception, string $status = QueuedTaskStateDataType::STATUS_ERROR, float $duration) : DataSheetInterface
+    protected function saveError(DataSheetInterface $dataSheet, ExceptionInterface $exception, string $status = QueuedTaskStateDataType::STATUS_ERROR, float $duration = null) : DataSheetInterface
     {
         try {
             if ($dataSheet->getColumns()->hasSystemColumns()) {
