@@ -2,7 +2,6 @@
 namespace exface\Core\Interfaces\Actions;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\ActionListInterface;
 
 /**
  * Interface for actions, that call other actions (e.g. chaines, workflows, etc.)
@@ -14,9 +13,9 @@ interface iCallOtherActions extends ActionInterface
 {
     /**
      *
-     * @return ActionListInterface|ActionInterface[]
+     * @return ActionInterface[]
      */
-    public function getActions() : ActionListInterface;
+    public function getActions() : array;
     
     /**
      * 
