@@ -335,7 +335,7 @@ const exfPreloader = {};
 	/**
 	 * @return Promise
 	 */
-	this.addAction = function(offlineAction, objectAlias) {
+	this.addAction = function(offlineAction, objectAlias, sActionName, sObjectName) {
 		var topics = _preloader.getTopics();
 		offlineAction.url = 'api/task/' + topics.join('/');
 		var xRequestId = _preloader.createUniqueId();
@@ -349,7 +349,9 @@ const exfPreloader = {};
 			triggered: offlineAction.data.assignedOn,
 			status: 'offline',
 			tries: 0,
-			synced: 'not synced'
+			synced: 'not synced',
+			action_name: (sActionName || null),
+			object_name: (sObjectName || null)
 		};
 		if (offlineAction.headers) {
 			data.headers = offlineAction.headers
