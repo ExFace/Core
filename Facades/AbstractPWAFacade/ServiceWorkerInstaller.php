@@ -272,8 +272,8 @@ self.addEventListener('sync', function(event) {
 				});
 				return;
 			})
-			.catch(error => {
-				console.error('Could not sync completely; scheduled for the next time.', error);
+			.catch(function(error){
+				console.error('Could not sync offline actions completely - scheduled for the next time.', error);
 				self.clients.matchAll()
 				.then(function(all) {
 					all.forEach(function(client) {
