@@ -106,7 +106,7 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
         
         // Add imports
         if ($config->hasOption('_IMPORTS')) {
-            foreach ($config->getOption(_IMPORTS)->getPropertiesAll() as $path) {
+            foreach ($config->getOption('_IMPORTS')->getPropertiesAll() as $path) {
                 $builder->addImport($path);
             }
         }
