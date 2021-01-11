@@ -251,6 +251,9 @@ return $filename;
     {
         $builder = new ServiceWorkerBuilder('vendor', $this->buildUrlToWorkbox());
         $workbenchConfig = $this->getWorkbench()->getConfig();
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        $msgSyncedJs = json_encode($translator->translate('OFFLINE.ACTIONS.SYNC_COMPLETE'));
+        $msgSyncFailedJs = json_encode($translator->translate('OFFLINE.ACTIONS.SYNC_FAILED'));
         
         foreach ($workbenchConfig->getOption('FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_ROUTES') as $id => $uxon) {
             $builder->addRouteFromUxon($id, $uxon);
@@ -267,7 +270,7 @@ self.addEventListener('sync', function(event) {
 				self.clients.matchAll()
 				.then(function(all) {
 					all.forEach(function(client) {
-						client.postMessage('Sync completed');
+						client.postMessage({$msgSyncedJs});
 					});
 				});
 				return;
@@ -277,7 +280,7 @@ self.addEventListener('sync', function(event) {
 				self.clients.matchAll()
 				.then(function(all) {
 					all.forEach(function(client) {
-						client.postMessage(error);
+						client.postMessage({$msgSyncFailedJs});
 					});
 				});
 				return Promise.reject(error);

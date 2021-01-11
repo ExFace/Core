@@ -241,6 +241,11 @@
 	"MESSAGE.SELECT_AT_LEAST_X_ROWS": "Please select at least %number% element!|Please select at least %number% elements!",
 	"MESSAGE.SELECT_X_TO_Y_ROWS": "Please select %min% to %max% elements first!",
 	
+	"OFFLINE.ACTIONS.ACTION_QUEUED": "Action saved in offline-queue. It will be performed once you are online again!",
+	"OFFLINE.ACTIONS.ACTION_QUEUE_FAILED": "Action cannot be handled offline!",
+	"OFFLINE.ACTIONS.SYNC_COMPLETE": "Offline actions synchronized",
+	"OFFLINE.ACTIONS.SYNC_FAILED": "Cannot synchronize offline actions!",
+	
     "PAGE.APPS.REPAIR": "Repair",
     "PAGE.ATTRIBUTES.OPEN_OBJECT": "Open Object",
     "PAGE.ATTRIBUTE_EDITOR.DATA_ADDRESS": "Data Address",

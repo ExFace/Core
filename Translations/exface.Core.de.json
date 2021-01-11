@@ -240,6 +240,11 @@
 	"MESSAGE.SELECT_AT_LEAST_X_ROWS": "Bitte mindestens %number% Datensatz auswählen!|Bitte mindestens %number% Datensätze auswählen!",
 	"MESSAGE.SELECT_X_TO_Y_ROWS": "Bitte %min% bis %max% Datensätze auswählen!",
 	
+    "OFFLINE.ACTIONS.ACTION_QUEUED": "Aktion in Offline-Puffer gespeichert. Sie wird ausgeführt, sobald Sie wieder online sind!",
+	"OFFLINE.ACTIONS.NETWORK.ACTION_QUEUE_FAILED": "Aktion kann nicht offline ausgeführt werden!",
+	"OFFLINE.ACTIONS.NETWORK.SYNC_COMPLETE": "Offline-Aktionen synchronisiert",
+	"OFFLINE.ACTIONS.NETWORK.SYNC_FAILED": "Synchronisation von Offline-Aktionen fehlgeschlagen!",
+	
     "PAGE.APPS.REPAIR": "Reparieren",
     "PAGE.ATTRIBUTES.OPEN_OBJECT": "Objekt öffnen",
     "PAGE.ATTRIBUTE_EDITOR.DATA_ADDRESS": "Datenadresse",
