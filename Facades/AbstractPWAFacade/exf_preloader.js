@@ -12,33 +12,7 @@ importScripts('vendor/exface/Core/Facades/AbstractPWAFacade/exf_preloader.js');
 
 // Handle OfflineActionSync Event
 self.addEventListener('sync', function(event) {
-    if (event.tag === 'OfflineActionSync') {
-		event.waitUntil(
-			exfPreloader.getActionQueueIds('offline')
-			.then(function(ids){
-				return exfPreloader.syncActionAll(ids)
-			})
-			.then(function(){
-				self.clients.matchAll()
-				.then(function(all) {
-					all.forEach(function(client) {
-						client.postMessage('Sync completed');
-					});
-				});
-				return;
-			})
-			.catch(error => {
-				console.error('Could not sync completely; scheduled for the next time.', error);
-				self.clients.matchAll()
-				.then(function(all) {
-					all.forEach(function(client) {
-						client.postMessage(error);
-					});
-				});
-				return Promise.reject(error);
-			})
-		)
-    }
+    ...
 });
 -----------------------------------------------------------
  * 
@@ -87,7 +61,7 @@ const exfPreloader = {};
 	}());
 	
 	/**
-	 * @return string
+	 * @return {string}
 	 */
 	this.getDeviceId = function() {
 		return _deviceId;
@@ -102,14 +76,14 @@ const exfPreloader = {};
 	}
 	
 	/**
-	 * @return array
+	 * @return {string[]}
 	 */
 	this.getTopics = function() {
 		return _topics;
 	}
 	
 	/**
-	 * @return exfPreloader
+	 * @return self
 	 */
 	this.addPreload = function(sAlias, aDataCols, aImageCols, sPageAlias, sWidgetId, sUidAlias) {		
 		_preloadTable
@@ -136,14 +110,14 @@ const exfPreloader = {};
 	};
 	
 	/**
-	 * @return Promise
+	 * @return {promise}
 	 */
 	this.getPreload = function(sAlias, sPageAlias, sWidgetId) {
 		return _preloadTable.get(sAlias);
 	};
 	
 	/**
-	 * @return Promise
+	 * @return {promise}
 	 */
 	this.syncAll = async function(fnCallback) {
 		var deferreds = [];
@@ -169,7 +143,7 @@ const exfPreloader = {};
 	};
 	
 	/**
-	 * @return Promise
+	 * @return {promise}
 	 */
 	this.sync = async function(item, bSyncImages, aUid) {
 		var sObjectAlias = item.object;
@@ -244,7 +218,7 @@ const exfPreloader = {};
 	};
 	
 	/**
-	 * @return array
+	 * @return {object[]}
 	 */
 	this.mergeRows = function (aOldRows, aNewRows, sUidAlias) {
 		for (var i = 0; i < aNewRows.length; i++) {
@@ -265,7 +239,7 @@ const exfPreloader = {};
 	}
 	
 	/**
-	 * @return Promise|NULL
+	 * @return {promise|null}
 	 */
 	this.syncImages = function (aUrls, sCacheName = 'image-cache') {
 		if (typeof window !== 'undefined') {
@@ -314,7 +288,7 @@ const exfPreloader = {};
 	};
 	
 	/**
-	 * @return Promise
+	 * @return {promise}
 	 */
 	this.reset = function() {
 		return clear = _preloadTable.toArray()
@@ -333,6 +307,12 @@ const exfPreloader = {};
 	};
 	
 	/**
+	 * Adds an action to the offline action queue
+	 * 
+	 * @param {object} offlineAction
+	 * @param {string} objectAlias
+	 * @param {string} [sActionName]
+	 * @param {string} [sObjectName]
 	 * @return Promise
 	 */
 	this.addAction = function(offlineAction, objectAlias, sActionName, sObjectName) {
@@ -368,9 +348,16 @@ const exfPreloader = {};
 	};
 	
 	/**
-	 * @return Promise
+	 * Returns a promise that resolves to an array of offline action queue items optionally 
+	 * filtered by status, action object alias and a filter callback for the action's input 
+	 * data rows.
+	 * 
+	 * @param {string} [sStatus]
+	 * @param {string} [sObjectAlias]
+	 * @param {function} [sObjectAlias]
+	 * @return {promise}
 	 */
-	this.getActionQueueData = function(status, objectAlias) {
+	this.getActionQueueData = function(sStatus, sObjectAlias, fnRowFilter) {
 		return _actionsTable.toArray()
 		.then(function(dbContent) {
 			var data = [];
@@ -378,12 +365,25 @@ const exfPreloader = {};
 				//if an element got stuck in the proccessing state, check here if that sync attempt was already more than 5 minutes ago, if so, change the state of that element to offline again
 				element = _preloader.updateProccessingState(element);
 				
-				if (status && element.status != status) {
+				if (sStatus && element.status != sStatus) {
 					return;
 				}
-				if (objectAlias && element.object != objectAlias) {
+				if (sObjectAlias && element.object != sObjectAlias) {
 					return;
-				}				
+				}	
+				if (fnRowFilter) {
+					if (element.request === undefined 
+						|| element.request.data === undefined 
+						|| element.request.data.data === undefined 
+						|| element.request.data.data.rows === undefined
+					) {
+						return;
+					}
+					
+					if (element.request.data.data.rows.filter(fnRowFilter).length === 0) {
+						return;
+					}
+				}
 				data.push(element);
 				return;
 			})
@@ -395,19 +395,23 @@ const exfPreloader = {};
 	};
 	
 	/**
-	 * @return array
+	 * Returns a promise that resolves to an array with all data rows from the offline
+	 * action queue from the action's input data for a given meta object UID.
+	 * 
+	 * @param {string} sObjectUid 
+	 * @return {promise}
 	 */
-	this.getActionObjectData = async function(objectUid) {
+	this.getOfflineActionsDataRows = async function(sObjectUid) {
 		var dbContent = await _actionsTable.toArray();
 		var actionRows = [];
 		dbContent.forEach(function(element) {
 			if (element.status !== 'offline' ) {
 				return;
 			}
-			if (element.request == undefined && element.request.data == undefined && element.request.data.object !== objectUid) {
+			if (element.request === undefined || element.request.data === undefined || element.request.data.object !== sObjectUid) {
 				return;
 			}
-			if (element.request.data.data == undefined && element.request.data.data.rows == undefined) {
+			if (element.request.data.data === undefined || element.request.data.data.rows === undefined) {
 				return;
 			}
 			element.request.data.data.rows.forEach(function(row) {
@@ -415,10 +419,10 @@ const exfPreloader = {};
 			})
 		})
 		return actionRows;
-	}
+	};
 	
 	/**
-	 * @return Promise
+	 * @return {promise}
 	 */
 	this.getActionQueueIds = function(filter) {
 		return _actionsTable.toArray()
@@ -443,7 +447,8 @@ const exfPreloader = {};
 	
 	/**
 	 * If element is in proccessing state and last sync attempt was more than 5 minutes ago, change it's state to 'offline'
-	 * @return object
+	 * @param {object} element
+	 * @return {object}
 	 */
 	this.updateProccessingState = function(element) {
 		if (element.status === 'proccessing' && element.lastSyncAttempt !== undefined && element.lastSyncAttempt + 3000 < (+ new Date())) {
@@ -454,7 +459,7 @@ const exfPreloader = {};
 	}
 	
 	/**
-	 * @return Promise
+	 * @return {promise}
 	 */
 	this.syncActionAll = async function(selectedIds) {
 		var result = true;
@@ -474,10 +479,10 @@ const exfPreloader = {};
 	};
 	
 	/**
-	 * @return Promise
+	 * @return {promise}
 	 */
 	this.syncAction = async function(id) {
-		element = await _actionsTable.get(id);
+		var element = await _actionsTable.get(id);
 		if (element === undefined) {
 			return false
 		}
@@ -568,7 +573,7 @@ const exfPreloader = {};
 	};
 	
 	/**
-	 * @return String
+	 * @return {string}
 	 */
 	this.encodeJson = function(srcjson, parent=""){
 		if(typeof srcjson !== "object")
@@ -625,7 +630,7 @@ const exfPreloader = {};
 		}
 	
 	/**
-	 * @return Promise
+	 * @return {promise}
 	 */
 	this.deleteActionAll = function(selectedIds) {
 		var promises = [];
@@ -636,28 +641,28 @@ const exfPreloader = {};
 	};
 	
 	/**
-	 * @return Promise
+	 * @return {promise}
 	 */
 	this.deleteAction = function(id) {
 		return _actionsTable.delete(id)
 	}
 	
 	/**
-	 * @return Dexie.Table
+	 * @return {Dexie.Table}
 	 */
 	this.getActionsTable = function() {
 		return _actionsTable;
 	}
 	
 	/**
-	 * @return Dexie.Table
+	 * @return {Dexie.Table}
 	 */
 	this.getPreloadTable = function() {
 		return _preloadTable;
 	}
 	
 	/**
-	 * @return string
+	 * @return {string}
 	 */
 	this.createUniqueId = function (a = "", b = false) {
 	    const c = Date.now()/1000;
@@ -672,7 +677,7 @@ const exfPreloader = {};
 	}
 	
 	/**
-	 * @return Promise
+	 * @return {promise}
 	 */
 	this.updatePreloadData = async function() {
 		var preloads = await _preloadTable.toArray();
@@ -721,7 +726,7 @@ const exfPreloader = {};
 	}
 	
 	/**
-	 * @return object
+	 * @return {object}
 	 */
 	this.loadErrorData = function() {
 		var body = {
@@ -769,17 +774,18 @@ const exfPreloader = {};
 	}
 	
 	/**
+	 * Returns items of the offline queue filtered by the given message ids.
 	 * 
-	 * @param aIds
-	 * @return array 
+	 * @param {string[]} aIds
+	 * @return {object[]} 
 	 */
-	this.getActionsData = function(aIds) {		
+	this.getActionsData = function(aMessageIds) {		
 		return _preloader.getActionQueueData('offline')
 		.then(function(actionsData) {
 			var data = {deviceId: _preloader.getDeviceId()};
 			var selectedActions = [];
 			actionsData.forEach(function(action) {
-				if (aIds.includes(action.id)) {
+				if (aMessageIds.includes(action.id)) {
 					selectedActions.push(action);
 				}
 			})
