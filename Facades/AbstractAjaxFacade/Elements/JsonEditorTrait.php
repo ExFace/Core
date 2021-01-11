@@ -337,7 +337,7 @@ JS;
                                         editor._autosuggestPending = true;
                                         var uxon = JSON.stringify(editor.get());
                                         return {$funcPrefix}_fetchAutosuggest(text, path, input, uxon)
-                                        .then(json => {                                          
+                                        .then(function(json){                                          
                                             editor._autosuggestPending = false;
                                             if (json === undefined) {
                                                 reject();
@@ -355,13 +355,13 @@ JS;
                                             // return response data for further processing
                                             return json;
                                         })
-                                       .catch((err) => { 
+                                       .catch(function(err){ 
                                             editor._autosuggestPending = false;
                                             console.warn("{$trans['ERROR.AUTOSUGGEST_FAILED']}", err);
                                        });
                     	           }
                                 })
-                                .catch((err) => {
+                                .catch(function(err){
                                     editor._autosuggestPending = false;
                                     console.warn("{$trans['ERROR.GETTING_OPTIONS']}", err);
                                     return Promise.resolve([]);
@@ -878,7 +878,7 @@ CSS;
         	      body: formData, // body data type must match "Content-Type" header
         	   }
             )
-          	.then(response => {
+          	.then(function(response){
                 if (
                     response
                     && response.ok
@@ -1013,7 +1013,7 @@ CSS;
             var aFiltered = [ [],[],[] ];
             var aResult = [];
             var iLen = aSuggestions.length;
-            aSuggestions.forEach(sVal => {
+            aSuggestions.forEach(function(sVal){
                 sValLower = sVal.toLowerCase();
                 switch (true) {
                     case sValLower.startsWith(sSearch):
@@ -1027,7 +1027,7 @@ CSS;
                 }
             });
             
-            aFiltered.forEach(aPart => {
+            aFiltered.forEach(function(aPart){
                 aResult = aResult.concat(aPart);
             });
             

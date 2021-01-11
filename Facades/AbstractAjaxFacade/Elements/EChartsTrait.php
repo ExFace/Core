@@ -599,7 +599,7 @@ JS;
                     var markLineSet = false;
                     var markLineData;
                     var axisIndex;
-                    options.series.forEach((series) => {
+                    options.series.forEach(function(series){
                         //check if the series that gets hidden was showing markLine
                         //if so, save markLine.data and the axisIndex of series
                         if (params.name === series.name && series.markLine._show === true) {
@@ -611,7 +611,7 @@ JS;
                             }
                         }
                     });
-                    options.series.forEach((series) => {
+                    options.series.forEach(function(series){
                         //check if series is shown, if no markLine is set yet
                         //and if markLineData was saved, means if a markLine was show on the
                         //series that got hidden
@@ -783,7 +783,7 @@ JS;
         var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};
         var options = echart.getOption();
         var newOptions = {series: []};
-        options.series.forEach((series) => {
+        options.series.forEach(function(series){
             newOptions.series.push({markLine: {data: {}, _show: false}});
         });
         // if the chart is a barchart
@@ -809,7 +809,7 @@ JS;
             if ({$this->buildJsRowCompare('echart._oldSelection', 'dataRow')} == true) {
                 {$this->buildJsSelect()}
                 newOptions = {series: []}
-                options.series.forEach((series) => {                    
+                options.series.forEach(function(series){                    
                     newOptions.series.push({markLine: {data: {}}, _show: false});
                 });
             } else {
@@ -1362,13 +1362,12 @@ JS;
             label: {
             normal: {
                 show: true,
-                formatter: (param) => {
+                formatter: function(param){
                     if (param.data['{$series->getValueDataColumn()->getDataColumnName()}'] ===  0) {
                         return 'N/A';
                     } else {
                         return param.data['{$series->getValueDataColumn()->getDataColumnName()}']
-                    } 
-                   
+                    }
                 }
             }
         },
@@ -2738,7 +2737,7 @@ JS;
         var tooltipPart = '';
         var currentAxis = params[0].axisIndex;
         // for each object in params build a table row
-        params.forEach(({axisIndex, axisValueLabel, marker, value, seriesIndex, seriesName}) => {
+        params.forEach(function({axisIndex, axisValueLabel, marker, value, seriesIndex, seriesName}){
             // get the correct formatter and the data for this object in params array
             if (("_bar" in options.series[seriesIndex]) == true) {
                 var data = options.series[seriesIndex].encode.x;
