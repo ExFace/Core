@@ -2318,6 +2318,20 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2021-01-11 11:22:29",
+            "MODIFIED_ON": "2021-01-11 11:29:27",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb9c6fe8a2e3409c6f847beb4a5184",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7EBO5IU",
+            "TITLE": "Incompatible web browser",
+            "DESCRIPTION": "The facade being used requires features, that are not available in the current web browser. This happens most often in Internet Explorer as most JavaScript frameworks dropped support for it. \n\nPlease use a moder web browser. If it has to be Internet Explorer for some reason, try a different facade\/template for the UI page.",
+            "HINT": "Please open the Link in Chrome, Firefox, Safari, Edge or similar!",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
