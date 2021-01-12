@@ -526,6 +526,7 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         $attr->setRequired($row['attribute_required_flag']);
         $attr->setEditable($row['attribute_editable_flag']);
+        $attr->setCopyable($row['attribute_copyable_flag']);
         $attr->setHidden($row['attribute_hidden_flag']);
         $attr->setSystem($row['system_flag']);
         $attr->setSortable($row['attribute_sortable_flag']);

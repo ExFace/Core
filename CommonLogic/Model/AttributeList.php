@@ -172,4 +172,16 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
         $defs->sortByKey();
         return $defs;
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeListInterface::getCopyable()
+     */
+    public function getCopyable() : MetaAttributeListInterface
+    {
+        return $this->filter(function(MetaAttributeInterface $attr) {
+            return $attr->isCopyable();
+        });
+    }
 }

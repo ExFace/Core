@@ -86,6 +86,10 @@
             "attribute_alias": "TYPE"
         },
         {
+            "name": "COPYABLEFLAG",
+            "attribute_alias": "COPYABLEFLAG"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -189,6 +193,7 @@
             "NAME": "Name",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "1",
             "ALIAS": "NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "name",
@@ -232,6 +237,7 @@
             "NAME": "Description",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "1",
             "ALIAS": "DESCRIPTION",
             "DATATYPE": "0x31310000000000000000000000000000",
             "DATA_ADDRESS": "descr",
@@ -275,6 +281,7 @@
             "NAME": "App",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "1",
             "ALIAS": "APP",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "app_oid",
@@ -318,6 +325,7 @@
             "NAME": "Alias",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "1",
             "ALIAS": "ALIAS",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "alias",
@@ -361,6 +369,7 @@
             "NAME": "Sync with external role",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "1",
             "ALIAS": "SYNC_WITH_EXT_ROLE",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "sync_with_external_role_oid",

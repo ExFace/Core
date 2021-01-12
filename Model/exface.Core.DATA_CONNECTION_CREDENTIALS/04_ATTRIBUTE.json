@@ -86,6 +86,10 @@
             "attribute_alias": "TYPE"
         },
         {
+            "name": "COPYABLEFLAG",
+            "attribute_alias": "COPYABLEFLAG"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -189,6 +193,7 @@
             "NAME": "Data Connection",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "1",
             "ALIAS": "DATA_CONNECTION",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "data_connection_oid",
@@ -232,6 +237,7 @@
             "NAME": "Connection Configuration",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "1",
             "ALIAS": "DATA_CONNECTOR_CONFIG",
             "DATATYPE": "0x11ea99f0acf95c54b00c025041000001",
             "DATA_ADDRESS": "data_connector_config",
@@ -277,6 +283,7 @@
             "NAME": "Credential Set Name",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "1",
             "ALIAS": "NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "name",
@@ -320,6 +327,7 @@
             "NAME": "Private",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "1",
             "ALIAS": "PRIVATE",
             "DATATYPE": "0x37000000000000000000000000000000",
             "DATA_ADDRESS": "private",

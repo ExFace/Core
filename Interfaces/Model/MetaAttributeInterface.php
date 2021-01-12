@@ -111,6 +111,19 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
     public function setEditable($value);
     
     /**
+     * 
+     * @return bool
+     */
+    public function isCopyable() : bool;
+    
+    /**
+     * 
+     * @param bool $value
+     * @return MetaAttributeInterface
+     */
+    public function setCopyable(bool $value) : MetaAttributeInterface;
+    
+    /**
      * Returns the formatter expression as a string
      * 
      * @return ExpressionInterface|NULL

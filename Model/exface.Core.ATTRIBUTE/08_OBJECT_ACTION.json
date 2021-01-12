@@ -61,7 +61,7 @@
     "rows": [
         {
             "CREATED_ON": "2019-04-14 07:13:11",
-            "MODIFIED_ON": "2020-10-29 09:37:03",
+            "MODIFIED_ON": "2021-01-12 15:04:59",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e95e84baee610e9677e4b318306b9a",
@@ -123,10 +123,13 @@
                                     "attribute_alias": "WRITABLEFLAG"
                                 },
                                 {
-                                    "attribute_alias": "REQUIREDFLAG"
+                                    "attribute_alias": "COPYABLEFLAG"
                                 },
                                 {
                                     "attribute_alias": "EDITABLEFLAG"
+                                },
+                                {
+                                    "attribute_alias": "REQUIREDFLAG"
                                 },
                                 {
                                     "attribute_alias": "HIDDENFLAG"

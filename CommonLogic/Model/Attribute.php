@@ -50,6 +50,8 @@ class Attribute implements MetaAttributeInterface
     private $hidden = false;
 
     private $editable = false;
+    
+    private $copyable = true;
 
     private $system = false;
 
@@ -1112,5 +1114,25 @@ class Attribute implements MetaAttributeInterface
     {
         return $this->getRelationPath()->isEmpty() === false;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isCopyable()
+     */
+    public function isCopyable(): bool
+    {
+        return $this->copyable;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setCopyable()
+     */
+    public function setCopyable(bool $value): MetaAttributeInterface
+    {
+        $this->copyable = $value;
+        return $this;
+    }
 }
-?>

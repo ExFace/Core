@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2020-09-23 07:08:05",
+            "MODIFIED_ON": "2021-01-11 22:27:44",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32350000000000000000000000000000",
@@ -258,6 +258,9 @@
                                             },
                                             {
                                                 "attribute_alias": "WRITABLEFLAG"
+                                            },
+                                            {
+                                                "attribute_alias": "COPYABLEFLAG"
                                             },
                                             {
                                                 "attribute_alias": "EDITABLEFLAG"

@@ -86,6 +86,10 @@
             "attribute_alias": "TYPE"
         },
         {
+            "name": "COPYABLEFLAG",
+            "attribute_alias": "COPYABLEFLAG"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -189,6 +193,7 @@
             "NAME": "Page",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "1",
             "ALIAS": "PAGE",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "page_oid",
@@ -232,6 +237,7 @@
             "NAME": "Group",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "1",
             "ALIAS": "PAGE_GROUP",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "page_group_oid",

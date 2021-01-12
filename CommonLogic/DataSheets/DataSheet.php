@@ -295,6 +295,9 @@ class DataSheet implements DataSheetInterface
         }
         
         if (is_array($column_values)) {
+            if ($this->countRows() > 0 && $this->countRows() !== count($column_values)) {
+                throw new DataSheetRuntimeError($this, 'Cannot update ' . $this->countRows() . ' data rows with ' . count($column_values) . ' values: expecting as many values as rows or a single value to apply to all rows!');
+            }
             // first update data rows
             foreach ($column_values as $row => $val) {
                 $this->rows[$row][$column_name] = $val;

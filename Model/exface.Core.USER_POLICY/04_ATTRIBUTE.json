@@ -86,6 +86,10 @@
             "attribute_alias": "TYPE"
         },
         {
+            "name": "COPYABLEFLAG",
+            "attribute_alias": "COPYABLEFLAG"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -189,6 +193,7 @@
             "NAME": "User",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "0",
             "ALIAS": "USER",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "user_oid",
