@@ -86,6 +86,10 @@
             "attribute_alias": "TYPE"
         },
         {
+            "name": "COPYABLEFLAG",
+            "attribute_alias": "COPYABLEFLAG"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -189,6 +193,7 @@
             "NAME": "Property",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "0",
             "ALIAS": "PROPERTY",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-property",
@@ -232,6 +237,7 @@
             "NAME": "Type",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "0",
             "ALIAS": "TYPE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-type",
@@ -275,6 +281,7 @@
             "NAME": "Template",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "0",
             "ALIAS": "TEMPLATE",
             "DATATYPE": "0x11e7b02848321d2398350205857feb80",
             "DATA_ADDRESS": "uxon-template",
@@ -318,6 +325,7 @@
             "NAME": "Default",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "0",
             "ALIAS": "DEFAULT",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-default",
@@ -361,6 +369,7 @@
             "NAME": "Required",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "0",
             "ALIAS": "REQUIRED",
             "DATATYPE": "0x37000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-required",
@@ -404,6 +413,7 @@
             "NAME": "Translatable",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "0",
             "ALIAS": "TRANSLATABLE",
             "DATATYPE": "0x37000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-translatable",

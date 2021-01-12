@@ -85,5 +85,10 @@ interface MetaAttributeListInterface extends EntityListInterface
      * @return MetaAttributeListInterface|MetaAttributeInterface[]
      */
     public function getEditable() : MetaAttributeListInterface;
+    
+    /**
+     *
+     * @return MetaAttributeListInterface|MetaAttributeInterface[]
+     */
+    public function getCopyable() : MetaAttributeListInterface;
 }
-

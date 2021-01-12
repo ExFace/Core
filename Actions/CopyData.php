@@ -39,12 +39,12 @@ use exface\Core\DataTypes\DataSheetDataType;
  * If you need to copy selected attributes only, use `CreateData` with an `input_mapper`
  * instead of this action.
  * 
- * **NOTE:** the action will copy all data of **editable** attributes - eventually reading
+ * **NOTE:** the action will copy all data of **copyable** attributes - eventually reading
  * those not present in input data right before copying. 
  * 
  * **NOTE:** attributes with a **fixed value** in their model will get freshly calculated values
  * when being copied. However attributes with a **default value** will inherit the value from
- * from the copied object __unless__ they are not editable and thus won't be copied at all.
+ * from the copied object __unless__ they are not copyable and thus won't be copied at all.
  * 
  * **NOTE:** the action requires every input row to have a UID value - otherwise neither
  * additional data nor related objects can be loaded.
@@ -168,18 +168,18 @@ class CopyData extends SaveData implements iCreateData
             }
         }
         
-        // Make sure, we have all editable attributes (just like in the copy-dialog.
-        // Therefore, copy the sheet, add all editable attributes and see if it needs
+        // Make sure, we have all copyable attributes.
+        // Therefore, copy the sheet, add all copyable attributes and see if it needs
         // to be read again (if we do that on the input sheet, reading here would override
         // eventually changed values!).
         $currentData = $inputSheet->copy();
-        foreach ($inputSheet->getMetaObject()->getAttributes()->getEditable() as $attr) {
+        foreach ($inputSheet->getMetaObject()->getAttributes()->getCopyable() as $attr) {
             if (! $currentData->getColumns()->getByAttribute($attr)) {
                 $currentData->getColumns()->addFromAttribute($attr);
             }
         }
-        // Don't read columns with subsheets because they do not represent any editable
-        // attributes and reading them here would just cause extra overhead. If there are
+        // Don't read columns with subsheets because they represent reverse relations handled
+        // later on and reading them here would just cause extra overhead. If there are
         // relations, that need to be copied along with the main object, this is going
         // to be done later in the code.
         foreach ($currentData->getColumns() as $currentCol) {
@@ -241,7 +241,7 @@ class CopyData extends SaveData implements iCreateData
                 // Create a data sheet for the right object of the relation with all it's
                 // writable attributes.
                 $relSheet = DataSheetFactory::createFromObject($rel->getRightObject());
-                foreach ($relSheet->getMetaObject()->getAttributes()->getEditable() as $attr) {
+                foreach ($relSheet->getMetaObject()->getAttributes()->getCopyable() as $attr) {
                     $relSheet->getColumns()->addFromAttribute($attr);
                 }
                 

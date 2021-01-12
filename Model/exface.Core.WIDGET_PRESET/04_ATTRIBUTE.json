@@ -86,6 +86,10 @@
             "attribute_alias": "TYPE"
         },
         {
+            "name": "COPYABLEFLAG",
+            "attribute_alias": "COPYABLEFLAG"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -189,6 +193,7 @@
             "NAME": "Widget",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "1",
             "ALIAS": "PROTOTYPE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "prototype",
@@ -232,6 +237,7 @@
             "NAME": "UXON schema",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "1",
             "ALIAS": "UXON_SCHEMA",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "uxon_schema",

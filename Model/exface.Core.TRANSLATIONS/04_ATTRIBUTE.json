@@ -86,6 +86,10 @@
             "attribute_alias": "TYPE"
         },
         {
+            "name": "COPYABLEFLAG",
+            "attribute_alias": "COPYABLEFLAG"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -189,6 +193,7 @@
             "NAME": "Contents",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "1",
             "ALIAS": "CONTENTS",
             "DATATYPE": "0x11e7b02848321d2398350205857feb80",
             "DATA_ADDRESS": "contents",
@@ -234,6 +239,7 @@
             "NAME": "App",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "0",
             "ALIAS": "APP",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "subpath(0,2)",
@@ -277,6 +283,7 @@
             "NAME": "Locale",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
+            "COPYABLEFLAG": "1",
             "ALIAS": "LOCALE",
             "DATATYPE": "0x11ea12218ced0ceb84aee4b318306b9a",
             "DATA_ADDRESS": "name",
