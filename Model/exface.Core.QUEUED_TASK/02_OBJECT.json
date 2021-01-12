@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-09-22 13:06:11",
-            "MODIFIED_ON": "2021-01-08 14:47:50",
+            "MODIFIED_ON": "2021-01-12 15:33:29",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea8f3c9ff2c5e68f3c8c04ba002958",
@@ -100,148 +100,35 @@
                 "widget_type": "Dialog",
                 "widgets": [
                     {
-                        "widget_type": "Tabs",
-                        "tabs": [
+                        "attribute_alias": "MESSAGE_ID"
+                    },
+                    {
+                        "attribute_alias": "PRODUCER"
+                    },
+                    {
+                        "attribute_alias": "TASK_ASSIGNED_ON"
+                    },
+                    {
+                        "attribute_alias": "TOPICS"
+                    },
+                    {
+                        "attribute_alias": "QUEUE"
+                    },
+                    {
+                        "attribute_alias": "CHANNEL",
+                        "value": "Manual",
+                        "disabled": true
+                    },
+                    {
+                        "widget_type": "WidgetGroup",
+                        "caption": "Task Uxon",
+                        "widgets": [
                             {
-                                "caption": "Info",
-                                "readonly": true,
-                                "widgets": [
-                                    {
-                                        "widget_type": "WidgetGroup",
-                                        "caption": "Message",
-                                        "widgets": [
-                                            {
-                                                "attribute_alias": "TASK_ASSIGNED_ON"
-                                            },
-                                            {
-                                                "attribute_alias": "OWNER__USERNAME"
-                                            },
-                                            {
-                                                "attribute_alias": "PRODUCER"
-                                            },
-                                            {
-                                                "attribute_alias": "MESSAGE_ID",
-                                                "id": "message_id_field"
-                                            },
-                                            {
-                                                "attribute_alias": "TOPICS"
-                                            },
-                                            {
-                                                "attribute_alias": "CHANNEL"
-                                            },
-                                            {
-                                                "attribute_alias": "USER_AGENT",
-                                                "widget_type": "Text"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "widget_type": "WidgetGroup",
-                                        "caption": "Task summary",
-                                        "widgets": [
-                                            {
-                                                "attribute_alias": "OBJECT_ALIAS"
-                                            },
-                                            {
-                                                "attribute_alias": "ACTION_ALIAS"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "widget_type": "WidgetGroup",
-                                        "caption": "Execution",
-                                        "widgets": [
-                                            {
-                                                "attribute_alias": "QUEUE__NAME"
-                                            },
-                                            {
-                                                "attribute_alias": "STATUS"
-                                            },
-                                            {
-                                                "attribute_alias": "PROCESSED_ON"
-                                            },
-                                            {
-                                                "attribute_alias": "RESULT_CODE"
-                                            },
-                                            {
-                                                "attribute_alias": "RESULT"
-                                            },
-                                            {
-                                                "attribute_alias": "ERROR_LOGID"
-                                            },
-                                            {
-                                                "attribute_alias": "ERROR_MESSAGE"
-                                            },
-                                            {
-                                                "attribute_alias": "DURATION_MS"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "widget_type": "WidgetGroup",
-                                        "width": "max",
-                                        "caption": "Message History",
-                                        "widgets": [
-                                            {
-                                                "widget_type": "DataTree",
-                                                "height": 10,
-                                                "object_alias": "exface.Core.QUEUED_TASK",
-                                                "tree_parent_relation_alias": "PARENT_ITEM",
-                                                "tree_folder_flag_attribute_alias": "HAS_SUCCESSOR",
-                                                "paginate": false,
-                                                "lazy_load_tree_levels": false,
-                                                "filters": [
-                                                    {
-                                                        "attribute_alias": "MESSAGE_ID",
-                                                        "value": "=message_id_field",
-                                                        "required": true,
-                                                        "input_widget": {
-                                                            "widget_type": "InputHidden"
-                                                        }
-                                                    }
-                                                ],
-                                                "sorters": [
-                                                    {
-                                                        "attribute_alias": "CREATED_ON",
-                                                        "direction": "asc"
-                                                    }
-                                                ],
-                                                "columns": [
-                                                    {
-                                                        "attribute_alias": "ENQUEUED_ON",
-                                                        "align": "left"
-                                                    },
-                                                    {
-                                                        "attribute_alias": "CREATED_BY_USER__LABEL"
-                                                    },
-                                                    {
-                                                        "attribute_alias": "QUEUE__LABEL"
-                                                    },
-                                                    {
-                                                        "attribute_alias": "STATUS"
-                                                    },
-                                                    {
-                                                        "attribute_alias": "RESULT"
-                                                    },
-                                                    {
-                                                        "attribute_alias": "ERROR_MESSAGE"
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "caption": "Task Uxon",
-                                "widgets": [
-                                    {
-                                        "hide_caption": true,
-                                        "widget_type": "InputUxon",
-                                        "height": "100%",
-                                        "attribute_alias": "TASK_UXON"
-                                    }
-                                ]
+                                "hide_caption": true,
+                                "widget_type": "InputUxon",
+                                "width": "max",
+                                "height": 16,
+                                "attribute_alias": "TASK_UXON"
                             }
                         ]
                     }
