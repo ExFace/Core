@@ -261,8 +261,11 @@ class InlineGroup extends Container
     /**
      * Set to TRUE to stretch inner widgets to fill the entire width.
      * 
-     * - Stretched: | Caption:  |________|x|________| |
-     * - Normal:    | Caption:  |___|x|___|           |
+     * ```
+     *  | Stretched:  |________|x|________| |
+     *  | Normal:     |___|x|___|           |
+     *  
+     * ```
      * 
      * Applies only to inner widgets without a specific width. If not stretched, the inner
      * widgets will auto-adjust their width to their values if possible.
