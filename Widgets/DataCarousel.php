@@ -111,18 +111,45 @@ class DataCarousel extends Split
         return $this->dataWidget;
     }
     
+    /**
+     * 
+     * @param iShowData $widget
+     * @return iShowData
+     */
     protected function initDataWidget(iShowData $widget) : iShowData
     {
         if ($this->hasDetailsWidget()) {
             $details = $this->getDetailsWidget();
-            foreach ($details->getChildrenRecursive() as $child) {
-                if ($child instanceof iShowSingleAttribute && $child->isBoundToAttribute()) {
-                    $widget->addColumn($widget->createColumnFromAttribute($child->getAttribute(), null, true));
-                }
+            foreach ($this->getChildrenToSyncWithDataWidget($details) as $child) {
+                $widget->addColumn($widget->createColumnFromAttribute($child->getAttribute(), null, true));
             }
             $this->dataWidgetInitialized = true;
         }
         return $widget;
+    }
+    
+    /**
+     * Returns all the details widgets, which need data that can be loaded via data widget.
+     * 
+     * @param iContainOtherWidgets $container
+     * @return WidgetInterface[]
+     */
+    public function getChildrenToSyncWithDataWidget(iContainOtherWidgets $container) : array
+    {
+        $widgets = [];
+        foreach ($container->getWidgets() as $child) {
+            switch (true) {
+                case ! $child->getMetaObject()->is($this->getMetaObject()):
+                    break;
+                case $child instanceof iShowSingleAttribute && $child->isBoundToAttribute():
+                    $widgets[] = $child;
+                    break;
+                case $child instanceof iContainOtherWidgets:
+                    $widgets = array_merge($widgets, $this->getChildrenToSyncWithDataWidget($child));
+                    break;
+            }
+        }
+        return $widgets;
     }
 
     /**

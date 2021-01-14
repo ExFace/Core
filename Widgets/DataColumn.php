@@ -8,7 +8,6 @@ use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\NumberDataType;
-use exface\Core\DataTypes\PriceDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
