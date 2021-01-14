@@ -121,7 +121,9 @@ class DataCarousel extends Split
         if ($this->hasDetailsWidget()) {
             $details = $this->getDetailsWidget();
             foreach ($this->getChildrenToSyncWithDataWidget($details) as $child) {
-                $widget->addColumn($widget->createColumnFromAttribute($child->getAttribute(), null, true));
+                if (! $widget->getColumnByAttributeAlias($child->getAttributeAlias())) {
+                    $widget->addColumn($widget->createColumnFromAttribute($child->getAttribute(), null, true));
+                }
             }
             $this->dataWidgetInitialized = true;
         }
