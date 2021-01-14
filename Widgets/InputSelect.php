@@ -19,6 +19,7 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Interfaces\Widgets\iHaveValues;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * A dropdown menu to select from.
@@ -460,8 +461,8 @@ class InputSelect extends Input implements iSupportMultiSelect
     {
         $data_sheet = parent::prepareDataSheetToPrefill($data_sheet);
         
-        if ($data_sheet->getMetaObject()->is($this->getOptionsObject())) {
-            $data_sheet->getColumns()->addFromAttribute($this->getTextAttribute());
+        if ($data_sheet->getMetaObject()->is($this->getOptionsObject()) && $textAttr = $this->getTextAttribute()) {
+            $data_sheet->getColumns()->addFromAttribute($textAttr);
         }
         
         return $data_sheet;
@@ -567,10 +568,13 @@ class InputSelect extends Input implements iSupportMultiSelect
 
     /**
      *
-     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
+     * @return MetaAttributeInterface|NULL
      */
-    public function getTextAttribute()
+    public function getTextAttribute() : ?MetaAttributeInterface
     {
+        if (! $this->isBoundToAttribute()) {
+            return null;
+        }
         return $this->getOptionsObject()->getAttribute($this->getTextAttributeAlias());
     }
 
