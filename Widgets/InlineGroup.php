@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Widgets\iTakeInput;
 
 /**
  * Displays multiple value-widgets in line - e.g. for dimensions (LxWxH), prices (value, currency), etc.
@@ -111,6 +112,8 @@ class InlineGroup extends Container
     private $separatorWidth = '5%';
     
     private $separatorWidgets = [];
+    
+    private $stretch = null;
     
     /**
      * Array of widgets to be placed in the group: mostly Value widgets, but any other kind is OK too.
@@ -253,5 +256,50 @@ class InlineGroup extends Container
             return $this->getWidgetFirst()->getCaption();
         }
         return parent::getCaption();
+    }
+    
+    /**
+     * Set to TRUE to stretch inner widgets to fill the entire width.
+     * 
+     * - Stretched: | Caption:  |________|x|________| |
+     * - Normal:    | Caption:  |___|x|___|           |
+     * 
+     * Applies only to inner widgets without a specific width. If not stretched, the inner
+     * widgets will auto-adjust their width to their values if possible.
+     * 
+     * By default, an `InlineGroup` is stretched if it contains at least one input widgets.
+     * If it's display widgets only it is not stretched.
+     * 
+     * @uxon-property stretch_width
+     * @uxon-type boolean
+     * 
+     * @param bool $trueOrFalse
+     * @return InlineGroup
+     */
+    public function setStretchWidth(bool $trueOrFalse) : InlineGroup
+    {
+        $this->stretch = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * Returns TRUE if the inner widgets should fill the entire width and FALSE if the sum
+     * of their width can be smaller.
+     *
+     * @return bool
+     * 
+     * @see setStretchWidth()
+     */
+    public function isStretched() : bool
+    {
+        if ($this->stretch === null) {
+            foreach ($this->getWidgets() as $child) {
+                if ($child instanceof iTakeInput) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return $this->stretch;
     }
 }
