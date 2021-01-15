@@ -344,6 +344,7 @@
 	"WIDGET.DATA.HELP.FILTERS": "Filters",
 	"WIDGET.DATA.HELP.COLUMNS": "Columns",
 	"WIDGET.DATA.NOT_LOADED": "Please set your filters before performing a search!",
+	"WIDGET.DATA.GROUP_EMPTY": "none",
 	
 	"WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION": "Filters",
 	"WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION": "Sorting",
