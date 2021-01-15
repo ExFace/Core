@@ -78,6 +78,8 @@ class DataRowGrouper implements WidgetPartInterface, iHaveCaption
      */
     private $show_counter = false;
     
+    private $empty_text = null;
+    
     /**
      * 
      * @throws WidgetConfigurationError
@@ -291,5 +293,29 @@ class DataRowGrouper implements WidgetPartInterface, iHaveCaption
             $this->setCaption($cap);
         }
         return $cap;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getEmptyText() : string
+    {
+        return $this->empty_text ?? $this->getWidget()->translate('WIDGET.DATA.GROUP_EMPTY');
+    }
+    
+    /**
+     * Caption of the group of rows without values in the `group_by_attribute_alias`.
+     * 
+     * @uxon-property empty_text
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return DataRowGrouper
+     */
+    public function setEmptyText(string $value) : DataRowGrouper
+    {
+        $this->empty_text = $value;
+        return $this;
     }
 }
