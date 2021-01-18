@@ -360,7 +360,7 @@ class SecurityManager implements SecurityManagerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getTokenLifetime()
      */
-    public function getTokenLifetime(): ?int
+    public function getTokenLifetime(AuthenticationTokenInterface $token): ?int
     {
         return null;
     }
