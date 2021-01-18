@@ -157,7 +157,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     * How long should a successful authentication be valid.
+     * How long should a successful authentication be valid (in seconds).
      * 
      * After this amount of seconds the user will be asked to log in again. The token
      * lifetime can be set for every authenticator individually. If it is not, the token
@@ -181,7 +181,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getTokenLifetime()
      */
-    public function getTokenLifetime() : ?int
+    public function getTokenLifetime(AuthenticationTokenInterface $token) : ?int
     {
         return $this->lifetime;
     }

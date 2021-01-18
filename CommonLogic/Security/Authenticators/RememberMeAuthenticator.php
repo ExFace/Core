@@ -142,10 +142,11 @@ class RememberMeAuthenticator extends AbstractAuthenticator
      */
     protected function saveSessionData(AuthenticationTokenInterface $token, AuthenticationProviderInterface $provider = null) : RememberMeAuthenticator
     {
+        $sessionScope = $this->getWorkbench()->getContext()->getScopeSession();
         if ($token->isAnonymous()) {
-            $this->getWorkbench()->getContext()->getScopeSession()->clearSessionData();
+            $sessionScope->clearSessionData();
         } else {
-            $this->getWorkbench()->getContext()->getScopeSession()->setSessionUserData($this->createSessionDataString($token, $provider));
+            $sessionScope->setSessionUserData($this->createSessionDataString($token, $provider));
         }
         $this->sessionData = null;
         $this->sessionDataEncrypted = null;
@@ -168,7 +169,7 @@ class RememberMeAuthenticator extends AbstractAuthenticator
         
         $this->sessionDataEncrypted = $dataString;
         
-        if ($dataString === null) {
+        if ($dataString === null || $dataString === '') {
             return null;
         }
         
@@ -198,10 +199,15 @@ class RememberMeAuthenticator extends AbstractAuthenticator
         if ($oldSessionData !== null && $oldSessionData['username'] === $token->getUsername()) {
             $expires = $oldSessionData['expires'];
         } else {
-            $lifetime = $this->getTokenLifetime();
-            if ($provider instanceof AuthenticatorInterface && $provider->getTokenLifetime() !== null) {
-                $lifetime = $provider->getTokenLifetime();
+            if (! ($provider instanceof AuthenticatorInterface) || ($lifetime = $provider->getTokenLifetime($token)) === null) {
+                $lifetime = $this->getTokenLifetime($token);
             }
+            
+            // If the lifetime is 0, we should not store any information at all!
+            if ($lifetime === 0) {
+                return '';
+            }
+            
             $expires = time() + $lifetime;
         }
         $user = $this->getWorkbench()->getSecurity()->getUser($token);
@@ -242,7 +248,7 @@ class RememberMeAuthenticator extends AbstractAuthenticator
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Security\Authenticators\AbstractAuthenticator::getTokenLifetime()
      */
-    public function getTokenLifetime() : ?int
+    public function getTokenLifetime(AuthenticationTokenInterface $token) : ?int
     {
         if ($this->lifetime === null) {
             return 604800;
