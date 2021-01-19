@@ -2,9 +2,11 @@
 namespace exface\Core\CommonLogic\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextInterface;
+use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 
 class RequestContextScope extends AbstractContextScope
 {
+    private $vars = [];
     
     const SUBREQUEST_SEPARATOR = ':';
 
@@ -153,5 +155,37 @@ class RequestContextScope extends AbstractContextScope
     {
         $this->baseUrl = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextScopeInterface::setVariable()
+     */
+    public function setVariable(string $name, $value, string $namespace = null) : ContextScopeInterface
+    {
+        $this->vars[($namespace !== null ? $namespace . '_' : '') . $name] =  $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextScopeInterface::unsetVariable()
+     */
+    public function unsetVariable(string $name, string $namespace = null) : ContextScopeInterface
+    {
+        unset($this->vars[($namespace !== null ? $namespace . '_' : '') . $name]);
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextScopeInterface::getVariable()
+     */
+    public function getVariable(string $name, string $namespace = null)
+    {
+        return $this->vars[($namespace !== null ? $namespace . '_' : '') . $name];
     }
 }

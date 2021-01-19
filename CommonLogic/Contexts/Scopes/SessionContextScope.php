@@ -8,6 +8,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 
 /**
  * The session context scope represents the PHP session (on server side).
@@ -405,5 +406,37 @@ class SessionContextScope extends AbstractContextScope
     protected function getInstallationFolderName() : string
     {
         return StringDataType::substringAfter($this->getWorkbench()->getInstallationPath(), DIRECTORY_SEPARATOR, false, false, true);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextScopeInterface::setVariable()
+     */
+    public function setVariable(string $name, $value, string $namespace = null) : ContextScopeInterface
+    {
+        $this->setSessionData('_' . ($namespace !== null ? $namespace . '_' : '') . $name, $value);
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextScopeInterface::unsetVariable()
+     */
+    public function unsetVariable(string $name, string $namespace = null) : ContextScopeInterface
+    {
+        $_SESSION['exface'][$this->getInstallationFolderName()]['_' . ($namespace !== null ? $namespace . '_' : '') . $name];
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextScopeInterface::getVariable()
+     */
+    public function getVariable(string $name, string $namespace = null)
+    {
+        return $this->getSessionData('_' . ($namespace !== null ? $namespace . '_' : '') . $name);
     }
 }
