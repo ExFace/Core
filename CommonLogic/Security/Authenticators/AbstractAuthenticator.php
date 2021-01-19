@@ -1,11 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Security\Authenticators;
 
-use Symfony\Component\Security\Core\Authentication\AuthenticationProviderManager;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
-use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
@@ -63,27 +60,6 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     public function getWorkbench()
     {
         return $this->workbench;
-    }
-    
-    protected function getSymfonyAuthManager() : AuthenticationProviderManager
-    {
-        if ($this->symfonyAuthManager === null) {
-            $this->symfonyAuthManager = new AuthenticationProviderManager($this->getSymfonyAuthProviders());
-            if ($this->getWorkbench()->eventManager() instanceof EventDispatcherInterface) {
-                $this->symfonyAuthManager->setEventDispatcher($this->getWorkbench()->eventManager()->getSymfonyEventDispatcher());
-            }
-        }
-        return $this->symfonyAuthManager;
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::createLoginWidget()
-     */
-    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
-    {
-        return $container;
     }
     
     /**

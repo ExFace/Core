@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Security\AuthenticationProviderInterface;
 use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\Exceptions\EncryptionError;
 use exface\Core\Facades\ConsoleFacade;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * Stores user data in the session context scope and attempts to re-authenticate the user with every request.
@@ -254,5 +255,15 @@ class RememberMeAuthenticator extends AbstractAuthenticator
             return 604800;
         }
         return $this->lifetime;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::createLoginWidget()
+     */
+    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    {
+        return $container;
     }
 }

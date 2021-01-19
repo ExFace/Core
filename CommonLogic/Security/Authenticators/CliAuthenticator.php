@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\Security\AuthenticationToken\CliEnvAuthToken;
 use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTrait;
 use exface\Core\Facades\ConsoleFacade;
 use exface\Core\CommonLogic\Security\AuthenticationToken\RememberMeAuthToken;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * Performs authentication for php scripts run in cli environment. 
@@ -109,5 +110,15 @@ class CliAuthenticator extends AbstractAuthenticator
     protected function getNameDefault() : string
     {
         return 'Command line authentication';
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::createLoginWidget()
+     */
+    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    {
+        return $container;
     }
 }
