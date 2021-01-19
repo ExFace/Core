@@ -107,10 +107,8 @@ class InstallationContextScope extends AbstractContextScope
     
     /**
      * 
-     * @param string $name
-     * @param mixed $value
-     * @param string $namespace
-     * @return ContextScopeInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextScopeInterface::setVariable()
      */
     public function setVariable(string $name, $value, string $namespace = null) : ContextScopeInterface
     {
@@ -120,9 +118,8 @@ class InstallationContextScope extends AbstractContextScope
     
     /**
      * 
-     * @param string $name
-     * @param string $namespace
-     * @return ContextScopeInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextScopeInterface::unsetVariable()
      */
     public function unsetVariable(string $name, string $namespace = null) : ContextScopeInterface
     {
@@ -132,9 +129,8 @@ class InstallationContextScope extends AbstractContextScope
     
     /**
      * 
-     * @param string $name
-     * @param string $namespace
-     * @return mixed
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextScopeInterface::getVariable()
      */
     public function getVariable(string $name, string $namespace = null)
     {
