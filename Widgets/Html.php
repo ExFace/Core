@@ -32,6 +32,8 @@ class Html extends Display
     
     private $margins = false;
     
+    private $inline = false;
+    
     private $baseUrl = '';
     
     private $baseUrlAttributeAlias = null;
@@ -156,10 +158,11 @@ class Html extends Display
      * @uxon-default
      * 
      * @param boolean $margins
+     * @return Html
      */
-    public function setMargins($true_or_false)
+    public function setMargins(bool $true_or_false)
     {
-        $this->margins = BooleanDataType::cast($true_or_false);
+        $this->margins = $true_or_false;
         return $this;
     }
     
@@ -348,5 +351,25 @@ class Html extends Display
         }
         return parent::getValue();
     }
+    
+    public function getInline() : bool
+    {
+        return $this->inline;
+    }
+    
+    /**
+     * Set to TRUE to make the widget appear in-line with its caption.
+     * 
+     * @uxon-property inline
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return Html
+     */
+    public function setInline(bool $value) : Html
+    {
+        $this->inline = $value;
+        return $this;
+    }
 }
-?>
