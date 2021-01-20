@@ -15,13 +15,40 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Actions\iModifyContext;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Factories\SelectorFactory;
+use exface\Core\Interfaces\Tasks\HttpTaskInterface;
 
 /**
  * Performs an authentication attempt using the supplied login data.
  * 
  * This action can perform authentication agains the workbench itself or against a 
- * specified data connection (depending on wheter `CONNECTION` is set in the input
+ * specified data connection (depending on whether `CONNECTION` is set in the input
  * data or not).
+ * 
+ * Requires input data based on the meta object `exface.Core.LOGIN_DATA`. The input
+ * data should contain exactly one row with all information required to create an
+ * authentication token in its cells. 
+ * 
+ * The following input columns control, how the data is processed:
+ * 
+ * - `CONNECTION` - if set, authentication will be performed against this data connection
+ * (the value MUST be a valid connection selector like an alias or UID)
+ * - `CONNECTION_SAVE` - if a truthly value is passed (`1` or `true`), a successfull
+ * login will produce connection credentials. Only applicable in connection-mode.
+ * - `CONNECTION_SAVE_FOR_USER` - if `CONNECTION_SAVE`, this column can be used to
+ * explicitly specify a the future owner of the credential set. Expects a valid user
+ * selector (username or UID).
+ * - `AUTH_TOKEN_CLASS` - the qualified PHP class name of the authentication token to
+ * use. All the other columns of the input data will be treated as named constructor
+ * arguments for the token: e.g. for `MyToken::__construct($user, $key)`, the values of
+ * the columns `USER` and `KEY` (case insensitive!) will automatically be used when calling
+ * the constructor. Additionally there are some reserved constructor argument names with
+ * the following behavior (they cannot be passed with the input data!):
+ *      - `$facade` will receive the instance of the facade the called the login action
+ *      - `$request` will receive the PSR7 request instance used to call the action or
+ *      `null` if the task is not an `HttpTask`
+ * 
+ * If no column `AUTH_TOKEN_CLASS` exists or if it's empty, the default `UsernamePasswordAuthToken` 
+ * will be used. 
  * 
  * @author Andrej Kabachnik
  *
@@ -81,15 +108,25 @@ class Login extends AbstractAction implements iModifyContext
             $reflector = new \ReflectionClass($tokenClass);
             $constructorArgs = [];
             foreach ($reflector->getConstructor()->getParameters() as $param) {
-                if ($param->getName() === 'facade') {
-                    $constructorArgs[] = $task->getFacade();
-                } else {
-                    foreach ($inputRow as $key => $val) {
-                        if (strcasecmp($key, $param->getName()) === 0) {
-                            $constructorArgs[] = $val;
-                            break;
+                // See if we can find a value for every constructor parameter
+                switch (mb_strtolower($param->getName())) {
+                    // Parameter name $facade is reserved for the calling facade
+                    case 'facade':
+                        $constructorArgs[] = $task->getFacade();
+                        break;
+                    // Parameter name $request is reserved for the HTTP request (if known)
+                    case 'request':
+                        $constructorArgs[] = $task instanceof HttpTaskInterface ? $task->getHttpRequest() : null;
+                        break;
+                    // All other constructor parameters should be found in the 
+                    // input data
+                    default:
+                        foreach ($inputRow as $key => $val) {
+                            if (strcasecmp($key, $param->getName()) === 0) {
+                                $constructorArgs[] = $val;
+                                break;
+                            }
                         }
-                    }
                 }
             }
             $token = $reflector->newInstanceArgs($constructorArgs);
