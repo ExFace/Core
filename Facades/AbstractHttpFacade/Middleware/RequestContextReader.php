@@ -36,6 +36,8 @@ class RequestContextReader implements MiddlewareInterface
     {
         $requestScope = $this->context->getScopeRequest();
         
+        $requestScope->setRequestProcessed($request);
+        
         $rId = $this->getHeaderValue($request, 'X-Request-ID');
         if ($rId !== null) {
             $requestScope->setRequestId($rId);
