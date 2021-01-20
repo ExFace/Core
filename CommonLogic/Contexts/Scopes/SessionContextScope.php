@@ -34,6 +34,10 @@ class SessionContextScope extends AbstractContextScope
     
     private $force_update_session_data = false;
     
+    private $session_vars_set = [];
+    
+    private $session_vars_unset = [];
+    
     public function __construct(Workbench $exface)
     {
         parent::__construct($exface);
@@ -131,6 +135,7 @@ class SessionContextScope extends AbstractContextScope
             }
         }
         
+        // Save contexts
         foreach ($this->getContextsLoaded() as $context) {
             $uxon = $context->exportUxonObject();
             if (! is_null($uxon) && ! $uxon->isEmpty()) {
@@ -142,6 +147,14 @@ class SessionContextScope extends AbstractContextScope
             } else {
                 $this->removeContext($context->getAliasWithNamespace());
             }
+        }
+        
+        // Save variables
+        foreach ($this->session_vars_set as $var => $val) {
+            $this->setSessionData($var, $val);
+        }
+        foreach (array_keys($this->session_vars_unset) as $var) {
+            $this->removeSessionData($var);
         }
         
         // Save other session data
@@ -310,6 +323,12 @@ class SessionContextScope extends AbstractContextScope
     }
     
     /**
+     * Writeds data to $_SESSION - only persistant if the session is open!!!
+     * 
+     * NOTE: the session is closed after the context is initialized, so all changes
+     * get reverted unless explicitly re-applied in `save_contexts()`. Changing
+     * the $_SESSION here is only temporary if the session is closed at the time
+     * of change!
      * 
      * @param string $key
      * @param string|array $data
@@ -318,6 +337,23 @@ class SessionContextScope extends AbstractContextScope
     protected function setSessionData(string $key, $data) : SessionContextScope
     {
         $_SESSION['exface'][$this->getInstallationFolderName()][$key] = $data;
+        return $this;
+    }
+    
+    /**
+     * Unsets data in $_SESSION - only persistant if the session is open!!!
+     * 
+     * NOTE: the session is closed after the context is initialized, so all changes
+     * get reverted unless explicitly re-applied in `save_contexts()`. Changing
+     * the $_SESSION here is only temporary if the session is closed at the time
+     * of change!
+     * 
+     * @param string $key
+     * @return SessionContextScope
+     */
+    protected function removeSessionData(string $key) : SessionContextScope
+    {
+        unset($_SESSION['exface'][$this->getInstallationFolderName()][$key]);
         return $this;
     }
     
@@ -415,7 +451,9 @@ class SessionContextScope extends AbstractContextScope
      */
     public function setVariable(string $name, $value, string $namespace = null) : ContextScopeInterface
     {
-        $this->setSessionData('_' . ($namespace !== null ? $namespace . '_' : '') . $name, $value);
+        $var = '_' . ($namespace !== null ? $namespace . '_' : '') . $name;
+        $this->setSessionData($var, $value);
+        $this->session_vars_set[$var] = $value;
         return $this;
     }
     
@@ -426,7 +464,9 @@ class SessionContextScope extends AbstractContextScope
      */
     public function unsetVariable(string $name, string $namespace = null) : ContextScopeInterface
     {
-        $_SESSION['exface'][$this->getInstallationFolderName()]['_' . ($namespace !== null ? $namespace . '_' : '') . $name];
+        $var = '_' . ($namespace !== null ? $namespace . '_' : '') . $name;
+        $this->session_vars_unset[$var] = $this->getSessionData($var);
+        $this->removeSessionData($var);
         return $this;
     }
     
