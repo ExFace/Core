@@ -120,7 +120,10 @@ class SessionContextScope extends AbstractContextScope
         // In particular, this prevens unneeded session operatinos, which may have negative
         // performance impact and can even produce PHP warnings if headers were sent already
         // (e.g. by the CMS).
-        if (empty($this->getContextsLoaded()) === true && $this->force_update_session_data === false) {
+        if (empty($this->getContextsLoaded()) === true 
+            && empty($this->session_vars_set)
+            && empty($this->session_vars_unset)
+            && $this->force_update_session_data === false) {
             return $this;
         }
         
