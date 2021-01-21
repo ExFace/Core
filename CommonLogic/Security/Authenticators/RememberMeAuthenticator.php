@@ -145,7 +145,9 @@ class RememberMeAuthenticator extends AbstractAuthenticator
     {
         $sessionScope = $this->getWorkbench()->getContext()->getScopeSession();
         if ($token->isAnonymous()) {
-            $sessionScope->clearSessionData();
+            if ($this->getWorkbench()->getContext()->getScopeSession()->getSessionUserData()) {
+                $sessionScope->clearSessionData();
+            }
         } else {
             $sessionScope->setSessionUserData($this->createSessionDataString($token, $provider));
         }
