@@ -24,10 +24,6 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\SecurityException;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Events\Security\OnAuthenticatedEvent;
-use exface\Core\Factories\ConfigurationFactory;
-use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
-use exface\Core\CoreApp;
-use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\Security\AuthenticationFailedMultiError;
 
 /**
