@@ -14,7 +14,7 @@ If your app is a Composer package and has a sources repository on GitHub, GitLab
 	"description" : "Business web application plattform",
 	"support" : {
 		"source" : "https://github.com/exface/core",
-		"docs" : "https://github.com/exface/core/blob/master/Docs",
+		"docs" : "https://github.com/exface/core/blob/1.x-dev/Docs",
 	}
 }
 ```
