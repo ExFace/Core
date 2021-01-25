@@ -230,7 +230,9 @@ class SqlModelLoader implements ModelLoaderInterface
                 $object->extendFromObject($baseObject);
             }
             // Now that we handled the base object, we can extend from the explicit parent.
-            if ($parent) {
+            // Still double check if it's the same object in case the user accidently specified
+            // the same object as base and parent in the metamodel.
+            if ($parent && $parent !== $baseObject) {
                 $object->extendFromObject($parent);
             }
             
