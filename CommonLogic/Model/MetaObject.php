@@ -451,7 +451,12 @@ class MetaObject implements MetaObjectInterface
             return;
         }
         
-        // Save UIDs of all objects this on extends from or it's parents extend from.
+        // Prevent extending multiple times becaus that would double behavior triggers!
+        if (in_array($parent, $this->parent_objects)) {
+            return;
+        }
+        
+        // Save all objects this one extends from.
         $this->parent_objects[] = $parent; 
         
         // Inherit data address
