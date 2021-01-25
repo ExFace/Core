@@ -104,7 +104,7 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      */
     public function getAliasWithNamespace()
     {
-        return $this->getNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getAlias();
+        return ($this->getNamespace() ? $this->getNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER : '') . $this->getAlias();
     }
     
     /**
