@@ -7,7 +7,7 @@ ALTER TABLE `exf_queued_task`
 	ADD COLUMN `duration_ms` DECIMAL(10,2) NULL DEFAULT NULL AFTER `processed_on`;
 	
 ALTER TABLE `exf_queued_task`
-    CHANGE COLUMN `queue` `queue_oid` BINARY(16) NULL AFTER `parent_item_oid`
+    CHANGE COLUMN `queue` `queue_oid` BINARY(16) NULL AFTER `parent_item_oid`;
 	
 UPDATE `exf_queued_task` SET `status` = 30 WHERE `status` = 10;
 UPDATE `exf_queued_task` SET `status` = 98 WHERE `status` = 90;
