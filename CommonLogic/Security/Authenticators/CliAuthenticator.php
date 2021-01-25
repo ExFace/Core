@@ -67,7 +67,7 @@ class CliAuthenticator extends AbstractAuthenticator
         $user = null;
         if ($this->userExists($token) === true) {
             $user = $this->getUserFromToken($token);
-        } elseif ($this->getCreateNewUsers() === true) {
+        } elseif ($this->getCreateNewUsers(true) === true) {
             $user = $this->createUserWithRoles($this->getWorkbench(), $token);
             //second authentification to save credentials
         } else {

@@ -13,13 +13,11 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
-use exface\Core\CommonLogic\Model\MetaObject;
 
 trait CreateUserFromTokenTrait
 {   
-    private $createNewUsers = false;
+    private $createNewUsers = null;
     
     private $newUsersRoles = [];
     
@@ -39,9 +37,9 @@ trait CreateUserFromTokenTrait
         return $this;
     }
     
-    protected function getCreateNewUsers() : bool
+    protected function getCreateNewUsers(bool $default = false) : bool
     {
-        return $this->createNewUsers;
+        return $this->createNewUsers ?? $default;
     }
     
     /**
@@ -74,25 +72,25 @@ trait CreateUserFromTokenTrait
     }
 
     /**
-     * Creates a user from the given token and saves it to the database. Returns the user.
+     * Creates a new workbench user in the model from the given token and data row array and returns the user.
      * 
-     * @param AuthenticationTokenInterface $token
+     * The $userData parameter may contain any attributes of the object `exface.Core.USER`: e.g.
+     * `['FIRST_NAME' => '...', 'LAST_NAME' => '...', 'EMAIL' => '...']`. If no $userData is passed,
+     * the created user will only get a username and the system default locale. 
+     * 
      * @param WorkbenchInterface $exface
+     * @param AuthenticationTokenInterface $token
+     * @param string[] $userData
      * @return UserInterface
      */
-    protected function createUserFromToken(WorkbenchInterface $exface, AuthenticationTokenInterface $token, string $surname = null, string $givenname = null): UserInterface
+    protected function createUserFromToken(WorkbenchInterface $exface, AuthenticationTokenInterface $token, array $userData = []): UserInterface
     {
         $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER');
         $row = [];
         $row['USERNAME'] = $token->getUsername();
         $row['MODIFIED_BY_USER'] = UserSelector::ANONYMOUS_USER_OID;
         $row['LOCALE'] = $exface->getConfig()->getOption("SERVER.DEFAULT_LOCALE");
-        if ($surname !== null) {
-            $row['LAST_NAME'] = $surname;
-        }
-        if ($givenname !== null) {
-            $row['FIRST_NAME'] = $givenname;
-        }
+        $row = array_merge($row, $userData);
         $userDataSheet->addRow($row);
         $userDataSheet->dataCreate();
         $user = UserFactory::createFromUsernameOrUid($exface, $userDataSheet->getRow(0)[$userDataSheet->getMetaObject()->getUidAttributeAlias()]);
@@ -145,19 +143,28 @@ trait CreateUserFromTokenTrait
     /**
      * Creates a new user, saves in the database and adds the roles.
      * 
+     * The `$userData` is the same as that in `createUserFromToken()`.
+     * If the parameter `$roles` is `NULL` (default) the roles from the
+     * `create_new_users_with_roles` configuration of the authenticator
+     * will be used. Otherwise the parameter is expected to be an array
+     * of role selectors (alias with namespace). An empty array would
+     * force the user not to have any roles at all!
+     * 
+     * @see createUserFromToken()
+     * 
      * @param WorkbenchInterface $exface
      * @param AuthenticationTokenInterface $token
-     * @param string $surname
-     * @param string $givenname
+     * @param string[] $userData
+     * @param string[]|NULL $roles
      * 
      * @return UserInterface
      */
-    protected function createUserWithRoles(WorkbenchInterface $exface, AuthenticationTokenInterface $token, string $surname = null, string $givenname = null, array $roles = null) : UserInterface
+    protected function createUserWithRoles(WorkbenchInterface $exface, AuthenticationTokenInterface $token, array $userData = [], array $roles = null) : UserInterface
     {
         if ($roles === null) {
             $roles = $this->getNewUserRoles();
         }
-        $user = $this->createUserFromToken($exface, $token, $surname, $givenname);
+        $user = $this->createUserFromToken($exface, $token, $userData);
         if (!empty($roles)) {
             try {
                 $this->addRolesToUser($exface, $user, $roles);

@@ -80,7 +80,7 @@ class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
             $this->setDnString($domain . '\{username}');
         }
         parent::authenticate($token);
-        if ($this->getCreateNewUsers() === true) {
+        if ($this->getCreateNewUsers(true) === true) {
             $this->createUserWithRoles($this->getWorkbench(), $token);
         } else {
             if (empty($this->getUserData($this->getWorkbench(), $token)->getRows())) {

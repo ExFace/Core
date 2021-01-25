@@ -121,31 +121,8 @@ class LdapAuthenticator extends AbstractAuthenticator
         
         if ($this->userExists($token) === true) {
             $user = $this->getUserFromToken($token);
-        } elseif ($this->getCreateNewUsers() === true) {
-            $dnArray = explode('.', $host);
-            $baseDn = '';
-            foreach ($dnArray as $part) {
-                $baseDn .= 'dc=' . $part . ',';
-            }
-            $baseDn = substr($baseDn, 0, -1);
-            $attributes = [$this->getLdapNameAlias()];
-            $ldapresult = ldap_search($ldapconn, $baseDn, "(&(objectClass=user)(sAMAccountName={$token->getUsername()}))", $attributes);
-            if ($ldapresult === false) {
-                $this->getWorkbench()->getLogger()->logException(new RuntimeException(ldap_error($ldapconn), ldap_errno($ldapconn)));
-            }
-            $entryArray = ldap_get_entries($ldapconn, $ldapresult);
-            $surname = null;
-            $givenname = null;
-            if ($entryArray['count'] > 0) {
-                $pattern = $this->getLdapNamePattern();
-                $nameString = $entryArray[0][$this->getLdapNameAlias()][0];
-                $matches = [];
-                if (preg_match_all($pattern, $nameString, $matches)) {
-                    $surname = $matches['lastname'][0];
-                    $givenname = $matches['firstname'][0];
-                }
-            }            
-            $user = $this->createUserWithRoles($this->getWorkbench(), $token, $surname, $givenname);
+        } elseif ($this->getCreateNewUsers(true) === true) {    
+            $user = $this->createUserWithRoles($this->getWorkbench(), $token, $this->getNewUserData($ldapconn, $token));
         } else {
             throw new AuthenticationFailedError($this, "Authentication failed, no PowerUI user with that username '{$token->getUsername()}' exists and none was created!", '7AL3J9X');
         }
@@ -156,6 +133,43 @@ class LdapAuthenticator extends AbstractAuthenticator
             return new DomainUsernamePasswordAuthToken($token->getDomain(), $user->getUsername(), $token->getPassword());
         }
         return $token;
+    }
+    
+    /**
+     * 
+     * @param resource $ldapconn
+     * @param AuthenticationTokenInterface $token
+     * @return array
+     */
+    protected function getNewUserData($ldapconn, AuthenticationTokenInterface $token) : array
+    {
+        $dnArray = explode('.', $this->getHost());
+        $baseDn = '';
+        foreach ($dnArray as $part) {
+            $baseDn .= 'dc=' . $part . ',';
+        }
+        $baseDn = substr($baseDn, 0, -1);
+        $attributes = [$this->getLdapNameAlias()];
+        $ldapresult = ldap_search($ldapconn, $baseDn, "(&(objectClass=user)(sAMAccountName={$token->getUsername()}))", $attributes);
+        if ($ldapresult === false) {
+            $this->getWorkbench()->getLogger()->logException(new RuntimeException(ldap_error($ldapconn), ldap_errno($ldapconn)));
+        }
+        $entryArray = ldap_get_entries($ldapconn, $ldapresult);
+        $surname = null;
+        $givenname = null;
+        if ($entryArray['count'] > 0) {
+            $pattern = $this->getLdapNamePattern();
+            $nameString = $entryArray[0][$this->getLdapNameAlias()][0];
+            $matches = [];
+            if (preg_match_all($pattern, $nameString, $matches)) {
+                $surname = $matches['lastname'][0];
+                $givenname = $matches['firstname'][0];
+            }
+        }
+        return [
+            'LAST_NAME' => $surname,
+            'FIRST_NAME' => $givenname
+        ];
     }
     
     /**
