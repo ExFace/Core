@@ -17,6 +17,7 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Widgets\Markdown;
 use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\Factories\UxonSchemaFactory;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
 
 /**
  * Returns autosuggest values for provided UXON objects.
@@ -72,7 +73,7 @@ class UxonAutosuggest extends AbstractAction
         $path = json_decode($task->getParameter(self::PARAM_PATH), true);
         $type = $task->getParameter(self::PARAM_TYPE);
         $uxon = UxonObject::fromJson($task->getParameter(self::PARAM_UXON));
-        $schema = $task->getParameter(self::PARAM_SCHEMA);
+        $schemaName = $task->getParameter(self::PARAM_SCHEMA);
         $rootObject = null;
         
         if ($rootObjectSelector = $task->getParameter(self::PARAM_OBJECT)) {
@@ -94,7 +95,13 @@ class UxonAutosuggest extends AbstractAction
             }
         }
         
-        $schema = UxonSchemaFactory::create($this->getWorkbench(), $schema);
+        // If we know the prototype class and that class has a UXON schema, use that schema
+        // instead of the one provided in the request. This is important in case the root
+        // prototype alread has it's own custom schema!
+        if ($rootPrototypeClass && is_subclass_of($rootPrototypeClass, iCanBeConvertedToUxon::class) && $rootPrototypeClass::getUxonSchemaClass()) {
+            $schemaName = '\\' . $rootPrototypeClass::getUxonSchemaClass();
+        }
+        $schema = UxonSchemaFactory::create($this->getWorkbench(), $schemaName);
         
         switch (true) {
             case strcasecmp($type, self::TYPE_FIELD) === 0:
