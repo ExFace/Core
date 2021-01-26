@@ -89,8 +89,10 @@ class JsonDataType extends TextDataType
         
         try {
             $array = $this::decodeJson($string);
-        } catch (\Throwable $e) {
+        } catch (DataTypeCastingError $e) {
             throw $this->createValidationError($e->getMessage(), $e->getCode(), $e);
+        } catch (\Throwable $e) {
+            throw $this->createValidationError('Invalid value "' . $string . '" for data type ' . $this->getAliasWithNamespace() . '!', null, $e);
         }
         return $this::encodeJson($array, $this->getPrettify());
     }
