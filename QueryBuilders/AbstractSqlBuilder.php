@@ -457,7 +457,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $columns[$attrAddress] = $attrAddress;
             $custom_insert_sql = $qpart->getDataAddressProperty('SQL_INSERT');
             foreach ($qpart->getValues() as $row => $value) {
-                $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                try {
+                    $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                } catch (\Throwable $e) {
+                    throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row ' . $row . ' of CREATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . $value, null, $e);
+                }
                 if ($custom_insert_sql) {
                     // If there is a custom insert SQL for the attribute, use it
                     // NOTE: if you just write some kind of generator here, it
@@ -651,7 +655,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 
                 if (count($qpart->getValues()) == 1) {
                     $values = $qpart->getValues();
-                    $value = $this->prepareInputValue(reset($values), $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                    try {
+                        $value = $this->prepareInputValue(reset($values), $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                    } catch (\Throwable $e) {
+                        throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row 0 of UPDATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . $value, null, $e);
+                    }
                     if ($custom_update_sql) {
                         // If there is a custom update SQL for the attribute, use it ONLY if there is no value
                         // Otherwise there would not be any possibility to save explicit values
@@ -670,7 +678,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         try {
                             $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
                         } catch (\Throwable $e) {
-                            throw new QueryBuilderException('Cannot build SQL SET clause for query part "' . $qpart->getAlias() . '" with value "' . $value . '" for query on object ' . $this->getMainObject()->getAliasWithNamespace() . '!', null, $e);
+                            throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row ' . $row_nr . ' of SQL UPDATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . $value, null, $e);
                         }
                         if ($custom_update_sql) {
                             // If there is a custom update SQL for the attribute, use it ONLY if there is no value
