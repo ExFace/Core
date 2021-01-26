@@ -55,10 +55,13 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
         
         if ($data_sheet->getUidColumn()) {
             $data_sheet = $this->getWidget()->prepareDataSheetToPrefill($data_sheet);
-            if (! $data_sheet->isFresh()) {
+            if (! $data_sheet->isFresh() && $data_sheet->hasUidColumn(true)) {
                 $data_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
                 $data_sheet->dataRead();
             }
+            // TODO #copy-data Really remove the UID column here? The CopyData action might
+            // need it to load additional values... Various disablers for child object tables
+            // in default editors count on the UID field being empty. 
             $data_sheet->getColumns()->removeByKey($data_sheet->getUidColumn()->getName());
         }
         
