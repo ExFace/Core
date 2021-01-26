@@ -188,7 +188,7 @@ class CopyData extends SaveData implements iCreateData
             }
         }
         // Read the data source, if our data is not fresh enough
-        if ($currentData->isFresh() === false) {
+        if ($currentData->isFresh() === false && $currentData->hasUidColumn(true)) {
             $currentData->getFilters()->addConditionFromColumnValues($currentData->getUidColumn());
             $currentData->dataRead();
         }
