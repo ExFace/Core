@@ -100,7 +100,14 @@ class AliasGeneratingBehavior extends AbstractBehavior
         "ü"=>"ue", 
         "ß"=>"ss", 
         " "=>"_",
-        "&" => "_and_"
+        "&" => "_and_",
+        "(" => "",
+        ")" => "",
+        "[" => "",
+        "]" => "",
+        "{" => "",
+        "}" => "",
+        "~" => ""
     ];
     
     private $namespaceCache = [];
@@ -313,7 +320,7 @@ class AliasGeneratingBehavior extends AbstractBehavior
         foreach ($this->getReplaceCharacters() as $exp => $repl) {
             $isRegex = false;
             foreach (self::REGEX_DELIMITERS as $delim) {
-                if (StringDataType::startsWith($exp, $delim) === true && StringDataType::endsWith($exp, $delim) === true) {
+                if (strlen($exp) > 2 && StringDataType::startsWith($exp, $delim) === true && StringDataType::endsWith($exp, $delim) === true) {
                     $isRegex = true;
                     break;
                 }
