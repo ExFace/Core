@@ -946,6 +946,21 @@
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "Percent",
             "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2021-01-27 11:23:34",
+            "MODIFIED_ON": "2021-01-27 11:24:05",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba9e9b66bd176a9e9847beb4a5184",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Regular Expression Pattern",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/RegularExpressionDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": null,
+            "ALIAS": "RegularExpression",
+            "SHORT_DESCRIPTION": "RegEx pattern enclosed in delimiters"
         }
     ],
     "totals_rows": [],

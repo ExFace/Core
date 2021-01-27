@@ -17,6 +17,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\DataTypes\RegularExpressionDataType;
 
 /**
  * Generates a the value for an alias-type attribute from another attribute (typically a name).
@@ -78,8 +79,6 @@ class AliasGeneratingBehavior extends AbstractBehavior
     const CASE_LOWER = 'LOWER';
     
     const TRANSLITERATION_CONFIG = 'Any-Latin; Latin-ASCII; [\u0080-\u7fff] remove;';
-    
-    const REGEX_DELIMITERS = ['/', '~', '@', ';', '%', '`'];
     
     private $namespaceAttributeAlias = null;
     
@@ -318,14 +317,7 @@ class AliasGeneratingBehavior extends AbstractBehavior
     protected function replaceSpecialCharacters(string $string) : string
     {
         foreach ($this->getReplaceCharacters() as $exp => $repl) {
-            $isRegex = false;
-            foreach (self::REGEX_DELIMITERS as $delim) {
-                if (strlen($exp) > 2 && StringDataType::startsWith($exp, $delim) === true && StringDataType::endsWith($exp, $delim) === true) {
-                    $isRegex = true;
-                    break;
-                }
-            }
-            if ($isRegex === true) {
+            if (RegularExpressionDataType::isRegex($exp)) {
                 $string = preg_replace($exp, $repl, $string);
             } else {
                 $string = str_replace($exp, $repl, $string);
