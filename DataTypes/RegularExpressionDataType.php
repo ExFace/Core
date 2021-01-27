@@ -5,7 +5,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 
 /**
- * Data type for file regular expression patterns.
+ * Data type for regular expression patterns.
  * 
  * @author Andrej Kabachnik
  *
