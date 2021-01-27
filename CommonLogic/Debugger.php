@@ -3,11 +3,12 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\DebuggerInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
-use Symfony\Component\Debug\ErrorHandler;
 use Symfony\Component\VarDumper\Dumper\HtmlDumper;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\CommonLogic\Debugger\ExceptionRenderer;
+use Symfony\Component\ErrorHandler\ErrorHandler;
 
 class Debugger implements DebuggerInterface
 {
@@ -20,11 +21,7 @@ class Debugger implements DebuggerInterface
     {
         $this->logger = $logger;
         
-        // register logger
-        $handler = new \Monolog\ErrorHandler($this->logger);
-        $handler->registerErrorHandler([], false);
-        $handler->registerExceptionHandler();
-        $handler->registerFatalHandler();
+        $this->setPrettifyErrors(false);
     }
 
     /**
@@ -35,7 +32,6 @@ class Debugger implements DebuggerInterface
      */
     public function printException(\Throwable $exception, $use_html = true)
     {
-        $handler = new DebuggerExceptionHandler();    
         if (! $exception instanceof \Exception){
             if ($exception instanceof \Error){
                 $error = $exception;
@@ -44,17 +40,11 @@ class Debugger implements DebuggerInterface
                 throw new RuntimeException('Cannot print exception of type ' . gettype($exception) . ' (' . get_class($exception) . ')!');
             }
         }
-        $flattened_exception = FlattenExceptionExface::create($exception);
+        $renderer = new ExceptionRenderer($exception);
         if ($use_html) {
-            $output = <<<HTML
-    <style>
-        {$handler->getStylesheet($flattened_exception)}
-        .exception .exception-summary { display: none !important }
-    </style>
-    {$handler->getContent($flattened_exception)}
-HTML;
+            $output = $renderer->renderHtml(false);
         } else {
-            $output = strip_tags($handler->getContent($flattened_exception));
+            $output = strip_tags($renderer->renderHtml());
         }
         return $output;
     }
@@ -79,11 +69,9 @@ HTML;
     public function setPrettifyErrors($value)
     {
         $this->prettify_errors = \exface\Core\DataTypes\BooleanDataType::cast($value);
-        if ($this->prettify_errors) {
-            // Debug::enable(E_ALL & ~E_NOTICE);
-            DebuggerExceptionHandler::register();
-            ErrorHandler::register();
-        }
+        $handler = new ErrorHandler(null, $this->prettify_errors);
+        $handler->setDefaultLogger($this->logger, E_ALL & ~E_NOTICE);
+        ErrorHandler::register($handler, true);
         return $this;
     }
 
