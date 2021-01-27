@@ -961,6 +961,21 @@
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "RegularExpression",
             "SHORT_DESCRIPTION": "RegEx pattern enclosed in delimiters"
+        },
+        {
+            "CREATED_ON": "2021-01-27 20:49:00",
+            "MODIFIED_ON": "2021-01-27 20:49:00",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba2ebb3e43aa2a2eb847beb4a5184",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "CRON Expression",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/CronDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": null,
+            "ALIAS": "CronExpression",
+            "SHORT_DESCRIPTION": ""
         }
     ],
     "totals_rows": [],
