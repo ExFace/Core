@@ -130,7 +130,7 @@ trait EChartsTrait
      */
     protected function buildHtmlChart($style = 'height:100%; min-height: 100px; overflow: hidden;') : string
     {
-        return '<div id="' . $this->getId() . '" style="' . $style . '"></div>';
+        return '<div id="' . $this->getId() . '" class="exf-chart" style="' . $style . '"></div>';
     }
     
     /**
@@ -356,6 +356,17 @@ JS;
         return <<<JS
         
     var {$this->buildJsEChartsVar()} = echarts.init(document.getElementById('{$this->getId()}'), '{$theme}');
+    (function() {
+        var iCnt = $('.exf-chart').length;console.log(iCnt);
+        var oChart = {$this->buildJsEChartsVar()};
+        var oOpts = oChart.getOption();
+        var aColors = oOpts['color'];
+        for (var i = 0; i < iCnt; i++) {
+            aColors.push(aColors.shift());
+        }  
+        oOpts.color = aColors;
+        oChart.setOption(oOpts);
+    })();
     
 JS;
     }
@@ -988,7 +999,27 @@ JS;
 	series: [{$seriesConfig}],
     {$visualMapJs}
     {$this->buildJsAxes()}
-    
+    color: function() {
+        // rotate colors for every chart widget to make them all look different
+        var iCnt = 0;
+        var oChart = {$this->buildJsEChartsVar()};
+        var oOpts = oChart.getOption() || {};
+        var aColors = oOpts.color || ['#c23531', '#2f4554', '#61a0a8', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3'];
+        var jqCharts = $('.exf-chart');
+
+        for (var i = 0; i < jqCharts.length; i++) {
+            if (jqCharts[i].id !== '{$this->getId()}') {
+                iCnt++;
+            } else {
+                break;
+            }
+        }
+
+        for (var i = 0; i < iCnt; i++) {
+            aColors.push(aColors.shift());
+        } 
+        return aColors;
+    }()
 }
 
 JS;
