@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-09-22 13:06:11",
-            "MODIFIED_ON": "2021-01-12 15:33:29",
+            "MODIFIED_ON": "2021-01-28 10:42:12",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea8f3c9ff2c5e68f3c8c04ba002958",
@@ -100,28 +100,44 @@
                 "widget_type": "Dialog",
                 "widgets": [
                     {
-                        "attribute_alias": "MESSAGE_ID"
+                        "widget_type": "WidgetGroup",
+                        "widgets": [
+                            {
+                                "attribute_alias": "TASK_ASSIGNED_ON",
+                                "value": 0
+                            },
+                            {
+                                "attribute_alias": "MESSAGE_ID"
+                            },
+                            {
+                                "attribute_alias": "TOPICS"
+                            },
+                            {
+                                "attribute_alias": "QUEUE"
+                            }
+                        ]
                     },
                     {
-                        "attribute_alias": "PRODUCER"
-                    },
-                    {
-                        "attribute_alias": "TASK_ASSIGNED_ON"
-                    },
-                    {
-                        "attribute_alias": "TOPICS"
-                    },
-                    {
-                        "attribute_alias": "QUEUE"
-                    },
-                    {
-                        "attribute_alias": "CHANNEL",
-                        "value": "Manual",
-                        "disabled": true
+                        "widget_type": "WidgetGroup",
+                        "widgets": [
+                            {
+                                "attribute_alias": "PRODUCER",
+                                "value": "GUI"
+                            },
+                            {
+                                "attribute_alias": "CHANNEL",
+                                "value": "Manual",
+                                "disabled": true
+                            },
+                            {
+                                "attribute_alias": "OWNER"
+                            }
+                        ]
                     },
                     {
                         "widget_type": "WidgetGroup",
                         "caption": "Task Uxon",
+                        "width": "max",
                         "widgets": [
                             {
                                 "hide_caption": true,
