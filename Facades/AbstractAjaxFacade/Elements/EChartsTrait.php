@@ -356,17 +356,6 @@ JS;
         return <<<JS
         
     var {$this->buildJsEChartsVar()} = echarts.init(document.getElementById('{$this->getId()}'), '{$theme}');
-    (function() {
-        var iCnt = $('.exf-chart').length;console.log(iCnt);
-        var oChart = {$this->buildJsEChartsVar()};
-        var oOpts = oChart.getOption();
-        var aColors = oOpts['color'];
-        for (var i = 0; i < iCnt; i++) {
-            aColors.push(aColors.shift());
-        }  
-        oOpts.color = aColors;
-        oChart.setOption(oOpts);
-    })();
     
 JS;
     }
