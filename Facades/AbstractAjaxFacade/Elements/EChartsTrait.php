@@ -1008,7 +1008,7 @@ JS;
         var jqCharts = $('.exf-chart');
 
         for (var i = 0; i < jqCharts.length; i++) {
-            if (jqCharts[i].id !== '{$this->getId()}') {
+            if (jqCharts[i] !== oChart.getDom()) {
                 iCnt++;
             } else {
                 break;
