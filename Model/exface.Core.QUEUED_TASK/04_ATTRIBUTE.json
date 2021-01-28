@@ -355,7 +355,7 @@
         },
         {
             "CREATED_ON": "2020-09-22 13:06:27",
-            "MODIFIED_ON": "2021-01-12 15:06:55",
+            "MODIFIED_ON": "2021-01-28 10:39:52",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea928da90be090928d8c04ba002958",
@@ -385,7 +385,7 @@
             "LABELFLAG": "0",
             "UIDFLAG": "0",
             "HIDDENFLAG": "0",
-            "EDITABLEFLAG": "0",
+            "EDITABLEFLAG": "1",
             "REQUIREDFLAG": "1",
             "RELATED_OBJ": "0x31343400000000000000000000000000",
             "SORTERPOS": null,
@@ -393,13 +393,13 @@
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "The user that produced the task",
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
-            "DEFAULT_VALUE": "",
+            "DEFAULT_VALUE": "=USER('UID')",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2020-09-22 13:06:27",
-            "MODIFIED_ON": "2021-01-12 15:06:55",
+            "MODIFIED_ON": "2021-01-28 14:01:35",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eab66ba90c14e8b66b8c04ba002958",
@@ -450,7 +450,7 @@
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "Current status of the task",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_VALUE": "",
+            "DEFAULT_VALUE": "10",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
         },
@@ -548,7 +548,7 @@
         },
         {
             "CREATED_ON": "2020-09-25 12:04:32",
-            "MODIFIED_ON": "2021-01-12 15:06:55",
+            "MODIFIED_ON": "2021-01-28 10:39:21",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eabaf2821ec420baf28c04ba002958",
@@ -586,7 +586,7 @@
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "The time, when the task was created within the producer. May be different from the enqueueing time if the task was sent to the queue later or had been reinserted multiple times",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_VALUE": "",
+            "DEFAULT_VALUE": "=NOW()",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
         },
