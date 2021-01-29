@@ -85,20 +85,21 @@ const exfPreloader = {};
 	/**
 	 * @return self
 	 */
-	this.addPreload = function(sAlias, aDataCols, aImageCols, sPageAlias, sWidgetId, sUidAlias) {		
+	this.addPreload = function(sAlias, aDataCols, aImageCols, sPageAlias, sWidgetId, sUidAlias, sName) {		
 		_preloadTable
 		.get(sAlias)
 		.then(item => {
 			var data = {
 				id: sAlias,
-				object: sAlias
+				object: sAlias,
+				name: sName || sAlias
 			};
 			
 			if (aDataCols) { data.dataCols = aDataCols; }
 			if (aImageCols) { data.imageCols = aImageCols; }
 			if (sPageAlias) { data.page = sPageAlias; }
 			if (sWidgetId) { data.widget = sWidgetId; }
-			if (sUidAlias) {data.uidAlias = sUidAlias}
+			if (sUidAlias) {data.uidAlias = sUidAlias; }
 			
 			if (item === undefined) {
 				_preloadTable.put(data);
