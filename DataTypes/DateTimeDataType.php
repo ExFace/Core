@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\DataTypes;
 
+use exface\Core\Interfaces\WorkbenchInterface;
+
 class DateTimeDataType extends DateDataType
 {   
     const DATETIME_FORMAT_INTERNAL = 'Y-m-d H:i:s';
@@ -34,7 +36,7 @@ class DateTimeDataType extends DateDataType
      */
     public function getFormat() : string
     {
-        return $this->hasCustomFormat() ? parent::getFormat() : $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT');
+        return $this->hasCustomFormat() ? parent::getFormat() : static::getFormatForCurrentTranslation($this->getWorkbench());
     }
     
     /**
@@ -45,6 +47,16 @@ class DateTimeDataType extends DateDataType
     public function getInputFormatHint() : string
     {
         return $this->getApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT_HINT');
+    }
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @return string
+     */
+    protected static function getFormatForCurrentTranslation(WorkbenchInterface $workbench) : string
+    {
+        return $workbench->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT');
     }
 }
 ?>
