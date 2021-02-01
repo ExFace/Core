@@ -2,7 +2,7 @@
     "uid": "0x11ebaf708ef99298af708c04ba002958",
     "alias_with_namespace": "exface.core.task-queue-my-tasks",
     "menu_parent_page_selector": "0x11eb998b0d92e38e998b847beb4a5184",
-    "menu_index": 1,
+    "menu_index": 0,
     "menu_visible": true,
     "name": "My tasks",
     "description": "Queue history for the current user",
@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
     "created_on": "2020-10-16 15:36:13",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-10-29 11:33:21",
+    "modified_on": "2021-01-29 11:37:39",
     "contents": {
         "widget_type": "DataTable",
         "id": "TaskQueue_table",

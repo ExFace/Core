@@ -106,6 +106,8 @@
     "ACTION.REFRESHWIDGET.NAME": "Refresh",
 	"ACTION.RESETWIDGET.NAME": "Reset",
 	
+	"ACTION.RUNSCHEDULER.NAME": "Run Schedulers",
+	
 	"ACTION.SAVEDATA.RESULT": "%number% item created or updated.|%number% items created or updated.",
 	"ACTION.SAVEDATA.NAME": "Save",
 	

@@ -28,7 +28,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
  * use exface\Core\CommonLogic\AbstractActionDeferred;
  * use exface\Core\CommonLogic\Tasks\ResultMessageStream;
  *  
- * class NumberGenerator extends AbstractActionDeferred
+ * class GenerateNumbers extends AbstractActionDeferred
  * {
  *  protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
  *  {
@@ -39,11 +39,11 @@ use exface\Core\Interfaces\Actions\ActionInterface;
  *              yield $i . '...';
  *          }
  *          sleep(1);
- *      }
+ *      };
  *      $result->setMessageStreamGenerator($generator);
  *      
  *      // IMPORTANT: don't forget to trigger the postprocessing!!!
- *      $this->performAfterDeferred();
+ *      $this->performAfterDeferred($result, $transaction);
  *      
  *      return $result;
  *  }

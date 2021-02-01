@@ -1,0 +1,178 @@
+{
+    "object_alias": "exface.Core.OBJECT_ACTION",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        },
+        {
+            "name": "ACTION_PROTOTYPE",
+            "attribute_alias": "ACTION_PROTOTYPE"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "SHORT_DESCRIPTION",
+            "attribute_alias": "SHORT_DESCRIPTION"
+        },
+        {
+            "name": "CONFIG_UXON",
+            "attribute_alias": "CONFIG_UXON"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "USE_IN_OBJECT_BASKET_FLAG",
+            "attribute_alias": "USE_IN_OBJECT_BASKET_FLAG"
+        },
+        {
+            "name": "DOCS",
+            "attribute_alias": "DOCS"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2021-02-01 15:56:27",
+            "MODIFIED_ON": "2021-02-01 15:56:27",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb914ba92efe4e914b025041000001",
+            "OBJECT": "0x11ebb374ef0b5eacb374847beb4a5184",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/CreateData.php",
+            "ALIAS": "DisableScheduler",
+            "NAME": "Disable",
+            "SHORT_DESCRIPTION": "",
+            "CONFIG_UXON": {
+                "object_alias": "exface.Core.CUSTOMIZING",
+                "input_object_alias": "exface.Core.CUSTOMIZING",
+                "icon": "ban",
+                "input_mappers": [
+                    {
+                        "from_object_alias": "exface.Core.SCHEDULER",
+                        "column_to_column_mappings": [
+                            {
+                                "from": "UID",
+                                "to": "ROW_UID"
+                            },
+                            {
+                                "from": "'exf_scheduler'",
+                                "to": "TABLE_NAME"
+                            },
+                            {
+                                "from": "'disabled'",
+                                "to": "COLUMN_NAME"
+                            },
+                            {
+                                "from": 1,
+                                "to": "VALUE"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2021-02-01 15:58:35",
+            "MODIFIED_ON": "2021-02-01 15:58:35",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb894cf55655ba894c025041000001",
+            "OBJECT": "0x11ebb374ef0b5eacb374847beb4a5184",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/DeleteObject.php",
+            "ALIAS": "EnableScheduler",
+            "NAME": "Enable",
+            "SHORT_DESCRIPTION": "",
+            "CONFIG_UXON": {
+                "object_alias": "exface.Core.CUSTOMIZING",
+                "input_object_alias": "exface.Core.CUSTOMIZING",
+                "icon": "check-circle-o",
+                "input_mappers": [
+                    {
+                        "from_object_alias": "exface.Core.SCHEDULER",
+                        "column_to_filter_mappings": [
+                            {
+                                "from": "UID",
+                                "to": "ROW_UID",
+                                "comparator": "=="
+                            },
+                            {
+                                "from": "'exf_scheduler'",
+                                "to": "TABLE_NAME",
+                                "comparator": "=="
+                            }
+                        ],
+                        "column_to_column_mappings": [
+                            {
+                                "from": "UID",
+                                "to": "ROW_UID"
+                            },
+                            {
+                                "from": "'exf_scheduler'",
+                                "to": "TABLE_NAME"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "DOCS": ""
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.OBJECT_ACTION",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.OBJECT_ACTION"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}
