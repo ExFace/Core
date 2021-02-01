@@ -80,6 +80,7 @@ class SymfonyCommandAdapter extends Command
         } else {
             $output->writeln($result->getMessage());
         }
+        return Command::SUCCESS;
     }
     
     public function getWorkbench()
