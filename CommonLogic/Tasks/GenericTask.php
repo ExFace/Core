@@ -169,8 +169,11 @@ class GenericTask implements TaskInterface
     }
 
     /**
+     * UID or namespaced alias of the action to be performed
      * 
-     * {@inheritDoc}
+     * @uxon-property action
+     * @uxon-type metamodel:action
+     * 
      * @see \exface\Core\Interfaces\Tasks\TaskInterface::setActionSelector()
      */
     public function setActionSelector($selectorOrString): TaskInterface
@@ -271,8 +274,11 @@ class GenericTask implements TaskInterface
     }
     
     /**
+     * UID or namespaced alias of the meta object
      * 
-     * {@inheritDoc}
+     * @uxon-property meta_object
+     * @uxon-type metamodel:object
+     * 
      * @see \exface\Core\Interfaces\Tasks\TaskInterface::setMetaObjectSelector()
      */
     public function setMetaObjectSelector($selectorOrString): TaskInterface
@@ -374,8 +380,11 @@ class GenericTask implements TaskInterface
     }
 
     /**
+     * UID or namespaced alias of the UI page this task is meant for
      * 
-     * {@inheritDoc}
+     * @uxon-property page
+     * @uxon-type metamodel:page
+     * 
      * @see \exface\Core\Interfaces\Tasks\TaskInterface::setPageSelector()
      */
     public function setPageSelector($selectorOrString): TaskInterface
@@ -452,6 +461,7 @@ class GenericTask implements TaskInterface
     {
         foreach ($uxon->getPropertiesAll() as $prop => $val) {
             switch ($prop) {
+                case 'page': $this->setPageSelector($val); break;
                 case 'page_selector': $this->setPageSelector($val); break;
                 case 'meta_object': $this->setMetaObjectSelector($val); break;
                 case 'input_data': $this->setInputData(DataSheetFactory::createFromUxon($this->getWorkbench(), $val)); break;

@@ -13,7 +13,6 @@ use exface\Core\Exceptions\Queues\QueueRuntimeError;
 use exface\Core\Exceptions\Queues\QueueMessageDuplicateError;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\DataTypes\QueuedTaskStateDataType;
-use Symfony\Component\Stopwatch\Stopwatch;
 
 /**
  * Performs the task immediately after inserting in the queue in the same transaction.

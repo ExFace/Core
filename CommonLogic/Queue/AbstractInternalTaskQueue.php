@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\Queues\QueueRuntimeError;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\Queues\QueueMessageDuplicateError;
+use exface\Core\CommonLogic\Tasks\ScheduledTask;
 
 /**
  * Base class for queue prototypes saving queues in the model DB.
@@ -159,6 +160,10 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             'USER_AGENT' => $userAgent,
             'QUEUE' => $this->getUid()
         ]);
+        
+        if ($task instanceof ScheduledTask) {
+            $dataSheet->setCellValue('SCHEDULER', 0, $task->getSchedulerUid());
+        }
         
         $dataSheet->dataCreate();
         

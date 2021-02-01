@@ -1,0 +1,382 @@
+{
+    "object_alias": "exface.Core.ATTRIBUTE",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "SORTABLEFLAG",
+            "attribute_alias": "SORTABLEFLAG"
+        },
+        {
+            "name": "FILTERABLEFLAG",
+            "attribute_alias": "FILTERABLEFLAG"
+        },
+        {
+            "name": "AGGREGATABLEFLAG",
+            "attribute_alias": "AGGREGATABLEFLAG"
+        },
+        {
+            "name": "DEFAULT_AGGREGATE_FUNCTION",
+            "attribute_alias": "DEFAULT_AGGREGATE_FUNCTION"
+        },
+        {
+            "name": "VALUE_LIST_DELIMITER",
+            "attribute_alias": "VALUE_LIST_DELIMITER"
+        },
+        {
+            "name": "READABLEFLAG",
+            "attribute_alias": "READABLEFLAG"
+        },
+        {
+            "name": "WRITABLEFLAG",
+            "attribute_alias": "WRITABLEFLAG"
+        },
+        {
+            "name": "SYSTEMFLAG",
+            "attribute_alias": "SYSTEMFLAG"
+        },
+        {
+            "name": "DEFAULT_EDITOR_UXON",
+            "attribute_alias": "DEFAULT_EDITOR_UXON"
+        },
+        {
+            "name": "COPY_WITH_RELATED_OBJECT",
+            "attribute_alias": "COPY_WITH_RELATED_OBJECT"
+        },
+        {
+            "name": "DELETE_WITH_RELATED_OBJECT",
+            "attribute_alias": "DELETE_WITH_RELATED_OBJECT"
+        },
+        {
+            "name": "DEFAULT_DISPLAY_UXON",
+            "attribute_alias": "DEFAULT_DISPLAY_UXON"
+        },
+        {
+            "name": "COMMENTS",
+            "attribute_alias": "COMMENTS"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "RELATION_CARDINALITY",
+            "attribute_alias": "RELATION_CARDINALITY"
+        },
+        {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
+            "name": "COPYABLEFLAG",
+            "attribute_alias": "COPYABLEFLAG"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "DATATYPE",
+            "attribute_alias": "DATATYPE"
+        },
+        {
+            "name": "DATA_ADDRESS",
+            "attribute_alias": "DATA_ADDRESS"
+        },
+        {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        },
+        {
+            "name": "FORMATTER",
+            "attribute_alias": "FORMATTER"
+        },
+        {
+            "name": "DISPLAYORDER",
+            "attribute_alias": "DISPLAYORDER"
+        },
+        {
+            "name": "LABELFLAG",
+            "attribute_alias": "LABELFLAG"
+        },
+        {
+            "name": "UIDFLAG",
+            "attribute_alias": "UIDFLAG"
+        },
+        {
+            "name": "HIDDENFLAG",
+            "attribute_alias": "HIDDENFLAG"
+        },
+        {
+            "name": "EDITABLEFLAG",
+            "attribute_alias": "EDITABLEFLAG"
+        },
+        {
+            "name": "REQUIREDFLAG",
+            "attribute_alias": "REQUIREDFLAG"
+        },
+        {
+            "name": "RELATED_OBJ",
+            "attribute_alias": "RELATED_OBJ"
+        },
+        {
+            "name": "SORTERPOS",
+            "attribute_alias": "SORTERPOS"
+        },
+        {
+            "name": "SORTERDIR",
+            "attribute_alias": "SORTERDIR"
+        },
+        {
+            "name": "RELATED_OBJ_ATTR",
+            "attribute_alias": "RELATED_OBJ_ATTR"
+        },
+        {
+            "name": "SHORT_DESCRIPTION",
+            "attribute_alias": "SHORT_DESCRIPTION"
+        },
+        {
+            "name": "DATA_ADDRESS_PROPS",
+            "attribute_alias": "DATA_ADDRESS_PROPS"
+        },
+        {
+            "name": "DEFAULT_VALUE",
+            "attribute_alias": "DEFAULT_VALUE"
+        },
+        {
+            "name": "FIXED_VALUE",
+            "attribute_alias": "FIXED_VALUE"
+        },
+        {
+            "name": "CUSTOM_DATA_TYPE",
+            "attribute_alias": "CUSTOM_DATA_TYPE"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2021-02-01 14:22:46",
+            "MODIFIED_ON": "2021-02-01 14:40:58",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb91c993140dc891c9025041000001",
+            "SORTABLEFLAG": "1",
+            "FILTERABLEFLAG": "1",
+            "AGGREGATABLEFLAG": "1",
+            "DEFAULT_AGGREGATE_FUNCTION": "",
+            "VALUE_LIST_DELIMITER": ",",
+            "READABLEFLAG": "1",
+            "WRITABLEFLAG": "1",
+            "SYSTEMFLAG": "0",
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": "0",
+            "DELETE_WITH_RELATED_OBJECT": "0",
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
+            "NAME": "Column",
+            "RELATION_CARDINALITY": "",
+            "TYPE": "D",
+            "COPYABLEFLAG": "1",
+            "ALIAS": "COLUMN_NAME",
+            "DATATYPE": "0x30000000000000000000000000000000",
+            "DATA_ADDRESS": "column_name",
+            "OBJECT": "0x11ebbe0692c9ced4be06025041000001",
+            "FORMATTER": "",
+            "DISPLAYORDER": null,
+            "LABELFLAG": "0",
+            "UIDFLAG": "0",
+            "HIDDENFLAG": "0",
+            "EDITABLEFLAG": "1",
+            "REQUIREDFLAG": "1",
+            "RELATED_OBJ": "",
+            "SORTERPOS": null,
+            "SORTERDIR": "",
+            "RELATED_OBJ_ATTR": "",
+            "SHORT_DESCRIPTION": "",
+            "DATA_ADDRESS_PROPS": null,
+            "DEFAULT_VALUE": "",
+            "FIXED_VALUE": "",
+            "CUSTOM_DATA_TYPE": {
+                "length_max": "50"
+            }
+        },
+        {
+            "CREATED_ON": "2021-02-01 14:22:46",
+            "MODIFIED_ON": "2021-02-01 14:24:06",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebacd89314af94acd8025041000001",
+            "SORTABLEFLAG": "1",
+            "FILTERABLEFLAG": "1",
+            "AGGREGATABLEFLAG": "1",
+            "DEFAULT_AGGREGATE_FUNCTION": null,
+            "VALUE_LIST_DELIMITER": ",",
+            "READABLEFLAG": "1",
+            "WRITABLEFLAG": "1",
+            "SYSTEMFLAG": "0",
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": null,
+            "DELETE_WITH_RELATED_OBJECT": null,
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": null,
+            "NAME": "Value",
+            "RELATION_CARDINALITY": "",
+            "TYPE": "D",
+            "COPYABLEFLAG": "1",
+            "ALIAS": "VALUE",
+            "DATATYPE": "0x30000000000000000000000000000000",
+            "DATA_ADDRESS": "value",
+            "OBJECT": "0x11ebbe0692c9ced4be06025041000001",
+            "FORMATTER": null,
+            "DISPLAYORDER": null,
+            "LABELFLAG": "0",
+            "UIDFLAG": "0",
+            "HIDDENFLAG": "0",
+            "EDITABLEFLAG": "1",
+            "REQUIREDFLAG": "1",
+            "RELATED_OBJ": "",
+            "SORTERPOS": null,
+            "SORTERDIR": null,
+            "RELATED_OBJ_ATTR": "",
+            "SHORT_DESCRIPTION": "",
+            "DATA_ADDRESS_PROPS": null,
+            "DEFAULT_VALUE": "",
+            "FIXED_VALUE": "",
+            "CUSTOM_DATA_TYPE": {
+                "length_max": "200"
+            }
+        },
+        {
+            "CREATED_ON": "2021-02-01 14:22:46",
+            "MODIFIED_ON": "2021-02-01 14:24:06",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebaef793127bb6aef7025041000001",
+            "SORTABLEFLAG": "1",
+            "FILTERABLEFLAG": "1",
+            "AGGREGATABLEFLAG": "1",
+            "DEFAULT_AGGREGATE_FUNCTION": null,
+            "VALUE_LIST_DELIMITER": ",",
+            "READABLEFLAG": "1",
+            "WRITABLEFLAG": "1",
+            "SYSTEMFLAG": "0",
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": null,
+            "DELETE_WITH_RELATED_OBJECT": null,
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": null,
+            "NAME": "Table",
+            "RELATION_CARDINALITY": "",
+            "TYPE": "D",
+            "COPYABLEFLAG": "1",
+            "ALIAS": "TABLE_NAME",
+            "DATATYPE": "0x30000000000000000000000000000000",
+            "DATA_ADDRESS": "table_name",
+            "OBJECT": "0x11ebbe0692c9ced4be06025041000001",
+            "FORMATTER": null,
+            "DISPLAYORDER": null,
+            "LABELFLAG": "0",
+            "UIDFLAG": "0",
+            "HIDDENFLAG": "0",
+            "EDITABLEFLAG": "1",
+            "REQUIREDFLAG": "1",
+            "RELATED_OBJ": "",
+            "SORTERPOS": null,
+            "SORTERDIR": null,
+            "RELATED_OBJ_ATTR": "",
+            "SHORT_DESCRIPTION": "",
+            "DATA_ADDRESS_PROPS": null,
+            "DEFAULT_VALUE": "",
+            "FIXED_VALUE": "",
+            "CUSTOM_DATA_TYPE": {
+                "length_max": "50"
+            }
+        },
+        {
+            "CREATED_ON": "2021-02-01 14:22:46",
+            "MODIFIED_ON": "2021-02-01 14:31:50",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebbf2f931399ecbf2f025041000001",
+            "SORTABLEFLAG": "1",
+            "FILTERABLEFLAG": "1",
+            "AGGREGATABLEFLAG": "1",
+            "DEFAULT_AGGREGATE_FUNCTION": "",
+            "VALUE_LIST_DELIMITER": ",",
+            "READABLEFLAG": "1",
+            "WRITABLEFLAG": "1",
+            "SYSTEMFLAG": "0",
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": "0",
+            "DELETE_WITH_RELATED_OBJECT": "0",
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
+            "NAME": "Target UID",
+            "RELATION_CARDINALITY": "",
+            "TYPE": "D",
+            "COPYABLEFLAG": "1",
+            "ALIAS": "ROW_UID",
+            "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
+            "DATA_ADDRESS": "row_oid",
+            "OBJECT": "0x11ebbe0692c9ced4be06025041000001",
+            "FORMATTER": "",
+            "DISPLAYORDER": null,
+            "LABELFLAG": "0",
+            "UIDFLAG": "0",
+            "HIDDENFLAG": "0",
+            "EDITABLEFLAG": "1",
+            "REQUIREDFLAG": "1",
+            "RELATED_OBJ": "",
+            "SORTERPOS": null,
+            "SORTERDIR": "",
+            "RELATED_OBJ_ATTR": "",
+            "SHORT_DESCRIPTION": "",
+            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
+            "DEFAULT_VALUE": "",
+            "FIXED_VALUE": "",
+            "CUSTOM_DATA_TYPE": null
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.ATTRIBUTE",
+        "conditions": [
+            {
+                "expression": "OBJECT__APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.ATTRIBUTE"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

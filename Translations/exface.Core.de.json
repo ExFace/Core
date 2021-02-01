@@ -105,6 +105,8 @@
     "ACTION.READDATA.SEARCH": "Suchen",
     "ACTION.REFRESHWIDGET.NAME": "Aktualisieren",
 	"ACTION.RESETWIDGET.NAME": "Zurücksetzen",
+	
+	"ACTION.RUNSCHEDULER.NAME": "Scheduler jetzt ausführen",
 
 	"ACTION.SAVEDATA.RESULT": "%number% Objekt gespeichert.|%number% Objekte gespeichert.",
 	"ACTION.SAVEDATA.NAME": "Speichern",
