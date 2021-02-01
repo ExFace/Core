@@ -38,9 +38,9 @@ class CronDataType extends StringDataType
      * @param string $cronString
      * @return \DateTime
      */
-    public static function findNextTime(string $cronString) : \DateTime
+    public static function findNextRunTime(string $cronString, \DateTime $relativeToTime) : \DateTime
     {
-        return (new CronExpression($cronString))->getNextRunDate();
+        return (new CronExpression($cronString))->getNextRunDate($relativeToTime, 0, true);
     }
     
     /**
@@ -48,13 +48,20 @@ class CronDataType extends StringDataType
      * @param string $cronString
      * @return \DateTime
      */
-    public static function findPreviousTime(string $cronString) : \DateTime
+    public static function findPreviousRunTime(string $cronString, \DateTime $relativeToTime) : \DateTime
     {
-        return (new CronExpression($cronString))->getPreviousRunDate();
+        return (new CronExpression($cronString))->getPreviousRunDate($relativeToTime, 0, true);
     }
     
-    public static function isDue(string $cronString) : bool
+    /**
+     * 
+     * @param string $cronString
+     * @param \DateTime $relativeToTime
+     * @return bool
+     */
+    public static function isDue(string $cronString, \DateTime $relativeToTime) : bool
     {
-        return (new CronExpression($cronString))->isDue();
+        $shouldRun = self::findNextRunTime($cronString, $relativeToTime);
+        return $shouldRun <= $relativeToTime;
     }
 }
