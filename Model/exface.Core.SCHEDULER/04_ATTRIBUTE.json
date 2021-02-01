@@ -219,7 +219,7 @@
         },
         {
             "CREATED_ON": "2021-01-27 21:33:37",
-            "MODIFIED_ON": "2021-02-01 12:09:22",
+            "MODIFIED_ON": "2021-02-01 19:20:12",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb8e12ef64c0b48e12847beb4a5184",
@@ -234,7 +234,9 @@
             "DEFAULT_EDITOR_UXON": null,
             "COPY_WITH_RELATED_OBJECT": "0",
             "DELETE_WITH_RELATED_OBJECT": "0",
-            "DEFAULT_DISPLAY_UXON": null,
+            "DEFAULT_DISPLAY_UXON": {
+                "widget_type": "DisplayCron"
+            },
             "COMMENTS": "",
             "NAME": "Schedule",
             "RELATION_CARDINALITY": "",

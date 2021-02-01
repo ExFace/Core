@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2021-01-27 21:33:37",
-            "MODIFIED_ON": "2021-02-01 18:41:22",
+            "MODIFIED_ON": "2021-02-01 21:38:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebb374ef0b5eacb374847beb4a5184",
@@ -189,10 +189,16 @@
                                         ],
                                         "columns": [
                                             {
-                                                "attribute_alias": "CREATED_ON"
+                                                "attribute_alias": "ENQUEUED_ON"
                                             },
                                             {
                                                 "attribute_alias": "STATUS"
+                                            },
+                                            {
+                                                "attribute_alias": "RESULT"
+                                            },
+                                            {
+                                                "attribute_alias": "ERROR_MESSAGE"
                                             },
                                             {
                                                 "attribute_alias": "QUEUE__LABEL"
@@ -200,7 +206,7 @@
                                         ],
                                         "sorters": [
                                             {
-                                                "attribute_alias": "CREATED_ON",
+                                                "attribute_alias": "ENQUEUED_ON",
                                                 "direction": "desc"
                                             }
                                         ],
