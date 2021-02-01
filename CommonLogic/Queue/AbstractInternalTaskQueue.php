@@ -56,6 +56,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
         }
         
         $dataSheet->setCellValue('STATUS', 0, QueuedTaskStateDataType::STATUS_INPROGRESS);
+        $dataSheet->setCellValue('QUEUE', 0, $this->getUid());
         
         $dataSheet->dataUpdate();
         
@@ -81,6 +82,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             $dataSheet->setCellValue('STATUS', 0, QueuedTaskStateDataType::STATUS_DONE);
             $dataSheet->setCellValue('PROCESSED_ON', 0, DateTimeDataType::now());
             $dataSheet->setCellValue('DURATION_MS', 0, $duration);
+            $dataSheet->setCellValue('QUEUE', 0, $this->getUid());
             $dataSheet->dataUpdate(false);
         } catch (\Throwable $e) {
             throw new QueueRuntimeError($this, 'Cannot save task result in queue "' . $this->getName() . '": ' . $e->getMessage(), null, $e);
@@ -108,6 +110,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             $dataSheet->setCellValue('ERROR_LOGID', 0, $exception->getId());
             $dataSheet->setCellValue('PROCESSED_ON', 0, DateTimeDataType::now());
             $dataSheet->setCellValue('DURATION_MS', 0, $duration);
+            $dataSheet->setCellValue('QUEUE', 0, $this->getUid());
             $dataSheet->dataUpdate(false);
         } catch (\Throwable $e) {
             throw new QueueRuntimeError($this, 'Cannot save task result in queue "' . $this->getName() . '": ' . $e->getMessage(), null, $e);
