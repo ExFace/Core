@@ -5,6 +5,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 class DateDataType extends AbstractDataType
 {
@@ -177,6 +178,7 @@ class DateDataType extends AbstractDataType
     }
     
     /**
+     * Returns the given date in the internal normalized format: e.g. `2021-12-31 23:59:59`
      * 
      * @param \DateTime $date
      * @return string
@@ -184,6 +186,37 @@ class DateDataType extends AbstractDataType
     public static function formatDateNormalized(\DateTime $date) : string
     {
         return $date->format(self::DATE_FORMAT_INTERNAL);
+    }
+    
+    /**
+     * Returns the give date formatted accoring to the current session locale and translation used.
+     * 
+     * For instantiated data types use `formatDate()` instead: it takes into account eventually
+     * customized formatting for this particular data type model.
+     * 
+     * @see formatDate()
+     * 
+     * @param \DateTime $date
+     * @param WorkbenchInterface $workbench
+     * 
+     * @return string
+     */
+    public static function formatDateLocalized(\DateTime $date, WorkbenchInterface $workbench) : string
+    {
+        $format = static::getFormatForCurrentTranslation($workbench);
+        $locale = $workbench->getContext()->getScopeSession()->getSessionLocale();
+        $formatter = static::createIntlDateFormatter($locale, $format);
+        return $formatter->format($date);
+    }
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @return string
+     */
+    protected static function getFormatForCurrentTranslation(WorkbenchInterface $workbench) : string
+    {
+        return $workbench->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATE_FORMAT');
     }
     
     /**
@@ -239,7 +272,7 @@ class DateDataType extends AbstractDataType
      */
     public function getFormat() : string
     {
-        return $this->format ?? $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATE_FORMAT');
+        return $this->format ?? self::getFormatForCurrentTranslation($this->getWorkbench());
     }
     
     /**
