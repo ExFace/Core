@@ -581,7 +581,7 @@
         },
         {
             "CREATED_ON": "2021-02-01 11:35:28",
-            "MODIFIED_ON": "2021-02-01 12:11:17",
+            "MODIFIED_ON": "2021-02-01 21:49:40",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb86c733f1a51086c7025041000001",
@@ -619,7 +619,7 @@
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_VALUE": "scheduler",
+            "DEFAULT_VALUE": "'scheduler'",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": {
                 "length_max": "50"
