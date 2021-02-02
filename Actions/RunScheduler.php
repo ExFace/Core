@@ -58,11 +58,12 @@ class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
      */
     public function runScheduler() : \Generator
     {
+        yield 'Running the scheduler at ' . DateTimeDataType::formatDateLocalized((new \DateTime()), $this->getWorkbench()) . ':' . PHP_EOL;
         $scheduledDs = $this->getScheduledTasks();
         $cnt = 0;
         $router = new TaskQueueBroker($this->getWorkbench());
         foreach ($scheduledDs->getRows() as $rowNo => $row) {
-            yield 'Task "' . $row['NAME'] . '": ';
+            yield PHP_EOL . 'Task "' . $row['NAME'] . '": ';
             
             if ($row['DISABLED']) {
                 yield 'disabled.' . PHP_EOL;
@@ -98,7 +99,7 @@ class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
                     yield 'failed. ' . $e->getMessage() . ' in ' . $e->getFile() . ' at line ' . $e->getLine();
                 } 
             } else {
-                yield 'not due yet (next run at ' . DateTimeDataType::formatDateLocalized(CronDataType::findNextRunTime($row['SCHEDULE'], $lastRunTime), $this->getWorkbench()) . ').';
+                yield 'not due at (next run at ' . DateTimeDataType::formatDateLocalized(CronDataType::findNextRunTime($row['SCHEDULE'], $lastRunTime), $this->getWorkbench()) . ').';
             }
             
             yield PHP_EOL;
