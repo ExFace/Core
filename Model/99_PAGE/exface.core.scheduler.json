@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2021-01-29 11:37:26",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2021-02-01 21:37:01",
+    "modified_on": "2021-02-02 10:27:25",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.SCHEDULER",
@@ -36,6 +36,9 @@
             },
             {
                 "attribute_alias": "DISABLED"
+            },
+            {
+                "attribute_alias": "ACTION_ALIAS"
             },
             {
                 "attribute_alias": "FIRST_RUN"
