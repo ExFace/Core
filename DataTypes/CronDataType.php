@@ -40,7 +40,7 @@ class CronDataType extends StringDataType
      */
     public static function findNextRunTime(string $cronString, \DateTime $relativeToTime) : \DateTime
     {
-        return (new CronExpression($cronString))->getNextRunDate($relativeToTime, 0, true);
+        return (new CronExpression($cronString))->getNextRunDate($relativeToTime);
     }
     
     /**
@@ -56,12 +56,12 @@ class CronDataType extends StringDataType
     /**
      * 
      * @param string $cronString
-     * @param \DateTime $relativeToTime
+     * @param \DateTime $previousRunTime
      * @return bool
      */
-    public static function isDue(string $cronString, \DateTime $relativeToTime) : bool
+    public static function isDue(string $cronString, \DateTime $previousRunTime) : bool
     {
-        $shouldRun = self::findNextRunTime($cronString, $relativeToTime);
-        return $shouldRun <= $relativeToTime;
+        $shouldRun = self::findNextRunTime($cronString, $previousRunTime);
+        return $shouldRun <= (new \DateTime());
     }
 }
