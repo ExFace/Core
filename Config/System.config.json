@@ -32,6 +32,7 @@
     "LOG.PASSTHROUGH_LOG_LEVEL": "error",
     
     "MONITOR.ENABLED": false,
+    "MONITOR.DAYS_TO_KEEP_ACTIONS": 30,
     
     "FOLDERS.INSTALLATION_PATH_ABSOLUTE": "",
     "FOLDERS.USERDATA_PATH_ABSOLUTE": "",
@@ -75,6 +76,10 @@
     	],
     	"exface.Core.Errors.OnErrorCodeLookup": [
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onErrorTranslateMessage"
+    	],
+    	"exface.Core.Workbench.OnCleanUp": [
+    		"\\exface\\Core\\CommonLogic\\Monitor::onCleanUp",
+    		"\\exface\\Core\\CommonLogic\\Queue\\TaskQueueBroker::onCleanUp"
     	]
     },
     

@@ -26,11 +26,15 @@ use exface\Core\CommonLogic\Tasks\ScheduledTask;
  * - `saveResult()`
  * - `saveError()`
  * 
+ * It also includes default `cleanUp()` logic to purge messages older than defined
+ * in the queue config property `days_to_keep_tasks`.
+ * 
  * @author Andrej Kabachnik
  *
  */
 abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
 {
+    private $daysToKeepTasks = null;
     
     /**
      * 
@@ -237,5 +241,45 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
         }
         
         return $sheet;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\TaskQueueInterface::cleanUp()
+     */
+    public function cleanUp() : string
+    {
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
+        $ds->getFilters()->addConditionFromString('QUEUE', $this->getUid(), ComparatorDataType::EQUALS);
+        $ds->getFilters()->addConditionFromString('ENQUEUED_ON', (-1)*$this->getDaysToKeepTasks(), ComparatorDataType::LESS_THAN);
+        $cnt = $ds->dataDelete();
+        return 'Cleaned up queue "' . $this->getName() . '" removing ' . $cnt . ' expired messages.';
+    }
+    
+    /**
+     * 
+     * @param int $default
+     * @return int
+     */
+    protected function getDaysToKeepTasks(int $default = 30) : int
+    {
+        return $this->daysToKeepTasks ?? $default;
+    }
+    
+    /**
+     * Processed tasks will be removed after this time (in days) when the workbench cleanup is run.
+     * 
+     * @uxon-property days_to_keep_tasks
+     * @uxon-type integer
+     * @uxon-default 30
+     * 
+     * @param int $value
+     * @return AbstractInternalTaskQueue
+     */
+    protected function setDaysToKeepTasks(int $value) : AbstractInternalTaskQueue
+    {
+        $this->daysToKeepTasks = $value;
+        return $this;
     }
 }

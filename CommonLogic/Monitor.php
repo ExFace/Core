@@ -18,6 +18,8 @@ use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Actions\ShowContextPopup;
 use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Events\Workbench\OnCleanUpEvent;
 
 /**
  * The monitor logs actions to the MONITOR_ACTION object.
@@ -27,6 +29,8 @@ use exface\Core\DataTypes\DateDataType;
  */
 class Monitor extends Profiler
 {
+    const CLEANUP_AREA_MONITOR = 'monitor';
+    
     private $rowObjects = [];
     
     /**
@@ -55,23 +59,42 @@ class Monitor extends Profiler
      */
     protected function registerEventListeners()
     {
-        $event_manager = $this->getWorkbench()->eventManager();
+        $eventManager = $this->getWorkbench()->eventManager();
         
         // Actions
-        $event_manager->addListener(OnBeforeActionPerformedEvent::getEventName(), array(
+        $eventManager->addListener(OnBeforeActionPerformedEvent::getEventName(), [
             $this,
             'onActionStart'
-        ));
-        $event_manager->addListener(OnActionPerformedEvent::getEventName(), array(
+        ]);
+        $eventManager->addListener(OnActionPerformedEvent::getEventName(), [
             $this,
             'onActionStop'
-        ));
-        $event_manager->addListener(OnBeforeStopEvent::getEventName(), array(
+        ]);
+        $eventManager->addListener(OnBeforeStopEvent::getEventName(), [
             $this,
             'onWorkbenchStop'
-        ));
+        ]);
         
         return $this;
+    }
+    
+    /**
+     *
+     * @return void
+     */
+    public static function onCleanUp(OnCleanUpEvent $event)
+    {
+        if (! $event->isAreaToBeCleaned(self::CLEANUP_AREA_MONITOR)) {
+            return;
+        }
+        
+        $workbench = $event->getWorkbench();
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($workbench, 'exface.Core.MONITOR_ACTION');
+        $ds->getFilters()->addConditionFromString('DATE', (-1)*$workbench->getConfig()->getOption('MONITOR.DAYS_TO_KEEP_ACTIONS'), ComparatorDataType::LESS_THAN);
+
+        $cnt = $ds->dataDelete();
+        
+        $event->addResultMessage('Cleaned up Monitor removing ' . $cnt . ' expired entries.');
     }
     
     /**

@@ -4,6 +4,8 @@
 	"ACTION.CHANGEMYPASSWORD.NAME": "Change password",
 	"ACTION.CHANGEMYPASSWORD.WRONG_PASSWORD": "Password could not be updated, old password is incorrect.",
 	
+	"ACTION.CLEANUP.NAME": "Clean up expired data",
+
 	"ACTION.CREATEDATA.RESULT": "%number% item created.|%number% items created.",
 	"ACTION.CREATEDATA.NAME": "Create",
 	"ACTION.COPYDATA.RESULT": "Copied %number% object|Copied %number% objects",
