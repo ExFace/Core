@@ -56,7 +56,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     use iCanBeAlignedTrait {
         getAlign as getAlignDefault;
     }
-    use AttributeCaptionTrait;
+    use AttributeCaptionTrait {
+        getCaption as getCaptionViaTrait;
+    }
     
     private $attribute_alias = null;
     
@@ -852,5 +854,36 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     {
         return $this->setCalculation($value);
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see AttributeCaptionTrait::getCaption()
+     */
+    public function getCaption() : ?string
+    {
+        $caption = $this->getCaptionViaTrait();
+        
+        // If there is no caption and its calculated column, try to derive a caption from
+        // the calculation expression.
+        if ($caption === null && $this->isCalculated()) {
+            $expr = $this->getCalculationExpression();
+            
+            // If it's a data-based (non-static) formula, use the first attribute's name
+            // if available
+            if (! $expr->isStatic()) {
+                $firstAlias = $expr->getRequiredAttributes()[0];
+                if ($firstAlias && $this->getMetaObject()->hasAttribute($firstAlias)) {
+                    $attr = $this->getMetaObject()->getAttribute($firstAlias);
+                    $caption = $attr->getName();
+                }
+            }
+            
+            // Otherwise just use the entire expression as caption
+            if ($caption === null) {
+                $caption = $expr->toString();
+            }
+        }
+        return $caption;
+    }
 }
-?>
