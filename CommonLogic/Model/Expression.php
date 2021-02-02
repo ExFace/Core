@@ -23,6 +23,7 @@ use exface\Core\Interfaces\Exceptions\MetaRelationResolverExceptionInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 
 /**
  * 
@@ -374,7 +375,11 @@ class Expression implements ExpressionInterface
             }
             switch ($this->type) {
                 case self::TYPE_ATTRIBUTE:
-                    return $data_sheet->getColumns()->getByExpression($this->attribute_alias)->getCellValue($row_number);
+                    $col = $data_sheet->getColumns()->getByExpression($this->attribute_alias);
+                    if (! $col) {
+                        throw new DataSheetColumnNotFoundError($data_sheet, 'Cannot evaluate expression "' . $this->toString() . '": column not found in data sheet!');
+                    }
+                    return $col->getCellValue($row_number);
                 case self::TYPE_FORMULA:
                     return $this->getFormula()->evaluate($data_sheet, $row_number);
                 default:

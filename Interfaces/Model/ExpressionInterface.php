@@ -83,6 +83,11 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
      */
     public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, $row_number = null);
     
+    /**
+     * Returns an array with aliases of all attributes required for this expression relative to its meta object.
+     * 
+     * @return string[]
+     */
     public function getRequiredAttributes();
     
     /**
