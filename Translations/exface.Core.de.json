@@ -4,6 +4,8 @@
 	"ACTION.CHANGEMYPASSWORD.NAME": "Passwort ändern",
 	"ACTION.CHANGEMYPASSWORD.WRONG_PASSWORD": "Passwort konnte nicht aktualisiert, altes Passwort ist inkorrekt.",
 
+	"ACTION.CLEANUP.NAME": "Veraltete Daten löschen",
+
 	"ACTION.CREATEDATA.RESULT": "%number% Objekt erstellt.|%number% Objekte erstellt.",
 	"ACTION.CREATEDATA.NAME": "Speichern",
 	"ACTION.COPYDATA.NAME": "Daten duplizieren",

@@ -17,6 +17,7 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Exceptions\InternalError;
+use exface\Core\Events\Workbench\OnCleanUpEvent;
 
 /**
  * Default implementation of the TaskQueueBrokerInterface.
@@ -25,11 +26,16 @@ use exface\Core\Exceptions\InternalError;
  * which one is responsible for a task. If no queue can be found, the task is saved
  * with status `20 Orphaned` without a queue relation.
  * 
+ * The broker also calls the `cleanUp()` method of every queue whenever the `OnCleanUpEvent`
+ * of the workbench is fired.
+ * 
  * @author Andrej Kabachnik
  *
  */
 class TaskQueueBroker implements TaskQueueBrokerInterface, WorkbenchDependantInterface
 {
+    const CLEANUP_AREA_QUEUES = 'queues';
+    
     private $workbench = null;
     
     private $queues = null;
@@ -188,5 +194,23 @@ class TaskQueueBroker implements TaskQueueBrokerInterface, WorkbenchDependantInt
         $dataSheet->dataCreate();
         
         return $dataSheet;
+    }
+    
+    /**
+     * 
+     * @param OnCleanUpEvent $event
+     * @return void
+     */
+    public static function onCleanUp(OnCleanUpEvent $event)
+    {
+        if (! $event->isAreaToBeCleaned(self::CLEANUP_AREA_QUEUES)) {
+            return;
+        }
+        
+        $broker = new self($event->getWorkbench());
+        foreach ($broker->getQueues() as $queue) {
+            $event->addResultMessage($queue->cleanUp());
+        }
+        return;
     }
 }
