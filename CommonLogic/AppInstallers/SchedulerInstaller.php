@@ -74,7 +74,7 @@ class SchedulerInstaller extends AbstractAppInstaller
         
         switch ($this->getOsFamily()) {
             case 'Windows': 
-                $cmd = "schtasks /create /sc minute /mo {$intervalInMinutes} /tn {$name} /tr \"cmd /c {$vendorPath}\bin\action.bat {$command}\"";
+                $cmd = "schtasks /create /sc minute /mo {$intervalInMinutes} /tn {$name} /ru system /np /tr \"cmd /c {$vendorPath}\bin\action.bat {$command}\"";
                 if ($overwrite === true) {
                     $cmd .= ' /f';
                 }
