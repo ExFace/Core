@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2021-01-27 21:33:37",
-            "MODIFIED_ON": "2021-02-01 21:38:04",
+            "MODIFIED_ON": "2021-02-03 11:30:31",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebb374ef0b5eacb374847beb4a5184",
@@ -195,7 +195,7 @@
                                                 "attribute_alias": "STATUS"
                                             },
                                             {
-                                                "attribute_alias": "RESULT"
+                                                "calculation": "=Left(RESULT,60)"
                                             },
                                             {
                                                 "attribute_alias": "ERROR_MESSAGE"
