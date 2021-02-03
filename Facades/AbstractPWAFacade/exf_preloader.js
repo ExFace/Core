@@ -310,13 +310,21 @@ const exfPreloader = {};
 	/**
 	 * Adds an action to the offline action queue
 	 * 
-	 * @param {object} offlineAction
-	 * @param {string} objectAlias
-	 * @param {string} [sActionName]
-	 * @param {string} [sObjectName]
+	 * @param {object} 	[offlineAction]
+	 * @param {string} 	[objectAlias]
+	 * @param {string} 	[sActionName]
+	 * @param {string} 	[sObjectName]
+	 * @param {Array.<{
+	 * 			name: String,
+	 * 			effected_object_alias: String
+	 * 			effected_object_uid: String
+	 * 			effected_object_key_alias: String 
+	 * 			key_column: String, 
+	 * 			key_values: Array
+	 * 		  }>} 		[aEffects]
 	 * @return Promise
 	 */
-	this.addAction = function(offlineAction, objectAlias, sActionName, sObjectName) {
+	this.addAction = function(offlineAction, objectAlias, sActionName, sObjectName, aEffects) {
 		var topics = _preloader.getTopics();
 		offlineAction.url = 'api/task/' + topics.join('/');
 		var xRequestId = _preloader.createUniqueId();
@@ -332,7 +340,8 @@ const exfPreloader = {};
 			tries: 0,
 			synced: 'not synced',
 			action_name: (sActionName || null),
-			object_name: (sObjectName || null)
+			object_name: (sObjectName || null),
+			effects: (aEffects || [])
 		};
 		if (offlineAction.headers) {
 			data.headers = offlineAction.headers
@@ -396,30 +405,43 @@ const exfPreloader = {};
 	};
 	
 	/**
-	 * Returns a promise that resolves to an array with all data rows from the offline
-	 * action queue from the action's input data for a given meta object UID.
+	 * Returns the effects of different actions on the given object alias.
 	 * 
-	 * @param {string} sObjectUid 
-	 * @return {promise}
+	 * Each effect is an object as provided in addAction() with one additional property:
+	 * `offline_queue_item` containing the entire action item the effect belongs to.
+	 * 
+	 * @param {String} [sEffectedObjectAlias]
+	 * @return {Array.<{
+	 * 			name: String,
+	 * 			effected_object_alias: String
+	 * 			effected_object_uid: String
+	 * 			effected_object_key_alias: String 
+	 * 			key_column: String, 
+	 * 			key_values: Array
+	 * 			offline_queue_item: Object
+	 * 		  }>}
 	 */
-	this.getOfflineActionsDataRows = async function(sObjectUid) {
+	this.getOfflineActionsEffects = async function(sEffectedObjectAlias) {
 		var dbContent = await _actionsTable.toArray();
-		var actionRows = [];
-		dbContent.forEach(function(element) {
-			if (element.status !== 'offline' ) {
+		var aEffects = [];
+		dbContent.forEach(function(oQueueItem) {
+			if (oQueueItem.status !== 'offline' ) {
 				return;
 			}
-			if (element.request === undefined || element.request.data === undefined || element.request.data.object !== sObjectUid) {
+			if (oQueueItem.request === undefined || oQueueItem.request.data === undefined) {
 				return;
 			}
-			if (element.request.data.data === undefined || element.request.data.data.rows === undefined) {
+			if (oQueueItem.effects === undefined) {
 				return;
 			}
-			element.request.data.data.rows.forEach(function(row) {
-				actionRows.push(row);	
+			oQueueItem.effects.forEach(function(oEffect){
+				if(oEffect.effected_object_alias === sEffectedObjectAlias) {
+					oEffect.offline_queue_item = oQueueItem;
+					aEffects.push(oEffect);
+				}
 			})
 		})
-		return actionRows;
+		return aEffects;
 	};
 	
 	/**
