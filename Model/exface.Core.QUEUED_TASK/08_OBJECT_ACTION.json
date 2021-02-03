@@ -466,7 +466,7 @@
         },
         {
             "CREATED_ON": "2021-01-12 15:26:35",
-            "MODIFIED_ON": "2021-01-12 15:26:35",
+            "MODIFIED_ON": "2021-02-03 11:29:35",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb8b4a2cd5462a8b4a025041000001",
@@ -494,7 +494,7 @@
                                                     "attribute_alias": "TASK_ASSIGNED_ON"
                                                 },
                                                 {
-                                                    "attribute_alias": "OWNER__USERNAME"
+                                                    "attribute_alias": "OWNER__LABEL"
                                                 },
                                                 {
                                                     "attribute_alias": "PRODUCER"
@@ -512,18 +512,12 @@
                                                 {
                                                     "attribute_alias": "USER_AGENT",
                                                     "widget_type": "Text"
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            "widget_type": "WidgetGroup",
-                                            "caption": "Task summary",
-                                            "widgets": [
-                                                {
-                                                    "attribute_alias": "OBJECT_ALIAS"
                                                 },
                                                 {
                                                     "attribute_alias": "ACTION_ALIAS"
+                                                },
+                                                {
+                                                    "attribute_alias": "OBJECT_ALIAS"
                                                 }
                                             ]
                                         },
@@ -544,9 +538,6 @@
                                                     "attribute_alias": "RESULT_CODE"
                                                 },
                                                 {
-                                                    "attribute_alias": "RESULT"
-                                                },
-                                                {
                                                     "attribute_alias": "ERROR_LOGID"
                                                 },
                                                 {
@@ -560,11 +551,26 @@
                                         {
                                             "widget_type": "WidgetGroup",
                                             "width": "max",
+                                            "caption": "Result",
+                                            "widgets": [
+                                                {
+                                                    "attribute_alias": "RESULT",
+                                                    "widget_type": "InputText",
+                                                    "hide_caption": true,
+                                                    "disabled": true,
+                                                    "height": 4,
+                                                    "width": "max"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "widget_type": "WidgetGroup",
+                                            "width": "max",
                                             "caption": "Message History",
                                             "widgets": [
                                                 {
                                                     "widget_type": "DataTree",
-                                                    "height": 10,
+                                                    "height": 7,
                                                     "object_alias": "exface.Core.QUEUED_TASK",
                                                     "tree_parent_relation_alias": "PARENT_ITEM",
                                                     "tree_folder_flag_attribute_alias": "HAS_SUCCESSOR",
@@ -601,7 +607,7 @@
                                                             "attribute_alias": "STATUS"
                                                         },
                                                         {
-                                                            "attribute_alias": "RESULT"
+                                                            "calculation": "=Left(RESULT,60)"
                                                         },
                                                         {
                                                             "attribute_alias": "ERROR_MESSAGE"
