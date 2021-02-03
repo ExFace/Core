@@ -1300,21 +1300,21 @@
         },
         {
             "CREATED_ON": "2019-11-06 15:44:24",
-            "MODIFIED_ON": "2020-11-23 15:43:35",
+            "MODIFIED_ON": "2021-02-03 11:29:01",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea00ac099a5d5fb7580205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Console for a single command",
-            "DESCRIPTION": "A Console that executes a command when loaded and does not permit to enter any other commands - good to display the output of a preconfigured command or action.",
+            "DESCRIPTION": "A Console that executes a command when loaded and does not permit to enter any other commands - good to display the output of a preconfigured command or action. Replace `exface.Core:CleanUp` with the desired CLI facade command.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Console.php",
             "UXON": {
                 "disabled": true,
                 "widget_type": "Console",
                 "start_commands": [
-                    ""
+                    "action exface.Core:CleanUp"
                 ],
-                "working_directory_path": ""
+                "working_directory_path": "vendor\/bin"
             },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
