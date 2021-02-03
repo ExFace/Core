@@ -14,6 +14,7 @@ use exface\Core\Facades\WebConsoleFacade;
 use exface\Core\CommonLogic\AppInstallers\FileContentInstaller;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Facades\HttpTaskFacade;
+use exface\Core\CommonLogic\AppInstallers\SchedulerInstaller;
 
 class CoreApp extends App
 {
@@ -132,6 +133,9 @@ RewriteRule ^data/\..*$ - [F]
             $installer->addInstaller($serverInstaller);
         }
         
+        $schedulerInstaller = new SchedulerInstaller($this->getSelector());
+        $schedulerInstaller->addTask('ExFace Scheduler', 'exface.Core:RunScheduler', 60);
+        $installer->addInstaller($schedulerInstaller);
         
         return $installer;
     }
