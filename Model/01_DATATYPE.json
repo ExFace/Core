@@ -976,6 +976,36 @@
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "CronExpression",
             "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2021-02-05 11:52:53",
+            "MODIFIED_ON": "2021-02-05 11:52:53",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb89424c8095588942025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Empty (no data)",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/EmptyDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": null,
+            "ALIAS": "Empty",
+            "SHORT_DESCRIPTION": "Data type for empty values (e.g. for attributes, that cannot contain any value)"
+        },
+        {
+            "CREATED_ON": "2021-02-05 12:23:33",
+            "MODIFIED_ON": "2021-02-05 12:23:33",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb9e72951ccb489e72025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Nested data",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/DataSheetDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": null,
+            "ALIAS": "DataSheet",
+            "SHORT_DESCRIPTION": "The value contains another objects data (a nested data sheet). Not all query builders support nested data - refer the documentation of the query builder."
         }
     ],
     "totals_rows": [],
