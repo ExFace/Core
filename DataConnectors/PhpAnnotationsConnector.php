@@ -2,7 +2,6 @@
 namespace exface\Core\DataConnectors;
 
 use exface\Core\CommonLogic\DataQueries\PhpAnnotationsDataQuery;
-use Wingu\OctopusCore\Reflection\ReflectionClass;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionQueryTypeError;
 
@@ -25,7 +24,6 @@ class PhpAnnotationsConnector extends FileContentsConnector
             $query->setBasePath($this->getBasePath());
         }
         
-        $query->setReflectionClass(new ReflectionClass($query->getClassNameWithNamespace()));
         return $query;
     }
 }
