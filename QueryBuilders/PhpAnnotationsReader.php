@@ -13,28 +13,59 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use Wingu\OctopusCore\Reflection\ReflectionProperty;
+use Wingu\OctopusCore\Reflection\ReflectionConstant;
 
 /**
- * A query builder to read annotations for PHP classes, their methods and properties.
- * Reads general comments and any specified annotation tags.
- *
- * @uxon-config {
- * "annotation_level": "class|method|property",
- * "ignore_comments_without_matching_tags": false
- * }
+ * A query builder to read annotations for PHP classes, their methods, properties and constants.
+ * 
+ * Reads general comments and any specified annotation tags. See meta objects
+ * `UXON_ENTITY_ANNOTATION` and `UXON_PROPERTY_ANNOTATION` of the Core for examples.
+ * 
+ * The type/level of annotations to read can be specified in the data address property
+ * `annotation_level`.
  *
  * @author Andrej Kabachnik
  *        
  */
 class PhpAnnotationsReader extends AbstractQueryBuilder
 {
+    /**
+     * Which level of annotation to use: class, method, property or constant
+     * 
+     * @uxon-property annotation_level
+     * @uxon-target object
+     * @uxon-type [class|method|property|constant|all]
+     * @uxon-default all
+     * 
+     * @var string
+     */
+    const DS_ANNOTATION_LEVEL = 'annotation_level';
+    
+    /**
+     * Set to TRUE to include empty data rows for comments without any of the specified annotation tags.
+     * 
+     * @uxon-property ignore_comments_without_matching_tags
+     * @uxon-target object
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @var string
+     */
+    const DS_IGNORE_COMMENTS_WITHOUT_MATCHING_TAGS = 'ignore_comments_without_matching_tags';
 
     const ANNOTATION_LEVEL_METHOD = 'method';
 
     const ANNOTATION_LEVEL_CLASS = 'class';
 
     const ANNOTATION_LEVEL_PROPERTY = 'property';
-
+    
+    const ANNOTATION_LEVEL_CONSTANT = 'constant';
+    
+    const COMMENT_TRIM_LINE_PATTERN = "\n\r\0\x0B";
+    
     private $last_query = null;
 
     /**
@@ -80,7 +111,7 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
 
     protected function getAnnotationLevel()
     {
-        return $this->getMainObject()->getDataAddressProperty('annotation_level');
+        return strtolower($this->getMainObject()->getDataAddressProperty(static::DS_ANNOTATION_LEVEL));
     }
 
     /**
@@ -100,8 +131,8 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
         
         $query = $data_connection->query($this->buildQuery());
         $this->setLastQuery($query);
-        /* @var $class \Wingu\OctopusCore\Reflection\ReflectionClass */
-        if ($class = $query->getReflectionClass()) {
+        if ($className = $query->getClassNameWithNamespace()) {
+            $class = new ReflectionClass($className);
             // Read class annotations
             if (! $annotation_level || $annotation_level == $this::ANNOTATION_LEVEL_CLASS) {
                 $row = $this->buildRowFromClass($class, array());
@@ -122,8 +153,29 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
             
             // Read property annotations
             if (! $annotation_level || $annotation_level == $this::ANNOTATION_LEVEL_PROPERTY) {
-                if ($annotation_level == $this::ANNOTATION_LEVEL_PROPERTY) {
-                    throw new QueryBuilderException('Annotations on property level are currently not supported in "' . get_class($this) . '"');
+                foreach ($class->getProperties() as $property) {
+                    $row = $this->buildRowFromProperty($class, $property, array());
+                    if (count($row) > 0) {
+                        $result_rows[] = $row;
+                    }
+                }
+            }
+            
+            // Read constant annotations
+            if (! $annotation_level || $annotation_level == $this::ANNOTATION_LEVEL_CONSTANT) {
+                // For some reason, constants without comments get the comment from the previous
+                // constant, so need to filter away these duplicates by simply comparing the
+                // UXON property with the previous one.
+                $prevRow = [];
+                foreach ($class->getConstants() as $constant) {
+                    $row = $this->buildRowFromConstant($class, $constant, array());
+                    if (! empty($prevRow) && $prevRow['PROPERTY'] === $row['PROPERTY']) {
+                        continue;
+                    }
+                    if (count($row) > 0) {
+                        $result_rows[] = $row;
+                        $prevRow = $row;
+                    }
                 }
             }
             
@@ -178,7 +230,7 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
                 // If we are specificlally interesten in the class annotations, search for fields
                 // in the class comment specifically
                 if ($this->getAnnotationLevel() == $this::ANNOTATION_LEVEL_CLASS) {
-                    if ($comment = $class->getReflectionDocComment("\n\r\0\x0B")) {
+                    if ($comment = $class->getReflectionDocComment(self::COMMENT_TRIM_LINE_PATTERN)) {
                         $row = $this->buildRowFromCommentTags($class, $comment, $row);
                         $row = $this->buildRowFromComment($class, $comment, $row);
                     }
@@ -237,25 +289,83 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
     /**
      *
      * @param ReflectionClass $class            
-     * @param ReflectionMethod $method            
+     * @param ReflectionMethod $property            
      * @param array $row            
      * @return string
      */
     protected function buildRowFromMethod(ReflectionClass $class, ReflectionMethod $method, array $row)
     {
         // First look for exact matches among the tags within the comment
-        $comment = $method->getReflectionDocComment("\n\r\0\x0B");
+        $comment = $method->getReflectionDocComment(self::COMMENT_TRIM_LINE_PATTERN);
         $row = $this->buildRowFromCommentTags($class, $comment, $row);
         
         // If at least one exact match was found, this method is a valid row.
         // Now add enrich the row with general comment fields (description, etc.) and fields from the class level
-        if (! $this->getIgnoreCommentsWithoutMatchingTags() || count($row) > 0) {
+        if (! $this->getIgnoreCommentsWithoutMatchingTags($this->getMainObject()) || count($row) > 0) {
             $row = $this->buildRowFromClass($class, $row);
             $row = $this->buildRowFromComment($class, $comment, $row);
             // Add the FQSEN (Fully Qualified Structural Element Name) if we are on method level
             foreach ($this->getAttributesMissingInRow($row) as $qpart) {
                 if (strcasecmp($qpart->getDataAddress(), 'fqsen') === 0) {
                     $row[$qpart->getColumnKey()] = $class->getName() . '::' . $method->getName() . '()';
+                }
+            }
+        }
+        
+        return $row;
+    }
+    
+    /**
+     *
+     * @param ReflectionClass $class
+     * @param ReflectionProperty $property
+     * @param array $row
+     * @return string
+     */
+    protected function buildRowFromProperty(ReflectionClass $class, ReflectionProperty $property, array $row)
+    {
+        // First look for exact matches among the tags within the comment
+        $comment = $property->getReflectionDocComment(self::COMMENT_TRIM_LINE_PATTERN);
+        $row = $this->buildRowFromCommentTags($class, $comment, $row);
+        
+        // If at least one exact match was found, this method is a valid row.
+        // Now add enrich the row with general comment fields (description, etc.) and fields from the class level
+        if (! $this->getIgnoreCommentsWithoutMatchingTags($this->getMainObject()) || count($row) > 0) {
+            $row = $this->buildRowFromClass($class, $row);
+            $row = $this->buildRowFromComment($class, $comment, $row);
+            // Add the FQSEN (Fully Qualified Structural Element Name) if we are on property level
+            foreach ($this->getAttributesMissingInRow($row) as $qpart) {
+                if (strcasecmp($qpart->getDataAddress(), 'fqsen') === 0) {
+                    $row[$qpart->getColumnKey()] = $class->getName() . '::' . $property->getName();
+                }
+            }
+        }
+        
+        return $row;
+    }
+    
+    /**
+     *
+     * @param ReflectionClass $class
+     * @param ReflectionConstant $constant
+     * @param array $row
+     * @return string
+     */
+    protected function buildRowFromConstant(ReflectionClass $class, ReflectionConstant $constant, array $row)
+    {
+        // First look for exact matches among the tags within the comment
+        $comment = $constant->getReflectionDocComment(self::COMMENT_TRIM_LINE_PATTERN);
+        $row = $this->buildRowFromCommentTags($class, $comment, $row);
+        
+        // If at least one exact match was found, this method is a valid row.
+        // Now add enrich the row with general comment fields (description, etc.) and fields from the class level
+        if (! $this->getIgnoreCommentsWithoutMatchingTags($this->getMainObject()) || count($row) > 0) {
+            $row = $this->buildRowFromClass($class, $row);
+            $row = $this->buildRowFromComment($class, $comment, $row);
+            // Add the FQSEN (Fully Qualified Structural Element Name) if we are on const level
+            foreach ($this->getAttributesMissingInRow($row) as $qpart) {
+                if (strcasecmp($qpart->getDataAddress(), 'fqsen') === 0) {
+                    $row[$qpart->getColumnKey()] = $class->getName() . '::' . $constant->getName();
                 }
             }
         }
@@ -347,9 +457,9 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
      *
      * @return boolean
      */
-    protected function getIgnoreCommentsWithoutMatchingTags()
+    protected function getIgnoreCommentsWithoutMatchingTags(MetaObjectInterface $object) : bool
     {
-        return $this->getMainObject()->getDataAddressProperty('ignore_comments_without_matching_tags') ? true : false;
+        return BooleanDataType::cast($object->getDataAddressProperty(self::DS_IGNORE_COMMENTS_WITHOUT_MATCHING_TAGS));
     }
 
     protected function getLastQuery()
