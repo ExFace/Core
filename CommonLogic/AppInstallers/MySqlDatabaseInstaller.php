@@ -260,7 +260,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
 CREATE TABLE IF NOT EXISTS `{$this->getMigrationsTableName()}` (
     `id` int(8) NOT NULL AUTO_INCREMENT,
     `migration_name` varchar(300) NOT NULL,
-    `up_datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `up_datetime` timestamp NOT NULL,
     `up_script` longtext NOT NULL,
     `up_result` longtext,
     `down_datetime` timestamp NULL,
@@ -342,12 +342,14 @@ SQL;
 INSERT INTO {$this->getMigrationsTableName()}
     (
         migration_name,
+        up_datetime,
         up_script,
         up_result,
         down_script
     )
     VALUES (
         '{$this->escapeSqlStringValue($migration->getMigrationName())}',
+        {$this->escapeSqlDateTimeValue($time)},
         '{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getUpScript()))}',
         '{$this->escapeSqlStringValue($up_result_string)}',
         '{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}'
@@ -388,6 +390,7 @@ SQL;
 INSERT INTO {$this->getMigrationsTableName()}
     (
         migration_name,
+        up_datetime,
         up_script,
         down_script,
         failed_flag,
@@ -395,6 +398,7 @@ INSERT INTO {$this->getMigrationsTableName()}
     )
     VALUES (
         '{$this->escapeSqlStringValue($migration->getMigrationName())}',
+        {$this->escapeSqlDateTimeValue($time)},
         '{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getUpScript()))}',
         '{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}',
         1,
