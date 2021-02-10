@@ -1,13 +1,12 @@
 -- UP
 
+sp_rename 'exf_queued_task.owner', 'owner_oid', 'COLUMN';
+sp_rename 'exf_queued_task.queue', 'queue_oid', 'COLUMN';
+
 ALTER TABLE [exf_queued_task]
-	ALTER COLUMN [owner] [owner_oid] [binary](16) NOT NULL,
 	ADD COLUMN [channel] [nvarchar](50) NULL,
 	ADD COLUMN [processed_on] [datetime2] NULL,
 	ADD COLUMN [duration_ms] [decimal](10,2) NULL;
-	
-ALTER TABLE [exf_queued_task]
-    ALTER COLUMN [queue] [queue_oid] [binary](16) NULL;
 	
 UPDATE [exf_queued_task] SET [status] = 30 WHERE [status] = 10;
 UPDATE [exf_queued_task] SET [status] = 98 WHERE [status] = 90;
@@ -17,9 +16,10 @@ ALTER TABLE [exf_queue]
 	
 -- DOWN
 
+sp_rename 'exf_queued_task.owner_oid', 'owner', 'COLUMN';
+sp_rename 'exf_queued_task.queue_oid', 'queue', 'COLUMN';
+
 ALTER TABLE [exf_queued_task]
-	ALTER COLUMN [owner_oid] [owner] [binary](16) NOT NULL,
-	ALTER COLUMN [queue_oid] [queue] [binary](16) NOT NULL,
 	DROP COLUMN [channel],
 	DROP COLUMN [processed_on],
 	DROP COLUMN [duration_ms];
