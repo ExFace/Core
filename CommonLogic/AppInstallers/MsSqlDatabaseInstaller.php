@@ -153,9 +153,9 @@ SQL;
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::buildSqlMigrationUpInsert()
      */
-    protected function buildSqlMigrationUpInsert(SqlMigration $migration, string $up_result_string) : string
+    protected function buildSqlMigrationUpInsert(SqlMigration $migration, string $up_result_string, \DateTime $time) : string
     {
-        return parent::buildSqlMigrationUpInsert($migration, $up_result_string) . "SELECT SCOPE_IDENTITY();";
+        return parent::buildSqlMigrationUpInsert($migration, $up_result_string, $time) . " SELECT SCOPE_IDENTITY();";
     }    
     
     /**
