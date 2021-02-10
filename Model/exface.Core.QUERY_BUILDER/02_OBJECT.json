@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2016-11-21 11:14:15",
-            "MODIFIED_ON": "2020-05-05 10:18:29",
+            "MODIFIED_ON": "2021-02-09 11:31:03",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6afdba24a42e58943e4b318306b9a",
@@ -96,7 +96,92 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "0x11e6be0ad5666af88ddee4b318306b9a",
             "DATA_ADDRESS_PROPS": "{\"finder_depth\":\"0\"}",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Tabs",
+                "object_alias": "exface.Core.UXON_ENTITY_ANNOTATION",
+                "tabs": [
+                    {
+                        "caption": "General",
+                        "widgets": [
+                            {
+                                "attribute_alias": "ENTITY",
+                                "widget_type": "TextHeading",
+                                "heading_level": 1,
+                                "width": "max"
+                            },
+                            {
+                                "attribute_alias": "CLASS",
+                                "width": "max"
+                            },
+                            {
+                                "attribute_alias": "FULL_DESCRIPTION",
+                                "widget_type": "Markdown",
+                                "width": "max",
+                                "hide_caption": true
+                            },
+                            {
+                                "attribute_alias": "FILE",
+                                "hidden": true,
+                                "id": "prototype_class_field"
+                            }
+                        ]
+                    },
+                    {
+                        "caption": "Supported Data Address Properties",
+                        "widgets": [
+                            {
+                                "object_alias": "exface.Core.UXON_QUERY_BUILDER_ANNOTATION",
+                                "widget_type": "DataTable",
+                                "filters": [
+                                    {
+                                        "attribute_alias": "FILE",
+                                        "widget_type": "InputHidden"
+                                    },
+                                    {
+                                        "attribute_alias": "PROPERTY"
+                                    },
+                                    {
+                                        "attribute_alias": "TITLE"
+                                    }
+                                ],
+                                "columns": [
+                                    {
+                                        "attribute_alias": "TARGET"
+                                    },
+                                    {
+                                        "attribute_alias": "PROPERTY"
+                                    },
+                                    {
+                                        "attribute_alias": "TITLE"
+                                    },
+                                    {
+                                        "attribute_alias": "TYPE"
+                                    }
+                                ],
+                                "row_grouper": {
+                                    "group_by_attribute_alias": "TARGET"
+                                },
+                                "sorters": [
+                                    {
+                                        "attribute_alias": "TARGET",
+                                        "direction": "desc"
+                                    },
+                                    {
+                                        "attribute_alias": "PROPERTY",
+                                        "direction": "desc"
+                                    }
+                                ],
+                                "buttons": [
+                                    {
+                                        "action_alias": "exface.Core.ShowObjectInfoDialog",
+                                        "bind_to_double_click": true
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
             "ALIAS": "QUERY_BUILDER",
             "DATA_ADDRESS": "*\/*\/QueryBuilders\/*.php"
         }
