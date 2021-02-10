@@ -20,6 +20,8 @@ class MsSqlConnector extends AbstractSqlConnector
 {
 
     private $dBase = null;
+    
+    private $warningsReturnAsErrors = false;
 
     /**
      *
@@ -42,6 +44,12 @@ class MsSqlConnector extends AbstractSqlConnector
         
         if (function_exists('sqlsrv_connect') === false) {
             throw new DataConnectionFailedError($this, 'PHP function "sqlsrv_connect" not available!', '76BJXFH');
+        }
+        
+        if ($this->getWarningsReturnAsErrors() === false) {
+            if(sqlsrv_configure("WarningsReturnAsErrors", 0) === false) {
+                throw new DataConnectionFailedError($this, 'PHP function "sqlsrv_connect" not available!', '76BJXFH');
+            } 
         }
         
         if (! $conn = sqlsrv_connect($this->getServerName() . ($this->getPort() ? ', ' . $this->getPort() : ''), $connectInfo)) {
@@ -127,7 +135,11 @@ class MsSqlConnector extends AbstractSqlConnector
 
     protected function getErrors()
     {
-        return sqlsrv_errors();
+        if ($this->getWarningsReturnAsErrors()) {
+            return sqlsrv_errors();
+        } else {
+            return sqlsrv_errors(SQLSRV_ERR_ERRORS);
+        }
     }
 
     /**
@@ -355,5 +367,28 @@ class MsSqlConnector extends AbstractSqlConnector
     {
         return $this->getDatabase();
     }
+    
+    protected function getWarningsReturnAsErrors() : bool
+    {
+        return $this->warningsReturnAsErrors;
+    }
+    
+    /**
+     * Set to TRUE to make the connection throw exceptions on SQL Server warning messages.
+     * 
+     * See https://docs.microsoft.com/en-us/sql/connect/php/how-to-handle-errors-and-warnings-using-the-sqlsrv-driver
+     * for details.
+     * 
+     * @uxon-property warnings_return_as_errors
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return MsSqlConnector
+     */
+    public function setWarningsReturnAsErrors(bool $value) : MsSqlConnector
+    {
+        $this->warningsReturnAsErrors = $value;
+        return $this;
+    }
 }
-?>
