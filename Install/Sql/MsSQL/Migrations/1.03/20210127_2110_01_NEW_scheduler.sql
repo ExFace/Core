@@ -1,9 +1,11 @@
 -- UP
 
-ALTER TABLE  exf_queued_task
+IF COL_LENGTH('dbo.exf_queued_task','scheduler_oid') IS NULL
+ALTER TABLE  dbo.exf_queued_task
 	ADD scheduler_oid BINARY(16) NULL;
-	
-CREATE TABLE IF NOT EXISTS  exf_customizing (
+
+IF OBJECT_ID('dbo.exf_customizing', 'U') IS NULL 
+CREATE TABLE dbo.exf_customizing (
   	oid binary(16) NOT NULL,
     created_on datetime2 NOT NULL,
     modified_on datetime2 NOT NULL,
@@ -17,7 +19,8 @@ CREATE TABLE IF NOT EXISTS  exf_customizing (
 	CONSTRAINT Ref_table_cell UNIQUE (row_oid, column_name)
 );
 
-CREATE TABLE IF NOT EXISTS  exf_scheduler (
+IF OBJECT_ID('dbo.exf_scheduler', 'U') IS NULL 
+CREATE TABLE dbo.exf_scheduler (
     oid binary(16) NOT NULL,
     created_on datetime2 NOT NULL,
     modified_on datetime2 NOT NULL,
@@ -32,18 +35,31 @@ CREATE TABLE IF NOT EXISTS  exf_scheduler (
     queue_topics nvarchar(50) NOT NULL,
     first_run datetime2 NOT NULL,
     last_run datetime2 DEFAULT NULL,
-	CONSTRAINT PK_exf_customizing_oid PRIMARY KEY (oid),
+	CONSTRAINT PK_exf_scheduler PRIMARY KEY (oid)
 );
 
-CREATE INDEX Find_duplicates ON exf_queued_task (message_id, producer, queue_oid, status);
-CREATE INDEX Scheduler ON exf_queued_task (scheduler_oid, created_on);
-CREATE INDEX Initial_views ON exf_queued_task (created_on, task_assigned_on, owner_oid, queue_oid);
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE NAME = N'Find_duplicates') 
+CREATE INDEX Find_duplicates ON dbo.exf_queued_task (message_id, producer, queue_oid, status);
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE NAME = N'Scheduler') 
+CREATE INDEX Scheduler ON dbo.exf_queued_task (scheduler_oid, created_on);
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE NAME = N'Initial_views') 
+CREATE INDEX Initial_views ON dbo.exf_queued_task (created_on, task_assigned_on, owner_oid, queue_oid);
 	
 -- DOWN
 
-ALTER TABLE exf_queued_task
-	DROP COLUMN scheduler_oid;
-	
-DROP TABLE IF EXISTS exf_customizing;
+IF EXISTS (SELECT * FROM sys.indexes WHERE NAME = N'Find_duplicates') 
+DROP INDEX Find_duplicates ON dbo.exf_queued_task;
+IF EXISTS (SELECT * FROM sys.indexes WHERE NAME = N'Scheduler') 
+DROP INDEX Scheduler ON dbo.exf_queued_task;
+IF EXISTS (SELECT * FROM sys.indexes WHERE NAME = N'Initial_views') 
+DROP INDEX Initial_views ON dbo.exf_queued_task;
 
-DROP TABLE IF EXISTS exf_scheduler;
+IF COL_LENGTH('dbo.exf_queued_task','scheduler_oid') IS NOT NULL
+ALTER TABLE dbo.exf_queued_task
+	DROP COLUMN scheduler_oid;
+
+IF OBJECT_ID('dbo.exf_customizing', 'U') IS NOT NULL 	
+DROP TABLE IF EXISTS dbo.exf_customizing;
+
+IF OBJECT_ID('dbo.exf_scheduler', 'U') IS NOT NULL 
+DROP TABLE IF EXISTS dbo.exf_scheduler;
