@@ -701,7 +701,7 @@
         },
         {
             "CREATED_ON": "2020-12-16 11:17:09",
-            "MODIFIED_ON": "2020-12-16 14:45:33",
+            "MODIFIED_ON": "2021-02-10 18:40:50",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eba178db29296ea178025041000001",
@@ -735,7 +735,7 @@
             "COPYABLEFLAG": "0",
             "ALIAS": "state",
             "DATATYPE": "0x11e7c3960c3586c38001e4b318306b9a",
-            "DATA_ADDRESS": "(CASE\n\tWHEN [#skip_flag#] = 1 THEN 'DISABLED'\n\tWHEN [#up_datetime#] IS NOT NULL AND [#down_datetime#] IS NULL AND [#failed_flag#] THEN 'FAILED_UP'\n\tWHEN [#down_datetime#] IS NOT NULL AND [#failed_flag#] THEN 'FAILED_DOWN'\n\tWHEN [#down_datetime#] IS NOT NULL THEN 'DOWN'\n\tWHEN [#up_datetime#] IS NOT NULL THEN 'UP'\nEND)",
+            "DATA_ADDRESS": "(CASE\n\tWHEN [#skip_flag#] = 1 THEN 'DISABLED'\n\tWHEN [#up_datetime#] IS NOT NULL AND [#down_datetime#] IS NULL AND [#failed_flag#] = 1 THEN 'FAILED_UP'\n\tWHEN [#down_datetime#] IS NOT NULL AND [#failed_flag#] = 1 THEN 'FAILED_DOWN'\n\tWHEN [#down_datetime#] IS NOT NULL THEN 'DOWN'\n\tWHEN [#up_datetime#] IS NOT NULL THEN 'UP'\nEND)",
             "OBJECT": "0x11e960ea52c375a6afc2ecf4bb639fc6",
             "FORMATTER": "",
             "DISPLAYORDER": null,
