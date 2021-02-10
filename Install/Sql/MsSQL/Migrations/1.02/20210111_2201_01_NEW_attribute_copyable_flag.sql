@@ -1,7 +1,7 @@
 -- UP
 
 ALTER TABLE [dbo].[exf_attribute]
-	ADD COLUMN [attribute_copyable_flag] [int] NOT NULL DEFAULT '1';
+	ADD [attribute_copyable_flag] [int] NOT NULL DEFAULT '1';
 	
 UPDATE [dbo].[exf_attribute] SET [attribute_copyable_flag] = [attribute_editable_flag];
 

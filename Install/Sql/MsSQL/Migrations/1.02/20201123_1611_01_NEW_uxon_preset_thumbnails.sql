@@ -1,7 +1,7 @@
 -- UP
 
 ALTER TABLE [dbo].[exf_uxon_preset]
-	ADD COLUMN [thumbnail] [nvarchar](250) DEFAULT NULL;
+	ADD [thumbnail] [nvarchar](250) DEFAULT NULL;
 	
 -- DOWN
 
