@@ -2,6 +2,8 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 class JsonDataType extends TextDataType
 {
@@ -149,5 +151,32 @@ class JsonDataType extends TextDataType
         return $this;
     }
     
+    /**
+     * 
+     * @param array $json
+     * @param string $path
+     * @throws RuntimeException
+     * @return mixed
+     */
+    public static function filterXPath($json, string $path)
+    {
+        switch (true) {
+            case is_array($json):
+                $array = $json;
+                break;
+            case $json instanceof \stdClass:
+                $array = (array) $json;
+                break;
+            case $json === null:
+            case $json === '':
+                return $json;
+            case is_string($json):
+                $array = json_decode($json, true);
+                break;
+            default:
+                throw new InvalidArgumentException('Cannot apply XPath filter to JSON: not a valid JSON!');
+        }
+        
+        return ArrayDataType::filterXPath($array, $path);
+    }
 }
-?>
