@@ -49,7 +49,7 @@ abstract class AbstractModelBuilder implements ModelBuilderInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\ModelBuilderInterface::generateAttributesForObject()
      */
-    public function generateAttributesForObject(MetaObjectInterface $object) : DataSheetInterface
+    public function generateAttributesForObject(MetaObjectInterface $object, string $addressPattern = '') : DataSheetInterface
     {
         throw new NotImplementedError('Creating models for explicitly specified object not yet implemented!');
     }
