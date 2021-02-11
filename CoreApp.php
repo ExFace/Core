@@ -15,6 +15,7 @@ use exface\Core\CommonLogic\AppInstallers\FileContentInstaller;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Facades\HttpTaskFacade;
 use exface\Core\CommonLogic\AppInstallers\SchedulerInstaller;
+use exface\Core\DataTypes\FilePathDataType;
 
 class CoreApp extends App
 {
@@ -127,14 +128,17 @@ RewriteRule ^data/\..*$ - [F]
         $tplInstaller->setFacade(FacadeFactory::createFromString(HttpTaskFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
         
+        // Server installer (e.g. for Microsoft IIS)
         $serverInstallerClass = $this->getWorkbench()->getConfig()->getOption("INSTALLER.SERVER_INSTALLER.CLASS");
         if ($serverInstallerClass != null) {
             $serverInstaller = new $serverInstallerClass($this->getSelector());
             $installer->addInstaller($serverInstaller);
         }
         
+        // Scheduler
         $schedulerInstaller = new SchedulerInstaller($this->getSelector());
-        $schedulerInstaller->addTask('ExFace Scheduler', 'exface.Core:RunScheduler', 60);
+        $schedulerName = 'Workbench scheduler (' . FilePathDataType::findFileName($this->getWorkbench()->getInstallationPath(), false) . ')';
+        $schedulerInstaller->addTask($schedulerName, 'exface.Core:RunScheduler', 60);
         $installer->addInstaller($schedulerInstaller);
         
         return $installer;
