@@ -41,7 +41,7 @@ class GenerateModelFromDataSource extends AbstractAction
                 $data_source = $this->getWorkbench()->data()->getDataSource($row[$data_src_col->getName()]);
                 $model_builder = $data_source->getConnection()->getModelBuilder();
                 
-                $created_ds = $model_builder->generateAttributesForObject($this->getWorkbench()->model()->getObject($row['OBJECT']));
+                $created_ds = $model_builder->generateAttributesForObject($this->getWorkbench()->model()->getObject($row['OBJECT']), $row['OBJECT_DATA_ADDRESS_MASK'] ?? '');
                 $created += $created_ds->countRows();
                 $skipped += $created_ds->countRowsInDataSource() - $created_ds->countRows();
             }
