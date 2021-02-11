@@ -23,3 +23,12 @@ These guides help set up a new web server or validate the configuration of an ex
 
 - [Install via PHP Composer](Install_via_Composer.md) on a single server.
 - [Install remotely via Deployer](https://github.com/axenox/deployer/blob/1.x-dev/Docs/index.md) if you want manage multiple machines from a single build server.
+
+## Starting up
+
+Open the URL to your installation folder in your browser (e.g. `http://localhost/exface`) and use the following initial credentials:
+
+Username: `admin`
+Password: `admin`
+
+**IMPORTANT:** don't forget to change the admin password later on or disable the admin user entirely!
