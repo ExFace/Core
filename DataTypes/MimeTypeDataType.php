@@ -170,4 +170,34 @@ class MimeTypeDataType extends StringDataType implements EnumDataTypeInterface
             '7z' => 'application/x-7z-compressed' // 7-zip archive
         ];
     }
+    
+    /**
+     * Returns TRUE if the mime type is a JSON format and FALSE otherwise
+     * @param string $mimeType
+     * @return bool
+     */
+    public static function detectJson(string $mimeType) : bool
+    {
+        return stripos($mimeType, 'json') !== false;
+    }
+    
+    /**
+     * Returns TRUE if the mime type is an XML format and FALSE otherwise
+     * @param string $mimeType
+     * @return bool
+     */
+    public static function detectXml(string $mimeType) : bool
+    {
+        return stripos($mimeType, 'xml') !== false && ! static::detectHtml($mimeType);
+    }
+    
+    /**
+     * Returns TRUE if the mime type is an HTML format and FALSE otherwise
+     * @param string $mimeType
+     * @return bool
+     */
+    public static function detectHtml(string $mimeType) : bool
+    {
+        return stripos($mimeType, 'html') !== false;
+    }
 }
