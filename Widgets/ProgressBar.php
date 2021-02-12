@@ -257,7 +257,7 @@ class ProgressBar extends Display implements iCanBeAligned
     {
         $data_sheet = parent::prepareDataSheetToRead($data_sheet);
         if ($this->isTextBoundToAttribute() === true) {
-            $textPrefillExpr = $this->getPrefillExpression($data_sheet, $this->getTextAttributeAlias());
+            $textPrefillExpr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getTextAttributeAlias());
             if ($textPrefillExpr !== null) {
                 $data_sheet->getColumns()->addFromExpression($textPrefillExpr);
             }
@@ -274,7 +274,7 @@ class ProgressBar extends Display implements iCanBeAligned
     {
         parent::doPrefill($data_sheet);
         if ($this->isTextBoundToAttribute() === true) {
-            $textPrefillExpression = $this->getPrefillExpression($data_sheet, $this->getTextAttributeAlias());
+            $textPrefillExpression = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getTextAttributeAlias());
             if ($textPrefillExpression !== null && $col = $data_sheet->getColumns()->getByExpression($textPrefillExpression)) {
                 if (count($col->getValues(false)) > 1 && $this->getAggregator()) {
                     // TODO #OnPrefillChangeProperty
