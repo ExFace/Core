@@ -172,7 +172,7 @@ class PDFViewer extends Display implements iFillEntireContainer
     {
         $data_sheet = parent::prepareDataSheetToRead($data_sheet);
         if ($this->isFilenameBoundToAttribute() === true) {
-            $filenamePrefillExpr = $this->getPrefillExpression($data_sheet, $this->getFilenameAttributeAlias());
+            $filenamePrefillExpr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getFilenameAttributeAlias());
             if ($filenamePrefillExpr !== null) {
                 $data_sheet->getColumns()->addFromExpression($filenamePrefillExpr);
             }
@@ -189,7 +189,7 @@ class PDFViewer extends Display implements iFillEntireContainer
     {
         parent::doPrefill($data_sheet);
         if ($this->isFilenameBoundToAttribute() === true) {
-            $filenamePrefillExpression = $this->getPrefillExpression($data_sheet, $this->getFilenameAttributeAlias());
+            $filenamePrefillExpression = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getFilenameAttributeAlias());
             if ($filenamePrefillExpression !== null && $col = $data_sheet->getColumns()->getByExpression($filenamePrefillExpression)) {
                 if (count($col->getValues(false)) > 1 && $this->getAggregator()) {
                     // TODO #OnPrefillChangeProperty
