@@ -111,7 +111,10 @@ JS;
         			};*/
         		},
         		dataToMarker: function(oRow, latlng) {
-        			return L.marker(latlng, { $markerProps } );
+                    return L.marker(latlng, { 
+                        icon: {$this->buildJsMarkerIcon($layer, 'oRow')},
+                        $markerProps 
+                    });
         		}
         	});
             oLayer.on('dataloaded', function(e) {
@@ -129,6 +132,38 @@ JS;
         })()
                
 JS;
+    }
+    
+    protected function buildJsMarkerIcon(DataMarkersLayer $layer, string $oRowJs) : string
+    {
+        $icon = $layer->getIcon() ?? '';
+        $prefix = $layer->getIconSet() ?? 'fa';
+        
+        if ($layer->hasValue()) {
+            $color = $layer->getColor() ?? 'black';
+            return <<<JS
+new L.ExtraMarkers.icon({
+                            icon: 'fa-number',
+                            number: {$oRowJs}.{$layer->getValueColumn()->getDataColumnName()},
+                            markerColor: '$color',
+                            shape: 'square',
+                            svg: true,
+                        })
+
+JS;
+        } else {
+            $color = $layer->getColor() ?? 'black';
+            return <<<JS
+new L.ExtraMarkers.icon({
+                            icon: '$icon',
+                            markerColor: '$color',
+                            shape: 'round',
+                            prefix: '$prefix',
+                            svg: true,
+                        })
+                        
+JS;
+        }
     }
     
     protected function buildJsLeafletVar() : string
@@ -152,7 +187,9 @@ JS;
         return [
             '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.CSS') . '"/>',
             '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.JS') . '"></script>',
-            '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.LAYERJSON_JS') . '"></script>'
+            '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.LAYERJSON_JS') . '"></script>',
+            '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.EXTRA_MARKERS_CSS') . '"/>',
+            '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.EXTRA_MARKERS_JS') . '"></script>'
         ]; 
     }
 }

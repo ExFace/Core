@@ -68,7 +68,7 @@ class Debugger implements DebuggerInterface
      */
     public function setPrettifyErrors($value)
     {
-        $this->prettify_errors = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->prettify_errors = true; //\exface\Core\DataTypes\BooleanDataType::cast($value);
         $handler = new ErrorHandler(null, $this->prettify_errors);
         $handler->setDefaultLogger($this->logger, E_ALL & ~E_NOTICE);
         ErrorHandler::register($handler, true);
