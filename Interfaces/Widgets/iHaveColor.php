@@ -1,15 +1,13 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
 
-use exface\Core\Interfaces\WidgetInterface;
-
 /**
- * This interface describes widgets, that have a main color: Text, ChartSeries, Tiles, etc.
+ * This interface describes widgets and wiget parts, that have a main color: Text, ChartSeries, Tiles, etc.
  * 
  * @author Andrej Kabachnik
  *
  */
-interface iHaveColor extends WidgetInterface
+interface iHaveColor
 {
     /**
      * Returns the color of this widget or NULL if no color explicitly defined.

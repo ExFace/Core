@@ -2,7 +2,6 @@
 namespace exface\Core\Widgets\Traits;
 
 use exface\Core\Interfaces\Widgets\iHaveIcon;
-use exface\Core\CommonLogic\Constants\Icons;
 
 trait iHaveIconTrait {
     

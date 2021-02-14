@@ -4,14 +4,22 @@ namespace exface\Core\Widgets\Parts\Maps;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\DataColumn;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\Interfaces\Widgets\iHaveColor;
+use exface\Core\Widgets\Traits\iHaveColorTrait;
 
 /**
  *
  * @author Andrej Kabachnik
  *
  */
-class DataMarkersLayer extends AbstractDataLayer
+class DataMarkersLayer extends AbstractDataLayer implements iHaveIcon, iHaveColor
 {
+    use iHaveIconTrait;
+    
+    use iHaveColorTrait;
+    
     private $latitudeAttributeAlias = null;
     
     private $latitudeColumn = null;
@@ -135,7 +143,7 @@ class DataMarkersLayer extends AbstractDataLayer
      */
     public function getValueColumn() : ?DataColumn
     {
-        return $this->tooltipColumn;
+        return $this->valueColumn;
     }
     
     /**
@@ -244,12 +252,10 @@ class DataMarkersLayer extends AbstractDataLayer
                 if ($this->hasValue()) {
                     $caption = $this->getValueColumn()->getCaption();
                 }
-                if (! $caption && $this->hasTooltip()) {
+                if (! $caption && $this->hasTooltip() && ! $this->getTooltipAttributeAlias() !== $this->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS')) {
                     $caption = $this->getTooltipColumn()->getCaption();
                 }
-                if (! $caption) {
-                    $caption = $this->getDataWidget()->getMetaObject()->getName();
-                }
+                $caption = $this->getDataWidget()->getMetaObject()->getName() . ($caption ? ' (' . $caption . ')' : '');
             }
         }
         return $caption;
