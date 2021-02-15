@@ -213,8 +213,6 @@ JS;
         
         /* @var $dataWidget \exface\Core\Widgets\Data */
         $dataWidget = $layer->getDataWidget();
-        $propertyId = $dataWidget->hasUidColumn() ? "'{$dataWidget->getUidColumn()->getDataColumnName()}'" : 'null';
-        $propertyTitle = $layer->hasTooltip() ? "'{$layer->getTooltipColumn()->getDataColumnName()}'" : 'null';
         
         $markerProps = '';
         if ($layer->hasTooltip()) {
@@ -224,37 +222,50 @@ JS;
         return <<<JS
             (function(){
                 var oBoundsInitial;
-                var oLayer = L.layerJSON({
-            		caching: true,				//disable markers caching and regenerate every time
-                    propertyId: $propertyId,
-                    propertyTitle: $propertyTitle,
-                    propertyLoc: ['{$layer->getLatitudeColumn()->getDataColumnName()}', '{$layer->getLongitudeColumn()->getDataColumnName()}'],
-            		callData: function(bbox, callback) {
-                        var oParams = {
-                            resource: "{$dataWidget->getPage()->getAliasWithNamespace()}", 
-                            element: "{$dataWidget->getId()}",
-                            object: "{$dataWidget->getMetaObject()->getId()}",
-                            action: "{$dataWidget->getLazyLoadingActionAlias()}"
-                        };
-    
-                        {$this->buildJsDataLoadFunctionName()}(oParams)
-                        .then(function(oResponseData){
-            			    callback(oResponseData.rows || []);	//render data to layer
-                        });
-                        /*
-            			return {
-            				abort: function() {} //called to stop previous requests on map move
-            			};*/
-            		},
-            		dataToMarker: function(oRow, latlng) {
+                var oLayer = L.geoJSON(null, {
+                    pointToLayer: function(feature, latlng) {
+                        var oRow = feature.properties;
                         return L.marker(latlng, { 
                             icon: {$this->buildJsMarkerIcon($layer, 'oRow')},
                             $markerProps 
                         });
-            		}
-            	});
-                oLayer.on('dataloaded', function(e) {
-                	setTimeout(function() {
+                    }
+                });
+                var oParams = {
+                    resource: "{$dataWidget->getPage()->getAliasWithNamespace()}", 
+                    element: "{$dataWidget->getId()}",
+                    object: "{$dataWidget->getMetaObject()->getId()}",
+                    action: "{$dataWidget->getLazyLoadingActionAlias()}"
+                };
+
+                {$this->buildJsDataLoadFunctionName()}(oParams)
+                .then(function(oResponseData){
+                    var aRows = oResponseData.rows || [];
+                    var aGeoJson = [];
+                    var aRowsSkipped = [];
+                
+                    aRows.forEach(function(oRow){
+                        var fLat = parseFloat(oRow.{$layer->getLatitudeColumn()->getDataColumnName()});
+                        var fLng = parseFloat(oRow.{$layer->getLongitudeColumn()->getDataColumnName()});
+    
+                        if (isNaN(fLat) || isNaN(fLng)) {
+                            aRowsSkipped.push(oRow);
+                            return;
+                        }
+
+                        aGeoJson.push({
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Point',
+                                coordinates: [fLng, fLat],
+                            },
+                            properties: oRow
+                        });
+                    })
+
+                    oLayer.addData(aGeoJson);
+
+                    setTimeout(function() {
                         if (oBoundsInitial === undefined) {
                             setTimeout(function(){
                                 oBoundsInitial = oLayer.getBounds();
@@ -263,9 +274,9 @@ JS;
                         }
                 	},100);
                 });
-                return oLayer; 
-            })()
                
+                return oLayer;
+            })()
 JS;
     }
     
@@ -340,7 +351,6 @@ JS;
         $includes = [
             '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.CSS') . '"/>',
             '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.JS') . '"></script>',
-            '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.LAYERJSON_JS') . '"></script>',
             '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.EXTRA_MARKERS_CSS') . '"/>',
             '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.EXTRA_MARKERS_JS') . '"></script>'
         ]; 
