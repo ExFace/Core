@@ -61,6 +61,8 @@ class Map extends AbstractWidget implements
     private $zoom = null;
     
     private $showFullScreenButton = true;
+    
+    private $showGpsLocateButton = true;
 
     /**
      * @var bool
@@ -565,6 +567,31 @@ class Map extends AbstractWidget implements
     public function setShowFullScreenButton(bool $value) : Map
     {
         $this->showFullScreenButton = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getShowGpsLocateButton() : bool
+    {
+        return $this->showGpsLocateButton;
+    }
+
+    /**
+     * Set to FALSE to disallow moving the view to the current location provided by GPS or other location services.
+     * 
+     * @uxon-property show_gps_location_button
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return Map
+     */
+    public function setShowGpsLocateButton(bool $value) : Map
+    {
+        $this->showGpsLocateButton = $value;
         return $this;
     }
 }
