@@ -41,7 +41,7 @@ abstract class AbstractDataLayer extends AbstractMapLayer
     public function getDataWidget() : iShowData
     {
         if ($this->dataWidget === null) {
-            $this->dataWidget = $this->initDataWidget(WidgetFactory::createFromUxonInParent($this->getMap(), $this->dataUxon, 'Data'));
+            $this->dataWidget = $this->initDataWidget(WidgetFactory::createFromUxonInParent($this->getMap(), $this->dataUxon ?? (new UxonObject()), 'Data'));
         }
         return $this->dataWidget;
     }
