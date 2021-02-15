@@ -18,7 +18,6 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Widgets\Traits\PrefillValueTrait;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 
@@ -60,6 +59,8 @@ class Map extends AbstractWidget implements
     private $centerViaGps = null;
     
     private $zoom = null;
+    
+    private $showFullScreenButton = true;
 
     /**
      * @var bool
@@ -539,6 +540,31 @@ class Map extends AbstractWidget implements
     public function setZoom(int $value) : Map
     {
         $this->zoom = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getShowFullScreenButton() : bool
+    {
+        return $this->showFullScreenButton;
+    }
+    
+    /**
+     * Set to FALSE to disallow switching to full-screen view.
+     * 
+     * @uxon-property show_full_screen_button
+     * @uxon-type boolean
+     * @uxon-defaul true
+     * 
+     * @param bool $value
+     * @return Map
+     */
+    public function setShowFullScreenButton(bool $value) : Map
+    {
+        $this->showFullScreenButton = $value;
         return $this;
     }
 }

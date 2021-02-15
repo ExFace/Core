@@ -37,10 +37,11 @@ HTML;
         $lat = $widget->getCenterLatitude() ?? 0;
         $lon = $widget->getCenterLongitude() ?? 0;
         
-        
         return <<<JS
 
-    {$this->buildJsLeafletVar()} = L.map('{$this->getIdLeaflet()}').setView([{$lat}, {$lon}], {$zoom});
+    {$this->buildJsLeafletVar()} = L.map('{$this->getIdLeaflet()}', {
+        {$this->buildJsMapOptions()}
+    }).setView([{$lat}, {$lon}], {$zoom});
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -49,6 +50,19 @@ HTML;
     {$this->buildJsLayers()}
     
 JS;
+    }
+    
+    protected function buildJsMapOptions() : string
+    {
+        $widget = $this->getWidget();
+        
+        $mapOptions = '';
+        if ($widget->getShowFullScreenButton()) {
+            $mapOptions .= "
+        fullscreenControl: true,";
+        }
+        
+        return $mapOptions;
     }
     
     protected function buildJsLayers() : string
@@ -189,7 +203,9 @@ JS;
             '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.JS') . '"></script>',
             '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.LAYERJSON_JS') . '"></script>',
             '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.EXTRA_MARKERS_CSS') . '"/>',
-            '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.EXTRA_MARKERS_JS') . '"></script>'
+            '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.EXTRA_MARKERS_JS') . '"></script>',
+            '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.FULLSCREEN_CSS') . '"/>',
+            '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.FULLSCREEN_JS') . '"></script>'
         ]; 
     }
 }
