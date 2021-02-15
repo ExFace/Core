@@ -47,6 +47,8 @@ HTML;
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo({$this->buildJsLeafletVar()});
 
+    {$this->buildJsLocateControl()}
+
     {$this->buildJsLayers()}
     
 JS;
@@ -63,6 +65,11 @@ JS;
         }
         
         return $mapOptions;
+    }
+    
+    protected function buildJsLocateControl() : string
+    {
+        return "L.control.locate().addTo({$this->buildJsLeafletVar()});";
     }
     
     protected function buildJsLayers() : string
@@ -197,15 +204,26 @@ JS;
     
     protected function buildHtmlHeadTagsLeaflet() : array
     {
+        $widget = $this->getWidget();
         $f = $this->getFacade();
-        return [
+        $includes = [
             '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.CSS') . '"/>',
             '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.JS') . '"></script>',
             '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.LAYERJSON_JS') . '"></script>',
             '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.EXTRA_MARKERS_CSS') . '"/>',
-            '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.EXTRA_MARKERS_JS') . '"></script>',
-            '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.FULLSCREEN_CSS') . '"/>',
-            '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.FULLSCREEN_JS') . '"></script>'
+            '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.EXTRA_MARKERS_JS') . '"></script>'
         ]; 
+        
+        if ($widget->getShowFullScreenButton()) {
+            $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.FULLSCREEN_CSS') . '"/>';
+            $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.FULLSCREEN_JS') . '"></script>';
+        }
+        
+        if ($widget->getShowGpsLocateButton()) {
+            $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.LOCATECONTROL_CSS') . '"/>';
+            $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.LOCATECONTROL_JS') . '"></script>';
+        }
+        
+        return $includes;
     }
 }
