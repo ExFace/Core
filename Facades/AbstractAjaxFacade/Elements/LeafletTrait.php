@@ -275,7 +275,7 @@ JS;
         $prefix = $layer->getIconSet() ?? 'fa';
         
         if ($layer->hasValue()) {
-            $color = $layer->getColor() ?? 'black';
+            $color = $layer->getColor() ?? $this->getMarkerColors()[$this->getWidget()->getLayerIndex($layer)];
             return <<<JS
 new L.ExtraMarkers.icon({
                             icon: 'fa-number',
@@ -301,7 +301,24 @@ JS;
         }
     }
     
-    protected function buildJsLeafletVar() : string
+    protected function getMarkerColors() : array
+    {
+        return [
+            'blue',
+            'cyan', 
+            'blue-dark',
+            'purple', 
+            'violet', 
+            'pink', 
+            'green-dark', 
+            'black', 
+            'white',
+            'orange-dark',
+            'orange'
+        ];
+    }
+    
+    public function buildJsLeafletVar() : string
     {
         return 'leaflet_' . $this->getId();
     }
