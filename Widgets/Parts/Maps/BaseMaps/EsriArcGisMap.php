@@ -8,7 +8,8 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Events\Facades\OnFacadeWidgetRendererExtendedEvent;
 
 /**
- *
+ * Shows ArcGIS base maps
+ * 
  * @author Andrej Kabachnik
  *
  */
@@ -30,6 +31,8 @@ class EsriArcGisMap extends AbstractBaseMap
     
     private $basemap = null;
     
+    private $showLabels = true;
+    
     public function __construct(Map $widget, UxonObject $uxon = null)
     {
         parent::__construct($widget, $uxon);
@@ -46,7 +49,11 @@ class EsriArcGisMap extends AbstractBaseMap
     }
     
     /**
+     * Which base map to show
      * 
+     * @uxon-property basemap
+     * @uxon-type [Topographic,Streets,NationalGeographic,Oceans,Gray,DarkGray,Imagery,ImageryClarity,ImageryFirefly,ShadedRelief,Physical]
+     * @uxon-default Topographic
      * 
      * @param string $value
      * @return EsriArcGisMap
@@ -74,16 +81,47 @@ class EsriArcGisMap extends AbstractBaseMap
         }
         
         $facadeElement->addLeafletHeadTag('<script src="' . $event->getFacade()->buildUrlToSource('LIBS.LEAFLET.ESRI.JS') . '"></script>');
+        $leafletVar = $facadeElement->buildJsLeafletVar();
         
-        $facadeElement->addLeafletLayerRenderer(function(MapLayerInterface $layer){
+        $facadeElement->addLeafletLayerRenderer(function(MapLayerInterface $layer) use ($leafletVar) {
         
-            
             if ($layer !== $this) {
                 return '';
             }
             
-            return "L.esri.basemapLayer('{$this->getBasemap()}')";
+            $basemap = $this->getBasemap();
+            $labelsLayer = '';
+            if ($layer->getShowLabels()) {
+                if ($basemap === 'ShadedRelief'
+                || $basemap === 'Oceans'
+                || $basemap === 'Gray'
+                || $basemap === 'DarkGray'
+                || $basemap === 'Terrain') {
+                    $labelsLayer = $basemap . 'Labels';
+                } elseif (strstr($basemap, 'Imagery') !== false) {
+                    $labelsLayer = 'ImageryLabels';
+                }
+            }
             
+            return <<<JS
+
+(function(){
+    var oBaseMap = L.esri.basemapLayer('{$basemap}');
+    var sLabelLayerName = '{$labelsLayer}';
+    var oLabelLayer;
+    if (sLabelLayerName) {
+        var oLabelLayer = L.esri.basemapLayer(sLabelLayerName);
+        oBaseMap.on('add', function(oEvent){
+            {$leafletVar}.addLayer(oLabelLayer);
+        });
+        oBaseMap.on('remove', function(oEvent){
+            {$leafletVar}.removeLayer(oLabelLayer);
+        });
+    }
+    return oBaseMap;
+})()
+
+JS;
         });
     }
     
@@ -95,5 +133,39 @@ class EsriArcGisMap extends AbstractBaseMap
     public function getCaption() : ?string
     {
         return self::BASEMAPS[$this->getBasemap()];
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getShowLabels() : bool
+    {
+        return $this->showLabels;
+    }
+    
+    /**
+     * Set to FALSE to remove labels (city names, etc.) if possible.
+     * 
+     * By default all maps include labels. For the following base maps labels can be removed:
+     * 
+     * - ShadedRelief
+     * - Oceans
+     * - Gray
+     * - DarkGray
+     * - Terrain
+     * - Imagery maps
+     * 
+     * @uxon-property show_labels
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return EsriArcGisMap
+     */
+    public function setShowLabels(bool $value) : EsriArcGisMap
+    {
+        $this->showLabels = $value;
+        return $this;
     }
 }
