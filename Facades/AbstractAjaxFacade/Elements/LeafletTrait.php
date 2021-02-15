@@ -6,6 +6,10 @@ use exface\Core\Widgets\Parts\Maps\DataMarkersLayer;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Events\Facades\OnFacadeWidgetRendererExtendedEvent;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\Actions\iReadData;
+use exface\Core\Exceptions\Facades\FacadeOutputError;
+use exface\Core\Widgets\Parts\Maps\AbstractDataLayer;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -82,15 +86,22 @@ HTML;
         
         return <<<JS
 
+(function(){
     {$this->buildJsLeafletVar()} = L.map('{$this->getIdLeaflet()}', {
         {$this->buildJsMapOptions()}
     }).setView([{$lat}, {$lon}], {$zoom});
+
+    {$this->buildJsLeafletVar()}._exfState = {
+        selectedFeature: null
+    };
+    {$this->buildJsLeafletVar()}._exfLayers = {};
 
     {$this->buildJsLocateControl()}
     {$this->buildJsScaleControl()}
 
     {$this->buildJsLayers()}
-    
+})();
+
 JS;
     }
     
@@ -157,7 +168,8 @@ JS;
         }
         
         $featureLayers = '';
-        foreach ($this->getWidget()->getLayers() as $layer) {
+        $featureMetadata = '';
+        foreach ($this->getWidget()->getLayers() as $index => $layer) {
             $captionJs = json_encode($layer->getCaption());
             $visible = true;
             $layerInit = $this->buildJsLayer($layer);
@@ -167,6 +179,14 @@ JS;
                     $featureLayers .= ".addTo({$this->buildJsLeafletVar()})";
                 }
                 $featureLayers .= ',';
+                if ($layer instanceof AbstractDataLayer) {
+                    $featureMetadata .= <<<JS
+{$index} : {
+       oId : {$layer->getMetaObject()->getId()}
+},    
+
+JS;
+                }
             }
         }
         
@@ -178,6 +198,8 @@ JS;
             $featureLayers
         }
     ).addTo({$this->buildJsLeafletVar()});
+
+    {$this->buildJsLeafletVar()}._exfLayers = { {$featureMetadata} };
 
 JS;
     }
@@ -224,11 +246,25 @@ JS;
                 var oBoundsInitial;
                 var oLayer = L.geoJSON(null, {
                     pointToLayer: function(feature, latlng) {
-                        var oRow = feature.properties;
+                        var oRow = feature.properties.data;
                         return L.marker(latlng, { 
                             icon: {$this->buildJsMarkerIcon($layer, 'oRow')},
                             $markerProps 
                         });
+                    },
+                    onEachFeature: function(feature, layer) {
+                        layer.on('click', function (e) {
+                            var jqIcon = $(e.target.getElement());
+                            if (jqIcon.hasClass('selected')) {
+                                $('#{$this->getIdLeaflet()} .leaflet-marker-icon').removeClass('selected');
+                                {$this->buildJsLeafletVar()}._exfState.selectedFeature = null;
+                            } else {
+                                $('#{$this->getIdLeaflet()} .leaflet-marker-icon').removeClass('selected');
+                                {$this->buildJsLeafletVar()}._exfState.selectedFeature = feature;
+                                jqIcon.addClass('selected');
+                            }
+                        });
+                    
                     }
                 });
                 var oParams = {
@@ -259,7 +295,11 @@ JS;
                                 type: 'Point',
                                 coordinates: [fLng, fLat],
                             },
-                            properties: oRow
+                            properties: {
+                                layer: {$this->getWidget()->getLayerIndex($layer)},
+                                object: '{$layer->getMetaObject()->getId()}',
+                                data: oRow
+                            }
                         });
                     })
 
@@ -368,5 +408,66 @@ JS;
         $includes = array_merge($includes, array_unique($this->headTags));
         
         return $includes;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsDataGetter()
+     */
+    public function buildJsDataGetter(ActionInterface $action = null) : string
+    {
+        $widget = $this->getWidget();
+        $rows = '';
+        if (is_null($action)) {
+            $rows = "{$this->buildJsLeafletVar()}._exfState.selectedFeature ? {$this->buildJsLeafletVar()}._exfState.selectedFeature.properties.data : []";
+        } elseif ($action instanceof iReadData) {
+            // If we are reading, than we need the special data from the configurator
+            // widget: filters, sorters, etc.
+            return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
+        } else {
+            $rows = $this->buildJsGetSelectedRows();
+        }
+        return "{oId: {$this->buildJsLeafletVar()}._exfState.selectedFeature ? {$this->buildJsLeafletVar()}._exfState.selectedFeature.properties.object : '{$widget->getMetaObject()->getId()}', rows: $rows}";
+    }
+    
+    protected function buildJsGetSelectedRows() : string
+    {
+        return "{$this->buildJsLeafletVar()}._exfState.selectedFeature ? [{$this->buildJsLeafletVar()}._exfState.selectedFeature.properties.data] : []";
+    }
+    
+    /**
+     * build function to get value of a selected data row
+     *
+     * @param string $column
+     * @param int $row
+     * @throws FacadeOutputError
+     * @return string
+     */
+    public function buildJsValueGetter($column = null, $row = null) : string
+    {
+        if ($column != null) {
+            $key = $column;
+        } else {
+            if ($this->getWidget()->getData()->hasUidColumn() === true) {
+                $column = $this->getWidget()->getData()->getUidColumn();
+                $key = $column->getDataColumnName();
+            } else {
+                throw new FacadeOutputError('Cannot create a value getter for a data widget without a UID column: either specify a column to get the value from or a UID column for the table.');
+            }
+        }
+        if ($row != null) {
+            throw new FacadeOutputError('Unsupported function ');
+        }
+        
+        return <<<JS
+function(){
+                    var aSelected = {$this->buildJsGetSelectedRows()};
+                    return aSelected.map(function(oRow){
+                        return oRow['$key'];
+                    }).join(',');
+                }()
+                
+JS;
     }
 }
