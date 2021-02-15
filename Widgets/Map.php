@@ -20,6 +20,7 @@ use exface\Core\Widgets\Traits\PrefillValueTrait;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
+use exface\Core\Widgets\Parts\Maps\Interfaces\BaseMapInterface;
 
 /**
  * A map with support for different mapping data providers and data layers.
@@ -44,7 +45,11 @@ class Map extends AbstractWidget implements
     
     const COORDINATE_LON = 'longitude';
     
+    const PART_FOLDER_BASE_MAPS = 'BaseMaps';
+    
     private $layers = [];
+    
+    private $baseMaps = [];
     
     private $providers = null;
     
@@ -70,6 +75,50 @@ class Map extends AbstractWidget implements
      * @var bool
      */
     private $hide_header = null;
+    
+    /**
+     *
+     * @return BaseMapInterface[]
+     */
+    public function getBaseMaps() : array
+    {
+        return $this->baseMaps;
+    }
+    
+    public function getBaseMap(int $index) : ?BaseMapInterface
+    {
+        return $this->baseMaps[$index];
+    }
+    
+    public function getBaseMapIndex(BaseMapInterface $baseMap) : ?int
+    {
+        return array_search($baseMap, $this->getBaseMaps());
+    }
+    
+    /**
+     * BaseMaps to show on top of the map
+     *
+     * @uxon-property base_maps
+     * @uxon-type \exface\Core\Widgets\Parts\Maps\AbstractMapLayer[]
+     * @uxon-template [{"type": ""}]
+     *
+     * @param UxonObject $uxon
+     * @throws WidgetConfigurationError
+     * @return Map
+     */
+    public function setBaseMaps(UxonObject $uxon) : Map
+    {
+        foreach ($uxon->getPropertiesAll() as $nr => $baseMapUxon) {
+            $type = $baseMapUxon->getProperty('type');
+            if (! $type) {
+                throw new WidgetConfigurationError($this, 'No map baseMap type specified for baseMap ' . $nr);
+            }
+            $class = $this->getLayerClassFromType($type, self::PART_FOLDER_BASE_MAPS);
+            $baseMap = new $class($this, $baseMapUxon);
+            $this->baseMaps[] = $baseMap;
+        }
+        return $this;
+    }
     
     /**
      * 
@@ -120,13 +169,13 @@ class Map extends AbstractWidget implements
      * @param string $layerType
      * @return string
      */
-    protected function getLayerClassFromType(string $layerType) : string
+    protected function getLayerClassFromType(string $layerType, string $subfolder = null) : string
     {
         if (substr($layerType, 0, 1) === '\\') {
             $class = $layerType;
         } else {
-            $class = __NAMESPACE__ . '\\Parts\\Maps\\' . $layerType;
-            if (! StringDataType::endsWith($class, 'Layer')) {
+            $class = __NAMESPACE__ . '\\Parts\\Maps\\' . ($subfolder !== null ? $subfolder . '\\' : '') . $layerType;
+            if ($subfolder === null && ! StringDataType::endsWith($class, 'Layer')) {
                 $class .= 'Layer';
             }
         }        

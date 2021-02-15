@@ -3,12 +3,15 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
 use exface\Core\Widgets\Parts\Maps\DataMarkersLayer;
+use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Interfaces\BaseMapInterface;
+use exface\Core\Widgets\Parts\Maps\BaseMaps\GenericUrlTiles;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
  * 
  * How to use: 
- * 
+ * TODO
  * 1. Add the following dependency to the composer.json of the facade: "bower-asset/jquery-qrcode" : "^1.0"
  * 2. Add the config option "LIBS.QRCODE.JS": "bower-asset/jquery-qrcode/jquery.qrcode.min.js" to the facade
  * 3. Use the trait in your element and call buildHtmlQrCode() and buildJsQrCodeRenderer() where needed.
@@ -20,6 +23,11 @@ use exface\Core\Widgets\Parts\Maps\DataMarkersLayer;
  */
 trait LeafletTrait
 {
+    /**
+     * 
+     * @param string $heightCss
+     * @return string
+     */
     protected function buildHtmlLeafletDiv(string $heightCss) : string
     {
         return <<<HTML
@@ -29,6 +37,10 @@ trait LeafletTrait
 HTML;
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsLeafletInit() : string
     {
         $widget = $this->getWidget();
@@ -42,10 +54,6 @@ HTML;
     {$this->buildJsLeafletVar()} = L.map('{$this->getIdLeaflet()}', {
         {$this->buildJsMapOptions()}
     }).setView([{$lat}, {$lon}], {$zoom});
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo({$this->buildJsLeafletVar()});
 
     {$this->buildJsLocateControl()}
     {$this->buildJsScaleControl()}
@@ -55,6 +63,10 @@ HTML;
 JS;
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsMapOptions() : string
     {
         $widget = $this->getWidget();
@@ -98,26 +110,100 @@ JS;
      */
     protected function buildJsLayers() : string
     {
-        $nameConstructorPairs = '';
-        foreach ($this->getWidget()->getLayers() as $idx => $layer) {
-            switch (true) {
-                case $layer instanceof DataMarkersLayer: 
-                    $nameConstructorPairs .= "'{$layer->getCaption()}' : {$this->buildJsDataMarkerLayer($layer, 'layer' . $idx)},";
-                    break;
+        $baseMaps = '';
+        $baseSelected = $this->getWidget()->getBaseMap(0);
+        foreach ($this->getWidget()->getBaseMaps() as $idx => $layer) {
+            $captionJs = json_encode($layer->getCaption() ?? 'Map ' . $idx);
+            $visible = ($baseSelected === $layer);
+            $layerInit = $this->buildJsBaseMap($layer);
+            if ($layerInit) {
+                $baseMaps .= "{$captionJs} : {$layerInit}";
+                if ($visible) {
+                    $baseMaps .= ".addTo({$this->buildJsLeafletVar()})";
+                }
+                $baseMaps .= ',';
+            }
+        }
+        
+        $featureLayers = '';
+        foreach ($this->getWidget()->getLayers() as $layer) {
+            $captionJs = json_encode($layer->getCaption());
+            $visible = true;
+            $layerInit = $this->buildJsLayer($layer);
+            if ($layerInit) {
+                $featureLayers .= "{$captionJs} : {$layerInit}";
+                if ($visible) {
+                    $featureLayers .= ".addTo({$this->buildJsLeafletVar()})";
+                }
+                $featureLayers .= ',';
             }
         }
         
         return <<<JS
 
-var aLayers = 
-    
-    L.control.layers(null, {
-        $nameConstructorPairs
-    }).addTo({$this->buildJsLeafletVar()});
+    var aLayers = L.control.layers({
+            $baseMaps
+        }, {
+            $featureLayers
+        }
+    ).addTo({$this->buildJsLeafletVar()});
 
 JS;
     }
     
+    /**
+     * 
+     * @param BaseMapInterface $layer
+     * @param int $index
+     * @param bool $visible
+     * @return string
+     */
+    protected function buildJsBaseMap(BaseMapInterface $layer) : string
+    {
+        switch (true) {
+            case $layer instanceof GenericUrlTiles:
+                return $this->buildJsUrlTileLayer($layer);
+        }
+        return '';
+    }
+    
+    /**
+     * 
+     * @param GenericUrlTiles $layer
+     * @return string
+     */
+    protected function buildJsUrlTileLayer(GenericUrlTiles $layer) : string
+    {
+        $url = $layer->getUrl();
+        $url = str_replace('{a|b|c}', '{s}', $url);
+        $attribution = json_encode($layer->getAttribution() ?? '');
+        return <<<JS
+L.tileLayer('{$url}', {
+                    attribution: $attribution
+                })
+JS;
+    }
+    
+    /**
+     * 
+     * @param MapLayerInterface $layer
+     * @param int $index
+     * @return string
+     */
+    protected function buildJsLayer(MapLayerInterface $layer) : string
+    {
+        switch (true) {
+            case $layer instanceof DataMarkersLayer:
+                return $this->buildJsDataMarkerLayer($layer);
+        }
+        return '';
+    }
+    
+    /**
+     * 
+     * @param DataMarkersLayer $layer
+     * @return string
+     */
     protected function buildJsDataMarkerLayer(DataMarkersLayer $layer) : string
     {
         /* @var $dataWidget \exface\Core\Widgets\Data */
@@ -131,50 +217,49 @@ JS;
         }
         
         return <<<JS
-        (function(){
-            var oBoundsInitial;
-            var oLayer = L.layerJSON({
-        		caching: true,				//disable markers caching and regenerate every time
-                propertyId: $propertyId,
-                propertyTitle: $propertyTitle,
-                propertyLoc: ['{$layer->getLatitudeColumn()->getDataColumnName()}', '{$layer->getLongitudeColumn()->getDataColumnName()}'],
-        		callData: function(bbox, callback) {
-                    var oParams = {
-                        resource: "{$dataWidget->getPage()->getAliasWithNamespace()}", 
-                        element: "{$dataWidget->getId()}",
-                        object: "{$dataWidget->getMetaObject()->getId()}",
-                        action: "{$dataWidget->getLazyLoadingActionAlias()}"
-                    };
-
-                    {$this->buildJsDataLoadFunctionName()}(oParams)
-                    .then(function(oResponseData){
-        			    callback(oResponseData.rows || []);	//render data to layer
-                    });
-                    /*
-        			return {
-        				abort: function() {} //called to stop previous requests on map move
-        			};*/
-        		},
-        		dataToMarker: function(oRow, latlng) {
-                    return L.marker(latlng, { 
-                        icon: {$this->buildJsMarkerIcon($layer, 'oRow')},
-                        $markerProps 
-                    });
-        		}
-        	});
-            oLayer.on('dataloaded', function(e) {
-            	setTimeout(function() {
-                    if (oBoundsInitial === undefined) {
-                        setTimeout(function(){
-                            oBoundsInitial = oLayer.getBounds();
-                            {$this->buildJsLeafletVar()}.fitBounds(oLayer.getBounds());
-                        }, 0);
-                    }
-            	},100);
-            });
-            oLayer.addTo({$this->buildJsLeafletVar()});
-            return oLayer; 
-        })()
+            (function(){
+                var oBoundsInitial;
+                var oLayer = L.layerJSON({
+            		caching: true,				//disable markers caching and regenerate every time
+                    propertyId: $propertyId,
+                    propertyTitle: $propertyTitle,
+                    propertyLoc: ['{$layer->getLatitudeColumn()->getDataColumnName()}', '{$layer->getLongitudeColumn()->getDataColumnName()}'],
+            		callData: function(bbox, callback) {
+                        var oParams = {
+                            resource: "{$dataWidget->getPage()->getAliasWithNamespace()}", 
+                            element: "{$dataWidget->getId()}",
+                            object: "{$dataWidget->getMetaObject()->getId()}",
+                            action: "{$dataWidget->getLazyLoadingActionAlias()}"
+                        };
+    
+                        {$this->buildJsDataLoadFunctionName()}(oParams)
+                        .then(function(oResponseData){
+            			    callback(oResponseData.rows || []);	//render data to layer
+                        });
+                        /*
+            			return {
+            				abort: function() {} //called to stop previous requests on map move
+            			};*/
+            		},
+            		dataToMarker: function(oRow, latlng) {
+                        return L.marker(latlng, { 
+                            icon: {$this->buildJsMarkerIcon($layer, 'oRow')},
+                            $markerProps 
+                        });
+            		}
+            	});
+                oLayer.on('dataloaded', function(e) {
+                	setTimeout(function() {
+                        if (oBoundsInitial === undefined) {
+                            setTimeout(function(){
+                                oBoundsInitial = oLayer.getBounds();
+                                {$this->buildJsLeafletVar()}.fitBounds(oLayer.getBounds());
+                            }, 0);
+                        }
+                	},100);
+                });
+                return oLayer; 
+            })()
                
 JS;
     }
