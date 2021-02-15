@@ -48,6 +48,7 @@ HTML;
     }).addTo({$this->buildJsLeafletVar()});
 
     {$this->buildJsLocateControl()}
+    {$this->buildJsScaleControl()}
 
     {$this->buildJsLayers()}
     
@@ -67,11 +68,34 @@ JS;
         return $mapOptions;
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsLocateControl() : string
     {
+        if (! $this->getWidget()->getShowGpsLocateButton()) {
+            return '';
+        }
         return "L.control.locate().addTo({$this->buildJsLeafletVar()});";
     }
     
+    /**
+     * 
+     * @return string
+     */
+    protected function buildJsScaleControl() : string
+    {
+        if (! $this->getWidget()->getShowScale()) {
+            return '';
+        }
+        return "L.control.scale().addTo({$this->buildJsLeafletVar()});";
+    }
+    
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsLayers() : string
     {
         $nameConstructorPairs = '';

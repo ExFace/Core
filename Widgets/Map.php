@@ -63,6 +63,8 @@ class Map extends AbstractWidget implements
     private $showFullScreenButton = true;
     
     private $showGpsLocateButton = true;
+    
+    private $showScale = true;
 
     /**
      * @var bool
@@ -592,6 +594,31 @@ class Map extends AbstractWidget implements
     public function setShowGpsLocateButton(bool $value) : Map
     {
         $this->showGpsLocateButton = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getShowScale() : bool
+    {
+        return $this->showScale;
+    }
+    
+    /**
+     * Set to FALSE to hide the scale from the map.
+     * 
+     * @uxon-property show_scale
+     * @uxon-type bool
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return Map
+     */
+    public function setShowScale(bool $value) : Map
+    {
+        $this->showScale = $value;
         return $this;
     }
 }
