@@ -4,8 +4,8 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
 use exface\Core\Widgets\Parts\Maps\DataMarkersLayer;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
-use exface\Core\Widgets\Parts\Maps\Interfaces\BaseMapInterface;
-use exface\Core\Widgets\Parts\Maps\BaseMaps\GenericUrlTiles;
+use exface\Core\Events\Facades\OnFacadeWidgetRendererExtendedEvent;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -23,6 +23,37 @@ use exface\Core\Widgets\Parts\Maps\BaseMaps\GenericUrlTiles;
  */
 trait LeafletTrait
 {
+    private $layerRenderers = [];
+    
+    private $headTags = [];
+    
+    public function addLeafletLayerRenderer(callable $callback)
+    {
+        $this->layerRenderers[] = $callback;
+        return;
+    }
+    
+    public function addLeafletHeadTag(string $html)
+    {
+        $this->headTags[] = $html;
+        return;
+    }
+    
+    /**
+     * @return void
+     */
+    protected function registerDefaultLayerRenderers()
+    {
+        $this->addLeafletLayerRenderer([$this, 'buildJsDataMarkerLayer']);
+        return;
+    }
+    
+    protected function fireRendererExtendedEvent(WidgetInterface $widget) 
+    {
+        $widget->getWorkbench()->eventManager()->dispatch(new OnFacadeWidgetRendererExtendedEvent($this->getFacade(), $widget, $this));
+        return;
+    }
+    
     /**
      * 
      * @param string $heightCss
@@ -113,9 +144,9 @@ JS;
         $baseMaps = '';
         $baseSelected = $this->getWidget()->getBaseMap(0);
         foreach ($this->getWidget()->getBaseMaps() as $idx => $layer) {
-            $captionJs = json_encode($layer->getCaption() ?? 'Map ' . $idx);
+            $captionJs = json_encode($layer->getCaption() ?? 'Map ' . ($idx+1));
             $visible = ($baseSelected === $layer);
-            $layerInit = $this->buildJsBaseMap($layer);
+            $layerInit = $this->buildJsLayer($layer);
             if ($layerInit) {
                 $baseMaps .= "{$captionJs} : {$layerInit}";
                 if ($visible) {
@@ -153,50 +184,20 @@ JS;
     
     /**
      * 
-     * @param BaseMapInterface $layer
-     * @param int $index
-     * @param bool $visible
-     * @return string
-     */
-    protected function buildJsBaseMap(BaseMapInterface $layer) : string
-    {
-        switch (true) {
-            case $layer instanceof GenericUrlTiles:
-                return $this->buildJsUrlTileLayer($layer);
-        }
-        return '';
-    }
-    
-    /**
-     * 
-     * @param GenericUrlTiles $layer
-     * @return string
-     */
-    protected function buildJsUrlTileLayer(GenericUrlTiles $layer) : string
-    {
-        $url = $layer->getUrl();
-        $url = str_replace('{a|b|c}', '{s}', $url);
-        $attribution = json_encode($layer->getAttribution() ?? '');
-        return <<<JS
-L.tileLayer('{$url}', {
-                    attribution: $attribution
-                })
-JS;
-    }
-    
-    /**
-     * 
      * @param MapLayerInterface $layer
      * @param int $index
      * @return string
      */
     protected function buildJsLayer(MapLayerInterface $layer) : string
     {
-        switch (true) {
-            case $layer instanceof DataMarkersLayer:
-                return $this->buildJsDataMarkerLayer($layer);
+        $renderers = array_reverse($this->layerRenderers);
+        foreach ($renderers as $callable) {
+            $js = $callable($layer, $this);
+            if ($js) {
+                break;
+            }
         }
-        return '';
+        return $js ?? '';
     }
     
     /**
@@ -204,8 +205,12 @@ JS;
      * @param DataMarkersLayer $layer
      * @return string
      */
-    protected function buildJsDataMarkerLayer(DataMarkersLayer $layer) : string
+    protected function buildJsDataMarkerLayer(MapLayerInterface $layer) : ?string
     {
+        if (! ($layer instanceof DataMarkersLayer)) {
+            return null;
+        }
+        
         /* @var $dataWidget \exface\Core\Widgets\Data */
         $dataWidget = $layer->getDataWidget();
         $propertyId = $dataWidget->hasUidColumn() ? "'{$dataWidget->getUidColumn()->getDataColumnName()}'" : 'null';
@@ -332,6 +337,8 @@ JS;
             $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.LOCATECONTROL_CSS') . '"/>';
             $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.LOCATECONTROL_JS') . '"></script>';
         }
+        
+        $includes = array_merge($includes, array_unique($this->headTags));
         
         return $includes;
     }

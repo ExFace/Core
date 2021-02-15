@@ -4,6 +4,10 @@ namespace exface\Core\Widgets\Parts\Maps\BaseMaps;
 use exface\Core\Widgets\Parts\Maps\Interfaces\BaseMapInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\Parts\Maps\AbstractBaseMap;
+use exface\Core\Widgets\Map;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
+use exface\Core\Events\Facades\OnFacadeWidgetRendererExtendedEvent;
 
 /**
  *
@@ -14,7 +18,11 @@ class GenericUrlTiles extends AbstractBaseMap
 {
     private $url = null;
     
-    private $attribution = null;
+    public function __construct(Map $widget, UxonObject $uxon = null)
+    {
+        parent::__construct($widget, $uxon);
+        $widget->getWorkbench()->eventManager()->addListener(OnFacadeWidgetRendererExtendedEvent::getEventName(), [$this, 'onLeafletRendererRegister']);
+    }
     
     public function getUrl(string $default = '') : string
     {
@@ -45,25 +53,37 @@ class GenericUrlTiles extends AbstractBaseMap
     
     /**
      * 
-     * @return string|NULL
+     * @param OnFacadeWidgetRendererExtendedEvent $event
      */
-    public function getAttribution() : ?string
+    public function onLeafletRendererRegister(OnFacadeWidgetRendererExtendedEvent $event)
     {
-        return $this->attribution;
-    }
-    
-    /**
-     * Changes the attribution shown on the map (accepts HTML).
-     * 
-     * @uxon-property attribution
-     * @uxon-type string
-     * 
-     * @param string $value
-     * @return GenericUrlTiles
-     */
-    public function setAttribution(string $value) : GenericUrlTiles
-    {
-        $this->attribution = $value;
-        return $this;
+        if ($event->getWidget() !== $this->getMap()) {
+            return;
+        }
+        
+        $facadeElement = $event->getFacadeElement();
+        
+        if (! $facadeElement || ! method_exists($facadeElement, 'addLeafletLayerRenderer')) {
+            return;
+        }
+        
+        $facadeElement->addLeafletLayerRenderer(function(MapLayerInterface $layer){
+        
+            
+            if ($layer !== $this) {
+                return '';
+            }
+            
+            $url = $layer->getUrl();
+            $url = str_replace('{a|b|c}', '{s}', $url);
+            $attribution = json_encode($layer->getAttribution() ?? '');
+            return <<<JS
+L.tileLayer('{$url}', {
+                    attribution: $attribution
+                })
+JS;
+            
+           
+        });
     }
 }
