@@ -2909,8 +2909,12 @@ JS;
         
         return <<<JS
         
-                function(){
+                (function(){
                     var data = '';
+                    var oChart = {$this->buildJsEChartsVar()};
+                    if (oChart === undefined) {
+                        return '';
+                    }
                     try {
                         var oldSelection = {$this->buildJsEChartsVar()}._oldSelection;
                     } catch (e) {
@@ -2924,7 +2928,7 @@ JS;
                         }
                     }
                 return data;
-                }()
+                })()
                 
 JS;
     }
