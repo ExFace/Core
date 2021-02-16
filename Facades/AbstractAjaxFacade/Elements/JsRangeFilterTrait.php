@@ -66,6 +66,14 @@ trait JsRangeFilterTrait
         return $this->inlineGroup;
     }
     
+    public function addOnChangeScript($string)
+    {
+        foreach ($this->getWidgetInlineGroup()->getWidgets() as $w) {
+            $this->getFacade()->getElement($w)->addOnChangeScript($string);
+        }
+        return $this;
+    }
+    
     /**
      *
      * @param string|null $valueJs
@@ -102,10 +110,19 @@ trait JsRangeFilterTrait
      * @throws FacadeLogicError
      * @return string
      */
-    public function buildJsValueGetter()
+    public function buildJsValueGetter(string $column = null)
     {
         $valueGetters = [];
         $facade = $this->getFacade();
+        
+        if ($column === '~value_from') {
+            return $facade->getElement($this->getWidgetInlineGroup()->getWidget(0))->buildJsValueGetter();
+        }
+        
+        if ($column === '~value_to') {
+            return $facade->getElement($this->getWidgetInlineGroup()->getWidget(2))->buildJsValueGetter();
+        }
+        
         foreach ($this->getWidgetInlineGroup()->getWidgets() as $w) {
             if ($w instanceof iTakeInput) {
                 $valueGetters[] = $facade->getElement($w)->buildJsValueGetter();
