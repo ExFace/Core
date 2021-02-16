@@ -148,11 +148,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
                 if (is_a(WidgetFactory::getWidgetClassFromType($wType), '\\' . Filter::class, true) === false) {
                     $mergedWidget = true;
                 }
-            }
-            // If there is an id, it is very probable, that it's a legacy filter. It is important
-            // to give that id to the input widget and not the filter as live references are
-            // typically intended to point to the input. 
-            if ($uxon_object->hasProperty('id') === true) {
+            } elseif ($uxon_object->hasProperty('id') === true) {
+                // If there is an id, it is very probable, that it's a legacy filter. It is important
+                // to give that id to the input widget and not the filter as live references are
+                // typically intended to point to the input.
                 $mergedWidget = true;
             }
             
