@@ -190,6 +190,8 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     
     private $preloader = null;
     
+    private $useHiddenInput = false;
+    
     /**
      * Returns TRUE if the input widget was already instantiated.
      * 
@@ -280,32 +282,43 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     protected function createInputWidget(UxonObject $uxon) : WidgetInterface
     {
-        if ($this->isBoundToAttribute() === true) {
-            try {
-                $attr = $this->getMetaObject()->getAttribute($this->getAttributeAlias());
-            } catch (MetaAttributeNotFoundError $e) {
-                throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $this->getAttributeAlias() . '" in widget "' . $this->getParent()->getWidgetType() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
-            }
-            
-            // Set a special caption for filters on relations, which is derived from the relation itself
-            // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
-            if (false === $uxon->hasProperty('caption') && $attr->isRelation()) {
-                // Get the relation from the object and not $attr->getRelation() because the latter would
-                // yield the wrong relation direction in case of reverse reltions.
-                $uxon->setProperty('caption', $this->getMetaObject()->getRelation($this->getAttributeAlias())->getName());
-            }
-            
-            // Try to use the default editor UXON of the attribute
-            if ($attr->isRelation() === true && $this->getMetaObject()->getRelation($this->getAttributeAlias())->isReverseRelation() === true) {
-                $defaultEditorUxon = $this->getMetaObject()->getRelation($this->getAttributeAlias())->getDefaultEditorUxon()->extend($uxon);
-                if (! $defaultEditorUxon->hasProperty('attribute_alias')) {
-                    $defaultEditorUxon->setProperty('attribute_alias', $this->getAttributeAlias());
+        // Look for the best configuration for the input_widget
+        switch (true) {
+            // If not UXON defined by user and the filter is explicitly hidden - use a simple `InputHidden`.
+            case $this->useHiddenInput && $uxon->isEmpty() && $this->isBoundToAttribute():
+                $defaultEditorUxon = new UxonObject([
+                    'widget_type' => 'InputHidden',
+                    'attribute_alias' => $this->getAttributeAlias()
+                ]);
+                break;
+            // If the filter is bound to an attribute, use its default editor UXON
+            case $this->isBoundToAttribute() === true:
+                try {
+                    $attr = $this->getMetaObject()->getAttribute($this->getAttributeAlias());
+                } catch (MetaAttributeNotFoundError $e) {
+                    throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $this->getAttributeAlias() . '" in widget "' . $this->getParent()->getWidgetType() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
                 }
-            } else {
-                $defaultEditorUxon = $attr->getDefaultEditorUxon()->extend($uxon);
-            }
-        } elseif ($this->hasCustomConditionGroup() === false && $this->hasCustomInputWidget() === false) {
-            throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for an empty attribute alias in widget "' . $this->getId() . '"!', '6T91AR9');
+                
+                // Set a special caption for filters on relations, which is derived from the relation itself
+                // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
+                if (false === $uxon->hasProperty('caption') && $attr->isRelation()) {
+                    // Get the relation from the object and not $attr->getRelation() because the latter would
+                    // yield the wrong relation direction in case of reverse reltions.
+                    $uxon->setProperty('caption', $this->getMetaObject()->getRelation($this->getAttributeAlias())->getName());
+                }
+                
+                // Try to use the default editor UXON of the attribute
+                if ($attr->isRelation() === true && $this->getMetaObject()->getRelation($this->getAttributeAlias())->isReverseRelation() === true) {
+                    $defaultEditorUxon = $this->getMetaObject()->getRelation($this->getAttributeAlias())->getDefaultEditorUxon()->extend($uxon);
+                    if (! $defaultEditorUxon->hasProperty('attribute_alias')) {
+                        $defaultEditorUxon->setProperty('attribute_alias', $this->getAttributeAlias());
+                    }
+                } else {
+                    $defaultEditorUxon = $attr->getDefaultEditorUxon()->extend($uxon);
+                }
+                break;
+            case $this->hasCustomConditionGroup() === false && $this->hasCustomInputWidget() === false:
+                throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for an empty attribute alias in widget "' . $this->getId() . '"!', '6T91AR9');
         } 
         
         if ($defaultEditorUxon && $defaultEditorUxon->isEmpty() === false) {
@@ -1327,5 +1340,26 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             }
             return $this->preloader;
         }
+    }
+    
+    /**
+     * Set to TRUE to hide the filter and use a simple InputHidden widget by default.
+     * 
+     * If you just need a hidden filter without any special configuration, set
+     * `hidden` to `true`. This will produce a filter with a `InputHidden` for 
+     * `input_widget` which is typically a lot simpler and faster, than a fully
+     * instantiated widget being hidden via `visibility`. There will be no additional
+     * background acitivity/formatting etc. The values will be used as-is.
+     * 
+     * @uxon-property hidden
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @see \exface\Core\Widgets\AbstractWidget::setHidden()
+     */
+    public function setHidden($value)
+    {
+        $this->useHiddenInput = $value;
+        return parent::setHidden($value);
     }
 }
