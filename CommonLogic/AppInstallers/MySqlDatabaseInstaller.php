@@ -268,7 +268,7 @@ CREATE TABLE IF NOT EXISTS `{$this->getMigrationsTableName()}` (
     `down_result` longtext NULL,
     `failed_flag` tinyint(1) NOT NULL DEFAULT 0,
     `failed_message` longtext NULL,
-    `skip_flag` tinyint(1) NOT NULL DEFAULT 0
+    `skip_flag` tinyint(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
