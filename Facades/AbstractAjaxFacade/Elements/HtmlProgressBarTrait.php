@@ -77,7 +77,7 @@ function() {
     var textMap = {$textMapJs};
     var html = {$tpl};
     var numVal = parseFloat(val);    
-    var color = 'transparent';
+    var color = colorMap[colorMap.length-1][1] || 'transparent';
 
     var c = [];
     for (var i in colorMap) {

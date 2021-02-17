@@ -182,7 +182,8 @@ class ProgressBar extends Display implements iCanBeAligned
             $m*70 => "#97CF86",
             $m*80 => "#86C983",
             $m*90 => "#75C47F",
-            $m*100 => "#63BE7B"
+            $m*100 => "#63BE7B",
+            $m*110 => "orange"
         ];
         
         return $invert === false ? $map : array_reverse($map);
