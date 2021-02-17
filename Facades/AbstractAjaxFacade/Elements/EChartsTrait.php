@@ -324,7 +324,7 @@ JS;
      *
      * @return string
      */
-    public function buildJsRefresh() : string
+    protected function buildJsEChartsRefresh()
     {
         return $this->buildJsDataLoadFunctionName() . '();';
     }
