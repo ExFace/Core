@@ -514,8 +514,21 @@ function(){
 JS;
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function buildJsLeafletRefresh() : string
     {
         return "{$this->buildJsLeafletVar()}.fire('exfRefresh')";
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function buildJsLeafletResize() : string
+    {
+        return "{$this->buildJsLeafletVar()}.invalidateSize()";
     }
 }
