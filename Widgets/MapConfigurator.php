@@ -2,32 +2,52 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\Parts\Maps\AbstractDataLayer;
+use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
- * A configurator widget for charts with filters, sorters and chart-specific options.
- * 
- * The `ChartConfigurator` is built on-top of the configurator for the data widget of
- * the `Chart`. This is important as a chart can use an external data widget via
- * `data_widget_link`, which would have it's own configurator depending on the type
- * of that widget (e.g. a `DataTableConfigurator` if it's a table). Whatever is set
- * in the configurator of the data widget also has effect on the chart and vice versa.
- * 
- * Technically this is achievend by using the `DataConfigurator` within the `ChartConfigurator`:
- * operations like getting or setting filters are simply forwarded to the `DataConfigurator`,
- * regardless of whether it belongs to the internal (invisible) data or a real data widget
- * somewhere outside the chart.
+ * A configurator widget for maps combining filters and sorters from all data layers.
  * 
  * @author Andrej Kabachnik
  * 
- * @method Chart getWidgetConfigured()
+ * @method Map getWidgetConfigured()
  *
  */
 class MapConfigurator extends DataConfigurator
 {    
+    public function getMap() : Map
+    {
+        return $this->getWidgetConfigured();
+    }
+    
     /**
-     * @var DataConfigurator $dataConfigurator
+     * 
+     * @return DataConfigurator[]
      */
-    private $dataConfigurator = null;
+    protected function getLayerConfigurators() : array
+    {
+        $result = [];
+        foreach ($this->getLayerDataWidgets() as $widget) {
+            $result[] = $widget->getConfiguratorWidget();
+        }
+        return $result;
+    }
+    
+    /**
+     * 
+     * @return iShowData[]
+     */
+    protected function getLayerDataWidgets() : array
+    {
+        $result = [];
+        foreach ($this->getMap()->getLayers() as $layer) {
+            if ($layer instanceof AbstractDataLayer) {
+                $result[] = $layer->getDataWidget();
+            }
+        }
+        return $result;
+    }
     
     /**
      * 
@@ -36,25 +56,7 @@ class MapConfigurator extends DataConfigurator
      */
     public function getDataWidget() : Data
     {
-        return $this->getWidgetConfigured()->getLayers()[0]->getDataWidget();
-    }
-    
-    public function setDataConfigurator(DataConfigurator $widget) : ChartConfigurator
-    {
-        $this->dataConfigurator = $widget;
-        return $this;
-    }
-    
-    /**
-     *
-     * @return DataConfigurator
-     */
-    protected function getDataConfigurator() : DataConfigurator
-    {
-        if( $this->dataConfigurator === null) {
-            $this->dataConfigurator = $this->getDataWidget()->getConfiguratorWidget();
-        }
-        return $this->dataConfigurator;
+        return $this->getLayerDataWidgets()[0]->getDataWidget();
     }
     
     /**
@@ -64,7 +66,13 @@ class MapConfigurator extends DataConfigurator
     */
     public function getFilters()
     {
-        return $this->getDataConfigurator()->getFilters();
+        $array = [];
+        foreach ($this->getLayerConfigurators() as $c) {
+            foreach ($c->getFilters() as $filter) {
+                $array[] = $filter;
+            }
+        }
+        return $array;
     }
     
     /**
@@ -74,8 +82,7 @@ class MapConfigurator extends DataConfigurator
      */
     public function setFilters(UxonObject $uxon_objects)
     {
-        $this->getDataConfigurator()->setFilters($uxon_objects);
-        return $this;
+        throw new WidgetConfigurationError($this, 'Cannot add filters to a map directly - only to data layers!');
     }
     
     /**
@@ -85,28 +92,7 @@ class MapConfigurator extends DataConfigurator
      */
     public function addFilter(AbstractWidget $filter_widget)
     {
-        $this->getDataConfigurator()->addFilter($filter_widget);
-        return $this;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\DataConfigurator::getFilterTab()
-     */
-    public function getFilterTab()
-    {
-        return $this->getDataConfigurator()->getFilterTab();
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\DataConfigurator::getSorterTab()
-     */
-    public function getSorterTab()
-    {
-        return $this->getDataConfigurator()->getSorterTab();
+        throw new WidgetConfigurationError($this, 'Cannot add filters to a map directly - only to data layers!');
     }
     
     /**
@@ -116,7 +102,13 @@ class MapConfigurator extends DataConfigurator
      */
     public function getQuickSearchFilters() : array
     {
-        return $this->getDataConfigurator()->getQuickSearchFilters();
+        $array = [];
+        foreach ($this->getLayerConfigurators() as $c) {
+            foreach ($c->getQuickSearchFilters() as $filter) {
+                $array[] = $filter;
+            }
+        }
+        return $array;
     }
     
     /**
@@ -126,17 +118,34 @@ class MapConfigurator extends DataConfigurator
      */
     public function setLazyLoading(bool $value)
     {
-        $this->getDataConfigurator()->setLazyLoading($value);
+        foreach ($this->getLayerConfigurators() as $c) {
+            $c->setLazyLoading($value);
+        }
         return $this;
     }
     
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\DataConfigurator::getWidgets()
-     */
-    public function getWidgets(callable $filter_callback = null)
+    protected function createFilterTab()
     {
-        return array_merge($this->getDataConfigurator()->getWidgets($filter_callback), parent::getWidgets($filter_callback));
+        $tab = parent::createFilterTab();
+        foreach ($this->getFilters() as $filter) {
+            $tab->addWidget($filter);
+        }
+        return $tab;
+    }
+    
+    /**
+     * Creates an empty sorter tab and returns it (without adding to the Tabs widget!)
+     *
+     * @return Tab
+     */
+    protected function createSorterTab()
+    {
+        $tab = parent::createSorterTab();
+        foreach ($this->getLayerConfigurators() as $c) {
+            foreach ($c->getSorterTab()->getWidgets() as $sorter) {
+                $tab->addWidget($sorter);
+            }
+        }
+        return $tab;
     }
 }

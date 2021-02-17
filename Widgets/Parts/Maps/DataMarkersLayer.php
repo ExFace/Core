@@ -8,6 +8,7 @@ use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Traits\iHaveColorTrait;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
 
 /**
  *
@@ -193,8 +194,14 @@ class DataMarkersLayer extends AbstractDataLayer implements iHaveIcon, iHaveColo
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Parts\Maps\AbstractDataLayer::initDataWidget()
      */
-    protected function initDataWidget(iShowData $widget) : iShowData
+    protected function createDataWidget(UxonObject $uxon) : iShowData
     {
+        $widget = parent::createDataWidget($uxon);
+        
+        if ($uxon->hasProperty('columns')) {
+            $widget->setColumnsAutoAddDefaultDisplayAttributes(false);
+        }
+        
         if ($this->getLatitudeAttributeAlias()) {
             if (! $col = $widget->getColumnByAttributeAlias($this->getLatitudeAttributeAlias())) {
                 $col = $widget->createColumnFromUxon(new UxonObject([
@@ -219,9 +226,9 @@ class DataMarkersLayer extends AbstractDataLayer implements iHaveIcon, iHaveColo
             if (! $col = $widget->getColumnByAttributeAlias($this->getValueAttributeAlias())) {
                 $col = $widget->createColumnFromUxon(new UxonObject([
                     'attribute_alias' => $this->getValueAttributeAlias(),
-                    'hidden' => true
+                    'visibility' => WidgetVisibilityDataType::PROMOTED
                 ]));
-                $widget->addColumn($col);
+                $widget->addColumn($col, 0);
             }
             $this->valueColumn = $col;
         }
@@ -249,13 +256,7 @@ class DataMarkersLayer extends AbstractDataLayer implements iHaveIcon, iHaveColo
         $caption = parent::getCaption();
         if (! $this->getHideCaption()) {
             if ($caption === null) {
-                if ($this->hasValue()) {
-                    $caption = $this->getValueColumn()->getCaption();
-                }
-                if (! $caption && $this->hasTooltip() && ! $this->getTooltipAttributeAlias() !== $this->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS')) {
-                    $caption = $this->getTooltipColumn()->getCaption();
-                }
-                $caption = $this->getDataWidget()->getMetaObject()->getName() . ($caption ? ' (' . $caption . ')' : '');
+                $caption = $this->getDataWidget()->getMetaObject()->getName();
             }
         }
         return $caption;
