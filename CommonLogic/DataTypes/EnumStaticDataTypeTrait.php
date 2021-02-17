@@ -130,7 +130,7 @@ trait EnumStaticDataTypeTrait {
      */
     public function getValues()
     {
-        return $this->getValuesStatic();
+        return $this::getValuesStatic();
     }
     
     /**
