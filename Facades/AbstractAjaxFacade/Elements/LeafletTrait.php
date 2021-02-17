@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Exceptions\Facades\FacadeOutputError;
 use exface\Core\Widgets\Parts\Maps\AbstractDataLayer;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -241,9 +242,35 @@ JS;
             $markerProps .= 'title: oRow.' . $layer->getTooltipColumn()->getDataColumnName() . ',';
         }
         
+        $popupTableRowsJs = '';
+        foreach ($dataWidget->getColumns() as $col) {
+            if ($col->isHidden() === false) {
+                $visibility = strtolower(WidgetVisibilityDataType::findKey($col->getVisibility()));
+                $hint = json_encode($col->getHint() ?? '');
+                $popupTableRowsJs .= "sHtml += '<tr class=\"exf-{$visibility}\" title={$hint}><td>{$col->getCaption()}:</td><td>' + feature.properties.data['{$col->getDataColumnName()}'] + '</td></tr>';";
+            }
+        }
+        
+        $showPopupJs = <<<JS
+
+                        var sHtml = '';
+                        $popupTableRowsJs
+                        if (sHtml !== '') {
+                            sHtml = '<table class="exf-map-popup-table">' + sHtml + '</table>';
+                        }
+                        sHtml = '<h3>{$layer->getCaption()}</h3>' + sHtml;
+                        layer.bindPopup(sHtml, {
+                            className: "exf-map-popup"
+                        }); 
+
+JS;
+                     
+        if ($layer->getAutoZoomToSeeAll() === true || $layer->getAutoZoomToSeeAll() && count($this->getWidget()->getDataLayers()) === 1){
+            $autoZoomJs = $this->buildJsAutoZoom('oLayer');
+        }
+        
         return <<<JS
             (function(){
-                var oBoundsInitial;
                 var oLayer = L.geoJSON(null, {
                     pointToLayer: function(feature, latlng) {
                         var oRow = feature.properties.data;
@@ -253,6 +280,9 @@ JS;
                         });
                     },
                     onEachFeature: function(feature, layer) {
+                        {$showPopupJs}                       
+
+                        // Toggle marker selected state
                         layer.on('click', function (e) {
                             var jqIcon = $(e.target.getElement());
                             if (jqIcon.hasClass('selected')) {
@@ -267,56 +297,69 @@ JS;
                     
                     }
                 });
-                var oParams = {
-                    resource: "{$dataWidget->getPage()->getAliasWithNamespace()}", 
-                    element: "{$dataWidget->getId()}",
-                    object: "{$dataWidget->getMetaObject()->getId()}",
-                    action: "{$dataWidget->getLazyLoadingActionAlias()}"
+
+                oLayer._exfRefresh = function() {
+                    var oParams = {
+                        resource: "{$dataWidget->getPage()->getAliasWithNamespace()}", 
+                        element: "{$dataWidget->getId()}",
+                        object: "{$dataWidget->getMetaObject()->getId()}",
+                        action: "{$dataWidget->getLazyLoadingActionAlias()}"
+                    };
+    
+                    {$this->buildJsDataLoadFunctionName()}(oParams)
+                    .then(function(oResponseData){
+                        var aRows = oResponseData.rows || [];
+                        var aGeoJson = [];
+                        var aRowsSkipped = [];
+                    
+                        aRows.forEach(function(oRow){
+                            var fLat = parseFloat(oRow.{$layer->getLatitudeColumn()->getDataColumnName()});
+                            var fLng = parseFloat(oRow.{$layer->getLongitudeColumn()->getDataColumnName()});
+        
+                            if (isNaN(fLat) || isNaN(fLng)) {
+                                aRowsSkipped.push(oRow);
+                                return;
+                            }
+    
+                            aGeoJson.push({
+                                type: 'Feature',
+                                geometry: {
+                                    type: 'Point',
+                                    coordinates: [fLng, fLat],
+                                },
+                                properties: {
+                                    layer: {$this->getWidget()->getLayerIndex($layer)},
+                                    object: '{$layer->getMetaObject()->getId()}',
+                                    data: oRow
+                                }
+                            });
+                        })
+
+                        oLayer.clearLayers();
+                        oLayer.addData(aGeoJson);
+                        {$autoZoomJs}
+                    });
                 };
 
-                {$this->buildJsDataLoadFunctionName()}(oParams)
-                .then(function(oResponseData){
-                    var aRows = oResponseData.rows || [];
-                    var aGeoJson = [];
-                    var aRowsSkipped = [];
-                
-                    aRows.forEach(function(oRow){
-                        var fLat = parseFloat(oRow.{$layer->getLatitudeColumn()->getDataColumnName()});
-                        var fLng = parseFloat(oRow.{$layer->getLongitudeColumn()->getDataColumnName()});
-    
-                        if (isNaN(fLat) || isNaN(fLng)) {
-                            aRowsSkipped.push(oRow);
-                            return;
-                        }
-
-                        aGeoJson.push({
-                            type: 'Feature',
-                            geometry: {
-                                type: 'Point',
-                                coordinates: [fLng, fLat],
-                            },
-                            properties: {
-                                layer: {$this->getWidget()->getLayerIndex($layer)},
-                                object: '{$layer->getMetaObject()->getId()}',
-                                data: oRow
-                            }
-                        });
-                    })
-
-                    oLayer.addData(aGeoJson);
-
-                    setTimeout(function() {
-                        if (oBoundsInitial === undefined) {
-                            setTimeout(function(){
-                                oBoundsInitial = oLayer.getBounds();
-                                {$this->buildJsLeafletVar()}.fitBounds(oLayer.getBounds());
-                            }, 0);
-                        }
-                	},100);
-                });
+                {$this->buildJsLeafletVar()}.on('exfRefresh', oLayer._exfRefresh);
+                oLayer._exfRefresh();
                
                 return oLayer;
             })()
+JS;
+    }
+    
+    protected function buildJsAutoZoom(string $oLayerJs) : string
+    {
+        return <<<JS
+
+                    setTimeout(function() {
+                        var oBounds = $oLayerJs.getBounds();
+                        if (oBounds !== undefined && oBounds.isValid()) {
+                            {$this->buildJsLeafletVar()}.fitBounds(oBounds);
+                        }
+                	},100);
+
 JS;
     }
     
@@ -469,5 +512,10 @@ function(){
                 }()
                 
 JS;
+    }
+    
+    public function buildJsLeafletRefresh() : string
+    {
+        return "{$this->buildJsLeafletVar()}.fire('exfRefresh')";
     }
 }

@@ -122,11 +122,26 @@ class Map extends AbstractWidget implements
     
     /**
      * 
+     * @param callable $filterCallback
      * @return MapLayerInterface[]
      */
-    public function getLayers() : array
+    public function getLayers(callable $filterCallback = null) : array
     {
+        if ($filterCallback !== null){
+            return array_values(array_filter($this->layers, $filterCallback));
+        }
         return $this->layers;
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    public function getDataLayers() : array
+    {
+        return $this->getLayers(function($layer){
+            return ($layer instanceof \exface\Core\Widgets\Parts\Maps\AbstractDataLayer);
+        });
     }
     
     public function getLayer(int $index) : ?MapLayerInterface
