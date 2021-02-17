@@ -122,11 +122,15 @@ class MsSqlBuilder extends AbstractSqlBuilder
             if ($qpartAttr->getDataAddressProperty('SQL_DATA_TYPE') == 'binary') {
                 $this->addBinaryColumn($qpart->getAlias());
             }
-            // if the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
-            // otherwise the enrichment joins won't work!
+            // if the query has a GROUP BY, we need to put the UID-Attribute in the core select as 
+            // well as in the enrichment select otherwise the enrichment joins won't work!
             if ($group_by && $qpartAttr->getObject()->hasUidAttribute() && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $has_attributes_with_reverse_relations && ! $qpart->getAggregator()) {
                 $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
-                $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $qpartAttr->getObject()->getUidAttributeAlias());
+                // In contrast to other SQL builders, we MUST NOT add the UID attribute to the 
+                // enrichment query as this will lead to an error due to the column being
+                // ambiguosly defined. This will happen in particular when filtering with at
+                // least on aggregate_by_attribute.
+                // $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $qpartAttr->getObject()->getUidAttributeAlias());
                 $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
             } elseif (! $group_by || $qpart->getAggregator() || $this->isAggregatedBy($qpart)) {
                 // If we are not aggregating or the attribute has a group function, add it regulary
