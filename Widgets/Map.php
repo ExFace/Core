@@ -329,6 +329,8 @@ class Map extends AbstractWidget implements
      */
     public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
     {
+        $data_sheet = parent::prepareDataSheetToPrefill($data_sheet);
+        
         if ($this->isCenterBoundToAttributes()) {
             if ($colName = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getCenterLatitudeAttributeAlias())) {
                 if (! $data_sheet->getColumns()->getByExpression($colName)) {
@@ -356,6 +358,8 @@ class Map extends AbstractWidget implements
      */
     public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
     {
+        $data_sheet = parent::prepareDataSheetToRead($data_sheet);
+        
         foreach ($this->getLayers() as $layer) {
             $data_sheet = $layer->prepareDataSheetToRead($data_sheet);
         }
