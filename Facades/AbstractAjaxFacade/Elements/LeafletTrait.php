@@ -32,6 +32,13 @@ trait LeafletTrait
     
     private $headTags = [];
     
+    protected function initLeaflet()
+    {
+        $this->fireRendererExtendedEvent($this->getWidget());
+        $this->registerDefaultLayerRenderers();
+        return;
+    }
+    
     public function addLeafletLayerRenderer(callable $callback)
     {
         $this->layerRenderers[] = $callback;
@@ -306,9 +313,8 @@ JS;
                         action: "{$dataWidget->getLazyLoadingActionAlias()}"
                     };
     
-                    {$this->buildJsDataLoadFunctionName()}(oParams)
-                    .then(function(oResponseData){
-                        var aRows = oResponseData.rows || [];
+                    {$this->buildJsLeafletDataLoader('oParams', 'aRows', "
+
                         var aGeoJson = [];
                         var aRowsSkipped = [];
                     
@@ -338,7 +344,8 @@ JS;
                         oLayer.clearLayers();
                         oLayer.addData(aGeoJson);
                         {$autoZoomJs}
-                    });
+
+")}
                 };
 
                 {$this->buildJsLeafletVar()}.on('exfRefresh', oLayer._exfRefresh);
@@ -348,6 +355,8 @@ JS;
             })()
 JS;
     }
+    
+    protected abstract function buildJsLeafletDataLoader(string $oRequestParamsJs, string $aResultRowsJs, string $onLoadedJs) : string;
     
     protected function buildJsAutoZoom(string $oLayerJs) : string
     {
@@ -417,7 +426,7 @@ JS;
         return 'leaflet_' . $this->getId();
     }
     
-    protected function getIdLeaflet() : string
+    public function getIdLeaflet() : string
     {
         return $this->getId();
     }
@@ -469,12 +478,12 @@ JS;
             // widget: filters, sorters, etc.
             return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
         } else {
-            $rows = $this->buildJsGetSelectedRows();
+            $rows = $this->buildJsLeafletGetSelectedRows();
         }
         return "{oId: {$this->buildJsLeafletVar()}._exfState.selectedFeature ? {$this->buildJsLeafletVar()}._exfState.selectedFeature.properties.object : '{$widget->getMetaObject()->getId()}', rows: $rows}";
     }
     
-    protected function buildJsGetSelectedRows() : string
+    protected function buildJsLeafletGetSelectedRows() : string
     {
         return "{$this->buildJsLeafletVar()}._exfState.selectedFeature ? [{$this->buildJsLeafletVar()}._exfState.selectedFeature.properties.data] : []";
     }
@@ -505,7 +514,7 @@ JS;
         
         return <<<JS
 function(){
-                    var aSelected = {$this->buildJsGetSelectedRows()};
+                    var aSelected = {$this->buildJsLeafletGetSelectedRows()};
                     return aSelected.map(function(oRow){
                         return oRow['$key'];
                     }).join(',');
