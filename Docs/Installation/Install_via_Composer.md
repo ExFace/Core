@@ -5,6 +5,12 @@
 3. Create a subfolder named `Config` with the initial config files for your [metamodel database](Configure_metamodel_DB.md) and your [server environment](Initial_configuration.md).
 4. Make sure Composer is installed or simply download `composer.phar` from [here](https://getcomposer.org/download/) and copy it to the installation folder.
 5. Execute `php composer install` on the command line (or `php composer.phar install` if you downloaded the phar manually).
+
+## Troubleshooting
+
+If anything goes wrong during downloading dependencies (this may take quite a while!) just restart `composer install`.
+
+If you see errors like `FAILED installing exface.Core!`, this probably means your initial configuration is incorrect (e.g. invalid DB connection). Fix the configuration and run `composer run-script post-install-cmd` to retry installing without downloading all the dependencies.
 	
 ## Typical minimum setup (stable versions)
 
