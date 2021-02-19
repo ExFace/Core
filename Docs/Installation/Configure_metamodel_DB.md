@@ -19,7 +19,9 @@
 
 ## Microsoft SQL Server
 
-To install the workbench on MS SQL Server you will need to create a table 
+**NOTE:** to install the model DB on SQL server your MUST enable the [sqlsrv PHP extension](https://github.com/microsoft/msphpsql/releases) before you start the installer! The extension MUST be enabled for the command line too. 
+
+Also make sure, the Microsoft ODBC drivers are installed. 
 
 ```
 {
