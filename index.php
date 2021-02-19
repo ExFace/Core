@@ -4,8 +4,6 @@ use exface\Core\Facades\AbstractHttpFacade\Middleware\FacadeResolverMiddleware;
 use exface\Core\Facades\AbstractHttpFacade\HttpRequestHandler;
 use exface\Core\Facades\AbstractHttpFacade\NotFoundHandler;
 
-error_reporting(E_ALL & ~E_NOTICE);
-
 // Start the workbench
 require_once('CommonLogic/Workbench.php');
 $workbench = new \exface\Core\CommonLogic\Workbench();
