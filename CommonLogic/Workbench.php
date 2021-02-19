@@ -237,12 +237,12 @@ class Workbench implements WorkbenchInterface
     public function getApp($selectorOrString) : AppInterface
     {
         if ($selectorOrString instanceof AppSelectorInterface) {
-            if ($app = $this->running_apps_selectors[$selectorOrString->toString()]) {
+            if ($app = ($this->running_apps_selectors[$selectorOrString->toString()] ?? null)) {
                 return $app;
             }
             $selector = $selectorOrString;
         } elseif (is_string($selectorOrString)) {
-            if ($app = $this->running_apps_selectors[$selectorOrString]) {
+            if ($app = ($this->running_apps_selectors[$selectorOrString] ?? null)) {
                 return $app;
             }
             $selector = new AppSelector($this, $selectorOrString);

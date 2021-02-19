@@ -461,7 +461,7 @@ class UiPage implements UiPageInterface
      */
     protected function sanitizeId($string)
     {
-        if ($this->widgets[$string]) {
+        if ($this->widgets[$string] ?? null) {
             $index = substr($string, - 2);
             if (is_numeric($index)) {
                 $index_new = str_pad(intval($index + 1), 2, 0, STR_PAD_LEFT);

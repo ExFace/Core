@@ -309,7 +309,7 @@ class App implements AppInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\AppInterface::getSelector()
      */
-    public function getSelector()
+    public function getSelector() : AliasSelectorInterface
     {
         return $this->selector;
     }

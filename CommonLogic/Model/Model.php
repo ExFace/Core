@@ -136,7 +136,7 @@ class Model implements ModelInterface
      */
     private function getObjectIdFromAlias($object_alias, $namespace)
     {
-        if ($id = $this->object_library[$namespace][$object_alias]) {
+        if ($id = ($this->object_library[$namespace][$object_alias] ?? null)) {
             return $id;
         } else {
             return false;
@@ -152,7 +152,7 @@ class Model implements ModelInterface
      */
     private function getObjectFromCache($object_id)
     {
-        if ($obj = $this->loaded_objects[$object_id]) {
+        if ($obj = ($this->loaded_objects[$object_id] ?? null)) {
             return $obj;
         } else {
             return false;

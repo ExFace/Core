@@ -530,7 +530,6 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setEditable($row['attribute_editable_flag']);
         $attr->setCopyable($row['attribute_copyable_flag'] ?? $row['attribute_editable_flag']);
         $attr->setHidden($row['attribute_hidden_flag']);
-        $attr->setSystem($row['system_flag']);
         $attr->setSortable($row['attribute_sortable_flag']);
         $attr->setFilterable($row['attribute_filterable_flag']);
         $attr->setAggregatable($row['attribute_aggregatable_flag']);
@@ -543,7 +542,7 @@ class SqlModelLoader implements ModelLoaderInterface
         if ($row['fixed_value'] !== null && $row['fixed_value'] !== '') {
             $attr->setFixedValue($row['fixed_value']);
         }
-        $attr->setFormula($row['attribute_formula']);
+        $attr->setFormula($row['attribute_formula'] ?? null);
         if ($row['default_sorter_dir']){
             $attr->setDefaultSorterDir($row['default_sorter_dir']);
         }
