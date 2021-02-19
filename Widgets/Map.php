@@ -21,6 +21,8 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Widgets\Parts\Maps\Interfaces\BaseMapInterface;
+use exface\Core\Widgets\Parts\Maps\BaseMaps\OpenStreetMap;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 
 /**
  * A map with support for different mapping data providers and data layers.
@@ -87,7 +89,7 @@ class Map extends AbstractWidget implements
     
     public function getBaseMap(int $index) : ?BaseMapInterface
     {
-        return $this->baseMaps[$index];
+        return $this->getBaseMaps()[$index];
     }
     
     public function getBaseMapIndex(BaseMapInterface $baseMap) : ?int
@@ -688,5 +690,21 @@ class Map extends AbstractWidget implements
     {
         $this->showScale = $value;
         return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::importUxonObject()
+     */
+    public function importUxonObject(UxonObject $uxon)
+    {
+        $result = parent::importUxonObject($uxon);
+        
+        if (empty($this->baseMaps)) {
+            $this->baseMaps[] = new OpenStreetMap($this);
+        }
+        
+        return $result;
     }
 }
