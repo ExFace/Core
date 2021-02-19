@@ -75,7 +75,7 @@ trait LeafletTrait
     {
         return <<<HTML
 
-        <div id="{$this->getIdLeaflet()}" class="{$this->buildCssClasses()}" style="height: {$heightCss}"></div>
+        <div id="{$this->getIdLeaflet()}" class="{$this->buildCssElementClass()}" style="height: {$heightCss}"></div>
 
 HTML;
     }
@@ -102,7 +102,7 @@ HTML;
     .on('contextmenu', function(e) {
         var latlng = e.latlng;
         var layer = e.target;
-        {$this->buildJsLeafletShowPopup('"Location info"', $this->buildJsLeafletPopupList("[
+        {$this->buildJsLeafletPopup('"Location info"', $this->buildJsLeafletPopupList("[
             {
                 caption: 'Latitude',
                 value: latlng.lat + '°'
@@ -276,12 +276,13 @@ JS;
         return $js ?? '';
     }
     
-    protected function buildJsLeafletShowPopup(string $titleJs, string $contentJs, string $bindToJs) : string
+    public function buildJsLeafletPopup(string $titleJs, string $contentJs, string $bindToJs) : string
     {
         return <<<JS
 
                         (function() {
-                            var sContent = '<h3>' + $titleJs + '</h3>' + $contentJs;
+                            var sTitle = $titleJs;
+                            var sContent = (sTitle ? '<h3>' + $titleJs + '</h3>' : '') + $contentJs;
                             if (Array.isArray($bindToJs)){
                                 L.popup({
                                     className: "exf-map-popup"
@@ -298,7 +299,7 @@ JS;
 JS;
     }
     
-    protected function buildJsLeafletPopupList(string $aRowsJs) : string
+    public function buildJsLeafletPopupList(string $aRowsJs) : string
     {
         return <<<JS
 
@@ -307,7 +308,7 @@ JS;
                                 var aRows = $aRowsJs || [];
                                 aRows.forEach(function(oRow){
                                     if (! oRow) return;
-                                    sHtml += '<tr class="' + oRow.class + '" title="' + oRow.tooltip + '"><td>' + oRow.caption + ':</td><td>' + oRow.value + '</td></tr>';
+                                    sHtml += '<tr class="' + (oRow.class || '') + '" title="' + (oRow.tooltip || '') + '"><td>' + oRow.caption + ':</td><td>' + oRow.value + '</td></tr>';
                                 });
                                 if (sHtml !== '') {
                                     sHtml = '<table class="exf-map-popup-table">' + sHtml + '</table>';
@@ -348,7 +349,7 @@ JS;
             }
         }
         
-        $showPopupJs = $this->buildJsLeafletShowPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer');
+        $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer');
                      
         if ($layer->getAutoZoomToSeeAll() === true || $layer->getAutoZoomToSeeAll() === null && count($this->getWidget()->getDataLayers()) === 1){
             $autoZoomJs = $this->buildJsAutoZoom('oLayer');
@@ -459,7 +460,7 @@ JS;
         $prefix = $layer->getIconSet() ?? 'fa';
         
         if ($layer->hasValue()) {
-            $color = $layer->getColor() ?? $this->getMarkerColors()[$this->getWidget()->getLayerIndex($layer)];
+            $color = $layer->getColor() ?? $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
             return <<<JS
 new L.ExtraMarkers.icon({
                             icon: 'fa-number',
@@ -485,20 +486,23 @@ JS;
         }
     }
     
-    protected function getMarkerColors() : array
+    public function getLayerBaseColor(MapLayerInterface $layer) : string
+    {
+        return $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
+    }
+    
+    protected function getLayerColors() : array
     {
         return [
             'blue',
-            'cyan', 
-            'blue-dark',
-            'purple', 
             'violet', 
-            'pink', 
-            'green-dark', 
+            'darkslategray', 
+            'indigo',
+            'darkgreen', 
             'black', 
-            'white',
-            'orange-dark',
-            'orange'
+            'gold',
+            'orange',
+            'seagreen'
         ];
     }
     
