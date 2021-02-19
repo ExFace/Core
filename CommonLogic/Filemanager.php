@@ -47,6 +47,8 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     
     private $path_to_log_detail_folder = null;
     
+    private $path_to_translations_folder = null;
+    
     public function __construct(Workbench $exface)
     {
         $this->exface = $exface;
@@ -91,7 +93,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
              } catch (ConfigOptionNotFoundError $e) {
              $path = '';
              }*/
-            $this->path_to_user_data_folder = $path ? $path : $this->getPathToDataFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_USER_DATA;
+            $this->path_to_user_data_folder = $this->getPathToDataFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_USER_DATA;
             if (! is_dir($this->path_to_user_data_folder)) {
                 static::pathConstruct($this->path_to_user_data_folder);
             }

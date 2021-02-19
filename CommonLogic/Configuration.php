@@ -207,6 +207,7 @@ class Configuration implements ConfigurationInterface
      */
     protected function readFile(string $absolute_path) : ?UxonObject
     {
+        $uxon = null;
         if (file_exists($absolute_path) && $uxon = UxonObject::fromJson(file_get_contents($absolute_path), CASE_UPPER)) {
             $this->loadConfigUxon($uxon);
         }

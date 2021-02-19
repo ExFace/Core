@@ -201,7 +201,7 @@ class Translation implements TranslationInterface
      */
     public function hasTranslationDomain(string $name) : bool
     {
-        if ($this->domains[$name] !== null) {
+        if (($this->domains[$name] ?? null) !== null) {
             return true;
         }
         

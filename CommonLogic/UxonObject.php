@@ -110,7 +110,7 @@ class UxonObject implements \IteratorAggregate
      */
     public function getProperty($name)
     {
-        $val = $this->array[$name];
+        $val = $this->array[$name] ?? null;
         return is_array($val) ? new self($val) : $val;
     }
 
