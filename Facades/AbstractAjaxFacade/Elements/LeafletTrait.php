@@ -97,15 +97,32 @@ HTML;
 (function(){
     {$this->buildJsLeafletVar()} = L.map('{$this->getIdLeaflet()}', {
         {$this->buildJsMapOptions()}
-    }).setView([{$lat}, {$lon}], {$zoom});
+    })
+    .setView([{$lat}, {$lon}], {$zoom})
+    .on('contextmenu', function(e) {
+        var latlng = e.latlng;
+        var layer = e.target;
+        {$this->buildJsLeafletShowPopup('"Location info"', $this->buildJsLeafletPopupList("[
+            {
+                caption: 'Latitude',
+                value: latlng.lat + '°'
+            },{
+                caption: 'Longitude',
+                value: latlng.lng + '°'
+            },{
+                caption: 'Altitude',
+                value: latlng.alt ? latlng.alt + 'm' : '?'
+            }
+        ]"), "[latlng.lat,latlng.lng]")}
+    });
 
     {$this->buildJsLeafletVar()}._exfState = {
         selectedFeature: null
     };
     {$this->buildJsLeafletVar()}._exfLayers = {};
 
-    {$this->buildJsLocateControl()}
-    {$this->buildJsScaleControl()}
+    {$this->buildJsLeafletControlLocate()}
+    {$this->buildJsLeafletControlScale()}
 
     {$this->buildJsLayers()}
 })();
@@ -130,11 +147,40 @@ JS;
         return $mapOptions;
     }
     
+    protected function buildJsLeafletControlInfo() : string
+    {
+        return <<<JS
+
+    L.easyButton({
+        states: [
+            {
+                stateName: 'click-mode-regular',        // name the state
+                icon:      'fa-mouse-pointer',               // and define its properties
+                title:     'Display place information on click',      // like its title
+                onClick: function(btn, map) {       // and its callback
+                    map.on('click', map._exfShowInfoPopup);
+                    btn.state('click-mode-info');    // change state on click!
+                }
+            }, {
+                stateName: 'click-mode-info',
+                icon:      'fa-hand-paper-o',
+                title:     'Back to regular mouse mode',
+                onClick: function(btn, map) {
+                    map.off('click', map._exfShowInfoPopup);
+                    btn.state('click-mode-regular');
+                }
+            }
+        ]
+    }).addTo({$this->buildJsLeafletVar()});
+
+JS;
+    }
+    
     /**
      * 
      * @return string
      */
-    protected function buildJsLocateControl() : string
+    protected function buildJsLeafletControlLocate() : string
     {
         if (! $this->getWidget()->getShowGpsLocateButton()) {
             return '';
@@ -146,7 +192,7 @@ JS;
      * 
      * @return string
      */
-    protected function buildJsScaleControl() : string
+    protected function buildJsLeafletControlScale() : string
     {
         if (! $this->getWidget()->getShowScale()) {
             return '';
@@ -230,6 +276,48 @@ JS;
         return $js ?? '';
     }
     
+    protected function buildJsLeafletShowPopup(string $titleJs, string $contentJs, string $bindToJs) : string
+    {
+        return <<<JS
+
+                        (function() {
+                            var sContent = '<h3>' + $titleJs + '</h3>' + $contentJs;
+                            if (Array.isArray($bindToJs)){
+                                L.popup({
+                                    className: "exf-map-popup"
+                                })
+                                    .setLatLng($bindToJs)
+                                    .setContent(sContent)
+                                    .openOn({$this->buildJsLeafletVar()});
+                            } else {
+                                $bindToJs.bindPopup(sContent, {
+                                    className: "exf-map-popup"
+                                });
+                            }
+                        })();
+JS;
+    }
+    
+    protected function buildJsLeafletPopupList(string $aRowsJs) : string
+    {
+        return <<<JS
+
+                            (function(){
+                                var sHtml = '';
+                                var aRows = $aRowsJs || [];
+                                aRows.forEach(function(oRow){
+                                    if (! oRow) return;
+                                    sHtml += '<tr class="' + oRow.class + '" title="' + oRow.tooltip + '"><td>' + oRow.caption + ':</td><td>' + oRow.value + '</td></tr>';
+                                });
+                                if (sHtml !== '') {
+                                    sHtml = '<table class="exf-map-popup-table">' + sHtml + '</table>';
+                                }
+                                return sHtml;
+                            })()
+
+JS;
+    }
+    
     /**
      * 
      * @param DataMarkersLayer $layer
@@ -250,29 +338,19 @@ JS;
         }
         
         $popupTableRowsJs = '';
+        $popupCaptionJs = json_encode($layer->getCaption());
         foreach ($dataWidget->getColumns() as $col) {
             if ($col->isHidden() === false) {
                 $visibility = strtolower(WidgetVisibilityDataType::findKey($col->getVisibility()));
                 $hint = json_encode($col->getHint() ?? '');
-                $popupTableRowsJs .= "sHtml += '<tr class=\"exf-{$visibility}\" title={$hint}><td>{$col->getCaption()}:</td><td>' + feature.properties.data['{$col->getDataColumnName()}'] + '</td></tr>';";
+                $caption = json_encode($col->getCaption() ?? '');
+                $popupTableRowsJs .= "{class: \"exf-{$visibility}\", tooltip: $hint, caption: $caption, value: feature.properties.data['{$col->getDataColumnName()}'] },";
             }
         }
         
-        $showPopupJs = <<<JS
-
-                        var sHtml = '';
-                        $popupTableRowsJs
-                        if (sHtml !== '') {
-                            sHtml = '<table class="exf-map-popup-table">' + sHtml + '</table>';
-                        }
-                        sHtml = '<h3>{$layer->getCaption()}</h3>' + sHtml;
-                        layer.bindPopup(sHtml, {
-                            className: "exf-map-popup"
-                        }); 
-
-JS;
+        $showPopupJs = $this->buildJsLeafletShowPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer');
                      
-        if ($layer->getAutoZoomToSeeAll() === true || $layer->getAutoZoomToSeeAll() && count($this->getWidget()->getDataLayers()) === 1){
+        if ($layer->getAutoZoomToSeeAll() === true || $layer->getAutoZoomToSeeAll() === null && count($this->getWidget()->getDataLayers()) === 1){
             $autoZoomJs = $this->buildJsAutoZoom('oLayer');
         }
         
@@ -310,7 +388,10 @@ JS;
                         resource: "{$dataWidget->getPage()->getAliasWithNamespace()}", 
                         element: "{$dataWidget->getId()}",
                         object: "{$dataWidget->getMetaObject()->getId()}",
-                        action: "{$dataWidget->getLazyLoadingActionAlias()}"
+                        action: "{$dataWidget->getLazyLoadingActionAlias()}",
+                        data: {
+                            oId: "{$dataWidget->getMetaObject()->getId()}"
+                        }
                     };
     
                     {$this->buildJsLeafletDataLoader('oParams', 'aRows', "
@@ -431,7 +512,7 @@ JS;
         return $this->getId();
     }
     
-    public function buildCssClasses()
+    public function buildCssElementClass()
     {
         return 'exf-map';
     }
