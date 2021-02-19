@@ -56,7 +56,7 @@ class MapConfigurator extends DataConfigurator
      */
     public function getDataWidget() : Data
     {
-        return $this->getLayerDataWidgets()[0]->getDataWidget();
+        return $this->getLayerDataWidgets()[0];
     }
     
     /**
