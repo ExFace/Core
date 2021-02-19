@@ -217,7 +217,7 @@ class Monitor extends Profiler
                 $this->getWorkbench()->getLogger()->logException($e);
             }
             
-            $triggerWidget = $task->isTriggeredByWidget() ? $task->getWidgetTriggeredBy() : $action->isDefinedInWidget() ? $action->getWidgetDefinedIn() : null;
+            $triggerWidget = ($task->isTriggeredByWidget() ? $task->getWidgetTriggeredBy() : $action->isDefinedInWidget() ? $action->getWidgetDefinedIn() : null);
             if ($triggerWidget instanceof iUseInputWidget) {
                 $inputWidget = $triggerWidget->getInputWidget();
             } else {
