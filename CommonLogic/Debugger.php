@@ -9,19 +9,34 @@ use Symfony\Component\VarDumper\Dumper\CliDumper;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Debugger\ExceptionRenderer;
 use Symfony\Component\ErrorHandler\ErrorHandler;
+use exface\Core\Interfaces\ConfigurationInterface;
 
 class Debugger implements DebuggerInterface
 {
 
     private $prettify_errors = false;
+    
+    private $error_reporting = null;
 
     private $logger = null;
 
-    function __construct(LoggerInterface $logger)
+    function __construct(LoggerInterface $logger, ConfigurationInterface $config)
     {
         $this->logger = $logger;
+        try {
+            $opt = $config->getOption('DEBUG.PHP_ERROR_REPORTING');
+            if (preg_match('/[^a-z0-9.\s~&_^]+/i', $opt) !== 0) {
+                throw new RuntimeException('Invalid configuration option DEBUG.PHP_ERROR_REPORTING: it must be a valid PHP syntax!');
+            }
+            $errorReportingFlags = eval('return ' . $opt . ';');
+        } catch (\Throwable $e) {
+            throw $e;
+            $errorReportingFlags = E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED & ~E_USER_DEPRECATED;
+        }
+        $this->error_reporting = $errorReportingFlags;
+        error_reporting($errorReportingFlags);
         
-        $this->setPrettifyErrors(false);
+        $this->setPrettifyErrors($config->getOption('DEBUG.PRETTIFY_ERRORS'));
     }
 
     /**
@@ -50,27 +65,15 @@ class Debugger implements DebuggerInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DebuggerInterface::getPrettifyErrors()
+     * 
+     * @param bool $value
+     * @return \exface\Core\CommonLogic\Debugger
      */
-    public function getPrettifyErrors()
+    protected function setPrettifyErrors(bool $value) : DebuggerInterface
     {
-        return $this->prettify_errors;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DebuggerInterface::setPrettifyErrors()
-     */
-    public function setPrettifyErrors($value)
-    {
-        $this->prettify_errors = true; //\exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->prettify_errors = true;
         $handler = new ErrorHandler(null, $this->prettify_errors);
-        $handler->setDefaultLogger($this->logger, E_ALL & ~E_NOTICE);
+        $handler->setDefaultLogger($this->logger, $this->error_reporting);
         ErrorHandler::register($handler, true);
         return $this;
     }
