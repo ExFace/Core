@@ -44,6 +44,7 @@ use exface\Core\Interfaces\Selectors\WidgetSelectorInterface;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
+use exface\Core\Exceptions\AppNotFoundError;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -291,6 +292,7 @@ class App implements AppInterface
     {
         if (is_null($this->uid)) {
             $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.APP');
+            $ds->getColumns()->addFromUidAttribute();
             $ds->getFilters()->addConditionFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
             $ds->dataRead();
             if ($ds->countRows() == 0) {
@@ -300,6 +302,9 @@ class App implements AppInterface
                 throw new LogicException('Multiple apps matching the alias "' . $this->getAliasWithNamespace() . '" found!');
             }
             $this->uid = $ds->getUidColumn()->getCellValue(0);
+            if (! $this->uid) {
+                throw new AppNotFoundError('App "' . $this->getAliasWithNamespace() . '" not found in the meta model! Please reinstall the app!');
+            }
         }
         return $this->uid;
     }
