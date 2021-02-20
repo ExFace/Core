@@ -313,7 +313,6 @@ class SqlModelLoader implements ModelLoaderInterface
                     // check if an attribute is marked as unique id for this object
                     if ($row['object_uid_flag']) {
                         $object->setUidAttributeAlias($row['attribute_alias']);
-                        $row['system_flag'] = true;
                     }
                     
                     // check if the attribute is part of the default sorting
@@ -326,6 +325,11 @@ class SqlModelLoader implements ModelLoaderInterface
                     
                     // populate attributes
                     $attr = $this->createAttributeFromDbRow($object, $row);
+                    
+                    if ($row['object_uid_flag']) {
+                        $attr->setSystem(true);
+                    }
+                    
                     // Add the attribute to the object giving the alias as key explicitly, because automatic key generation will
                     // fail here in an infinite loop, because it uses get_relation_path(), etc.
                     // TODO Check if get_alias_with_relation_path() really will cause loops inevitably. If not, remove the explicit key
@@ -542,7 +546,7 @@ class SqlModelLoader implements ModelLoaderInterface
         if ($row['fixed_value'] !== null && $row['fixed_value'] !== '') {
             $attr->setFixedValue($row['fixed_value']);
         }
-        $attr->setFormula($row['attribute_formula'] ?? null);
+        $attr->setFormula($row['attribute_formula']);
         if ($row['default_sorter_dir']){
             $attr->setDefaultSorterDir($row['default_sorter_dir']);
         }
