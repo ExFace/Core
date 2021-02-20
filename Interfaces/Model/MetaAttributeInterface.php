@@ -397,7 +397,7 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
      *
      * @return boolean
      */
-    public function isSystem();
+    public function isSystem() : bool;
     
     /**
      * Marks the attribute as system (TRUE) or non-system (FALSE).
@@ -407,7 +407,7 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
      * @param boolean $value
      * @return MetaAttributeInterface
      */
-    public function setSystem($value);
+    public function setSystem(bool $value) : MetaAttributeInterface;
     
     /**
      *

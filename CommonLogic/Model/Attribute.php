@@ -815,7 +815,7 @@ class Attribute implements MetaAttributeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isSystem()
      */
-    public function isSystem()
+    public function isSystem() : bool
     {
         return $this->system;
     }
@@ -825,9 +825,9 @@ class Attribute implements MetaAttributeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setSystem()
      */
-    public function setSystem($value)
+    public function setSystem(bool $value) : MetaAttributeInterface
     {
-        $this->system = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->system = $value;
         return $this;
     }
 
