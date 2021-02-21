@@ -456,11 +456,11 @@ JS;
     
     protected function buildJsMarkerIcon(DataMarkersLayer $layer, string $oRowJs) : string
     {
-        $icon = $layer->getIcon() ?? '';
+        $icon = $layer->getIcon() ?? 'fa-map-marker';
         $prefix = $layer->getIconSet() ?? 'fa';
+        $color = $layer->getColor() ?? $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
         
         if ($layer->hasValue()) {
-            $color = $layer->getColor() ?? $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
             return <<<JS
 new L.ExtraMarkers.icon({
                             icon: 'fa-number',
@@ -472,12 +472,11 @@ new L.ExtraMarkers.icon({
 
 JS;
         } else {
-            $color = $layer->getColor() ?? 'black';
             return <<<JS
 new L.ExtraMarkers.icon({
                             icon: '$icon',
+                            extraClasses: 'fa-5x',
                             markerColor: '$color',
-                            shape: 'round',
                             prefix: '$prefix',
                             svg: true,
                         })
