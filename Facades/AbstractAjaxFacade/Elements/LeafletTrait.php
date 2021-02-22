@@ -447,7 +447,7 @@ JS;
                         var oMap = {$this->buildJsLeafletVar()};
                         if (oBounds !== undefined && oBounds.isValid()) {
                             if (oMap.getBoundsZoom(oBounds) < oMap.getZoom() || oMap.getZoom() === oMap._exfState.initialZoom) {
-                                {$this->buildJsLeafletVar()}.fitBounds(oBounds);
+                                {$this->buildJsLeafletVar()}.fitBounds(oBounds, {padding: [10,10]});
                             }
                         }
                 	},100);
