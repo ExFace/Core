@@ -21,12 +21,15 @@ abstract class AbstractMapPart implements WidgetPartInterface
     
     private $workbench = null;
     
+    private $uxon = null;
+    
     public function __construct(Map $widget, UxonObject $uxon = null)
     {
         $this->chart = $widget;
         $this->workbench = $widget->getWorkbench();
         if ($uxon !== null) {
             $this->importUxonObject($uxon);
+            $this->uxon = $uxon;
         }
     }
     
@@ -76,5 +79,15 @@ abstract class AbstractMapPart implements WidgetPartInterface
     public function getMetaObject() : MetaObjectInterface
     {
         return $this->chart->getMetaObject();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        return $this->uxon ?? (new UxonObject());
     }
 }

@@ -8,9 +8,8 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\BaseMapInterface;
  * @author Andrej Kabachnik
  *
  */
-class AbstractBaseMap extends AbstractDataLayer implements BaseMapInterface
+abstract class AbstractBaseMap extends AbstractMapLayer implements BaseMapInterface
 {
-    
     private $attribution = null;
     
     /**
@@ -35,5 +34,17 @@ class AbstractBaseMap extends AbstractDataLayer implements BaseMapInterface
     {
         $this->attribution = $value;
         return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\AbstractMapPart::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        // TODO
+        return $uxon;
     }
 }

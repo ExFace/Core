@@ -5,6 +5,7 @@ use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  *
@@ -14,6 +15,8 @@ use exface\Core\Widgets\Traits\iHaveCaptionTrait;
 abstract class AbstractMapLayer extends AbstractMapPart implements MapLayerInterface
 {
     use iHaveCaptionTrait;
+    
+    private $autoZoomToSeeAll = null;
     
     /**
      * @uxon-property type
@@ -35,5 +38,59 @@ abstract class AbstractMapLayer extends AbstractMapPart implements MapLayerInter
     {
         $class = PhpClassDataType::findClassNameWithoutNamespace($this);
         return StringDataType::substringBefore($class, 'Layer', $class);
+    }
+    
+    /**
+     *
+     * @return bool|NULL
+     */
+    public function getAutoZoomToSeeAll() : ?bool
+    {
+        return $this->autoZoomToSeeAll;
+    }
+    
+    /**
+     * Set to TRUE to zoom in or out to make all data visible every time the layer data is loaded.
+     *
+     * @uxon-property auto_zoom_to_see_all
+     * @uxon-type boolean
+     *
+     * @param bool $value
+     * @return AbstractDataLayer
+     */
+    public function setAutoZoomToSeeAll(bool $value) : AbstractDataLayer
+    {
+        $this->autoZoomToSeeAll = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface::getWidgets()
+     */
+    public function getWidgets() : \Generator
+    {
+        yield from [];
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface::prepareDataSheetToRead()
+     */
+    public function prepareDataSheetToRead(DataSheetInterface $sheet): DataSheetInterface
+    {
+        return $sheet;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface::prepareDataSheetToPrefill()
+     */
+    public function prepareDataSheetToPrefill(DataSheetInterface $sheet): DataSheetInterface
+    {
+        return $sheet;
     }
 }

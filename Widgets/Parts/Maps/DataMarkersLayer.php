@@ -9,17 +9,23 @@ use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Traits\iHaveColorTrait;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Interfaces\Widgets\iHaveColorScale;
+use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\DateDataType;
 
 /**
  *
  * @author Andrej Kabachnik
  *
  */
-class DataMarkersLayer extends AbstractDataLayer implements iHaveIcon, iHaveColor
+class DataMarkersLayer extends AbstractDataLayer implements iHaveIcon, iHaveColor, iHaveColorScale
 {
     use iHaveIconTrait;
     
     use iHaveColorTrait;
+    
+    use iHaveColorScaleTrait;
     
     private $latitudeAttributeAlias = null;
     
@@ -260,5 +266,25 @@ class DataMarkersLayer extends AbstractDataLayer implements iHaveIcon, iHaveColo
             }
         }
         return $caption;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColorScale::isColorScaleRangeBased()
+     */
+    public function isColorScaleRangeBased() : bool
+    {
+        if (! $this->hasValue()) {
+            return false;
+        }
+        $dataType = $this->getValueColumn()->getDataType();
+        switch (true) {
+            case $dataType instanceof NumberDataType:
+            case $dataType instanceof DateDataType:
+                return true;
+        }
+        
+        return false;
     }
 }
