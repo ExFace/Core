@@ -153,35 +153,6 @@ JS;
         return $mapOptions;
     }
     
-    protected function buildJsLeafletControlInfo() : string
-    {
-        return <<<JS
-
-    L.easyButton({
-        states: [
-            {
-                stateName: 'click-mode-regular',        // name the state
-                icon:      'fa-mouse-pointer',               // and define its properties
-                title:     'Display place information on click',      // like its title
-                onClick: function(btn, map) {       // and its callback
-                    map.on('click', map._exfShowInfoPopup);
-                    btn.state('click-mode-info');    // change state on click!
-                }
-            }, {
-                stateName: 'click-mode-info',
-                icon:      'fa-hand-paper-o',
-                title:     'Back to regular mouse mode',
-                onClick: function(btn, map) {
-                    map.off('click', map._exfShowInfoPopup);
-                    btn.state('click-mode-regular');
-                }
-            }
-        ]
-    }).addTo({$this->buildJsLeafletVar()});
-
-JS;
-    }
-    
     /**
      * 
      * @return string
@@ -212,54 +183,69 @@ JS;
      */
     protected function buildJsLayers() : string
     {
-        $baseMaps = '';
+        $baseMapsJs = '';
         $baseSelected = $this->getWidget()->getBaseMap(0);
         foreach ($this->getWidget()->getBaseMaps() as $idx => $layer) {
             $captionJs = json_encode($layer->getCaption() ?? 'Map ' . ($idx+1));
             $visible = ($baseSelected === $layer);
             $layerInit = $this->buildJsLayer($layer);
             if ($layerInit) {
-                $baseMaps .= "{$captionJs} : {$layerInit}";
+                $baseMapsJs .= "{$captionJs} : {$layerInit}";
                 if ($visible) {
-                    $baseMaps .= ".addTo({$this->buildJsLeafletVar()})";
+                    $baseMapsJs .= ".addTo({$this->buildJsLeafletVar()})";
                 }
-                $baseMaps .= ',';
+                $baseMapsJs .= ',';
             }
         }
         
-        $featureLayers = '';
-        $featureMetadata = '';
+        $featureLayersJs = '';
         foreach ($this->getWidget()->getLayers() as $index => $layer) {
-            $captionJs = json_encode($layer->getCaption());
-            $visible = true;
             $layerInit = $this->buildJsLayer($layer);
             if ($layerInit) {
-                $featureLayers .= "{$captionJs} : {$layerInit}";
+                $captionJs = json_encode($layer->getCaption());
+                $visible = true;
+                $autoZoom = $layer->getAutoZoomToSeeAll() === true ? 'true' : 'false';
+                
                 if ($visible) {
-                    $featureLayers .= ".addTo({$this->buildJsLeafletVar()})";
+                    $layerInit .= ".addTo({$this->buildJsLeafletVar()})";
                 }
-                $featureLayers .= ',';
+                
+                $optionsJs = '';
                 if ($layer instanceof AbstractDataLayer) {
-                    $featureMetadata .= <<<JS
-{$index} : {
-       oId : {$layer->getMetaObject()->getId()}
-},    
-
-JS;
+                    $optionsJs .= "oId : '{$layer->getMetaObject()->getId()}',";
                 }
+                    
+                $featureLayersJs .= <<<JS
+
+        {
+            index: $index,
+            caption: $captionJs,
+            autoZoom: {$autoZoom},
+            $optionsJs
+            layer: $layerInit
+        },
+JS;
             }
         }
         
         return <<<JS
 
-    var aLayers = L.control.layers({
-            $baseMaps
-        }, {
-            $featureLayers
-        }
+    var aLayers = [
+        $featureLayersJs
+    ]
+    var oLayerList = {};
+
+    aLayers.forEach(function(oLayerData){
+        oLayerList[oLayerData.caption] = oLayerData.layer;
+    });
+    
+    L.control.layers({
+            $baseMapsJs
+        },
+        oLayerList
     ).addTo({$this->buildJsLeafletVar()});
 
-    {$this->buildJsLeafletVar()}._exfLayers = { {$featureMetadata} };
+    {$this->buildJsLeafletVar()}._exfLayers = aLayers;
 
 JS;
     }
@@ -446,7 +432,13 @@ JS;
     
     protected abstract function buildJsLeafletDataLoader(string $oRequestParamsJs, string $aResultRowsJs, string $onLoadedJs) : string;
     
-    protected function buildJsAutoZoom(string $oLayerJs) : string
+    /**
+     * Returns the JS code to pan/zoom the map after the data of a layer is refreshed
+     * 
+     * @param string $oLayerJs
+     * @return string
+     */
+    public function buildJsAutoZoom(string $oLayerJs) : string
     {
         return <<<JS
 

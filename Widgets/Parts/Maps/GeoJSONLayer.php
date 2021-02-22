@@ -9,21 +9,30 @@ use exface\Core\Widgets\Map;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\NumberDataType;
+use exface\Core\Interfaces\Widgets\iHaveColorScale;
+use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
+use exface\Core\Facades\AbstractAjaxFacade\Elements\JsValueScaleTrait;
 
 /**
  *
  * @author Andrej Kabachnik
  *
  */
-class GeoJSONLayer extends AbstractDataLayer implements iHaveColor
+class GeoJSONLayer extends AbstractDataLayer implements iHaveColor, iHaveColorScale
 {
     use iHaveColorTrait;
+    
+    use iHaveColorScaleTrait;
+    
+    use JsValueScaleTrait;
     
     private $url = null;
     
     private $lineWeight = null;
     
     private $opacity = null;
+    
+    private $colorScaleProperty = null;
     
     /**
      * 
@@ -61,14 +70,35 @@ class GeoJSONLayer extends AbstractDataLayer implements iHaveColor
             }
             
             $color = $this->getColor() ?? $facadeElement->getLayerBaseColor($this);
-            $styleJs = "color: '$color',";
+            $styleJs = "";
+            $colorScaleJs = '';
             if ($weight = $this->getLineWeight()) {
                 $styleJs .= "weight: $weight,";
             }
             if ($opacity = $this->getOpacity()) {
                 $styleJs .= "opacity: $opacity,";
             }
+            if ($this->hasColorScale()) {
+                $scaleProp = $this->getColorScaleProperty();
+                if ($scaleProp === null) {
+                    throw new WidgetConfigurationError($this->getMap(), 'Missing map layer option color_scale_property: A GeoJSON map layer with a color_scale must know, which property of the features to use a scale base!');
+                }
+                $colorScaleJs = "oStyle.color = {$this->buildJsScaleResolver('feature.properties.' . $scaleProp, $this->getColorScale(), $this->isColorScaleRangeBased())}";
+            } else {
+                $styleJs .= "color: '$color',";
+            }
             
+            $styleFuncJs = <<<JS
+
+            var oStyle = { {$styleJs} };
+            $colorScaleJs
+            return oStyle;
+
+JS;
+            
+            if ($layer->getAutoZoomToSeeAll() === true){
+                $autoZoomJs = $facadeElement->buildJsAutoZoom('oLayer');
+            }
             
             
             return <<<JS
@@ -85,7 +115,9 @@ class GeoJSONLayer extends AbstractDataLayer implements iHaveColor
             }
             {$facadeElement->buildJsLeafletPopup("'{$this->getCaption()}'", $facadeElement->buildJsLeafletPopupList('oPopupData'), 'layer')}
         },
-        style: { $styleJs },
+        style: function(feature) {
+            $styleFuncJs
+        },
         pointToLayer: function(feature, latlng) {
             var oProps = feature.properties;
             return L.marker(latlng, { 
@@ -114,6 +146,8 @@ class GeoJSONLayer extends AbstractDataLayer implements iHaveColor
                 data = data.features;
             }
             oLayer.addData(data);
+
+            {$autoZoomJs}
         });
     }
 
@@ -159,7 +193,7 @@ JS;
      * 
      * @return float|NULL
      */
-    public function getLineWeight() : ?float
+    protected function getLineWeight() : ?float
     {
         return $this->lineWeight;
     }
@@ -186,7 +220,7 @@ JS;
      * 
      * @return float|NULL
      */
-    public function getOpacity() : ?float
+    protected function getOpacity() : ?float
     {
         return $this->opacity;
     }
@@ -203,6 +237,65 @@ JS;
     public function setOpacity(float $value) : GeoJSONLayer
     {
         $this->opacity = NumberDataType::cast($value);
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColorScale::isColorScaleRangeBased()
+     */
+    public function isColorScaleRangeBased(): bool
+    {
+        foreach (array_values($this->getColorScale()) as $val) {
+            if ($val !== null && $val !== '' && ! is_numeric($val)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getColorScaleProperty() : ?string
+    {
+        return $this->colorScaleProperty;
+    }
+    
+    /**
+     * The name of the feature property to use as base for coloring.
+     * 
+     * Accepts a JavaScript-type path from the `properties` of a GeoJSON feature.
+     * 
+     * **NOTE**: every Feature MUST have this property!
+     * 
+     * For the example GeoJSON below you could use `status` or `metrics.progress`
+     * as `color_scale_property`.
+     * 
+     * ```
+     * {
+     *      type: "Feature",
+     *      geometry: {...},
+     *      properties: {
+     *          id: 123,
+     *          name: "Feature name"
+     *          status: "Good",
+     *          metrics: {
+     *              progress: 95,
+     *          }
+     *      }
+     * }          
+     * 
+     * ```
+     * 
+     * @param string $value
+     * @return GeoJSONLayer
+     */
+    public function setColorScaleProperty(string $value) : GeoJSONLayer
+    {
+        $this->colorScaleProperty = $value;
         return $this;
     }
 }

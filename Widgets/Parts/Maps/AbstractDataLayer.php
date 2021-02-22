@@ -18,8 +18,6 @@ abstract class AbstractDataLayer extends AbstractMapLayer
     
     private $dataUxon = null;
     
-    private $autoZoomToSeeAll = null;
-    
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
@@ -77,44 +75,30 @@ abstract class AbstractDataLayer extends AbstractMapLayer
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface::getWidgets()
+     * @see \exface\Core\Widgets\Parts\Maps\AbstractMapLayer::getWidgets()
      */
     public function getWidgets() : \Generator
     {
         yield $this->getDataWidget();
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\AbstractMapLayer::prepareDataSheetToRead()
+     */
     public function prepareDataSheetToRead(DataSheetInterface $sheet): DataSheetInterface
     {
         return $this->getDataWidget()->prepareDataSheetToRead($sheet);
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\AbstractMapLayer::prepareDataSheetToPrefill()
+     */
     public function prepareDataSheetToPrefill(DataSheetInterface $sheet): DataSheetInterface
     {
         return $this->getDataWidget()->prepareDataSheetToPrefill($sheet);
-    }
-
-    /**
-     * 
-     * @return bool|NULL
-     */
-    public function getAutoZoomToSeeAll() : ?bool
-    {
-        return $this->autoZoomToSeeAll;
-    }
-    
-    /**
-     * Set to TRUE to zoom in or out to make all data visible every time the layer data is loaded.
-     * 
-     * @uxon-property auto_zoom_to_see_all
-     * @uxon-type boolean
-     * 
-     * @param bool $value
-     * @return AbstractDataLayer
-     */
-    public function setAutoZoomToSeeAll(bool $value) : AbstractDataLayer
-    {
-        $this->autoZoomToSeeAll = $value;
-        return $this;
     }
 }
