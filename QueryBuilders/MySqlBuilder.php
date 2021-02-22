@@ -143,7 +143,7 @@ class MySqlBuilder extends AbstractSqlBuilder
             } elseif ($group_by && $this->getAggregation($qpartAttr->getRelationPath()->toString())) {
                 // If aggregating, also add attributes, that belong directly to objects, we are aggregating 
                 // over (they can be assumed unique too, since their object is unique per row)
-                // FIXME it should be possible to integrate this into the if-branch with isObjectGroupSafe())
+                // FIXME #sql-is-group-safe it should be possible to integrate this into the if-branch with isObjectGroupSafe())
                 $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();

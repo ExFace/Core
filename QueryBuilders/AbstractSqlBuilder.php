@@ -2294,21 +2294,27 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $aggregations = $this->getAggregations();
         }
         
-        // Condition (1) and (2) - see method doc
+        // Condition (1) - see method doc
         if ($object->hasUidAttribute()) {
             $uidDataAddress = $this->buildSqlDataAddress($object->getUidAttribute());
             foreach ($aggregations as $qpart) {
-                // Condition (1) - see method doc
                 if ($qpart->getAttribute()->getObject()->isExactly($object) && $this->buildSqlDataAddress($qpart) === $uidDataAddress) {
                     return true;
                 }
-                // Condition (2) - see method doc
-                if ($relPathFromQuery !== null) {
-                    $relPathStr = $relPathFromQuery->toString();
-                    $qpartAlias = $qpart->getAlias();
-                    if ($relPathStr === $qpartAlias || StringDataType::startsWith($relPathStr, $qpartAlias . RelationPath::getRelationSeparator())) {
-                        return true;
-                    }
+            }
+        }
+        
+        // Condition (2) - see method doc
+        if ($relPathFromQuery !== null) {
+            foreach ($aggregations as $qpart) {
+                $relPathStr = $relPathFromQuery->toString();
+                $qpartAlias = $qpart->getAlias();
+                // FIXME #sql-is-group-safe if the relaton path matches the aggregator, the
+                // object is group safe too. However, currenly this situation is handled in
+                // each query builder separately (see hashtag). Need merge both logics!
+                // if ($relPathStr === $qpartAlias || StringDataType::startsWith($relPathStr, $qpartAlias . RelationPath::getRelationSeparator())) {
+                if (StringDataType::startsWith($relPathStr, $qpartAlias . RelationPath::getRelationSeparator())) {
+                    return true;
                 }
             }
         }
