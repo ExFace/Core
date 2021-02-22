@@ -70,9 +70,9 @@ trait iHaveColorScaleTrait
     /**
      *
      * {@inheritdoc}
-     * @see iHaveColorScale::getColor()
+     * @see iHaveColorScale::getColorForValue()
      */
-    public function getColor($value = null) : ?string
+    public function getColorForValue($value = null) : ?string
     {
         return static::findColor($value, $this->getColorScale(), $this->isColorScaleRangeBased());
     }
