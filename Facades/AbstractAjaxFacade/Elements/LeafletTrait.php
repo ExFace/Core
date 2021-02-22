@@ -80,6 +80,11 @@ trait LeafletTrait
 HTML;
     }
     
+    protected function getZoomInitial() : int
+    {
+        return $this->getWidget()->getZoom() ?? 2;
+    }
+    
     /**
      * 
      * @return string
@@ -88,7 +93,7 @@ HTML;
     {
         $widget = $this->getWidget();
         
-        $zoom = $widget->getZoom() ?? 2;
+        $zoom = $this->getZoomInitial();
         $lat = $widget->getCenterLatitude() ?? 0;
         $lon = $widget->getCenterLongitude() ?? 0;
         
@@ -117,7 +122,8 @@ HTML;
     });
 
     {$this->buildJsLeafletVar()}._exfState = {
-        selectedFeature: null
+        selectedFeature: null,
+        initialZoom: {$this->getZoomInitial()}
     };
     {$this->buildJsLeafletVar()}._exfLayers = {};
 
@@ -446,8 +452,11 @@ JS;
 
                     setTimeout(function() {
                         var oBounds = $oLayerJs.getBounds();
+                        var oMap = {$this->buildJsLeafletVar()};
                         if (oBounds !== undefined && oBounds.isValid()) {
-                            {$this->buildJsLeafletVar()}.fitBounds(oBounds);
+                            if (oMap.getBoundsZoom(oBounds) < oMap.getZoom() || oMap.getZoom() === oMap._exfState.initialZoom) {
+                                {$this->buildJsLeafletVar()}.fitBounds(oBounds);
+                            }
                         }
                 	},100);
 
