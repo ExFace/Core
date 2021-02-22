@@ -36,6 +36,7 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\DataTypes\UUIDDataType;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * A query builder for generic SQL syntax.
@@ -2259,9 +2260,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * of the query will be used automatically.
      *
      * Technically, this method checks for the following conditions:
-     * (1) Is the query aggregated by an attribute based on the UID column of the given object
-     * (2) Is there an equals-filter, over the UID of the given object or anohter attribute with the same data address
-     * (3) Is there an equals-filter over a forward-relation to the given object
+     * 
+     * 1. Is the query aggregated by an attribute based on the UID column of the given object
+     * 2. Is the query aggregated by an attribute, that is part of the relation path to the object 
+     * (if that is known). That is, if we have ORDERS aggregated by CUSTOMER the attribute
+     * CUSTOMER__ADDRESS__COUNTRY is group safe as all orders in an aggregated row have the
+     * same customer and thus the same address and country. 
+     * 3. Is there an equals-filter, over the UID of the given object or anohter attribute with the same data address
+     * 4. Is there an equals-filter over a forward-relation to the given object
      *
      * @param MetaObjectInterface $object
      * @param QueryPartFilterGroup $filterGroup
@@ -2269,7 +2275,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      *
      * @return array
      */
-    protected function isObjectGroupSafe(MetaObjectInterface $object, QueryPartFilterGroup $filterGroup = null, array $aggregations = null) : bool
+    protected function isObjectGroupSafe(MetaObjectInterface $object, QueryPartFilterGroup $filterGroup = null, array $aggregations = null, MetaRelationPathInterface $relPathFromQuery = null) : bool
     {
         if ($filterGroup === null) {
             $filterGroup = $this->getFilters();
@@ -2288,12 +2294,21 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $aggregations = $this->getAggregations();
         }
         
-        // Condition (1) - see method doc
+        // Condition (1) and (2) - see method doc
         if ($object->hasUidAttribute()) {
             $uidDataAddress = $this->buildSqlDataAddress($object->getUidAttribute());
             foreach ($aggregations as $qpart) {
+                // Condition (1) - see method doc
                 if ($qpart->getAttribute()->getObject()->isExactly($object) && $this->buildSqlDataAddress($qpart) === $uidDataAddress) {
                     return true;
+                }
+                // Condition (2) - see method doc
+                if ($relPathFromQuery !== null) {
+                    $relPathStr = $relPathFromQuery->toString();
+                    $qpartAlias = $qpart->getAlias();
+                    if ($relPathStr === $qpartAlias || StringDataType::startsWith($relPathStr, $qpartAlias . RelationPath::getRelationSeparator())) {
+                        return true;
+                    }
                 }
             }
         }
@@ -2313,11 +2328,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             
             if ($isFilterEquals) {
                 $filterAttr = $qpart->getAttribute();
-                // Condition (2) - see method doc
+                // Condition (3) - see method doc
                 if ($filterAttr->getObject()->isExactly($object) && ($filterAttr->isExactly($object->getUidAttribute()) || $this->buildSqlDataAddress($filterAttr) && $this->buildSqlDataAddress($filterAttr) === $this->buildSqlDataAddress($object->getUidAttribute()))) {
                     return true;
                 }
-                // Condition (3) - see method doc
+                // Condition (4) - see method doc
                 if ($filterAttr->isRelation() === true && $filterAttr->getRelation()->isForwardRelation() === true) {
                     if ($this->getMainObject()->getRelatedObject($qpart->getAlias())->isExactly($object)) {
                         return true;

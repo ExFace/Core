@@ -124,7 +124,7 @@ class MySqlBuilder extends AbstractSqlBuilder
                 $selects[] = $this->buildSqlSelect($qpart);
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
-            } elseif ($this->isObjectGroupSafe($qpartAttr->getObject()) === true) {
+            } elseif ($this->isObjectGroupSafe($qpartAttr->getObject(), null, null, $qpartAttr->getRelationPath()) === true) {
                 // If aggregating, also add attributes, that are aggregated over or can be assumed unique due to set filters
                 // FIXME allways putting selects for attributes of related group-safe object in the enrichment select will
                 // probably break sorting over these attributes because sorting is done in the core query too...
