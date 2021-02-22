@@ -138,7 +138,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
                 // If aggregating, also add attributes, that are aggregated over or can be assumed unique due to set filters
-            } elseif ($this->isObjectGroupSafe($qpartAttr->getObject()) === true) {
+            } elseif ($this->isObjectGroupSafe($qpartAttr->getObject(), null, null, $qpartAttr->getRelationPath()) === true) {
                 $rels = $qpart->getUsedRelations();
                 $first_rel = false;
                 if (! empty($rels)) {

@@ -278,7 +278,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 elseif (! $group_by || $qpart->getAggregator() || $this->isAggregatedBy($qpart)) {
                     $select .= ', ' . $this->buildSqlSelect($qpart);
                     $joins = array_merge($joins, $this->buildSqlJoins($qpart));
-                } elseif ($this->isObjectGroupSafe($qpartAttr->getObject()) === true) {
+                } elseif ($this->isObjectGroupSafe($qpartAttr->getObject(), null, null, $qpartAttr->getRelationPath()) === true) {
                     $rels = $qpart->getUsedRelations();
                     $first_rel = false;
                     if (! empty($rels)) {
