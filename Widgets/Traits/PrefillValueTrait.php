@@ -48,7 +48,7 @@ trait PrefillValueTrait
         if ($prefill_object->is($widget_object)) {
             // If we are looking for attributes of the object of this widget, then just return the attribute_alias
             return $expression;
-        } elseif ($widget_object->hasAttribute($attributeAlias)) {
+        } elseif ($attributeAlias !== null && $widget_object->hasAttribute($attributeAlias)) {
             $attribute = $this->getMetaObject()->getAttribute($attributeAlias);
             // If not, we are dealing with a prefill with data of another object. It only makes sense to try to prefill here,
             // if the widgets shows an attribute, because then we have a chance to find a relation between the widget's object
