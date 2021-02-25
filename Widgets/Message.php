@@ -47,7 +47,7 @@ class Message extends Text
         if ($value instanceof MessageTypeDataType) {
             $this->type = $value;
         } elseif (is_string($value)) {
-            $this->type = MessageTypeDataType::fromValue($this->getWorkbench(), $value);
+            $this->type = MessageTypeDataType::fromValue($this->getWorkbench(), strtoupper($value));
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Unknown message type "' . $value . '"!');
         }
