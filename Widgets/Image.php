@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Widgets\iShowImage;
 use exface\Core\DataTypes\UrlDataType;
 
 /**
- * The image widget shows the image specified by the URL in the value of an attribute.
+ * Shows an image from an URI in its `value` or data of its `attribute_alias`.
  * 
  * The concrete implementation depends on the facade used, but in most cases, the image
  * URI will be embedded in the generated UI leaving the task of actually fetching the image
