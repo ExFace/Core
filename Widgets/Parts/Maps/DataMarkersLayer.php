@@ -6,20 +6,20 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
-use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Traits\iHaveColorTrait;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Interfaces\Widgets\iHaveColorScale;
 use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\DateDataType;
+use exface\Core\Widgets\Parts\Maps\Interfaces\MarkerMapLayerInterface;
 
 /**
  *
  * @author Andrej Kabachnik
  *
  */
-class DataMarkersLayer extends AbstractDataLayer implements iHaveIcon, iHaveColor, iHaveColorScale
+class DataMarkersLayer extends AbstractDataLayer implements MarkerMapLayerInterface, iHaveIcon, iHaveColorScale
 {
     use iHaveIconTrait;
     
@@ -42,6 +42,8 @@ class DataMarkersLayer extends AbstractDataLayer implements iHaveIcon, iHaveColo
     private $tooltipAttribtueAlias = null;
     
     private $tooltipColumn = null;
+    
+    private $clustering = null;
     
     /**
      * 
@@ -286,5 +288,32 @@ class DataMarkersLayer extends AbstractDataLayer implements iHaveIcon, iHaveColo
         }
         
         return false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\Interfaces\MarkerMapLayerInterface::isClusteringMarkers()
+     */
+    public function isClusteringMarkers() : ?bool
+    {
+        return $this->clustering;
+    }
+    
+    /**
+     * Set to TRUE to group markers to clusters or to FALSE to disable clustering explicitly.
+     * 
+     * By default, the facade will decide itself, if clustering is appropriate for this layer.
+     * 
+     * @uxon-property cluster_markers
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return DataMarkersLayer
+     */
+    public function setClusterMarkers(bool $value) : DataMarkersLayer
+    {
+        $this->clustering = $value;
+        return $this;
     }
 }
