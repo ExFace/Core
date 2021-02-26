@@ -376,7 +376,7 @@ JS;
         if ($layer->isClusteringMarkers() === true) {
             $clusterInitJs = <<<JS
 L.markerClusterGroup({
-                    iconCreateFunction: {$this->buildJsClusterIcon($layer)},
+                    iconCreateFunction: {$this->buildJsClusterIcon($layer, 'cluster')},
                 })
 JS;
         } else {
@@ -527,21 +527,26 @@ JS;
         }
     }
     
-    protected function buildJsClusterIcon(DataMarkersLayer $layer) : string
+    protected function buildJsClusterIcon(DataMarkersLayer $layer, string $oClusterJs) : string
     {
         $color = $layer->getColor() ?? $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
+        $caption = str_replace("'", "\\'", trim(json_encode($layer->getCaption()), '"'));
+        
+        /* TODO SUM values instead of counting if needed
+         var markers = oCluster.getAllChildMarkers();
+         var n = 0;
+         for (var i = 0; i < markers.length; i++) {
+         n += 1;
+         */
+        $sContentJs = "var sContent = '(' + iCnt + ')';";
         
         return <<<JS
-function (cluster) {
-        				/*var markers = cluster.getAllChildMarkers();
-        				var n = 0;
-        				for (var i = 0; i < markers.length; i++) {
-        					n += 1;
-        				}*/
-                        var mContent = cluster.getChildCount();
-                		
+function ($oClusterJs) {
+                        var oCluster = $oClusterJs;
+                        var iCnt = oCluster.getChildCount();
+                        {$sContentJs}
 	                    return new L.DivIcon({
-                            html: '<div style="background-color: {$color}; box-shadow: 0 0 10px 5px {$color}"><i>(' + mContent + ')</i></div>',
+                            html: '<div title="' + iCnt + 'x {$caption}" style="background-color: {$color}; box-shadow: 0 0 10px 5px {$color}"><i>' + sContent + '</i></div>',
                             className: 'marker-cluster',
                             iconSize: new L.Point(40, 40)
                         });
