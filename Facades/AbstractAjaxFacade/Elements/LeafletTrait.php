@@ -11,15 +11,40 @@ use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Exceptions\Facades\FacadeOutputError;
 use exface\Core\Widgets\Parts\Maps\AbstractDataLayer;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Widgets\Parts\Maps\Interfaces\MarkerMapLayerInterface;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
  * 
- * How to use: 
- * TODO
- * 1. Add the following dependency to the composer.json of the facade: "bower-asset/jquery-qrcode" : "^1.0"
- * 2. Add the config option "LIBS.QRCODE.JS": "bower-asset/jquery-qrcode/jquery.qrcode.min.js" to the facade
- * 3. Use the trait in your element and call buildHtmlQrCode() and buildJsQrCodeRenderer() where needed.
+ * ## How to use: 
+ * 
+ * 1. Add the following dependencies to the composer.json of the facade: 
+ *      ```
+ *      "npm-asset/leaflet" : "^1.7",
+ *     	"npm-asset/leaflet-extra-markers" : "^1.2",
+ *     	"npm-asset/leaflet-fullscreen" : "^1.0",
+ *     	"npm-asset/leaflet.locatecontrol" : "~0.72",
+ *     	"npm-asset/esri-leaflet" : "^3.0",
+ *     	"npm-asset/leaflet.markercluster" : "^1.4"
+ *      ```
+ * 2. Add the config options to the facade:
+ *      ```
+ *      "LIBS.LEAFLET.CSS": "npm-asset/leaflet/dist/leaflet.css",
+ *  	"LIBS.LEAFLET.JS": "npm-asset/leaflet/dist/leaflet.js",
+ *  	"LIBS.LEAFLET.EXTRA_MARKERS_CSS": "npm-asset/leaflet-extra-markers/dist/css/leaflet.extra-markers.min.css",
+ *  	"LIBS.LEAFLET.EXTRA_MARKERS_JS": "npm-asset/leaflet-extra-markers/dist/js/leaflet.extra-markers.min.js",
+ *  	"LIBS.LEAFLET.MARKERCLUSTER_CSS": "npm-asset/leaflet.markercluster/dist/MarkerCluster.css",
+ *  	"LIBS.LEAFLET.MARKERCLUSTER_JS": "npm-asset/leaflet.markercluster/dist/leaflet.markercluster.js",
+ *  	"LIBS.LEAFLET.FULLSCREEN_CSS": "npm-asset/leaflet-fullscreen/dist/Leaflet.fullscreen.css",
+ *  	"LIBS.LEAFLET.FULLSCREEN_JS": "npm-asset/leaflet-fullscreen/dist/Leaflet.fullscreen.min.js",
+ *  	"LIBS.LEAFLET.LOCATECONTROL_CSS": "npm-asset/leaflet.locatecontrol/dist/L.Control.Locate.min.css",
+ *  	"LIBS.LEAFLET.LOCATECONTROL_JS": "npm-asset/leaflet.locatecontrol/dist/L.Control.Locate.min.js",
+ *  	"LIBS.LEAFLET.ESRI.JS": "npm-asset/esri-leaflet/dist/esri-leaflet.js",
+ *      ```
+ * 3. Use the trait in your element by creating a globally accessible variable or 
+ * property `buildJsLeafletVar()` and calling `buildJsLeafletInit()` at a time, 
+ * where the map `div` is available and the map is to be rendered. This method will
+ * initialize the leaflet variable.
  * 
  * @method \exface\Core\Widgets\Map getWidget()
  *        
@@ -230,6 +255,10 @@ JS;
         
         return <<<JS
 
+    var oBaseMapsList = {
+        $baseMapsJs
+    };
+
     var aLayers = [
         $featureLayersJs
     ]
@@ -239,11 +268,8 @@ JS;
         oLayerList[oLayerData.caption] = oLayerData.layer;
     });
     
-    L.control.layers({
-            $baseMapsJs
-        },
-        oLayerList
-    ).addTo({$this->buildJsLeafletVar()});
+    L.control.layers(oBaseMapsList, oLayerList)
+    .addTo({$this->buildJsLeafletVar()});
 
     {$this->buildJsLeafletVar()}._exfLayers = aLayers;
 
@@ -347,8 +373,19 @@ JS;
             $autoZoomJs = $this->buildJsAutoZoom('oLayer');
         }
         
+        if ($layer->isClusteringMarkers() === true) {
+            $clusterInitJs = <<<JS
+L.markerClusterGroup({
+                    iconCreateFunction: {$this->buildJsClusterIcon($layer)},
+                })
+JS;
+        } else {
+            $clusterInitJs = 'null';
+        }
+        
         return <<<JS
             (function(){
+                var oClusterLayer = {$clusterInitJs};
                 var oLayer = L.geoJSON(null, {
                     pointToLayer: function(feature, latlng) {
                         var oRow = feature.properties.data;
@@ -419,13 +456,17 @@ JS;
                         oLayer.addData(aGeoJson);
                         {$autoZoomJs}
 
+                        if (oClusterLayer !== null) {
+                            oClusterLayer.clearLayers().addLayer(oLayer);
+                        }
+
 ")}
                 };
 
                 {$this->buildJsLeafletVar()}.on('exfRefresh', oLayer._exfRefresh);
                 oLayer._exfRefresh();
                
-                return oLayer;
+                return oClusterLayer ? oClusterLayer : oLayer;
             })()
 JS;
     }
@@ -486,6 +527,29 @@ JS;
         }
     }
     
+    protected function buildJsClusterIcon(DataMarkersLayer $layer) : string
+    {
+        $color = $layer->getColor() ?? $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
+        
+        return <<<JS
+function (cluster) {
+        				/*var markers = cluster.getAllChildMarkers();
+        				var n = 0;
+        				for (var i = 0; i < markers.length; i++) {
+        					n += 1;
+        				}*/
+                        var mContent = cluster.getChildCount();
+                		
+	                    return new L.DivIcon({
+                            html: '<div style="background-color: {$color}; box-shadow: 0 0 10px 5px {$color}"><i>(' + mContent + ')</i></div>',
+                            className: 'marker-cluster',
+                            iconSize: new L.Point(40, 40)
+                        });
+        			}
+        			
+JS;
+    }
+    
     public function getLayerBaseColor(MapLayerInterface $layer) : string
     {
         return $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
@@ -531,6 +595,14 @@ JS;
             '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.EXTRA_MARKERS_CSS') . '"/>',
             '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.EXTRA_MARKERS_JS') . '"></script>'
         ]; 
+        
+        foreach ($this->getWidget()->getLayers() as $layer) {
+            if (($layer instanceof MarkerMapLayerInterface) && $layer->isClusteringMarkers() === true) {
+                $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.MARKERCLUSTER_CSS') . '"/>';
+                $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.MARKERCLUSTER_JS') . '"></script>';
+                break;
+            }
+        }
         
         if ($widget->getShowFullScreenButton()) {
             $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.FULLSCREEN_CSS') . '"/>';
