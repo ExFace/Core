@@ -36,6 +36,7 @@ class Model implements ModelInterface
     }
 
     /**
+     * @deprecated use MetaObjectFactory::createFromUid()
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ModelInterface::getObjectById()
@@ -70,6 +71,7 @@ class Model implements ModelInterface
     }
     
     /**
+     * @deprecated use MetaObjectFactory::createFromAliasAndNamespace()
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ModelInterface::getObjectByAlias()
@@ -98,6 +100,7 @@ class Model implements ModelInterface
     }
 
     /**
+     * @deprecated use MetaObjectFactory::createFromString()
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ModelInterface::getObject()
