@@ -30,6 +30,8 @@ class ResultMessageStream extends ResultMessage implements ResultMessageStreamIn
 {
     private $generatorCallable;
     
+    private $generatorArgs = [];
+    
     private $generatorWasRun = false;
     
     private $generatorResult = null;
@@ -50,7 +52,7 @@ class ResultMessageStream extends ResultMessage implements ResultMessageStreamIn
         }
         
         $this->generatorWasRun = true;
-        return call_user_func($this->generatorCallable);
+        return call_user_func_array($this->generatorCallable, $this->generatorArgs);
     }
     
     /**
@@ -58,9 +60,10 @@ class ResultMessageStream extends ResultMessage implements ResultMessageStreamIn
      * {@inheritdoc}
      * @see ResultMessageStreamInterface::setMessageStreamGenerator()
      */
-    public function setMessageStreamGenerator(callable $closure) : ResultMessageStreamInterface
+    public function setMessageStreamGenerator(callable $closure, array $arguments = []) : ResultMessageStreamInterface
     {
         $this->generatorCallable = $closure;
+        $this->generatorArgs = $arguments;
         return $this;
     }
     

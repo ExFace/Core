@@ -2,14 +2,13 @@
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Actions\iCanBeCalledFromCLI;
 use exface\Core\CommonLogic\AbstractActionDeferred;
-use exface\Core\CommonLogic\Tasks\ResultMessageStream;
 use exface\Core\CommonLogic\Actions\ServiceParameter;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Events\Workbench\OnCleanUpEvent;
+use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
 
 /**
  * Triggers various housekeeping procedures: purging older queue messages and monitor data, etc.
@@ -34,24 +33,19 @@ class CleanUp extends AbstractActionDeferred implements iCanBeCalledFromCLI
     private $areas = null;
     
     /**
-     * 
+     *
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AbstractAction::perform()
+     * @see \exface\Core\CommonLogic\AbstractActionDeferred::performImmediately()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
+    protected function performImmediately(TaskInterface $task, DataTransactionInterface $transaction, ResultMessageStreamInterface $result) : array
     {
-       $result = new ResultMessageStream($task);
-       $result->setMessageStreamGenerator([$this, 'performDeferred']);
-       
-       // IMPORTANT: don't forget to trigger the postprocessing!!!
-       $this->performAfterDeferred($result, $transaction);
-       
-       return $result;
+        return [];
     }
     
     /**
      * 
-     * @return \Generator
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractActionDeferred::performDeferred()
      */
     public function performDeferred() : \Generator
     {

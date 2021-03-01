@@ -16,6 +16,7 @@ use exface\Core\CommonLogic\Queue\TaskQueueBroker;
 use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\CommonLogic\Tasks\ResultError;
+use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
 
 /**
  * 
@@ -39,24 +40,19 @@ class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AbstractAction::perform()
+     * @see \exface\Core\CommonLogic\AbstractActionDeferred::performImmediately()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
+    protected function performImmediately(TaskInterface $task, DataTransactionInterface $transaction, ResultMessageStreamInterface $result) : array
     {
-       $result = new ResultMessageStream($task);
-       $result->setMessageStreamGenerator([$this, 'runScheduler']);
-       
-       // IMPORTANT: don't forget to trigger the postprocessing!!!
-       $this->performAfterDeferred($result, $transaction);
-       
-       return $result;
+        return [];
     }
     
     /**
      * 
-     * @return \Generator
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractActionDeferred::performDeferred()
      */
-    public function runScheduler() : \Generator
+    protected function performDeferred() : \Generator
     {
         yield 'Running the scheduler at ' . DateTimeDataType::formatDateLocalized((new \DateTime()), $this->getWorkbench()) . ':' . PHP_EOL;
         $scheduledDs = $this->getScheduledTasks();

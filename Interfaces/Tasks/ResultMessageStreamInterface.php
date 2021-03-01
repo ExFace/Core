@@ -21,9 +21,14 @@ interface ResultMessageStreamInterface extends ResultInterface
     public function getMessageStreamGenerator() : \Traversable;
     
     /**
+     * Sets the generator to stream for and the arguments to pass to it if required.
+     * 
+     * The arguments are meant to be used as `call_user_func_array($generator, $arguments)`.
      * 
      * @param callable $generator
+     * @param array $arguments
+     * 
      * @return ResultMessageStreamInterface
      */
-    public function setMessageStreamGenerator(callable $generator) : ResultMessageStreamInterface;
+    public function setMessageStreamGenerator(callable $generator, array $arguments = []) : ResultMessageStreamInterface;
 }
