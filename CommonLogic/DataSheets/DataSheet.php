@@ -1538,8 +1538,12 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
+     * Array of sorters to apply when reading from the data source
      * 
-     * {@inheritDoc}
+     * @uxon-property sorters
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSorter[]
+     * @uxon-template [{"attribute_alias": "","direction": "ASC"}]
+     * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getSorters()
      */
     public function getSorters()
@@ -1823,6 +1827,15 @@ class DataSheet implements DataSheetInterface
         return $this->filters;
     }
 
+    /**
+     * Condition group to filter the data when reading from the data source.
+     * 
+     * @uxon-property filters
+     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
+     * @uxon-template {"operator": "AND","conditions":[{"expression": "","comparator": "=","value": ""}]}
+     * 
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setFilters()
+     */
     public function setFilters(ConditionGroup $condition_group)
     {
         $this->filters = $condition_group;
