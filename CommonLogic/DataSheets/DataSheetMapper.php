@@ -59,14 +59,14 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::map()
      */
-    public function map(DataSheetInterface $fromSheet) : DataSheetInterface
+    public function map(DataSheetInterface $fromSheet, bool $readMissingColumns = null) : DataSheetInterface
     {
         if (! $this->getFromMetaObject()->is($fromSheet->getMetaObject())){
             throw new DataSheetMapperInvalidInputError($fromSheet, $this, 'Input data sheet based on "' . $fromSheet->getMetaObject()->getAliasWithNamespace() . '" does not match the input object of the mapper "' . $this->getFromMetaObject()->getAliasWithNamespace() . '"!');
         }
         
         // Make sure, the from-sheet has everything needed
-        $fromSheet = $this->prepareFromSheet($fromSheet);
+        $fromSheet = $this->prepareFromSheet($fromSheet, $readMissingColumns);
         
         // Create an empty to-sheet
         $toSheet = DataSheetFactory::createFromObject($this->getToMetaObject());
@@ -114,48 +114,62 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * 
      * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
      */
-    protected function prepareFromSheet(DataSheetInterface $data_sheet) : DataSheetInterface
+    protected function prepareFromSheet(DataSheetInterface $data_sheet, bool $readMissingColumns = null) : DataSheetInterface
     {
-        // Only try to add new columns if the sheet has a UID column and is fresh (no values changed)
-        if ($data_sheet->hasUidColumn(true) && $data_sheet->isFresh()){
-            $additionSheet = null;
-            // See if any mapped columns are missing in the original data sheet. If so, add empty
-            // columns and also create a separate sheet for reading missing data.
+        // If reading missing column not requested explicitly, add them automatically 
+        // if the sheet has a UID column and is fresh (no values changed)
+        $readMissingColumns = $readMissingColumns ?? ($data_sheet->hasUidColumn(true) && $data_sheet->isFresh());
+        
+        if ($readMissingColumns !== true) {
+            return $data_sheet;
+        }
+        
+        if ($data_sheet->isEmpty()) {
             foreach ($this->getColumnToColumnMappings() as $map){
-                $from_expression = $map->getFromExpression();
-                if (! $data_sheet->getColumns()->getByExpression($from_expression)){
-                    if ($additionSheet === null) {
-                        $additionSheet = $data_sheet->copy();
-                        foreach ($additionSheet->getColumns() as $col) {
-                            if ($col !== $additionSheet->getUidColumn()) {
-                                $additionSheet->getColumns()->remove($col);
-                            }
-                        }
-                    }
-                    $data_sheet->getColumns()->addFromExpression($from_expression);
-                    $additionSheet->getColumns()->addFromExpression($from_expression);
-                }
+                $data_sheet->getColumns()->addFromExpression($map->getFromExpression());
             }
-            // If columns were added to the original sheet, that need data to be loaded,
-            // use the additional data sheet to load the data. This makes sure, the values
-            // in the original sheet (= the input values) are not overwrittten by the read
-            // operation.
-            if (! $data_sheet->isFresh()){
-                $additionSheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
-                $additionSheet->dataRead();
-                $uidCol = $data_sheet->getUidColumn();
-                foreach ($additionSheet->getColumns() as $addedCol) {
-                    foreach ($additionSheet->getRows() as $row) {
-                        $uid = $row[$uidCol->getName()];
-                        $rowNo = $uidCol->findRowByValue($uid);
-                        if ($uid === null || $rowNo === false) {
-                            throw new DataSheetMapperError($this, 'Cannot load additional data in preparation for mapping!');
+            $data_sheet->dataRead();
+            return $data_sheet;
+        }
+        
+        $additionSheet = null;
+        // See if any mapped columns are missing in the original data sheet. If so, add empty
+        // columns and also create a separate sheet for reading missing data.
+        foreach ($this->getColumnToColumnMappings() as $map){
+            $from_expression = $map->getFromExpression();
+            if (! $data_sheet->getColumns()->getByExpression($from_expression)){
+                if ($additionSheet === null) {
+                    $additionSheet = $data_sheet->copy();
+                    foreach ($additionSheet->getColumns() as $col) {
+                        if ($col !== $additionSheet->getUidColumn()) {
+                            $additionSheet->getColumns()->remove($col);
                         }
-                        $data_sheet->setCellValue($addedCol->getName(), $rowNo, $row[$addedCol->getName()]);
                     }
+                }
+                $data_sheet->getColumns()->addFromExpression($from_expression);
+                $additionSheet->getColumns()->addFromExpression($from_expression);
+            }
+        }
+        // If columns were added to the original sheet, that need data to be loaded,
+        // use the additional data sheet to load the data. This makes sure, the values
+        // in the original sheet (= the input values) are not overwrittten by the read
+        // operation.
+        if (! $data_sheet->isFresh()){
+            $additionSheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
+            $additionSheet->dataRead();
+            $uidCol = $data_sheet->getUidColumn();
+            foreach ($additionSheet->getColumns() as $addedCol) {
+                foreach ($additionSheet->getRows() as $row) {
+                    $uid = $row[$uidCol->getName()];
+                    $rowNo = $uidCol->findRowByValue($uid);
+                    if ($uid === null || $rowNo === false) {
+                        throw new DataSheetMapperError($this, 'Cannot load additional data in preparation for mapping!');
+                    }
+                    $data_sheet->setCellValue($addedCol->getName(), $rowNo, $row[$addedCol->getName()]);
                 }
             }
         }
+            
         return $data_sheet;
     }
     
