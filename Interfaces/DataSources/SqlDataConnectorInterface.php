@@ -7,12 +7,18 @@ interface SqlDataConnectorInterface extends DataConnectionInterface, TextualQuer
 {
 
     /**
-     * Runs any sql returning a data query instance
+     * Runs any sql returning a data query instance.
+     * 
+     * Using the optional $multiquery parameter you can force the SQL to be
+     * executed in multiquery mode (true) or not (false). Multiqueries are
+     * obviously more versatile, but also vulnarable to SQL injections. Use
+     * this with caution!!!
      *
-     * @param string $string            
+     * @param string $string      
+     * @param bool $multiquery      
      * @return SqlDataQuery
      */
-    public function runSql($string);
+    public function runSql($string, bool $multiquery = null);
 
     /**
      *

@@ -100,8 +100,27 @@ class MySqlConnector extends AbstractSqlConnector
      */
     protected function performQuerySql(SqlDataQuery $query)
     {
+        $conn = $this->getCurrentConnection();
         try {
-            $result = mysqli_query($this->getCurrentConnection(), $query->getSql());
+            if ($query->isMultipleStatements()) {
+                if (mysqli_multi_query($conn, $query->getSql())) {
+                    $idx = 0;
+                    do {
+                        $idx++;
+                        //$result = mysqli_use_result($conn);
+                        if (mysqli_more_results($conn)) {
+                            //mysqli_free_result($result);
+                        } else {
+                            break;
+                        }
+                        if(!mysqli_next_result($conn) || mysqli_errno($conn)) {
+                            throw new DataQueryFailedError($query, 'Error in query ' . $idx . ' of a multi-query statement. ' . $this->getLastError());
+                        }
+                    } while (true);
+                }
+            } else {
+                $result = mysqli_query($conn, $query->getSql());
+            }
             if ($result instanceof \mysqli_result) {
                 $query->setResultResource($result);
             }
