@@ -446,6 +446,11 @@ class GraphChartSeries extends ChartSeries
         return $this->getMetaObject()->getAttribute($this->direction_attribute_alias);
     }
     
+    public function hasDirectionColumn() : bool
+    {
+        return $this->direction_attribute_alias !== null;
+    }
+    
     /**
      * Attribute alias for direction (relative to the meta object of the chart series).
      *
@@ -604,7 +609,9 @@ class GraphChartSeries extends ChartSeries
         $this->getRightObjectNameAxis();
         $this->getRelationAxis();
         $this->getRelationNameAxis();
-        $this->getDirectionAxis();
+        if ($this->hasDirectionColumn()) {
+            $this->getDirectionAxis();
+        }
         if ($this->hasCategories() === true) {
             $this->getCategoryAxis();
         }
