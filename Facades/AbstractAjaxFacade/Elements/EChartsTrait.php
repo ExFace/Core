@@ -2334,7 +2334,20 @@ JS;
      */
     protected function buildJsRedrawGraph(string $selection = 'undefined', string $dataJs = 'rowData')
     {
+        /* @var $series \exface\Core\Widgets\Parts\Charts\GraphChartSeries */
         $series = $this->getWidget()->getSeries()[0];
+        
+        // we only check relations in regular direction	to data, so arrows are always in the right direction in the graph
+        // if relation direction is "regular" left object is source node, right object is target node for that relation
+        $getSourceAndTargetFromRowJs = <<<JS
+        
+    		source = {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()};
+    		target = {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()};
+
+JS;
+        if ($series->hasDirectionColumn()) {
+            $getSourceAndTargetFromRowJs = "if (oRow.{$series->getDirectionDataColumn()->getDataColumnName()} == 'regular') {" . $getSourceAndTargetFromRowJs . "}";
+        }
         
         if ($series->hasCategories() === true) {
             $categories = <<<JS
@@ -2371,28 +2384,31 @@ JS;
     var node = {};
     var link = {};
     var categories = [];
+    var oRow = [];
+    var source, target, existingNodeLeft, existingNodeRight, existingLink;
     
     // for each data object add a node that's not already existing to the nodes array
     // and a link that's not already existing to the links array
-    for (var i = 0; i < {$dataJs}.length; i++) {    	
-		var existingNodeLeft = false;
-        var existingNodeRight = false;
+    for (var i = 0; i < {$dataJs}.length; i++) {    
+        oRow = {$dataJs}[i];	
+		existingNodeLeft = false;
+        existingNodeRight = false;
         for (var j = 0; j<nodes.length; j++) {
             // if the right object already exists at node, increase the symbol size of that node
-			if (nodes[j].id === {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()}) {
+			if (nodes[j].id === oRow.{$series->getRightObjectDataColumn()->getDataColumnName()}) {
 				existingNodeRight = true;
                 nodes[j].symbolSize += 1;
                 nodes[j].value += 1;
 			}
             // if the left object already exists at node, increase the symbol size of that node
-			if (nodes[j].id === {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
+			if (nodes[j].id === oRow.{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
 				existingNodeLeft = true;
                 nodes[j].symbolSize += 1;
                 nodes[j].value += 1;
 			}
 		}
         // if the left and right object are the same and not yet existing as node, only add the left object to the nodes
-        if ({$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()} === {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
+        if (oRow.{$series->getRightObjectDataColumn()->getDataColumnName()} === oRow.{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
             existingNodeRight = true;
         }
 
@@ -2402,8 +2418,8 @@ JS;
         // if the left object is not existing as node yet, add it
 		if (existingNodeLeft === false ) {
 			node = {
-				id: {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()},
-				name: {$dataJs}[i].{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
+				id: oRow.{$series->getLeftObjectDataColumn()->getDataColumnName()},
+				name: oRow.{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
                 symbolSize: 10,
 				value: 10,
                 category: nodeCategory,
@@ -2413,32 +2429,29 @@ JS;
         // if the right object is not existing as node yet, add it
 		if (existingNodeRight === false ) {
 			node = {
-				id: {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()},
-				name: {$dataJs}[i].{$series->getRightObjectNameDataColumn()->getDataColumnName()},
+				id: oRow.{$series->getRightObjectDataColumn()->getDataColumnName()},
+				name: oRow.{$series->getRightObjectNameDataColumn()->getDataColumnName()},
 				symbolSize: 10,
 				value: 10,
                 category: nodeCategory,
 			};
-		nodes.push(node);
+	        nodes.push(node);
 		}
-        // we only check relations in regular direction	to data, so arrows are always in the right direction in the graph
-    	// if relation direction is "regular" left object is source node, right object is target node for that relation
-        if ({$dataJs}[i].{$series->getDirectionDataColumn()->getDataColumnName()} == "regular") {
-    		var source = {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()};
-    		var target = {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()};
-        }
-        var existingLink = false;
+        
+        {$getSourceAndTargetFromRowJs}
+        
+        existingLink = false;
         // for every relation check if it's not already existing in links array
         for (var j = 0; j<links.length; j++) {
-            if (links[j].id === {$dataJs}[i].{$series->getRelationDataColumn()->getDataColumnName()}) {
+            if (links[j].id === oRow.{$series->getRelationDataColumn()->getDataColumnName()}) {
                 existingLink = true;
             }
         }
         // if relation is not existing yet as link, add it to links array
         if (existingLink === false) {
             link = {
-        		id: {$dataJs}[i].{$series->getRelationDataColumn()->getDataColumnName()},
-        		name: {$dataJs}[i].{$series->getRelationNameDataColumn()->getDataColumnName()},
+        		id: oRow.{$series->getRelationDataColumn()->getDataColumnName()},
+        		name: oRow.{$series->getRelationNameDataColumn()->getDataColumnName()},
         		source: source,
         		target: target,
         	};
