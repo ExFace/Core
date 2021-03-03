@@ -105,13 +105,15 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSources\SqlDataConnectorInterface::runSql()
      */
-    public function runSql($string)
+    public function runSql($string, bool $multiquery = null)
     {
         $query = new SqlDataQuery();
         $query->setSql($string);
+        if ($multiquery !== null) {
+            $query->forceMultipleStatements($multiquery);
+        }
         return $this->query($query);
     }
     
