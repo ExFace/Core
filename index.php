@@ -12,9 +12,9 @@ $workbench = new \exface\Core\CommonLogic\Workbench();
 // If the middleware will not be able to match a rout, the handler will return the
 // fallback response created here - which is an empty 404. This is enough for a
 // simple API endpoint.
-$handler = new HttpRequestHandler(new NotFoundHandler());
+$handler = new HttpRequestHandler(new NotFoundHandler(), $workbench->getLogger());
 $handler->add(new FacadeResolverMiddleware($workbench));
 $response = $handler->handle(ServerRequest::fromGlobals());
 
 // Send the response
-$handler::send($response);
+$handler->send($response);

@@ -38,18 +38,17 @@ class WebConsoleFacade extends AbstractHttpFacade
      */
     public function handle(ServerRequestInterface $request) : ResponseInterface
     {
-        if ($this->getWorkbench()->isStarted() === false) {
-            $this->getWorkbench()->start();
-        }
-        
-        $handler = new HttpRequestHandler(new OKHandler());
-        $handler->add(new AuthenticationMiddleware($this));
-        $responseTpl = $handler->handle($request);
-        if ($responseTpl->getStatusCode() >= 400) {
-            return $responseTpl;
-        }
-        
         try {
+            if ($this->getWorkbench()->isStarted() === false) {
+                $this->getWorkbench()->start();
+            }
+            
+            $handler = new HttpRequestHandler(new OKHandler());
+            $handler->add(new AuthenticationMiddleware($this));
+            $responseTpl = $handler->handle($request);
+            if ($responseTpl->getStatusCode() >= 400) {
+                return $responseTpl;
+            }
             $response = $this->performCommand($request);
         } catch (\Throwable $e) {
             if ($e instanceof ExceptionInterface) {
