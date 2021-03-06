@@ -115,7 +115,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                     $event->preventCreate();
                     $eventSheet->removeRows();
                     $eventSheet->addRow($row);
-                    $eventSheet->dataUpdate();
+                    $eventSheet->dataUpdate(false, $event->getTransaction());
                     return;
             }
         } else {
@@ -153,7 +153,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                         $eventSheet->removeRow($duplRowNo);
                     }
                     //call update on update sheet
-                    $updateSheet->dataUpdate();
+                    $updateSheet->dataUpdate(false, $event->getTransaction());
                     
                     if ($eventSheet->isEmpty()) {
                         $event->preventCreate();
