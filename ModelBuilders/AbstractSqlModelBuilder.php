@@ -112,6 +112,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
                 if ($meta_object->isWritable(true) === false) {
                     $row['WRITABLEFLAG'] = false;
                     $row['EDITABLEFLAG'] = false;
+                    $row['COPYABLEFLAG'] = false;
                 }
                 $result_data_sheet->addRow($row);
             }
