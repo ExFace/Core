@@ -111,6 +111,10 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
         $sql = "SELECT table_name as ALIAS, table_name as NAME, table_name as DATA_ADDRESS, table_comment as SHORT_DESCRIPTION FROM information_schema.tables where table_schema='{$this->getDataConnection()->getDbase()}' {$filter}";
         $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
         foreach ($rows as $nr => $row) {
+            // MySQL views have the table_comment "VIEW" by default - ignore it
+            if ($row['SHORT_DESCRIPTION'] === 'VIEW') {
+                $row['SHORT_DESCRIPTION'] = '';
+            }
             $rows[$nr]['NAME'] = $this->generateLabel($row['NAME'], $row['SHORT_DESCRIPTION']);
         }
         return $rows;
