@@ -305,7 +305,7 @@
         },
         {
             "CREATED_ON": "2020-03-10 17:42:53",
-            "MODIFIED_ON": "2020-05-06 16:48:17",
+            "MODIFIED_ON": "2021-03-07 18:53:31",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea62f692491b8ca2e30205857feb80",
@@ -336,7 +336,7 @@
             "UIDFLAG": "0",
             "HIDDENFLAG": "0",
             "EDITABLEFLAG": "1",
-            "REQUIREDFLAG": "1",
+            "REQUIREDFLAG": "0",
             "RELATED_OBJ": "",
             "SORTERPOS": null,
             "SORTERDIR": "",

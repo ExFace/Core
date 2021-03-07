@@ -70,6 +70,23 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Prevent deleting system roles",
             "DESCRIPTION": "Core roles AUTHENTICATED, ANONYMOUS and SUPERUSER must not be deleted!"
+        },
+        {
+            "CREATED_ON": "2021-03-07 18:53:11",
+            "MODIFIED_ON": "2021-03-07 19:03:53",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebbd69fbcdbb00bd69025041000001",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/AliasGeneratingBehavior.php",
+            "CONFIG_UXON": {
+                "source_attribute_alias": "NAME",
+                "target_attribute_alias": "ALIAS",
+                "case": "lower"
+            },
+            "OBJECT": "0x11ea4b0d9c862d5db2cfe4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Generate alias from name",
+            "DESCRIPTION": ""
         }
     ],
     "totals_rows": [],
