@@ -72,4 +72,16 @@ class ActionSchema extends UxonSchema
     {
         return '\\' . AbstractAction::class;
     }
+    
+    
+    public function getPropertyValueRecursive(UxonObject $uxon, array $path, string $propertyName, string $rootValue = '')
+    {
+        if ($propertyName === 'object_alias' && $path[0] === 'input_mappers' && $path[count($path)-1] === 'from') {
+            $mapper = $uxon->getProperty($path[0])->getProperty($path[1]);
+            if ($mapper->hasProperty('from_object_alias')) {
+                return $mapper->getProperty('from_object_alias');
+            }
+        }
+        return parent::getPropertyValueRecursive($uxon, $path, $propertyName, $rootValue);
+    }
 }

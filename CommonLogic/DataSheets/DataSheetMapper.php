@@ -14,6 +14,7 @@ use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
 use exface\Core\Factories\DataColumnFactory;
 use exface\Core\Interfaces\DataSheets\DataColumnToFilterMappingInterface;
 use exface\Core\Interfaces\DataSheets\DataFilterToColumnMappingInterface;
+use exface\Core\Uxon\DataSheetMapperSchema;
 
 /**
  * Maps data from one data sheet to another using mappers for columns, filters, sorters, etc.
@@ -666,5 +667,15 @@ class DataSheetMapper implements DataSheetMapperInterface {
     {
         $this->refreshDataAfterMapping = $trueOrFalse;
         return $this;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return DataSheetMapperSchema::class;
     }
 }
