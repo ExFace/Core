@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
     "created_on": "2013-06-20 19:21:06",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-07-23 09:32:48",
+    "modified_on": "2021-03-07 19:05:31",
     "contents": {
         "object_alias": "exface.Core.OBJECT",
         "widget_type": "DataTable",
@@ -127,6 +127,10 @@
                 "action_alias": "exface.Core.DeleteObject"
             },
             {
+                "action_alias": "exface.Core.ShowModelBuilderDialog",
+                "caption": "=TRANSLATE('exface.Core', 'ACTION.SHOWMODELBUILDERDIALOG.NAME')"
+            },
+            {
                 "action": {
                     "alias": "exface.Core.GoToPage",
                     "page_alias": "exface.core.attributes",
@@ -143,10 +147,6 @@
                     "input_rows_max": 1
                 },
                 "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.RELATIONS')"
-            },
-            {
-                "action_alias": "exface.Core.ShowModelBuilderDialog",
-                "caption": "=TRANSLATE('exface.Core', 'ACTION.SHOWMODELBUILDERDIALOG.NAME')"
             }
         ]
     }
