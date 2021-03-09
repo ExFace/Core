@@ -19,8 +19,14 @@ abstract class AbstractMapLayer extends AbstractMapPart implements MapLayerInter
     private $autoZoomToSeeAll = null;
     
     /**
+     * The type (prototype class) of the layer.
+     * 
+     * Use one of the built-in classes (e.g. `DataMarkers`, `GeoJSON`, etc.) or 
+     * specify any PHP class implementing the MapLayerInterface (e.g. 
+     * `\exface\Core\Widgets\Parts\Maps\DataMarkersLayer`).
+     * 
      * @uxon-property type
-     * @uxon-type [DataLine,DataMarkers]
+     * @uxon-type [DataLine,DataMarkers,GeoJSON]
      * @uxon-required true
      * 
      * @return MapLayerInterface
@@ -92,5 +98,14 @@ abstract class AbstractMapLayer extends AbstractMapPart implements MapLayerInter
     public function prepareDataSheetToPrefill(DataSheetInterface $sheet): DataSheetInterface
     {
         return $sheet;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return MapLayerUxonSchema::class;
     }
 }
