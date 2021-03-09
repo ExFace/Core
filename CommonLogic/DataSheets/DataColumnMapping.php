@@ -76,7 +76,7 @@ class DataColumnMapping implements DataColumnMappingInterface
      * The expression can be an attribute alias, a constant or a formula.
      * 
      * @uxon-property from
-     * @uxon-type string
+     * @uxon-type metamodel:expression
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::setFrom()
@@ -114,8 +114,8 @@ class DataColumnMapping implements DataColumnMappingInterface
     /**
      * This is the expression, that the from-expression is going to be translated to.
      * 
-     * @uxon-property from
-     * @uxon-type string
+     * @uxon-property to
+     * @uxon-type metamodel:expression
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::setTo()
