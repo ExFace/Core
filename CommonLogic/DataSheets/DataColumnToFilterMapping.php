@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnToFilterMappingInterface;
+use exface\Core\Uxon\DataSheetMapperSchema;
 
 /**
  * Maps on data sheet column to a filter expression in another data sheet.
@@ -58,6 +59,13 @@ class DataColumnToFilterMapping extends DataColumnMapping implements DataColumnT
         $this->comparator = $comparator;
         return $this;
     }
-
-    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return DataSheetMapperSchema::class;
+    }
 }

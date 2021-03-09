@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\DataSheets\DataFilterToColumnMappingInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\Uxon\DataSheetMapperSchema;
 
 /**
  * Maps all filters matching the given expression from one sheet to a column of another sheet.
@@ -226,5 +227,15 @@ class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterT
     {
         $this->removeFilter = $value;
         return $this;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return DataSheetMapperSchema::class;
     }
 }
