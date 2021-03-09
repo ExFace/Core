@@ -74,11 +74,15 @@ class UxonAutosuggest extends AbstractAction
         $type = $task->getParameter(self::PARAM_TYPE);
         $uxon = UxonObject::fromJson($task->getParameter(self::PARAM_UXON));
         $schemaName = $task->getParameter(self::PARAM_SCHEMA);
+        $schemaBase = new UxonObject();
         $rootObject = null;
         
         if ($rootObjectSelector = $task->getParameter(self::PARAM_OBJECT)) {
             try {
                 $rootObject = $this->getWorkbench()->model()->getObject($rootObjectSelector);
+                if (! $schemaBase->hasProperty('object_alias')) {
+                    $schemaBase->setProperty('object_alias', $rootObject->getAliasWithNamespace());
+                }
             } catch (MetaObjectNotFoundError $e) {
                 $rootObject = null;  
             }
@@ -102,6 +106,10 @@ class UxonAutosuggest extends AbstractAction
             $schemaName = '\\' . $rootPrototypeClass::getUxonSchemaClass();
         }
         $schema = UxonSchemaFactory::create($this->getWorkbench(), $schemaName);
+        
+        if (! $schemaBase->isEmpty()) {
+            $uxon = $schemaBase->extend($uxon);
+        }
         
         switch (true) {
             case strcasecmp($type, self::TYPE_FIELD) === 0:
