@@ -1278,6 +1278,7 @@ CSS;
                     input: 'preset',
                     schema: {$uxonSchema},
                     prototype: {$rootPrototype},
+                    object: {$rootObject},
                     uxon: node.editor.getText()
                 }, // data
                 

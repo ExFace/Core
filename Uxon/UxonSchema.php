@@ -147,11 +147,44 @@ class UxonSchema implements UxonSchemaInterface
             }
         }
         
-        if (count($path) > 1) {
-            return $this->getPropertyValueRecursive($uxon->getProperty($prop), $path, $propertyName, $value);
+        if (count($path) > 0) {
+            // If the current property is an array, we need to step into one of the arrays
+            // elements to get the next schema (because the array itself is still part of
+            // the parent schema)
+            if (is_numeric($path[0])) {
+                $prop2 = array_shift($path);
+                $nextStep = [$prop, $prop2];
+                $nextUxon = $uxon->getProperty($prop)->getProperty($prop2);
+                if (! ($nextUxon instanceof UxonObject)) {
+                    return $value;
+                }
+            } else {
+                $nextStep = [$prop];
+                $nextUxon = $uxon->getProperty($prop);
+            }
+            $nextSchema = $this->getSchemaForClass($this->getPrototypeClass($uxon, $nextStep));
+            return $nextSchema->getPropertyValueRecursive($nextUxon, $path, $propertyName, $value);
         }
         
         return $value;
+    }
+    
+    /**
+     * 
+     * @param UxonObject $uxon
+     * @param array $path
+     * @return UxonObject
+     */
+    protected function getPathTargetUxon(UxonObject $uxon, array $path) : UxonObject
+    {
+        $level = $uxon;
+        foreach ($path as $step) {
+            $value = $level->getProperty($step);
+            if ($value instanceof UxonObject) {
+                $level = $value;
+            }
+        }
+        return $level;
     }
     
     /**
@@ -438,8 +471,7 @@ class UxonSchema implements UxonSchemaInterface
     }
     
     /**
-     *
-     * {@inheritdoc}
+     * 
      * @see UxonSchemaInterface::getMetaObject()
      */
     public function getMetaObject(UxonObject $uxon, array $path, MetaObjectInterface $rootObject = null) : MetaObjectInterface
@@ -827,7 +859,7 @@ class UxonSchema implements UxonSchemaInterface
             $class = $prototypeClass::getUxonSchemaClass();
         } 
         
-        if ($class === null || is_subclass_of($this, $class)) {
+        if ($class === null || is_a($this, $class, true)) {
             return $this;
         }
         
@@ -881,15 +913,20 @@ class UxonSchema implements UxonSchemaInterface
     {
         $presets = [];
         
+        $prototypeClass = $this->getPrototypeClass($uxon, $path, $rootPrototypeClass);
+        $schema = $this->getSchemaForClass($prototypeClass);
+        
+        if ($schema !== $this) {
+            return $schema->getPresets($uxon, $path, $rootPrototypeClass);
+        }
+        
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.' . strtoupper($this::getSchemaName()) . '_PRESET');
         $ds->getColumns()->addMultiple(['UID','NAME', 'PROTOTYPE__LABEL', 'DESCRIPTION', 'PROTOTYPE', 'UXON' , 'WRAP_PATH', 'WRAP_FLAG', 'THUMBNAIL']);
-        $ds->getFilters()->addConditionFromString('UXON_SCHEMA', $this::getSchemaName());
+        $ds->getFilters()->addConditionFromString('UXON_SCHEMA', $schema::getSchemaName());
         $ds->getSorters()
         ->addFromString('PROTOTYPE', SortingDirectionsDataType::ASC)
         ->addFromString('NAME', SortingDirectionsDataType::ASC);
         $ds->dataRead();
-        
-        $class = $this->getPrototypeClass($uxon, $path, $rootPrototypeClass);
         
         foreach ($ds->getRows() as $row) {
             // TODO: Leerer Editor, oberste Knoten => class ist abstract widget => keine Filterung
