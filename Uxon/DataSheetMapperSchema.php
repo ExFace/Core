@@ -39,6 +39,7 @@ class DataSheetMapperSchema extends UxonSchema
         }
         
         // Editable attributes
+        $mappings = [];
         foreach ($objectTo->getAttributes()->getEditable() as $attr) {
             $mappings[] = [
                 'from' => '',
@@ -61,6 +62,7 @@ class DataSheetMapperSchema extends UxonSchema
         ];
         
         // All attributes
+        $mappings = [];
         foreach ($objectTo->getAttributes() as $attr) {
             $mappings[] = [
                 'from' => '',
@@ -93,5 +95,16 @@ class DataSheetMapperSchema extends UxonSchema
     protected function getDefaultPrototypeClass() : string
     {
         return '\\' . DataSheetMapper::class;
+    }
+    
+    public function getPropertyValueRecursive(UxonObject $uxon, array $path, string $propertyName, string $rootValue = '')
+    {
+        if ($propertyName === 'object_alias' && $path[count($path)-1] === 'from' && $uxon['from_object_alias']) {
+            return $uxon['from_object_alias'];
+        }
+        if ($propertyName === 'object_alias' && $path[count($path)-1] === 'to' && $uxon['to_object_alias']) {
+            return $uxon['to_object_alias'];
+        }
+        return parent::getPropertyValueRecursive($uxon, $path, $propertyName, $rootValue);
     }
 }

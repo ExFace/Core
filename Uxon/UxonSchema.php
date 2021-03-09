@@ -100,7 +100,7 @@ class UxonSchema implements UxonSchemaInterface
     {
         $rootPrototypeClass = $rootPrototypeClass ?? $this->getDefaultPrototypeClass();
         
-        if (count($path) > 1) {
+        if (count($path) > 0 && ($uxon->getProperty($path[0]) instanceof UxonObject)) {
             $prop = array_shift($path);
             
             if (is_numeric($prop) === false) {
@@ -913,14 +913,27 @@ class UxonSchema implements UxonSchemaInterface
     {
         $presets = [];
         
-        $prototypeClass = $this->getPrototypeClass($uxon, $path, $rootPrototypeClass);
+        $prototypeClass = $this->getPrototypeClass($uxon, $path, $rootPrototypeClass, true);
         $schema = $this->getSchemaForClass($prototypeClass);
         
         if ($schema !== $this) {
             return $schema->getPresets($uxon, $path, $rootPrototypeClass);
         }
         
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.' . strtoupper($this::getSchemaName()) . '_PRESET');
+        $schemaNameUC = strtoupper($this::getSchemaName());
+        switch ($schemaNameUC) {
+            case 'CONNECTION':
+            case 'BEHAVIOR':
+            case 'DATATYPE':
+            case 'ACTION':
+            case 'WIDGET':
+                $objectAlias = 'exface.Core.' . $schemaNameUC . '_PRESET';
+                break;
+            default:
+                $objectAlias = 'exface.Core.UXON_PRESET';
+                
+        }
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $objectAlias);
         $ds->getColumns()->addMultiple(['UID','NAME', 'PROTOTYPE__LABEL', 'DESCRIPTION', 'PROTOTYPE', 'UXON' , 'WRAP_PATH', 'WRAP_FLAG', 'THUMBNAIL']);
         $ds->getFilters()->addConditionFromString('UXON_SCHEMA', $schema::getSchemaName());
         $ds->getSorters()

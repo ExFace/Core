@@ -2094,6 +2094,14 @@ class DataSheet implements DataSheetInterface
         return $this->rows_on_page;
     }
 
+    /**
+     * Max. number of rows to read (all if not set explicitly)
+     * 
+     * @uxon-property rows_limit
+     * @uxon-type integer
+     * 
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setRowsLimit()
+     */
     public function setRowsLimit($value)
     {
         $this->rows_on_page = $value;
@@ -2105,6 +2113,14 @@ class DataSheet implements DataSheetInterface
         return $this->row_offset;
     }
 
+    /**
+     * Number of rows to skip when reading.
+     * 
+     * @uxon-property rows_offset
+     * @uxon-type integer
+     * 
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setRowsOffset()
+     */
     public function setRowsOffset($value)
     {
         $this->row_offset = $value;

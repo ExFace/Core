@@ -102,7 +102,7 @@ class UxonAutosuggest extends AbstractAction
         // If we know the prototype class and that class has a UXON schema, use that schema
         // instead of the one provided in the request. This is important in case the root
         // prototype alread has it's own custom schema!
-        if ($rootPrototypeClass && is_subclass_of($rootPrototypeClass, iCanBeConvertedToUxon::class) && $rootPrototypeClass::getUxonSchemaClass()) {
+        if ($rootPrototypeClass && is_subclass_of($rootPrototypeClass, iCanBeConvertedToUxon::class, true) && $rootPrototypeClass::getUxonSchemaClass()) {
             $schemaName = '\\' . $rootPrototypeClass::getUxonSchemaClass();
         }
         $schema = UxonSchemaFactory::create($this->getWorkbench(), $schemaName);

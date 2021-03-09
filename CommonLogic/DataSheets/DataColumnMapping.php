@@ -8,6 +8,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
 use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Uxon\DataSheetMapperSchema;
 
 /**
  * Maps one data sheet column to another column of another sheet.
@@ -197,5 +198,15 @@ class DataColumnMapping implements DataColumnMappingInterface
     {
         $this->createRowInEmptyData = $value;
         return $this;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return DataSheetMapperSchema::class;
     }
 }
