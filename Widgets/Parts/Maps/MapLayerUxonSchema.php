@@ -1,12 +1,12 @@
 <?php
-namespace exface\Core\Widgets\Parts\Charts;
+namespace exface\Core\Widgets\Parts\Maps;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Uxon\UxonSchema;
-use exface\Core\Widgets\Chart;
+use exface\Core\Widgets\Map;
 
 /**
- * UXON-schema class for chart series widget parts.
+ * UXON-schema class for map layer widget parts.
  * 
  * This schema loads the correct widget part depending on the `type` property of
  * series UXON.
@@ -16,7 +16,7 @@ use exface\Core\Widgets\Chart;
  * @author Andrej Kabachnik
  *
  */
-class ChartSeriesUxonSchema extends UxonSchema
+class MapLayerUxonSchema extends UxonSchema
 {
     /**
      * 
@@ -29,9 +29,9 @@ class ChartSeriesUxonSchema extends UxonSchema
         
         foreach ($uxon as $key => $value) {
             if (strcasecmp($key, 'type') === 0) {
-                $part = Chart::getSeriesClassName($value);
-                if ($this->validatePrototypeClass($part) === true) {
-                    $name = $part;
+                $class = Map::getLayerClassFromType($value);
+                if ($this->validatePrototypeClass($class) === true) {
+                    $name = $class;
                 }
                 break;
             }
@@ -47,10 +47,25 @@ class ChartSeriesUxonSchema extends UxonSchema
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Uxon\UxonSchema::getPropertyValueRecursive()
+     */
+    public function getPropertyValueRecursive(UxonObject $uxon, array $path, string $propertyName, string $rootValue = '')
+    {
+        if ($propertyName === 'object_alias' && $dataUxon = $uxon->getProperty('data')) {
+            if ($dataUxon->hasProperty('object_alias')) {
+                return $dataUxon->getProperty('object_alias');
+            }
+        }
+        return parent::getPropertyValueRecursive($uxon, $path, $propertyName, $rootValue);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Uxon\UxonSchema::getDefaultPrototypeClass()
      */
     protected function getDefaultPrototypeClass() : string
     {
-        return '\\' . ChartSeries::class;
+        return '\\' . AbstractMapLayer::class;
     }
 }

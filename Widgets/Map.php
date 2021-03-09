@@ -101,7 +101,7 @@ class Map extends AbstractWidget implements
      * BaseMaps to show on top of the map
      *
      * @uxon-property base_maps
-     * @uxon-type \exface\Core\Widgets\Parts\Maps\AbstractMapLayer[]
+     * @uxon-type \exface\Core\Widgets\Parts\Maps\AbstractBaseMap[]
      * @uxon-template [{"type": ""}]
      *
      * @param UxonObject $uxon
@@ -160,7 +160,7 @@ class Map extends AbstractWidget implements
      * Layers to show on top of the map
      * 
      * @uxon-property layers
-     * @uxon-type \exface\Core\Widgets\Parts\Maps\AbstractDataLayer[]
+     * @uxon-type \exface\Core\Widgets\Parts\Maps\AbstractMapLayer[]
      * @uxon-template [{"type": ""}]
      * 
      * @param UxonObject $uxon
@@ -186,7 +186,7 @@ class Map extends AbstractWidget implements
      * @param string $layerType
      * @return string
      */
-    protected function getLayerClassFromType(string $layerType, string $subfolder = null) : string
+    public static function getLayerClassFromType(string $layerType, string $subfolder = null) : string
     {
         if (substr($layerType, 0, 1) === '\\') {
             $class = $layerType;
