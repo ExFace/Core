@@ -18,7 +18,7 @@ trait JqueryLayoutTrait {
     private $searched_for_number_of_columns = false;
     
     /**
-     * Returns an inline JavaScript-Snippet to create/refresh the layout of the widget.
+     * Returns a JavaScript-Snippet to create/refresh the layout of the widget.
      *
      * @return string
      */

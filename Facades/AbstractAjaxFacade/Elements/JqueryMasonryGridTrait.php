@@ -70,7 +70,7 @@ trait JqueryMasonryGridTrait {
      */
     public function buildJsLayouter() : string
     {
-        return $this->buildJsFunctionPrefix() . 'layouter()';
+        return $this->buildJsFunctionPrefix() . 'layouter();';
     }
     
     /**
