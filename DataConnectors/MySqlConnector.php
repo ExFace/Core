@@ -22,6 +22,8 @@ class MySqlConnector extends AbstractSqlConnector
     private $connection_method = 'SET CHARACTER SET';
 
     private $use_persistant_connection = false;
+    
+    private $affectedRows = null;
 
     /**
      *
@@ -101,13 +103,15 @@ class MySqlConnector extends AbstractSqlConnector
     protected function performQuerySql(SqlDataQuery $query)
     {
         $conn = $this->getCurrentConnection();
+        $this->affectedRows = null;
         try {
             if ($query->isMultipleStatements()) {
                 if (mysqli_multi_query($conn, $query->getSql())) {
                     $idx = 0;
                     do {
                         $idx++;
-                        //$result = mysqli_use_result($conn);
+                        $this->affectedRows += mysqli_affected_rows($conn);
+                        $result = mysqli_use_result($conn);
                         if (mysqli_more_results($conn)) {
                             //mysqli_free_result($result);
                         } else {
@@ -172,6 +176,10 @@ class MySqlConnector extends AbstractSqlConnector
 
     public function getAffectedRowsCount(SqlDataQuery $query)
     {
+        if ($this->affectedRows !== null) {
+            return $this->affectedRows;
+        }
+        
         try {
             $cnt = mysqli_affected_rows($this->getCurrentConnection());
             // mysqli_affected_rows() can return -1 in case of an error accoring to the docs. It seems,
