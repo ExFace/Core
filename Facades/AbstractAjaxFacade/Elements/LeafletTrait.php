@@ -326,7 +326,7 @@ JS;
                                 var aRows = $aRowsJs || [];
                                 aRows.forEach(function(oRow){
                                     if (! oRow) return;
-                                    sHtml += '<tr class="' + (oRow.class || '') + '" title="' + (oRow.tooltip || '') + '"><td>' + oRow.caption + ':</td><td>' + oRow.value + '</td></tr>';
+                                    sHtml += '<tr class="' + (oRow.class || '') + '" title="' + (oRow.tooltip || '') + '"><td>' + oRow.caption + ':</td><td>' + (oRow.value === null || oRow.value === undefined ? '' : oRow.value) + '</td></tr>';
                                 });
                                 if (sHtml !== '') {
                                     sHtml = '<table class="exf-map-popup-table">' + sHtml + '</table>';
