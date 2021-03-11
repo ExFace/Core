@@ -778,6 +778,19 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     /**
      *
      * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::setDisabledIf()
+     */
+    public function setDisabledIf(UxonObject $value) : WidgetInterface
+    {
+        if ($this->isInputWidgetInitialized() === true) {
+            $this->getInputWidget()->setDisabledIf($value);
+        }
+        return parent::setDisabledIf($value);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::isDisabled()
      */
     public function isDisabled() : ?bool
