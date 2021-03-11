@@ -174,11 +174,17 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
                     $uxon_object->setProperty('condition_group', $inputUxon->getProperty('condition_group'));
                     $inputUxon->unsetProperty('condition_group');
                 }
-                if ($uxon_object !== null && $inputUxon->hasProperty('required')) {
-                    // A filter is only required, if a user explicitly marked it as required in the filter's UXON
+                
+                // A filter is only required, if a user explicitly marked it as required in the filter's UXON
+                if ($inputUxon->hasProperty('required')) {
                     $uxon_object->setProperty('required', $inputUxon->getProperty('required'));
                     $inputUxon->unsetProperty('required');
                 } 
+                // Similarly, a filter is only disabled, if a user explicitly marked it as required in the filter's UXON
+                if ($inputUxon->hasProperty('disabled')) {
+                    $uxon_object->setProperty('disabled', $inputUxon->getProperty('disabled'));
+                    $inputUxon->unsetProperty('disabled');
+                }
                 
                 $uxon_object->setProperty('input_widget', $inputUxon);
             }
