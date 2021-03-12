@@ -32,9 +32,8 @@
            {
                "context_scope": "Window",
                "context_alias": "exface.Core.DebugContext",
-               "visibility": "show_allways",
-               "restrict_only_admins": true
-           }           
+               "visibility": "show_allways"
+           }         
 	   ]
 	},
 	
