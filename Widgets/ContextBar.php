@@ -69,9 +69,7 @@ class ContextBar extends Toolbar
      *  {
      *      "context_alias": "exface.Core.DebugContext",
      *      "context_scope": "Window",
-     *      "visibility": "show_always",
-     *      "restrict_only_admins": true,
-     *      "restrict_only_authenticated": true
+     *      "visibility": "show_always"
      *  }
      *  
      * The visibility property takes the following options, that customize the
