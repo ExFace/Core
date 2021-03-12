@@ -32,8 +32,8 @@ trait HtmlProgressBarTrait
             $style .= 'height: ' . $this->getHeight() . '; ';
         }
         
-        if ($text === null && $value !== null) {
-            $text = $value;
+        if ($text === null) {
+            $text = $value ?? '&nbsp;';
         }
         $progress = $progress ?? $widget->getMin();
         $color = $color ?? 'transparent';
@@ -97,6 +97,9 @@ function() {
         html = html.replace(/exfph-text/g, textMap[val]);
     } else {
         var text = {$this->buildJsValueFormatter('val')};
+        if (text === undefined || text === null) {
+            text = '&nbsp;';
+        }
         html = html.replace(/exfph-text/g, text);
     }
     
