@@ -63,11 +63,8 @@ class UserContextScope extends InstallationContextScope
     }
 
     /**
-     * Returns the Exface user which is currently logged in in the CMS.
-     * 
-     * If no user is logged in in the CMS, an anonymous user is returned.
-     * 
-     * @return User
+     * @deprecated use $workbench->getSecurity()->getAuthenticatedUser() instead
+     * @return UserInterface
      */
     public function getUserCurrent() : UserInterface
     {
