@@ -1604,20 +1604,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $attr = $qpart->getAttribute();
         $comp = $qpart->getComparator();
         
-        if ($attr->isRelation() && $comp != EXF_COMPARATOR_IN) {
+        switch (true) {
             // always use the equals comparator for foreign keys! It's faster!
-            $comp = EXF_COMPARATOR_EQUALS;
-        } elseif ($this->getMainObject()->hasUidAttribute() && $attr->isExactly($this->getMainObject()->getUidAttribute()) && ($comp == EXF_COMPARATOR_IS || $comp == EXF_COMPARATOR_IS_NOT)) {
-            $comp = $comp === EXF_COMPARATOR_IS ? EXF_COMPARATOR_EQUALS : EXF_COMPARATOR_EQUALS_NOT;
-        } elseif (($qpart->getDataType() instanceof NumberDataType) && ($comp == EXF_COMPARATOR_IS || $comp == EXF_COMPARATOR_IS_NOT) && is_numeric($val)) {
+            case $attr->isRelation() && ($comp == ComparatorDataType::IS || $comp == ComparatorDataType::IS_NOT):
+            case $this->getMainObject()->hasUidAttribute() && $attr->isExactly($this->getMainObject()->getUidAttribute()) && ($comp == ComparatorDataType::IS || $comp == ComparatorDataType::IS_NOT):
             // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
-            $comp = $comp === EXF_COMPARATOR_IS ? EXF_COMPARATOR_EQUALS : EXF_COMPARATOR_EQUALS_NOT;
-        } elseif (($qpart->getDataType() instanceof BooleanDataType) && ($comp == EXF_COMPARATOR_IS || $comp == EXF_COMPARATOR_IS_NOT)) {
+            case ($qpart->getDataType() instanceof NumberDataType) && is_numeric($val) && ($comp == ComparatorDataType::IS || $comp == ComparatorDataType::IS_NOT):
             // also use equals for the BOOLEAN data type
-            $comp = $comp === EXF_COMPARATOR_IS ? EXF_COMPARATOR_EQUALS : EXF_COMPARATOR_EQUALS_NOT;
-        } elseif (($qpart->getDataType() instanceof DateDataType) && ($comp == EXF_COMPARATOR_IS || $comp == EXF_COMPARATOR_IS_NOT)) {
+            case ($qpart->getDataType() instanceof BooleanDataType) && ($comp == ComparatorDataType::IS || $comp == ComparatorDataType::IS_NOT):
             // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
-            $comp = $comp === EXF_COMPARATOR_IS ? EXF_COMPARATOR_EQUALS : EXF_COMPARATOR_EQUALS_NOT;
+            case ($qpart->getDataType() instanceof DateDataType) && ($comp == ComparatorDataType::IS || $comp == ComparatorDataType::IS_NOT):
+                $comp = $comp === ComparatorDataType::IS ? ComparatorDataType::EQUALS : ComparatorDataType::EQUALS_NOT;
+                break;
         }
         return $comp;
     }
