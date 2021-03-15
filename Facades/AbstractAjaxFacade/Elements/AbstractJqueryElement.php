@@ -595,10 +595,11 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
             if (! $alias && $widget instanceof iShowDataColumn) {
                 $alias = $widget->getDataColumnName();
             }
-        } else {
-            $alias = $widget->getMetaObject()->getAliasWithNamespace();
+            if ($alias) {
+                $rowsJs = "{'$alias': {$this->buildJsValueGetter()} }";
+            }
         }
-        return "{oId: '" . $widget->getMetaObject()->getId() . "', rows: [{'" . $alias . "': " . $this->buildJsValueGetter() . "}]}";
+        return "{oId: '{$widget->getMetaObject()->getId()}', rows: [{$rowsJs}]}";
     }
     
     /**
