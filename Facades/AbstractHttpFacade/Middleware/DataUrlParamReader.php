@@ -66,7 +66,10 @@ class DataUrlParamReader implements MiddlewareInterface
             return $handler->handle($request);
         }
         
-        $task = $this->updateTask($task, $this->methodName, $this->parseRequestData($data, $task->getWorkbench()));
+        $dataSheet = $this->parseRequestData($data, $task->getWorkbench());
+        if (! $dataSheet->isBlank()) {
+            $task = $this->updateTask($task, $this->methodName, $dataSheet);
+        }
         
         return $handler->handle($request->withAttribute($this->taskAttributeName, $task));
     }
@@ -80,6 +83,7 @@ class DataUrlParamReader implements MiddlewareInterface
      */
     protected function parseRequestData($requestParam, WorkbenchInterface $workbench) : DataSheetInterface
     {
+        $data_sheet = null;
         // Look for actual data rows in the request
         $uxon = UxonObject::fromAnything($requestParam);
         // If there is a data request parameter, create a data sheet from it
