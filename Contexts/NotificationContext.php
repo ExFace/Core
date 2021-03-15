@@ -34,15 +34,6 @@ class NotificationContext extends AbstractContext
     private $counter = null;
     
     /**
-     * 
-     * @param ContextSelectorInterface $selector
-     */
-    public function __construct(ContextSelectorInterface $selector)
-    {
-        parent::__construct($selector);
-    }
-    
-    /**
      * The object basket context resides in the window scope by default.
      * 
      * {@inheritDoc}
@@ -83,13 +74,14 @@ class NotificationContext extends AbstractContext
      */
     public function getIndicator()
     {
-        $i = 0;
-        foreach ($this->getNotificationData()->getRows() as $row) {
-            $i++;
-        }
-        return $i;
+        return $this->getNotificationData() ? $this->getNotificationData()->countRows() : 0;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getIcon()
+     */
     public function getIcon()
     {
         return Icons::ENVELOPE_O;
