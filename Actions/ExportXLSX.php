@@ -244,7 +244,7 @@ class ExportXLSX extends ExportJSON
         // Zeitpunkt des Exports
         $this->getWriter()->writeSheetRow($this->getExcelInfoSheetName(), [
             $translator->translate('ACTION.EXPORTXLSX.TIMESTAMP'),
-            date($translator->translate('LOCALIZATION.DATE.DATETIME_FORMAT'))
+            DateTimeDataType::formatDateLocalized(new \DateTime(), $this->getWorkbench())
         ]);
         
         // Exportiertes Objekt
@@ -305,8 +305,7 @@ class ExportXLSX extends ExportJSON
                 // Zeile schreiben
                 $this->getWriter()->writeSheetRow($this->getExcelInfoSheetName(), [
                     $filterName,
-                    $filterComparator,
-                    $filterValue
+                    $filterComparator . ' ' . $filterValue,
                 ]);
             }
         }
