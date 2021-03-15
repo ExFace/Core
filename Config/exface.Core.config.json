@@ -19,22 +19,27 @@
 	
 	"WIDGET.CONTEXTBAR": {
 	   "contexts": [
-	       {
+	       	{
+               "context_scope": "User",
+               "context_alias": "exface.Core.NotificationContext",
+               "visibility": "show_allways"
+			},
+          	{
 	           "context_scope": "User",
 	           "context_alias": "exface.Core.FavoritesContext",
 	           "visibility": "show_allways"
-	       },
-	       {
+	       	},
+	       	{
                "context_scope": "Session",
                "context_alias": "exface.Core.ObjectBasketContext",
                "visibility": "show_allways"
-           },
-           {
+           	},
+           	{
                "context_scope": "Window",
                "context_alias": "exface.Core.DebugContext",
                "visibility": "show_allways"
-           }         
-	   ]
+           	}         
+	   	]
 	},
 	
 	"WIDGET.DATATOOLBAR.GLOBAL_ACTIONS": [

@@ -7,6 +7,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 abstract class ConditionGroupFactory extends AbstractUxonFactory
 {
@@ -98,6 +99,17 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
         $result = static::createEmpty($exface, null, $baseObject);
         $result->importUxonObject($uxon);
         return $result;
+    }
+    
+    /**
+     * 
+     * @param DataSheetInterface $sheet
+     * @param string $operator
+     * @return ConditionGroupInterface
+     */
+    public static function createForDataSheet(DataSheetInterface $sheet, string $operator) : ConditionGroupInterface
+    {
+        return static::createEmpty($sheet->getWorkbench(), $operator, $sheet->getMetaObject());
     }
 }
 ?>
