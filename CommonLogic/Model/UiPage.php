@@ -27,6 +27,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
 use exface\Core\Factories\UserFactory;
+use exface\Core\Events\Widget\OnUiPageInitializedEvent;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -125,6 +126,7 @@ class UiPage implements UiPageInterface
         }
         
         $this->widgets[$widget->getId()] = $widget;
+        
         return $this;
     }
 
@@ -152,6 +154,7 @@ class UiPage implements UiPageInterface
             WidgetFactory::createFromUxon($this, $this->getContentsUxon());
         }
         $this->dirty = false;
+        $this->getWorkbench()->eventManager()->dispatch(new OnUiPageInitializedEvent($this));
         return $this;
     }
 
@@ -191,7 +194,6 @@ class UiPage implements UiPageInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Model\UiPageInterface::getWidget()
      */
     public function getWidget($id, WidgetInterface $parent = null)
