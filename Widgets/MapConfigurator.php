@@ -2,9 +2,9 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Widgets\Parts\Maps\AbstractDataLayer;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iUseData;
 
 /**
  * A configurator widget for maps combining filters and sorters from all data layers.
@@ -42,8 +42,8 @@ class MapConfigurator extends DataConfigurator
     {
         $result = [];
         foreach ($this->getMap()->getLayers() as $layer) {
-            if ($layer instanceof AbstractDataLayer) {
-                $result[] = $layer->getDataWidget();
+            if ($layer instanceof iUseData) {
+                $result[] = $layer->getData();
             }
         }
         return $result;
@@ -67,9 +67,12 @@ class MapConfigurator extends DataConfigurator
     public function getFilters()
     {
         $array = [];
-        foreach ($this->getLayerConfigurators() as $c) {
-            foreach ($c->getFilters() as $filter) {
-                $array[] = $filter;
+        foreach ($this->getMap()->getLayers() as $layer) {
+            if (($layer instanceof iUseData) && $layer->getDataWidgetLink() === null) {
+                $c = $layer->getData()->getConfiguratorWidget();
+                foreach ($c->getFilters() as $filter) {
+                    $array[] = $filter;
+                }
             }
         }
         return $array;
