@@ -197,19 +197,9 @@ class DataMarkersLayer extends AbstractDataLayer implements MarkerMapLayerInterf
         return $this->tooltipColumn;
     }
     
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\Parts\Maps\AbstractDataLayer::initDataWidget()
-     */
-    protected function createDataWidget(UxonObject $uxon) : iShowData
+    protected function initDataWidget(iShowData $widget) : iShowData
     {
-        $widget = parent::createDataWidget($uxon);
-        
-        if ($uxon->hasProperty('columns')) {
-            $widget->setColumnsAutoAddDefaultDisplayAttributes(false);
-        }
-        
+        $widget = parent::initDataWidget($widget);
         if ($this->getLatitudeAttributeAlias()) {
             if (! $col = $widget->getColumnByAttributeAlias($this->getLatitudeAttributeAlias())) {
                 $col = $widget->createColumnFromUxon(new UxonObject([
@@ -249,6 +239,22 @@ class DataMarkersLayer extends AbstractDataLayer implements MarkerMapLayerInterf
                 $widget->addColumn($col);
             }
             $this->tooltipColumn = $col;
+        }
+        
+        return $widget;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\AbstractDataLayer::initDataWidget()
+     */
+    protected function createDataWidget(UxonObject $uxon) : iShowData
+    {
+        $widget = parent::createDataWidget($uxon);
+        
+        if ($uxon->hasProperty('columns')) {
+            $widget->setColumnsAutoAddDefaultDisplayAttributes(false);
         }
         
         return $widget;

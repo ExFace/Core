@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
-use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
 use exface\Core\Widgets\Parts\Maps\DataMarkersLayer;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Events\Facades\OnFacadeWidgetRendererExtendedEvent;
@@ -9,9 +8,9 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Exceptions\Facades\FacadeOutputError;
-use exface\Core\Widgets\Parts\Maps\AbstractDataLayer;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MarkerMapLayerInterface;
+use exface\Core\Interfaces\Widgets\iUseData;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -236,7 +235,7 @@ JS;
                 }
                 
                 $optionsJs = '';
-                if ($layer instanceof AbstractDataLayer) {
+                if ($layer instanceof iUseData) {
                     $optionsJs .= "oId : '{$layer->getMetaObject()->getId()}',";
                 }
                     
@@ -261,7 +260,7 @@ JS;
 
     var aLayers = [
         $featureLayersJs
-    ]
+    ];
     var oLayerList = {};
 
     aLayers.forEach(function(oLayerData){
@@ -274,6 +273,11 @@ JS;
     {$this->buildJsLeafletVar()}._exfLayers = aLayers;
 
 JS;
+    }
+    
+    protected function buildJsLayerGetter(MapLayerInterface $layer) : string
+    {
+        return "{$this->buildJsLeafletVar()}._exfLayers.find(function(oLayerData){oLayerData.index === {$this->getWidget()->getLayerIndex($layer)}})";
     }
     
     /**
@@ -363,7 +367,12 @@ JS;
                 $visibility = strtolower(WidgetVisibilityDataType::findKey($col->getVisibility()));
                 $hint = json_encode($col->getHint() ?? '');
                 $caption = json_encode($col->getCaption() ?? '');
-                $popupTableRowsJs .= "{class: \"exf-{$visibility}\", tooltip: $hint, caption: $caption, value: feature.properties.data['{$col->getDataColumnName()}'] },";
+                $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
+                $popupTableRowsJs .= "{
+                    class: \"exf-{$visibility}\", 
+                    tooltip: $hint, 
+                    caption: $caption, 
+                    value: {$formatter->buildJsFormatter("feature.properties.data['{$col->getDataColumnName()}']")} },";
             }
         }
         
@@ -373,7 +382,7 @@ JS;
             $autoZoomJs = $this->buildJsAutoZoom('oLayer');
         }
         
-        if ($layer->isClusteringMarkers() === true) {
+        if ($layer->isClusteringMarkers() !== false) {
             $clusterInitJs = <<<JS
 L.markerClusterGroup({
                     iconCreateFunction: {$this->buildJsClusterIcon($layer, 'cluster')},
@@ -383,8 +392,65 @@ JS;
             $clusterInitJs = 'null';
         }
         
+        if ($link = $layer->getDataWidgetLink()) {
+            $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
+            $exfRefreshJs = <<<JS
+function() {
+                    setTimeout(function(){
+                        var oData = {$linkedEl->buildJsDataGetter()};
+                        var aRows = oData.rows || []; 
+                        var aGeoJson = [];
+                        var aRowsSkipped = [];
+                        
+                        {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
+                        
+                        oLayer.clearLayers();
+                        oLayer.addData(aGeoJson);
+                        {$autoZoomJs}
+                        
+                        if (oClusterLayer !== null) {
+                            oClusterLayer.clearLayers().addLayer(oLayer);
+                        }
+                    }, 100);
+                }
+                
+JS;
+        } else {
+            $exfRefreshJs = <<<JS
+function() {
+                    var oParams = {
+                        resource: "{$dataWidget->getPage()->getAliasWithNamespace()}",
+                        element: "{$dataWidget->getId()}",
+                        object: "{$dataWidget->getMetaObject()->getId()}",
+                        action: "{$dataWidget->getLazyLoadingActionAlias()}",
+                        data: {
+                            oId: "{$dataWidget->getMetaObject()->getId()}"
+                        }
+                    };
+                    
+                    {$this->buildJsLeafletDataLoader('oParams', 'aRows', "
+                        
+                        var aGeoJson = [];
+                        var aRowsSkipped = [];
+                        
+                        {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
+                        
+                        oLayer.clearLayers();
+                        oLayer.addData(aGeoJson);
+                        {$autoZoomJs}
+                        
+                        if (oClusterLayer !== null) {
+                            oClusterLayer.clearLayers().addLayer(oLayer);
+                        }
+                        
+")}
+                }
+JS;
+        }
+        
         return <<<JS
             (function(){
+                var oLeaflet = {$this->buildJsLeafletVar()};
                 var oClusterLayer = {$clusterInitJs};
                 var oLayer = L.geoJSON(null, {
                     pointToLayer: function(feature, latlng) {
@@ -413,32 +479,38 @@ JS;
                     }
                 });
 
-                oLayer._exfRefresh = function() {
-                    var oParams = {
-                        resource: "{$dataWidget->getPage()->getAliasWithNamespace()}", 
-                        element: "{$dataWidget->getId()}",
-                        object: "{$dataWidget->getMetaObject()->getId()}",
-                        action: "{$dataWidget->getLazyLoadingActionAlias()}",
-                        data: {
-                            oId: "{$dataWidget->getMetaObject()->getId()}"
-                        }
-                    };
-    
-                    {$this->buildJsLeafletDataLoader('oParams', 'aRows', "
+                oLayer._exfRefresh = $exfRefreshJs;
 
-                        var aGeoJson = [];
-                        var aRowsSkipped = [];
-                    
-                        aRows.forEach(function(oRow){
+                oLeaflet.on('exfRefresh', oLayer._exfRefresh);
+                oLayer._exfRefresh();
+               
+                return oClusterLayer ? oClusterLayer : oLayer;
+            })()
+JS;
+    }
+    
+    /**
+     * 
+     * @param iUseData $layer
+     * @param string $aRowsJs
+     * @param string $aGeoJsonJs
+     * @param string $aRowsSkippedJs
+     * @return string
+     */
+    protected function buildJsConvertDataRowsToGeoJSON(iUseData $layer, string $aRowsJs, string $aGeoJsonJs, string $aRowsSkippedJs) : string
+    {
+        return <<<JS
+
+                        $aRowsJs.forEach(function(oRow){
                             var fLat = parseFloat(oRow.{$layer->getLatitudeColumn()->getDataColumnName()});
                             var fLng = parseFloat(oRow.{$layer->getLongitudeColumn()->getDataColumnName()});
         
                             if (isNaN(fLat) || isNaN(fLng)) {
-                                aRowsSkipped.push(oRow);
+                                $aRowsSkippedJs.push(oRow);
                                 return;
                             }
     
-                            aGeoJson.push({
+                            $aGeoJsonJs.push({
                                 type: 'Feature',
                                 geometry: {
                                     type: 'Point',
@@ -452,22 +524,6 @@ JS;
                             });
                         })
 
-                        oLayer.clearLayers();
-                        oLayer.addData(aGeoJson);
-                        {$autoZoomJs}
-
-                        if (oClusterLayer !== null) {
-                            oClusterLayer.clearLayers().addLayer(oLayer);
-                        }
-
-")}
-                };
-
-                {$this->buildJsLeafletVar()}.on('exfRefresh', oLayer._exfRefresh);
-                oLayer._exfRefresh();
-               
-                return oClusterLayer ? oClusterLayer : oLayer;
-            })()
 JS;
     }
     
@@ -602,7 +658,7 @@ JS;
         ]; 
         
         foreach ($this->getWidget()->getLayers() as $layer) {
-            if (($layer instanceof MarkerMapLayerInterface) && $layer->isClusteringMarkers() === true) {
+            if (($layer instanceof MarkerMapLayerInterface) && $layer->isClusteringMarkers() !== false) {
                 $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.MARKERCLUSTER_CSS') . '"/>';
                 $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.MARKERCLUSTER_JS') . '"></script>';
                 break;
@@ -702,4 +758,10 @@ JS;
     {
         return "{$this->buildJsLeafletVar()}.invalidateSize()";
     }
+    
+    /**
+     *
+     * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\EChartsTrait
+     */
+    protected abstract function registerLiveReferenceAtLinkedElements();
 }
