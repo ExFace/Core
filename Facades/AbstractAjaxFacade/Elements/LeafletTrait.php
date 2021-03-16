@@ -11,6 +11,9 @@ use exface\Core\Exceptions\Facades\FacadeOutputError;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MarkerMapLayerInterface;
 use exface\Core\Interfaces\Widgets\iUseData;
+use exface\Core\Widgets\Parts\Maps\DataSelectionMarkerLayer;
+use exface\Core\Factories\ActionFactory;
+use exface\Core\Actions\SaveData;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -394,24 +397,27 @@ JS;
         
         if ($link = $layer->getDataWidgetLink()) {
             $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
+            if ($layer instanceof DataSelectionMarkerLayer) {
+                $asIfForAction = ActionFactory::createFromString($layer->getWorkbench(), SaveData::class);
+            } else {
+                $asIfForAction = null;
+            }
             $exfRefreshJs = <<<JS
 function() {
-                    setTimeout(function(){
-                        var oData = {$linkedEl->buildJsDataGetter()};
-                        var aRows = oData.rows || []; 
-                        var aGeoJson = [];
-                        var aRowsSkipped = [];
-                        
-                        {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
-                        
-                        oLayer.clearLayers();
-                        oLayer.addData(aGeoJson);
-                        {$autoZoomJs}
-                        
-                        if (oClusterLayer !== null) {
-                            oClusterLayer.clearLayers().addLayer(oLayer);
-                        }
-                    }, 100);
+                    var oData = {$linkedEl->buildJsDataGetter($asIfForAction)};
+                    var aRows = oData.rows || []; 
+                    var aGeoJson = [];
+                    var aRowsSkipped = [];
+                    
+                    {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
+                    
+                    oLayer.clearLayers();
+                    oLayer.addData(aGeoJson);
+                    {$autoZoomJs}
+                    
+                    if (oClusterLayer !== null) {
+                        oClusterLayer.clearLayers().addLayer(oLayer);
+                    }
                 }
                 
 JS;
