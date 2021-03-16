@@ -39,7 +39,7 @@ trait JsValueScaleTrait
         
         return <<<JS
 
-function() {
+(function() {
     var val = {$valueJs};
     
     if (val === undefined || val === '' || val === null) return '';
@@ -60,7 +60,7 @@ function() {
         }
     }
     return sv[1];
-}()
+})()
 
 JS;
     }
@@ -77,7 +77,7 @@ JS;
         
         return <<<JS
         
-function() {
+(function() {
     var val = {$valueJs};
     
     if (val === undefined || val === '' || val === null) return '';
@@ -91,7 +91,7 @@ function() {
         }
     }
     return scale[''] || '';
-}()
+})()
 
 JS;
     }
