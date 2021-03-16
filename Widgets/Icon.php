@@ -4,6 +4,8 @@ namespace exface\Core\Widgets;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\DateDataType;
 
 /**
  * This widget shows an icon - either a static one or derived from an attribute's value.
@@ -217,6 +219,15 @@ class Icon extends Display
     }
     
     /**
+     * 
+     * @return bool
+     */
+    public function hasIconScale() : bool
+    {
+        return $this->iconsScale !== null;
+    }
+    
+    /**
      *
      * @return array
      */
@@ -255,5 +266,22 @@ class Icon extends Display
     {
         $this->iconsScale = $valueIconPairs->toArray();
         return $this;
-    }    
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColorScale::isColorScaleRangeBased()
+     */
+    public function isIconScaleRangeBased() : bool
+    {
+        $dataType = $this->getValueDataType();
+        switch (true) {
+            case $dataType instanceof NumberDataType:
+            case $dataType instanceof DateDataType:
+                return true;
+        }
+        
+        return false;
+    }
 }
