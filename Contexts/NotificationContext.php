@@ -7,14 +7,10 @@ use exface\Core\Widgets\Container;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Widgets\Menu;
-use exface\Core\DataTypes\WidgetVisibilityDataType;
-use exface\Core\CommonLogic\Model\Notification;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
-use Symfony\Component\Finder\Comparator\Comparator;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
-use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
 
 /**
  * The ObjectBasketContext provides a unified interface to store links to selected instances of meta objects in any context scope.
@@ -107,7 +103,7 @@ class NotificationContext extends AbstractContext
     }
     
     public function getName(){
-        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.OBJECTBASKET.NAME');
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.NOTIFICATION.NAME');
     }
     
     /**
