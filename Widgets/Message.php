@@ -35,7 +35,7 @@ class Message extends Text
      * Type of the message: error, warning, info, success, hint.
      * 
      * @uxon-property type
-     * @uxon-type [error,warning,info,success,hint]
+     * @uxon-type [error,warning,info,success,hint,question]
      * @uxon-default info
      * 
      * @param MessageTypeDataType|string $value

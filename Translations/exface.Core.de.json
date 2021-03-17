@@ -238,6 +238,7 @@
     "MESSAGE.TYPES.INFO": "Info",
     "MESSAGE.TYPES.SUCCESS": "Erfolg",
     "MESSAGE.TYPES.HINT": "Tip",
+    "MESSAGE.TYPES.QUESTION": "Frage",
     
     "MESSAGE.SELECT_EXACTLY_X_ROWS": "Bitte genau %number% Datensatz auswählen!|Bitte genau %number% Datensätze auswählen!",
 	"MESSAGE.SELECT_AT_MOST_X_ROWS": "Bitte maximal %number% Datensatz auswählen!|Bitte maximal %number% Datensätze auswählen!",

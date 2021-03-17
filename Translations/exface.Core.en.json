@@ -239,6 +239,7 @@
     "MESSAGE.TYPES.INFO": "Info",
     "MESSAGE.TYPES.SUCCESS": "Success",
     "MESSAGE.TYPES.HINT": "Hint",
+    "MESSAGE.TYPES.QUESTION": "Question",
     
     "MESSAGE.SELECT_EXACTLY_X_ROWS": "Please select exactly %number% element!|Please select exactly %number% elements!",
 	"MESSAGE.SELECT_AT_MOST_X_ROWS": "Please select at most %number% element!|Please select at most %number% elements!",
