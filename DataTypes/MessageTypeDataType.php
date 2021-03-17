@@ -25,6 +25,7 @@ class MessageTypeDataType extends StringDataType implements EnumDataTypeInterfac
     const INFO = "INFO";
     const SUCCESS = "SUCCESS";
     const HINT = "HINT";
+    const QUESTION = "QUESTION";
     
     private $labels = [];
     
