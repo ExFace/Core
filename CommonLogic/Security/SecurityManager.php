@@ -25,6 +25,8 @@ use exface\Core\Exceptions\SecurityException;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Events\Security\OnAuthenticatedEvent;
 use exface\Core\Exceptions\Security\AuthenticationFailedMultiError;
+use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\Exceptions\InternalError;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -296,7 +298,18 @@ class SecurityManager implements SecurityManagerInterface
         foreach ($this->getAuthenticators() as $authenticator) {
             $loginForm = WidgetFactory::create($loginPrompt->getPage(), 'Form', $loginPrompt);
             $loginForm->setObjectAlias('exface.Core.LOGIN_DATA');
-            $authenticator->createLoginWidget($loginForm);
+            try {
+                $authenticator->createLoginWidget($loginForm);
+            } catch (\Throwable $e) {
+                if (! ($e instanceof ExceptionInterface)) {
+                    $e = new InternalError($e->getMessage(), null, $e);
+                }
+                $loginForm->addWidget(WidgetFactory::createFromUxonInParent($loginForm, new UxonObject([
+                    'widget_type' => 'Message',
+                    'type' => 'error',
+                    'text' => 'Failed to initialize authenticator "' . $authenticator->getName() . '": see log ID "' . $e->getId() . '" for details!'
+                ])));
+            }
             if ($loginForm->isEmpty() === false) {
                 $loginForm->setCaption($authenticator->getName());
                 $loginPrompt->addForm($loginForm);
