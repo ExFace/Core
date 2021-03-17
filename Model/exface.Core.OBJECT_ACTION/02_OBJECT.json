@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2017-01-24 09:32:09",
-            "MODIFIED_ON": "2020-07-15 09:27:51",
+            "MODIFIED_ON": "2021-03-17 18:49:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6e217f7f91457a3d9e4b318306b9a",
@@ -137,10 +137,11 @@
                                         "attribute_alias": "CONFIG_UXON",
                                         "widget_type": "InputUxon",
                                         "width": 2,
-                                        "height": 15,
+                                        "height": 17,
                                         "schema": "action",
                                         "root_prototype": "=prototype_selector",
-                                        "root_object": "=object_selector"
+                                        "root_object": "=object_selector",
+                                        "hide_caption": true
                                     },
                                     {
                                         "attribute_alias": "USE_IN_OBJECT_BASKET_FLAG"
