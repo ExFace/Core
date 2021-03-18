@@ -178,8 +178,8 @@ class Tile extends Button
      * @return string|null
      */
     public function getSubtitle()
-    {
-        return $this->subtitle;
+    { 
+        return $this->subtitle ?? ($this->getHint() !== $this->getTitle() ? $this->getHint() : null);
     }
 
     /**
