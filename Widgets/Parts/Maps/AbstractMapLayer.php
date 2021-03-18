@@ -6,6 +6,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Widgets\Traits\iHaveVisibilityTrait;
 
 /**
  *
@@ -16,7 +17,11 @@ abstract class AbstractMapLayer extends AbstractMapPart implements MapLayerInter
 {
     use iHaveCaptionTrait;
     
+    use iHaveVisibilityTrait;
+    
     private $autoZoomToSeeAll = null;
+    
+    private $visibility = null;
     
     /**
      * The type (prototype class) of the layer.
