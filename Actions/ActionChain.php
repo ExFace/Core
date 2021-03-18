@@ -219,7 +219,7 @@ class ActionChain extends AbstractAction implements iCallOtherActions
         $chainResult = $chainResult ?? $result;
         
         $chainResult->setDataModified($data_modified);
-        $chainResult->setMessage($message);
+        $chainResult->setMessage($this->getResultMessageText() ?? $message);
         
         return $chainResult;
     }
