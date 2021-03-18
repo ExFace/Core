@@ -230,7 +230,7 @@ JS;
             $layerInit = $this->buildJsLayer($layer);
             if ($layerInit) {
                 $captionJs = json_encode($layer->getCaption());
-                $visible = true;
+                $visible = $layer->getVisibility() >= WidgetVisibilityDataType::NORMAL;
                 $autoZoom = $layer->getAutoZoomToSeeAll() === true ? 'true' : 'false';
                 
                 if ($visible) {
@@ -248,6 +248,7 @@ JS;
             index: $index,
             caption: $captionJs,
             autoZoom: {$autoZoom},
+            visibility: {$layer->getVisibility()},
             $optionsJs
             layer: $layerInit
         },

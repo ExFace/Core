@@ -4,13 +4,14 @@ namespace exface\Core\Widgets\Parts\Maps\Interfaces;
 use exface\Core\Widgets\Map;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Widgets\iHaveCaption;
+use exface\Core\Interfaces\Widgets\iHaveVisibility;
 
 /**
  *
  * @author Andrej Kabachnik
  *
  */
-interface MapLayerInterface extends iHaveCaption
+interface MapLayerInterface extends iHaveCaption, iHaveVisibility
 {    
     /**
      *
