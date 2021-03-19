@@ -79,9 +79,10 @@ class InstallationContextScope extends AbstractContextScope
                         throw new LogicException('Cannot save installation context data: unknown write error!');
                     }
                 }
-            } elseif (file_exists($this->getFilePathAbsolute())) {
-                unlink($this->getFilePathAbsolute());
             }
+            // The installation context is actually never empty as the internal sodium secret
+            // and the last_install_time are always there. Removing or emptying the file may
+            // be dangerous as the secret key would get lost!
         }
         return $this;
     }
