@@ -3803,6 +3803,275 @@
             "WRAP_PATH": "$.actions[0]",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2021-03-19 18:41:10",
+            "MODIFIED_ON": "2021-03-19 19:03:37",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb88184adc17808818025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Map visualizing data from a table",
+            "DESCRIPTION": "The map on the right will show a marker for each row loaded in the table. The position of the markers is determined via `latitude_attribute_alias` and `latitude_attribute_alias` that will be added to the table automatically. You can also make each marker show a (short) value (typically a number) by setting `value_attribute_alias`",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Map.php",
+            "UXON": {
+                "widget_type": "SplitHorizontal",
+                "object_alias": "",
+                "panels": [
+                    {
+                        "width": "50%",
+                        "widgets": [
+                            {
+                                "widget_type": "DataTable",
+                                "id": "table_with_data",
+                                "filters": [
+                                    {
+                                        "attribute_alias": ""
+                                    }
+                                ],
+                                "columns": [
+                                    {
+                                        "attribute_alias": ""
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "widgets": [
+                            {
+                                "widget_type": "Map",
+                                "layers": [
+                                    {
+                                        "type": "DataMarkers",
+                                        "latitude_attribute_alias": "",
+                                        "longitude_attribute_alias": "",
+                                        "auto_zoom_to_see_all": true,
+                                        "data_widget_link": "table_with_data"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "WRAP_PATH": "$.panels[0].widgets[0]",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/map\/map_split.gif"
+        },
+        {
+            "CREATED_ON": "2021-03-19 18:49:12",
+            "MODIFIED_ON": "2021-03-19 19:02:23",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb91666a04a3569166025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Map with a aggregated data in markers ",
+            "DESCRIPTION": "Place the aggregated value (e.g. `id:COUNT`) in the `value_attribute_alias` to display it on every marker",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Map.php",
+            "UXON": {
+                "widget_type": "Map",
+                "object_alias": "",
+                "layers": [
+                    {
+                        "type": "DataMarkers",
+                        "longitude_attribute_alias": "",
+                        "latitude_attribute_alias": "",
+                        "value_attribute_alias": "",
+                        "data": {
+                            "filters": [
+                                {
+                                    "attribute_alias": ""
+                                }
+                            ],
+                            "aggregate_by_attribute_alias": [
+                                ""
+                            ],
+                            "columns": [
+                                {
+                                    "attribute_alias": ""
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/map\/map_with_marker_values.gif"
+        },
+        {
+            "CREATED_ON": "2021-03-19 18:50:44",
+            "MODIFIED_ON": "2021-03-19 19:11:22",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb9b27a11fcaa09b27025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Simple map with data markers",
+            "DESCRIPTION": "A marker will be shown for every row in the data. Add more columns the display their values in popups when markers are clicked.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Map.php",
+            "UXON": {
+                "widget_type": "Map",
+                "object_alias": "",
+                "layers": [
+                    {
+                        "type": "DataMarkers",
+                        "longitude_attribute_alias": "",
+                        "latitude_attribute_alias": "",
+                        "data": {
+                            "filters": [
+                                {
+                                    "attribute_alias": ""
+                                }
+                            ],
+                            "columns": [
+                                {
+                                    "attribute_alias": ""
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/map\/map_with_markers.gif"
+        },
+        {
+            "CREATED_ON": "2021-03-19 18:52:37",
+            "MODIFIED_ON": "2021-03-19 19:02:37",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb8ffbe4799a6a8ffb025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Map with multiple base maps (ESRI, OpenStreetMap)",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Map.php",
+            "UXON": {
+                "widget_type": "Map",
+                "object_alias": "",
+                "base_maps": [
+                    {
+                        "type": "EsriArcGisMap",
+                        "basemap": "Gray"
+                    },
+                    {
+                        "type": "EsriArcGisMap",
+                        "basemap": "DarkGray"
+                    },
+                    {
+                        "type": "OpenStreetMap"
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/map\/map_with_layers.gif"
+        },
+        {
+            "CREATED_ON": "2021-03-19 19:06:08",
+            "MODIFIED_ON": "2021-03-19 19:06:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebbef0c815416abef0025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Map with data from a widget link",
+            "DESCRIPTION": "The map will show markers for every data row from another data widget (a table, a chart, etc.) and will refresh with that widget. Data columns for `latitude_attribute_alias` and `longitude_attribute_alias` will be added to the data widget automatically.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Map.php",
+            "UXON": {
+                "widget_type": "Map",
+                "layers": [
+                    {
+                        "type": "DataMarkers",
+                        "latitude_attribute_alias": "",
+                        "longitude_attribute_alias": "",
+                        "auto_zoom_to_see_all": true,
+                        "data_widget_link": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/map\/map_with_data_link.gif"
+        },
+        {
+            "CREATED_ON": "2021-03-19 19:08:29",
+            "MODIFIED_ON": "2021-03-19 19:08:29",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebbfdc1bacf2dcbfdc025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Map visualizing data from a table",
+            "DESCRIPTION": "The map on the right will show a marker for every SELECTED row in the table. Thus, the markers will move every time a user selects a row. The layer `DataSelectionMarker` can only be used with a `data_widget_link`!",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Map.php",
+            "UXON": {
+                "widget_type": "SplitHorizontal",
+                "object_alias": "",
+                "panels": [
+                    {
+                        "width": "50%",
+                        "widgets": [
+                            {
+                                "widget_type": "DataTable",
+                                "id": "table_with_data",
+                                "filters": [
+                                    {
+                                        "attribute_alias": ""
+                                    }
+                                ],
+                                "columns": [
+                                    {
+                                        "attribute_alias": ""
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "widgets": [
+                            {
+                                "widget_type": "Map",
+                                "layers": [
+                                    {
+                                        "type": "DataSelectionMarker",
+                                        "latitude_attribute_alias": "",
+                                        "longitude_attribute_alias": "",
+                                        "data_widget_link": "table_with_data"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "WRAP_PATH": "$.panels[0].widgets[0]",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/map\/map_with_select_link.gif"
+        },
+        {
+            "CREATED_ON": "2021-03-19 19:11:09",
+            "MODIFIED_ON": "2021-03-19 19:11:09",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebbc117b6836e6bc11025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "GeoJSON data on map",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Map.php",
+            "UXON": {
+                "widget_type": "Map",
+                "object_alias": "",
+                "layers": [
+                    {
+                        "type": "GeoJSON",
+                        "caption": "",
+                        "url": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/map\/map_geojson.gif"
         }
     ],
     "totals_rows": [],
