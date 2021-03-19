@@ -83,9 +83,9 @@ class Workbench implements WorkbenchInterface
         
         // Similarly, use the installation folder name as the unique name of the installation
         // if not specified in the config (and save this for later)
-        if (! ($instName = $cfg->getOption('SERVER.INSTALLTION_NAME'))) {
+        if (! $cfg->hasOption('SERVER.INSTALLATION_NAME') || ! ($instName = $cfg->getOption('SERVER.INSTALLATION_NAME'))) {
             $instName = FilePathDataType::findFileName($this->getInstallationPath(), false);
-            $cfg->setOption('SERVER.INSTALLTION_NAME', $instName, App::CONFIG_SCOPE_SYSTEM);
+            $cfg->setOption('SERVER.INSTALLATION_NAME', $instName, App::CONFIG_SCOPE_SYSTEM);
         }
         $this->installation_name = $instName;
         
