@@ -7,7 +7,6 @@ use exface\Core\Exceptions\Contexts\ContextNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 
 /**
@@ -38,8 +37,11 @@ class SessionContextScope extends AbstractContextScope
     
     private $session_vars_unset = [];
     
+    private $installation_name = null;
+    
     public function __construct(Workbench $exface)
     {
+        $this->installation_name = $exface->getInstallationName();
         parent::__construct($exface);
         
         $this->sessionOpen();
@@ -67,7 +69,7 @@ class SessionContextScope extends AbstractContextScope
     public function init()
     {
         if ($this->getSavedContexts() instanceof UxonObject) {
-            foreach ($this->getSavedContexts() as $alias => $uxon) {
+            foreach (array_keys($this->getSavedContexts()) as $alias) {
                 try {
                     $this->getContext($alias);
                 } catch (ContextNotFoundError|AuthorizationExceptionInterface $error) {
@@ -177,7 +179,7 @@ class SessionContextScope extends AbstractContextScope
      */
     public function removeContext($alias)
     {
-        unset($_SESSION['exface'][$this->getInstallationFolderName()]['contexts'][$alias]);
+        unset($_SESSION['exface'][$this->installation_name]['contexts'][$alias]);
         return parent::removeContext($alias);
     }
 
@@ -299,7 +301,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function getSessionContextData()
     {
-        return $_SESSION['exface'][$this->getInstallationFolderName()]['contexts'];
+        return $_SESSION['exface'][$this->installation_name]['contexts'];
     }
 
     /**
@@ -311,7 +313,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function setSessionContextData($key, $value)
     {
-        $_SESSION['exface'][$this->getInstallationFolderName()]['contexts'][$key] = $value;
+        $_SESSION['exface'][$this->installation_name]['contexts'][$key] = $value;
         return $this;
     }
     
@@ -322,7 +324,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function getSessionData(string $key)
     {
-        return $_SESSION['exface'][$this->getInstallationFolderName()][$key];
+        return $_SESSION['exface'][$this->installation_name][$key];
     }
     
     /**
@@ -339,7 +341,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function setSessionData(string $key, $data) : SessionContextScope
     {
-        $_SESSION['exface'][$this->getInstallationFolderName()][$key] = $data;
+        $_SESSION['exface'][$this->installation_name][$key] = $data;
         return $this;
     }
     
@@ -356,7 +358,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function removeSessionData(string $key) : SessionContextScope
     {
-        unset($_SESSION['exface'][$this->getInstallationFolderName()][$key]);
+        unset($_SESSION['exface'][$this->installation_name][$key]);
         return $this;
     }
     
@@ -366,7 +368,7 @@ class SessionContextScope extends AbstractContextScope
      */
     public function clearSessionData() : SessionContextScope
     {
-        unset($_SESSION['exface'][$this->getInstallationFolderName()]);
+        unset($_SESSION['exface'][$this->installation_name]);
         if (empty($_SESSION['exface'])) {
             unset($_SESSION['exface']);
         }
@@ -435,16 +437,6 @@ class SessionContextScope extends AbstractContextScope
     public function getSessionUserData() : ?string
     {
         return $this->session_user_data;
-    }
-    
-    /**
-     * Returns installation folder name of exface instance.
-     * 
-     * @return string
-     */
-    protected function getInstallationFolderName() : string
-    {
-        return StringDataType::substringAfter($this->getWorkbench()->getInstallationPath(), DIRECTORY_SEPARATOR, false, false, true);
     }
     
     /**
