@@ -10,6 +10,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\Model\ConditionIncompleteError;
 use exface\Core\Interfaces\Model\ConditionInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 abstract class ConditionFactory extends AbstractUxonFactory
 {
@@ -141,6 +142,19 @@ abstract class ConditionFactory extends AbstractUxonFactory
         $comp = $tokens[0];
         $value = substr($string, (strlen($comp)+1));
         return static::createFromExpression($expression->getWorkbench(), $expression, $value, $comp);
+    }
+    
+    /**
+     * 
+     * @param MetaAttributeInterface $attribute
+     * @param mixed $value
+     * @param string $comparator
+     * @return ConditionInterface
+     */
+    public static function createFromAttribute(MetaAttributeInterface $attribute, $value, string $comparator = null) : ConditionInterface
+    {
+        $expr = ExpressionFactory::createFromAttribute($attribute);
+        return static::createFromExpression($attribute->getWorkbench(), $expr, $value, $comparator);
     }
 }
 ?>
