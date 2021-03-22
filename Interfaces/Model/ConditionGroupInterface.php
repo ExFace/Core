@@ -41,6 +41,15 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
     public function addConditionFromString(string $expression_string, $value, string $comparator = null) : ConditionGroupInterface;
     
     /**
+     * 
+     * @param MetaAttributeInterface $attribute
+     * @param mixed $value
+     * @param string $comparator
+     * @return ConditionGroupInterface
+     */
+    public function addConditionFromAttribute(MetaAttributeInterface $attribute, $value, string $comparator = null) : ConditionGroupInterface;
+    
+    /**
      * Adds an filter based on a list of values: the column value must equal one of the values in the list.
      * The list may be an array or a comma separated string
      * FIXME move to ConditionGroup, so it can be used for nested groups too!

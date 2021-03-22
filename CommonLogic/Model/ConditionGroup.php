@@ -15,6 +15,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * Default implementation of the ConditionGroupInterface
@@ -447,6 +448,10 @@ class ConditionGroup implements ConditionGroupInterface
         return $this->baseObject;
     }
     
+    /**
+     * 
+     * @return string|NULL
+     */
     protected function getBaseObjectSelector() : ?string
     {
         return $this->baseObjectSelector ?? ($this->baseObject !== null ? $this->baseObject->getAliasWithNamespace() : null);
@@ -468,6 +473,11 @@ class ConditionGroup implements ConditionGroupInterface
         return $this;
     }
     
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @return ConditionGroup
+     */
     protected function setBaseObject(MetaObjectInterface $object) : ConditionGroup
     {
         $this->baseObject = $object;
@@ -475,6 +485,10 @@ class ConditionGroup implements ConditionGroupInterface
         return $this;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     public function hasBaseObject() : bool
     {
         return $this->baseObject !== null || $this->baseObjectSelector !== null;
@@ -510,12 +524,9 @@ class ConditionGroup implements ConditionGroupInterface
     }
     
     /**
-     * Creates a new condition and adds it to the filters of this data sheet to the root condition group.
-     *
-     * @param string $expression_string
-     * @param mixed $value
-     * @param string $comparator
-     * @return ConditionGroupInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::addConditionFromString()
      */
     public function addConditionFromString(string $expression_string, $value, string $comparator = null) : ConditionGroupInterface
     {
@@ -544,13 +555,21 @@ class ConditionGroup implements ConditionGroupInterface
     }
     
     /**
-     * Adds an filter based on a list of values: the column value must equal one of the values in the list.
-     * The list may be an array or a comma separated string
-     * FIXME move to ConditionGroup, so it can be used for nested groups too!
-     *
-     * @param string|ExpressionInterface $expressionString
-     * @param string|array $values
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::addConditionFromAttribute()
      */
+    public function addConditionFromAttribute(MetaAttributeInterface $attribute, $value, string $comparator = null) : ConditionGroupInterface
+    {
+        $this->addCondition(ConditionFactory::createFromAttribute($attribute, $value, $comparator));
+        return $this;
+    }
+    
+   /**
+    * 
+    * {@inheritDoc}
+    * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::addConditionFromValueArray()
+    */
     public function addConditionFromValueArray($expressionOrString, $value_list) : ConditionGroupInterface
     {
         if ($expressionOrString instanceof ExpressionInterface) {
@@ -574,8 +593,8 @@ class ConditionGroup implements ConditionGroupInterface
     
     /**
      * 
-     * @param DataColumnInterface $column
-     * @return ConditionGroupInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::addConditionFromColumnValues()
      */
     public function addConditionFromColumnValues(DataColumnInterface $column) : ConditionGroupInterface
     {
