@@ -182,7 +182,7 @@ class SqlModelLoader implements ModelLoaderInterface
         if ($object->getId()) {
             $q_where = 'o.oid = ' . $object->getId();
         } else {
-            $q_where = "a.app_alias = '{$object->getNamespace()}' AND o.object_alias = '{$object->getAlias()}'";
+            $q_where = "a.app_alias = '{$this->buildSqlEscapedString($object->getNamespace())}' AND o.object_alias = '{$this->buildSqlEscapedString($object->getAlias())}'";
         }
         $exists = $this->buildSqlExists('exf_object_behaviors ob', 'ob.object_oid = o.oid', 'has_behaviors');
         $query = $this->getDataConnection()->runSql('
@@ -597,7 +597,7 @@ class SqlModelLoader implements ModelLoaderInterface
         // If there is a user logged in, fetch his specific connctor config (credentials)
         $authToken = $exface->getSecurity()->getAuthenticatedToken();
         if ($authToken->isAnonymous() === false && $user_name = $authToken->getUsername()) {
-            $join_user_credentials = " LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.oid = uc.data_connection_credentials_oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = '{$user_name}') ON dcc.data_connection_oid = dc.oid";
+            $join_user_credentials = " LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.oid = uc.data_connection_credentials_oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = '{$this->buildSqlEscapedString($user_name)}') ON dcc.data_connection_oid = dc.oid";
             $select_user_credentials = ', dcc.data_connector_config AS user_connector_config';
         }
         
@@ -754,16 +754,16 @@ class SqlModelLoader implements ModelLoaderInterface
             if ($selector->hasNamespace()) {
                 $appAlias = $selector->getAppAlias();
                 $alias = substr($selector->toString(), (strlen($appAlias)+1));
-                $filter = "dc.alias = '{$alias}' AND a.app_alias = '{$appAlias}'";
+                $filter = "dc.alias = '{$this->buildSqlEscapedString($alias)}' AND a.app_alias = '{$this->buildSqlEscapedString($appAlias)}'";
             } else {
-                $filter = "dc.alias = '{$selector->toString()}'";
+                $filter = "dc.alias = '{$this->buildSqlEscapedString($selector->toString())}'";
             }
         }
         
         // If there is a user logged in, fetch his specific connctor config (credentials)
         $authToken = $exface->getSecurity()->getAuthenticatedToken();
         if ($authToken->isAnonymous() === false && $user_name = $authToken->getUsername()) {
-            $join_user_credentials = " LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.oid = uc.data_connection_credentials_oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = '{$user_name}') ON dcc.data_connection_oid = dc.oid";
+            $join_user_credentials = " LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.oid = uc.data_connection_credentials_oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = '{$this->buildSqlEscapedString($user_name)}') ON dcc.data_connection_oid = dc.oid";
             $select_user_credentials = ', dcc.data_connector_config AS user_connector_config';
         }
         
@@ -865,7 +865,7 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     public function loadAction(AppInterface $app, $action_alias, WidgetInterface $trigger_widget = null)
     {
-        $sql_where = "a.app_alias = '{$app->getAliasWithNamespace()}' AND oa.alias = '{$action_alias}'";
+        $sql_where = "a.app_alias = '{$this->buildSqlEscapedString($app->getAliasWithNamespace())}' AND oa.alias = '{$this->buildSqlEscapedString($action_alias)}'";
         $actions = $this->loadActionsFromModel(new AppActionList($app->getWorkbench(), $app), $sql_where, $trigger_widget);
         return $actions->getFirst();
     }
@@ -1169,7 +1169,7 @@ SELECT
 FROM
     exf_user u
 WHERE
-    u.username = '{$user->getUsername()}'
+    u.username = '{$this->buildSqlEscapedString($user->getUsername())}'
 SQL;
         
         $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
@@ -1269,7 +1269,7 @@ SQL;
                 exf_user_role_users turu
                 INNER JOIN exf_user u ON turu.user_oid = u.oid
             WHERE
-                u.username = '{$userOrToken->getUsername()}'
+                u.username = '{$this->buildSqlEscapedString($userOrToken->getUsername())}'
         )
         OR apol.target_user_role_oid = $authenticatedGroupOid
         OR
@@ -1741,5 +1741,14 @@ SQL;
         $query = $this->getDataConnection()->runSql($sql);
         $rows = $query->getResultArray();
         return $rows;        
+    }
+    
+    protected function buildSqlEscapedString(string $string) : string
+    {
+        if (function_exists('mb_ereg_replace')) {
+            return mb_ereg_replace('[\x00\x0A\x0D\x1A\x22\x27\x5C]', '\\\0', $string);
+        } else {
+            return preg_replace('~[\x00\x0A\x0D\x1A\x22\x27\x5C]~u', '\\\$0', $string);
+        }
     }
 }

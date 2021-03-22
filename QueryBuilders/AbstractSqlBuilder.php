@@ -813,7 +813,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function escapeString($string)
     {
-        return addslashes($string);
+        if (function_exists('mb_ereg_replace')) {
+            return mb_ereg_replace('[\x00\x0A\x0D\x1A\x22\x27\x5C]', '\\\0', $string);
+        } else {
+            return preg_replace('~[\x00\x0A\x0D\x1A\x22\x27\x5C]~u', '\\\$0', $string);
+        }
     }
     
     /**
