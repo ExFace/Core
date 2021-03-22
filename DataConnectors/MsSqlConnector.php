@@ -22,6 +22,8 @@ class MsSqlConnector extends AbstractSqlConnector
     private $dBase = null;
     
     private $warningsReturnAsErrors = false;
+    
+    private $resultCounter = null;
 
     /**
      *
@@ -81,15 +83,37 @@ class MsSqlConnector extends AbstractSqlConnector
     protected function performQuerySql(SqlDataQuery $query)
     {
         $sql = $query->getSql();
-        if (StringDataType::startsWith($sql, 'INSERT', false) === true) {
-            $sql .= '; SELECT SCOPE_IDENTITY() AS IDENTITY_COLUMN_NAME';
-        }
-        if (! $result = sqlsrv_query($this->getCurrentConnection(), $sql)) {
-            throw new DataQueryFailedError($query, "SQL query failed! " . $this->getLastError(), '6T2T2UI');
+        $this->resultCounter = null;
+        if ($query->isMultipleStatements()) {
+            $this->resultCounter = 0;
+            $stmt = sqlsrv_query($this->getCurrentConnection(), $sql);
+            $query->setResultResource($stmt);
+            
+            // Consume the first result (rows affected by INSERT) without calling sqlsrv_next_result.
+            $this->resultCounter = sqlsrv_rows_affected($stmt);
+            
+            // Move to the next result and display results.
+            $stmtNo = 1;
+            $next_result = sqlsrv_next_result($stmt);
+            while ($next_result === true) {
+                $stmtNo++;
+                $next_result = sqlsrv_next_result($stmt);
+                $this->resultCounter += sqlsrv_rows_affected($stmt);
+            }
+            if($next_result === false) {
+                throw new DataQueryFailedError($query, "SQL query substatement {$stmtNo} failed! " . $this->getLastError(), '6T2T2UI');
+            }
         } else {
-            $query->setResultResource($result);
-            return $query;
+            if (StringDataType::startsWith($sql, 'INSERT', false) === true) {
+                $sql .= '; SELECT SCOPE_IDENTITY() AS IDENTITY_COLUMN_NAME';
+            }
+            if (! $result = sqlsrv_query($this->getCurrentConnection(), $sql)) {
+                throw new DataQueryFailedError($query, "SQL query failed! " . $this->getLastError(), '6T2T2UI');
+            } else {
+                $query->setResultResource($result);
+            }
         }
+        return $query;
     }
 
     /**
@@ -111,7 +135,13 @@ class MsSqlConnector extends AbstractSqlConnector
 
     function getAffectedRowsCount(SqlDataQuery $query)
     {
-        $cnt = sqlsrv_rows_affected($query->getResultResource());
+        if (! $stmt = $query->getResultResource()) {
+            return null;
+        }
+        if ($this->resultCounter !== null) {
+            return $this->resultCounter;
+        }
+        $cnt = sqlsrv_rows_affected($stmt);
         // sqlsrv_rows_affected() can return FALSE in case of an error accoring to the docs and -1
         // if no counting was possible.
         switch (true) {
