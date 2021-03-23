@@ -724,7 +724,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $subquery->update($data_connection);
             }
             
-            return new DataQueryResultData([], $affected_rows);
+            return new DataQueryResultData([], $affected_rows ?? 0);
     }
     
     /**
