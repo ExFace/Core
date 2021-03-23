@@ -24,6 +24,7 @@ use exface\Core\CommonLogic\Security\AuthenticationToken\CliEnvAuthToken;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 
 /**
  * Command line interface facade based on Symfony Console.
@@ -229,9 +230,9 @@ class ConsoleFacade extends Application implements FacadeInterface
      * 
      * @throws AuthenticationFailedError
      * 
-     * @return CliEnvAuthToken
+     * @return AuthenticationTokenInterface
      */
-    protected function authenticateCliUser() : CliEnvAuthToken
+    protected function authenticateCliUser() : AuthenticationTokenInterface
     {
         $token = new CliEnvAuthToken($this);
         return $this->getWorkbench()->getSecurity()->authenticate($token);
