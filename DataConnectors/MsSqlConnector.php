@@ -85,23 +85,29 @@ class MsSqlConnector extends AbstractSqlConnector
         $sql = $query->getSql();
         $this->resultCounter = null;
         if ($query->isMultipleStatements()) {
+            $error = false;
+            $stmtNo = 1;
             $this->resultCounter = 0;
-            $stmt = sqlsrv_query($this->getCurrentConnection(), $sql);
-            $query->setResultResource($stmt);
             
-            // Consume the first result (rows affected by INSERT) without calling sqlsrv_next_result.
+            $stmt = sqlsrv_query($this->getCurrentConnection(), $sql);
+            if ($stmt === false) {
+                $error = true;
+            } else {
+                $query->setResultResource($stmt);
+            }
+            
+            // Consume the first result without calling sqlsrv_next_result.
             $this->resultCounter = sqlsrv_rows_affected($stmt);
             
             // Move to the next result and display results.
-            $stmtNo = 1;
             $next_result = sqlsrv_next_result($stmt);
             while ($next_result === true) {
                 $stmtNo++;
                 $next_result = sqlsrv_next_result($stmt);
                 $this->resultCounter += sqlsrv_rows_affected($stmt);
             }
-            if($next_result === false) {
-                throw new DataQueryFailedError($query, "SQL query substatement {$stmtNo} failed! " . $this->getLastError(), '6T2T2UI');
+            if($error === true || $next_result === false) {
+                throw new DataQueryFailedError($query, "SQL multi-query statement {$stmtNo} failed! " . $this->getLastError(), '6T2T2UI');
             }
         } else {
             if (StringDataType::startsWith($sql, 'INSERT', false) === true) {
