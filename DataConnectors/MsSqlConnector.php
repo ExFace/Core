@@ -222,6 +222,11 @@ class MsSqlConnector extends AbstractSqlConnector
             return $this;
         }
         
+        // Do nothing if no transaction was started - there is nothing to commit.
+        if ($this->transactionIsStarted() === false) {
+            return $this;
+        }
+        
         if (! sqlsrv_commit($this->getCurrentConnection())) {
             throw new DataConnectionCommitFailedError($this, 'Cannot commit transaction in "' . $this->getAliasWithNamespace() . '": ' . $this->getLastError(), '6T2T2O9');
         } else {
@@ -235,6 +240,11 @@ class MsSqlConnector extends AbstractSqlConnector
         // Throw error if trying to rollback a transaction with autocommit enabled
         if ($this->getAutocommit()) {
             throw new DataConnectionRollbackFailedError($this, 'Cannot rollback transaction in "' . $this->getAliasWithNamespace() . '": The autocommit options is set to TRUE for this connection!');
+        }
+        
+        // Do nothing if no transaction was started - no changes to roll back.
+        if ($this->transactionIsStarted() === false) {
+            return $this;
         }
         
         if (! sqlsrv_rollback($this->getCurrentConnection())) {
