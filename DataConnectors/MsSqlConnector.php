@@ -85,13 +85,12 @@ class MsSqlConnector extends AbstractSqlConnector
         $sql = $query->getSql();
         $this->resultCounter = null;
         if ($query->isMultipleStatements()) {
-            $error = false;
             $stmtNo = 1;
             $this->resultCounter = 0;
             
             $stmt = sqlsrv_query($this->getCurrentConnection(), $sql);
             if ($stmt === false) {
-                $error = true;
+                throw new DataQueryFailedError($query, "SQL multi-query statement {$stmtNo} failed! " . $this->getLastError(), '6T2T2UI');
             } else {
                 $query->setResultResource($stmt);
             }
@@ -106,7 +105,7 @@ class MsSqlConnector extends AbstractSqlConnector
                 $next_result = sqlsrv_next_result($stmt);
                 $this->resultCounter += sqlsrv_rows_affected($stmt);
             }
-            if($error === true || $next_result === false) {
+            if($next_result === false) {
                 throw new DataQueryFailedError($query, "SQL multi-query statement {$stmtNo} failed! " . $this->getLastError(), '6T2T2UI');
             }
         } else {
