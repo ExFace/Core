@@ -268,10 +268,10 @@ class StringDataType extends AbstractDataType
         $search = [];
         $replace = [];
         foreach ($phs as $ph) {
-            if ($strict === true && isset($placeholders[$ph]) === false) {
-                throw new RangeException('Missing value for "' . $ph . '"!');
+            if ($strict === true && array_key_exists($ph, $placeholders) === false) {
+                throw new RangeException('Missing value for placeholder "[#' . $ph . '#]"!');
             }
-            $search[] = '[#' . $ph . '#]';
+            $search[] = '[#' . ($ph ?? '') . '#]';
             $replace[] = $placeholders[$ph] ?? '';
         }
         return str_replace($search, $replace, $string);
@@ -287,7 +287,7 @@ class StringDataType extends AbstractDataType
     public static function replacePlaceholder(string $string, string $placeholder, $value) : string
     {
         if (! is_scalar($value)) {
-            throw new RuntimeException('Cannot replace placeholder "' . $placeholder . '" in string "' . $string . '": replacement value must be scalar, ' . gettype($value) . ' received!');
+            throw new RuntimeException('Cannot replace placeholder "[#' . $placeholder . '#]" in string "' . $string . '": replacement value must be scalar, ' . gettype($value) . ' received!');
         }
         $search = '[#' . $placeholder . '#]';
         return str_replace($search, $value, $string);
