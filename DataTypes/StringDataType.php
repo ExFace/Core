@@ -254,15 +254,19 @@ class StringDataType extends AbstractDataType
      * - replacePlaceholder('Hello [#world#][#dot#]', ['world'=>'WORLD']) -> exception
      * - replacePlaceholder('Hello [#world#][#dot#]', ['world'=>'WORLD'], false) -> "Hello WORLD"
      * 
+     * If `$recursive` is set to `true`, placeholders eventually contained in the replacement values
+     * will be replaced true, allowing nested placeholders.
+     * 
      * @param string $string
      * @param string[] $placeholders
      * @param bool $strict
+     * @param bool $recursive
      * 
      * @throws RangeException if no value is found for a placeholder
      * 
      * @return string
      */
-    public static function replacePlaceholders(string $string, array $placeholders, bool $strict = true) : string
+    public static function replacePlaceholders(string $string, array $placeholders, bool $strict = true, bool $recursive = false) : string
     {
         $phs = static::findPlaceholders($string);
         $search = [];
@@ -274,7 +278,19 @@ class StringDataType extends AbstractDataType
             $search[] = '[#' . ($ph ?? '') . '#]';
             $replace[] = $placeholders[$ph] ?? '';
         }
-        return str_replace($search, $replace, $string);
+        
+        $replaced = str_replace($search, $replace, $string);
+        
+        while ($recursive === true) {
+            $replacedAgain = static::replacePlaceholders($replaced, $placeholders, $strict, false);
+            if ($replacedAgain === $replaced) {
+                $recursive = false;
+            } else {
+                $replaced = $replacedAgain;
+            }
+        }
+        
+        return $replaced;
     }
     
     /**
