@@ -214,7 +214,7 @@ class UxonSchema implements UxonSchemaInterface
             $propertyCol = $ds->getColumns()->get('PROPERTY');
             foreach ($col->getValues() as $r => $tpl) {
                 if ($tpl !== null) {
-                    $tpls[$propertyCol->getCellValue($r)] = $tpl;
+                    $tpls[$propertyCol->getCellValue($r)] = str_replace('\n', "\n", $tpl);
                 }
             }
         }

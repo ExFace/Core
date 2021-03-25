@@ -851,6 +851,7 @@ CSS;
         {
             $addHelpButtonFunction = static::buildJsFunctionNameAddHelpButton($funcPrefix);
             $onBlurFunctionName = static::buildJsFunctionNameOnBlur($funcPrefix);
+            $onClickValueFunctionName = $funcPrefix . '_onClickValue';
             $presetHintHide = static::buildJsPresetHintHide($uxonEditorId);
             $trans = static::getTranslations($workbench);
             
@@ -965,16 +966,39 @@ CSS;
         	}
         	var path = node.getPath();
         	var prop = path[path.length-1];
+            var val;
+            var tpl;
+            var type = 'auto';
         	if (editor._autosuggestLastResult && editor._autosuggestLastResult.templates) {
-        		var tpl = editor._autosuggestLastResult.templates[prop];
+        		tpl = editor._autosuggestLastResult.templates[prop];
         		if (tpl) {
-        			var val = JSON.parse(tpl);
-        			node.setValue(val, (Array.isArray(val) ? 'array' : 'object'));
+        			try {
+                        val = JSON.parse(tpl);
+                        type = (Array.isArray(val) ? 'array' : 'object');
+                    } catch (e) {
+                        val = tpl;
+                        if (tpl.includes("\\n")) {
+        			        node.setValue(val, type);
+                            {$funcPrefix}_openAceModal(node);
+                            return;
+                        }
+                    }
+        			node.setValue(val, type);
         			node.expand(true);
         			{$funcPrefix}_focusFirstChildValue(node);
         		}
         	}
         }
+
+        function {$onClickValueFunctionName}(event){
+            var editor = event.data.jsonEditor;
+        	var oNode = {$funcPrefix}_getNodeFromTarget(this);
+            var sVal = oNode.getValue();
+            if (sVal && sVal.includes("\\n")) {
+                {$funcPrefix}_openAceModal(oNode);
+            }
+        }
+
           function {$addHelpButtonFunction}($, editorId, url, title) {
             var helpBtn = $(
                 '<button title="{$trans['HELP']}" style="background: transparent;"><i ' +
@@ -1119,6 +1143,7 @@ CSS;
                 "jsoneditor-modal jsoneditor-modal-maximized",
                 function(modal) {
                     var editor = ace.edit('{$funcPrefix}_value_editor');
+                    editor.focus();
 
                     modal.modalElem().querySelector(".uxoneditor-btn-ok").onclick = function() {
                         node.setValue(editor.getValue());
@@ -1850,7 +1875,25 @@ JS;
             <<<JS
                 
                 $(function() {
-            		$(document).on('blur', '#{$uxonEditorId} div.jsoneditor-field[contenteditable="true"]', {jsonEditor: {$this::buildJsEditorGetter($uxonEditorId)} }, {$funcPrefix}_onBlur);
+                    var sEditableFieldsSelector = '#{$uxonEditorId} div.jsoneditor-field[contenteditable="true"]';
+                    var sEditableValuesSelector = '#{$uxonEditorId} div.jsoneditor-value[contenteditable="true"].jsoneditor-string';
+                    var oEventData = {
+                        jsonEditor: {$this::buildJsEditorGetter($uxonEditorId)} 
+                    };
+
+                    if (! ($._data(document, 'events').click || []).find(function(oListener){
+                            return oListener.selector === sEditableValuesSelector;
+                        })
+                    ){
+                        $(document).on('click', sEditableValuesSelector, oEventData, {$funcPrefix}_onClickValue);
+                    }
+
+                    if (! ($._data(document, 'events').blur || []).find(function(oListener){
+                            return oListener.selector === sEditableFieldsSelector;
+                        })
+                    ){
+                        $(document).on('blur', sEditableFieldsSelector, oEventData, {$funcPrefix}_onBlur);
+                    }
             	});
 JS;
     }
