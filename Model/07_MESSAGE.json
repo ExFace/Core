@@ -2332,6 +2332,20 @@
             "HINT": "Please open the Link in Chrome, Firefox, Safari, Edge or similar!",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2021-03-26 14:25:10",
+            "MODIFIED_ON": "2021-03-26 14:25:10",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba280b077182ca280025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7FDSVFK",
+            "TITLE": "Cannot check for potential update conflicts",
+            "DESCRIPTION": "The `TimeStampingBehavior` implements so-called \"optimistic locking\" by perventing write-operations if the `updated_on_attribute` of a data row changed since the row was last read. If the value of the attribute has changed, a (concurrent) write operation must have occurred.\n\nThis error indicates, that checking `updated_on_attribute` was not possible because there was no time value provided in the action's input data. Thus, there is nothing to check against. \n\nTo aviod this error, make sure, every update-operation on an object with `TimeStampingBehavior` MUST have the `updated_on_attribute` in its input data. In many cases, this can be done by adding this attribute to the `input_mapper` of the action.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

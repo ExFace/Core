@@ -16,6 +16,9 @@ use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Events\Model\OnMetaAttributeModelValidatedEvent;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
 
 /**
  * Tracks time and users that created/changed objects and prevents concurrent writes comparing the update-times.
@@ -446,7 +449,7 @@ class TimeStampingBehavior extends AbstractBehavior
         // Check if the updated_on column is present in the sheet
         $updated_column = $data_sheet->getColumns()->getByAttribute($this->getUpdatedOnAttribute());
         if (! $updated_column) {
-            throw new DataSheetColumnNotFoundError($data_sheet, 'Cannot check for potential update conflicts in TimeStamping behavior: column "' . $this->getUpdatedOnAttributeAlias() . '" not found in given data sheet!');
+            throw new DataSheetColumnNotFoundError($data_sheet, 'Cannot check for potential update conflicts in TimeStamping behavior: column "' . $this->getUpdatedOnAttributeAlias() . '" not found in given data sheet!', '7FDSVFK');
         }
         $update_qty = count($updated_column->getValues());
         
@@ -497,7 +500,7 @@ class TimeStampingBehavior extends AbstractBehavior
                 $check_val = $check_column->aggregate(AggregatorFunctionsDataType::fromValue($this->getWorkbench(), $check_column->getAttribute()->getDefaultAggregateFunction()));
                 
                 try {
-                    if (empty($data_sheet->getUidColumn()->getValues()[0])) {
+                    if (! $data_sheet->hasUidColumn() || empty($data_sheet->getUidColumn()->getValues()[0])) {
                         // Beim Massenupdate mit Filtern wird als TS_UPDATE-Wert die momentane Zeit mitgeliefert, die natuerlich neuer
                         // ist, als alle Werte in der Datenbank. Es werden jedoch keine oid-Werte uebergeben, da nicht klar ist welche
                         // Objekte betroffen sind. Momentan wird daher das Update einfach gestattet, spaeter soll hier eine Warnung
@@ -549,10 +552,24 @@ class TimeStampingBehavior extends AbstractBehavior
         $check_sheet = $originalSheet->copy()->removeRows();
         // Only read current data if there are UIDs or filters in the original sheet!
         // Otherwise it would read ALL data which is useless.
-        if ($originalSheet->hasUidColumn(true) === true || $originalSheet->getFilters()->isEmpty() === false) {
+        if ($originalSheet->hasUidColumn(true) === true) {
             $check_sheet->getFilters()->addConditionFromColumnValues($originalSheet->getUidColumn());
-            $check_sheet->dataRead();
+        } elseif ($originalSheet->getFilters()->isEmpty() === false) {
+            // If there are no UIDs, but filters and a single row, this is a mass-update sheet.
+            // In this case, we need to get the maximum of the update-times of the affected data items
+            // and compare that to the time in the input data (in `onUpdateCheckForConflicts()`). 
+            // FIXME what about the other columns? Read them too? With default aggregators?!
+            if ($originalSheet->countRows() === 1 && $updCol = $originalSheet->getColumns()->getByAttribute($this->getUpdatedOnAttribute())) {
+                $maxSheet = DataSheetFactory::createFromObject($check_sheet->getMetaObject());
+                $maxCol = $maxSheet->getColumns()->addFromExpression(DataAggregation::addAggregatorToAlias($this->getUpdatedOnAttributeAlias(), new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX)));
+                $maxSheet->setFilters($check_sheet->getFilters()->copy());
+                $maxSheet->dataRead();
+                $updCol->setValue(0, $maxCol->getValue(0));
+            }
+        } else {
+            return $check_sheet;
         }
+        $check_sheet->dataRead();
         return $check_sheet;
     }
     
