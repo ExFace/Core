@@ -8,12 +8,11 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
 {
-    private $use_context_filters = false;
+    private $use_context_filters = null;
 
     /**
      * 
@@ -25,7 +24,7 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
         $data_sheet = $this->getInputDataSheet($task);
         
         // Add filters from context if applicable
-        if ($this->getUseContextFilters() || ! $data_sheet->getUidColumn()) {
+        if ($this->getUseContextFilters() === true || ($this->getUseContextFilters() === null && ! $data_sheet->hasUidColumn(true) && $data_sheet->getFilters()->isEmpty(true))) {
             $conditions = $this->getWorkbench()->getContext()->getScopeWindow()->getFilterContext()->getConditions($data_sheet->getMetaObject());
             if (is_array($conditions) || ! empty($conditions)) {
                 foreach ($conditions as $condition) {
@@ -79,7 +78,7 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
      * 
      * @return bool
      */
-    public function getUseContextFilters() : bool
+    public function getUseContextFilters() : ?bool
     {
         return $this->use_context_filters;
     }
@@ -88,7 +87,8 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
      * Set to TRUE to force adding filters from the filter context to all update queries - FALSE by default.
      * 
      * By default the filter context is only used as a filter when updating if the
-     * data to be updated lacks a UID column and, thus, the all data would get updated.
+     * data to be updated neither has UIDs nor explicitly set filters, meaning, that 
+     * all data would get updated.
      * In this case, it is important to doublecheck the context as we would otherwise
      * update data that the user does not see in the current context. With a UID column
      * this cannot happen, because only rows explicitly selected by the user could make
@@ -100,9 +100,9 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
      * @param bool $value
      * @return \exface\Core\Actions\UpdateData
      */
-    public function setUseContextFilters($value) : UpdateData
+    public function setUseContextFilters(bool $value) : UpdateData
     {
-        $this->use_context_filters = BooleanDataType::cast($value);
+        $this->use_context_filters = $value;
         return $this;
     }
 }
