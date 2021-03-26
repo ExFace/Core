@@ -22,7 +22,7 @@ class ReadData extends AbstractAction implements iReadData
 
     private $affected_rows = 0;
 
-    private $update_filter_context = true;
+    private $update_filter_context = null;
     
     private $widgetToReadFor = null;
 
@@ -47,7 +47,7 @@ class ReadData extends AbstractAction implements iReadData
         // It is important to do it after the data had been read, because otherwise the newly set
         // context filters would affect the result of the read operation (context filters are automatically
         // applied to the query, each time, data is fetched)
-        if ($this->getUpdateFilterContext()) {
+        if ($this->getUpdateFilterContext($data_sheet)) {
             $this->updateFilterContext($data_sheet);
         }
         
@@ -78,17 +78,24 @@ class ReadData extends AbstractAction implements iReadData
      * 
      * @return bool
      */
-    public function getUpdateFilterContext()
+    public function getUpdateFilterContext(DataSheetInterface $data) : bool
     {
-        return $this->update_filter_context;
+        return $this->update_filter_context ?? ! $data->hasAggregations();
     }
 
     /**
+     * Set to TRUE/FALSE to force passing the filters of this action to the filter context (or not).
+     * 
+     * By default, any explicit read-operation (not autosuggest or so) without
+     * aggregation will update the filter context
+     * 
+     * @uxon-property update_filter_context
+     * @uxon-type boolean
      * 
      * @param bool $value
      * @return \exface\Core\Actions\ReadData
      */
-    public function setUpdateFilterContext($value)
+    public function setUpdateFilterContext(bool $value) : ReadData
     {
         $this->update_filter_context = $value;
         return $this;
