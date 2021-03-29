@@ -69,7 +69,7 @@ class SessionContextScope extends AbstractContextScope
     public function init()
     {
         if ($this->getSavedContexts() instanceof UxonObject) {
-            foreach (array_keys($this->getSavedContexts()) as $alias) {
+            foreach ($this->getSavedContexts()->getPropertyNames() as $alias) {
                 try {
                     $this->getContext($alias);
                 } catch (ContextNotFoundError|AuthorizationExceptionInterface $error) {
