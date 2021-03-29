@@ -40,7 +40,7 @@ class Tracer extends Profiler
     {
         parent::__construct($workbench, $startOffsetMs);
         $this->registerLogHandlers();
-        $this->registerListeners();
+        $this->registerEventHandlers();
     }
     
     /**
@@ -106,7 +106,7 @@ class Tracer extends Profiler
         }
     }
     
-    protected function registerListeners()
+    protected function registerEventHandlers()
     {
         $event_manager = $this->getWorkbench()->eventManager();
         
