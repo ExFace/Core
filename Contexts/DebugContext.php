@@ -13,6 +13,8 @@ use exface\Core\Actions\ContextApi;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\CommonLogic\Tracer;
+use exface\Core\Events\Action\OnActionPerformedEvent;
+use exface\Core\Interfaces\Events\ActionEventInterface;
 
 /**
  * This context offers usefull debugging tools right in the GUI.
@@ -67,15 +69,21 @@ class DebugContext extends AbstractContext
         $this->is_debugging = true;
         $this->startTracer();
         
+        // Make sure the tracer is disabled for all actions dealing with this context, so
+        // we don't caption stop-tracing and debug-menu actions.
         $this->getWorkbench()->eventManager()->addListener(OnBeforeActionPerformedEvent::getEventName(), array(
             $this,
-            'skipContextActionsEventHanlder'
+            'onContextActionDisableTracer'
+        ));
+        $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), array(
+            $this,
+            'onContextActionDisableTracer'
         ));
         
         return $this;
     }
     
-    public function skipContextActionsEventHanlder(OnBeforeActionPerformedEvent $e)
+    public function onContextActionDisableTracer(ActionEventInterface $e)
     {
         $action = $e->getAction();
         if ((($action instanceof ShowContextPopup) && $action->getContext() === $this)
