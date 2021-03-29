@@ -9,7 +9,7 @@ For PowerUI to work, the support for rewrite rules needs to be enabled on the II
 Download the module here:
 
 - [Download x86 Version](https://go.microsoft.com/?linkid=9722533)
-- [Download x86 Version](https://go.microsoft.com/?linkid=9722532)
+- [Download x64 Version](https://go.microsoft.com/?linkid=9722532)
 
 ## WinCache Extension Installation
 The WinCache Extension for php is required. Donwload the correct `nts` version, fitting to your php and Windows version, here:
