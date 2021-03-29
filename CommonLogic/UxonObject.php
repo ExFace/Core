@@ -321,6 +321,15 @@ class UxonObject implements \IteratorAggregate
         return true;
     }
     
+    /**
+     * 
+     * @return string[]
+     */
+    public function getPropertyNames() : array
+    {
+        return array_keys($this->array);
+    }
+    
     public function __get($name)
     {
         throw new LogicException('Direct access to properties of a UxonObject is not supported anymore!');
