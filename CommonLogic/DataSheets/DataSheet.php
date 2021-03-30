@@ -50,6 +50,8 @@ use exface\Core\Interfaces\Model\ConditionInterface;
 use exface\Core\DataTypes\EncryptedDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Widgets\DebugMessage;
+use exface\Core\Factories\WidgetFactory;
 
 /**
  * Default implementation of DataSheetInterface
@@ -2460,6 +2462,7 @@ class DataSheet implements DataSheetInterface
         return $rows;
     }
     
+    
     public function findRowsByValues(array $rowData) : array
     {
         $result = [];
@@ -2472,5 +2475,41 @@ class DataSheet implements DataSheetInterface
             $result[] = $idx;
         }
         return $result;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanGenerateDebugWidgets::createDebugWidget()
+     */
+    public function createDebugWidget(DebugMessage $debug_widget)
+    {
+        // Add a tab with the data sheet UXON
+        $uxon_tab = $debug_widget->createTab();
+        $uxon_tab->setCaption('DataSheet');
+        $uxon_tab->setNumberOfColumns(1);
+        $uxon_widget = WidgetFactory::create($debug_widget->getPage(), 'Html', $uxon_tab);
+        $uxon_tab->addWidget($uxon_widget);
+        $uxon_widget->setHtml('<pre>' . $this->getCensoredDataSheet()->exportUxonObject()->toJson(true) . '</pre>');
+        $debug_widget->addTab($uxon_tab);
+        return $debug_widget;
+    }
+    
+    /**
+     * Substitues values in columns with DataType marked as sensitive with 'CENSORED'
+     *
+     * @return DataSheetInterface
+     */
+    protected function getCensoredDataSheet() : DataSheetInterface
+    {
+        $dataSheet = $this->copy();
+        foreach ($dataSheet->getColumns() as $col) {
+            if ($col->getDataType()->isSensitiveData() === true) {
+                for ($i = 0; $i < $dataSheet->countRows(); $i++) {
+                    $col->setValue($i, 'CENSORED');
+                }
+            }
+        }
+        return $dataSheet;
     }
 }
