@@ -479,9 +479,9 @@ class Console extends AbstractWidget
     {
         switch (true) {
             case $type instanceof StringDataType:
-                $string = trim(json_encode($value), "\"");
+                $value = trim(json_encode($value), "\"");
         }   
-        return $string;
+        return $value;
     }
     
     /**
