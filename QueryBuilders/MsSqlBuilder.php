@@ -164,7 +164,12 @@ class MsSqlBuilder extends AbstractSqlBuilder
             // If we have attributes, that need reverse relations, we must move the group by to the outer (enrichment) query, because
             // the subselects of the subqueries will reference UIDs of the core rows, thus making grouping in the core query impossible
             if (! $skipped && $group_by && $has_attributes_with_reverse_relations) {
-                $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()));
+                if ($aggregator = $qpart->getAggregator()) {
+                    $aggregator = $qpart->getAggregator()->getNextLevelAggregator();
+                } else {
+                    $aggregator = null;
+                }
+                $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()), null, $aggregator);
             }
         }
         // Core SELECT
