@@ -79,7 +79,8 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatter($jsInput)
     {
-        return "exfTools.date.format((! {$jsInput} ? {$jsInput} : (isNaN({$jsInput}) ? exfTools.date.parse({$jsInput}, '{$this->getFormat()}') : new Date({$jsInput}))), \"{$this->getFormat()}\")";
+        $formatQuoted = json_encode($this->getFormat());
+        return "exfTools.date.format((! {$jsInput} ? {$jsInput} : (isNaN({$jsInput}) ? exfTools.date.parse({$jsInput}, {$formatQuoted}) : new Date({$jsInput}))), {$formatQuoted})";
     }
 
     /**
@@ -108,7 +109,8 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatDateObjectToString($jsDateObject)
     {
-        return "exfTools.date.format({$jsDateObject}, \"{$this->getFormat()}\")";
+        $formatQuoted = json_encode($this->getFormat());
+        return "exfTools.date.format({$jsDateObject}, {$formatQuoted})";
     }
 
     /**
@@ -121,7 +123,8 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatParserToJsDate($jsString)
     {
-        return "exfTools.date.parse({$jsString}, '{$this->getFormat()}')";
+        $formatQuoted = json_encode($this->getFormat());
+        return "exfTools.date.parse({$jsString}, {$formatQuoted})";
     }
 
     /**
@@ -131,9 +134,10 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatParser($jsInput)
     {
+        $formatQuoted = json_encode($this->getFormat());
         return <<<JS
 function() {
-                var dateObj = exfTools.date.parse({$jsInput}, '{$this->getFormat()}');
+                var dateObj = exfTools.date.parse({$jsInput}, {$formatQuoted});
                 return (dateObj ? {$this->buildJsFormatDateObjectToInternal('dateObj')} : '');
             }()
         
