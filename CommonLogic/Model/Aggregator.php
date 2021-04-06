@@ -192,4 +192,21 @@ class Aggregator implements AggregatorInterface {
         }
         return $type;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\AggregatorInterface::getNextLevelAggregator()
+     */
+    public function getNextLevelAggregator() : AggregatorInterface
+    {
+        switch ($this->getFunction()->getValue()){
+            case AggregatorFunctionsDataType::COUNT:
+            case AggregatorFunctionsDataType::COUNT_IF:
+            case AggregatorFunctionsDataType::COUNT_DISTINCT:
+                return new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::SUM);
+        }
+        
+        return $this;
+    }
 }

@@ -929,15 +929,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // build subselects for reverse relations if the body of the select is not specified explicitly
         if (! $select_column && $qpart->getUsedRelations(RelationTypeDataType::REVERSE)) {
             $output = $this->buildSqlSelectSubselect($qpart, $select_from);
-            if ($make_groupable && $aggregator){
-                if ($aggregator && $aggregator === $qpart->getAggregator()){
-                    switch ($aggregator->getFunction()->getValue()){
-                        case AggregatorFunctionsDataType::COUNT:
-                        case AggregatorFunctionsDataType::COUNT_IF:
-                        case AggregatorFunctionsDataType::COUNT_DISTINCT:
-                            $aggregator = new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::SUM);
-                            break;
-                    }
+            if ($make_groupable && $aggregator) {
+                if ($aggregator === $qpart->getAggregator()){
+                    $aggregator = $aggregator->getNextLevelAggregator();
                 }
                 $output = $this->buildSqlGroupByExpression($qpart, $output, $aggregator);
             } else {

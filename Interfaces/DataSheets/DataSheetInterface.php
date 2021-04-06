@@ -10,6 +10,7 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\CommonLogic\DataSheets\DataSheetList;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
+use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 
 /**
  * Internal data respresentation - a row-based table with filters, sorters, aggregators, etc.
@@ -30,7 +31,7 @@ use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
  * @author Andrej Kabachnik
  *
  */
-interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCanBeConvertedToUxon
+interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCanBeConvertedToUxon, iCanGenerateDebugWidgets
 {
 
     /**

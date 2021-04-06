@@ -8,7 +8,7 @@ class RowDataArraySorter
 
     public function sort(array $array_of_rows)
     {
-        if (! $this->coutCriterias())
+        if (! $this->countCriterias())
             return $array_of_rows;
         
         $arguments = array();
@@ -44,7 +44,7 @@ class RowDataArraySorter
         return array_column($array_of_rows, $key);
     }
 
-    public function coutCriterias()
+    public function countCriterias()
     {
         return count($this->getCriterias());
     }

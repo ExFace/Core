@@ -13,13 +13,13 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataSheetDiffError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
-use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\DataTypes\ArrayDataType;
 
 class DataColumn implements DataColumnInterface
 {
@@ -854,60 +854,10 @@ class DataColumn implements DataColumnInterface
         }
         
         try {
-            return static::aggregateValues($this->getValues(false), $aggregator);
+            return ArrayDataType::aggregateValues($this->getValues(false), $aggregator);
         } catch (\Throwable $e) {
             throw new DataSheetRuntimeError($this->getDataSheet(), 'Cannot aggregate values of column "' . $this->getName() . '" of a data sheet of "' . $this->getMetaObject()->getAliasWithNamespace() . '": unknown aggregator function "' . $aggregator . '"!', '6T5UXLD', $e);
         }
-    }
-
-    /**
-     * Reduces the given array of values to a single value by applying the given aggregator.
-     * If no aggregator is specified, returns the first value.
-     *
-     * @param array $row_array  
-     * @param AggregatorInterface $aggregator          
-     * @return array
-     */
-    public static function aggregateValues(array $row_array, AggregatorInterface $aggregator = null)
-    {
-        if ($aggregator === null) {
-            $func = AggregatorFunctionsDataType::LIST_DISTINCT;
-            $args = [];
-        } else {
-            $func = $aggregator->getFunction()->getValue();
-            $args = $aggregator->getArguments();
-        }
-        
-        $output = '';
-        switch ($func) {
-            case AggregatorFunctionsDataType::LIST_ALL:
-                $output = implode(($args[0] ? $args[0] : EXF_LIST_SEPARATOR), $row_array);
-                break;
-            case AggregatorFunctionsDataType::LIST_DISTINCT:
-                $output = implode(($args[0] ? $args[0] : EXF_LIST_SEPARATOR), array_unique($row_array));
-                break;
-            case AggregatorFunctionsDataType::MIN:
-                $output = count($row_array) > 0 ? min($row_array) : 0;
-                break;
-            case AggregatorFunctionsDataType::MAX:
-                $output = count($row_array) > 0 ? max($row_array) : 0;
-                break;
-            case AggregatorFunctionsDataType::COUNT:
-                $output = count($row_array);
-                break;
-            case AggregatorFunctionsDataType::COUNT_DISTINCT:
-                $output = count(array_unique($row_array));
-                break;
-            case AggregatorFunctionsDataType::SUM:
-                $output = array_sum($row_array);
-                break;
-            case AggregatorFunctionsDataType::AVG:
-                $output = count($row_array) > 0 ? array_sum($row_array) / count($row_array) : 0;
-                break;
-            default:
-                throw new UnexpectedValueException('Unsupported aggregator function "' . $func . '"!');
-        }
-        return $output;
     }
 
     /**

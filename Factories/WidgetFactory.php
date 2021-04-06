@@ -18,6 +18,7 @@ use exface\Core\Interfaces\Widgets\iCanBeDisabled;
 use exface\Core\DataTypes\MessageTypeDataType;
 use exface\Core\Widgets\Parts\WidgetInheritance;
 use exface\Core\Widgets\Parts\WidgetInheriter;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * 
@@ -344,6 +345,25 @@ abstract class WidgetFactory extends AbstractStaticFactory
         }
         
         return $editors;
+    }
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param string $widgetType
+     * @return WidgetInterface
+     */
+    public static function createOnBlankPage(WorkbenchInterface $workbench, string $widgetType, $objectOrSelector) : WidgetInterface
+    {
+        $page = UiPageFactory::createEmpty($workbench);
+        if ($objectOrSelector instanceof MetaObjectInterface) {
+            $object = $objectOrSelector;
+        } else {
+            $object = MetaObjectFactory::createFromString($workbench, $objectOrSelector);
+        }
+        $widget = static::create($page, $widgetType);
+        $widget->setMetaObject($object);
+        return $widget;
     }
 }
 ?>

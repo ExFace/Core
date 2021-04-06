@@ -4,7 +4,6 @@ namespace exface\Core\Exceptions\DataSheets;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\ExceptionTrait;
 use exface\Core\Widgets\DebugMessage;
-use exface\Core\Factories\WidgetFactory;
 
 /**
  * This trait enables an exception to output data sheet specific debug information.
@@ -17,7 +16,7 @@ trait DataSheetExceptionTrait {
     #TODO function to censor columns with sensitive data
     
     use ExceptionTrait {
-		createDebugWidget as parentCreateDebugWidget;
+		createDebugWidget as createDebugWidgetViaExceptionTrait;
 	}
 
     private $data_sheet = null;
@@ -51,35 +50,7 @@ trait DataSheetExceptionTrait {
 
     public function createDebugWidget(DebugMessage $debug_widget)
     {
-        $debug_widget = $this->parentCreateDebugWidget($debug_widget);
-        $page = $debug_widget->getPage();
-        // Add a tab with the data sheet UXON
-        $uxon_tab = $debug_widget->createTab();
-        $uxon_tab->setCaption('DataSheet');
-        $uxon_tab->setNumberOfColumns(1);
-        $uxon_widget = WidgetFactory::create($page, 'Html');
-        $uxon_tab->addWidget($uxon_widget);
-        $uxon_widget->setHtml('<pre>' . $this->getCensoredDataSheet()->exportUxonObject()->toJson(true) . '</pre>');
-        $debug_widget->addTab($uxon_tab);
-        return $debug_widget;
-    }
-    
-    /**
-     * Substitues values in columns with DataType marked as sensitive with 'CENSORED'
-     * 
-     * @return DataSheetInterface
-     */
-    protected function getCensoredDataSheet() : DataSheetInterface
-    {
-        $dataSheet = $this->getDataSheet();
-        foreach ($dataSheet->getColumns() as $col) {
-            if ($col->getDataType()->isSensitiveData() === true) {
-                for ($i = 0; $i < $dataSheet->countRows(); $i++) {
-                    $col->setValue($i, 'CENSORED');
-                }
-            }
-        }
-        return $dataSheet;
+        $debug_widget = $this->createDebugWidgetViaExceptionTrait($debug_widget);
+        return $this->getDataSheet()->createDebugWidget($debug_widget);
     }
 }
-?>

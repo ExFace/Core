@@ -5,6 +5,8 @@ use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
  * 
@@ -128,5 +130,55 @@ class ArrayDataType extends AbstractDataType
             }
         }
         return $val;
+    }
+    
+    /**
+     * Reduces the given array of values to a single value by applying the given aggregator.
+     * If no aggregator is specified, returns the first value.
+     *
+     * @param array $values
+     * @param AggregatorInterface $aggregator
+     * @return array
+     */
+    public static function aggregateValues(array $values, AggregatorInterface $aggregator = null)
+    {
+        if ($aggregator === null) {
+            $func = AggregatorFunctionsDataType::LIST_DISTINCT;
+            $args = [];
+        } else {
+            $func = $aggregator->getFunction()->getValue();
+            $args = $aggregator->getArguments();
+        }
+        
+        $output = '';
+        switch ($func) {
+            case AggregatorFunctionsDataType::LIST_ALL:
+                $output = implode(($args[0] ? $args[0] : EXF_LIST_SEPARATOR), $values);
+                break;
+            case AggregatorFunctionsDataType::LIST_DISTINCT:
+                $output = implode(($args[0] ? $args[0] : EXF_LIST_SEPARATOR), array_unique($values));
+                break;
+            case AggregatorFunctionsDataType::MIN:
+                $output = count($values) > 0 ? min($values) : 0;
+                break;
+            case AggregatorFunctionsDataType::MAX:
+                $output = count($values) > 0 ? max($values) : 0;
+                break;
+            case AggregatorFunctionsDataType::COUNT:
+                $output = count($values);
+                break;
+            case AggregatorFunctionsDataType::COUNT_DISTINCT:
+                $output = count(array_unique($values));
+                break;
+            case AggregatorFunctionsDataType::SUM:
+                $output = array_sum($values);
+                break;
+            case AggregatorFunctionsDataType::AVG:
+                $output = count($values) > 0 ? array_sum($values) / count($values) : 0;
+                break;
+            default:
+                throw new UnexpectedValueException('Unsupported aggregator function "' . $func . '"!');
+        }
+        return $output;
     }
 }
