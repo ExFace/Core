@@ -1,0 +1,44 @@
+{
+    "uid": "0x11eb81167e4d8d5481168c04ba002958",
+    "alias_with_namespace": "exface.core.error-monitor",
+    "menu_parent_page_selector": "0x11ebb1630a28048ab163025041000001",
+    "menu_index": 0,
+    "menu_visible": true,
+    "name": "Error Monitor",
+    "description": "",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "created_on": "2021-04-06 15:03:33",
+    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "modified_on": "2021-04-06 16:33:58",
+    "contents": {
+        "widget_type": "DataTable",
+        "object_alias": "exface.Core.MONITOR_ERROR",
+        "columns": [
+            {
+                "attribute_alias": "CREATED_ON"
+            },
+            {
+                "attribute_alias": "CREATED_BY_USER__LABEL"
+            },
+            {
+                "attribute_alias": "LOG_ID"
+            },
+            {
+                "attribute_alias": "ERROR_LEVEL"
+            },
+            {
+                "attribute_alias": "MESSAGE"
+            }
+        ],
+        "buttons": [
+            {
+                "action": {
+                    "alias": "exface.core.ShowDialogFromData",
+                    "uxon_attribute": "ERROR_WIDGET"
+                }
+            }
+        ]
+    }
+}

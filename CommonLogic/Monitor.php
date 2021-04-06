@@ -20,6 +20,8 @@ use exface\Core\Actions\ShowContextPopup;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Events\Workbench\OnCleanUpEvent;
+use exface\Core\CommonLogic\Log\Handlers\BufferingHandler;
+use exface\Core\CommonLogic\Log\Handlers\LogMonitorHandler;
 
 /**
  * The monitor logs actions to the MONITOR_ACTION object.
@@ -51,6 +53,7 @@ class Monitor extends Profiler
     {
         $self = new self($workbench);
         $self->registerEventListeners();
+        $self->registerLogHandler();
     }
     
     /**
@@ -75,6 +78,18 @@ class Monitor extends Profiler
             'onWorkbenchStop'
         ]);
         
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return \exface\Core\CommonLogic\Monitor
+     */
+    protected function registerLogHandler()
+    {
+        $workbench = $this->getWorkbench();
+        $handler = new BufferingHandler(new LogMonitorHandler($workbench));
+        $workbench->getLogger()->appendHandler($handler);
         return $this;
     }
     
