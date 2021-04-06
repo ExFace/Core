@@ -409,6 +409,8 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
     protected function prepareCommentText($string)
     {
         $string = preg_replace('/([^\r\n])\R([^{}\s\r\n#=-])/', '$1 $2', $string);
+        // Remove spaces before pipes at the beginning of a line to fix markdown tables
+        $string = preg_replace('/^ \\|/m', '|', $string);
         return $string;
     }
 

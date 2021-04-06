@@ -15,6 +15,7 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\DataTypes\ArrayDataType;
 
 abstract class AbstractQueryBuilder implements QueryBuilderInterface
 {
@@ -580,6 +581,47 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
             return $row_array;
         }
         return array_slice($row_array, $this->getOffset(), $this->getLimit());
+    }
+    
+    /**
+     *
+     * @param mixed[][] $rows
+     * @param QueryPartAttribute[] $byAttributeQueryParts
+     * @return mixed[][]
+     */
+    protected function applyAggregations(array $rows, array $byAttributeQueryParts) : array
+    {
+        if (empty($byAttributeQueryParts)) {
+            return $rows;
+        }
+        $resultRows = [];
+        $rowsPerKey = [];
+        foreach ($rows as $row) {
+            $key = '';
+            foreach ($byAttributeQueryParts as $qpart) {
+                $key .= $row[$qpart->getColumnKey()];
+            }
+            $rowsPerKey[$key][] = $row;
+        }
+        foreach ($rowsPerKey as $rowsWithKey) {
+            $resultRow = [];
+            foreach ($this->getAttributes() as $qpart) {
+                $key = $qpart->getColumnKey();
+                switch (true) {
+                    case $this->isAggregatedBy($qpart):
+                        $resultRow[$key] = $rowsWithKey[0][$key];
+                        break;
+                    case $qpart->hasAggregator():
+                        $vals = [];
+                        foreach ($rowsWithKey as $r) {
+                            $vals[] = $r[$key];
+                        }
+                        $resultRow[$key] = ArrayDataType::aggregateValues($vals, $qpart->getAggregator());
+                }
+            }
+            $resultRows[] = $resultRow;
+        }
+        return $resultRows;
     }
     
     protected function replacePlaceholdersByFilterValues($string)
