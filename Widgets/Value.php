@@ -24,6 +24,7 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Widgets\Traits\PrefillValueTrait;
 use exface\Core\Factories\DataPointerFactory;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * The Value widget simply shows a raw (unformatted) value.
@@ -307,18 +308,27 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * Changes the data type of the value to one of the 
      *
      * @uxon-property value_data_type
-     * @uxon-type metamodel:datatype
+     * @uxon-type \exface\Core\CommonLogic\DataTypes\AbstractDataType|metamodel:datatype
+     * @uxon-template {"alias": ""}
      * 
-     * @see \exface\Core\Interfaces\Widgets\iHaveValue::setDataType()
+     * @param UxonObject|DataTypeInterface|string $data_type_or_string
+     * @throws WidgetConfigurationError
+     * @return \exface\Core\Widgets\Value
      */
     public function setValueDataType($data_type_or_string)
     {
-        if ($data_type_or_string instanceof DataTypeInterface) {
-            $this->data_type = $data_type_or_string;
-        } elseif (is_string($data_type_or_string)) {
-            $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $data_type_or_string);
-        } else {
-            throw new WidgetConfigurationError($this, 'Cannot set custom data type for widget ' . $this->getWidgetType() . ': invalid value "' . gettype($data_type_or_string) . '" given - expecting an instantiated data type or a string selector!');
+        switch (true) {
+            case $data_type_or_string instanceof UxonObject:
+                $this->data_type = DataTypeFactory::createFromUxon($this->getWorkbench(), $data_type_or_string);
+                break;
+            case $data_type_or_string instanceof DataTypeInterface:
+                $this->data_type = $data_type_or_string;
+                break;
+            case is_string($data_type_or_string):
+                $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $data_type_or_string);
+                break;
+            default:
+                throw new WidgetConfigurationError($this, 'Cannot set custom data type for widget ' . $this->getWidgetType() . ': invalid value "' . gettype($data_type_or_string) . '" given - expecting an instantiated data type or a string selector!');
         }
         return $this;
     }
