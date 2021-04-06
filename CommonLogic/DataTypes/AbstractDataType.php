@@ -266,7 +266,7 @@ abstract class AbstractDataType implements DataTypeInterface
     }
     
     /**
-     * 
+     * Alias of the data type
      * 
      * @uxon-property alias
      * @uxon-type metamodel:datatype
