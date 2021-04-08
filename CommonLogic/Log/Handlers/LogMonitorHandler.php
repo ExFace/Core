@@ -8,14 +8,19 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\CommonLogic\Log\Helpers\LogHelper;
 use Monolog\Logger;
+use exface\Core\CommonLogic\Monitor;
+use exface\Core\DataTypes\DateDataType;
 
 class LogMonitorHandler extends DebugMessageFileHandler
 {
+    private $logIds = [];
     
+    private $monitor;
     
-    function __construct(WorkbenchInterface $workbench, $level = LoggerInterface::CRITICAL)
+    function __construct(WorkbenchInterface $workbench, Monitor $monitor, $level = LoggerInterface::CRITICAL)
     {
         $this->workbench = $workbench;
+        $this->monitor = $monitor;
         $this->minLogLevel = $level;
     }
     
@@ -56,13 +61,15 @@ class LogMonitorHandler extends DebugMessageFileHandler
         
         $ds->addRow([
             'LOG_ID' => $context["id"],
-            'ERROR_LEVEL' => $level,
+            'ERROR_LEVEL' => Logger::getLevelName(Logger::toMonologLevel($level)),
             'MESSAGE' => $message,
-            'ERROR_WIDGET' => $debugWidgetData
+            'ERROR_WIDGET' => $debugWidgetData,
+            'USER' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
+            'DATE' => DateDataType::now()
         ]);
         $ds->dataCreate();
+        $this->monitor->addLogIdToLastRowObject($ds->getUidColumn()->getValue(0));
         
         return;
     }
-
 }

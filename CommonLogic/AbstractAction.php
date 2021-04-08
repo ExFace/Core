@@ -40,6 +40,7 @@ use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Events\Action\OnActionInputValidatedEvent;
+use exface\Core\Events\Action\OnActionFailedEvent;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -308,7 +309,12 @@ abstract class AbstractAction implements ActionInterface
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionPerformedEvent($this, $task, $transaction));
         
         // Call the action's logic
-        $result = $this->perform($task, $transaction);
+        try {
+            $result = $this->perform($task, $transaction);
+        } catch (\Throwable $e) {
+            $this->getWorkbench()->eventManager()->dispatch(new OnActionFailedEvent($this, $task, $e, $transaction));
+            throw $e;
+        }
         
         // Do finalizing stuff like dispatching the OnAfterActionEvent, autocommit, etc.
         $this->performAfter($result, $transaction);
