@@ -20,8 +20,10 @@ use exface\Core\Actions\ShowContextPopup;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Events\Workbench\OnCleanUpEvent;
-use exface\Core\CommonLogic\Log\Handlers\BufferingHandler;
 use exface\Core\CommonLogic\Log\Handlers\LogMonitorHandler;
+use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\Events\ActionEventInterface;
+use exface\Core\Events\Action\OnActionFailedEvent;
 
 /**
  * The monitor logs actions to the MONITOR_ACTION object.
@@ -34,6 +36,10 @@ class Monitor extends Profiler
     const CLEANUP_AREA_MONITOR = 'monitor';
     
     private $rowObjects = [];
+    
+    private $actionsEnabled = false;
+    
+    private $errorsEnabled = false;
     
     /**
      * 
@@ -51,9 +57,15 @@ class Monitor extends Profiler
      */
     public static function register(WorkbenchInterface $workbench) 
     {
-        $self = new self($workbench);
+        $self = new self($workbench);        
+        $config = $workbench->getConfig();
+        $self->actionsEnabled = $config->getOption('MONITOR.ACTIONS.ENABLED');
+        $self->errorsEnabled = $config->getOption('MONITOR.ERRORS.ENABLED');
+        
         $self->registerEventListeners();
-        $self->registerLogHandler();
+        if ($self->errorsEnabled) {
+            $self->registerLogHandler();
+        }
     }
     
     /**
@@ -64,19 +76,27 @@ class Monitor extends Profiler
     {
         $eventManager = $this->getWorkbench()->eventManager();
         
+        if ($this->actionsEnabled) {
+            $eventManager->addListener(OnBeforeActionPerformedEvent::getEventName(), [
+                $this,
+                'onActionStart'
+            ]);
+        }
         // Actions
-        $eventManager->addListener(OnBeforeActionPerformedEvent::getEventName(), [
-            $this,
-            'onActionStart'
-        ]);
-        $eventManager->addListener(OnActionPerformedEvent::getEventName(), [
-            $this,
-            'onActionStop'
-        ]);
-        $eventManager->addListener(OnBeforeStopEvent::getEventName(), [
-            $this,
-            'onWorkbenchStop'
-        ]);
+        if ($this->actionsEnabled || $this->errorsEnabled) {            
+            $eventManager->addListener(OnActionPerformedEvent::getEventName(), [
+                $this,
+                'onActionStop'
+            ]);
+            $eventManager->addListener(OnActionFailedEvent::getEventName(), [
+                $this,
+                'onActionStop'
+            ]);
+            $eventManager->addListener(OnBeforeStopEvent::getEventName(), [
+                $this,
+                'onWorkbenchStop'
+            ]);
+        }
         
         return $this;
     }
@@ -88,7 +108,13 @@ class Monitor extends Profiler
     protected function registerLogHandler()
     {
         $workbench = $this->getWorkbench();
-        $handler = new BufferingHandler(new LogMonitorHandler($workbench));
+        $config = $this->getWorkbench()->getConfig();
+        if ($config->hasOption("MONITOR.ERRORS.MINIMUM_LEVEL_TO_LOG")) {
+            $level = $config->getOption("MONITOR.ERRORS.MINIMUM_LEVEL_TO_LOG");
+        } else {
+            $level = LoggerInterface::CRITICAL;
+        }
+        $handler = new LogMonitorHandler($workbench, $this, $level);
         $workbench->getLogger()->appendHandler($handler);
         return $this;
     }
@@ -105,7 +131,7 @@ class Monitor extends Profiler
         
         $workbench = $event->getWorkbench();
         $ds = DataSheetFactory::createFromObjectIdOrAlias($workbench, 'exface.Core.MONITOR_ACTION');
-        $ds->getFilters()->addConditionFromString('DATE', (-1)*$workbench->getConfig()->getOption('MONITOR.DAYS_TO_KEEP_ACTIONS'), ComparatorDataType::LESS_THAN);
+        $ds->getFilters()->addConditionFromString('DATE', (-1)*$workbench->getConfig()->getOption('MONITOR.ACTIONS.DAYS_TO_KEEP'), ComparatorDataType::LESS_THAN);
 
         $cnt = $ds->dataDelete();
         
@@ -131,13 +157,16 @@ class Monitor extends Profiler
      * @param OnActionPerformedEvent $event
      * @return void
      */
-    public function onActionStop(OnActionPerformedEvent $event)
+    public function onActionStop(ActionEventInterface $event)
     {
         if (! $this->isActionMonitored($event->getAction())) {
             return;
         }
         
-        $ms = $this->stop($event->getAction());
+        $ms = null;
+        if ($this->actionsEnabled) {
+            $ms = $this->stop($event->getAction());
+        }        
         $this->addRowFromAction($event->getAction(), $event->getTask(), $ms);
         return;
     }
@@ -161,6 +190,16 @@ class Monitor extends Profiler
                 $this->getWorkbench()->getLogger()->logException($e);
             }
         }        
+    }
+    
+    public function addLogIdToLastRowObject(string $ids) : void
+    {
+        if (empty($this->rowObjects)) {
+            return;
+        }
+        $idx = count($this->rowObjects) - 1;
+        $this->rowObjects[$idx]['logIds'][] = $ids;
+        return;
     }
     
     /**
@@ -195,7 +234,8 @@ class Monitor extends Profiler
             'action' => $action,
             'task' => $task,
             'duration' => $duration,
-            'time' => DateTimeDataType::now()
+            'time' => DateTimeDataType::now(),
+            'logIds' => []
         ];
         return $this;
     }
@@ -208,6 +248,9 @@ class Monitor extends Profiler
     {
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.MONITOR_ACTION');
         foreach ($this->rowObjects as $item) {
+            if (! $this->actionsEnabled && empty($item['logIds'])) {
+                continue;
+            }
             /* @var $action \exface\Core\Interfaces\Actions\ActionInterface */
             $action = $item['action'];
             /* @var $task \exface\Core\Interfaces\Tasks\TaskInterface */
@@ -267,12 +310,27 @@ class Monitor extends Profiler
                 'TIME' => $item['time'],
                 'DATE' => DateDataType::cast($item['time']),
                 'DURATION' => $item['duration']
-            ]);   
+            ]);
+            $ds->dataCreate();
+            
+            $logIds = $item['logIds'];
+            if (! empty($logIds)) {
+                $actionUid = $ds->getUidColumn()->getValue(0);
+                $errorDs = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.MONITOR_ERROR');
+                $errorDs->getColumns()->addFromSystemAttributes();
+                $errorDs->getColumns()->addFromExpression('ACTION');
+                $uidAlias = $errorDs->getMetaObject()->getUidAttributeAlias();
+                $errorDs->getFilters()->addConditionFromValueArray($uidAlias, $logIds);
+                $errorDs->dataRead();
+                $errorDs->getColumns()->getByExpression('ACTION')->setValueOnAllRows($actionUid);
+                $errorDs->dataUpdate();              
+            }
+            $ds->removeRows();
         }
         
-        if (! $ds->isEmpty()) {
+        /*if (! $ds->isEmpty()) {
             $ds->dataCreate();
-        }
+        }*/ 
         
         return $this;
     }
