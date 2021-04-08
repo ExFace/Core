@@ -6,13 +6,16 @@
 	//ICU format to moment format
 	(function(m){
 		m.fn.formatICU = function(format){
-			var that = this;
-
 			return this.format(_ICUFormatToMoment (format));
 		};
 	}(moment));
 	
-	function _ICUFormatToMoment (format) {
+	/**
+	 * Translates the ICU format syntax into moment.js syntax
+	 * @param {string} [sFormatICU]
+     * @return {string}
+	 */
+	function _ICUFormatToMoment (sFormatICU) {
 		var formatMap = {
 			'yyyy': 'YYYY',
 			'yy': 'YY',
@@ -55,21 +58,39 @@
 			'xxx': 'Z',	
 			'xx': 'ZZ'	
 		};
-			
-		var RegExpString = '';
+		var sRegExp = '';
+		var oRegExp = '';
+		var sFormatMoment = '';
+		// Find escaped sequences in the ICU format and replace them by a neutral `%%`.
+		var aEscaped = sFormatICU.match(/\'[^\']*\'/g) || [];
+		sFormatICU = sFormatICU.replace(/\'[^\']*\'/g, '%%');
+		
+		// Replace symbols using a regular expression generated from the symbol map
 		for (var key in formatMap) {
 			if (!formatMap.hasOwnProperty(key)) continue;
-			RegExpString += key + "|";
+			sRegExp += key + "|";
 		}
-	
-		var formatEx = new RegExp("(" + RegExpString + ")", "g");
-		
-		return format.replace(formatEx, function(ICUStr){
+		oRegExp = new RegExp("(" + sRegExp + ")", "g");
+		sFormatMoment = sFormatICU.replace(oRegExp, function(ICUStr){
 			if (formatMap[ICUStr] !== undefined) {
 				return formatMap[ICUStr];
 			}
 			return '';
 		});
+		
+		// Replace each of the escape-placeholders with its original value
+		// Translate the ICU escape syntax (single quotes) into moment escape (square braces)
+		aEscaped.forEach(function(sEscapedICU){
+			var sEscapedMoment = '';
+			if (sEscapedICU === "''") {
+				sEscapedMoment = "'";
+			} else {
+				sEscapedMoment = sEscapedICU.replace(/\'/, '[').replace(/\'/, ']');
+			}
+			sFormatMoment = sFormatMoment.replace(/%%/, sEscapedMoment);
+		});
+		
+		return sFormatMoment;
 	};
 	
 	var _mDateParseDefaultParams = {
