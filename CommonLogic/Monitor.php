@@ -135,6 +135,11 @@ class Monitor extends Profiler
 
         $cnt = $ds->dataDelete();
         
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($workbench, 'exface.Core.MONITOR_ERROR');
+        $ds->getFilters()->addConditionFromString('DATE', (-1)*$workbench->getConfig()->getOption('MONITOR.ERRORS.DAYS_TO_KEEP'), ComparatorDataType::LESS_THAN);
+        
+        $cnt += $ds->dataDelete();
+        
         $event->addResultMessage('Cleaned up Monitor removing ' . $cnt . ' expired entries.');
     }
     
