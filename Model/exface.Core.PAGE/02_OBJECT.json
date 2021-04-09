@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2018-05-29 07:48:36",
-            "MODIFIED_ON": "2020-12-15 13:21:59",
+            "MODIFIED_ON": "2021-04-09 16:47:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e86314af5caf7f971b0205857feb80",
@@ -247,10 +247,7 @@
                                                                             "value_right": ""
                                                                         }
                                                                     ]
-                                                                },
-                                                                "refresh_widget_ids": [
-                                                                    "policy_table"
-                                                                ]
+                                                                }
                                                             },
                                                             {
                                                                 "action_alias": "exface.Core.DeleteObject",
@@ -305,7 +302,6 @@
                                                         "object_alias": "exface.Core.PAGE_POLICY",
                                                         "widget_type": "DataTable",
                                                         "hide_header": true,
-                                                        "id": "policy_table",
                                                         "row_grouper": {
                                                             "group_by_attribute_alias": "AUTHORIZATION_POINT__LABEL",
                                                             "hide_caption": true

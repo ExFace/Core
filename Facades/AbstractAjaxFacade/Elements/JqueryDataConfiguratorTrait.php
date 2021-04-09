@@ -99,7 +99,11 @@ trait JqueryDataConfiguratorTrait
         return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($filter_group !== '' ? ", filters: " . $filter_group : "") . "}";
     }
     
-    public function buildJsRefreshOnEnter()
+    /**
+     * 
+     * @return string
+     */
+    protected function buildJsRefreshOnEnter()
     {
         // Use keyup() instead of keypress() because the latter did not work with jEasyUI combos.
         return <<<JS
@@ -107,12 +111,83 @@ trait JqueryDataConfiguratorTrait
             $('#{$this->getId()}').find('input').keyup(function (ev) {
                 var keycode = (ev.keyCode ? ev.keyCode : ev.which);
                 if (keycode == '13') {
-                    {$this->getFacade()->getElement($this->getWidget()->getWidgetConfigured())->buildJsRefresh()};
+                    {$this->buildJsRefreshConfiguredWidget(false)};
                 }
             })
-        }, 10)
+        }, 10);
 
 JS;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function buildJsRefreshOnActionEffect() : string
+    {
+        $effectedAliases = [$this->getMetaObject()->getAliasWithNamespace()];
+        foreach ($this->getWidget()->getDataWidget()->getColumns() as $col) {
+            if (! $col->isBoundToAttribute()) {
+                continue;
+            }
+            $attr = $col->getAttribute();
+            if ($attr->getRelationPath()->isEmpty()) {
+                continue;
+            }
+            foreach ($attr->getRelationPath()->getRelations() as $rel) {
+                $effectedAliases[] = $rel->getLeftObject()->getAliasWithNamespace();
+                $effectedAliases[] = $rel->getRightObject()->getAliasWithNamespace();
+            }
+        }
+        foreach ($this->getWidget()->getFilters() as $filter) {
+            if (! $filter->isBoundToAttribute()) {
+                continue;
+            }
+            $attr = $filter->getAttribute();
+            if ($attr->isRelation()) {
+                $effectedAliases[] = $attr->getRelation()->getRightObject()->getAliasWithNamespace();   
+            }
+            if ($attr->getRelationPath()->isEmpty()) {
+                continue;
+            }
+            foreach ($attr->getRelationPath()->getRelations() as $rel) {
+                $effectedAliases[] = $rel->getLeftObject()->getAliasWithNamespace();
+                $effectedAliases[] = $rel->getRightObject()->getAliasWithNamespace();
+            }
+        }
+        $effectedAliasesJs = json_encode(array_values(array_unique($effectedAliases)));
+        return <<<JS
+
+$( document ).off( "actionperformed.{$this->getId()}" );
+$( document ).on( "actionperformed.{$this->getId()}", function( oEvent, oParams ) {
+    var oEffect = {};
+    var aUsedObjectAliases = {$effectedAliasesJs};
+    console.log( "Receiving at {$this->getId()}:", oParams, aUsedObjectAliases );
+    for (var i = 0; i < oParams.effects.length; i++) {
+        oEffect = oParams.effects[i];
+        if (aUsedObjectAliases.indexOf(oEffect.objectAlias) !== -1) {
+            // refresh immediately if directly affected or delayed if it is an indirect effect
+            if (oEffect.objectAlias === '{$this->getWidget()->getMetaObject()->getAliasWithNamespace()}') {
+                {$this->buildJsRefreshConfiguredWidget(true)}
+            } else {
+                setTimeout(function(){ {$this->buildJsRefreshConfiguredWidget(true)} }, 100);
+            }
+            break;
+        }
+    }
+});
+
+JS;
+    }
+    
+    /**
+     * 
+     * @param bool $keepPagination
+     * @return string
+     */
+    protected function buildJsRefreshConfiguredWidget(bool $keepPagination) : string
+    {
+        return $this->getFacade()->getElement($this->getWidget()->getWidgetConfigured())->buildJsRefresh($keepPagination);
     }
                 
     /**

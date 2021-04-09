@@ -329,5 +329,14 @@ class ShowDialog extends ShowWidget implements iShowDialog
         }
         return $uxon;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::getEffects()
+     */
+    public function getEffects() : array
+    {
+        return $this->getEffectsSpecifiedExplicitly();
+    }
 }
-?>

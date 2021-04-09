@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2021-01-11 22:27:44",
+            "MODIFIED_ON": "2021-04-09 16:47:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32350000000000000000000000000000",
@@ -345,7 +345,6 @@
                                     {
                                         "widget_type": "DataTable",
                                         "object_alias": "exface.Core.ATTRIBUTE_COMPOUND",
-                                        "id": "compound_table",
                                         "filters": [
                                             {
                                                 "attribute_alias": "COMPOUND_ATTRIBUTE",
@@ -403,9 +402,6 @@
                                                         ]
                                                     }
                                                 },
-                                                "refresh_widget_ids": [
-                                                    "compound_table"
-                                                ],
                                                 "disabled_if": {
                                                     "operator": "OR",
                                                     "conditions": [

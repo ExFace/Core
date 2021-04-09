@@ -8,6 +8,8 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
+use exface\Core\CommonLogic\Actions\ActionEffect;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * This action runs one or more selected test steps
@@ -65,5 +67,19 @@ class GenerateModelFromDataSource extends AbstractAction
         
         return ResultFactory::createMessageResult($task, $message);
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::getEffects()
+     */
+    public function getEffects() : array
+    {
+        $effects = parent::getEffects();
+        $effects[] = new ActionEffect($this, new UxonObject(['effected_object' => 'exface.Core.OBJECT']));
+        $effects[] = new ActionEffect($this, new UxonObject(['effected_object' => 'exface.Core.ATTRIBUTE']));
+        $effects[] = new ActionEffect($this, new UxonObject(['effected_object' => 'exface.Core.DATATYPE']));
+        $effects[] = new ActionEffect($this, new UxonObject(['effected_object' => 'exface.Core.OBJECT_ACTION']));
+        return $effects;
+    }
 }
-?>

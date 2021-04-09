@@ -40,6 +40,12 @@ use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Events\Action\OnActionInputValidatedEvent;
+use exface\Core\Interfaces\Actions\ActionEffectInterface;
+use exface\Core\Widgets\Button;
+use exface\Core\CommonLogic\Actions\ActionEffect;
+use exface\Core\Factories\RelationPathFactory;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -117,6 +123,8 @@ abstract class AbstractAction implements ActionInterface
     private $result_object_alias = null;
     
     private $triggerWidgetRequired = null;
+    
+    private $customEffects = [];
 
     /**
      *
@@ -1257,5 +1265,262 @@ abstract class AbstractAction implements ActionInterface
         $this->hint = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * @return ActionEffectInterface[]
+     */
+    public function getEffects() : array
+    {
+        if (! ($this instanceof iModifyData)) {
+            return [];
+        }
+        return array_merge($this->getEffectsSpecifiedExplicitly(), $this->getEffectsFromModel());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasEffectOn()
+     */
+    public function hasEffectOn(MetaObjectInterface $object) : bool
+    {
+        foreach ($this->getEffects() as $effect) {
+            if ($effect->getEffectedObject()->is($object)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getEffectsOn()
+     */
+    public function getEffectsOn(MetaObjectInterface $object) : array
+    {
+        $result = [];
+        foreach ($this->getEffects() as $effect) {
+            if ($effect->getEffectedObject()->is($object)) {
+                $result[] = $effect;
+            }
+        }
+        return $result;
+    }
+    
+    /**
+     * 
+     * @return ActionEffectInterface[]
+     */
+    protected function getEffectsSpecifiedExplicitly() : array
+    {
+        return $this->customEffects;
+    }
+    
+    /**
+     * 
+     * @return ActionEffectInterface[]
+     */
+    protected function getEffectsFromModel() : array
+    {
+        $button = $this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null;
+        $name = $button ? $button->getCaption() : $this->getName();
+        $effects = [];
+        $effects[] = new ActionEffect($this, new UxonObject([
+            'name' => $name,
+            'effected_object' => $this->getMetaObject()->getAliasWithNamespace()
+        ]));
+        if ($button) {
+            $effects = array_merge($effects, $this->getEffectsFromTriggerWidget($button, $this->getMetaObject(), $name, RelationPathFactory::createForObject($this->getMetaObject())));
+        }
+        return $effects;
+    }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $prevLevelObject
+     * @param string $prevLevelName
+     * @return array
+     */
+    protected function getEffectsFromTriggerWidget(iTriggerAction $button, MetaObjectInterface $prevLevelObject, string $prevLevelName, MetaRelationPathInterface $prevLevelRelPath = null) : array
+    {
+        $effects = [];
+        
+        if (! ($name = $button->getCaption())) {
+            $name = $prevLevelName;
+        }
+        $thisLevelObject = $button->getMetaObject();
+        
+        // Add effect on the object of the button triggering this action - if it is based on a different object.
+        if ($thisLevelObject !== $prevLevelObject) {
+            if ($prevLevelObject !== $button->getMetaObject()) {
+                $name .= ' > ' . $prevLevelName;
+            }
+            $effectUxon = new UxonObject([
+                'name' => $name,
+                'effected_object' => $thisLevelObject->getAliasWithNamespace()
+            ]);
+            $relationFromPrev = null;
+            if ($prevLevelRelPath && $relationFromPrev = $prevLevelObject->findRelation($thisLevelObject, true)) {
+                $relPathFromPrev = $prevLevelRelPath->copy()->appendRelation($relationFromPrev);
+                $effectUxon->setProperty('relation_path_to_effected_object', $relPathFromPrev->toString());
+            }
+            $effects[] = new ActionEffect($this, $effectUxon);
+        }
+        
+        // Add effect on the object of the input widget of the trigger button - if different
+        // Also see if the input dialog has a button as parent (= is part of a widget shown by an action)
+        // and call this method recursively for that button
+        if ($inputWidget = $button->getInputWidget()) {
+            $inputObject = $inputWidget->getMetaObject();
+            
+            // Try to find a relation to the object of the input widget
+            $inputObjectRelPath = null;
+            if ($prevLevelRelPath) {
+                switch (true) {
+                    // If it's the same object, as the previous level - use the injected relation path
+                    case $inputObject === $prevLevelObject:
+                        $inputObjectRelPath = $prevLevelRelPath;
+                        break;
+                    // If it's the same object, as that of the button, use the relation path determined above
+                    case $inputObject === $thisLevelObject:
+                        $inputObjectRelPath = $relPathFromPrev;
+                        break;
+                    // Try to find a relation from the object of the button
+                    case $relationToInput = $thisLevelObject->findRelation($inputObject, true):
+                        if ($relationFromPrev) {
+                            $inputObjectRelPath = $relPathFromPrev->copy()->appendRelation($relationToInput);
+                        } else {
+                            $inputObjectRelPath = $prevLevelRelPath->copy()->appendRelation($relationToInput);
+                        }
+                        break;
+                    // Use no relation path if all above fails
+                    default:
+                        $inputObjectRelPath = null;
+                }
+            }
+            
+            // If the input widgets object had not been added already (= it is different from the button and previous 
+            // level objects) - add an effect for it
+            if ($inputObject !== $button->getMetaObject() && $inputObject !== $prevLevelObject) {
+                $effectUxon = new UxonObject([
+                    'name' => $name,
+                    'effected_object' => $inputObject->getAliasWithNamespace()
+                ]);
+                if ($inputObjectRelPath) {
+                    $effectUxon->setProperty('relation_path_to_effected_object', $inputObjectRelPath->toString());
+                }
+                $effects[] = new ActionEffect($this, $effectUxon);
+            }
+            
+            // If the input widget was shown by an action triggered by a button in-turn, get effects of that button
+            // recursively
+            /* @var $inputDialogTrigger \exface\Core\Widgets\Button */
+            if ($inputDialogTrigger = $inputWidget->getParentByClass(Button::class)) {
+                if ($inputDialogTrigger->hasAction()) {
+                    $effects = array_merge(
+                        $effects, 
+                        $this->getEffectsFromTriggerWidget($inputDialogTrigger, $thisLevelObject, $name, $relPathFromPrev ?? $prevLevelRelPath)
+                    );
+                }
+            }
+        }
+        
+        return $effects;
+    }
+    
+    /**
+     * Objects and relations that may be affected by the action (apart from the obvious input and action objects).
+     * 
+     * Most effects of an action can be determined automatically. If not, you can add them
+     * here manually. For example:
+     * 
+     * - If actions in a dashboard do not cause some of the data widgets to update, add the
+     * meta objects of these widgets to the actions `effects` to trigger the update.
+     * - CLI command actions mostly cannot determine their effects automatically - add them here!
+     * - WebService actions also often do not "know" their effects - add them here too!
+     * 
+     * If you do not need advanced effects properties like relaiton paths or names, usin the flat
+     * `effected_objects` array is simpler!
+     * 
+     * Every action can have one or more effects, each indicating that it modifies a meta object.
+     * Action effects allow the workbench to better understand, what actions do. In particular,
+     * they indicate, what data might have changed after an action was performed. 
+     * 
+     * **NOTE:** an effect on a specific object, does not guarantee, that it will be changed every
+     * time the action is performed - it only means, the action **can** modify that object.
+     * 
+     * Whether the modification takes place or not depends on the logic of the action, the input
+     * data, behaviors of other effect object etc. - in many cases, we can't even really know
+     * what exactly happens because actions may trigger logic in external systems, DB-triggers, 
+     * etc. 
+     * 
+     * This is why action effects are part of the action model and can be manually added manually 
+     * to tell the workbench, that the action is likely to effect an object even if that is 
+     * not obvious.
+     * 
+     * @uxon-property effects
+     * @uxon-type \exface\Core\CommonLogic\Actions\ActionEffect[]
+     * @uxon-template [{"name": "", "effected_object": ""}]
+     * 
+     * @param UxonObject $uxonArray
+     * @return ActionInterface
+     */
+    protected function setEffects(UxonObject $uxonArray) : ActionInterface
+    {
+        foreach ($uxonArray as $uxon) {
+            $this->customEffects[] = new ActionEffect($this, $uxon);
+        }
+        return $this;
+    }
+    
+    /**
+     * Aliases of meta objects, that may be affected by this action (apart from the obvious input and action objects).
+     * 
+     * Examples: 
+     * 
+     * - If actions in a dashboard do not cause some of the data widgets to update, add the
+     * meta objects of these widgets to the actions `effects` to trigger the update.
+     * - CLI command actions mostly cannot determine their effects automatically - add them here!
+     * - WebService actions also often do not "know" their effects - add them here too!
+     * 
+     * This property is a simplified shortcut for `effects`. Refer to the documentation of the
+     * `effects` property for more details.
+     * 
+     * @uxon-property effected_objects
+     * @uxon-type metamodel:object[]
+     * @uxon-template [""]
+     * 
+     * @param UxonObject $uxonArray
+     * @return ActionInterface
+     */
+    protected function setEffectedObjects(UxonObject $uxonArray) : ActionInterface
+    {
+        foreach ($uxonArray->getPropertiesAll() as $objectAlias) {
+            $this->customEffects[] = new ActionEffect($this, new UxonObject([
+                'effected_object' => $objectAlias
+            ]));
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::addEffect()
+     */
+    public function addEffect(MetaObjectInterface $effectedObject, string $name = null, MetaRelationPathInterface $relationPathFromActionObject = null) : ActionInterface
+    {
+        $uxon = new UxonObject();
+        if ($name !== null) {
+            $uxon->setProperty('name', $name);
+        }
+        if ($relationPathFromActionObject !== null) {
+            $uxon->setProperty('relation_path_to_effected_object', $relationPathFromActionObject->toString());
+        } else {
+            $uxon->setProperty('effected_object', $effectedObject->getAliasWithNamespace());
+        }
+        $this->customEffects[] = new ActionEffect($this, $uxon);
+    }
 }
-?>
