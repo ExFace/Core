@@ -2,11 +2,9 @@
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Actions\iCanBeCalledFromCLI;
 use exface\Core\CommonLogic\AbstractActionDeferred;
-use exface\Core\CommonLogic\Tasks\ResultMessageStream;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\CronDataType;
