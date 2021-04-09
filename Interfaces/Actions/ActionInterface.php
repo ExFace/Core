@@ -21,6 +21,7 @@ use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * Common interface for all actions.
@@ -480,4 +481,39 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return ActionInterface
      */
     public function setInputTriggerWidgetRequired(bool $trueOrFalse) : ActionInterface;
+    
+    /**
+     * Returns an array with all effects of this action
+     * 
+     * @return ActionEffectInterface[]
+     */
+    public function getEffects() : array;
+    
+    /**
+     * Returns TRUE if the action has effect on the given meta object and FALSE otherwise.
+     * 
+     * @param MetaObjectInterface $object
+     * @return bool
+     */
+    public function hasEffectOn(MetaObjectInterface $object) : bool;
+    
+    /**
+     * Returns all effects on the given object (or its derivatives).
+     * 
+     * Returns an empty array if the action has no effect on the given object.
+     * 
+     * @param MetaObjectInterface $object
+     * @return ActionEffectInterface[]
+     */
+    public function getEffectsOn(MetaObjectInterface $object) : array;
+    
+    /**
+     * Adds and effect to the action.
+     * 
+     * @param MetaObjectInterface $effectedObject
+     * @param string $name
+     * @param MetaRelationPathInterface $relationPathFromActionObject
+     * @return ActionInterface
+     */
+    public function addEffect(MetaObjectInterface $effectedObject, string $name = null, MetaRelationPathInterface $relationPathFromActionObject = null) : ActionInterface;
 }
