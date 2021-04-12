@@ -169,7 +169,6 @@ $( document ).on( "actionperformed.{$this->getId()}", function( oEvent, oParams 
     var fnRefresh = function() {
         {$this->buildJsRefreshConfiguredWidget(true)}
     };
-    console.log( "Receiving at {$this->getId()}:", oParams, aUsedObjectAliases );
 
     if (oParams.refresh_not_widgets.indexOf(sConfiguredWidgetId) !== -1) {
         return;
