@@ -67,7 +67,15 @@ class ActionEffect implements ActionEffectInterface
      */
     public function getName() : string
     {
-        return $this->name ?? $this->getAction()->getName();
+        if ($this->name === null) {
+            if ($this->getAction()->isDefinedInWidget()) {
+                $this->name = $this->getAction()->getWidgetDefinedIn()->getCaption();
+            }
+            if ($this->name === null) {
+                $this->name = $this->getAction()->getName();
+            }
+        }
+        return $this->name ?? '';
     }
     
     /**

@@ -235,8 +235,26 @@ JS;
      * Returns the JS code to trigger things to run on action success
      * 
      * 1. Reset the input if needed (before refreshing!!!)
-     * 2. Fire the JS even acitonperformed
+     * 2. Fire the JS even `actionperformed`
      * 3. Run custom on-success scripts added in PHP via `addOnSuccessScript()`
+     * 
+     * The event `actionperformed` has an additional parameter with the following structure:
+     * 
+     * ```
+     * {
+     *  trigger_widget_id: "DataTable_DataToolbar_ButtonGroup_DataButton", // Id of the widget (e.g. button) that triggered the action
+     *  action_alias: "exface.Core.SaveData", // Namespaced alias of the action performed
+     *  effects: [
+     *      {
+     *          "name": "Save",
+     *          "effected_object": "exface.Core.ATTRIBUTE",
+     *      }   
+     *  ], 
+     *  refresh_widgets: [],
+     *  refresh_not_widgets: [],
+     * }
+     * 
+     * ```
      * 
      * @param ActionInterface $action
      * @return string
@@ -244,26 +262,30 @@ JS;
     protected function buildJsTriggerActionEffects(ActionInterface $action) : string
     {
         $effects = $action->getEffects();
+        $widget = $this->getWidget();
         
         $effectsJs = '';
         foreach ($effects as $effect) {
-            $effectProps = [
-                'objectAlias' => $effect->getEffectedObject()->getAliasWithNamespace(),
-                'name' => $effect->getName()
-            ];
-            $effectsJs .= json_encode($effectProps) . ',';
+            $effectsJs .= $effect->exportUxonObject()->toJson() . ',';
+        }
+        
+        $refreshIds = '';
+        $refreshNotIds = $widget->getRefreshInput() === false ? $widget->getId() : '';
+        foreach ($widget->getRefreshWidgetIds() as $refreshId) {
+            $refreshIds .= '"' . $refreshId . '", ';
         }
         
         return <<<JS
 
                 {$this->buildJsResetWidgets($this->getWidget())}
                 
-                $(document).trigger("actionperformed", [
-                    {
-                    actionAlias: "{$action->getAliasWithNamespace()}",
-                    effects: [ $effectsJs ]
-                    } 
-                ]);
+                $(document).trigger("actionperformed", [{
+                    trigger_widget_id: "{$this->getId()}",
+                    action_alias: "{$action->getAliasWithNamespace()}",
+                    effects: [ $effectsJs ],
+                    refresh_widgets: [ $refreshIds ],
+                    refresh_not_widgets: [ $refreshNotIds ],
+                }]);
                 
                 {$this->buildJsOnSuccessScript()}
 JS;
