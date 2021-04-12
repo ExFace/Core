@@ -171,7 +171,7 @@ $( document ).on( "actionperformed.{$this->getId()}", function( oEvent, oParams 
     };
     
     // Avoid errors if widget was removed already
-    if ($('#' + sConfiguredWidgetId).length === 0) {
+    if ($('#{$this->getFacade()->getElement($this->getWidget()->getWidgetConfigured())->getId()}').length === 0) {
         return;
     }
 
