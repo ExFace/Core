@@ -13,7 +13,22 @@ use exface\Core\Factories\UiPageFactory;
 use exface\Core\DataTypes\StringDataType;
 
 /**
- * Renders a dialog with any contents specified in the widget-property.
+ * Opens a dialog modeled within the actions configuration.
+ * 
+ * **NOTE: ** `effects` defined for this action explicitly will be triggered __after__ the dialog is closed!
+ * 
+ * To define the dialog contents use either
+ * 
+ * - `widget` property defining the entire dialog widget (i.e. a widget of type `Dialog` or a derivate)
+ * - `dialog` property to skip the definition of the dialog itself and simply define its configuration
+ * (in this case the widget type will be `Dialog`).
+ * 
+ * If you are reusing a dialog (e.g. extend one) as the contents of this action, you can overwrite
+ * its `buttons` by setting `dialog_buttons` in the action config.
+ * 
+ * You can force the `Dialog` to open regularly or maximized by via `maximize` property. The exact effect
+ * of this property depends on the facade/template used for rendering and how it handles the `maximized`
+ * property of dialog widgets.
  * 
  * @author Andrej Kabachnik
  *
