@@ -22,7 +22,8 @@ use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Widgets\Parts\Maps\Interfaces\BaseMapInterface;
 use exface\Core\Widgets\Parts\Maps\BaseMaps\OpenStreetMap;
-use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\Interfaces\Widgets\iCanAutoloadData;
+use exface\Core\Widgets\Traits\iCanAutoloadDataTrait;
 
 /**
  * A map with support for different mapping data providers and data layers.
@@ -35,13 +36,15 @@ class Map extends AbstractWidget implements
     iHaveButtons, 
     iHaveHeader, 
     iHaveConfigurator, 
-    iFillEntireContainer
+    iFillEntireContainer,
+    iCanAutoloadData
 {
     use iHaveButtonsAndToolbarsTrait;
     use PrefillValueTrait;
     use iHaveConfiguratorTrait {
         setConfiguratorWidget as setConfiguratorWidgetViaTrait;
     }
+    use iCanAutoloadDataTrait;
     
     const COORDINATE_LAT = 'latitude';
     

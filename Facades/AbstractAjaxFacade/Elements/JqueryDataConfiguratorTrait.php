@@ -125,6 +125,9 @@ JS;
      */
     protected function buildJsRefreshOnActionEffect() : string
     {
+        if ($this->getWidget()->getWidgetConfigured()->hasAutorefreshData() === false) {
+            return '';
+        }
         $effectedAliases = [$this->getMetaObject()->getAliasWithNamespace()];
         foreach ($this->getWidget()->getDataWidget()->getColumns() as $col) {
             if (! $col->isBoundToAttribute()) {
@@ -162,17 +165,17 @@ $( document ).off( "actionperformed.{$this->getId()}" );
 $( document ).on( "actionperformed.{$this->getId()}", function( oEvent, oParams ) {
     var oEffect = {};
     var aUsedObjectAliases = {$effectedAliasesJs};
-    var sDataWidgetId = "{$this->getWidget()->getDataWidget()->getId()}";
+    var sConfiguredWidgetId = "{$this->getWidget()->getDataWidget()->getId()}";
     var fnRefresh = function() {
         {$this->buildJsRefreshConfiguredWidget(true)}
     };
     console.log( "Receiving at {$this->getId()}:", oParams, aUsedObjectAliases );
 
-    if (oParams.refresh_not_widgets.indexOf(sDataWidgetId) !== -1) {
+    if (oParams.refresh_not_widgets.indexOf(sConfiguredWidgetId) !== -1) {
         return;
     }
 
-    if (oParams.refresh_widgets.indexOf(sDataWidgetId) !== -1) {
+    if (oParams.refresh_widgets.indexOf(sConfiguredWidgetId) !== -1) {
         fnRefresh();
         return;
     }

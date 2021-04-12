@@ -27,6 +27,8 @@ use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Widgets\Traits\iCanAutoloadDataTrait;
+use exface\Core\Interfaces\Widgets\iCanAutoloadData;
 
 /**
  * A Chart widget draws a chart with upto two axis and any number of series.
@@ -39,6 +41,7 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
  */
 class Chart extends AbstractWidget implements 
     iUseData, 
+    iCanAutoloadData,
     iHaveToolbars, 
     iHaveButtons, 
     iHaveHeader, 
@@ -52,6 +55,7 @@ class Chart extends AbstractWidget implements
     use iHaveConfiguratorTrait {
         setConfiguratorWidget as setConfiguratorWidgetViaTrait;
     }
+    use iCanAutoloadDataTrait;
 
     const AXIS_X = 'x';
 
@@ -340,6 +344,8 @@ class Chart extends AbstractWidget implements
      */
     protected function prepareDataWidget(iShowData $dataWidget) : Chart
     {
+        $dataWidget->setAutoloadData($this->hasAutoloadData());
+        $dataWidget->setAutorefreshData($this->hasAutorefreshData());
         foreach ($this->getSeries() as $series) {
             $series->prepareDataWidget($dataWidget);
         }
@@ -957,36 +963,5 @@ class Chart extends AbstractWidget implements
             $configurator = $widget;
         }
         return $this->setConfiguratorWidgetViaTrait($configurator);
-    }
-    
-    /**
-     * Returns a text which can be displayed if initial loading is prevented.
-     *
-     * @return string
-     */
-    public function getAutoloadDisabledHint()
-    {
-        if ($this->autoload_disabled_hint === null) {
-            return $this->translate('WIDGET.DATA.NOT_LOADED');
-        }
-        return $this->autoload_disabled_hint;
-    }
-    
-    /**
-     * Overrides the text shown if autoload_data is set to FALSE or required filters are missing.
-     *
-     * Use `=TRANSLATE()` to make the text translatable.
-     *
-     * @uxon-property autoload_disabled_hint
-     * @uxon-type string|metamodel:formula
-     * @uxon-translatable true
-     *
-     * @param string $text
-     * @return Data
-     */
-    public function setAutoloadDisabledHint(string $text) : Chart
-    {
-        $this->autoload_disabled_hint = $this->evaluatePropertyExpression($text);
-        return $this;
     }
 }
