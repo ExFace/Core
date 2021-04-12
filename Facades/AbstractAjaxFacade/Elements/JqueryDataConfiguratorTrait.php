@@ -162,17 +162,31 @@ $( document ).off( "actionperformed.{$this->getId()}" );
 $( document ).on( "actionperformed.{$this->getId()}", function( oEvent, oParams ) {
     var oEffect = {};
     var aUsedObjectAliases = {$effectedAliasesJs};
+    var sDataWidgetId = "{$this->getWidget()->getDataWidget()->getId()}";
+    var fnRefresh = function() {
+        {$this->buildJsRefreshConfiguredWidget(true)}
+    };
     console.log( "Receiving at {$this->getId()}:", oParams, aUsedObjectAliases );
+
+    if (oParams.refresh_not_widgets.indexOf(sDataWidgetId) !== -1) {
+        return;
+    }
+
+    if (oParams.refresh_widgets.indexOf(sDataWidgetId) !== -1) {
+        fnRefresh();
+        return;
+    }
+
     for (var i = 0; i < oParams.effects.length; i++) {
         oEffect = oParams.effects[i];
-        if (aUsedObjectAliases.indexOf(oEffect.objectAlias) !== -1) {
+        if (aUsedObjectAliases.indexOf(oEffect.effected_object) !== -1) {
             // refresh immediately if directly affected or delayed if it is an indirect effect
-            if (oEffect.objectAlias === '{$this->getWidget()->getMetaObject()->getAliasWithNamespace()}') {
-                {$this->buildJsRefreshConfiguredWidget(true)}
+            if (oEffect.effected_object === '{$this->getWidget()->getMetaObject()->getAliasWithNamespace()}') {
+                fnRefresh();
             } else {
-                setTimeout(function(){ {$this->buildJsRefreshConfiguredWidget(true)} }, 100);
+                setTimeout(fnRefresh, 100);
             }
-            break;
+            return;
         }
     }
 });
