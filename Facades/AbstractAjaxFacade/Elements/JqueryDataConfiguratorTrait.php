@@ -169,6 +169,11 @@ $( document ).on( "actionperformed.{$this->getId()}", function( oEvent, oParams 
     var fnRefresh = function() {
         {$this->buildJsRefreshConfiguredWidget(true)}
     };
+    
+    // Avoid errors if widget was removed already
+    if ($('#' + sConfiguredWidgetId).length === 0) {
+        return;
+    }
 
     if (oParams.refresh_not_widgets.indexOf(sConfiguredWidgetId) !== -1) {
         return;
