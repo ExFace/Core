@@ -15,7 +15,7 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Widgets\Traits\iCanAutoloadDataTrait;
 use exface\Core\Interfaces\Widgets\iHaveContextualHelp;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
@@ -35,6 +35,7 @@ use exface\Core\Interfaces\Widgets\iHaveSorters;
 use exface\Core\Widgets\Parts\DataFooter;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\Interfaces\Widgets\iCanAutoloadData;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -65,7 +66,8 @@ class Data
         iHaveContextualHelp, 
         iHaveConfigurator, 
         iShowData,
-        iCanPreloadData
+        iCanPreloadData,
+        iCanAutoloadData
 {
     use iHaveColumnsAndColumnGroupsTrait;
     use iHaveButtonsAndToolbarsTrait {
@@ -79,6 +81,7 @@ class Data
     }
     use iHaveContextualHelpTrait;
     use iHaveConfiguratorTrait;
+    use iCanAutoloadDataTrait;
 
     // properties
     private $paginate = true;
@@ -124,10 +127,6 @@ class Data
     private $hide_footer = false;
     
     private $has_system_columns = false;
-
-    private $autoload_data = true;
-    
-    private $autoload_disabled_hint = null;
     
     private $quickSearchWidget = null;
     
@@ -1202,60 +1201,6 @@ class Data
     public function setHideFooter($value)
     {
         $this->hide_footer = \exface\Core\DataTypes\BooleanDataType::cast($value);
-        return $this;
-    }
-
-    public function getAutoloadData()
-    {
-        return $this->autoload_data;
-    }
-
-    /**
-     * Set to FALSE to prevent initial loading of data or TRUE (default) to enable it.
-     * 
-     * NOTE: if autoload is disabled, the widget will show a message specified in the
-     * `autoload_disabled_hint` property.
-     * 
-     * @uxon-property autoload_data
-     * @uxon-type boolean
-     * 
-     * @param boolean $autoloadData
-     * @return Data
-     */
-    public function setAutoloadData($autoloadData)
-    {
-        $this->autoload_data = BooleanDataType::cast($autoloadData);
-        return $this;
-    }
-    
-    /**
-     * Returns a text which can be displayed if initial loading is prevented.
-     * 
-     * @return string
-     */
-    public function getAutoloadDisabledHint()
-    {
-        if ($this->autoload_disabled_hint === null) {
-            return $this->translate('WIDGET.DATA.NOT_LOADED');
-        }
-        return $this->autoload_disabled_hint;
-    }
-    
-    /**
-     * Overrides the text shown if autoload_data is set to FALSE or required filters are missing.
-     * 
-     * Use `=TRANSLATE()` to make the text translatable.
-     * 
-     * @uxon-property autoload_disabled_hint
-     * @uxon-type string|metamodel:formula
-     * @uxon-translatable true
-     * 
-     * @param string $text
-     * @return Data
-     */
-    public function setAutoloadDisabledHint(string $text) : Data
-    {
-        $this->autoload_disabled_hint = $this->evaluatePropertyExpression($text);
         return $this;
     }
     
