@@ -15,9 +15,13 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 /**
  * This action performs another action specified in the action_alias property or via request parameter "call=your_action_alias".
  *
- * This action behaves exactly as the action to be called, but offers a universal interface for multiple action types. Thus, if you
- * need a custom server call somewhere in a facade, but you do not know, which action will be called in advance, you can request
- * this action an pass the actually desired one as a request parameter.
+ * This action behaves exactly as the action to be called, but offers a universal interface for 
+ * multiple action types. Thus, if you need a custom server call somewhere in a facade, but you 
+ * do not know, which action will be called in advance, you can request this action an pass the 
+ * actually desired one as a request parameter.
+ * 
+ * **NOTE:** this action will not inherit effects of the called action automatically (because
+ * the called action may not be known until being actually called)!
  *
  * @author Andrej Kabachnik
  *        

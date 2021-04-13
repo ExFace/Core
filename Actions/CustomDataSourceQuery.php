@@ -18,12 +18,18 @@ use exface\Core\Interfaces\DataSources\DataSourceInterface;
 use exface\Core\Factories\DataSourceFactory;
 use exface\Core\Interfaces\DataSources\TextualQueryConnectorInterface;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Interfaces\Actions\iModifyData;
 
 /**
  * Runs explicitly specified data source queries with placeholders filled from input data.
  * 
  * Allows to run custom queries on supporting data sourcers like SQL, OLAP, etc. The data
  * connection MUST implement the interface `TextualQueryConnectorInterface` for this to work!
+ * 
+ * **NOTE:** Since this action is mainly used trigger some internal functionality in the data
+ * source (e.g. database stored procedures, etc.), it is generally concidered as a data
+ * changing action. In particular, it will automatically have `effects` on its object and
+ * possibly other meta objects - just like the action `UpdateData` would do.  
  * 
  * ## Example
  * 
@@ -65,7 +71,7 @@ use exface\Core\Exceptions\Actions\ActionConfigurationError;
  * @author Andrej Kabachnik
  *
  */
-class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuery
+class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuery, iModifyData
 {
     private $queries = [];
 

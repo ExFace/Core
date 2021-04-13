@@ -15,6 +15,7 @@ use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\CommonLogic\Tasks\ResultError;
 use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
+use exface\Core\Interfaces\Actions\iModifyData;
 
 /**
  * 
@@ -22,7 +23,7 @@ use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
  * @author Andrej Kabachnik
  *
  */
-class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
+class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI, iModifyData
 {
     /**
      * 
