@@ -61,7 +61,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-06-07 15:56:51",
-            "MODIFIED_ON": "2020-06-07 19:53:40",
+            "MODIFIED_ON": "2021-04-13 12:43:21",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eaa8d75510fde7bba0e4b318306b9a",
@@ -73,7 +73,7 @@
             "CONFIG_UXON": {
                 "input_rows_min": 1,
                 "input_object_alias": "exface.Core.AUTHORIZATION_POINT",
-                "icon": "ban",
+                "icon": "toggle-off",
                 "input_mapper": {
                     "inherit_columns": false,
                     "column_to_column_mappings": [
@@ -98,7 +98,7 @@
         },
         {
             "CREATED_ON": "2020-06-07 15:57:34",
-            "MODIFIED_ON": "2020-06-07 19:49:40",
+            "MODIFIED_ON": "2021-04-13 12:43:51",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eaa8d76e818d49bba0e4b318306b9a",
@@ -110,7 +110,7 @@
             "CONFIG_UXON": {
                 "input_rows_min": 1,
                 "input_object_alias": "exface.Core.AUTHORIZATION_POINT",
-                "icon": "check-circle-o",
+                "icon": "toggle-on",
                 "input_mapper": {
                     "inherit_columns": false,
                     "column_to_column_mappings": [
