@@ -82,8 +82,8 @@ class SyncTaskQueue extends AsyncTaskQueue
             // If the task is a stream, read it completely here to make sure all generators
             // are run. If they produce errors, they should be handled as task/action errors
             // and not result-save errors.
-            if ($task instanceof ResultMessageStreamInterface) {
-                $task->getMessage();
+            if ($result instanceof ResultMessageStreamInterface) {
+                $result->getMessage();
             }
             
             // Save he result if no errors up-to now
