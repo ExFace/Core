@@ -2631,7 +2631,7 @@
         },
         {
             "CREATED_ON": "2020-05-20 16:21:59",
-            "MODIFIED_ON": "2021-04-13 12:23:32",
+            "MODIFIED_ON": "2021-04-13 12:42:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea9ab60540b9458abc0205857feb80",
@@ -2641,7 +2641,7 @@
             "PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
             "UXON": {
                 "input_object_alias": "",
-                "icon": "",
+                "icon": "toggle-off",
                 "input_rows_min": 1,
                 "input_mapper": {
                     "inherit_columns_only_for_system_attributes": true,
