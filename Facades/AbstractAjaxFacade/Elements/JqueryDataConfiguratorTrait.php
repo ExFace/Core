@@ -159,10 +159,11 @@ JS;
             }
         }
         $effectedAliasesJs = json_encode(array_values(array_unique($effectedAliases)));
+        $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
         return <<<JS
 
-$( document ).off( "actionperformed.{$this->getId()}" );
-$( document ).on( "actionperformed.{$this->getId()}", function( oEvent, oParams ) {
+$( document ).off( "{$actionperformed}.{$this->getId()}" );
+$( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oParams ) {
     var oEffect = {};
     var aUsedObjectAliases = {$effectedAliasesJs};
     var sConfiguredWidgetId = "{$this->getWidget()->getDataWidget()->getId()}";

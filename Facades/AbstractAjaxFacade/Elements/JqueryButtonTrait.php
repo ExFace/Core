@@ -21,7 +21,7 @@ use exface\Core\Exceptions\Actions\ActionConfigurationError;
  * @method Button getWidget()
  * @method AbstractAjaxFacade getFacade()
  * 
- * @author tmc
+ * @author Andrej Kabachnik
  *
  */
 trait JqueryButtonTrait {
@@ -275,11 +275,12 @@ JS;
             $refreshIds .= '"' . $refreshId . '", ';
         }
         
+        $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
         return <<<JS
 
                 {$this->buildJsResetWidgets($this->getWidget())}
                 
-                $(document).trigger("actionperformed", [{
+                $(document).trigger("$actionperformed", [{
                     trigger_widget_id: "{$this->getId()}",
                     action_alias: "{$action->getAliasWithNamespace()}",
                     effects: [ $effectsJs ],
