@@ -46,6 +46,7 @@ use exface\Core\CommonLogic\Actions\ActionEffect;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Factories\ActionEffectFactory;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -1267,15 +1268,24 @@ abstract class AbstractAction implements ActionInterface
     }
     
     /**
+     * By default, an action returns the effects specified in its model (via `effects` or `effected_objects`)
+     * and those, that can be derived from the UI model **if** the action is known to change data!
      * 
-     * @return ActionEffectInterface[]
+     * Override this method to change the default effeects of an action. See the following actions
+     * for examples:
+     * 
+     * @see \exface\Core\Actions\GenerateModelFromDataSource
+     * @see \exface\Core\Actions\CustomDataSourceQuery
+     * 
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getEffects()
      */
     public function getEffects() : array
     {
-        if (! ($this instanceof iModifyData)) {
-            return [];
+        $effects = $this->getEffectsSpecifiedExplicitly();
+        if ($this instanceof iModifyData) {
+            $effects = array_merge($effects,  $this->getEffectsFromModel());
         }
-        return array_merge($this->getEffectsSpecifiedExplicitly(), $this->getEffectsFromModel());
+        return $effects;
     }
     
     /**
@@ -1327,10 +1337,7 @@ abstract class AbstractAction implements ActionInterface
         $button = $this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null;
         $name = $button ? $button->getCaption() : $this->getName();
         $effects = [];
-        $effects[] = new ActionEffect($this, new UxonObject([
-            'name' => $name,
-            'effected_object' => $this->getMetaObject()->getAliasWithNamespace()
-        ]));
+        $effects[] = ActionEffectFactory::createForEffectedObject($this, $this->getMetaObject(), $name);
         if ($button) {
             $effects = array_merge($effects, $this->getEffectsFromTriggerWidget($button, $this->getMetaObject(), $name, RelationPathFactory::createForObject($this->getMetaObject())));
         }
@@ -1431,7 +1438,7 @@ abstract class AbstractAction implements ActionInterface
     }
     
     /**
-     * Objects and relations that may be affected by the action (apart from the obvious input and action objects).
+     * Objects and relations that may be affected by the action (in addition to those determined by the action logic automatically).
      * 
      * Most effects of an action can be determined automatically. If not, you can add them
      * here manually. For example:
@@ -1439,24 +1446,27 @@ abstract class AbstractAction implements ActionInterface
      * - If actions in a dashboard do not cause some of the data widgets to update, add the
      * meta objects of these widgets to the actions `effects` to trigger the update.
      * - CLI command actions mostly cannot determine their effects automatically - add them here!
-     * - WebService actions also often do not "know" their effects - add them here too!
+     * - Actions like `CallWebService`, `CustomFacadeScript`, etc. mostly do not "know" their 
+     * effects - add them here too!
      * 
-     * If you do not need advanced effects properties like relaiton paths or names, usin the flat
-     * `effected_objects` array is simpler!
+     * **HINT:** If you do not need advanced effects properties like relaiton paths or names, using 
+     * the flat `effected_objects` array is simpler!
      * 
-     * Every action can have one or more effects, each indicating that it modifies a meta object.
-     * Action effects allow the workbench to better understand, what actions do. In particular,
-     * they indicate, what data might have changed after an action was performed. 
+     * Every action can have one or more effects, each indicating that it modifies the state of a 
+     * meta object - e.g. by changing its data in the data source. Knowing the action effects allows 
+     * the workbench to better understand, what actions really do and how this might affect the UI. 
+     * In particular, they indicate, what data might have changed and needs reloading after an action 
+     * was performed. 
      * 
-     * **NOTE:** an effect on a specific object, does not guarantee, that it will be changed every
-     * time the action is performed - it only means, the action **can** modify that object.
+     * **NOTE:** an effect on a specific object, does not guarantee, that the action will actually 
+     * change it every time it is performed - it only means, the action **can** modify that object.
      * 
      * Whether the modification takes place or not depends on the logic of the action, the input
-     * data, behaviors of other effect object etc. - in many cases, we can't even really know
-     * what exactly happens because actions may trigger logic in external systems, DB-triggers, 
-     * etc. 
+     * data, behaviors of other effected objects etc. - in many cases, we can't even really know
+     * for sure, what will happen because actions may trigger logic in external systems, DB-triggers, 
+     * etc. - things not known to the workbench at all.
      * 
-     * This is why action effects are part of the action model and can be manually added manually 
+     * This is why action effects are part of the action model and can be added manually to actions
      * to tell the workbench, that the action is likely to effect an object even if that is 
      * not obvious.
      * 

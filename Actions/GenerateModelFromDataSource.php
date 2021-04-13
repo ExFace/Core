@@ -2,14 +2,13 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\AbstractAction;
-use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
-use exface\Core\CommonLogic\Actions\ActionEffect;
-use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Factories\ActionEffectFactory;
+use exface\Core\Interfaces\Actions\iModifyData;
 
 /**
  * This action runs one or more selected test steps
@@ -17,9 +16,13 @@ use exface\Core\CommonLogic\UxonObject;
  * @author Andrej Kabachnik
  *        
  */
-class GenerateModelFromDataSource extends AbstractAction
+class GenerateModelFromDataSource extends AbstractAction implements iModifyData
 {
-
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::init()
+     */
     protected function init()
     {
         $this->setIcon(Icons::COGS);
@@ -28,6 +31,11 @@ class GenerateModelFromDataSource extends AbstractAction
         $this->setInputObjectAlias('exface.Core.MODEL_BUILDER_INPUT');
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::perform()
+     */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $input_data = $this->getInputDataSheet($task);
@@ -76,10 +84,10 @@ class GenerateModelFromDataSource extends AbstractAction
     public function getEffects() : array
     {
         $effects = parent::getEffects();
-        $effects[] = new ActionEffect($this, new UxonObject(['effected_object' => 'exface.Core.OBJECT']));
-        $effects[] = new ActionEffect($this, new UxonObject(['effected_object' => 'exface.Core.ATTRIBUTE']));
-        $effects[] = new ActionEffect($this, new UxonObject(['effected_object' => 'exface.Core.DATATYPE']));
-        $effects[] = new ActionEffect($this, new UxonObject(['effected_object' => 'exface.Core.OBJECT_ACTION']));
+        $effects[] = ActionEffectFactory::createForEffectedObjectAliasOrUid($this, 'exface.Core.OBJECT');
+        $effects[] = ActionEffectFactory::createForEffectedObjectAliasOrUid($this, 'exface.Core.ATTRIBUTE');
+        $effects[] = ActionEffectFactory::createForEffectedObjectAliasOrUid($this, 'exface.Core.DATATYPE');
+        $effects[] = ActionEffectFactory::createForEffectedObjectAliasOrUid($this, 'exface.Core.OBJECT_ACTION');
         return $effects;
     }
 }
