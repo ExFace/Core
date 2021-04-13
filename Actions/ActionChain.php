@@ -490,9 +490,12 @@ class ActionChain extends AbstractAction implements iCallOtherActions
         $effects = parent::getEffects();
         foreach ($this->getActions() as $action) {
             foreach ($action->getEffects() as $effect) {
-                if (! $this->hasEffectOn($effect->getEffectedObject())) {
-                    $effects[] = $effect;
+                foreach ($effects as $chainEffect) {
+                    if ($chainEffect->getEffectedObject()->isExactly($effect->getEffectedObject)) {
+                        continue 2;
+                    }
                 }
+                $effects[] = $effect;
             }
         }
         return $effects;
