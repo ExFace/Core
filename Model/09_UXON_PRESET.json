@@ -2631,18 +2631,20 @@
         },
         {
             "CREATED_ON": "2020-05-20 16:21:59",
-            "MODIFIED_ON": "2020-05-20 16:21:59",
+            "MODIFIED_ON": "2021-04-13 12:23:32",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea9ab60540b9458abc0205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Set flag on an object (e.g. disable\/enable)",
-            "DESCRIPTION": "Replace the `0` in the `from` property with your desired value. Place the alias of the target attribute in the `to` property. Note: the input data MUST be based on the target meta object!",
+            "NAME": "Set a flag on an object (e.g. disable\/enable)",
+            "DESCRIPTION": "Replace the `0` in the `from` property with your desired value. Place the alias of the target attribute in the `to` property. **Note:** the input data MUST be based on the target meta object - enforce this by setting `input_object_alias`!",
             "PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
             "UXON": {
-                "input_rows_min": 1,
+                "input_object_alias": "",
                 "icon": "",
+                "input_rows_min": 1,
                 "input_mapper": {
+                    "inherit_columns_only_for_system_attributes": true,
                     "column_to_column_mappings": [
                         {
                             "from": "=0",
@@ -2653,7 +2655,7 @@
             },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
-            "THUMBNAIL": null
+            "THUMBNAIL": ""
         },
         {
             "CREATED_ON": "2020-05-22 10:45:03",
@@ -4072,6 +4074,34 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/map\/map_geojson.gif"
+        },
+        {
+            "CREATED_ON": "2021-04-13 12:11:40",
+            "MODIFIED_ON": "2021-04-13 12:23:57",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebbaaca3d59982baac025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Toggle a flag on an object (e.g. disable\/enable)",
+            "DESCRIPTION": "Replace the `REPLACE_WITH_FLAG_ATTRIBUTE_ALIAS` with the alias of the attribute you want to toggle. **Note:** the input data MUST be based on the target meta object - enforce this by setting `input_object_alias`!",
+            "PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
+            "UXON": {
+                "input_object_alias": "",
+                "input_rows_min": 1,
+                "icon": "toggle-off",
+                "input_mapper": {
+                    "inherit_columns_only_for_system_attributes": true,
+                    "column_to_column_mappings": [
+                        {
+                            "from": "=Not(REPLACE_WITH_FLAG_ATTRIBUTE_ALIAS)",
+                            "to": "REPLACE_WITH_FLAG_ATTRIBUTE_ALIAS"
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": ""
         }
     ],
     "totals_rows": [],
