@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-11-17 13:30:20",
     "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2021-04-08 18:15:28",
+    "modified_on": "2021-04-14 13:53:42",
     "contents": {
         "widget_type": "SplitVertical",
         "object_alias": "exface.Core.MONITOR_ACTION",
@@ -22,6 +22,89 @@
                     {
                         "widget_type": "SplitHorizontal",
                         "panels": [
+                            {
+                                "caption": "Activity per day",
+                                "width": "34%",
+                                "widgets": [
+                                    {
+                                        "object_alias": "exface.Core.DATE_DIMENSION",
+                                        "widget_type": "Chart",
+                                        "id": "date_chart",
+                                        "hide_header": true,
+                                        "data": {
+                                            "paginate": false,
+                                            "columns": [
+                                                {
+                                                    "id": "action_date",
+                                                    "attribute_alias": "MONITOR_ACTION__DATE:LIST_DISTINCT"
+                                                },
+                                                {
+                                                    "id": "error_date",
+                                                    "attribute_alias": "MONITOR_ERROR__DATE:LIST_DISTINCT"
+                                                }
+                                            ],
+                                            "filters": [
+                                                {
+                                                    "attribute_alias": "START_DATE",
+                                                    "value": -30,
+                                                    "input_widget": {
+                                                        "widget_type": "InputHidden"
+                                                    }
+                                                },
+                                                {
+                                                    "attribute_alias": "END_DATE",
+                                                    "value": 0,
+                                                    "input_widget": {
+                                                        "widget_type": "InputHidden"
+                                                    }
+                                                }
+                                            ],
+                                            "sorters": [
+                                                {
+                                                    "attribute_alias": "DATE",
+                                                    "direction": "asc"
+                                                }
+                                            ],
+                                            "aggregate_by_attribute_alias": [
+                                                "DATE"
+                                            ]
+                                        },
+                                        "series": [
+                                            {
+                                                "type": "Column",
+                                                "x_attribute_alias": "DATE",
+                                                "y_attribute_alias": "MONITOR_ERROR__STATUS:COUNT_IF(== 20)",
+                                                "y_axis_no": 0,
+                                                "caption": "Errors"
+                                            },
+                                            {
+                                                "type": "line",
+                                                "x_attribute_alias": "DATE",
+                                                "y_axis_no": 0,
+                                                "caption": "Actions"
+                                            },
+                                            {
+                                                "type": "line",
+                                                "x_attribute_alias": "DATE",
+                                                "y_attribute_alias": "MONITOR_ACTION__DURATION:AVG",
+                                                "caption": "\u00d8 avg. (ms)"
+                                            }
+                                        ],
+                                        "axis_x": [
+                                            {
+                                                "attribute_alias": "DATE",
+                                                "hide_caption": true
+                                            }
+                                        ],
+                                        "axis_y": [
+                                            {
+                                                "attribute_alias": "MONITOR_ACTION__UID:COUNT",
+                                                "caption": "Count"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
                             {
                                 "caption": "User Activity",
                                 "width": "33%",
@@ -40,8 +123,8 @@
                                             "filters": [
                                                 {
                                                     "attribute_alias": "DATE",
-                                                    "value": -30,
                                                     "comparator": ">=",
+                                                    "value": -30,
                                                     "input_widget": {
                                                         "widget_type": "InputHidden"
                                                     }
@@ -80,6 +163,7 @@
                                 ]
                             },
                             {
+                                "width": "33%",
                                 "caption": "Pages",
                                 "widgets": [
                                     {
@@ -90,8 +174,8 @@
                                             "filters": [
                                                 {
                                                     "attribute_alias": "DATE",
-                                                    "value": -30,
                                                     "comparator": ">=",
+                                                    "value": -30,
                                                     "input_widget": {
                                                         "widget_type": "InputHidden"
                                                     }
@@ -115,75 +199,125 @@
                                         ]
                                     }
                                 ]
-                            },
-                            {
-                                "caption": "Activity per day",
-                                "width": "33%",
-                                "widgets": [
-                                    {
-                                        "widget_type": "Chart",
-                                        "id": "date_chart",
-                                        "hide_header": true,
-                                        "data": {
-                                            "filters": [
-                                                {
-                                                    "attribute_alias": "DATE",
-                                                    "value": -30,
-                                                    "comparator": ">=",
-                                                    "input_widget": {
-                                                        "widget_type": "InputHidden"
-                                                    }
-                                                }
-                                            ],
-                                            "sorters": [
-                                                {
-                                                    "attribute_alias": "DATE",
-                                                    "direction": "asc"
-                                                }
-                                            ],
-                                            "aggregate_by_attribute_alias": [
-                                                "DATE"
-                                            ]
-                                        },
-                                        "series": [
-                                            {
-                                                "type": "line",
-                                                "x_attribute_alias": "DATE",
-                                                "y_attribute_alias": "UID:COUNT",
-                                                "caption": "Actions"
-                                            },
-                                            {
-                                                "type": "line",
-                                                "x_attribute_alias": "DATE",
-                                                "y_attribute_alias": "DURATION:AVG",
-                                                "caption": "\u00d8 avg. (ms)"
-                                            }
-                                        ],
-                                        "axis_x": [
-                                            {
-                                                "attribute_alias": "DATE",
-                                                "hide_caption": true
-                                            }
-                                        ]
-                                    }
-                                ]
                             }
                         ]
                     }
                 ]
             },
             {
-                "caption": "Activity of the last 30 days",
                 "widgets": [
                     {
                         "widget_type": "SplitHorizontal",
                         "panels": [
                             {
+                                "caption": "Errors in the last 30 days",
                                 "width": "50%",
-                                "caption": "Actions",
+                                "widgets": [
+                                    {
+                                        "id": "error_table",
+                                        "widget_type": "DataTable",
+                                        "object_alias": "exface.Core.MONITOR_ERROR",
+                                        "filters": [
+                                            {
+                                                "attribute_alias": "USER",
+                                                "value": "=user_chart!USER",
+                                                "apply_on_change": true,
+                                                "input_widget": {
+                                                    "widget_type": "InputHidden"
+                                                }
+                                            },
+                                            {
+                                                "attribute_alias": "ACTION__PAGE",
+                                                "value": "=page_chart!PAGE",
+                                                "apply_on_change": true
+                                            },
+                                            {
+                                                "attribute_alias": "DATE",
+                                                "value": "=date_chart!DATE",
+                                                "apply_on_change": true,
+                                                "input_widget": {
+                                                    "widget_type": "InputHidden"
+                                                }
+                                            },
+                                            {
+                                                "attribute_alias": "ERROR_LEVEL"
+                                            },
+                                            {
+                                                "attribute_alias": "ACTION",
+                                                "value": "=action_table!UID",
+                                                "hidden": false,
+                                                "apply_on_change": true
+                                            }
+                                        ],
+                                        "sorters": [
+                                            {
+                                                "attribute_alias": "CREATED_ON",
+                                                "direction": "desc"
+                                            }
+                                        ],
+                                        "columns": [
+                                            {
+                                                "caption": "Time",
+                                                "attribute_alias": "CREATED_ON"
+                                            },
+                                            {
+                                                "calculation": "=Left(MESSAGE,150)"
+                                            },
+                                            {
+                                                "attribute_alias": "LOG_ID"
+                                            },
+                                            {
+                                                "attribute_alias": "USER__LABEL"
+                                            },
+                                            {
+                                                "attribute_alias": "STATUS"
+                                            }
+                                        ],
+                                        "buttons": [
+                                            {
+                                                "bind_to_double_click": true,
+                                                "caption": "Show Error Widget",
+                                                "action": {
+                                                    "alias": "exface.core.ShowDialogFromData",
+                                                    "uxon_attribute": "ERROR_WIDGET"
+                                                }
+                                            },
+                                            {
+                                                "action": {
+                                                    "alias": "exface.core.ShowObjectInfoDialog",
+                                                    "disable_buttons": false
+                                                }
+                                            },
+                                            {
+                                                "caption": "Mark Resolved",
+                                                "action": {
+                                                    "alias": "exface.core.UpdateData",
+                                                    "input_rows_min": 1,
+                                                    "input_object_alias": "exface.Core.MONITOR_ERROR",
+                                                    "input_mappers": [
+                                                        {
+                                                            "from_object_alias": "exface.Core.MONITOR_ERROR",
+                                                            "column_to_column_mappings": [
+                                                                {
+                                                                    "from": 99,
+                                                                    "to": "STATUS"
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "width": "50%",
+                                "caption": "Actions in the last 30 days",
                                 "widgets": [
                                     {
                                         "id": "action_table",
+                                        "object_alias": "exface.Core.MONITOR_ACTION",
                                         "widget_type": "DataTable",
                                         "empty_text": "No activity found. Make sure the monitor is enabled in System.config.js (MONITOR.ENABLED)",
                                         "filters": [
@@ -206,6 +340,9 @@
                                                 "apply_on_change": true
                                             },
                                             {
+                                                "input_widget": {
+                                                    "widget_type": "InputHidden"
+                                                },
                                                 "attribute_alias": "DATE",
                                                 "value": "=date_chart!DATE",
                                                 "apply_on_change": true
@@ -248,91 +385,6 @@
                                             {
                                                 "attribute_alias": "TIME",
                                                 "direction": "desc"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "caption": "Errors",
-                                "width": "50%",
-                                "widgets": [
-                                    {
-                                        "widget_type": "DataTable",
-                                        "object_alias": "exface.Core.MONITOR_ERROR",
-                                        "filters": [
-                                            {
-                                                "attribute_alias": "DATE",
-                                                "value": -30,
-                                                "comparator": ">=",
-                                                "input_widget": {
-                                                    "widget_type": "InputHidden"
-                                                }
-                                            },
-                                            {
-                                                "attribute_alias": "USER",
-                                                "value": "=user_chart!USER",
-                                                "apply_on_change": true
-                                            },
-                                            {
-                                                "attribute_alias": "ACTION__PAGE",
-                                                "value": "=page_chart!PAGE",
-                                                "apply_on_change": true
-                                            },
-                                            {
-                                                "attribute_alias": "DATE",
-                                                "value": "=date_chart!DATE",
-                                                "apply_on_change": true
-                                            },
-                                            {
-                                                "attribute_alias": "ERROR_LEVEL"
-                                            },
-                                            {
-                                                "attribute_alias": "ACTION",
-                                                "value": "=action_table!UID",
-                                                "apply_on_change": true
-                                            }
-                                        ],
-                                        "sorters": [
-                                            {
-                                                "attribute_alias": "CREATED_ON",
-                                                "direction": "desc"
-                                            }
-                                        ],
-                                        "columns": [
-                                            {
-                                                "caption": "Time",
-                                                "attribute_alias": "CREATED_ON"
-                                            },
-                                            {
-                                                "attribute_alias": "LOG_ID"
-                                            },
-                                            {
-                                                "attribute_alias": "ERROR_LEVEL"
-                                            },
-                                            {
-                                                "attribute_alias": "USER__LABEL"
-                                            },
-                                            {
-                                                "attribute_alias": "ACTION__PAGE__LABEL"
-                                            },
-                                            {
-                                                "attribute_alias": "ACTION__WIDGET_NAME"
-                                            },
-                                            {
-                                                "attribute_alias": "ACTION__ACTION_NAME"
-                                            },
-                                            {
-                                                "attribute_alias": "MESSAGE"
-                                            }
-                                        ],
-                                        "buttons": [
-                                            {
-                                                "caption": "Show Error Widget",
-                                                "action": {
-                                                    "alias": "exface.core.ShowDialogFromData",
-                                                    "uxon_attribute": "ERROR_WIDGET"
-                                                }
                                             }
                                         ]
                                     }

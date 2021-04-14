@@ -11,13 +11,25 @@ use Monolog\Logger;
 use exface\Core\CommonLogic\Monitor;
 use exface\Core\DataTypes\DateDataType;
 
+/**
+ * The monitor logs log entries with the configured error level or above to the MONITOR_ERROR object. 
+ * 
+ * @author rml
+ *
+ */
 class LogMonitorHandler extends DebugMessageFileHandler
 {
     private $logIds = [];
     
     private $monitor;
     
-    function __construct(WorkbenchInterface $workbench, Monitor $monitor, $level = LoggerInterface::CRITICAL)
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param Monitor $monitor
+     * @param string $level
+     */
+    function __construct(WorkbenchInterface $workbench, Monitor $monitor, string $level = LoggerInterface::CRITICAL)
     {
         $this->workbench = $workbench;
         $this->monitor = $monitor;
@@ -65,7 +77,8 @@ class LogMonitorHandler extends DebugMessageFileHandler
             'MESSAGE' => $message,
             'ERROR_WIDGET' => $debugWidgetData,
             'USER' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
-            'DATE' => DateDataType::now()
+            'DATE' => DateDataType::now(),
+            'STATUS' => '20'
         ]);
         $ds->dataCreate();
         $this->monitor->addLogIdToLastRowObject($ds->getUidColumn()->getValue(0));
