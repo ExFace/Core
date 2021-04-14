@@ -21,11 +21,11 @@ class DebugMessageFileHandler implements LogHandlerInterface
 
     private $dir;
 
-    private $minLogLevel;
+    protected $minLogLevel;
 
     private $staticFilenamePart;
     
-    private $workbench;
+    protected $workbench;
 
     /**
      * DebugMessageFileHandler constructor.
