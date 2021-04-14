@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2021-04-06 13:43:23",
-            "MODIFIED_ON": "2021-04-08 17:54:27",
+            "MODIFIED_ON": "2021-04-14 13:54:43",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11eb90f04b00a9be90f08c04ba002958",
@@ -96,7 +96,66 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Dialog",
+                "widgets": [
+                    {
+                        "caption": "Error",
+                        "widget_type": "WidgetGroup",
+                        "widgets": [
+                            {
+                                "attribute_alias": "CREATED_ON"
+                            },
+                            {
+                                "attribute_alias": "LOG_ID"
+                            },
+                            {
+                                "attribute_alias": "ERROR_LEVEL"
+                            },
+                            {
+                                "attribute_alias": "USER__LABEL"
+                            },
+                            {
+                                "attribute_alias": "STATUS"
+                            },
+                            {
+                                "attribute_alias": "MESSAGE",
+                                "widget_type": "InputText",
+                                "width": "max",
+                                "height": 8
+                            }
+                        ]
+                    },
+                    {
+                        "widget_type": "WidgetGroup",
+                        "caption": "Action",
+                        "widgets": [
+                            {
+                                "attribute_alias": "ACTION__PAGE__LABEL"
+                            },
+                            {
+                                "attribute_alias": "ACTION__WIDGET_NAME"
+                            },
+                            {
+                                "attribute_alias": "ACTION__ACTION_NAME"
+                            },
+                            {
+                                "attribute_alias": "ACTION__ACTION_ALIAS"
+                            }
+                        ]
+                    }
+                ],
+                "buttons": [
+                    {
+                        "caption": "Show Error Widget",
+                        "close_dialog": false,
+                        "action": {
+                            "alias": "exface.core.ShowDialogFromData",
+                            "uxon_attribute": "ERROR_WIDGET"
+                        }
+                    }
+                ]
+            },
             "ALIAS": "MONITOR_ERROR",
             "DATA_ADDRESS": "exf_monitor_error"
         }
