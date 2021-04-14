@@ -629,7 +629,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
         foreach (StringDataType::findPlaceholders($string) as $ph) {
             if ($ph_filter = $this->getFilter($ph)) {
                 if (! is_null($ph_filter->getCompareValue())) {
-                    $string = str_replace('[#' . $ph . '#]', $ph_filter->getCompareValue(), $string);
+                    $string = str_replace('[#' . $ph . '#]', $ph_filter->getDataType()->parse($ph_filter->getCompareValue()), $string);
                 } else {
                     // If at least one filter does not have a value, return false
                     throw new QueryBuilderException('Missing filter value in "' . $ph_filter->getAlias() . '" needed for placeholder "' . $ph . '" in SQL "' . $string . '"!');

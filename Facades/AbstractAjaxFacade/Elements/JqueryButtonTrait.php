@@ -556,7 +556,8 @@ JS;
                 {$this->buildJsTriggerActionEffects($action)};
                 {$this->buildJsCloseDialog($widget, $input_element)};
 
-JS; 
+JS;
+
     }
     
     /**
