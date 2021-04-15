@@ -14,6 +14,7 @@ use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\BinaryDataType;
+use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 
 /**
  * A query builder for MySQL.
@@ -268,8 +269,18 @@ class MySqlBuilder extends AbstractSqlBuilder
      */
     protected function prepareWhereValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
+        /* Date values are wrapped in the ODBC syntax {ts 'value'}. This only should happen
+         * if the value is an actual date and not an SQL statement like 'DATE_DIMENSION.date'.
+         * Therefor the value is tried to parse as a date in the DateDataType, if that fails the value
+         * is treated as an SQL statement. 
+         */
         if ($data_type instanceof DateDataType) {
-            $output = "{ts '" . $value . "'}";
+            try {
+                $data_type->parse($value);                
+                $output = "{ts '" . $value . "'}";
+            } catch (DataTypeValidationError $e) {
+                $output = $this->escapeString($value);
+            }
         } else {
             $output = parent::prepareWhereValue($value, $data_type, $sql_data_type);
         }
