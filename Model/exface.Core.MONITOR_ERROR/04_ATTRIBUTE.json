@@ -489,9 +489,9 @@
         },
         {
             "CREATED_ON": "2021-04-14 12:53:54",
-            "MODIFIED_ON": "2021-04-14 13:08:15",
+            "MODIFIED_ON": "2021-04-15 16:54:25",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebb67ab497a790b67a8c04ba002958",
             "SORTABLEFLAG": "1",
             "FILTERABLEFLAG": "1",
@@ -501,7 +501,9 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "StateInputSelect"
+            },
             "COPY_WITH_RELATED_OBJECT": "0",
             "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,
@@ -527,15 +529,17 @@
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_VALUE": "",
+            "DEFAULT_VALUE": "10",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": {
                 "values": {
-                    "20": "OPEN",
-                    "40": "TICKET",
-                    "60": "SKIP",
-                    "99": "CLEARED"
-                }
+                    "10": "10 New",
+                    "20": "20 Todo",
+                    "40": "40 Ticket",
+                    "90": "90 Skip",
+                    "99": "99 Cleared"
+                },
+                "show_values": false
             }
         }
     ],

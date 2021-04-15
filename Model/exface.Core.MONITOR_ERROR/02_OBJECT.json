@@ -81,9 +81,9 @@
     "rows": [
         {
             "CREATED_ON": "2021-04-06 13:43:23",
-            "MODIFIED_ON": "2021-04-14 15:16:26",
+            "MODIFIED_ON": "2021-04-15 16:45:18",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb90f04b00a9be90f08c04ba002958",
             "READABLE_FLAG": "1",
             "WRITABLE_FLAG": "1",
@@ -157,6 +157,9 @@
                             "alias": "exface.core.ShowDialogFromData",
                             "uxon_attribute": "ERROR_WIDGET"
                         }
+                    },
+                    {
+                        "widget_type": "StateMenuButton"
                     }
                 ]
             },

@@ -10,8 +10,8 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-11-17 13:30:20",
-    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2021-04-14 15:01:49",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2021-04-15 17:37:38",
     "contents": {
         "widget_type": "SplitVertical",
         "object_alias": "exface.Core.MONITOR_ACTION",
@@ -33,16 +33,6 @@
                                         "hide_header": true,
                                         "data": {
                                             "paginate": false,
-                                            "columns": [
-                                                {
-                                                    "id": "action_date",
-                                                    "attribute_alias": "MONITOR_ACTION__DATE:LIST_DISTINCT"
-                                                },
-                                                {
-                                                    "id": "error_date",
-                                                    "attribute_alias": "MONITOR_ERROR__DATE:LIST_DISTINCT"
-                                                }
-                                            ],
                                             "filters": [
                                                 {
                                                     "attribute_alias": "START_DATE",
@@ -71,35 +61,27 @@
                                         },
                                         "series": [
                                             {
-                                                "type": "Column",
-                                                "x_attribute_alias": "DATE",
-                                                "y_attribute_alias": "MONITOR_ERROR__STATUS:COUNT_IF(== 20)",
-                                                "y_axis_no": 0,
-                                                "caption": "Open Errors"
-                                            },
-                                            {
                                                 "type": "line",
                                                 "x_attribute_alias": "DATE",
-                                                "y_axis_no": 0,
+                                                "y_attribute_alias": "MONITOR_ACTION__UID:COUNT",
                                                 "caption": "Actions"
                                             },
                                             {
                                                 "type": "line",
-                                                "x_attribute_alias": "DATE",
                                                 "y_attribute_alias": "MONITOR_ACTION__DURATION:AVG",
-                                                "caption": "\u00d8 avg. (ms)"
+                                                "caption": "\u00d8 duration (ms)"
+                                            },
+                                            {
+                                                "type": "Column",
+                                                "y_attribute_alias": "MONITOR_ERROR__STATUS:COUNT_IF(< 90)",
+                                                "caption": "Pending Errors",
+                                                "color": "orangered"
                                             }
                                         ],
                                         "axis_x": [
                                             {
                                                 "attribute_alias": "DATE",
                                                 "hide_caption": true
-                                            }
-                                        ],
-                                        "axis_y": [
-                                            {
-                                                "attribute_alias": "MONITOR_ACTION__UID:COUNT",
-                                                "caption": "Count"
                                             }
                                         ]
                                     }
@@ -261,6 +243,9 @@
                                                 "attribute_alias": "CREATED_ON"
                                             },
                                             {
+                                                "attribute_alias": "STATUS"
+                                            },
+                                            {
                                                 "calculation": "=Left(MESSAGE,150)"
                                             },
                                             {
@@ -268,9 +253,6 @@
                                             },
                                             {
                                                 "attribute_alias": "USER__LABEL"
-                                            },
-                                            {
-                                                "attribute_alias": "STATUS"
                                             }
                                         ],
                                         "buttons": [
@@ -289,23 +271,7 @@
                                                 }
                                             },
                                             {
-                                                "caption": "Mark Resolved",
-                                                "action": {
-                                                    "alias": "exface.core.UpdateData",
-                                                    "input_rows_min": 1,
-                                                    "input_object_alias": "exface.Core.MONITOR_ERROR",
-                                                    "input_mappers": [
-                                                        {
-                                                            "from_object_alias": "exface.Core.MONITOR_ERROR",
-                                                            "column_to_column_mappings": [
-                                                                {
-                                                                    "from": 99,
-                                                                    "to": "STATUS"
-                                                                }
-                                                            ]
-                                                        }
-                                                    ]
-                                                }
+                                                "widget_type": "StateMenuButton"
                                             }
                                         ]
                                     }
