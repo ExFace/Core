@@ -126,14 +126,19 @@ JS;
      * `actionperformed`. The listener will see if the widget configured is affected
      * by the event (e.g. by the action effects) and triggers a refresh on the widget.
      * 
+     * By default the script does nothing if there is no DOM element matchnig the id of
+     * the configured element. This check can be disabled by setting $onlyIfDomExists to false.
+     * 
      * @param string $scriptJs
+     * @param bool $onlyIfDomExists
      * @return string
      */
-    protected function buildJsRegisterOnActionPerformed(string $scriptJs) : string
+    protected function buildJsRegisterOnActionPerformed(string $scriptJs, bool $onlyIfDomExists = true) : string
     {
         if ($this->getWidget()->getWidgetConfigured()->hasAutorefreshData() === false) {
             return '';
         }
+        $onlyIfDomExistsJs = $onlyIfDomExists ? 'true' : 'false';
         $effectedAliases = [$this->getMetaObject()->getAliasWithNamespace()];
         foreach ($this->getWidget()->getDataWidget()->getColumns() as $col) {
             if (! $col->isBoundToAttribute()) {
@@ -171,14 +176,15 @@ JS;
 $( document ).off( "{$actionperformed}.{$this->getId()}" );
 $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oParams ) {
     var oEffect = {};
+    var bOnlyIfDomExists = {$onlyIfDomExistsJs};
     var aUsedObjectAliases = {$effectedAliasesJs};
     var sConfiguredWidgetId = "{$this->getWidget()->getDataWidget()->getId()}";
     var fnRefresh = function() {
         {$scriptJs}
     };
-    
+
     // Avoid errors if widget was removed already
-    if ($('#{$this->getFacade()->getElement($this->getWidget()->getWidgetConfigured())->getId()}').length === 0) {
+    if (bOnlyIfDomExists && $('#{$this->getFacade()->getElement($this->getWidget()->getWidgetConfigured())->getId()}').length === 0) {
         return;
     }
 
