@@ -27,10 +27,14 @@ use exface\Core\Interfaces\Actions\iCallOtherActions;
  * 
  * As a rule of thumb, the action chain will behave as the first action in the it: it will inherit it's 
  * name, trigger widget, input restrictions, etc. Thus, in the above example, the action chain would 
- * inherit the name "Order" and `input_rows_min`=`0`. However, there are some important exceptions 
- * from this rule:
+ * inherit the name "Order" and `input_rows_min`=`0`. 
+ * 
+ * **Exceptions** from the above rule:
  * 
  * - the chain has modified data if at least one of the actions modified data
+ * - the chain will have `effects` on all objects effected by its sub-actions. However, if multiple 
+ * actions effect the same object, only the first effect will be inherited by the chain. In particular,
+ * this makes sure manually defined `effects` of the chain itself prevail!
  *
  * By default, all actions in the chain will be performed in a single transaction. That is, all actions 
  * will get rolled back if at least one failes. Set the property `use_single_transaction` to false 
@@ -474,5 +478,26 @@ class ActionChain extends AbstractAction implements iCallOtherActions
     {
         $this->freeze_input_data_at_action_index = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::getEffects()
+     */
+    public function getEffects() : array
+    {
+        $effects = parent::getEffects();
+        foreach ($this->getActions() as $action) {
+            foreach ($action->getEffects() as $effect) {
+                foreach ($effects as $chainEffect) {
+                    if ($chainEffect->getEffectedObject()->isExactly($effect->getEffectedObject)) {
+                        continue 2;
+                    }
+                }
+                $effects[] = $effect;
+            }
+        }
+        return $effects;
     }
 }

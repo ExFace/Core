@@ -52,7 +52,7 @@ class OnQueueRunEvent extends AbstractEvent implements QueueRunEventInterface, T
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Events\ErrorEventInterface::getException()
+     * @see \exface\Core\Interfaces\Events\QueueRunEventInterface::getQueue()
      */
     public function getQueue() : TaskQueueInterface
     {

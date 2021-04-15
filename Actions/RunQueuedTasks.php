@@ -18,6 +18,8 @@ use exface\Core\Factories\ResultFactory;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\CommonLogic\Tasks\ResultError;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
+use exface\Core\Interfaces\Actions\iModifyContext;
+use exface\Core\Interfaces\Actions\iModifyData;
 
 /**
  * Performs a task that is saved in a task queue.
@@ -25,7 +27,7 @@ use exface\Core\Exceptions\Actions\ActionRuntimeError;
  * @author Ralf Mulansky
  *
  */
-class RunQueuedTasks extends AbstractAction
+class RunQueuedTasks extends AbstractAction implements iModifyData
 {    
     /**
      * 

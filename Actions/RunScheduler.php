@@ -2,11 +2,9 @@
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Actions\iCanBeCalledFromCLI;
 use exface\Core\CommonLogic\AbstractActionDeferred;
-use exface\Core\CommonLogic\Tasks\ResultMessageStream;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\CronDataType;
@@ -17,6 +15,7 @@ use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\CommonLogic\Tasks\ResultError;
 use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
+use exface\Core\Interfaces\Actions\iModifyData;
 
 /**
  * 
@@ -24,7 +23,7 @@ use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
  * @author Andrej Kabachnik
  *
  */
-class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
+class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI, iModifyData
 {
     /**
      * 

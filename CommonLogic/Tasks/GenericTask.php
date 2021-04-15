@@ -69,7 +69,7 @@ class GenericTask implements TaskInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Tasks\TaskInterface::getFacade()
      */
-    public function getFacade() : FacadeInterface
+    public function getFacade() : ?FacadeInterface
     {
         return $this->facade;
     }

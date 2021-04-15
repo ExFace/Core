@@ -13,6 +13,7 @@ use exface\Core\Exceptions\Queues\QueueRuntimeError;
 use exface\Core\Exceptions\Queues\QueueMessageDuplicateError;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\DataTypes\QueuedTaskStateDataType;
+use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
 
 /**
  * Performs the task immediately after inserting in the queue in the same transaction.
@@ -77,8 +78,16 @@ class SyncTaskQueue extends AsyncTaskQueue
             
             $task = $event->getTask();
             $result = $this->getWorkbench()->handle($task);
-            $this->saveResult($ds, $result, (microtime(true) - $start));
             
+            // If the task is a stream, read it completely here to make sure all generators
+            // are run. If they produce errors, they should be handled as task/action errors
+            // and not result-save errors.
+            if ($result instanceof ResultMessageStreamInterface) {
+                $result->getMessage();
+            }
+            
+            // Save he result if no errors up-to now
+            $this->saveResult($ds, $result, (microtime(true) - $start));
             $event->setResult($result);
         } catch (\Throwable $e) {
             if (! $e instanceof ExceptionInterface) {

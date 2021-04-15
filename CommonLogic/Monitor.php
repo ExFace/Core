@@ -271,7 +271,7 @@ class Monitor extends Profiler
                         $page = $task->getPageTriggeredOn();
                         break;
                     case $action->isDefinedInWidget():
-                        $page = $action->getWidgetDefinedIn();
+                        $page = $action->getWidgetDefinedIn()->getPage();
                         break;
                     default:
                         $page = null;

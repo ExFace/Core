@@ -449,6 +449,8 @@ class SessionContextScope extends AbstractContextScope
         $var = '_' . ($namespace !== null ? $namespace . '_' : '') . $name;
         $this->setSessionData($var, $value);
         $this->session_vars_set[$var] = $value;
+        // If this variable was unset previously, remove it from the unset-list
+        unset($this->session_vars_unset[$var]);
         return $this;
     }
     
@@ -461,6 +463,8 @@ class SessionContextScope extends AbstractContextScope
     {
         $var = '_' . ($namespace !== null ? $namespace . '_' : '') . $name;
         $this->session_vars_unset[$var] = $this->getSessionData($var);
+        // If this variable was set previously, remove it from the set-list
+        unset($this->session_vars_set[$var]);
         $this->removeSessionData($var);
         return $this;
     }

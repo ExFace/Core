@@ -25,7 +25,8 @@ use exface\Core\Interfaces\Widgets\iHaveIcon;
  */
 abstract class AbstractJqueryElement implements WorkbenchDependantInterface, AjaxFacadeElementInterface
 {
-
+    const EVENT_NAME_ACTIONPERFORMED = 'actionperformed';
+    
     private $exf_widget = null;
 
     private $facade = null;
