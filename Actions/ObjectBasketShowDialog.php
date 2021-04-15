@@ -31,8 +31,6 @@ class ObjectBasketShowDialog extends ShowDialog
     protected function init()
     {
         parent::init();
-        $this->setInputRowsMax(1);
-        $this->setInputRowsMin(1);
         $this->setContextAlias('exface.Core.ObjectBasketContext');
         $this->setPrefillDisabled(true);
     }

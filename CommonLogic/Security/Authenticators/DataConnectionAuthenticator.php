@@ -74,28 +74,36 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
         }
         $this->checkAuthenticatorDisabledForUsername($token->getUsername());
         
+        $user = $this->userExists($token) ? $this->getUserFromToken($token) : null;
+        
         try {
             $connector = DataConnectionFactory::createFromModel($this->getWorkbench(), $token->getDataConnectionAlias());;
-            $connector->authenticate($token, false);
+            if ($user === null) {
+                $authenticatedToken = $connector->authenticate($token, false);
+            } else {
+                $authenticatedToken = $connector->authenticate($token, true, $user, true);
+            }
         } catch (AuthenticationException $e) {
             throw new AuthenticationFailedError($this, $e->getMessage(), null, $e);
         }
-        $user = null;
-        if ($this->userExists($token) === true) {
-            $user = $this->getUserFromToken($token);
-        } elseif ($this->getCreateNewUsers() === true) {
-            $user = $this->createUserWithRoles($this->getWorkbench(), $token);            
-            //second authentification to save credentials
-            $connector->authenticate($token, true, $user, true);
-        } else {            
-            throw new AuthenticationFailedError($this, "Authentication failed, no PowerUI user with that username '{$token->getUsername()}' exists and none was created!", '7AL3J9X');
+        
+        if ($user === null) {
+            if ($this->getCreateNewUsers() === true) {
+                $user = $this->createUserWithRoles($this->getWorkbench(), $token);            
+                // second authentification to save credentials
+                $connector->authenticate($token, true, $user, true);
+            } else {            
+                throw new AuthenticationFailedError($this, "Authentication failed, no PowerUI user with that username '{$token->getUsername()}' exists and none was created!", '7AL3J9X');
+            }
         }
+        
         $this->logSuccessfulAuthentication($user, $token->getUsername());
         if ($token->getUsername() !== $user->getUsername()) {
             return new DataConnectionUsernamePasswordAuthToken($token->getDataConnectionAlias(), $user->getUsername(), $token->getPassword());
         }
-        $this->authenticatedToken = $token;
-        return $token;
+        
+        $this->authenticatedToken = $authenticatedToken;
+        return $authenticatedToken;
     }
     
     /**

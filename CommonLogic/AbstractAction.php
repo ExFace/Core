@@ -40,6 +40,7 @@ use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Events\Action\OnActionInputValidatedEvent;
+use exface\Core\Events\Action\OnActionFailedEvent;
 use exface\Core\Interfaces\Actions\ActionEffectInterface;
 use exface\Core\Widgets\Button;
 use exface\Core\CommonLogic\Actions\ActionEffect;
@@ -47,7 +48,6 @@ use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Factories\ActionEffectFactory;
-use exface\Core\Events\Action\OnActionFailedEvent;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 

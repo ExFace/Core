@@ -120,10 +120,16 @@ JS;
     }
     
     /**
+     * Registers a jQuery custom event handler that refreshes the configured widget if effected by an action.
      * 
+     * Returns JS code to register a listener on `document` for the custom jQuery event 
+     * `actionperformed`. The listener will see if the widget configured is affected
+     * by the event (e.g. by the action effects) and triggers a refresh on the widget.
+     * 
+     * @param string $scriptJs
      * @return string
      */
-    protected function buildJsRefreshOnActionEffect() : string
+    protected function buildJsRegisterOnActionPerformed(string $scriptJs) : string
     {
         if ($this->getWidget()->getWidgetConfigured()->hasAutorefreshData() === false) {
             return '';
@@ -168,7 +174,7 @@ $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oPara
     var aUsedObjectAliases = {$effectedAliasesJs};
     var sConfiguredWidgetId = "{$this->getWidget()->getDataWidget()->getId()}";
     var fnRefresh = function() {
-        {$this->buildJsRefreshConfiguredWidget(true)}
+        {$scriptJs}
     };
     
     // Avoid errors if widget was removed already
