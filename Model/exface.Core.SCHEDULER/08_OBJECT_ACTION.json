@@ -61,19 +61,19 @@
     "rows": [
         {
             "CREATED_ON": "2021-02-01 15:56:27",
-            "MODIFIED_ON": "2021-02-01 15:56:27",
+            "MODIFIED_ON": "2021-04-13 12:41:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb914ba92efe4e914b025041000001",
             "OBJECT": "0x11ebb374ef0b5eacb374847beb4a5184",
             "ACTION_PROTOTYPE": "exface\/Core\/Actions\/CreateData.php",
             "ALIAS": "DisableScheduler",
-            "NAME": "Disable",
+            "NAME": "Turn OFF",
             "SHORT_DESCRIPTION": "",
             "CONFIG_UXON": {
                 "object_alias": "exface.Core.CUSTOMIZING",
                 "input_object_alias": "exface.Core.CUSTOMIZING",
-                "icon": "ban",
+                "icon": "toggle-off",
                 "input_mappers": [
                     {
                         "from_object_alias": "exface.Core.SCHEDULER",
@@ -104,19 +104,19 @@
         },
         {
             "CREATED_ON": "2021-02-01 15:58:35",
-            "MODIFIED_ON": "2021-02-01 15:58:35",
+            "MODIFIED_ON": "2021-04-13 12:41:06",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb894cf55655ba894c025041000001",
             "OBJECT": "0x11ebb374ef0b5eacb374847beb4a5184",
             "ACTION_PROTOTYPE": "exface\/Core\/Actions\/DeleteObject.php",
             "ALIAS": "EnableScheduler",
-            "NAME": "Enable",
+            "NAME": "Turn ON",
             "SHORT_DESCRIPTION": "",
             "CONFIG_UXON": {
                 "object_alias": "exface.Core.CUSTOMIZING",
                 "input_object_alias": "exface.Core.CUSTOMIZING",
-                "icon": "check-circle-o",
+                "icon": "toggle-on",
                 "input_mappers": [
                     {
                         "from_object_alias": "exface.Core.SCHEDULER",

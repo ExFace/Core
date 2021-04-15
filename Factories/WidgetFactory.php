@@ -19,6 +19,7 @@ use exface\Core\DataTypes\MessageTypeDataType;
 use exface\Core\Widgets\Parts\WidgetInheritance;
 use exface\Core\Widgets\Parts\WidgetInheriter;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Widgets\DebugMessage;
 
 /**
  * 
@@ -365,5 +366,15 @@ abstract class WidgetFactory extends AbstractStaticFactory
         $widget->setMetaObject($object);
         return $widget;
     }
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param MetaObjectInterface $baseObject
+     * @return DebugMessage
+     */
+    public static function createDebugMessage(WorkbenchInterface $workbench, MetaObjectInterface $baseObject = null) : DebugMessage
+    {
+        return static::createOnBlankPage($workbench, 'DebugMessage', $baseObject);
+    }
 }
-?>

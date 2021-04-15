@@ -106,9 +106,9 @@ interface TaskInterface extends WorkbenchDependantInterface, iCanBeConvertedToUx
     
     /**
      * 
-     * @return FacadeInterface
+     * @return FacadeInterface|NULL
      */
-    public function getFacade() : FacadeInterface;
+    public function getFacade() : ?FacadeInterface;
     
     /**
      * 

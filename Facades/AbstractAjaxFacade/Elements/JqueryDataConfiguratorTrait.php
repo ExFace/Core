@@ -99,7 +99,11 @@ trait JqueryDataConfiguratorTrait
         return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($filter_group !== '' ? ", filters: " . $filter_group : "") . "}";
     }
     
-    public function buildJsRefreshOnEnter()
+    /**
+     * 
+     * @return string
+     */
+    protected function buildJsRefreshOnEnter()
     {
         // Use keyup() instead of keypress() because the latter did not work with jEasyUI combos.
         return <<<JS
@@ -107,12 +111,105 @@ trait JqueryDataConfiguratorTrait
             $('#{$this->getId()}').find('input').keyup(function (ev) {
                 var keycode = (ev.keyCode ? ev.keyCode : ev.which);
                 if (keycode == '13') {
-                    {$this->getFacade()->getElement($this->getWidget()->getWidgetConfigured())->buildJsRefresh()};
+                    {$this->buildJsRefreshConfiguredWidget(false)};
                 }
             })
-        }, 10)
+        }, 10);
 
 JS;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function buildJsRefreshOnActionEffect() : string
+    {
+        if ($this->getWidget()->getWidgetConfigured()->hasAutorefreshData() === false) {
+            return '';
+        }
+        $effectedAliases = [$this->getMetaObject()->getAliasWithNamespace()];
+        foreach ($this->getWidget()->getDataWidget()->getColumns() as $col) {
+            if (! $col->isBoundToAttribute()) {
+                continue;
+            }
+            $attr = $col->getAttribute();
+            if ($attr->getRelationPath()->isEmpty()) {
+                continue;
+            }
+            foreach ($attr->getRelationPath()->getRelations() as $rel) {
+                $effectedAliases[] = $rel->getLeftObject()->getAliasWithNamespace();
+                $effectedAliases[] = $rel->getRightObject()->getAliasWithNamespace();
+            }
+        }
+        foreach ($this->getWidget()->getFilters() as $filter) {
+            if (! $filter->isBoundToAttribute()) {
+                continue;
+            }
+            $attr = $filter->getAttribute();
+            if ($attr->isRelation()) {
+                $effectedAliases[] = $attr->getRelation()->getRightObject()->getAliasWithNamespace();   
+            }
+            if ($attr->getRelationPath()->isEmpty()) {
+                continue;
+            }
+            foreach ($attr->getRelationPath()->getRelations() as $rel) {
+                $effectedAliases[] = $rel->getLeftObject()->getAliasWithNamespace();
+                $effectedAliases[] = $rel->getRightObject()->getAliasWithNamespace();
+            }
+        }
+        $effectedAliasesJs = json_encode(array_values(array_unique($effectedAliases)));
+        $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
+        return <<<JS
+
+$( document ).off( "{$actionperformed}.{$this->getId()}" );
+$( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oParams ) {
+    var oEffect = {};
+    var aUsedObjectAliases = {$effectedAliasesJs};
+    var sConfiguredWidgetId = "{$this->getWidget()->getDataWidget()->getId()}";
+    var fnRefresh = function() {
+        {$this->buildJsRefreshConfiguredWidget(true)}
+    };
+    
+    // Avoid errors if widget was removed already
+    if ($('#{$this->getFacade()->getElement($this->getWidget()->getWidgetConfigured())->getId()}').length === 0) {
+        return;
+    }
+
+    if (oParams.refresh_not_widgets.indexOf(sConfiguredWidgetId) !== -1) {
+        return;
+    }
+
+    if (oParams.refresh_widgets.indexOf(sConfiguredWidgetId) !== -1) {
+        fnRefresh();
+        return;
+    }
+
+    for (var i = 0; i < oParams.effects.length; i++) {
+        oEffect = oParams.effects[i];
+        if (aUsedObjectAliases.indexOf(oEffect.effected_object) !== -1) {
+            // refresh immediately if directly affected or delayed if it is an indirect effect
+            if (oEffect.effected_object === '{$this->getWidget()->getMetaObject()->getAliasWithNamespace()}') {
+                fnRefresh();
+            } else {
+                setTimeout(fnRefresh, 100);
+            }
+            return;
+        }
+    }
+});
+
+JS;
+    }
+    
+    /**
+     * 
+     * @param bool $keepPagination
+     * @return string
+     */
+    protected function buildJsRefreshConfiguredWidget(bool $keepPagination) : string
+    {
+        return $this->getFacade()->getElement($this->getWidget()->getWidgetConfigured())->buildJsRefresh($keepPagination);
     }
                 
     /**
