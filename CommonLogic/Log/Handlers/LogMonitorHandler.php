@@ -77,8 +77,7 @@ class LogMonitorHandler extends DebugMessageFileHandler
             'MESSAGE' => $message,
             'ERROR_WIDGET' => $debugWidgetData,
             'USER' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
-            'DATE' => DateDataType::now(),
-            'STATUS' => '20'
+            'DATE' => DateDataType::now()
         ]);
         $ds->dataCreate();
         $this->monitor->addLogIdToLastRowObject($ds->getUidColumn()->getValue(0));

@@ -118,7 +118,7 @@ class StateMachineState
      * 
      * @uxon-property buttons
      * @uxon-type \exface\Core\Widgets\Button[]
-     * @uxon-template [{"action": {"alias": ""}}]
+     * @uxon-template {"10": {"caption": "", "action": {"alias": ""}}, "20": {"caption": "", "action": {"alias": ""}}}
      *
      * @param UxonObject $value            
      * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
@@ -228,7 +228,7 @@ class StateMachineState
      *  
      * @uxon-property transitions
      * @uxon-type array
-     * @uxon-template [""]
+     * @uxon-template ["10", "20", "99"]
      *
      * @param UxonObject|integer[] $value            
      * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
