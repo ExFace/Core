@@ -19,6 +19,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\Interfaces\Actions\ActionInterface;
 
 /**
  * Tracks time and users that created/changed objects and prevents concurrent writes comparing the update-times.
@@ -577,7 +578,7 @@ class TimeStampingBehavior extends AbstractBehavior
      * 
      * @return \exface\Core\Interfaces\Actions\ActionInterface
      */
-    protected function getCurrentAction()
+    protected function getCurrentAction() : ?ActionInterface
     {
         return $this->getWorkbench()->getContext()->getScopeWindow()->getActionContext()->getCurrentAction();
     }
