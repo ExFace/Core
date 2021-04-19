@@ -144,6 +144,7 @@ class GenericAuthorizationPolicy implements AuthorizationPolicyInterface
                 return PermissionFactory::createNotApplicable($this);
             }
         } catch (\Throwable $e) {
+            $this->workbench->getLogger()->logException($e);
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         

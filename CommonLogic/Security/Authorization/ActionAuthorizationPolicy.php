@@ -153,7 +153,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             }
             
             // See if applicable only to cli/non-cli tasks
-            if (($expectCli = $this->getCommandLineTaskOption()) !== null) {
+            if (($expectCli = $this->getCommandLineTaskRestriction()) !== null) {
                 $isCli = ($task instanceof CliTaskInterface);
                 switch (true) {
                     case $expectCli === true && $isCli === false:
@@ -235,6 +235,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 return PermissionFactory::createNotApplicable($this);
             }
         } catch (\Throwable $e) {
+            $action->getWorkbench()->getLogger()->logException($e);
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         
@@ -394,9 +395,9 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     
     /**
      * 
-     * @return bool
+     * @return bool|NULL
      */
-    protected function getCommandLineTaskOption() : bool
+    protected function getCommandLineTaskRestriction() : ?bool
     {
         return $this->cliTasks;
     }

@@ -123,6 +123,7 @@ class FacadeAuthorizationPolicy implements AuthorizationPolicyInterface
                 return PermissionFactory::createNotApplicable($this);
             }
         } catch (\Throwable $e) {
+            $facade->getWorkbench()->getLogger()->logException($e);
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         

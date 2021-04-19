@@ -126,6 +126,7 @@ class UiPageAuthorizationPolicy implements AuthorizationPolicyInterface
                 return PermissionFactory::createNotApplicable($this);
             }
         } catch (\Throwable $e) {
+            $menuItem->getWorkbench()->getLogger()->logException($e);
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         
