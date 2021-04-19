@@ -40,7 +40,7 @@ class DomainException extends \DomainException implements ErrorExceptionInterfac
      */
     public function getDefaultLogLevel()
     {
-        return LoggerInterface::ERROR;
+        return LoggerInterface::CRITICAL;
     }
 }
 ?>

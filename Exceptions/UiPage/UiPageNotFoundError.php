@@ -12,10 +12,8 @@ use exface\Core\Exceptions\NotFoundError;
  */
 class UiPageNotFoundError extends NotFoundError implements ErrorExceptionInterface
 {
-
     public function getDefaultAlias()
     {
         return '6WNC22Z';
     }
 }
-?>

@@ -37,7 +37,7 @@ class OutOfBoundsException extends \OutOfBoundsException implements ErrorExcepti
      */
     public function getDefaultLogLevel()
     {
-        return LoggerInterface::ERROR;
+        return LoggerInterface::CRITICAL;
     }
 }
 ?>

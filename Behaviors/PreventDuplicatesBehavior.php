@@ -7,7 +7,7 @@ use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
-use exface\Core\Exceptions\Behaviors\DataSheetDuplicatesError;
+use exface\Core\Exceptions\DataSheets\DataSheetDuplicatesError;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
@@ -77,6 +77,8 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      * 
      * @param OnBeforeCreateDataEvent $event
      * @throws DataSheetDuplicatesError
+     * @throws BehaviorRuntimeError
+     * @return void
      */
     public function handleOnBeforeCreate(OnBeforeCreateDataEvent $event)
     {
@@ -107,7 +109,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                     $row = $eventSheet->getRow(0);
                     $duplRows = $duplicates[0];
                     if (count($duplRows) !== 1) {
-                        throw new DataSheetDuplicatesError($eventSheet, 'Cannot update duplicates of "' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): multiple potential duplicates found!');
+                        throw new BehaviorRuntimeError($this->getObject(), 'Cannot update duplicates of "' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): multiple potential duplicates found!');
                     }
                     foreach ($eventSheet->getMetaObject()->getAttributes()->getSystem() as $systemAttr) {
                         $row[$systemAttr->getAlias()] = $duplRows[0][$systemAttr->getAlias()];
@@ -142,7 +144,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                         $row = $eventSheet->getRow($duplRowNo);
                         $duplRows = $duplicates[$duplRowNo];
                         if (count($duplRows) !== 1) {
-                            throw new DataSheetDuplicatesError($eventSheet, 'Cannot update duplicates of "' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): multiple potential duplicates found!');
+                            throw new BehaviorRuntimeError($this->getObject(), 'Cannot update duplicates of "' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): multiple potential duplicates found!');
                         }
                         //copy system attributes values
                         foreach ($eventSheet->getMetaObject()->getAttributes()->getSystem() as $systemAttr) {
@@ -171,11 +173,12 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      * 
      * @param OnBeforeUpdateDataEvent $event
      * @throws DataSheetDuplicatesError
+     * @return void
      */
     public function handleOnBeforeUpdate(OnBeforeUpdateDataEvent $event)
     {
         if ($this->isDisabled()) {
-            return ;
+            return;
         }
         
         $eventSheet = $event->getDataSheet();
