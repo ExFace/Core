@@ -97,6 +97,7 @@ class ContextAuthorizationPolicy implements AuthorizationPolicyInterface
                 return PermissionFactory::createNotApplicable($this);
             }
         } catch (\Throwable $e) {
+            $context->getWorkbench()->getLogger()->logException($e);
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         
