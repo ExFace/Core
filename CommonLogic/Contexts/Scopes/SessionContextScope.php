@@ -8,6 +8,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
+use exface\Core\Facades\ConsoleFacade;
 
 /**
  * The session context scope represents the PHP session (on server side).
@@ -227,7 +228,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function sessionOpen(bool $ignoreHeaderWarnings = false)
     {
-        if (! $this->sessionIsOpen()) {
+        if (! $this->sessionIsOpen() && $this->sessionIsPossible()) {
             // If there is a session id saved in the context, this session was already loaded into it, so the next time
             // we need to open exactly the same session!
             if ($this->getSessionId() && $this->getSessionId() !== session_id()) {
@@ -270,10 +271,12 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function sessionClose()
     {
-        if ($this->getSessionId() === null) {
-            $this->setSessionId(session_id());
+        if ($this->sessionIsPossible()) {
+            if ($this->getSessionId() === null) {
+                $this->setSessionId(session_id());
+            }
+            session_write_close();
         }
-        session_write_close();
         return $this;
     }
 
@@ -292,6 +295,11 @@ class SessionContextScope extends AbstractContextScope
             }
         }
         return FALSE;
+    }
+    
+    protected function sessionIsPossible() : bool
+    {
+        return ! ConsoleFacade::isPhpScriptRunInCli();
     }
 
     /**
