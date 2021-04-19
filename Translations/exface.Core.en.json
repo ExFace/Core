@@ -72,6 +72,8 @@
 	"ACTION.GOBACK.NAME": "Back",
 	"ACTION.GOTOURL.NAME": "Visit URL",
 	"ACTION.GOTOURL.SUCCESS": "Redirecting...",
+	"ACTION.GOTOEMAIL.NAME": "Send email",
+	"ACTION.GOTOEMAIL.SUCCESS": "Open mail...",
 	"ACTION.GOTOPAGE.NAME": "Go to",
 	"ACTION.NAVIGATE.OPENING_NEW_WINDOW": "Opening a new browser tab/window!",
 	

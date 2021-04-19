@@ -69,7 +69,9 @@
 	
 	"ACTION.GOBACK.NAME": "Назад",
 	"ACTION.GOTOURL.NAME": "Перейти по ссылке",
-	"ACTION.GOTOURL.SUCCESS": "Перенаправление...",
+	"ACTION.GOTOURL.SUCCESS": "Перенаправление...",	
+	"ACTION.GOTOEMAIL.NAME": "Send email",
+	"ACTION.GOTOEMAIL.SUCCESS": "Open mail...",
 	"ACTION.GOTOPAGE.NAME": "Перейти",
 	
 	"ACTION.SHOWMASSEDITDIALOG.NAME": "Массовое редактирование",
