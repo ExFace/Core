@@ -178,10 +178,15 @@ class Logger implements LoggerInterface
                     try {
                         $this->log(LoggerInterface::ALERT, $e->getMessage(), array('exception' => $e), new InternalError($e->getMessage(), null, $e));
                     } catch (\Throwable $ee) {
-                        // do nothing if even logging fails
+                        // Log both errors to PHP error log if regular logging fails
+                        error_log($e->getMessage() . ' in ' . $e->getFile() . ' on ' . $e->getLine() . '. Trace: ' . $e->getTraceAsString());
+                        error_log($ee->getMessage() . ' in ' . $ee->getFile() . ' on ' . $ee->getLine() . '. Trace: ' . $ee->getTraceAsString());
                     }
                 }
             }
+        } catch (\Throwable $e) {
+            // Log to PHP error log if regular logging fails
+            error_log($e->getMessage() . ' in ' . $e->getFile() . ' on ' . $e->getLine() . '. Trace: ' . $e->getTraceAsString());
         } finally {
             // clear "in logging process" mark
             $this->setLogging(false);
