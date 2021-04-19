@@ -5,11 +5,15 @@ use exface\Core\Events\AbstractEvent;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\Interfaces\Events\AuthorizationPointEventInterface;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
+use exface\Core\Interfaces\Security\PermissionInterface;
 use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Events\ABACEventInterface;
+use exface\Core\Interfaces\iCanGenerateDebugWidgets;
+use exface\Core\CommonLogic\Security\Traits\AuthorizationDebugTrait;
+use exface\Core\Widgets\DebugMessage;
 
 /**
  * Event triggered when access to a resource or an action was authorized.
@@ -28,8 +32,10 @@ use exface\Core\Interfaces\Events\ABACEventInterface;
  * @author Andrej Kabachnik
  *
  */
-class OnAuthorizedEvent extends AbstractEvent implements AuthorizationPointEventInterface, ABACEventInterface
+class OnAuthorizedEvent extends AbstractEvent implements AuthorizationPointEventInterface, ABACEventInterface, iCanGenerateDebugWidgets
 {
+    use AuthorizationDebugTrait;
+    
     private $ap = null;
     
     private $subject = null;
@@ -38,11 +44,14 @@ class OnAuthorizedEvent extends AbstractEvent implements AuthorizationPointEvent
     
     private $action = null;
     
-    public function __construct(AuthorizationPointInterface $authPoint, UserImpersonationInterface $userOrToken, $object = null, ActionInterface $action = null)
+    private $permission = null;
+    
+    public function __construct(AuthorizationPointInterface $authPoint, PermissionInterface $permission, UserImpersonationInterface $userOrToken, $object = null, $action = null)
     {
         $this->ap = $authPoint;
         $this->subject = $userOrToken;
         $this->object = $object;
+        $this->permission = $permission;
         $this->action = $action;
     }
     
@@ -106,6 +115,9 @@ class OnAuthorizedEvent extends AbstractEvent implements AuthorizationPointEvent
      */
     public function getAction() : ?ActionInterface
     {
+        if ($this->action === null && $this->getObject() instanceof ActionInterface) {
+            return $this->getObject();
+        }
         return $this->action;
     }
     
@@ -117,5 +129,19 @@ class OnAuthorizedEvent extends AbstractEvent implements AuthorizationPointEvent
     {
         return $this->getWorkbench()->getContext();
     }
-
+    
+    /**
+     * 
+     * @see AuthorizationDebugTrait::getPermission()
+     */
+    protected function getPermission(): PermissionInterface
+    {
+        return $this->permission;
+    }
+    
+    public function createDebugWidget(DebugMessage $error_message)
+    {
+        $error_message->addTab($this->createPoliciesTab($error_message));
+        return $error_message;
+    }
 }

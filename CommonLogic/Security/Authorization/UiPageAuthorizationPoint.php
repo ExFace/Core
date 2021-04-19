@@ -83,7 +83,8 @@ class UiPageAuthorizationPoint extends AbstractAuthorizationPoint
                     switch (true) {
                         case $creatorSelector->isUid() && $creatorSelector->toString() === $user->getUid():
                         case $creatorSelector->isUsername() && $creatorSelector->toString() === $user->getUsername():
-                            $event = new OnAuthorizedEvent($this, $userOrToken, $resource);
+                            $event = new OnAuthorizedEvent($this, $decision, $userOrToken, $resource);
+                            $this->workbench->getLogger()->debug('Authorized ' . $this->getResourceName($resource), [], $event);
                             $this->getWorkbench()->eventManager()->dispatch($event);
                             return $decision;
                     }

@@ -91,6 +91,6 @@ class FacadeAuthorizationPoint extends AbstractAuthorizationPoint
      */
     protected function getResourceName($resource) : string
     {
-        return "facade '{$resource->getAliasWithNamespace()}'";
+        return "facade \"{$resource->getAliasWithNamespace()}\"";
     }
 }
