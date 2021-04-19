@@ -286,7 +286,8 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
         switch (true) {
             case $permission->isPermitted():
             case ($permission->isIndeterminate() || $permission->isNotApplicable()) && $this->getDefaultPolicyEffect() == PolicyEffectDataType::PERMIT:
-                $event = new OnAuthorizedEvent($this, $userOrToken, $resource);
+                $event = new OnAuthorizedEvent($this, $permission, $userOrToken, $resource);
+                $this->workbench->getLogger()->debug('Authorized ' . $this->getResourceName($resource), [], $event);
                 $this->getWorkbench()->eventManager()->dispatch($event);
                 break;
             case $permission->isDenied():

@@ -93,6 +93,6 @@ class ActionAuthorizationPoint extends AbstractAuthorizationPoint
      */
     protected function getResourceName($resource) : string
     {
-        return "action '{$resource->getAliasWithNamespace()}'";
+        return "action \"{$resource->getAliasWithNamespace()}\"";
     }
 }
