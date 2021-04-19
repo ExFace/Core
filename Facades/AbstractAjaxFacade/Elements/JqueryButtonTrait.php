@@ -259,7 +259,7 @@ JS;
      * @param ActionInterface $action
      * @return string
      */
-    protected function buildJsTriggerActionEffects(ActionInterface $action) : string
+    public function buildJsTriggerActionEffects(ActionInterface $action) : string
     {
         $effects = $action->getEffects();
         $widget = $this->getWidget();

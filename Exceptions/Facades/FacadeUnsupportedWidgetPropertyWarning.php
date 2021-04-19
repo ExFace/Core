@@ -1,14 +1,14 @@
 <?php
 namespace exface\Core\Exceptions\Facades;
 
-use exface\Core\Exceptions\Warning;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
- * Warning thrown if the current facade does not support a specific widget property.
+ * Exception thrown if the current facade does not support a specific widget property.
  *
  * @author Andrej Kabachnik
  *        
  */
-class FacadeUnsupportedWidgetPropertyWarning extends Warning
+class FacadeUnsupportedWidgetPropertyWarning extends RuntimeException
 {
 }

@@ -8,6 +8,9 @@ use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\ModelBuilders\MySqlModelBuilder;
+use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
+use exface\Core\Interfaces\DataSources\DataQueryInterface;
+use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
 
 /**
  * Data source connector for MySQL databases
@@ -37,7 +40,7 @@ class MySqlConnector extends AbstractSqlConnector
         $conn = null;
         
         $this->enableErrorExceptions();
-        
+        $e = null;
         while (! $conn && $safe_count < 3) {
             try {
                 if ($this->getUsePersistantConnection()) {
@@ -118,7 +121,7 @@ class MySqlConnector extends AbstractSqlConnector
                             break;
                         }
                         if(!mysqli_next_result($conn) || mysqli_errno($conn)) {
-                            throw new DataQueryFailedError($query, 'Error in query ' . $idx . ' of a multi-query statement. ' . $this->getLastError());
+                            throw $this->createQueryError($query, 'Error in query ' . $idx . ' of a multi-query statement. ' . $this->getLastError(), mysqli_errno($conn));
                         }
                     } while (true);
                 }
@@ -129,16 +132,28 @@ class MySqlConnector extends AbstractSqlConnector
                 $query->setResultResource($result);
             }
         } catch (\mysqli_sql_exception $e) {
-            throw new DataQueryFailedError($query, $e->getMessage() . ' - SQL error code ' . $e->getCode(), $this->getErrorCode($e), $e);
+            throw $this->createQueryError($query, $e->getMessage() . ' - SQL error code ' . $e->getCode(), null, $e);
         }
         return $query;
     }
     
-    protected function getErrorCode(\Exception $sqlException) : string
+    /**
+     * 
+     * @param DataQueryInterface $query
+     * @param string $message
+     * @param string $sqlErrorNo
+     * @param \Exception $sqlException
+     * @return DataQueryExceptionInterface
+     */
+    protected function createQueryError(DataQueryInterface $query, string $message, string $sqlErrorNo = null, \Exception $sqlException = null) : DataQueryExceptionInterface
     {
-        switch ($sqlException->getCode()) {
-            case 1062: return '73II64M';
-            default: return '6T2T2UI';
+        $sqlErrorNo = $sqlErrorNo ?? $sqlException->getCode() ?? null;
+        
+        switch ($sqlErrorNo) {
+            case 1062:
+                return new DataQueryConstraintError($query, $message, '73II64M', $sqlException);
+            default:
+                return new DataQueryFailedError($query, $message, '6T2T2UI', $sqlException);
         }
     }
 

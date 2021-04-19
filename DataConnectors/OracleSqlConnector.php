@@ -135,7 +135,7 @@ class OracleSqlConnector extends AbstractSqlConnector
     protected function getErrorCode(\Exception $sqlException = null) : string
     {
         switch ($sqlException->getCode()) {
-            case 1: return '73II64M';
+            case 1: return '73II64M'; // Duplicate
             default: return '6T2T2UI';
         }
     }
