@@ -39,7 +39,7 @@ class BadMethodCallException extends \BadMethodCallException implements ErrorExc
      */
     public function getDefaultLogLevel()
     {
-        return LoggerInterface::ERROR;
+        return LoggerInterface::CRITICAL;
     }
 }
 ?>

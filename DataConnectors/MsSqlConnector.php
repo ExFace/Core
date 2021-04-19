@@ -9,6 +9,9 @@ use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\ModelBuilders\MsSqlModelBuilder;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\DataSources\DataQueryInterface;
+use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
+use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
 
 /**
  * Microsoft SQL Server connector via sqlsrv PHP extension.
@@ -90,7 +93,7 @@ class MsSqlConnector extends AbstractSqlConnector
             
             $stmt = sqlsrv_query($this->getCurrentConnection(), $sql);
             if ($stmt === false) {
-                throw new DataQueryFailedError($query, "SQL multi-query statement {$stmtNo} failed! " . $this->getLastError(), '6T2T2UI');
+                throw $this->createQueryError($query, "SQL multi-query statement {$stmtNo} failed! " . $this->getLastError());
             } else {
                 $query->setResultResource($stmt);
             }
@@ -106,19 +109,38 @@ class MsSqlConnector extends AbstractSqlConnector
                 $this->resultCounter += sqlsrv_rows_affected($stmt);
             }
             if($next_result === false) {
-                throw new DataQueryFailedError($query, "SQL multi-query statement {$stmtNo} failed! " . $this->getLastError(), '6T2T2UI');
+                throw $this->createQueryError($query, "SQL multi-query statement {$stmtNo} failed! " . $this->getLastError());
             }
         } else {
             if (StringDataType::startsWith($sql, 'INSERT', false) === true) {
                 $sql .= '; SELECT SCOPE_IDENTITY() AS IDENTITY_COLUMN_NAME';
             }
             if (! $result = sqlsrv_query($this->getCurrentConnection(), $sql)) {
-                throw new DataQueryFailedError($query, "SQL query failed! " . $this->getLastError(), '6T2T2UI');
+                throw $this->createQueryError($query, "SQL query failed! " . $this->getLastError());
             } else {
                 $query->setResultResource($result);
             }
         }
         return $query;
+    }
+    
+    /**
+     *
+     * @param DataQueryInterface $query
+     * @param string $message
+     * @return DataQueryExceptionInterface
+     */
+    protected function createQueryError(DataQueryInterface $query, string $message) : DataQueryExceptionInterface
+    {
+        $sqlErrorNo = $this->getLastErrorCode();
+        
+        switch ($sqlErrorNo) {
+            case 2627:
+            case 2601:
+                return new DataQueryConstraintError($query, $message, '73II64M');
+            default:
+                return new DataQueryFailedError($query, $message, '6T2T2UI');
+        }
     }
 
     /**
@@ -162,10 +184,24 @@ class MsSqlConnector extends AbstractSqlConnector
         return $cnt;
     }
 
-    protected function getLastError()
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getLastError() : ?string
     {
         $errors = $this->getErrors();
         return $errors[0]['message'];
+    }
+    
+    /**
+     * 
+     * @return int|string|NULL
+     */
+    protected function getLastErrorCode()
+    {
+        $errors = $this->getErrors();
+        return $errors[0]['code'];
     }
 
     protected function getErrors()

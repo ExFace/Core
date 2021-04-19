@@ -5,6 +5,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
 use exface\Core\Interfaces\Security\AuthenticationProviderInterface;
 use exface\Core\Events\Security\OnAuthenticationFailedEvent;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * Exception thrown if an authentication attempt fails
@@ -61,5 +62,15 @@ class AuthenticationFailedError extends RuntimeException implements Authenticati
     public function getDefaultAlias()
     {
         return '7AL3G5P';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\RuntimeException::getDefaultLogLevel()
+     */
+    public function getDefaultLogLevel()
+    {
+        return LoggerInterface::ERROR;
     }
 }

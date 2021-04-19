@@ -39,7 +39,7 @@ class UnexpectedValueException extends \UnexpectedValueException implements Erro
      */
     public function getDefaultLogLevel()
     {
-        return LoggerInterface::ERROR;
+        return LoggerInterface::CRITICAL;
     }
 }
 ?>
