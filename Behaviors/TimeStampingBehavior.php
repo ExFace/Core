@@ -5,7 +5,6 @@ use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Actions\iUndoActions;
 use exface\Core\Exceptions\Behaviors\ConcurrentWriteError;
-use exface\Core\Exceptions\Behaviors\ConcurrentWritesCannotBePreventedWarning;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -19,6 +18,7 @@ use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 
 /**
  * Tracks time and users that created/changed objects and prevents concurrent writes comparing the update-times.
@@ -431,7 +431,7 @@ class TimeStampingBehavior extends AbstractBehavior
      * @param OnBeforeUpdateDataEvent $event
      * 
      * @throws DataSheetColumnNotFoundError
-     * @throws ConcurrentWritesCannotBePreventedWarning
+     * @throws BehaviorRuntimeError
      * @throws ConcurrentWriteError
      * 
      * @return void
@@ -480,7 +480,7 @@ class TimeStampingBehavior extends AbstractBehavior
                             // ist, als alle Werte in der Datenbank. Es werden jedoch keine oid-Werte uebergeben, da nicht klar ist welche
                             // Objekte betroffen sind. Momentan wird daher das Update einfach gestattet, spaeter soll hier eine Warnung
                             // ausgegeben werden.
-                            throw new ConcurrentWritesCannotBePreventedWarning('Cannot check for concurrent writes on mass updates via filters', '6T6I04D');
+                            throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for concurrent writes on mass updates via filters', '6T6I04D');
                         }
                         $updated_date = new \DateTime($updated_val);
                         $check_date = new \DateTime($check_val);
@@ -505,7 +505,7 @@ class TimeStampingBehavior extends AbstractBehavior
                         // ist, als alle Werte in der Datenbank. Es werden jedoch keine oid-Werte uebergeben, da nicht klar ist welche
                         // Objekte betroffen sind. Momentan wird daher das Update einfach gestattet, spaeter soll hier eine Warnung
                         // ausgegeben werden.
-                        throw new ConcurrentWritesCannotBePreventedWarning('Cannot check for concurrent writes on mass updates via filters', '6T6I04D');
+                        throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for concurrent writes on mass updates via filters', '6T6I04D');
                     }
                     $updated_date = new \DateTime($updated_val);
                     $check_date = new \DateTime($check_val);

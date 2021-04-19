@@ -19,6 +19,7 @@ use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\CommonLogic\Selectors\AppSelector;
 use exface\Core\Widgets\Message;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\CommonLogic\Log\Helpers\LogHelper;
 
 /**
  * This trait contains a default implementation of ExceptionInterface to be used on-top
@@ -483,8 +484,10 @@ trait ExceptionTrait {
     public function getLogLevel()
     {
         if (is_null($this->logLevel)){
-            if ($this->getPrevious() && $this->getPrevious() instanceof ExceptionInterface && $this->getPrevious()->getLogLevel() != $this->getDefaultLogLevel()){
-                return $this->getPrevious()->getLogLevel();
+            if ($this->getPrevious()){
+                if ($this->getPrevious() instanceof ExceptionInterface) {
+                    return $this->getPrevious()->getLogLevel();
+                }
             }
             return $this->getDefaultLogLevel();
         }

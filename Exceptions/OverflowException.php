@@ -38,7 +38,7 @@ class OverflowException extends \OverflowException implements ErrorExceptionInte
      */
     public function getDefaultLogLevel()
     {
-        return LoggerInterface::ERROR;
+        return LoggerInterface::CRITICAL;
     }
 }
 ?>

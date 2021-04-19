@@ -9,6 +9,12 @@ use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
+/**
+ * Instantiates condition groups
+ * 
+ * @author andrej.kabachnik
+ *
+ */
 abstract class ConditionGroupFactory extends AbstractUxonFactory
 {
 
@@ -111,5 +117,45 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
     {
         return static::createEmpty($sheet->getWorkbench(), $operator, $sheet->getMetaObject());
     }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @param string $operator
+     * @return ConditionGroupInterface
+     */
+    public function createForObject(MetaObjectInterface $object, string $operator) : ConditionGroupInterface
+    {
+        return static::createEmpty($object->getWorkbench(), $operator, $object);
+    }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @return ConditionGroupInterface
+     */
+    public function createAND(MetaObjectInterface $object) : ConditionGroupInterface
+    {
+        return static::createEmpty($object->getWorkbench(), EXF_LOGICAL_AND, $object);
+    }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @return ConditionGroupInterface
+     */
+    public function createOR(MetaObjectInterface $object) : ConditionGroupInterface
+    {
+        return static::createEmpty($object->getWorkbench(), EXF_LOGICAL_OR, $object);
+    }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @return ConditionGroupInterface
+     */
+    public function createXOR(MetaObjectInterface $object) : ConditionGroupInterface
+    {
+        return static::createEmpty($object->getWorkbench(), EXF_LOGICAL_XOR, $object);
+    }
 }
-?>

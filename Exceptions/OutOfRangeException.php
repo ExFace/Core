@@ -35,7 +35,7 @@ class OutOfRangeException extends \OutOfRangeException implements ErrorException
      */
     public function getDefaultLogLevel()
     {
-        return LoggerInterface::ERROR;
+        return LoggerInterface::CRITICAL;
     }
 }
 ?>
