@@ -1424,7 +1424,7 @@ JS;
         $xZoomCount = 0;
         $yZoomCount = 0;
         foreach ($widget->getAxesX() as $axis) {
-            $xAxesJS .= $this->buildJsAxisProperties($axis);
+            $xAxesJS .= $this->buildJsAxisProperties($axis, 1, $axis->isHidden());
             if ($axis->isZoomable() === true) {
                 $zoom .= $this->buildJsAxisZoom($axis, $xZoomCount);
                 $xZoomCount++;
@@ -1435,12 +1435,16 @@ JS;
                 $zoom .= $this->buildJsAxisZoom($axis, $yZoomCount);
                 $yZoomCount++;
             }
-            if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false) {
-                $countAxisLeft++;
-                $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisLeft);
-            } elseif ($axis->getPosition() === ChartAxis::POSITION_RIGHT && $axis->isHidden() === false) {
-                $countAxisRight++;
-                $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisRight);
+            if ($axis->getPosition() === ChartAxis::POSITION_LEFT) {
+                if ($axis->isHidden() === false) {
+                    $countAxisLeft++;
+                }
+                $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisLeft, $axis->isHidden());
+            } elseif ($axis->getPosition() === ChartAxis::POSITION_RIGHT) {
+                if ($axis->isHidden() === false) {
+                    $countAxisRight++;
+                }                
+                $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisRight, $axis->isHidden());
             }
         }
         return <<<JS
@@ -1479,8 +1483,10 @@ JS;
      * @param int $nameGapMulti
      * @return string
      */
-    protected function buildJsAxisProperties(ChartAxis $axis, int $nameGapMulti = 1) : string
+    protected function buildJsAxisProperties(ChartAxis $axis, int $nameGapMulti = 1, bool $hidden = FALSE) : string
     {
+        
+        $axisType = $axis->getAxisType();
         if (! $axis->getHideCaption()) {
             $caption = $axis->getCaption();            
         } else {
@@ -1507,8 +1513,6 @@ JS;
         } else {
             $max = "max: '" . $axis->getMaxValue() . "',";
         }
-        $axisType = $axis->getAxisType();
-        
         if ($axis->getDimension() == Chart::AXIS_X) {
             $nameLocation = "nameLocation: 'center',";
         } else {
@@ -1559,10 +1563,16 @@ JS;
             $onZero = '';
         }
         
+        $show = 'true';
+        if ($hidden === true) {
+            $show = 'false';
+        }
+        
         return <<<JS
         
     {
         id: '{$axis->getIndex()}',
+        show: {$show},
         name: '{$caption}',
         {$nameLocation}
         {$inverse}
@@ -1574,7 +1584,6 @@ JS;
             show: $gridArea
         },
         position: '{$position}',
-        show: false,
         nameGap: {$nameGap},
         axisLabel: {
             fontFamily: '{$this->baseAxisLabelFont()}',
