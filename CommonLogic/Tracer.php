@@ -10,6 +10,7 @@ use exface\Core\CommonLogic\Log\Handlers\BufferingHandler;
 use exface\Core\CommonLogic\Log\Handlers\LogfileHandler;
 use exface\Core\CommonLogic\Log\Handlers\DebugMessageFileHandler;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\CommonLogic\Log\Handlers\MonologCsvFileHandler;
 
 /**
  * The tracer dumps detailed logs to a special trace file, readable by the standard log viewer.
@@ -95,11 +96,16 @@ class Tracer extends Profiler
         $workbench = $this->getWorkbench();
         $this->log_handlers = [
             new BufferingHandler(
-                new LogfileHandler("exface", $this->getTraceFileName(), $workbench, LoggerInterface::DEBUG)
-                ),
-            new BufferingHandler(
-                new DebugMessageFileHandler($workbench, $workbench->filemanager()->getPathToLogDetailsFolder(), ".json", LoggerInterface::DEBUG)
+                new MonologCsvFileHandler(
+                    $this->getWorkbench(),
+                    "Tracer", 
+                    $this->getTraceFileName(), 
+                    $workbench->filemanager()->getPathToLogDetailsFolder(),
+                    LoggerInterface::DEBUG,
+                    LoggerInterface::DEBUG,
+                    LoggerInterface::DEBUG
                 )
+            )
         ];
         foreach ($this->log_handlers as $handler){
             $workbench->getLogger()->appendHandler($handler);

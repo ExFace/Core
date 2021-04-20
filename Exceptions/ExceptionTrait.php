@@ -20,6 +20,7 @@ use exface\Core\CommonLogic\Selectors\AppSelector;
 use exface\Core\Widgets\Message;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\Log\Helpers\LogHelper;
+use exface\Core\CommonLogic\Log\Logger;
 
 /**
  * This trait contains a default implementation of ExceptionInterface to be used on-top
@@ -466,14 +467,9 @@ trait ExceptionTrait {
     public function getId()
     {
         if (is_null($this->id)) {
-            $this->id = $this->createId();
+            $this->id = Logger::generateLogId();
         }
         return $this->id;
-    }
-
-    private function createId()
-    {
-        return strtoupper(substr(md5(uniqid(rand(), true)), 0, 8));
     }
 
     /**

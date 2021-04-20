@@ -31,6 +31,7 @@ use exface\Core\CommonLogic\Security\SecurityManager;
 use exface\Core\Events\Workbench\OnBeforeStopEvent;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\CommonLogic\Model\App;
+use exface\Core\Factories\LoggerFactory;
 
 class Workbench implements WorkbenchInterface
 {
@@ -404,7 +405,7 @@ class Workbench implements WorkbenchInterface
     public function getLogger()
     {
         if (is_null($this->logger)) {
-            $this->logger = Log::getErrorLogger($this);
+            $this->logger = LoggerFactory::createDefaultLogger($this);
         }
         return $this->logger;
     }
