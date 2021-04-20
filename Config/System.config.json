@@ -30,7 +30,7 @@
     
     "LOG.MINIMUM_LEVEL_TO_LOG": "debug",
     "LOG.MAX_DAYS_TO_KEEP": "14",
-    "LOG.PERSIST_LOG_LEVEL": "alert",
+    "LOG.PERSIST_LOG_LEVEL": "critical",
     "LOG.PASSTHROUGH_LOG_LEVEL": "error",
     
     "MONITOR.ENABLED": false,

@@ -206,16 +206,6 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     }
     
     /**
-     * Returns the filename of the core log.
-     *
-     * @return string
-     */
-    public function getCoreLogFilename()
-    {
-        return static::FILE_NAME_CORE_LOG;
-    }
-    
-    /**
      * Returns the absolute path to the log details folder
      *
      * @return string

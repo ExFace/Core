@@ -20,10 +20,10 @@ use exface\Core\Actions\ShowContextPopup;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Events\Workbench\OnCleanUpEvent;
-use exface\Core\CommonLogic\Log\Handlers\LogMonitorHandler;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\Events\Action\OnActionFailedEvent;
+use exface\Core\CommonLogic\Log\Handlers\MonitorLogHandler;
 
 /**
  * The monitor logs actions to the MONITOR_ACTION object.
@@ -114,7 +114,7 @@ class Monitor extends Profiler
         } else {
             $level = LoggerInterface::CRITICAL;
         }
-        $handler = new LogMonitorHandler($workbench, $this, $level);
+        $handler = new MonitorLogHandler($workbench, $this, $level);
         $workbench->getLogger()->appendHandler($handler);
         return $this;
     }

@@ -8,7 +8,7 @@ use exface\Core\DataTypes\BooleanDataType;
 /**
  * Buffers all log entries to pass them on to the actual handler at the end of the request.
  * 
- * The handler passed in __construct() will get all log entries en block once
+ * The $handler passed in __construct() will get all log entries en block once
  * the buffering handler is destroyed - unless it was disabled somewhere along
  * the way.
  * 
@@ -70,15 +70,5 @@ class BufferingHandler implements LogHandlerInterface
     public function setDisabled($true_or_false)
     {
         $this->disabled = BooleanDataType::cast($true_or_false);
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
-     */
-    public function getWorkbench()
-    {
-        return $this->handler->getWorkbench();
     }
 }

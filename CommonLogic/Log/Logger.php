@@ -1,18 +1,24 @@
 <?php
 namespace exface\Core\CommonLogic\Log;
 
-use exface\Core\CommonLogic\Log\Helpers\LogHelper;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
-use exface\Core\Exceptions\InternalError;
+use exface\Core\Factories\LoggerFactory;
+use exface\Core\Exceptions\RuntimeException;
 
+/**
+ * Default implementation of the LoggerInterface
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class Logger implements LoggerInterface
 {
-
     /** @var LogHandlerInterface[] $handlers */
     private $handlers = array();
+    
     private $isLogging = false;
 
     /**
@@ -150,8 +156,9 @@ class Logger implements LoggerInterface
      */
     public function log($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        if ($this->shouldNotLog())
+        if ($this->isLogging()) {
             return;
+        }
 
         // mark as "in logging process"
         $this->setLogging(true);
@@ -168,25 +175,31 @@ class Logger implements LoggerInterface
                 $context['exception'] = $sender;
                 $context['id']        = $sender->getId();
             } else {
-                $context['id']        = LogHelper::createId();
+                $context['id']        = $this::generateLogId();
             }
-
-            foreach ($this->handlers as $handler) {
+            
+            foreach ($this->handlers as $i => $handler) {
                 try {
                     $handler->handle($level, $message, $context, $sender);
                 } catch (\Throwable $e) {
                     try {
-                        $this->log(LoggerInterface::ALERT, $e->getMessage(), array('exception' => $e), new InternalError($e->getMessage(), null, $e));
+                        if (count($this->handlers) > 1) {
+                            unset($this->handlers[$i]);
+                            $this->setLogging(false);
+                            $this->logException(new RuntimeException('Log handler error (handler ' . $i . ' disabled now): ' . $e->getMessage(), null, $e));
+                        } else {
+                            LoggerFactory::createPhpErrorLogLogger()->alert('Log handler error: ' . $e->getMessage(), ['exception' => $e]);
+                        }
                     } catch (\Throwable $ee) {
                         // Log both errors to PHP error log if regular logging fails
-                        error_log($e->getMessage() . ' in ' . $e->getFile() . ' on ' . $e->getLine() . '. Trace: ' . $e->getTraceAsString());
-                        error_log($ee->getMessage() . ' in ' . $ee->getFile() . ' on ' . $ee->getLine() . '. Trace: ' . $ee->getTraceAsString());
+                        error_log($e);
+                        error_log($ee);
                     }
                 }
             }
         } catch (\Throwable $e) {
             // Log to PHP error log if regular logging fails
-            error_log($e->getMessage() . ' in ' . $e->getFile() . ' on ' . $e->getLine() . '. Trace: ' . $e->getTraceAsString());
+            error_log($e);
         } finally {
             // clear "in logging process" mark
             $this->setLogging(false);
@@ -245,21 +258,32 @@ class Logger implements LoggerInterface
         return $this->handlers;
     }
 
-    protected function shouldNotLog()
-    {
-        if ($this->isLogging())
-            return true;
-
-        return false;
-    }
-
-    protected function setLogging($isLogging)
+    /**
+     * 
+     * @param bool $isLogging
+     * @return LoggerInterface
+     */
+    protected function setLogging(bool $isLogging) : LoggerInterface
     {
         $this->isLogging = $isLogging;
+        return $this;
     }
 
-    protected function isLogging()
+    /**
+     * 
+     * @return boolean
+     */
+    protected function isLogging() : bool
     {
         return $this->isLogging;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public static function generateLogId()
+    {
+        return strtoupper(substr(md5(uniqid(rand(), true)), 0, 8));
     }
 }

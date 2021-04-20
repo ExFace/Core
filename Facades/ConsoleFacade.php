@@ -25,6 +25,7 @@ use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Command line interface facade based on Symfony Console.
@@ -97,6 +98,17 @@ class ConsoleFacade extends Application implements FacadeInterface
                 // Do nothing - the console can still be run in anonymous mode
             }
         }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \Symfony\Component\Console\Application::renderThrowable()
+     */
+    public function renderThrowable(\Throwable $e, OutputInterface $output): void
+    {
+        $this->getWorkbench()->getLogger()->logException($e);
+        parent::renderThrowable($e, $output);
     }
 
     /**

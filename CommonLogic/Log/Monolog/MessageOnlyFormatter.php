@@ -1,8 +1,14 @@
 <?php
-namespace exface\Core\CommonLogic\Log\Formatters;
+namespace exface\Core\CommonLogic\Log\Monolog;
 
 use Monolog\Formatter\FormatterInterface;
 
+/**
+ * Makes a monolog handler output `$record['message']` only - nothing else.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class MessageOnlyFormatter implements FormatterInterface
 {
 
