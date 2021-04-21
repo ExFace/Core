@@ -61,7 +61,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-01-08 18:26:36",
-            "MODIFIED_ON": "2020-03-23 11:24:28",
+            "MODIFIED_ON": "2021-04-21 11:57:05",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea3244285e38889442e4b318306b9a",
@@ -95,6 +95,7 @@
                                 "alias": "exface.Core.ShowLoginDialog",
                                 "login_to": "connection",
                                 "input_mapper": {
+                                    "to_object_alias": "exface.Core.LOGIN_DATA",
                                     "column_to_column_mappings": [
                                         {
                                             "from": "DATA_CONNECTION",
@@ -109,7 +110,11 @@
                                             "to": "CONNECTION_SAVE"
                                         }
                                     ]
-                                }
+                                },
+                                "effected_objects": [
+                                    "exface.Core.DATA_CONNECTION_CREDENTIALS",
+                                    "exface.Core.USER_CREDENTIALS"
+                                ]
                             }
                         }
                     ]
