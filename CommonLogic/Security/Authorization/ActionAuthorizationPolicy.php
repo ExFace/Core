@@ -26,6 +26,7 @@ use exface\Core\Interfaces\Tasks\CliTaskInterface;
 use exface\Core\Interfaces\Actions\iCallOtherActions;
 use exface\Core\Actions\ShowWidget;
 use exface\Core\Actions\ReadPrefill;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
 
 /**
  * Policy for access to actions.
@@ -326,6 +327,13 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 return true;
             }
             if ($task->isTriggeredByWidget()) {
+                $triggerWidget = $task->getWidgetTriggeredBy();
+                if (! ($triggerWidget instanceof iTriggerAction)) {
+                    return false;
+                }
+                if (! $triggerWidget->hasAction()) {
+                    return false;
+                }
                 $widgetAction = $task->getWidgetTriggeredBy()->getAction();
                 
                 switch (true) {
