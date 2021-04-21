@@ -56,7 +56,7 @@
     		"id": "CLI_DEFAULT_AUTH",
     		"create_new_users": true,
     		"create_new_users_with_roles": [
-                "exface.core.SUPERUSER"
+                "exface.core.CLI_USER"
             ]
     	},
         {
