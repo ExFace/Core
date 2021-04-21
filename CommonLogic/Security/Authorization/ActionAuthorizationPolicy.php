@@ -334,7 +334,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 if (! $triggerWidget->hasAction()) {
                     return false;
                 }
-                $widgetAction = $task->getWidgetTriggeredBy()->getAction();
+                $widgetAction = $triggerWidget->getAction();
                 
                 switch (true) {
                     case $widgetAction instanceof iCallOtherActions:
