@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2017-05-10 15:06:24",
-            "MODIFIED_ON": "2020-05-05 10:21:40",
+            "MODIFIED_ON": "2021-04-21 11:47:49",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7359214da6ecbba83e4b318306b9a",
@@ -169,14 +169,15 @@
                 ],
                 "buttons": [
                     {
+                        "bind_to_double_click": true,
+                        "caption": "Details",
                         "action": {
                             "alias": "exface.Core.ShowDialogFromFile",
                             "file_path_attribute_alias": "id",
                             "file_extension": "json",
                             "folder_path": "logs\/details",
                             "do_not_prefill": true
-                        },
-                        "bind_to_double_click": true
+                        }
                     }
                 ]
             },

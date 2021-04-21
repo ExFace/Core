@@ -61,7 +61,7 @@
     "rows": [
         {
             "CREATED_ON": "2021-04-21 09:41:05",
-            "MODIFIED_ON": "2021-04-21 11:10:39",
+            "MODIFIED_ON": "2021-04-21 11:49:51",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebbeb2ee0e0c3ebeb2025041000001",
@@ -79,7 +79,7 @@
                     "widgets": [
                         {
                             "widget_type": "WidgetGroup",
-                            "caption": "State",
+                            "caption": "Current State",
                             "width": 2,
                             "widgets": [
                                 {
@@ -192,6 +192,19 @@
                                         },
                                         {
                                             "attribute_alias": "message"
+                                        }
+                                    ],
+                                    "buttons": [
+                                        {
+                                            "bind_to_double_click": true,
+                                            "caption": "Details",
+                                            "action": {
+                                                "alias": "exface.Core.ShowDialogFromFile",
+                                                "file_path_attribute_alias": "id",
+                                                "file_extension": "json",
+                                                "folder_path": "logs\/details",
+                                                "do_not_prefill": true
+                                            }
                                         }
                                     ]
                                 }
