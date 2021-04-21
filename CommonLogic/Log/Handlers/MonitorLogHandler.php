@@ -56,7 +56,7 @@ class MonitorLogHandler implements LogHandlerInterface
         $ds->addRow([
             'LOG_ID' => $context["id"],
             'REQUEST_ID' => $this->workbench->getContext()->getScopeRequest()->getScopeId(),
-            'ERROR_LEVEL' => Logger::getLevelName(Logger::toMonologLevel($level)),
+            'ERROR_LEVEL' => $level,
             'MESSAGE' => $message,
             'ERROR_WIDGET' => $this->getDebugWidgetJson($sender),
             'USER' => $this->workbench->getSecurity()->getAuthenticatedUser()->getUid(),
