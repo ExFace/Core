@@ -14,6 +14,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Security\Authorization\CombinedPermission;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Tab;
+use exface\Core\Interfaces\UserInterface;
 
 /**
  * This trait contains everything needed to add a policies tab to a debug widget. 
@@ -94,6 +95,11 @@ trait AuthorizationDebugTrait
                     'widget_type' => 'Display',
                     'caption' => 'User',
                     'value' => $this->getSubjectText()
+                ],
+                [
+                    'widget_type' => 'Display',
+                    'caption' => 'Roles',
+                    'value' => implode(', ', $this->getSubject() instanceof UserInterface ? $this->getSubject()->getRoles() : $this->getAuthorizationPoint()->getWorkbench()->getSecurity()->getUser($this->getSubject())->getRoles())
                 ],
                 [
                     'widget_type' => 'Display',

@@ -15,6 +15,7 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Factories\UiPageFactory;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Representation of an Exface user.
@@ -545,6 +546,15 @@ class User implements UserInterface
         return UiPageFactory::createIndexPage($this->getWorkbench());
     }
     
+    public function getRoles(string $attributeAlias = 'ALIAS_WITH_NS') : array
+    {
+        $col = $this->getRoleData()->getColumns()->getByExpression($attributeAlias);
+        if (! $col) {
+            throw new RuntimeException('Cannot get roles of user "' . $this->getUsername() . '": requested role attribute "' . $attributeAlias . '" not found!');
+        }
+        return $col->getValues();
+    }
+    
     /**
      * 
      * @return DataSheetInterface
@@ -552,9 +562,14 @@ class User implements UserInterface
     public function getRoleData() : DataSheetInterface
     {
         if ($this->roleData === null) {
+            $roleUids = [];
+            foreach ($this->getRoleSelectors() as $sel) {
+                if ($sel->isUid()) {
+                    $roleUids[] = $sel->toString();
+                }
+            }
             $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE');
-            $ds->getFilters()->addConditionFromString('USER_ROLE_USERS__USER__USERNAME', $this->getUsername(), ComparatorDataType::EQUALS);
-            $ds->getSorters()->addFromString('USER_ROLE_USERS__CREATED_ON', SortingDirectionsDataType::DESC);
+            $ds->getFilters()->addConditionFromValueArray('UID', $roleUids);
             $ds->getColumns()->addFromAttributeGroup($ds->getMetaObject()->getAttributeGroup(AttributeGroup::ALL));
             $ds->dataRead();
             $this->roleData = $ds;
