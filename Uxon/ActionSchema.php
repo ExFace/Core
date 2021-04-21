@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\DataTypes\UxonSchemaNameDataType;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * UXON-schema class for actions.
@@ -62,7 +63,7 @@ class ActionSchema extends UxonSchema
             $action = ActionFactory::create($selector);
         } catch (\Throwable $e) {
             $ex = new RuntimeException('Error loading action autosuggest - falling back to "AbstractAction"!', null, $e);
-            $this->getWorkbench()->getLogger()->logException($ex);
+            $this->getWorkbench()->getLogger()->logException($ex, LoggerInterface::DEBUG);
             return $this->getDefaultPrototypeClass();
         }
         return get_class($action);
