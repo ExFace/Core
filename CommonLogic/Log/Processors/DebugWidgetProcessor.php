@@ -57,10 +57,10 @@ class DebugWidgetProcessor
                 $debugWidgetData = $this->createHtmlFallback($this->workbench->getDebugger()->printException($exception, true));
             }
             $record[$this->targetRecordKey] = $debugWidgetData;
-        } elseif ($record['exception'] instanceof \Throwable){
+        } elseif (($e = $record['context']['exception'] ?? null) instanceof \Throwable){
             // If there is no sender, but the context contains an error, use
             // the error fallback to create a debug widget
-            $record[$this->targetRecordKey] = $this->createHtmlFallback($this->workbench->getDebugger()->printException($record['exception'], true));
+            $record[$this->targetRecordKey] = $this->createHtmlFallback($this->workbench->getDebugger()->printException($e, true));
         } else {
             // If all the above fails, simply dump the entire record to the debug widget
             $dump = $record;
