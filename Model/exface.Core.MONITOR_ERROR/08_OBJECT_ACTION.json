@@ -1,0 +1,248 @@
+{
+    "object_alias": "exface.Core.OBJECT_ACTION",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        },
+        {
+            "name": "ACTION_PROTOTYPE",
+            "attribute_alias": "ACTION_PROTOTYPE"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "SHORT_DESCRIPTION",
+            "attribute_alias": "SHORT_DESCRIPTION"
+        },
+        {
+            "name": "CONFIG_UXON",
+            "attribute_alias": "CONFIG_UXON"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "USE_IN_OBJECT_BASKET_FLAG",
+            "attribute_alias": "USE_IN_OBJECT_BASKET_FLAG"
+        },
+        {
+            "name": "DOCS",
+            "attribute_alias": "DOCS"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2021-04-21 09:41:05",
+            "MODIFIED_ON": "2021-04-21 11:10:39",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebbeb2ee0e0c3ebeb2025041000001",
+            "OBJECT": "0x11eb90f04b00a9be90f08c04ba002958",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "ALIAS": "ShowMonitorErrorDialog",
+            "NAME": "Details",
+            "SHORT_DESCRIPTION": "",
+            "CONFIG_UXON": {
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "icon": "info",
+                "widget": {
+                    "widget_type": "Dialog",
+                    "widgets": [
+                        {
+                            "widget_type": "WidgetGroup",
+                            "caption": "State",
+                            "width": 2,
+                            "widgets": [
+                                {
+                                    "widget_type": "InputHidden",
+                                    "attribute_alias": "UID"
+                                },
+                                {
+                                    "attribute_alias": "STATUS"
+                                },
+                                {
+                                    "attribute_alias": "TICKET_NO"
+                                },
+                                {
+                                    "attribute_alias": "COMMENT",
+                                    "width": "max",
+                                    "height": 3
+                                }
+                            ]
+                        },
+                        {
+                            "caption": "Error",
+                            "widget_type": "WidgetGroup",
+                            "width": 2,
+                            "readonly": true,
+                            "widgets": [
+                                {
+                                    "attribute_alias": "LOG_ID"
+                                },
+                                {
+                                    "attribute_alias": "CREATED_ON",
+                                    "caption": "Occurred at"
+                                },
+                                {
+                                    "attribute_alias": "USER__LABEL"
+                                },
+                                {
+                                    "attribute_alias": "ERROR_LEVEL"
+                                },
+                                {
+                                    "attribute_alias": "MESSAGE",
+                                    "width": "max",
+                                    "widget_type": "Text"
+                                },
+                                {
+                                    "attribute_alias": "LOG_FILE",
+                                    "id": "field_logfile",
+                                    "widget_type": "InputHidden"
+                                },
+                                {
+                                    "attribute_alias": "REQUEST_ID",
+                                    "id": "field_request_id",
+                                    "widget_type": "InputHidden"
+                                }
+                            ]
+                        },
+                        {
+                            "widget_type": "WidgetGroup",
+                            "caption": "Action Monitor",
+                            "width": 2,
+                            "readonly": true,
+                            "widgets": [
+                                {
+                                    "attribute_alias": "MONITOR_ACTION__PAGE__LABEL"
+                                },
+                                {
+                                    "attribute_alias": "MONITOR_ACTION__WIDGET_NAME"
+                                },
+                                {
+                                    "attribute_alias": "MONITOR_ACTION__ACTION_NAME"
+                                },
+                                {
+                                    "attribute_alias": "MONITOR_ACTION__ACTION_ALIAS"
+                                }
+                            ]
+                        },
+                        {
+                            "widget_type": "WidgetGroup",
+                            "caption": "Log",
+                            "width": "max",
+                            "widgets": [
+                                {
+                                    "widget_type": "DataTable",
+                                    "object_alias": "exface.Core.LOG_ENTRY",
+                                    "height": 10,
+                                    "filters": [
+                                        {
+                                            "attribute_alias": "levelname"
+                                        },
+                                        {
+                                            "attribute_alias": "message"
+                                        },
+                                        {
+                                            "attribute_alias": "logfile",
+                                            "value": "=field_logfile",
+                                            "required": true,
+                                            "hidden": true,
+                                            "comparator": "=="
+                                        },
+                                        {
+                                            "attribute_alias": "requestId",
+                                            "value": "=field_request_id",
+                                            "comparator": "==",
+                                            "required": false,
+                                            "hidden": true
+                                        }
+                                    ],
+                                    "columns": [
+                                        {
+                                            "attribute_alias": "levelname"
+                                        },
+                                        {
+                                            "attribute_alias": "message"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "buttons": [
+                        {
+                            "caption": "Show Error Widget",
+                            "close_dialog": false,
+                            "action": {
+                                "alias": "exface.core.ShowDialogFromData",
+                                "uxon_attribute": "ERROR_WIDGET"
+                            }
+                        },
+                        {
+                            "action_alias": "exface.Core.UpdateData",
+                            "visibility": "promoted",
+                            "align": "opposite"
+                        }
+                    ]
+                }
+            },
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "DOCS": ""
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.OBJECT_ACTION",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.OBJECT_ACTION"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

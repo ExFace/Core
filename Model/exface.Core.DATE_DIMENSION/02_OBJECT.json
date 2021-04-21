@@ -81,15 +81,15 @@
     "rows": [
         {
             "CREATED_ON": "2021-04-13 11:26:10",
-            "MODIFIED_ON": "2021-04-13 18:23:19",
+            "MODIFIED_ON": "2021-04-21 08:37:13",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb992b489b5fda992b8c04ba002958",
             "READABLE_FLAG": "1",
             "WRITABLE_FLAG": "0",
             "COMMENTS": "",
             "DOCS": "",
-            "NAME": "Date Dimension",
+            "NAME": "Date",
             "INHERIT_DATA_SOURCE_BASE_OBJECT": "0",
             "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",

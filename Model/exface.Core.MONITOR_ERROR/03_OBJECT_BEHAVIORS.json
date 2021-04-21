@@ -49,7 +49,7 @@
     "rows": [
         {
             "CREATED_ON": "2021-04-15 16:34:40",
-            "MODIFIED_ON": "2021-04-15 17:38:15",
+            "MODIFIED_ON": "2021-04-21 09:14:33",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb87dcb685391287dc025041000001",
@@ -59,157 +59,19 @@
                 "states": {
                     "10": {
                         "name": "New",
+                        "icon": "eye",
                         "color": "orangered",
                         "transitions": [
                             20,
                             40,
                             90,
                             99
-                        ],
-                        "buttons": {
-                            "20": {
-                                "caption": "Todo",
-                                "icon": "thumb-tack",
-                                "action": {
-                                    "alias": "exface.core.UpdateData",
-                                    "input_rows_min": 1,
-                                    "input_object_alias": "exface.Core.MONITOR_ERROR",
-                                    "input_mappers": [
-                                        {
-                                            "from_object_alias": "exface.Core.MONITOR_ERROR",
-                                            "column_to_column_mappings": [
-                                                {
-                                                    "from": 20,
-                                                    "to": "STATUS"
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            },
-                            "40": {
-                                "caption": "Ticket opened",
-                                "icon": "bug",
-                                "action": {
-                                    "alias": "exface.core.UpdateData",
-                                    "input_rows_min": 1,
-                                    "input_object_alias": "exface.Core.MONITOR_ERROR",
-                                    "input_mappers": [
-                                        {
-                                            "from_object_alias": "exface.Core.MONITOR_ERROR",
-                                            "column_to_column_mappings": [
-                                                {
-                                                    "from": 40,
-                                                    "to": "STATUS"
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            },
-                            "90": {
-                                "caption": "Skip",
-                                "icon": "trash",
-                                "action": {
-                                    "alias": "exface.core.UpdateData",
-                                    "input_rows_min": 1,
-                                    "input_object_alias": "exface.Core.MONITOR_ERROR",
-                                    "input_mappers": [
-                                        {
-                                            "from_object_alias": "exface.Core.MONITOR_ERROR",
-                                            "column_to_column_mappings": [
-                                                {
-                                                    "from": 90,
-                                                    "to": "STATUS"
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            },
-                            "99": {
-                                "caption": "Mark Resolved",
-                                "action": {
-                                    "alias": "exface.core.UpdateData",
-                                    "input_rows_min": 1,
-                                    "input_object_alias": "exface.Core.MONITOR_ERROR",
-                                    "input_mappers": [
-                                        {
-                                            "from_object_alias": "exface.Core.MONITOR_ERROR",
-                                            "column_to_column_mappings": [
-                                                {
-                                                    "from": 99,
-                                                    "to": "STATUS"
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        }
+                        ]
                     },
                     "20": {
-                        "name": "Todo",
+                        "name": "ToDo",
+                        "icon": "thumb-tack",
                         "color": "orange",
-                        "buttons": {
-                            "40": {
-                                "caption": "Ticket opened",
-                                "action": {
-                                    "alias": "exface.core.UpdateData",
-                                    "input_rows_min": 1,
-                                    "input_object_alias": "exface.Core.MONITOR_ERROR",
-                                    "input_mappers": [
-                                        {
-                                            "from_object_alias": "exface.Core.MONITOR_ERROR",
-                                            "column_to_column_mappings": [
-                                                {
-                                                    "from": 40,
-                                                    "to": "STATUS"
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            },
-                            "90": {
-                                "caption": "Skip",
-                                "action": {
-                                    "alias": "exface.core.UpdateData",
-                                    "input_rows_min": 1,
-                                    "input_object_alias": "exface.Core.MONITOR_ERROR",
-                                    "input_mappers": [
-                                        {
-                                            "from_object_alias": "exface.Core.MONITOR_ERROR",
-                                            "column_to_column_mappings": [
-                                                {
-                                                    "from": 90,
-                                                    "to": "STATUS"
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            },
-                            "99": {
-                                "caption": "Mark Resolved",
-                                "action": {
-                                    "alias": "exface.core.UpdateData",
-                                    "input_rows_min": 1,
-                                    "input_object_alias": "exface.Core.MONITOR_ERROR",
-                                    "input_mappers": [
-                                        {
-                                            "from_object_alias": "exface.Core.MONITOR_ERROR",
-                                            "column_to_column_mappings": [
-                                                {
-                                                    "from": 99,
-                                                    "to": "STATUS"
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        },
                         "transitions": [
                             20,
                             40,
@@ -220,6 +82,7 @@
                     "40": {
                         "name": "Ticket",
                         "color": "yellow",
+                        "icon": "ticket",
                         "transitions": [
                             40,
                             90,
@@ -227,14 +90,20 @@
                         ]
                     },
                     "90": {
-                        "name": "Skip",
+                        "name": "Ignored",
                         "color": "lightgray",
-                        "transitions": []
+                        "icon": "eye-slash",
+                        "transitions": [
+                            90
+                        ]
                     },
                     "99": {
-                        "name": "Cleared",
+                        "name": "Resolved",
                         "color": "lightgray",
-                        "transitions": []
+                        "icon": "thumbs-up",
+                        "transitions": [
+                            99
+                        ]
                     }
                 }
             },

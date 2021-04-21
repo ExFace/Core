@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2021-04-06 13:43:23",
-            "MODIFIED_ON": "2021-04-15 16:45:18",
+            "MODIFIED_ON": "2021-04-21 10:37:36",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb90f04b00a9be90f08c04ba002958",
@@ -89,7 +89,7 @@
             "WRITABLE_FLAG": "1",
             "COMMENTS": "",
             "DOCS": "",
-            "NAME": "Monitored Errors",
+            "NAME": "Monitored Error",
             "INHERIT_DATA_SOURCE_BASE_OBJECT": "1",
             "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
@@ -102,49 +102,56 @@
                     {
                         "caption": "Error",
                         "widget_type": "WidgetGroup",
+                        "width": 2,
                         "widgets": [
                             {
                                 "widget_type": "InputHidden",
                                 "attribute_alias": "UID"
                             },
                             {
-                                "attribute_alias": "CREATED_ON"
-                            },
-                            {
                                 "attribute_alias": "LOG_ID"
                             },
                             {
-                                "attribute_alias": "ERROR_LEVEL"
+                                "attribute_alias": "CREATED_ON",
+                                "caption": "Occurred at"
                             },
                             {
                                 "attribute_alias": "USER__LABEL"
                             },
                             {
-                                "attribute_alias": "STATUS"
+                                "attribute_alias": "ERROR_LEVEL"
                             },
                             {
                                 "attribute_alias": "MESSAGE",
-                                "widget_type": "InputText",
-                                "width": "max",
-                                "height": 8
+                                "width": "max"
+                            },
+                            {
+                                "attribute_alias": "STATUS"
+                            },
+                            {
+                                "attribute_alias": "TICKET_NO"
+                            },
+                            {
+                                "attribute_alias": "COMMENT"
                             }
                         ]
                     },
                     {
                         "widget_type": "WidgetGroup",
-                        "caption": "Action",
+                        "caption": "Action Monitor",
+                        "width": 2,
                         "widgets": [
                             {
-                                "attribute_alias": "ACTION__PAGE__LABEL"
+                                "attribute_alias": "MONITOR_ACTION__PAGE__LABEL"
                             },
                             {
-                                "attribute_alias": "ACTION__WIDGET_NAME"
+                                "attribute_alias": "MONITOR_ACTION__WIDGET_NAME"
                             },
                             {
-                                "attribute_alias": "ACTION__ACTION_NAME"
+                                "attribute_alias": "MONITOR_ACTION__ACTION_NAME"
                             },
                             {
-                                "attribute_alias": "ACTION__ACTION_ALIAS"
+                                "attribute_alias": "MONITOR_ACTION__ACTION_ALIAS"
                             }
                         ]
                     }
@@ -157,9 +164,6 @@
                             "alias": "exface.core.ShowDialogFromData",
                             "uxon_attribute": "ERROR_WIDGET"
                         }
-                    },
-                    {
-                        "widget_type": "StateMenuButton"
                     }
                 ]
             },

@@ -55,6 +55,7 @@ class MonitorLogHandler implements LogHandlerInterface
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->workbench, 'exface.Core.MONITOR_ERROR');      
         $ds->addRow([
             'LOG_ID' => $context["id"],
+            'REQUEST_ID' => $this->workbench->getContext()->getScopeRequest()->getScopeId(),
             'ERROR_LEVEL' => Logger::getLevelName(Logger::toMonologLevel($level)),
             'MESSAGE' => $message,
             'ERROR_WIDGET' => $this->getDebugWidgetJson($sender),
