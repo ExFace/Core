@@ -190,7 +190,11 @@ class FacadePageTemplateRenderer implements TemplateRendererInterface
                 break;
             case StringDataType::startsWith($placeholder, '~url:') === true;
                 $pageSelectorString = StringDataType::substringAfter($placeholder, '~url:');
-                $val = $this->getFacade()->buildUrlToPage($pageSelectorString);
+                if ($pageSelectorString === '') {
+                    $val = $this->getFacade()->buildUrlToSiteRoot();
+                } else {
+                    $val = $this->getFacade()->buildUrlToPage($pageSelectorString);
+                }
                 break;
             case StringDataType::startsWith($placeholder, '~page:');
                 $property = StringDataType::substringAfter($placeholder, '~page:');

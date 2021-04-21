@@ -40,6 +40,10 @@
         {
             "name": "SYNC_WITH_EXT_ROLE",
             "attribute_alias": "SYNC_WITH_EXT_ROLE"
+        },
+        {
+            "name": "START_PAGE",
+            "attribute_alias": "START_PAGE"
         }
     ],
     "rows": [
@@ -53,7 +57,8 @@
             "DESCRIPTION": "Edit pages and permissions",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "UI_DESIGNER",
-            "SYNC_WITH_EXT_ROLE": ""
+            "SYNC_WITH_EXT_ROLE": "",
+            "START_PAGE": ""
         },
         {
             "CREATED_ON": "2020-03-12 17:21:42",
@@ -65,7 +70,8 @@
             "DESCRIPTION": "Edit the metamodel",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "MODEL_DEV",
-            "SYNC_WITH_EXT_ROLE": ""
+            "SYNC_WITH_EXT_ROLE": "",
+            "START_PAGE": ""
         },
         {
             "CREATED_ON": "2020-03-22 13:39:26",
@@ -77,7 +83,8 @@
             "DESCRIPTION": "",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "SUPERUSER",
-            "SYNC_WITH_EXT_ROLE": ""
+            "SYNC_WITH_EXT_ROLE": "",
+            "START_PAGE": ""
         },
         {
             "CREATED_ON": "2020-03-22 13:54:52",
@@ -89,7 +96,8 @@
             "DESCRIPTION": "Non-authenticated users",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "ANONYMOUS",
-            "SYNC_WITH_EXT_ROLE": ""
+            "SYNC_WITH_EXT_ROLE": "",
+            "START_PAGE": ""
         },
         {
             "CREATED_ON": "2020-03-26 19:38:33",
@@ -101,7 +109,8 @@
             "DESCRIPTION": "Manage users and access rights",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "USER_ADMIN",
-            "SYNC_WITH_EXT_ROLE": ""
+            "SYNC_WITH_EXT_ROLE": "",
+            "START_PAGE": ""
         },
         {
             "CREATED_ON": "2020-03-26 20:53:06",
@@ -113,7 +122,8 @@
             "DESCRIPTION": "Automatically given to all named users",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "AUTHENTICATED",
-            "SYNC_WITH_EXT_ROLE": ""
+            "SYNC_WITH_EXT_ROLE": "",
+            "START_PAGE": ""
         },
         {
             "CREATED_ON": "2020-03-27 14:44:40",
@@ -125,7 +135,8 @@
             "DESCRIPTION": "Access to logs and extended error display",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "DEBUGGER",
-            "SYNC_WITH_EXT_ROLE": ""
+            "SYNC_WITH_EXT_ROLE": "",
+            "START_PAGE": ""
         },
         {
             "CREATED_ON": "2020-05-11 13:00:51",
@@ -137,7 +148,8 @@
             "DESCRIPTION": "Everything in administration",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "ADMINISTRATOR",
-            "SYNC_WITH_EXT_ROLE": ""
+            "SYNC_WITH_EXT_ROLE": "",
+            "START_PAGE": ""
         },
         {
             "CREATED_ON": "2021-04-19 11:54:27",
@@ -149,7 +161,21 @@
             "DESCRIPTION": "Default role for command-line-interface users",
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "CLI_USER",
-            "SYNC_WITH_EXT_ROLE": ""
+            "SYNC_WITH_EXT_ROLE": "",
+            "START_PAGE": ""
+        },
+        {
+            "CREATED_ON": "2021-04-21 18:41:36",
+            "MODIFIED_ON": "2021-04-21 18:41:36",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebadc4702cd376adc4025041000001",
+            "NAME": "Support",
+            "DESCRIPTION": "",
+            "APP": "0x31000000000000000000000000000000",
+            "ALIAS": "SUPPORT",
+            "SYNC_WITH_EXT_ROLE": "",
+            "START_PAGE": "0x11ebb1630a28048ab163025041000001"
         }
     ],
     "totals_rows": [],

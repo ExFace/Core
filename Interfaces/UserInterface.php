@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces;
 use exface\Core\CommonLogic\Model\User;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Selectors\UserRoleSelectorInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 
 interface UserInterface extends UserImpersonationInterface, WorkbenchDependantInterface
 {
@@ -167,4 +168,10 @@ interface UserInterface extends UserImpersonationInterface, WorkbenchDependantIn
      * @return mixed|NULL
      */
     public function getAttribute(string $alias);
+    
+    /**
+     * 
+     * @return UiPageInterface
+     */
+    public function getStartPage() : UiPageInterface;
 }

@@ -12,6 +12,9 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Factories\UiPageFactory;
 
 /**
  * Representation of an Exface user.
@@ -46,6 +49,8 @@ class User implements UserInterface
     private $modelLoaded = false;
     
     private $roleSelectors = null;
+    
+    private $roleData = null;
     
     private $disabled = false;
 
@@ -522,5 +527,38 @@ class User implements UserInterface
         $ds->getFilters()->addConditionFromString($userObj->getUidAttributeAlias(), $this->getUid(), ComparatorDataType::EQUALS);
         $ds->dataRead();
         return $ds->getCellValue($alias, 0);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::getStartPage()
+     */
+    public function getStartPage() : UiPageInterface
+    {
+        $selectors = $this->getRoleData()->getColumns()->getByExpression('START_PAGE')->getValues();
+        foreach ($selectors as $selector) {
+            if ($selector !== null && $selector !== '') {
+                return UiPageFactory::createFromModel($this->getWorkbench(), $selector);
+            }
+        }
+        return UiPageFactory::createIndexPage($this->getWorkbench());
+    }
+    
+    /**
+     * 
+     * @return DataSheetInterface
+     */
+    public function getRoleData() : DataSheetInterface
+    {
+        if ($this->roleData === null) {
+            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE');
+            $ds->getFilters()->addConditionFromString('USER_ROLE_USERS__USER__USERNAME', $this->getUsername(), ComparatorDataType::EQUALS);
+            $ds->getSorters()->addFromString('USER_ROLE_USERS__CREATED_ON', SortingDirectionsDataType::DESC);
+            $ds->getColumns()->addFromAttributeGroup($ds->getMetaObject()->getAttributeGroup(AttributeGroup::ALL));
+            $ds->dataRead();
+            $this->roleData = $ds;
+        }
+        return $this->roleData;
     }
 }
