@@ -174,4 +174,11 @@ interface UserInterface extends UserImpersonationInterface, WorkbenchDependantIn
      * @return UiPageInterface
      */
     public function getStartPage() : UiPageInterface;
+    
+    /**
+     * 
+     * @param string $attributeAlias
+     * @return string[]
+     */
+    public function getRoles(string $attributeAlias = 'ALIAS_WITH_NS') : array;
 }
