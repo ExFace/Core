@@ -448,7 +448,7 @@ class User implements UserInterface
         if (empty($this->roleSelectors) && $this->isAnonymous() === false) {
             $this->roleSelectors = $this->addBuiltInRoles($this->roleSelectors ?? []);
         }
-        return $this->roleSelectors;
+        return $this->roleSelectors ?? [];
     }
     
     /**
