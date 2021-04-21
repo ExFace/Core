@@ -17,6 +17,7 @@ use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * This PSR-15 middleware will look for a facade responsible for the given request
@@ -71,7 +72,15 @@ class FacadeResolverMiddleware implements MiddlewareInterface
                     $request = $request->withAttribute($facade->getRequestAttributeForWidget(), $page->getWidgetRoot()->getId());
                 }
             } catch (FacadeRoutingError $ePage) {
-                $this->workbench->getLogger()->logException($eRouter)->logException($ePage);
+                $logLevel = null;
+                // Lower log level for JS-map URLs often happening in browser developer console.
+                if (StringDataType::endsWith($request->getUri()->__toString(), '.js.map', false)
+                    || StringDataType::endsWith($request->getUri()->__toString(), 'map.js', false)) {
+                    $logLevel = LoggerInterface::NOTICE;
+                }
+                $this->workbench->getLogger()
+                    ->logException($eRouter, $logLevel)
+                    ->logException($ePage, $logLevel);
                 return new Response(404, [], $eRouter->getMessage());
             }
         }
