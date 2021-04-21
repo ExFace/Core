@@ -437,7 +437,7 @@ class StringDataType extends AbstractDataType
      * @param bool $stickToWords
      * @return string
      */
-    public static function truncate(string $string, int $length, bool $stickToWords) : string
+    public static function truncate(string $string, int $length, bool $stickToWords = false) : string
     {
         if ($stickToWords === false) {
             return mb_substr($string, 0, $length);
