@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-11-17 13:30:20",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2021-04-21 11:13:48",
+    "modified_on": "2021-04-21 13:42:12",
     "contents": {
         "widget_type": "SplitVertical",
         "object_alias": "exface.Core.MONITOR_ACTION",
@@ -161,6 +161,14 @@
                                                     "input_widget": {
                                                         "widget_type": "InputHidden"
                                                     }
+                                                },
+                                                {
+                                                    "attribute_alias": "PAGE",
+                                                    "comparator": "!==",
+                                                    "value": "NULL",
+                                                    "input_widget": {
+                                                        "widget_type": "InputHidden"
+                                                    }
                                                 }
                                             ],
                                             "aggregate_by_attribute_alias": [
@@ -203,7 +211,16 @@
                                         "empty_text": "No errors found. If this is a surprise, check if error monitoring is enabled in System.config.js (MONITOR.ERRORS.ENABLED)",
                                         "filters": [
                                             {
-                                                "attribute_alias": "STATUS"
+                                                "attribute_alias": "STATUS",
+                                                "input_widget": {
+                                                    "widget_type": "InputSelect",
+                                                    "multi_select": true,
+                                                    "values": [
+                                                        10,
+                                                        20,
+                                                        40
+                                                    ]
+                                                }
                                             },
                                             {
                                                 "attribute_alias": "MESSAGE",
