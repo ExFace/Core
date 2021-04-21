@@ -103,6 +103,14 @@ class UiPageFactory extends AbstractStaticFactory
         $page->importUxonObject($uxon, $skip_property_names);
         return $page;
     }
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @return UiPageInterface
+     */
+    public static function createIndexPage(WorkbenchInterface $workbench) : UiPageInterface
+    {
+        return static::createFromModel($workbench, $workbench->getConfig()->getOption('SERVER.INDEX_PAGE_SELECTOR'));
+    }
 }
-
-?>

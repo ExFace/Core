@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-02-09 07:27:44",
-            "MODIFIED_ON": "2020-05-14 07:45:37",
+            "MODIFIED_ON": "2021-04-21 18:35:15",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4b0d9c862d5db2cfe4b318306b9a",
@@ -129,6 +129,9 @@
                                                     },
                                                     {
                                                         "attribute_alias": "DESCRIPTION"
+                                                    },
+                                                    {
+                                                        "attribute_alias": "START_PAGE"
                                                     },
                                                     {
                                                         "attribute_alias": "SYNC_WITH_EXT_ROLE"

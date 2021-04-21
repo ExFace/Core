@@ -104,9 +104,10 @@ class FacadeResolverMiddleware implements MiddlewareInterface
         
         try {
             if ($aliasFromUrl === '') {
-                $aliasFromUrl = $this->workbench->getConfig()->getOption('SERVER.INDEX_PAGE_SELECTOR');
+                return $this->workbench->getSecurity()->getAuthenticatedUser()->getStartPage();
+            } else {
+                return UiPageFactory::createFromModel($this->workbench, $aliasFromUrl);
             }
-            return UiPageFactory::createFromModel($this->workbench, $aliasFromUrl);
         } catch (UiPageNotFoundError $e) {            
             throw new FacadeRoutingError('No route can be found for URL "' . $uri->getPath() . '" - please check system configuration option FACADES.ROUTES or reinstall your facade!', null, $e);
         }
