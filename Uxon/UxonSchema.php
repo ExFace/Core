@@ -17,6 +17,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\UxonSchemaNameDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
@@ -346,7 +347,7 @@ class UxonSchema implements UxonSchemaInterface
         } catch (MetaObjectNotFoundError $e) {
             // TODO better error handling to tell apart invalid object alias and no object alias.
             if ($rootObject !== null) {
-                $this->getWorkbench()->getLogger()->logException($e);
+                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
             }
             $object = null;
         }
