@@ -461,7 +461,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 try {
                     $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
                 } catch (\Throwable $e) {
-                    throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row ' . $row . ' of CREATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . $value, null, $e);
+                    throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row ' . $row . ' of CREATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . StringDataType::truncate($value, 100, false), null, $e);
                 }
                 if ($custom_insert_sql) {
                     // If there is a custom insert SQL for the attribute, use it
