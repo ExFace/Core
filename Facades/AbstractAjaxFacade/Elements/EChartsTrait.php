@@ -1424,7 +1424,7 @@ JS;
         $xZoomCount = 0;
         $yZoomCount = 0;
         foreach ($widget->getAxesX() as $axis) {
-            $xAxesJS .= $this->buildJsAxisProperties($axis, 1, $axis->isHidden());
+            $xAxesJS .= $this->buildJsAxisProperties($axis, 1);
             if ($axis->isZoomable() === true) {
                 $zoom .= $this->buildJsAxisZoom($axis, $xZoomCount);
                 $xZoomCount++;
@@ -1436,15 +1436,17 @@ JS;
                 $yZoomCount++;
             }
             if ($axis->getPosition() === ChartAxis::POSITION_LEFT) {
+                //only if the axis is shown the count to calculate the name gap need to be increased
                 if ($axis->isHidden() === false) {
                     $countAxisLeft++;
                 }
-                $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisLeft, $axis->isHidden());
+                $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisLeft);
             } elseif ($axis->getPosition() === ChartAxis::POSITION_RIGHT) {
+                //only if the axis is shown the count to calculate the name gap need to be increased
                 if ($axis->isHidden() === false) {
                     $countAxisRight++;
                 }                
-                $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisRight, $axis->isHidden());
+                $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisRight);
             }
         }
         return <<<JS
@@ -1483,7 +1485,7 @@ JS;
      * @param int $nameGapMulti
      * @return string
      */
-    protected function buildJsAxisProperties(ChartAxis $axis, int $nameGapMulti = 1, bool $hidden = FALSE) : string
+    protected function buildJsAxisProperties(ChartAxis $axis, int $nameGapMulti = 1) : string
     {
         
         $axisType = $axis->getAxisType();
@@ -1563,16 +1565,12 @@ JS;
             $onZero = '';
         }
         
-        $show = 'true';
-        if ($hidden === true) {
-            $show = 'false';
-        }
-        
+        //initially hide all axes, so they are only shown after calculation for the gaps and everything is done
         return <<<JS
         
     {
         id: '{$axis->getIndex()}',
-        show: {$show},
+        show: false,
         name: '{$caption}',
         {$nameLocation}
         {$inverse}
@@ -1968,9 +1966,9 @@ JS;
         foreach ($this->getWidget()->getAxes() as $axis) {
             if ($axis->isHidden() === true) {
                 //add an object to the axis array also for hidden axes
-                //that necessary as hidden axes are also in the options from echat, so we need to have the same
+                //that is necessary as hidden axes are also in the options from echart, so we need to have the same
                 //ammount of axes in the new options when redrawing and calculatign the gaps, so we merge the 
-                //options of an axes with the actual right axes and not a different (maybe hidden) one
+                //options of an axis with the correct axis and not a different (maybe hidden) one
                 $axesJsObjectInit .= <<<JS
                 
     axes["{$axis->getDataColumn()->getDataColumnName()}"] = {
@@ -2039,7 +2037,7 @@ JS;
         index: "{$axis->getIndex()}",
         name: "{$axis->getDataColumn()->getDataColumnName()}",
         rotation: {$rotated},
-        show : true
+        show: true
     };
     
 JS;
@@ -2105,12 +2103,14 @@ JS;
             if (axis.rotation === true && axis.caption === true) { 
                 var nameGap = axis.gap + {$this->baseAxisNameGap()};
                 newOptions[axis.dimension + 'Axis'].push({
+                    show: true,
                     offset: offsets[axis.position],
                     nameGap: axis.gap,
                 });
                 offsets[axis.position] += nameGap;
             } else {
                 newOptions[axis.dimension + 'Axis'].push({
+                    show: true,
                     offset: offsets[axis.position],
                 });
                 if (axis.caption === true) {
