@@ -305,7 +305,7 @@
         },
         {
             "CREATED_ON": "2017-05-05 11:08:48",
-            "MODIFIED_ON": "2017-06-06 15:06:01",
+            "MODIFIED_ON": "2021-04-21 11:32:07",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e73172732789049cea0242ac110004",
@@ -317,20 +317,9 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": {
-                "widget_type": "InputSelect",
-                "selectable_options": {
-                    "100": "DEBUG",
-                    "200": "INFO",
-                    "250": "NOTICE",
-                    "300": "WARNING",
-                    "400": "ERROR",
-                    "500": "CRITICAL",
-                    "600": "EMERGENCY"
-                }
-            },
-            "COPY_WITH_RELATED_OBJECT": null,
-            "DELETE_WITH_RELATED_OBJECT": null,
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": "0",
+            "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Level",
@@ -338,7 +327,7 @@
             "TYPE": "D",
             "COPYABLEFLAG": "0",
             "ALIAS": "level",
-            "DATATYPE": "0x30000000000000000000000000000000",
+            "DATATYPE": "0x11ebaeb9a50e158aaeb9025041000001",
             "DATA_ADDRESS": "6",
             "OBJECT": "0x11e72bfabc4cc8e7a3bee4b318306b9a",
             "FORMATTER": "",
@@ -356,11 +345,13 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": {
+                "use_numeric_levels": true
+            }
         },
         {
             "CREATED_ON": "2017-05-05 11:09:06",
-            "MODIFIED_ON": "2017-06-06 15:06:08",
+            "MODIFIED_ON": "2021-04-21 11:32:21",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e731727e10d8159cea0242ac110004",
@@ -373,8 +364,8 @@
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
             "DEFAULT_EDITOR_UXON": null,
-            "COPY_WITH_RELATED_OBJECT": null,
-            "DELETE_WITH_RELATED_OBJECT": null,
+            "COPY_WITH_RELATED_OBJECT": "0",
+            "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Level",
@@ -382,7 +373,7 @@
             "TYPE": "D",
             "COPYABLEFLAG": "0",
             "ALIAS": "levelname",
-            "DATATYPE": "0x30000000000000000000000000000000",
+            "DATATYPE": "0x11ebaeb9a50e158aaeb9025041000001",
             "DATA_ADDRESS": "7",
             "OBJECT": "0x11e72bfabc4cc8e7a3bee4b318306b9a",
             "FORMATTER": "",
