@@ -8,25 +8,27 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Interfaces\Actions\iCreateData;
-use exface\Core\CommonLogic\Model\Expression;
-use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Behaviors\StateMachineBehavior;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
 
 /**
  * Defines a state for the StateMachineBehavior.
  *
  * @author SFL
  */
-class StateMachineState
+class StateMachineState implements iHaveIcon
 {
     use TranslatablePropertyTrait;
+    
+    use iHaveIconTrait;
 
     private $state_id = null;
 
-    private $buttons = [];
+    private $buttons = null;
 
     private $disabled_attributes_aliases = [];
     
@@ -41,6 +43,8 @@ class StateMachineState
     private $name_translation_key = null;
     
     private $color = null;
+    
+    private $icon = null;
     
     private $stateMachine = null;
     
@@ -78,11 +82,53 @@ class StateMachineState
      */
     public function getButtons()
     {
+        if ($this->buttons === null) {
+            if (! empty($this->getTransitions())) {
+                foreach ($this->getTransitions() as $stateId) {
+                    $state = $this->getStateMachine()->getState($stateId);
+                    $btnUxon = new UxonObject([
+                        "action" => [
+                            "alias" => "exface.core.UpdateData",
+                            "input_rows_min" => 1,
+                            "input_object_alias" => $this->getStateMachine()->getObject()->getAliasWithNamespace(),
+                            "input_mappers"=> [
+                                [
+                                    "from_object_alias" => $this->getStateMachine()->getObject()->getAliasWithNamespace(),
+                                    "inherit_columns_only_for_system_attributes" => true,
+                                    "column_to_column_mappings" => [
+                                        [
+                                            "from" => "'$stateId'",
+                                            "to" => $this->getStateMachine()->getStateAttributeAlias()
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]);
+                    if ($stateId !== $this->getStateId()) {
+                        $btnUxon->setProperty('caption', $state->getName());
+                        if ($state->getIcon() !== null && $state->getShowIcon()) {
+                            $btnUxon->setProperty('icon', $state->getIcon());
+                            if ($state->getIconSet() !== null) {
+                                $btnUxon->setProperty('icon_set', $state->getIconSet());
+                            }
+                        }
+                    }
+                    $this->buttons[$stateId] = $btnUxon;
+                }
+            } else {
+                $this->buttons = [];
+            }
+        }
         return $this->buttons;
     }
 
     /**
-     * Defines the buttons for the state.
+     * Defines the transition-buttons for the state.
+     * 
+     * If not set, but `transitions` defined, buttons for each transition state will
+     * be generated automatically using the built-in action `exface.Core.UpdateData`
+     * with an `input_mapper` for the state-attribute - see example below
      *
      * Example:
      * 
@@ -91,26 +137,23 @@ class StateMachineState
      *  "states": [
      *      "10": { 
      *          "name": "Created",
-     *          "buttons": [
-     *              {
-     *                  "caption": "20 Confirm",
+     *          "buttons": {
+     *              "20": {
+     *                  "caption": "Target state name",
      *                  "action": {
-     *                      "alias": "exface.Core.UpdateData",
-     *                      "input_data_sheet": {
-     *                          "object_alias": "alexa.RMS.CUSTOMER_COMPLAINT",
-     *                          "columns": [
-     *                              {
-     *                                  "attribute_alias": "STATE_ID",
-     *                                  "formula": "=NumberValue('20')"
-     *                              },
-     *                              {
-     *                                  "attribute_alias": "TS_UPDATE"
-     *                              }
-     *                          ]
-     *                      }
+     *                      "alias": "exface.core.UpdateData",
+     *                      "input_rows_min": 1,
+     *                      "input_object_alias":"my.App.object_of_behavior",
+     *                      "input_mappers":[{
+     *                              "from_object_alias": "exface.Core.MONITOR_ERROR",
+     *                              "inherit_columns_only_for_system_attributes": true,
+     *                              "column_to_column_mappings":[
+     *                                  {"from": 20,"to":"STATUS"}
+     *                               ]
+     *                      }]
      *                  }
      *              }
-     *          ]
+     *          }
      *      }
      *  }
      *  
@@ -192,7 +235,7 @@ class StateMachineState
     /**
      * Returns the allowed transitions for the state.
      *
-     * @return integer[]
+     * @return number[]|string[]
      */
     public function getTransitions()
     {

@@ -22,7 +22,7 @@ trait iHaveIconTrait {
     }
 
     /**
-     * The icon name to be displayed.
+     * The name of the icon to be displayed.
      * 
      * Refer to the documentation of the facade for supported icon names. Most
      * facades will support font awesome icons and some poprietary icon set
@@ -83,7 +83,7 @@ trait iHaveIconTrait {
     /**
      * Which icon set to use (if not set, the facade's default will be used)
      *
-     * @uxon-property icon-set
+     * @uxon-property icon_set
      * @uxon-type string
      * @uxon-default fa
      *

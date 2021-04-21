@@ -11,14 +11,11 @@ interface iHaveIcon
     public function getIcon() : ?string;
 
     /**
-     * The icon name to be displayed.
+     * The name of the icon to be displayed.
      * 
      * Refer to the documentation of the facade for supported icon names. Most
      * facades will support font awesome icons and some poprietary icon set
      * additionally.
-     * 
-     * @uxon-property icon
-     * @uxon-type icon|string
      *
      * @param string $value            
      * @return boolean
@@ -36,9 +33,6 @@ interface iHaveIcon
      * Force the icon to show (TRUE) or hide (FALSE)
      * 
      * The default depends on the facade used.
-     * 
-     * @uxon-property show_icon
-     * @uxon-type boolean 
      * 
      * @param bool $value
      * @return iHaveIcon
