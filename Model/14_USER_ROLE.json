@@ -138,6 +138,18 @@
             "APP": "0x31000000000000000000000000000000",
             "ALIAS": "ADMINISTRATOR",
             "SYNC_WITH_EXT_ROLE": ""
+        },
+        {
+            "CREATED_ON": "2021-04-19 11:54:27",
+            "MODIFIED_ON": "2021-04-19 17:26:31",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba8ea3b31c0c2a8ea025041000001",
+            "NAME": "CLI User",
+            "DESCRIPTION": "Default role for command-line-interface users",
+            "APP": "0x31000000000000000000000000000000",
+            "ALIAS": "CLI_USER",
+            "SYNC_WITH_EXT_ROLE": ""
         }
     ],
     "totals_rows": [],
