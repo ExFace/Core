@@ -11,6 +11,9 @@ use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Events\WidgetLinkEventInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\Factories\UiPageFactory;
+use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
+use exface\Core\Exceptions\UxonParserError;
 
 /**
  * Allows a widget to inherit the configuration of another widget.
@@ -115,6 +118,13 @@ class WidgetInheriter implements WorkbenchDependantInterface, iCanBeConvertedToU
     public function getWidgetUxon(UxonObject $extendingUxon) : UxonObject
     {
         $baseUxon = $this->getInheritFromWidgetLink()->getTargetWidgetUxon();
+        if ($baseUxon->isEmpty() && $this->inheritFromPageAlias !== null) {
+            try {
+                UiPageFactory::createFromModel($this->getWorkbench(), $this->inheritFromPageAlias);
+            } catch (UiPageNotFoundError $e) {
+                throw new UxonParserError($this->exportUxonObject(), 'Invalid widget inheritance configuration: page "' . $this->inheritFromPageAlias . '" not found!'); 
+            }
+        }
         // Remove the id from the new widget, because otherwise it would be identical to the id of the widget extended from
         if ($this->getKeepWidgetId() === false) {
             $baseUxon->unsetProperty('id');

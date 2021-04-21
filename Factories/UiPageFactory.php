@@ -13,7 +13,9 @@ class UiPageFactory extends AbstractStaticFactory
 
     /**
      * Creates a page for the passed selector automatically loading it from 
-     * the CMS if it exists there.
+     * the model if it exists there.
+     * 
+     * NOTE: if the model has no page matching the selector, a blank page will be created!
      * 
      * @param UiPageSelectorInterface $selector
      * 
