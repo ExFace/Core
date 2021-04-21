@@ -59,7 +59,7 @@ class LogLevelDataType extends StringDataType implements EnumDataTypeInterface
             return $this->getValuesOfMonologLevels();
         } else {
             return array_combine($this->getKeysStatic(), array_map(function($word) {
-                return ucfirst(strtolower($word));
+                return strtoupper($word);
             }, $this->getKeysStatic()));
         }
     }
@@ -95,7 +95,7 @@ class LogLevelDataType extends StringDataType implements EnumDataTypeInterface
      */
     public static function convertToPsrLevel(int $monologLevel) : string
     {
-        return Logger::getLevelName($monologLevel);
+        return strtolower(Logger::getLevelName($monologLevel));
     }
     
     /**
