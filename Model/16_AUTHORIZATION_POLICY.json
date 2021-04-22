@@ -576,6 +576,25 @@
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": "exface\/Core\/Facades\/ConsoleFacade"
+        },
+        {
+            "CREATED_ON": "2021-04-22 11:07:01",
+            "MODIFIED_ON": "2021-04-22 11:07:01",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb878c19786380878c025041000001",
+            "NAME": "Access to Monitor for Support",
+            "DESCRIPTION": "",
+            "EFFECT": "P",
+            "APP": "0x31000000000000000000000000000000",
+            "AUTHORIZATION_POINT": "0x11ea5ede96e738f6b9920205857feb80",
+            "TARGET_PAGE_GROUP": "0x11ebb081f5b857c0b081025041000001",
+            "TARGET_USER_ROLE": "0x11ebadc4702cd376adc4025041000001",
+            "TARGET_OBJECT": "",
+            "CONDITION_UXON": null,
+            "TARGET_ACTION_MODEL": "",
+            "TARGET_ACTION_PROTOTYPE": "",
+            "TARGET_FACADE": ""
         }
     ],
     "totals_rows": [],
