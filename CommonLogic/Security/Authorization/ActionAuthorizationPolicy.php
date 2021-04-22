@@ -27,6 +27,8 @@ use exface\Core\Interfaces\Actions\iCallOtherActions;
 use exface\Core\Actions\ShowWidget;
 use exface\Core\Actions\ReadPrefill;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Interfaces\Tasks\HttpTaskInterface;
+use exface\Core\CommonLogic\Tasks\ScheduledTask;
 
 /**
  * Policy for access to actions.
@@ -40,8 +42,9 @@ use exface\Core\Interfaces\Widgets\iTriggerAction;
  * 
  * Additional conditions:
  * 
- * - `command_line_task` - if set, policy only applies to CLI tasks (`true`) 
- * or web tasks (`false`)
+ * - `command_line_task`, `http_task`, `scheduler_task` - if set, the policy only 
+ * applies to the respective task type (`true`) or is explicitly not applicable 
+ * to it (`false`).
  * - `action_trigger_widget_match` - if set, policy only applies if the task has
  * a trigger widget and the action matches that widget's action (`true`) or not 
  * (`false`). NOTE: such policies never apply to actions, that explicitly do not 
@@ -76,6 +79,10 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     private $excludeActionSelectors = [];
     
     private $cliTasks = null;
+    
+    private $scheduledTasks = null;
+    
+    private $httpTasks = null;
     
     /**
      * 
@@ -157,8 +164,32 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             if (($expectCli = $this->getCommandLineTaskRestriction()) !== null) {
                 $isCli = ($task instanceof CliTaskInterface);
                 switch (true) {
-                    case $expectCli === true && $isCli === false:
+                    case $expectCli === true && $isCli=== false:
                     case $expectCli === false && $isCli === true:
+                        return PermissionFactory::createNotApplicable($this);
+                    default:
+                        $applied = true;
+                }
+            }
+            
+            // See if applicable only to http/non-http tasks
+            if (($expectHttp = $this->getHttpTaskRestriction()) !== null) {
+                $isHttp = ($task instanceof HttpTaskInterface);
+                switch (true) {
+                    case $expectHttp === true && $isHttp === false:
+                    case $expectHttp === false && $isHttp === true:
+                        return PermissionFactory::createNotApplicable($this);
+                    default:
+                        $applied = true;
+                }
+            }
+            
+            // See if applicable only to scheduler/non-scheduler tasks
+            if (($expectScheduler = $this->getSchedulerTaskRestriction()) !== null) {
+                $isScheduler = ($task instanceof ScheduledTask);
+                switch (true) {
+                    case $expectScheduler === true && $isScheduler === false:
+                    case $expectScheduler === false && $isScheduler === true:
                         return PermissionFactory::createNotApplicable($this);
                     default:
                         $applied = true;
@@ -408,5 +439,57 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     protected function getCommandLineTaskRestriction() : ?bool
     {
         return $this->cliTasks;
+    }
+    
+    /**
+     * Set to TRUE to apply only to scheduler tasks or to FALSE to exclude scheduler tasks.
+     *
+     * By default, the policy will be applied to all tasks regardless of their origin.
+     *
+     * @uxon-property scheduler_task
+     * @uxon-type boolean
+     *
+     * @param bool $trueOrFalse
+     * @return ActionAuthorizationPolicy
+     */
+    protected function setSchedulerTask(bool $trueOrFalse) : ActionAuthorizationPolicy
+    {
+        $this->scheduledTasks = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool|NULL
+     */
+    protected function getSchedulerTaskRestriction() : ?bool
+    {
+        return $this->scheduledTasks;
+    }
+    
+    /**
+     * Set to TRUE to apply only to HTTP tasks or to FALSE to exclude HTTP tasks.
+     *
+     * By default, the policy will be applied to all tasks regardless of their origin.
+     *
+     * @uxon-property http_task
+     * @uxon-type boolean
+     *
+     * @param bool $trueOrFalse
+     * @return ActionAuthorizationPolicy
+     */
+    protected function setHttpTask(bool $trueOrFalse) : ActionAuthorizationPolicy
+    {
+        $this->httpTasks = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool|NULL
+     */
+    protected function getHttpTaskRestriction() : ?bool
+    {
+        return $this->httpTasks;
     }
 }
