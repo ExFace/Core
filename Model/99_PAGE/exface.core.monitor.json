@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-11-17 13:30:20",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2021-04-21 13:42:12",
+    "modified_on": "2021-04-22 11:06:33",
     "contents": {
         "widget_type": "SplitVertical",
         "object_alias": "exface.Core.MONITOR_ACTION",
@@ -82,6 +82,19 @@
                                             {
                                                 "attribute_alias": "DATE",
                                                 "hide_caption": true
+                                            }
+                                        ],
+                                        "axis_y": [
+                                            {
+                                                "attribute_alias": "MONITOR_ACTION__UID:COUNT"
+                                            },
+                                            {
+                                                "attribute_alias": "MONITOR_ACTION__DURATION:AVG",
+                                                "position": "right"
+                                            },
+                                            {
+                                                "attribute_alias": "MONITOR_ERROR__STATUS:COUNT_IF(< 90)",
+                                                "hidden": true
                                             }
                                         ]
                                     }
