@@ -13,8 +13,6 @@ use exface\Core\Events\Security\OnAuthorizedEvent;
 use exface\Core\Interfaces\Security\PermissionInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Interfaces\UserInterface;
-use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 
 /**
  * Base class for core authorization points.
