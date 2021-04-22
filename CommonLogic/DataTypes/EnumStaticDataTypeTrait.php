@@ -105,6 +105,7 @@ trait EnumStaticDataTypeTrait {
         }
         
         $value = parent::cast($value);
+        $value = trim($value);
         
         if (! static::isValidStaticValue($value)){
             throw new DataTypeCastingError('Value "' . $value . '" does not fit into the enumeration data type ' . get_called_class() . '!');
