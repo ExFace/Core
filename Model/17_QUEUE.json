@@ -73,7 +73,7 @@
         },
         {
             "CREATED_ON": "2021-02-01 13:15:37",
-            "MODIFIED_ON": "2021-02-01 14:24:36",
+            "MODIFIED_ON": "2021-04-22 12:55:33",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb9091314b83ae9091847beb4a5184",
@@ -87,7 +87,8 @@
                     "all_of": [
                         "scheduler"
                     ]
-                }
+                },
+                "error_log_level": "critical"
             },
             "NAME": "Scheduler"
         }

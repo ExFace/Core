@@ -18,6 +18,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Exceptions\InternalError;
 use exface\Core\Events\Workbench\OnCleanUpEvent;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * Default implementation of the TaskQueueBrokerInterface.
@@ -69,6 +70,7 @@ class TaskQueueBroker implements TaskQueueBrokerInterface, WorkbenchDependantInt
         try {
             $handlers = $this->findQueues($task, $topics, $producer);
         } catch (\Throwable $e) {
+            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::ALERT);
             $this->saveOrphan($task, $topics, $producer, $messageId, $channel, $e);
             $result = ResultFactory::createErrorResult($task, $e);
             return $result;

@@ -18,7 +18,6 @@ use exface\Core\Factories\ResultFactory;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\CommonLogic\Tasks\ResultError;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
-use exface\Core\Interfaces\Actions\iModifyContext;
 use exface\Core\Interfaces\Actions\iModifyData;
 
 /**
