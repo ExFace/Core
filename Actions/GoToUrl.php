@@ -57,14 +57,14 @@ use exface\Core\DataTypes\BooleanDataType;
 class GoToUrl extends AbstractAction implements iShowUrl
 {
 
-    private $url = null;
+    protected $url = null;
 
-    private $open_in_new_window = false;
+    protected $open_in_new_window = false;
 
     /**
      * @var boolean
      */
-    private $urlencode_placeholders = true;
+    protected  $urlencode_placeholders = true;
 
     protected function init()
     {

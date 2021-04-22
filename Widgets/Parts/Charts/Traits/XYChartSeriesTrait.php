@@ -310,14 +310,6 @@ trait XYChartSeriesTrait
         $secondaryAxisPosition = $dimension === Chart::AXIS_X ? 'bottom' : 'right';
         $chart = $this->getChart();
         
-        //Check if series is stacked and if so find previous series with same stack and use axis from that series
-        if ($this instanceof StackableChartSeriesInterface && $this->isStacked() && $this->getValueColumnDimension() === $dimension && $this->getIndex() > 0) {
-            $prevSeries = $this->getChart()->getSeries()[($this->getIndex() - 1)];
-            if ($prevSeries instanceof StackableChartSeriesInterface && $prevSeries->getStackGroupId() === $this->getStackGroupId()) {
-                return $dimension === Chart::AXIS_X ? $prevSeries->getXAxis() : $prevSeries->getYAxis();
-            }
-        }
-        
         //when series has number given, try get axis with that number, if that fails, continue
         if ($axisNo !== null) {
             try {
@@ -327,6 +319,30 @@ trait XYChartSeriesTrait
                 }
             } catch (\Throwable $e) {
                 // Continue with the other cases
+            }
+        }
+        
+        //Check if serious is stacked or has no explicit value axis given and previous series is given with same stack, if so use axis from that series
+        if ($this instanceof StackableChartSeriesInterface && $this->getValueColumnDimension()=== $dimension) {
+            $attrAxes = [];
+            // get already exisiting axes bound to the same attribute or column
+            if ($attributeAlias) {
+                $attrAxes = $chart->findAxesByAttribute($chart->getMetaObject()->getAttribute($attributeAlias));
+            } elseif ($columnId && $column = $chart->getData()->getColumnByDataColumnName($columnId)) {
+                $attrAxes = $column->getAttributeAlias();
+            }
+            // check if series is stacked and not the first series or if stacked isn't explicitly set in the configuration
+            // and no axis for the series value already exists
+            if (($this->isStacked() === true && $this->getIndex() > 0) || ($this->isStacked() === null && empty($attrAxes) && $this->getIndex() > 0)) {
+                $prevSeries = $chart->getSeries()[($this->getIndex() - 1)];
+                //check if previous series is the same type and has the same stack group
+                if ($prevSeries instanceof StackableChartSeriesInterface && $prevSeries->isStacked() === true && $prevSeries->getType() === $this->getType() && $prevSeries->getStackGroupId() === $this->getStackGroupId()) {
+                    $this->setStacked(true);
+                    return $dimension === Chart::AXIS_X ? $prevSeries->getXAxis() : $prevSeries->getYAxis();
+                }
+            //if stack isnt explicitly set and there wasnt a previous matching stacked axis found for the value dimension, set this series to not be stacked    
+            } elseif ($this->isStacked() === null) {
+                $this->setStacked(false);
             }
         }
         
@@ -500,4 +516,10 @@ trait XYChartSeriesTrait
      * @return bool
      */
     abstract protected function hasCaption() : bool;
+    
+    /**
+     *
+     * @return bool
+     */
+    abstract protected function getChart() : Chart;
 }
