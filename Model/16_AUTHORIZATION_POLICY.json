@@ -494,12 +494,12 @@
         },
         {
             "CREATED_ON": "2020-05-28 15:42:11",
-            "MODIFIED_ON": "2020-07-20 12:58:17",
+            "MODIFIED_ON": "2021-04-22 12:26:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eaa0f9b9fd9c67bba0e4b318306b9a",
             "NAME": "Deny any web-actions without a trigger widget",
-            "DESCRIPTION": "Only applied to non-CLI tasks without a trigger widget. Login\/Logout are excluded as they are always allowed.",
+            "DESCRIPTION": "Only applied to HTTP tasks without a trigger widget. Login\/Logout are excluded as they are always allowed.",
             "EFFECT": "D",
             "APP": "0x31000000000000000000000000000000",
             "AUTHORIZATION_POINT": "0x11ea8eddc766689f8ba98c04ba002958",
@@ -508,7 +508,7 @@
             "TARGET_OBJECT": "",
             "CONDITION_UXON": {
                 "action_trigger_widget_match": false,
-                "command_line_task": false,
+                "http_task": true,
                 "exclude_actions": [
                     "exface.Core.Login",
                     "exface.Core.Logout"
@@ -592,6 +592,27 @@
             "TARGET_USER_ROLE": "0x11ebadc4702cd376adc4025041000001",
             "TARGET_OBJECT": "",
             "CONDITION_UXON": null,
+            "TARGET_ACTION_MODEL": "",
+            "TARGET_ACTION_PROTOTYPE": "",
+            "TARGET_FACADE": ""
+        },
+        {
+            "CREATED_ON": "2021-04-22 12:27:06",
+            "MODIFIED_ON": "2021-04-22 12:27:06",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb98d649cd239498d6025041000001",
+            "NAME": "Running the scheduler for CLI users",
+            "DESCRIPTION": "",
+            "EFFECT": "P",
+            "APP": "0x31000000000000000000000000000000",
+            "AUTHORIZATION_POINT": "0x11ea8eddc766689f8ba98c04ba002958",
+            "TARGET_PAGE_GROUP": "",
+            "TARGET_USER_ROLE": "0x11eba8ea3b31c0c2a8ea025041000001",
+            "TARGET_OBJECT": "",
+            "CONDITION_UXON": {
+                "scheduler_task": true
+            },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": ""
