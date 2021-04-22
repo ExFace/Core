@@ -27,7 +27,9 @@ use Monolog\Logger;
  */
 class LogLevelDataType extends StringDataType implements EnumDataTypeInterface
 {
-    use EnumStaticDataTypeTrait;
+    use EnumStaticDataTypeTrait {
+        cast as castViaEnumTrait;
+    }
     
     private $numericLevels = false;
     
@@ -66,12 +68,14 @@ class LogLevelDataType extends StringDataType implements EnumDataTypeInterface
     
     /**
     * Compares PSR 3 log levels. It uses monolog to do so.
+    * 
+    * Result is < 0 if monolog values of level1 < level2. Result is > 0 if monolog values of level1 >
+    * level2. Result is 0 if monolog values of level1 and level2 are equal.
     *
     * @param string $level1
     * @param string $level2
     *
-    * @return int Result is < 0 if monolog values of level1 < level2. Result is > 0 if monolog values of level1 >
-    * level2. Result is 0 if monolog values of level1 and level2 are equal.
+    * @return int 
     */
     public static function compareLogLevels(string $level1, string $level2) : int
     {
@@ -125,5 +129,19 @@ class LogLevelDataType extends StringDataType implements EnumDataTypeInterface
     public function isUsingNumericLevels() : bool
     {
         return $this->numericLevels;
+    }
+
+    /**
+     * 
+     * {@inheritdoc}
+     * @see StringDataType::cast()
+     * @see EnumStaticDataTypeTrait::cast()
+     */
+    public static function cast($value)
+    {
+        if (! static::isValueEmpty($value)) {
+            $value = mb_strtolower($value);
+        }
+        return static::castViaEnumTrait($value);
     }
 }
