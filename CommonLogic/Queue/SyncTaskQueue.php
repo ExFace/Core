@@ -90,11 +90,11 @@ class SyncTaskQueue extends AsyncTaskQueue
             $this->saveResult($ds, $result, (microtime(true) - $start));
             $event->setResult($result);
         } catch (\Throwable $e) {
-            if (! $e instanceof ExceptionInterface) {
-                $e = new InternalError($e->getMessage(), null, $e);
+            if (! $e instanceof QueueRuntimeError) {
+                $e = new QueueRuntimeError($this, 'Error in queue "' . $this->getName() . '": ' . $e->getMessage(), null, $e);
             }
             
-            $this->getWorkbench()->getLogger()->logException($e);
+            $this->getWorkbench()->getLogger()->logException($e, $this->getLogLevel($e->getLogLevel()));
             
             $this->saveError($ds, $e, QueuedTaskStateDataType::STATUS_ERROR, (microtime(true) - $start));
             

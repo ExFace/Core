@@ -14,6 +14,8 @@ use exface\Core\Exceptions\Queues\QueueRuntimeError;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\Queues\QueueMessageDuplicateError;
 use exface\Core\CommonLogic\Tasks\ScheduledTask;
+use exface\Core\Interfaces\TaskQueueInterface;
+use exface\Core\DataTypes\LogLevelDataType;
 
 /**
  * Base class for queue prototypes saving queues in the model DB.
@@ -35,6 +37,8 @@ use exface\Core\CommonLogic\Tasks\ScheduledTask;
 abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
 {
     private $daysToKeepTasks = null;
+    
+    private $errorLogLevel = null;
     
     /**
      * 
@@ -110,8 +114,15 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
                 $dataSheet->getColumns()->addFromSystemAttributes();
                 $dataSheet->dataRead();
             }
+            
+            if ($exception instanceof QueueRuntimeError && $exception->getPrevious() !== null) {
+                $message = $exception->getPrevious()->getMessage();
+            } else {
+                $message = $exception->getMessage();
+            }
+            
             $dataSheet->setCellValue('STATUS', 0, $status);
-            $dataSheet->setCellValue('ERROR_MESSAGE', 0, $exception->getMessage());
+            $dataSheet->setCellValue('ERROR_MESSAGE', 0, $message);
             $dataSheet->setCellValue('ERROR_LOGID', 0, $exception->getId());
             $dataSheet->setCellValue('PROCESSED_ON', 0, DateTimeDataType::now());
             $dataSheet->setCellValue('DURATION_MS', 0, $duration);
@@ -280,6 +291,31 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
     protected function setDaysToKeepTasks(int $value) : AbstractInternalTaskQueue
     {
         $this->daysToKeepTasks = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param string $defaultPsr3Level
+     * @return string
+     */
+    public function getErrorLogLevel(string $defaultPsr3Level) : string
+    {
+        return $this->errorLogLevel ?? $defaultPsr3Level;
+    }
+    
+    /**
+     * The PSR-3 log level to use on errors in this queue (overriding the original log level or the error)
+     * 
+     * @uxon-property error_log_level
+     * @uxon-type [debug, info, notice, warning, error, critical, alert, emergency]
+     * 
+     * @param string $psr3Level
+     * @return TaskQueueInterface
+     */
+    protected function setErrorLogLevel(string $psr3Level) : TaskQueueInterface
+    {
+        $this->errorLogLevel = LogLevelDataType::cast($psr3Level);
         return $this;
     }
 }
