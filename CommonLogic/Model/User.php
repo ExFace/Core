@@ -572,7 +572,7 @@ class User implements UserInterface
             if (! empty($roleUids)) {
                 $ds->getFilters()->addConditionFromValueArray('UID', $roleUids);
             } else {
-                $ds->getFilters()->addConditionFromExpression('USER_ROLE_USERS__USER__USERNAME', $this->getUsername(), ComparatorDataType::EQUALS);
+                $ds->getFilters()->addConditionFromString('USER_ROLE_USERS__USER', $this->getUid(), ComparatorDataType::EQUALS);
             }
             $ds->getColumns()->addFromAttributeGroup($ds->getMetaObject()->getAttributeGroup(AttributeGroup::ALL));
             $ds->dataRead();
