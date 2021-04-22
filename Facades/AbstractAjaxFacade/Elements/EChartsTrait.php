@@ -1424,7 +1424,7 @@ JS;
         $xZoomCount = 0;
         $yZoomCount = 0;
         foreach ($widget->getAxesX() as $axis) {
-            $xAxesJS .= $this->buildJsAxisProperties($axis);
+            $xAxesJS .= $this->buildJsAxisProperties($axis, 1);
             if ($axis->isZoomable() === true) {
                 $zoom .= $this->buildJsAxisZoom($axis, $xZoomCount);
                 $xZoomCount++;
@@ -1435,11 +1435,17 @@ JS;
                 $zoom .= $this->buildJsAxisZoom($axis, $yZoomCount);
                 $yZoomCount++;
             }
-            if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false) {
-                $countAxisLeft++;
+            if ($axis->getPosition() === ChartAxis::POSITION_LEFT) {
+                //only if the axis is shown the count to calculate the name gap need to be increased
+                if ($axis->isHidden() === false) {
+                    $countAxisLeft++;
+                }
                 $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisLeft);
-            } elseif ($axis->getPosition() === ChartAxis::POSITION_RIGHT && $axis->isHidden() === false) {
-                $countAxisRight++;
+            } elseif ($axis->getPosition() === ChartAxis::POSITION_RIGHT) {
+                //only if the axis is shown the count to calculate the name gap need to be increased
+                if ($axis->isHidden() === false) {
+                    $countAxisRight++;
+                }                
                 $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisRight);
             }
         }
@@ -1481,6 +1487,8 @@ JS;
      */
     protected function buildJsAxisProperties(ChartAxis $axis, int $nameGapMulti = 1) : string
     {
+        
+        $axisType = $axis->getAxisType();
         if (! $axis->getHideCaption()) {
             $caption = $axis->getCaption();            
         } else {
@@ -1507,8 +1515,6 @@ JS;
         } else {
             $max = "max: '" . $axis->getMaxValue() . "',";
         }
-        $axisType = $axis->getAxisType();
-        
         if ($axis->getDimension() == Chart::AXIS_X) {
             $nameLocation = "nameLocation: 'center',";
         } else {
@@ -1559,10 +1565,12 @@ JS;
             $onZero = '';
         }
         
+        //initially hide all axes, so they are only shown after calculation for the gaps and everything is done
         return <<<JS
         
     {
         id: '{$axis->getIndex()}',
+        show: false,
         name: '{$caption}',
         {$nameLocation}
         {$inverse}
@@ -1574,7 +1582,6 @@ JS;
             show: $gridArea
         },
         position: '{$position}',
-        show: false,
         nameGap: {$nameGap},
         axisLabel: {
             fontFamily: '{$this->baseAxisLabelFont()}',
@@ -1958,6 +1965,18 @@ JS;
         //for X-Axis its based on the AxisIndex, for Y-Axis it's based on the length of the longest data value
         foreach ($this->getWidget()->getAxes() as $axis) {
             if ($axis->isHidden() === true) {
+                //add an object to the axis array also for hidden axes
+                //that is necessary as hidden axes are also in the options from echart, so we need to have the same
+                //ammount of axes in the new options when redrawing and calculatign the gaps, so we merge the 
+                //options of an axis with the correct axis and not a different (maybe hidden) one
+                $axesJsObjectInit .= <<<JS
+                
+    axes["{$axis->getDataColumn()->getDataColumnName()}"] = {
+        dimension: "{$axis->getDimension()}",
+        show: false
+    };
+    
+JS;
                 continue;
             }
             
@@ -2018,6 +2037,7 @@ JS;
         index: "{$axis->getIndex()}",
         name: "{$axis->getDataColumn()->getDataColumnName()}",
         rotation: {$rotated},
+        show: true
     };
     
 JS;
@@ -2042,8 +2062,6 @@ JS;
         
         
         return <<<JS
-
-    
     
     // initalize axis array
     var axes = [];
@@ -2073,41 +2091,44 @@ JS;
     // for every visible axis, set the correct offset and that it is visible
     for (var i in axes) {
         axis = axes[i];
-        if (axis.gap === 0 && {$dataJs}.length > 0) {   
-            {$this->buildJsShowMessageError("'{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.ECHARTS.AXIS_NO_DATA')} \"' + axis.name + '\"'")}
-        }
-        //if the caption for axis is shown the gap for x Axes needs to be
-        // set based on the axis.gap (means the space needed to show axis values)
-        if (axis.rotation === true && axis.caption === true) { 
-            var nameGap = axis.gap + {$this->baseAxisNameGap()};
-            newOptions[axis.dimension + 'Axis'].push({
-                offset: offsets[axis.position],
-                nameGap: axis.gap,               
-                show: true
+        if (axis.show === false) {
+            newOptions[axis.dimension + 'Axis'].push({                
             });
-            offsets[axis.position] += nameGap;
         } else {
-            newOptions[axis.dimension + 'Axis'].push({
-                offset: offsets[axis.position],               
-                show: true
-            });
-            if (axis.caption === true) {
-                offsets[axis.position] += axis.gap + {$this->baseAxisNameGap()};
-            } else {
-                offsets[axis.position] += axis.gap;
+            if (axis.gap === 0 && {$dataJs}.length > 0) {   
+                {$this->buildJsShowMessageError("'{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.ECHARTS.AXIS_NO_DATA')} \"' + axis.name + '\"'")}
             }
+            //if the caption for axis is shown the gap for x Axes needs to be
+            // set based on the axis.gap (means the space needed to show axis values)
+            if (axis.rotation === true && axis.caption === true) { 
+                var nameGap = axis.gap + {$this->baseAxisNameGap()};
+                newOptions[axis.dimension + 'Axis'].push({
+                    show: true,
+                    offset: offsets[axis.position],
+                    nameGap: axis.gap,
+                });
+                offsets[axis.position] += nameGap;
+            } else {
+                newOptions[axis.dimension + 'Axis'].push({
+                    show: true,
+                    offset: offsets[axis.position],
+                });
+                if (axis.caption === true) {
+                    offsets[axis.position] += axis.gap + {$this->baseAxisNameGap()};
+                } else {
+                    offsets[axis.position] += axis.gap;
+                }
+            }
+            
+            // increase the offset for the next axis at the same position by the gap calculated for this axis        
+            /*if (nameGap === 0) {
+                offsets[axis.position] += axis.gap;
+            } else {
+                offsets[axis.position] += nameGap;
+            }
+    
+            offsets[axis.position] += axis.gap*/
         }
-        
-        // increase the offset for the next axis at the same position by the gap calculated for this axis        
-        /*if (nameGap === 0) {
-            offsets[axis.position] += axis.gap;
-        } else {
-            offsets[axis.position] += nameGap;
-        }
-
-        offsets[axis.position] += axis.gap*/
-        
-        
     }
     
     // the grid margin at each side is the sum of each calculated axis gap for this side + the base margin
@@ -2564,7 +2585,7 @@ JS;
             if ($axis->isZoomable() === true) {
                 $count++;
             }
-            if ($axis->getPosition() === ChartAxis::POSITION_RIGHT) {
+            if ($axis->getPosition() === ChartAxis::POSITION_RIGHT && $axis->isHidden() === false) {
                 $rightAxis = true;
             }
         }
@@ -2618,7 +2639,7 @@ JS;
     {
         $leftAxis = false;
         foreach ($this->getWidget()->getAxesY() as $axis) {
-            if ($axis->getPosition() === ChartAxis::POSITION_LEFT) {
+            if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false) {
                 $leftAxis = true;
             }
         }
