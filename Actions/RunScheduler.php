@@ -16,6 +16,8 @@ use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\CommonLogic\Tasks\ResultError;
 use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
 use exface\Core\Interfaces\Actions\iModifyData;
+use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Exceptions\Queues\SchedulerError;
 
 /**
  * 
@@ -90,7 +92,7 @@ class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
                         yield $result->getMessage() ?: 'done.';
                     }
                 } catch (\Throwable $e) {
-                    // TODO
+                    $this->getWorkbench()->getLogger()->logException(new SchedulerError('Error in scheduled task "' . $row['NAME'] . '": ' . $e->getMessage(), null, $e));
                     yield 'failed. ' . $e->getMessage() . ' in ' . $e->getFile() . ' at line ' . $e->getLine();
                 } 
             } else {
