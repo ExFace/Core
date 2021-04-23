@@ -374,7 +374,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         $where = $this->buildSqlWhere($this->getFilters());
         $where = $where ? "\n WHERE " . $where : '';
         if (! $where)
-            throw new QueryBuilderException('Cannot perform update on all objects "' . $this->main_object->getAlias() . '"! Forbidden operation!');
+            throw new QueryBuilderException('Cannot delete all objects "' . $this->main_object->getAlias() . '"! Forbidden operation!');
         
         $sql = 'DELETE FROM ' . $this->buildSqlDataAddress($this->getMainObject()) . str_replace($this->getMainObject()->getAlias() . $this->getAliasDelim(), '', $where);
         $query = $data_connection->runSql($sql);
