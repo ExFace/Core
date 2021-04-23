@@ -6,6 +6,12 @@ use exface\Core\Interfaces\InstallerContainerInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
+/**
+ * Allows to add additional data sheets to the MetaModelInstaller.
+ * 
+ * @author andrej.kabachnik
+ *
+ */
 class MetaModelAdditionInstaller extends AbstractAppInstaller
 {
     private $modelInstaller = null;
