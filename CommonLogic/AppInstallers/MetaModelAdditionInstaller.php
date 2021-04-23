@@ -31,6 +31,11 @@ class MetaModelAdditionInstaller extends AbstractAppInstaller
         return $this;
     }
     
+    /**
+     * 
+     * @param InstallerContainerInterface $container
+     * @return MetaModelInstaller|NULL
+     */
     protected function findModelInstaller(InstallerContainerInterface $container) : ?MetaModelInstaller
     {
         $found = null;
@@ -48,16 +53,31 @@ class MetaModelAdditionInstaller extends AbstractAppInstaller
         return $found;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\InstallerInterface::backup()
+     */
     public function backup(string $absolute_path): \Iterator
     {
         yield from [];
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\InstallerInterface::uninstall()
+     */
     public function uninstall(): \Iterator
     {
         yield from [];
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\InstallerInterface::install()
+     */
     public function install(string $source_absolute_path): \Iterator
     {
         yield from [];
