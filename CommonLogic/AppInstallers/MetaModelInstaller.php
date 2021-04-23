@@ -136,7 +136,25 @@ class MetaModelInstaller extends AbstractAppInstaller
         
         yield $idt . 'Uninstalling model:' . PHP_EOL;
         
-        $counter = 0;          
+        $counter = 0;
+        
+        // Uninstall additions first as the may depend on the apps model
+        foreach ($this->getAdditions() as $addition) {
+            $sheet = $addition['sheet'];
+            if ($sheet->hasUIdColumn()) {
+                // Read data to fill the UID column. Some data source do not support deletes via
+                // filter (or filter over relations), so it is safer to fetch the UIDs here.
+                $sheet->dataRead();
+                if ($sheet->hasUidColumn(true)) {
+                    $sheet->getFilters()->removeAll();
+                    $counter += $sheet->dataDelete($transaction);
+                }
+            } else {
+                $counter += $sheet->dataDelete($transaction);
+            }
+        }
+        
+        // Uninstall the main model now
         foreach ($this->getCoreModelSheets() as $sheet) {
             if ($sheet->getMetaObject()->is('exface.Core.APP') === true) {
                 $appSheet = $sheet;
@@ -145,12 +163,7 @@ class MetaModelInstaller extends AbstractAppInstaller
             }
         }
         $appSheet->getFilters()->removeAll();
-        $counter = $appSheet->dataDelete($transaction);
-        
-        foreach ($this->getAdditions() as $addition) {
-            $sheet = $addition['sheet'];
-            $counter += $sheet->dataDelete($transaction);
-        }
+        $counter += $appSheet->dataDelete($transaction);
         
         $transaction->commit();
         
