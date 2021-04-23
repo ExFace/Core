@@ -347,9 +347,11 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     }
     
     /**
-     * @deprecated use `addEffect()` or UXON property `effects` and `effected_objects` instead!
-     * 
      * Ids of widgets to refresh after the button's action was complete successfully.
+     * 
+     * @uxon-property refresh_widget_ids
+     * @uxon-type uxon:$..id[]
+     * @uxon-template [""]
      * 
      * @param UxonObject|string[] $value
      * @return Button
