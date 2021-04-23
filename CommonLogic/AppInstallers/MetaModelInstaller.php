@@ -21,7 +21,13 @@ use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\DataTypes\JsonDataType;
 
 /**
- * Saves all model entities as JSON files in the `Model` subfolder of the app.
+ * Saves all model entities and eventual custom added data as JSON files in the `Model` subfolder of the app.
+ * 
+ * ## What is exported
+ * 
+ * By default, this installer will export the entire model of an app as JSON. You can also
+ * add specific external content via `addModelDataSheet`. These data sheets (called
+ * `additions`) will be exported into subfolders of the default `Model` folder (see below).
  * 
  * ## Export folder and file structure
  * 
