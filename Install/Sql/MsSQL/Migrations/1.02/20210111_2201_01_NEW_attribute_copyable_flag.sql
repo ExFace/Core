@@ -10,5 +10,5 @@ INSERT INTO [exf_attribute] ([oid], [attribute_alias], [attribute_name], [object
 	
 -- DOWN
 
-ALTER TABLE [exf_attribute]
+ALTER TABLE [dbo].[exf_attribute]
 	DROP COLUMN [attribute_copyable_flag];
