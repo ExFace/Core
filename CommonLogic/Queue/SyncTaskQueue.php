@@ -44,11 +44,7 @@ class SyncTaskQueue extends AsyncTaskQueue
         if (! $event->hasResult()) {
             throw new QueueRuntimeError($this, "Performing the task with UID '{$uid}' did not produce any result or error");
         }
-        $result = $event->getResult();
-        if ($result instanceof ResultError) {
-            throw $result->getException();
-        }
-        return $result;
+        return $event->getResult();
     }
     
     /**
@@ -94,7 +90,7 @@ class SyncTaskQueue extends AsyncTaskQueue
                 $e = new QueueRuntimeError($this, 'Error in queue "' . $this->getName() . '": ' . $e->getMessage(), null, $e);
             }
             
-            $this->getWorkbench()->getLogger()->logException($e, $this->getLogLevel($e->getLogLevel()));
+            $this->getWorkbench()->getLogger()->logException($e, $this->getErrorLogLevel($e->getLogLevel()));
             
             $this->saveError($ds, $e, QueuedTaskStateDataType::STATUS_ERROR, (microtime(true) - $start));
             
