@@ -296,7 +296,7 @@ class App implements AppInterface
             $ds->getFilters()->addConditionFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
             $ds->dataRead();
             if ($ds->countRows() == 0) {
-                throw new LogicException('No app matching alias "' . $this->getAliasWithNamespace() . '" is installed!');
+                throw new AppNotFoundError('No app matching alias "' . $this->getAliasWithNamespace() . '" is installed!');
             }
             if ($ds->countRows() > 1) {
                 throw new LogicException('Multiple apps matching the alias "' . $this->getAliasWithNamespace() . '" found!');
