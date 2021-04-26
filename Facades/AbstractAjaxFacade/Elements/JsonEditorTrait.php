@@ -1827,7 +1827,7 @@ JS;
         if ($widget instanceof InputUxon) {
             $expr = $widget->getSchemaExpression();
             if ($expr->isString() === true) {
-                return '"' . trim($expr->toString(), "'\"") . '"';
+                return json_encode(trim($expr->toString(), "'\""));
             } elseif ($expr->isReference() === true) {
                 $link = $expr->getWidgetLink($widget);
                 return $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetColumnId());

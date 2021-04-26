@@ -76,6 +76,7 @@ class UxonAutosuggest extends AbstractAction
         $schemaName = $task->getParameter(self::PARAM_SCHEMA);
         $schemaBase = new UxonObject();
         $rootObject = null;
+        $rootPrototypeClass = null;
         
         if ($rootObjectSelector = $task->getParameter(self::PARAM_OBJECT)) {
             try {

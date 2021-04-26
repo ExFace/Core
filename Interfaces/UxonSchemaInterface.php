@@ -7,7 +7,11 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 interface UxonSchemaInterface extends WorkbenchDependantInterface
 {   
     /**
-     * Returns the name of the schema: widget, action, datatype, etc.
+     * Returns the name of the schema: widget, action, datatype, etc. or `generic` for the generic UxonSchema.
+     * 
+     * If a custom schema class is used (e.g. a derivative of UxonSchema), this method will return the qualified
+     * PHP class name. 
+     * 
      * @return string
      */
     public static function getSchemaName() : string;

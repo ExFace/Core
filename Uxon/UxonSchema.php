@@ -902,7 +902,13 @@ class UxonSchema implements UxonSchemaInterface
      */
     public static function getSchemaName() : string
     {
-        return UxonSchemaNameDataType::GENERIC;
+        $thisClass = get_called_class();
+        $genericClass = UxonSchema::class;
+        if ($thisClass === $genericClass) {
+            return UxonSchemaNameDataType::GENERIC;
+        } else {
+            return '\\' . $thisClass;
+        }
     }
     
     /**
@@ -936,7 +942,7 @@ class UxonSchema implements UxonSchemaInterface
         }
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $objectAlias);
         $ds->getColumns()->addMultiple(['UID','NAME', 'PROTOTYPE__LABEL', 'DESCRIPTION', 'PROTOTYPE', 'UXON' , 'WRAP_PATH', 'WRAP_FLAG', 'THUMBNAIL']);
-        $ds->getFilters()->addConditionFromString('UXON_SCHEMA', $schema::getSchemaName());
+        $ds->getFilters()->addConditionFromString('UXON_SCHEMA', $schema::getSchemaName(), ComparatorDataType::EQUALS);
         $ds->getSorters()
         ->addFromString('PROTOTYPE', SortingDirectionsDataType::ASC)
         ->addFromString('NAME', SortingDirectionsDataType::ASC);
