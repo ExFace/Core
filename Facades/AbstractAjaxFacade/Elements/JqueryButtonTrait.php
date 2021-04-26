@@ -266,7 +266,11 @@ JS;
         
         $effectsJs = '';
         foreach ($effects as $effect) {
-            $effectsJs .= $effect->exportUxonObject()->toJson() . ',';
+            $effectUxon = $effect->exportUxonObject();
+            // Make sure the `effected_object` property is set in all cases - even if it was not
+            // set in the original UXON or not required by it (e.g. implied by relation path, etc.)
+            $effectUxon->setProperty('effected_object', $effect->getEffectedObject()->getAliasWithNamespace());
+            $effectsJs .= $effectUxon->toJson() . ',';
         }
         
         $refreshIds = '';
