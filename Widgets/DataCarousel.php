@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iShowDataColumn;
 
 /**
  * A master-detail widget showing a data widget and a detail-container (e.g. Form) working on the same data.
@@ -26,19 +27,50 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * The width/height of each area can be simply controlled by setting `width` or `height` of the respecitve
  * child widget.
  * 
+ * **NOTE:** sharing data between the data widget and the details-widgets only works if they are based
+ * on the same object or are explicitly bound to the same data columns - see examples for more information.
+ * You can still add other types of widgets to the details container (e.g. based on another object or not
+ * boundt to data at all), but they will not react to seletions made in the data widget.
+ * 
  * ## Example
  * 
  * ```
  * {
  *  "widget_type": "DataCarousel",
+ *  "object_alias": "exface.Core.OBJECT"
  *  "data": {
- *      "widget_type": "DataTableResponsive"
+ *      "widget_type": "DataTableResponsive",
+ *      "columns": [
+ *          {"attribute_alias": "NAME"},
+ *          {"data_column_name": "my_custom_column"}
+ *      ],
+ *      "buttons": [
+ *          {"action_alias": "exface.Core.UpdateData"}
+ *      ]
  *  },
  *  "details": {
- *      "widget_type": "Form"
+ *      "widget_type": "Form",
+ *      "widgets": [
+ *          {"attribute_alias": "NAME"},
+ *          {"attribute_alias": "ALIAS"},
+ *          {"data_column_name": "my_custom_column", "widget_type": "Input"}
+ *      ]
  *  }
  * 
  * ```
+ * 
+ * In this example, a responsive table with meta object names and an (empty) custom column will be
+ * shown next to a form, that will get filled with the data of the selected row from the table. 
+ * If the `NAME` is changed in the form, it will change immediately in the table - but the change
+ * will only get saved in the data source once the `UpdateData` button is pressed (saving all changed
+ * rows). 
+ * 
+ * Also note, that the `ALIAS` is only present in the details widget. It will be added to the table
+ * as an invisible column automatically, so changes to it will still have effect.
+ * 
+ * The non-attribute `my_custom_column` will be synced between the data and the details widget too
+ * because both widgets are bound to the same data column. In this case, the column/widget both need
+ * to be explicitly defined - no invisible column can be added automatically! 
  * 
  * ## Responsive behavior
  * 
@@ -121,8 +153,10 @@ class DataCarousel extends Split
         if ($this->hasDetailsWidget()) {
             $details = $this->getDetailsWidget();
             foreach ($this->getChildrenToSyncWithDataWidget($details) as $child) {
-                if (! $widget->getColumnByAttributeAlias($child->getAttributeAlias())) {
-                    $widget->addColumn($widget->createColumnFromAttribute($child->getAttribute(), null, true));
+                if ($child instanceof iShowSingleAttribute && $child->isBoundToAttribute()) {
+                    if (! $widget->getColumnByAttributeAlias($child->getAttributeAlias())) {
+                        $widget->addColumn($widget->createColumnFromAttribute($child->getAttribute(), null, true));
+                    }
                 }
             }
             $this->dataWidgetInitialized = true;
@@ -131,7 +165,13 @@ class DataCarousel extends Split
     }
     
     /**
-     * Returns all the details widgets, which need data that can be loaded via data widget.
+     * Returns all the details widgets, which need data that can be loaded via data widget:
+     * 
+     * - Those bound to an attribute of the same object as the carousel
+     * - Those bound to a data column (e.g. via `data_column_name`) base on the same object
+     * 
+     * The search for details widget is performed recursively in all containers within the
+     * `details` widget.
      * 
      * @param iContainOtherWidgets $container
      * @return WidgetInterface[]
@@ -144,6 +184,7 @@ class DataCarousel extends Split
                 case ! $child->getMetaObject()->is($this->getMetaObject()):
                     break;
                 case $child instanceof iShowSingleAttribute && $child->isBoundToAttribute():
+                case $child instanceof iShowDataColumn && $child->isBoundToDataColumn():
                     $widgets[] = $child;
                     break;
                 case $child instanceof iContainOtherWidgets:
