@@ -261,10 +261,15 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
     /**
      * Regular expression for the model builder to find relations (foreign keys) automatically.
      * 
-     * Refet to the documentation of the specific model builder for details!
+     * Refer to the documentation of the specific model builder for details!
+     * 
+     * Typical examples:
+     * - `/(?<alias>(?<table>.*))_(?<key>id)/i` - product_id -> relation to table "product"
+     * - `/(?<alias>(?<table>.*))(?<key>Id)/i` - ProductId -> relation to table "product"
      * 
      * @uxon-property relation_matcher
      * @uxon-type string
+     * @uxon-template /(?<alias>(?<table>.*))_(?<key>id)/i
      * 
      * @param string $value
      * @return AbstractSqlConnector
