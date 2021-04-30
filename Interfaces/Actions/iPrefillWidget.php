@@ -5,6 +5,14 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 
+/**
+ * Interface for actions that fetch prefill data for widgets.
+ * 
+ * @triggers \exface\Core\Events\Widget\OnPrefillDataLoadedEvent
+ * 
+ * @author andrej.kabachnik
+ *
+ */
 interface iPrefillWidget extends ActionInterface
 {
     const REFRESH_AUTO = 'auto';
