@@ -15,7 +15,9 @@ use exface\Core\DataTypes\StringDataType;
 /**
  * Opens a dialog modeled within the actions configuration.
  * 
- * **NOTE: ** `effects` defined for this action explicitly will be triggered __after__ the dialog is closed!
+ * **NOTE: ** `effects` eventually defined for this action explicitly will be triggered **after** the dialog is closed!
+ * 
+ * ## Dialog contents
  * 
  * To define the dialog contents use either
  * 
@@ -26,9 +28,45 @@ use exface\Core\DataTypes\StringDataType;
  * If you are reusing a dialog (e.g. extend one) as the contents of this action, you can overwrite
  * its `buttons` by setting `dialog_buttons` in the action config.
  * 
+ * ## Maximizing a dialog
+ * 
  * You can force the `Dialog` to open regularly or maximized by via `maximize` property. The exact effect
  * of this property depends on the facade/template used for rendering and how it handles the `maximized`
  * property of dialog widgets.
+ * 
+ * ## Prefilling data
+ * 
+ * You can open a dialog either empty (more precisely filled with default values of each widget) or
+ * prefilled with certain data: set `prefill_with_input_data` to `true` to make the dialog use the
+ * actions input data for prefill. And it is not just the input data - most of the time the input
+ * data will actually represent one or more data items of the input object and this action will
+ * be smart enough to pull all data required for the dialog - not only those columns really present
+ * in the input data.
+ * 
+ * This prefill logic is a great help as you can easily build and reuse complex editors without having
+ * to worry about loading the required data - all that you need is some data row with a UID in it.
+ * 
+ * ### Customizing prefills
+ * 
+ * There are many ways to customize the prefill logic. Here are the most commonly used properties:
+ * 
+ * - `prefill_with_input_data`
+ * - `prefill_with_prefill_data`
+ * - `prefill_with_filter_context`
+ * - `prefill_disabled`
+ * - `prefill_data_sheet`
+ * - `prefill_data_refresh`
+ * 
+ * Perhaps the most traigh-forward option is to use `prefill_with_input_data` and `input_mappers` or 
+ * a pre-defined `input_data_sheet`.
+ * 
+ * ### Debugging prefills
+ * 
+ * As you may have noticed, the prefill logic is quite complex. Especially if the dialog shows a different 
+ * object than that of the input data or when `input_mappers` are used, it is not easy obvious, how
+ * exactly the prefill works. In these cases use the tracer in the debug context and look for 
+ * `Prefill data loaded for ...` entries in the trace. They will contain a detailed explanation for
+ * the prefill logic used in a particular case.
  * 
  * @author Andrej Kabachnik
  *
@@ -125,6 +163,10 @@ class ShowDialog extends ShowWidget implements iShowDialog
         return $dialog;
     }
 
+    /**
+     * 
+     * @return string
+     */
     protected function getDialogCaption()
     {
         if ($this->getWidgetDefinedIn()) {
