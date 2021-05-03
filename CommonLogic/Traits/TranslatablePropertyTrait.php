@@ -38,7 +38,7 @@ trait TranslatablePropertyTrait {
         if ($this->isValueFormula($propertyValue) === true) {
             $expr = ExpressionFactory::createFromString($this->getWorkbench(), $propertyValue);
             if ($expr->isStatic()) {
-                return $expr->evaluate();
+                return $expr->evaluate() ?? '';
             } else {
                 throw new RuntimeException('Cannot use dynamic formula "' . $propertyValue . '" as a static value!');
             }
