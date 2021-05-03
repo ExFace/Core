@@ -20,6 +20,7 @@ use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\DataTypes\DataSheetDataType;
 
 /**
  * Tracks time and users that created/changed objects and prevents concurrent writes comparing the update-times.
@@ -570,6 +571,15 @@ class TimeStampingBehavior extends AbstractBehavior
         } else {
             return $check_sheet;
         }
+        
+        // Remove nested sheet columns
+        // TODO better read max-timestamp of all nested data here!
+        foreach ($check_sheet->getColumns() as $col) {
+            if ($col->getDataType() instanceof DataSheetDataType) {
+                $check_sheet->getColumns()->remove($col);
+            }
+        }
+        
         $check_sheet->dataRead();
         return $check_sheet;
     }
