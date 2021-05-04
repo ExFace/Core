@@ -15,6 +15,7 @@ use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Interfaces\Security\PasswordAuthenticationTokenInterface;
 use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthToken;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
+use exface\Core\CommonLogic\Security\AuthenticationToken\MetamodelUsernamePasswordAuthToken;
 
 /**
  * This PSR-15 middleware to handle authentication via workbench security.
@@ -184,7 +185,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
             $explodedCredential = explode(":", base64_decode($matches[1]), 2);
             if (count($explodedCredential) == 2) {
                 list($username, $password) = $explodedCredential;
-                return new UsernamePasswordAuthToken($username, $password, $facade);
+                return new MetamodelUsernamePasswordAuthToken($username, $password);
             }
         }
         return null;
