@@ -986,8 +986,6 @@ class DataSheet implements DataSheetInterface
                 continue;
             }
             
-            $nestedSheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $sheetArr);
-            
             // Use the dataReplaceByFilters() method to do the replacement. This will ensure, that
             // removed rows will be deleted from the data source - ultimately removing all rows
             // if the new nested sheet is empty.
@@ -999,11 +997,22 @@ class DataSheet implements DataSheetInterface
             // the main sheet's row.
             $relPathToNestedSheet = RelationPathFactory::createFromString($this->getMetaObject(), $column->getAttributeAlias());
             $relPathFromNestedSheet = $relPathToNestedSheet->reverse();
-            $relThisSheetKeyCol = $this->getColumns()->getByAttribute($relPathFromNestedSheet->getRelationLast()->getRightKeyAttribute());
+            $relThisSheetKeyAttr = $relPathFromNestedSheet->getRelationLast()->getRightKeyAttribute();
+            $relThisSheetKeyCol = $this->getColumns()->getByAttribute($relThisSheetKeyAttr);
             $relThisKeyVal = $relThisSheetKeyCol->getCellValue($rowNr);
             if (! $relThisSheetKeyCol || $relThisKeyVal === '' || $relThisKeyVal === mull) {
                 throw new DataSheetWriteError($this, 'Cannot update nested data - missing key value in main data sheet!');
             }
+            
+            // Instantiate a subsheet from the value
+            $nestedSheet = DataSheetFactory::createSubsheetFromUxon(
+                $this, // parent
+                UxonObject::fromAnything($sheetArr), // subsheet UXON
+                $relPathFromNestedSheet->toString(), // JOIN key alias in subsheet
+                $relThisSheetKeyCol->getAttributeAlias(), // JOIN key alias in parent
+                $relPathToNestedSheet //relation path from parent sheet to nested sheet
+            );
+            
             $nestedSheet->getFilters()->addConditionFromString($relPathFromNestedSheet->toString(), $relThisKeyVal, ComparatorDataType::EQUALS);
             if (! $relNestedSheetCol = $nestedSheet->getColumns()->getByExpression($relPathFromNestedSheet->toString())) {
                 $relNestedSheetCol = $nestedSheet->getColumns()->addFromExpression($relPathFromNestedSheet->toString());
@@ -1011,9 +1020,18 @@ class DataSheet implements DataSheetInterface
             $relNestedSheetCol->setValues($relThisKeyVal);
             
             if (! $nestedSheet->hasUidColumn(true) && $nestedSheet->getMetaObject()->hasUidAttribute()) {
-                if (! $nestedSheet->isEmpty()) {
-                    $nestedUidSheet = $nestedSheet->copy();
+                // If the nested sheet has data, try to find the corresponding UID values in the data source
+                if (! $nestedSheet->isEmpty() && $nestedSheet->getMetaObject()->isReadable()) {
+                    // Add a UID column to the original nested sheet to store looked up values
+                    // Need to add it here explicitly to make sure it exists even if we don't find
+                    // any UIDs, which would mean all nested rows are new ones!
                     $nestedSheet->getColumns()->addFromUidAttribute();
+                    
+                    // Make a copy of the nested sheet
+                    $nestedUidSheet = $nestedSheet->copy();
+                    // Add the UID column
+                    $nestedUidSheet->getColumns()->addFromUidAttribute();
+                    // Add filters for every column in the original nested sheet
                     foreach ($nestedSheet->getColumns() as $col) {
                         // Skip the column with the relation to the main heet because we
                         // added filters for it in the previous step
@@ -1022,15 +1040,31 @@ class DataSheet implements DataSheetInterface
                         }
                         $nestedUidSheet->getFilters()->addConditionFromColumnValues($col);
                     }
+                    // Read the data
                     $nestedUidSheet->dataRead();
+                    // Now we have read all rows from the data source, that have the same values as
+                    // the nested sheet in all columns except the UID
+                    // NOTE: the read data might also contain other system colums!
                     $nestedUidColName = $nestedUidSheet->getUidColumnName();
                     foreach ($nestedUidSheet->getRows() as $nestedUidRow) {
+                        // Now find rows in the original nested sheet, that have the same values
+                        // as this rows of the read sheet and give them the UID of this freshly read row.
+                        // To do this we strip off everything from the row, that is not present in
+                        // the original sheet and the UID value of course too.
                         $nestedUid = $nestedUidRow[$nestedUidColName];
                         unset($nestedUidRow[$nestedUidColName]);
+                        foreach (array_keys($nestedUidRow) as $cn) {
+                            if (! $nestedSheet->getColumns()->get($cn)) {
+                                unset($nestedUidRow[$cn]);
+                            }
+                        }
+                        // Search for matching rows of the original sheet
                         $nestedSheetIdxs = $nestedSheet->findRowsByValues($nestedUidRow);
+                        // If it's a single row exactly - we would end up with non-unique UIDs which is bad...
                         if (count($nestedSheetIdxs) !== 1) {
                             throw new DataSheetWriteError($this, 'Cannot process subsheet for "' . $column->getAttributeAlias() . '": UID count mismatch!');
                         }
+                        // If everything worked well, put the UID into the original nested sheet
                         $nestedSheet->setCellValue($nestedUidColName, $nestedSheetIdxs[0], $nestedUid);
                     }
                 }
@@ -1094,7 +1128,7 @@ class DataSheet implements DataSheetInterface
                     $deleteCnt += $delete_ds->dataDelete($transaction);
                 }
             } else {
-                throw new DataSheetWriteError($this, 'Cannot delete redundant rows while replacing data for "' . $this->getMetaObject()->getAliasWithNamespace() . '": data sheet has no UID, so there is no way to compare it\' rows to the data source reliably.', '6T5V5EB');
+                throw new DataSheetWriteError($this, 'Cannot delete redundant rows while replacing data for "' . $this->getMetaObject()->getAliasWithNamespace() . '": data sheet has no UID, so there is no way to compare its rows to the data source reliably.', '6T5V5EB');
             }
         }
         
