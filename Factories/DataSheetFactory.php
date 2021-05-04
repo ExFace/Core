@@ -9,8 +9,9 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataSheets\DataSheetSubsheetInterface;
 use exface\Core\CommonLogic\DataSheets\DataSheetSubsheet;
-use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Exceptions\UxonParserError;
 
 abstract class DataSheetFactory extends AbstractUxonFactory
 {
@@ -70,18 +71,29 @@ abstract class DataSheetFactory extends AbstractUxonFactory
      */
     public static function createFromUxon(Workbench $exface, UxonObject $uxon, MetaObjectInterface $fallback_object = null)
     {
+        $meta_object = static::findObject($uxon, $exface) ?? $fallback_object;
+        $data_sheet = self::createFromObject($meta_object);
+        $data_sheet->importUxonObject($uxon);
+        return $data_sheet;
+    }
+    
+    /**
+     * 
+     * @param UxonObject $uxon
+     * @param WorkbenchInterface $workbench
+     * @return MetaObjectInterface|NULL
+     */
+    protected static function findObject(UxonObject $uxon, WorkbenchInterface $workbench) : ?MetaObjectInterface
+    {
         $object_ref = $uxon->hasProperty('object_alias') ? $uxon->getProperty('object_alias') : $uxon->getProperty('meta_object_alias');
         if (! $object_ref){
             $object_ref = $uxon->hasProperty('meta_object_id') ? $uxon->getProperty('meta_object_id') : $uxon->getProperty('oId');
         }
         if ($object_ref) {
-            $meta_object = $exface->model()->getObject($object_ref);
-        } else {
-            $meta_object = $fallback_object;
+            return $workbench->model()->getObject($object_ref);
         }
-        $data_sheet = self::createFromObject($meta_object);
-        $data_sheet->importUxonObject($uxon);
-        return $data_sheet;
+        
+        return null;
     }
 
     /**
@@ -107,16 +119,54 @@ abstract class DataSheetFactory extends AbstractUxonFactory
     }
     
     /**
+     * Instantiates an empty subsheet for the given paren data sheet
      * 
      * @param DataSheetInterface $parentSheet
      * @param MetaObjectInterface $subsheetObject
      * @param string $joinKeyAliasOfSubsheet
      * @param string $joinKeyAliasOfParentSheet
      * @param MetaRelationPathInterface $relationPathFromParentSheet
+     * 
      * @return DataSheetSubsheetInterface
      */
-    public static function createSubsheet(DataSheetInterface $parentSheet, MetaObjectInterface $subsheetObject, string $joinKeyAliasOfSubsheet, string $joinKeyAliasOfParentSheet, MetaRelationPathInterface $relationPathFromParentSheet = null) : DataSheetSubsheetInterface
+    public static function createSubsheet(
+        DataSheetInterface $parentSheet, 
+        MetaObjectInterface $subsheetObject, 
+        string $joinKeyAliasOfSubsheet, 
+        string $joinKeyAliasOfParentSheet, 
+        MetaRelationPathInterface $relationPathFromParentSheet = null
+    ) : DataSheetSubsheetInterface
     {
         return new DataSheetSubsheet($subsheetObject, $parentSheet, $joinKeyAliasOfSubsheet, $joinKeyAliasOfParentSheet, $relationPathFromParentSheet);
+    }
+    
+    /**
+     * Instantiates a subsheet for a given parent data sheet from a UXON model of the subsheet
+     * 
+     * @param DataSheetInterface $parentSheet
+     * @param UxonObject $subsheetUxon
+     * @param string $joinKeyAliasOfSubsheet
+     * @param string $joinKeyAliasOfParentSheet
+     * @param MetaRelationPathInterface $relationPathFromParentSheet
+     * 
+     * @throws UxonParserError
+     * 
+     * @return DataSheetSubsheetInterface
+     */
+    public static function createSubsheetFromUxon(
+        DataSheetInterface $parentSheet,
+        UxonObject $subsheetUxon,
+        string $joinKeyAliasOfSubsheet,
+        string $joinKeyAliasOfParentSheet,
+        MetaRelationPathInterface $relationPathFromParentSheet = null
+    ) : DataSheetSubsheetInterface
+    {
+        $subsheetObject = static::findObject($subsheetUxon, $parentSheet->getWorkbench());
+        if ($subsheetObject === null) {
+            throw new UxonParserError($subsheetUxon, 'Cannot create data subsheet from UXON: no meta object found!');
+        }
+        $subsheet = static::createSubsheet($parentSheet, $subsheetObject, $joinKeyAliasOfSubsheet, $joinKeyAliasOfParentSheet, $relationPathFromParentSheet);
+        $subsheet->importUxonObject($subsheetUxon);
+        return $subsheet;
     }
 }
