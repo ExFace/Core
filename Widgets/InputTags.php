@@ -27,9 +27,13 @@ class InputTags extends InputCombo
     public function getTagData() : DataSheetInterface
     {
         if ($this->tagData === null) {
-            $this->tagData = $this->getOptionsDataSheet();
-            $this->tagData->getColumns()->addFromSystemAttributes();
-            $this->tagData->dataRead();
+            $sheet = $this->getOptionsDataSheet()->copy();
+            $sheet->getColumns()->addFromSystemAttributes();
+            if ($sheet->getSorters()->isEmpty()) {
+                $sheet->getSorters()->addFromString($this->getTextAttributeAlias());
+            }
+            $sheet->dataRead();
+            $this->tagData = $sheet;
         }
         return $this->tagData;
     }
