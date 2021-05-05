@@ -4102,6 +4102,156 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2021-04-30 20:23:30",
+            "MODIFIED_ON": "2021-05-05 11:21:20",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebbb5d2ac44ab2bb5d025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Nested data as spreadsheet (child-objects inside parent-editor)",
+            "DESCRIPTION": "Use this preset to embed editable tables with simple child-objects or mappings (like categories) in an object editor. Each line will represent a child object. Lines can be added or removed even if the parent-object is not saved yet. Changes are saved together with the parent. Using a spreadsheet allows to quickly pull values along rows and columns. \n\nIf a column represents a relation, use consider using `InputCombo` widget without lazy loading to improve performance of the spreadsheet (see example in second column)",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataSpreadSheet.php",
+            "UXON": {
+                "widget_type": "DataSpreadSheet",
+                "object_alias": "\/\/ REPLACE WITH CHILD-OBJECT OR MAPPING-OBJECT ALIAS",
+                "hide_header": true,
+                "hide_footer": true,
+                "hide_caption": true,
+                "height": 12,
+                "filters": [
+                    {
+                        "attribute_alias": "\/\/ REPLACE WITH RELATION TO PARENT OBJECT",
+                        "required": true,
+                        "widget_type": "InputHidden",
+                        "value": ""
+                    }
+                ],
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "attribute_alias": "",
+                        "cell_widget": {
+                            "widget_type": "InputComboTable",
+                            "lazy_loading": false
+                        }
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/spreadsheet_small.gif"
+        },
+        {
+            "CREATED_ON": "2021-05-05 10:29:14",
+            "MODIFIED_ON": "2021-05-05 11:10:51",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb24df981f9bab24d747827435ce5",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Data spread sheet (like Excel)",
+            "DESCRIPTION": "A spreadsheet is an editable `DataTable` that works like Excel. By default all columns based on editable attributes are editable. Set `disabled` or `editable` to `false` to create a non-editable column. Pagination is disabled by default and also not recommended for spreadsheets as switching pages would discard changes. ",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataSpreadSheet.php",
+            "UXON": {
+                "widget_type": "DataSpreadSheet",
+                "object_alias": "",
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "attribute_alias": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/spreadsheet.gif"
+        },
+        {
+            "CREATED_ON": "2021-05-05 11:35:46",
+            "MODIFIED_ON": "2021-05-05 11:36:57",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb951a44d9f260951a025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Nested data as tags (tag selector in object editor)",
+            "DESCRIPTION": "If you have a mapping between an object and predefined tags or categories (known as 3-table tagging in SQL), use this preset to create a tag-selector inside a widget based on the main object. Since the `InputTags` widget is based on the mapping-object, it will produce nested data for every mapping. The autosuggest will list all available tags as long as the `attribute_alias` is the relation from the mapping-object to the tag-object.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/InputTags.php",
+            "UXON": {
+                "widget_type": "InputTags",
+                "object_alias": "\/\/ REPLACE WITH ALIAS OF MAPPING-OBJECT",
+                "attribute_alias": "\/\/ REPLACE WITH RELATION FROM MAPPING TO TAG",
+                "required": false,
+                "multi_select": true,
+                "caption": "Tags"
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/input\/tags.gif"
+        },
+        {
+            "CREATED_ON": "2021-05-05 11:41:40",
+            "MODIFIED_ON": "2021-05-05 11:49:35",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb8e9b1808dd368e9b025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Nested data as combo (category mapping in object editor)",
+            "DESCRIPTION": "If you have a mapping between an object and predefined categories, use this preset to create a dropdown-selector inside a widget based on the main object. Since the `InputComboTabel` widget is based on the mapping-object, it will produce nested data for every mapping. The autosuggest will list all available tags as long as the `attribute_alias` is the relation from the mapping-object to the category-object.\n\nUsing an `InputComboTable` allows to display additional information about each category like a description. For simpler objects like tags also consider `InputTags`.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/InputComboTable.php",
+            "UXON": {
+                "widget_type": "InputTags",
+                "object_alias": "\/\/ REPLACE WITH ALIAS OF MAPPING-OBJECT",
+                "attribute_alias": "\/\/ REPLACE WITH RELATION FROM MAPPING TO TAG",
+                "required": false,
+                "multi_select": true
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/input\/combo_table_multi.gif"
+        },
+        {
+            "CREATED_ON": "2021-05-05 11:52:20",
+            "MODIFIED_ON": "2021-05-05 11:52:20",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb907495d31e7e9074025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Multi-select filter",
+            "DESCRIPTION": "Replace `widget_type` of the input widget with `InputComboTable`, `InputTags` or any other widget you like.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Filter.php",
+            "UXON": {
+                "attribute_alias": "",
+                "input_widget": {
+                    "widget_type": "InputSelect",
+                    "multi_select": true
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/input\/select_multi.gif"
+        },
+        {
+            "CREATED_ON": "2021-05-05 11:55:12",
+            "MODIFIED_ON": "2021-05-05 11:55:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebac37fcc9f8a0ac37025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Range filter for dates or numbers",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Filter.php",
+            "UXON": {
+                "attribute_alias": "",
+                "widget_type": "RangeFilter"
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/inline_range.gif"
         }
     ],
     "totals_rows": [],
