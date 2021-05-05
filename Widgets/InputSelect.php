@@ -507,7 +507,7 @@ class InputSelect extends Input implements iSupportMultiSelect
             // Split the value by value delimiter, but only if the raw value does not match
             // one of the selectable options exactly!
             if (! array_key_exists($this->getValue(), $this->getSelectableOptions())) {
-                return explode($this->getMultiSelectValueDelimiter(), $this->getValue());
+                return array_map('trim', explode($this->getMultiSelectValueDelimiter(), $this->getValue()));
             } else {
                 return [$this->getValue()];
             }
@@ -789,7 +789,10 @@ class InputSelect extends Input implements iSupportMultiSelect
     public function getOptionsDataSheet()
     {
         if (is_null($this->options_data_sheet)) {
-            $this->options_data_sheet = DataSheetFactory::createFromObject($this->getOptionsObject());
+            $sheet = DataSheetFactory::createFromObject($this->getOptionsObject());
+            $sheet->getColumns()->addFromAttribute($this->getValueAttribute());
+            $sheet->getColumns()->addFromAttribute($this->getTextAttribute());
+            $this->options_data_sheet = $sheet;
         }
         return $this->options_data_sheet;
     }
