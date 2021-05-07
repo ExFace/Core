@@ -11,10 +11,13 @@ use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\AppFactory;
-use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Factories\ActionFactory;
+use axenox\PackageManager\StaticInstaller;
+use exface\Core\CommonLogic\ArchiveManager;
+use Psr\Http\Message\StreamInterface;
 
 
 class PackagistFacade extends AbstractHttpFacade
@@ -36,84 +39,101 @@ class PackagistFacade extends AbstractHttpFacade
         $uri = $request->getUri();
         $path = $uri->getPath();
         $topics = explode('/',substr(StringDataType::substringAfter($path, $this->getUrlRouteDefault()), 1));
-        $workbench = $this->getWorkbench();
         if ($topics[0] === 'packages') {
-            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.APP');
-            $ds->getColumns()->addMultiple(['FOLDER', 'PACKAGE', 'PACKAGE__version', 'ALIAS']);
-            /*$ds->getColumns()->addFromExpression('FOLDER');
-            $ds->getColumns()->addFromExpression('PACKAGE');
-            $ds->getColumns()->addFromExpression('PACKAGE__version');
-            $ds->getColumns()->addFromExpression('ALIAS');*/
-            $ds->dataRead();
-            $json = [
-                'packages' => []
-            ];
-            foreach($ds->getRows() as $row) {
-                if ($row['PACKAGE__version']) {
-                    continue;
-                }
-                $alias = $row['ALIAS'];
-                $app = AppFactory::createFromAlias($alias, $workbench);
-                $packageManager = $this->getWorkbench()->getApp("axenox.PackageManager");
-                $composerJson = $packageManager->getComposerJson($app);
-                $composerJson['version'] = 'dev-master';
-                $composerJson['dist'] = [
-                    'type' => 'zip',
-                    'url' => $this->getPackageUrl($app),
-                    'reference' => $this->getAppVersion()
-                ];
-                $json['packages'][$composerJson['name']] = [
-                    'dev-master' => $composerJson
-                ]; 
-            }
-            /*$value = [
-                'packages' => [
-                    'bachelor/test' => [
-                        'dev-master' => [
-                            'name' => 'bachelor/test',
-                            'version' => 'dev-master',
-                            'dist' => [
-                                'type' => 'zip',
-                                'url' => 'C:/wamp/www/powerui/vendor/bachelor/test2.zip',
-                                'reference' => 'test5',
-                            ],
-                            'time' => '2021-03-30 14:54:14',
-                            'require' => [
-                                'exface/core' => '^1.0',
-                            ],
-                            'autoload' => [
-                                'psr-4' => [
-                                    '\\bachelor\\test\\' => '',
-                                ],
-                                'exclude-from-classmap' => [
-                                    0 => '/Config/',
-                                    1 => '/Translations/',
-                                    2 => '/Model/',
-                                ],
-                            ],
-                            'extra' => [
-                                'app' => [
-                                    'app_uid' => '0x11eb8bcaef76908c8bca8c04ba002958',
-                                    'app_alias' => 'bachelor.test',
-                                    'model_md5' => '942de9702acc046819d46eed0baf37d2',
-                                    'model_timestamp' => '2021-03-17 14:54:14',
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-            ];*/
-            $headers = [];
-            $headers['Content-type'] = ['application/json;charset=utf-8'];
-            $body = json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-            return new Response(200, $headers, $body);
+            return $this->buildResponsePackagesJson();
+        } elseif ($topics[0]) {
+            return $this->buildResponsePackage($topics);
         }
         return new Response(400);
     }
     
-    public function getPackageUrl(AppInterface $app) : string
+    /**
+     * Returns the response including the packages.json
+     * 
+     * @return ResponseInterface
+     */
+    protected function buildResponsePackagesJson() : ResponseInterface
     {
-        return $this->getWorkbench()->getUrl() . $this->getUrlRouteDefault() . '/' . mb_strtolower($app->getVendor() . '/' . str_replace($app->getVendor() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, '', $app->getAliasWithNamespace()));
+        $workbench = $this->getWorkbench();
+        $action = ActionFactory::createFromString($workbench, StaticInstaller::PACKAGE_MANAGER_BACKUP_ACTION_ALIAS);
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.APP');
+        $ds->getColumns()->addMultiple(['FOLDER', 'PACKAGE', 'PACKAGE__version', 'ALIAS', 'PUPLISHED']);
+        $ds->getFilters()->addConditionFromString('PUPLISHED', true, ComparatorDataType::EQUALS);
+        $ds->dataRead();
+        $json = [
+            'packages' => []
+        ];
+        foreach($ds->getRows() as $row) {
+            if ($row['PACKAGE__version']) {
+                continue;
+            }
+            $alias = $row['ALIAS'];
+            $app = AppFactory::createFromAlias($alias, $workbench);
+            $packageManager = $this->getWorkbench()->getApp("axenox.PackageManager");
+            $composerJson = $packageManager->getComposerJson($app);
+            $composerJson['version'] = 'dev-master';
+            $composerJson['dist'] = [
+                'type' => 'zip',
+                'url' => $this->buildPackageUrl($app),
+                'reference' => $this->getAppVersion()
+            ];
+            $json['packages'][$composerJson['name']] = [];            
+            $json['packages'][$composerJson['name']]['dev-master'] = $composerJson;
+            
+        }        
+        $headers = [];
+        $headers['Content-type'] = 'application/json;charset=utf-8';
+        $body = json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        return new Response(200, $headers, $body);
+    }
+    
+    protected function buildResponsePackage(array $topics) : ResponseInterface
+    {
+        $workbench = $this->getWorkbench();
+        $filemanager = $workbench->filemanager();
+        $packageAlias = '';
+        foreach ($topics as $topic) {
+            $packageAlias .= $topic . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
+        }
+        $packageAlias = substr($packageAlias, 0, -1);
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.APP');
+        $ds->getColumns()->addMultiple(['ALIAS', 'PUPLISHED']);
+        $ds->getFilters()->addConditionFromString('PUPLISHED', true, ComparatorDataType::EQUALS);
+        $ds->getFilters()->addConditionFromString('ALIAS', $packageAlias, ComparatorDataType::EQUALS);
+        $ds->dataRead();
+        if ($ds->isEmpty()) {
+            return new Response(400, [], "The package '$packageAlias' does not exist or is not puplished");
+        }
+        $app = AppFactory::createFromAlias($packageAlias, $workbench);        
+        $backupAction = ActionFactory::createFromString($workbench, StaticInstaller::PACKAGE_MANAGER_BACKUP_ACTION_ALIAS);
+        $path = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, DIRECTORY_SEPARATOR, $packageAlias) . DIRECTORY_SEPARATOR . $this->getAppVersion();
+        $path = $filemanager->getPathToPuplishedFolder() . DIRECTORY_SEPARATOR . $path;
+        $backupAction->setBackupPath($path);
+        $generator = $backupAction->backup($app->getSelector());
+        foreach($generator as $gen) {
+            continue;
+        }
+        $zip = new ArchiveManager($workbench, $path . '.zip');
+        $zip->addFolder($path);
+        $zip->close();
+        $headers = [
+            "Content-type" => "application/zip",
+            "Content-Transfer-Encoding"=> "Binary",
+        ];
+        $filemanager->deleteDir($path);
+        return new Response(200, $headers, readfile($path . '.zip'));
+        
+    }
+    
+    /**
+     * Build the URL to include in packages.json for the composer to download the app
+     * 
+     * @param AppInterface $app
+     * @return string
+     */
+    public function buildPackageUrl(AppInterface $app) : string
+    {
+        return $this->buildUrlToFacade() . '/' . mb_strtolower($app->getVendor() . '/' . str_replace($app->getVendor() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, '', $app->getAliasWithNamespace()));
     }
 
     /**
@@ -123,7 +143,7 @@ class PackagistFacade extends AbstractHttpFacade
     protected function getAppVersion(): string
     {
         if (!$this->appVersion) {
-            $this->appVersion = date('Ymd_Hm');
+            $this->appVersion = date('Ymd_Hi');
         }
         return $this->appVersion;
     }
