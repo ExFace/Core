@@ -4252,6 +4252,73 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/inline_range.gif"
+        },
+        {
+            "CREATED_ON": "2021-05-07 12:37:18",
+            "MODIFIED_ON": "2021-05-07 12:39:25",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb68132a9e306b681025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Custom input widget with external JS lib",
+            "DESCRIPTION": "Use any JS UI library to render a custom input in almost any facade",
+            "PROTOTYPE": "exface\/Core\/Widgets\/InputCustom.php",
+            "UXON": {
+                "attribute_alias": "",
+                "widget_type": "InputCustom",
+                "hide_caption": true,
+                "width": "max",
+                "html": "",
+                "script_to_init": "",
+                "script_to_get_value": "",
+                "script_to_set_value": "",
+                "script_variables": {
+                    "": ""
+                },
+                "include_js": [
+                    ""
+                ],
+                "include_css": [
+                    ""
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2021-05-07 12:42:52",
+            "MODIFIED_ON": "2021-05-07 12:42:52",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb80e1f96b18ac80e1025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "HTML WYSIWYG editor (rich text editor) via Quill.JS",
+            "DESCRIPTION": "This preset is an example for the integration of external UI libraries via `InputCustom` widgets.\n\n**NOTE:** The functionality of such custom widgets may be limited: for example, live references and conditional properties like `disable_if` may not work!",
+            "PROTOTYPE": "exface\/Core\/Widgets\/InputCustom.php",
+            "UXON": {
+                "attribute_alias": "",
+                "widget_type": "InputCustom",
+                "hide_caption": true,
+                "width": "max",
+                "height": 20,
+                "html": "<div id=\"[#~sId#]_quill\"><\/div>",
+                "script_to_init": "[#quill#] = new Quill('#[#~sId#]_quill', {\n    theme: 'snow'\n  });",
+                "script_to_get_value": "[#quill#].root.innerHTML",
+                "script_to_set_value": "[#quill#].root.innerHTML = [#~mValue#];",
+                "script_variables": {
+                    "quill": "null"
+                },
+                "include_js": [
+                    "https:\/\/cdn.quilljs.com\/1.0.0\/quill.min.js"
+                ],
+                "include_css": [
+                    "https:\/\/cdn.quilljs.com\/1.0.0\/quill.snow.css"
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": ""
         }
     ],
     "totals_rows": [],

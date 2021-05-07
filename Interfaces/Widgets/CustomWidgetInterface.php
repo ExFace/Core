@@ -44,9 +44,9 @@ interface CustomWidgetInterface extends WidgetInterface
      * was not there).
      * 
      * @param FacadeInterface $facade
-     * @param mixed|NULL $baseElement
+     * @param mixed $baseElement
      * 
      * @return mixed
      */
-    public function createFacadeElement(FacadeInterface $facade, $baseElement = null);
+    public function createFacadeElement(FacadeInterface $facade, $baseElement);
 }
