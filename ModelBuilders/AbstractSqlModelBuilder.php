@@ -243,6 +243,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
             case $sqlType === 'NUMBER':
             case $sqlType === 'DECIMAL':
             case $sqlType === 'FLOAT':
+            case $sqlType === 'DOUBLE':
                 if (is_numeric($scale) === true && $scale == 0) {
                     $data_type = DataTypeFactory::createFromString($workbench, IntegerDataType::class);
                 } else {
