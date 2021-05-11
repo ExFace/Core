@@ -2691,6 +2691,8 @@ JS;
     
     /**
      * build basic tooltip configuration
+     * 
+     * Fix for tooltip position taken from here: https://github.com/apache/echarts/issues/5004
      *
      * @return string
      */
@@ -2703,6 +2705,50 @@ JS;
 	trigger: 'item',
 	formatter: "{b} : {c} ({d}%)",
     confine: true,
+    position: function(canvasMousePos: any, params: any, tooltipDom: any, rect: any, sizes: any) {
+        var margin = 10; // How far away from the mouse should the tooltip be
+        var overflowMargin = 5; // If no satisfactory position can be found, how far away from the edge of the window should the tooltip be kept
+
+        var canvasRect = tooltipDom.parentElement.getElementsByTagName("canvas")[0].getBoundingClientRect();
+
+        // The mouse coordinates relative to the whole window
+        // The first parameter to the position function is the mouse position relative to the canvas
+        var mouseX = canvasMousePos[0] + canvasRect.x;
+        var mouseY = canvasMousePos[1] + canvasRect.y;
+
+        // The width and height of the tooltip dom element
+        var tooltipWidth = sizes.contentSize[0];
+        var tooltipHeight = sizes.contentSize[1];
+
+        // Start by placing the tooltip top and right relative to the mouse position
+        var xPos = mouseX + margin;
+        var yPos = mouseY - margin - tooltipHeight;
+
+        // The tooltip is overflowing past the right edge of the window
+        if (Math.abs(tooltipDom.closest('.GridCardContent').clientWidth - canvasMousePos[0]) < tooltipWidth) {
+            // Attempt to place the tooltip to the left of the mouse position
+            xPos = mouseX - margin - tooltipWidth;
+
+            // The tooltip is overflowing past the left edge of the window
+            if (xPos <= 0)
+                // Place the tooltip a fixed distance from the left edge of the window
+                xPos = overflowMargin;
+        }
+
+        // The tooltip is overflowing past the top edge of the window
+        if (yPos <= 0) {
+            // Attempt to place the tooltip to the bottom of the mouse position
+            yPos = mouseY + margin;
+
+            // The tooltip is overflowing past the bottom edge of the window
+            if (yPos + tooltipHeight >= tooltipDom.closest('.GridCardContent').clientHeight)
+                // Place the tooltip a fixed distance from the top edge of the window
+                yPos = overflowMargin;
+        }
+
+        // Return the position (converted back to a relative position on the canvas)
+        return [xPos - canvasRect.x, yPos - canvasRect.y];
+    },
 },
 
 JS;
