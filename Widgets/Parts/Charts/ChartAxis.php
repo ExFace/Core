@@ -16,10 +16,16 @@ use exface\Core\Widgets\Chart;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
- * The ChartAxis represents the X or Y axis of a chart.
+ * Explicit configuration of the X or Y axis of a chart.
  *
- * Most important properties of a ChartAxis are it's `caption`, `axis_type` (time, text, numbers, etc.), 
- * `position` (left, right, bottom, top) and `min`/`max` values. An axis can also be `hidden`.
+ * Most important properties of a `ChartAxis` are:
+ * 
+ * - `caption` - derived from the caption of the axis data column if not set explicitly
+ * - `hide_caption` - for all axis types except `time` set to `false` by default
+ * - `axis_type` (`time`, `category`, `value`, etc.) - determined automatically from the data type
+ * - `position` (left, right, bottom, top) 
+ * - `min`/`max` values - determined automatically from the data if not set explicitly
+ * - `hidden` - always `false` unless explicitly set to `true`
  *
  * @author Andrej Kabachnik
  *        
@@ -28,6 +34,7 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
 {
     use iHaveCaptionTrait {
         getCaption as getCaptionSetExplicitly;
+        getHideCaption as getHideCaptionSetExplicitly;
     }
 
     private $axis_type = null;
@@ -581,5 +588,15 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     public function hasTicksForEveryValue() : bool
     {
         return $this->ticks_for_every_value ?? $this->getAxisType() === self::AXIS_TYPE_CATEGORY;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see iHaveCaptionTrait::getHideCaption()
+     */
+    public function getHideCaption() : ?bool
+    {
+        return $this->getHideCaptionSetExplicitly() ?? ($this->getAxisType() === self::AXIS_TYPE_TIME ? true : false);
     }
 }
