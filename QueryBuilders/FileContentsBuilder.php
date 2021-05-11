@@ -2,25 +2,47 @@
 namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
-use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
 use exface\Core\Exceptions\QueryBuilderException;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * A query builder to the raw contents of a file.
- * This is the base for many specific query builders like the CsvBuilder, etc.
- *
+ * 
+ * This is the base for format-specific query builders like the `CsvBuilder`, `ExcelBuilder`, etc. It can also be
+ * used by itself to access the raw contents of a single file.
+ * 
+ * ## Data source configuration
+ * 
+ * To access file contents create a data source with this query builder and a connection with the `FileContentsConnector`.
+ * 
+ * ## Object data addresses
+ * 
+ * The meta object address is the file path - either absolute or relative to the base of the corresponding connection.
+ * 
+ * ## Attribute data addresses
+ * 
+ * - `~filepath`
+ * - `~filepath_relative`
+ * - `~contents`
+ * 
+ * These file-specific data addresses are also available in derived query builders.
  *
  * @author Andrej Kabachnik
  *        
  */
 class FileContentsBuilder extends AbstractQueryBuilder
 {
+    const ATTR_ADDRESS_FILEPATH = '~filepath';
+    
+    const ATTR_ADDRESS_FILEPATH_RELATIVE = '~filepath_relative';
+    
+    const ATTR_ADDRESS_CONTENTS = '~contents';
+    
     /**
      *
      * @return FileContentsDataQuery
@@ -28,22 +50,66 @@ class FileContentsBuilder extends AbstractQueryBuilder
     protected function buildQuery()
     {
         $query = new FileContentsDataQuery();
-        $query->setPathRelative($this->replacePlaceholdersInPath($this->getMainObject()->getDataAddress()));
+        $query->setPathRelative($this->getPathForObject($this->getMainObject()));
         return $query;
     }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @param bool $replacePlaceholders
+     * @return string
+     */
+    protected function getPathForObject(MetaObjectInterface $object, bool $replacePlaceholders = true) : string
+    {
+        $path = trim($object->getDataAddress());
+        
+        if ($replacePlaceholders) {
+            $path = $this->replacePlaceholdersByFilterValues($path);
+        }
+        
+        return $path ?? '';
+    }
 
+    /**
+     * 
+     * @param FileContentsDataQuery $query
+     * @param string $data_address
+     * @return mixed
+     */
     protected function getFileProperty(FileContentsDataQuery $query, $data_address)
     {
-        switch (mb_strtoupper($data_address)) {
-            case '_FILEPATH':
+        $prop = mb_strtolower(trim($data_address));
+        if (substr($prop, 0, 1) === '_') {
+            $prop = '~' . substr($prop, 1);
+        }
+        switch ($prop) {
+            case self::ATTR_ADDRESS_FILEPATH:
                 return $query->getPathAbsolute();
-            case '_FILEPATH_RELATIVE':
+            case self::ATTR_ADDRESS_FILEPATH_RELATIVE:
                 return $query->getPathRelative();
-            case '_CONTENTS':
+            case self::ATTR_ADDRESS_CONTENTS:
                 return file_get_contents($query->getPathAbsolute());
             default:
-                return false;
+                throw new QueryBuilderException('Unknown file property data address "' . $data_address . '"!');
         }
+    }
+    
+    /**
+     * 
+     * @param string $dataAddress
+     * @return bool
+     */
+    protected function isFileProperty(string $dataAddress) : bool
+    {
+        $prop = mb_strtoupper(trim($dataAddress));
+        $begin = substr($prop, 0, 1);
+        if ($begin === '_' || $begin === '~') {
+            if (defined(__CLASS__ . '::ATTR_ADDRESS_' . substr($prop, 1))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -55,15 +121,14 @@ class FileContentsBuilder extends AbstractQueryBuilder
     {
         $result_rows = array();
         $query = $this->buildQuery();
-        if (is_null($data_connection)) {
-            $data_connection = $this->getMainObject()->getDataConnection();
-        }
         
         $data_connection->query($query);
         
         foreach ($this->getAttributes() as $qpart) {
             if ($this->getFileProperty($query, $qpart->getDataAddress())) {
                 $result_rows[$qpart->getColumnKey()] = $this->getFileProperty($query, $qpart->getDataAddress());
+            } elseif ($qpart->getDataAddress()) {
+                throw new QueryBuilderException('Unknown data address "' . $qpart->getDataAddress() . '"!');
             }
         }
         
@@ -71,6 +136,7 @@ class FileContentsBuilder extends AbstractQueryBuilder
         
         $this->applyFilters($result_rows);
         $this->applySorting($result_rows);
+        $this->applyAggregations($result_rows, $this->getAggregations());
         $this->applyPagination($result_rows);
         
         $cnt = count($result_rows);
@@ -85,30 +151,6 @@ class FileContentsBuilder extends AbstractQueryBuilder
     public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         return $this->read($data_connection);
-    }
-
-    /**
-     * Looks for placeholders in the give path and replaces them with values from the corresponding filters.
-     * Returns the given string with all placeholders replaced or FALSE if some placeholders could not be replaced.
-     *
-     * @param string $path            
-     * @return string|boolean
-     */
-    protected function replacePlaceholdersInPath($path)
-    {
-        foreach (StringDataType::findPlaceholders($path) as $ph) {
-            if ($ph_filter = $this->getFilter($ph)) {
-                if (! is_null($ph_filter->getCompareValue())) {
-                    $path = str_replace('[#' . $ph . '#]', $ph_filter->getCompareValue(), $path);
-                } else {
-                    throw new QueryBuilderException('Filter "' . $ph_filter->getAlias() . '" required for "' . $path . '" does not have a value!');
-                }
-            } else {
-                // If at least one placeholder does not have a corresponding filter, return false
-                throw new QueryBuilderException('No filter found in query for placeholder "' . $ph . '" required for "' . $path . '"!');
-            }
-        }
-        return $path;
     }
     
     /**
