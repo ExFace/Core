@@ -2698,15 +2698,11 @@ JS;
      */
     protected function buildJsChartPropertyTooltip() : string
     {
-        if ($this->isPieChart() === true) {
-            return <<<JS
-            
-{
-	trigger: 'item',
-	formatter: "{b} : {c} ({d}%)",
-    confine: true,
-    position: function(canvasMousePos: any, params: any, tooltipDom: any, rect: any, sizes: any) {
-        var margin = 10; // How far away from the mouse should the tooltip be
+        // Best-fit tooltip position to avoid overflowing the chart container
+        $fnPositionJs = <<<JS
+function(canvasMousePos, params, tooltipDom, rect, sizes) {
+        var echartsDom = tooltipDom.closest('.exf-chart');
+        var margin = 2; // How far away from the mouse should the tooltip be
         var overflowMargin = 5; // If no satisfactory position can be found, how far away from the edge of the window should the tooltip be kept
 
         var canvasRect = tooltipDom.parentElement.getElementsByTagName("canvas")[0].getBoundingClientRect();
@@ -2724,54 +2720,67 @@ JS;
         var xPos = mouseX + margin;
         var yPos = mouseY - margin - tooltipHeight;
 
-        // The tooltip is overflowing past the right edge of the window
-        if (Math.abs(tooltipDom.closest('.GridCardContent').clientWidth - canvasMousePos[0]) < tooltipWidth) {
-            // Attempt to place the tooltip to the left of the mouse position
-            xPos = mouseX - margin - tooltipWidth;
-
-            // The tooltip is overflowing past the left edge of the window
-            if (xPos <= 0)
-                // Place the tooltip a fixed distance from the left edge of the window
-                xPos = overflowMargin;
-        }
-
-        // The tooltip is overflowing past the top edge of the window
-        if (yPos <= 0) {
-            // Attempt to place the tooltip to the bottom of the mouse position
-            yPos = mouseY + margin;
-
-            // The tooltip is overflowing past the bottom edge of the window
-            if (yPos + tooltipHeight >= tooltipDom.closest('.GridCardContent').clientHeight)
-                // Place the tooltip a fixed distance from the top edge of the window
-                yPos = overflowMargin;
+        if (echartsDom) {
+            // The tooltip is overflowing past the right edge of the window
+            if (Math.abs(echartsDom.clientWidth - canvasMousePos[0]) < tooltipWidth) {
+                // Attempt to place the tooltip to the left of the mouse position
+                xPos = mouseX - margin - tooltipWidth;
+    
+                // The tooltip is overflowing past the left edge of the window
+                if (xPos <= 0)
+                    // Place the tooltip a fixed distance from the left edge of the window
+                    xPos = overflowMargin;
+            }
+    
+            // The tooltip is overflowing past the top edge of the window
+            if (yPos <= 0) {
+                // Attempt to place the tooltip to the bottom of the mouse position
+                yPos = mouseY + margin;
+    
+                // The tooltip is overflowing past the bottom edge of the window
+                if (yPos + tooltipHeight >= echartsDom.clientHeight)
+                    // Place the tooltip a fixed distance from the top edge of the window
+                    yPos = overflowMargin;
+            }
         }
 
         // Return the position (converted back to a relative position on the canvas)
         return [xPos - canvasRect.x, yPos - canvasRect.y];
-    },
+    }
+JS;
+        switch (true) {
+            case $this->isPieChart():
+                return <<<JS
+            
+{
+	trigger: 'item',
+	formatter: "{b} : {c} ({d}%)",
+    confine: true,
+    position: $fnPositionJs,
 },
 
 JS;
-        } elseif ($this->isGraphChart() === true) {
-            return <<<JS
+            case $this->isGraphChart() === true:
+                return <<<JS
 
 {
 	formatter: function(params) {
 		return params.data.name
 	},
     confine: true,
+    position: $fnPositionJs,
 },
 
 JS;
-        } elseif ($this->isHeatmapChart()) {
-            $series = $this->getWidget()->getSeries()[0];
-            $xAxisCaption = $series->getXAxis()->getCaption();
-            $xAxisName = $series->getXAxis()->getDataColumn()->getDataColumnName();
-            $yAxisCaption = $series->getYAxis()->getCaption();
-            $yAxisName = $series->getYAxis()->getDataColumn()->getDataColumnName();
-            $valueName = $series->getValueDataColumn()->getDataColumnName();
-            $valueCaption = $series->getValueDataColumn()->getCaption();
-            return <<<JS
+            case $this->isHeatmapChart() === true:
+                $series = $this->getWidget()->getSeries()[0];
+                $xAxisCaption = $series->getXAxis()->getCaption();
+                $xAxisName = $series->getXAxis()->getDataColumn()->getDataColumnName();
+                $yAxisCaption = $series->getYAxis()->getCaption();
+                $yAxisName = $series->getYAxis()->getDataColumn()->getDataColumnName();
+                $valueName = $series->getValueDataColumn()->getDataColumnName();
+                $valueCaption = $series->getValueDataColumn()->getCaption();
+                return <<<JS
 
 {
 	formatter: function(params) {
@@ -2804,11 +2813,12 @@ JS;
 		return tooltip;
 	},
     confine: true,
+    position: $fnPositionJs,
 },
 
 JS;
-        } else {
-            return <<<JS
+            default:
+                return <<<JS
             
 {
 	trigger: 'axis',
@@ -2818,10 +2828,7 @@ JS;
 	axisPointer: {
 		type: 'cross'
 	},
-    position: function (point) {
-      //postion directly at cursor
-      return [point[0]+5, point[1]+5];
-    },
+    position: $fnPositionJs,
     formatter: function (params) {
         // params is ordered by value Axis (x Axis normally, y Axis for bar charts)
         var options = {$this->buildJsEChartsVar()}.getOption();                       
@@ -2838,17 +2845,21 @@ JS;
         var currentAxis = params[0].axisIndex;
         // for each object in params build a table row
         params.forEach(function({axisIndex, axisValueLabel, marker, value, seriesIndex, seriesName}){
+            var data, Index, formatter, value;
             // get the correct formatter and the data for this object in params array
             if (("_bar" in options.series[seriesIndex]) == true) {
-                var data = options.series[seriesIndex].encode.x;
-                var Index = options.series[seriesIndex].xAxisIndex;
-                var formatter = options.xAxis[Index].axisLabel.formatter;              
+                data = options.series[seriesIndex].encode.x;
+                Index = options.series[seriesIndex].xAxisIndex;
+                formatter = options.xAxis[Index].axisLabel.formatter;              
             } else {
-                var data = options.series[seriesIndex].encode.y;
-                var Index = options.series[seriesIndex].yAxisIndex;
-                var formatter = options.yAxis[Index].axisLabel.formatter;                
+                data = options.series[seriesIndex].encode.y;
+                Index = options.series[seriesIndex].yAxisIndex;
+                formatter = options.yAxis[Index].axisLabel.formatter;                
             }
-            var value = formatter(value[data]);
+            value = formatter(value[data]);
+            if (value === null || value === undefined) {
+                value = '';
+            }
             // if this params object is bound to another axis as the ones before, build a new header with new label
             if (stacked === true) {
                 if (axisIndex !== currentAxis) {
