@@ -27,17 +27,28 @@ use exface\Core\Widgets\DataButton;
 use exface\Core\Widgets\Parts\Charts\HeatmapChartSeries;
 use exface\Core\Widgets\Parts\Charts\VisualMapChartPart;
 use exface\Core\Widgets\Parts\Charts\Interfaces\SplittableChartSeriesInterface;
+use exface\Core\Interfaces\Widgets\iHaveColor;
+use exface\Core\Widgets\Parts\Charts\Interfaces\XYChartSeriesInterface;
 
 /**
  * Trait to use for implementation of charts into a facade using echarts library.
  * 
  * ## How to use
  * 
- * 1. Add the following line to the config of the facade:
- * `"LIBS.ECHARTS.ECHARTS_JS": "exface/Core/Facades/AbstractAjaxFacade/js/echarts/echarts.custom.min.js",`
- * 2. Use the trait in a facade element - see examples in \exface\JEasyUIFacade\Facades\Elements\euiChart.php
+ * 1. Add the following dependencies to the composer.json of the facade: 
+ *      ```
+ *		"npm-asset/tinycolor2": "^1.4.2",
+ *		"npm-asset/tinygradient": "^1.1.4"
+ *      ```
+ * 2. Add the following lines to the config of the facade:
+ *      ```
+ *      "LIBS.ECHARTS.ECHARTS_JS": "exface/Core/Facades/AbstractAjaxFacade/js/echarts/echarts.custom.min.js",
+ *      "LIBS.TINYCOLOR.JS": "npm-asset/tinycolor2/dist/tinycolor-min.js",
+ *      "LIBS.TINYGRADIENT.JS": "npm-asset/tinygradient/browser.js",
+ *      ```
+ * 3. Use the trait in a facade element - see examples in \exface\JEasyUIFacade\Facades\Elements\euiChart.php
  * or \exface\UI5Facade\Facades\Elements\UI5Chart.php.
- * 3. It is recommended to add eCharts as a composer dependency to make it appear in the list of
+ * 4. It is recommended to add eCharts as a composer dependency to make it appear in the list of
  * installed packages and licenses. Add `"npm-asset/echarts" : "^5"` to the `require` section of 
  * the facade's `composer.json`.
  * 
@@ -144,8 +155,9 @@ trait EChartsTrait
         $includes = [];
         
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.ECHARTS.ECHARTS_JS') . '"></script>';
-        
-        
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.TINYCOLOR.JS') . '"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.TINYGRADIENT.JS') . '"></script>';
+                
         foreach ($this->getWidget()->getData()->getColumns() as $col) {
             $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
             $includes = array_merge($includes, $formatter->buildHtmlBodyIncludes($this->getFacade()));
@@ -959,7 +971,7 @@ JS;
             if ($s instanceof HeatmapChartSeries && count($series) > 1) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support heatmap charts with multiple series!');
             }
-            if (($s instanceof LineChartSeries || $s instanceof ColumnChartSeries) && count($series) > 1 && $s->isSplitByAttribute()) {
+            if ($s instanceof SplittableChartSeriesInterface && $s->isSplitByAttribute() && ! $this->canSplitSeries($s)) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support split by attribute with multiple series!');
             }
             $seriesConfig .= $this->buildJsChartSeriesConfig($s) . ',';
@@ -1131,6 +1143,18 @@ JS;
         } else {
             $color = '';
         }
+        //TODO option to show label, define position of it, maybe rotation etc.
+        /*$label = <<<JS
+    label: {
+        show: true,
+        formatter: function(params) {
+            return {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'params.value.' . $series->getValueDataColumn()->getDataColumnName())}
+        }
+    },
+
+JS;
+        */
+        $label = '';
         
         return <<<JS
         
@@ -1144,6 +1168,7 @@ JS;
     xAxisIndex: {$series->getXAxis()->getIndex()},
     yAxisIndex: {$series->getYAxis()->getIndex()},
     {$color}
+    {$label}
     {$this->buildJsStack($series)}
     {$this->buildJsMarkLineProperties($series)}
     
@@ -1957,7 +1982,7 @@ JS;
      * 
      * @return string
      */
-    protected function buildJsRedrawXYChart(string $selection = 'undefined', string $series = 'undefined', string $dataJs = 'rowData') : string
+    protected function buildJsRedrawXYChart(string $selectionJs = 'undefined', string $seriesIndexMarkedJs = 'undefined', string $dataJs = 'rowData') : string
     {
         $axesOffsetCalc = '';
         $axesJsObjectInit = '';
@@ -2053,12 +2078,30 @@ JS;
                 $zoomSet = 'yes';                
             }
         }
-        
-        if ($this->getWidget()->getSeries()[0] instanceof SplittableChartSeriesInterface && $this->getWidget()->getSeries()[0]->isSplitByAttribute()) {
-            $splitByDataColumnName = "'{$this->getWidget()->getSeries()[0]->getSplitByDataColumn()->getDataColumnName()}'";
-        } else {
-            $splitByDataColumnName = "undefined";
+        $firstSeries = $widget->getSeries()[0];
+        $splitSeriesJs = '';
+        if ($firstSeries instanceof SplittableChartSeriesInterface && $this->canSplitSeries($firstSeries)) {
+            if ($firstSeries->isSplitByAttribute()) {
+                $splitByDataColumnName = "'{$firstSeries->getSplitByDataColumn()->getDataColumnName()}'";                
+            } else {
+                $splitByDataColumnName = "undefined";
+            }
+            $splitSeriesJs = <<<JS
+
+    var split = {$splitByDataColumnName};
+    if (split === undefined) {
+        {$this->buildJsSplitCheck($firstSeries, 'split', $dataJs)}
+    } 
+    if (split === undefined) {
+        {$this->buildJsEChartsVar()}.setOption({dataset: {source: {$dataJs}}})
+    }
+    else {
+        {$this->buildJsSplitSeries($firstSeries, 'split', $dataJs)}
+    }
+
+JS;
         }
+        
         
         
         return <<<JS
@@ -2158,21 +2201,12 @@ JS;
     newOptions.grid = gridmargin;    
     {$this->buildJsEChartsVar()}.setOption(newOptions);
     
-    var split = {$splitByDataColumnName};
-    if (split === undefined) {
-        {$this->buildJsSplitCheck()}
-    } 
-    if (split === undefined) {
-        {$this->buildJsEChartsVar()}.setOption({dataset: {source: {$dataJs}}})
-    }
-    else {
-        {$this->buildJsSplitSeries()}
-    }
+    {$splitSeriesJs}    
 
-    var selection = {$selection};
+    var selection = {$selectionJs};
     if (selection != undefined) {
-        if ({$series} != undefined) {
-            var params = {seriesIndex: seriesIndex};
+        if ({$seriesIndexMarkedJs} != undefined) {
+            var params = {seriesIndex: {$seriesIndexMarkedJs}}
         } else {
             var params = {seriesIndex: 0};
         }
@@ -2183,20 +2217,34 @@ JS;
     
 JS;
     }
-       
+    
+    /**
+     * Function to check if a series can be splitted or not
+     * 
+     * @param ChartSeries $series
+     * @return bool
+     */
+    protected function canSplitSeries(ChartSeries $series) : bool
+    {
+        return $series instanceof SplittableChartSeriesInterface && $series->getIndex() === 0 && count($series->getChart()->getSeries()) === 1;        
+    }
+    
+    
     /**
      * js snippet to check if data should be split
      * only supports single series
      * 
      * @return string
      */
-    protected function buildJsSplitCheck(string $dataJs = 'rowData') : string
+    protected function buildJsSplitCheck(SplittableChartSeriesInterface $series, string $splitJs, string $dataJs) : string
     {
-        $widget = $this->getWidget();
-        if (($widget->getSeries()[0]) instanceof BarChartSeries) {
-            $axisKey = $widget->getAxesY()[0]->getDataColumn()->getDataColumnName();
+        if (! $series instanceof XYChartSeriesInterface) {
+            return '';
+        }
+        if (($series) instanceof BarChartSeries) {
+            $axisKey = $series->getYAxis()->getDataColumn()->getDataColumnName();
         } else {
-            $axisKey = $widget->getAxesX()[0]->getDataColumn()->getDataColumnName();
+            $axisKey = $series->getXAxis()->getDataColumn()->getDataColumnName();
         }
         return <<<JS
     
@@ -2246,7 +2294,7 @@ JS;
             }
         }
         if (valueMatch === true) {
-            split = dataKeys[j]
+            {$splitJs} = dataKeys[j]
             break
         }
     }
@@ -2260,13 +2308,20 @@ JS;
     *
     * @return string
     */
-    protected function buildJsSplitSeries(string $dataJs = 'rowData') : string
+    protected function buildJsSplitSeries(SplittableChartSeriesInterface $series, string $splitJs, string $dataJs) : string
     {
+        $baseColor = 'undefined';
+        if ($series instanceof iHaveColor) {
+            if ($series->getColor()) {
+                $baseColor = $series->getColor();
+            }
+        }
         return <<<JS
     
+    var baseColor = '{$baseColor}';
     var splitDatasetObject = {};
     for (var i=0; i < {$dataJs}.length; i++) {
-        var p = {$dataJs}[i][split];
+        var p = {$dataJs}[i][{$splitJs}];
         if (!splitDatasetObject[p]) {
             splitDatasetObject[p] = [];
         }
@@ -2274,18 +2329,38 @@ JS;
     }
     var splitDatasetArray = Object.keys(splitDatasetObject).map(i => splitDatasetObject[i]);
     var newNames = Object.keys(splitDatasetObject);
-    var baseSeries = {$this->buildJsChartSeriesConfig($this->getWidget()->getSeries()[0])}
+    if (baseColor == 'undefined') {
+        var options = {$this->buildJsEChartsVar()}.getOption();
+        baseColor = options['color'][{$series->getIndex()}]
+    }
+    var baseSeries = {$this->buildJsChartSeriesConfig($series)}
     var currentSeries = JSON.parse(JSON.stringify(baseSeries));
-    
     currentSeries.name = newNames[0];
-    currentSeries.datasetIndex = 0;
+    currentSeries.datasetIndex = 0;    
+    var gradient = tinygradient([baseColor, 'white']);
+    var colorsRgb = gradient.rgb(newNames.length+1);
+    var col = '#' + colorsRgb[0].toHex()
+    currentSeries.itemStyle = {
+            color: col
+        }
+    var formatter = undefined;
+    if (baseSeries.label !== undefined && baseSeries.label.formatter !== undefined) {
+        formatter = baseSeries.label.formatter
+        currentSeries.label.formatter = formatter;
+    }
     var newSeriesArray = [currentSeries];
 
     for (var i = 1; i < newNames.length; i++) {
         currentSeries = JSON.parse(JSON.stringify(baseSeries));
         currentSeries.name = newNames[i];
         currentSeries.datasetIndex = i;
-        currentSeries.markLine = baseSeries.markLine;
+        col = '#' + colorsRgb[i].toHex();
+        currentSeries.itemStyle = {
+            color: col
+        }
+        if (formatter !== undefined) {
+            currentSeries.label.formatter = formatter;
+        }
         newSeriesArray.push(currentSeries);
     }
     var dataset = [{source: splitDatasetArray[0]}]
@@ -2296,7 +2371,8 @@ JS;
     }
     var newOptions = {
         dataset: dataset,
-        series: newSeriesArray }
+        series: newSeriesArray
+    }
     {$this->buildJsEChartsVar()}.setOption(newOptions)
     
 JS;
@@ -2653,7 +2729,7 @@ JS;
     }
     
     /**
-     * function to check if graph is a graph series
+     * function to check if pie is a pie series
      *
      * @return bool
      */
