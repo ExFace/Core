@@ -1143,6 +1143,18 @@ JS;
         } else {
             $color = '';
         }
+        //TODO option to show label, define position of it, maybe rotation etc.
+        /*$label = <<<JS
+    label: {
+        show: true,
+        formatter: function(params) {
+            return {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'params.value.' . $series->getValueDataColumn()->getDataColumnName())}
+        }
+    },
+
+JS;
+        */
+        $label = '';
         
         return <<<JS
         
@@ -1156,6 +1168,7 @@ JS;
     xAxisIndex: {$series->getXAxis()->getIndex()},
     yAxisIndex: {$series->getYAxis()->getIndex()},
     {$color}
+    {$label}
     {$this->buildJsStack($series)}
     {$this->buildJsMarkLineProperties($series)}
     
@@ -2330,6 +2343,11 @@ JS;
     currentSeries.itemStyle = {
             color: col
         }
+    var formatter = undefined;
+    if (baseSeries.label !== undefined && baseSeries.label.formatter !== undefined) {
+        formatter = baseSeries.label.formatter
+        currentSeries.label.formatter = formatter;
+    }
     var newSeriesArray = [currentSeries];
 
     for (var i = 1; i < newNames.length; i++) {
@@ -2339,6 +2357,9 @@ JS;
         col = '#' + colorsRgb[i].toHex();
         currentSeries.itemStyle = {
             color: col
+        }
+        if (formatter !== undefined) {
+            currentSeries.label.formatter = formatter;
         }
         newSeriesArray.push(currentSeries);
     }
