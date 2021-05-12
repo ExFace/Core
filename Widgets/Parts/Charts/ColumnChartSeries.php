@@ -6,6 +6,8 @@ use exface\Core\Widgets\Parts\Charts\Traits\StackableChartSeriesTrait;
 use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
 use exface\Core\Widgets\Parts\Charts\Interfaces\SplittableChartSeriesInterface;
 use exface\Core\Widgets\Parts\Charts\Traits\SplittableChartSeriesTrait;
+use exface\Core\Interfaces\Widgets\iHaveColor;
+use exface\Core\Widgets\Parts\Charts\Interfaces\XYChartSeriesInterface;
 
 /**
  * A column chart shows vertical columns for every value on the X axis.
@@ -32,7 +34,7 @@ use exface\Core\Widgets\Parts\Charts\Traits\SplittableChartSeriesTrait;
  * @author Andrej Kabachnk
  *
  */
-class ColumnChartSeries extends ChartSeries implements StackableChartSeriesInterface, SplittableChartSeriesInterface
+class ColumnChartSeries extends ChartSeries implements StackableChartSeriesInterface, SplittableChartSeriesInterface, iHaveColor, XYChartSeriesInterface
 {
     use XYChartSeriesTrait;
     use StackableChartSeriesTrait;
