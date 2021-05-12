@@ -7,6 +7,8 @@ use exface\Core\Widgets\Parts\Charts\Traits\XYChartSeriesTrait;
 use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
 use exface\Core\Widgets\Parts\Charts\Interfaces\SplittableChartSeriesInterface;
 use exface\Core\Widgets\Parts\Charts\Traits\SplittableChartSeriesTrait;
+use exface\Core\Interfaces\Widgets\iHaveColor;
+use exface\Core\Widgets\Parts\Charts\Interfaces\XYChartSeriesInterface;
 
 /**
  * Line chart using a meta attributes or column references for X and Y values.
@@ -71,7 +73,7 @@ use exface\Core\Widgets\Parts\Charts\Traits\SplittableChartSeriesTrait;
  * @author Andrej kabachnik
  *
  */
-class LineChartSeries extends ChartSeries implements StackableChartSeriesInterface, SplittableChartSeriesInterface
+class LineChartSeries extends ChartSeries implements StackableChartSeriesInterface, SplittableChartSeriesInterface, iHaveColor, XYChartSeriesInterface
 {
     use FillableChartSeriesTrait;
     use StackableChartSeriesTrait;

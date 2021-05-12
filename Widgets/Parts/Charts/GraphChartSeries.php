@@ -12,7 +12,7 @@ use exface\Core\Widgets\Chart;
  * GraphChart to show relations between Objects
  *
  */
-class GraphChartSeries extends ChartSeries
+class GraphChartSeries extends ChartSeries implements iHaveColor
 {
     private $left_object_attribute_alias = null;
     

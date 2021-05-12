@@ -27,20 +27,28 @@ use exface\Core\Widgets\DataButton;
 use exface\Core\Widgets\Parts\Charts\HeatmapChartSeries;
 use exface\Core\Widgets\Parts\Charts\VisualMapChartPart;
 use exface\Core\Widgets\Parts\Charts\Interfaces\SplittableChartSeriesInterface;
-use exface\Core\Widgets\Parts\Charts\Traits\SplittableChartSeriesTrait;
 use exface\Core\Interfaces\Widgets\iHaveColor;
-use exface\Core\Widgets\Parts\Charts\Traits\XYChartSeriesTrait;
+use exface\Core\Widgets\Parts\Charts\Interfaces\XYChartSeriesInterface;
 
 /**
  * Trait to use for implementation of charts into a facade using echarts library.
  * 
  * ## How to use
  * 
- * 1. Add the following line to the config of the facade:
- * `"LIBS.ECHARTS.ECHARTS_JS": "exface/Core/Facades/AbstractAjaxFacade/js/echarts/echarts.custom.min.js",`
- * 2. Use the trait in a facade element - see examples in \exface\JEasyUIFacade\Facades\Elements\euiChart.php
+ * 1. Add the following dependencies to the composer.json of the facade: 
+ *      ```
+ *		"npm-asset/tinycolor2": "^1.4.2",
+ *		"npm-asset/tinygradient": "^1.1.4"
+ *      ```
+ * 2. Add the following lines to the config of the facade:
+ *      ```
+ *      "LIBS.ECHARTS.ECHARTS_JS": "exface/Core/Facades/AbstractAjaxFacade/js/echarts/echarts.custom.min.js",
+ *      "LIBS.TINYCOLOR.JS": "npm-asset/tinycolor2/dist/tinycolor-min.js",
+ *      "LIBS.TINYGRADIENT.JS": "npm-asset/tinygradient/browser.js",
+ *      ```
+ * 3. Use the trait in a facade element - see examples in \exface\JEasyUIFacade\Facades\Elements\euiChart.php
  * or \exface\UI5Facade\Facades\Elements\UI5Chart.php.
- * 3. It is recommended to add eCharts as a composer dependency to make it appear in the list of
+ * 4. It is recommended to add eCharts as a composer dependency to make it appear in the list of
  * installed packages and licenses. Add `"npm-asset/echarts" : "^5"` to the `require` section of 
  * the facade's `composer.json`.
  * 
@@ -147,8 +155,8 @@ trait EChartsTrait
         $includes = [];
         
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.ECHARTS.ECHARTS_JS') . '"></script>';
-        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToVendorFile('exface\core\Facades\AbstractAjaxFacade\js\echarts\tinycolor.min.js') . '"></script>';
-        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToVendorFile('exface\core\Facades\AbstractAjaxFacade\js\echarts\tinygradient.js') . '"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.TINYCOLOR.JS') . '"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.TINYGRADIENT.JS') . '"></script>';
                 
         foreach ($this->getWidget()->getData()->getColumns() as $col) {
             $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
@@ -2075,7 +2083,7 @@ JS;
         {$this->buildJsEChartsVar()}.setOption({dataset: {source: {$dataJs}}})
     }
     else {
-        {$this->buildJsSplitSeries($firstSeries, $dataJs)}
+        {$this->buildJsSplitSeries($firstSeries, 'split', $dataJs)}
     }
 
 JS;
@@ -2212,7 +2220,7 @@ JS;
      */
     protected function buildJsSplitCheck(SplittableChartSeriesInterface $series, string $splitJs, string $dataJs) : string
     {
-        if (! $series instanceof XYChartSeriesTrait) {
+        if (! $series instanceof XYChartSeriesInterface) {
             return '';
         }
         if (($series) instanceof BarChartSeries) {
@@ -2282,18 +2290,20 @@ JS;
     *
     * @return string
     */
-    protected function buildJsSplitSeries(SplittableChartSeriesInterface $series, string $dataJs) : string
+    protected function buildJsSplitSeries(SplittableChartSeriesInterface $series, string $splitJs, string $dataJs) : string
     {
-        $baseColor = $series->getColor();
-        if (! $baseColor) {
-            $baseColor = 'undefined';
+        $baseColor = 'undefined';
+        if ($series instanceof iHaveColor) {
+            if ($series->getColor()) {
+                $baseColor = $series->getColor();
+            }
         }
         return <<<JS
     
     var baseColor = '{$baseColor}';
     var splitDatasetObject = {};
     for (var i=0; i < {$dataJs}.length; i++) {
-        var p = {$dataJs}[i][split];
+        var p = {$dataJs}[i][{$splitJs}];
         if (!splitDatasetObject[p]) {
             splitDatasetObject[p] = [];
         }
