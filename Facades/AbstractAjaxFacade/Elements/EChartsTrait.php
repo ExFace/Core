@@ -1969,7 +1969,7 @@ JS;
      * 
      * @return string
      */
-    protected function buildJsRedrawXYChart(string $selectionJs = 'undefined', string $seriesIndexJs = 'undefined', string $dataJs = 'rowData') : string
+    protected function buildJsRedrawXYChart(string $selectionJs = 'undefined', string $seriesIndexMarkedJs = 'undefined', string $dataJs = 'rowData') : string
     {
         $axesOffsetCalc = '';
         $axesJsObjectInit = '';
@@ -2192,8 +2192,8 @@ JS;
 
     var selection = {$selectionJs};
     if (selection != undefined) {
-        if ({$seriesIndexJs} != undefined) {
-            var params = {seriesIndex: {$seriesIndexJs}}
+        if ({$seriesIndexMarkedJs} != undefined) {
+            var params = {seriesIndex: {$seriesIndexMarkedJs}}
         } else {
             var params = {seriesIndex: 0};
         }
@@ -2205,7 +2205,12 @@ JS;
 JS;
     }
     
-    
+    /**
+     * Function to check if a series can be splitted or not
+     * 
+     * @param ChartSeries $series
+     * @return bool
+     */
     protected function canSplitSeries(ChartSeries $series) : bool
     {
         return $series instanceof SplittableChartSeriesInterface && $series->getIndex() === 0 && count($series->getChart()->getSeries()) === 1;        
