@@ -94,6 +94,11 @@ class ExcelBuilder extends FileContentsBuilder
         $spreadsheet = IOFactory::load($query->getPathAbsolute());
         $sheetName = $this->getSheetForObject($this->getMainObject());
         $sheet = $sheetName !== null && $sheetName !== '' ? $spreadsheet->getSheetByName($sheetName) : $spreadsheet->getActiveSheet();
+        
+        if (! $sheet) {
+            throw new QueryBuilderException('Worksheet "' . $sheetName . '" not found in spreadsheet "' . $query->getPathAbsolute() . '"!');
+        }
+        
         $lastRow = $sheet->getHighestDataRow();
         $static_values = [];
         foreach ($this->getAttributes() as $qpart) {
