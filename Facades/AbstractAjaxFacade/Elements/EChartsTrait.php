@@ -193,7 +193,7 @@ trait EChartsTrait
             'hint' => 'Change chart type'
         ]));
         $tb->getButtonGroupForSearchActions()->addButton($menu, 1);
-        if ($this->isGraphChart() === true) {
+        if ($this->getChartType() === Chart::CHART_TYPE_GRAPH) {
             $buttonUxon = $buttonTemplate->copy();
             $buttonUxon->setProperty('caption', 'Circle');            
             $buttonUxon->setProperty('icon', 'circle-o');
@@ -261,7 +261,7 @@ JS;
         $handlersJs = $this->buildJsLegendSelectHandler();
         $handlersJs .= $this->buildJsOnClickHandler();
         $handlersJs .= $this->buildJsBindToClickHandler();
-        if ($this->isGraphChart() === true) {
+        if ($this->getChartType() === Chart::CHART_TYPE_GRAPH) {
             $handlersJs .= $this->buildJsOnGraphHoverHandler();
         }
         return $handlersJs;
@@ -427,8 +427,9 @@ JS;
      */
     protected function buildJsGetSelectedRowFunction(string $selection) : string
     {
-        if ($this->isPieChart() === true) {
-            return <<<JS
+        switch ($this->getChartType()) {
+            case Chart::CHART_TYPE_PIE:
+                return <<<JS
             
                     function(){
                         var dataset = {$this->buildJsEChartsVar()}._dataset;
@@ -442,10 +443,9 @@ JS;
                     }()
                     
 JS;
-            
-        } else if ($this->isGraphChart() === true) {
-            return <<<JS
-            
+            case Chart::CHART_TYPE_GRAPH:
+                return <<<JS
+                
                     function(){
                         var dataset = {$this->buildJsEChartsVar()}._dataset;
                         var selection = {$selection};
@@ -463,11 +463,10 @@ JS;
                         }*/
                         return '';
                     }()
-                    
+                        
 JS;
-            
-        } else {
-            return "{$selection}";
+            default:
+                return "{$selection}";
         }
     }
     
@@ -715,9 +714,9 @@ JS;
      */
     protected function buildJsSingleClickFunctionBody(string $params) : string
     {
-        if ($this->isPieChart() === true) {
-            return <<<JS
-            
+        switch ($this->getChartType()) {
+            case Chart::CHART_TYPE_PIE:
+                return <<<JS
         var params = {$params};
         var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};
         var echart = {$this->buildJsEChartsVar()};
@@ -745,11 +744,9 @@ JS;
         }
 
 JS;
-                
-        } elseif ($this->isGraphChart() === true) {            
-            return <<<JS
-
-        
+               
+            case Chart::CHART_TYPE_GRAPH:            
+                return <<<JS
         var echart = {$this->buildJsEChartsVar()};
         var params = {$params};
         var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')}; 
@@ -784,12 +781,11 @@ JS;
 
 JS;
                 
-        } elseif ($this->isHeatmapChart()) {
-            
-            return '';
-        
-        } else {
-            return <<<JS
+            case Chart::CHART_TYPE_HEATMAP:            
+                return '';
+                
+            default: 
+                return <<<JS
         var echart = {$this->buildJsEChartsVar()};
         var params = {$params};
         var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};
@@ -850,7 +846,7 @@ JS;
         $widget = $this->getWidget();
         $output = '';
         
-        if ($this->isGraphChart() === true) {
+        if ($this->getChartType() === Chart::CHART_TYPE_GRAPH) {
             // click actions for graph charts
             // for now you can only call an action when clicking on a node
             if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[0]) {
@@ -1437,7 +1433,7 @@ JS;
      */
     protected function buildJsAxes() : string
     {
-        if ($this->isPieChart() === true || $this->isGraphChart() === true) {
+        if ($this->getChartType() !== Chart::CHART_TYPE_XY) {
             return '';
         }
         $countAxisRight = 0;
@@ -1916,8 +1912,10 @@ JS;
         switch ($this->getChartType()) {
             case Chart::CHART_TYPE_PIE:
                 $js = $this->buildJsRedrawPie('newSelection');
+                break;
             case Chart::CHART_TYPE_GRAPH:
                 $js = $this->buildJsRedrawGraph('newSelection');
+                break;
             default:
                 $js = $this->buildJsRedrawXYChart('newSelection', 'seriesIndex');
         }
@@ -2849,8 +2847,8 @@ function(canvasMousePos, params, tooltipDom, rect, sizes) {
         return [xPos - canvasRect.x, yPos - canvasRect.y];
     }
 JS;
-        switch (true) {
-            case $this->isPieChart():
+        switch ($this->getChartType()) {
+            case Chart::CHART_TYPE_PIE:
                 return <<<JS
             
 {
@@ -2861,7 +2859,7 @@ JS;
 },
 
 JS;
-            case $this->isGraphChart() === true:
+            case Chart::CHART_TYPE_GRAPH:
                 return <<<JS
 
 {
@@ -2873,7 +2871,7 @@ JS;
 },
 
 JS;
-            case $this->isHeatmapChart() === true:
+            case Chart::CHART_TYPE_HEATMAP:
                 $series = $this->getWidget()->getSeries()[0];
                 $xAxisCaption = $series->getXAxis()->getCaption();
                 $xAxisName = $series->getXAxis()->getDataColumn()->getDataColumnName();
