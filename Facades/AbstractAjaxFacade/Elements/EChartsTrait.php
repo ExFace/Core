@@ -2079,21 +2079,21 @@ JS;
             }
         }
         $firstSeries = $widget->getSeries()[0];
-        $splitSeriesJs = '';
+        $setDatasetJs = "{$this->buildJsEChartsVar()}.setOption({dataset: {source: {$dataJs}}})";
         if ($firstSeries instanceof SplittableChartSeriesInterface && $this->canSplitSeries($firstSeries)) {
             if ($firstSeries->isSplitByAttribute()) {
                 $splitByDataColumnName = "'{$firstSeries->getSplitByDataColumn()->getDataColumnName()}'";                
             } else {
                 $splitByDataColumnName = "undefined";
             }
-            $splitSeriesJs = <<<JS
+            $setDatasetJs = <<<JS
 
     var split = {$splitByDataColumnName};
     if (split === undefined) {
         {$this->buildJsSplitCheck($firstSeries, 'split', $dataJs)}
     } 
     if (split === undefined) {
-        {$this->buildJsEChartsVar()}.setOption({dataset: {source: {$dataJs}}})
+        {$setDatasetJs}
     }
     else {
         {$this->buildJsSplitSeries($firstSeries, 'split', $dataJs)}
@@ -2201,8 +2201,8 @@ JS;
     newOptions.grid = gridmargin;    
     {$this->buildJsEChartsVar()}.setOption(newOptions);
     
-    {$splitSeriesJs}    
-
+    {$setDatasetJs}    
+    
     var selection = {$selectionJs};
     if (selection != undefined) {
         if ({$seriesIndexMarkedJs} != undefined) {
