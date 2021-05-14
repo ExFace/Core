@@ -590,7 +590,7 @@ class GraphChartSeries extends ChartSeries implements iHaveColor
      * @param string $color
      * @return ChartSeries
      */
-    public function setColor(string $color) : ChartSeries
+    public function setColor($color) : ChartSeries
     {
         $this->color = $color;
         return $this;
