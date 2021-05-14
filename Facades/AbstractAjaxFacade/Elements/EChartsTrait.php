@@ -1913,13 +1913,21 @@ JS;
         if ($this->getWidget()->getData()->hasUidColumn()) {
             $uidField =  $this->getWidget()->getData()->getUidColumn()->getDataColumnName();
         }
-        if ($this->isPieChart() === true) {
+        switch ($this->getChartType()) {
+            case Chart::CHART_TYPE_PIE:
+                $js = $this->buildJsRedrawPie('newSelection');
+            case Chart::CHART_TYPE_GRAPH:
+                $js = $this->buildJsRedrawGraph('newSelection');
+            default:
+                $js = $this->buildJsRedrawXYChart('newSelection', 'seriesIndex');
+        }
+        /*if ($this->isPieChart() === true) {
             $js = $this->buildJsRedrawPie('newSelection');
         } elseif ($this->isGraphChart() === true) {
             $js = $this->buildJsRedrawGraph('newSelection');
         } else {
             $js = $this->buildJsRedrawXYChart('newSelection', 'seriesIndex');
-        }       
+        }*/       
         
         return <<<JS
         
@@ -2726,6 +2734,23 @@ JS;
         }
         $margin = $basemargin;
         return  $margin;
+    }
+    
+    protected function getChartType() : string
+    {
+        $s = $this->getWidget()->getSeries()[0];
+        switch (true) {
+            case $s instanceof PieChartSeries:
+            case $s instanceof DonutChartSeries:
+            case $s instanceof RoseChartSeries:
+                return Chart::CHART_TYPE_PIE;
+            case $s instanceof GraphChartSeries:
+                return Chart::CHART_TYPE_GRAPH;
+            case $s instanceof HeatmapChartSeries:
+                return Chart::CHART_TYPE_HEATMAP;
+            default:
+                return Chart::CHART_TYPE_XY;
+        }
     }
     
     /**

@@ -61,6 +61,14 @@ class Chart extends AbstractWidget implements
 
     const AXIS_Y = 'y';
     
+    const CHART_TYPE_PIE = 'pie';
+    
+    const CHART_TYPE_XY = 'xy_chart';
+    
+    const CHART_TYPE_GRAPH = 'graph';
+    
+    const CHART_TYPE_HEATMAP = 'heatmap';
+    
     private $autoload_disabled_hint = null;
     
     /**
