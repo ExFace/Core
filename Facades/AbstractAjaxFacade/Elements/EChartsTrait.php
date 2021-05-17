@@ -784,7 +784,8 @@ JS;
                 
             case Chart::CHART_TYPE_HEATMAP:
                 return '';
-                
+            case Chart::CHART_TYPE_SANKEY:
+                return '';
             default:
                 return <<<JS
         var echart = {$this->buildJsEChartsVar()};
@@ -1439,25 +1440,20 @@ JS;
     protected function buildJsSankeyChart(SankeyChartSeries $series) : string
     {
         return <<<JS
+        
         {
-            tooltip: {
-                trigger: 'item',
-                triggerOn: 'mousemove'
+            type: 'sankey',
+            focusNodeAdjacency: 'allEdges',
+            itemStyle: {
+                borderWidth: 1,
+                borderColor: '#aaa'
             },
-            series: [
-                {
-                    type: 'sankey',
-                    focusNodeAdjacency: 'allEdges',
-                    itemStyle: {
-                        borderWidth: 1,
-                        borderColor: '#aaa'
-                    },
-                    lineStyle: {
-                        color: 'source',
-                        curveness: 0.5
-                    }
-                }
-            ]
+            lineStyle: {
+                color: 'source',
+                curveness: 0.5
+            },
+            data: [],
+            links: []
         }
         
 JS;
@@ -2636,6 +2632,87 @@ JS;
     {
         /* @var $series \exface\Core\Widgets\Parts\Charts\SankeyChartSeries */
         $series = $this->getWidget()->getSeries()[0];
+        return <<<JS
+
+        var targetIdColumn = '{$series->getTargetIdAttributeDataColumn()->getDataColumnName()}';
+        var targetCaption = '{$series->getTargetCaptionAttributeDataColumn()->getDataColumnName()}';
+        var targetLevel = '{$series->getTargetLevelAttributeDataColumn()->getDataColumnName()}';
+        var sourceIdColumn = '{$series->getSourceIdAttributeDataColumn()->getDataColumnName()}';
+        var sourceCaption = '{$series->getSourceCaptionAttributeDataColumn()->getDataColumnName()}';
+        var sourceLevel = '{$series->getSourceLevelAttributeDataColumn()->getDataColumnName()}';
+        var linkCaption = '{$series->getLinkCaptionAttributeDataColumn()->getDataColumnName()}';
+        
+        var nodes = {};
+        var links = [];        
+        var echart = {$this->buildJsEChartsVar()};
+        var options = echart.getOption();
+        var colors = options['color'];
+        for (var i = 0; i < {$dataJs}.length; i++) {
+            var row = {$dataJs}[i];            
+            var sourceID = row[sourceIdColumn];
+            var targetID = row[targetIdColumn];
+            // if targetID and sourceID are set, add nodes
+            if (targetID != '' && sourceID != '') {
+                // if source doesnt exist as node yet, add it
+                if (nodes[sourceID] === undefined) {
+                    nodes[sourceID] = {
+                        "name": row[sourceCaption],
+                        "depth": row[sourceLevel],
+                        "itemStyle": {
+                            "color": colors[row[sourceLevel]]
+                        },
+                        "_caption": row[sourceCaption]
+                    };
+                }
+                // if target doesnt exist as node yet, add it
+                if (nodes[targetID] === undefined) {
+                    nodes[targetID] = {
+                        "name": row[targetCaption],
+                        "depth": row[targetLevel],
+                        "itemStyle": {
+                            "color": colors[row[targetLevel]]
+                        },
+                        "_caption": row[targetCaption]
+                    };
+                }                
+                
+            }
+            if (nodes[sourceID] && nodes[targetID]) {           
+                var depthSource = nodes[sourceID]["depth"];
+                var depthTarget = nodes[targetID]["depth"];
+                //if target nodes depth higher or equal (should not happen) to source node depth add the link
+                if (depthTarget >= depthSource) {            
+                    links.push({
+                        "source": row[sourceCaption],
+                        "target": row[targetCaption],
+                        "value": 1,
+                        "_caption": row[linkCaption]
+                    });
+                }
+            
+                //if target node depth is higher than source node depth, add link but switch target and source 
+                if (depthTarget < depthSource) {            
+                    links.push({
+                        "source": row[targetCaption],
+                        "target": row[sourceCaption],
+                        "value": 1,
+                        "_caption": row[linkCaption]
+                    });
+                }
+            }
+        }
+        var nodesArray = [];
+        for (var prop in nodes) {
+            nodesArray.push(nodes[prop]);
+        }
+        echart.setOption({
+        	series: [{
+        		data: nodesArray,
+                links: links
+        	}],
+        });
+
+JS;
     }
     
     /**
@@ -2968,6 +3045,18 @@ JS;
 },
 
 JS;
+            case Chart::CHART_TYPE_SANKEY:
+                return <<<JS
+                
+{
+	formatter: function(params) {
+		return params.data._caption;
+	},
+    confine: true,
+    position: $fnPositionJs,
+},
+
+JS;
             default:
                 return <<<JS
                 
@@ -3065,16 +3154,15 @@ JS;
             $padding = 'padding: [20,10,20,10],';
         }
         
-        if ($this->isLegendHidden() === true) {
+        /*if ($this->isLegendHidden() === true) {
             $show = 'show: false,';
         } else {
             $show = '';
-        }
+        }*/
         return <<<JS
         
 {
 	type: 'scroll',
-    {$show}
     {$padding}
     {$positionJs}
     
@@ -3231,7 +3319,7 @@ JS;
             return true;
         }
         $firstSeries = $widget->getSeries()[0];
-        if (count($widget->getSeries()) === 1 && (($firstSeries instanceof PieChartSeries) === false || $firstSeries instanceof GraphChartSeries === false)) {
+        if (count($widget->getSeries()) === 1 && (($firstSeries instanceof PieChartSeries) === false || $firstSeries instanceof GraphChartSeries === false || $firstSeries instanceof SankeyChartSeries === false)) {
             if ($firstSeries->getValueDataColumn() === $firstSeries->getValueAxis()->getDataColumn()){
                 if ($firstSeries instanceof SplittableChartSeriesInterface) {
                     if ($firstSeries->isSplitByAttribute()) {
