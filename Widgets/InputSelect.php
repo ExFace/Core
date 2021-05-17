@@ -799,8 +799,12 @@ class InputSelect extends Input implements iSupportMultiSelect
     {
         if (is_null($this->options_data_sheet)) {
             $sheet = DataSheetFactory::createFromObject($this->getOptionsObject());
-            $sheet->getColumns()->addFromAttribute($this->getValueAttribute());
-            $sheet->getColumns()->addFromAttribute($this->getTextAttribute());
+            if ($vAttr = $this->getValueAttribute()) {
+                $sheet->getColumns()->addFromAttribute($vAttr);
+            }
+            if (($tAttr = $this->getTextAttribute()) && $tAttr !== $vAttr) {
+                $sheet->getColumns()->addFromAttribute($tAttr);
+            }
             $this->options_data_sheet = $sheet;
         }
         return $this->options_data_sheet;
@@ -1025,15 +1029,4 @@ class InputSelect extends Input implements iSupportMultiSelect
         }
         return parent::setValue($value, $parseStringAsExpression);
     }
-    
-    /**
-     * Same as isBoundToAttribute(), but for the value text.
-     * 
-     * @return bool
-     */
-    public function isTextBoundToAttribute() : bool
-    {
-        return $this->getTextAttributeAlias() ? true : false;
-    }
 }
-?>
