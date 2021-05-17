@@ -4,47 +4,53 @@ namespace exface\Core\Widgets\Parts\Charts;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Widgets\Chart;
 
 class SankeyChartSeries extends ChartSeries
 {
-    private $sourceAttributeAlias = null;
+    private $sourceIdAttribute = null;
     
-    private $sourceAttributeAxis = null;
+    private $sourceIdAttributeAxis = null;
     
-    private $sourceNameAttributeAlias = null;
+    private $sourceCaptionAttribute = null;
     
-    private $sourceNameAttributeAxis = null;
+    private $sourceCaptionAttributeAxis = null;
     
-    private $targetAttributeAlias = null;
+    private $sourceLevelAttribute = null;
     
-    private $targetAttributeAxis = null;
+    private $sourceLevelAttributeAxis = null;
     
-    private $targetNameAttributeAlias = null;
+    private $targetIdAttribute = null;
     
-    private $targetNameAttributeAxis = null;
+    private $targetIdAttributeAxis = null;
     
-    private $linkNameAttributeAlias = null;
+    private $targetCaptionAttribute = null;
     
-    private $linkNameAttributeAxis = null;
+    private $targetCaptionAttributeAxis = null;    
     
-    private $levelAttributeAlias = null;
+    private $targetLevelAttribute = null;
     
-    private $levelAttributeAxis = null;
+    private $targetLevelAttributeAxis = null;
+    
+    private $linkCaptionAttribute = null;
+    
+    private $linkCaptionAttributeAxis = null;
     
     
     /**
      * Attribute alias for source of sankey connection (relative to the meta object of the chart series).
      * 
-     * @uxon-property source_attribute_alias
+     * @uxon-property source_id_attribute
      * @uxon-type metamodel:attribute
+     * @uxon-required true
      * 
      * 
      * @param string $aliasRelativeToSeriesObject
      * @return SankeyChartSeries
      */
-    public function setSourceAttributeAlias(string $aliasRelativeToSeriesObject) : SankeyChartSeries
+    public function setSourceIdAttribute(string $aliasRelativeToSeriesObject) : SankeyChartSeries
     {
-        $this->sourceAttributeAlias = $aliasRelativeToSeriesObject;
+        $this->sourceIdAttribute = $aliasRelativeToSeriesObject;
         return $this;
     }
     
@@ -53,9 +59,9 @@ class SankeyChartSeries extends ChartSeries
      * 
      * @return string
      */
-    public function getSourceAttributeAlias() : string
+    public function getSourceIdAttributeAlias() : string
     {
-        return $this->sourceAttributeAlias;
+        return $this->sourceIdAttribute;
     }
     
     /**
@@ -63,9 +69,9 @@ class SankeyChartSeries extends ChartSeries
      * 
      * @return MetaAttributeInterface
      */
-    public function getSourceAttribute() : MetaAttributeInterface
+    public function getSourceIdAttribute() : MetaAttributeInterface
     {
-        return $this->getMetaObject()->getAttribute($this->sourceAttributeAlias);
+        return $this->getMetaObject()->getAttribute($this->sourceIdAttribute);
     }
     
     /**
@@ -73,19 +79,19 @@ class SankeyChartSeries extends ChartSeries
      *
      * @return ChartAxis
      */
-    public function getSourceAttributeAxis() : ChartAxis
+    public function getSourceIdAttributeAxis() : ChartAxis
     {
-        if ($this->sourceAttributeAxis === null) {
-            $axes = $this->getChart()->findAxesByAttribute($this->getSourceAttribute());
+        if ($this->sourceIdAttributeAxis === null) {
+            $axes = $this->getChart()->findAxesByAttribute($this->getSourceIdAttribute());
             if (empty($axes)) {
-                $axis = $this->getChart()->createAxisFromExpression($this->sourceAttributeAlias);
+                $axis = $this->getChart()->createAxisFromExpression($this->sourceIdAttribute);
                 $this->getChart()->addAxisX($axis);
             } else {
                 $axis = $axes[0];
             }
-            $this->sourceAttributeAxis = $axis;
+            $this->sourceIdAttributeAxis = $axis;
         }
-        return $this->sourceAttributeAxis;
+        return $this->sourceIdAttributeAxis;
     }
     
     /**
@@ -93,131 +99,200 @@ class SankeyChartSeries extends ChartSeries
      *
      * @return DataColumn
      */
-    public function getSourceAttributeDataColumn() : DataColumn
+    public function getSourceIdAttributeDataColumn() : DataColumn
     {
-        return $this->getSourceAttributeAxis()->getDataColumn();
+        return $this->getSourceIdAttributeAxis()->getDataColumn();
     }
     
     /**
-     * Attribute alias for source name of sankey connection (relative to the meta object of the chart series).
+     * Attribute alias for source caption of sankey connection (relative to the meta object of the chart series).
      *
-     * @uxon-property source_name_attribute_alias
+     * @uxon-property source_caption_attribute
      * @uxon-type metamodel:attribute
+     * @uxon-required true
      *
      *
      * @param string $aliasRelativeToSeriesObject
      * @return SankeyChartSeries
      */
-    public function setSourceNameAttributeAlias(string $aliasRelativeToSeriesObject) : SankeyChartSeries
+    public function setSourceCaptionAttribute(string $aliasRelativeToSeriesObject) : SankeyChartSeries
     {
-        $this->sourceNameAttributeAlias = $aliasRelativeToSeriesObject;
+        $this->sourceCaptionAttribute = $aliasRelativeToSeriesObject;
         return $this;
     }
     
     /**
-     * Returns the attribute alias of the source name of a sankey connection
+     * Returns the attribute alias of the source caption of a sankey connection
      *
      * @return string
      */
-    public function getSourceNameAttributeAlias() : string
+    public function getSourceCaptionAttributeAlias() : string
     {
-        return $this->sourceNameAttributeAlias;
+        return $this->sourceCaptionAttribute;
     }
     
     /**
-     * Returns the attribute of the source name of a sankey connection
+     * Returns the attribute of the source caption of a sankey connection
      *
      * @return MetaAttributeInterface
      */
-    public function getSourcenameAttribute() : MetaAttributeInterface
+    public function getSourceCaptionAttribute() : MetaAttributeInterface
     {
-        return $this->getMetaObject()->getAttribute($this->sourceNameAttributeAlias);
+        return $this->getMetaObject()->getAttribute($this->sourceCaptionAttribute);
     }
     
     /**
-     * get the axis for the source attribute
+     * get the axis for the source caption attribute
      *
      * @return ChartAxis
      */
-    public function getSourceNameAttributeAxis() : ChartAxis
+    public function getSourceCaptionAttributeAxis() : ChartAxis
     {
-        if ($this->sourceNameAttributeAxis === null) {
-            $axes = $this->getChart()->findAxesByAttribute($this->getSourceNameAttribute());
+        if ($this->sourceCaptionAttributeAxis === null) {
+            $axes = $this->getChart()->findAxesByAttribute($this->getSourceCaptionAttribute());
             if (empty($axes)) {
-                $axis = $this->getChart()->createAxisFromExpression($this->sourceNameAttributeAlias);
+                $axis = $this->getChart()->createAxisFromExpression($this->sourceCaptionAttribute);
                 $this->getChart()->addAxisX($axis);
             } else {
                 $axis = $axes[0];
             }
-            $this->sourceNameAttributeAxis = $axis;
+            $this->sourceCaptionAttributeAxis = $axis;
         }
-        return $this->sourceNameAttributeAxis;
+        return $this->sourceCaptionAttributeAxis;
     }
     
     /**
-     * get Data Column for source name attribute
+     * get Data Column for source caption attribute
      *
      * @return DataColumn
      */
-    public function getSourceNameAttributeDataColumn() : DataColumn
+    public function getSourceCaptionAttributeDataColumn() : DataColumn
     {
-        return $this->getSourceNameAttributeAxis()->getDataColumn();
+        return $this->getSourceCaptionAttributeAxis()->getDataColumn();
     }
     
     /**
-     * Attribute alias for target of sankey connection (relative to the meta object of the chart series).
+     * Attribute alias for source level of sankey connection (relative to the meta object of the chart series).
      *
-     * @uxon-property target_attribute_alias
+     * @uxon-property source_level_attribute
      * @uxon-type metamodel:attribute
+     * @uxon-required true
      *
      *
      * @param string $aliasRelativeToSeriesObject
      * @return SankeyChartSeries
      */
-    public function setTargetAttributeAlias(string $aliasRelativeToSeriesObject) : SankeyChartSeries
+    public function setSourceLevelAttribute(string $aliasRelativeToSeriesObject) : SankeyChartSeries
     {
-        $this->targetAttributeAlias = $aliasRelativeToSeriesObject;
+        $this->sourceLevelAttribute = $aliasRelativeToSeriesObject;
         return $this;
     }
     
     /**
-     * Returns the attribute alias of the target of a sankey connection
+     * Returns the attribute alias of the source level of a sankey connection
      *
      * @return string
      */
-    public function getTargetAttributeAlias() : string
+    public function getSourceLevelAttributeAlias() : string
     {
-        return $this->targetAttributeAlias;
+        return $this->sourceLevelAttribute;
     }
     
     /**
-     * Returns the attribute of the target of a sankey connection
+     * Returns the attribute of the source level of a sankey connection
      *
      * @return MetaAttributeInterface
      */
-    public function getTargetAttribute() : MetaAttributeInterface
+    public function getSourceLevelAttribute() : MetaAttributeInterface
     {
-        return $this->getMetaObject()->getAttribute($this->targetAttributeAlias);
+        return $this->getMetaObject()->getAttribute($this->sourceLevelAttribute);
     }
     
     /**
-     * get the axis for the target attribute
+     * get the axis for the source level attribute
      *
      * @return ChartAxis
      */
-    public function getTargetAttributeAxis() : ChartAxis
+    public function getSourceLevelAttributeAxis() : ChartAxis
     {
-        if ($this->targetAttributeAxis === null) {
-            $axes = $this->getChart()->findAxesByAttribute($this->getTargetAttribute());
+        if ($this->sourceLevelAttributeAxis === null) {
+            $axes = $this->getChart()->findAxesByAttribute($this->getSourceLevelAttribute());
             if (empty($axes)) {
-                $axis = $this->getChart()->createAxisFromExpression($this->targetAttributeAlias);
+                $axis = $this->getChart()->createAxisFromExpression($this->sourceLevelAttribute);
                 $this->getChart()->addAxisX($axis);
             } else {
                 $axis = $axes[0];
             }
-            $this->targetAttributeAxis = $axis;
+            $this->sourceLevelAttributeAxis = $axis;
         }
-        return $this->targetAttributeAxis;
+        return $this->sourceLevelAttributeAxis;
+    }
+    
+    /**
+     * get Data Column for source level attribute
+     *
+     * @return DataColumn
+     */
+    public function getSourceLevelAttributeDataColumn() : DataColumn
+    {
+        return $this->getSourceLevelAttributeAxis()->getDataColumn();
+    }
+    
+    /**
+     * Attribute for target id of sankey connection (relative to the meta object of the chart series).
+     *
+     * @uxon-property target_id_attribute
+     * @uxon-type metamodel:attribute
+     * @uxon-required true
+     *
+     *
+     * @param string $aliasRelativeToSeriesObject
+     * @return SankeyChartSeries
+     */
+    public function setTargetIdAttribute(string $aliasRelativeToSeriesObject) : SankeyChartSeries
+    {
+        $this->targetIdAttribute = $aliasRelativeToSeriesObject;
+        return $this;
+    }
+    
+    /**
+     * Returns the attribute alias of the target id of a sankey connection
+     *
+     * @return string
+     */
+    public function getTargetIdAttributeAlias() : string
+    {
+        return $this->targetIdAttribute;
+    }
+    
+    /**
+     * Returns the attribute of the target id of a sankey connection
+     *
+     * @return MetaAttributeInterface
+     */
+    public function getTargetIdAttribute() : MetaAttributeInterface
+    {
+        return $this->getMetaObject()->getAttribute($this->targetIdAttribute);
+    }
+    
+    /**
+     * get the axis for the target id attribute
+     *
+     * @return ChartAxis
+     */
+    public function getTargetIdAttributeAxis() : ChartAxis
+    {
+        if ($this->targetIdAttributeAxis === null) {
+            $axes = $this->getChart()->findAxesByAttribute($this->getTargetIdAttribute(), Chart::AXIS_Y);
+            if (empty($axes)) {
+                $axis = $this->getChart()->createAxisFromExpression($this->targetIdAttribute);
+                $this->getChart()->addAxisY($axis);
+            } else {
+                $axis = $axes[0];
+            }
+            $this->targetIdAttributeAxis = $axis;
+        }
+        return $this->targetIdAttributeAxis;
     }
     
     /**
@@ -225,207 +300,218 @@ class SankeyChartSeries extends ChartSeries
      *
      * @return DataColumn
      */
-    public function getTargetAttributeDataColumn() : DataColumn
+    public function getTargetIdAttributeDataColumn() : DataColumn
     {
-        return $this->getTargetAttributeAxis()->getDataColumn();
+        return $this->getTargetIdAttributeAxis()->getDataColumn();
     }
     
     /**
-     * Attribute alias for target name of sankey connection (relative to the meta object of the chart series).
+     * Attribute alias for target caption of sankey connection (relative to the meta object of the chart series).
      *
-     * @uxon-property target_name_attribute_alias
+     * @uxon-property target_caption_attribute
      * @uxon-type metamodel:attribute
+     * @uxon-required true
      *
      *
      * @param string $aliasRelativeToSeriesObject
      * @return SankeyChartSeries
      */
-    public function setTargetNameAttributeAlias(string $aliasRelativeToSeriesObject) : SankeyChartSeries
+    public function setTargetCaptionAttribute(string $aliasRelativeToSeriesObject) : SankeyChartSeries
     {
-        $this->targetNameAttributeAlias = $aliasRelativeToSeriesObject;
+        $this->targetCaptionAttribute = $aliasRelativeToSeriesObject;
         return $this;
     }
     
     /**
-     * Returns the attribute alias of the target name of a sankey connection
+     * Returns the attribute alias of the target caption of a sankey connection
      *
      * @return string
      */
-    public function getTargetNameAttributeAlias() : string
+    public function getTargetCaptionAttributeAlias() : string
     {
-        return $this->targetNameAttributeAlias;
+        return $this->targetCaptionAttribute;
     }
     
     /**
-     * Returns the attribute of the target name of a sankey connection
+     * Returns the attribute of the target caption of a sankey connection
      *
      * @return MetaAttributeInterface
      */
-    public function getTargetNameAttribute() : MetaAttributeInterface
+    public function getTargetCaptionAttribute() : MetaAttributeInterface
     {
-        return $this->getMetaObject()->getAttribute($this->targetNameAttributeAlias);
+        return $this->getMetaObject()->getAttribute($this->targetCaptionAttribute);
     }
     
     /**
-     * get the axis for the target name attribute
+     * get the axis for the target caption attribute
      *
      * @return ChartAxis
      */
-    public function getTargetNameAttributeAxis() : ChartAxis
+    public function getTargetCaptionAttributeAxis() : ChartAxis
     {
-        if ($this->targetNameAttributeAxis === null) {
-            $axes = $this->getChart()->findAxesByAttribute($this->getTargetAttribute());
+        if ($this->targetCaptionAttributeAxis === null) {
+            $axes = $this->getChart()->findAxesByAttribute($this->getTargetCaptionAttribute(), Chart::AXIS_Y);
             if (empty($axes)) {
-                $axis = $this->getChart()->createAxisFromExpression($this->targetNameAttributeAlias);
-                $this->getChart()->addAxisX($axis);
+                $axis = $this->getChart()->createAxisFromExpression($this->targetCaptionAttribute);
+                $this->getChart()->addAxisY($axis);
             } else {
                 $axis = $axes[0];
             }
-            $this->targetNameAttributeAxis = $axis;
+            $this->targetCaptionAttributeAxis = $axis;
         }
-        return $this->targetNameAttributeAxis;
+        return $this->targetCaptionAttributeAxis;
     }
     
     /**
-     * get Data Column for target name attribute
+     * get Data Column for target caption attribute
      *
      * @return DataColumn
      */
-    public function getTargetNameAttributeDataColumn() : DataColumn
+    public function getTargetCaptionAttributeDataColumn() : DataColumn
     {
-        return $this->getTargetNameAttributeAxis()->getDataColumn();
+        return $this->getTargetCaptionAttributeAxis()->getDataColumn();
     }
     
     /**
-     * Attribute alias for link name of sankey connection (relative to the meta object of the chart series).
+     * Attribute alias for target level of sankey connection (relative to the meta object of the chart series).
      *
-     * @uxon-property link_name_attribute_alias
+     * @uxon-property target_level_attribute
      * @uxon-type metamodel:attribute
+     * @uxon-required true
      *
      *
      * @param string $aliasRelativeToSeriesObject
      * @return SankeyChartSeries
      */
-    public function setLinkNameAttributeAlias(string $aliasRelativeToSeriesObject) : SankeyChartSeries
+    public function setTargetLevelAttribute(string $aliasRelativeToSeriesObject) : SankeyChartSeries
     {
-        $this->linkNameAttributeAlias = $aliasRelativeToSeriesObject;
+        $this->targetLevelAttribute = $aliasRelativeToSeriesObject;
         return $this;
     }
     
     /**
-     * Returns the attribute alias of the link of a sankey connection
+     * Returns the attribute alias of the target level of a sankey connection
      *
      * @return string
      */
-    public function getLinkNameAttributeAlias() : string
+    public function getTargetLevelAttributeAlias() : string
     {
-        return $this->linkNameAttributeAlias;
+        return $this->targetLevelAttribute;
     }
     
     /**
-     * Returns the attribute of the link name of a sankey connection
+     * Returns the attribute of the target level of a sankey connection
      *
      * @return MetaAttributeInterface
      */
-    public function getLinkNameAttribute() : MetaAttributeInterface
+    public function getTargetLevelAttribute() : MetaAttributeInterface
     {
-        return $this->getMetaObject()->getAttribute($this->linkNameAttributeAlias);
+        return $this->getMetaObject()->getAttribute($this->targetLevelAttribute);
     }
     
     /**
-     * get the axis for the link attribute
+     * get the axis for the target level attribute
      *
      * @return ChartAxis
      */
-    public function getLinkNameAttributeAxis() : ChartAxis
+    public function getTargetLevelAttributeAxis() : ChartAxis
     {
-        if ($this->linkNameAttributeAxis === null) {
-            $axes = $this->getChart()->findAxesByAttribute($this->getLinkAttribute());
+        if ($this->targetLevelAttributeAxis === null) {
+            $axes = $this->getChart()->findAxesByAttribute($this->getTargetLevelAttribute(), Chart::AXIS_Y);
             if (empty($axes)) {
-                $axis = $this->getChart()->createAxisFromExpression($this->linkNameAttributeAlias);
-                $this->getChart()->addAxisX($axis);
+                $axis = $this->getChart()->createAxisFromExpression($this->targetLevelAttribute);
+                $this->getChart()->addAxisY($axis);
             } else {
                 $axis = $axes[0];
             }
-            $this->linkNameAttributeAxis = $axis;
+            $this->targetLevelAttributeAxis = $axis;
         }
-        return $this->linkNameAttributeAxis;
+        return $this->targetLevelAttributeAxis;
     }
     
     /**
-     * get Data Column for link attribute
+     * get Data Column for target level attribute
      *
      * @return DataColumn
      */
-    public function getLinkNameAttributeDataColumn() : DataColumn
+    public function getTargetLevelAttributeDataColumn() : DataColumn
     {
-        return $this->getLinkNameAttributeAxis()->getDataColumn();
+        return $this->getTargetLevelAttributeAxis()->getDataColumn();
     }
     
     /**
-     * Attribute alias for levels of a sankey chart (relative to the meta object of the chart series).
+     * Attribute alias for link caption of sankey connection (relative to the meta object of the chart series).
      *
-     * @uxon-property level_attribute_alias
+     * @uxon-property link_caption_attribute
      * @uxon-type metamodel:attribute
-     *
+     * 
      *
      * @param string $aliasRelativeToSeriesObject
      * @return SankeyChartSeries
      */
-    public function setLevelAttributeAlias(string $aliasRelativeToSeriesObject) : SankeyChartSeries
+    public function setLinkCaptionAttribute(string $aliasRelativeToSeriesObject) : SankeyChartSeries
     {
-        $this->levelAttributeAlias = $aliasRelativeToSeriesObject;
+        $this->linkCaptionAttribute = $aliasRelativeToSeriesObject;
         return $this;
     }
     
     /**
-     * Returns the attribute alias of the level of a sankey chart
+     * Returns the attribute alias of the link caption of a sankey connection
      *
      * @return string
      */
-    public function getLevelAttributeAlias() : string
+    public function getLinkCaptionAttributeAlias() : string
     {
-        return $this->linkNameAttributeAlias;
+        return $this->linkCaptionAttribute;
     }
     
     /**
-     * Returns the attribute of the levels of a sankey chart
+     * Returns the attribute of the link caption of a sankey connection
      *
      * @return MetaAttributeInterface
      */
-    public function getLevelAttribute() : MetaAttributeInterface
+    public function getLinkCaptionAttribute() : MetaAttributeInterface
     {
-        return $this->getMetaObject()->getAttribute($this->levelAttributeAlias);
+        return $this->getMetaObject()->getAttribute($this->linkCaptionAttribute);
     }
     
     /**
-     * get the axis for the levels attribute
+     * get the axis for the link caption attribute
      *
      * @return ChartAxis
      */
-    public function getLevelAttributeAxis() : ChartAxis
+    public function getLinkCaptionAttributeAxis() : ChartAxis
     {
-        if ($this->levelAttributeAxis === null) {
-            $axes = $this->getChart()->findAxesByAttribute($this->getLevelAttribute());
+        if ($this->linkCaptionAttributeAxis === null) {
+            $axes = $this->getChart()->findAxesByAttribute($this->getLinkCaptionAttribute());
             if (empty($axes)) {
-                $axis = $this->getChart()->createAxisFromExpression($this->levelAttributeAlias);
+                $axis = $this->getChart()->createAxisFromExpression($this->linkCaptionAttribute);
                 $this->getChart()->addAxisX($axis);
             } else {
                 $axis = $axes[0];
             }
-            $this->levelAttributeAxis = $axis;
+            $this->linkCaptionAttributeAxis = $axis;
         }
-        return $this->levelAttributeAxis;
+        return $this->linkCaptionAttributeAxis;
     }
     
     /**
-     * get Data Column for level attribute
+     * get Data Column for link caption attribute
      *
      * @return DataColumn
      */
-    public function getLevelAttributeDataColumn() : DataColumn
+    public function getLinkCaptionAttributeDataColumn() : DataColumn
     {
-        return $this->getLevelAttributeAxis()->getDataColumn();
+        return $this->getLinkCaptionAttributeAxis()->getDataColumn();
+    }  
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasLinkCaptionColumn() : bool
+    {
+        return $this->linkCaptionAttribute !== null;
     }
     
     /**
@@ -435,7 +521,7 @@ class SankeyChartSeries extends ChartSeries
      */
     public function getValueDataColumn() : DataColumn
     {
-        return $this->getLeftObjectAxis()->getDataColumn();
+        return $this->getSourceIdAttributeAxis()->getDataColumn();
     }
     
     /**
@@ -445,19 +531,21 @@ class SankeyChartSeries extends ChartSeries
      */
     public function getValueAxis() : ChartAxis
     {
-        return $this->getSourceAttributeAxis();
+        return $this->getSourceIdAttributeAxis();
     }
 
     public function prepareDataWidget(iShowData $dataWidget): ChartSeries
     {
-        $this->getSourceAttributeAxis();
-        $this->getSourceNameAttributeAxis();
-        $this->getTargetAttributeAxis();
-        $this->getTargetNameAttributeAxis();
-        $this->getLinkNameAttributeAxis();
-        if ($this->hasLevelDataColumn()) {
-            $this->getLevelAttributeAxis();
+        $this->getSourceIdAttributeAxis();
+        $this->getSourceCaptionAttributeAxis();
+        $this->getSourceLevelAttributeAxis();
+        $this->getTargetIdAttributeAxis();
+        $this->getTargetCaptionAttributeAxis();
+        $this->getTargetLevelAttributeAxis();
+        if ($this->hasLinkCaptionColumn()) {
+            $this->getLinkCaptionAttributeAxis();
         }
+        return $this;
     }
 
     
