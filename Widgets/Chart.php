@@ -69,6 +69,8 @@ class Chart extends AbstractWidget implements
     
     const CHART_TYPE_HEATMAP = 'heatmap';
     
+    const CHART_TYPE_SANKEY = 'sankey';
+    
     private $autoload_disabled_hint = null;
     
     /**
