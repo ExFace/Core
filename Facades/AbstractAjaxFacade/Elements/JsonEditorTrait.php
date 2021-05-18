@@ -414,7 +414,7 @@ JS;
                             
                             // Add preset button if applicable
                             // ist objekt oder wert === leer                            
-                            if(menuNodeType === "object" || menuNodeType === "root") {
+                            if(menuNodeType === "object" || menuNodeType === "root" || (menuNodeType === 'array' && Array.isArray(val) && val.length === 0)) {
                                 items.unshift(
                                 {
                                     text : "{$trans['PRESETS.TITLE']}",   // the text for the menu item
@@ -1286,7 +1286,7 @@ CSS;
                 nodeIsWrappingTarget = false;
             }
             
-            var hasArrayContext = (node.parent !== null && node.parent.childs)? true : false;
+            var hasArrayContext = (node.parent !== null && node.parent.type === 'array') ? true : false;
            
             var oNodePathElem = document.getElementById('uxonPresetPath');
             {$funcPrefix}_autoWidth(oNodePathElem);
@@ -1400,8 +1400,11 @@ CSS;
                 return [];
             } ); // fail
             
-            var {$funcPrefix}_replaceNodeValue = function(oNode, sJson, oModal){  
-               oNode.update(sJson);
+            var {$funcPrefix}_replaceNodeValue = function(oNode, mJson, oModal){  
+               if (oNode.type === 'array' && oNode.childs.length === 0) {
+                    mJson = (typeof mJson === 'string' || mJson instanceof String) ? '[' + mJson + ']' : [mJson];
+               }
+               oNode.update(mJson);
                oNode.expand(true);
                {$funcPrefix}_focusFirstChildValue(oNode, true);
                {$presetHintHide}
