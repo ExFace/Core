@@ -6,6 +6,7 @@ use exface\Core\Widgets\Parts\Charts\ChartAxis;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
+use exface\Core\DataTypes\BooleanDataType;
 
 trait SplittableChartSeriesTrait
 {
@@ -16,6 +17,8 @@ trait SplittableChartSeriesTrait
     private $split_by_attribute_alias = null;
     
     private $split_by_axis = null;
+    
+    private $split_use_color_gradients = null;
     
     /**
      * Set this attribute when you want to split the dataset into parts and get a series for
@@ -42,6 +45,38 @@ trait SplittableChartSeriesTrait
     public function getSplitByAttributeAlias() : ?string
     {
         return $this->split_by_attribute_alias;
+    }
+    
+    /**
+     * Set this attribute when you want series resulting from a split to use color gradients instead of different colors
+     * If it is set to false, the possible set color for the series will be ignored.
+     * If it is set to true the color will be use to generated gradients of it for the resulting series.
+     * If no color is set color will be chosen automatically.
+     * Default is true.
+     *
+     * @uxon-property split_use_color_gradients
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param string $value
+     * @return ChartSeries
+     */
+    public function setSplitUseColorGradients(bool $trueOrFalse) : ChartSeries
+    {
+        $this->split_use_color_gradients = BooleanDataType::cast($trueOrFalse);
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    public function getSplitUseColorGradients() : bool
+    {
+        if ($this->split_use_color_gradients !== null) {
+            return $this->split_use_color_gradients;
+        }
+        return true;
     }
     
     /**
