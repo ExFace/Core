@@ -6,6 +6,45 @@ use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Widgets\Chart;
 
+/**
+ * Sankey chart to show a data flow. Sankey charts can only show directed acyclic graphs, which means there are no cycles possible to show.
+ * Data for Sankey charts need to contain the source id, the source caption, the source level, the target id, the target caption, the target level.
+ * Optional the link caption can be added.
+ * 
+ * This examples shows the configuration for a sankey chart visualizing an ETL flows.
+ * ```
+ * {
+ *  "widget_type": "Chart",
+ *  "legend_position": "top",
+ *  "object_alias": "axenox.ETL.step",
+ *  "data": {
+ *      "paginate": false,
+ *      "filters": [
+ *          {
+ *              "attribute_alias": "flow",
+ *              "required": false,
+ *              "comparator": "=="
+ *          }
+ *      ]
+ *  },
+ *  "series": [
+ *      {
+ *          "type": "sankey",
+ *          "source_id_attribute": "from_object__UID",
+ *          "source_caption_attribute": "from_object__ALIAS",
+ *          "source_level_attribute": "from_object__flow_objects__level:MAX",
+ *          "target_id_attribute": "to_object__UID",
+ *          "target_caption_attribute": "to_object__ALIAS",
+ *           "target_level_attribute": "to_object__flow_objects__level:MAX",
+ *          "link_caption_attribute": "name"
+ *      }
+ *  ]
+ * } 
+ * ```
+ * 
+ * @author ralf.mulansky
+ *
+ */
 class SankeyChartSeries extends ChartSeries
 {
     private $sourceIdAttribute = null;
