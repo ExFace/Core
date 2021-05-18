@@ -8,6 +8,7 @@ use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\DataTypes\DateDataType;
 
 /**
  * A query builder to access Excel files (or similar spreadsheets).
@@ -108,10 +109,15 @@ class ExcelBuilder extends FileContentsBuilder
             } 
             $colKey = $qpart->getColumnKey();
             $address = $qpart->getDataAddress();
+            $attrType = $qpart->getDataType();
+            switch (true) {
+                case $attrType instanceof DateDataType: $formatValues = true; break;
+                default: $formatValues = false;
+            }
             switch (true) {
                 case $this->isAddressRange($address):
                     $resultRowNo = 0;
-                    foreach ($this->getValuesOfRange($sheet, $address) as $sheetRowNo => $colVals) {
+                    foreach ($this->getValuesOfRange($sheet, $address, $formatValues) as $sheetRowNo => $colVals) {
                         if ($sheetRowNo > $lastRow) {
                             break;
                         }
@@ -161,13 +167,13 @@ class ExcelBuilder extends FileContentsBuilder
      * @param string $range
      * @return array
      */
-    protected function getValuesOfRange(Worksheet $sheet, string $range) : array
+    protected function getValuesOfRange(Worksheet $sheet, string $range, bool $formatValues = false) : array
     {
         return $sheet->rangeToArray(
             $range,     // The worksheet range that we want to retrieve
             null,        // Value that should be returned for empty cells
             true,        // Should formulas be calculated (the equivalent of getCalculatedValue() for each cell)
-            true,        // Should values be formatted (the equivalent of getFormattedValue() for each cell)
+            $formatValues,        // Should values be formatted (the equivalent of getFormattedValue() for each cell)
             true         // Should the array be indexed by cell row and cell column
         );
     }
