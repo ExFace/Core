@@ -1145,7 +1145,7 @@
         },
         {
             "CREATED_ON": "2019-10-01 19:05:45",
-            "MODIFIED_ON": "2020-12-10 10:04:31",
+            "MODIFIED_ON": "2021-05-17 11:17:22",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e47e7544f531bacde4b318306b9a",
@@ -1156,6 +1156,8 @@
             "UXON": {
                 "widget_type": "ColorIndicator",
                 "attribute_alias": "",
+                "fill": true,
+                "color_only": false,
                 "color_scale": {
                     "10": "red",
                     "20": "yellow",
@@ -4314,6 +4316,80 @@
                 ],
                 "include_css": [
                     "https:\/\/cdn.quilljs.com\/1.0.0\/quill.snow.css"
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2021-05-17 11:40:37",
+            "MODIFIED_ON": "2021-05-17 11:42:58",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba9f1eff78d2aa9f1025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Attachments dialog with upload-enabled FileList (PDF)",
+            "DESCRIPTION": "A dialog with an editable FileList for attachments if a master object. In this example only PDF-files are allowed. The FileList has a view-button showing the PDF.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
+            "UXON": {
+                "widget_type": "Dialog",
+                "object_alias": "\/\/ REPLACE WITH MASTER OBJECT",
+                "height": 5,
+                "widgets": [
+                    {
+                        "attribute_alias": "id",
+                        "widget_type": "InputHidden",
+                        "id": "master_id_field"
+                    },
+                    {
+                        "widget_type": "FileList",
+                        "object_alias": "\/\/ REPLACE WITH ATTACHMENT OBJECT",
+                        "filename_attribute_alias": "",
+                        "mime_type_attribute_alias": "",
+                        "file_content_attribute_alias": "",
+                        "upload_enabled": true,
+                        "paginate": false,
+                        "hide_header": true,
+                        "upload_options": {
+                            "allowed_file_extensions": [
+                                "pdf"
+                            ]
+                        },
+                        "filters": [
+                            {
+                                "attribute_alias": "\/\/ REPLACE WITH RELATION TO MASTER",
+                                "required": true,
+                                "hidden": false,
+                                "disabled": true
+                            }
+                        ],
+                        "columns": [
+                            {
+                                "attribute_alias": "\/\/ REPLACE WITH RELATION TO MASTER",
+                                "hidden": true,
+                                "value": "=master_id_field"
+                            }
+                        ],
+                        "buttons": [
+                            {
+                                "icon": "eye",
+                                "caption": "PDF",
+                                "bind_to_double_click": true,
+                                "action": {
+                                    "alias": "exface.Core.ShowDialog",
+                                    "maximize": false,
+                                    "input_rows_min": 1,
+                                    "input_rows_max": 1,
+                                    "widget": {
+                                        "widget_type": "PDFViewer",
+                                        "attribute_alias": "",
+                                        "filename_attribute_alias": ""
+                                    }
+                                }
+                            }
+                        ]
+                    }
                 ]
             },
             "WRAP_PATH": "",
