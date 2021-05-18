@@ -421,7 +421,8 @@ JS;
     
     
     /**
-     * returns the data row from the initial dataset for a selection on a graph
+     * returns the data row from the initial dataset for a selection on a chart
+     * TODO implementation for sankey chart is missing
      *
      * @param string $selection
      * @return string
@@ -465,6 +466,11 @@ JS;
                         return '';
                     }()
                     
+JS;
+            case Chart::CHART_TYPE_SANKEY:
+                return <<<JS
+                    ''
+
 JS;
             default:
                 return "{$selection}";
@@ -2632,6 +2638,10 @@ JS;
     {
         /* @var $series \exface\Core\Widgets\Parts\Charts\SankeyChartSeries */
         $series = $this->getWidget()->getSeries()[0];
+        $linkCaption = 'undefined';
+        if ($series->hasLinkCaptionColumn()) {
+            $linkCaption = $series->getLinkCaptionAttributeDataColumn()->getDataColumnName();
+        }
         return <<<JS
 
         var targetIdColumn = '{$series->getTargetIdAttributeDataColumn()->getDataColumnName()}';
@@ -2639,8 +2649,8 @@ JS;
         var targetLevel = '{$series->getTargetLevelAttributeDataColumn()->getDataColumnName()}';
         var sourceIdColumn = '{$series->getSourceIdAttributeDataColumn()->getDataColumnName()}';
         var sourceCaption = '{$series->getSourceCaptionAttributeDataColumn()->getDataColumnName()}';
-        var sourceLevel = '{$series->getSourceLevelAttributeDataColumn()->getDataColumnName()}';
-        var linkCaption = '{$series->getLinkCaptionAttributeDataColumn()->getDataColumnName()}';
+        var sourceLevel = '{$series->getSourceLevelAttributeDataColumn()->getDataColumnName()}';        
+        var linkCaption = '{$linkCaption}';
         
         var nodes = {};
         var links = [];        
@@ -2681,23 +2691,29 @@ JS;
                 var depthSource = nodes[sourceID]["depth"];
                 var depthTarget = nodes[targetID]["depth"];
                 //if target nodes depth higher or equal (should not happen) to source node depth add the link
-                if (depthTarget >= depthSource) {            
-                    links.push({
+                if (depthTarget >= depthSource) {
+                    var link = {
                         "source": row[sourceCaption],
                         "target": row[targetCaption],
-                        "value": 1,
-                        "_caption": row[linkCaption]
-                    });
+                        "value": 1
+                    }
+                    if (linkCaption != 'undefined') {
+                        link["_caption"] = row[linkCaption];
+                    }
+                    links.push(link);
                 }
             
                 //if target node depth is higher than source node depth, add link but switch target and source 
-                if (depthTarget < depthSource) {            
-                    links.push({
+                if (depthTarget < depthSource) {
+                    var link = {
                         "source": row[targetCaption],
                         "target": row[sourceCaption],
-                        "value": 1,
-                        "_caption": row[linkCaption]
-                    });
+                        "value": 1
+                    }
+                    if (linkCaption != 'undefined') {
+                        link["_caption"] = row[linkCaption];
+                    }
+                    links.push(link);
                 }
             }
         }
@@ -3050,7 +3066,10 @@ JS;
                 
 {
 	formatter: function(params) {
-		return params.data._caption;
+        if (params.data._caption) {
+		  return params.data._caption;
+        }
+        return params.name;
 	},
     confine: true,
     position: $fnPositionJs,
