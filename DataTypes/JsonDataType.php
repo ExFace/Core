@@ -54,19 +54,23 @@ class JsonDataType extends TextDataType
      * {@inheritDoc}
      * @see \exface\Core\DataTypes\StringDataType::cast()
      */
-    public static function cast($string)
+    public static function cast($stringOrArrayOrObject)
     {
-        $string = trim($string);
+        if (is_array($stringOrArrayOrObject) || $stringOrArrayOrObject instanceof \stdClass) {
+            return $stringOrArrayOrObject;
+        }
         
-        if ($string === '') {
+        $stringOrArrayOrObject = trim($stringOrArrayOrObject);
+        
+        if ($stringOrArrayOrObject === '') {
             return '{}';
         }
         
-        if ($string === null) {
+        if ($stringOrArrayOrObject === null) {
             return null;
         }
         
-        return $string;
+        return $stringOrArrayOrObject;
     }
     
     public static function isValueEmpty($string) : bool
@@ -79,22 +83,26 @@ class JsonDataType extends TextDataType
      * {@inheritDoc}
      * @see \exface\Core\DataTypes\StringDataType::parse()
      */
-    public function parse($string)
+    public function parse($stringOrArrayOrObject)
     {
-        if ($string === '') {
+        if ($stringOrArrayOrObject === '') {
             return '{}';
         }
         
-        if ($string === null) {
+        if ($stringOrArrayOrObject === null) {
             return null;
         }
         
         try {
-            $array = $this::decodeJson($string);
+            if (is_array($stringOrArrayOrObject) || $stringOrArrayOrObject instanceof \stdClass) {
+                $array = (array) $stringOrArrayOrObject;
+            } else {
+                $array = $this::decodeJson($stringOrArrayOrObject);
+            }
         } catch (DataTypeCastingError $e) {
             throw $this->createValidationError($e->getMessage(), $e->getCode(), $e);
         } catch (\Throwable $e) {
-            throw $this->createValidationError('Invalid value "' . $string . '" for data type ' . $this->getAliasWithNamespace() . '!', null, $e);
+            throw $this->createValidationError('Invalid value "' . $stringOrArrayOrObject . '" for data type ' . $this->getAliasWithNamespace() . '!', null, $e);
         }
         return $this::encodeJson($array, $this->getPrettify());
     }
