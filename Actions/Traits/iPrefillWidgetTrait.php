@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
+use exface\Core\Events\Widget\OnPrefillDataLoadedEvent;
 
 /**
  * 
@@ -34,6 +35,41 @@ trait iPrefillWidgetTrait
     /**
      * Prefills the widget of this action with any available data: the action's input data, prefill data from the request and filter contexts.
      *
+     * @return WidgetInterface
+     */
+    protected function prefillWidget(TaskInterface $task, WidgetInterface $widget) : WidgetInterface
+    {
+        $log = '';
+        $logSheets = [];
+        $prefillSheets = $this->getPrefillDataFromTask($widget, $task, $log, $logSheets);
+        
+        // Add data from the filter contexts if possible.
+        // Do this ONLY for the main prefill sheet
+        // Do this AFTER the regular prefill data was fully read because otherwise the filter values
+        // will get eventually overwritten!
+        if ($mainSheetWithContext = $this->getPrefillDataFromFilterContext($widget, ($prefillSheets[0] ?? null), $task, $log)) {
+            $prefillSheets[0] = $mainSheetWithContext;
+        }
+        
+        foreach ($prefillSheets as $sheet) {
+            $event = new OnPrefillDataLoadedEvent(
+                $widget, 
+                $sheet,
+                $this,
+                $logSheets,
+                $log
+            );
+            $this->getWorkbench()->getLogger()->debug('Prefill data loaded for object ' . $sheet->getMetaObject()->getAliasWithNamespace(), [], $event);
+            $this->getWorkbench()->EventManager()->dispatch($event);
+            $widget->prefill($sheet);
+        }
+        
+        return $widget;
+    }
+    
+    /**
+     * Returns the prefill data derived from the task as an array  of data sheets ordered by importance descendingly.
+     * 
      * Technically, the method will attempt to create a data sheet from all those sources by merging them, read data for this sheet and perform
      * a $this->getWidget()->prefill(). If the different sources for prefill data cannot be combined into a single data sheet, the widget will
      * first get prefilled by input data and then by prefill data separately. If the context data cannot be combined with the input data, it will
@@ -43,62 +79,102 @@ trait iPrefillWidgetTrait
      * worth it? Maybe do prefills sequentially instead starting with the leas significant data (context) and overwriting it with prefill data
      * and input data subsequently?
      *
-     * @return void;
+     * @param WidgetInterface $widget
+     * @param TaskInterface $task
+     * @param string $log
+     * @param array $logSheets
+     * 
+     * @throws ActionInputMissingError
+     * 
+     * @return DataSheetInterface[]
      */
-    protected function prefillWidget(TaskInterface $task, WidgetInterface $widget) : WidgetInterface
+    protected function getPrefillDataFromTask(WidgetInterface $widget, TaskInterface $task, string &$log = '', array &$logSheets = []) : array
     {
+        $log = '';
+        $logSheets = [];
+        
         // Start with the prefill data already stored in the widget
         if ($widget->isPrefilled()) {
-            $data_sheet = $widget->getPrefillData();
+            $log .= '- Using current widget prefill data as base.' . PHP_EOL;
+            $data_sheet = $widget->getPrefillData()->copy();
+            $logSheets['Current prefill data in widget'] = $data_sheet;
         }
         
         // Add (merge) input data if not explicitly disabled
+        $log .= '- Property `prefill_with_input_data` is `' . ($this->getPrefillWithInputData() ? 'true' : 'false') . '`.' . PHP_EOL;
         if ($this->getPrefillWithInputData() === true && ($task->hasInputData() === true || $this->hasInputDataPreset() === true)) {
             $input_data = $this->getInputDataSheet($task);
+            $logSheets['Input data'] = $input_data;
+            $log .= '- Input data found:' . PHP_EOL;
+            $log .= '   - Object: "' . $input_data->getMetaObject()->getAliasWithNamespace() . '"' . PHP_EOL;
+            $log .= '   - Rows: ' . $input_data->countRows() . PHP_EOL;
+            $log .= '   - Filters: ' . ($input_data->getFilters()->countConditions() + $input_data->getFilters()->countNestedGroups()) . PHP_EOL;
             if (! $data_sheet || $data_sheet->isEmpty()) {
+                $log .= '   - Using input data for prefill.' . PHP_EOL;
                 $data_sheet = $input_data->copy();
             } else {
                 try {
                     $data_sheet = $data_sheet->merge($input_data);
+                    $log .= '   - Merged input data with current prefill data of the widget.' . PHP_EOL;
                 } catch (DataSheetMergeError $e) {
                     // If anything goes wrong, use the input data to prefill. It is more important for an action, than
                     // other prefill sources.
                     $data_sheet = $input_data->copy();
+                    $log .= '- Merging input data with current prefill data of the widget failed - using just the input data instead!' . PHP_EOL;
                 }
             }
+        } else {
+            $log .= '   - No input data to use.' . PHP_EOL;
         }
         
         // Add (merge) prefill data if not explicitly disabled. The prefill data is a merge from the
         // task's prefill data and the `prefill_data` preset from the action's config.
+        $log .= '- Property `prefill_with_prefill_data` is `' . ($this->getPrefillWithPrefillData() ? 'true' : 'false') . '`.' . PHP_EOL;
         if ($this->getPrefillWithPrefillData() && ($prefill_data = $this->getPrefillDataSheet($task)) && ! $prefill_data->isBlank()) {
             // Try to merge prefill data and any data already gathered. If the merge does not work, ignore the prefill data
             // for now and use it for a secondary prefill later.
             $prefill_data_merge_failed = false;
+            $logSheets['Provided prefill data'] = $prefill_data;
+            $log .= '- Input data found:' . PHP_EOL;
+            $log .= '   - Object: "' . $prefill_data->getMetaObject()->getAliasWithNamespace() . '"' . PHP_EOL;
+            $log .= '   - Rows: ' . $prefill_data->countRows() . PHP_EOL;
+            $log .= '   - Filters: ' . ($prefill_data->getFilters()->countConditions() + $prefill_data->getFilters()->countNestedGroups()) . PHP_EOL;
             if (! $data_sheet || $data_sheet->isEmpty()) {
+                $log .= '   - Using prefill data for prefill.' . PHP_EOL;
                 $data_sheet = $prefill_data->copy();
             } else {
                 try {
                     $data_sheet = $data_sheet->merge($prefill_data);
+                    $log .= '   - Merged prefill data with data collected above (input data, current prefill).' . PHP_EOL;
                 } catch (DataSheetMergeError $e) {
                     // Do not use the prefill data if it cannot be merged with the input data
                     $prefill_data_merge_failed = true;
+                    $log .= '   - Merging prefill data failed - will try to use prefill data additionally below.' . PHP_EOL;
                 }
             }
+        } else {
+            $log .= '   - No prefill data to use' . PHP_EOL;
         }
         
         // See if the data should be re-read from the data source
         if ($data_sheet) {
+            $log .= '- Potential prefill data found - now finding out if a refresh/read is needed.' . PHP_EOL;
             $refresh = $this->getPrefillDataRefresh();
+            $log .= '- Property `prefill_data_refresh` is `' . $refresh . '`:' . PHP_EOL;
             
             // If `prefill_data_refresh` is set to `auto`, pick one of the other options
             // according to the current situation.
             if ($refresh === iPrefillWidget::REFRESH_AUTO) {
                 // Silently ignore empty prefills, those without UIDs and non-readable data
                 if ($data_sheet->countRows() === 0 || ! $data_sheet->hasUidColumn(true) || ! $data_sheet->getMetaObject()->isReadable()) {
+                    $log .= '   - No refresh for empty prefills, those without UIDs and non-readable data' . PHP_EOL;
                     $refresh = iPrefillWidget::REFRESH_NEVER;
                 } else {
                     // Ask the widget for expected data to see if a refresh is required
+                    $colsBefore = $data_sheet->getColumns()->count();
+                    $log .= '   - Getting required prefill columns from wiget: ';
                     $data_sheet = $widget->prepareDataSheetToPrefill($data_sheet);
+                    $log .= 'found ' . ($data_sheet->getColumns()->count() - $colsBefore) . ' additional columns.' . PHP_EOL;
                     switch (true) {
                         // Don't read the data source if we have all data required. This is a controlversal
                         // decision, but that's the way it was done in former versions. On the one hand,
@@ -111,57 +187,69 @@ trait iPrefillWidgetTrait
                         // will probably require additional fields causing a refresh anyway. So this option
                         // basically saves a data source request for simple use-cases.
                         case $data_sheet->isFresh():
+                            $log .= '   - Prefill data is fresh' . PHP_EOL;
                             $refresh = iPrefillWidget::REFRESH_NEVER;
                             break;
-                        // Only refresh missing values if input data was used and a mapper was applied.
-                        // In this case the user intended to change certain columns, so we should not
-                        // overwrite them with data source values, but we should still read missing
-                        // values because the user was probably too lazy to mapp all required columns.
-                        case $input_data && $this->getInputMapperUsed($input_data) !== null:
-                            $refresh = iPrefillWidget::REFRESH_ONLY_MISSING_VALUES;
-                            break;
-                        // Refresh in all other cases
-                        default:
-                            $refresh = iPrefillWidget::REFRESH_ALWAYS;
-                            break;
+                            // Only refresh missing values if input data was used and a mapper was applied.
+                            // In this case the user intended to change certain columns, so we should not
+                            // overwrite them with data source values, but we should still read missing
+                            // values because the user was probably too lazy to mapp all required columns.
+                            case $input_data && $this->getInputMapperUsed($input_data) !== null:
+                                $refresh = iPrefillWidget::REFRESH_ONLY_MISSING_VALUES;
+                                $log .= '   - An `input_mapper` was used' . PHP_EOL;
+                                break;
+                                // Refresh in all other cases
+                            default:
+                                $refresh = iPrefillWidget::REFRESH_ALWAYS;
+                                break;
                     }
-                } 
+                }
             } elseif ($refresh !== iPrefillWidget::REFRESH_NEVER) {
                 // If $refresh is not `auto` and not explicitly disabled, ask the widget for
                 // expected data
+                $colsBefore = $data_sheet->getColumns()->count();
+                $log .= '   - Getting required prefill columns from wiget: ';
                 $data_sheet = $widget->prepareDataSheetToPrefill($data_sheet);
+                $log .= 'found ' . ($data_sheet->getColumns()->count() - $colsBefore) . ' additional columns.' . PHP_EOL;
             }
             
             // Refresh data if required
             switch (true) {
                 // Refresh in any case on `always`
                 case $refresh === iPrefillWidget::REFRESH_ALWAYS:
-                // Refresh if not fresh on `only_missing_values` (= empty columns were added)
+                    // Refresh if not fresh on `only_missing_values` (= empty columns were added)
                 case $refresh === iPrefillWidget::REFRESH_ONLY_MISSING_VALUES && ! $data_sheet->isFresh():
                     if (! $data_sheet->hasUidColumn(true)) {
                         throw new ActionInputMissingError($this, 'Cannot refresh prefill data for action "' . $this->getAliaswithNamespace() . '": UID values for every prefill row required!');
                     }
                     $freshData = $data_sheet->copy();
                     $freshData->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
+                    // Improve performance by disabling the row counter
+                    $freshData->setAutoCount(false);
                     $freshData->dataRead();
                     // Merge and overwrite existing values unless refresh `only_missing_values`
+                    if ($refresh === iPrefillWidget::REFRESH_ONLY_MISSING_VALUES) {
+                        $log .= '   - Refreshing only missing values' . PHP_EOL;
+                    } else {
+                        $log .= '   - Refreshing all data' . PHP_EOL;
+                    }
                     $data_sheet->merge($freshData, $refresh !== iPrefillWidget::REFRESH_ONLY_MISSING_VALUES);
                     break;
+                default:
+                    $log .= '   - Will not refresh' . PHP_EOL;
             }
         }
         
-        // Add data from the filter contexts if possible. 
-        // Do this AFTER the refresh because otherwise the filter values will get eventually overwritten!
-        $data_sheet = $this->getPrefillDataFromFilterContext($widget, $data_sheet);
-        
+        $result_sheets = [];
         if ($data_sheet) {
-            $widget->prefill($data_sheet);
+            $log .= '- Prefill data found - will apply the prefill now.' . PHP_EOL;
+            $result_sheets[] = $data_sheet;
         }
         if ($prefill_data_merge_failed) {
-            $widget->prefill($prefill_data);
+            $log .= '- Repeating prefill with dedicatd prefill data because merging input and prefill data failed' . PHP_EOL;
+            $result_sheets[] = $data_sheet;
         }
-        
-        return $widget;
+        return $result_sheets;
     }
     
     /**
@@ -172,12 +260,15 @@ trait iPrefillWidgetTrait
      * 
      * @return DataSheetInterface
      */
-    protected function getPrefillDataFromFilterContext(WidgetInterface $widget, DataSheetInterface $data_sheet = null, TaskInterface $task = null) : ?DataSheetInterface
+    protected function getPrefillDataFromFilterContext(WidgetInterface $widget, DataSheetInterface $data_sheet = null, TaskInterface $task = null, string &$log = '') : ?DataSheetInterface
     {
+        $log = trim($log) . PHP_EOL;
+        $log .= '- Property `prefill_with_filter_context` is `' . ($this->getPrefillWithFilterContext($task) ? 'true' : 'false') . '`' . PHP_EOL;
         // Prefill widget using the filter contexts if the widget does not have any prefill data yet
         // TODO Use the context prefill even if the widget already has other prefill data: use DataSheet::merge()!
         if ($this->getPrefillWithFilterContext($task) && $widget && $context_conditions = $this->getApp()->getWorkbench()->getContext()->getScopeWindow()->getFilterContext()->getConditions($widget->getMetaObject())) {
             if (! $data_sheet || $data_sheet->isBlank()) {
+                $log .= '   - Creating new data sheet for the widgets object since no usable data found so far' . PHP_EOL;
                 $data_sheet = DataSheetFactory::createFromObject($widget->getMetaObject());
             }
             
@@ -187,6 +278,7 @@ trait iPrefillWidgetTrait
             if ($widget->getMetaObject()->is($data_sheet->getMetaObject())) {
                 /* @var $condition \exface\Core\CommonLogic\Model\Condition */
                 foreach ($context_conditions as $condition) {
+                    $log .= '   - Found condition "' . $condition->toString() . '" - ';
                     /*
                      * if ($widget && $condition->getExpression()->getMetaObject()->getId() == $widget->getMetaObject()->getId()){
                      * // If the expressions belong to the same object, as the one being displayed, use them as filters
@@ -209,6 +301,7 @@ trait iPrefillWidgetTrait
                              }
                          }
                          if ($filter_conflict) {
+                             $log .= 'conflict detected - ignoring';
                              continue;
                          }
                          
@@ -238,13 +331,22 @@ trait iPrefillWidgetTrait
                                          $col->setValueOnAllRows($value);
                                      }
                                  }
+                                 $log .= 'applied';
+                             } else {
+                                 $log .= 'value empty - ignoring';
                              }
                          } catch (\Exception $e) {
+                             $log .= 'error ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine();
                              // Do nothing if anything goes wrong. After all the context prefills are just an attempt the help
                              // the user. It's not a good Idea to throw a real error here!
                          }
+                     } else {
+                         $log .= 'not applicable';
                      }
+                     $log .= PHP_EOL;
                 }
+            } else {
+                $log .= '   - No filter context data to use.' . PHP_EOL;
             }
         }
         return $data_sheet;
@@ -256,7 +358,7 @@ trait iPrefillWidgetTrait
      * @param TaskInterface $task
      * @return DataSheetInterface
      */
-    protected function getPrefillDataSheet(TaskInterface $task) : DataSheetInterface
+    public function getPrefillDataSheet(TaskInterface $task) : DataSheetInterface
     {
         if ($task->hasPrefillData()) {
             // If the task has some prefill data, use it

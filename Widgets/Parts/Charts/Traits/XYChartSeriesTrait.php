@@ -93,10 +93,10 @@ trait XYChartSeriesTrait
      * @uxon-property color
      * @uxon-type string
      *
-     * @param string $color
+     * @param $color
      * @return ChartSeries
      */
-    public function setColor(string $color) : ChartSeries
+    public function setColor($color) : ChartSeries
     {
         $this->color = $color;
         return $this;

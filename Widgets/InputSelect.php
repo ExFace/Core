@@ -22,18 +22,41 @@ use exface\Core\Interfaces\Widgets\iHaveValues;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
- * A dropdown menu to select from.
+ * A dropdown menu to select from: each dropdown item has a value and a text. 
  * 
- * Each menu item has a value and a text. Multiple selection can be enabled with select_multiple: true.
+ * Multiple selection can be enabled/disabled via `multi_select`. There are also some advanced
+ * options like `multi_select_value_delimiter`, etc.
  * 
- * The selectable options can either be specified directly (via the property `selectable_options`) or generated from
- * the data source. In the latter case, attributes for text and values can be specified via `text_attribute_alias` and
- * `value_attribute_alias`. They do not need to have something to do with the object or attribute, that the widget
- * represents: the options are just values to pick from. Event a totally unrelated object can be specified to fetch
- * the options - via `options_object_alias` property. The selected value will then be saved to the attribute being
+ * `InputSelect`s should be used if you do not have many options: i.e. not more than 20. With more
+ * options you are better off with `InputCombo` or `InputComboTable`, which support searching and
+ * lazy loading.
+ * 
+ * ## Selectable options
+ * 
+ * The selectable options can either be specified directly (via the property `selectable_options`) 
+ * or generated from the data source. In the latter case, attributes for text and values can be 
+ * specified via `text_attribute_alias` and `value_attribute_alias`. They do not need to have 
+ * something to do with the object or attribute, that the widget represents: the options are just 
+ * values to pick from. Event a totally unrelated object can be specified to fetch the options - via 
+ * `options_object_alias` property. The selected value will then be saved to the attribute being
  * represented by the `InputSelect` itself.
  * 
- * Example 1 (manually defined options):
+ * The widget will also add some generic menu items automatically:
+ * 
+ * - an option to empty the selection if the widget is not required 
+ * (the value of this option is an empty string)
+ * - an option to select empty values if the widget is based on an 
+ * attribute which is not required (the value is the empty-comparator `NULL`)
+ * 
+ * ## Prefill 
+ * 
+ * By turning `use_prefill_to_filter_options` on or off, the prefill 
+ * behavior can be customized. By default, the values from the prefill 
+ * data will be used as options in the select automatically.
+ * 
+ * ## Examples
+ * 
+ * ### Manually defined options
  * 
  * ```
  *  {
@@ -49,7 +72,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
  *  
  * ```
  * 
- * Example 2 (attributes of another object as options):
+ * ### Attributes of another object as options
  * 
  * ```
  *  {
@@ -62,20 +85,6 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
  *  }
  *  
  * ```
- * 
- * By turning `use_prefill_to_filter_options` on or off, the prefill 
- * behavior can be customized. By default, the values from the prefill 
- * data will be used as options in the select automatically.
- * 
- * The widget will also add some generic menu items automatically:
- * - an option to empty the selection if the widget is not required 
- * (the value of this option is an empty string)
- * - an option to select empty values if the widget is based on an 
- * attribute which is not required (the value is the empty-comparator `NULL`)
- * 
- * InputSelects should be used for small data sets, as not all frameworks 
- * will support searching for values or lazy loading. If you have a large 
- * amount of data, use an InputCombo instead!
  *
  * @author Andrej Kabachnik
  */
@@ -131,7 +140,7 @@ class InputSelect extends Input implements iSupportMultiSelect
     }
 
     /**
-     * Sets the text to be displayed for the current value (only makes sense if the "value" is set too!)
+     * Sets the text to be displayed for the current value (only makes sense if the `value` is set too!)
      *
      * @uxon-property value_text
      * @uxon-type string
@@ -155,7 +164,7 @@ class InputSelect extends Input implements iSupportMultiSelect
     }
 
     /**
-     * Set to TRUE to allow multiple items to be selected.
+     * Set to TRUE/FALSE to force the option to select multiple items on or off.
      *
      * @uxon-property multi_select
      * @uxon-type boolean
@@ -247,7 +256,7 @@ class InputSelect extends Input implements iSupportMultiSelect
     }
 
     /**
-     * Sets the options, that can be selected: {"value1": "text1", "value2": "text2"].
+     * Sets the options explicitly: `{"value1": "text1", "value2": "text2"}`.
      *
      * @uxon-property selectable_options
      * @uxon-type object
@@ -507,7 +516,7 @@ class InputSelect extends Input implements iSupportMultiSelect
             // Split the value by value delimiter, but only if the raw value does not match
             // one of the selectable options exactly!
             if (! array_key_exists($this->getValue(), $this->getSelectableOptions())) {
-                return explode($this->getMultiSelectValueDelimiter(), $this->getValue());
+                return array_map('trim', explode($this->getMultiSelectValueDelimiter(), $this->getValue()));
             } else {
                 return [$this->getValue()];
             }
@@ -580,6 +589,9 @@ class InputSelect extends Input implements iSupportMultiSelect
 
     /**
      * Defines the alias of the attribute of the options object to be displayed for every value.
+     * 
+     * **NOTE:** This alias is resolved relative to the `options_object`!
+     * 
      * If not set, the system will try to determine one automatically.
      *
      * If the text_attribute_alias was not set explicitly (e.g. via UXON), it will be determined as follows:
@@ -605,12 +617,7 @@ class InputSelect extends Input implements iSupportMultiSelect
     /**
      * Returns the alias of the options object's attribute to be displayed, when a value is selected.
      *
-     * If the text_attribute_alias was not set explicitly (e.g. via UXON), it will be determined as follows:
-     * - If an option object was specified explicitly, it's label will be used (or it's UID if no label is defined)
-     * - If the widget represents a relation, the related object's label will be used
-     * - If the widget represents the UID of it's object, than the label of this object will be used
-     * - If the widget represents any other attribute and there is no explicit options_object, this attribute
-     * will be used for values as well as for the displayed text.
+     * @see setTextAttributeAlias()
      *
      * @return string
      */
@@ -722,6 +729,8 @@ class InputSelect extends Input implements iSupportMultiSelect
     /**
      * The alias of the attribute of the options object to be used as the internal value of the select.
      * 
+     * **NOTE:** This alias is resolved relative to the `options_object_alias`!
+     * 
      * If not set, the UID attribute will be used.
      *
      * @uxon-property value_attribute_alias
@@ -789,12 +798,27 @@ class InputSelect extends Input implements iSupportMultiSelect
     public function getOptionsDataSheet()
     {
         if (is_null($this->options_data_sheet)) {
-            $this->options_data_sheet = DataSheetFactory::createFromObject($this->getOptionsObject());
+            $sheet = DataSheetFactory::createFromObject($this->getOptionsObject());
+            if ($vAttr = $this->getValueAttribute()) {
+                $sheet->getColumns()->addFromAttribute($vAttr);
+            }
+            if (($tAttr = $this->getTextAttribute()) && $tAttr !== $vAttr) {
+                $sheet->getColumns()->addFromAttribute($tAttr);
+            }
+            $this->options_data_sheet = $sheet;
         }
         return $this->options_data_sheet;
     }
 
     /**
+     * A custom data sheet to fetch get selectable options
+     * 
+     * **WARNING:** This is an advanced feature, which is not easy to use. Concider the simpler 
+     * `filters` and `sorters` properties first!
+     * 
+     * @uxon-property options_data_sheet
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
+     * @uxon-template {"object_alias": ""}
      * 
      * @param DataSheetInterface $data_sheet
      * @throws WidgetPropertyInvalidValueError
@@ -1005,15 +1029,4 @@ class InputSelect extends Input implements iSupportMultiSelect
         }
         return parent::setValue($value, $parseStringAsExpression);
     }
-    
-    /**
-     * Same as isBoundToAttribute(), but for the value text.
-     * 
-     * @return bool
-     */
-    public function isTextBoundToAttribute() : bool
-    {
-        return $this->getTextAttributeAlias() ? true : false;
-    }
 }
-?>

@@ -20,6 +20,8 @@ use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\DataTypes\DataSheetDataType;
+use exface\Core\Interfaces\DataSheets\DataSheetSubsheetInterface;
 
 /**
  * Tracks time and users that created/changed objects and prevents concurrent writes comparing the update-times.
@@ -35,6 +37,15 @@ use exface\Core\Interfaces\Actions\ActionInterface;
  * modified in the mean time). If so, an error is thrown.
  * 
  * The optimistic locking can be explicitly disabled by setting `check_for_conflicts_on_update` to `false`.
+ * 
+ * ## Known limitations
+ * 
+ * The TimeStampingBehavior is a great help as it can be used to implemnt optimistic locking extremely
+ * genericly, but this approach has some limitations:
+ * 
+ * - concurrency detection is limited for updates with nested data (see property
+ * `check_for_conflicts_not_mandatory_for_subsheets` for details)
+ * - concurrency detection is limited for mass-updates via filters
  * 
  * ## Examples
  * 
@@ -93,7 +104,9 @@ class TimeStampingBehavior extends AbstractBehavior
     
     private $updatedByValueUserAttributeAlias = null;
 
-    private $check_for_conflicts_on_update = true;
+    private $checkForConflictsOnUpdate = true;
+    
+    private $checkForConflictsNotMandatoryForSubsheets = true;
 
     public function register() : BehaviorInterface
     {
@@ -212,7 +225,7 @@ class TimeStampingBehavior extends AbstractBehavior
      */
     protected function getCheckForConflictsOnUpdate() : bool
     {
-        return $this->check_for_conflicts_on_update;
+        return $this->checkForConflictsOnUpdate;
     }
 
     /**
@@ -229,7 +242,7 @@ class TimeStampingBehavior extends AbstractBehavior
      */
     public function setCheckForConflictsOnUpdate(bool $value) : TimeStampingBehavior
     {
-        $this->check_for_conflicts_on_update = $value;
+        $this->checkForConflictsOnUpdate = $value;
         return $this;
     }
     
@@ -448,11 +461,39 @@ class TimeStampingBehavior extends AbstractBehavior
         }
         
         // Check if the updated_on column is present in the sheet
-        $updated_column = $data_sheet->getColumns()->getByAttribute($this->getUpdatedOnAttribute());
-        if (! $updated_column) {
-            throw new DataSheetColumnNotFoundError($data_sheet, 'Cannot check for potential update conflicts in TimeStamping behavior: column "' . $this->getUpdatedOnAttributeAlias() . '" not found in given data sheet!', '7FDSVFK');
+        /* @var $update_times string[] array with an updated-on for every row number in the original data sheet */
+        $update_times = [];
+        switch (true) {
+            case $updated_column = $data_sheet->getColumns()->getByAttribute($this->getUpdatedOnAttribute());
+                $update_times = $updated_column->getValues();
+                break;
+            case $data_sheet instanceof DataSheetSubsheetInterface && $this->getCheckForConflictsNotMandatoryForSubsheets():
+                // If we have a subsheet without it's own updated-on column, see if the parent sheet has one
+                $parentSheet = $data_sheet->getParentSheet();
+                $parentObj = $parentSheet->getMetaObject();
+                foreach ($parentObj->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class) as $parentBeh) {
+                    /* @var $parentBeh \exface\Core\Behaviors\TimeStampingBehavior */
+                    if ($parentBeh->hasUpdatedOnAttribute() && $parentBeh->getCheckForConflictsOnUpdate() === true) {
+                        return;
+                    }
+                    
+                    /* IDEA check the parent sheet for an updated-column here. This did not work right away though
+                     * because the time of the subrows differs slightly from that on the main row.
+                    if ($parentBeh->hasUpdatedOnAttribute() && $parentUpdatedCol = $parentSheet->getColumns()->getByAttribute($parentBeh->getUpdatedOnAttribute())) {
+                         $update_times = [];
+                         foreach ($data_sheet->getJoinKeyColumnOfSubsheet()->getValues() as $rowNo => $parentKeyVal) {
+                             $parentRowNo = $data_sheet->getJoinKeyColumnOfParentSheet()->findRowByValue($parentKeyVal);
+                             $update_times[$rowNo] = $parentUpdatedCol->getValue($parentRowNo);
+                         }
+                         break 2; // break the switch()
+                     }
+                     */
+                }
+                // Don't break here! Let the exception happen!
+            default:
+                throw new DataSheetColumnNotFoundError($data_sheet, 'Cannot check for potential update conflicts in TimeStamping behavior: column "' . $this->getUpdatedOnAttributeAlias() . '" not found in given data sheet!', '7FDSVFK');
         }
-        $update_qty = count($updated_column->getValues());
+        $update_cnt = count($update_times);
         
         $conflict_rows = array();
         // See, if the UndoAction is performed currently. It needs special treatment
@@ -467,16 +508,49 @@ class TimeStampingBehavior extends AbstractBehavior
             // Check the current update timestamp in the data source
             $check_sheet = $this->readCurrentData($data_sheet);
             $check_column = $check_sheet->getColumns()->getByAttribute($this->getUpdatedOnAttribute());
-            $check_qty = count($check_column->getValues());
+            $check_cnt = count($check_column->getValues());
             
-            if ($check_qty === $update_qty) {
-                // beim Bearbeiten eines einzelnen Objektes ueber einfaches Bearbeiten, Massenupdate in Tabelle, Massenupdate
-                // ueber Knopf, ueber Knopf mit Filtern $check_nr == 1, $update_nr == 1
-                // beim Bearbeiten mehrerer Objekte ueber Massenupdate in Tabelle $check_nr == $update_nr > 1
-                foreach ($updated_column->getValues() as $row_nr => $updated_val) {
-                    $check_val = $check_column->getCellValue($check_sheet->getUidColumn()->findRowByValue($data_sheet->getUidColumn()->getCellValue($row_nr)));
+            // There are different types of updates to handle differently
+            switch (true) {
+                // A regular update via UID would result in the same number of rows in update data and current data
+                case $check_cnt === $update_cnt:
+                // An update via UID with create-if-no-UID could also result in less current rows than updated ones (1)
+                // Same could apply to a mass-update via filters if no current rows found - but that is not an issues
+                // since it would not actually do anything (2)
+                case $check_cnt < $update_cnt && $event->getCreateIfUidNotFound():
+                    foreach ($update_times as $data_sheet_row_nr => $updated_val) {
+                        $data_sheet_uid = $data_sheet->getUidColumn()->getCellValue($data_sheet_row_nr);
+                        // If no UID is found in the original data
+                        if (empty($data_sheet_uid)) {
+                            if ($event->getCreateIfUidNotFound()) {
+                                // see case (1) above
+                                continue;
+                            } elseif ($check_cnt === 0) {
+                                // see case (2) above
+                                continue;
+                            } else {
+                                // Very strange - should not happen :)
+                                throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for concurrent writes: row count mismatch!', '6T6I04D');
+                            }
+                        }
+                        
+                        // If we have a UID, look for conflicts!
+                        $check_sheet_row_nr = $check_sheet->getUidColumn()->findRowByValue($data_sheet_uid);
+                        $check_val = $check_column->getCellValue($check_sheet_row_nr);
+                        $updated_date = new \DateTime($updated_val);
+                        $check_date = new \DateTime($check_val);
+                        if ($updated_date != $check_date) {
+                            $conflict_rows[] = $data_sheet_row_nr;
+                        }
+                    }
+                    break;
+                // beim Bearbeiten mehrerer Objekte ueber Massenupdate via Knopf, mehrerer Objekte ueber Knopf mit Filtern
+                case $check_cnt > 1 && $update_cnt == 1:
+                    $updated_val = $update_times[0];
+                    $check_val = $check_column->aggregate(AggregatorFunctionsDataType::fromValue($this->getWorkbench(), $check_column->getAttribute()->getDefaultAggregateFunction()));
+                    
                     try {
-                        if (empty($data_sheet->getUidColumn()->getValues()[$row_nr])) {
+                        if (! $data_sheet->hasUidColumn() || empty($data_sheet->getUidColumn()->getValues()[0])) {
                             // Beim Massenupdate mit Filtern wird als TS_UPDATE-Wert die momentane Zeit mitgeliefert, die natuerlich neuer
                             // ist, als alle Werte in der Datenbank. Es werden jedoch keine oid-Werte uebergeben, da nicht klar ist welche
                             // Objekte betroffen sind. Momentan wird daher das Update einfach gestattet, spaeter soll hier eine Warnung
@@ -491,33 +565,12 @@ class TimeStampingBehavior extends AbstractBehavior
                     }
                     
                     if ($updated_date != $check_date) {
-                        $conflict_rows[] = $row_nr;
+                        $conflict_rows = array_keys($check_column->getValues(), $check_val);
                     }
-                }
-            } else if ($check_qty > 1 && $update_qty == 1) {
-                // beim Bearbeiten mehrerer Objekte ueber Massenupdate ueber Knopf, mehrerer Objekte ueber Knopf mit Filtern
-                // $check_nr > 1, $update_nr == 1
-                $updated_val = $updated_column->getValues()[0];
-                $check_val = $check_column->aggregate(AggregatorFunctionsDataType::fromValue($this->getWorkbench(), $check_column->getAttribute()->getDefaultAggregateFunction()));
-                
-                try {
-                    if (! $data_sheet->hasUidColumn() || empty($data_sheet->getUidColumn()->getValues()[0])) {
-                        // Beim Massenupdate mit Filtern wird als TS_UPDATE-Wert die momentane Zeit mitgeliefert, die natuerlich neuer
-                        // ist, als alle Werte in der Datenbank. Es werden jedoch keine oid-Werte uebergeben, da nicht klar ist welche
-                        // Objekte betroffen sind. Momentan wird daher das Update einfach gestattet, spaeter soll hier eine Warnung
-                        // ausgegeben werden.
-                        throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for concurrent writes on mass updates via filters', '6T6I04D');
-                    }
-                    $updated_date = new \DateTime($updated_val);
-                    $check_date = new \DateTime($check_val);
-                } catch (\Exception $e) {
-                    $updated_date = 0;
-                    $check_date = 0;
-                }
-                
-                if ($updated_date != $check_date) {
-                    $conflict_rows = array_keys($check_column->getValues(), $check_val);
-                }
+                    break;
+                // In all other cases throw an error - this should not happen actually, but just in case!
+                default:
+                    throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for concurrent writes: row count mismatch!', '6T6I04D');
             }
         }
         
@@ -570,6 +623,15 @@ class TimeStampingBehavior extends AbstractBehavior
         } else {
             return $check_sheet;
         }
+        
+        // Remove nested sheet columns
+        // TODO better read max-timestamp of all nested data here!
+        foreach ($check_sheet->getColumns() as $col) {
+            if ($col->getDataType() instanceof DataSheetDataType) {
+                $check_sheet->getColumns()->remove($col);
+            }
+        }
+        
         $check_sheet->dataRead();
         return $check_sheet;
     }
@@ -744,5 +806,37 @@ class TimeStampingBehavior extends AbstractBehavior
         $this->updatedByValueUserAttributeAlias = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function getCheckForConflictsNotMandatoryForSubsheets() : bool
+    {
+        return $this->checkForConflictsNotMandatoryForSubsheets;
+    }
+    
+    /**
+     * Set to FALSE to force concurrent writes detection in subsheets
+     * 
+     * By default pre-update checks (see `check_for_conflicts_on_update`) are not mandatory for nested
+     * data. This means, that on update operations that involve subsheets (e.g. tags, categories, etc.
+     * saved together with their head-object) the optimistic locking checks are only performed if
+     * the corresponding timestamp columns are present in the subsheet. If not AND the object of the
+     * main sheet has a timestamping behavior, it is assumed, that having the head-object checked is
+     * enough and the update is permitted. If `check_for_conflicts_not_mandatory_for_subsheets` is set 
+     * to `FALSE`, such updates would fail. 
+     * 
+     * @uxon-property check_for_conflicts_not_mandatory_for_subsheets
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return TimeStampingBehavior
+     */
+    public function setCheckForConflictsNotMandatoryForSubsheets(bool $value) : TimeStampingBehavior
+    {
+        $this->checkForConflictsNotMandatoryForSubsheets = $value;
+        return $this;
+    }
 }
-?>
