@@ -105,13 +105,11 @@ class StateMachineState implements iHaveIcon
                             ]
                         ]
                     ]);
-                    if ($stateId !== $this->getStateId()) {
-                        $btnUxon->setProperty('caption', $state->getName());
-                        if ($state->getIcon() !== null && $state->getShowIcon()) {
-                            $btnUxon->setProperty('icon', $state->getIcon());
-                            if ($state->getIconSet() !== null) {
-                                $btnUxon->setProperty('icon_set', $state->getIconSet());
-                            }
+                    $btnUxon->setProperty('caption', $state->getName());
+                    if ($state->getShowIcon() !== false) {
+                        $btnUxon->setProperty('icon', $state->getIcon() ?? 'arrow-right');
+                        if ($state->getIconSet() !== null) {
+                            $btnUxon->setProperty('icon_set', $state->getIconSet());
                         }
                     }
                     $this->buttons[$stateId] = $btnUxon;
@@ -239,18 +237,28 @@ class StateMachineState implements iHaveIcon
      */
     public function getTransitions()
     {
+        if ($this->transitions === null) {
+            return $this->getStateMachine()->getStateIds();
+        }
         return $this->transitions ?? [];
     }
 
     /**
-     * Defines the allowed transitions for the state.
+     * Defines the allowed transitions for the state (if not set, transitions to all states are allowed).
+     * 
+     * Set to an empty array to forbid any transitions from a state (including to itself!). Set to
+     * an array containing only the key of this state to forbid any transitions, but still allow
+     * changing data in this state.
      *
-     * The below example illustrates a state machine with the following rules. 
-     * From state 10 any state can be reached except 80. In state 20 too, but
-     * there is no going back to 10. From only transitions to 80 or 99 are
-     * allowed. In 80 an object can be saved, but the state cannot change,
-     * while in state 99 no writing to the instance is possible (even without
-     * changing the state!).
+     * The below example illustrates a state machine with the following rules:
+     * 
+     * - From state 10 any state can be reached except 80. 
+     * - In state 20 too, but there is no going back to 10. 
+     * - From only transitions to 80 or 99 are allowed. 
+     * - In 80 an object can be saved, but the state cannot change
+     * - In state 99 no writing to the instance is possible (even without changing the state!).
+     * 
+     * ```
      *  {
      *      10: {
      *          transitions: [ 10, 20, 50, 99 ]
@@ -267,7 +275,9 @@ class StateMachineState implements iHaveIcon
      *      99: {
      *          transitions: []
      *      }
-     *  } 
+     *  }
+     *  
+     * ``` 
      *  
      * @uxon-property transitions
      * @uxon-type array

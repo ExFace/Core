@@ -13,6 +13,8 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iPrefillWidget;
 use exface\Core\Actions\Traits\iPrefillWidgetTrait;
+use exface\Core\Events\Widget\OnPrefillDataLoadedEvent;
+use exface\Core\Factories\DataSheetFactory;
 
 /**
  * Exports the prefill data sheet for the target widget.
@@ -53,50 +55,86 @@ class ReadPrefill extends ReadData implements iPrefillWidget
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        // Get the prefill data from the request. 
-        // TODO The logic here should ideally be the same as in ShowWidget::prefillWidget(), but at the
-        // moment, there is no way to use the very same code. Perhaps trait could help...
-        $data_sheet = null;
-        try {
-            $data_sheet = $this->getInputDataSheet($task);
-        } catch (ActionInputMissingError $e) {
-            // ignore missing data - continue with the next if
-        }
-        if ($data_sheet === null || $data_sheet->isBlank() && $task->hasPrefillData()) {
-            $data_sheet = $task->getPrefillData();
-        } 
-        
-        // We don't need the total row count for prefills.
-        $data_sheet->setAutoCount(false);
-        
-        // IDEA are there other ways to load more data, than use UID-filters?
-        $canLoadMoreData = $data_sheet->hasUidColumn(true);
-        
+        $mainSheet = null;
+        $log = '';
+        $logSheets = [];
         $targetWidget = $this->getWidgetToReadFor($task);
         
-        if ($data_sheet->isEmpty()) {
-            $data_sheet = $this->getPrefillDataFromFilterContext($targetWidget, $data_sheet, $task);
-            return ResultFactory::createDataResult($task, $data_sheet);
+        // Normally, if we know, which widget to prefill, use the normal prefill logic from the iPrefillWidgetTrait
+        // Otherwise get the input/prefill data and refresh it if neccessary
+        if ($targetWidget !== null) {
+            $prefillSheets = $this->getPrefillDataFromTask($targetWidget, $task, $log, $logSheets);
+            $mainSheet = $prefillSheets[0];
+            $mainSheet = $this->getPrefillDataFromFilterContext($targetWidget, $mainSheet, $task, $log);
         } else {
-            if ($data_sheet->hasUidColumn(true)) {
-                $data_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
-            } /*elseif ($data_sheet->getFilters()->isEmpty() === false) {
+            $log .= '- Cannot determine widget to prefill - falling back to use of input/prefill data only!' . PHP_EOL;
+            try {
+                $mainSheet = $this->getInputDataSheet($task);
+                $logSheets['Input data'] = $mainSheet;
+                $log .= '- Input data found:' . PHP_EOL;
+                $log .= '   - Object: "' . $mainSheet->getMetaObject()->getAliasWithNamespace() . '"' . PHP_EOL;
+                $log .= '   - Rows: ' . $mainSheet->countRows() . PHP_EOL;
+                $log .= '   - Filters: ' . ($mainSheet->getFilters()->countConditions() + $mainSheet->getFilters()->countNestedGroups()) . PHP_EOL;
+            } catch (ActionInputMissingError $e) {
+                $log .= '- No input data to use' . PHP_EOL;
+                // ignore missing data - continue with the next if
+            }
+            if ($mainSheet === null || $mainSheet->isBlank() && $task->hasPrefillData()) {
+                $mainSheet = $task->getPrefillData();
+                $logSheets['Input data'] = $mainSheet;
+                $log .= '- Prefill data found:' . PHP_EOL;
+                $log .= '   - Object: "' . $mainSheet->getMetaObject()->getAliasWithNamespace() . '"' . PHP_EOL;
+                $log .= '   - Rows: ' . $mainSheet->countRows() . PHP_EOL;
+                $log .= '   - Filters: ' . ($mainSheet->getFilters()->countConditions() + $mainSheet->getFilters()->countNestedGroups()) . PHP_EOL;
+            } else {
+                $log .= '- No input data to use' . PHP_EOL;
+            }
+            
+            // We don't need the total row count for prefills.
+            $mainSheet->setAutoCount(false);
+            
+            // IDEA are there other ways to load more data, than use UID-filters?
+            $canLoadMoreData = $mainSheet->hasUidColumn(true);
+            
+            if ($mainSheet->isEmpty()) {
+                $log .= '- Did not find any prefill data till now - use filter context only.' . PHP_EOL;
+                $mainSheet = $this->getPrefillDataFromFilterContext($targetWidget, $mainSheet, $task, $log);
+                $canLoadMoreData = false;
+            } else {
+                if ($mainSheet->hasUidColumn(true)) {
+                    $mainSheet->getFilters()->addConditionFromColumnValues($mainSheet->getUidColumn());
+                } /*elseif ($data_sheet->getFilters()->isEmpty() === false) {
                 return ResultFactory::createDataResult($task, $data_sheet->removeRows());
-            }*/
+                }*/
+            }
+            
+            // Reed data if it is not fresh
+            if ($canLoadMoreData === true && $mainSheet->isFresh() === false) {
+                $log .= '- Refreshing data' . PHP_EOL;
+                $mainSheet->dataRead();
+            } else {
+                $log .= '- Refresh is not required or not possible' . PHP_EOL;
+            }
         }
         
-        // Let widgets modify the data sheet if neccessary
-        if ($targetWidget) {
-            $data_sheet = $targetWidget->prepareDataSheetToPrefill($data_sheet);
+        if ($mainSheet === null) {
+            $mainSheet = DataSheetFactory::createFromObject($this->getMetaObject());
         }
         
-        // Reed data if it is not fresh
-        if ($canLoadMoreData === true && $data_sheet->isFresh() === false) {
-            $affected_rows = $data_sheet->dataRead();
-        }
+        // Fire the event, log it to make it appear in the tracer
+        $event = new OnPrefillDataLoadedEvent(
+            $targetWidget,
+            $mainSheet,
+            $this,
+            $logSheets,
+            $log
+        );
+        $this->getWorkbench()->getLogger()->debug('Prefill data loaded for object ' . $mainSheet->getMetaObject()->getAliasWithNamespace(), [], $event);
+        $this->getWorkbench()->EventManager()->dispatch($event);
         
-        $result = ResultFactory::createDataResult($task, $data_sheet);
-        $result->setMessage($affected_rows . ' entries read');
+        // Send back the result
+        $result = ResultFactory::createDataResult($task, $mainSheet);
+        $result->setMessage($mainSheet->countRows() . ' prefill item(s) found');
         
         return $result;
     }
@@ -122,6 +160,11 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         return parent::getWidgetToReadFor($task);
     }
     
+    /**
+     * 
+     * @param TaskInterface $task
+     * @return WidgetInterface|NULL
+     */
     protected function getPrefillTrigger(TaskInterface $task) : ?WidgetInterface
     {
         if ($task->isTriggeredByWidget()) {
@@ -131,6 +174,11 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         }
     }
     
+    /**
+     * 
+     * @param TaskInterface $task
+     * @return ActionInterface|NULL
+     */
     protected function getPrefillTriggerAction(TaskInterface $task) : ?ActionInterface
     {
         $trigger = $this->getPrefillTrigger($task);
@@ -215,13 +263,13 @@ class ReadPrefill extends ReadData implements iPrefillWidget
      * {@inheritDoc}
      * @see \exface\Core\Actions\Traits\iPrefillWidgetTrait::getPrefillDataSheet()
      */
-    public function getPrefillDataSheet(TaskInterface $task = null) : DataSheetInterface
+    public function getPrefillDataSheet(TaskInterface $task) : DataSheetInterface
     {
         if ($task && ($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
-            return $action->getPrefillDataSheet();
+            return $action->getPrefillDataSheet($task);
         }
         
-        return $this->getPrefillDataSheetViaTrait();
+        return $this->getPrefillDataSheetViaTrait($task);
     }
     
     /**

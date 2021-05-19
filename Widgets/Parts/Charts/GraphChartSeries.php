@@ -12,7 +12,7 @@ use exface\Core\Widgets\Chart;
  * GraphChart to show relations between Objects
  *
  */
-class GraphChartSeries extends ChartSeries
+class GraphChartSeries extends ChartSeries implements iHaveColor
 {
     private $left_object_attribute_alias = null;
     
@@ -74,7 +74,7 @@ class GraphChartSeries extends ChartSeries
     }
     
     /**
-     * get the graph type, if no type was set, graphy type is network
+     * get the graph type, if no type was set, graph type is network
      * 
      * @return string
      */
@@ -87,7 +87,7 @@ class GraphChartSeries extends ChartSeries
     }
     
     /**
-     * get the attribute alias for left object
+     * get the attribute for left object
      * 
      * @return MetaAttributeInterface
      */
@@ -162,7 +162,7 @@ class GraphChartSeries extends ChartSeries
     }
     
     /**
-     * get the attribute alias for left object name
+     * get the attribute for left object name
      * 
      * @return MetaAttributeInterface
      */
@@ -217,7 +217,7 @@ class GraphChartSeries extends ChartSeries
     }
     
     /**
-     * get the attribute alias for right object
+     * get the attribute for right object
      *
      * @return MetaAttributeInterface
      */
@@ -272,7 +272,7 @@ class GraphChartSeries extends ChartSeries
     }
     
     /**
-     * get the attribute alias for right object name
+     * get the attribute for right object name
      *
      * @return MetaAttributeInterface
      */
@@ -327,7 +327,7 @@ class GraphChartSeries extends ChartSeries
     }
     
     /**
-     * get the attribute alias for relation
+     * get the attribute for relation
      *
      * @return MetaAttributeInterface
      */
@@ -382,7 +382,7 @@ class GraphChartSeries extends ChartSeries
     }
     
     /**
-     * get the attribute alias for relation name
+     * get the attribute for relation name
      *
      * @return MetaAttributeInterface
      */
@@ -437,7 +437,7 @@ class GraphChartSeries extends ChartSeries
     }
     
     /**
-     * get the attribute alias for direction
+     * get the attribute for direction
      *
      * @return MetaAttributeInterface
      */
@@ -497,7 +497,7 @@ class GraphChartSeries extends ChartSeries
     }
     
     /**
-     * get the attribute alias for category
+     * get the attribute for category
      *
      * @return MetaAttributeInterface
      */
@@ -590,7 +590,7 @@ class GraphChartSeries extends ChartSeries
      * @param string $color
      * @return ChartSeries
      */
-    public function setColor(string $color) : ChartSeries
+    public function setColor($color) : ChartSeries
     {
         $this->color = $color;
         return $this;

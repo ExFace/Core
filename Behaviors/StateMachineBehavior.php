@@ -13,13 +13,9 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\CommonLogic\Model\Behaviors\StateMachineState;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
-use exface\Core\Actions\SaveData;
-use exface\Core\Actions\DeleteObject;
 use exface\Core\Events\Widget\OnPrefillEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\DataTypes\NumberDataType;
-use exface\Core\DataTypes\StringEnumDataType;
-use exface\Core\DataTypes\NumberEnumDataType;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Widgets\ProgressBar;
 use exface\Core\Events\Model\OnMetaAttributeModelValidatedEvent;
@@ -342,6 +338,16 @@ class StateMachineBehavior extends AbstractBehavior
     public function getStates()
     {
         return $this->states;
+    }
+    
+    /**
+     * Returns an array with the ids of all states
+     * 
+     * @return string[]
+     */
+    public function getStateIds() : array
+    {
+        return array_keys($this->getStates());
     }
 
     /**

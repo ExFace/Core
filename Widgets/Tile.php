@@ -284,4 +284,19 @@ class Tile extends Button
         
         return parent::doPrefill($dataSheet);
     }
+    
+    
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Button::getChildren()
+     */
+    public function getChildren() : \Iterator
+    {
+        yield from parent::getChildren();
+        if ($this->hasDisplayWidget()) {
+            yield $this->getDisplayWidget();
+        }
+    }
 }

@@ -34,7 +34,7 @@ class CsvBuilder extends FileContentsBuilder
         
         $static_values = array();
         foreach ($this->getAttributes() as $qpart) {
-            if ($this->getFileProperty($query, $qpart->getDataAddress()) !== false) {
+            if ($this->isFileProperty($qpart->getDataAddress())) {
                 $static_values[$qpart->getColumnKey()] = $this->getFileProperty($query, $qpart->getDataAddress());
             } 
         }
@@ -142,7 +142,7 @@ class CsvBuilder extends FileContentsBuilder
     {
         $readerFiltering = false;
         foreach ($this->getFilters()->getFilters() as $qpart) {
-            if ($this->getFileProperty($query, $qpart->getDataAddress()) === false) {
+            if ($this->isFileProperty($qpart->getDataAddress()) === false) {
                 $qpart->setAlias($qpart->getDataAddress()); // use numeric alias since league/csv filter on arrays with numeric indexes
                 $qpart->setApplyAfterReading(true);
                 $readerFiltering = true;

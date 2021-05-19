@@ -327,4 +327,17 @@ class KPI extends Display implements iUseData
         $this->usePreifllData = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getChildren()
+     */
+    public function getChildren() : \Iterator
+    {
+        yield from parent::getChildren();
+        if ($this->hasDataWidgetLink() === false) {
+            yield $this->getData();
+        }
+    }
 }
