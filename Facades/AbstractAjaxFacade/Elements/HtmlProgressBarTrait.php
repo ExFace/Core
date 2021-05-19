@@ -71,7 +71,7 @@ HTML;
 function() {
     var val = {$value_js};
     
-    if (val === undefined || val === '') return '';
+    if (val === undefined || val === null || val === '') return '';
 
     var colorMap = [ {$colorMapJs} ];
     var textMap = {$textMapJs};
