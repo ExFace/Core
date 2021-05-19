@@ -2678,10 +2678,16 @@ JS;
         var echart = {$this->buildJsEChartsVar()};
         var options = echart.getOption();
         var colors = options['color'];
-        for (var i = 0; i < {$dataJs}.length; i++) {
-            var row = {$dataJs}[i];            
+        var minDepth;
+        {$dataJs}.forEach(function(row) {           
             var sourceID = row[sourceIdColumn];
             var targetID = row[targetIdColumn];
+            var depth;
+            // wrap captions after 32 characers
+            row[sourceCaption] = (row[sourceCaption] || '').replace(/(?![^\\n]{1,32}$)([^\\n]{1,32})\\s/g, '$1\\n');
+            row[targetCaption] = (row[targetCaption] || '').replace(/(?![^\\n]{1,32}$)([^\\n]{1,32})\\s/g, '$1\\n');
+            row[sourceLevel] = parseFloat(row[sourceLevel]);
+            row[targetLevel] = parseFloat(row[targetLevel]);
             // if targetID and sourceID are set, add nodes
             if (targetID != '' && sourceID != '') {
                 // if source doesnt exist as node yet, add it
@@ -2694,6 +2700,9 @@ JS;
                         },
                         "_caption": row[sourceCaption]
                     };
+                    if (minDepth === undefined || row[sourceLevel] < minDepth) {
+                        minDepth = row[sourceLevel];
+                    }
                 }
                 // if target doesnt exist as node yet, add it
                 if (nodes[targetID] === undefined) {
@@ -2705,21 +2714,32 @@ JS;
                         },
                         "_caption": row[targetCaption]
                     };
+                    if (minDepth === undefined || row[sourceLevel] < minDepth) {
+                        minDepth = row[targetLevel];
+                    }
                 }                
                 
             }
-            if (nodes[sourceID] && nodes[targetID]) {           
+            if (sourceID !== targetID && nodes[sourceID] && nodes[targetID]) {           
                 var depthSource = nodes[sourceID]["depth"];
                 var depthTarget = nodes[targetID]["depth"];
                 //if target nodes depth higher or equal (should not happen) to source node depth add the link
                 if (depthTarget >= depthSource) {
+                    if (depthTarget === depthSource && ! isNaN(depthTarget)) {
+                        depthTarget = depthTarget + 0.5;
+                        nodes[targetID].depth = depthTarget;
+                    }
                     var link = {
-                        "source": row[sourceCaption],
-                        "target": row[targetCaption],
-                        "value": 1
+                        source: row[sourceCaption],
+                        target: row[targetCaption],
+                        value: 1,
+                        lineStyle: {
+                            color: colors[depthSource],
+                            opacity: 0.3
+                        }
                     }
                     if (linkCaption != 'undefined') {
-                        link["_caption"] = row[linkCaption];
+                        link._caption = row[linkCaption];
                     }
                     links.push(link);
                 }
@@ -2727,17 +2747,27 @@ JS;
                 //if target node depth is higher than source node depth, add link but switch target and source 
                 if (depthTarget < depthSource) {
                     var link = {
-                        "source": row[targetCaption],
-                        "target": row[sourceCaption],
-                        "value": 1
+                        source: row[targetCaption],
+                        target: row[sourceCaption],
+                        value: 1,
+                        lineStyle: {
+                            color: colors[depthSource]
+                        }
                     }
                     if (linkCaption != 'undefined') {
-                        link["_caption"] = row[linkCaption];
+                        link._caption = row[linkCaption];
                     }
                     links.push(link);
                 }
             }
+        });
+
+        if (minDepth > 0) {
+            for (var i in nodes) {
+                nodes[i].depth = nodes[i].depth - minDepth;
+            }
         }
+        
         var nodesArray = [];
         for (var prop in nodes) {
             nodesArray.push(nodes[prop]);
