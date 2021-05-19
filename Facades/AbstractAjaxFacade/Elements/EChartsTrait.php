@@ -1008,6 +1008,7 @@ JS;
         if ($visualMapConfig !== '') {
             $visualMapJs = "visualMap: [{$visualMapConfig}],";
         }
+        $colorScheme = $this->getWidget()->getColorScheme() ?? 'null';
         return <<<JS
         
 {
@@ -1024,12 +1025,17 @@ JS;
         var oOpts = oChart.getOption() || {};
         var aColors = oOpts.color || ['#c23531', '#2f4554', '#61a0a8', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3'];
         var jqCharts = $('.exf-chart');
+        var iColorScheme = $colorScheme;
         
-        for (var i = 0; i < jqCharts.length; i++) {
-            if (jqCharts[i] !== oChart.getDom()) {
-                iCnt++;
-            } else {
-                break;
+        if (iColorScheme !== null) {
+            iCnt = iColorScheme;
+        } else {
+            for (var i = 0; i < jqCharts.length; i++) {
+                if (jqCharts[i] !== oChart.getDom()) {
+                    iCnt++;
+                } else {
+                    break;
+                }
             }
         }
         
@@ -2374,7 +2380,7 @@ JS;
             }
         }
         $useGradients = 'true';
-        if ($series->getSplitUseColorGradients() === false) {
+        if ($series->getSplitWithColorGradients() === false) {
             $useGradients = 'false';
         }
         return <<<JS

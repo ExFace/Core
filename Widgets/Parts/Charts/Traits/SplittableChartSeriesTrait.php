@@ -2,7 +2,6 @@
 namespace exface\Core\Widgets\Parts\Charts\Traits;
 
 use exface\Core\Widgets\Parts\Charts\ChartSeries;
-use exface\Core\Widgets\Parts\Charts\ChartAxis;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
@@ -49,21 +48,24 @@ trait SplittableChartSeriesTrait
     
     /**
      * Set this attribute when you want series resulting from a split to use color gradients instead of different colors
-     * If it is set to false, the possible set color for the series will be ignored.
-     * If it is set to true the color will be use to generated gradients of it for the resulting series.
-     * If no color is set color will be chosen automatically.
-     * Default is true.
+     * 
+     * If it is set to `true` (default) the `color` of the series will be use to generated 
+     * gradients for every split. If no `color` is set, the auto-assigned color will be 
+     * used for gradients.
+     * 
+     * If it is set to `false`, the possibly set color for the series will be ignored - instead each split
+     * will get it's own color.
      *
-     * @uxon-property split_use_color_gradients
+     * @uxon-property split_with_color_gradients
      * @uxon-type boolean
      * @uxon-default true
      *
      * @param string $value
      * @return ChartSeries
      */
-    public function setSplitUseColorGradients(bool $trueOrFalse) : ChartSeries
+    public function setSplitWithColorGradients(bool $trueOrFalse) : ChartSeries
     {
-        $this->split_use_color_gradients = BooleanDataType::cast($trueOrFalse);
+        $this->split_use_color_gradients = $trueOrFalse;
         return $this;
     }
     
@@ -71,7 +73,7 @@ trait SplittableChartSeriesTrait
      *
      * @return string|NULL
      */
-    public function getSplitUseColorGradients() : bool
+    public function getSplitWithColorGradients() : bool
     {
         if ($this->split_use_color_gradients !== null) {
             return $this->split_use_color_gradients;
