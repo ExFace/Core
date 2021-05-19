@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2021-01-27 21:33:37",
-            "MODIFIED_ON": "2021-02-03 11:30:31",
+            "MODIFIED_ON": "2021-05-18 16:38:36",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebb374ef0b5eacb374847beb4a5184",
@@ -166,7 +166,7 @@
                                         "attribute_alias": "TASK_UXON",
                                         "widget_type": "InputUxon",
                                         "hide_caption": true,
-                                        "height": true,
+                                        "height": "100%",
                                         "root_prototype": "exface\\Core\\CommonLogic\\Tasks\\GenericTask"
                                     }
                                 ]
