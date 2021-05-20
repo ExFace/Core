@@ -1,11 +1,9 @@
 -- UP
 
 ALTER TABLE `exf_monitor_error`
-	ADD INDEX `logid` (`log_id`),
-	ADD INDEX `date-user-status` (`date`, `user_oid`, `status`);
+	ADD INDEX `logid` (`log_id`);
 	
 -- DOWN
 
 ALTER TABLE `exf_monitor_error`
-	DROP INDEX `logid`,
-	DROP INDEX `date-user-status`;
+	DROP INDEX `logid`;
