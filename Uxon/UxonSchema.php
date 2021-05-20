@@ -411,7 +411,7 @@ class UxonSchema implements UxonSchemaInterface
             case strcasecmp($type, 'metamodel:comparator') === 0:
                 $options = $this->getMetamodelComparators($search);
                 break;
-            case strcasecmp($type, 'metamodel:attribute') === 0:
+            case strcasecmp($type, 'metamodel:attribute') === 0 && $object !== null:
             case strcasecmp($type, 'metamodel:relation') === 0 && $object !== null:
                 try {
                     if (strcasecmp($type, 'metamodel:attribute') === 0) {
