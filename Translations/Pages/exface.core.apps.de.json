@@ -3,5 +3,8 @@
     "DESCRIPTION": null,
     "INTRO": null,
     "CONTENT.CAPTION.PUPLISHED": "Veröffentlicht",
-    "CONTENT.CAPTION.PUPLISH": "Veröffentlichen"
+    "CONTENT.CAPTION.PUPLISH": "Veröffentlichen",
+    "CONTENT.CAPTION.UNPUPLISH": "Unveröffentlichen",
+    "CONTENT.CAPTION.PACKAGES_URL": "Packages URL",
+    "CONTENT.CAPTION.PUPLISHED_PACKAGES_URL": "Veröffentlichte Packages URL"
 }

@@ -26,10 +26,6 @@
             "attribute_alias": "DEFAULT_LANGUAGE_CODE"
         },
         {
-            "name": "PUPLISHED",
-            "attribute_alias": "PUPLISHED"
-        },
-        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -46,7 +42,6 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31000000000000000000000000000000",
             "DEFAULT_LANGUAGE_CODE": "en",
-            "PUPLISHED": "0",
             "ALIAS": "exface.Core",
             "NAME": "ExFace Core"
         }
