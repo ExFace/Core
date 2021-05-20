@@ -362,7 +362,7 @@ class MetaModelInstaller extends AbstractAppInstaller
         $app = $this->getApp();      
         $model = $this->getWorkbench()->model();
         $sheets = array();
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.APP'), 'UID');
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.APP'), 'UID', ['PUPLISHED']);
         $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.DATATYPE'), 'APP');
         $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.OBJECT'), 'APP');
         $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.OBJECT_BEHAVIORS'), 'APP');
