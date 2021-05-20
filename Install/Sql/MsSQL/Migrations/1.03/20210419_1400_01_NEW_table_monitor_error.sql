@@ -15,7 +15,7 @@ CREATE TABLE [dbo].[exf_monitor_error] (
     [status] smallint NOT NULL,
     [user_oid] binary(16) DEFAULT NULL,
     [action_oid] binary(16) DEFAULT NULL,
-  CONSTRAINT [PK_exf_monitor_action_oid] PRIMARY KEY CLUSTERED (oid)
+  CONSTRAINT [PK_exf_monitor_error_oid] PRIMARY KEY CLUSTERED (oid)
 )
 GO
 
