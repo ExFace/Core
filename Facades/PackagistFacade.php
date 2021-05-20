@@ -55,7 +55,6 @@ class PackagistFacade extends AbstractHttpFacade
     protected function buildResponsePackagesJson() : ResponseInterface
     {
         $workbench = $this->getWorkbench();
-        $action = ActionFactory::createFromString($workbench, StaticInstaller::PACKAGE_MANAGER_BACKUP_ACTION_ALIAS);
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.APP');
         $ds->getColumns()->addMultiple(['FOLDER', 'PACKAGE', 'PACKAGE__version', 'ALIAS', 'PUPLISHED']);
         $ds->getFilters()->addConditionFromString('PUPLISHED', true, ComparatorDataType::EQUALS);
