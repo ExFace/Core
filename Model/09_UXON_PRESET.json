@@ -4324,7 +4324,7 @@
         },
         {
             "CREATED_ON": "2021-05-17 11:40:37",
-            "MODIFIED_ON": "2021-05-17 11:42:58",
+            "MODIFIED_ON": "2021-05-21 13:54:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eba9f1eff78d2aa9f1025041000001",
@@ -4335,7 +4335,6 @@
             "UXON": {
                 "widget_type": "Dialog",
                 "object_alias": "\/\/ REPLACE WITH MASTER OBJECT",
-                "height": 5,
                 "widgets": [
                     {
                         "attribute_alias": "id",
