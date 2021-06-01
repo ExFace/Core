@@ -29,12 +29,12 @@ class PackagistFacade extends AbstractHttpFacade
         $middleware = new AuthenticationMiddleware($this,[[AuthenticationMiddleware::class, 'extractBasicHttpAuthToken']]);
         $token = $middleware->extractBasicHttpAuthToken($request, $this);
         if (!$token) {
-            return new Response(400, [], 'No Basic-Auth data provided!');
+            return new Response(401, [], 'No Basic-Auth data provided!');
         }
         try {
             $this->getWorkbench()->getSecurity()->authenticate($token);
         } catch (AuthenticationFailedError $e) {
-            return new Response(400, [], 'Authentification failed!');
+            return new Response(403, [], 'Authentification failed!');
         }
         $uri = $request->getUri();
         $path = $uri->getPath();
