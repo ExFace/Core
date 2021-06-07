@@ -6,8 +6,6 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\Interfaces\Widgets\iHaveColor;
-use exface\Core\Widgets\Traits\iHaveColorTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
@@ -143,6 +141,8 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 class Tile extends Button
 {
     private $subtitle = null;
+    
+    private $footer = null;
     
     private $displayWidget = null;
     
@@ -298,5 +298,29 @@ class Tile extends Button
         if ($this->hasDisplayWidget()) {
             yield $this->getDisplayWidget();
         }
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getFooterText() : ?string
+    {
+        return $this->footer;
+    }
+    
+    /**
+     * Text to be displayed in the footer of the tile
+     * 
+     * @uxon-property footer
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return Tile
+     */
+    public function setFooter(string $value) : Tile
+    {
+        $this->footer = $value;
+        return $this;
     }
 }
