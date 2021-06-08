@@ -962,5 +962,38 @@ JS;
         
         return $this->buildJsValueSetter($initialValueJs);
     }
+    
+    /**
+     * Escapes special characters in the given string value, so it can be used in JavaScript or HTML (if `$forUseInHtml` is set to TRUE).
+     * 
+     * By default the escaped string is automatically enclosed in double quotes. To avoid this, set 
+     * `$encloseInQuotes` to `false`. It is recommended to place the result in double quotes in
+     * this case: e.g. `"escaped_string"`.
+     * 
+     * @param mixed $string
+     * @param bool $forUseInHtml
+     * @return string|NULL
+     */
+    public function escapeString($string, bool $encloseInQuotes = true, bool $forUseInHtml = false) : ?string
+    {
+        if ($string === null) {
+            return $string;
+        }
+        
+        if ($string === '') {
+            return $encloseInQuotes ? '""' : $string;
+        }
+        
+        if ($forUseInHtml === true) {
+            $escaped = htmlentities($string, ENT_QUOTES);
+            return $encloseInQuotes ? '"' . $escaped . '"' : $escaped;
+        }
+        
+        $escaped = json_encode($string);
+        if ($encloseInQuotes === false && substr($escaped, 0, 1) === '"' && substr($escaped, -1) === '"') {
+            $escaped = substr($escaped, 1, -1);
+        }
+        return $escaped;
+    }
 }
 ?>
