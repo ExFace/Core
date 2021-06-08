@@ -19,7 +19,7 @@ trait JqueryInputTrait
     {
         $defaults = [
             'name' => $this->getWidget()->getAttributeAlias(),
-            'value' => $this->escapeString($this->getWidget()->getValueWithDefaults(), false),
+            'value' => $this->escapeString($this->getWidget()->getValueWithDefaults(), false, true),
             'id' => $this->getId()
         ];
         
