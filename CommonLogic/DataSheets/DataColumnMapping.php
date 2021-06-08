@@ -158,15 +158,32 @@ class DataColumnMapping implements DataColumnMappingInterface
         $fromExpr = $this->getFromExpression();
         $toExpr = $this->getToExpression();
         
-        if ($fromExpr->isConstant()){
-            $newCol = $toSheet->getColumns()->addFromExpression($toExpr)->setValuesByExpression($fromExpr);
-            // If the sheet has no rows, setValuesByExpression() will not have an effect, so
-            // we need to add a row manually.
-            if ($toSheet->isEmpty() === true) {
-                $toSheet->addRow([$newCol->getName() => $fromExpr->evaluate()]);
-            }
-        } elseif ($fromCol = $fromSheet->getColumns()->getByExpression($fromExpr)){
-            $toSheet->getColumns()->addFromExpression($toExpr, '', $fromCol->getHidden())->setValues($fromCol->getValues(false));
+        switch (true) {
+            // Constants and static formulas
+            case $fromExpr->isStatic():
+                $newCol = $toSheet->getColumns()->addFromExpression($toExpr)->setValuesByExpression($fromExpr);
+                // If the sheet has no rows, setValuesByExpression() will not have an effect, so
+                // we need to add a row manually.
+                if ($toSheet->isEmpty() === true) {
+                    $toSheet->addRow([$newCol->getName() => $fromExpr->evaluate()]);
+                }
+                break;
+            // Data column references
+            case $fromCol = $fromSheet->getColumns()->getByExpression($fromExpr):
+                $toSheet->getColumns()->addFromExpression($toExpr, '', $fromCol->getHidden())->setValues($fromCol->getValues(false));
+                break;
+            // Formulas with data
+            case $fromExpr->isFormula():
+                $newCol = $toSheet->getColumns()->addFromExpression($toExpr);
+                $newCol->setValues($fromExpr->evaluate($fromSheet));
+                // If the sheet has no rows, setValuesByExpression() will not have an effect, so
+                // we need to add a row manually.
+                if ($toSheet->isEmpty() === true) {
+                    $toSheet->addRow([$newCol->getName() => $fromExpr->evaluate($fromSheet, 0)]);
+                }
+                break;
+            default:
+                throw new DataSheetMapperError($this->getMapper(), 'Cannot use "' . $fromExpr->toString() . '" as from-expression in a column-to-column mapping: only data column names, constants and formulas allowed!');
         }
         
         return $toSheet;
