@@ -43,11 +43,11 @@ interface SplittableChartSeriesInterface
      * @param bool $trueOrFalse
      * @return ChartSeries
      */
-    public function setSplitUseColorGradients(bool $trueOrFalse) : ChartSeries;
+    public function setSplitWithColorGradients(bool $trueOrFalse) : ChartSeries;
     
     /**
      * 
      * @return bool
      */
-    public function getSplitUseColorGradients() : bool;
+    public function getSplitWithColorGradients() : bool;
 }

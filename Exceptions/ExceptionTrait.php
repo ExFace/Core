@@ -466,8 +466,12 @@ trait ExceptionTrait {
      */
     public function getId()
     {
-        if (is_null($this->id)) {
-            $this->id = Logger::generateLogId();
+        if ($this->id === null) {
+            if ($this->getPrevious() instanceof ExceptionInterface) {
+                $this->id = $this->getPrevious()->getId();
+            } else {
+                $this->id = Logger::generateLogId();
+            }
         }
         return $this->id;
     }

@@ -403,7 +403,7 @@ class Expression implements ExpressionInterface
                 case self::TYPE_ATTRIBUTE:
                     $col = $data_sheet->getColumns()->getByExpression($this->attribute_alias);
                     if (! $col) {
-                        throw new DataSheetColumnNotFoundError($data_sheet, 'Cannot evaluate expression "' . $this->toString() . '": column not found in data sheet!');
+                        throw new DataSheetColumnNotFoundError($data_sheet, 'Expression "' . $this->toString() . '" does not match any column in provided data sheet!');
                     }
                     return $col->getCellValue($row_number);
                 case self::TYPE_FORMULA:

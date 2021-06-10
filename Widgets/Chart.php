@@ -117,6 +117,8 @@ class Chart extends AbstractWidget implements
     private $dataPrepared = false;
     
     private $empty_text = null;
+    
+    private $colorScheme = null;
 
     /**
      * 
@@ -963,5 +965,36 @@ class Chart extends AbstractWidget implements
             $configurator = $widget;
         }
         return $this->setConfiguratorWidgetViaTrait($configurator);
+    }
+    
+    /**
+     * 
+     * @return int|NULL
+     */
+    public function getColorScheme() : ?int
+    {
+        return $this->colorScheme;
+    }
+    
+    /**
+     * Give two charts the same scheme number to make them use the same colors.
+     * 
+     * Facades will automatically assign colors to chart series according to their
+     * design rules. Most facades will alter colors automatically, so that two
+     * different charts do not look the same. Setting the `color_scheme` to the
+     * same value for two charts will force them to use the same color logic
+     * making the look related. What exactly the `color_scheme` number stand for
+     * is up to the facade.
+     * 
+     * @uxon-property color_scheme
+     * @uxon-type integer
+     * 
+     * @param int $value
+     * @return Chart
+     */
+    public function setColorScheme(int $value) : Chart
+    {
+        $this->colorScheme = $value;
+        return $this;
     }
 }
