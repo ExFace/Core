@@ -82,7 +82,7 @@ abstract class Formula implements FormulaInterface
     {
         // now find out, what each parameter is: a column reference, a string, a widget reference etc.
         foreach ($arguments as $arg) {
-            $expr = $this->getWorkbench()->model()->parseExpression($arg);
+            $expr = $this->getWorkbench()->model()->parseExpression(trim($arg));
             $this->arguments[] = $expr;
             $this->required_attributes = array_merge($this->required_attributes, $expr->getRequiredAttributes());
         }
@@ -131,7 +131,7 @@ abstract class Formula implements FormulaInterface
                 $onRow = $row_number !== null ? ' on row ' . $row_number : '';
                 $errorText .= ' for data of ' . $data_sheet->getMetaObject()->getAliasWithNamespace() . $onRow . '!';
             }
-            throw new FormulaError($errorText, null, $e);
+            throw new FormulaError($errorText . ' ' . $e->getMessage(), null, $e);
         }
     }
 

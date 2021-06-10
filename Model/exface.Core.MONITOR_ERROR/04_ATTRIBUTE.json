@@ -173,7 +173,7 @@
     "rows": [
         {
             "CREATED_ON": "2021-04-06 13:44:54",
-            "MODIFIED_ON": "2021-04-21 10:36:44",
+            "MODIFIED_ON": "2021-05-19 19:10:26",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb8c4481427db88c448c04ba002958",
@@ -190,7 +190,7 @@
             "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "NAME": "Log ID",
+            "NAME": "Log-ID",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": "1",
@@ -200,7 +200,7 @@
             "OBJECT": "0x11eb90f04b00a9be90f08c04ba002958",
             "FORMATTER": "",
             "DISPLAYORDER": null,
-            "LABELFLAG": "0",
+            "LABELFLAG": "1",
             "UIDFLAG": "0",
             "HIDDENFLAG": "0",
             "EDITABLEFLAG": "0",

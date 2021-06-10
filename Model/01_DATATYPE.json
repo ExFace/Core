@@ -393,7 +393,7 @@
         },
         {
             "CREATED_ON": "2017-10-24 07:43:19",
-            "MODIFIED_ON": "2017-10-24 07:43:19",
+            "MODIFIED_ON": "2021-05-20 18:38:19",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7b88efc3e81d586360205857feb80",
@@ -403,7 +403,7 @@
             "CONFIG_UXON": null,
             "VALIDATION_ERROR": "",
             "DEFAULT_EDITOR_UXON": {
-                "widget_type": "Markdown"
+                "widget_type": "InputMarkdown"
             },
             "ALIAS": "Markdown",
             "SHORT_DESCRIPTION": "Text formatted via markdown"

@@ -206,7 +206,9 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             
         } catch (\Throwable $e) {
             $connection->transactionRollback();
-            $this->getWorkbench()->getLogger()->logException($e);
+            $this->getWorkbench()->getLogger()
+                ->logException($exception)
+                ->logException($e);
             throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' failure log error: ' . $e->getMessage(), null, $e);
         }
         return $migration;
