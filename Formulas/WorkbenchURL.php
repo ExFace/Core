@@ -11,7 +11,7 @@ use exface\Core\Factories\DataTypeFactory;
  * Produces an URL by adding the given string to the base workbench url
  * 
  * E.g. 
- * - `=WorkbenchURL('api/packagist/packages')` => https://myserver.com/mypath/api/packagist/packages
+ * - `=WorkbenchURL('api/packagist')` => https://myserver.com/mypath/api/packagist
  *
  * @author Ralf Mulansky
  *        
