@@ -557,4 +557,10 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * @return MetaObjectInterface
      */
     public function setReadable($true_or_false);
+    
+    /**
+     * 
+     * @return string
+     */
+    public function __toString() : string;
 }
