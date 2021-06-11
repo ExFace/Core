@@ -24,6 +24,8 @@ class PackagistFacade extends AbstractHttpFacade
 {
     private $appVersion = null;
     
+    const BRANCH_NAME = 'dev-puplished';
+    
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $middleware = new AuthenticationMiddleware($this,[[AuthenticationMiddleware::class, 'extractBasicHttpAuthToken']]);
@@ -70,14 +72,14 @@ class PackagistFacade extends AbstractHttpFacade
             $app = AppFactory::createFromAlias($alias, $workbench);
             $packageManager = $this->getWorkbench()->getApp("axenox.PackageManager");
             $composerJson = $packageManager->getComposerJson($app);
-            $composerJson['version'] = 'dev-master';
+            $composerJson['version'] = self::BRANCH_NAME;
             $composerJson['dist'] = [
                 'type' => 'zip',
                 'url' => $this->buildPackageUrl($app),
                 'reference' => $this->getAppVersion()
             ];
             $json['packages'][$composerJson['name']] = [];            
-            $json['packages'][$composerJson['name']]['dev-master'] = $composerJson;
+            $json['packages'][$composerJson['name']][self::BRANCH_NAME] = $composerJson;
             
         }        
         $headers = [];
