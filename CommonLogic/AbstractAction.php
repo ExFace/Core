@@ -1404,7 +1404,7 @@ abstract class AbstractAction implements ActionInterface
                     case $relationToInput = $thisLevelObject->findRelation($inputObject, true):
                         if ($relationFromPrev) {
                             $inputObjectRelPath = $relPathFromPrev->copy()->appendRelation($relationToInput);
-                        } else {
+                        } elseif ($prevLevelRelPath->getEndObject()->isExactly($thisLevelObject)) {
                             $inputObjectRelPath = $prevLevelRelPath->copy()->appendRelation($relationToInput);
                         }
                         break;
