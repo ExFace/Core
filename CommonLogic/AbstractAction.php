@@ -1432,9 +1432,19 @@ abstract class AbstractAction implements ActionInterface
             /* @var $inputDialogTrigger \exface\Core\Widgets\Button */
             if ($inputDialogTrigger = $inputWidget->getParentByClass(Button::class)) {
                 if ($inputDialogTrigger->hasAction()) {
+                    // Double check if the relation path found so far actually connects the actions object and
+                    // this levels object. If so, pass it on to the next level.
+                    // This is important for deeply nested buttons when the relation path can only be determined
+                    // upto a certain depth or after a certain depth. Both cases are useless for the effects, but
+                    // produce relation paths here. Doing the checks earlier in the code would make the logic
+                    // overcomplicated, so we just check it once here - right before passing on to the next level.
+                    $relPath = $relPathFromPrev ?? $prevLevelRelPath;
+                    if ($relPath && (! $relPath->getStartObject()->isExactly($this->getMetaObject()) || ! $relPath->getEndObject()->isExactly($thisLevelObject))) {
+                        $relPath = null;
+                    }
                     $effects = array_merge(
                         $effects, 
-                        $this->getEffectsFromTriggerWidget($inputDialogTrigger, $thisLevelObject, $name, $relPathFromPrev ?? $prevLevelRelPath)
+                        $this->getEffectsFromTriggerWidget($inputDialogTrigger, $thisLevelObject, $name, $relPath)
                     );
                 }
             }
