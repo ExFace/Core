@@ -44,7 +44,7 @@ class PackagistFacade extends AbstractHttpFacade
         } elseif ($topics[0]) {
             return $this->buildResponsePackage($topics);
         }
-        return new Response(400);
+        return new Response(404);
     }
     
     /**
@@ -101,7 +101,8 @@ class PackagistFacade extends AbstractHttpFacade
         $ds->getFilters()->addConditionFromString('ALIAS', $packageAlias, ComparatorDataType::EQUALS);
         $ds->dataRead();
         if ($ds->isEmpty()) {
-            return new Response(400, [], "The package '$packageAlias' does not exist or is not puplished");
+            $packageAlias = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, '/', $packageAlias);
+            return new Response(404, [], "The package '{$packageAlias}' does not exist or is not puplished!");
         }
         $app = AppFactory::createFromAlias($packageAlias, $workbench);        
         $backupAction = ActionFactory::createFromString($workbench, StaticInstaller::PACKAGE_MANAGER_BACKUP_ACTION_ALIAS);
