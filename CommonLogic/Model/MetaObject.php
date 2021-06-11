@@ -1240,7 +1240,10 @@ class MetaObject implements MetaObjectInterface
         $this->writable = BooleanDataType::cast($true_or_false);
         return $this;
     }
-
-
+    
+    public function __toString() : string
+    {
+        return '"' . $this->getName() . '" [' . $this->getAliasWithNamespace() . ']';
+    }
 }
 ?>
