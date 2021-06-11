@@ -26,7 +26,7 @@ use exface\Core\Factories\ExpressionFactory;
  *      "repositories": {
  *          "[#PACKAGE#]": {
  *              "type": "composer",
- *              "url": "[#=WorkbenchURL('api/packagist')#]"
+ *              "url": "[#=WorkbenchURL('api/packagist/packages')#]"
  *          }
  *      }
  *  }')
