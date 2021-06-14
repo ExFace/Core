@@ -20,6 +20,8 @@ use Symfony\Component\Cache\Psr16Cache;
  */
 class WorkbenchCache implements WorkbenchCacheInterface
 {
+    const KEY_RESERVED_CHARS = ["\\", '/', '[', ']', '(', ')', '@', ':'];
+    
     private $workbench = null;
     private $mainPool = null;
     private $pools = [];
