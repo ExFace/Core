@@ -218,7 +218,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         'LEVEL',
         'ORDER',
         'GROUP',
-        'BINARY'
+        'BINARY',
+        'OPTION'
     );
     
     // Aliases
