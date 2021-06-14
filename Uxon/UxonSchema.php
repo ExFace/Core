@@ -18,6 +18,7 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\UxonSchemaNameDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\CommonLogic\WorkbenchCache;
 
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
@@ -264,12 +265,12 @@ class UxonSchema implements UxonSchemaInterface
     
     protected function getCache(string $prototypeClass, string $key)
     {
-        return $this->getWorkbench()->getCache()->getPool('uxon.schema')->get($key . '.' . str_replace("\\", '.', $prototypeClass));
+        return $this->getWorkbench()->getCache()->getPool('uxon.schema')->get($key . '.' . str_replace(WorkbenchCache::KEY_RESERVED_CHARS, '.', $prototypeClass));
     }
     
     protected function setCache(string $prototypeClass, string $key, $data) : UxonSchema
     {
-        $this->getWorkbench()->getCache()->getPool('uxon.schema')->set($key . '.' . str_replace("\\", '.', $prototypeClass), $data);
+        $this->getWorkbench()->getCache()->getPool('uxon.schema')->set($key . '.' . str_replace(WorkbenchCache::KEY_RESERVED_CHARS, '.', $prototypeClass), $data);
         return $this;
     }
 
