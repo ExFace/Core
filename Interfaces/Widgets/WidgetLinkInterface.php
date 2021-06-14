@@ -18,7 +18,12 @@ use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
  */
 interface WidgetLinkInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon
 {
-
+    const REF_SELF = '~self';
+    
+    const REF_PARENT = '~parent';
+    
+    const REF_INPUT = '~input';
+    
     /**
      * Returns the page alias of the target page of the link.
      * 
