@@ -9,10 +9,43 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Events\Widget\OnWidgetLinkedEvent;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Widgets\iUseInputWidget;
 
+/**
+ * A reference to another widget or its data.
+ * 
+ * Widget links are similar to Excel references. Think of a UI page as an Excel workbook, a widget as
+ * a worksheet and the widgets data as that worksheets contents.
+ * 
+ * You can address
+ * 
+ * - UI pages using their namespaced alias in square braces
+ * - Widgets using their ids. **NOTE:** This means, to explicitly linke a widget, you MUST give it an `id`.
+ * - Data columns using their `data_column_name` following the widgets id separated by an `!` 
+ * 
+ * There are also a couple of "shortcut" references available instead of explicit page/widget ids:
+ * 
+ * - `~self` - references the widget the link is defined in
+ * - `~parent` - references the immediate parent of `~self`
+ * - `~input` - references the `input_widget` of a `Button` or anything else that supports input widgets. 
+ * 
+ * A few examples:
+ * 
+ * - `some_widget` - references the entire widget with id `some_widget`
+ * - `some_widget!mycol` - references the column `mycol` in the data of the widget with id `some_widget`
+ * - `[my.App.page1]` - references the root widget of the page with alias `my.App.page1`
+ * - `[my.App.page1]some_widget` - references the widget with id `some_widget` on page `my.App.page1`
+ * - `~self!mycol` - references the column `mycol` in the data of the current widget
+ * - `~parent!mycol` - references the column `mycol` of the current widgets parent
+ * - `~input!mycol` - references the column `mycol` of the input widget (if the current widget is a `Button`)
+ * 
+ * @author andrej.kabachnik
+ *
+ */
 class WidgetLink implements WidgetLinkInterface
 {
-
+    
     private $sourcePage = null;
     
     private $sourceWidget = null;
@@ -103,6 +136,7 @@ class WidgetLink implements WidgetLinkInterface
             // Otherwise, everything that is left, is the widget id
             $widget_id = $string;
         }
+        
         $this->setWidgetId($widget_id);
         
         return $this;
@@ -150,7 +184,33 @@ class WidgetLink implements WidgetLinkInterface
      */
     protected function setWidgetId($value)
     {
+        // Handle magir refs
+        switch ($value) {
+            case WidgetLinkInterface::REF_SELF:
+                if ($this->hasSourceWidget()) {
+                    $value = $this->getSourceWidget()->getId();
+                    break;
+                }
+                throw new RuntimeException('Cannot parse widget link: reference "' . WidgetLinkInterface::REF_SELF . '" only available if the links source widget is known!');
+            case WidgetLinkInterface::REF_PARENT:
+                if ($this->hasSourceWidget() && $this->getSourceWidget()->hasParent()) {
+                    $value = $this->getSourceWidget()->getParent()->getId();
+                    break;
+                }
+                throw new RuntimeException('Cannot parse widget link: reference "' . WidgetLinkInterface::REF_INPUT . '" only available if the links source widget is known and it has a parent!');
+            case WidgetLinkInterface::REF_INPUT:
+                if ($this->hasSourceWidget()) {
+                    $src = $this->getSourceWidget();
+                    if ($src instanceof iUseInputWidget && $input = $src->getInputWidget()) {
+                        $value = $input->getId();
+                        break;
+                    }
+                }
+                throw new RuntimeException('Cannot parse widget link: reference "' . WidgetLinkInterface::REF_INPUT . '" only available if the links source widget is a button (or any other widget with an input widget) and the input widget is known!');
+        }
+        
         $this->targetWidgetId = $value;
+        return $this;
     }
 
     /**
