@@ -97,7 +97,7 @@ trait iHaveColorScaleTrait
             }
         } else {
             foreach ($colorMap as $scaleVal => $color) {
-                if (strcasecmp($value, $scaleVal)) {
+                if (strcasecmp($value, $scaleVal) === 0) {
                     return $color;
                 }
             }
