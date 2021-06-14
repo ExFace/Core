@@ -241,6 +241,6 @@ class WebConsoleFacade extends AbstractHttpFacade
     
     protected function isCliAction(string $command, string $workingDir) : bool
     {
-        return strcasecmp($command, 'action') === 0 && strcasecmp(FilePathDataType::normalize($workingDir, '/'), 'vendor/bin') === 0;
+        return (strcasecmp($command, 'action') === 0 && strcasecmp(FilePathDataType::normalize($workingDir, '/'), 'vendor/bin') === 0) || (strcasecmp($command, 'vendor/bin/action') === 0 || strcasecmp($command, 'vendor\bin\action') === 0);
     }
 }
