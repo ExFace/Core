@@ -2,11 +2,10 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
-use exface\Core\Widgets\ProgressBar;
 
 /**
  *
- * @method ProgressBar getWidget()
+ * @method \exface\Core\Widgets\ProgressBar getWidget()
  *        
  * @author Andrej Kabachnik
  *        
