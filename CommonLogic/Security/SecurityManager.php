@@ -309,6 +309,7 @@ class SecurityManager implements SecurityManagerInterface
                     'type' => 'error',
                     'text' => 'Failed to initialize authenticator "' . $authenticator->getName() . '": see log ID "' . $e->getId() . '" for details!'
                 ])));
+                $this->getWorkbench()->getLogger()->logException($e);
             }
             if ($loginForm->isEmpty() === false) {
                 $loginForm->setCaption($authenticator->getName());
