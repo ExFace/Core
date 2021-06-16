@@ -58,12 +58,22 @@ trait HtmlColorIndicatorTrait
         
         $output = <<<HTML
 
-<div class="exf-colorindicator" style="{$style}">
+<div id="{$this->getId()}" class="exf-colorindicator" style="{$style}">
     {$text}
 </div>
 
 HTML;
         return $output;
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see AbstractJqueryElement::buildJsValueSetter()
+     */
+    public function buildJsValueSetter($value_js)
+    {
+        return "$('#{$this->getId()}').replaceWith($({$this->buildJsValueDecorator($value_js)}))";
     }
     
     /**
@@ -98,6 +108,11 @@ function() {
 JS;
     }
     
+    /**
+     * 
+     * @param string $valueJs
+     * @return string
+     */
     protected function buildJsColorResolver(string $valueJs) : string
     {
         $widget = $this->getWidget();

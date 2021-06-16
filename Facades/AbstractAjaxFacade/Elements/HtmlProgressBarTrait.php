@@ -49,6 +49,16 @@ HTML;
     }
     
     /**
+     * 
+     * {@inheritdoc}
+     * @see AbstractJqueryElement::buildJsValueSetter()
+     */
+    public function buildJsValueSetter($value_js)
+    {
+        return "$('#{$this->getId()}').replaceWith($({$this->buildJsValueDecorator($value_js)}))";
+    }
+    
+    /**
      * {@inheritdoc}
      * @see JsValueDecoratingInterface::buildJsValueDecorator
      */
