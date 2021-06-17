@@ -1069,7 +1069,11 @@ class Attribute implements MetaAttributeInterface
             if ($this->default_display_uxon_string !== null) {
                 $this->default_display_uxon = UxonObject::fromJson($this->default_display_uxon_string);
             } else {
-                $this->default_display_uxon = new UxonObject(['widget_type' => 'Display']);
+                $tpl = $this->getDataType()->getDefaultDisplayUxon()->copy();
+                if ($tpl->isEmpty()) {
+                    $tpl->setProperty('widget_type', 'Display');
+                }
+                $this->default_display_uxon = $tpl;
             }
         }
         
