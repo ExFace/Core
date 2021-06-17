@@ -4,7 +4,7 @@ namespace exface\Core\CommonLogic\Contexts\Scopes;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
-use exface\Core\Exceptions\LogicException;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * 
@@ -17,6 +17,10 @@ class InstallationContextScope extends AbstractContextScope
     const CONTEXTS_FILENAME = '.contexts.json';
 
     private $context_file_contents = null;
+    
+    private $changed_vars = [];
+    
+    private $removed_vars = [];
 
     /**
      * 
@@ -61,6 +65,10 @@ class InstallationContextScope extends AbstractContextScope
             $uxon = $context->exportUxonObject();
             if (! is_null($uxon) && ! $uxon->isEmpty()) {
                 $this->getContextsUxon()->setProperty($context->getAliasWithNamespace(), $uxon);
+                $this->changed_vars[] = $context->getAliasWithNamespace();
+                if (($idx = array_search($context->getAliasWithNamespace(), $this->removed_vars)) !== false) {
+                    unset($this->removed_vars[$idx]);
+                }
             } else {
                 $this->removeContext($context->getAliasWithNamespace());
             }
@@ -68,16 +76,26 @@ class InstallationContextScope extends AbstractContextScope
         
         // Now save the cached version of the file.
         // NOTE: if nothing was cached, than we don't need to change anything.
-        if ($this->context_file_contents !== null) {
-            if (! $this->context_file_contents->isEmpty()) {
-                $reuslt = file_put_contents($this->getFilePathAbsolute(), $this->context_file_contents->toJson());
-                if ($reuslt === false) {
-                    if (is_writable($this->getFilePathAbsolute()) === false) {
-                        $user = get_current_user() ? get_current_user() : exec('whoami');
-                        throw new LogicException('Cannot save installation context data: file "' . $this->getFilePathAbsolute() . '" not writable for user "' . $user . '"!');
-                    } else {
-                        throw new LogicException('Cannot save installation context data: unknown write error!');
-                    }
+        if ($this->context_file_contents !== null && ! $this->context_file_contents->isEmpty()) {
+            if (! empty($this->changed_vars) || ! empty($this->removed_vars)) {
+                // Load a fresh copy of the data (in case it was changed by another thread) and
+                // only change variables that were changed or removed in this thread. This is
+                // important for concurrent requests as another request might have added some
+                // data that was not present when reading this requests data initially.
+                $uxon = $this->getContextsUxon(true);
+                foreach ($this->changed_vars as $var) {
+                    $uxon->setProperty($var, $this->context_file_contents->getProperty($var));
+                }
+                foreach ($this->removed_vars as $var) {
+                    $uxon->unsetProperty($var);
+                }
+                
+                // Do an atomic write to the .contexts file. Using an atomic dump is important to avoid corrupted data
+                // on multiple simultanious requests.
+                try {
+                    $this->getWorkbench()->filemanager()->dumpFile($this->getFilePathAbsolute(), $uxon->toJson());
+                } catch (\Throwable $e) {
+                    throw new RuntimeException('Cannot save installation context data! ' . $e->getMessage());
                 }
             }
             // The installation context is actually never empty as the internal sodium secret
@@ -95,15 +113,32 @@ class InstallationContextScope extends AbstractContextScope
     public function removeContext($alias)
     {
         $this->getContextsUxon()->unsetProperty($alias);
+        $this->removed_vars[] = $alias;
+        if (($idx = array_search($alias, $this->changed_vars)) !== false) {
+            unset($this->changed_vars[$idx]);
+        }
         return parent::removeContext($alias);
     }
 
     /**
+     * 
      * @return string
      */
     protected function getFilePathAbsolute() : string
     {
         return $this->getWorkbench()->filemanager()->getPathToDataFolder() . DIRECTORY_SEPARATOR . static::CONTEXTS_FILENAME;
+    }
+    
+    /**
+     * Returns the internal variable name from a given name and namespace.
+     * 
+     * @param string $name
+     * @param string $namespace
+     * @return string
+     */
+    protected function getVarName(string $name, string $namespace = null) : string
+    {
+        return '_' . ($namespace !== null ? $namespace . '_' : '') . $name;
     }
     
     /**
@@ -113,7 +148,12 @@ class InstallationContextScope extends AbstractContextScope
      */
     public function setVariable(string $name, $value, string $namespace = null) : ContextScopeInterface
     {
-        $this->getContextsUxon()->setProperty('_' . ($namespace !== null ? $namespace . '_' : '') . $name, $value);
+        $var = $this->getVarName($name, $namespace);
+        $this->getContextsUxon()->setProperty($var, $value);
+        $this->changed_vars[] = $var;
+        if (($idx = array_search($var, $this->removed_vars)) !== false) {
+            unset($this->removed_vars[$idx]);
+        }
         return $this;
     }
     
@@ -124,7 +164,12 @@ class InstallationContextScope extends AbstractContextScope
      */
     public function unsetVariable(string $name, string $namespace = null) : ContextScopeInterface
     {
-        $this->getContextsUxon()->unsetProperty('_' . ($namespace !== null ? $namespace . '_' : '') . $name);
+        $var = $this->getVarName($name, $namespace);
+        $this->getContextsUxon()->unsetProperty($var);
+        $this->removed_vars[] = $var;
+        if (($idx = array_search($var, $this->changed_vars)) !== false) {
+            unset($this->changed_vars[$idx]);
+        }
         return $this;
     }
     
@@ -140,19 +185,26 @@ class InstallationContextScope extends AbstractContextScope
     
     /**
      * 
+     * @param bool $noCache
      * @return UxonObject
      */
-    protected function getContextsUxon() : UxonObject
+    protected function getContextsUxon(bool $noCache = false) : UxonObject
     {
-        if ($this->context_file_contents === null) {
+        if ($this->context_file_contents === null || $noCache === true) {
             if (file_exists($this->getFilePathAbsolute())) {
                 try {
-                    $this->context_file_contents = UxonObject::fromAnything(file_get_contents($this->getFilePathAbsolute()));
+                    $uxon = UxonObject::fromAnything(file_get_contents($this->getFilePathAbsolute()));
                 } catch (\Throwable $e) {
-                    $this->context_file_contents = new UxonObject();
+                    $this->getWorkbench()->getLogger()->logException(new RuntimeException('Cannot load installation context data! ' . $e->getMessage(), null, $e));
+                    $uxon = new UxonObject();
                 }
             } else {
-                $this->context_file_contents = new UxonObject();
+                $uxon = new UxonObject();
+            }
+            if ($noCache === true) {
+                return $uxon;
+            } else {
+                $this->context_file_contents = $uxon;
             }
         }
         return $this->context_file_contents;
