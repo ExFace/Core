@@ -1019,7 +1019,8 @@ class SqlModelLoader implements ModelLoaderInterface
         } elseif (! empty($cache)) {
             $uxon = UxonObject::fromJson($cache['config_uxon']);
             $default_editor_uxon = UxonObject::fromJson($cache['default_editor_uxon']);
-            $data_type = DataTypeFactory::createFromModel($cache['prototype'], $cache['data_type_alias'], $this->getWorkbench()->getApp($cache['app_alias']), $uxon, $cache['name'], $cache['short_description'], $cache['validation_error_code'], $cache['validation_error_text'], $default_editor_uxon);
+            $default_display_uxon = UxonObject::fromJson($cache['default_display_uxon']);
+            $data_type = DataTypeFactory::createFromModel($cache['prototype'], $cache['data_type_alias'], $this->getWorkbench()->getApp($cache['app_alias']), $uxon, $cache['name'], $cache['short_description'], $cache['validation_error_code'], $cache['validation_error_text'], $default_editor_uxon, $default_display_uxon);
             $this->data_types_by_uid[$cache['oid']] = $data_type;
             return $data_type;
         } else {
@@ -1062,9 +1063,9 @@ class SqlModelLoader implements ModelLoaderInterface
                     ve.title as validation_error_text
 				FROM exf_data_type dt LEFT JOIN exf_message ve ON dt.validation_error_oid = ve.oid LEFT JOIN exf_app a ON a.oid = dt.app_oid
 				WHERE ' . $where);
-        foreach ($query->getResultArray() as $dt) {
-            $this->data_types_by_uid[$dt['oid']] = $dt;
-            $this->data_type_uids[$this->addNamespace($dt['app_alias'], $dt['data_type_alias'])] = $dt['oid'];
+        foreach ($query->getResultArray() as $row) {
+            $this->data_types_by_uid[$row['oid']] = $row;
+            $this->data_type_uids[$this->addNamespace($row['app_alias'], $row['data_type_alias'])] = $row['oid'];
         }
         return $this;
     }

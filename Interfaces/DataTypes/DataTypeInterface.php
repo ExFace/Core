@@ -203,13 +203,6 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
     public function setDefaultEditorUxon(UxonObject $uxon) : DataTypeInterface;
     
     /**
-     * 
-     * @param UxonObject $uxon
-     * @return DataTypeInterface
-     */
-    public function setDefaultEditorWidget(UxonObject $uxon) : DataTypeInterface;
-    
-    /**
      * @return UxonObject
      */
     public function getDefaultEditorUxon() : UxonObject;
@@ -249,5 +242,16 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * @return DataTypeInterface
      */
     public function setSensitiveData(bool $trueOrFalse) : DataTypeInterface;
+    
+    /**
+     * @return UxonObject
+     */
+    public function getDefaultDisplayUxon() : UxonObject;
+    
+    /**
+     *
+     * @param UxonObject $uxon
+     * @return DataTypeInterface
+     */
+    public function setDefaultDisplayUxon(UxonObject $uxon) : DataTypeInterface;
 }
-?>

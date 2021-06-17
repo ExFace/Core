@@ -39,6 +39,8 @@ abstract class AbstractDataType implements DataTypeInterface
     
     private $defaultEditorUxon = null;
     
+    private $defaultDisplayUxon = null;
+    
     private $validationErrorCode = null;
     
     private $validationErrorText = null;
@@ -402,11 +404,43 @@ abstract class AbstractDataType implements DataTypeInterface
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setDefaultEditorWidget()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getDefaultEditorUxon()
      */
-    public function setDefaultEditorWidget(UxonObject $uxon) : DataTypeInterface
+    public function getDefaultDisplayUxon() : UxonObject
     {
-        return $this->setDefaultEditorUxon($uxon);
+        if (is_null($this->defaultDisplayUxon)) {
+            $this->defaultDisplayUxon = new UxonObject();
+        }
+        
+        // Make sure, the UXON has allways an explicit widget type! Otherwise checks for
+        // widget type later in the code might put in their defaults potentially uncompatible
+        // with properties set here or anywhere inbetween.
+        if (! $this->defaultDisplayUxon->hasProperty('widget_type')) {
+            $this->defaultDisplayUxon->setProperty('widget_type', $this->getWorkbench()->getConfig()->getOption('FACADES.DEFAULT_WIDGET_FOR_UNKNOWN_DATA_TYPES'));
+        }
+        
+        return $this->defaultDisplayUxon;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setDefaultDisplayUxon()
+     */
+    public function setDefaultDisplayUxon(UxonObject $defaultDisplayUxon) : DataTypeInterface
+    {
+        $this->defaultDisplayUxon = $defaultDisplayUxon;
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setDefaultDisplayWidget()
+     */
+    public function setDefaultDisplayWidget(UxonObject $uxon) : DataTypeInterface
+    {
+        return $this->setDefaultDisplayUxon($uxon);
     }
 
     /**
