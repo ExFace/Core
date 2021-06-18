@@ -8,7 +8,6 @@ use exface\Core\DataTypes\FilePathDataType;
 
 class Filemanager extends Filesystem implements WorkbenchDependantInterface
 {
-    
     const FOLDER_NAME_VENDOR = 'vendor';
     
     const FOLDER_NAME_DATA = 'data';
@@ -29,8 +28,6 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     
     const FOLDER_NAME_LOG_DETAILS = 'details';
     
-    const FOLDER_NAME_PUPLISHED = 'puplished';
-    
     private $exface = null;
     
     private $path_to_cache_folder = null;
@@ -50,8 +47,6 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     private $path_to_log_detail_folder = null;
     
     private $path_to_translations_folder = null;
-    
-    private $path_to_puplished_folder = null;
     
     public function __construct(Workbench $exface)
     {
@@ -244,27 +239,6 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
             }
         }
         return $this->path_to_backup_folder;
-    }
-    
-    /**
-     * Returns the absolute path to the puplished folder
-     *
-     * @return string
-     */
-    public function getPathToPuplishedFolder() : string
-    {
-        if (is_null($this->path_to_puplished_folder)) {
-            try {
-                $path = $this->getWorkbench()->getConfig()->getOption('FOLDERS.PUPLISHED_PATH_ABSOLUTE');
-            } catch (ConfigOptionNotFoundError $e) {
-                $path = '';
-            }
-            $this->path_to_puplished_folder = $path ? $path : $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_PUPLISHED;
-            if (! is_dir($this->path_to_puplished_folder)) {
-                static::pathConstruct($this->path_to_puplished_folder);
-            }
-        }
-        return $this->path_to_puplished_folder;
     }
     
     /**
