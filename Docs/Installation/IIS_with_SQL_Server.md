@@ -2,52 +2,73 @@
 
 ## PHP Installation with FastCGI module
 
-To run PowerUI on an IIS server with SQL, configure the IIS server and install PHP as shown in this guide: [Host PHP Applications on IIS](https://docs.microsoft.com/en-us/iis/application-frameworks/install-and-configure-php-applications-on-iis/using-fastcgi-to-host-php-applications-on-iis)
+To run PowerUI on an IIS server with SQL, configure the IIS server and install PHP as shown in one of these guides: 
+
+- [Install via "Microsoft Web Platform Installer" (Web PI) or manually on Windows Server 2016+](https://docs.microsoft.com/en-us/iis/application-frameworks/scenario-build-a-php-website-on-iis/configuring-step-1-install-iis-and-php)
+- [Install manually on Windows Server 2008+ (IIS 7+)](https://docs.microsoft.com/en-us/iis/application-frameworks/install-and-configure-php-applications-on-iis/using-fastcgi-to-host-php-applications-on-iis)
+
+### Recommended PHP installation
+
+Since the Web PI does not offer most recent versions of PHP, it is probably a good idea to install everything manually. 
+
+- Download one of the latest [PHP binaries](https://windows.php.net/download/) - pick the non-thread-safe (nts) version.
+- Unpack it into `C:\Program Files\PHP\bin`
+- Follow the guides above to register it as a FastCGI module in IIS
 
 ## Rewrite Module Installation
-For PowerUI to work, the support for rewrite rules needs to be enabled on the IIS server. For this the rewrite module needs to be installed.
-Download the module here:
 
-- [Download x86 Version](https://go.microsoft.com/?linkid=9722533)
-- [Download x64 Version](https://go.microsoft.com/?linkid=9722532)
+For the workbench to work properly, the support for rewrite rules needs to be enabled on the IIS server.
+
+- [Download UrlRewrite module](https://www.iis.net/downloads/microsoft/url-rewrite) 
+- Run the installer. No additional configuration is required.
 
 ## WinCache Extension Installation
-The WinCache Extension for php is required. Donwload the correct `nts` version, fitting to your php and Windows version, here:
-- [WinCache Download](https://sourceforge.net/projects/wincache/)
 
-Install the module, if an error like `"PHPPATH property must be set to the directory where PHP resides"` occurs, try to install it via PowerShell.
+The WinCache Extension is definitely recommended. It accelerates PHP on IIS greatly (comparable to opcache on Apache-based servers).
 
-The command is `msiexec /i {WinCacheMsiPath} PHPPATH={PHPPath} IACCEPTWINDOWSCACHEFORPHPLICENSETERMS="Yes" /q`
+- [Download WinCache](https://sourceforge.net/projects/wincache/). Donwload the `nts` version if you have used the `nts` PHP binary above. Look in the `development` folder if you can't find your desired PHP version.
+- Unpack the files somewhere (e.g. `C:\Program Files\PHP\wincache`).
+- Copy `php_wincache.dll` to your PHP extensions-folder (e.g. `C:\Program Files\PHP\bin\ext`)
+- Add the extension to `php.ini` as shown below
 
-`{WinCacheMsiPath}` is the path to the .msi file to install WinCache and `{PHPPath}` is the path to the php folder.
+Alternatively, you can install via CMD or PowerShell: 
 
-**Important:** The php path must end with a trailing slash!
+`msiexec /i {WinCacheMsiPath} PHPPATH={PHPPath} IACCEPTWINDOWSCACHEFORPHPLICENSETERMS="Yes" /q` 
 
-## SQL Driver Installation
-Download the driver package from the Microsoft website:
-- [SQL Driver](https://docs.microsoft.com/en-us/sql/connect/php/download-drivers-php-sql-server?view=sql-server-ver15).
-Copy the two `.ddl`-files corresponding your php version and windows version, starting with `php_pdo` and `php_sqlsrv`, into the `ext` subfolder of your `PHP` directory. The `nts` versions of those fiels are needed.
-So for a php version `7.2.18` and a windows x64 version the files `php_pdo_sqlsrv_72_nts_x64.dll` and `php_sqlsrv_72_nts_x64.dll` are needed.
+where `{WinCacheMsiPath}` is the path to the .msi file to install WinCache and `{PHPPath}` is the path to the php folder. **Important:** The php path must end with a trailing slash! If an error like `"PHPPATH property must be set to the directory where PHP resides"` occurs, try to install it via PowerShell.
+
+## SQL Server extension
+
+- [Download sqlsrv extension](https://github.com/microsoft/msphpsql/releases) for your PHP version
+- Copy `php_sqlsrv_74_nts.dll` (or similar) to the `ext` folder of PHP. Use the `ts`/`nts` version according to your PHP binaries (see above)
+- Add the extension to `php.ini` as shown below
 
 ## php.ini Settings
-Their are a few settings that need to be changed or added to the `php.ini` file in your `PHP` directory.
 
-1. Deactivate memory limit:
-	- `memory_limit = -1`
-2. Activate SQL Driver Extensions by adding the entries matching the two SQL driver files copied to the `ext` directory, for example:
-	- `extension=php_pdo_sqlsrv_73_nts_x64.dll`
-	- `extension=php_sqlsrv_73_nts_x64.dll`
+There are a few settings that need to be changed or added to the `php.ini` file in your `PHP` directory. Rename `php.ini-development` or `php.ini-production` to `php.ini` to start with.
+
+Use the following configuration in addition to the server-independent [recommendations](Recommended_PHP_settings.md).
+
+**IMPORTANT**: Recycle your application pool in the IIS Manager to activate changes in `php.ini`!
+
+1. Initial setup
+	- `extension_dir = ./ext` - this is important! If not set, you might not be able to load extensions!
+	- `cgi.force_redirect = 0`
+	- `cgi.fix_pathinfo = 1`
+	- `fastcgi.impersonate = 1`
+	- `extension = sodium`
+2. Add SQL Server Extension:
+	- `extension = sqlsrv_74_nts`
 3. WinCache settings:
-	- `extension=php_wincache.dll`
-	- `wincache.fcenabled=1`
-	- `wincache.ocenabled=1`
-4. Activiate Sodium extension:
-	- `extension=sodium`
-5. Opache Settings:
-	- `zend_extension=php_opcache.dll`
-	- `opcache.enable=On`
-	- `opcache.enable_cli=On`
-	- add the settings shown [HERE](https://wiki.salt-solutions.de/pages/viewpage.action?pageId=162169402# Installation/UpdatedesWAMP-Servers-KonfigurationvonOPCache)
+	- `extension = wincache`
+	- `wincache.fcenabled=1` (optional)
+	- `wincache.ocenabled=1` (optional)
+4. Recommended security-related settings
+	- `open_basedir = c:\inetpub`
+	- `fastcgi.logging = 0` (for dev-environment `1`) 
+	- `display_errors = Off` (for dev-environment `On`) 
+	- `log_errors = On`
+	- `error_log = c:\Program Files\PHP\logs\error.log` - don't forget to crate the directory used here!
 	
 ## Securing sesnsitive folders
 
