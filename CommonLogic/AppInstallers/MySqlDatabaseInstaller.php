@@ -87,7 +87,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
                 $this->getWorkbench()->getLogger()->debug('SQL migration table' . $this->getMigrationsTableName() . ' created! ');
             } catch (\Throwable $e) {
                 $this->getWorkbench()->getLogger()->logException($e);
-                throw new InstallerRuntimeError($this, 'Generating Migration table failed!');
+                throw new InstallerRuntimeError($this, 'Generating Migration table failed! ' . $e->getMessage(), null, $e);
             }
             return;
         }
@@ -99,7 +99,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
                 $this->getWorkbench()->getLogger()->debug('Added columns \'failed\', \'failed_message\', \'skip flag\' to existing migration table ' . $this->getMigrationsTableName() . '.');
             } catch (\Throwable $e) {
                 $this->getWorkbench()->getLogger()->logException($e);
-                throw new InstallerRuntimeError($this, 'Adding columns \'failed\', \'failed_message\', \'skip flag\' to existing migration table ' . $this->getMigrationsTableName() . ' failed.');
+                throw new InstallerRuntimeError($this, 'Adding columns \'failed\', \'failed_message\', \'skip flag\' to existing migration table ' . $this->getMigrationsTableName() . ' failed. ' . $e->getMessage(), null, $e);
             }
             return;
         }
