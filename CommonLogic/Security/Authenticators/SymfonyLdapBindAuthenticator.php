@@ -84,7 +84,7 @@ class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
             $this->createUserWithRoles($this->getWorkbench(), $token);
         } else {
             if (empty($this->getUserData($this->getWorkbench(), $token)->getRows())) {
-                throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!', '7AL3J9X');
+                throw new AuthenticationFailedError($this, "Authentication failed, no workbench user '{$token->getUsername()}' exists: either create one manually or enable `create_new_users` in authenticator configuration!", '7AL3J9X');
             }
         }
         return $token;

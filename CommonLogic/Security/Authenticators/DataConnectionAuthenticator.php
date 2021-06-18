@@ -93,7 +93,7 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
                 // second authentification to save credentials
                 $connector->authenticate($token, true, $user, true);
             } else {            
-                throw new AuthenticationFailedError($this, "Authentication failed, no PowerUI user with that username '{$token->getUsername()}' exists and none was created!", '7AL3J9X');
+                throw new AuthenticationFailedError($this, "Authentication failed, no workbench user '{$token->getUsername()}' exists: either create one manually or enable `create_new_users` in authenticator configuration!", '7AL3J9X');
             }
         }
         
@@ -102,8 +102,19 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
             return new DataConnectionUsernamePasswordAuthToken($token->getDataConnectionAlias(), $user->getUsername(), $token->getPassword());
         }
         
-        $this->authenticatedToken = $authenticatedToken;
+        $this->saveAuthenticatedToken($authenticatedToken);
         return $authenticatedToken;
+    }
+    
+    /**
+     * 
+     * @param AuthenticationTokenInterface $token
+     * @return DataConnectionAuthenticator
+     */
+    protected function saveAuthenticatedToken(AuthenticationTokenInterface $token) : DataConnectionAuthenticator
+    {
+        $this->authenticatedToken = $token;
+        return $this;
     }
     
     /**
