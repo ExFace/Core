@@ -9,5 +9,19 @@ WHERE NOT EXISTS (SELECT oid from [dbo].[exf_attribute] WHERE oid = 0x11eb85e9cc
 	
 -- DOWN
 
+DECLARE @sql NVARCHAR(MAX)
+WHILE 1=1
+BEGIN
+    SELECT TOP 1 @sql = N'ALTER TABLE exf_data_type DROP CONSTRAINT ['+dc.NAME+N']'
+    from sys.default_constraints dc
+    JOIN sys.columns c
+        ON c.default_object_id = dc.object_id
+    WHERE 
+        dc.parent_object_id = OBJECT_ID('exf_data_type')
+    AND c.name IN (N'request_id', N'comment', N'ticket_no')
+    IF @@ROWCOUNT = 0 BREAK
+    EXEC (@sql)
+END
+
 ALTER TABLE [dbo].[exf_data_type]
 	DROP COLUMN [default_display_uxon];

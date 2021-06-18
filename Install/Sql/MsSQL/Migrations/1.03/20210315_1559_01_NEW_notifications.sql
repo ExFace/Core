@@ -11,7 +11,7 @@ CREATE TABLE dbo.exf_notification (
   	title nvarchar(200) NOT NULL,
   	icon nvarchar(50) DEFAULT NULL,
   	widget_uxon nvarchar(max) NOT NULL,
-  	CONSTRAINT PK_exf_customizing_oid PRIMARY KEY (oid)
+  	CONSTRAINT PK_exf_notifications_oid PRIMARY KEY (oid)
 );
 
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE NAME = N'user_notifications') 

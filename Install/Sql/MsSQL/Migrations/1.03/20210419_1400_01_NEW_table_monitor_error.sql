@@ -16,18 +16,14 @@ CREATE TABLE [dbo].[exf_monitor_error] (
     [user_oid] binary(16) DEFAULT NULL,
     [action_oid] binary(16) DEFAULT NULL,
   CONSTRAINT [PK_exf_monitor_error_oid] PRIMARY KEY CLUSTERED (oid)
-)
-GO
+);
 
-IF NOT EXISTS (SELECT * FROM sys.indexes WHERE NAME = N'IDX_exf_monitor_error_date_user_status') 
-CREATE INDEX [exf_idx_monitor_error_date_user_status] ON [dbo].[exf_monitor_error] ([date, user_oid, status])
-GO
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE NAME = N'exf_idx_monitor_error_date_user_status') 
+CREATE INDEX [exf_idx_monitor_error_date_user_status] ON [dbo].[exf_monitor_error] ([date], [user_oid], [status]);
 
 -- DOWN
 
 IF EXISTS (SELECT * FROM sys.indexes WHERE NAME = N'IDX_exf_monitor_error_date_user_status') 
-DROP INDEX [exf_idx_monitor_error_date_user_status] ON [dbo].[exf_monitor_error]
-GO
+DROP INDEX [exf_idx_monitor_error_date_user_status] ON [dbo].[exf_monitor_error];
 
-DROP TABLE IF EXISTS [dbo].[exf_monitor_error]
-GO
+DROP TABLE IF EXISTS [dbo].[exf_monitor_error];
