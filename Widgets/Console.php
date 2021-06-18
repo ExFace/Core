@@ -508,6 +508,8 @@ class Console extends AbstractWidget
     }
     
     /**
+     * Set to FALSE to produce an error if the `working_directory_path` does not exist.
+     * 
      * @uxon-property working_directory_create
      * @uxon-type boolean
      * @uxon-default true
