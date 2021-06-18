@@ -19,6 +19,8 @@ To install the model DB on SQL server your MUST enable the [sqlsrv PHP extension
 
 ## Recommended PHP settings
 
+Use the following configuration in addition to the server-independent [recommendations](Recommended_PHP_settings.md).
+
 ### Enable OPcache
 
 The following OPCache configuration is recommended in the `php.ini`:
