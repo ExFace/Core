@@ -38,6 +38,12 @@ Also make sure, the Microsoft ODBC drivers are installed.
 }
 ```
 
+### Troubleshooting
+
+#### Error "Named Pipes Provider: Could not open a connection to SQL Server"
+
+The `host` in the configuration above could not be resolved. Try using the machines network name instead of the IP or vice versa. Also see if you are trying to contact a named SQL server - if so, add it's name to the `host` separated by a slash.
+
 ## MariaDB
 
 ```
