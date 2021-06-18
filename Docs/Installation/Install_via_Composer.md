@@ -19,10 +19,10 @@ This will install the latest stable version and a typical minimum set of extras 
 ```
 {
   "require": {
-    "exface/Core": "^1.0",
-    "axenox/PackageManager": "^1.0",
-    "exface/UrlDataConnector": "^1.0",
-    "exface/JEasyUIFacade": "^1.0",
+    "exface/core": "^1.0",
+    "axenox/packagemanager": "^1.0",
+    "exface/urldataconnector": "^1.0",
+    "exface/jeasyuifacade": "^1.0",
     "bower-asset/jeasyui": "1.4.3"
   },
   "repositories": [
@@ -75,10 +75,10 @@ This will install the latest stable version and a typical minimum set of extras 
 ```
 {
   "require": {
-    "exface/Core": "dev-1.x-dev as 1.99",
-    "axenox/PackageManager": "dev-1.x-dev as 1.99",
-    "exface/UrlDataConnector": "dev-1.x-dev as 1.99",
-    "exface/JEasyUIFacade": "dev-1.x-dev as 1.99",
+    "exface/core": "dev-1.x-dev as 1.99",
+    "axenox/packagemanager": "dev-1.x-dev as 1.99",
+    "exface/urldataconnector": "dev-1.x-dev as 1.99",
+    "exface/jeasyuifacade": "dev-1.x-dev as 1.99",
     "bower-asset/jeasyui": "1.4.3"
   },
   "repositories": [
@@ -136,13 +136,13 @@ This will install the latest stable version and a typical minimum set of extras 
 ```
 {
   "require": {
-    "exface/Core": "dev-1.x-dev as 1.99",
-    "axenox/PackageManager": "dev-1.x-dev as 1.99",
-    "exface/UrlDataConnector": "dev-1.x-dev as 1.99",
-    "exface/SapConnector": "dev-1.x-dev as 1.99",
-    "exface/UI5Facade": "dev-1.x-dev as 1.99",
-    "exface/JEasyUIFacade": "dev-1.x-dev as 1.99",
+    "exface/core": "dev-1.x-dev as 1.99",
+    "axenox/packagemanager": "dev-1.x-dev as 1.99",
+    "exface/urldataconnector": "dev-1.x-dev as 1.99",
+    "exface/jeasyuifacade": "dev-1.x-dev as 1.99",
     "bower-asset/jeasyui": "1.4.3"
+    "exface/sapconnector": "dev-1.x-dev as 1.99",
+    "exface/ui5facade": "dev-1.x-dev as 1.99",
   },
   "repositories": [
     {
