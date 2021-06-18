@@ -306,9 +306,35 @@ class Expression implements ExpressionInterface
         $stack = array();
         $depth = 0;
         $len = strlen($str);
+        $escaped1 = false;
+        $escaped2 = false;
         for ($i = 0; $i < $len; $i ++) {
             $char = $str[$i];
+            if (($escaped1 && $char !== "'") || ($escaped2 && $char !== '"')) {
+                $buffer .= $char;
+                continue;
+            }
             switch ($char) {
+                case "'":
+                    if ($escaped1 === false) {                    
+                        $escaped1 = true;
+                        break;
+                    } else {
+                        if ($str[$i-1] !== '\\') {
+                            $escaped1 = false;
+                        }                        
+                        break;
+                    }
+                case '"':
+                    if ($escaped2 === false) {
+                        $escaped2 = true;
+                        break;
+                    } else {
+                        if ($str[$i-1] !== '\\') {
+                            $escaped2 = false;
+                        }
+                        break;
+                    }
                 case '(':
                     $depth ++;
                     break;

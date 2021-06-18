@@ -13,8 +13,8 @@ use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Interfaces\Security\PasswordAuthenticationTokenInterface;
-use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthToken;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
+use exface\Core\CommonLogic\Security\AuthenticationToken\MetamodelUsernamePasswordAuthToken;
 
 /**
  * This PSR-15 middleware to handle authentication via workbench security.
@@ -161,7 +161,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
     }
     
     /**
-     * Token extractor for HTTP basic auth - produces a UsernamePasswordAuthToken.
+     * Token extractor for HTTP basic auth - produces a MetamodellUsernamePasswordAuthToken.
      * 
      * Usage:
      * 
@@ -177,14 +177,14 @@ class AuthenticationMiddleware implements MiddlewareInterface
      * @param ServerRequestInterface $request
      * @return PasswordAuthenticationTokenInterface|NULL
      */
-    public static function extractBasicHttpAuthToken(ServerRequestInterface $request, HttpFacadeInterface $facade) : ?UsernamePasswordAuthToken
+    public static function extractBasicHttpAuthToken(ServerRequestInterface $request, HttpFacadeInterface $facade) : ?MetamodelUsernamePasswordAuthToken
     {
         $matches = [];
         if (preg_match("/Basic\s+(.*)$/i", $request->getHeaderLine("Authorization"), $matches)) {
             $explodedCredential = explode(":", base64_decode($matches[1]), 2);
             if (count($explodedCredential) == 2) {
                 list($username, $password) = $explodedCredential;
-                return new UsernamePasswordAuthToken($username, $password, $facade);
+                return new MetamodelUsernamePasswordAuthToken($username, $password);
             }
         }
         return null;

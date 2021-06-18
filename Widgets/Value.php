@@ -144,7 +144,22 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function isPrefillable()
     {
-        return parent::isPrefillable() && ! ($this->hasValue() && ! $this->getValueExpression()->isReference());
+        if (! parent::isPrefillable()) {
+            return false;
+        }
+        if ($this->hasValue() === false) {
+            return true;
+        } else {
+            $expr = $this->getValueExpression();
+            switch (true) {
+                case $expr->isReference():
+                    return true;
+                //IDEA: Expressions from non static formulas should also lead to a prefill. Right now that is not working.
+                /*case $expr->isFormula() && ! $expr->isStatic():
+                    return true;*/
+            }
+        }
+        return false;
     }
     
     
@@ -547,8 +562,10 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function getValue()
     {
         if ($expr = $this->getValueExpression()) {
-            if ($expr->isStatic()) {
+            if ($expr->isStatic()) {                
                 return $expr->evaluate();
+            } elseif ($expr->isFormula() && $this->isPrefilled()) {
+                return $expr->evaluate($this->getPrefillData(), 0);
             } else {
                 return $expr->toString();
             }

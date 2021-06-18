@@ -96,7 +96,7 @@ class WebConsoleFacade extends AbstractHttpFacade
         // Check if command allowed
         $allowed = FALSE;
         foreach ($widget->getAllowedCommands() as $allowedCommand){
-            $match = preg_match($allowedCommand, '/' . $cmd . '/');
+            $match = preg_match($allowedCommand, $cmd);
             if($match !=0){
                 $allowed = TRUE;
             }
@@ -107,6 +107,10 @@ class WebConsoleFacade extends AbstractHttpFacade
             ];
             $body = 'Command not allowed!';
             return new Response(200, $headers, $body);
+        }
+        $cmdNormalized = str_replace('/', DIRECTORY_SEPARATOR, $command);
+        if ($cmdNormalized !== $command) {
+            $cmd = str_replace($command, $cmdNormalized, $cmd);
         }
            
         // Process command
@@ -193,18 +197,35 @@ class WebConsoleFacade extends AbstractHttpFacade
     }    
       
     /**
-     * Returns the part of $cmd preceding the first ' '
+     * Returns the part of $cmd preceding the first ' ' or the complete command if it is a complex command
      * 
      * @param string $cmd
      * @return string
      */
-    protected function getCommand(string $cmd) :string
+    protected function getCommand(string $cmd) : string
     {
+        if ($this->isComplexCommand($cmd)) {
+            return $cmd;
+        }
         if (StringDataType::substringBefore($cmd, ' ') == false){
             return $cmd;
         } else {
             return StringDataType::substringBefore($cmd, ' ');
         }
+    }
+    
+    /**
+     * Checks if a command is complex, means it includes '&&' or '|'
+     * 
+     * @param string $cmd
+     * @return bool
+     */
+    protected function isComplexCommand(string $cmd) : bool
+    {
+        if (strpos($cmd, ' && ') !== false || strpos($cmd, ' | ') !== false) {
+            return true;
+        }
+        return false;
     }
     
     /**
