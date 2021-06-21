@@ -15,6 +15,8 @@ use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Interfaces\Security\PasswordAuthenticationTokenInterface;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\CommonLogic\Security\AuthenticationToken\MetamodelUsernamePasswordAuthToken;
+use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
+use exface\Core\CommonLogic\Security\Authorization\FacadeAuthorizationPoint;
 
 /**
  * This PSR-15 middleware to handle authentication via workbench security.
@@ -31,6 +33,7 @@ use exface\Core\CommonLogic\Security\AuthenticationToken\MetamodelUsernamePasswo
  *      Psr\Http\Message\ServerRequestInterface $request
  *      exface\Core\Interfaces\Facades\HttpFacadeInterface $facade
  *  ) : ?\exface\Core\Interfaces\Security\AuthenticationTokenInterface
+ *  
  * ```
  * 
  * The middleware provides a built-in extractor via `extractBasicHttpAuthToken()` static method.
@@ -43,6 +46,7 @@ use exface\Core\CommonLogic\Security\AuthenticationToken\MetamodelUsernamePasswo
  *          [AuthenticationMiddleware::class, 'extractBasicHttpAuthToken']
  *      ]
  *  )
+ *  
  * ```
  * 
  * @author Andrej Kabachnik
@@ -109,6 +113,14 @@ class AuthenticationMiddleware implements MiddlewareInterface
         
         // If the token is still anonymous, check if that is allowed in the configuration!
         if (true === $authenticatedToken->isAnonymous() && false === $this->isAnonymousAllowed()) {
+            return $this->createResponseAccessDenied($request);
+        }
+        
+        // In any case, check if the user impersonated by the token has access to the facade
+        try {
+            $this->workbench->getSecurity()->getAuthorizationPoint(FacadeAuthorizationPoint::class)->authorize($this->facade, $authenticatedToken);
+        } catch (AccessPermissionDeniedError $e) {
+            $this->workbench->getLogger()->logException($e);
             return $this->createResponseAccessDenied($request);
         }
         
