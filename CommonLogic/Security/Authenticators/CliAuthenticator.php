@@ -64,19 +64,23 @@ class CliAuthenticator extends AbstractAuthenticator
         if ($token->getUsername() !== $currentUsername) {
             throw new AuthenticationFailedError($this, "Cannot authenticate user '{$token->getUsername()}' via '{$this->getName()}'");
         }
-        $user = null;
-        if ($this->userExists($token) === true) {
-            $user = $this->getUserFromToken($token);
-        } elseif ($this->getCreateNewUsers(true) === true) {
-            $user = $this->createUserWithRoles($this->getWorkbench(), $token);
-            //second authentification to save credentials
-        } else {
-            throw new AuthenticationFailedError($this, "Authentication failed, no workbench user '{$token->getUsername()}' exists: either create one manually or enable `create_new_users` in authenticator configuration!", '7AL3J9X');
+        
+        if ($token->isAnonymous() === false) {
+            $user = null;
+            if ($this->userExists($token) === true) {
+                $user = $this->getUserFromToken($token);
+            } elseif ($this->getCreateNewUsers(true) === true) {
+                $user = $this->createUserWithRoles($this->getWorkbench(), $token);
+                //second authentication to save credentials
+            } else {
+                throw new AuthenticationFailedError($this, "Authentication failed, no workbench user '{$token->getUsername()}' exists: either create one manually or enable `create_new_users` in authenticator configuration!", '7AL3J9X');
+            }
+            if ($token->getUsername() !== $user->getUsername()) {
+                return new RememberMeAuthToken($user->getUsername());
+            }
+            $this->logSuccessfulAuthentication($user, $token->getUsername());
         }
-        if ($token->getUsername() !== $user->getUsername()) {
-            return new RememberMeAuthToken($user->getUsername());
-        }
-        $this->logSuccessfulAuthentication($user, $token->getUsername());
+        
         $this->authenticatedToken = $token;
         
         return $token;

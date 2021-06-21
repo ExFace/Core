@@ -65,6 +65,6 @@ class CliEnvAuthToken implements PreAuthenticatedTokenInterface
      */
     public function isAnonymous() : bool
     {
-        return $this->username === null;
+        return $this->username === null || $this->username === '';
     }
 }

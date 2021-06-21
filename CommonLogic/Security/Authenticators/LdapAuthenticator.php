@@ -117,20 +117,23 @@ class LdapAuthenticator extends AbstractAuthenticator
             throw new AuthenticationFailedError($this, 'LDAP authentication failed', '7AL3J9X', new RuntimeException(ldap_error($ldapconn), ldap_errno($ldapconn)));
         }
         
-        $user = null;
-        
-        if ($this->userExists($token) === true) {
-            $user = $this->getUserFromToken($token);
-        } elseif ($this->getCreateNewUsers(true) === true) {    
-            $user = $this->createUserWithRoles($this->getWorkbench(), $token, $this->getNewUserData($ldapconn, $token));
-        } else {
-            throw new AuthenticationFailedError($this, "Authentication failed, no workbench user '{$token->getUsername()}' exists: either create one manually or enable `create_new_users` in authenticator configuration!", '7AL3J9X');
-        }
-        ldap_unbind($ldapconn);
-        $this->authenticatedToken = $token;
-        $this->logSuccessfulAuthentication($user, $token->getUsername());
-        if ($token->getUsername() !== $user->getUsername()) {
-            return new DomainUsernamePasswordAuthToken($token->getDomain(), $user->getUsername(), $token->getPassword());
+        if ($token->isAnonymous() === false) {
+            $user = null;
+            
+            if ($this->userExists($token) === true) {
+                $user = $this->getUserFromToken($token);
+            } elseif ($this->getCreateNewUsers(true) === true) {    
+                $user = $this->createUserWithRoles($this->getWorkbench(), $token, $this->getNewUserData($ldapconn, $token));
+            } else {
+                throw new AuthenticationFailedError($this, "Authentication failed, no workbench user '{$token->getUsername()}' exists: either create one manually or enable `create_new_users` in authenticator configuration!", '7AL3J9X');
+            }
+            ldap_unbind($ldapconn);
+            $this->authenticatedToken = $token;
+            $this->logSuccessfulAuthentication($user, $token->getUsername());
+            
+            if ($token->getUsername() !== $user->getUsername()) {
+                return new DomainUsernamePasswordAuthToken($token->getDomain(), $user->getUsername(), $token->getPassword());
+            }
         }
         return $token;
     }
