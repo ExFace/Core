@@ -416,7 +416,7 @@ abstract class AbstractDataType implements DataTypeInterface
         // widget type later in the code might put in their defaults potentially uncompatible
         // with properties set here or anywhere inbetween.
         if (! $this->defaultDisplayUxon->hasProperty('widget_type')) {
-            $this->defaultDisplayUxon->setProperty('widget_type', $this->getWorkbench()->getConfig()->getOption('FACADES.DEFAULT_WIDGET_FOR_UNKNOWN_DATA_TYPES'));
+            $this->defaultDisplayUxon->setProperty('widget_type', 'Display');
         }
         
         return $this->defaultDisplayUxon;
