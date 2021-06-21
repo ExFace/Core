@@ -90,7 +90,7 @@ class UserFactory extends AbstractStaticFactory
      */
     public static function createAnonymous(Workbench $exface)
     {
-        return new User($exface);
+        return new User($exface, null, $exface->model()->getModelLoader());
     }
     
     public static function createFromModel(Workbench $workbench, string $username) : UserInterface

@@ -1160,6 +1160,11 @@ SQL;
     public function loadUserData(UserInterface $user, DataSheetInterface $userData = null) : UserInterface
     {
         $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('uru.user_role_oid'), 'exf_user_role_users uru', 'uru.user_oid = u.oid');
+        if ($user->isAnonymous()) {
+            $sqlWhere = "u.oid = " . UserSelector::ANONYMOUS_USER_OID;
+        } else {
+            $sqlWhere = "u.username = '{$this->buildSqlEscapedString($user->getUsername())}'";
+        }
         $sql = <<<SQL
 SELECT
     u.*,
@@ -1170,7 +1175,7 @@ SELECT
 FROM
     exf_user u
 WHERE
-    u.username = '{$this->buildSqlEscapedString($user->getUsername())}'
+    {$sqlWhere}
 SQL;
         
         $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
@@ -1190,7 +1195,7 @@ SQL;
                     $user->setPassword($row['password']);
                 }
                 if ($row['role_oids']) {
-                    foreach (explode(',', $row['role_oids']) as $roleUid) {
+                    foreach (explode(',', rtrim($row['role_oids'], ",")) as $roleUid) {
                         $user->addRoleSelector($roleUid);
                     }
                 }
