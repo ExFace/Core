@@ -26,6 +26,7 @@ use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use exface\Core\CommonLogic\Security\Authorization\FacadeAuthorizationPoint;
 
 /**
  * Command line interface facade based on Symfony Console.
@@ -90,13 +91,16 @@ class ConsoleFacade extends Application implements FacadeInterface
         $this->exface = $selector->getWorkbench();
         $this->selector = $selector;
         $this->setCommandLoader(new CommandLoader($this));
+        // If run from CLI, authenticate the user and check authorization for CLI facade.
+        // Otherwise the security stuff is handled by the web facades.
         if ($this->isPhpScriptRunInCli() === true) {
             try {
-                $this->authenticateCliUser();
+                $authToken = $this->authenticateCliUser();
             } catch (AuthenticationExceptionInterface $e) {
                 $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::ERROR);
                 // Do nothing - the console can still be run in anonymous mode
             }
+            $this->getWorkbench()->getSecurity()->getAuthorizationPoint(FacadeAuthorizationPoint::class)->authorize($this, $authToken);
         }
     }
     
