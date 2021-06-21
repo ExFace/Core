@@ -1699,7 +1699,7 @@ SQL;
             WHERE (oid = {$id} OR parent_oid = {$id}) AND menu_visible = 1";
         }
         $sqlOrder = "
-            ORDER BY parent_oid, menu_index";
+            ORDER BY parent_oid ASC, menu_index ASC, oid ASC";
         $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('pgp.page_group_oid'), 'exf_page_group_pages pgp', 'pgp.page_oid = p.oid');
         $sql = "
             SELECT
