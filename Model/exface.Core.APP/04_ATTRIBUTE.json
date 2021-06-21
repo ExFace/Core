@@ -264,7 +264,7 @@
         },
         {
             "CREATED_ON": "2016-07-21 10:33:13",
-            "MODIFIED_ON": "2020-11-09 08:17:08",
+            "MODIFIED_ON": "2021-06-21 08:53:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e64f1dbf2abd3a97ec0050568905af",
@@ -287,7 +287,7 @@
             "COPYABLEFLAG": "0",
             "ALIAS": "PACKAGE",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "REPLACE([#~alias#].app_alias, '.', '\/')",
+            "DATA_ADDRESS": "LOWER(REPLACE([#~alias#].app_alias, '.', '\/'))",
             "OBJECT": "0x35370000000000000000000000000000",
             "FORMATTER": "",
             "DISPLAYORDER": null,
