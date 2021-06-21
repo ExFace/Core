@@ -79,12 +79,14 @@ class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
             $domain = $token->getDomain();
             $this->setDnString($domain . '\{username}');
         }
-        parent::authenticate($token);
-        if ($this->getCreateNewUsers(true) === true) {
-            $this->createUserWithRoles($this->getWorkbench(), $token);
-        } else {
-            if (empty($this->getUserData($this->getWorkbench(), $token)->getRows())) {
-                throw new AuthenticationFailedError($this, "Authentication failed, no workbench user '{$token->getUsername()}' exists: either create one manually or enable `create_new_users` in authenticator configuration!", '7AL3J9X');
+        $authenticatedToken = parent::authenticate($token);
+        if ($authenticatedToken->isAnonymous() === false) {
+            if ($this->getCreateNewUsers(true) === true) {
+                $this->createUserWithRoles($this->getWorkbench(), $token);
+            } else {
+                if (empty($this->getUserData($this->getWorkbench(), $token)->getRows())) {
+                    throw new AuthenticationFailedError($this, "Authentication failed, no workbench user '{$token->getUsername()}' exists: either create one manually or enable `create_new_users` in authenticator configuration!", '7AL3J9X');
+                }
             }
         }
         return $token;
