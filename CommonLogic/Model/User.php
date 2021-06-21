@@ -13,7 +13,6 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\RuntimeException;
 
@@ -74,7 +73,7 @@ class User implements UserInterface
     
     protected function loadData() : User
     {
-        if ($this->modelLoader !== null) {
+        if ($this->modelLoader !== null || $this->isAnonymous()) {
             $this->modelLoader->loadUserData($this);
             $this->modelLoaded = true;
         }
