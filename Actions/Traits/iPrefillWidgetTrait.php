@@ -130,26 +130,30 @@ trait iPrefillWidgetTrait
         // Add (merge) prefill data if not explicitly disabled. The prefill data is a merge from the
         // task's prefill data and the `prefill_data` preset from the action's config.
         $log .= '- Property `prefill_with_prefill_data` is `' . ($this->getPrefillWithPrefillData() ? 'true' : 'false') . '`.' . PHP_EOL;
-        if ($this->getPrefillWithPrefillData() && ($prefill_data = $this->getPrefillDataSheet($task)) && ! $prefill_data->isBlank()) {
+        if ($this->getPrefillWithPrefillData() && ($prefill_data = $this->getPrefillDataSheet($task))) {
             // Try to merge prefill data and any data already gathered. If the merge does not work, ignore the prefill data
             // for now and use it for a secondary prefill later.
             $prefill_data_merge_failed = false;
             $logSheets['Provided prefill data'] = $prefill_data;
-            $log .= '- Input data found:' . PHP_EOL;
+            $log .= '- Prefill data found:' . PHP_EOL;
             $log .= '   - Object: "' . $prefill_data->getMetaObject()->getAliasWithNamespace() . '"' . PHP_EOL;
             $log .= '   - Rows: ' . $prefill_data->countRows() . PHP_EOL;
             $log .= '   - Filters: ' . ($prefill_data->getFilters()->countConditions() + $prefill_data->getFilters()->countNestedGroups()) . PHP_EOL;
-            if (! $data_sheet || $data_sheet->isEmpty()) {
-                $log .= '   - Using prefill data for prefill.' . PHP_EOL;
-                $data_sheet = $prefill_data->copy();
+            if ($prefill_data->isBlank()) {
+                $log .= '   - Cannot use prefill data - data sheet is blank (no rows, no filters)!' . PHP_EOL;
             } else {
-                try {
-                    $data_sheet = $data_sheet->merge($prefill_data);
-                    $log .= '   - Merged prefill data with data collected above (input data, current prefill).' . PHP_EOL;
-                } catch (DataSheetMergeError $e) {
-                    // Do not use the prefill data if it cannot be merged with the input data
-                    $prefill_data_merge_failed = true;
-                    $log .= '   - Merging prefill data failed - will try to use prefill data additionally below.' . PHP_EOL;
+                if (! $data_sheet || $data_sheet->isEmpty()) {
+                    $log .= '   - Using prefill data for prefill.' . PHP_EOL;
+                    $data_sheet = $prefill_data->copy();
+                } else {
+                    try {
+                        $data_sheet = $data_sheet->merge($prefill_data);
+                        $log .= '   - Merged prefill data with data collected above (input data, current prefill).' . PHP_EOL;
+                    } catch (DataSheetMergeError $e) {
+                        // Do not use the prefill data if it cannot be merged with the input data
+                        $prefill_data_merge_failed = true;
+                        $log .= '   - Merging prefill data failed - will try to use prefill data additionally below.' . PHP_EOL;
+                    }
                 }
             }
         } else {
