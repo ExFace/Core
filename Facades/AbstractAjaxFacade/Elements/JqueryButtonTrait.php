@@ -274,7 +274,7 @@ JS;
         }
         
         $refreshIds = '';
-        $refreshNotIds = $widget->getRefreshInput() === false ? $widget->getId() : '';
+        $refreshNotIds = $widget->getRefreshInput() === false ? '"' . $widget->getId() . '"' : '';
         foreach ($widget->getRefreshWidgetIds(false) as $refreshId) {
             $refreshIds .= '"' . $refreshId . '", ';
         }
