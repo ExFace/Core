@@ -1175,7 +1175,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if (!$if_comp || is_null($if_val)) {
                     throw new QueryBuilderException('Invalid argument for COUNT_IF aggregator: "' . $cond . '"!', '6WXNHMN');
                 }
-                $output = "SUM(CASE WHEN " . $this->buildSqlWhereComparator($sql,  $if_comp, $if_val, $qpart->getAttribute()->getDataType()). " THEN 1 ELSE 0 END)";
+                $output = "SUM(CASE WHEN " . $this->buildSqlWhereComparator($sql, $if_comp, $if_val, $qpart->getAttribute()->getDataType(), $qpart->getDataAddressProperty('SQL_DATA_TYPE'), $qpart->getValueListDelimiter()). " THEN 1 ELSE 0 END)";
                 break;
             default:
                 break;
@@ -1419,6 +1419,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $val = $qpart->getCompareValue();
         $attr = $qpart->getAttribute();
         $comp = $this->getOptimizedComparator($qpart);
+        $delimiter = $qpart->getValueListDelimiter();
         
         $select = $this->buildSqlSelectGrouped($qpart);
         $customWhereClause = $qpart->getDataAddressProperty('SQL_WHERE');
@@ -1447,7 +1448,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $subj = $select;
             }
             // Do the actual comparing
-            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'), $delimiter);
+            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'), $delimiter, $qpart->isValueDataAddress());
         }
         
         return $output;
@@ -1592,7 +1593,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
             // Do the actual comparing
-            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'), $delimiter);
+            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'), $delimiter, $qpart->isValueDataAddress());
         }
         return $output;
     }
@@ -1627,72 +1628,71 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param DataTypeInterface $data_type
      * @param string $sql_data_type value of SQL_DATA_TYPE data source setting
      * @param string $value_list_delimiter delimiter used to separate concatenated lists of values
+     * @param bool $valueIsSQL
      * @return string
      */
-    protected function buildSqlWhereComparator($subject, $comparator, $value, DataTypeInterface $data_type, $sql_data_type = NULL, $value_list_delimiter = EXF_LIST_SEPARATOR)
+    protected function buildSqlWhereComparator($subject, $comparator, $value, DataTypeInterface $data_type, $sql_data_type = NULL, $value_list_delimiter = EXF_LIST_SEPARATOR, bool $valueIsSQL = false)
     {
         // Check if the value is of valid type.
         try {
             // Pay attention to comparators expecting concatennated values (like IN) - the concatennated value will not validate against
             // the data type, but the separated parts should
-            if ($comparator != EXF_COMPARATOR_IN && $comparator != EXF_COMPARATOR_NOT_IN) {
-                // If it's a single value, cast it to the data type to make sure, it's a valid value.
-                // FIXME how to distinguish between actual values and SQL statements as values? The
-                // following switch() makes sure, a number can be compared to an SQL statement
-                // which is ultimately a string - casting the SQL statement would result in a
-                // casting exception. The current solution is insecure though, as it makes it
-                // possible to pass SQL statements from outside and it uses them without any
-                // sanitization! We could use $qpart->isValueDataAddress() here, but currently
-                // we don't have the query part at hand at this point.
-                switch (true) {
-                    case ($data_type instanceof DateDataType):
-                    case ($data_type instanceof NumberDataType):
-                    case ($data_type instanceof BooleanDataType):
-                        if (! $this->checkForSqlStatement($value)) {
+            switch (true) {
+                case $valueIsSQL === true:
+                    break;
+                case $comparator != EXF_COMPARATOR_IN && $comparator != EXF_COMPARATOR_NOT_IN:
+                    // If it's a single value, cast it to the data type to make sure, it's a valid value.
+                    switch (true) {
+                        
+                        case ($data_type instanceof DateDataType):
+                        case ($data_type instanceof NumberDataType):
+                        case ($data_type instanceof BooleanDataType):
                             $value = $data_type::cast($value);
-                        }
-                        break;
-                    default:
-                        $value = $data_type::cast($value);
-                }
-            } else {
-                $values = explode($value_list_delimiter, $value);
-                $value = '';
-                $valueNullCheck = '';
-                
-                foreach ($values as $nr => $val) {
-                    // If there is an empty string among the values or one of the empty-comparators,
-                    // this means that the value may or may not be empty (NULL). NULL is not a valid
-                    // value for an IN-statement, though, so we need to append an "OR IS NULL" here.
-                    if ($val === '' || $val === EXF_LOGICAL_NULL) {
-                        unset($values[$nr]);
-                        $valueNullCheck = $subject . ($comparator == EXF_COMPARATOR_IN ? ' IS NULL' : ' IS NOT NULL');
-                        continue;
+                            break;
+                        default:
+                            $value = $data_type::cast($value);
                     }
-                    // Normalize non-empty values
-                    $values[$nr] = $this->prepareWhereValue($val, $data_type, $sql_data_type);
-                }
-                
-                switch (true) {
-                    // If there is only one value, it is better to use = than IN - it is exactly the same
-                    // and often is significantly faster. Keep in mind thogh, that the null-check will not
-                    // be part of the $values array, so need to check for it too.
-                    case count($values) === 1 && $valueNullCheck === '':
-                        $val = $values[0];
-                        if ($comparator == ComparatorDataType::IN) {
-                            return $subject . ' = ' . $val;
-                        } else {
-                            return $subject . ' != ' . $val;
+                    break;
+                    
+                default:
+                    $values = explode($value_list_delimiter, $value);
+                    $value = '';
+                    $valueNullCheck = '';
+                    
+                    foreach ($values as $nr => $val) {
+                        // If there is an empty string among the values or one of the empty-comparators,
+                        // this means that the value may or may not be empty (NULL). NULL is not a valid
+                        // value for an IN-statement, though, so we need to append an "OR IS NULL" here.
+                        if ($val === '' || $val === EXF_LOGICAL_NULL) {
+                            unset($values[$nr]);
+                            $valueNullCheck = $subject . ($comparator == EXF_COMPARATOR_IN ? ' IS NULL' : ' IS NOT NULL');
+                            continue;
                         }
-                        break;
-                        // IN(null) will result in empty $values and a NULL-check, so just use the NULL-check in this case.
-                    case empty($values) === true && $valueNullCheck !== '':
-                        $value = EXF_LOGICAL_NULL;
-                        break;
-                        // Otherwise create a (...) list and append the NULL-check with an OR if there is one.
-                    default:
-                        $value = '(' . (! empty($values) ? implode(',', $values) : 'NULL') . ')' . ($valueNullCheck ? ' OR ' . $valueNullCheck : '');
-                }
+                        // Normalize non-empty values
+                        $values[$nr] = $this->prepareWhereValue($val, $data_type, $sql_data_type);
+                    }
+                    
+                    switch (true) {
+                        // If there is only one value, it is better to use = than IN - it is exactly the same
+                        // and often is significantly faster. Keep in mind thogh, that the null-check will not
+                        // be part of the $values array, so need to check for it too.
+                        case count($values) === 1 && $valueNullCheck === '':
+                            $val = $values[0];
+                            if ($comparator == ComparatorDataType::IN) {
+                                return $subject . ' = ' . $val;
+                            } else {
+                                return $subject . ' != ' . $val;
+                            }
+                            break;
+                            // IN(null) will result in empty $values and a NULL-check, so just use the NULL-check in this case.
+                        case empty($values) === true && $valueNullCheck !== '':
+                            $value = EXF_LOGICAL_NULL;
+                            break;
+                            // Otherwise create a (...) list and append the NULL-check with an OR if there is one.
+                        default:
+                            $value = '(' . (! empty($values) ? implode(',', $values) : 'NULL') . ')' . ($valueNullCheck ? ' OR ' . $valueNullCheck : '');
+                    }
+                    break;
             }
         } catch (DataTypeCastingError $e) {
             // If the data type is incompatible with the value, return a WHERE clause, that is always false.
@@ -1721,16 +1721,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $output = "(" . $subject . " NOT IN " . $value . ")";
                 break; // The parentheses are needed if there is a OR IS NULL addition (see above)
             case EXF_COMPARATOR_EQUALS:
-                $output = $subject . " = " . $this->prepareWhereValue($value, $data_type, $sql_data_type);
+                $output = $subject . " = " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $sql_data_type));
                 break;
             case EXF_COMPARATOR_EQUALS_NOT:
-                $output = $subject . " != " . $this->prepareWhereValue($value, $data_type, $sql_data_type);
+                $output = $subject . " != " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $sql_data_type));
                 break;
             case EXF_COMPARATOR_GREATER_THAN:
             case EXF_COMPARATOR_LESS_THAN:
             case EXF_COMPARATOR_GREATER_THAN_OR_EQUALS:
             case EXF_COMPARATOR_LESS_THAN_OR_EQUALS:
-                $output = $subject . " " . $comparator . " " . $this->prepareWhereValue($value, $data_type, $sql_data_type);
+                $output = $subject . " " . $comparator . " " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $sql_data_type));
                 break;
             case EXF_COMPARATOR_IS_NOT:
                 $output = 'UPPER(' . $subject . ") NOT LIKE '%" . $this->escapeString(strtoupper($value)) . "%'";
