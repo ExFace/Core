@@ -1,11 +1,27 @@
 # Release history
 
-## 1.3 (in development)
+## 1.4 (in development)
+
+- NEW GUI to install payload packages on a workbench(`Administration > Package manager`)
+- FIX much improved form layouts in the UI5 facade
+
+## 1.3
 
 - NEW action scheuler: `Administration > BG Processing > Scheduler`
-- NEW Single-Sign-On via OAuth 2.0: e.g. with Microsoft 365 / Azure, Google, etc.
+- NEW infrastructure app [axenox.ETL](https://github.com/axenox/ETL) to build and run ETL processes
+- NEW Single-Sign-On via OAuth 2.0: e.g. with [Microsoft 365 / Azure](https://github.com/axenox/Microsoft365Connector), [Google](https://github.com/axenox/GoogleConnector), etc.
 - NEW OAuth2 authentication for HTTP data connections
-- NEW data connector apps for Google APIs and Microsoft Graph 
+- NEW data connector apps for [Google APIs](https://github.com/axenox/GoogleConnector) and [Microsoft Graph](https://github.com/axenox/Microsoft365Connector) 
+- NEW Error monitor to keep track of recent errors incl. dashboard for support user group
+- NEW configurable home-pages for user groups
+- NEW widgets 
+	- `Map` for interactive maps with various layers
+	- `InputCustom` to hook-in arbitrary JS libraries easily (WYSIWYG editors, etc.)
+	- `InputTags` to quickly select tags, categories, etc.
+	- `InputMarkdown` - WYSIWYG MarkDown editor
+- NEW query builder to read Excel files (*.xlsx)
+- FIX improved prefill debugger
+- FIX much improved auto-detection of objects and widgets affected by an action + custom `effects` in action models
 
 ## 1.2
 
