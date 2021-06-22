@@ -3,6 +3,7 @@
 ## 1.4 (in development)
 
 - NEW GUI to install payload packages on a workbench(`Administration > Package manager`)
+- NEW Single-sign-on via SQL query to validate passwords against hashes stored in a database by other applications
 - FIX much improved form layouts in the UI5 facade
 
 ## 1.3
