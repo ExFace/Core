@@ -22,6 +22,7 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\CommonLogic\Selectors\UiPageSelector;
 
 /**
  * Saves pages as UXON (JSON) files and imports these files back into model when needed.
@@ -124,6 +125,12 @@ class PageInstaller extends AbstractAppInstaller
                 // gesetzen Position.
                 $page->setParentPageSelectorDefault($page->getParentPageSelector());
                 $page->setMenuIndexDefault($page->getMenuIndex());
+                
+                // Pages marked as top-level explicitly, get this installations root page as parent
+                if ($page->isMenuHome()) {
+                    $page->setParentPageSelector(UiPageSelector::getServerRootSelector($this->getWorkbench()));
+                }
+                    
                 $pagesFile[] = $page;
             } catch (\Throwable $e) {
                 throw new InstallerRuntimeError($this, 'Cannot load page model from file "' . $file . '": corrupted UXON?', null, $e);
@@ -345,10 +352,12 @@ class PageInstaller extends AbstractAppInstaller
                 $parentSelector = $page->getParentPageSelector();
                 $parentFound = false;
                 // Hat die Seite einen Parent im inputArray?
-                foreach ($inputPages as $parentPagePos => $parentPage) {
-                    if ($parentPage->isExactly($parentSelector)) {
-                        $parentFound = true;
-                        break;
+                if ($parentSelector !== null) {
+                    foreach ($inputPages as $parentPagePos => $parentPage) {
+                        if ($parentPage->isExactly($parentSelector)) {
+                            $parentFound = true;
+                            break;
+                        }
                     }
                 }
                 if (! $parentFound) {

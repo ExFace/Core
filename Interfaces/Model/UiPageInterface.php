@@ -173,18 +173,18 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      * 
      * Defaults to 0 if not set explicitly.
      *  
-     * @return integer
+     * @return int
      */
-    public function getMenuIndex();
+    public function getMenuIndex() : int;
 
     /**
      * Sets the index (position number starting with 0) of this page in the 
      * submenu of its parent.
      *
-     * @param integer $number
+     * @param int|NULL $number
      * @return UiPageInterface
      */
-    public function setMenuIndex($number);
+    public function setMenuIndex($number) : UiPageInterface;
     
     /**
      * 
@@ -344,4 +344,20 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      * @return bool
      */
     public function hasModel() : bool;
+    
+    /**
+     * Set to TRUE to indicate, that this page is to be installed at the top level of the main menu.
+     *
+     * This is where each app typically has it's "home" page.
+     *
+     * @param bool $trueOrFalse
+     * @return UiPageInterface
+     */
+    public function setMenuHome(bool $trueOrFalse) : UiPageInterface;
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isMenuHome() : bool;
 }

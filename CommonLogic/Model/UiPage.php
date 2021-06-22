@@ -72,11 +72,13 @@ class UiPage implements UiPageInterface
     
     private $menuParentPageSelectorDefault = null;
     
-    private $menuIndex = 0;
+    private $menuIndex = null;
 
     private $menuIndexDefault = null;
     
     private $menuVisible = true;
+    
+    private $menuHome = false;
 
     private $id = null;
 
@@ -682,9 +684,9 @@ class UiPage implements UiPageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuIndex()
      */
-    public function getMenuIndex()
+    public function getMenuIndex() : int
     {
-        return $this->menuIndex;
+        return $this->menuIndex ?? 0;
     }
 
     /**
@@ -692,9 +694,9 @@ class UiPage implements UiPageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuIndex()
      */
-    public function setMenuIndex($number)
+    public function setMenuIndex($number) : UiPageInterface
     {
-        $this->menuIndex = NumberDataType::cast($number);
+        $this->menuIndex = $number === null ? null : NumberDataType::cast($number);
         return $this;
     }
 
@@ -1013,7 +1015,10 @@ class UiPage implements UiPageInterface
         $uxon = new UxonObject();
         $uxon->setProperty('uid', $this->getUid());
         $uxon->setProperty('alias_with_namespace', $this->getAliasWithNamespace());
-        $uxon->setProperty('menu_parent_page_selector', $this->getParentPageSelector()->toString());
+        if ($this->isMenuHome()) {
+            $uxon->setProperty('menu_home', $this->isMenuHome());
+        }
+        $uxon->setProperty('menu_parent_page_selector', $this->isMenuHome() || ! $this->hasParent() ? null : $this->getParentPageSelector()->toString());
         $uxon->setProperty('menu_index', $this->getMenuIndex());
         $uxon->setProperty('menu_visible', $this->getMenuVisible());
         $uxon->setProperty('name', $this->getName());
@@ -1344,6 +1349,7 @@ class UiPage implements UiPageInterface
             'DEFAULT_MENU_PARENT' => $this->getParentPageSelectorDefault() !== null ? $this->getPageUidFromSelector($this->getParentPageSelectorDefault()) : null,
             'DESCRIPTION' => $this->getDescription(),
             'INTRO' => $this->getIntro(),
+            'MENU_HOME' => $this->isMenuHome(),
             'MENU_PARENT' => $this->hasParent() ? $this->getPageUidFromSelector($this->getParentPageSelector()) : null,
             'MENU_POSITION' => $this->getMenuIndex(),
             'MENU_VISIBLE' => $this->getMenuVisible(),
@@ -1365,5 +1371,32 @@ class UiPage implements UiPageInterface
             return $selector->toString();
         }
         return UiPageFactory::createFromModel($this->getWorkbench(), $selector)->getUid();
+    }
+    
+    /**
+     * Set to TRUE to indicate, that this page is to be installed at the top level of the main menu.
+     * 
+     * This is where each app typically has it's "home" page.
+     * 
+     * @uxon-property menu_home
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuHome()
+     */
+    public function setMenuHome(bool $trueOrFalse) : UiPageInterface
+    {
+        $this->menuHome = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::isMenuHome()
+     */
+    public function isMenuHome() : bool
+    {
+        return $this->menuHome;
     }
 }

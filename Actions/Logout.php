@@ -10,6 +10,7 @@ use exface\Core\Factories\ResultFactory;
 use exface\Core\CommonLogic\Security\AuthenticationToken\AnonymousAuthToken;
 use exface\Core\Interfaces\Actions\iModifyContext;
 use exface\Core\Factories\SelectorFactory;
+use exface\Core\CommonLogic\Selectors\UiPageSelector;
 
 /**
  * Logs out the currently authenticated user.
@@ -31,7 +32,7 @@ class Logout extends AbstractAction implements iModifyContext
         if ($task->isTriggeredOnPage()) {
             $redirectToPageSelector = $task->getPageSelector();
         } else {
-            $redirectToPageSelector = SelectorFactory::createPageSelector($this->getWorkbench(), $this->getWorkbench()->getConfig()->getOption('SERVER.INDEX_PAGE_SELECTOR'));
+            $redirectToPageSelector = UiPageSelector::getServerRootSelector($this->getWorkbench());
         }
         $result = ResultFactory::createRedirectToPageResult($task, $redirectToPageSelector, $this->translate('RESULT'));
         $result->setContextModified(true);

@@ -1393,6 +1393,7 @@ SQL;
         
         $uiPage->setMenuIndex(intval($row['menu_index']));
         $uiPage->setMenuVisible($row['menu_visible'] ? true : false);
+        $uiPage->setMenuHome($row['menu_home'] ? true : false);
         $uiPage->setPublished($row['published'] ? true : false);
         
         if ($row['parent_oid']) {
@@ -1699,7 +1700,7 @@ SQL;
             WHERE (oid = {$id} OR parent_oid = {$id}) AND menu_visible = 1";
         }
         $sqlOrder = "
-            ORDER BY parent_oid ASC, menu_index ASC, oid ASC";
+            ORDER BY parent_oid ASC, menu_index ASC, name ASC";
         $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('pgp.page_group_oid'), 'exf_page_group_pages pgp', 'pgp.page_oid = p.oid');
         $sql = "
             SELECT

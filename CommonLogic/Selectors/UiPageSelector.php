@@ -62,4 +62,9 @@ class UiPageSelector extends AbstractSelector implements UiPageSelectorInterface
     {
         return $this->toString() === '';
     }
+    
+    public static function getServerRootSelector(WorkbenchInterface $workbench) : UiPageSelectorInterface
+    {
+        return new self($workbench, $workbench->getConfig()->getOption('SERVER.INDEX_PAGE_SELECTOR'));
+    }
 }

@@ -150,7 +150,7 @@ class NavMenu extends AbstractWidget
      */
     public function getRootPageSelectors() : array
     {
-        return $this->rootPageSelectors ?? [(new UiPageSelector($this->getWorkbench(), $this->getWorkbench()->getConfig()->getOption('SERVER.INDEX_PAGE_SELECTOR')))];
+        return $this->rootPageSelectors ?? [UiPageSelector::getServerRootSelector($this->getWorkbench())];
     }
     
     /**
