@@ -27,6 +27,7 @@ use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use exface\Core\CommonLogic\Security\Authorization\FacadeAuthorizationPoint;
+use exface\Core\Events\Facades\OnFacadeInitEvent;
 
 /**
  * Command line interface facade based on Symfony Console.
@@ -95,12 +96,17 @@ class ConsoleFacade extends Application implements FacadeInterface
         // Otherwise the security stuff is handled by the web facades.
         if ($this->isPhpScriptRunInCli() === true) {
             try {
-                $authToken = $this->authenticateCliUser();
+                $this->authenticateCliUser();
             } catch (AuthenticationExceptionInterface $e) {
                 $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::ERROR);
                 // Do nothing - the console can still be run in anonymous mode
-            }
-            $this->getWorkbench()->getSecurity()->getAuthorizationPoint(FacadeAuthorizationPoint::class)->authorize($this, $authToken);
+            }     
+            
+            // Only trigger the facade-init event if this facade is actually run in CLI. Otherwise
+            // it is triggered by another facade (e.g. the WebConsoleFacade) and does not need
+            // authorization and other stuff - in other words it is not a facade then, but
+            // merely an internal interface.
+            $selector->getWorkbench()->eventManager()->dispatch(new OnFacadeInitEvent($this));
         }
     }
     
