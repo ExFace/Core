@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\Interfaces\WorkbenchInterface;
+
 class WidgetDimension
 {
 
@@ -8,9 +10,12 @@ class WidgetDimension
 
     private $value = NULL;
 
-    function __construct(\exface\Core\CommonLogic\Workbench $exface)
+    public function __construct(WorkbenchInterface $exface, string $value = null)
     {
         $this->exface = $exface;
+        if ($value !== null) {
+            $this->parseDimension($value);
+        }
     }
 
     /**

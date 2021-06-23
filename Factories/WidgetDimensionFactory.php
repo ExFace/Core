@@ -28,8 +28,7 @@ abstract class WidgetDimensionFactory extends AbstractStaticFactory
      */
     public static function createFromString(Workbench $exface, $string)
     {
-        $d = static::createEmpty($exface);
-        $d->parseDimension($string);
+        $d = new WidgetDimension($exface, $string);
         return $d;
     }
 
