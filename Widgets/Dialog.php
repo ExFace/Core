@@ -319,6 +319,7 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     public function setHideHeader(bool $boolean) : iHaveHeader
     {
         $this->hide_header = $boolean;
+        return $this;
     }
     
     /**
