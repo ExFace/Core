@@ -135,17 +135,7 @@ class UserContext extends AbstractContext
               ],
               "buttons" => [
                 [
-                    "action" => [
-                        "alias" => "exface.Core.ShowLoginDialog",
-                        "input_mapper" => [
-                            "column_to_column_mappings" => [
-                                [
-                                    "from" => 'username',
-                                    "to" => 'username'
-                                ]    
-                            ]
-                        ]
-                    ],
+                    "action_alias" => "exface.Core.ShowLoginDialog",
                     "visibility" => WidgetVisibilityDataType::PROMOTED
                 ]
               ]
