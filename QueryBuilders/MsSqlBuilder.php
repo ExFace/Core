@@ -15,7 +15,7 @@ use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 
 /**
- * A query builder for Microsoft SQL.
+ * A query builder for Microsoft SQL Server 2012+ (T-SQL).
  * 
  * Supported dialect tags in multi-dialect statements (in order of priority): `@T-SQL:`, `@MSSQL:`, `@OTHER:`.
  *
@@ -229,18 +229,58 @@ class MsSqlBuilder extends AbstractSqlBuilder
             // Increase limit by one to check if there are more rows (see AbstractSqlBuilder::read())
             $limit = ' OFFSET ' . $this->getOffset() . ' ROWS FETCH NEXT ' . ($this->getLimit()+1) . ' ROWS ONLY';
         }
-        
+
         if ($useEnrichment) {
-            if (count($this->getAttributesWithReverseRelations()) > 0) {
-                $query = "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . ") EXFCOREQ " . $enrichment_join . $group_by . $having . $order_by . $limit;
-            } else {
-                $query = "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . $group_by . $having . ") EXFCOREQ " . $enrichment_join . $order_by . $limit;
-            }
+            $query = $this->buildSqlQuerySelectWithEnrichment($select, $enrichment_select, $select_comment, $from, $join, $enrichment_join, $where, $group_by, $having, $order_by, $limit, $distinct);
         } else {
-            $query = "\n SELECT " . $distinct . $select . $select_comment . " FROM " . $from . $join . $where . $group_by . $having . $order_by . $limit;
+            $query = $this->buildSqlQuerySelectWithoutEnrichment($select, $select_comment, $from, $join, $where, $group_by, $having, $order_by, $limit, $distinct);
         }
         
         return $query;
+    }
+    
+    /**
+     * 
+     * @param string $select
+     * @param string $enrichment_select
+     * @param string $select_comment
+     * @param string $from
+     * @param string $join
+     * @param string $enrichment_join
+     * @param string $where
+     * @param string $group_by
+     * @param string $having
+     * @param string $order_by
+     * @param string $limit
+     * @param string $distinct
+     * @return string
+     */
+    protected function buildSqlQuerySelectWithEnrichment(string $select, string $enrichment_select, string $select_comment, string $from, string $join, string $enrichment_join, string $where, string $group_by, string $having, string $order_by, string $limit, string $distinct = '') : string
+    {
+        if (count($this->getAttributesWithReverseRelations()) > 0) {
+            return "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . ") EXFCOREQ " . $enrichment_join . $group_by . $having . $order_by . $limit;
+        } else {
+            return "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . $group_by . $having . ") EXFCOREQ " . $enrichment_join . $order_by . $limit;
+        }
+    }
+    
+    /**
+     * 
+     * @param string $select
+     * @param string $select_comment
+     * @param string $from
+     * @param string $join
+     * @param string $where
+     * @param string $group_by
+     * @param string $having
+     * @param string $order_by
+     * @param string $limit
+     * @param string $distinct
+     * @return string
+     */
+    protected function buildSqlQuerySelectWithoutEnrichment(string $select, string $select_comment, string $from, string $join, string $where, string $group_by, string $having, string $order_by, string $limit, string $distinct = '') : string
+    {
+        return "\n SELECT " . $distinct . $select . $select_comment . " FROM " . $from . $join . $where . $group_by . $having . $order_by . $limit;
     }
 
     /**
@@ -449,5 +489,10 @@ class MsSqlBuilder extends AbstractSqlBuilder
     protected function buildSqlAsForTables(string $alias) : string
     {
         return ' AS ' . $alias;
+    }
+    
+    protected function getSqlServerVersion() : string
+    {
+        return 2012;
     }
 }
