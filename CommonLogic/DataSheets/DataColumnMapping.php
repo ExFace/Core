@@ -168,10 +168,6 @@ class DataColumnMapping implements DataColumnMappingInterface
                     $toSheet->addRow([$newCol->getName() => $fromExpr->evaluate()]);
                 }
                 break;
-            // Data column references
-            case $fromCol = $fromSheet->getColumns()->getByExpression($fromExpr):
-                $toSheet->getColumns()->addFromExpression($toExpr, '', $fromCol->getHidden())->setValues($fromCol->getValues(false));
-                break;
             // Formulas with data
             case $fromExpr->isFormula():
                 $newCol = $toSheet->getColumns()->addFromExpression($toExpr);
@@ -182,6 +178,14 @@ class DataColumnMapping implements DataColumnMappingInterface
                     $toSheet->addRow([$newCol->getName() => $fromExpr->evaluate($fromSheet, 0)]);
                 }
                 break;
+            // Data column references
+            case $fromCol = $fromSheet->getColumns()->getByExpression($fromExpr):
+                $toSheet->getColumns()->addFromExpression($toExpr, '', $fromCol->getHidden())->setValues($fromCol->getValues(false));
+                break;
+            // Data column references should not result in errors if the data sheet is completely empty
+            // Otherwise input-mappers would always produce errors on empty input data!
+            case $fromSheet->getColumns()->isEmpty() && ! $fromExpr->isReference():
+                return $toSheet;
             default:
                 throw new DataSheetMapperError($this->getMapper(), 'Cannot use "' . $fromExpr->toString() . '" as from-expression in a column-to-column mapping: only data column names, constants and formulas allowed!');
         }
