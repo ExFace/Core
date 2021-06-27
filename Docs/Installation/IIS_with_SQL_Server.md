@@ -64,12 +64,22 @@ Use the following configuration in addition to the server-independent [recommend
 	- `wincache.fcenabled=1` (optional)
 	- `wincache.ocenabled=1` (optional)
 4. Recommended security-related settings
-	- `open_basedir = c:\inetpub`
 	- `fastcgi.logging = 0` (for dev-environment `1`) 
 	- `display_errors = Off` (for dev-environment `On`) 
 	- `log_errors = On`
 	- `error_log = c:\Program Files\PHP\logs\error.log` - don't forget to crate the directory used here!
 	
+## Installing the workbench
+
+Now it is time to install the workbench via [Composer](Install_via_Composer.md) or the [deployer app](https://github.com/axenox/deployer/blob/1.x-dev/Docs/index.md) (if you already have a build server).
+
+**IMPORTANT**: Don't forget to add the IIS-specific installer to the configuration file `System.config.json` to make sure the workbench has proper access to all files and folders it needs after installtion:
+
+```
+"INSTALLER.SERVER_INSTALLER.CLASS": "\\exface\\Core\\CommonLogic\\AppInstallers\\IISServerInstaller"
+
+```
+
 ## Securing sesnsitive folders
 
 See [security docs](../Security/Securing_installation_folders.md) for a list of folders to restrict access to.

@@ -9,6 +9,12 @@ Note that apps also can have their specific configuration files locateded in the
 - `SERVER.DEFAULT_LOCALE` - the default language/local to use for new users
 - `SERVER.TITLE` and `SERVER.TITLE_HTML` - how your installation is called
 
+## Server installers
+
+Depending no the web server being used, an additional installer may be needed to take care of redirects, file and folder permissions, etc.:
+
+- On Microsoft IIS add `"INSTALLER.SERVER_INSTALLER.CLASS": "\\exface\\Core\\CommonLogic\\AppInstallers\\IISServerInstaller"` to `System.config.json`.
+
 ## Authentication
 
 By default, users must be created manually in `Administration > Users & Security`. In most cases, it is very handy to add single-sign-on with other applications, LDAP, Azure, etc. by extending and overwriting `SECURITY.AUTHENTICATORS` in your configuration - see [Authentication docs](../Security/Authentication/index.md) for more details.
