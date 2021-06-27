@@ -120,5 +120,7 @@
     	"exface/Core/Facades/AbstractPWAFacade/exf_preloader.js"
     ],
     
-    "FACADES.DOCSFACADE.BASE_URL_REWRITE": {}
+    "FACADES.DOCSFACADE.BASE_URL_REWRITE": {},
+	
+    "INSTALLER.SERVER_INSTALLER.CLASS": ""
 }

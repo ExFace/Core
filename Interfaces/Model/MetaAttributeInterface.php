@@ -10,6 +10,8 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopied
 {
+    const OBJECT_LABEL_ALIAS = 'LABEL';
+    
     public function __construct(MetaObjectInterface $object);
     
     /**

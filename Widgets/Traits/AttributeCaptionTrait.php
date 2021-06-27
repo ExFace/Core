@@ -4,6 +4,7 @@ namespace exface\Core\Widgets\Traits;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * This trait provides a getCaption() for widgets, that can be bound to metamodel attributes.
@@ -71,7 +72,7 @@ trait AttributeCaptionTrait
         }
         
         if ($this->getAttribute()) {
-            $labelRelPathEnding = RelationPath::RELATION_SEPARATOR . $this->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS');
+            $labelRelPathEnding = RelationPath::RELATION_SEPARATOR . MetaAttributeInterface::OBJECT_LABEL_ALIAS;
             if (StringDataType::endsWith($alias, $labelRelPathEnding, false) === true) {
                 return true;
             } else {
