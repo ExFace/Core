@@ -13,6 +13,7 @@ use exface\Core\Factories\QueryBuilderFactory;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * InputCombo is similar to InputSelect extended by an autosuggest, that supports lazy loading.
@@ -209,7 +210,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
             // trying this trick to prevent additional queries to the data source just to find the text for the combo value!
             if (! $data_sheet->getColumns()->getByExpression($text_column_expr) && $this->getTextColumn()->getAttribute()->isLabelForObject() === true) {
                 // FIXME use $this->getTextAttributeAlias() here instead? But isn't that alias relative to the table's object?
-                $text_column_expr = RelationPath::relationPathAdd($this->getAttribute()->getAliasWithRelationPath(), $this->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS'));
+                $text_column_expr = RelationPath::relationPathAdd($this->getAttribute()->getAliasWithRelationPath(), MetaAttributeInterface::OBJECT_LABEL_ALIAS);
             }
         } elseif ($this->getMetaObject()->isExactly($this->getOptionsObject())) {
             $text_column_expr = $this->getTextColumn()->getExpression()->toString();

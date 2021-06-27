@@ -109,7 +109,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
                 // It is important to append __LABEL to the relation path (and not the actual alias of the
                 // label attribute) to make the column show the relation name as caption and not the attribute's
                 // name. This is also what a human designer would typically do.
-                $attribute = $this->getMetaObject()->getAttribute(RelationPath::relationPathAdd($attribute->getAlias(), $this->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS')));
+                $attribute = $this->getMetaObject()->getAttribute(RelationPath::relationPathAdd($attribute->getAlias(), MetaAttributeInterface::OBJECT_LABEL_ALIAS));
             }
         }
         

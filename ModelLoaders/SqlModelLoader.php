@@ -79,6 +79,7 @@ use exface\Core\Events\Model\OnMetaObjectActionLoadedEvent;
 use exface\Core\Events\Model\OnUiMenuItemLoadedEvent;
 use exface\Core\Events\Model\OnUiPageLoadedEvent;
 use exface\Core\Events\Model\OnBeforeMetaObjectActionLoadedEvent;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * Loads metamodel entities from SQL databases supporting the MySQL dialect.
@@ -289,9 +290,9 @@ class SqlModelLoader implements ModelLoaderInterface
                         // always add a LABEL attribute if it is not already called LABEL (widgets always need to show the LABEL!)
                         // IDEA why does the reference from the object then go to the original attribute instead of the extra
                         // created one?
-                        if ($row['attribute_alias'] != $object->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS')) {
+                        if ($row['attribute_alias'] != MetaAttributeInterface::OBJECT_LABEL_ALIAS) {
                             $label_attribute = $row;
-                            $label_attribute['attribute_alias'] = $object->getModel()->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS');
+                            $label_attribute['attribute_alias'] = MetaAttributeInterface::OBJECT_LABEL_ALIAS;
                             $label_attribute['attribute_hidden_flag'] = '1';
                             $label_attribute['attribute_required_flag'] = '0';
                             $label_attribute['attribute_editable_flag'] = '0';
