@@ -54,10 +54,14 @@ class MsSql2008Builder extends MsSqlBuilder
                     throw new QueryBuilderException('At least one sorter is required to use SQL paging with MS SQL 2008 on object without UIDs (primary keys)!');
                 }
             } else {
-                $order_by = 'ORDER BY ';
+                $order_by = '';
                 foreach ($this->getSorters() as $qpart) {
-                    $order_by .= $this->buildSqlOrderBy($qpart, 'EXFCOREQ');
+                    $order_by .= ', ' . $this->buildSqlOrderBy($qpart, 'EXFCOREQ');
                 }
+                if ($order_by === '') {
+                    $order_by = ', ' . $this->buildSqlOrderByDefault(true, 'EXFCOREQ');
+                }
+                $order_by = 'ORDER BY ' . substr($order_by, 2);
             }
             $enrichment_select .= ($enrichment_select ? ', ' : '') . "ROW_NUMBER() OVER ({$order_by}) AS EXFROWNUM";
             $limit = '';
@@ -84,10 +88,15 @@ class MsSql2008Builder extends MsSqlBuilder
                     throw new QueryBuilderException('At least one sorter is required to use SQL paging with MS SQL 2008 on object without UIDs (primary keys)!');
                 }
             } else {
-                $order_by = 'ORDER BY ';
+                $order_by = '';
+                $mainTableAlias = $this->getShortAlias($this->getMainObject()->getAlias());
                 foreach ($this->getSorters() as $qpart) {
-                    $order_by .= $this->buildSqlOrderBy($qpart, $this->getShortAlias($this->getMainObject()->getAlias()));
+                    $order_by .= ', ' . $this->buildSqlOrderBy($qpart, $mainTableAlias);
                 }
+                if ($order_by === '') {
+                    $order_by = ', ' . $this->buildSqlOrderByDefault(true, $mainTableAlias);
+                }
+                $order_by = 'ORDER BY ' . substr($order_by, 2);
             }
             $select .= ($select ? ', ' : '') . "ROW_NUMBER() OVER ({$order_by}) AS EXFROWNUM";
             $limit = '';

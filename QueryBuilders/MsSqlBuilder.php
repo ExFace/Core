@@ -13,6 +13,7 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
+use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 
 /**
  * A query builder for Microsoft SQL Server 2012+ (T-SQL).
@@ -194,24 +195,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         // ORDER BY
         // If there is a limit in the query, ensure there is an ORDER BY even if no sorters given.
         if (empty($this->getSorters()) === true && $this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
-            if ($this->getMainObject()->hasUidAttribute()) {
-                $orderByUidCol = ($useEnrichment ? 'EXFCOREQ' . $this->getAliasDelim() : '') . $this->getMainObject()->getAlias() . '.' . $this->buildSqlDataAddress($this->getMainObject()->getUidAttribute());
-                foreach ($this->getAttributes() as $qpart) {
-                    if ($qpart->getAttribute()->isExactly($this->getMainObject()->getUidAttribute())) {
-                        $orderByUidCol = $this->getShortAlias($qpart->getColumnKey());
-                    }
-                }
-                // If no order is specified, sort sort over the UID of the meta object
-                $order_by .= ', ' . $orderByUidCol . ' DESC';
-            } else {
-                // If the object has no UID, sort over the first column in the query, which is not an SQL statement itself
-                foreach ($this->getAttributes() as $qpart) {
-                    if (! $this->checkForSqlStatement($this->buildSqlDataAddress($qpart))) {
-                        $order_by .= ', ' . $qpart->getColumnKey() . ' DESC';
-                        break;
-                    }
-                }
-            }
+            $order_by .= ', ' . $this->buildSqlOrderByDefault($useEnrichment);
         }
         foreach ($this->getSorters() as $qpart) {
             // A sorter can only be used, if there is no GROUP BY, or the sorted attribute has unique values within the group
@@ -237,6 +221,39 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         
         return $query;
+    }
+    
+    /**
+     * Generates an ORDER BY clause if no sorters are provided (required for paging in MS SQL)
+     * 
+     * Orders by UID descending if a UID attribute exists or by the first column that is not
+     * a custom SQL statement - also descending.
+     * 
+     * @param bool $useEnrichment
+     * @param string $select_from
+     * @return string
+     */
+    protected function buildSqlOrderByDefault(bool $useEnrichment, $select_from = '') : string
+    {
+        if ($this->getMainObject()->hasUidAttribute()) {
+            $orderByUidCol = ($useEnrichment ? 'EXFCOREQ' . $this->getAliasDelim() : '') . $this->getMainObject()->getAlias() . '.' . $this->buildSqlDataAddress($this->getMainObject()->getUidAttribute());
+            foreach ($this->getAttributes() as $qpart) {
+                if ($qpart->getAttribute()->isExactly($this->getMainObject()->getUidAttribute())) {
+                    $orderByUidCol = $this->getShortAlias($qpart->getColumnKey());
+                }
+            }
+            // If no order is specified, sort sort over the UID of the meta object
+            $order_by = $orderByUidCol . ' DESC';
+        } else {
+            // If the object has no UID, sort over the first column in the query, which is not an SQL statement itself
+            foreach ($this->getAttributes() as $qpart) {
+                if (! $this->checkForSqlStatement($this->buildSqlDataAddress($qpart))) {
+                    $order_by = $qpart->getColumnKey() . ' DESC';
+                    break;
+                }
+            }
+        }
+        return ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $order_by;
     }
     
     /**
