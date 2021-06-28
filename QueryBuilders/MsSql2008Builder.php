@@ -53,6 +53,11 @@ class MsSql2008Builder extends MsSqlBuilder
                 } else {
                     throw new QueryBuilderException('At least one sorter is required to use SQL paging with MS SQL 2008 on object without UIDs (primary keys)!');
                 }
+            } else {
+                $order_by = 'ORDER BY ';
+                foreach ($this->getSorters() as $qpart) {
+                    $order_by .= $this->buildSqlOrderBy($qpart, 'EXFCOREQ');
+                }
             }
             $enrichment_select .= ($enrichment_select ? ', ' : '') . "ROW_NUMBER() OVER ({$order_by}) AS EXFROWNUM";
             $limit = '';
@@ -77,6 +82,11 @@ class MsSql2008Builder extends MsSqlBuilder
                     $order_by = 'ORDER BY ' . $this->getMainObject()->getUidAttribute()->getDataAddress() . ' ASC';
                 } else {
                     throw new QueryBuilderException('At least one sorter is required to use SQL paging with MS SQL 2008 on object without UIDs (primary keys)!');
+                }
+            } else {
+                $order_by = 'ORDER BY ';
+                foreach ($this->getSorters() as $qpart) {
+                    $order_by .= $this->buildSqlOrderBy($qpart, $this->getShortAlias($this->getMainObject()->getAlias()));
                 }
             }
             $select .= ($select ? ', ' : '') . "ROW_NUMBER() OVER ({$order_by}) AS EXFROWNUM";

@@ -37,6 +37,8 @@ use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
+use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 
 /**
  * A query builder for generic SQL syntax.
@@ -882,7 +884,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * WHERE ARTI.ARTICLE_COLOR_OID = EXFCOREQ.OID) AS "ARTI__POS_TRANSACTIONS__SALES1"
      * Another idea might be to enforce grouping after every reverse relation. Don't know, how it would look like in SQL though...
      *
-     * @param \exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart
+     * @param QueryPart $qpart
      * @param string $select_from
      * @param string $select_column
      * @param string $select_as
@@ -1000,11 +1002,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     /**
      * Builds subselects for reversed relations
      *
-     * @param \exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart
+     * @param QueryPart $qpart
      * @param string $select_from
      * @return string
      */
-    protected function buildSqlSelectSubselect(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $select_from = null)
+    protected function buildSqlSelectSubselect(QueryPart $qpart, $select_from = null)
     {
         $rev_rel = $qpart->getFirstRelation(RelationTypeDataType::REVERSE);
         if (! $rev_rel)
@@ -1108,14 +1110,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * would also make it easier to override this method for specific sql dialects while reusing some
      * basics (like SUM or AVG) from the general sql query builder.
      *
-     * @param \exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart
+     * @param QueryPart $qpart
      * @param string $select_from
      * @param string $select_column
      * @param string $select_as
      * @param AggregatorInterface $aggregator
      * @return string
      */
-    protected function buildSqlSelectGrouped(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, AggregatorInterface $aggregator = null)
+    protected function buildSqlSelectGrouped(QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, AggregatorInterface $aggregator = null)
     {
         $aggregator = ! is_null($aggregator) ? $aggregator : $qpart->getAggregator();
         $select = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false);
@@ -1226,11 +1228,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     
     /**
      *
-     * @param \exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart
+     * @param QueryPart $qpart
      * @param string $left_table_alias
      * @return array [ relation_path_relative_to_main_object => join_string ]
      */
-    protected function buildSqlJoins(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $left_table_alias = '')
+    protected function buildSqlJoins(QueryPart $qpart, $left_table_alias = '')
     {
         $joins = array();
         
@@ -1535,7 +1537,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * Builds a single filter condition for the where clause (e.g.
      * " table.column LIKE '%string%' ")
      *
-     * @param \exface\Core\CommonLogic\QueryBuilder\QueryPartFilter $qpart
+     * @param QueryPartFilter $qpart
      * @return boolean|string
      */
     protected function buildSqlWhereCondition(QueryPartFilter $qpart, $rely_on_joins = true)
@@ -1769,7 +1771,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * does not support joining. The optional parameter $rely_on_joins controls
      * whether the method can rely on the main query have all neccessary joins.
      *
-     * @param \exface\Core\CommonLogic\QueryBuilder\QueryPartFilter $qpart
+     * @param QueryPartFilter $qpart
      * @param boolean $rely_on_joins
      */
     protected function buildSqlWhereSubquery(QueryPartFilter $qpart, $rely_on_joins = true)
@@ -1902,24 +1904,48 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     }
     
     /**
-     * Builds the contents of an ORDER BY statement for one column (e.g.
-     * "ATTRIBUTE_ALIAS DESC" to sort via the column ALIAS of the table
-     * ATTRIBUTE). The result does not contain the words "ORDER BY", the
+     * Builds the contents of an ORDER BY statement for one column. 
+     * 
+     * E.g. `APP DESC` to sort via the attribute alias `APP` of the meta object
+     * `exface.Core.OBJECT`). By default the ORDER clause will contain column
+     * aliases (i.e. `APP` and not `app_oid` in the example above). Override
+     * this method in a specific query builder to change this.
+     * 
+     * The result does not contain the words "ORDER BY", the
      * results of multiple calls to this method with different attributes can
      * be concatennated into a comple ORDER BY clause.
      *
-     * @param \exface\Core\CommonLogic\QueryBuilder\QueryPartSorter $qpart
+     * @param QueryPartSorter $qpart
+     * @param string|NULL $select_from
      * @return string
      */
-    protected function buildSqlOrderBy(\exface\Core\CommonLogic\QueryBuilder\QueryPartSorter $qpart)
+    protected function buildSqlOrderBy(QueryPartSorter $qpart, $select_from = '') : string
     {
-        if ($customOrderBy = $qpart->getDataAddressProperty("SQL_ORDER_BY")) {
-            $output = $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getAliasDelim() . $customOrderBy;
-        } else {
-            $output = $this->getShortAlias($qpart->getColumnKey());
+        switch ($select_from) {
+            case '':
+                $select_from = '';
+                break;
+            case null:
+                $select_from = $this->getShortAlias($this->getMainObject()->getAlias());
+                break;
         }
-        $output .= ' ' . $qpart->getOrder();
-        return $output;
+        
+        if ($customOrderBy = $qpart->getDataAddressProperty("SQL_ORDER_BY")) {
+            $phs = StringDataType::findPlaceholders($customOrderBy);
+            if (empty($phs)) {
+                // Fallback to older code in case the SQL_ORDER_BY has no placeholders
+                return $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getAliasDelim() . $customOrderBy . ' ' . $qpart->getOrder();
+            } else {
+                return StringDataType::replacePlaceholders($customOrderBy, [
+                    '~alias' => $select_from,
+                    '~order' => $qpart->getOrder()
+                ]);
+            }
+        } else {
+            $sort_by = $this->getShortAlias($qpart->getColumnKey());
+        }
+        
+        return ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $sort_by . ' ' . $qpart->getOrder();
     }
     
     /**
@@ -1929,11 +1955,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * the results of multiple calls to this method with different attributes can be concatennated into
      * a comple GROUP BY clause.
      *
-     * @param \exface\Core\CommonLogic\QueryBuilder\QueryPartSorter $qpart
+     * @param QueryPartSorter $qpart
      * @param string $select_from
      * @return string
      */
-    protected function buildSqlGroupBy(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $select_from = null)
+    protected function buildSqlGroupBy(QueryPart $qpart, $select_from = null)
     {
         $output = '';
         if ($this->checkForSubselect($this->buildSqlDataAddress($qpart->getAttribute())) === true) {
@@ -2171,7 +2197,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param string $attribute_alias
      * @param string $sql
      * @param string $comparator
-     * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilter
+     * @return QueryPartFilter
      */
     protected function addFilterWithCustomSql($attribute_alias, $sql, $comparator = EXF_COMPARATOR_IS)
     {
