@@ -11,25 +11,25 @@ To run PowerUI on an IIS server with SQL, configure the IIS server and install P
 
 Since the Web PI does not offer most recent versions of PHP, it is probably a good idea to install everything manually. 
 
-- Download one of the latest [PHP binaries](https://windows.php.net/download/) - pick the non-thread-safe (nts) version.
-- Unpack it into `C:\Program Files\PHP\bin`
-- Follow the guides above to register it as a FastCGI module in IIS
+1. Download one of the latest [PHP binaries](https://windows.php.net/download/) - pick the non-thread-safe (nts) version.
+2. Unpack it into `C:\Program Files\PHP\bin`
+3. Follow the guides above to register it as a FastCGI module in IIS
 
 ## Rewrite Module Installation
 
 For the workbench to work properly, the support for rewrite rules needs to be enabled on the IIS server.
 
-- [Download UrlRewrite module](https://www.iis.net/downloads/microsoft/url-rewrite) 
-- Run the installer. No additional configuration is required.
+1. [Download UrlRewrite module](https://www.iis.net/downloads/microsoft/url-rewrite) 
+2. Run the installer. No additional configuration is required.
 
 ## WinCache Extension Installation
 
 The WinCache Extension is definitely recommended. It accelerates PHP on IIS greatly (comparable to opcache on Apache-based servers).
 
-- [Download WinCache](https://sourceforge.net/projects/wincache/). Donwload the `nts` version if you have used the `nts` PHP binary above. Look in the `development` folder if you can't find your desired PHP version.
-- Unpack the files somewhere (e.g. `C:\Program Files\PHP\wincache`).
-- Copy `php_wincache.dll` to your PHP extensions-folder (e.g. `C:\Program Files\PHP\bin\ext`)
-- Add the extension to `php.ini` as shown below
+1. [Download WinCache](https://sourceforge.net/projects/wincache/). Donwload the `nts` version if you have used the `nts` PHP binary above. Look in the `development` folder if you can't find your desired PHP version.
+2. Unpack the files somewhere (e.g. `C:\Program Files\PHP\wincache`).
+3. Copy `php_wincache.dll` to your PHP extensions-folder (e.g. `C:\Program Files\PHP\bin\ext`)
+4. Add the extension to `php.ini` as shown below
 
 Alternatively, you can install via CMD or PowerShell: 
 
@@ -39,9 +39,9 @@ where `{WinCacheMsiPath}` is the path to the .msi file to install WinCache and `
 
 ## SQL Server extension
 
-- [Download sqlsrv extension](https://github.com/microsoft/msphpsql/releases) for your PHP version
-- Copy `php_sqlsrv_74_nts.dll` (or similar) to the `ext` folder of PHP. Use the `ts`/`nts` version according to your PHP binaries (see above)
-- Add the extension to `php.ini` as shown below
+1. [Download sqlsrv extension](https://github.com/microsoft/msphpsql/releases) for your PHP version
+2. Copy `php_sqlsrv_74_nts.dll` (or similar) to the `ext` folder of PHP. Use the `ts`/`nts` version according to your PHP binaries (see above)
+3. Add the extension to `php.ini` as shown below
 
 ## php.ini Settings
 
@@ -83,3 +83,16 @@ Now it is time to install the workbench via [Composer](Install_via_Composer.md) 
 ## Securing sesnsitive folders
 
 See [security docs](../Security/Securing_installation_folders.md) for a list of folders to restrict access to.
+
+## Add mime types to IIS configuration if required for facades
+
+Different web facades use different file types and extensions. When installing a facade, check if all required files are allowed to be downloaded from the IIS - if not, add them to the MIME type mapping of IIS:
+
+1. Open the IIS Manager
+2. Select your server
+3. Click on the `MIME Types` feature icon
+4. Click on the `Add...` action on the right and map the required extension to a MIME type
+
+For exampe, the `exface.UI5Facade` based on SAP UI5 uses `*.properties` files for translations. This extension is not part of the standard IIS MIME mapping, so it needs to be added with MIME type `text/plain`.
+
+To find out if MIME types are missing, look for `404`-errors in your browsers network debug tools (i.e. richt click > Inspect element).
