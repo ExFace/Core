@@ -51,8 +51,8 @@ class ReplacePlaceholders extends \exface\Core\CommonLogic\Model\Formula
                 $phValues[$ph] = $value;
             }
         }
-        $string = StringDataType::replacePlaceholders($string, $phValues);
-        return $string;
+        $result = StringDataType::replacePlaceholders($string, $phValues);
+        return $result;
     }
     
     /**

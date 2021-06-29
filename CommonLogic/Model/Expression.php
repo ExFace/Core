@@ -24,6 +24,7 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
+use Symfony\Component\ExpressionLanguage\Lexer;
 
 /**
  * 
@@ -292,11 +293,13 @@ class Expression implements ExpressionInterface
         if ($parenthesis_1 === false || $parenthesis_2 === false) {
             throw new FormulaError('Syntax error in the data function: "' . $expression . '"');
         }
+        //from symfony/ExpressionLanguage documentation:
+        //Control characters (e.g. \n) in expressions are replaced with whitespace.
+        //To avoid this, escape the sequence with a single backslash (e.g. \\n).
+        $expression = str_replace("\n", "\\n", $expression);
         
-        $func_name = substr($expression, 0, $parenthesis_1);
-        $params = substr($expression, $parenthesis_1 + 1, $parenthesis_2 - $parenthesis_1 - 1);
-        
-        return FormulaFactory::createFromString($this->exface, $func_name, $this->parseParams($params));
+        $formula = FormulaFactory::createFromString($this->exface, $expression);
+        return $formula;
     }
 
     
