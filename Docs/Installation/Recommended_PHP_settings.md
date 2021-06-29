@@ -22,4 +22,4 @@ The following setting are recommended in the `php.ini` file in your PHP director
 	- `log_errors = On`
 	- `error_log = <path_to_error_log_file>` - Use `syslog` to log to the windows event viewer or an absolute path to a log file. 
 	- `open_basedir = <path>` - Restrict where PHP processes can read and write on a file system
-4. Set the correct timezone in `date.Timezone`
+4. Set the correct timezone in `date.Timezone` - e.g. `date.timezone = Europe/Berlin`
