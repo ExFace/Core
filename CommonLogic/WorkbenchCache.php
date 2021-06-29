@@ -87,6 +87,10 @@ class WorkbenchCache implements WorkbenchCacheInterface
         // Clear main cache pool
         try {
             $ok = $this->mainPool->clear();
+            foreach ($this->pools as $pool)
+            {
+                $ok = $pool->clear();
+            }
         } catch (\Throwable $e) {
             $ok = false;
             $this->workbench->getLogger()->logException($e);
@@ -148,16 +152,18 @@ class WorkbenchCache implements WorkbenchCacheInterface
      * 
      * @param WorkbenchInterface $workbench
      * @param string $name
-     * @return CacheInterface
      */
-    public static function createDefaultPool(WorkbenchInterface $workbench, string $name = null): CacheInterface
+    public static function createDefaultPool(WorkbenchInterface $workbench, string $name = null, bool $psr16 = true)
     {
         if ($workbench->getConfig()->getOption('CACHE.ENABLED') === false) {
             $psr6Cache = new ArrayAdapter();
         } else {
             $psr6Cache = new PhpFilesAdapter($name ?? '_workbench', 0, $workbench->filemanager()->getPathToCacheFolder());
         }
-        return new Psr16Cache($psr6Cache);
+        if ($psr16) {
+            return new Psr16Cache($psr6Cache);
+        }
+        return $psr6Cache;
     }
 
     /**

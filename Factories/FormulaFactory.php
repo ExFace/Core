@@ -5,6 +5,9 @@ use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Selectors\FormulaSelector;
+use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
+use exface\Core\CommonLogic\Model\SymfonyTokenStream;
+use exface\Core\Exceptions\FormulaError;
 
 abstract class FormulaFactory extends AbstractSelectableComponentFactory
 {
@@ -31,10 +34,29 @@ abstract class FormulaFactory extends AbstractSelectableComponentFactory
      * @param array $arguments            
      * @return Formula
      */
-    public static function createFromString(WorkbenchInterface $workbench, $function_name, array $arguments = array())
+    public static function createFromString(WorkbenchInterface $workbench, string $expression)
     {
+        $tokenStream = new SymfonyTokenStream($expression);
+        $function_name = $tokenStream->getFormulaName();
+        if ($function_name === null) {
+            throw new FormulaError("Can not create formula for expression {$expression}. No formula name found.");
+        }
         $selector = new FormulaSelector($workbench, $function_name);
-        return static::create($selector, $arguments);
+        $formula = static::createFromSelector($selector);
+        $formula->setTokenStream($tokenStream);
+        return $formula;
+    }
+    
+    public static function createFromTokenStream(WorkbenchInterface $workbench, FormulaTokenStreamInterface $stream)
+    {
+        $function_name = $stream->getFormulaName();
+        if ($function_name === null) {
+            throw new FormulaError("Can not create formula for expression {$stream->getExpression()}. No formula name found.");
+        }
+        $selector = new FormulaSelector($workbench, $function_name);
+        $formula = static::createFromSelector($selector);
+        $formula->setTokenStream($stream);
+        return $formula;
     }
 }
 ?>
