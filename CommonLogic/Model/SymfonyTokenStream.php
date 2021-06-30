@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Model;
 
 use Symfony\Component\ExpressionLanguage\Lexer;
 use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 class SymfonyTokenStream implements FormulaTokenStreamInterface
 {
@@ -14,6 +15,8 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
     private $formName = null;
     
     private $nestedForms = null;
+    
+    private $formulas = null;
     
     private $arguments = null;
     
@@ -38,6 +41,35 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
         return $this->tokens;
     }
     
+    protected function getFormulas() : array
+    {
+        if ($this->formulas === null) {
+            $forms = [];
+            $delim = AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
+            $tokens = $this->getTokens();
+            $buffer = null;
+            for ($i = 0; $i < count($tokens); $i++) {
+                $token = $tokens[$i];
+                if ($token['name']) {
+                    if ($tokens[$i+1]['punctuation'] === $delim) {
+                        $buffer .= $token['name'] . $delim;
+                        continue;
+                    }
+                    if ($tokens[$i+1]['punctuation'] === '(') {
+                        if ($tokens[$i-1]['punctuation'] === $delim && $buffer) {
+                            $forms[] = $buffer . $token['name'];
+                        } else {
+                            $forms[] = $token['name'];
+                        }
+                        $buffer = null;
+                    }
+                }
+            }            
+            $this->formulas = $forms;
+        }
+        return $this->formulas;
+    }
+    
     /**
      * 
      * @return string|NULL
@@ -45,16 +77,7 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
     public function getFormulaName() : ?string
     {
         if ($this->formName === null) {
-            $tokens = $this->getTokens();
-            for ($i = 0; $i < count($tokens); $i++) {
-                $token = $tokens[$i];
-                if ($token['name']) {
-                    if ($tokens[$i+1]['punctuation'] === '(') {
-                        $this->formName = $token['name'];
-                        break;
-                    }
-                }
-            }
+            $this->formName = $this->getFormulas()[0];
         }
         return $this->formName;
     }
@@ -66,17 +89,8 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
     public function getNestedFormulas() : array
     {
         if ($this->nestedForms === null) {
-            $formName = $this->getFormulaName();
-            $tokens = $this->getTokens();
-            $nestedForms = [];
-            for ($i = 0; $i < count($tokens); $i++) {
-                $token = $tokens[$i];
-                if ($token['name'] && $token['name'] !== $formName) {
-                    if ($tokens[$i+1]['punctuation'] === '(') {
-                        $nestedForms[] = $token['name'];
-                    }
-                }
-            }
+            $nestedForms = $this->getFormulas();
+            array_shift($nestedForms); 
             $this->nestedForms = $nestedForms;
         }
         return $this->nestedForms;
@@ -94,8 +108,8 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
             for ($i = 0; $i < count($tokens); $i++) {
                 $token = $tokens[$i];
                 if ($token['name']) {
-                    if ($tokens[$i+1]['punctuation'] !== '(') {
-                        $arguments = $token['name'];
+                    if ($tokens[$i+1]['punctuation'] !== '(' && $tokens[$i+1]['punctuation'] !== '.') {
+                        $arguments[] = $token['name'];
                     }
                 }
             }
