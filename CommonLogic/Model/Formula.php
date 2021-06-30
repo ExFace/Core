@@ -9,12 +9,8 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\FormulaError;
-use exface\Core\Factories\FormulaFactory;
-use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
-use exface\Core\Exceptions\LogicException;
-use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
-use exface\Core\CommonLogic\Selectors\FormulaSelector;
+use exface\Core\Exceptions\RuntimeException;
 /**
  * Data functions are much like Excel functions.
  * They calculate
@@ -108,9 +104,6 @@ abstract class Formula implements FormulaInterface
                 throw new FormulaError('No expression given to evalute formula!');
             }
             if ($this->isStatic()) {
-                /*foreach ($this->arguments as $expr) {
-                    $args[] = $expr->evaluate();
-                }*/
                 $row = [];
                 
             } else {
@@ -122,28 +115,8 @@ abstract class Formula implements FormulaInterface
                 $this->setCurrentRowNumber($row_number);
                 $row = $data_sheet->getRow($row_number);
             }
-            $exface = $this->getWorkbench();
-            $cache = $exface->getCache()->createDefaultPool($exface, '_expressions', false);
-            $expressionLanguage = new ExpressionLanguage($cache);            
-            $expression = $this->getExpression();
-            $formula = $this;
-            $name = $this->getFormulaNameFromStream();
-            
-            //ExpressionLanguage does not support formulas with a namespace (e.g. 'exface.Core.AddDays()')
-            //Therefore we have to cut the namespace of a formula of and also substitute it in the expression
-            //This works but will cause strange behavior when two formulas with the same name but different namespace
-            //exist and are used in the same expression
-            $shortName = substr(strrchr($name, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER), 1) ?: $name;            
-            $expression = str_replace($name, $shortName, $expression);
-            $this->addFunctionToExpressionLanguage($expressionLanguage, $shortName, $formula);
-            foreach ($this->getNestedFormulas() as $funcName) {                
-                $shortFuncName = substr(strrchr($funcName, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER), 1) ?: $funcName;
-                $expression = str_replace($funcName, $shortFuncName, $expression);
-                $formula = FormulaFactory::createFromSelector(new FormulaSelector($exface, $funcName));
-                $formula->setTokenStream(new SymfonyTokenStream($funcName . '()'));
-                $this->addFunctionToExpressionLanguage($expressionLanguage, $shortFuncName, $formula);
-            }
-            return $expressionLanguage->evaluate($expression, $row);
+            $expressionLanguage = new SymfonyExpressionLanguage($this->getWorkbench());
+            return $expressionLanguage->evaluate($this, $row);
         } catch (\Throwable $e) {
             $errorText = 'Cannot evaluate formula `' . $this->__toString() . '`';
             if ($data_sheet === null) {
@@ -154,28 +127,6 @@ abstract class Formula implements FormulaInterface
             }
             throw new FormulaError($errorText . ' ' . $e->getMessage(), null, $e);
         }
-    }
-    
-    /**
-     * 
-     * @param ExpressionLanguage $expression
-     * @param string $funcName
-     * @param FormulaInterface $formula
-     * @return Formula
-     */
-    protected function addFunctionToExpressionLanguage(ExpressionLanguage $expression, string $funcName, FormulaInterface $formula) : Formula
-    {
-        $expression->register($funcName, function ($str) {}, function() use ($formula) {
-            //get all arguments given to the function
-            $args = func_get_args();
-            //cut of the first one as it is the array given to the evalute function call as second argument
-            array_shift($args);
-            return call_user_func_array([
-                $formula,
-                'run'
-            ], $args);
-        });
-        return $formula;
     }
 
     public function getRelationPath()
@@ -285,20 +236,8 @@ abstract class Formula implements FormulaInterface
      * @see \exface\Core\Interfaces\Formulas\FormulaInterface::isStatic()
      */
     public function isStatic() : bool
-    {
-        // A formula is static if it has no arguments or all arguments are static.
-        // In other words, it is static if it does not have non-static arguments.
-        /*foreach ($this->getArguments() as $expr) {
-            if (! $expr->isStatic()) {
-                return false;
-            }
-        }
-        
-        return true;*/
-        if (! empty($this->getRequiredAttributes())) {
-            return false;
-        }
-        return true;
+    {        
+        return empty($this->getRequiredAttributes()) ? true : false;
     }
     
     public function __toString()
@@ -310,13 +249,13 @@ abstract class Formula implements FormulaInterface
     /**
      * 
      * @param FormulaTokenStreamInterface $stream
-     * @throws LogicException
+     * @throws RuntimeException
      * @return Formula
      */
     public function setTokenStream(FormulaTokenStreamInterface $stream) : Formula
     {
         if ($this->tokenStream !== null) {
-            throw new LogicException('Can not set token stream. Token stream already exists for this formula.');
+            throw new RuntimeException('Can not set token stream. Token stream already exists for this formula.');
         }
         $this->tokenStream = $stream;
         return $this;
@@ -328,14 +267,15 @@ abstract class Formula implements FormulaInterface
     }
     
     /**
-     *
+     * 
+     * @throws RuntimeException
      * @return string
      */
-    protected function getFormulaNameFromStream() : string
+    public function getFormulaNameFromStream() : string
     {
         $name = $this->getTokenStream() ? $this->getTokenStream()->getFormulaName() : null;
         if ($name === null) {
-            throw new LogicException('Can not extract formula name from token stream. Either no token stream exists for this formula or expression includes no formula!');
+            throw new RuntimeException('Can not extract formula name from token stream. Either no token stream exists for this formula or expression includes no formula!');
         }
         return $name;
     }
@@ -343,7 +283,7 @@ abstract class Formula implements FormulaInterface
      * 
      * @return array
      */
-    protected function getNestedFormulas() : array
+    public function getNestedFormulas() : array
     {
         return $this->getTokenStream() ? $this->getTokenStream()->getNestedFormulas() : [];
     }
@@ -352,7 +292,7 @@ abstract class Formula implements FormulaInterface
      * 
      * @return string|NULL
      */
-    protected function getExpression() : ?string
+    public function getExpression() : ?string
     {
         return $this->getTokenStream() ? $this->getTokenStream()->getExpression() : [];
     }
