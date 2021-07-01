@@ -25,8 +25,6 @@ abstract class Formula implements FormulaInterface
 
     private $required_attributes = array();
 
-    private $arguments = array();
-
     private $data_sheet = null;
 
     private $relation_path = null;
@@ -52,6 +50,7 @@ abstract class Formula implements FormulaInterface
     {
         $this->exface = $selector->getWorkbench();
         $this->selector = $selector;
+        $this->tokenStream = $tokenStream;
     }
 
     /**
@@ -73,22 +72,6 @@ abstract class Formula implements FormulaInterface
     public function getSelector() : FormulaSelectorInterface
     {
         return $this->selector;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::init()
-     */
-    public function init(array $arguments)
-    {
-        // now find out, what each parameter is: a column reference, a string, a widget reference etc.
-        foreach ($arguments as $arg) {
-            $expr = $this->getWorkbench()->model()->parseExpression(trim($arg));
-            $this->arguments[] = $expr;
-            $this->required_attributes = array_merge($this->required_attributes, $expr->getRequiredAttributes());
-        }
     }
 
     /**
@@ -136,30 +119,27 @@ abstract class Formula implements FormulaInterface
 
     public function setRelationPath($relation_path)
     {
+        // FIXME
         // set new relation path
-        $this->relation_path = $relation_path;
+        /*$this->relation_path = $relation_path;
         if ($relation_path) {
             foreach ($this->arguments as $key => $a) {
                 $a->setRelationPath($relation_path);
                 $this->arguments[$key] = $a;
             }
-        }
+        }*/
         return $this;
-    }
-
-    public function getRequiredAttributes()
-    {
-        //return $this->required_attributes;
-        return $this->getTokenStream() ? $this->getTokenStream()->getArguments() : [];
     }
 
     /**
      * 
-     * @return ExpressionInterface[]
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::getRequiredAttributes()
      */
-    public function getArguments()
+    public function getRequiredAttributes() : array
     {
-        return $this->arguments;
+        //return $this->required_attributes;
+        return $this->getTokenStream() ? $this->getTokenStream()->getArguments() : [];
     }
 
     /**
@@ -198,7 +178,8 @@ abstract class Formula implements FormulaInterface
 
     public function mapAttribute($map_from, $map_to)
     {
-        foreach ($this->required_attributes as $id => $attr) {
+        //FIXME 
+        /*foreach ($this->required_attributes as $id => $attr) {
             if ($attr == $map_from) {
                 $this->required_attributes[$id] = $map_to;
             }
@@ -206,7 +187,7 @@ abstract class Formula implements FormulaInterface
         foreach ($this->arguments as $key => $a) {
             $a->mapAttribute($map_from, $map_to);
             $this->arguments[$key] = $a;
-        }
+        }*/
     }
 
     /**
@@ -248,19 +229,8 @@ abstract class Formula implements FormulaInterface
     
     /**
      * 
-     * @param FormulaTokenStreamInterface $stream
-     * @throws RuntimeException
-     * @return Formula
+     * @return FormulaTokenStreamInterface|NULL
      */
-    public function setTokenStream(FormulaTokenStreamInterface $stream) : Formula
-    {
-        if ($this->tokenStream !== null) {
-            throw new RuntimeException('Can not set token stream. Token stream already exists for this formula.');
-        }
-        $this->tokenStream = $stream;
-        return $this;
-    }
-    
     protected function getTokenStream() : ?FormulaTokenStreamInterface
     {
         return $this->tokenStream;
@@ -268,10 +238,10 @@ abstract class Formula implements FormulaInterface
     
     /**
      * 
-     * @throws RuntimeException
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::getFormulaName()
      */
-    public function getFormulaNameFromStream() : string
+    public function getFormulaName() : string
     {
         $name = $this->getTokenStream() ? $this->getTokenStream()->getFormulaName() : null;
         if ($name === null) {
@@ -279,9 +249,11 @@ abstract class Formula implements FormulaInterface
         }
         return $name;
     }
+    
     /**
      * 
-     * @return array
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::getNestedFormulas()
      */
     public function getNestedFormulas() : array
     {
@@ -290,11 +262,12 @@ abstract class Formula implements FormulaInterface
     
     /**
      * 
-     * @return string|NULL
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::getExpression()
      */
-    public function getExpression() : ?string
+    public function getExpression() : string
     {
-        return $this->getTokenStream() ? $this->getTokenStream()->getExpression() : [];
+        return $this->getTokenStream() ? $this->getTokenStream()->getExpression() : '';
     }
 }
 ?>

@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Factories\FormulaFactory;
 use exface\Core\CommonLogic\Selectors\FormulaSelector;
 use exface\Core\Exceptions\OutOfBoundsException;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, WorkbenchDependantInterface
 {
@@ -33,7 +34,7 @@ class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, W
         }
         $expressionLanguage = new ExpressionLanguage($cache);
         $expression = $formula->getExpression();
-        $name = $formula->getFormulaNameFromStream();
+        $name = $formula->getFormulaName();
         
         //ExpressionLanguage does not support formulas with a namespace delimiter(e.g. 'exface.Core.AddDays()')
         //Therefore we have to replace the namespace delimiter with thesupported character '_'
@@ -43,11 +44,15 @@ class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, W
         foreach ($formula->getNestedFormulas() as $funcName) {
             $fixedName = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, '_', $funcName);
             $expression = str_replace($funcName, $fixedName, $expression);
-            $nestedFormula = FormulaFactory::createFromSelector(new FormulaSelector($exface, $funcName));
-            $nestedFormula->setTokenStream(new SymfonyTokenStream($funcName . '()'));
+            $nestedFormula = FormulaFactory::createFromTokenStream($exface, new EmptyTokenStream($funcName));
             $this->addFunctionToExpressionLanguage($expressionLanguage, $fixedName, $nestedFormula);
         }
-        return $expressionLanguage->evaluate($expression, $row);
+        foreach ($formula->getRequiredAttributes() as $attrAlias) {
+            $columnName = DataColumn::sanitizeColumnName($attrAlias);
+            $expression = str_replace($attrAlias, $columnName, $expression);
+        }
+        $value = $expressionLanguage->evaluate($expression, $row);
+        return $value;
     }
     
     /**
