@@ -17,6 +17,8 @@ use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\BinaryDataType;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * Lists files and folders using Symfony Finder Component.
@@ -43,13 +45,6 @@ use exface\Core\DataTypes\FilePathDataType;
  * filters, similary to URL builders in the UrlDataConnector. For example,
  * `myfolder/[#FOLDER_NAME#]/*` will mean, that a filter for the folder name
  * is required and  
- * 
- * #### Data address options
- * 
- * - `finder_depth` - Restrict the depth of traversing folders - see [depth()](https://symfony.com/doc/current/components/finder.html#directory-depth)
- * method of the Symfony Finder Component. By default the depth is unlimited.
- * Set `finder_depth` to `0` to ignore subfolders completely, `1` will only allow
- * immediate subfolders, etc. Complex expressions like `> 2, < 5` are possible).
  * 
  * ### Attributes 
  * 
@@ -83,7 +78,29 @@ use exface\Core\DataTypes\FilePathDataType;
  */
 class FileFinderBuilder extends AbstractQueryBuilder
 {
-    const PROP_FINDER_DEPTH = 'finder_depth';
+    /**
+     * Restrict the depth of traversing folders.
+     * 
+     * See [depth()](https://symfony.com/doc/current/components/finder.html#directory-depth)
+     * method of the Symfony Finder Component. By default the depth is unlimited.
+     * Set `finder_depth` to `0` to ignore subfolders completely, `1` will only allow
+     * immediate subfolders, etc. Complex expressions like `> 2, < 5` are possible).
+     *
+     * @uxon-property finder_depth
+     * @uxon-target object
+     * @uxon-type boolean
+     */
+    const DAP_FINDER_DEPTH = 'finder_depth';
+    
+    /**
+     * Set to TRUE to delete an empty folder after the last file in it was deleted by this query builder.
+     *
+     * @uxon-property delete_empty_folders
+     * @uxon-target object
+     * @uxon-type boolean
+     * @uxon-default false
+     */
+    const DAP_DELETE_EMPTY_FOLDERS = 'delete_empty_folders';
     
     /**
      *
@@ -114,7 +131,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
             }
         }
         
-        $depth = $this->getMainObject()->getDataAddressProperty(self::PROP_FINDER_DEPTH);
+        $depth = $this->getMainObject()->getDataAddressProperty(self::DAP_FINDER_DEPTH);
         if (strpos($depth, ',') !== false) {
             $depth = explode(',', $depth);
         }
@@ -264,9 +281,70 @@ class FileFinderBuilder extends AbstractQueryBuilder
      */
     public function create(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        $fileArray = $this->getValue('PATHNAME_ABSOLUTE')->getValues();
-        $contentArray = $this->getValue('CONTENTS')->getValues();
+        $fileArray = $this->buildPathsFromValues();
+        foreach ($fileArray as $path) {
+            $folder = FilePathDataType::findFolderPath($path);
+            if (! is_dir($folder)) {
+                Filemanager::pathConstruct($folder);
+            }
+        }
+        $contentArray = $this->buildFilesContentsFromValues();
         return new DataQueryResultData([], $this->write($fileArray, $contentArray));
+    }
+    
+    /**
+     * 
+     * @return string[]
+     */
+    protected function buildFilesContentsFromValues() : array
+    {
+        $array = [];
+        foreach ($this->getValues() as $qpart) {
+            if ($qpart->getDataAddress() === 'contents') {
+                $array = $qpart->getValues();
+                switch (true) {
+                    case $qpart->getDataType() instanceof BinaryDataType && $qpart->getDataType()->getEncoding() === BinaryDataType::ENCODING_BASE64:
+                        array_walk($array, 'base64_decode');
+                        break;
+                    default:
+                        foreach ($array as $i => $val) {
+                            if (StringDataType::startsWith($val, 'data:', false) && stripos($val, 'base64,') !== false) {
+                                $array[$i] = base64_decode(StringDataType::substringAfter($val, 'base64,'));
+                            }
+                        }
+                }
+            }
+        }
+        return $array;
+    }
+    
+    /**
+     * 
+     * @return string[]
+     */
+    protected function buildPathsFromValues() : array
+    {
+        
+        switch (true) {
+            case $qpart = $this->getValue('PATHNAME_ABSOLUTE'):
+                return $qpart->getValues();
+            case $qpart = $this->getValue('FILENAME'):
+                $paths = [];
+                $addr = FilePathDataType::normalize($this->getMainObject()->getDataAddress());
+                $addr = StringDataType::substringBefore($addr, '/', $addr, false, true);
+                $addrPhs = StringDataType::findPlaceholders($addr);
+                
+                foreach ($qpart->getValues() as $rowIdx => $filename) {
+                    $phVals = [];
+                    foreach ($addrPhs as $ph) {
+                        if ($phQpart = $this->getValue($ph)) {
+                            $phVals[$ph] = $phQpart->getValues()[$rowIdx];
+                        }
+                    }
+                    $paths[] = StringDataType::replacePlaceholders($addr, $phVals) . '/' . $filename;
+                }
+                return $paths;
+        }
     }
 
     /**
@@ -356,10 +434,16 @@ class FileFinderBuilder extends AbstractQueryBuilder
     {
         $deletedFileNr = 0;
         $query = $this->buildQuery();
+        $deleteEmptyFolder = BooleanDataType::cast($this->getMainObject()->getDataAddressProperty(self::DAP_DELETE_EMPTY_FOLDERS));
         if ($files = $data_connection->query($query)->getFinder()) {
+            /* @var \Symfony\Component\Finder\SplFileInfo $file */
             foreach ($files as $file) {
+                $folder = $file->getPath();
                 unlink($file);
                 $deletedFileNr ++;
+                if ($deleteEmptyFolder === true && Filemanager::isDirEmpty($folder)) {
+                    Filemanager::deleteDir($folder);
+                }
             }
         }
         
@@ -396,35 +480,50 @@ class FileFinderBuilder extends AbstractQueryBuilder
         
         foreach ($this->getAttributes() as $qpart) {
             if ($field = strtolower($qpart->getAttribute()->getDataAddress())) {
-                if (array_key_exists($field, $file_data)) {
-                    $value = $file_data[$field];
-                } elseif (substr($field, 0, 4) === 'line') {
-                    $line_nr = intval(trim(substr($field, 4), '()'));
-                    if ($line_nr === 1) {
-                        $value = $file->openFile()->fgets();
-                    } else {
-                        $fileObject = $file->openFile();
-                        $fileObject->seek(($line_nr-1));
-                        $value = $fileObject->current();
-                    }
-                } elseif (substr($field, 0, 7) === 'subpath') {
-                    list($start, $length) = explode(',', trim(substr($field, 7), '()'));
-                    $start = trim($start);
-                    $length = trim($length);
-                    if (! is_numeric($start) || ($length !== null && ! is_numeric($length))) {
-                        throw new QueryBuilderException('Cannot query "' . $field . '" on file path "' . $file->getPathname() . '": invalid start or length condition!');
-                    }
-                    $pathParts = explode('/', $this->getPathRelative($file->getPath(), $query));
-                    $subParts = array_slice($pathParts, $start, $length);
-                    $value = implode('/', $subParts);
-                } else {
-                    $method_name = 'get' . ucfirst($field);
-                    if (method_exists($file, $method_name)) {
-                        $value = call_user_func(array(
-                            $file,
-                            $method_name
-                        ));
-                    }
+                switch (true) {
+                    case array_key_exists($field, $file_data):
+                        $value = $file_data[$field];
+                        break;
+                    case substr($field, 0, 4) === 'line':
+                        $line_nr = intval(trim(substr($field, 4), '()'));
+                        if ($line_nr === 1) {
+                            $value = $file->openFile()->fgets();
+                        } else {
+                            $fileObject = $file->openFile();
+                            $fileObject->seek(($line_nr-1));
+                            $value = $fileObject->current();
+                        }
+                        break;
+                    case substr($field, 0, 7) === 'subpath':
+                        list($start, $length) = explode(',', trim(substr($field, 7), '()'));
+                        $start = trim($start);
+                        $length = trim($length);
+                        if (! is_numeric($start) || ($length !== null && ! is_numeric($length))) {
+                            throw new QueryBuilderException('Cannot query "' . $field . '" on file path "' . $file->getPathname() . '": invalid start or length condition!');
+                        }
+                        $pathParts = explode('/', $this->getPathRelative($file->getPath(), $query));
+                        $subParts = array_slice($pathParts, $start, $length);
+                        $value = implode('/', $subParts);
+                        break;
+                    /*case 'contents':
+                        $value = $file->getContents();
+                        if ($qpart->getDataType() instanceof BinaryDataType) {
+                            switch ($qpart->getDataType()->getEncoding()) {
+                                case BinaryDataType::ENCODING_BASE64:
+                                    $value = base64_encode($value);
+                                    break;
+                            }
+                        }
+                        break;*/
+                    default: 
+                        $method_name = 'get' . ucfirst($field);
+                        if (method_exists($file, $method_name)) {
+                            $value = call_user_func(array(
+                                $file,
+                                $method_name
+                            ));
+                        }
+                        break;
                 }
                 $row[$qpart->getColumnKey()] = $value;
             }
