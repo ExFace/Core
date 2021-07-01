@@ -112,6 +112,12 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
         $formatQuoted = json_encode($this->getFormat());
         return "exfTools.date.format({$jsDateObject}, {$formatQuoted})";
     }
+    
+    public function buildJsFormatDateObject(string $jsDateObject, string $ICUFormat) : string
+    {
+        $formatJs = json_encode($ICUFormat);
+        return "exfTools.date.format({$jsDateObject}, $formatJs)";
+    }
 
     /**
      * Returns inline javascript code to turn the given String to a Date Object.
