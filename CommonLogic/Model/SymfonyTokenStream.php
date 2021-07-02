@@ -6,6 +6,13 @@ use Symfony\Component\ExpressionLanguage\Lexer;
 use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
+/**
+ * Wrapper class to extract formula name, nested formulas and attributes
+ * from a given expression using the Symfony/ExpressionLanguage/Lexer class
+ * 
+ * @author ralf.mulansky
+ *
+ */
 class SymfonyTokenStream implements FormulaTokenStreamInterface
 {
     private $tokenStream = null;
@@ -18,8 +25,12 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
     
     private $formulas = null;
     
-    private $arguments = null;
+    private $attributes = null;
     
+    /**
+     * 
+     * @param string $expression
+     */
     public function __construct(string $expression)
     {
         $lexer = new Lexer();
@@ -27,6 +38,10 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
         $this->tokenStream = $tokenStream;
     }
     
+    /**
+     * 
+     * @return array
+     */
     protected function getTokens() : array
     {
         if ($this->tokens === null) {
@@ -41,6 +56,10 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
         return $this->tokens;
     }
     
+    /**
+     * 
+     * @return array
+     */
     protected function getFormulas() : array
     {
         if ($this->formulas === null) {
@@ -74,7 +93,8 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
     
     /**
      * 
-     * @return string|NULL
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::getFormulaName()
      */
     public function getFormulaName() : ?string
     {
@@ -86,7 +106,8 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
     
     /**
      * 
-     * @return array
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::getNestedFormulas()
      */
     public function getNestedFormulas() : array
     {
@@ -100,13 +121,14 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
     
     /**
      * 
-     * @return array
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::getAttributes()
      */
-    public function getArguments() : array
+    public function getAttributes() : array
     {
-        if ($this->arguments === null) {
+        if ($this->attributes === null) {
             $tokens = $this->getTokens();
-            $arguments = [];
+            $attributes = [];
             $buffer = null;
             for ($i = 0; $i < count($tokens); $i++) {
                 $token = $tokens[$i];
@@ -115,21 +137,22 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
                     if ($tokens[$i+1]['punctuation'] === ':') {
                         $buffer .= $token['name'] . ':';
                     } elseif ($tokens[$i+1]['punctuation'] !== '(' && $tokens[$i+1]['punctuation'] !== '.') {
-                        $arguments[] = $buffer . $token['name'];
+                        $attributes[] = $buffer . $token['name'];
                         $buffer = null;
                     } else {
                         $buffer = null;
                     }
                 }
             }
-            $this->arguments = $arguments;
+            $this->attributes = $attributes;
         }
-        return $this->arguments;
+        return $this->attributes;
     }
     
     /**
      * 
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::getExpression()
      */
     public function getExpression() : string
     {

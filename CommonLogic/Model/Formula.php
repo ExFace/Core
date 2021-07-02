@@ -13,8 +13,7 @@ use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
 use exface\Core\Exceptions\RuntimeException;
 /**
  * Data functions are much like Excel functions.
- * They calculate
- * the value of a cell in a data_sheet based on other data from
+ * They calculate the value of a cell in a data_sheet based on other data from
  * this sheet and user defined arguments.
  *
  * @author Andrej Kabachnik
@@ -91,7 +90,7 @@ abstract class Formula implements FormulaInterface
                 
             } else {
                 if (is_null($data_sheet) || is_null($row_number)) {
-                    throw new InvalidArgumentException('In a non-static formula $data_sheet, $column_name and $row_number are mandatory arguments.');
+                    throw new InvalidArgumentException('In a non-static formula $data_sheet and $row_number are mandatory arguments.');
                 }
                 
                 $this->setDataSheet($data_sheet);
@@ -139,7 +138,7 @@ abstract class Formula implements FormulaInterface
     public function getRequiredAttributes() : array
     {
         //return $this->required_attributes;
-        return $this->getTokenStream() ? $this->getTokenStream()->getArguments() : [];
+        return $this->getTokenStream() ? $this->getTokenStream()->getAttributes() : [];
     }
 
     /**
