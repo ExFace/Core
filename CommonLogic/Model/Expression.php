@@ -297,83 +297,10 @@ class Expression implements ExpressionInterface
         //Control characters (e.g. \n) in expressions are replaced with whitespace.
         //To avoid this, escape the sequence with a single backslash (e.g. \\n).
         $expression = str_replace("\n", "\\n", $expression);
+        $expression = str_replace("\t", "\\t", $expression);
         
         $formula = FormulaFactory::createFromString($this->exface, $expression);
         return $formula;
-    }
-
-    
-    protected function parseParams($str)
-    {
-        $buffer = '';
-        $stack = array();
-        $depth = 0;
-        $len = strlen($str);
-        $escaped1 = false;
-        $escaped2 = false;
-        for ($i = 0; $i < $len; $i ++) {
-            $char = $str[$i];
-            if (($escaped1 && $char !== "'") || ($escaped2 && $char !== '"')) {
-                $buffer .= $char;
-                continue;
-            }
-            switch ($char) {
-                case "'":
-                    if ($escaped1 === false) {                    
-                        $escaped1 = true;
-                        break;
-                    } else {
-                        if ($str[$i-1] !== '\\') {
-                            $escaped1 = false;
-                        }                        
-                        break;
-                    }
-                case '"':
-                    if ($escaped2 === false) {
-                        $escaped2 = true;
-                        break;
-                    } else {
-                        if ($str[$i-1] !== '\\') {
-                            $escaped2 = false;
-                        }
-                        break;
-                    }
-                case '(':
-                    $depth ++;
-                    break;
-                case ',':
-                    if (! $depth) {
-                        if ($buffer !== '') {
-                            $stack[] = $buffer;
-                            $buffer = '';
-                        }
-                        continue 2;
-                    }
-                    break;
-                case ' ':
-                    if (! $depth) {
-                        // Not sure, what the purpose of this continue is, but it removes whitespaces from formual arguments in the first level
-                        // causing many problems. Commented it out for now to see if that helps.
-                        // continue 2;
-                    }
-                    break;
-                case ')':
-                    if ($depth) {
-                        $depth --;
-                    } else {
-                        $stack[] = $buffer . $char;
-                        $buffer = '';
-                        continue 2;
-                    }
-                    break;
-            }
-            $buffer .= $char;
-        }
-        if ($buffer !== '') {
-            $stack[] = $buffer;
-        }
-        
-        return $stack;
     }
 
     /**
