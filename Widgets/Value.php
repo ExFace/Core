@@ -28,21 +28,21 @@ use exface\Core\CommonLogic\UxonObject;
 
 /**
  * The Value widget simply shows a raw (unformatted) value.
- * 
+ *
  * The value can be set directly via "value" property (formulas and widget links are possible too!)
  * or fetched from prefill data referenced by the "attribute_alias" property.
- * 
+ *
  * The Value widget will just show the raw value, optionally with a tooltip explaining it (depending
  * on the tempalte used). For formatted values (e.g. a Date in the correct locale format) use the
  * Display widget or it's derivatives. Display widgets will typically also include a title.
- * 
+ *
  * To allow the user to edit the value, use Input widgets.
- * 
+ *
  * @see Display
  * @see Input
  *
  * @author Andrej Kabachnik
- *        
+ *
  */
 class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, iShowDataColumn, iSupportAggregators
 {
@@ -51,11 +51,11 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     use PrefillValueTrait;
     
     private $attribute_alias = null;
-
+    
     private $data_type = null;
-
+    
     private $aggregate_function = null;
-
+    
     private $empty_text = null;
     
     private $data_column_name = null;
@@ -72,13 +72,13 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     {
         return $this->attribute_alias;
     }
-
+    
     /**
      * Makes the widget show the value of the attribute specified by this alias relative to the widget's meta object.
-     * 
+     *
      * @uxon-property attribute_alias
      * @uxon-type metamodel:attribute
-     * 
+     *
      * @param string $value
      * @return \exface\Core\Widgets\Value
      */
@@ -88,7 +88,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         $this->data_type = null;
         return $this;
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -108,18 +108,22 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
          *      var_dump($data_column->getAttributeAlias());
          *  }
          * } else
-         */
-        
-        if ($this->isBoundToDataColumn() || $this->isBoundToAttribute()) {
-            $prefillExpr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getAttributeAlias(), $this->getDataColumnName());
-            if ($prefillExpr !== null && ! $data_sheet->getColumns()->getByExpression($prefillExpr)) {
-                $data_sheet->getColumns()->addFromExpression($prefillExpr);
-            }
-        }
-        
-        return $data_sheet;
+         */ 
+         if ($this->getValueExpression() && $this->getValueExpression()->isFormula()) {
+             $prefillExpr = $this->getValueExpression();
+             if ($prefillExpr !== null && ! $data_sheet->getColumns()->getByExpression($prefillExpr)) {
+                 $data_sheet->getColumns()->addFromExpression($prefillExpr);
+             }
+         } elseif ($this->isBoundToDataColumn() || $this->isBoundToAttribute()) {
+             $prefillExpr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getAttributeAlias(), $this->getDataColumnName());
+             if ($prefillExpr !== null && ! $data_sheet->getColumns()->getByExpression($prefillExpr)) {
+                 $data_sheet->getColumns()->addFromExpression($prefillExpr);
+             }
+         }
+         
+         return $data_sheet;
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -134,11 +138,11 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         }
         return $this->prepareDataSheetToRead($data_sheet);
     }
-
+    
     /**
      * A text widget is prefillable if it does not have a value or it's value
      * is a reference (live reference formula).
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::isPrefillable()
      */
@@ -147,6 +151,9 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         if (! parent::isPrefillable()) {
             return false;
         }
+        if ($this->getValueExpression() && $this->getValueExpression()->isFormula()) {
+            return true;
+        }
         if ($this->hasValue() === false) {
             return true;
         } else {
@@ -154,9 +161,6 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
             switch (true) {
                 case $expr->isReference():
                     return true;
-                //IDEA: Expressions from non static formulas should also lead to a prefill. Right now that is not working.
-                /*case $expr->isFormula() && ! $expr->isStatic():
-                    return true;*/
             }
         }
         return false;
@@ -167,9 +171,9 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     {
         return $this->hasValue() && $this->getValueExpression()->isReference();
     }
-
+    
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::doPrefill()
      */
@@ -185,25 +189,27 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         $prefill_columns = $this->prepareDataSheetToPrefill(DataSheetFactory::createFromObject($data_sheet->getMetaObject()))->getColumns();
         if (! $prefill_columns->isEmpty() && $col = $data_sheet->getColumns()->getByExpression($prefill_columns->getFirst()->getExpressionObj())) {
             if (count($col->getValues(false)) > 1 && $this->getAggregator()) {
-                // TODO #OnPrefillChangeProperty
                 $valuePointer = DataPointerFactory::createFromColumn($col);
                 $value = $col->aggregate($this->getAggregator());
             } else {
                 $valuePointer = DataPointerFactory::createFromColumn($col, 0);
                 $value = $valuePointer->getValue();
             }
-            // Ignore empty values because if value is a live-references as the ref would get overwritten 
+            // Ignore empty values because if value is a live-references as the ref would get overwritten
             // even without a meaningfull prefill value
-            if ($this->isBoundByReference() === false || ($value !== null && $value != '')) {
+            if ($this->getValueExpression() && $this->getValueExpression()->isFormula()) {
+                $this->setValue($value, false);
+                $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $valuePointer));
+            } elseif ($this->isBoundByReference() === false || ($value !== null && $value != '')) {
                 $this->setValue($value, false);
                 $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $valuePointer));
             }
         }
         return;
     }
-
+    
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iSupportAggregators::getAggregator()
      */
@@ -221,13 +227,13 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     {
         return $this->getAggregator() !== null;
     }
-
+    
     /**
      * How to aggregate values if the widget receives multiple
-     * 
+     *
      * @uxon-property aggregator
      * @uxon-type metamodel:aggregator
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iSupportAggregators::setAggregator()
      */
     public function setAggregator($aggregator_or_string)
@@ -250,9 +256,9 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     {
         $alias = $this->getAttributeAlias();
         return $alias !== null
-            && $alias !== '';
+        && $alias !== '';
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -278,7 +284,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iShowDataColumn::isBoundToDataColumn()
      */
@@ -288,8 +294,8 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     }
     
     /**
-     * Returns the data type of the widget. 
-     * 
+     * Returns the data type of the widget.
+     *
      * The data type can either be set explicitly by UXON, or is derived from the shown meta attribute.
      * If there is neither an attribute bound to the column, nor an explicit data_type, the base data
      * type is returned.
@@ -314,18 +320,18 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                         $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
                         break;
                 }
-            } 
+            }
         }
         return $this->data_type;
     }
     
     /**
-     * Changes the data type of the value to one of the 
+     * Changes the data type of the value to one of the
      *
      * @uxon-property value_data_type
      * @uxon-type \exface\Core\CommonLogic\DataTypes\AbstractDataType|metamodel:datatype
      * @uxon-template {"alias": ""}
-     * 
+     *
      * @param UxonObject|DataTypeInterface|string $data_type_or_string
      * @throws WidgetConfigurationError
      * @return \exface\Core\Widgets\Value
@@ -347,7 +353,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         }
         return $this;
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -370,7 +376,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueWithDefaults()
      */
@@ -392,7 +398,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::getEmptyText()
      */
@@ -423,7 +429,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iShowDataColumn::getDataColumnName()
      */
@@ -444,22 +450,22 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     
     /**
      * Set the name of the value data column explicitly - only needed for non-attribute widgets.
-     * 
+     *
      * Internally all data is stored in excel-like sheets, where every column has a unique name.
-     * These data sheets are passed around between widgets, actions, data sources, etc. 
-     * 
+     * These data sheets are passed around between widgets, actions, data sources, etc.
+     *
      * If a data sheet represents a meta object, it's columns are attributes. Column names are
      * simply attribute aliases in most cases: this is why specifying `attribute_alias` is mostly
      * enough for a value-widget.
-     * 
+     *
      * However, there are also cases, when the desired value does not represent an attribute: for
      * example, if you need an input for some action-parameter or a display for a calculated value.
      * If that value still needs to be handled by the server, a `data_column_name` must be set
      * explicitly, since there is no `attribute_alias`.
-     * 
+     *
      * @uxon-property data_column_name
      * @uxon-type string
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iShowDataColumn::setDataColumnName()
      */
     public function setDataColumnName($value)
@@ -469,7 +475,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::hasValue()
      */
@@ -480,17 +486,17 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     
     /**
      * Returns TRUE if the widget represents a cell in a data widget.
-     * 
+     *
      * This way, in-table editors and display widgets can be easily detected.
-     * 
+     *
      * @see Data::setCellWidget()
-     * 
+     *
      * @return bool
      */
     public function isInTable() : bool
     {
         return $this->getParent() instanceof DataColumn;
-    } 
+    }
     
     /**
      * Explicitly sets the value of the widget.
@@ -511,24 +517,24 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
             $this->value = $expressionOrString;
         } else {
             // TODO #expression-syntax is still not 100% stable.
-            // 
-            // 1) On the one hand, passing a string value should obviously result in the widget showing this 
-            // exact string as value - no matter if it included quotes or not. 
-            // 2) On the other hand, a non-quoted string would result in an Expression of UNKNOWN type, which 
-            // is not static, thus widgets would not show anything. 
+            //
+            // 1) On the one hand, passing a string value should obviously result in the widget showing this
+            // exact string as value - no matter if it included quotes or not.
+            // 2) On the other hand, a non-quoted string would result in an Expression of UNKNOWN type, which
+            // is not static, thus widgets would not show anything.
             // 3) Yet another source of values are doPrefill() calls in widgets, that, again, use non-quoted
-            // static values. 
+            // static values.
             // 4) Finally, if the user sets the value in UXON, the general expression syntax suggests to use
             // quotes for strings, but these would show up in the UI, so most users omit the quotes.
-            // 
+            //
             // The current solution includes to control-flags: $parseStringAsExpression here and $treatUnknownAsString
             // in the constructor of the Expression:
-            // - When the value is set from UXON $parseStringAsExpression=true, but $treatUnknownAsString=false 
-            // which leads to the possibility to use formulas and links, but unqoted strings are treated 
+            // - When the value is set from UXON $parseStringAsExpression=true, but $treatUnknownAsString=false
+            // which leads to the possibility to use formulas and links, but unqoted strings are treated
             // as strings, not unknown expressions.
             // - When values are set in doPrefill(), $parseStringAsExpression=false forces the expression to
             // be number or string and turns off links and formulas (and unknown expressions) completely.
-            // 
+            //
             // An issue may arise if a widget with a value is converted to UXON and back - in this case, it
             // seams, that values starting with `=` will get treated as formulas regardless of whether it
             // was a static string previously or not. A
@@ -555,17 +561,15 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValue()
      */
     public function getValue()
     {
         if ($expr = $this->getValueExpression()) {
-            if ($expr->isStatic()) {                
+            if ($expr->isStatic()) {
                 return $expr->evaluate();
-            } elseif ($expr->isFormula() && $this->isPrefilled()) {
-                return $expr->evaluate($this->getPrefillData(), 0);
             } else {
                 return $expr->toString();
             }
@@ -574,7 +578,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueExpression()
      */
@@ -584,7 +588,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueWidgetLink()
      */
