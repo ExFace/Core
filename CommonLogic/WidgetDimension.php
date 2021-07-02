@@ -5,7 +5,8 @@ use exface\Core\Interfaces\WorkbenchInterface;
 
 class WidgetDimension
 {
-
+    const MAX = 'max';
+    
     private $exface;
 
     private $value = NULL;
@@ -76,7 +77,7 @@ class WidgetDimension
      */
     public function isRelative()
     {
-        if (! $this->isUndefined() && (is_numeric($this->getValue()) || $this->getValue() == 'max'))
+        if (! $this->isUndefined() && (is_numeric($this->getValue()) || $this->isMax()))
             return true;
         else
             return false;
@@ -90,7 +91,7 @@ class WidgetDimension
      */
     public function isMax()
     {
-        if (! $this->isUndefined() && (strcasecmp($this->getValue(), 'max') == 0)) {
+        if (! $this->isUndefined() && (strcasecmp($this->getValue(), self::MAX) == 0)) {
             return true;
         } else {
             return false;

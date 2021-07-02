@@ -214,6 +214,48 @@ class BinaryDataType extends StringDataType
     }
     
     /**
+     * Converts a given Base64 string to a data URI with the provided mime type
+     * 
+     * @param string $base64
+     * @param string $mimeType
+     * @return string
+     */
+    public static function convertBase64ToDataUri(string $base64, string $mimeType) : string
+    {
+        return 'data:' . $mimeType . ';base64,' . $base64;
+    }
+    
+    /**
+     * Extracts the Base64-encoded data from a data-URI
+     * 
+     * @param string $dataURL
+     * @return string
+     */
+    public static function convertDataUriToBase64(string $dataURL) : string
+    {
+        list(, $data) = explode(';', $dataURL, 2);
+        list($enc, $data)      = explode(',', $data, 2);
+        switch (strtolower($enc)) {
+            case 'base64': return $data;
+            default:
+                throw new DataTypeCastingError('Invalid encoding "' . $enc . "' found in data URI!");
+        }
+    }
+    
+    /**
+     * Extracts the mime-type from a data-URI
+     * 
+     * @param string $dataURL
+     * @return string
+     */
+    public static function convertDataUriToMimeType(string $dataURL) : string
+    {
+        $tmp = explode(';', $dataURL, 1);
+        list(, $mime) = explode(':', $tmp);
+        return $mime;
+    }
+    
+    /**
      * Converts the given data from the current encoding to Base64.
      * 
      * @param string|null $value
@@ -279,5 +321,29 @@ class BinaryDataType extends StringDataType
             default:
                 throw new RuntimeException('Cannot convert binary data in ' . $this->getEncoding() . ' to a binary string!');
         }
+    }
+    
+    /**
+     * Converts the given data from the current encoding to a data URI.
+     * 
+     * @param string $mimeType
+     * @param string $value
+     * @throws RuntimeException
+     * @return string|NULL
+     */
+    public function convertToDataUri(string $mimeType, string $value = null) : ?string
+    {
+        $value = $value ?? $this->getValue();
+        if ($value === null) {
+            return $value;
+        }
+        switch ($this->getEncoding()) {
+            case self::ENCODING_BINARY: $b64 = self::convertBinaryToBase64($value);
+            case self::ENCODING_BASE64: $b64 = $value;
+            case self::ENCODING_HEX: $b64 = self::convertHexToBase64($value);
+            default:
+                throw new RuntimeException('Cannot convert binary data in ' . $this->getEncoding() . ' to a data URI!');
+        }
+        return self::convertBase64ToDataUri($b64, $mimeType);
     }
 }

@@ -6,6 +6,8 @@ use exface\Core\Widgets\Traits\iCanUseProxyFacadeTrait;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\ImageUrlDataType;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\Parts\Uploader;
+use exface\Core\CommonLogic\WidgetDimension;
 
 /**
  * Shows a scrollable gallery of images as a horizontal or vertical strip.
@@ -106,7 +108,15 @@ class ImageGallery extends Data implements iCanUseProxyFacade
     
     private $image_title_attribute_alias = null;
     
-    private $orientation = null;
+    private $orientation = self::ORIENTATION_HORIZONTAL;
+    
+    private $uploader = null;
+    
+    private $uploaderUxon = null;
+    
+    private $uploadEnabled = false;
+    
+    private $zoom = false;
     
     protected function init()
     {
@@ -249,5 +259,121 @@ class ImageGallery extends Data implements iCanUseProxyFacade
         
         $this->orientation = $value;
         return $this;
+    }
+    
+    public function isUploadEnabled() : bool
+    {
+        return $this->uploadEnabled;
+    }
+    
+    /**
+     * Enable or disable uploading
+     * 
+     * @uxon-property upload_enabled
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return ImageGallery
+     */
+    public function setUploadEnabled(bool $value) : ImageGallery
+    {
+        $this->uploadEnabled = $value;
+        return $this;
+    }
+    
+    public function getUploader() : Uploader
+    {
+        if ($this->uploader === null) {
+            if ($this->uploaderUxon === null) {
+                throw new WidgetConfigurationError('Please configure the `uploader` option of widget "' . $this->getWidgetType() . '"!');
+            }
+            $this->uploader = new Uploader($this, $this->uploaderUxon);
+        }
+        return $this->uploader;
+    }
+    
+    /**
+     * Uploader configuration
+     * 
+     * @uxon-property uploader
+     * @uxon-type \exface\Core\Widgets\Parts\Uploader
+     * @uxon-template {"filename_attribute": "", "file_content_attribute": ""}
+     * 
+     * @param UxonObject $value
+     * @return ImageGallery
+     */
+    public function setUploader(UxonObject $value) : ImageGallery
+    {
+        $this->uploaderUxon = $value;
+        $this->uploadEnabled = true;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::getChildren()
+     */
+    public function getChildren() : \Iterator
+    {
+        yield from parent::getChildren();
+        
+        if ($this->isUploadEnabled()) {
+            yield $this->getUploader()->getInstantUploadButton();
+        }
+        
+        return;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isZoomable() : bool
+    {
+        return $this->zoom;
+    }
+    
+    /**
+     * Set to TRUE to enable a lightbox-style zoom effect on click
+     * 
+     * @uxon-property zoomable
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return ImageGallery
+     */
+    public function setZoomable(bool $value) : ImageGallery
+    {
+        $this->zoom = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getWidth()
+     */
+    public function getWidth()
+    {
+        if ($this->isHorizontal() && parent::getWidth()->isUndefined()) {
+            $this->setWidth(WidgetDimension::MAX);
+        }
+        return parent::getWidth();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getHeight()
+     */
+    public function getHeight()
+    {
+        if (! $this->isHorizontal() && parent::getHeight()->isUndefined()) {
+            $this->setHeight(WidgetDimension::MAX);
+        }
+        return parent::getHeight();
     }
 }

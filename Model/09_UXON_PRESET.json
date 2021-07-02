@@ -4398,6 +4398,139 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2021-07-02 10:44:53",
+            "MODIFIED_ON": "2021-07-02 11:45:29",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba43cc5324188a43c025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Horizontal image gallery with upload",
+            "DESCRIPTION": "Scrollable horizontal image gallery with an uploader",
+            "PROTOTYPE": "exface\/Core\/Widgets\/ImageGallery.php",
+            "UXON": {
+                "widget_type": "ImageGallery",
+                "object_alias": "",
+                "image_url_attribute_alias": "",
+                "image_title_attribute_alias": "",
+                "zoomable": true,
+                "hide_header": false,
+                "uploader": {
+                    "filename_attribute": "FILENAME",
+                    "file_content_attribute": "CONTENTS"
+                },
+                "buttons": [
+                    {
+                        "action_alias": "exface.Core.DeleteObject"
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/image_gallery_h_upload.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-02 10:46:18",
+            "MODIFIED_ON": "2021-07-02 11:45:14",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb8ca1f7be539e8ca1025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Horizontal image gallery",
+            "DESCRIPTION": "Scorllable horizontal image gallery with filters and sorters",
+            "PROTOTYPE": "exface\/Core\/Widgets\/ImageGallery.php",
+            "UXON": {
+                "widget_type": "ImageGallery",
+                "object_alias": "",
+                "image_url_attribute_alias": "",
+                "image_title_attribute_alias": "",
+                "zoomable": true,
+                "hide_header": false,
+                "filters": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ],
+                "sorters": [
+                    {
+                        "attribute_alias": "",
+                        "direction": "asc"
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/image_gallery_h_filters.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-02 11:04:25",
+            "MODIFIED_ON": "2021-07-02 11:45:22",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb9ae180ccc4ac9ae1025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Horizontal image gallery without header",
+            "DESCRIPTION": "Scorllable horizontal image gallery without a header (just the gallery)",
+            "PROTOTYPE": "exface\/Core\/Widgets\/ImageGallery.php",
+            "UXON": {
+                "widget_type": "ImageGallery",
+                "object_alias": "",
+                "image_url_attribute_alias": "",
+                "image_title_attribute_alias": "",
+                "zoomable": true,
+                "hide_header": true
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/image_gallery_h.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-02 11:05:59",
+            "MODIFIED_ON": "2021-07-02 11:45:43",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba589b7aa4512a589025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Horizontal attachment gallery with upload",
+            "DESCRIPTION": "Attachments with a relation to an object displayed as a scrollable gallery",
+            "PROTOTYPE": "exface\/Core\/Widgets\/ImageGallery.php",
+            "UXON": {
+                "caption": "Attachments",
+                "widget_type": "ImageGallery",
+                "object_alias": "",
+                "image_url_attribute_alias": "",
+                "image_title_attribute_alias": "",
+                "zoomable": true,
+                "hide_header": false,
+                "uploader": {
+                    "filename_attribute": "",
+                    "file_content_attribute": ""
+                },
+                "filters": [
+                    {
+                        "attribute_alias": "\/\/ REPLACE WITH RELATION TO OBJECT",
+                        "hidden": true,
+                        "required": true,
+                        "comparator": "=="
+                    }
+                ],
+                "columns": [
+                    {
+                        "attribute_alias": "\/\/ REPLACE WITH RELATION TO OBJECT",
+                        "value": "\/\/ REPLACE LINK TO RELATION VALUE (e.g. =object_uid_field)",
+                        "hidden": true
+                    }
+                ],
+                "buttons": [
+                    {
+                        "action_alias": "exface.Core.DeleteObject"
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/image_gallery_h_upload.gif"
         }
     ],
     "totals_rows": [],
