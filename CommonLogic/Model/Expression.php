@@ -481,6 +481,7 @@ class Expression implements ExpressionInterface
         }
         
         if ($this->isFormula() === true) {
+            // FIXME #Formulas
             $this->getFormula()->setRelationPath($relation_path);
         }
         if ($this->attribute_alias) {
