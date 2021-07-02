@@ -118,7 +118,7 @@ abstract class Formula implements FormulaInterface
 
     public function setRelationPath($relation_path)
     {
-        // FIXME
+        // FIXME #Formulas
         // set new relation path
         /*$this->relation_path = $relation_path;
         if ($relation_path) {
@@ -177,7 +177,7 @@ abstract class Formula implements FormulaInterface
 
     public function mapAttribute($map_from, $map_to)
     {
-        //FIXME 
+        // FIXME #Formulas
         /*foreach ($this->required_attributes as $id => $attr) {
             if ($attr == $map_from) {
                 $this->required_attributes[$id] = $map_to;
