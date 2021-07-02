@@ -19,11 +19,20 @@ class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, W
     
     private $cacheName = '_expressions';
     
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     */
     public function __construct(WorkbenchInterface $workbench)
     {
         $this->workbench = $workbench;        
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaExpressionLanguageInterface::evaluate()
+     */
     public function evaluate(FormulaInterface $formula, array $row)
     {
         $exface = $this->getWorkbench();
@@ -56,6 +65,7 @@ class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, W
     }
     
     /**
+     * Add a given `formula` with the given `funcName` to the given `ExpressionLanguage` instance
      *
      * @param ExpressionLanguage $expressionLanguage
      * @param string $funcName
