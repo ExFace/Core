@@ -474,20 +474,46 @@ class FileList extends DataTable
     {
         if ($this->uploader === null) {
             $uxon = new UxonObject();
-            $fileNameType = $this->getFilenameColumn()->getDataType();
-            if ($fileNameType instanceof StringDataType && $fileNameType->getLengthMax() !== null) {
-                $uxon->setProperty('max_filename_length', $fileNameType->getLengthMax());
+            
+            if ($this->filenameAttributeAlias !== null || $this->filenameColumn !== null) {
+                $uxon->setProperty('filename_attribute', $this->getFilenameColumn()->getAttributeAlias());
+                $fileNameType = $this->getFilenameColumn()->getDataType();
+                if ($fileNameType instanceof StringDataType && $fileNameType->getLengthMax() !== null) {
+                    $uxon->setProperty('max_filename_length', $fileNameType->getLengthMax());
+                }
             }
-            $contentType = $this->getFileContentAttribute()->getDataType();
-            if ($contentType instanceof BinaryDataType && $contentType->getMaxSizeInMB() !== null) {
-                $uxon->setProperty('max_file_size_mb', $contentType->getMaxSizeInMB());
+            
+            if ($this->fileContentAttributeAlias !== null || $this->fileContentColumn !== null) {
+                $uxon->setProperty('file_content_attribute', $this->getFileContentAttribute()->getAliasWithRelationPath());
+                $contentType = $this->getFileContentAttribute()->getDataType();
+                if ($contentType instanceof BinaryDataType && $contentType->getMaxSizeInMB() !== null) {
+                    $uxon->setProperty('max_file_size_mb', $contentType->getMaxSizeInMB());
+                }
             }
+            
+            if ($this->mimeTypeAttributeAlias !== null || $this->mimeTypeColumn !== null) {
+                $uxon->setProperty('file_mime_type_attribute', $this->getMimeTypeColumn()->getAttributeAlias());
+            }
+            
+            if ($this->fileModificationTimeAttributeAlias !== null || $this->fileModificationTimeColumn !== null) {
+                $uxon->setProperty('file_modification_time_attribute', $this->getFileModificationTimeColumn()->getAttributeAlias());
+            }
+            
             if ($this->uploaderUxon !== null) {
                 $uxon = $uxon->extend($this->uploaderUxon);
             }
             $this->uploader = new Uploader($this, $uxon, true);
         }
         return $this->uploader;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isUploaderInitialized() : bool
+    {
+        return $this->uploader !== null;
     }
     
     /**

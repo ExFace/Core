@@ -12,6 +12,8 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Actions\CreateData;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 
 /**
@@ -60,6 +62,14 @@ class Uploader implements WidgetPartInterface
     
     private $instantUpload = true;
     
+    private $filenameAttributeAlias = null;
+    
+    private $fileContentAttributeAlias = null;
+    
+    private $fileModificationTimeAttributeAlias = null;
+    
+    private $mimeTypeAttributeAlias = null;
+    
     /**
      * 
      * @param WidgetInterface $widget
@@ -73,6 +83,11 @@ class Uploader implements WidgetPartInterface
         if ($uxon !== null) {
             $this->importUxonObject($uxon);
         }
+    }
+    
+    public function getMetaObject() : MetaObjectInterface
+    {
+        return $this->getWidget()->getMetaObject();
     }
     
     /**
@@ -332,6 +347,119 @@ class Uploader implements WidgetPartInterface
     public function setInstantUpload(bool $value) : Uploader
     {
         $this->instantUpload = $value;
+        return $this;
+    }
+    
+    protected function getFileMimeTypeAttributeAlias() : ?string
+    {
+        return $this->mimeTypeAttributeAlias;
+    }
+    
+    public function getFileMimeTypeAttribute() : MetaAttributeInterface
+    {
+        return $this->getMetaObject()->getAttribute($this->getFileMimeTypeAttributeAlias());
+    }
+    
+    /**
+     * The alias of the attribute to save the content type (mime type) to
+     * 
+     * @uxon-property file_mime_type_attribute
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $value
+     * @return Uploader
+     */
+    public function setFileMimeTypeAttribute(string $value) : Uploader
+    {
+        $this->mimeTypeAttributeAlias = $value;
+        return $this;
+    }
+    
+    protected function getFilenameAttributeAlias() : ?string
+    {
+        return $this->filenameAttributeAlias;
+    }
+    
+    public function getFilenameAttribute() : MetaAttributeInterface
+    {
+        return $this->getMetaObject()->getAttribute($this->getFilenameAttributeAlias());
+    }
+    
+    /**
+     * The alias of the attribute to save the filename to
+     *
+     * @uxon-property filename_attribute
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $value
+     * @return Uploader
+     */
+    public function setFilenameAttribute(string $value) : Uploader
+    {
+        $this->filenameAttributeAlias = $value;
+        return $this;
+    }
+    
+    protected function getFileContentAttributeAlias() : ?string
+    {
+        return $this->fileContentAttributeAlias;
+    }
+    
+    public function getFileContentAttribute() : MetaAttributeInterface
+    {
+        return $this->getMetaObject()->getAttribute($this->getFileContentAttributeAlias());
+    }
+    
+    /**
+     * The alias of the attribute to save the (binary) content to
+     *
+     * @uxon-property file_content_attribute
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $value
+     * @return Uploader
+     */
+    public function setFileContentAttribute(string $value) : Uploader
+    {
+        $this->fileContentAttributeAlias = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasFileLastModificationTimeAttribute() : bool
+    {
+        return $this->fileModificationTimeAttributeAlias !== null;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getFileModificationTimeAttributeAlias() : ?string
+    {
+        return $this->fileModificationTimeAttributeAlias;
+    }
+    
+    public function getFileModificationTimeAttribute() : MetaAttributeInterface
+    {
+        return $this->getMetaObject()->getAttribute($this->getFileModificationTimeAttributeAlias());
+    }
+    
+    /**
+     * The alias of the attribute to save the last modification date and time of the uploaded file
+     *
+     * @uxon-property file_modification_time_attribute
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $value
+     * @return Uploader
+     */
+    public function setFileModificationTimeAttribute(string $value) : Uploader
+    {
+        $this->fileModificationTimeAttributeAlias = $value;
         return $this;
     }
 }

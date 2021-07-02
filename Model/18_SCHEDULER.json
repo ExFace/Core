@@ -57,9 +57,9 @@
     "rows": [
         {
             "CREATED_ON": "2021-02-01 16:24:42",
-            "MODIFIED_ON": "2021-02-02 14:56:10",
+            "MODIFIED_ON": "2021-07-02 09:25:19",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11eb92e27691c90492e2025041000001",
             "UID": "0x11eb801a9bd7d794801a025041000001",
             "ACTION_UXON": {
                 "alias": "exface.Core.CleanUp"
