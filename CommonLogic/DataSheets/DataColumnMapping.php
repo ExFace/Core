@@ -187,6 +187,9 @@ class DataColumnMapping implements DataColumnMappingInterface
             case $fromSheet->getColumns()->isEmpty() && ! $fromExpr->isReference():
                 return $toSheet;
             default:
+                if ($fromExpr->isMetaAttribute()) {
+                    throw new DataSheetMapperError($this->getMapper(), 'Cannot map from attribute "' . $fromExpr->toString() . '" in a column-to-column mapping: there is no matching column in the from-data and it cannot be loaded automatically (e.g. because the from-object ' . $fromSheet->getMetaObject() .' has no UID attribute)!');
+                }
                 throw new DataSheetMapperError($this->getMapper(), 'Cannot use "' . $fromExpr->toString() . '" as from-expression in a column-to-column mapping: only data column names, constants and formulas allowed!');
         }
         
