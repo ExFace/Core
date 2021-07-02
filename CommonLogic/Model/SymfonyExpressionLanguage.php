@@ -13,6 +13,12 @@ use exface\Core\CommonLogic\Selectors\FormulaSelector;
 use exface\Core\Exceptions\OutOfBoundsException;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 
+/**
+ * Wraper class to evaluate a formula expression using Symfony/ExpressionLanguage
+ * 
+ * @author ralf.mulansky
+ *
+ */
 class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, WorkbenchDependantInterface
 {
     private $workbench = null;
