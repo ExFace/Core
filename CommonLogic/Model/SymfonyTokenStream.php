@@ -3,6 +3,7 @@
 namespace exface\Core\CommonLogic\Model;
 
 use Symfony\Component\ExpressionLanguage\Lexer;
+use exface\Core\Formulas\Calc;
 use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
@@ -99,8 +100,13 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
     public function getFormulaName() : ?string
     {
         if ($this->formName === null) {
-            $this->formName = $this->getFormulas()[0];
-        }
+            $name = $this->getFormulas()[0];
+            //if expression does not contain formula name, e.g. '(1 + 1)', the formula is the Calc class formula
+            if ($name === null) {
+                $name = Calc::class;
+            }
+            $this->formName = $name;
+        }        
         return $this->formName;
     }
     
