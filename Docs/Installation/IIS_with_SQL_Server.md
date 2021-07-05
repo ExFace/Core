@@ -63,7 +63,10 @@ Use the following configuration in addition to the server-independent [recommend
 	- `extension = wincache`
 	- `wincache.fcenabled=1` (optional)
 	- `wincache.ocenabled=1` (optional)
-4. Recommended security-related settings
+4. OPCache settings:
+	- `zend_extension = C:\Program Files\PHP\bin\ext\php_opcache.dll`
+	- `opcache.enable = 1` and other settings as described in the general [PHP recommendations](Recommended_PHP_settings.md)
+5. Recommended security-related settings
 	- `fastcgi.logging = 0` (for dev-environment `1`) 
 	- `display_errors = Off` (for dev-environment `On`) 
 	- `log_errors = On`
