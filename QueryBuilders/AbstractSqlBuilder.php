@@ -556,8 +556,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // TODO How to get multiple inserted ids???
             if ($cnt = $query->countAffectedRows()) {
                 $insertedCounter += $cnt;
-                if ($uidAlias !== null) {
-                    $insertedIds[] = [$uidAlias => $last_id];
+                if ($uidAlias !== null || $this->getMainObject()->hasUidAttribute() && $this->getMainObject()->getUidAttribute()->getDataAddress()) {
+                    $insertedIds[] = [$uidAlias ?? $this->getMainObject()->getUidAttribute()->getAlias() => $last_id];
                 }
             }
             

@@ -14,6 +14,8 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 
 /**
  * A query builder for Microsoft SQL Server 2012+ (T-SQL).
@@ -508,8 +510,26 @@ class MsSqlBuilder extends AbstractSqlBuilder
         return ' AS ' . $alias;
     }
     
-    protected function getSqlServerVersion() : string
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::create()
+     */
+    public function create(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        return 2012;
+        // SQL Server does not accept NULL as value for an IDENTITY column, so we remove 
+        // UID columns here entirely if they
+        // - are not required in the metamodel
+        // - do not have non-empty values
+        // - do not use the optimized UUID generator
+        // - do not have a custom SQL generator
+        if ($this->getMainObject()->hasUidAttribute()) {
+            $uidAttr = $this->getMainObject()->getUidAttribute();
+            $uidQpart = $this->getValue($uidAttr->getAlias());
+            if ($uidAttr->isRequired() === false && $uidQpart->hasValues() === false && ! $uidAttr->getDataAddressProperty('SQL_INSERT') && ! $uidAttr->getDataAddressProperty('SQL_USE_OPTIMIZED_UID')) {
+                $this->removeQueryPart($uidQpart);
+            }
+        }
+        return parent::create($data_connection);
     }
 }

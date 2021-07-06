@@ -523,6 +523,29 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
         } 
         return $this;
     }
+    
+    /**
+     * 
+     * @param QueryPart $qpart
+     * @throws NotImplementedError
+     * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
+     */
+    protected function removeQueryPart(QueryPart $qpart) 
+    {
+        switch (true) {
+            case $qpart instanceof QueryPartValue:
+                unset($this->values[$qpart->getAlias()]);
+                break;
+            case $qpart instanceof QueryPartAttribute:
+                $columnKey = $qpart instanceof QueryPartSelect ? $qpart->getColumnKey() : $qpart->getAlias();
+                unset($this->attributes[$columnKey]);
+                break;
+            default:
+                // FIXME add all other query parts. Perhaps use this metho even in the regular add...() methods to centralize the population of the private arrays.
+                throw new NotImplementedError('Removing ready-made query parts to existing queries not supported for ' . get_class($qpart));
+        }
+        return $this;
+    }
 
     /**
      * Sorts the given array of data rows by applying the sorters defined for this query.

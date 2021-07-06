@@ -20,16 +20,6 @@ use exface\Core\Exceptions\QueryBuilderException;
 class MsSql2008Builder extends MsSqlBuilder
 {    
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\QueryBuilders\MsSqlBuilder::getSqlServerVersion()
-     */
-    protected function getSqlServerVersion() : string
-    {
-        return 2008;
-    }
-    
-    /**
      *
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::getSqlDialects()
