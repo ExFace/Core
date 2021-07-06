@@ -3,13 +3,13 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\ButtonGroup;
-use exface\Core\Exceptions\Facades\FacadeOutputError;
 use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Actions\SaveData;
 use exface\Core\DataTypes\UrlDataType;
 use exface\Core\Widgets\Button;
+use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 
 /**
  * Helps implement ImageCarousel widgets with jQuery and the slick.
@@ -265,13 +265,17 @@ JS
         return $this->btnZoom;
     }
     
+    /**
+     * 
+     * @see AbstractJqueryElement::buildJsValueGetter()
+     */
     public function buildJsValueGetter($columnName = null, $row = null)
     {
        if (is_null($columnName)) {
             if ($this->getWidget()->hasUidColumn() === true) {
                 $col = $this->getWidget()->getUidColumn();
             } else {
-                throw new FacadeOutputError('Cannot create a value getter for a data widget without a UID column: either specify a column to get the value from or a UID column for the table.');
+                throw new FacadeRuntimeError('Cannot create a value getter for a data widget without a UID column: either specify a column to get the value from or a UID column for the table.');
             }
         } else {
             if (! $col = $this->getWidget()->getColumnByDataColumnName($columnName)) {
@@ -281,8 +285,6 @@ JS
         
         $delimiter = $col->isBoundToAttribute() ? $col->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
         
-        // TODO need to list values if multi_select is on instead of just returning the value
-        // of the first row (becuase getSelection returns the first row in jEasyUI datagrid)
         return <<<JS
 (function(){
     var aSelectedRows = {$this->buildJsDataGetter(ActionFactory::createFromString($this->getWorkbench(), SaveData::class))}.rows;
