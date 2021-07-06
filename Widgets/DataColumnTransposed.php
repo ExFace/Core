@@ -8,30 +8,30 @@ namespace exface\Core\Widgets;
  */
 class DataColumnTransposed extends DataColumn
 {
-
     private $label_attribute_alias = null;
 
-    private $label_sort_direction = null;
-
-    public function getLabelAttributeAlias()
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getLabelAttributeAlias() : ?string
     {
         return $this->label_attribute_alias;
     }
 
-    public function setLabelAttributeAlias($value)
+    /**
+     * Which attribute to use for column heading when transposing this columns data.
+     * 
+     * @uxon-property label_attribute_alias
+     * @uxon-type metamodel:attribute
+     * @uxon-required true
+     * 
+     * @param string $value
+     * @return \exface\Core\Widgets\DataColumnTransposed
+     */
+    public function setLabelAttributeAlias(string $value) : DataColumnTransposed
     {
         $this->label_attribute_alias = $value;
-        return $this;
-    }
-
-    public function getLabelSortDirection()
-    {
-        return $this->label_sort_direction;
-    }
-
-    public function setLabelSortDirection($value)
-    {
-        $this->label_sort_direction = $value;
         return $this;
     }
 
@@ -45,7 +45,6 @@ class DataColumnTransposed extends DataColumn
     {
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('label_attribute_alias', $this->getLabelAttributeAlias());
-        $uxon->setProperty('label_sort_direction', $this->getLabelSortDirection());
         return $uxon;
     }
 }
