@@ -708,9 +708,12 @@ JS;
     if (oData !== undefined && Array.isArray(oData.rows)) {
         aData = {$this->buildJsConvertDataToArray('oData.rows')}
     }
-    if (aData.length > 0) {
-        {$this->buildJsJqueryElement()}.jexcel('setData', aData);
+    if (aData.length === 0) {
+        for (var i = 0; i < {$this->getMinSpareRows()}; i++) {
+            aData.push([]);
+        }
     }
+    {$this->buildJsJqueryElement()}.jexcel('setData', aData);
 }()
 
 JS;
