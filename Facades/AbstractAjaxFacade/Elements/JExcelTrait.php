@@ -21,6 +21,7 @@ use exface\Core\Widgets\Parts\DataSpreadSheetFooter;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Widgets\InputComboTable;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -206,13 +207,17 @@ JS;
         updateTable: function(instance, cell, col, row, value, label, cellName) {
             {$this->buildJsOnUpdateTableRowColors('row', 'cell')} 
         },
-        onchange: function(instance, cell, col, row, value) {
+        onchange: function(instance, cell, col, row, value, oldValue) {
             // setTimeout ensures, the minSpareRows are always added before the spread logic runs
+            {$this->buildJsOnUpdateApplyValuesFromWidgetLinks('instance', 'col', 'row')};
             setTimeout(function(){
                 {$this->buildJsFixedFootersSpread()}
             }, 0);
         },
-        ondeleterow: function(instance) {
+        oninsertrow: function(el, rowNumber, numOfRows, rowTDs, insertBefore) {
+            
+        },
+        ondeleterow: function(el, rowNumber, numOfRows, rowDOMElements, rowData, cellAttributes) {
             {$this->buildJsFixedFootersSpread()}
         }
     });
@@ -869,4 +874,72 @@ $.ajaxSetup({
 
 JS;
     }
+    
+    /**
+     * 
+     * @param string $oExcelElJs
+     * @param string $iColJs
+     * @param string $iRowJs
+     * @return string
+     */
+    protected function buildJsOnUpdateApplyValuesFromWidgetLinks(string $oExcelElJs, string $iColJs, string $iRowJs) : string
+    {
+        foreach ($this->getWidget()->getColumns() as $colIdx => $col) {
+            $cellWidget = $col->getCellWidget();
+            if ($cellWidget->hasValue() === false) {
+                continue;
+            }
+            $valueExpr = $cellWidget->getValueExpression();
+            if ($valueExpr->isReference() === true) {
+                $linkedColIdxs[] = $colIdx;
+                $linkedEl = $this->getFacade()->getElement($valueExpr->getWidgetLink($cellWidget)->getTargetWidget());
+                $addLocalValuesToRowJs .= <<<JS
+                            $oExcelElJs.jexcel.setValueFromCoords({$colIdx}, parseInt({$iRowJs}), {$linkedEl->buildJsValueGetter()}, true);
+JS;
+            }
+            $linkedColIdxsJs = json_encode($linkedColIdxs);
+        }
+        return <<<JS
+
+            var aLinkedCols = $linkedColIdxsJs;
+            if (! aLinkedCols.includes($iColJs)) {
+                $addLocalValuesToRowJs
+            }
+JS;
+    }
+    
+    /**
+     *
+     * @see AbstractJqueryElement::buildJsValueGetter()
+     */
+    public function buildJsValueGetter($columnName = null, $row = null)
+    {
+        if (is_null($columnName)) {
+            if ($this->getWidget()->hasUidColumn() === true) {
+                $col = $this->getWidget()->getUidColumn();
+            } else {
+                throw new FacadeRuntimeError('Cannot create a value getter for a data widget without a UID column: either specify a column to get the value from or a UID column for the table.');
+            }
+        } else {
+            if (! $col = $this->getWidget()->getColumnByDataColumnName($columnName)) {
+                $col = $this->getWidget()->getColumnByAttributeAlias($columnName);
+            }
+        }
+        
+        $delimiter = $col->isBoundToAttribute() ? $col->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
+        
+        return <<<JS
+(function(){
+    var aAllRows = {$this->buildJsDataGetter()}.rows;
+    var aSelectedIdxs = $('#{$this->getId()}').jexcel('getSelectedRows', true);
+    var aVals = [];
+    aSelectedIdxs.forEach(function(iRowIdx){
+        aVals.push(aAllRows[iRowIdx]['{$col->getDataColumnName()}']);
+    })
+    return aVals.join('{$delimiter}');
+})()
+JS;
+    }
+    
+    
 }
