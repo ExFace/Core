@@ -20,11 +20,11 @@ class TextStylesDataType extends StringDataType implements EnumDataTypeInterface
 {
     use EnumStaticDataTypeTrait;
     
-    const NORMAL = "NORMAL";
-    const BOLD = "BOLD";
-    const ITALIC = "ITALIC";
-    const STRIKETHROUGH = "STRIKETHROUGH";
-    const UNDERLINE = "UNDERLINE";
+    const NORMAL = "normal";
+    const BOLD = "bold";
+    const ITALIC = "italic";
+    const STRIKETHROUGH = "strikethrough";
+    const UNDERLINE = "underline";
     
     private $labels = [];
     

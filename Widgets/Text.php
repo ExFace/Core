@@ -89,7 +89,7 @@ class Text extends Display implements iShowText
      */
     public function setStyle($value)
     {
-        $this->style = $value;
+        $this->style = strtolower($value);
         return $this;
     }
 
