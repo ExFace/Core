@@ -566,6 +566,7 @@ JS;
                 $numberType = $cellWidget->getValueDataType();
                 if ($numberType->getBase() === 10) {
                     $type = "numeric";
+                    $options .= 'allowEmpty: true,';
                     $decimal = $numberType->getDecimalSeparator();
                     //$options .= "mask: '{$this->buildMaskNumeric($numberType, $decimal)}',decimal:'{$decimal}',";
                 }
