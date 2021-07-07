@@ -56,6 +56,9 @@ use exface\Core\Exceptions\Facades\FacadeRuntimeError;
  */
 trait JExcelTrait 
 {
+    /**
+     * @return void
+     */
     protected function registerReferencesAtLinkedElements()
     {
         $widget = $this->getWidget();
@@ -65,6 +68,11 @@ trait JExcelTrait
         }
     }
     
+    /**
+     * 
+     * @param DataSpreadSheet $widget
+     * @throws FacadeUnsupportedWidgetPropertyWarning
+     */
     protected function registerReferencesAtLinkedElementsForSpreadSheet(DataSpreadSheet $widget)
     {
         // Add live refs links for default_row
@@ -165,6 +173,10 @@ JS;
         return "$('#{$this->getId()}')";
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildHtmlJExcel() : string
     {
         return <<<JS
@@ -228,11 +240,19 @@ JS;
 JS;
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsFixAutoColumnWidth() : string
     {
         return "{$this->buildJsJqueryElement()}.find('colgroup col').attr('width','');";
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsFixContextMenuPosition() : string
     {
         // Move contex menu to body to fix positioning errors when there is a parent with position:relative
@@ -280,6 +300,12 @@ JS;
         return $colNames;
     }
         
+    /**
+     * 
+     * @param string $rowNrJs
+     * @param string $cellNodeJs
+     * @return string
+     */
     protected function buildJsOnUpdateTableRowColors(string $rowNrJs, string $cellNodeJs) : string
     {
         if ($this->getWidget()->getStriped() === true) {
@@ -295,11 +321,20 @@ JS;
         return '';
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildCssClassForStripedRows() : string
     {
         return 'datagrid-row-alt';
     }
     
+    /**
+     * 
+     * @param string $jqSelfJs
+     * @return string
+     */
     protected function buildJsFixedFootersOnLoad(string $jqSelfJs) : string
     {
         $js = '';
@@ -335,21 +370,38 @@ JS;
         return $js;
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsFixedFootersSpreadFunctionName() : string
     {
         return $this->buildJsFunctionPrefix() . 'fixedFootersSpread';
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsFixedFootersSpread() : string
     {
         return $this->buildJsFixedFootersSpreadFunctionName() . '()';
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsFixedFootersSpreadFunction() : string
     {
         return 'function ' . $this->buildJsFixedFootersSpreadFunctionName() . '() {' . $this->buildJsFixedFootersSpreadFunctionBody() . '}';
     }
     
+    /**
+     * 
+     * @throws FacadeUnsupportedWidgetPropertyWarning
+     * @return string
+     */
     protected function buildJsFixedFootersSpreadFunctionBody() : string
     {
         $js = '';
@@ -414,12 +466,24 @@ JS;
 
 JS;
     }
-        
+       
+    /**
+     * 
+     * @param string $jqSelfJs
+     * @param string $idxJs
+     * @return string
+     */
     protected function buildJsFooterValueGetterByColumnIndex(string $jqSelfJs, string $idxJs) : string
     {
         return $jqSelfJs . ".find('thead.footer td[data-x=\"' + {$idxJs} + '\"]').text()";
     }
     
+    /**
+     * 
+     * @param string $dataJs
+     * @param string $jqSelfJs
+     * @return string
+     */
     protected function buildJsFooterRefresh(string $dataJs, string $jqSelfJs) : string
     {
         if ($this->hasFooter() === false) {
@@ -441,6 +505,11 @@ JS;
 JS;
     }
         
+    /**
+     * 
+     * @param string $jqSelfJs
+     * @return string
+     */
     protected function buildJsFooterGetter(string $jqSelfJs) : string
     {
         return <<<JS
@@ -476,11 +545,14 @@ JS;
     }
     
     /**
+     * Returns the column properties to create an editor appropriate the columns cell widget.
+     * 
+     * Returns NULL if a standard editor is to be used (just an editable cell)!
      * 
      * @param DataColumn $col
-     * @return string
+     * @return string|NULL
      */
-    protected function buildJsJExcelColumn(DataColumn $col) : string
+    protected function buildJsJExcelColumnEditorOptions(DataColumn $col) : ?string
     {
         $cellWidget = $col->getCellWidget();
         $options = '';
@@ -509,8 +581,33 @@ JS;
                 $options .= $this->buildJsJExcelColumnDropdownOptions($cellWidget);
                 break;
             default:
-                $type = "text";
-                $align = EXF_ALIGN_LEFT;
+                return null;
+        }
+        
+        $align = $align ? 'align: "' . $align . '",' : '';
+        return <<<JS
+                type: "$type",
+                $options
+                $align
+
+JS;
+    }
+    
+    /**
+     * 
+     * @param DataColumn $col
+     * @return string
+     */
+    protected function buildJsJExcelColumn(DataColumn $col) : string
+    {
+        $options = $this->buildJsJExcelColumnEditorOptions($col);
+        
+        if ($options === null) {
+            $options = <<<JS
+                type: "text",
+                align: "left",
+
+JS;
         }
         
         if ($col->isEditable() === false) {
@@ -528,20 +625,23 @@ JS;
             $widthJs = "width: {$widthJs},";
         }
         
-        $align = $align ? 'align: "' . $align . '",' : '';
-        
         return <<<JS
 
             {
                 title: "{$col->getCaption()}",
-                type: "{$type}",
                 {$widthJs}
-                {$align}
                 {$options}
             }
 JS;
     }
-        
+      
+    /**
+     * 
+     * @param InputSelect $cellWidget
+     * @throws FacadeLogicError
+     * @throws FacadeUnsupportedWidgetPropertyWarning
+     * @return string
+     */
     protected function buildJsJExcelColumnDropdownOptions(InputSelect $cellWidget) : string
     {
         if ($cellWidget->isBoundToAttribute() === false) {
@@ -595,6 +695,10 @@ JS;
         return "source: {$srcJson},";
     }
     
+    /**
+     * 
+     * @return bool
+     */
     protected function hasFooter() : bool
     {
         foreach ($this->getWidget()->getColumns() as $col) {
@@ -605,11 +709,19 @@ JS;
         return false;
     }
         
+    /**
+     * 
+     * @return int
+     */
     protected function getMinSpareRows() : int
     {
         return $this->getAllowAddRows() === true ? 1 : 0;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     protected function getAllowAddRows() : bool
     {
         $widget = $this->getWidget();
@@ -721,12 +833,22 @@ JS;
         
     protected function buildJsConvertArrayToData(string $arrayOfArraysJs) : string
     {
+        $parsersJson = '{';
+        foreach ($this->getWidget()->getColumns() as $col) {
+            // If the values were formatted according to their data types in buildJsConvertDataToArray()
+            // parse them back here
+            if ($this->buildJsJExcelColumnEditorOptions($col) === null) {
+                $parsersJson .= $col->getDataColumnName() . ': function(value){ return ' . $this->getFacade()->getDataTypeFormatter($col->getDataType())->buildJsFormatParser('value') . '},';
+            }
+        }
+        $parsersJson .= '}';
         return <<<JS
 function() {
     var aDataArray = {$arrayOfArraysJs};
     var aData = [];
     var jExcel = {$this->buildJsJqueryElement()};
     var oColNames = jExcel.data('_exfColumnNames');
+    var aParsers = $parsersJson;
     aDataArray.forEach(function(aRow, i){
         var oRow = {};
         var sHeaderName;
@@ -739,7 +861,7 @@ function() {
             }
             sColName = oColNames[sHeaderName];
             if (sColName) {
-                oRow[sColName] = val;
+                oRow[sColName] = aParsers[sColName] ? aParsers[sColName](val) : val;
             }
         });
         aData.push(oRow);
@@ -756,6 +878,15 @@ JS;
     
     protected function buildJsConvertDataToArray(string $arrayOfObjectsJs) : string
     {
+        $formattersJson = '{';
+        foreach ($this->getWidget()->getColumns() as $col) {
+            // For those cells, that do not have a specific editor, use the data type formatter
+            // to format the values before showing them and parse them back in buildJsConvertArrayToData()
+            if ($this->buildJsJExcelColumnEditorOptions($col) === null) {
+                $formattersJson .= $col->getDataColumnName() . ': function(value){ return ' . $this->getFacade()->getDataTypeFormatter($col->getDataType())->buildJsFormatter('value') . '},';
+            }
+        }
+        $formattersJson .= '}';
         return <<<JS
         
 function() {
@@ -765,6 +896,7 @@ function() {
     var oColNames = jExcel.data('_exfColumnNames');
     var aColHeaders = jExcel.jexcel('getHeaders').split(',');
     var oColIdxCache = {};
+    var aFormatters = $formattersJson;
     aDataRows.forEach(function(oRow, i){
         var oRowIndexed = {};
         var aRow = [];
@@ -779,7 +911,7 @@ function() {
             if (! sHeaderName) continue;
             iColIdx = aColHeaders.indexOf(sHeaderName);
             if (iColIdx >= 0) {
-                oRowIndexed[iColIdx] = oRow[sColName];
+                oRowIndexed[iColIdx] = aFormatters[sColName] ? aFormatters[sColName](oRow[sColName]) : oRow[sColName];
                 oColIdxCache[sColName] = iColIdx;
             }
         }
@@ -802,7 +934,6 @@ function() {
 
 JS;
     }
-    
     
     public function buildJsDataResetter() : string
     {
@@ -887,6 +1018,7 @@ JS;
      */
     protected function buildJsOnUpdateApplyValuesFromWidgetLinks(string $oExcelElJs, string $iColJs, string $iRowJs) : string
     {
+        $linkedColIdxsJs = '[';
         foreach ($this->getWidget()->getColumns() as $colIdx => $col) {
             $cellWidget = $col->getCellWidget();
             if ($cellWidget->hasValue() === false) {
@@ -894,14 +1026,15 @@ JS;
             }
             $valueExpr = $cellWidget->getValueExpression();
             if ($valueExpr->isReference() === true) {
-                $linkedColIdxs[] = $colIdx;
+                $linkedColIdxsJs .= $colIdx . ',';
                 $linkedEl = $this->getFacade()->getElement($valueExpr->getWidgetLink($cellWidget)->getTargetWidget());
                 $addLocalValuesToRowJs .= <<<JS
-                            $oExcelElJs.jexcel.setValueFromCoords({$colIdx}, parseInt({$iRowJs}), {$linkedEl->buildJsValueGetter()}, true);
+                $oExcelElJs.jexcel.setValueFromCoords({$colIdx}, parseInt({$iRowJs}), {$linkedEl->buildJsValueGetter()}, true);
+
 JS;
-            }
-            $linkedColIdxsJs = json_encode($linkedColIdxs);
+            }    
         }
+        $linkedColIdxsJs .= ']';
         return <<<JS
 
             var aLinkedCols = $linkedColIdxsJs;
@@ -943,6 +1076,4 @@ JS;
 })()
 JS;
     }
-    
-    
 }
