@@ -34,6 +34,13 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
      */
     public function __construct(string $expression)
     {
+        
+        //from symfony/ExpressionLanguage documentation:
+        //Control characters (e.g. \n) in expressions are replaced with whitespace.
+        //To avoid this, escape the sequence with a single backslash (e.g. \\n).
+        $expression = str_replace("\n", "\\n", $expression);
+        $expression = str_replace("\t", "\\t", $expression);
+        
         $lexer = new Lexer();
         $tokenStream = $lexer->tokenize($expression);
         $this->tokenStream = $tokenStream;
