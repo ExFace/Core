@@ -137,7 +137,6 @@ abstract class Formula implements FormulaInterface
      */
     public function getRequiredAttributes() : array
     {
-        //return $this->required_attributes;
         return $this->getTokenStream() ? $this->getTokenStream()->getAttributes() : [];
     }
 
@@ -222,7 +221,6 @@ abstract class Formula implements FormulaInterface
     
     public function __toString()
     {
-        //return $this->getSelector()->toString() . '(' . implode(', ', $this->getArguments()) . ')';
         return $this->getTokenStream() ? $this->getTokenStream()->getExpression() : '';
     }
     
