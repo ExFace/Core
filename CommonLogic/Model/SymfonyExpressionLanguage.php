@@ -42,10 +42,11 @@ class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, W
     public function evaluate(FormulaInterface $formula, array $row)
     {
         $exface = $this->getWorkbench();
-        try {
-            $cache = $exface->getCache()->getPool($this->cacheName, false);
-        } catch (OutOfBoundsException $e) {
+        if ($exface->getCache()->hasPool($this->cacheName)) {
+            $cache = $exface->getCache()->getPool($this->cacheName, false);    
+        } else {            
             $cache = $exface->getCache()->createDefaultPool($exface, $this->cacheName, false);
+            $exface->getCache()->addPool($this->cacheName, $cache);
         }
         $expressionLanguage = new ExpressionLanguage($cache);
         $expression = $formula->getExpression();
