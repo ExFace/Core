@@ -206,6 +206,16 @@ class WorkbenchCache implements WorkbenchCacheInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchCacheInterface::hasPool()
+     */
+    public function hasPool(string $name) : bool
+    {
+        return $this->pools[$name] ? true : false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\WorkbenchCacheInterface::getPoolDefault()
      */
     public function getPoolDefault()
