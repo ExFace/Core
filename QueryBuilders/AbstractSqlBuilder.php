@@ -1062,9 +1062,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // attach to the related object key of the last regular relation before the reverse one
                     $junction_attribute = $this->getMainObject()->getAttribute(RelationPath::relationPathAdd($reg_rel_path->toString(), $this->getMainObject()->getRelation($reg_rel_path->toString())->getRightKeyAttribute()->getAlias()));
                 } else {
+                    // attach to the target key in the core query if there are no regular relations preceeding the reversed one
+                    $junction_attribute = $rev_rel->getLeftKeyAttribute();
+                } 
+                /* TODO Remove after 31.12.2021 if no problems arise. The above new else is correct,
+                 * but older code may also require this old strange version below.
+                else {
                     // attach to the uid of the core query if there are no regular relations preceeding the reversed one
                     $junction_attribute = $this->getMainObject()->getUidAttribute();
-                }
+                }*/
+                
                 // The filter needs to be an EQ, since we want a to compare by "=" to whatever we define without any quotes
                 // Putting the value in brackets makes sure it is treated as an SQL expression and not a normal value
                 if ($rightKeyAttribute instanceof CompoundAttributeInterface) {
