@@ -392,8 +392,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                 case $expr->isFormula() && $expr->isStatic():
                     return $expr->evaluate();
             }
-        }
-        
+        }        
         return $this->getValue();
     }
     
