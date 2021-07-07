@@ -293,11 +293,6 @@ class Expression implements ExpressionInterface
         if ($parenthesis_1 === false || $parenthesis_2 === false) {
             throw new FormulaError('Syntax error in the data function: "' . $expression . '"');
         }
-        //from symfony/ExpressionLanguage documentation:
-        //Control characters (e.g. \n) in expressions are replaced with whitespace.
-        //To avoid this, escape the sequence with a single backslash (e.g. \\n).
-        $expression = str_replace("\n", "\\n", $expression);
-        $expression = str_replace("\t", "\\t", $expression);
         
         $formula = FormulaFactory::createFromString($this->exface, $expression);
         return $formula;
