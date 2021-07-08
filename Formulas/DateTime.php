@@ -24,7 +24,12 @@ use exface\Core\Factories\DataTypeFactory;
  */
 class DateTime extends \exface\Core\CommonLogic\Model\Formula
 {
-
+    /**
+     * 
+     * @param string $date
+     * @param string $format
+     * @return string|NULL
+     */
     function run($date, $format = '')
     {
         if (! $date)

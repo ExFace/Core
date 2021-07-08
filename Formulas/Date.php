@@ -16,6 +16,7 @@ use exface\Core\DataTypes\DateDataType;
  * - `=DATE('1585090800')` = 2020-03-25
  * - `=DATE('1585090800', 'dd.MM.yyyy)` = 25.03.2020
  * - `=DATE('2020-03-25', 'yyyyMMddHHmmss')` = 20200325000000
+ * - `=DATE('2021-07-08', 'E')` = Thu
  * 
  * See http://userguide.icu-project.org/formatparse/datetime for a complete guide to
  * the ICU date format syntax.
@@ -46,7 +47,7 @@ class Date extends \exface\Core\CommonLogic\Model\Formula
             return $date;
         }
         
-        $dataType = $this->getDataType();
+        $dataType = DataTypeFactory::createFromString($this->getWorkbench(), DateDataType::class);
         if ($format) {
             $dataType->setFormat($format);
         } else {
