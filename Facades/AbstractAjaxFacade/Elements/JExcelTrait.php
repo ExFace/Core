@@ -838,7 +838,7 @@ JS;
         foreach ($this->getWidget()->getColumns() as $col) {
             // If the values were formatted according to their data types in buildJsConvertDataToArray()
             // parse them back here
-            if ($this->buildJsJExcelColumnEditorOptions($col) === null) {
+            if ($this->needsDataFormatting($col)) {
                 $parsersJson .= $col->getDataColumnName() . ': function(value){ return ' . $this->getFacade()->getDataTypeFormatter($col->getDataType())->buildJsFormatParser('value') . '},';
             }
         }
@@ -883,7 +883,7 @@ JS;
         foreach ($this->getWidget()->getColumns() as $col) {
             // For those cells, that do not have a specific editor, use the data type formatter
             // to format the values before showing them and parse them back in buildJsConvertArrayToData()
-            if ($this->buildJsJExcelColumnEditorOptions($col) === null) {
+            if ($this->needsDataFormatting($col)) {
                 $formattersJson .= $col->getDataColumnName() . ': function(value){ return ' . $this->getFacade()->getDataTypeFormatter($col->getDataType())->buildJsFormatter('value') . '},';
             }
         }
@@ -934,6 +934,11 @@ function() {
 }()
 
 JS;
+    }
+    
+    protected function needsDataFormatting(DataColumn $col) : bool
+    {
+        return $this->buildJsJExcelColumnEditorOptions($col) === null && ! ($col->getCellWidget() instanceof Display && $col->getCellWidget()->getDisableFormatting());
     }
     
     public function buildJsDataResetter() : string
