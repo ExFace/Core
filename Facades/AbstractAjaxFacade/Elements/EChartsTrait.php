@@ -517,16 +517,16 @@ JS;
     {
         return <<<JS
         
+            
             var clickCount = {$this->buildJsEChartsVar()}._clickCount;
             var params = {$params};
             var selected = {$this->buildJsGetSelectedRowFunction('params.data')};
-            
+
             clickCount++;
             {$this->buildJsEChartsVar()}._clickCount = clickCount;
+            var oldSelection = {$this->buildJsEChartsVar()}._oldSelection;
             if (clickCount === 1) {
-                if ({$this->buildJsEChartsVar()}._oldSelection === undefined || {$this->buildJsEChartsVar()}._oldSelection != selected ) {
-                    {$this->buildJsEChartsVar()}._doubleClkSelection = selected;
-                }
+                {$this->buildJsEChartsVar()}._doubleClkSelection = selected;
                 {$this->buildJsSingleClick($params)}
                 setTimeout(function(){
                     clickCount = 0;
@@ -534,9 +534,10 @@ JS;
                     {$this->buildJsEChartsVar()}._doubleClkSelection = undefined;
                 }, 500);
             } else {
-                if ({$this->buildJsEChartsVar()}._doubleClkSelection != undefined) {
+                if ({$this->buildJsEChartsVar()}._doubleClkSelection != undefined && {$this->buildJsEChartsVar()}._doubleClkSelection == selected) {
                     // do nothing
                 } else {
+                    {$this->buildJsEChartsVar()}._doubleClkSelection = selected;
                     {$this->buildJsSingleClick($params)}
                 }
                 
