@@ -13,6 +13,7 @@ use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
 {
@@ -20,6 +21,10 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
     private $affected_rows = 0;
 
     private $undo_data_sheet = null;
+    
+    private $ignore_rows_if_empty_except_column_names = null;
+    
+    private $ignore_rows_if_empty = false;
 
     /**
      * 
@@ -105,5 +110,119 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
     {
         throw new ActionUndoFailedError($this, 'Undo functionality not implemented yet for action "' . $this->getAlias() . '"!', '6T5DS00');
     }
+    
+    protected function getIgnoreRowsIfEmpty() : bool
+    {
+        return $this->ignore_rows_if_empty;
+    }
+    
+    /**
+     * Set to TRUE to ignore input data rows that do not have any values.
+     * 
+     * **NOTE:** These rows will be removed and will not be present in the result data!
+     * 
+     * @uxon-property ignore_rows_if_empty
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return SaveData
+     */
+    protected function setIgnoreRowsIfEmpty(bool $value) : SaveData
+    {
+        $this->ignore_rows_if_empty = $value;
+        return $this;
+    }
+    
+    protected function getIgnoreRowsIfEmptyExceptColumnNames() : array
+    {
+        return $this->ignore_rows_if_empty_except_column_names;
+    }
+    
+    /** 
+     * If a row is empty except in these columns, it will still be concidered empty and ignored
+     * 
+     * Setting the property with automatically set `ignore_rows_if_empty` to `true`!
+     * 
+     * This is particularly handy if you save matrix data like values per date where values
+     * exist only fro certain "coordinates" (e.g. some dates do not have values) - if rows
+     * without meaningfull values should not besaved, they can be ignored by adding the 
+     * "coordinate" column to this list.
+     * 
+     * @uxon-property ignore_rows_if_empty_except_column_names
+     * @uxon-type array
+     * @uxon-template [""]
+     * 
+     * @param UxonObject $arrayOfColumnNames
+     * @return SaveData
+     */
+    protected function setIgnoreRowsIfEmptyExceptColumnNames(UxonObject $arrayOfColumnNames) : SaveData
+    {
+        $this->ignore_rows_if_empty_except_column_names = $arrayOfColumnNames->toArray();
+        $this->ignore_rows_if_empty = true;
+        return $this;
+    }
+    
+    /**
+     * If a row is empty except for these attributes, it will still be concidered empty and ignored
+     * 
+     * Setting the property with automatically set `ignore_rows_if_empty` to `true`!
+     * 
+     * This is particularly handy if you save matrix data like values per date where values
+     * exist only fro certain "coordinates" (e.g. some dates do not have values) - if rows
+     * without meaningfull values should not besaved, they can be ignored by adding the 
+     * "coordinate" column to this list.
+     *
+     * @uxon-property ignore_rows_if_empty_except_attributes
+     * @uxon-type metamodel:attribute[]
+     * @uxon-template [""]
+     *
+     * @param UxonObject $arrayOfAliases
+     * @return SaveData
+     */
+    protected function setIgnoreRowsIfEmptyExceptAttributes(UxonObject $arrayOfAliases) : SaveData
+    {
+        foreach ($arrayOfAliases->toArray() as $alias) {
+            $this->ignore_rows_if_empty_except_column_names[] = DataColumn::sanitizeColumnName($alias);
+        }
+        $this->ignore_rows_if_empty = true;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isIgnoringRowsIfEmpty() : bool
+    {
+        return $this->ignore_rows_if_empty;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::getInputDataSheet()
+     */
+    protected function getInputDataSheet(TaskInterface $task) : DataSheetInterface
+    {
+        $sheet = parent::getInputDataSheet($task);
+        
+        if ($this->isIgnoringRowsIfEmpty()) {
+            $exceptCols = $this->getIgnoreRowsIfEmptyExceptColumnNames();
+            for ($i = ($sheet->countRows()-1); $i >= 0; $i--) {
+                $row = $sheet->getRow($i);
+                foreach ($row as $colName => $val) {
+                    if (in_array($colName, $exceptCols)) {
+                        continue;
+                    }
+                    if ($sheet->getColumns()->get($colName)->getDataType()->isValueEmpty($val) === false) {
+                        continue 2;
+                    }
+                }
+                $sheet->removeRow($i);
+            }
+        }
+        
+        return $sheet;
+    }
 }
-?>
