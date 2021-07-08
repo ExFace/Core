@@ -9,7 +9,6 @@ use exface\Core\Interfaces\Widgets\iHaveContextMenu;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Interfaces\Widgets\iTakeInput;
-use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Parts\DataRowGrouper;
 use exface\Core\Widgets\Traits\EditableTableTrait;
 use exface\Core\Widgets\Traits\DataTableTrait;
@@ -122,6 +121,8 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     private $context_menu = null;
     
     private $multi_select_sync_attribute = null;
+    
+    private $frozen_columns = 0;
 
     function hasRowDetails()
     {
@@ -583,5 +584,30 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     public function getMultiSelectSyncAttributeAlias()
     {
         return $this->multi_select_sync_attribute;
+    }
+    
+    /**
+     * 
+     * @return int
+     */
+    public function getFrozenColumns() : int
+    {
+        return $this->frozen_columns;
+    }
+    
+    /**
+     * Freeze the first X columns from the left (X is the value of this property)
+     * 
+     * @uxon-property frozen_columns
+     * @uxon-type integer
+     * @uxon-default 0 
+     * 
+     * @param int $value
+     * @return DataTable
+     */
+    public function setFrozenColumns(int $value) : DataTable
+    {
+        $this->frozen_columns = $value;
+        return $this;
     }
 }
