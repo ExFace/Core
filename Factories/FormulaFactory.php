@@ -5,24 +5,16 @@ use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Selectors\FormulaSelector;
+use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
+use exface\Core\CommonLogic\Model\SymfonyTokenStream;
+use exface\Core\Exceptions\FormulaError;
+use exface\Core\CommonLogic\Model\EmptyTokenStream;
 
 abstract class FormulaFactory extends AbstractSelectableComponentFactory
 {
 
-    /**
-     * Creates a formula from the given name resolver and optionally specified array of arguments
-     *
-     * @param FormulaSelectorInterface $selector            
-     * @param array $arguments            
-     * @return Formula
-     */
-    public static function create(FormulaSelectorInterface $selector, array $arguments = array())
-    {
-        $formula = static::createFromSelector($selector);
-        $formula->init($arguments);
-        return $formula;
-    }
-
+    private static $cache = [];
+    
     /**
      * Creates a Formula specified by the function name and an optional array of arguments.
      *
@@ -31,10 +23,34 @@ abstract class FormulaFactory extends AbstractSelectableComponentFactory
      * @param array $arguments            
      * @return Formula
      */
-    public static function createFromString(WorkbenchInterface $workbench, $function_name, array $arguments = array())
+    public static function createFromString(WorkbenchInterface $workbench, string $expression)
     {
+        $tokenStream = new SymfonyTokenStream($expression);
+        return static::createFromTokenStream($workbench, $tokenStream);
+    }
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param FormulaTokenStreamInterface $tokenStream
+     * @throws FormulaError
+     * @return mixed
+     */
+    public static function createFromTokenStream(WorkbenchInterface $workbench, FormulaTokenStreamInterface $tokenStream)
+    {
+        $function_name = $tokenStream->getFormulaName();
+        if ($function_name === null) {
+            throw new FormulaError("Can not create formula for expression {$tokenStream->getExpression()}. No formula name found.");
+        }
         $selector = new FormulaSelector($workbench, $function_name);
-        return static::create($selector, $arguments);
+        if ($tokenStream instanceof EmptyTokenStream) {
+            return static::createFromSelector($selector, [$selector, $tokenStream]);
+        }
+        if (! isset(self::$cache[$tokenStream->getExpression()])) {
+            self::$cache[$tokenStream->getExpression()] = $tokenStream;
+        }
+        $formula = static::createFromSelector($selector, [$selector, self::$cache[$tokenStream->getExpression()]]);
+        return $formula;
     }
 }
 ?>

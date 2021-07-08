@@ -496,6 +496,7 @@ class DataSheet implements DataSheetInterface
             if ($attribute->hasCalculation()) {
                 $col->setFormatter($attribute->getCalculationExpression());
                 if ($aggregator = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $col->getExpressionObj()->toString())) {
+                    // FIXME #Formulas
                     $col->getFormatter()->mapAttribute(str_replace(':' . $aggregator->exportString(), '', $col->getExpressionObj()->toString()), $col->getExpressionObj()->toString());
                 }
                 foreach ($col->getFormatter()->getRequiredAttributes() as $req) {

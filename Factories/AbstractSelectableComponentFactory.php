@@ -20,7 +20,7 @@ abstract class AbstractSelectableComponentFactory extends AbstractStaticFactory
      * @param AliasSelectorInterface|PrototypeSelectorInterface $selector
      * @return mixed
      */
-    public static function createFromSelector(SelectorInterface $selector)
+    public static function createFromSelector(SelectorInterface $selector, array $constructorArguments = null)
     {
         if ($selector instanceof AliasSelectorInterface) {
             $appSelector = $selector->getAppSelector();
@@ -29,7 +29,7 @@ abstract class AbstractSelectableComponentFactory extends AbstractStaticFactory
         } else {
             throw new LogicException('Cannot determine the app from ' . get_class($selector) . ' "' . $selector->toString() . '" automatically: please use custom factory logic or provide a selector based on aliases or prototypes.');
         }
-        return $selector->getWorkbench()->getApp($appSelector)->get($selector);
+        return $selector->getWorkbench()->getApp($appSelector)->get($selector, null , $constructorArguments);
     }
 }
 ?>
