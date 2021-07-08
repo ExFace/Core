@@ -2025,7 +2025,6 @@ JS;
     //reset Chart Configuration and variables bound to div before building new one
     {$this->buildJsDataResetter()}
     // if data is empty or not defined show overlay message
-    console.log('Redraw');
     if (! rowData || rowData.length === 0) {
         {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
         return;
