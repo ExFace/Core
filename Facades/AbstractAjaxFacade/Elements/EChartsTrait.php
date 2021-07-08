@@ -2801,7 +2801,7 @@ JS;
     {
         return <<<JS
         
-$({$this->buildJsEChartsVar()}.getDom()).prepend($('<div class="{$this->buildJsEChartsVar()}_exf-chart-message" style="position: absolute; padding: 10px; width: 100%; text-align: center;">{$message}</div>'));
+$({$this->buildJsEChartsVar()}.getDom()).prepend($('<div class="{$this->getId()}_exf-chart-message" style="position: absolute; padding: 10px; width: 100%; text-align: center;">{$message}</div>'));
 
 JS;
     }
@@ -2814,8 +2814,8 @@ JS;
     protected function buildJsMessageOverlayHide() : string
     {
         return <<<JS
-if ($(".{$this->buildJsEChartsVar()}_exf-chart-message").length > 0) {
-    $(".{$this->buildJsEChartsVar()}_exf-chart-message").remove();
+if ($(".{$this->getId()}_exf-chart-message").length > 0) {
+    $(".{$this->getId()}_exf-chart-message").remove();
 }
 
 JS;
