@@ -2025,6 +2025,7 @@ JS;
     //reset Chart Configuration and variables bound to div before building new one
     {$this->buildJsDataResetter()}
     // if data is empty or not defined show overlay message
+    console.log('Redraw');
     if (! rowData || rowData.length === 0) {
         {$this->buildJsMessageOverlayShow($this->getWidget()->getEmptyText())}
         return;
@@ -2800,7 +2801,7 @@ JS;
     {
         return <<<JS
         
-$({$this->buildJsEChartsVar()}.getDom()).prepend($('<div class="exf-chart-message" style="position: absolute; padding: 10px; width: 100%; text-align: center;">{$message}</div>'));
+$({$this->buildJsEChartsVar()}.getDom()).prepend($('<div class="{$this->buildJsEChartsVar()}_exf-chart-message" style="position: absolute; padding: 10px; width: 100%; text-align: center;">{$message}</div>'));
 
 JS;
     }
@@ -2813,8 +2814,8 @@ JS;
     protected function buildJsMessageOverlayHide() : string
     {
         return <<<JS
-if ($(".exf-chart-message").length > 0) {
-    $(".exf-chart-message").remove();
+if ($(".{$this->buildJsEChartsVar()}_exf-chart-message").length > 0) {
+    $(".{$this->buildJsEChartsVar()}_exf-chart-message").remove();
 }
 
 JS;
