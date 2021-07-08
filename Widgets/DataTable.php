@@ -122,7 +122,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     
     private $multi_select_sync_attribute = null;
     
-    private $frozen_columns = 0;
+    private $freeze_columns = 0;
 
     function hasRowDetails()
     {
@@ -590,24 +590,45 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * 
      * @return int
      */
-    public function getFrozenColumns() : int
+    public function getFreezeColumns() : int
     {
-        return $this->frozen_columns;
+        return $this->freeze_columns;
     }
     
     /**
      * Freeze the first X columns from the left (X is the value of this property)
      * 
-     * @uxon-property frozen_columns
+     * @uxon-property freeze_columns
      * @uxon-type integer
      * @uxon-default 0 
      * 
      * @param int $value
      * @return DataTable
      */
-    public function setFrozenColumns(int $value) : DataTable
+    public function setFreezeColumns(int $value) : DataTable
     {
-        $this->frozen_columns = $value;
+        $this->freeze_columns = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * @param DataColumn $col
+     * @return bool
+     */
+    public function isFrozen(DataColumn $col) : bool
+    {
+        $frozen = $this->getFreezeColumns();
+        if ($frozen === 0) {
+            return false;
+        }
+        $visibleCnt = 0;
+        foreach ($this->getColumns() as $col) {
+            if ($col->isHidden()) {
+               continue; 
+            }
+            $visibleCnt++;
+            return $visibleCnt <= $frozen ? true : false;
+        }
     }
 }
