@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2021-03-07 18:58:25",
+            "MODIFIED_ON": "2021-07-07 18:11:52",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
@@ -312,7 +312,8 @@
                                                 "hint": "=TRANSLATE('exface.Core', 'PAGE.OBJECT_EDITOR.QUICK_EDIT_ATTRIBUTES_HINT')",
                                                 "action": {
                                                     "alias": "exface.Core.QuickEditAttributes",
-                                                    "prefill_with_data_from_widget_link": "object_uid"
+                                                    "prefill_with_data_from_widget_link": "object_uid",
+                                                    "prefill_with_input_data": false
                                                 }
                                             }
                                         ]
