@@ -163,8 +163,11 @@ trait EChartsTrait
     {
         $facade = $this->getFacade();
         $includes = [];
-        
-        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.ECHARTS.ECHARTS_JS') . '"></script>';
+        if ($this->getChartType() === $this->chartTypes[CHART_TYPE_HEATMAP]) {
+            $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.ECHARTS.ECHARTSHEATMAP_JS') . '"></script>';
+        } else {
+            $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.ECHARTS.ECHARTS_JS') . '"></script>';
+        }
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.TINYCOLOR.JS') . '"></script>';
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.TINYGRADIENT.JS') . '"></script>';
         
@@ -1488,7 +1491,7 @@ JS;
      */
     protected function buildJsAxes() : string
     {
-        if ($this->getChartType() !== $this->chartTypes[CHART_TYPE_XY]) {
+        if ($this->getChartType() !== $this->chartTypes[CHART_TYPE_XY] && $this->getChartType() !== $this->chartTypes[CHART_TYPE_HEATMAP]) {
             return '';
         }
         $countAxisRight = 0;
