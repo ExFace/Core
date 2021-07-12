@@ -357,13 +357,13 @@ JS;
                                         })
                                        .catch(function(err){ 
                                             editor._autosuggestPending = false;
-                                            console.warn("{$trans['ERROR.AUTOSUGGEST_FAILED']}", err);
+                                            console.warn("{$trans['ERROR.AUTOSUGGEST_FAILED.GENERAL']}", err);
                                        });
                     	           }
                                 })
                                 .catch(function(err){
                                     editor._autosuggestPending = false;
-                                    console.warn("{$trans['ERROR.GETTING_OPTIONS']}", err);
+                                    console.warn("{$trans['ERROR.AUTOSUGGEST_FAILED.GETTING_OPTIONS']}", err);
                                     return Promise.resolve([]);
                                 });
                             }
@@ -1038,7 +1038,7 @@ CSS;
             var aResult = [];
             var iLen = aSuggestions.length;
             aSuggestions.forEach(function(sVal){
-                sValLower = sVal.toLowerCase();
+                sValLower = (sVal || '').toLowerCase();
                 switch (true) {
                     case sValLower.startsWith(sSearch):
                         aFiltered[0].push(sVal);
