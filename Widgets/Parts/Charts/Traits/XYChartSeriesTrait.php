@@ -11,6 +11,7 @@ use exface\Core\Widgets\Parts\Charts\ChartAxis;
 use exface\Core\Widgets\Parts\Charts\ChartSeries;
 use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
 use exface\Core\Widgets\Parts\Charts\Interfaces\SplittableChartSeriesInterface;
+use exface\Core\Interfaces\Widgets\iHaveColorScale;
 
 trait XYChartSeriesTrait
 {
@@ -75,7 +76,7 @@ trait XYChartSeriesTrait
     {
         if (is_null($this->color)) {
             $cellWidget = $this->getValueDataColumn()->getCellWidget();
-            if ($cellWidget instanceof iHaveColor) {
+            if ($cellWidget instanceof iHaveColor && ! ($cellWidget instanceof iHaveColorScale && $cellWidget->hasColorScale())) {
                 $this->color = $cellWidget->getColor();
             }
         }
