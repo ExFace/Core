@@ -526,7 +526,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         if ($this->getMainObject()->hasUidAttribute()) {
             $uidAttr = $this->getMainObject()->getUidAttribute();
             $uidQpart = $this->getValue($uidAttr->getAlias());
-            if ($uidAttr->isRequired() === false && $uidQpart->hasValues() === false && ! $uidAttr->getDataAddressProperty('SQL_INSERT') && ! $uidAttr->getDataAddressProperty('SQL_USE_OPTIMIZED_UID')) {
+            if ($uidQpart && $uidAttr->isRequired() === false && $uidQpart->hasValues() === false && ! $uidAttr->getDataAddressProperty('SQL_INSERT') && ! $uidAttr->getDataAddressProperty('SQL_USE_OPTIMIZED_UID')) {
                 $this->removeQueryPart($uidQpart);
             }
         }
