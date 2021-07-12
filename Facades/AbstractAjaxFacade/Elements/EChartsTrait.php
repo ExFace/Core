@@ -449,7 +449,7 @@ JS;
                         var dataset = {$this->buildJsEChartsVar()}._dataset;
                         var selectedRow = {$selection};
                         for (var i = 0; i < dataset.length; i++) {
-                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} === selectedRow.name) {
+                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} == selectedRow.name) {
                                 return dataset[i];
                             }
                         }
@@ -465,13 +465,13 @@ JS;
                         var selection = {$selection};
                         // searches first if a left object UID matches the data.id
                         for (var i = 0; i < dataset.length; i++) {
-                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()} === selection.id) {
+                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()} == selection.id) {
                                 return dataset[i];
                             }
                         }/*
                         // if no node matches, then searches if a relation UID matches the data.id
                         for (var i = 0; i < dataset.length; i++) {
-                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getRelationDataColumn()->getDataColumnName()} === selection.id) {
+                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getRelationDataColumn()->getDataColumnName()} == selection.id) {
                                 return dataset[i];
                             }
                         }*/
