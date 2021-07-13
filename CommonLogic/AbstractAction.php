@@ -48,6 +48,7 @@ use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Factories\ActionEffectFactory;
+use exface\Core\CommonLogic\Tasks\ResultData;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -92,6 +93,8 @@ abstract class AbstractAction implements ActionInterface
     private $input_mappers = [];
     
     private $input_mappers_used = [];
+    
+    private $output_mappers = [];
 
     /**
      * @var string
@@ -323,6 +326,10 @@ abstract class AbstractAction implements ActionInterface
         } catch (\Throwable $e) {
             $this->getWorkbench()->eventManager()->dispatch(new OnActionFailedEvent($this, $task, $e, $transaction));
             throw $e;
+        }
+        
+        if ($result instanceof ResultData && $this->hasOutputMappers() && $mapper = $this->getOutputMapper($result->getData()->getMetaObject())) {
+            $result->setData($mapper->map($result->getData()));
         }
         
         // Do finalizing stuff like dispatching the OnAfterActionEvent, autocommit, etc.
@@ -1548,5 +1555,101 @@ abstract class AbstractAction implements ActionInterface
             $uxon->setProperty('effected_object', $effectedObject->getAliasWithNamespace());
         }
         $this->customEffects[] = new ActionEffect($this, $uxon);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getOutputMappers()
+     */
+    public function getOutputMappers() : array
+    {
+        return $this->output_mappers;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getOutputMapper()
+     */
+    public function getOutputMapper(MetaObjectInterface $fromObject) : ?DataSheetMapperInterface
+    {
+        foreach ($this->getOutputMappers() as $mapper){
+            if ($mapper->getFromMetaObject()->is($fromObject)){
+                return $mapper;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasOutputMappers()
+     */
+    public function hasOutputMappers() : bool
+    {
+        return ! empty($this->getOutputMappers());
+    }
+    
+    /**
+     * Allows to apply output mappers depending on the object of the actions result data - similarly as `input_mappers`.
+     * 
+     * A mapper will be applied if the result data of the action is based on the from-object
+     * of the mapper.
+     *
+     * @uxon-property output_mappers
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheetMapper[]
+     * @uxon-template [{"from_object_alias": "", "column_to_column_mappings": [{"from": "", "to": ""}]}]
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setOutputMappers()
+     */
+    public function setOutputMappers(UxonObject $uxon)
+    {
+        foreach ($uxon as $instance){
+            $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $instance, null, $this->getMetaObject());
+            $this->addOutputMapper($mapper);
+        }
+    }
+    
+    /**
+     * Allows to transform the actions result data similarly to the `input_mapper`.
+     * 
+     * In contrast to `output_mappers` this mapper will take whatever object the action is based on
+     * and map it to the mappers `to_object_alias` (or itself if `to_object_alias` is not set).
+     *
+     * @uxon-property output_mapper
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheetMapper
+     * @uxon-template {"to_object_alias": "", "column_to_column_mappings": [{"from": "", "to": ""}]}
+     *
+     * @see setOutputMappers()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setOutputMapper()
+     */
+    public function setOutputMapper(UxonObject $uxon)
+    {
+        if ($uxon->hasProperty('from_object_alias')) {
+            $from_object = $this->getWorkbench()->model()->getObject($uxon->getProperty('from_object_alias'));
+        } else {
+            $from_object = $this->getMetaObject();
+        }
+        if ($uxon->hasProperty('to_object_alias')) {
+            $to_object = $this->getWorkbench()->model()->getObject($uxon->getProperty('to_object_alias'));
+        } else {
+            $to_object = $this->getMetaObject();
+        }
+        $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $uxon, $from_object, $to_object);
+        return $this->addOutputMapper($mapper);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::addOutputMapper()
+     */
+    public function addOutputMapper(DataSheetMapperInterface $mapper)
+    {
+        $this->output_mappers[] = $mapper;
+        return $this;
     }
 }
