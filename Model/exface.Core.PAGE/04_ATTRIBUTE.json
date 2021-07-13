@@ -789,7 +789,7 @@
         },
         {
             "CREATED_ON": "2020-02-08 15:20:38",
-            "MODIFIED_ON": "2020-03-10 20:35:45",
+            "MODIFIED_ON": "2021-07-13 15:09:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4a86844a4ab9b2cfe4b318306b9a",
@@ -825,7 +825,7 @@
             "SORTERPOS": null,
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
-            "SHORT_DESCRIPTION": "",
+            "SHORT_DESCRIPTION": "If unchecked only superusers and the creator of the page can see it. The flag can also be used explicitly in policy conditions. ",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
