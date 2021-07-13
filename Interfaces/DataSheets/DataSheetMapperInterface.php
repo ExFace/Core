@@ -5,7 +5,6 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
-use exface\Core\CommonLogic\UxonObject;
 
 /**
  * Maps data from one data sheet to another using mappers for columns, filters, sorters, etc.
@@ -17,7 +16,6 @@ use exface\Core\CommonLogic\UxonObject;
  */
 interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDependantInterface
 {
-
     /**
      * 
      * @param DataSheetInterface $fromSheet
@@ -69,72 +67,31 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
     public function getMappings() : array;
     
     /**
-     *
-     * @param UxonObject
-     * @return DataSheetMapperInterface
-     */
-    public function setColumnToColumnMappings(UxonObject $uxon) : DataSheetMapperInterface;
-    
-    /**
-     *
-     * @param DataColumnMappingInterface $map
-     * @return DataSheetMapperInterface
-     */
-    public function addColumnToColumnMapping(DataColumnMappingInterface $map) : DataSheetMapperInterface;
-    
-    /**
-     *
-     * @param UxonObject
-     * @return DataSheetMapperInterface
-     */
-    public function setColumnToFilterMappings(UxonObject $uxon) : DataSheetMapperInterface;
-    
-    /**
-     *
-     * @param DataColumnMappingInterface $map
-     * @return DataSheetMapperInterface
-     */
-    public function addColumnToFilterMapping(DataColumnToFilterMappingInterface $map) : DataSheetMapperInterface;
-    
-    /**
-     *
-     * @param UxonObject
-     * @return DataSheetMapperInterface
-     */
-    public function setFilterToColumnMappings(UxonObject $uxon) : DataSheetMapperInterface;
-    
-    /**
-     *
-     * @param DataColumnMappingInterface $map
-     * @return DataSheetMapperInterface
-     */
-    public function addFilterToColumnMapping(DataFilterToColumnMappingInterface $map) : DataSheetMapperInterface;
-    
-    /**
-     * Creates all types of mappings, that can be derived from expressions: mappings for columns, filters, sorters, aggregators, etc.
      * 
-     * @param UxonObject
+     * @param DataMappingInterface $map
      * @return DataSheetMapperInterface
      */
-    public function setExpressionMappings(UxonObject $uxon) : DataSheetMapperInterface;
-    
-    /**
-     * 
-     * @param bool $trueOrFalse
-     * @return DataSheetMapperInterface
-     */
-    public function setRefreshDataAfterMapping(bool $trueOrFalse) : DataSheetMapperInterface;
+    public function addMapping(DataMappingInterface $map) : DataSheetMapperInterface;  
     
     /**
      * 
      * @param bool $value
+     * @throws DataSheetMapperError
      * @return DataSheetMapperInterface
      */
     public function setInheritColumns(bool $value) : DataSheetMapperInterface;
-
+    
     /**
      * 
      * @param bool $value
+     * @return DataSheetMapperInterface
+     */
+    public function setInheritColumnsOnlyForSystemAttributes(bool $value) : DataSheetMapperInterface;
+    
+    /**
+     * 
+     * @param bool $value
+     * @throws DataSheetMapperError
      * @return DataSheetMapperInterface
      */
     public function setInheritFilters(bool $value) : DataSheetMapperInterface;
@@ -142,8 +99,15 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
     /**
      * 
      * @param bool $value
+     * @throws DataSheetMapperError
      * @return DataSheetMapperInterface
      */
     public function setInheritSorters(bool $value) : DataSheetMapperInterface;
-   
+    
+    /**
+     * 
+     * @param bool $trueOrFalse
+     * @return DataSheetMapperInterface
+     */
+    public function setRefreshDataAfterMapping(bool $trueOrFalse) : DataSheetMapperInterface;
 }
