@@ -4531,6 +4531,107 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/image_gallery_h_upload.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-13 21:30:18",
+            "MODIFIED_ON": "2021-07-14 09:17:22",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb9100c1ef08009100025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Simple DataMatrix",
+            "DESCRIPTION": "A table with transposed columns forming a matrix within the table. You can have one or more transposed columns. Each of them needs a `label_attribute_alias` - the \"x-axis\" of the matrix. If multiple transposed columns have the same `label_attribute_alias` their values will show up as separate rows in the matrix. If the `label_attribute_alias` is different, they will form multiple matrices. ",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataMatrix.php",
+            "UXON": {
+                "widget_type": "DataMatrix",
+                "object_alias": "",
+                "paginate": false,
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "attribute_alias": "",
+                        "label_attribute_alias": "",
+                        "widget_type": "DataColumnTransposed"
+                    },
+                    {
+                        "attribute_alias": "",
+                        "label_attribute_alias": "",
+                        "widget_type": "DataColumnTransposed"
+                    }
+                ],
+                "sorters": [
+                    {
+                        "attribute_alias": "",
+                        "direction": "asc"
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datamatrix.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-14 09:19:07",
+            "MODIFIED_ON": "2021-07-14 09:25:51",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb45bc73d11b8b45b025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "DataMatrix with totals",
+            "DESCRIPTION": "Transposed columns inside a DataMatrix may also have `footer` totals - these will be displayed in a separate column on the right of every row of transposed values. ",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataMatrix.php",
+            "UXON": {
+                "widget_type": "DataMatrix",
+                "object_alias": "",
+                "paginate": false,
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "attribute_alias": "",
+                        "label_attribute_alias": "",
+                        "widget_type": "DataColumnTransposed",
+                        "footer": ""
+                    },
+                    {
+                        "attribute_alias": "",
+                        "label_attribute_alias": "",
+                        "widget_type": "DataColumnTransposed",
+                        "footer": ""
+                    }
+                ],
+                "sorters": [
+                    {
+                        "attribute_alias": "",
+                        "direction": "asc"
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datamatrix_totals.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-14 10:13:20",
+            "MODIFIED_ON": "2021-07-14 10:20:06",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb853e5a26848a853e025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "External web site (iFrame)",
+            "DESCRIPTION": "Browser-in-browser (technically called iFrame) - shows the provided URL inside the widget allowing the user to navigate and interact with the target web page independently of the rest of the app. If using a static URL it does not matter, which meta object is assigned to the widget - you can use `exface.Core.DUMMY`",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Browser.php",
+            "UXON": {
+                "widget_type": "Browser",
+                "object_alias": "exface.Core.DUMMY",
+                "url": ""
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/browser.gif"
         }
     ],
     "totals_rows": [],
