@@ -12,6 +12,7 @@ use exface\Core\Widgets\Parts\Charts\ChartSeries;
 use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
 use exface\Core\Widgets\Parts\Charts\Interfaces\SplittableChartSeriesInterface;
 use exface\Core\Interfaces\Widgets\iHaveColorScale;
+use exface\Core\Widgets\Parts\Charts\BarChartSeries;
 
 trait XYChartSeriesTrait
 {
@@ -309,6 +310,10 @@ trait XYChartSeriesTrait
         $column = $dimension === Chart::AXIS_X ? $this->xColumn : $this->yColumn;
         $columnId = $dimension === Chart::AXIS_X ? $this->xColumnId : $this->yColumnId;
         $secondaryAxisPosition = $dimension === Chart::AXIS_X ? 'bottom' : 'right';
+        $setAxisTypeToCategory = false;
+        if ($this instanceof BarChartSeries && $dimension !== $this->getValueColumnDimension()) {
+            $setAxisTypeToCategory = true;
+        }
         $chart = $this->getChart();
         
         //when series has number given, try get axis with that number, if that fails, continue
@@ -316,6 +321,9 @@ trait XYChartSeriesTrait
             try {
                 $axis = $chart->getAxes($dimension)[$axisNo];
                 if ($axis !== null) {
+                    if ($setAxisTypeToCategory) {
+                        $axis->setAxisType(ChartAxis::AXIS_TYPE_CATEGORY);
+                    }
                     return $axis;
                 }
             } catch (\Throwable $e) {
@@ -334,15 +342,30 @@ trait XYChartSeriesTrait
             }
             // check if series is stacked and not the first series or if stacked isn't explicitly set in the configuration
             // and no axis for the series value already exists
-            if (($this->isStacked() === true && $this->getIndex() > 0) || ($this->isStacked() === null && empty($attrAxes) && $this->getIndex() > 0)) {
+            if (($this->isStacked() !== false && $this->getIndex() > 0)) {
                 $prevSeries = $chart->getSeries()[($this->getIndex() - 1)];
                 //check if previous series is the same type and has the same stack group
                 if ($prevSeries instanceof StackableChartSeriesInterface && $prevSeries->isStacked() === true && $prevSeries->getType() === $this->getType() && $prevSeries->getStackGroupId() === $this->getStackGroupId()) {
-                    $this->setStacked(true);
-                    return $dimension === Chart::AXIS_X ? $prevSeries->getXAxis() : $prevSeries->getYAxis();
+                    //if no axis was found for the value attriute alias return the prvious series value axis for this series
+                    if (empty($attrAxes)) {
+                        $this->setStacked(true);
+                        return $dimension === Chart::AXIS_X ? $prevSeries->getXAxis() : $prevSeries->getYAxis();
+                    } else {
+                        //if axes were found for value attribute alias check if any of thoses axes is the same value axis of the pevious series
+                        //if so the value axis of the previous axis is the correct value axis for this series
+                        $prevSeriesAxis = $dimension === Chart::AXIS_X ? $prevSeries->getXAxis() : $prevSeries->getYAxis();
+                        foreach ($attrAxes as $axis) {
+                            if ($axis === $prevSeriesAxis) {
+                                $this->setStacked(true);
+                                return $prevSeriesAxis;
+                            }
+                        }
+                    }
                 }
-            //if stack isnt explicitly set and there wasnt a previous matching stacked axis found for the value dimension, set this series to not be stacked    
-            } elseif ($this->isStacked() === null) {
+                
+            }
+            //if still isnt set yet, therefore no matching axis was found and the series wont be stacked, set stacked to false
+            if ($this->isStacked() === null) {
                 $this->setStacked(false);
             }
         }
@@ -355,6 +378,9 @@ trait XYChartSeriesTrait
                     //when no axis already exists create new axis
                     case 0:
                         $axis = $chart->createAxisFromColumnId($column->getId());
+                        if ($setAxisTypeToCategory) {
+                            $axis->setAxisType(ChartAxis::AXIS_TYPE_CATEGORY);
+                        }
                         $chart->addAxis($dimension, $axis);
                         break;
                     //when there are already axes existing, search if one has same attribute
@@ -364,6 +390,9 @@ trait XYChartSeriesTrait
                         //when there is no axis with same attribute, create new axis
                         if (empty($attrAxes)) {
                             $axis = $chart->createAxisFromColumnId($column->getId());
+                            if ($setAxisTypeToCategory) {
+                                $axis->setAxisType(ChartAxis::AXIS_TYPE_CATEGORY);
+                            }
                             $axis->setPosition($secondaryAxisPosition);
                             $chart->addAxis($dimension, $axis);
                         //when there are axes with same attribute, use first of those axes
@@ -376,6 +405,9 @@ trait XYChartSeriesTrait
             // when columnId given, create axis base on that columnId
             case $columnId !== null:
                 $axis = $chart->createAxisFromColumnId($columnId);
+                if ($setAxisTypeToCategory) {
+                    $axis->setAxisType(ChartAxis::AXIS_TYPE_CATEGORY);
+                }
                 $axis->setPosition($secondaryAxisPosition);
                 if ($this->hasCaption()) {
                     $axis->setCaption($this->getCaption());
