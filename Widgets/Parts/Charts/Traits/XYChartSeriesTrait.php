@@ -12,6 +12,7 @@ use exface\Core\Widgets\Parts\Charts\ChartSeries;
 use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
 use exface\Core\Widgets\Parts\Charts\Interfaces\SplittableChartSeriesInterface;
 use exface\Core\Interfaces\Widgets\iHaveColorScale;
+use exface\Core\Widgets\Parts\Charts\BarChartSeries;
 
 trait XYChartSeriesTrait
 {
@@ -309,6 +310,10 @@ trait XYChartSeriesTrait
         $column = $dimension === Chart::AXIS_X ? $this->xColumn : $this->yColumn;
         $columnId = $dimension === Chart::AXIS_X ? $this->xColumnId : $this->yColumnId;
         $secondaryAxisPosition = $dimension === Chart::AXIS_X ? 'bottom' : 'right';
+        $setAxisTypeToCategory = false;
+        if ($this instanceof BarChartSeries && $dimension !== $this->getValueColumnDimension()) {
+            $setAxisTypeToCategory = true;
+        }
         $chart = $this->getChart();
         
         //when series has number given, try get axis with that number, if that fails, continue
@@ -316,6 +321,9 @@ trait XYChartSeriesTrait
             try {
                 $axis = $chart->getAxes($dimension)[$axisNo];
                 if ($axis !== null) {
+                    if ($setAxisTypeToCategory) {
+                        $axis->setAxisType(ChartAxis::AXIS_TYPE_CATEGORY);
+                    }
                     return $axis;
                 }
             } catch (\Throwable $e) {
@@ -370,6 +378,9 @@ trait XYChartSeriesTrait
                     //when no axis already exists create new axis
                     case 0:
                         $axis = $chart->createAxisFromColumnId($column->getId());
+                        if ($setAxisTypeToCategory) {
+                            $axis->setAxisType(ChartAxis::AXIS_TYPE_CATEGORY);
+                        }
                         $chart->addAxis($dimension, $axis);
                         break;
                     //when there are already axes existing, search if one has same attribute
@@ -379,6 +390,9 @@ trait XYChartSeriesTrait
                         //when there is no axis with same attribute, create new axis
                         if (empty($attrAxes)) {
                             $axis = $chart->createAxisFromColumnId($column->getId());
+                            if ($setAxisTypeToCategory) {
+                                $axis->setAxisType(ChartAxis::AXIS_TYPE_CATEGORY);
+                            }
                             $axis->setPosition($secondaryAxisPosition);
                             $chart->addAxis($dimension, $axis);
                         //when there are axes with same attribute, use first of those axes
@@ -391,6 +405,9 @@ trait XYChartSeriesTrait
             // when columnId given, create axis base on that columnId
             case $columnId !== null:
                 $axis = $chart->createAxisFromColumnId($columnId);
+                if ($setAxisTypeToCategory) {
+                    $axis->setAxisType(ChartAxis::AXIS_TYPE_CATEGORY);
+                }
                 $axis->setPosition($secondaryAxisPosition);
                 if ($this->hasCaption()) {
                     $axis->setCaption($this->getCaption());
