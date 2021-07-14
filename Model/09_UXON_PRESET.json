@@ -4534,13 +4534,13 @@
         },
         {
             "CREATED_ON": "2021-07-13 21:30:18",
-            "MODIFIED_ON": "2021-07-14 09:17:22",
+            "MODIFIED_ON": "2021-07-14 12:07:16",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb9100c1ef08009100025041000001",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Simple DataMatrix",
-            "DESCRIPTION": "A table with transposed columns forming a matrix within the table. You can have one or more transposed columns. Each of them needs a `label_attribute_alias` - the \"x-axis\" of the matrix. If multiple transposed columns have the same `label_attribute_alias` their values will show up as separate rows in the matrix. If the `label_attribute_alias` is different, they will form multiple matrices. ",
+            "DESCRIPTION": "A table with transposed columns forming a matrix within the table. You can have one or more transposed columns. Each of them needs a `label_attribute_alias` - the \"x-axis\" of the matrix. If multiple transposed columns have the same `label_attribute_alias` their values will show up as separate rows in the matrix. If the `label_attribute_alias` is different, they will form multiple matrices. \n\nAlso keep in mind, that pagination of transposed data is very difficult, so it is safer to turn it off via `paginate:false`.",
             "PROTOTYPE": "exface\/Core\/Widgets\/DataMatrix.php",
             "UXON": {
                 "widget_type": "DataMatrix",
@@ -4632,6 +4632,140 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/browser.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-14 12:03:58",
+            "MODIFIED_ON": "2021-07-14 12:11:32",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba304ce46cfe6a304025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Button disabled depending on selection in table",
+            "DESCRIPTION": "Buttons in tables or other data widgets can be dynamically enabled or disabled depending on values in the currently selected rows\/items. You don't even need to give the data widget an explicit `id` - just use the magic reference `~input` in your condition to link the table the button belongs to (= its `input_widget`). For example, `=~input!my_col` would reference the column\/attribute `my_col` of the buttons input widget.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Button.php",
+            "UXON": {
+                "action_alias": "",
+                "disabled_if": {
+                    "operator": "AND",
+                    "conditions": [
+                        {
+                            "value_left": "=~input!REPLACE_WITH_COLUMN_NAME_OR_ATTRIBUTE_ALIAS",
+                            "comparator": "==",
+                            "value_right": ""
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/button\/button_disabled_if_table.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-14 12:11:12",
+            "MODIFIED_ON": "2021-07-14 12:11:40",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb495d15bde82b495025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Button with a dropdown-menu (multi-action)",
+            "DESCRIPTION": "When this button is clicked, a menu will show up which also consists of button widgets - these menu items actually trigger actions. Each button inside the menu can separately be `disabled` or `disabled_if`.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/MenuButton.php",
+            "UXON": {
+                "widget_type": "MenuButton",
+                "caption": "",
+                "icon": "",
+                "buttons": [
+                    {
+                        "action_alias": ""
+                    },
+                    {
+                        "action_alias": ""
+                    },
+                    {
+                        "action_alias": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/button\/menubutton.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-14 12:17:31",
+            "MODIFIED_ON": "2021-07-14 12:21:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb89abb35a91de89ab025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Button with custom action",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Button.php",
+            "UXON": {
+                "caption": "",
+                "hint": "",
+                "icon": "",
+                "action": {
+                    "alias": ""
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/button\/button.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-14 12:18:22",
+            "MODIFIED_ON": "2021-07-14 12:20:33",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba178d146bc9aa178025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Button without icon",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Button.php",
+            "UXON": {
+                "show_icon": false,
+                "action_alias": ""
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/button\/button_no_icon.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-14 12:20:20",
+            "MODIFIED_ON": "2021-07-14 12:20:20",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb61a17a1cd2eb61a025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Icon-only button",
+            "DESCRIPTION": "Make sure to add a proper `hint` to give the button a helpful tooltip",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Button.php",
+            "UXON": {
+                "icon": "",
+                "hint": "",
+                "action_alias": ""
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/button\/button_icon_only.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-14 12:22:00",
+            "MODIFIED_ON": "2021-07-14 12:22:00",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb8bca533c57648bca025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Button without action (dummy)",
+            "DESCRIPTION": "Used as mockup for quick prototyping",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Button.php",
+            "UXON": {
+                "caption": "",
+                "icon": ""
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/button\/button.gif"
         }
     ],
     "totals_rows": [],
