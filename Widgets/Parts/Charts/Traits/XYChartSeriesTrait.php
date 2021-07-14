@@ -334,15 +334,30 @@ trait XYChartSeriesTrait
             }
             // check if series is stacked and not the first series or if stacked isn't explicitly set in the configuration
             // and no axis for the series value already exists
-            if (($this->isStacked() === true && $this->getIndex() > 0) || ($this->isStacked() === null && empty($attrAxes) && $this->getIndex() > 0)) {
+            if (($this->isStacked() !== false && $this->getIndex() > 0)) {
                 $prevSeries = $chart->getSeries()[($this->getIndex() - 1)];
                 //check if previous series is the same type and has the same stack group
                 if ($prevSeries instanceof StackableChartSeriesInterface && $prevSeries->isStacked() === true && $prevSeries->getType() === $this->getType() && $prevSeries->getStackGroupId() === $this->getStackGroupId()) {
-                    $this->setStacked(true);
-                    return $dimension === Chart::AXIS_X ? $prevSeries->getXAxis() : $prevSeries->getYAxis();
+                    //if no axis was found for the value attriute alias return the prvious series value axis for this series
+                    if (empty($attrAxes)) {
+                        $this->setStacked(true);
+                        return $dimension === Chart::AXIS_X ? $prevSeries->getXAxis() : $prevSeries->getYAxis();
+                    } else {
+                        //if axes were found for value attribute alias check if any of thoses axes is the same value axis of the pevious series
+                        //if so the value axis of the previous axis is the correct value axis for this series
+                        $prevSeriesAxis = $dimension === Chart::AXIS_X ? $prevSeries->getXAxis() : $prevSeries->getYAxis();
+                        foreach ($attrAxes as $axis) {
+                            if ($axis === $prevSeriesAxis) {
+                                $this->setStacked(true);
+                                return $prevSeriesAxis;
+                            }
+                        }
+                    }
                 }
-            //if stack isnt explicitly set and there wasnt a previous matching stacked axis found for the value dimension, set this series to not be stacked    
-            } elseif ($this->isStacked() === null) {
+                
+            }
+            //if still isnt set yet, therefore no matching axis was found and the series wont be stacked, set stacked to false
+            if ($this->isStacked() === null) {
                 $this->setStacked(false);
             }
         }
