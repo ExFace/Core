@@ -13,7 +13,6 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
-use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 
