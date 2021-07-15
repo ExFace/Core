@@ -14,6 +14,8 @@ Since the Web PI does not offer most recent versions of PHP, it is probably a go
 1. Download one of the latest [PHP binaries](https://windows.php.net/download/) - pick the non-thread-safe (nts) version.
 2. Unpack it into `C:\Program Files\PHP\bin`
 3. Follow the guides above to register it as a FastCGI module in IIS
+4. Create a `tmp` folder in your PHP folder. (`C:\Program Files\PHP\tmp`)
+5. Give the users `IUSR` and `IIS AppPool\DefaultAppPool` read/write and modify permissions for the `tmp` folder.
 
 ## Rewrite Module Installation
 
@@ -57,6 +59,7 @@ Use the following configuration in addition to the server-independent [recommend
 	- `cgi.fix_pathinfo = 1`
 	- `fastcgi.impersonate = 1`
 	- `extension = sodium`
+	- `sys_temp_dir = "C:\Program Files\PHP\tmp"` - If the path to your `tmp` folder is different change the path to the correct one!
 2. Add SQL Server Extension:
 	- `extension = sqlsrv_74_nts`
 3. WinCache settings:
