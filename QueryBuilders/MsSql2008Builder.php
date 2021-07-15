@@ -2,6 +2,7 @@
 namespace exface\Core\QueryBuilders;
 
 use exface\Core\Exceptions\QueryBuilderException;
+use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 
 /**
  * A query builder for Microsoft SQL 2008.
@@ -106,14 +107,30 @@ class MsSql2008Builder extends MsSqlBuilder
     protected function buildSqlQuerySelectRownumWrapper(string $query) : string
     {
         if ($this->getLimit() > 0) {
-            $limitPlusOne = $this->getLimit() + 1;
+            $from = $this->getOffset() + 1; // ROW_NUMBER() OVER starts at 1!!! 
+            $to = $this->getOffset() + $this->getLimit() + 1;
             $query = <<<SQL
 SELECT *
     FROM ({$query}) EXFUNPAGED
-    WHERE EXFROWNUM BETWEEN {$this->getOffset()} AND {$limitPlusOne}
+    WHERE EXFROWNUM BETWEEN {$from} AND {$to}
     
 SQL;
         }
         return $query;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlOrderBy()
+     */
+    protected function buildSqlOrderBy(QueryPartSorter $qpart, $select_from = '') : string
+    {
+        // SQL Server 2008 cannot sort over an alias from the SELECT - need to place the entire data address in the ORDER BY
+        // in case the attribute is a custom SQL statement.
+        if ($this->checkForSqlStatement($qpart->getDataAddress()) && ! $qpart->getDataAddressProperty("SQL_ORDER_BY")) {
+            return $this->buildSqlSelect($qpart, null, null, '') . ' ' . $qpart->getOrder();
+        }
+        return parent::buildSqlOrderBy($qpart, $select_from);
     }
 }
