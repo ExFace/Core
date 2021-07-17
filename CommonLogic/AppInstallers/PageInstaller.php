@@ -433,6 +433,7 @@ class PageInstaller extends AbstractAppInstaller
             }
         }
         $exportWb = Workbench::startNewInstance($exportConfig);
+        $exportWb->getContext()->getScopeSession()->setSessionDisabled(true);
         $exportApp = $exportWb->getApp($this->getApp()->getSelector());
         
         // Dann alle Dialoge der App als Dateien in den Ordner schreiben.
