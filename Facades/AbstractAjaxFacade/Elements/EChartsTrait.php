@@ -416,7 +416,7 @@ JS;
         return <<<JS
         
             var echart = {$this->buildJsEChartsVar()};
-            // check if _redrawSelection is not undefined, means the select is called for ma redraw with a row selected before the redraw
+            // check if _redrawSelection is not undefined, means the select is called for a redraw with a row selected before the redraw
             if (echart._redrawSelection !== undefined) {
                 //if the selected row before the redraw is in new dataset and got selected again, dont call onChangeScripts
                 if ({$selection} !== undefined && {$this->buildJsRowCompare('echart._redrawSelection', $selection)}) {
@@ -2011,6 +2011,7 @@ JS;
     var echart = {$this->buildJsEChartsVar()}
     var newSelection = undefined;
     var uidField = '{$uidField}' || undefined;
+    //save the old selection to check later if after redraw it is still selected and therefor no onChangeScripts need to be called
     echart._redrawSelection = echart._oldSelection;   
     if (echart._oldSelection != undefined) {
         newSelection = function (){
