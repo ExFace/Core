@@ -1,5 +1,16 @@
 # Recommended PHP settings
 
+## TS or NTS version for Windows?
+
+- Apache + LoadModule: Thread Safe (TS)
+- Apache + FastCGI: Non-Thread Safe (NTS)
+- IIS: Thread Safe
+- IIS + FastCGI: Non-Thread Safe
+
+PHP manual has nice [installation instructions for Windows servers](http://php.net/install.windows).
+
+In general running PHP with FastCGI is the preferable way, it performs faster and allows for more fine-grained security configuration.
+
 ## Required extensions
 
 - `mbstring`
