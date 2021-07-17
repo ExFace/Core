@@ -416,17 +416,34 @@ JS;
         return <<<JS
         
             var echart = {$this->buildJsEChartsVar()};
-            var oSelected = {$selection};
-            if (echart._oldselection === undefined) {
+            // check if _redrawSelection is not undefined, means the select is called for a redraw with a row selected before the redraw
+            if (echart._redrawSelection !== undefined) {
+                //if the selected row before the redraw is in new dataset and got selected again, dont call onChangeScripts
+                if ({$selection} !== undefined && {$this->buildJsRowCompare('echart._redrawSelection', $selection)}) {
+                    echart._oldSelection = {$selection};
+                    echart._redrawSelection = undefined;
+                    return;
+                }
+                {$this->getOnChangeScript()}
+                
+                echart._oldSelection = {$selection};
+                echart._redrawSelection = undefined;
+                return;
+            }
+            if (echart._oldSelection === undefined && {$selection} === undefined) {
+                return;
+            }
+            if (echart._oldSelection === undefined) {
                 echart._oldSelection = {$selection};
             } else {
-                if (({$this->buildJsRowCompare('echart._oldSelection', 'oSelected')}) === false) {
+                if (({$this->buildJsRowCompare('echart._oldSelection', $selection)}) === false) {
                     echart._oldSelection = {$selection};
                 } else {
                     return;
                 }
             }
             {$this->getOnChangeScript()}
+            return;
             
 JS;
     }
@@ -1993,19 +2010,11 @@ JS;
     var rowData = $dataJs;
     var echart = {$this->buildJsEChartsVar()}
     var newSelection = undefined;
-    var uidField = '{$uidField}' || undefined ;
+    var uidField = '{$uidField}' || undefined;
+    //save the old selection to check later if after redraw it is still selected and therefor no onChangeScripts need to be called
+    echart._redrawSelection = echart._oldSelection;   
     if (echart._oldSelection != undefined) {
-        if (uidField != undefined) {
-            newSelection = function (){
-                for (var i = 0; i < rowData.length; i++) {
-                    if (rowData[i][uidField] === echart._oldSelection[uidField]) {
-                        return rowData[i];
-                    }
-                }
-                return undefined
-            }();
-        } else {
-            newSelection = function (){
+        newSelection = function (){
                 for (var i = 0; i < rowData.length; i++) {
                     if ({$this->buildJsRowCompare('rowData[i]', 'echart._oldSelection')}) {
                         return rowData[i];
@@ -2013,8 +2022,9 @@ JS;
                 }
                 return undefined
             }();
-        }
     }
+    // save the row that was selected before redraw, need later to check that its a redraw and selection didnt change (or changed)
+    echart._prevRedrawSelection = undefined;
     var options = echart.getOption();
     var seriesIndex = undefined
     if (options != undefined) {
@@ -2269,16 +2279,17 @@ JS;
     {$this->buildJsEChartsVar()}.setOption(newOptions);
     
     {$setDatasetJs}
-    
-    var selection = {$selectionJs};
-    if (selection != undefined) {
+
+    if ({$selectionJs} != undefined) {
         if ({$seriesIndexMarkedJs} != undefined) {
             var params = {seriesIndex: {$seriesIndexMarkedJs}}
         } else {
             var params = {seriesIndex: 0};
         }
-        params.data = selection;
+        params.data = {$selectionJs};
         {$this->buildJsSingleClick('params')}
+    } else {
+        {$this->buildJsSelect()}
     }
     
     
@@ -2484,11 +2495,10 @@ JS;
             data: {$dataJs}.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
         }
     })
-    var selection = {$selection};
-    if (selection != undefined) {
+    if ({$selection} != undefined) {
         var index = function(){
             for (var i = 0; i < chartData.length; i++) {
-                if (chartData[i].name === selection.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}) {
+                if (chartData[i].name === {$selection}.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}) {
                     return i
                 }
             }
@@ -2496,6 +2506,8 @@ JS;
         var params = {seriesIndex: 0, dataIndex: index};
         params.data = {name: chartData[index].name};
         {$this->buildJsSingleClick('params')}
+    }  else {
+        {$this->buildJsSelect()}
     }
     
     
@@ -2642,11 +2654,10 @@ JS;
             categories: categories,
     	}],
     });
-    var selection = {$selection};
-    if (selection != undefined) {
+    if ({$selection} != undefined) {
         var index = function(){
             for (var i = 0; i < nodes.length; i++) {
-                if (nodes[i].id === selection.{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()}) {
+                if (nodes[i].id === {$selection}.{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()}) {
                     return i
                 }
             }
@@ -2654,7 +2665,8 @@ JS;
         var params = {seriesIndex: 0, dataIndex: index, dataType: 'node'};
         params.data = {id: nodes[index].id};
         {$this->buildJsSingleClick('params')}
-        //echart._oldSelection = selection;
+    } else {
+        {$this->buildJsSelect()}
     }
     
 JS;
@@ -2662,6 +2674,7 @@ JS;
     
     /**
      * javascript snippet to transform data to match data required for sankey charts and draw sankey chart
+     * TODO implement selection keeping on redraw
      *
      * @return string
      */

@@ -40,6 +40,8 @@ class SessionContextScope extends AbstractContextScope
     
     private $installation_name = null;
     
+    private $session_disabled = false;
+    
     public function __construct(Workbench $exface)
     {
         $this->installation_name = $exface->getInstallationName();
@@ -228,7 +230,10 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function sessionOpen(bool $ignoreHeaderWarnings = false)
     {
-        if (! $this->sessionIsOpen() && $this->sessionIsPossible()) {
+        if (! $this->sessionIsPossible()) {
+            return $this;
+        }
+        if (! $this->sessionIsOpen()) {
             // If there is a session id saved in the context, this session was already loaded into it, so the next time
             // we need to open exactly the same session!
             if ($this->getSessionId() && $this->getSessionId() !== session_id()) {
@@ -299,7 +304,7 @@ class SessionContextScope extends AbstractContextScope
     
     protected function sessionIsPossible() : bool
     {
-        return ! ConsoleFacade::isPhpScriptRunInCli();
+        return $this->session_disabled === false && ! ConsoleFacade::isPhpScriptRunInCli();
     }
 
     /**
@@ -485,5 +490,11 @@ class SessionContextScope extends AbstractContextScope
     public function getVariable(string $name, string $namespace = null)
     {
         return $this->getSessionData('_' . ($namespace !== null ? $namespace . '_' : '') . $name);
+    }
+    
+    public function setSessionDisabled(bool $trueOrFalse) : SessionContextScope
+    {
+        $this->session_disabled = $trueOrFalse;
+        return $this;
     }
 }
