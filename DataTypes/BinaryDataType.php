@@ -206,7 +206,7 @@ class BinaryDataType extends StringDataType
     public static function convertHexToBinary(string $hexString) : string
     {
         $hexString = stripos($hexString, HexadecimalNumberDataType::HEX_PREFIX) === 0 ? substr($hexString, 2) : $hexString;
-        $binary = hex2bin($hexString, true);
+        $binary = hex2bin($hexString);
         if ($binary === false) {
             throw new DataTypeCastingError('Cannot convert hexadecimal to binary: invalid hexadecimal number!');
         }
