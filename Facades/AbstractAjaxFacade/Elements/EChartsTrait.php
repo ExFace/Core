@@ -424,9 +424,8 @@ JS;
                     echart._redrawSelection = undefined;
                     return;
                 }
-                {$this->getOnChangeScript()}
-                
                 echart._oldSelection = {$selection};
+                {$this->getOnChangeScript()}
                 echart._redrawSelection = undefined;
                 return;
             }
@@ -2014,14 +2013,25 @@ JS;
     //save the old selection to check later if after redraw it is still selected and therefor no onChangeScripts need to be called
     echart._redrawSelection = echart._oldSelection;   
     if (echart._oldSelection != undefined) {
-        newSelection = function (){
+        if (uidField != undefined) {
+            newSelection = function (){
                 for (var i = 0; i < rowData.length; i++) {
-                    if ({$this->buildJsRowCompare('rowData[i]', 'echart._oldSelection')}) {
+                    if (rowData[i][uidField] === echart._oldSelection[uidField]) {
                         return rowData[i];
                     }
                 }
                 return undefined
             }();
+        } else {       
+            newSelection = function (){
+                    for (var i = 0; i < rowData.length; i++) {
+                        if ({$this->buildJsRowCompare('rowData[i]', 'echart._oldSelection')}) {
+                            return rowData[i];
+                        }
+                    }
+                    return undefined
+                }();
+        }
     }
     // save the row that was selected before redraw, need later to check that its a redraw and selection didnt change (or changed)
     echart._prevRedrawSelection = undefined;
