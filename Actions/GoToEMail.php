@@ -2,7 +2,6 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Constants\Icons;
-use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\CommonLogic\Model\Expression;
 
@@ -74,8 +73,8 @@ class GoToEMail extends GoToUrl
      */
     public function getUrl()
     {
-        if ($this->url) {
-            return $this->url;
+        if ($url = parent::getUrl()) {
+            return $url;
         }
         
         $to = $this->getTo();
@@ -103,6 +102,9 @@ class GoToEMail extends GoToUrl
      *
      * @uxon-property subject
      * @uxon-type string
+     * 
+     * @param string $value
+     * @return GoToEMail
      */
     public function setSubject(string $value) : GoToEMail
     {
@@ -114,7 +116,11 @@ class GoToEMail extends GoToUrl
      * Defines the recipient of the email.
      *
      * @uxon-property to
-     * @uxon-type string
+     * @uxon-type string|metamodel:formula
+     * @uxon-required true
+     * 
+     * @param string $value
+     * @return GoToEMail
      */
     public function setTo(string $value) : GoToEMail
     {
@@ -151,8 +157,11 @@ class GoToEMail extends GoToUrl
      *
      * @uxon-property body
      * @uxon-type string
+     * 
+     * @param string $value
+     * @return GoToEMail
      */
-    public function setBody($value) : GoToEMail
+    public function setBody(string $value) : GoToEMail
     {
         $this->body = $value;
         return $this;
