@@ -167,8 +167,8 @@
 					cnts.push(result);
 				}
 			}
-			//sort contours by area big->small
-			cnts.sort((a,b)=>b.area-a.area);
+			//sort contours by area big->small 
+			cnts.sort((a,b) => b.area-a.area);
 			let points = cnts[0].points;
 			//sort points by coordinates top left is first, then counter clockwise
 			points.sort((a,b)=>(a.x+a.y)-(b.x+b.y));
@@ -184,7 +184,17 @@
 				tmpPoints.push(points[1]);
 				tmpPoints.push(points[0]);
 				points = tmpPoints;
+			} 
+			
+			if (points[1].y - points[0].y < 200) {
+				points = [
+					{x: 10, y: 10, selected: false},
+					{x: 10, y: canvas.height - 10, selected: false},
+					{x: canvas.width - 10, y: canvas.height - 10, selected: false},
+					{x: canvas.width - 10 , y: 10, selected: false}
+				];
 			}
+			
 			docScanner._variables.points = points;
 			canvas.onmousedown = docScanner._canvasClick;
 			canvas.onmouseup = docScanner._stopDragging;
