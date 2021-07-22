@@ -10,6 +10,10 @@ use exface\Core\Actions\SaveData;
 use exface\Core\DataTypes\UrlDataType;
 use exface\Core\Widgets\Button;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsDateFormatter;
+use exface\Core\Factories\DataTypeFactory;
+use exface\Core\DataTypes\DateTimeDataType;
 
 /**
  * Helps implement ImageCarousel widgets with jQuery and the slick.
@@ -72,15 +76,12 @@ trait SlickGalleryTrait
     private $btnZoom = null;
     
     /**
-     * Returns the JS code to read data and populate the carousel with slides.
      *
-     * Should be overridden by facade implementations
-     *
+     * @param string $oParamsJs
+     * @param string $onUploadCompleteJs
      * @return string
      */
-    protected abstract function buildJsDataSource() : string;
-    
-    protected abstract function buildJsUploaderInit() : string;
+    protected abstract function buildJsUploadSend(string $oParamsJs, string $onUploadCompleteJs) : string;
     
     /**
      * Returns the HTML code of the carousel.
@@ -91,52 +92,35 @@ trait SlickGalleryTrait
     {
         return <<<HTML
 
-<div id="{$this->getId()}" class="slick-carousel horizontal" style="height: 100%">
+<div id="{$this->getIdOfSlick()}" class="slick-carousel horizontal" style="height: 100%">
     <!-- Slides will be placed here programmatically -->
 </div>
 	
 HTML;
     }
-        
-    /**
-     * Returns the JS code to initialize the carousel and load initial data.
-     * 
-     * @return string
-     */
-    protected function buildJsCarouselInit() : string
-    {
-        return <<<JS
     
-    {$this->buildJsFunctionPrefix()}_init();
-    setTimeout(function(){
-        {$this->buildJsFunctionPrefix()}_load();
-    }, 0);
-
-JS;
+    protected function getIdOfSlick() : string
+    {
+        return $this->getId();
     }
-
-    /**
-     * Returns the JS code defining all sorts of functions to be used by this element.
-     * 
-     * @return string
-     */
-    protected function buildJsCarouselFunctions() : string
+    
+    protected function buildJsSlickInit() : string
     {
         if ($this->getWidget()->isZoomable()) {
             if ($this->getWidget()->hasImageTitleColumn()) {
-                $lightboxCaption = "caption: function(element, info){var oData = $('#{$this->getId()}').data('_exfData'); if (oData) {return (oData.rows || [])[info.index]['{$this->getWidget()->getImageTitleColumn()->getDataColumnName()}'] } else {return '';} },";
+                $lightboxCaption = "caption: function(element, info){var oData = $('#{$this->getIdOfSlick()}').data('_exfData'); if (oData) {return (oData.rows || [])[info.index]['{$this->getWidget()->getImageTitleColumn()->getDataColumnName()}'] } else {return '';} },";
             }
             
             $zoomOnClickJs = $this->getWidget()->getHideHeader() ? 'true' : 'false';
             
             $lightboxInit = <<<JS
 
-    $("#{$this->getId()}")
+    $("#{$this->getIdOfSlick()}")
     .slickLightbox({
         src: 'src',
         itemSelector: '.imagecarousel-item img',
         shouldOpen: function(slick, element, event){
-            return $("#{$this->getId()}").data('_exfZoomOnClick') || false;
+            return $("#{$this->getIdOfSlick()}").data('_exfZoomOnClick') || false;
         },
         {$lightboxCaption}
     })
@@ -146,25 +130,17 @@ JS;
         } else {
             $lightboxInit = '';
         }
-        $output = <<<JS
+        
+        return <<<JS
 
-function {$this->buildJsFunctionPrefix()}_init(){
-    
-    $("#{$this->getId()}").slick({
+    $("#{$this->getIdOfSlick()}").slick({
         infinite: false,
         {$this->buildJsSlickOrientationOptions()}
         {$this->buildJsSlickOptions()}
     });
     {$lightboxInit}
-}
-
-function {$this->buildJsFunctionPrefix()}_load(){
-	{$this->buildJsDataSource()}
-}
 
 JS;
-        
-        return $output;
     }
     
     /**
@@ -193,21 +169,11 @@ JS;
     }
 
     /**
-     * 
-     * {@inheritdoc}
-     * @see AbstractJqueryElement::buildJsRefresh()
-     */
-    public function buildJsRefresh($keep_pagination_position = false)
-    {
-        return $this->buildJsFunctionPrefix() . "_load();";
-    }
-
-    /**
      * Returns an array of <head> tags required for this trait to work
      * 
      * @return string[]
      */
-    protected function buildHtmlHeadSliderIncludes()
+    protected function buildHtmlHeadTagsSlick()
     {
         $includes = [];
         $facade = $this->getFacade();
@@ -218,6 +184,31 @@ JS;
         if ($this->getWidget()->isZoomable()) {
             $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.SLICK.LIGHTBOX_JS') . '"></script>';
             $includes[] = '<link rel="stylesheet" type="text/css" href="' . $facade->buildUrlToSource('LIBS.SLICK.LIGHTBOX_CSS') . '">';
+        }
+        
+        if ($this->getWidget()->isUploadEnabled()) {
+            // The jQuery UI widget factory, can be omitted if jQuery UI is already included -->
+            $includes[] = '<script src="vendor/bower-asset/blueimp-file-upload/js/vendor/jquery.ui.widget.js"></script>';
+            // The Load Image plugin is included for the preview images and image resizing functionality -->
+            $includes[] = '<script src="vendor/npm-asset/blueimp-load-image/js/load-image.all.min.js"></script>';
+            // The Iframe Transport is required for browsers without support for XHR file uploads -->
+            $includes[] = '<script src="vendor/bower-asset/blueimp-file-upload/js/jquery.iframe-transport.js"></script>';
+            // The basic File Upload plugin -->
+            $includes[] = '<script src="vendor/bower-asset/blueimp-file-upload/js/jquery.fileupload.js"></script>';
+            // The File Upload processing plugin -->
+            $includes[] = '<script src="vendor/bower-asset/blueimp-file-upload/js/jquery.fileupload-process.js"></script>';
+            // The File Upload image preview & resize plugin -->
+            $includes[] = '<script src="vendor/bower-asset/blueimp-file-upload/js/jquery.fileupload-image.js"></script>';
+            /*
+            // The File Upload audio preview plugin -->
+            $includes[] = '<script src="vendor/bower-asset/blueimp-file-upload/js/jquery.fileupload-audio.js"></script>';
+            // The File Upload video preview plugin -->
+            $includes[] = '<script src="vendor/bower-asset/blueimp-file-upload/js/jquery.fileupload-video.js"></script>';
+            // The File Upload validation plugin -->
+            */
+            $includes[] = '<script src="vendor/bower-asset/blueimp-file-upload/js/jquery.fileupload-validate.js"></script>';
+            $includes[] = '<script src="vendor/bower-asset/paste.js/paste.js"></script>';
+            $includes = array_merge($includes, $this->getDateFormatter()->buildHtmlHeadIncludes($this->getFacade()), $this->getDateFormatter()->buildHtmlBodyIncludes($this->getFacade()));
         }
         
         return $includes;
@@ -239,7 +230,7 @@ JS;
                 'alias' => 'exface.Core.CustomFacadeScript',
                 'script' => <<<JS
                     var jqActiveSlide;
-                    var jqCarousel = $('#{$this->getId()}');
+                    var jqCarousel = $('#{$this->getIdOfSlick()}');
                     jqCarousel.data('_exfZoomOnClick', true); 
                     jqActiveSlide = jqCarousel.find('.imagecarousel-item.selected');
                     if (jqActiveSlide.length === 0) {
@@ -307,7 +298,7 @@ JS;
         
         switch (true) {
             case $action === null:
-                return "($('#{$this->getId()}').data('_exfData') || {oId: '{$widget->getMetaObject()->getId()}', rows: []})";
+                return "($('#{$this->getIdOfSlick()}').data('_exfData') || {oId: '{$widget->getMetaObject()->getId()}', rows: []})";
                 break;
             case $action instanceof iReadData:
                 // If we are reading, than we need the special data from the configurator
@@ -317,7 +308,7 @@ JS;
         
         return <<<JS
 (function(){
-    var jqCarousel = $('#{$this->getId()}');
+    var jqCarousel = $('#{$this->getIdOfSlick()}');
     var aSelectedRows = [];
     var aAllRows = ((jqCarousel.data('_exfData') || {}).rows || []);
     jqCarousel.find('.imagecarousel-item.selected').each(function(i, jqItem){
@@ -331,7 +322,7 @@ JS;
 JS;
     }
     
-    protected function buildJsCarouselSlidesFromData(string $jqSlickJs, string $oDataJs) : string
+    protected function buildJsSlickSlidesFromData(string $jqSlickJs, string $oDataJs) : string
     {
         $widget = $this->getWidget();
         if (($urlType = $widget->getImageUrlColumn()->getDataType()) && $urlType instanceof UrlDataType) {
@@ -344,7 +335,7 @@ JS;
                     var src = '';
                     var title = '';
     				var aRows = $oDataJs.rows;
-                    $jqSlickJs.data('_exfData', json);
+                    $jqSlickJs.data('_exfData', $oDataJs);
     
                     $jqSlickJs.slick('removeSlide', null, null, true);
     
@@ -354,8 +345,8 @@ JS;
                         $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<img src=\"' + src + '\" title=\"' + title + '\" alt=\"' + title + '\" />'")});
                     }
     
-                    $('#{$this->getId()} .imagecarousel-item').click(function(e) {
-                        $('#{$this->getId()} .imagecarousel-item').removeClass('selected');
+                    $('#{$this->getIdOfSlick()} .imagecarousel-item').click(function(e) {
+                        $('#{$this->getIdOfSlick()} .imagecarousel-item').removeClass('selected');
                         $(e.target).closest('.imagecarousel-item').addClass('selected');
                     });
                 })();
@@ -377,8 +368,8 @@ JS;
     {
         return <<<JS
         
-            $('#{$this->getId()} .slick-track').empty();
-            $('#{$this->getId()}').data('_exfData', {});
+            $('#{$this->getIdOfSlick()} .slick-track').empty();
+            $('#{$this->getIdOfSlick()}').data('_exfData', {});
            
 JS;
     }
@@ -400,5 +391,137 @@ JS;
     protected function buildCssHeightDefaultValue()
     {
         return $this->getWidget()->isHorizontal() ? ($this->getHeightRelativeUnit() * 6) . 'px' : '100%';
+    }
+    
+    /**
+     * TODO move this method to a JquerFileUploaderTrait
+     *
+     * @param string $jqSlickJs
+     * @return string
+     */
+    protected function buildJsUploaderInit(string $jqSlickJs, string $uploaderSlideCssClass = '') : string
+    {
+        if ($this->getWidget()->isUploadEnabled() === false) {
+            return '';
+        }
+        
+        $widget = $this->getWidget();
+        $uploader = $this->getWidget()->getUploader();
+        $uploadButtonEl = $this->getFacade()->getElement($uploader->getInstantUploadButton());
+        
+        $filenameColName = DataColumn::sanitizeColumnName($uploader->getFilenameAttribute()->getAliasWithRelationPath());
+        $contentColName = DataColumn::sanitizeColumnName($uploader->getFileContentAttribute()->getAliasWithRelationPath());
+        $fileModificationColumnJs = '';
+        if ($uploader->hasFileLastModificationTimeAttribute()) {
+            $fileModificationColumnJs = DataColumn::sanitizeColumnName($uploader->getFileModificationAttribute()->getAliasWithRelationPath()) . ": file.lastModified,";
+        }
+        $mimeTypeColumnJs = '';
+        if ($uploader->hasFileMimeTypeAttribute()) {
+            $mimeTypeColumnJs = DataColumn::sanitizeColumnName($uploader->getFileMimeTypeAttribute()->getAliasWithRelationPath()) . ": file.type,";
+        }
+        
+        $maxFileSizeInBytes = $uploader->getMaxFileSizeMb()*1024*1024;
+            
+        // TODO Use built-in file uploading instead of a custom $.ajax request to
+        // be able to take advantage of callbacks like fileuploadfail, fileuploadprogressall
+        // etc. To get the files from the XHR on server-side, we could replace their names
+        // by the corresponding data column names and teach the data reader middleware to
+        // place $_FILES in the data sheet if the column names match.
+        $output = <<<JS
+            
+    $jqSlickJs.slick('slickAdd', '<a class="imagecarousel-upload pastearea"><i class="fa fa-upload"></i></a>');
+    $jqSlickJs.find('.imagecarousel-upload').on('click', function(){
+        var jqA = $(this);
+        if (! jqA.hasClass('armed')) {
+            jqA.addClass('armed');
+            jqA.children('.fa-upload').hide();
+            jqA.append('<span>Paste or drag file here</span>');
+        } else {
+            jqA.removeClass('armed');
+            jqA.children('span').remove();
+            jqA.children('.fa-upload').show();
+        }
+    });
+    
+	$('#{$this->getIdOfSlick()} .pastearea').pastableNonInputable();
+	$('#{$this->getIdOfSlick()} .pastearea').on('pasteImage', function(ev, data){
+        $('#{$this->getIdOfSlick()} .imagecarousel-upload').fileupload('add', {files: [data.blob]});
+    });
+    
+    $('#{$this->getIdOfSlick()} .imagecarousel-upload').fileupload({
+        url: '{$this->getAjaxUrl()}',
+        dataType: 'json',
+        autoUpload: true,
+        {$this->buildJsUploadAcceptedFileTypesFilter()}
+        maxFileSize: {$maxFileSizeInBytes},
+        previewMaxHeight: $('#{$this->getIdOfSlick()} .imagecarousel-upload').height(),
+        previewMaxWidth: $('#{$this->getIdOfSlick()}').width(),
+        previewCrop: false,
+        formData: {
+            resource: '{$this->getPageId()}',
+            element: '{$uploader->getInstantUploadButton()->getId()}',
+            object: '{$widget->getMetaObject()->getId()}',
+            action: '{$uploader->getInstantUploadAction()->getAliasWithNamespace()}'
+        }
+    })
+    .on('fileuploadsend', function(e, data) {
+        var oParams = data.formData;
+        
+        data.files.forEach(function(file){
+            var fileReader = new FileReader();
+            $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""')}).append(file.preview)[0]);
+            fileReader.onload = function () {
+                var sContent = {$this->buildJsFileContentEncoder($uploader->getFileContentAttribute()->getDataType(), 'fileReader.result', 'file.type')};
+                {$this->buildJsBusyIconShow()}console.log(file.type);
+                oParams.data = {
+                    oId: '{$this->getMetaObject()->getId()}',
+                    rows: [{
+                        '{$filenameColName}': (file.name || 'Upload_' + {$this->getDateFormatter()->buildJsFormatDateObject('(new Date())', 'yyyyMMdd_HHmmss')} + '.png'),
+                        {$fileModificationColumnJs}
+                        {$mimeTypeColumnJs}
+                        '{$contentColName}': sContent,
+                    }]
+                };
+                {$this->buildJsBusyIconShow()}
+                {$this->buildJsUploadSend('oParams', $this->buildJsBusyIconHide() . $uploadButtonEl->buildJsTriggerActionEffects($uploader->getInstantUploadAction()))}
+            };
+            fileReader.readAsBinaryString(file);
+        });
+        return false;
+    });
+JS;
+                
+                return $output;
+    }
+    
+    /**
+     *
+     * @return JsDateFormatter
+     */
+    protected function getDateFormatter() : JsDateFormatter
+    {
+        return new JsDateFormatter(DataTypeFactory::createFromString($this->getWorkbench(), DateTimeDataType::class));
+    }
+    
+    /**
+     * Generates the acceptedFileTypes option with a corresponding regular expressions if allowed_extensions is set
+     * for the widget
+     *
+     * @return string
+     */
+    protected function buildJsUploadAcceptedFileTypesFilter()
+    {
+        $uploader = $this->getWidget()->getUploader();
+        if ($uploader->getAllowedFileExtensions()) {
+            return 'acceptFileTypes: /(\.|\/)(' . str_replace(array(
+                ',',
+                ' '
+            ), array(
+                '|',
+                ''
+            ), $uploader->getAllowedFileExtensions()) . ')$/i,';
+        } else {
+            return '';
+        }
     }
 }
