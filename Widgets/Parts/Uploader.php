@@ -350,11 +350,28 @@ class Uploader implements WidgetPartInterface
         return $this;
     }
     
+    /**
+     * 
+     * @return string|NULL
+     */
     protected function getFileMimeTypeAttributeAlias() : ?string
     {
         return $this->mimeTypeAttributeAlias;
     }
     
+    /**
+     * 
+     * @return bool
+     */
+    public function hasFileMimeTypeAttribute() : bool
+    {
+        return $this->mimeTypeAttributeAlias !== null;
+    }
+    
+    /**
+     * 
+     * @return MetaAttributeInterface
+     */
     public function getFileMimeTypeAttribute() : MetaAttributeInterface
     {
         return $this->getMetaObject()->getAttribute($this->getFileMimeTypeAttributeAlias());
@@ -443,6 +460,10 @@ class Uploader implements WidgetPartInterface
         return $this->fileModificationTimeAttributeAlias;
     }
     
+    /**
+     * 
+     * @return MetaAttributeInterface
+     */
     public function getFileModificationTimeAttribute() : MetaAttributeInterface
     {
         return $this->getMetaObject()->getAttribute($this->getFileModificationTimeAttributeAlias());
