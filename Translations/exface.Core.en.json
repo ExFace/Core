@@ -73,7 +73,9 @@
 	"ACTION.GOTOURL.NAME": "Visit URL",
 	"ACTION.GOTOURL.SUCCESS": "Redirecting...",
 	"ACTION.GOTOEMAIL.NAME": "Send email",
-	"ACTION.GOTOEMAIL.SUCCESS": "Open mail...",
+	"ACTION.GOTOEMAIL.SUCCESS": "Opening email client...",
+	"ACTION.GOTOMAPS.NAME": "Maps",
+	"ACTION.GOTOMAPS.SUCCESS": "Opening map app...",
 	"ACTION.GOTOPAGE.NAME": "Go to",
 	"ACTION.NAVIGATE.OPENING_NEW_WINDOW": "Opening a new browser tab/window!",
 	
