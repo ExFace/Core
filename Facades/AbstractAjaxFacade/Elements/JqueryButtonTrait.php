@@ -556,7 +556,7 @@ JS;
         
         return <<<JS
         
-                {$action->buildScript($input_element->getId())};
+                {$action->buildScript($input_element->getId(), $input_element)};
                 {$this->buildJsTriggerActionEffects($action)};
                 {$this->buildJsCloseDialog($widget, $input_element)};
 
