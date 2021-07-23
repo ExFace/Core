@@ -754,7 +754,7 @@ JS;
      */
     public function buildJsLeafletRefresh() : string
     {
-        return "{$this->buildJsLeafletVar()}.fire('exfRefresh')";
+        return "{$this->buildJsLeafletVar()}.fire('exfRefresh').invalidateSize()";
     }
     
     /**

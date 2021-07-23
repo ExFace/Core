@@ -274,7 +274,9 @@ class Map extends AbstractWidget implements
         }
         
         foreach ($this->getLayers() as $layer) {
-            $layer->doPrefill($data_sheet);
+            foreach ($layer->getWidgets() as $w) {
+                $w->doPrefill($data_sheet);
+            }
         }
         return;
     }
@@ -302,9 +304,8 @@ class Map extends AbstractWidget implements
                 $valuePointer = DataPointerFactory::createFromColumn($col, 0);
                 $value = $valuePointer->getValue();
             }
-            // Ignore empty values because if value is a live-references as the ref would get overwritten
-            // even without a meaningfull prefill value
-            if ($this->isCenterBoundByReference() === false || ($value !== null && $value != '')) {
+            
+            if ($this->isCenterBoundByReference() === false && $value !== null && $value != '') {
                 if ($coordinate === self::COORDINATE_LAT) {
                     $this->setCenterLatitude($value);
                 } else {
@@ -458,7 +459,7 @@ class Map extends AbstractWidget implements
      * 
      * @return string|NULL
      */
-    protected function getCenterLatitudeAttributeAlias() : ?string
+    public function getCenterLatitudeAttributeAlias() : ?string
     {
         return $this->centerLatitudeAttributeAlias;
     }
@@ -515,7 +516,7 @@ class Map extends AbstractWidget implements
      * 
      * @return string|NULL
      */
-    protected function getCenterLongitudeAttributeAlias() : ?string
+    public function getCenterLongitudeAttributeAlias() : ?string
     {
         return $this->centerLongitudeAttributeAlias;
     }
