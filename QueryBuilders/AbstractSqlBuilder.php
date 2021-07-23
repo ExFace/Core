@@ -1666,7 +1666,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 default:
                     $values = explode($value_list_delimiter, $value);
                     $value = '';
-                    $valueNullCheck = '';
+                    $valueNullChecks = [];
                     
                     foreach ($values as $nr => $val) {
                         // If there is an empty string among the values or one of the empty-comparators,
@@ -1674,7 +1674,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         // value for an IN-statement, though, so we need to append an "OR IS NULL" here.
                         if ($val === '' || $val === EXF_LOGICAL_NULL) {
                             unset($values[$nr]);
-                            $valueNullCheck = $subject . ($comparator == EXF_COMPARATOR_IN ? ' IS NULL' : ' IS NOT NULL');
+                            $valueNullChecks[] = $subject . ($comparator == EXF_COMPARATOR_IN ? ' IS NULL' : ' IS NOT NULL');
+                            if ($data_type instanceof StringDataType) {
+                                $valueNullChecks[] = $subject . ($comparator == EXF_COMPARATOR_IN ? " = ''" : " != ''");
+                            }
                             continue;
                         }
                         // Normalize non-empty values
@@ -1685,7 +1688,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         // If there is only one value, it is better to use = than IN - it is exactly the same
                         // and often is significantly faster. Keep in mind thogh, that the null-check will not
                         // be part of the $values array, so need to check for it too.
-                        case count($values) === 1 && $valueNullCheck === '':
+                        case count($values) === 1 && empty($valueNullChecks):
                             $val = $values[0];
                             if ($comparator == ComparatorDataType::IN) {
                                 return $subject . ' = ' . $val;
@@ -1693,13 +1696,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                                 return $subject . ' != ' . $val;
                             }
                             break;
-                            // IN(null) will result in empty $values and a NULL-check, so just use the NULL-check in this case.
-                        case empty($values) === true && $valueNullCheck !== '':
+                        // IN(null) will result in empty $values and a NULL-check, so just use the NULL-check in this case.
+                        case empty($values) === true && ! empty($valueNullChecks):
                             $value = EXF_LOGICAL_NULL;
                             break;
-                            // Otherwise create a (...) list and append the NULL-check with an OR if there is one.
+                        // Otherwise create a (...) list and append the NULL-check with an OR if there is one.
                         default:
-                            $value = '(' . (! empty($values) ? implode(',', $values) : 'NULL') . ')' . ($valueNullCheck ? ' OR ' . $valueNullCheck : '');
+                            $value = '(' . (! empty($values) ? implode(',', $values) : 'NULL') . ')';
+                            if (! empty($valueNullChecks)) {
+                                if ($comparator === ComparatorDataType::IN) {
+                                    $value .= ' OR ' . implode(' OR ', $valueNullChecks);
+                                } else {
+                                    $value .= ' AND ' . implode(' AND ', $valueNullChecks);
+                                }
+                            }
                     }
                     break;
             }
