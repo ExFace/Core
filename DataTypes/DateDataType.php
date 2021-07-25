@@ -52,7 +52,7 @@ class DateDataType extends AbstractDataType
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::cast()
      */
-    public static function cast($string)
+    public static function cast($string, bool $returnPhpDate = false)
     {
         $string = trim($string);
         
@@ -68,12 +68,12 @@ class DateDataType extends AbstractDataType
             $string = '@' . $string;
         }
         
-        if ($relative = static::parseRelativeDate($string)){
-            return $relative;
+        if ($relative = static::parseRelativeDate($string)) {
+            return $returnPhpDate ? new \DateTime($relative) : $relative;
         }
         
-        if ($short = static::parseShortDate($string)){
-            return $short;
+        if ($short = static::parseShortDate($string)) {
+            return $returnPhpDate ? new \DateTime($short) : $short;
         }
         
         // Numeric values, that are neither relative nor short dates, must be invalid!
@@ -86,7 +86,18 @@ class DateDataType extends AbstractDataType
         } catch (\Exception $e) {
             throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1', $e);
         }
-        return static::formatDateNormalized($date);
+        
+        return $returnPhpDate ? $date : static::formatDateNormalized($date);
+    }
+    
+    /**
+     * 
+     * @param mixed $string
+     * @return \DateTime|NULL
+     */
+    public static function castToPhpDate($string) : ?\DateTime
+    {
+        return static::cast($string, true);
     }
     
     /**
@@ -99,7 +110,7 @@ class DateDataType extends AbstractDataType
         try {
             return parent::parse($value);
         } catch (DataTypeValidationError | DataTypeCastingError $e) {
-            $parsed =  $this->getIntlDateFormatter()->parse($value);
+            $parsed = $this->getIntlDateFormatter()->parse($value);
             if ($parsed === false) {
                 throw $e;
             }
@@ -138,7 +149,7 @@ class DateDataType extends AbstractDataType
     
     /**
      * 
-     * @param unknown $string
+     * @param mixed $string
      * @return string|boolean
      */
     public static function parseShortDate($string)
@@ -157,7 +168,7 @@ class DateDataType extends AbstractDataType
     
     /**
      * 
-     * @param unknown $string
+     * @param mixed $string
      * @throws UnexpectedValueException
      * @return boolean|string
      */
