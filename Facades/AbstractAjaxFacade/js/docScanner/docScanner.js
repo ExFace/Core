@@ -10,13 +10,10 @@
 		_variables: {
 			file: null,
 			originalImg: null,
-			originalImgSmall: null,
 			parentDivId: null,
 			pdfFile: null,
 			points: null,
-			ratio: null,
-			transformedImg: null,
-			transformedImgSmall: null			
+			ratio: null			
 		},
 		
 		init: function(parentDivId) {			
@@ -27,7 +24,7 @@
 		_loadImage: function(file) {
 			return new Promise((resolve,reject)=>{
 				const url = URL.createObjectURL(file);
-				let img = new Image();
+				var img = new Image();
 				img.onload = ()=>{
 					resolve(img);
 				};
@@ -82,9 +79,9 @@
 		},
 		
 		_drawPoints: function(points, canvas) {
-			let context = canvas.getContext('2d');
+			var context = canvas.getContext('2d');
 			for(var i=0; i<points.length; i++) {
-				let size = 20;
+				var size = 20;
 				var circle = points[i];
 				context.globalAlpha = 0.85;
 				context.beginPath();
@@ -134,42 +131,41 @@
 		processImage: async function(file) {
 			docScanner._variables.file = file;
 			docScanner._switchView("clip");
-			let canvas = $("#inputImage")[0];
+			var canvas = $("#inputImage")[0];
 			const img = await docScanner._loadImage(file);
 			docScanner._variables.originalImg = img;
 			docScanner._drawImageScaled(img, canvas);	
 
-			let image = cv.imread(canvas);
-			docScanner._variables.originalImgSmall = image;
-			let edges = new cv.Mat();
+			var image = cv.imread(canvas);
+			var edges = new cv.Mat();
 			var edged = cv.Canny(image,edges,100,200);
 			//cv.imshow($("#inputImage")[0],edges);
-			let contours = new cv.MatVector();
-			let hierarchy = new cv.Mat();
+			var contours = new cv.MatVector();
+			var hierarchy = new cv.Mat();
 			cv.findContours(edges,contours,hierarchy,cv.RETR_LIST,cv.CHAIN_APPROX_SIMPLE);
-			let cnts = []
+			var cnts = []
 			
 			//find contours that have 4 edges
-			for (let i=0;i<contours.size();i++) {
+			for (var i=0;i<contours.size();i++) {
 				const tmp = contours.get(i);
 				const peri = cv.arcLength(tmp,true);
-				let approx = new cv.Mat();
-				let result = {
+				var approx = new cv.Mat();
+				var result = {
 					area:cv.contourArea(tmp),
 					points:[]
 				};
 				cv.approxPolyDP(tmp,approx,0.02*peri,true);
 				const pointsData = approx.data32S;
-				for (let j=0;j<pointsData.length/2;j++) {
+				for (var j=0;j<pointsData.length/2;j++) {
 					result.points.push({x:pointsData[2*j],y:pointsData[2*j+1]});
 				}
 				if (result.points.length===4) {
 					cnts.push(result);
 				}
 			}
-			//sort contours by area big->small 
-			cnts.sort((a,b) => b.area-a.area);
-			let points = cnts[0].points;
+			//sort contours by area big->small
+			cnts.sort((a,b)=>b.area-a.area);
+			var points = cnts[0].points;
 			//sort points by coordinates top left is first, then counter clockwise
 			points.sort((a,b)=>(a.x+a.y)-(b.x+b.y));
 			var tmpPoint = points[1];
@@ -184,7 +180,7 @@
 				tmpPoints.push(points[1]);
 				tmpPoints.push(points[0]);
 				points = tmpPoints;
-			} 
+			}
 			
 			if (points[1].y - points[0].y < 200) {
 				points = [
@@ -241,7 +237,7 @@
 			var points = docScanner._variables.points;
 			var ratio = docScanner._variables.ratio;
 			var tl = points[0],bl=points[1],br=points[2],tr=points[3]; //stands for top-left,top-right ....
-			// transform coordinates from point back to original image size
+			// transform coordinates from points back to original image size
 			tl.x = tl.x * (1/ratio);
 			tl.y = tl.y * (1/ratio);
 			tr.x = tr.x * (1/ratio);
@@ -267,20 +263,9 @@
 			var size = new cv.Size();
 			size.width = width;
 			size.height = height;
-			var img = docScanner._variables.originalImg;
 			cv.warpPerspective(cv.imread(docScanner._variables.originalImg),out,M,size);
 			
-			docScanner._switchView("save");
-			canvas = $("#transformedImageSmall")[0]
-			//TODO landscape pictures that get turned to potrait are cut at the bottom, yet not sure why
-			//var newCanWidth = width/height*$("#transformedImageSmall").height()
-			//$("#transformedImageSmall").width(newCanWidth)
-			//var canHeight = $("#transformedImageSmall").height(height)
-			//canvas.width = newCanWidth;
-			//canvas.height = $("#transformedImageSmall").height();			
-			//show small version of transformed image
-			cv.imshow("transformedImageSmall",out);
-			
+			docScanner._switchView("save");			
 			//add original transformed image to hidden canvas
 			$("#" + docScanner._variables.parentDivId).append('<canvas id="transformedImage" hidden></canvas>');
 			$("#transformedImage").height(height);
@@ -288,6 +273,21 @@
 			$("#transformedImage").width(width);
 			$("#transformedImage")[0].width = width;
 			cv.imshow("transformedImage",out);
+			
+			//transform canvas size to fit the transformed image format and draw the transformed image			
+			var canvas = $("#transformedImageSmall")[0]
+			var canWidth = $("#transformedImageSmall").width();
+			var canHeight = $("#transformedImageSmall").height();
+			var hRatio =  canWidth / width;
+			var vRatio =  canHeight / height;
+			var ratio  = Math.min ( hRatio, vRatio );
+			var scaledWidth = Math.floor(width * ratio);
+			var scaledHeight = Math.floor(height * ratio);			
+			$("#transformedImageSmall").height(scaledHeight);
+			$("#transformedImageSmall").width(scaledWidth);
+			canvas.height = $("#transformedImageSmall").height();
+			canvas.width = $("#transformedImageSmall").width();
+			cv.imshow("transformedImageSmall",out);
 		},
 
 		_switchView: function(name) {
@@ -325,6 +325,7 @@
 			orientation: orient,
 			hotfixes: ["px_scaling"],
 			compress: true});
+			docScanner._variables.pdfFile = pdf;
 			pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height, undefined, 'SLOW');
 			pdf.save("download.pdf");
 		}
