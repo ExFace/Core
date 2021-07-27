@@ -55,7 +55,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
 
     private $element_type = null;
     
-    private $element_class = '';
+    private $element_class = 'exf-element';
     
     private $element_style = '';
 
