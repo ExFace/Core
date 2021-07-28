@@ -101,7 +101,8 @@ JS;
             if ($("#{$this->getId()}_masonry_grid").find(".{$this->getId()}_masonry_exf-grid-item").length > 0) {
                 $("#{$this->getId()}_masonry_grid").masonry({
                     columnWidth: "#{$this->getId()}_sizer",
-                    itemSelector: ".{$this->getId()}_masonry_exf-grid-item"
+                    itemSelector: ".{$this->getId()}_masonry_exf-grid-item",
+                    transitionDuration: 0
                 });
             }
         } else {
@@ -119,7 +120,8 @@ JS;
             if ($("#{$this->getId()}").find(".{$this->getId()}_masonry_exf-grid-item").length > 0) {
                 $("#{$this->getId()}").masonry({
                     columnWidth: "#{$this->getId()}_sizer",
-                    itemSelector: ".{$this->getId()}_masonry_exf-grid-item"
+                    itemSelector: ".{$this->getId()}_masonry_exf-grid-item",
+                    transitionDuration: 0
                 });
             }
         } else {
