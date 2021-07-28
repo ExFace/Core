@@ -6,35 +6,17 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
+use exface\Core\Exceptions\RuntimeException;
 
 interface FormulaInterface extends WorkbenchDependantInterface
 {
-
-    /**
-     * Parses the the arguments for this function.
-     * Each argument
-     * is an ExFace expression, which in turn can be another function,
-     * a reference, a constant - whatever. We generally instatiate
-     * expression objects for the arguments together with the function
-     * and not while applying the function to data, because argument types
-     * do not change depending on the contents of cells of data_sheets.
-     * It is faster to create the respective expressions here and just
-     * evaluate them, when really running the function.
-     *
-     * @param
-     *            array arguments
-     * @return void
-     */
-    public function init(array $arguments);
-
     /**
      * Evaluates the function based on a given data sheet and the coordinates
      * of a cell (data functions are only applicable to specific cells!)
      * This method is called for every row of a data sheet, while the function
      * is mostly defined for an entire column, so we try to do as little as possible
-     * here: evaluate each argument's expression and call the run() method with
-     * the resulting values. At this point all arguments are ExFace expressions
-     * already. They where instantiated together with the function.
+     * here: instantiate a class implementing FormulaExpressionLanguage and call the evaluate
+     * method with the formula and teh current row as arguments.
      *
      * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet            
      * @param string $column_name            
@@ -76,5 +58,34 @@ interface FormulaInterface extends WorkbenchDependantInterface
      * @return FormulaSelectorInterface
      */
     public function getSelector() : FormulaSelectorInterface;
+    
+    /**
+     * Returns attribute aliases of required attributes
+     * 
+     * @return array
+     */
+    public function getRequiredAttributes() : array;
+    
+    /**
+     * Get the formula name. If no name can be found, throw exception.
+     * 
+     * @throws RuntimeException
+     * @return string
+     */
+    public function getFormulaName() : string;
+    
+    /**
+     * Get formula names of formulas that are nested in this formula
+     * 
+     * @return array
+     */
+    public function getNestedFormulas() : array;
+    
+    /**
+     * Get the expression used to instiantiate this formula
+     * 
+     * @return string
+     */
+    public function getExpression() : string;
     
 }
