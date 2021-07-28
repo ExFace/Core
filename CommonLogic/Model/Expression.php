@@ -24,6 +24,7 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
+use Symfony\Component\ExpressionLanguage\Lexer;
 
 /**
  * 
@@ -293,84 +294,8 @@ class Expression implements ExpressionInterface
             throw new FormulaError('Syntax error in the data function: "' . $expression . '"');
         }
         
-        $func_name = substr($expression, 0, $parenthesis_1);
-        $params = substr($expression, $parenthesis_1 + 1, $parenthesis_2 - $parenthesis_1 - 1);
-        
-        return FormulaFactory::createFromString($this->exface, $func_name, $this->parseParams($params));
-    }
-
-    
-    protected function parseParams($str)
-    {
-        $buffer = '';
-        $stack = array();
-        $depth = 0;
-        $len = strlen($str);
-        $escaped1 = false;
-        $escaped2 = false;
-        for ($i = 0; $i < $len; $i ++) {
-            $char = $str[$i];
-            if (($escaped1 && $char !== "'") || ($escaped2 && $char !== '"')) {
-                $buffer .= $char;
-                continue;
-            }
-            switch ($char) {
-                case "'":
-                    if ($escaped1 === false) {                    
-                        $escaped1 = true;
-                        break;
-                    } else {
-                        if ($str[$i-1] !== '\\') {
-                            $escaped1 = false;
-                        }                        
-                        break;
-                    }
-                case '"':
-                    if ($escaped2 === false) {
-                        $escaped2 = true;
-                        break;
-                    } else {
-                        if ($str[$i-1] !== '\\') {
-                            $escaped2 = false;
-                        }
-                        break;
-                    }
-                case '(':
-                    $depth ++;
-                    break;
-                case ',':
-                    if (! $depth) {
-                        if ($buffer !== '') {
-                            $stack[] = $buffer;
-                            $buffer = '';
-                        }
-                        continue 2;
-                    }
-                    break;
-                case ' ':
-                    if (! $depth) {
-                        // Not sure, what the purpose of this continue is, but it removes whitespaces from formual arguments in the first level
-                        // causing many problems. Commented it out for now to see if that helps.
-                        // continue 2;
-                    }
-                    break;
-                case ')':
-                    if ($depth) {
-                        $depth --;
-                    } else {
-                        $stack[] = $buffer . $char;
-                        $buffer = '';
-                        continue 2;
-                    }
-                    break;
-            }
-            $buffer .= $char;
-        }
-        if ($buffer !== '') {
-            $stack[] = $buffer;
-        }
-        
-        return $stack;
+        $formula = FormulaFactory::createFromString($this->exface, $expression);
+        return $formula;
     }
 
     /**
@@ -478,6 +403,7 @@ class Expression implements ExpressionInterface
         }
         
         if ($this->isFormula() === true) {
+            // FIXME #Formulas
             $this->getFormula()->setRelationPath($relation_path);
         }
         if ($this->attribute_alias) {

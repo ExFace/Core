@@ -9,11 +9,11 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\FormulaError;
-
+use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
+use exface\Core\Exceptions\RuntimeException;
 /**
  * Data functions are much like Excel functions.
- * They calculate
- * the value of a cell in a data_sheet based on other data from
+ * They calculate the value of a cell in a data_sheet based on other data from
  * this sheet and user defined arguments.
  *
  * @author Andrej Kabachnik
@@ -23,8 +23,6 @@ abstract class Formula implements FormulaInterface
 {
 
     private $required_attributes = array();
-
-    private $arguments = array();
 
     private $data_sheet = null;
 
@@ -39,16 +37,19 @@ abstract class Formula implements FormulaInterface
     private $current_column_name = null;
 
     private $current_row_number = null;
+    
+    private $tokenStream = null;
 
     /**
      *
      * @deprecated use FormulaFactory instead!
      * @param Workbench $workbench            
      */
-    public function __construct(FormulaSelectorInterface $selector)
+    public function __construct(FormulaSelectorInterface $selector, FormulaTokenStreamInterface $tokenStream = null)
     {
         $this->exface = $selector->getWorkbench();
         $this->selector = $selector;
+        $this->tokenStream = $tokenStream;
     }
 
     /**
@@ -76,53 +77,28 @@ abstract class Formula implements FormulaInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::init()
-     */
-    public function init(array $arguments)
-    {
-        // now find out, what each parameter is: a column reference, a string, a widget reference etc.
-        foreach ($arguments as $arg) {
-            $expr = $this->getWorkbench()->model()->parseExpression(trim($arg));
-            $this->arguments[] = $expr;
-            $this->required_attributes = array_merge($this->required_attributes, $expr->getRequiredAttributes());
-        }
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Formulas\FormulaInterface::evaluate()
      */
     public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, int $row_number = null)
     {
-        $args = array();
-        
         try {
+            if (is_null($this->getExpression())) {
+                throw new FormulaError('No expression given to evalute formula!');
+            }
             if ($this->isStatic()) {
-                foreach ($this->arguments as $expr) {
-                    $args[] = $expr->evaluate();
-                }
+                $row = [];
                 
             } else {
                 if (is_null($data_sheet) || is_null($row_number)) {
-                    throw new InvalidArgumentException('In a non-static formula $data_sheet, $column_name and $row_number are mandatory arguments.');
+                    throw new InvalidArgumentException('In a non-static formula $data_sheet and $row_number are mandatory arguments.');
                 }
-                
-                
-                foreach ($this->arguments as $expr) {
-                    $args[] = $expr->evaluate($data_sheet, $row_number);
-                }
-                
                 
                 $this->setDataSheet($data_sheet);
                 $this->setCurrentRowNumber($row_number);
+                $row = $data_sheet->getRow($row_number);
             }
-            
-            return call_user_func_array(array(
-                $this,
-                'run'
-            ), $args);
+            $expressionLanguage = new SymfonyExpressionLanguage($this->getWorkbench());
+            return $expressionLanguage->evaluate($this, $row);
         } catch (\Throwable $e) {
             $errorText = 'Cannot evaluate formula `' . $this->__toString() . '`';
             if ($data_sheet === null) {
@@ -142,29 +118,26 @@ abstract class Formula implements FormulaInterface
 
     public function setRelationPath($relation_path)
     {
+        // FIXME #Formulas
         // set new relation path
-        $this->relation_path = $relation_path;
+        /*$this->relation_path = $relation_path;
         if ($relation_path) {
             foreach ($this->arguments as $key => $a) {
                 $a->setRelationPath($relation_path);
                 $this->arguments[$key] = $a;
             }
-        }
+        }*/
         return $this;
-    }
-
-    public function getRequiredAttributes()
-    {
-        return $this->required_attributes;
     }
 
     /**
      * 
-     * @return ExpressionInterface[]
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::getRequiredAttributes()
      */
-    public function getArguments()
+    public function getRequiredAttributes() : array
     {
-        return $this->arguments;
+        return $this->getTokenStream() ? $this->getTokenStream()->getAttributes() : [];
     }
 
     /**
@@ -203,7 +176,8 @@ abstract class Formula implements FormulaInterface
 
     public function mapAttribute($map_from, $map_to)
     {
-        foreach ($this->required_attributes as $id => $attr) {
+        // FIXME #Formulas
+        /*foreach ($this->required_attributes as $id => $attr) {
             if ($attr == $map_from) {
                 $this->required_attributes[$id] = $map_to;
             }
@@ -211,7 +185,7 @@ abstract class Formula implements FormulaInterface
         foreach ($this->arguments as $key => $a) {
             $a->mapAttribute($map_from, $map_to);
             $this->arguments[$key] = $a;
-        }
+        }*/
     }
 
     /**
@@ -241,21 +215,56 @@ abstract class Formula implements FormulaInterface
      * @see \exface\Core\Interfaces\Formulas\FormulaInterface::isStatic()
      */
     public function isStatic() : bool
-    {
-        // A formula is static if it has no arguments or all arguments are static.
-        // In other words, it is static if it does not have non-static arguments.
-        foreach ($this->getArguments() as $expr) {
-            if (! $expr->isStatic()) {
-                return false;
-            }
-        }
-        
-        return true;
+    {        
+        return empty($this->getRequiredAttributes()) ? true : false;
     }
     
     public function __toString()
     {
-        return $this->getSelector()->toString() . '(' . implode(', ', $this->getArguments()) . ')';
+        return $this->getTokenStream() ? $this->getTokenStream()->getExpression() : '';
+    }
+    
+    /**
+     * 
+     * @return FormulaTokenStreamInterface|NULL
+     */
+    protected function getTokenStream() : ?FormulaTokenStreamInterface
+    {
+        return $this->tokenStream;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::getFormulaName()
+     */
+    public function getFormulaName() : string
+    {
+        $name = $this->getTokenStream() ? $this->getTokenStream()->getFormulaName() : null;
+        if ($name === null) {
+            throw new RuntimeException('Can not extract formula name from token stream. Either no token stream exists for this formula or expression includes no formula!');
+        }
+        return $name;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::getNestedFormulas()
+     */
+    public function getNestedFormulas() : array
+    {
+        return $this->getTokenStream() ? $this->getTokenStream()->getNestedFormulas() : [];
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::getExpression()
+     */
+    public function getExpression() : string
+    {
+        return $this->getTokenStream() ? $this->getTokenStream()->getExpression() : '';
     }
 }
 ?>

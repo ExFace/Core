@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\DateTimeDataType;
 
-class Adddays extends Formula
+class AddDays extends Formula
 {
     /**
      * 
@@ -18,7 +18,7 @@ class Adddays extends Formula
         if (! $date) {
             return;
         }
-        $date = new Date(DateTimeDataType::cast($date));
+        $date = new \DateTime(DateTimeDataType::cast($date));
         $interval = ($days_to_add < 0 ? 'N' : 'P') . intval($days_to_add) . 'D';
         $date->add(new \DateInterval($interval));
                 

@@ -39,6 +39,14 @@ interface WorkbenchCacheInterface extends CacheInterface, WorkbenchDependantInte
     public function getPool(string $name, bool $autoCreate = true);
     
     /**
+     * Check if a pool with the given name exist. Returns true if so, false if not.
+     * 
+     * @param string $name
+     * @return bool
+     */
+    public function hasPool(string $name) : bool;
+    
+    /**
      * Returns the defaul cache pool of the workbench.
      * 
      * @return CacheInterface|CacheItemPoolInterface
