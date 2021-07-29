@@ -305,7 +305,7 @@
         },
         {
             "CREATED_ON": "2017-02-17 15:20:37",
-            "MODIFIED_ON": "2017-10-17 12:28:22",
+            "MODIFIED_ON": "2021-07-28 17:38:39",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6f524979ae2f89aa50205857feb80",
@@ -320,10 +320,10 @@
             "DEFAULT_EDITOR_UXON": {
                 "width": 2,
                 "height": 12,
-                "widget_type": "InputText"
+                "widget_type": "InputMarkdown"
             },
-            "COPY_WITH_RELATED_OBJECT": null,
-            "DELETE_WITH_RELATED_OBJECT": null,
+            "COPY_WITH_RELATED_OBJECT": "0",
+            "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Description",

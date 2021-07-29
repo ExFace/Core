@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2021-04-09 16:47:45",
+            "MODIFIED_ON": "2021-07-28 17:29:17",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32350000000000000000000000000000",
@@ -317,7 +317,7 @@
                                 "widgets": [
                                     {
                                         "attribute_alias": "CUSTOM_DATA_TYPE",
-                                        "height": 7,
+                                        "height": "max",
                                         "widget_type": "InputUxon",
                                         "schema": "datatype",
                                         "root_object": "=object_selector",
@@ -325,14 +325,14 @@
                                     },
                                     {
                                         "attribute_alias": "DEFAULT_EDITOR_UXON",
-                                        "height": 7,
+                                        "height": "max",
                                         "widget_type": "InputUxon",
                                         "schema": "widget",
                                         "root_object": "=object_selector"
                                     },
                                     {
                                         "attribute_alias": "DEFAULT_DISPLAY_UXON",
-                                        "height": 7,
+                                        "height": "max",
                                         "widget_type": "InputUxon",
                                         "schema": "widget",
                                         "root_object": "=object_selector"

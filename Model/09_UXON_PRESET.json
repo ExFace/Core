@@ -2096,7 +2096,7 @@
         },
         {
             "CREATED_ON": "2020-01-20 09:20:12",
-            "MODIFIED_ON": "2020-12-04 14:41:27",
+            "MODIFIED_ON": "2021-07-25 19:37:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea3b65ec22ef96b32f0205857feb80",
@@ -2112,9 +2112,7 @@
                         "attribute_alias": "\/\/ REPLACE with relation to master object",
                         "comparator": "==",
                         "required": true,
-                        "input_widget": {
-                            "widget_type": "InputHidden"
-                        }
+                        "hidden": true
                     }
                 ],
                 "columns": [
@@ -3202,7 +3200,7 @@
         },
         {
             "CREATED_ON": "2020-12-04 14:44:29",
-            "MODIFIED_ON": "2020-12-04 14:44:50",
+            "MODIFIED_ON": "2021-07-25 19:36:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eba490d5236b06a490847beb4a5184",
@@ -3218,9 +3216,7 @@
                         "attribute_alias": "\/\/ REPLACE with relation to master object",
                         "comparator": "==",
                         "required": true,
-                        "input_widget": {
-                            "widget_type": "InputHidden"
-                        },
+                        "hidden": true,
                         "apply_on_change": true,
                         "value": "\/\/ REPLACE with widget link to value-widget with the id of the master object - e.g. `=master_table!id`"
                     }
