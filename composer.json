@@ -33,6 +33,7 @@
         "symfony/console": "^4.2||^5.0",
         "symfony/security-core": "^4.2||^5.0",
         "symfony/ldap": "^4.2||^5.0",
+        "symfony/expression-language": "^5.3",
         "webmozart/path-util": "^2.3",
         "monolog/monolog": "^1.22.1",
         "femtopixel/monolog-csvhandler": "~0.1",
@@ -53,8 +54,7 @@
         "npm-asset/workbox-sw": "^5.1.3",
         "npm-asset/dexie": "^2.0.4",
         "ramsey/uuid": "^3.0||^4.0",
-        "dragonmantank/cron-expression": "^3.1",
-		"symfony/expression-language": "^5.3"
+        "dragonmantank/cron-expression": "^3.1"
     },
     "bin": [
         "Facades/ConsoleFacade/bin/action"
@@ -63,8 +63,8 @@
         "app": {
             "app_uid": "0x31000000000000000000000000000000",
             "app_alias": "exface.Core",
-            "model_md5": "2b5856f4d9588dc35fcf0d4385d6a782",
-            "model_timestamp": "2021-07-14 12:22:00"
+            "model_md5": "899933d9d97812abd5de306de3bce946",
+            "model_timestamp": "2021-07-29 09:54:07"
         }
     },
     "autoload": {

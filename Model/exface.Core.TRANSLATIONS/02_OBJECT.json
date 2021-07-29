@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2018-04-09 16:02:28",
-            "MODIFIED_ON": "2020-08-25 14:16:54",
+            "MODIFIED_ON": "2021-07-28 17:43:53",
             "CREATED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e83bfea324861e86d30205857feb80",
@@ -111,7 +111,7 @@
                                 "attribute_alias": "CONTENTS",
                                 "widget_type": "InputJson",
                                 "hide_caption": true,
-                                "height": "auto"
+                                "height": "max"
                             }
                         ]
                     },

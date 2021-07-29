@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2016-04-25 13:19:43",
-            "MODIFIED_ON": "2019-11-26 13:46:30",
+            "MODIFIED_ON": "2021-07-28 17:08:05",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e60ad7563429b089840050568905af",
@@ -123,7 +123,7 @@
                         "hide_caption": true,
                         "widget_type": "InputUxon",
                         "schema": "behavior",
-                        "height": 18,
+                        "height": "max",
                         "root_object": "=object_selector",
                         "root_prototype": "=prototype_selector"
                     }

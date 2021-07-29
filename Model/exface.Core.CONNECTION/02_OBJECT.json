@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2019-09-29 19:54:49",
+            "MODIFIED_ON": "2021-07-28 17:44:41",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x33380000000000000000000000000000",
@@ -118,7 +118,7 @@
                     {
                         "attribute_alias": "CONFIG",
                         "width": "max",
-                        "height": 11,
+                        "height": "max",
                         "widget_type": "InputUxon",
                         "root_prototype": "=connector_selector"
                     },
