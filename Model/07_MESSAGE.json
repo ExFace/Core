@@ -2290,6 +2290,20 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2021-07-30 15:13:41",
+            "MODIFIED_ON": "2021-07-30 15:13:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb8462f64935608462025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7H6M243",
+            "TITLE": "Invalid use of a data mapper",
+            "DESCRIPTION": "This type of error indicates, that data mappings (e.g. `input_mappers` or `output_mappers` in actions) are not configured correctly or received invalid from-data.\n\nA mapper is used to transform one data sheet into another by mapping parts of the from-sheet to other parts of the to-sheet. The most common use-case is transforming the input data of an action by mapping data column from one object to another.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

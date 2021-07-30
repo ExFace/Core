@@ -130,7 +130,13 @@ class DataSheetMapper implements DataSheetMapperInterface
         }
         
         if ($data_sheet->isEmpty()) {
-            foreach ($this->getColumnToColumnMappings() as $map){
+            // Only use mappings that use a from-column
+            // TODO give mappings a prepare() method and put the logic in there. But how to make sure the
+            // passed data sheet is not altered? Pass a copy?
+            foreach ($this->getMappings() as $map){
+                if ($map instanceof DataFilterToColumnMappingInterface || $map instanceof DataJoinMapping) {
+                    continue;
+                }
                 $data_sheet->getColumns()->addFromExpression($map->getFromExpression());
             }
             $data_sheet->dataRead();
@@ -140,7 +146,12 @@ class DataSheetMapper implements DataSheetMapperInterface
         $additionSheet = null;
         // See if any mapped columns are missing in the original data sheet. If so, add empty
         // columns and also create a separate sheet for reading missing data.
-        foreach ($this->getColumnToColumnMappings() as $map){
+        foreach ($this->getMappings() as $map){
+            // Only use mappings that use a from-column
+            // TODO give mappings a prepare() method and put the logic in there - see other comment few lines above.
+            if ($map instanceof DataFilterToColumnMappingInterface || $map instanceof DataJoinMapping) {
+                continue;
+            }
             $from_expression = $map->getFromExpression();
             if (! $data_sheet->getColumns()->getByExpression($from_expression)){
                 if ($additionSheet === null) {
