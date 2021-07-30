@@ -39,9 +39,9 @@ class DataColumnToFilterMapping extends DataColumnMapping implements DataColumnT
                 break;
             default:
                 if ($fromExpr->isMetaAttribute()) {
-                    throw new DataSheetMapperError($this->getMapper(), 'Cannot map from attribute "' . $fromExpr->toString() . '" in a column-to-filter mapping: there is no matching column in the from-data and it cannot be loaded automatically (e.g. because the from-object ' . $fromSheet->getMetaObject() .' has no UID attribute)!');
+                    throw new DataSheetMapperError($this->getMapper(), 'Cannot map from attribute "' . $fromExpr->toString() . '" in a column-to-filter mapping: there is no matching column in the from-data and it cannot be loaded automatically (e.g. because the from-object ' . $fromSheet->getMetaObject() .' has no UID attribute)!', '7H6M243');
                 }
-                throw new DataSheetMapperError($this->getMapper(), 'Cannot use "' . $fromExpr->toString() . '" as from-expression in a column-to-filter mapping: only data column names, constants and static formulas allowed!');
+                throw new DataSheetMapperError($this->getMapper(), 'Cannot use "' . $fromExpr->toString() . '" as from-expression in a column-to-filter mapping: only data column names, constants and static formulas allowed!', '7H6M243');
         }
         
         return $toSheet;
