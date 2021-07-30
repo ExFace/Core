@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-02-08 21:31:18",
-            "MODIFIED_ON": "2020-11-17 09:08:07",
+            "MODIFIED_ON": "2021-07-29 11:37:31",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4aba4bb25832b2cfe4b318306b9a",
@@ -129,9 +129,9 @@
                                                 ]
                                             },
                                             {
-                                                "caption": "Pages",
                                                 "widgets": [
                                                     {
+                                                        "caption": "Pages",
                                                         "object_alias": "exface.Core.PAGE_GROUP_PAGES",
                                                         "widget_type": "DataTree",
                                                         "tree_parent_id_attribute_alias": "PAGE__MENU_PARENT",

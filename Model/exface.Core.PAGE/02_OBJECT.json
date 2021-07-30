@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2018-05-29 07:48:36",
-            "MODIFIED_ON": "2021-06-22 07:55:54",
+            "MODIFIED_ON": "2021-07-29 11:30:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e86314af5caf7f971b0205857feb80",
@@ -196,10 +196,10 @@
                                         "widget_type": "SplitVertical",
                                         "panels": [
                                             {
-                                                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.PAGE_GROUPS')",
                                                 "height": "40%",
                                                 "widgets": [
                                                     {
+                                                        "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.PAGE_GROUPS')",
                                                         "widget_type": "DataTable",
                                                         "id": "page_group_table",
                                                         "object_alias": "exface.Core.PAGE_GROUP_PAGES",
@@ -299,9 +299,9 @@
                                                 ]
                                             },
                                             {
-                                                "caption": "Policies",
                                                 "widgets": [
                                                     {
+                                                        "caption": "Policies",
                                                         "object_alias": "exface.Core.PAGE_POLICY",
                                                         "widget_type": "DataTable",
                                                         "hide_header": true,
