@@ -349,7 +349,7 @@
         },
         {
             "CREATED_ON": "2019-09-04 15:43:09",
-            "MODIFIED_ON": "2020-12-04 14:49:02",
+            "MODIFIED_ON": "2021-08-02 15:18:49",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9cf2a95a0bf9aad7fe4b318306b9a",
@@ -387,9 +387,7 @@
                                                 "attribute_alias": "\/\/ REPLACE WITH RELATION TO MASTER OBJECT",
                                                 "comparator": "==",
                                                 "required": true,
-                                                "input_widget": {
-                                                    "widget_type": "InputHidden"
-                                                }
+                                                "hidden": true
                                             }
                                         ],
                                         "columns": [
@@ -891,7 +889,7 @@
         },
         {
             "CREATED_ON": "2019-09-24 19:34:12",
-            "MODIFIED_ON": "2020-12-10 10:23:57",
+            "MODIFIED_ON": "2021-08-02 15:17:59",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9df0248f5b89898360205857feb80",
@@ -929,9 +927,7 @@
                                         "value": "=master_table",
                                         "apply_on_change": true,
                                         "required": true,
-                                        "input_widget": {
-                                            "widget_type": "InputHidden"
-                                        }
+                                        "hidden": true
                                     }
                                 ],
                                 "columns": [
@@ -2433,7 +2429,7 @@
         },
         {
             "CREATED_ON": "2020-04-21 07:13:34",
-            "MODIFIED_ON": "2020-12-04 14:49:19",
+            "MODIFIED_ON": "2021-08-02 15:18:31",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea839eaf1f208e8ee80205857feb80",
@@ -2463,9 +2459,7 @@
                                 "attribute_alias": "\/\/ REPLACE with relation to main object",
                                 "required": true,
                                 "value": "=uid_field",
-                                "input_widget": {
-                                    "widget_type": "InputHidden"
-                                }
+                                "hidden": true
                             }
                         ],
                         "columns": [
