@@ -8,6 +8,7 @@ use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
+use exface\Core\Exceptions\QueryBuilderException;
 
 /**
  * A query builder to read CSV files.
@@ -54,7 +55,25 @@ class CsvBuilder extends FileContentsBuilder
         }
         
         // prepare reader
-        $csv = Reader::createFromPath(new SplFileObject($query->getPathAbsolute()));
+        switch (true) {
+            case $query instanceof FileContentsDataQuery:
+                $splFileInfo = $query->getFileInfo();
+                if ($splFileInfo === $query->getFileInfo()) {
+                    return new DataQueryResultData([], 0, false);
+                }
+                $csv = Reader::createFromPath();
+                break;
+            case is_a($query, 'exface\UrlDataConnector\Psr7DataQuery'):
+                $response = $query->getResponse() ? $query->getResponse()->__toString() : null;
+                if ($response === null) {
+                    return new DataQueryResultData([], 0, false);
+                }
+                $csv = Reader::createFromString($response);
+                break;
+            default:
+                throw new QueryBuilderException('Cannot use "' . get_class($query) . '" as query in a CsvBuilder!');
+                
+        }
         $csv->setDelimiter($delimiter);
         $csv->setEnclosure($enclosure);
         
