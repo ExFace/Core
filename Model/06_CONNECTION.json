@@ -97,14 +97,16 @@
         },
         {
             "CREATED_ON": "2017-04-27 15:27:08",
-            "MODIFIED_ON": "2017-04-27 15:26:46",
+            "MODIFIED_ON": "2021-08-03 19:27:24",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e72b5df9840faea3bee4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "LABEL": "Local file",
             "CONNECTOR": "exface\/Core\/DataConnectors\/FileContentsConnector.php",
-            "CONFIG": null,
+            "CONFIG": {
+                "error_if_file_not_found": false
+            },
             "READONLY": "0",
             "ALIAS": "LOCAL_FILE",
             "FILTER_CONTEXT": null

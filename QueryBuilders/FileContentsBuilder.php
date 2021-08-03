@@ -89,7 +89,7 @@ class FileContentsBuilder extends AbstractQueryBuilder
             case self::ATTR_ADDRESS_FILEPATH_RELATIVE:
                 return $query->getPathRelative();
             case self::ATTR_ADDRESS_CONTENTS:
-                return file_get_contents($query->getPathAbsolute());
+                return $query->getFileContents();
             default:
                 throw new QueryBuilderException('Unknown file property data address "' . $data_address . '"!');
         }

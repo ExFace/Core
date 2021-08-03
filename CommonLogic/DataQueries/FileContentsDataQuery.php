@@ -12,9 +12,21 @@ class FileContentsDataQuery extends AbstractDataQuery
 
     private $path_relative = null;
 
-    public function getFileInfo()
+    public function getFileInfo() : ?\SplFileInfo
     {
-        return new \SplFileInfo($this->getPathAbsolute());
+        $path = $this->getPathAbsolute();
+        if (! file_exists($path)) {
+            return null;
+        }
+        return new \SplFileInfo($path);
+    }
+    
+    public function getFileContents() : ?string
+    {
+        if (! file_exists($this->getPathAbsolute())) {
+            return null;
+        }
+        return file_get_contents($this->getPathAbsolute());
     }
 
     public function getBasePath()
