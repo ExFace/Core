@@ -33,7 +33,7 @@ trait JsValueScaleTrait
         // retain the order of keys, which is crucial in this case.
         $scaleValsJs = '';
         foreach ($scale as $val => $color) {
-            $scaleValsJs .= '[' . $val . ',  "' . $color . '"],';
+            $scaleValsJs .= '[' . (is_numeric($val) || $val === null ? $val : "'$val'")  . ',  "' . $color . '"],';
         }
         $scaleValsJs = rtrim($scaleValsJs, ",");
         

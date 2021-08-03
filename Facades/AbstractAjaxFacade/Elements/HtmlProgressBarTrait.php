@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  *
@@ -72,8 +73,9 @@ HTML;
         // The color map is presented as an array of arrays in JS because an object does not
         // retain the order of keys, which is crucial in this case.
         $colorMapJs = '';
+        $colorMapStringBased = $widget->getValueDataType() instanceof StringDataType ? true : false;
         foreach ($widget->getColorScale() as $val => $color) {
-            $colorMapJs .= '[' . $val . ',  "' . $color . '"],';
+            $colorMapJs .= '[' . ($colorMapStringBased || ! is_null($val) ? "'$val'" : $val) . ',  "' . $color . '"],';
         }
         $colorMapJs = rtrim($colorMapJs, ",");
         
