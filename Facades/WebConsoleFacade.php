@@ -6,7 +6,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Process\Process;
 use GuzzleHttp\Psr7\Response;
-use function GuzzleHttp\Psr7\stream_for;
+use GuzzleHttp\Psr7;
 use exface\Core\Facades\AbstractHttpFacade\IteratorStream;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
 use exface\Core\Factories\UiPageFactory;
@@ -91,6 +91,13 @@ class WebConsoleFacade extends AbstractHttpFacade
                 throw new RuntimeException('Working Directory is not a folder!');
             }*/
         }
+        if (is_dir($this->getRootDirectory() . DIRECTORY_SEPARATOR . $cwd) === FALSE){
+            $headers = [
+                'X-CWD' => $cwd
+            ];
+            $body = 'Working directory is not a directory!';
+            return new Response(200, $headers, $body);
+        }
         chdir($this->getRootDirectory() . DIRECTORY_SEPARATOR . $cwd);
         
         // Check if command allowed
@@ -103,7 +110,7 @@ class WebConsoleFacade extends AbstractHttpFacade
         }
         if ($allowed === FALSE){
             $headers = [
-                'X-CWD' => StringDataType::substringAfter(getcwd(), $this->getRootDirectory() . DIRECTORY_SEPARATOR)
+                'X-CWD' => $cwd
             ];
             $body = 'Command not allowed!';
             return new Response(200, $headers, $body);
@@ -120,8 +127,18 @@ class WebConsoleFacade extends AbstractHttpFacade
                 if (Filemanager::pathIsAbsolute($newDir)) {
                     throw new RuntimeException('Absolute Path syntax ' . $newDir .'  not allowed! Use relative paths!');
                 }
-                chdir($newDir);
-                $stream = stream_for('');
+                //chdir($newDir);
+                $stream = Psr7\Utils::streamFor('');
+                if ($newDir) {
+                    $path = $cwd ? $cwd . DIRECTORY_SEPARATOR . $newDir : $newDir;
+                    $path = str_replace('/', DIRECTORY_SEPARATOR, $path);
+                    $path = $this->normalizePath($path);
+                    if ($path !== null) {
+                        if (is_dir($this->getRootDirectory(). DIRECTORY_SEPARATOR . $path) || $path === '') {
+                            $cwd = $path;
+                        }
+                    }
+                }
                 break;
             case $command === 'test': 
                 $generator = function ($bytes) {
@@ -165,7 +182,7 @@ class WebConsoleFacade extends AbstractHttpFacade
         }
         
         $headers = [
-            'X-CWD' => StringDataType::substringAfter(getcwd(), $this->getRootDirectory() . DIRECTORY_SEPARATOR),
+            'X-CWD' => $cwd,
             'Content-Type' => 'text/plain-stream'
         ];
         
@@ -264,5 +281,14 @@ class WebConsoleFacade extends AbstractHttpFacade
     {
         return (strcasecmp($command, 'action') === 0 && strcasecmp(FilePathDataType::normalize($workingDir, '/'), 'vendor/bin') === 0) 
         || (stripos($command, 'vendor/bin/action') !== false || stripos($command, 'vendor\bin\action') !== false);
+    }
+    
+    protected function normalizePath(string $path) : ?string
+    {
+        $norml = $this->getWorkbench()->filemanager()->pathNormalize($path, DIRECTORY_SEPARATOR);
+        if (StringDataType::startsWith($norml, '..')) {
+            return null;
+        }
+        return $norml;       
     }
 }
