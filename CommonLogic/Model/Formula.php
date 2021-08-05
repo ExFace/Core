@@ -5,7 +5,6 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Formulas\FormulaInterface;
-use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\FormulaError;
@@ -24,19 +23,17 @@ abstract class Formula implements FormulaInterface
 
     private $required_attributes = array();
 
-    private $data_sheet = null;
+    private $currentDataSheet = null;
 
-    private $relation_path = null;
+    private $relationPathString = null;
 
-    private $data_type = NULL;
+    private $dataType = NULL;
 
     private $exface = null;
     
     private $selector = null;
 
-    private $current_column_name = null;
-
-    private $current_row_number = null;
+    private $currentRowNumber = null;
     
     private $tokenStream = null;
 
@@ -45,11 +42,12 @@ abstract class Formula implements FormulaInterface
      * @deprecated use FormulaFactory instead!
      * @param Workbench $workbench            
      */
-    public function __construct(FormulaSelectorInterface $selector, FormulaTokenStreamInterface $tokenStream = null)
+    public function __construct(FormulaSelectorInterface $selector, FormulaTokenStreamInterface $tokenStream = null, $relationPath = null)
     {
         $this->exface = $selector->getWorkbench();
         $this->selector = $selector;
         $this->tokenStream = $tokenStream;
+        $this->relationPathString = $relationPath;
     }
 
     /**
@@ -82,23 +80,29 @@ abstract class Formula implements FormulaInterface
     public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, int $row_number = null)
     {
         try {
-            if (is_null($this->getExpression())) {
-                throw new FormulaError('No expression given to evalute formula!');
+            if ($this->__toString() === '') {
+                throw new FormulaError('Cannot evalute empty formula!');
             }
+            
             if ($this->isStatic()) {
                 $row = [];
-                
             } else {
                 if (is_null($data_sheet) || is_null($row_number)) {
                     throw new InvalidArgumentException('In a non-static formula $data_sheet and $row_number are mandatory arguments.');
                 }
                 
-                $this->setDataSheet($data_sheet);
-                $this->setCurrentRowNumber($row_number);
+                $this->currentDataSheet = $data_sheet;
+                $this->currentRowNumber = $row_number;
                 $row = $data_sheet->getRow($row_number);
             }
             $expressionLanguage = new SymfonyExpressionLanguage($this->getWorkbench());
-            return $expressionLanguage->evaluate($this, $row);
+            $result = $expressionLanguage->evaluate($this, $row);
+            
+            // Clean up current data in case the formula will be evaluated again
+            $this->currentDataSheet = null;
+            $this->currentRowNumber = null;
+            
+            return $result;
         } catch (\Throwable $e) {
             $errorText = 'Cannot evaluate formula `' . $this->__toString() . '`';
             if ($data_sheet === null) {
@@ -111,23 +115,9 @@ abstract class Formula implements FormulaInterface
         }
     }
 
-    public function getRelationPath()
+    protected function getRelationPath()
     {
-        return $this->relation_path;
-    }
-
-    public function setRelationPath($relation_path)
-    {
-        // FIXME #Formulas
-        // set new relation path
-        /*$this->relation_path = $relation_path;
-        if ($relation_path) {
-            foreach ($this->arguments as $key => $a) {
-                $a->setRelationPath($relation_path);
-                $this->arguments[$key] = $a;
-            }
-        }*/
-        return $this;
+        return $this->relationPathString;
     }
 
     /**
@@ -135,9 +125,20 @@ abstract class Formula implements FormulaInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Formulas\FormulaInterface::getRequiredAttributes()
      */
-    public function getRequiredAttributes() : array
+    public function getRequiredAttributes(bool $withRelationPath = true) : array
     {
-        return $this->getTokenStream() ? $this->getTokenStream()->getAttributes() : [];
+        $tStream = $this->getTokenStream();
+        if ($tStream === null) {
+            return [];
+        }
+        
+        $attrs = $tStream->getAttributes();
+        if ($withRelationPath && $this->hasRelationPath()) {
+            foreach ($attrs as $i => $attr) {
+                $attrs[$i] = RelationPath::relationPathAdd($this->getRelationPath(), $attr);
+            }
+        }
+        return $attrs;
     }
 
     /**
@@ -147,45 +148,20 @@ abstract class Formula implements FormulaInterface
      */
     public function getDataSheet()
     {
-        return $this->data_sheet;
-    }
-
-    /**
-     *
-     * @param DataSheetInterface $value            
-     * @return \exface\Core\CommonLogic\Model\Formula
-     */
-    protected function setDataSheet(DataSheetInterface $value)
-    {
-        $this->data_sheet = $value;
-        return $this;
+        return $this->currentDataSheet;
     }
 
     public function getDataType()
     {
-        if (is_null($this->data_type)) {
-            $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
+        if (is_null($this->dataType)) {
+            $this->dataType = DataTypeFactory::createBaseDataType($this->getWorkbench());
         }
-        return $this->data_type;
+        return $this->dataType;
     }
 
     public function setDataType($value)
     {
-        $this->data_type = $value;
-    }
-
-    public function mapAttribute($map_from, $map_to)
-    {
-        // FIXME #Formulas
-        /*foreach ($this->required_attributes as $id => $attr) {
-            if ($attr == $map_from) {
-                $this->required_attributes[$id] = $map_to;
-            }
-        }
-        foreach ($this->arguments as $key => $a) {
-            $a->mapAttribute($map_from, $map_to);
-            $this->arguments[$key] = $a;
-        }*/
+        $this->dataType = $value;
     }
 
     /**
@@ -195,18 +171,7 @@ abstract class Formula implements FormulaInterface
      */
     public function getCurrentRowNumber()
     {
-        return $this->current_row_number;
-    }
-
-    /**
-     *
-     * @param integer $value            
-     * @return \exface\Core\CommonLogic\Model\Formula
-     */
-    protected function setCurrentRowNumber($value)
-    {
-        $this->current_row_number = $value;
-        return $this;
+        return $this->currentRowNumber;
     }
     
     /**
@@ -219,9 +184,9 @@ abstract class Formula implements FormulaInterface
         return empty($this->getRequiredAttributes()) ? true : false;
     }
     
-    public function __toString()
+    public function __toString() : string
     {
-        return $this->getTokenStream() ? $this->getTokenStream()->getExpression() : '';
+        return $this->getTokenStream() ? $this->getTokenStream()->__toString() : '';
     }
     
     /**
@@ -259,12 +224,21 @@ abstract class Formula implements FormulaInterface
     
     /**
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::getExpression()
+     * @return bool
      */
-    public function getExpression() : string
+    protected function hasRelationPath() : bool
     {
-        return $this->getTokenStream() ? $this->getTokenStream()->getExpression() : '';
+        return $this->relationPathString !== null;
+    }
+    
+    /**
+     * 
+     * @param string $relationPath
+     * @return FormulaInterface
+     */
+    public function withRelationPath(string $relationPath) : FormulaInterface
+    {
+        $selfClass = static::class;
+        return new $selfClass($this->getSelector(), $this->getTokenStream(), $relationPath);
     }
 }
-?>

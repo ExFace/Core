@@ -86,6 +86,5 @@ interface FormulaInterface extends WorkbenchDependantInterface
      * 
      * @return string
      */
-    public function getExpression() : string;
-    
+    public function __toString() : string;   
 }

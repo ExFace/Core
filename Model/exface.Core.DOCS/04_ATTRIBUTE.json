@@ -192,7 +192,7 @@
             "COMMENTS": "",
             "NAME": "Title",
             "RELATION_CARDINALITY": "",
-            "TYPE": "D",
+            "TYPE": "X",
             "COPYABLEFLAG": "0",
             "ALIAS": "TITLE",
             "DATATYPE": "0x30000000000000000000000000000000",
