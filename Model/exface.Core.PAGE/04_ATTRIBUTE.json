@@ -940,7 +940,7 @@
             "COMMENTS": "",
             "NAME": "URL",
             "RELATION_CARDINALITY": "",
-            "TYPE": "D",
+            "TYPE": "X",
             "COPYABLEFLAG": "0",
             "ALIAS": "URL",
             "DATATYPE": "0x30000000000000000000000000000000",

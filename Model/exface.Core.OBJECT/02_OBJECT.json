@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2021-07-29 15:04:48",
+            "MODIFIED_ON": "2021-08-05 13:26:32",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
@@ -244,7 +244,7 @@
                                                 "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTES.DISPLAY_ORDER')"
                                             },
                                             {
-                                                "attribute_alias": "=Left(DATA_ADDRESS,80)"
+                                                "attribute_alias": "=Left(DATA_ADDRESS,60)"
                                             },
                                             {
                                                 "attribute_alias": "DATATYPE__LABEL"

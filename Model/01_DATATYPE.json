@@ -839,7 +839,7 @@
         },
         {
             "CREATED_ON": "2020-01-30 18:11:57",
-            "MODIFIED_ON": "2020-01-30 18:19:41",
+            "MODIFIED_ON": "2021-08-05 13:03:51",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea438c00f52350bb290205857feb80",
@@ -850,7 +850,8 @@
                 "show_values": false,
                 "values": {
                     "D": "Data",
-                    "C": "Compound"
+                    "C": "Compound",
+                    "X": "Calculated"
                 }
             },
             "VALIDATION_ERROR": "",

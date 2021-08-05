@@ -133,8 +133,6 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
     
     public function setDataType($value);
     
-    public function mapAttribute($map_from, $map_to);
-    
     public function getMetaObject();
     
     public function setMetaObject(MetaObjectInterface $object) : ExpressionInterface;

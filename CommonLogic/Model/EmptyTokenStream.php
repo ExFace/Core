@@ -57,9 +57,9 @@ class EmptyTokenStream implements FormulaTokenStreamInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::getExpression()
+     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::__toString()
      */
-    public function getExpression() : string
+    public function __toString() : string
     {
         return '';
     }

@@ -40,16 +40,17 @@ abstract class FormulaFactory extends AbstractSelectableComponentFactory
     {
         $function_name = $tokenStream->getFormulaName();
         if ($function_name === null) {
-            throw new FormulaError("Can not create formula for expression {$tokenStream->getExpression()}. No formula name found.");
+            throw new FormulaError("Can not create formula for expression {$tokenStream->__toString()}. No formula name found.");
         }
         $selector = new FormulaSelector($workbench, $function_name);
         if ($tokenStream instanceof EmptyTokenStream) {
             return static::createFromSelector($selector, [$selector, $tokenStream]);
         }
-        if (! isset(self::$cache[$tokenStream->getExpression()])) {
-            self::$cache[$tokenStream->getExpression()] = $tokenStream;
+        $str = $tokenStream->__toString();
+        if (! isset(self::$cache[$str])) {
+            self::$cache[$str] = $tokenStream;
         }
-        $formula = static::createFromSelector($selector, [$selector, self::$cache[$tokenStream->getExpression()]]);
+        $formula = static::createFromSelector($selector, [$selector, self::$cache[$str]]);
         return $formula;
     }
 }
