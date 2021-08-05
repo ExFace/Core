@@ -10,6 +10,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\FormulaError;
 use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 /**
  * Data functions are much like Excel functions.
  * They calculate the value of a cell in a data_sheet based on other data from
@@ -144,9 +145,9 @@ abstract class Formula implements FormulaInterface
     /**
      * Returns the data sheet, the formula is being run on
      *
-     * @return DataSheetInterface
+     * @return DataSheetInterface|NULL
      */
-    public function getDataSheet()
+    protected function getDataSheet() : ?DataSheetInterface
     {
         return $this->currentDataSheet;
     }
@@ -159,6 +160,10 @@ abstract class Formula implements FormulaInterface
         return $this->dataType;
     }
 
+    /**
+     * 
+     * @param DataTypeInterface $value
+     */
     public function setDataType($value)
     {
         $this->dataType = $value;
@@ -167,9 +172,9 @@ abstract class Formula implements FormulaInterface
     /**
      * Returns the row number in the data sheet currently being processed.
      *
-     * @return integer
+     * @return int|NULL
      */
-    public function getCurrentRowNumber()
+    protected function getCurrentRowNumber() : ?int
     {
         return $this->currentRowNumber;
     }
