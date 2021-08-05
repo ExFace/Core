@@ -409,8 +409,6 @@ class Expression implements ExpressionInterface
         switch ($this->getType()) {
             case self::TYPE_ATTRIBUTE:
                 return ($this->relation_path ? RelationPath::relationPathAdd($this->relation_path, $this->attribute_alias) : $this->attribute_alias);
-            case self::TYPE_FORMULA:
-                return $this->getFormula()->__toString();
             default:
                 return $this->originalString;
         }

@@ -26,25 +26,11 @@ interface FormulaInterface extends WorkbenchDependantInterface
     public function evaluate(DataSheetInterface $data_sheet, int $row_number);
 
     /**
-     * Returns the data sheet, the formula is being run on
-     *
-     * @return DataSheetInterface
-     */
-    public function getDataSheet();
-
-    /**
      * Returns the data type, that the formula will produce
      *
      * @return DataTypeInterface
      */
     public function getDataType();
-
-    /**
-     * Returns the row number in the data sheet currently being processed.
-     *
-     * @return integer
-     */
-    public function getCurrentRowNumber();
     
     /**
      * Returns TRUE if the formula can be evaluated without a data sheet (e.g. NOW()) and FALSE otherwise.
