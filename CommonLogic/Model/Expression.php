@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\Exceptions\FormulaError;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\FormulaFactory;
 use exface\Core\Factories\WidgetLinkFactory;
@@ -24,7 +23,7 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
-use Symfony\Component\ExpressionLanguage\Lexer;
+use exface\Core\Factories\ExpressionFactory;
 
 /**
  * 
@@ -276,25 +275,22 @@ class Expression implements ExpressionInterface
     }
 
     /**
-     * Checks, if the given expression is a data function and returns the function object if so, false otherwise.
-     * It is a good idea to create the function here already, because we need to know it's required attributes.
+     * Parses the given $expression into a formula instance
      *
-     * @param string $expression            
-     * @return boolean|FormulaInterface function object or false
+     * @param string $expression     
+     * @param string $relationPath  
+     *      
+     * @return FormulaInterface
      */
-    protected function parseFormula($expression)
+    protected function parseFormula(string $expression, string $relationPath = null) : FormulaInterface
     {
-        if (substr($expression, 0, 1) !== '=')
-            return false;
-        $expression = substr($expression, 1);
-        $parenthesis_1 = strpos($expression, '(');
-        $parenthesis_2 = strrpos($expression, ')');
-        
-        if ($parenthesis_1 === false || $parenthesis_2 === false) {
-            throw new FormulaError('Syntax error in the data function: "' . $expression . '"');
+        if (substr($expression, 0, 1) === '=') {
+            $expression = substr($expression, 1); // remove the '='
         }
-        
         $formula = FormulaFactory::createFromString($this->exface, $expression);
+        if ($relationPath !== null && $relationPath !== '') {
+            $formula = $formula->withRelationPath($relationPath);
+        }
         return $formula;
     }
 
@@ -304,6 +300,7 @@ class Expression implements ExpressionInterface
      */
     public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, $row_number = null)
     {
+        // Static valuse (no depending on data)
         if ($this->isStatic() === true) {
             if ($this->isFormula() === true) {
                 return $this->getFormula()->evaluate();
@@ -311,11 +308,14 @@ class Expression implements ExpressionInterface
                 return $this->value;
             }
             
-        } else {
+        } 
+        // Data-driven values
+        else {
             if ($data_sheet === null) {
                 throw new InvalidArgumentException('In a non-static expression $data_sheet and $column_name are mandatory arguments.');
             }
             
+            // If not evaluated for a single row, evaluate() recursively for each row
             if ($row_number === null) {
                 $result = array();
                 $rows_and_totals_count = $data_sheet->countRows() + count($data_sheet->getTotalsRows());
@@ -324,9 +324,15 @@ class Expression implements ExpressionInterface
                 }
                 return $result;
             }
+            // If in single row context, do the actual evaluation
             switch ($this->type) {
                 case self::TYPE_ATTRIBUTE:
-                    $col = $data_sheet->getColumns()->getByExpression(($this->relation_path ? RelationPath::relationPathAdd($this->relation_path, $this->attribute_alias) : $this->attribute_alias));
+                    if ($this->relation_path !== null) {
+                        $attrAlias = RelationPath::relationPathAdd($this->relation_path, $this->attribute_alias);
+                    } else {
+                        $attrAlias = $this->attribute_alias;
+                    }
+                    $col = $data_sheet->getColumns()->getByExpression($attrAlias);
                     if (! $col) {
                         throw new DataSheetColumnNotFoundError($data_sheet, 'Expression "' . $this->toString() . '" does not match any column in provided data sheet!');
                     }
@@ -370,31 +376,15 @@ class Expression implements ExpressionInterface
     {
         return $this->relation_path;
     }
-
-    /**
-     * @deprecated use rebase()
-     * FIXME get rid of setRelationPath in favor of rebase() or so.
-     * 
-     * @param string $relation_path
-     * @return \exface\Core\CommonLogic\Model\Expression
-     */
-    private function setRelationPath(string $relation_path) : Expression
+    
+    private function setRelationPath(string $pathString) : ExpressionInterface
     {
-        // set new relation path
-        $this->relation_path = $relation_path;
-        
-        if ($this->isFormula() === true) {
-            $this->formula = $this->getFormula()->withRelationPath($relation_path);
-        }
-        
+        $this->relation_path = $pathString;
+        // Unset cached formula to force its reinitialization when getFormula() is called.
+        $this->formula = null;
         return $this;
     }
     
-    /**
-     * 
-     * @param string $relation_path
-     * @return ExpressionInterface
-     */
     public function withRelationPath(MetaRelationPathInterface $path) : ExpressionInterface
     {
         return $this->copy()->setMetaObject($path->getStartObject())->setRelationPath($path->toString());
@@ -512,6 +502,7 @@ class Expression implements ExpressionInterface
     {
         if ($this->isFormula()) {
             // TODO Implement rebasing formulas. It should be possible via recursion.
+            $this->getWorkbench()->getLogger()->error('Cannot rebase formula "' . $this->toString() . '" - leaving the formula as-is (see Expression::rebase())');
             return $this->copy();
         } elseif ($this->isMetaAttribute()) {
             try {
@@ -570,8 +561,7 @@ class Expression implements ExpressionInterface
             if ($new_expression_string == '') {
                 $new_expression_string .= $rel->getRightKeyAttribute()->getAlias();
             }
-            
-            return $this->getWorkbench()->model()->parseExpression($new_expression_string, $rel->getRightObject());
+            return ExpressionFactory::createFromString($this->getWorkbench(), $new_expression_string, $rel->getRightObject());
         } else {
             // In all other cases (i.e. for constants), just leave the expression as it is. It does not depend on any meta model!
             return $this->copy();
@@ -722,7 +712,7 @@ class Expression implements ExpressionInterface
         }
         
         if ($this->formula === null) {
-            $this->formula = $this->parseFormula($this->originalString);
+            $this->formula = $this->parseFormula($this->originalString, $this->relation_path);
         }
         
         return $this->formula;

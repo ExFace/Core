@@ -1,10 +1,6 @@
 <?php
 namespace exface\Core\Formulas;
 
-
-use exface\Core\Factories\UiPageFactory;
-use exface\Core\Factories\SelectorFactory;
-use exface\Core\DataTypes\UrlDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\Model\Expression;

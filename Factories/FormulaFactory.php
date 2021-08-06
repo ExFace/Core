@@ -2,7 +2,6 @@
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Model\Formula;
-use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Selectors\FormulaSelector;
 use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
