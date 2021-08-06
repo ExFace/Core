@@ -1,5 +1,19 @@
 -- UP
 
+DECLARE @sql NVARCHAR(MAX)
+WHILE 1=1
+BEGIN
+    SELECT TOP 1 @sql = N'ALTER TABLE exf_attribute DROP CONSTRAINT ['+dc.NAME+N']'
+    from sys.default_constraints dc
+    JOIN sys.columns c
+        ON c.default_object_id = dc.object_id
+    WHERE 
+        dc.parent_object_id = OBJECT_ID('exf_attribute')
+    AND c.name IN (N'attribute_formatter')
+    IF @@ROWCOUNT = 0 BREAK
+    EXEC (@sql)
+END
+
 ALTER TABLE [dbo].[exf_attribute]
 	ALTER COLUMN [attribute_formatter] NVARCHAR(max) NULL;
 
