@@ -377,6 +377,11 @@ class Expression implements ExpressionInterface
         return $this->relation_path;
     }
     
+    /**
+     * 
+     * @param string $pathString
+     * @return ExpressionInterface
+     */
     private function setRelationPath(string $pathString) : ExpressionInterface
     {
         $this->relation_path = $pathString;
@@ -385,32 +390,42 @@ class Expression implements ExpressionInterface
         return $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::withRelationPath()
+     */
     public function withRelationPath(MetaRelationPathInterface $path) : ExpressionInterface
     {
         return $this->copy()->setMetaObject($path->getStartObject())->setRelationPath($path->toString());
     }
 
     /**
-     * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Model\ExpressionInterface::toString()
+     * @deprecated use __toString() instead!
      */
     public function toString()
     {
-        switch ($this->getType()) {
-            case self::TYPE_ATTRIBUTE:
-                return ($this->relation_path ? RelationPath::relationPathAdd($this->relation_path, $this->attribute_alias) : $this->attribute_alias);
-            default:
-                return $this->originalString;
-        }
+        return $this->__toString();
     }
     
     /**
      * 
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::__toString()
      */
-    public function __toString()
+    public function __toString() : string
     {
-        return $this->toString();
+        switch ($this->getType()) {
+            case self::TYPE_ATTRIBUTE:
+                // IDEA perhaps it would be better not to prepend the relation path here as it originates
+                // from withRelationPath() which should not modify the expression. On the other hand, the
+                // premise that chaining withRelationPath() will replace the previous path is fulfilled here.
+                // There are also many places in the code, that assume that toString() of an attribute
+                // expression will yield the alias including the relation path...
+                return ($this->relation_path ? RelationPath::relationPathAdd($this->relation_path, $this->attribute_alias) : $this->attribute_alias);
+            default:
+                return $this->originalString;
+        }
     }
 
     /**
@@ -716,25 +731,6 @@ class Expression implements ExpressionInterface
         }
         
         return $this->formula;
-    }
-    
-    /**
-     * 
-     * @param string $string
-     * @param string $quote
-     * @throws UnexpectedValueException
-     * @return string
-     */
-    public static function enquote(string $string, string $quote = '"') : string
-    {
-        switch ($quote) {
-            case '"':
-                return json_encode($string);
-            case "'": 
-                return "'" . str_replace("'", "\\'", $string);
-            default:
-                throw new UnexpectedValueException('Invalid quote character "' . $quote . '" used to enquote expression!');
-        }
     }
     
     /**
