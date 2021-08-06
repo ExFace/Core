@@ -11,6 +11,8 @@ use exface\Core\Exceptions\FormulaError;
 use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\Factories\RelationPathFactory;
 /**
  * Data functions are much like Excel functions.
  * They calculate the value of a cell in a data_sheet based on other data from
@@ -116,11 +118,6 @@ abstract class Formula implements FormulaInterface
         }
     }
 
-    protected function getRelationPath()
-    {
-        return $this->relationPathString;
-    }
-
     /**
      * 
      * {@inheritDoc}
@@ -136,7 +133,7 @@ abstract class Formula implements FormulaInterface
         $attrs = $tStream->getAttributes();
         if ($withRelationPath && $this->hasRelationPath()) {
             foreach ($attrs as $i => $attr) {
-                $attrs[$i] = RelationPath::relationPathAdd($this->getRelationPath(), $attr);
+                $attrs[$i] = RelationPath::relationPathAdd($this->getRelationPathString(), $attr);
             }
         }
         return $attrs;
@@ -229,17 +226,28 @@ abstract class Formula implements FormulaInterface
     
     /**
      * 
-     * @return bool
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::hasRelationPath()
      */
-    protected function hasRelationPath() : bool
+    public function hasRelationPath() : bool
     {
         return $this->relationPathString !== null;
     }
     
     /**
      * 
-     * @param string $relationPath
-     * @return FormulaInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::getRelationPathString()
+     */
+    public function getRelationPathString() : ?string
+    {
+        return $this->relationPathString;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::withRelationPath()
      */
     public function withRelationPath(string $relationPath) : FormulaInterface
     {

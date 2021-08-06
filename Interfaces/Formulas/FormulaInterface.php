@@ -73,4 +73,23 @@ interface FormulaInterface extends WorkbenchDependantInterface
      * @return string
      */
     public function __toString() : string;   
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasRelationPath() : bool;
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    public function getRelationPathString() : ?string;
+    
+    /**
+     *
+     * @param string $relationPath
+     * @return FormulaInterface
+     */
+    public function withRelationPath(string $relationPath) : FormulaInterface;
 }
