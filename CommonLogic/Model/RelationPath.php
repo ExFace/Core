@@ -6,7 +6,6 @@ use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\OutOfRangeException;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 

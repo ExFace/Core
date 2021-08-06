@@ -308,6 +308,7 @@ class MetaObject implements MetaObjectInterface
                     $rel_attr = $this->getRelatedObject($rel_parts[0])->getAttribute($rel_parts[1]);
                     $attr = $rel_attr->copy();
                     $rel = $this->getRelation($rel_parts[0]);
+                    // TODO replace with #Attribute::withRelationPath()
                     $attr->getRelationPath()->prependRelation($rel);
                     $this->setAttributeCache($alias, $attr);
                     return $attr;
@@ -334,6 +335,7 @@ class MetaObject implements MetaObjectInterface
                     try {
                         $rel_attr = $rev_rel->getRightObject()->getAttribute($rev_rel->getRightKeyAttribute()->getAlias());
                         $attr = $rel_attr->copy();
+                        // TODO replace with #Attribute::withRelationPath()
                         $attr->getRelationPath()->prependRelation($rev_rel);
                         $this->setAttributeCache($alias, $attr);
                         return $attr;
