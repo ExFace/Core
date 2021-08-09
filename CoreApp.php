@@ -138,7 +138,7 @@ RewriteRule ^data/\..*$ - [F]
         // Scheduler
         $schedulerInstaller = new SchedulerInstaller($this->getSelector());
         $schedulerName = 'Workbench scheduler (' . $this->getWorkbench()->getInstallationName() . ')';
-        $schedulerInstaller->addTask($schedulerName, 'exface.Core:RunScheduler', 60);
+        $schedulerInstaller->addTask($schedulerName, 'exface.Core:RunScheduler', 60, true);
         $installer->addInstaller($schedulerInstaller);
         
         return $installer;
