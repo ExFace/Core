@@ -58,10 +58,10 @@ class CsvBuilder extends FileContentsBuilder
         switch (true) {
             case $query instanceof FileContentsDataQuery:
                 $splFileInfo = $query->getFileInfo();
-                if ($splFileInfo === $query->getFileInfo()) {
+                if ($splFileInfo === null) {
                     return new DataQueryResultData([], 0, false);
                 }
-                $csv = Reader::createFromPath();
+                $csv = Reader::createFromPath($query->getFileInfo());
                 break;
             case is_a($query, 'exface\UrlDataConnector\Psr7DataQuery'):
                 $response = $query->getResponse() ? $query->getResponse()->__toString() : null;
