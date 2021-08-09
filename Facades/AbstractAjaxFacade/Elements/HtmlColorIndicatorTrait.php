@@ -24,20 +24,20 @@ trait HtmlColorIndicatorTrait
     protected function buildHtmlIndicator($value = null, string $text = null, string $color = null) : string
     {
         $widget = $this->getWidget();
-        $style = '';
+        $style = 'box-sizing: border-box;';
         
         if (! $widget->getWidth()->isUndefined()) {
-            $style .= 'width:' . $this->getWidth() . '; ';
+            $style .= ' width:' . $this->getWidth() . '; ';
         } elseif ($widget->getFill()) {
-            $style .= 'width: calc(100% - 6px);';
+            $style .= ' width: 100%;';
         } else {
-            $style .= 'width: 100%';
+            $style .= ' width: 100%;';
         }
         
         if (! $widget->getHeight()->isUndefined()) {
-            $style .= 'height: ' . $this->getHeight() . '; ';
+            $style .= ' height: ' . $this->getHeight() . '; ';
         } else {
-            $style .= 'height: 100%;';
+            $style .= ' height: 100%;';
         }
         
         if ($text === null) {
@@ -49,9 +49,9 @@ trait HtmlColorIndicatorTrait
         }
         
         if ($widget->getFill()) {
-            $style .= "padding: 0 3px; background-color: {$color} !important;";
+            $style .= " padding: 0 3px; background-color: {$color} !important;";
         } else {
-            $style .= "font-weight: bold; color: {$color} !important;";
+            $style .= " font-weight: bold; color: {$color} !important;";
         }
         
         $color = $color ?? 'transparent';

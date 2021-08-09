@@ -43,7 +43,7 @@ trait HtmlProgressBarTrait
         
         $output = <<<HTML
 
-<div id="{$this->getId()}" class="exf-progressbar" style="width: calc(100% - 6px); padding: 0 3px; border:1px solid #ccc; position:relative; overflow: hidden; white-space:nowrap; color:transparent; {$style}" {$titleProp}>{$text}
+<div id="{$this->getId()}" class="exf-progressbar" style="width: 100%; padding: 0 3px; border:1px solid #ccc; position:relative; overflow: hidden; white-space:nowrap; color:transparent; box-sizing: border-box; {$style}" {$titleProp}>{$text}
     <div class="exf-progressbar-bar" style="position: absolute; left:0; top:0; width:{$progress}%; background:{$color};">&nbsp;</div>
     <div class="exf-progressbar-text" style="position:absolute; left:0; top:0; z-index:100; padding:0 2px; width:100%; color:initial; overflow: hidden; text-overflow: ellipsis; text-align: {$this->buildCssTextAlignValue($widget->getAlign())}">{$text}</div>
 </div>
