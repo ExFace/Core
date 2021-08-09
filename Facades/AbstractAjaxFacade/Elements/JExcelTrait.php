@@ -753,29 +753,30 @@ JS;
     {
         $widget = $this->getWidget();
         $rows = $this->buildJsConvertArrayToData("{$this->buildJsJqueryElement()}.jexcel('getData', false)");
+        $dataObj = $widget->hasParent() ? $widget->getParent()->getMetaObject() : $action->getMetaObject();
         
         // If we have an action, that is based on another object and does not have an input mapper for
         // the widgets's object, the data should become a subsheet. Otherwise we just return the data
         // as-is.
-        if ($widget->isEditable() && $action && ! $action->getMetaObject()->is($widget->getMetaObject()) && $action->getInputMapper($widget->getMetaObject()) === null) {
+        if ($widget->isEditable() && $action && ! $dataObj->is($widget->getMetaObject()) && $action->getInputMapper($widget->getMetaObject()) === null) {
             // If the action is based on the same object as the widget's parent, use the widget's
             // logic to find the relation to the parent. Otherwise try to find a relation to the
             // action's object and throw an error if this fails.
-            if ($widget->hasParent() && $action->getMetaObject()->is($widget->getParent()->getMetaObject()) && $relPath = $widget->getObjectRelationPathFromParent()) {
+            if ($widget->hasParent() && $dataObj->is($widget->getParent()->getMetaObject()) && $relPath = $widget->getObjectRelationPathFromParent()) {
                 $relAlias = $relPath->toString();
-            } elseif ($relPath = $action->getMetaObject()->findRelationPath($widget->getMetaObject())) {
+            } elseif ($relPath = $dataObj->findRelationPath($widget->getMetaObject())) {
                 $relAlias = $relPath->toString();
             }
             
             if ($relAlias === null || $relAlias === '') {
-                throw new WidgetConfigurationError($widget, 'Cannot use data from widget "' . $widget->getId() . '" with action on object "' . $action->getMetaObject()->getAliasWithNamespace() . '": no relation can be found from widget object to action object', '7CYA39T');
+                throw new WidgetConfigurationError($widget, 'Cannot use data from widget "' . $widget->getId() . '" with action on object "' . $dataObj->getAliasWithNamespace() . '": no relation can be found from widget object to action object', '7CYA39T');
             }
             
             $configurator_element = $this->getFacade()->getElement($this->getWidget()->getConfiguratorWidget());
             
             $data = <<<JS
     {
-        oId: '{$action->getMetaObject()->getId()}',
+        oId: '{$dataObj->getId()}',
         rows: [
             {
                 '{$relAlias}': function(){
