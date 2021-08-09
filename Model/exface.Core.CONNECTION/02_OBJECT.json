@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2021-07-28 17:44:41",
+            "MODIFIED_ON": "2021-08-07 15:54:07",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x33380000000000000000000000000000",
@@ -98,6 +98,13 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "Dialog",
+                "messages": [
+                    {
+                        "type": "info",
+                        "caption": "Storing passwords and keys securely",
+                        "text": "You can store passwords and keys here to make the connection usable by anybody who has access to it's objects and corresponding UI pages. However, any information entered here will be stored unencrypted, remain visible to all admins and will be exported as part of the apps model. Alternatively you can use the encrypted credential storage in `Administration > Users & Security > Credential Storage` - in this case you can create multiple credential sets for each connection and assign them to users manually. Last but not least, you can omit sensitive information completely to show a login promt for every new user trying to access data through this connection (this only work for connections that support authentication!)."
+                    }
+                ],
                 "widgets": [
                     {
                         "attribute_alias": "LABEL"
@@ -125,7 +132,7 @@
                     {
                         "attribute_alias": "FILTER_CONTEXT",
                         "width": "max",
-                        "height": 8
+                        "height": 5
                     }
                 ]
             },
