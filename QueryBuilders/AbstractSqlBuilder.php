@@ -931,7 +931,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // Skip reverse relations without a specific attribute (e.g. `ATTRIBUTE` of `exface.Core.ATTRIBUTE`
         // which is the reverse of `RELATION_TO_ATTRIBUTE`). SQL builders do not support nested objects
         // for now! Technically such a query would produce recursion on buildSqlSelectSubselect() -> buildSqlSelect().
-        if ($attribute->isRelation() && ! $aggregator) {
+        if ($attribute->isRelation() && $aggregator === null) {
             $rel = $this->getMainObject()->getRelation($qpart->getAlias());
             if ($rel->isReverseRelation()) {
                 return;
