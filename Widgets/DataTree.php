@@ -3,7 +3,6 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\DataTypes\FlagTreeFolderDataType;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\CommonLogic\UxonObject;
@@ -235,9 +234,9 @@ class DataTree extends DataTable
      * 
      * @return string
      */
-    public function getTreeFolderFilterAttributeAlias() : string
+    public function getTreeFolderFilterAttributeAlias() : ?string
     {
-        if ($this->tree_folder_filter_attribute_alias === null) {
+        if ($this->tree_folder_filter_attribute_alias === null && $this->hasUidColumn()) {
             return $this->getUidColumn()->getAttributeAlias();
         }
         
@@ -374,8 +373,8 @@ class DataTree extends DataTable
         if ($this->getTreeRootUid() !== null && $this->getLazyLoadTreeLevels() !== false && $data_sheet->getFilters()->isEmpty(true) === true && $this->getMetaObject()->is($data_sheet->getMetaObject())) {
             $data_sheet->getFilters()->addConditionFromString($this->getTreeParentRelationAlias(), $this->getTreeRootUid(), ComparatorDataType::EQUALS);
         }
-        if ($this->getLazyLoadTreeLevels() === true && $this->getTreeRootUid() === null) {
-            throw new WidgetConfigurationError($this, 'Cannot use `lazy_load_tree_levels` in a ' . $this->getWidgetType() . ' if no `tree_root_uid` is specified!');
+        if ($this->getLazyLoadTreeLevels() === true && $this->getTreeRootUid() === null && $this->getTreeFolderFilterAttributeAlias() === null) {
+            throw new WidgetConfigurationError($this, 'Cannot use `lazy_load_tree_levels` in a ' . $this->getWidgetType() . ' if no `tree_root_uid` or `tree_folder_filter_attribute_alias` are specified!');
         }
         
         return $data_sheet;

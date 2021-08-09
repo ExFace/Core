@@ -279,24 +279,6 @@
             "SHORT_DESCRIPTION": ""
         },
         {
-            "CREATED_ON": "1970-01-01 00:00:00",
-            "MODIFIED_ON": "2017-09-11 12:00:33",
-            "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
-            "UID": "0x39000000000000000000000000000000",
-            "APP": "0x31000000000000000000000000000000",
-            "NAME": "Tree Folder Flag",
-            "PROTOTYPE": "exface\/Core\/DataTypes\/FlagTreeFolderDataType.php",
-            "CONFIG_UXON": null,
-            "VALIDATION_ERROR": "",
-            "DEFAULT_DISPLAY_UXON": null,
-            "DEFAULT_EDITOR_UXON": {
-                "widget_type": "InputCheckBox"
-            },
-            "ALIAS": "FlagTreeFolder",
-            "SHORT_DESCRIPTION": ""
-        },
-        {
             "CREATED_ON": "2017-10-13 15:02:03",
             "MODIFIED_ON": "2017-09-11 10:25:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
