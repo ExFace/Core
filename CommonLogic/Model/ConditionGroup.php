@@ -92,6 +92,18 @@ class ConditionGroup implements ConditionGroupInterface
         $this->nested_groups[] = $group;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::addNestedGroupFromString()
+     */
+    public function addNestedGroupFromString(string $operator) : ConditionGroupInterface
+    {
+        $grp = ConditionGroupFactory::createEmpty($this->getWorkbench(), $operator, $this->getBaseObject());
+        $this->addNestedGroup($grp);
+        return $grp;
+    }
 
     /**
      *
