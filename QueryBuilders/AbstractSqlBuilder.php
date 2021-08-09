@@ -19,7 +19,6 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
-use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Factories\QueryBuilderFactory;
@@ -928,6 +927,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $select_from = $this->getShortAlias($select_from);
         $aggregator = ! is_null($aggregator) ? $aggregator : $qpart->getAggregator();
         $make_groupable = $make_groupable ?? $this->isSubquery();
+        
+        // Skip reverse relations without a specific attribute (e.g. `ATTRIBUTE` of `exface.Core.ATTRIBUTE`
+        // which is the reverse of `RELATION_TO_ATTRIBUTE`). SQL builders do not support nested objects
+        // for now! Technically such a query would produce recursion on buildSqlSelectSubselect() -> buildSqlSelect().
+        if ($attribute->isRelation() && ! $aggregator) {
+            $rel = $this->getMainObject()->getRelation($qpart->getAlias());
+            if ($rel->isReverseRelation()) {
+                return;
+            }
+        }
         
         // build subselects for reverse relations if the body of the select is not specified explicitly
         if (! $select_column && $qpart->getUsedRelations(RelationTypeDataType::REVERSE)) {
