@@ -68,12 +68,20 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
     public function addConditionFromColumnValues(DataColumnInterface $column) : ConditionGroupInterface;
     
     /**
-     * Adds a subgroup to this group.
+     * Adds a subgroup to this condition group.
      *
      * @param ConditionGroupInterface $group
      * @return ConditionGroupInterface
      */
     public function addNestedGroup(ConditionGroupInterface $group) : ConditionGroupInterface;
+    
+    /**
+     * Adds a subgroup with a given logical operator and returns it for chaining.
+     * 
+     * @param string $operator
+     * @return ConditionGroupInterface
+     */
+    public function addNestedGroupFromString(string $operator) : ConditionGroupInterface;
     
     /**
      * Returns an array of conditions directly contained in this group (not in the subgroups!).
