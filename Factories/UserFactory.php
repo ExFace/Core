@@ -44,7 +44,7 @@ class UserFactory extends AbstractStaticFactory
      * @param UserSelectorInterface $selector
      * @return UserInterface
      */
-    public static function createFromSelector(UserSelectorInterface $selector) : UserInterface
+    public static function createFromSelector(UserSelectorInterface $selector, array $constructorArguments = null) : UserInterface
     {
         if ($selector->isUsername() === true) {
             return static::createFromModel($selector->getWorkbench(), $selector->toString());

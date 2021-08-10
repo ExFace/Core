@@ -75,7 +75,7 @@ abstract class DataConnectionFactory extends AbstractSelectableComponentFactory
      * 
      * @see \exface\Core\Factories\AbstractSelectableComponentFactory::createFromSelector()
      */
-    public static function createFromSelector(SelectorInterface $connectorSelector) : DataConnectionInterface
+    public static function createFromSelector(SelectorInterface $connectorSelector, array $constructorArguments = null) : DataConnectionInterface
     {
         // If it's a selector for a configured connection, load it from the model
         if ($connectorSelector instanceof DataConnectionSelectorInterface) {
@@ -88,7 +88,7 @@ abstract class DataConnectionFactory extends AbstractSelectableComponentFactory
         if (self::isMetamodelConnector($connectorSelector)) {
             return $connectorSelector->getWorkbench()->model()->getModelLoader()->getDataConnection();
         } else {
-            return parent::createFromSelector($connectorSelector);
+            return parent::createFromSelector($connectorSelector, $constructorArguments);
         }
     }
 

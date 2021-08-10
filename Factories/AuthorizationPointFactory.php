@@ -16,10 +16,13 @@ abstract class AuthorizationPointFactory extends AbstractStaticFactory
      * @param AuthorizationPointSelectorInterface $selector
      * @return mixed
      */
-    public static function createFromSelector(AuthorizationPointSelectorInterface $selector)
+    public static function createFromSelector(AuthorizationPointSelectorInterface $selector, array $constructorArguments = null)
     {
         $appSelector = $selector->getPrototypeAppSelector();
         $app = $selector->getWorkbench()->getApp($appSelector);
-        return $app->get($selector, null, [$app]);
+        if ($constructorArguments === null) {
+            $constructorArguments = [$app];
+        }
+        return $app->get($selector, null, $constructorArguments);
     }
 }
