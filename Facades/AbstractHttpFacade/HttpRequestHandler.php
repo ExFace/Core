@@ -73,13 +73,15 @@ class HttpRequestHandler implements RequestHandlerInterface
             $response->getProtocolVersion(),
             $response->getStatusCode(),
             $response->getReasonPhrase()
-            );
+        );
         header($http_line, true, $response->getStatusCode());
+        
         foreach ($response->getHeaders() as $name => $values) {
             foreach ($values as $value) {
                 header("$name: $value", false);
             }
         }
+        
         $stream = $response->getBody();
         $isStreamByLine = $stream instanceof IteratorStream || $response->getHeader('Content-Type')[0] === 'text/plain-stream';
         $chunk = $isStreamByLine ? 1 : 1024 * 8;
