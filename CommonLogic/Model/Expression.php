@@ -349,7 +349,7 @@ class Expression implements ExpressionInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::getRequiredAttributes()
      */
-    public function getRequiredAttributes()
+    public function getRequiredAttributes() : array
     {
         switch ($this->getType()) {
                 case self::TYPE_ATTRIBUTE:
@@ -357,6 +357,7 @@ class Expression implements ExpressionInterface
                 case self::TYPE_FORMULA:
                     return $this->getFormula()->getRequiredAttributes();           
         }
+        return [];
     }
 
     /**
