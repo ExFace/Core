@@ -88,7 +88,7 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
      * 
      * @return string[]
      */
-    public function getRequiredAttributes();
+    public function getRequiredAttributes() : array;
     
     /**
      * @return string
