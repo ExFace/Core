@@ -9,9 +9,9 @@ interface iUseInputWidget extends WidgetInterface
     /**
      * Returns the widget, that supplies the input data for the action
      *
-     * @return AbstractWidget $widget
+     * @return WidgetInterface
      */
-    public function getInputWidget();
+    public function getInputWidget() : WidgetInterface;
     
     /**
      * Sets the widget, that supplies the input data for the action
@@ -19,5 +19,5 @@ interface iUseInputWidget extends WidgetInterface
      * @param AbstractWidget $widget
      * @return AbstractWidget
      */
-    public function setInputWidget(AbstractWidget $widget);
+    public function setInputWidget(WidgetInterface $widget) : iUseInputWidget;
 }
