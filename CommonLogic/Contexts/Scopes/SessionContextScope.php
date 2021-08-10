@@ -2,18 +2,24 @@
 namespace exface\Core\CommonLogic\Contexts\Scopes;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Contexts\ContextInterface;
-use exface\Core\Exceptions\Contexts\ContextNotFoundError;
-use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
-use exface\Core\Interfaces\Contexts\ContextScopeInterface;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\Contexts\ContextNotFoundError;
 use exface\Core\Facades\ConsoleFacade;
+use exface\Core\Interfaces\Contexts\ContextInterface;
+use exface\Core\Interfaces\Contexts\ContextScopeInterface;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 
 /**
  * The session context scope represents the PHP session (on server side).
- * Contexts in this scope live as long as
- * the session does and are accessible from all windows of the browser instance, that started the session.
+ * 
+ * Contexts in this scope live as long as the PHP session does and are accessible from 
+ * all windows of the browser instance, that started the session.
+ * 
+ * Technically this scope opens and reads the session when being created, closes it immediately
+ * to avoid blocking and re-opens it right before storing data at the very end of the request
+ * (typically on Workbench::__destroy()). This does not work well with default cookie-based
+ * sessions, so there is a workaround for session handling - see sessionOpen() for details!
  *
  * @author Andrej Kabachnik
  *        
@@ -41,6 +47,8 @@ class SessionContextScope extends AbstractContextScope
     private $installation_name = null;
     
     private $session_disabled = false;
+    
+    private $useCookieWorkaround = true;
     
     public function __construct(Workbench $exface)
     {
@@ -133,7 +141,7 @@ class SessionContextScope extends AbstractContextScope
         }
         
         try {
-            $this->sessionOpen(true);
+            $this->sessionOpen();
         } catch (\ErrorException $e) {
             if ($e->getSeverity() === E_WARNING) {
                 $this->getWorkbench()->getLogger()->logException($e);
@@ -223,48 +231,84 @@ class SessionContextScope extends AbstractContextScope
     }
 
     /**
-     * Opens the curernt session for writing.
-     * Creates a new session, if there is no session yet
+     * Opens the curernt session for writing; Creates a new session, if there is no session yet.
+     * 
+     * NOTE: since context data is stored in the session itself and that context data is saved at the
+     * very end of the request, the session context scope requires the session to remain writable even 
+     * after HTTP headers being sent (which happens somewhere unpredictable along the way). Keeping
+     * the session open all the time is not an option as the default file-based sessions would block
+     * concurrent AJAX-requests.
+     * 
+     * If the session is created here and `isCookieHandlingEnabled()` is not disabled explicitly, 
+     * this method will handle session cookies itself to avoid "headers already sent" warnings and the
+     * session being unable to save any data at the end. Should custom sessions be used or should
+     * the workaround cause unwanted side-effects, the whole thing can be disabled by making
+     * `isCookieHandlingEnabled()` return false.
      *
      * @return SessionContextScope
      */
-    protected function sessionOpen(bool $ignoreHeaderWarnings = false)
+    protected function sessionOpen()
     {
         if (! $this->sessionIsPossible()) {
             return $this;
         }
+        
         if (! $this->sessionIsOpen()) {
-            // If there is a session id saved in the context, this session was already loaded into it, so the next time
-            // we need to open exactly the same session!
-            if ($this->getSessionId() && $this->getSessionId() !== session_id()) {
-                session_id($this->getSessionId());
+            $sessionId = $this->getSessionId();
+            $sessionStartedPreviously = ($sessionId !== null);
+            $cookieHandling = $this->isCookieHandlingEnabled();
+            $cookieName = session_name();
+            
+            if ($sessionStartedPreviously === false) {
+                // Custom cookie handling to avoid headers-already-sent-issues. See method comments
+                // above!
+                if ($cookieHandling === true) {
+                    ini_set('session.use_only_cookies', false);
+                    ini_set('session.use_cookies', false);
+                    ini_set('session.use_trans_sid', false);
+                    ini_set('session.cache_limiter', null);
+                    
+                    if (array_key_exists($cookieName, $_COOKIE)) {
+                        $sessionId = $_COOKIE[$cookieName];
+                        session_id($sessionId);
+                    } else {
+                        session_start();
+                        $sessionId = session_id();
+                        setcookie($cookieName, $sessionId);
+                        session_write_close();
+                    }
+                }
+            } else {
+                session_id($sessionId);
             }
             
-            // It is important to wrap session_start() in a try-catch-block because it can produce warnings on certain
-            // occasions (e.g. if the session uses cookies and the headers were already sent at this point), that may be
-            // converted to exceptions if a corresponding error handler is being used. Exceptions would prevent the
-            // rest of the code from being executed and, thus, the purpose of opening the session will not be fulfilled.
-            // To prevent this, we simply catch any exception and check if the session is really open afterwards - if not,
-            // a meaningfull exception is thrown.
             try {
-                if ($ignoreHeaderWarnings) {
-                    $started = @session_start();
-                } else {
-                    $started = session_start();
-                }
+                $started = session_start();
             } catch (\Throwable $e) {
                 if (! $this->sessionIsOpen()) {
                     throw new RuntimeException('Opening the session for the session context scope failed: ' . $e->getMessage(), null, $e);
                 }
             }
             // Throw an error if the session could not be started. 
-            if ($started === false && ! $ignoreHeaderWarnings) {
+            if ($started === false) {
                 throw new RuntimeException('Opening the session for the session context scope failed: unknown error!');
+            } else {
+                $this->setSessionId(session_id());
             }
         } else {
             $this->setSessionId(session_id());
         }
         return $this;
+    }
+    
+    /**
+     * Retruns TRUE if custom session cookie handling is required and FALSE otherwise.
+     * 
+     * @return bool
+     */
+    protected function isCookieHandlingEnabled() : bool
+    {
+        return $this->useCookieWorkaround;
     }
 
     /**
