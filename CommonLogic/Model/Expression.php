@@ -40,8 +40,6 @@ class Expression implements ExpressionInterface
     const TYPE_NUMBER = 'number';
     const TYPE_REFERENCE = 'reference';
     const TYPE_UNKNOWN = 'unknown';
-    
-    private $attributes = null;
 
     private $formula = null;
 
