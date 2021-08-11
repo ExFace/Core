@@ -53,7 +53,7 @@
             },
             {
                 "attribute_alias": "AUTHORIZATION_POLICY__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.POLICIES')"
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.POLICIES')"
             },
             {
                 "attribute_alias": "ACTION_PROTOTYPE",

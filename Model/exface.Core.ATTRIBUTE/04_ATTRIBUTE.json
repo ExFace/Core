@@ -1057,7 +1057,7 @@
             "SORTERPOS": null,
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
-            "SHORT_DESCRIPTION": "This expression will allways be evaluated, when the object is saved - eventually overwriting user input. This is handy for attributes like last_update_time, where a fixed value =NOW() will automatically set the attribute to the time of saving.",
+            "SHORT_DESCRIPTION": "This expression will allways be evaluated, when the object is saved - eventually overwriting user input. This is handy for attributes like last_update_time, where a fixed value =Now() will automatically set the attribute to the time of saving.",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",

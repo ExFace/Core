@@ -51,11 +51,11 @@
             },
             {
                 "attribute_alias": "USER_CREDENTIALS__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS')"
+                "caption": "=Translate('exface.Core', 'PAGE.USERS.CREDENTIALS')"
             },
             {
                 "attribute_alias": "USER_AUTHENTICATOR__LAST_AUTHENTICATED_ON:MAX",
-                "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.LAST_LOGIN')"
+                "caption": "=Translate('exface.Core', 'PAGE.USERS.LAST_LOGIN')"
             }
         ],
         "sorters": [

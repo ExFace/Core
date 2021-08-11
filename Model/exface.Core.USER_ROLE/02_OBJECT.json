@@ -104,7 +104,7 @@
                         "widget_type": "Tabs",
                         "tabs": [
                             {
-                                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ROLE')",
+                                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.ROLE')",
                                 "widgets": [
                                     {
                                         "widget_type": "SplitVertical",
@@ -171,7 +171,7 @@
                                                         "buttons": [
                                                             {
                                                                 "action_alias": "exface.Core.ShowObjectCreateDialog",
-                                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                                                                 "icon": "plus",
                                                                 "disabled_if": {
                                                                     "operator": "AND",
@@ -186,7 +186,7 @@
                                                             },
                                                             {
                                                                 "action_alias": "exface.Core.DeleteObject",
-                                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                                 "icon": "minus"
                                                             }
                                                         ]
@@ -198,7 +198,7 @@
                                 ]
                             },
                             {
-                                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.PERMISSIONS')",
+                                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.PERMISSIONS')",
                                 "widgets": [
                                     {
                                         "widget_type": "DataTable",
@@ -251,11 +251,11 @@
                                         "buttons": [
                                             {
                                                 "action_alias": "exface.Core.ShowObjectCreateDialog",
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')"
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')"
                                             },
                                             {
                                                 "action_alias": "exface.Core.DeleteObject",
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                 "icon": "minus"
                                             },
                                             {

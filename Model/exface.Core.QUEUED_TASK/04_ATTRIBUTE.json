@@ -393,7 +393,7 @@
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "The user that produced the task",
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
-            "DEFAULT_VALUE": "=USER('UID')",
+            "DEFAULT_VALUE": "=User('UID')",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
         },
@@ -586,7 +586,7 @@
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "The time, when the task was created within the producer. May be different from the enqueueing time if the task was sent to the queue later or had been reinserted multiple times",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_VALUE": "=NOW()",
+            "DEFAULT_VALUE": "=Now()",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
         },

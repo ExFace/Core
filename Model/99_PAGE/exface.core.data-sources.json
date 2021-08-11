@@ -44,11 +44,11 @@
             },
             {
                 "attribute_alias": "BASE_OBJECT__LABEL",
-                "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCES.BASE_OBJECT')"
+                "caption": "=Translate('exface.Core', 'PAGE.DATA_SOURCES.BASE_OBJECT')"
             },
             {
                 "attribute_alias": "OBJECT__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.OBJECTS')"
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.OBJECTS')"
             },
             {
                 "attribute_alias": "READABLE_FLAG"
@@ -58,7 +58,7 @@
             },
             {
                 "attribute_alias": "CONNECTION__READONLY",
-                "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCES.CONNECTION_READONLY')"
+                "caption": "=Translate('exface.Core', 'PAGE.DATA_SOURCES.CONNECTION_READONLY')"
             },
             {
                 "attribute_alias": "APP__LABEL"
@@ -89,10 +89,10 @@
             },
             {
                 "action_alias": "exface.Core.ShowModelBuilderDialog",
-                "caption": "=TRANSLATE('exface.Core', 'ACTION.SHOWMODELBUILDERDIALOG.NAME')"
+                "caption": "=Translate('exface.Core', 'ACTION.SHOWMODELBUILDERDIALOG.NAME')"
             },
             {
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.OBJECTS')",
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.OBJECTS')",
                 "action": {
                     "alias": "exface.Core.GoToPage",
                     "page_alias": "exface.core.objects"

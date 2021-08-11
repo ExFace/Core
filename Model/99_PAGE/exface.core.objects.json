@@ -52,7 +52,7 @@
             },
             {
                 "attribute_alias": "APP__ALIAS",
-                "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECTS.APP_ALIAS')"
+                "caption": "=Translate('exface.Core', 'PAGE.OBJECTS.APP_ALIAS')"
             },
             {
                 "attribute_alias": "ALIAS"
@@ -61,19 +61,19 @@
                 "attribute_alias": "DATA_SOURCE__LABEL"
             },
             {
-                "calculation": "=LEFT(DATA_ADDRESS,100)"
+                "calculation": "=Left(DATA_ADDRESS,100)"
             },
             {
                 "attribute_alias": "ATTRIBUTE__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ATTRIBUTES')"
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.ATTRIBUTES')"
             },
             {
                 "attribute_alias": "OBJECT_ACTION__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ACTIONS')"
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.ACTIONS')"
             },
             {
                 "attribute_alias": "OBJECT_BEHAVIORS__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.BEHAVIORS')"
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.BEHAVIORS')"
             },
             {
                 "attribute_alias": "HAS_DEFAULT_EDITOR"
@@ -104,15 +104,15 @@
             },
             {
                 "widget_type": "MenuButton",
-                "caption": "=TRANSLATE('exface.Core.', 'ACTION.SHOWOBJECTCOPYDIALOG.NAME')",
+                "caption": "=Translate('exface.Core.', 'ACTION.SHOWOBJECTCOPYDIALOG.NAME')",
                 "icon": "clone",
                 "buttons": [
                     {
-                        "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECTS.COPY_OBJECT')",
+                        "caption": "=Translate('exface.Core', 'PAGE.OBJECTS.COPY_OBJECT')",
                         "action_alias": "exface.Core.ShowObjectCopyDialog"
                     },
                     {
-                        "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECTS.COPY_OBJECT_WITH_ATTRIBUTES')",
+                        "caption": "=Translate('exface.Core', 'PAGE.OBJECTS.COPY_OBJECT_WITH_ATTRIBUTES')",
                         "action": {
                             "alias": "exface.Core.ShowObjectCopyDialog",
                             "copy_related_objects": [
@@ -127,7 +127,7 @@
             },
             {
                 "action_alias": "exface.Core.ShowModelBuilderDialog",
-                "caption": "=TRANSLATE('exface.Core', 'ACTION.SHOWMODELBUILDERDIALOG.NAME')"
+                "caption": "=Translate('exface.Core', 'ACTION.SHOWMODELBUILDERDIALOG.NAME')"
             },
             {
                 "action": {
@@ -136,7 +136,7 @@
                     "input_rows_min": 1,
                     "input_rows_max": 1
                 },
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ATTRIBUTES')"
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.ATTRIBUTES')"
             },
             {
                 "action": {
@@ -145,7 +145,7 @@
                     "input_rows_min": 1,
                     "input_rows_max": 1
                 },
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.RELATIONS')"
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.RELATIONS')"
             }
         ]
     }

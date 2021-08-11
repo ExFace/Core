@@ -103,7 +103,7 @@
                 "messages": [
                     {
                         "type": "HINT",
-                        "text": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.COMPOUND_COMPONENT_HINT')"
+                        "text": "=Translate('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.COMPOUND_COMPONENT_HINT')"
                     }
                 ],
                 "widgets": [
@@ -154,7 +154,7 @@
                     },
                     {
                         "widget_type": "WidgetGroup",
-                        "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.COMPOUND_DELIMITER')",
+                        "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.COMPOUND_DELIMITER')",
                         "widgets": [
                             {
                                 "attribute_alias": "VALUE_PREFIX"

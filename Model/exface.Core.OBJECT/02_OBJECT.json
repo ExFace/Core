@@ -103,11 +103,11 @@
                         "widget_type": "Tabs",
                         "tabs": [
                             {
-                                "caption": "=TRANSLATE('exface.Core', 'PAGE.TABS.GENERAL')",
+                                "caption": "=Translate('exface.Core', 'PAGE.TABS.GENERAL')",
                                 "widgets": [
                                     {
                                         "widget_type": "WidgetGroup",
-                                        "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.MODEL')",
+                                        "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.MODEL')",
                                         "widgets": [
                                             {
                                                 "attribute_alias": "APP"
@@ -124,7 +124,7 @@
                                             {
                                                 "widget_type": "InputComboTable",
                                                 "attribute_alias": "DATA_SOURCE__BASE_OBJECT",
-                                                "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECT_EDITOR.DATA_SOURCE_BASE_OBJECT')",
+                                                "caption": "=Translate('exface.Core', 'PAGE.OBJECT_EDITOR.DATA_SOURCE_BASE_OBJECT')",
                                                 "display_only": true,
                                                 "disabled": true,
                                                 "value": "=data_source_selector!BASE_OBJECT"
@@ -152,7 +152,7 @@
                                     },
                                     {
                                         "widget_type": "WidgetGroup",
-                                        "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECT_EDITOR.DATA_ADDRESS')",
+                                        "caption": "=Translate('exface.Core', 'PAGE.OBJECT_EDITOR.DATA_ADDRESS')",
                                         "widgets": [
                                             {
                                                 "attribute_alias": "DATA_ADDRESS",
@@ -196,7 +196,7 @@
                                 ]
                             },
                             {
-                                "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECT_EDITOR.DEFAULT_EDITOR')",
+                                "caption": "=Translate('exface.Core', 'PAGE.OBJECT_EDITOR.DEFAULT_EDITOR')",
                                 "widgets": [
                                     {
                                         "attribute_alias": "DEFAULT_EDITOR_UXON",
@@ -210,7 +210,7 @@
                                 ]
                             },
                             {
-                                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ATTRIBUTES')",
+                                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.ATTRIBUTES')",
                                 "widgets": [
                                     {
                                         "widget_type": "DataTable",
@@ -241,7 +241,7 @@
                                             },
                                             {
                                                 "attribute_alias": "DISPLAYORDER",
-                                                "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTES.DISPLAY_ORDER')"
+                                                "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTES.DISPLAY_ORDER')"
                                             },
                                             {
                                                 "attribute_alias": "=Left(DATA_ADDRESS,60)"
@@ -261,18 +261,18 @@
                                             },
                                             {
                                                 "attribute_alias": "RELATED_OBJ__NAME",
-                                                "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECT_EDITOR.RELATION_TO')"
+                                                "caption": "=Translate('exface.Core', 'PAGE.OBJECT_EDITOR.RELATION_TO')"
                                             },
                                             {
                                                 "attribute_alias": "HIDDENFLAG"
                                             },
                                             {
                                                 "attribute_alias": "UIDFLAG",
-                                                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.UID')"
+                                                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.UID')"
                                             },
                                             {
                                                 "attribute_alias": "LABELFLAG",
-                                                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.LABEL')"
+                                                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.LABEL')"
                                             },
                                             {
                                                 "attribute_alias": "SHORT_DESCRIPTION",
@@ -308,8 +308,8 @@
                                                 "action_alias": "exface.Core.DeleteObject"
                                             },
                                             {
-                                                "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECT_EDITOR.QUICK_EDIT_ATTRIBUTES')",
-                                                "hint": "=TRANSLATE('exface.Core', 'PAGE.OBJECT_EDITOR.QUICK_EDIT_ATTRIBUTES_HINT')",
+                                                "caption": "=Translate('exface.Core', 'PAGE.OBJECT_EDITOR.QUICK_EDIT_ATTRIBUTES')",
+                                                "hint": "=Translate('exface.Core', 'PAGE.OBJECT_EDITOR.QUICK_EDIT_ATTRIBUTES_HINT')",
                                                 "action": {
                                                     "alias": "exface.Core.QuickEditAttributes",
                                                     "prefill_with_data_from_widget_link": "object_uid",
@@ -321,7 +321,7 @@
                                 ]
                             },
                             {
-                                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.BEHAVIORS')",
+                                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.BEHAVIORS')",
                                 "widgets": [
                                     {
                                         "object_alias": "exface.Core.OBJECT_BEHAVIORS",
@@ -368,7 +368,7 @@
                                 ]
                             },
                             {
-                                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ACTIONS')",
+                                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.ACTIONS')",
                                 "widgets": [
                                     {
                                         "object_alias": "exface.Core.OBJECT_ACTION",
@@ -392,7 +392,7 @@
                                             },
                                             {
                                                 "attribute_alias": "AUTHORIZATION_POLICY__UID:COUNT",
-                                                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.POLICIES')"
+                                                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.POLICIES')"
                                             },
                                             {
                                                 "attribute_alias": "ACTION_PROTOTYPE"
@@ -425,7 +425,7 @@
                                 ]
                             },
                             {
-                                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.PERMISSIONS')",
+                                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.PERMISSIONS')",
                                 "widgets": [
                                     {
                                         "widget_type": "DataTable",
@@ -513,7 +513,7 @@
                                         "buttons": [
                                             {
                                                 "action_alias": "exface.Core.ShowObjectCreateDialog",
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                                                 "disabled_if": {
                                                     "operator": "AND",
                                                     "conditions": [
@@ -527,7 +527,7 @@
                                             },
                                             {
                                                 "action_alias": "exface.Core.DeleteObject",
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                 "icon": "minus"
                                             },
                                             {
@@ -547,7 +547,7 @@
                 "buttons": [
                     {
                         "action_alias": "exface.Core.ShowModelBuilderDialog",
-                        "caption": "=TRANSLATE('exface.Core', 'ACTION.SHOWMODELBUILDERDIALOG.NAME')",
+                        "caption": "=Translate('exface.Core', 'ACTION.SHOWMODELBUILDERDIALOG.NAME')",
                         "close_dialog": false,
                         "disable_condition": {
                             "widget_link": "object_uid",

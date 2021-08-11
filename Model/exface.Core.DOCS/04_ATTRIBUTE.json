@@ -198,7 +198,7 @@
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "line(1)",
             "OBJECT": "0x11e7b7d9e1203963995b0205857feb80",
-            "FORMATTER": "=SUBSTITUTE(TITLE, '#', '')",
+            "FORMATTER": "=Substitute(TITLE, '#', '')",
             "DISPLAYORDER": null,
             "LABELFLAG": "0",
             "UIDFLAG": "0",

@@ -194,7 +194,7 @@
                                 },
                                 {
                                     "attribute_alias": "PAGE_GROUP_PAGES__UID:COUNT",
-                                    "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.PAGE_GROUPS')"
+                                    "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.PAGE_GROUPS')"
                                 },
                                 {
                                     "attribute_alias": "TEMPLATE__LABEL"
@@ -237,7 +237,7 @@
                                                     "action_alias": "exface.Core.CreateData",
                                                     "visibility": "promoted",
                                                     "align": "opposite",
-                                                    "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                                                    "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                                                     "icon": "plus"
                                                 }
                                             ]
@@ -270,7 +270,7 @@
                                                 {
                                                     "visibility": "promoted",
                                                     "align": "opposite",
-                                                    "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                    "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                     "icon": "minus",
                                                     "action": {
                                                         "alias": "exface.Core.DeleteObject",

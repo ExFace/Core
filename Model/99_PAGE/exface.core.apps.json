@@ -49,27 +49,27 @@
             },
             {
                 "attribute_alias": "PAGE__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.PAGES')"
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.PAGES')"
             },
             {
                 "attribute_alias": "OBJECT__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.OBJECTS')"
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.OBJECTS')"
             },
             {
                 "attribute_alias": "DATASRC__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.DATA_SOURCES')"
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.DATA_SOURCES')"
             },
             {
                 "attribute_alias": "CONNECTION__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.CONNECTIONS')"
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.CONNECTIONS')"
             },
             {
                 "attribute_alias": "USER_ROLE__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ROLES')"
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.ROLES')"
             },
             {
                 "attribute_alias": "AUTHORIZATION_POLICY__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.POLICIES')"
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.POLICIES')"
             },
             {
                 "attribute_alias": "PUPLISHED",
@@ -94,7 +94,7 @@
                 "action_alias": "exface.Core.ShowAppRelationGraph"
             },
             {
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.OBJECTS')",
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.OBJECTS')",
                 "action": {
                     "alias": "exface.Core.GoToPage",
                     "page_alias": "exface.core.objects",
@@ -132,12 +132,12 @@
             },
             {
                 "widget_type": "MenuButton",
-                "caption": "=TRANSLATE('exface.Core', 'PAGE.APPS.REPAIR')",
+                "caption": "=Translate('exface.Core', 'PAGE.APPS.REPAIR')",
                 "icon": "wrench",
                 "buttons": [
                     {
                         "action_alias": "axenox.PackageManager.ShowAppRepairConsole",
-                        "caption": "=TRANSLATE('exface.Core', 'PAGE.APPS.REPAIR')"
+                        "caption": "=Translate('exface.Core', 'PAGE.APPS.REPAIR')"
                     },
                     {
                         "action_alias": "axenox.PackageManager.ImportAppModel"
