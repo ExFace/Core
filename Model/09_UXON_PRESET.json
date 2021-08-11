@@ -1810,7 +1810,7 @@
                         },
                         {
                             "attribute_alias": "",
-                            "formula": "=NOW()"
+                            "formula": "=Now()"
                         }
                     ]
                 }
@@ -2470,7 +2470,7 @@
                         "buttons": [
                             {
                                 "action_alias": "exface.Core.ShowObjectCreateDialog",
-                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                                 "disabled_if": {
                                     "operator": "AND",
                                     "conditions": [
@@ -2484,7 +2484,7 @@
                             },
                             {
                                 "action_alias": "exface.Core.DeleteObject",
-                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')"
+                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')"
                             }
                         ]
                     }
@@ -2766,7 +2766,7 @@
                     ],
                     "buttons": [
                         {
-                            "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                            "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                             "icon": "plus",
                             "action_alias": "exface.Core.CreateData",
                             "visibility": "promoted",
@@ -2810,7 +2810,7 @@
                     ],
                     "buttons": [
                         {
-                            "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                            "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                             "icon": "minus",
                             "visibility": "promoted",
                             "align": "opposite",

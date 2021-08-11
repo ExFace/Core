@@ -103,7 +103,7 @@
                         "widget_type": "Tabs",
                         "tabs": [
                             {
-                                "caption": "=TRANSLATE('exface.Core', 'PAGE.TABS.GENERAL')",
+                                "caption": "=Translate('exface.Core', 'PAGE.TABS.GENERAL')",
                                 "widgets": [
                                     {
                                         "widget_type": "WidgetGroup",
@@ -161,7 +161,7 @@
                                     },
                                     {
                                         "widget_type": "WidgetGroup",
-                                        "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.DATA_ADDRESS')",
+                                        "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.DATA_ADDRESS')",
                                         "widgets": [
                                             {
                                                 "attribute_alias": "DATA_ADDRESS",
@@ -185,7 +185,7 @@
                                     },
                                     {
                                         "widget_type": "WidgetGroup",
-                                        "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.RELATION')",
+                                        "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.RELATION')",
                                         "widgets": [
                                             {
                                                 "attribute_alias": "RELATED_OBJ",
@@ -234,7 +234,7 @@
                                     },
                                     {
                                         "widget_type": "WidgetGroup",
-                                        "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.DEFAULTS')",
+                                        "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.DEFAULTS')",
                                         "widgets": [
                                             {
                                                 "attribute_alias": "DEFAULT_VALUE"
@@ -261,7 +261,7 @@
                                     },
                                     {
                                         "widget_type": "WidgetGroup",
-                                        "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.OPTIONS')",
+                                        "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.OPTIONS')",
                                         "widgets": [
                                             {
                                                 "attribute_alias": "READABLEFLAG"
@@ -300,7 +300,7 @@
                                     },
                                     {
                                         "widget_type": "WidgetGroup",
-                                        "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.DESCRIPTION')",
+                                        "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.DESCRIPTION')",
                                         "widgets": [
                                             {
                                                 "attribute_alias": "SHORT_DESCRIPTION",
@@ -311,7 +311,7 @@
                                     },
                                     {
                                         "widget_type": "WidgetGroup",
-                                        "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.COMMENTS')",
+                                        "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.COMMENTS')",
                                         "widgets": [
                                             {
                                                 "attribute_alias": "COMMENTS",
@@ -323,7 +323,7 @@
                                 ]
                             },
                             {
-                                "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.CUSTOMIZING')",
+                                "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.CUSTOMIZING')",
                                 "widgets": [
                                     {
                                         "attribute_alias": "CUSTOM_DATA_TYPE",
@@ -350,7 +350,7 @@
                                 ]
                             },
                             {
-                                "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.COMPOUND')",
+                                "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.COMPOUND')",
                                 "widgets": [
                                     {
                                         "widget_type": "DataTable",
@@ -444,8 +444,8 @@
                 ],
                 "buttons": [
                     {
-                        "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.OPEN_DATATYPE')",
-                        "hint": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.OPEN_DATATYPE_HINT')",
+                        "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.OPEN_DATATYPE')",
+                        "hint": "=Translate('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.OPEN_DATATYPE_HINT')",
                         "icon": "external-link",
                         "close_dialog": false,
                         "action": {

@@ -124,11 +124,11 @@
             },
             {
                 "attribute_alias": "RELATED_OBJ__LABEL",
-                "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECT_EDITOR.RELATION_TO')"
+                "caption": "=Translate('exface.Core', 'PAGE.OBJECT_EDITOR.RELATION_TO')"
             },
             {
                 "attribute_alias": "DISPLAYORDER",
-                "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTES.DISPLAY_ORDER')"
+                "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTES.DISPLAY_ORDER')"
             },
             {
                 "attribute_alias": "DATA_ADDRESS_PROPS",
@@ -149,7 +149,7 @@
         ],
         "buttons": [
             {
-                "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTES.OPEN_OBJECT')",
+                "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTES.OPEN_OBJECT')",
                 "action": {
                     "alias": "exface.Core.ShowObjectEditDialog",
                     "object_alias": "exface.Core.OBJECT",

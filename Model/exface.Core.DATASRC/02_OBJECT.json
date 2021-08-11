@@ -124,7 +124,7 @@
                     },
                     {
                         "widget_type": "WidgetGroup",
-                        "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.DEFAULTS')",
+                        "caption": "=Translate('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.DEFAULTS')",
                         "widgets": [
                             {
                                 "attribute_alias": "DEFAULT_CONNECTION"
@@ -136,7 +136,7 @@
                     },
                     {
                         "widget_type": "WidgetGroup",
-                        "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.CUSTOM_CONFIG')",
+                        "caption": "=Translate('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.CUSTOM_CONFIG')",
                         "widgets": [
                             {
                                 "attribute_alias": "CUSTOM_CONNECTION"
@@ -148,7 +148,7 @@
                     },
                     {
                         "widget_type": "WidgetGroup",
-                        "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.CURRENT_CONFIG')",
+                        "caption": "=Translate('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.CURRENT_CONFIG')",
                         "widgets": [
                             {
                                 "attribute_alias": "CONNECTION",
@@ -162,7 +162,7 @@
                 ],
                 "buttons": [
                     {
-                        "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.EDIT_CONNECTION')",
+                        "caption": "=Translate('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.EDIT_CONNECTION')",
                         "close_dialog": false,
                         "disable_condition": {
                             "widget_link": "current_connection!UID",
@@ -183,7 +183,7 @@
                         }
                     },
                     {
-                        "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.COPY_CONNECTION')",
+                        "caption": "=Translate('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.COPY_CONNECTION')",
                         "close_dialog": false,
                         "disable_condition": {
                             "widget_link": "current_connection!UID",

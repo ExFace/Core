@@ -76,7 +76,7 @@
                 "action_alias": "exface.Core.ShowObjectCopyDialog"
             },
             {
-                "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_CONNECTIONS.ADD_CREDENTIALS')",
+                "caption": "=Translate('exface.Core', 'PAGE.DATA_CONNECTIONS.ADD_CREDENTIALS')",
                 "action": {
                     "alias": "exface.Core.CreateCredentialsDialog",
                     "input_mapper": {

@@ -103,7 +103,7 @@
                         "widget_type": "Tabs",
                         "tabs": [
                             {
-                                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ACTION')",
+                                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.ACTION')",
                                 "widgets": [
                                     {
                                         "attribute_alias": "UID",
@@ -150,7 +150,7 @@
                                 ]
                             },
                             {
-                                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.PERMISSIONS')",
+                                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.PERMISSIONS')",
                                 "widgets": [
                                     {
                                         "widget_type": "DataTable",
@@ -208,7 +208,7 @@
                                         "buttons": [
                                             {
                                                 "action_alias": "exface.Core.ShowObjectCreateDialog",
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                                                 "disabled_if": {
                                                     "operator": "AND",
                                                     "conditions": [
@@ -222,7 +222,7 @@
                                             },
                                             {
                                                 "action_alias": "exface.Core.DeleteObject",
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                 "icon": "minus"
                                             },
                                             {

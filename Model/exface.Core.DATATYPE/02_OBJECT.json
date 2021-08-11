@@ -158,7 +158,7 @@
                 "buttons": [
                     {
                         "close_dialog": false,
-                        "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_TYPES.SHOW_MESSAGE_EDITOR')",
+                        "caption": "=Translate('exface.Core', 'PAGE.DATA_TYPES.SHOW_MESSAGE_EDITOR')",
                         "disable_condition": {
                             "widget_link": "message_selector!UID",
                             "comparator": "==",

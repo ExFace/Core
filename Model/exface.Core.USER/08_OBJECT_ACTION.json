@@ -104,7 +104,7 @@
                             "align": "opposite"
                         },
                         {
-                            "caption": "=TRANSLATE('exface.Core', 'ACTION.CHANGEMYPASSWORD.NAME')",
+                            "caption": "=Translate('exface.Core', 'ACTION.CHANGEMYPASSWORD.NAME')",
                             "action_alias": "exface.Core.ShowChangePasswordDialog"
                         }
                     ]
@@ -333,7 +333,7 @@
                                             "action_alias": "exface.Core.CreateData",
                                             "align": "opposite",
                                             "visibility": "promoted",
-                                            "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                                            "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                                             "icon": "plus"
                                         }
                                     ]
@@ -368,7 +368,7 @@
                                     ],
                                     "buttons": [
                                         {
-                                            "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                            "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                             "visibility": "promoted",
                                             "align": "opposite",
                                             "icon": "minus",
