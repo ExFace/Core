@@ -34,6 +34,8 @@ class SqlMigration
     private $failed_message = '';
 
     private $skip_flag = false;
+    
+    private $failed_logId = null;
 
 
     /**
@@ -252,6 +254,28 @@ class SqlMigration
     public function setFailedMessage(string $failed_message): SqlMigration
     {
         $this->failed_message = $failed_message;
+        return $this;
+    }
+    
+    /**
+     * Returns the logId or null.
+     * 
+     * @return string|NULL
+     */
+    public function getFailedLogId(): ?string
+    {
+        return $this->failed_logId;
+    }
+    
+    /**
+     * Sets the failed message of the SqlMigration
+     *
+     * @param string $logId
+     * @return SqlMigration
+     */
+    public function setFailedLogId(string $logId) : SqlMigration
+    {
+        $this->failed_logId = $logId;
         return $this;
     }
 
