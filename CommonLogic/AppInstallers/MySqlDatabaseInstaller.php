@@ -9,6 +9,7 @@ use function GuzzleHttp\json_encode;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataConnectors\MySqlConnector;
 use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 
 /**
  * Database AppInstaller for Apps with MySQL Database.
@@ -89,20 +90,36 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
                 $this->getWorkbench()->getLogger()->logException($e);
                 throw new InstallerRuntimeError($this, 'Generating Migration table failed! ' . $e->getMessage(), null, $e);
             }
-            return;
         }
+        $sql = $this->alterMigrationsTable($connection);
+        return;
+    }
+    
+    protected function alterMigrationsTable(SqlDataConnectorInterface $connection) : void
+    {
         $sql = $this->buildSqlShowColumnFailed();
         if (empty($connection->runSql($sql)->getResultArray())) {
             try {
-                $columns_create = $this->buildSqlMigrationTableAtler();
+                $columns_create = $this->buildSqlMigrationTableAlterAddFailed();
                 $this->runSqlMultiStatementScript($connection, $columns_create);
                 $this->getWorkbench()->getLogger()->debug('Added columns \'failed\', \'failed_message\', \'skip flag\' to existing migration table ' . $this->getMigrationsTableName() . '.');
             } catch (\Throwable $e) {
                 $this->getWorkbench()->getLogger()->logException($e);
                 throw new InstallerRuntimeError($this, 'Adding columns \'failed\', \'failed_message\', \'skip flag\' to existing migration table ' . $this->getMigrationsTableName() . ' failed. ' . $e->getMessage(), null, $e);
             }
-            return;
         }
+        $sql = $this->buildSqlShowColumnLogId();
+        if (empty($connection->runSql($sql)->getResultArray())) {
+            try {
+                $columns_create = $this->buildSqlMigrationTableAlterAddLogId();
+                $this->runSqlMultiStatementScript($connection, $columns_create);
+                $this->getWorkbench()->getLogger()->debug('Added columns \'logId\' to existing migration table ' . $this->getMigrationsTableName() . '.');
+            } catch (\Throwable $e) {
+                $this->getWorkbench()->getLogger()->logException($e);
+                throw new InstallerRuntimeError($this, 'Adding columns \'logId\' to existing migration table ' . $this->getMigrationsTableName() . ' failed. ' . $e->getMessage(), null, $e);
+            }
+        }
+        
         return;
     }
 
@@ -193,7 +210,15 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
     protected function migrateFail(SqlMigration $migration, SqlDataConnectorInterface $connection, bool $up, \Throwable $exception) : SqlMigration
     {
         try {
-            $migration->setFailed(true)->setFailedMessage($exception->getMessage());
+            $migration->setFailed(true);
+            if ($exception->getPrevious()) {
+                $migration->setFailedMessage($exception->getPrevious()->getMessage());
+            } else {
+                $migration->setFailedMessage($exception->getMessage());            
+            }
+            if ($exception instanceof ExceptionInterface) {
+                $migration->setFailedLogId($exception->getId());
+            }
             if ($up) {
                 $sql_script = $this->buildSqlMigrationUpFailed($migration, new \DateTime());
             } else {
@@ -264,13 +289,14 @@ CREATE TABLE IF NOT EXISTS `{$this->getMigrationsTableName()}` (
     `migration_name` varchar(300) NOT NULL,
     `up_datetime` timestamp NOT NULL,
     `up_script` longtext NOT NULL,
-    `up_result` longtext,
+    `up_result` longtext NULL,
     `down_datetime` timestamp NULL,
     `down_script` longtext NOT NULL,
     `down_result` longtext NULL,
     `failed_flag` tinyint(1) NOT NULL DEFAULT 0,
     `failed_message` longtext NULL,
     `skip_flag` tinyint(1) NOT NULL DEFAULT 0,
+    `log_id` varchar(10) NULL
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
@@ -292,11 +318,25 @@ SQL;
     }
     
     /**
+     * SQL statement to check if `logId` column exist in migration table
+     *
+     * @return string
+     */
+    protected function buildSqlShowColumnLogId() : string
+    {
+        return <<<SQL
+        
+SHOW COLUMNS FROM {$this->getMigrationsTableName()} LIKE '%log_id%';
+
+SQL;
+    }
+    
+    /**
      * SQL statement to add columns `failed`, `failed_message` and `skip_flag` to migrations table.
      * 
      * @return string
      */
-    protected function buildSqlMigrationTableAtler() : string
+    protected function buildSqlMigrationTableAlterAddFailed() : string
     {
         return <<<SQL
         
@@ -305,7 +345,22 @@ ALTER TABLE {$this->getMigrationsTableName()} ADD COLUMN (
     `failed_message` longtext NULL,
     `skip_flag` tinyint(1) NOT NULL DEFAULT 0
 );
-ALTER TABLE {$this->getMigrationsTableName()} MODIFY `up_result` longtext;
+
+SQL;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function buildSqlMigrationTableAlterAddLogId() : string
+    {
+        return <<<SQL
+        
+ALTER TABLE {$this->getMigrationsTableName()} ADD COLUMN (
+    `log_id` varchar(10) NULL
+);
+ALTER TABLE {$this->getMigrationsTableName()} MODIFY `up_result` longtext NULL;
 
 SQL;
     }
@@ -322,7 +377,7 @@ SQL;
     protected function buildSqlMigrationUpInsert(SqlMigration $migration, string $up_result_string, \DateTime $time) : string
     {
         if ($migration->getId()) {
-         return <<<SQL
+            return <<<SQL
         
 UPDATE {$this->getMigrationsTableName()}
 SET
@@ -332,6 +387,7 @@ SET
     down_datetime=NULL,
     down_script='{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}',
     down_result=NULL,
+    log_id=NULL,
     failed_flag=0,
     failed_message=NULL
 WHERE id='{$migration->getId()}';
@@ -370,7 +426,10 @@ SQL;
     protected function buildSqlMigrationUpFailed(SqlMigration $migration, \DateTime $time) :string
     {
         if ($migration->getId()) {
-        return <<<SQL
+            if ($migration->getFailedLogId() !== null) {
+                $logIdEntry = "log_id='{$migration->getFailedLogId()}',";
+            }            
+            return <<<SQL
         
 UPDATE {$this->getMigrationsTableName()}
 SET
@@ -380,13 +439,19 @@ SET
     down_datetime=NULL,
     down_script='{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}',
     down_result=NULL,
+    {$logIdEntry}
     failed_flag=1,
     failed_message='{$this->escapeSqlStringValue($migration->getFailedMessage())}'
 WHERE id='{$migration->getId()}';
 
 SQL;
         }
-        
+        $logIdColumn = '';
+        $logId = '';
+        if ($migration->getFailedLogId() !== null) {
+            $logIdColumn = "log_id,";
+            $logId = "'{$migration->getFailedLogId()}',";
+        }
         return <<<SQL
         
 INSERT INTO {$this->getMigrationsTableName()}
@@ -395,6 +460,7 @@ INSERT INTO {$this->getMigrationsTableName()}
         up_datetime,
         up_script,
         down_script,
+        {$logIdColumn}
         failed_flag,
         failed_message
     )
@@ -403,6 +469,7 @@ INSERT INTO {$this->getMigrationsTableName()}
         {$this->escapeSqlDateTimeValue($time)},
         '{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getUpScript()))}',
         '{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}',
+        {$logId}
         1,
         '{$this->escapeSqlStringValue($migration->getFailedMessage())}'
     );
@@ -427,6 +494,7 @@ SET
     down_datetime={$this->escapeSqlDateTimeValue($time)},
     down_script='{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}',
     down_result='{$this->escapeSqlStringValue($down_result_string)}',
+    log_id=NULL,
     failed_flag=0,
     failed_message=NULL
 WHERE id='{$migration->getId()}';
@@ -442,6 +510,10 @@ SQL;
      */
     protected function buildSqlMigrationDownFailed(SqlMigration $migration, \DateTime $time) : string
     {
+        $logIdEntry = '';
+        if ($migration->getFailedLogId() !== null) {
+            $logIdEntry = "log_id='{$migration->getFailedLogId()}',";
+        }       
         return <<<SQL
         
 UPDATE {$this->getMigrationsTableName()}
@@ -449,6 +521,7 @@ SET
     down_datetime={$this->escapeSqlDateTimeValue($time)},
     down_script='{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}',
     down_result=NULL,
+    {$logIdEntry}
     failed_flag=1,
     failed_message='{$this->escapeSqlStringValue($migration->getFailedMessage())}'
 WHERE id='{$migration->getId()}';

@@ -104,7 +104,8 @@ CREATE TABLE {$this->getMigrationsTableName()}(
 	[down_result] [nvarchar](max) NULL,
     [failed_flag] tinyint NOT NULL DEFAULT 0,
     [failed_message] [nvarchar](max) NULL,
-    [skip_flag] tinyint NOT NULL DEFAULT 0    
+    [skip_flag] tinyint NOT NULL DEFAULT 0,
+    [log_id] varchar(10) NULL  
     CONSTRAINT [{$pkName}] PRIMARY KEY CLUSTERED 
     (
 	   [id] ASC
@@ -118,9 +119,9 @@ SQL;
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::buildSqlMigrationTableAtler()
+     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::buildSqlMigrationTableAtlerAddFailed()
      */
-    protected function buildSqlMigrationTableAtler() : string
+    protected function buildSqlMigrationTableAlterAddFailed() : string
     {
         //no check if columns exists, if so probably will give an error
         return <<<SQL
@@ -130,7 +131,16 @@ ALTER TABLE {$this->getMigrationsTableName()} ADD
     [failed_message] [nvarchar](max) NULL,
     [skip_flag] tinyint NOT NULL DEFAULT 0;
 ALTER TABLE {$this->getMigrationsTableName()} ALTER COLUMN [up_result] [nvarchar](max) NULL;
-
+SQL;
+    }
+    
+    protected function buildSqlMigrationTableAlterAddLogId() : string
+    {
+        return <<<SQL
+        
+ALTER TABLE {$this->getMigrationsTableName()} ADD (
+    [log_id] varchar(10) NULL
+);
 SQL;
     }
     
@@ -144,6 +154,20 @@ SQL;
         return <<<SQL
         
 SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'{$this->getMigrationsTableName()}') AND name LIKE '%failed%';
+
+SQL;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::buildSqlShowColumnLogId()
+     */
+    protected function buildSqlShowColumnLogId() : string
+    {
+        return <<<SQL
+        
+SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'{$this->getMigrationsTableName()}') AND name LIKE '%log_id%';
 
 SQL;
     }
