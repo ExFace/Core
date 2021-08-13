@@ -9,6 +9,7 @@ use exface\Core\Uxon\DatatypeSchema;
 use exface\Core\Uxon\BehaviorSchema;
 use exface\Core\Uxon\ConnectionSchema;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Uxon\QueryBuilderSchema;
 
 /**
  * Produces UXON schema classes for examining and validating UXON descriptions.
@@ -41,6 +42,15 @@ abstract class UxonSchemaFactory extends AbstractStaticFactory
                 break;
             case UxonSchema::SCHEMA_CONNECTION:
                 $schema = new ConnectionSchema($workbench);
+                break;
+            case UxonSchema::SCHEMA_QUERYBUILDER:
+                $schema = new QueryBuilderSchema($workbench);
+                break;
+            case UxonSchema::SCHEMA_QUERYBUILDER_ATTRIBUTE:
+                $schema = new QueryBuilderSchema($workbench, null, QueryBuilderSchema::LEVEL_ATTRIBUTE);
+                break;
+            case UxonSchema::SCHEMA_QUERYBUILDER_OBJECT:
+                $schema = new QueryBuilderSchema($workbench, null, QueryBuilderSchema::LEVEL_OBJECT);
                 break;
             default:
                 if (substr($schemaName, 0, 1) === '\\' && class_exists($schemaName)) {

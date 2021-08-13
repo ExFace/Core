@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2021-08-05 13:21:24",
+            "MODIFIED_ON": "2021-08-13 15:14:21",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32350000000000000000000000000000",
@@ -115,7 +115,20 @@
                                             },
                                             {
                                                 "attribute_alias": "OBJECT",
-                                                "id": "object_selector"
+                                                "widget_type": "InputComboTable",
+                                                "id": "object_selector",
+                                                "table": {
+                                                    "object_alias": "exface.Core.OBJECT",
+                                                    "columns": [
+                                                        {
+                                                            "attribute_group_alias": "~DEFAULT_DISPLAY"
+                                                        },
+                                                        {
+                                                            "attribute_alias": "DATA_SOURCE__QUERYBUILDER",
+                                                            "hidden": false
+                                                        }
+                                                    ]
+                                                }
                                             },
                                             {
                                                 "attribute_alias": "ALIAS"
@@ -179,7 +192,14 @@
                                                 }
                                             },
                                             {
-                                                "attribute_alias": "DATA_ADDRESS_PROPS"
+                                                "attribute_alias": "DATA_ADDRESS_PROPS",
+                                                "widget_type": "InputUxon",
+                                                "minimalistic": true,
+                                                "hide_caption": true,
+                                                "height": 6,
+                                                "schema": "querybuilder_attribute",
+                                                "root_prototype": "=object_selector!DATA_SOURCE__QUERYBUILDER",
+                                                "root_object": "=object_selector!UID"
                                             }
                                         ]
                                     },
@@ -448,9 +468,18 @@
                         "hint": "=Translate('exface.Core', 'PAGE.ATTRIBUTE_EDITOR.OPEN_DATATYPE_HINT')",
                         "icon": "external-link",
                         "close_dialog": false,
+                        "input_widget_id": "datatype_selector",
                         "action": {
                             "alias": "exface.Core.ShowObjectEditDialog",
-                            "object_alias": "exface.Core.DATATYPE"
+                            "object_alias": "exface.Core.DATATYPE",
+                            "input_mapper": {
+                                "column_to_column_mappings": [
+                                    {
+                                        "from": "DATATYPE",
+                                        "to": "UID"
+                                    }
+                                ]
+                            }
                         },
                         "disable_condition": {
                             "widget_link": "datatype_selector!UID",
