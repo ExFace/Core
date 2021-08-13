@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2021-08-05 13:26:32",
+            "MODIFIED_ON": "2021-08-13 11:29:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
@@ -167,7 +167,10 @@
                                                 "table": {
                                                     "columns": [
                                                         {
-                                                            "attribute_group_alias": "~DEFAULT_DISPLAY"
+                                                            "attribute_alias": "LABEL"
+                                                        },
+                                                        {
+                                                            "attribute_alias": "CONNECTION__LABEL"
                                                         },
                                                         {
                                                             "attribute_alias": "READABLE_FLAG"
@@ -176,7 +179,14 @@
                                                             "attribute_alias": "WRITABLE_FLAG"
                                                         },
                                                         {
+                                                            "attribute_alias": "APP__LABEL"
+                                                        },
+                                                        {
                                                             "attribute_alias": "BASE_OBJECT",
+                                                            "hidden": true
+                                                        },
+                                                        {
+                                                            "attribute_alias": "QUERYBUILDER",
                                                             "hidden": true
                                                         }
                                                     ]
@@ -189,7 +199,14 @@
                                                 "attribute_alias": "WRITABLE_FLAG"
                                             },
                                             {
-                                                "attribute_alias": "DATA_ADDRESS_PROPS"
+                                                "attribute_alias": "DATA_ADDRESS_PROPS",
+                                                "widget_type": "InputUxon",
+                                                "minimalistic": true,
+                                                "hide_caption": true,
+                                                "height": 6,
+                                                "schema": "querybuilder_object",
+                                                "root_prototype": "=data_source_selector!QUERYBUILDER",
+                                                "root_object": "=object_uid"
                                             }
                                         ]
                                     }

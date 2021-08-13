@@ -27,6 +27,9 @@ class UxonSchemaNameDataType extends StringDataType implements EnumDataTypeInter
     const BEHAVIOR = "behavior";
     const CONNECTION = "connection";
     const FACADE = "facade";
+    const QUERYBUILDER = 'querybuilder';
+    const QUERYBUILDER_ATTRIBUTE = 'querybuilder_attribute';
+    const QUERYBUILDER_OBJECT = 'querybuilder_object';
     
     /**
      * 
