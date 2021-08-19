@@ -16,6 +16,7 @@ use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\ArrayDataType;
+use exface\Core\Uxon\QueryBuilderSchema;
 
 abstract class AbstractQueryBuilder implements QueryBuilderInterface
 {
@@ -706,5 +707,14 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
             }
         }
         return false;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return QueryBuilderSchema::class;
     }
 }

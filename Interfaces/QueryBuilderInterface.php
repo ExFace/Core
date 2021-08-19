@@ -68,5 +68,11 @@ interface QueryBuilderInterface extends WorkbenchDependantInterface
      */
     public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface;
     
+    /**
+     * 
+     * @return string|NULL
+     */
+    public static function getUxonSchemaClass() : ?string;
+    
     // TODO
 }

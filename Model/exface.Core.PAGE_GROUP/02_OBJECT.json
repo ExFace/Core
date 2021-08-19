@@ -177,7 +177,7 @@
                                                         ],
                                                         "buttons": [
                                                             {
-                                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                                                                 "icon": "plus",
                                                                 "action": {
                                                                     "alias": "exface.Core.ShowPageAddToGroupDialog",
@@ -196,7 +196,7 @@
                                                                 }
                                                             },
                                                             {
-                                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                                 "icon": "minus",
                                                                 "action_alias": "exface.Core.DeleteObject"
                                                             }
@@ -262,11 +262,11 @@
                                         "buttons": [
                                             {
                                                 "action_alias": "exface.Core.ShowObjectCreateDialog",
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')"
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')"
                                             },
                                             {
                                                 "action_alias": "exface.Core.DeleteObject",
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                 "icon": "minus"
                                             },
                                             {

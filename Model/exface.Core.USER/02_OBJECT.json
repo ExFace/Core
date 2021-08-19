@@ -108,7 +108,7 @@
                                 "widgets": [
                                     {
                                         "widget_type": "WidgetGroup",
-                                        "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.USER_DATA')",
+                                        "caption": "=Translate('exface.Core', 'PAGE.USERS.USER_DATA')",
                                         "widgets": [
                                             {
                                                 "attribute_alias": "UID",
@@ -133,7 +133,7 @@
                                     },
                                     {
                                         "widget_type": "WidgetGroup",
-                                        "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.PERSONAL_DATA')",
+                                        "caption": "=Translate('exface.Core', 'PAGE.USERS.PERSONAL_DATA')",
                                         "widgets": [
                                             {
                                                 "attribute_alias": "FIRST_NAME"
@@ -155,7 +155,7 @@
                                         ]
                                     },
                                     {
-                                        "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS')",
+                                        "caption": "=Translate('exface.Core', 'PAGE.USERS.CREDENTIALS')",
                                         "widget_type": "DataTableResponsive",
                                         "object_alias": "exface.Core.DATA_CONNECTION_CREDENTIALS",
                                         "id": "credentials_table",
@@ -180,7 +180,7 @@
                                         ],
                                         "buttons": [
                                             {
-                                                "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS_ADD_CONNECTION')",
+                                                "caption": "=Translate('exface.Core', 'PAGE.USERS.CREDENTIALS_ADD_CONNECTION')",
                                                 "action": {
                                                     "alias": "exface.Core.CreateCredentialsDialog",
                                                     "prefill_with_data_from_widget_link": "user_uid_field",
@@ -198,7 +198,7 @@
                                                 }
                                             },
                                             {
-                                                "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS_UPDATE')",
+                                                "caption": "=Translate('exface.Core', 'PAGE.USERS.CREDENTIALS_UPDATE')",
                                                 "icon": "refresh",
                                                 "action": {
                                                     "alias": "exface.Core.CreateCredentialsDialog",
@@ -291,7 +291,7 @@
                                                         "buttons": [
                                                             {
                                                                 "action_alias": "exface.Core.ShowObjectCreateDialog",
-                                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                                                                 "disabled_if": {
                                                                     "operator": "AND",
                                                                     "conditions": [
@@ -305,7 +305,7 @@
                                                             },
                                                             {
                                                                 "action_alias": "exface.Core.DeleteObject",
-                                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                                 "icon": "minus"
                                                             },
                                                             {
@@ -420,7 +420,7 @@
                                         "buttons": [
                                             {
                                                 "action_alias": "exface.Core.ShowObjectCreateDialog",
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                                                 "disabled_if": {
                                                     "operator": "AND",
                                                     "conditions": [
@@ -434,15 +434,15 @@
                                             },
                                             {
                                                 "action_alias": "exface.Core.DeleteObject",
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                 "icon": "minus"
                                             },
                                             {
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.DISABLE')",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.DISABLE')",
                                                 "action_alias": "exface.Core.DisableUserAuthenticator"
                                             },
                                             {
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ENABLE')",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ENABLE')",
                                                 "action_alias": "exface.Core.EnableUserAuthenticator"
                                             }
                                         ]

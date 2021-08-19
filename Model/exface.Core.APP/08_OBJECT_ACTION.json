@@ -96,8 +96,8 @@
                             ],
                             "command_presets": [
                                 {
-                                    "caption": "=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_COMMIT')",
-                                    "hint": "=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_COMMIT_HINT')",
+                                    "caption": "=Translate('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_COMMIT')",
+                                    "hint": "=Translate('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_COMMIT_HINT')",
                                     "visibility": "promoted",
                                     "commands": [
                                         "git add --all",
@@ -106,36 +106,36 @@
                                     ]
                                 },
                                 {
-                                    "caption": "=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_SHOW_CHANGES')",
-                                    "hint": "=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_SHOW_CHANGES_HINT')",
+                                    "caption": "=Translate('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_SHOW_CHANGES')",
+                                    "hint": "=Translate('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_SHOW_CHANGES_HINT')",
                                     "commands": [
                                         "git status"
                                     ]
                                 },
                                 {
-                                    "caption": "=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_PUSH')",
-                                    "hint": "=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_PUSH_HINT')",
+                                    "caption": "=Translate('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_PUSH')",
+                                    "hint": "=Translate('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_PUSH_HINT')",
                                     "commands": [
                                         "git push"
                                     ]
                                 },
                                 {
-                                    "caption": "=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_PULL')",
-                                    "hint": "=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_PULL_HINT')",
+                                    "caption": "=Translate('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_PULL')",
+                                    "hint": "=Translate('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_PULL_HINT')",
                                     "commands": [
                                         "git pull"
                                     ]
                                 },
                                 {
-                                    "caption": "=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_LIST_BRANCH')",
-                                    "hint": "=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_LIST_BRANCH_HINT')",
+                                    "caption": "=Translate('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_LIST_BRANCH')",
+                                    "hint": "=Translate('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_LIST_BRANCH_HINT')",
                                     "commands": [
                                         "git branch -a"
                                     ]
                                 },
                                 {
-                                    "caption": "=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_SWITCH_BRANCH')",
-                                    "hint": "=TRANSLATE('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_SWITCH_BRANCH_HINT')",
+                                    "caption": "=Translate('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_SWITCH_BRANCH')",
+                                    "hint": "=Translate('exface.Core', 'ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_SWITCH_BRANCH_HINT')",
                                     "commands": [
                                         "git checkout &lt;branch&gt;"
                                     ]
@@ -397,15 +397,15 @@
                                                                 },
                                                                 {
                                                                     "attribute_alias": "ATTRIBUTE__UID:COUNT",
-                                                                    "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ATTRIBUTES')"
+                                                                    "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.ATTRIBUTES')"
                                                                 },
                                                                 {
                                                                     "attribute_alias": "OBJECT_ACTION__UID:COUNT",
-                                                                    "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ACTIONS')"
+                                                                    "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.ACTIONS')"
                                                                 },
                                                                 {
                                                                     "attribute_alias": "OBJECT_BEHAVIORS__UID:COUNT",
-                                                                    "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.BEHAVIORS')"
+                                                                    "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.BEHAVIORS')"
                                                                 },
                                                                 {
                                                                     "attribute_alias": "HAS_DEFAULT_EDITOR"
@@ -436,15 +436,15 @@
                                                                 },
                                                                 {
                                                                     "widget_type": "MenuButton",
-                                                                    "caption": "=TRANSLATE('exface.Core.', 'ACTION.SHOWOBJECTCOPYDIALOG.NAME')",
+                                                                    "caption": "=Translate('exface.Core.', 'ACTION.SHOWOBJECTCOPYDIALOG.NAME')",
                                                                     "icon": "clone",
                                                                     "buttons": [
                                                                         {
-                                                                            "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECTS.COPY_OBJECT')",
+                                                                            "caption": "=Translate('exface.Core', 'PAGE.OBJECTS.COPY_OBJECT')",
                                                                             "action_alias": "exface.Core.ShowObjectCopyDialog"
                                                                         },
                                                                         {
-                                                                            "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECTS.COPY_OBJECT_WITH_ATTRIBUTES')",
+                                                                            "caption": "=Translate('exface.Core', 'PAGE.OBJECTS.COPY_OBJECT_WITH_ATTRIBUTES')",
                                                                             "action": {
                                                                                 "alias": "exface.Core.ShowObjectCopyDialog",
                                                                                 "copy_related_objects": [
@@ -459,7 +459,7 @@
                                                                 },
                                                                 {
                                                                     "action_alias": "exface.Core.ShowModelBuilderDialog",
-                                                                    "caption": "=TRANSLATE('exface.Core', 'ACTION.SHOWMODELBUILDERDIALOG.NAME')"
+                                                                    "caption": "=Translate('exface.Core', 'ACTION.SHOWMODELBUILDERDIALOG.NAME')"
                                                                 }
                                                             ]
                                                         }
@@ -645,7 +645,7 @@
                                                                 },
                                                                 {
                                                                     "attribute_alias": "AUTHORIZATION_POLICY__UID:COUNT",
-                                                                    "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.POLICIES')"
+                                                                    "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.POLICIES')"
                                                                 },
                                                                 {
                                                                     "attribute_alias": "ACTION_PROTOTYPE",
@@ -773,11 +773,11 @@
                                                                 },
                                                                 {
                                                                     "attribute_alias": "BASE_OBJECT__LABEL",
-                                                                    "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCES.BASE_OBJECT')"
+                                                                    "caption": "=Translate('exface.Core', 'PAGE.DATA_SOURCES.BASE_OBJECT')"
                                                                 },
                                                                 {
                                                                     "attribute_alias": "OBJECT__UID:COUNT",
-                                                                    "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.OBJECTS')"
+                                                                    "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.OBJECTS')"
                                                                 },
                                                                 {
                                                                     "attribute_alias": "READABLE_FLAG"
@@ -787,7 +787,7 @@
                                                                 },
                                                                 {
                                                                     "attribute_alias": "CONNECTION__READONLY",
-                                                                    "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCES.CONNECTION_READONLY')"
+                                                                    "caption": "=Translate('exface.Core', 'PAGE.DATA_SOURCES.CONNECTION_READONLY')"
                                                                 },
                                                                 {
                                                                     "attribute_alias": "APP__LABEL"
@@ -818,7 +818,7 @@
                                                                 },
                                                                 {
                                                                     "action_alias": "exface.Core.ShowModelBuilderDialog",
-                                                                    "caption": "=TRANSLATE('exface.Core', 'ACTION.SHOWMODELBUILDERDIALOG.NAME')"
+                                                                    "caption": "=Translate('exface.Core', 'ACTION.SHOWMODELBUILDERDIALOG.NAME')"
                                                                 }
                                                             ]
                                                         }
@@ -1409,8 +1409,8 @@
                                                 },
                                                 {
                                                     "attribute_alias": "ATTRIBUTE__UID:COUNT",
-                                                    "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_TYPES.USED')",
-                                                    "hint": "=TRANSLATE('exface.Core', 'PAGE.DATA_TYPES.USED_HINT')"
+                                                    "caption": "=Translate('exface.Core', 'PAGE.DATA_TYPES.USED')",
+                                                    "hint": "=Translate('exface.Core', 'PAGE.DATA_TYPES.USED_HINT')"
                                                 },
                                                 {
                                                     "attribute_alias": "SHORT_DESCRIPTION"

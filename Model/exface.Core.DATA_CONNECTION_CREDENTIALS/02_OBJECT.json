@@ -103,7 +103,7 @@
                         "widget_type": "Tabs",
                         "tabs": [
                             {
-                                "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS')",
+                                "caption": "=Translate('exface.Core', 'PAGE.USERS.CREDENTIALS')",
                                 "widgets": [
                                     {
                                         "attribute_alias": "UID",
@@ -149,7 +149,7 @@
                                 ]
                             },
                             {
-                                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.USERS')",
+                                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.USERS')",
                                 "widgets": [
                                     {
                                         "widget_type": "DataTableResponsive",
@@ -178,7 +178,7 @@
                                         "buttons": [
                                             {
                                                 "action_alias": "exface.Core.ShowObjectCreateDialog",
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                                                 "disabled_if": {
                                                     "operator": "OR",
                                                     "conditions": [
@@ -197,7 +197,7 @@
                                             },
                                             {
                                                 "action_alias": "exface.Core.DeleteObject",
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                 "disabled_if": {
                                                     "operator": "OR",
                                                     "conditions": [

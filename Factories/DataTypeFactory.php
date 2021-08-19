@@ -30,12 +30,12 @@ abstract class DataTypeFactory extends AbstractSelectableComponentFactory
      * @param SelectorInterface $selector
      * @return \exface\Core\Interfaces\DataTypes\DataTypeInterface
      */
-    public static function createFromSelector(SelectorInterface $selector)
+    public static function createFromSelector(SelectorInterface $selector, array $constructorArguments = null)
     {
         if ($selector->isUid()) {
             return $selector->getWorkbench()->model()->getModelLoader()->loadDataType($selector);
         } else {
-            return parent::createFromSelector($selector);
+            return parent::createFromSelector($selector, $constructorArguments);
         }
     }
     

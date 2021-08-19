@@ -74,6 +74,9 @@ class UxonSchema implements UxonSchemaInterface
     const SCHEMA_BEHAVIOR = 'behavior';
     const SCHEMA_DATATYPE = 'datatype';
     const SCHEMA_CONNECTION = 'connection';
+    const SCHEMA_QUERYBUILDER = 'querybuilder';
+    const SCHEMA_QUERYBUILDER_ATTRIBUTE = 'querybuilder_attribute';
+    const SCHEMA_QUERYBUILDER_OBJECT = 'querybuilder_object';
     
     private $prototypePropCache = [];
     

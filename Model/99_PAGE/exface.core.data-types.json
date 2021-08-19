@@ -51,8 +51,8 @@
             },
             {
                 "attribute_alias": "ATTRIBUTE__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_TYPES.USED')",
-                "hint": "=TRANSLATE('exface.Core', 'PAGE.DATA_TYPES.USED_HINT')"
+                "caption": "=Translate('exface.Core', 'PAGE.DATA_TYPES.USED')",
+                "hint": "=Translate('exface.Core', 'PAGE.DATA_TYPES.USED_HINT')"
             },
             {
                 "attribute_alias": "SHORT_DESCRIPTION"
