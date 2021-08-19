@@ -190,7 +190,7 @@
                                 ]
                             },
                             {
-                                "caption": "=TRANSLATE('exface.Core', 'PAGE.PAGE_EDITOR.GROUPS_AND_PERMISSIONS')",
+                                "caption": "=Translate('exface.Core', 'PAGE.PAGE_EDITOR.GROUPS_AND_PERMISSIONS')",
                                 "widgets": [
                                     {
                                         "widget_type": "SplitVertical",
@@ -199,7 +199,7 @@
                                                 "height": "40%",
                                                 "widgets": [
                                                     {
-                                                        "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.PAGE_GROUPS')",
+                                                        "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.PAGE_GROUPS')",
                                                         "widget_type": "DataTable",
                                                         "id": "page_group_table",
                                                         "object_alias": "exface.Core.PAGE_GROUP_PAGES",
@@ -240,7 +240,7 @@
                                                         "buttons": [
                                                             {
                                                                 "action_alias": "exface.Core.ShowObjectCreateDialog",
-                                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                                                                 "disabled_if": {
                                                                     "operator": "AND",
                                                                     "conditions": [
@@ -254,7 +254,7 @@
                                                             },
                                                             {
                                                                 "action_alias": "exface.Core.DeleteObject",
-                                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                                 "icon": "minus"
                                                             },
                                                             {

@@ -40,8 +40,6 @@ class Expression implements ExpressionInterface
     const TYPE_NUMBER = 'number';
     const TYPE_REFERENCE = 'reference';
     const TYPE_UNKNOWN = 'unknown';
-    
-    private $attributes = null;
 
     private $formula = null;
 
@@ -349,7 +347,7 @@ class Expression implements ExpressionInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::getRequiredAttributes()
      */
-    public function getRequiredAttributes()
+    public function getRequiredAttributes() : array
     {
         switch ($this->getType()) {
                 case self::TYPE_ATTRIBUTE:
@@ -357,6 +355,7 @@ class Expression implements ExpressionInterface
                 case self::TYPE_FORMULA:
                     return $this->getFormula()->getRequiredAttributes();           
         }
+        return [];
     }
 
     /**

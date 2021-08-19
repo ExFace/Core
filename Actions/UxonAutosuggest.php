@@ -18,6 +18,7 @@ use exface\Core\Widgets\Markdown;
 use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\Factories\UxonSchemaFactory;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Uxon\QueryBuilderSchema;
 
 /**
  * Returns autosuggest values for provided UXON objects.
@@ -211,7 +212,13 @@ class UxonAutosuggest extends AbstractAction
         $prototypeSchemaClass = $prototypeClass::getUxonSchemaClass() ?? '\\' . UxonSchema::class;
         $filepathRelative = $schema->getFilenameForEntity($prototypeClass);
         
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_PROPERTY_ANNOTATION');
+        if ($schema instanceof QueryBuilderSchema) {
+            $metaObject = 'exface.Core.UXON_QUERY_BUILDER_ANNOTATION';
+        } else {
+            $metaObject = 'exface.Core.UXON_PROPERTY_ANNOTATION';
+        }
+        
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $metaObject);
         $ds->getColumns()->addMultiple([
             'PROPERTY', 
             'TYPE', 
@@ -224,6 +231,11 @@ class UxonAutosuggest extends AbstractAction
         ]);
         $ds->getFilters()->addConditionFromString('FILE', $filepathRelative, ComparatorDataType::EQUALS);
         $ds->getSorters()->addFromString('PROPERTY', SortingDirectionsDataType::ASC);
+        
+        if ($schema instanceof QueryBuilderSchema) {
+            $ds->getColumns()->addFromExpression('TARGET');
+            $ds->getFilters()->addConditionFromString('TARGET', $schema->getLevel(), ComparatorDataType::EQUALS);
+        }
         
         try {
             $ds->dataRead();

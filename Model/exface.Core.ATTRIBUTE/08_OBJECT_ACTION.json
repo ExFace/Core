@@ -109,7 +109,7 @@
                                 },
                                 {
                                     "attribute_alias": "DISPLAYORDER",
-                                    "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTES.DISPLAY_ORDER')"
+                                    "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTES.DISPLAY_ORDER')"
                                 },
                                 {
                                     "attribute_alias": "DATATYPE",
@@ -146,11 +146,11 @@
                                 },
                                 {
                                     "attribute_alias": "UIDFLAG",
-                                    "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.UID')"
+                                    "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.UID')"
                                 },
                                 {
                                     "attribute_alias": "LABELFLAG",
-                                    "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.LABEL')"
+                                    "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.LABEL')"
                                 },
                                 {
                                     "attribute_alias": "DEFAULT_VALUE"

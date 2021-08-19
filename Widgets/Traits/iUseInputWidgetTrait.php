@@ -5,6 +5,7 @@ use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * This trait helps getting the input widget for action triggers.
@@ -36,9 +37,9 @@ trait iUseInputWidgetTrait {
      *
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iTriggerAction::getInputWidget()
+     * @see \exface\Core\Interfaces\Widgets\iUseInputWidget::getInputWidget()
      */
-    public function getInputWidget()
+    public function getInputWidget() : WidgetInterface
     {
         if ($this->input_widget === null) {
             if ($this->input_widget_id) {
@@ -49,7 +50,7 @@ trait iUseInputWidgetTrait {
                     $widgetId = $this->input_widget_id;
                 }
                 $this->input_widget = $this->getPage()->getWidget($widgetId);
-            } elseif ($this->getParent()) {
+            } elseif ($this->hasParent()) {
                 $parent = $this->getParent();
                 while (!(($parent instanceof iHaveButtons) || ($parent instanceof iUseInputWidget)) && ! is_null($parent->getParent())) {
                     $parent = $parent->getParent();
@@ -61,10 +62,14 @@ trait iUseInputWidgetTrait {
                 }
             }
         }
-        return $this->input_widget;
+        return $this->input_widget ?? $this;
     }
     
-    public function setInputWidget(AbstractWidget $widget)
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iUseInputWidget::setInputWidget()
+     */
+    public function setInputWidget(WidgetInterface $widget) : iUseInputWidget
     {
         $this->input_widget = $widget;
         $this->setInputWidgetId($widget->getId());

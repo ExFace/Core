@@ -6,6 +6,8 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Facades\DocsFacade;
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\DataTypes\UxonSchemaNameDataType;
+use exface\Core\Factories\DataTypeFactory;
 
 /**
  * This trait helps use the JsonEditor library to create InputJson and InputUxon widgets.
@@ -56,9 +58,10 @@ trait JsonEditorTrait
 HTML;
         }
         return <<<HTML
-
+        <div id="{$this->getId()}_wrapper" style="height: 100%; width: 100%; position: relative;">
             <div id="{$this->getId()}" style="height: 100%; width: 100%;"></div>
             $uxonEditorHtml
+        </div>
 
 HTML;
     }
@@ -258,6 +261,10 @@ JS;
             $uxonEditorOptions = '';
         }
         
+        if ($widget->isMinimalistic()) {
+            $uxonEditorOptions .= 'mainMenuBar: false, navigationBar: false,';
+        }
+        
 	return <<<JS
 
     onError: {$this->buildJsOnErrorFunction()},
@@ -296,12 +303,18 @@ JS;
      * @param string $funcPrefix
      * @return string
      */
-    public static function buildJsUxonEditorOptions(string $editorIdJs, string $uxonSchema, string $funcPrefix, Workbench $workbench) : string
+    protected function buildJsUxonEditorOptions(string $editorIdJs, string $uxonSchema, string $funcPrefix, Workbench $workbench) : string
     {   
         $trans = static::getTranslations($workbench);
+
+        if ($title = $this->getWidget()->getCaption()) {
+            $title = "'$title'";
+        } else {
+            $title = $uxonSchema;
+        }
         
         return <<<JS
-                    name: ({$uxonSchema} === 'generic' ? 'UXON' : {$uxonSchema}),
+                    name: $title,
                     enableTransform: false,
                     enableSort: false,
                     history: true,
@@ -534,7 +547,8 @@ JS;
                             }
                             
                             return items;
-                        } // onCreateMenu
+                        }, // onCreateMenu
+
 JS;
     }
             

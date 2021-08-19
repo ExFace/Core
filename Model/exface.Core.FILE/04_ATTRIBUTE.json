@@ -564,7 +564,7 @@
             "SHORT_DESCRIPTION": "Letzter \u00c4nderungszeitpunkt der Datei (wird immer automatisch gesetzt)",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
-            "FIXED_VALUE": "=NOW('Y-m-d H:i:s')",
+            "FIXED_VALUE": "=Now('Y-m-d H:i:s')",
             "CUSTOM_DATA_TYPE": null
         },
         {

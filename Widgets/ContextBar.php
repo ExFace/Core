@@ -8,6 +8,7 @@ use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Contexts\UserContext;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * The context bar shows information about the current context of the workbench.
@@ -208,10 +209,8 @@ class ContextBar extends Toolbar
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Button::getInputWidget()
      */
-    public function getInputWidget()
+    public function getInputWidget() : WidgetInterface
     {
         return $this;
-    }
-    
+    }   
 }
-?>
