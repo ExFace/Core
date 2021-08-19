@@ -80,46 +80,14 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      */
     protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : void
     {
-        $sql = $this->buildSqlMigrationTableShow();
-        if (empty($connection->runSql($sql)->getResultArray())) {
-            try {
-                $migrations_table_create = $this->buildSqlMigrationTableCreate();
-                $this->runSqlMultiStatementScript($connection, $migrations_table_create);
-                $this->getWorkbench()->getLogger()->debug('SQL migration table' . $this->getMigrationsTableName() . ' created! ');
-            } catch (\Throwable $e) {
-                $this->getWorkbench()->getLogger()->logException($e);
-                throw new InstallerRuntimeError($this, 'Generating Migration table failed! ' . $e->getMessage(), null, $e);
-            }
+        try {
+            $migrations_table_create = $this->buildSqlMigrationTableCreate();
+            $this->runSqlMultiStatementScript($connection, $migrations_table_create);
+            $this->getWorkbench()->getLogger()->debug('SQL migration table' . $this->getMigrationsTableName() . ' created! ');
+        } catch (\Throwable $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
+            throw new InstallerRuntimeError($this, 'Generating Migration table failed! ' . $e->getMessage(), null, $e);
         }
-        $sql = $this->alterMigrationsTable($connection);
-        return;
-    }
-    
-    protected function alterMigrationsTable(SqlDataConnectorInterface $connection) : void
-    {
-        $sql = $this->buildSqlShowColumnFailed();
-        if (empty($connection->runSql($sql)->getResultArray())) {
-            try {
-                $columns_create = $this->buildSqlMigrationTableAlterAddFailed();
-                $this->runSqlMultiStatementScript($connection, $columns_create);
-                $this->getWorkbench()->getLogger()->debug('Added columns \'failed\', \'failed_message\', \'skip flag\' to existing migration table ' . $this->getMigrationsTableName() . '.');
-            } catch (\Throwable $e) {
-                $this->getWorkbench()->getLogger()->logException($e);
-                throw new InstallerRuntimeError($this, 'Adding columns \'failed\', \'failed_message\', \'skip flag\' to existing migration table ' . $this->getMigrationsTableName() . ' failed. ' . $e->getMessage(), null, $e);
-            }
-        }
-        $sql = $this->buildSqlShowColumnLogId();
-        if (empty($connection->runSql($sql)->getResultArray())) {
-            try {
-                $columns_create = $this->buildSqlMigrationTableAlterAddLogId();
-                $this->runSqlMultiStatementScript($connection, $columns_create);
-                $this->getWorkbench()->getLogger()->debug('Added columns \'logId\' to existing migration table ' . $this->getMigrationsTableName() . '.');
-            } catch (\Throwable $e) {
-                $this->getWorkbench()->getLogger()->logException($e);
-                throw new InstallerRuntimeError($this, 'Adding columns \'logId\' to existing migration table ' . $this->getMigrationsTableName() . ' failed. ' . $e->getMessage(), null, $e);
-            }
-        }
-        
         return;
     }
 
@@ -260,30 +228,18 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
     }
     
     /**
-     * Returns SQL statement to check if migration table exists.
-     * 
-     * @return string
-     */
-    protected function buildSqlMigrationTableShow() : string
-    {
-        return "SHOW tables LIKE '{$this->getMigrationsTableName()}'";
-    }
-    
-    /**
      * Returns SQL statement to create migrations table.
      * 
      * @return string
      */
     protected function buildSqlMigrationTableCreate() : string
     {
-        // Add columns 'failed', 'failed_message', 'skip flag' to existing migration table if they don't exist.
-        // down_datetime   failed_flag
-        // NULL            0           -> UP-script successful, migration present
-        // NULL            1           -> UP-script failure, migration not present
-        // NOT NULL        0           -> DOWN-script successful, migration not present
-        // NOT NULL        1           -> DOWN-script failure, migration present
+        // in case any changes need to be made to the migrations table, make the changes in the CREATE TABLE statement
+        // also add the changes as a seperate statement (like the ones below the CREATE TABLE statement) so that
+        // already existing installations will be updated
         return <<<SQL
-        
+
+-- creation of migrations table       
 CREATE TABLE IF NOT EXISTS `{$this->getMigrationsTableName()}` (
     `id` int(8) NOT NULL AUTO_INCREMENT,
     `migration_name` varchar(300) NOT NULL,
@@ -296,71 +252,45 @@ CREATE TABLE IF NOT EXISTS `{$this->getMigrationsTableName()}` (
     `failed_flag` tinyint(1) NOT NULL DEFAULT 0,
     `failed_message` longtext NULL,
     `skip_flag` tinyint(1) NOT NULL DEFAULT 0,
-    `log_id` varchar(10) NULL
+    `log_id` varchar(10) NULL,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
-SQL;
-    }
-    
-   /**
-    * SQL statement to check if `failed` column exist in migration table
-    * 
-    * @return string
-    */
-    protected function buildSqlShowColumnFailed() : string
-    {
-        return <<<SQL
-        
-SHOW COLUMNS FROM {$this->getMigrationsTableName()} LIKE '%failed%';
+-- update to add `failed_flag`, `failed_message` and `skip_flag` columns
+SELECT count(*)
+INTO @exist
+FROM information_schema.columns
+WHERE table_schema = DATABASE()
+and COLUMN_NAME LIKE '%failed%'
+AND table_name = '{$this->getMigrationsTableName()}' LIMIT 1;
 
-SQL;
-    }
-    
-    /**
-     * SQL statement to check if `logId` column exist in migration table
-     *
-     * @return string
-     */
-    protected function buildSqlShowColumnLogId() : string
-    {
-        return <<<SQL
-        
-SHOW COLUMNS FROM {$this->getMigrationsTableName()} LIKE '%log_id%';
+set @query = IF(@exist <= 0, 'ALTER TABLE `{$this->getMigrationsTableName()}` ADD COLUMN (
+        `failed_flag` tinyint(1) NOT NULL DEFAULT 0,
+        `failed_message` longtext NULL,
+        `skip_flag` tinyint(1) NOT NULL DEFAULT 0
+    )',
+'select \'Column Exists\' status');
 
-SQL;
-    }
-    
-    /**
-     * SQL statement to add columns `failed`, `failed_message` and `skip_flag` to migrations table.
-     * 
-     * @return string
-     */
-    protected function buildSqlMigrationTableAlterAddFailed() : string
-    {
-        return <<<SQL
-        
-ALTER TABLE {$this->getMigrationsTableName()} ADD COLUMN (
-    `failed_flag` tinyint(1) NOT NULL DEFAULT 0,
-    `failed_message` longtext NULL,
-    `skip_flag` tinyint(1) NOT NULL DEFAULT 0
-);
+prepare stmt from @query;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
-SQL;
-    }
-    
-    /**
-     * 
-     * @return string
-     */
-    protected function buildSqlMigrationTableAlterAddLogId() : string
-    {
-        return <<<SQL
-        
-ALTER TABLE {$this->getMigrationsTableName()} ADD COLUMN (
-    `log_id` varchar(10) NULL
-);
-ALTER TABLE {$this->getMigrationsTableName()} MODIFY `up_result` longtext NULL;
+-- update to add `log_id` column
+SELECT count(*)
+INTO @exist
+FROM information_schema.columns
+WHERE table_schema = DATABASE()
+and COLUMN_NAME LIKE '%log_id%'
+AND table_name = '{$this->getMigrationsTableName()}' LIMIT 1;
+
+set @query = IF(@exist <= 0, 'ALTER TABLE `{$this->getMigrationsTableName()}` ADD COLUMN (
+        `log_id` varchar(10) NULL
+    )',
+'select \'Column Exists\' status');
+
+prepare stmt from @query;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 SQL;
     }
