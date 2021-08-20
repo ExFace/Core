@@ -108,14 +108,14 @@ BEGIN
     ALTER TABLE {$this->getMigrationsTableName()} ADD
         [failed_flag] tinyint NOT NULL DEFAULT 0,
         [failed_message] [nvarchar](max) NULL,
-        [skip_flag] tinyint NOT NULL DEFAULT 0;
-    ALTER TABLE {$this->getMigrationsTableName()} ALTER COLUMN [up_result] [nvarchar](max) NULL;
+        [skip_flag] tinyint NOT NULL DEFAULT 0
+    ALTER TABLE {$this->getMigrationsTableName()} ALTER COLUMN [up_result] [nvarchar](max) NULL
 END;
 
 -- update to add `log_id` column
 IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'{$this->getMigrationsTableName()}') AND name LIKE '%log_id%')
 BEGIN
-    ALTER TABLE {$this->getMigrationsTableName()} ADD [log_id] varchar(10) NULL;
+    ALTER TABLE {$this->getMigrationsTableName()} ADD [log_id] varchar(10) NULL
 END;
 
 SQL;
