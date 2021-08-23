@@ -2826,7 +2826,7 @@ JS;
     protected function buildJsMessageOverlayShow(string $message) : string
     {
         return <<<JS
-        
+{$this->buildJsMessageOverlayHide()}      
 $({$this->buildJsEChartsVar()}.getDom()).prepend($('<div class="{$this->getId()}_exf-chart-message" style="position: absolute; padding: 10px; width: 100%; text-align: center;">{$message}</div>'));
 
 JS;
