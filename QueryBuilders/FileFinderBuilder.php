@@ -110,17 +110,26 @@ class FileFinderBuilder extends AbstractQueryBuilder
     {
         $query = new FileFinderDataQuery();
         
-        $path_pattern = $this->buildPathPatternFromFilterGroup($this->getFilters(), $query);
+        $path_patterns = $this->buildPathPatternFromFilterGroup($this->getFilters(), $query);
         $filename = $this->buildFilenameFromFilterGroup($this->getFilters(), $query);
         
         // Setup query
-        $path_pattern = $path_pattern ? $path_pattern : $this->getMainObject()->getDataAddress();
-        $last_slash_pos = mb_strripos($path_pattern, '/');
-        if ($last_slash_pos === false) {
-            $path_relative = $path_pattern;
-        } else {
-            $path_relative = substr($path_pattern, 0, $last_slash_pos);
-            $filename = $filename ? $filename : substr($path_pattern, ($last_slash_pos + 1));
+        foreach ($path_patterns as $path) {
+            if ($path == '') {
+                $path = $this->getMainObject()->getDataAddress();
+            }
+            $last_slash_pos = mb_strripos($path, '/');
+            if ($last_slash_pos === false) {
+                $path_relative = $path;
+            } else {
+                $path_relative = substr($path, 0, $last_slash_pos);
+                $name = $filename ? $filename : substr($path, ($last_slash_pos + 1));
+            }
+            if (! is_null($name) && $name !== '') {
+                $query->getFinder()->name($name);
+            }
+            
+            $query->addFolder($path_relative);            
         }
         
         if (count($this->getSorters()) > 0) {
@@ -138,12 +147,6 @@ class FileFinderBuilder extends AbstractQueryBuilder
         if ($depth !== null) {
             $query->getFinder()->depth($depth);
         }
-        
-        if (! is_null($filename) && $filename !== '') {
-            $query->getFinder()->name($filename);
-        }
-        
-        $query->addFolder($path_relative);
         
         return $query;
     }
@@ -213,35 +216,75 @@ class FileFinderBuilder extends AbstractQueryBuilder
         return $filename;
     }
     
-    protected function buildPathPatternFromFilterGroup(QueryPartFilterGroup $qpart, FileFinderDataQuery $query) : ?string
+    protected function buildPathPatternFromFilterGroup(QueryPartFilterGroup $qpart, FileFinderDataQuery $query) : array
     {
         // See if the data address has placeholders
+        $oper = $qpart->getOperator();
         $addr = $this->getMainObject()->getDataAddress();
         $addrPhs = StringDataType::findPlaceholders($addr);
-        $addrPhsValues = [];
+        $pathPatterns = [];
+        $uidPatterns = [];
         // Look for filters, that can be processed by the connector itself
         foreach ($this->getFilters()->getFilters() as $qpart) {
-            if (in_array($qpart->getAlias(), $addrPhs) === true && $qpart->getComparator() === EXF_COMPARATOR_EQUALS) {
-                $addrPhsValues[$qpart->getAlias()] = $qpart->getCompareValue();
-                continue;
-            }
-            
-            if ($qpart->getAttribute()->is($this->getMainObject()->getUidAttribute())) {
+            $addrPhsValues = [];
+            $uidPaths = [];
+            if ($qpart->getAttribute()->is($this->getMainObject()->getUidAttribute()) || in_array($qpart->getAlias(), $addrPhs)) {
+                //add the base data adresse to the patterns if first attribute replacing a placeholder is found
+                if (in_array($qpart->getAlias(), $addrPhs)) {
+                    if (empty($pathPatterns)) {
+                        $pathPatterns[] = $addr;
+                    }
+                }
                 switch ($qpart->getComparator()) {
                     case EXF_COMPARATOR_IS:
                     case EXF_COMPARATOR_EQUALS:
-                        $uidPath = Filemanager::pathNormalize($qpart->getCompareValue());
+                        //if attribute alias is a placeholder in the path patterns, replace it with the value
+                        if (in_array($qpart->getAlias(), $addrPhs)) {                            
+                            $addrPhsValues[$qpart->getAlias()] = $qpart->getCompareValue();
+                            $newPatterns = [];
+                            foreach ($pathPatterns as $pattern) {
+                                $newPatterns[] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
+                            }
+                            $pathPatterns = $newPatterns;
+                        } else {
+                            $uidPaths[] = Filemanager::pathNormalize($qpart->getCompareValue());
+                        }
                         break;
                     case EXF_COMPARATOR_IN:
                         $values = explode($qpart->getValueListDelimiter(), $qpart->getCompareValue());
-                        if (count($values) === 1) {
-                            $uidPath = Filemanager::pathNormalize($values[0]);
-                            break;
+                        //if attribute alias is a placeholder in the path patterns, replace it with the values (therefore creating more pattern entries)
+                        if (in_array($qpart->getAlias(), $addrPhs)) {
+                            foreach ($values as $val) {
+                                $addrPhsValues[$qpart->getAlias()] = $val;
+                                foreach ($pathPatterns as $pattern) {
+                                    $newPatterns[] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
+                                }
+                            }
+                            $pathPatterns = $newPatterns;
+                        } else {
+                            foreach ($values as $val) {
+                                $uidPaths[] = Filemanager::pathNormalize($val);
+                            }
                         }
-                        // No "break;" here to fallback to default if none of the ifs above worked
+                        break;
                     default:
                         $qpart->setApplyAfterReading(true);
                         $query->setFullScanRequired(true);
+                }
+                if ($oper === EXF_LOGICAL_AND) {
+                    if (! empty($uidPatterns)) {
+                        foreach ($uidPaths as $path) {
+                            if (! in_array($path, $uidPatterns)) {
+                                throw new QueryBuilderException('Can not add multiple different paths from different "' . EXF_LOGICAL_AND .'" combined filters!');
+                            }
+                        }
+                    } else {
+                        $uidPatterns = $uidPaths;
+                    }
+                } elseif ($oper === EXF_LOGICAL_OR) {
+                    $uidPatterns = array_unique(array_merge($uidPatterns, $uidPaths));
+                } else {
+                    throw new QueryBuilderException('Other filter operators than "' . EXF_LOGICAL_AND . '" or "'. EXF_LOGICAL_OR . '" are not supported by the FileFinderBuilder');
                 }
             } else {
                 $this->addAttribute($qpart->getExpression()->toString());
@@ -249,29 +292,20 @@ class FileFinderBuilder extends AbstractQueryBuilder
                 $query->setFullScanRequired(true);
             }
         }
-        
-        if ($uidPath === '') {
-            $uidPath = null;
+        foreach ($pathPatterns as $path) {
+            if (! empty(StringDataType::findPlaceholders($path))) {
+                throw new QueryBuilderException('No filter value given to replace placeholders in path "' . $path . "!'");
+            }
         }
-        
-        // If the data address has placeholders and the filter include both, paths and placeholder
-        // values, there is no way to decide, which path is correct.
-        if (empty($addrPhs) === false && empty($addrPhsValues) === false && $uidPath !== null) {
-            throw new QueryBuilderException('Cannot use filters over relative path (' . $uidPath . ') and a relative path with placeholders (' . $addr . ') in FileFinderBuilder at the same time!');
-        }
-        // If there is no conflict, use the UID paths if available
-        if ($uidPath !== null) {
-            $path_pattern = $uidPath;
-        } elseif (empty($addrPhs) === false) {
-            // Otherwise use the placeholders if there are any (even if no values are provided in
-            // the filters - this will and should cause an error!
-            $path_pattern = StringDataType::replacePlaceholders($addr, $addrPhsValues);
+        if ($oper === EXF_LOGICAL_OR) {
+            return array_unique(array_merge($pathPatterns, $uidPatterns));
+        } elseif (! empty($pathPatterns) && ! empty($uidPatterns)) {
+            throw new QueryBuilderException('Can not add multiple different paths from different "' . EXF_LOGICAL_AND .'" combined filters!');
+        } elseif (! empty($pathPatterns)) {
+            return $pathPatterns;
         } else {
-            // If neither UID filters nor placeholders are found - return NULL
-            $path_pattern = null;
+            return $uidPatterns;
         }
-        
-        return $path_pattern;
     }
 
     /**
