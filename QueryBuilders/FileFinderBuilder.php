@@ -224,6 +224,9 @@ class FileFinderBuilder extends AbstractQueryBuilder
         $addrPhs = StringDataType::findPlaceholders($addr);
         $pathPatterns = [];
         $uidPatterns = [];
+        if ($addr !== null && empty($this->getFilters()->getFilters())) {
+            return [$addr];
+        }
         // Look for filters, that can be processed by the connector itself
         foreach ($this->getFilters()->getFilters() as $qpart) {
             $addrPhsValues = [];
