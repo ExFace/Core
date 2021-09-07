@@ -663,7 +663,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
                     $string = str_replace('[#' . $ph . '#]', $ph_filter->getDataType()->parse($ph_filter->getCompareValue()), $string);
                 } else {
                     // If at least one filter does not have a value, return false
-                    throw new QueryBuilderException('Missing filter value in "' . $ph_filter->getAlias() . '" needed for placeholder "' . $ph . '" in SQL "' . $string . '"!');
+                    throw new QueryBuilderException('Missing filter value in "' . $ph_filter->getAlias() . '" needed for placeholder "' . $ph . '" in data address "' . $string . '"!');
                 }
             } else {
                 // If at least one placeholder does not have a corresponding filter or is a static formula, return false
