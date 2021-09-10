@@ -64,24 +64,7 @@ class MsSqlDatabaseInstaller extends MySqlDatabaseInstaller
             $msg = 'Database ' . $dbName . ' created! ';
         }
         yield $indent . $msg . PHP_EOL;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::buildSqlShowMigrationTable()
-     */
-    protected function buildSqlMigrationTableShow() : string
-    {
-        return <<<SQL
-
-IF OBJECT_ID('{$this->getMigrationsTableName()}', 'U') IS NOT NULL
-BEGIN
- SELECT OBJECT_ID('{$this->getMigrationsTableName()}', 'U') AS id
-END
-
-SQL;
-    }
+    }    
     
     /**
      * 
@@ -91,63 +74,53 @@ SQL;
     protected function buildSqlMigrationTableCreate() : string
     {
         $pkName = 'PK_' . parent::getMigrationsTableName() . '_id';
+        // in case any changes need to be made to the migrations table, make the changes in the CREATE TABLE statement
+        // also add the changes as a seperate statement (like the ones below the CREATE TABLE statement) so that
+        // already existing installations will be updated
         return <<<SQL
-        
-CREATE TABLE {$this->getMigrationsTableName()}(
-	[id] [int] IDENTITY(40,1) NOT NULL,
-	[migration_name] [nvarchar](300) NOT NULL,
-	[up_datetime] [datetime] NOT NULL,
-	[up_script] [nvarchar](max) NOT NULL,
-	[up_result] [nvarchar](max) NULL,
-	[down_datetime] [datetime] NULL,
-	[down_script] [nvarchar](max) NOT NULL,
-	[down_result] [nvarchar](max) NULL,
-    [failed_flag] tinyint NOT NULL DEFAULT 0,
-    [failed_message] [nvarchar](max) NULL,
-    [skip_flag] tinyint NOT NULL DEFAULT 0    
-    CONSTRAINT [{$pkName}] PRIMARY KEY CLUSTERED 
-    (
-	   [id] ASC
-    )
-    WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY];
+-- creation of migrations table
+IF OBJECT_ID('{$this->getMigrationsTableName()}', 'U') IS NULL  
+BEGIN       
+    CREATE TABLE {$this->getMigrationsTableName()}(
+    	[id] [int] IDENTITY(40,1) NOT NULL,
+    	[migration_name] [nvarchar](300) NOT NULL,
+    	[up_datetime] [datetime] NOT NULL,
+    	[up_script] [nvarchar](max) NOT NULL,
+    	[up_result] [nvarchar](max) NULL,
+    	[down_datetime] [datetime] NULL,
+    	[down_script] [nvarchar](max) NOT NULL,
+    	[down_result] [nvarchar](max) NULL,
+        [failed_flag] tinyint NOT NULL DEFAULT 0,
+        [failed_message] [nvarchar](max) NULL,
+        [skip_flag] tinyint NOT NULL DEFAULT 0,
+        [log_id] varchar(10) NULL,
+        CONSTRAINT [{$pkName}] PRIMARY KEY CLUSTERED 
+        (
+    	   [id] ASC
+        )
+        WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+    ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+END;
+
+-- update to add `failed_flag`, `failed_message` and `skip_flag` columns
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'{$this->getMigrationsTableName()}') AND name LIKE '%failed%')
+BEGIN
+    ALTER TABLE {$this->getMigrationsTableName()} ADD
+        [failed_flag] tinyint NOT NULL DEFAULT 0,
+        [failed_message] [nvarchar](max) NULL,
+        [skip_flag] tinyint NOT NULL DEFAULT 0
+    ALTER TABLE {$this->getMigrationsTableName()} ALTER COLUMN [up_result] [nvarchar](max) NULL
+END;
+
+-- update to add `log_id` column
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'{$this->getMigrationsTableName()}') AND name LIKE '%log_id%')
+BEGIN
+    ALTER TABLE {$this->getMigrationsTableName()} ADD [log_id] varchar(10) NULL
+END;
 
 SQL;
     }
     
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::buildSqlMigrationTableAtler()
-     */
-    protected function buildSqlMigrationTableAtler() : string
-    {
-        //no check if columns exists, if so probably will give an error
-        return <<<SQL
-        
-ALTER TABLE {$this->getMigrationsTableName()} ADD
-    [failed_flag] tinyint NOT NULL DEFAULT 0,
-    [failed_message] [nvarchar](max) NULL,
-    [skip_flag] tinyint NOT NULL DEFAULT 0;
-ALTER TABLE {$this->getMigrationsTableName()} ALTER COLUMN [up_result] [nvarchar](max) NULL;
-
-SQL;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::buildSqlShowColumnFailed()
-     */
-    protected function buildSqlShowColumnFailed() : string
-    {
-        return <<<SQL
-        
-SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'{$this->getMigrationsTableName()}') AND name LIKE '%failed%';
-
-SQL;
-    }
-
     /**
      * 
      * {@inheritDoc}
