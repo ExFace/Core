@@ -165,36 +165,4 @@ trait iHaveContextualHelpTrait {
     {        
         return $help_container;
     }
-    
-    /**
-     * Returns a row (assotiative array) for a data sheet with exface.Core.USER_HELP_ELEMENT filled with information about
-     * the given attribute.
-     * The inforation is derived from the attributes meta model.
-     *
-     * @param MetaAttributeInterface $attr
-     * @return string[]
-     */
-    protected function getHelpDataRowFromAttribute(MetaAttributeInterface $attr, WidgetInterface $widget = null) : array
-    {
-        $row = [];
-        $descr = $attr->getShortDescription() ? rtrim(trim($attr->getShortDescription()), ".") . '.' : '';
-        
-        
-        if (! $attr->getRelationPath()->isEmpty()) {
-            $descr .= $attr->getObject()->getShortDescription() ? ' ' . rtrim($attr->getObject()->getShortDescription(), ".") . '.' : '';
-        }
-        
-        if ($widget !== null && ($widget instanceof iTakeInput) && $widget->isDisabled() !== true) {
-            if ($dataTypeHint = $attr->getDataType()->getInputFormatHint()) {
-                $descr .= ($descr ? "\n\n" : '') . $this->translate('LOCALIZATION.DATATYPE.FORMAT_HINT') . $dataTypeHint;
-            }
-            
-            if ($widget->isRequired() === true) {
-                $descr .= ($descr ? "\n\n" : '') . $this->translate('WIDGET.INPUT.REQUIRED_HINT');
-            }
-        }
-        
-        $row['DESCRIPTION'] = $descr;
-        return $row;
-    }
 }
