@@ -367,6 +367,8 @@
 	"WIDGET.DATA.HELP.COLUMNS": "Columns",
 	"WIDGET.DATA.NOT_LOADED": "Please set your filters before performing a search!",
 	"WIDGET.DATA.GROUP_EMPTY": "none",
+	"WIDGET.DATA.RESET_INPUT": "Discard Inputs",
+	"WIDGET.DATA.RESET_INPUT.TEXT": "Attention: loading additional data will lead to all unsaved data in the table getting lost!",
 	
 	"WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION": "Filters",
 	"WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION": "Sorting",
