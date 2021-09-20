@@ -71,6 +71,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $footer = null;
     
     private $widthMax = null;
+    
+    private $widthMin = null;
 
     /**
      * 
@@ -789,15 +791,47 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     }
     
     /**
-     * Sets the maximum width for a column.
+     * Sets the minimun width for a column.
      * 
+     * This property takes the same values as "width" or "height", but unlike "width" it
+     * will allow the column to be wider, but never smaller, than the given value. "Width"
+     * on the other hand, will make the column have a fixed width.
+     * Right now that property is only supported in the UI5Facade 'DataTable'.
+     * 
+     * @uxon-property width_min
+     * @uxon-type string
+     * 
+     * @param string|WidgetDimension $stringOrDimension
+     * @return DataColumn
+     */
+    public function setWidthMin($stringOrDimension) : DataColumn
+    {
+        $this->widthMin = WidgetDimensionFactory::createFromAnything($this->getWorkbench(), $stringOrDimension);
+        return $this;
+    }
+    
+    /**
+     *
+     * @return WidgetDimension
+     */
+    public function getWidthMin() : WidgetDimension
+    {
+        if ($this->widthMin === null) {
+            $this->widthMin = WidgetDimensionFactory::createEmpty($this->getWorkbench());
+        }
+        return $this->widthMin;
+    }
+    
+    /**
+     * Sets the maximum width for a column.
+     *
      * This property takes the same values as "width" or "height", but unlike "width" it
      * will allow the column to be smaller, but never wider, than the given value. "Width"
      * on the other hand, will make the column have a fixed width.
-     * 
+     *
      * @uxon-property width_max
      * @uxon-type string
-     * 
+     *
      * @param string|WidgetDimension $stringOrDimension
      * @return DataColumn
      */
