@@ -142,7 +142,13 @@ class LdapAuthenticator extends AbstractAuthenticator
         // anmelden am ldap server
         $ldapbind = ldap_bind($ldapconn, $ldaprdn, $ldappass);
         if (! $ldapbind) {
-            throw new AuthenticationFailedError($this, 'LDAP error ' . ldap_errno($ldapconn) . ': ' . ldap_error($ldapconn), '7AL3J9X');
+            $errText = ldap_error($ldapconn);
+            $errDetails = null;
+            ldap_get_option($ldapconn, LDAP_OPT_DIAGNOSTIC_MESSAGE, $errDetails);
+            if ($errDetails && $errDetails !== $errText) {
+                $errText .= ' (' . $errDetails . ')';
+            }
+            throw new AuthenticationFailedError($this, 'LDAP error ' . ldap_errno($ldapconn) . ': ' . $errText, '7AL3J9X');
         }
         
         if ($token->isAnonymous() === false) {
