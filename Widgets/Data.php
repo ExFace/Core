@@ -1070,22 +1070,21 @@ class Data
         foreach ($this->getFilters() as $filter) {
             $row = array(
                 'TITLE' => $filter->getCaption(),
-                'GROUP' => $this->translate('WIDGET.DATA.HELP.FILTERS')
+                'GROUP' => $this->translate('WIDGET.DATA.HELP.FILTERS'),
+                'DESCRIPTION' => $filter->getHint()
             );
-            if ($attr = $filter->getAttribute()) {
-                $row = array_merge($row, $this->getHelpDataRowFromAttribute($attr, $filter));
-            }
             $data_sheet->addRow($row);
         }
         
         foreach ($this->getColumns() as $col) {
+            if ($col->isHidden() === true) {
+                continue;
+            }
             $row = array(
                 'TITLE' => $col->getCaption(),
-                'GROUP' => $this->translate('WIDGET.DATA.HELP.COLUMNS')
-            );
-            if ($col->isBoundToAttribute() && $attr = $col->getAttribute()) {
-                $row = array_merge($row, $this->getHelpDataRowFromAttribute($attr, $col->getCellWidget()));
-            }
+                'GROUP' => $this->translate('WIDGET.DATA.HELP.COLUMNS'),
+                'DESCRIPTION' => $col->getHint()
+            );            
             $data_sheet->addRow($row);
         }
         
