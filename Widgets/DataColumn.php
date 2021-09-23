@@ -801,10 +801,11 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     /**
      * Sets the minimun width for a column.
      * 
+     * **NOTE:** this property may not have effect on some facades: try it out first!
+     * 
      * This property takes the same values as "width" or "height", but unlike "width" it
      * will allow the column to be wider, but never smaller, than the given value. "Width"
      * on the other hand, will make the column have a fixed width.
-     * Right now that property is only supported in the UI5Facade 'DataTable'.
      * 
      * @uxon-property width_min
      * @uxon-type string
@@ -833,6 +834,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     /**
      * Sets the maximum width for a column.
      *
+     * **NOTE:** this property may not have effect on some facades: try it out first!
+     * 
      * This property takes the same values as "width" or "height", but unlike "width" it
      * will allow the column to be smaller, but never wider, than the given value. "Width"
      * on the other hand, will make the column have a fixed width.
