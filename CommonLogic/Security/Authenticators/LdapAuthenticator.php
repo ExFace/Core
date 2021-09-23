@@ -23,6 +23,34 @@ use exface\Core\DataTypes\StringDataType;
  * - `dn_string` - default is `[#domain#]\\[#username#]`.
  * - `domains` - array of domains for the user to pick from.
  * 
+ * ## LDAPS (secure LDAP) and custom ports
+ * 
+ * In order to use LDAPS, make sure the `host` looks like this: `ldaps://adserver:636`.
+ * 
+ * If getting `Can't contact LDAP server` errors with a self-signed SSL certificate, try
+ * disabling certificate verification:
+ * 
+ * - on Windows create the file `C:\OpenLDAP\sysconf\ldap.conf` with a single line `TLS_REQCERT never`.
+ * - on Linux add the same line to `/usr/local/openldap/etc/openldap/ldap.conf`
+ * - **restart** the web server (e.g. Apache)!
+ * 
+ * NOTE: disabling certifcate validation makes the server vulnurable to man-in-the-middle attacks!
+ * 
+ * ## Debugging the connection
+ * 
+ * Create a separate php-file for testing with the code below an call it from command line!
+ * 
+ * ```
+ * <?php
+ * ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, 7);
+ * $resource = ldap_connect("ldaps://{redacted}/", 636) or die ("Could not connect.");
+ * ldap_set_option($resource, LDAP_OPT_PROTOCOL_VERSION, 3)
+ * ldap_set_option ($ldapconn, LDAP_OPT_REFERRALS, 0);
+ * $bound = ldap_bind($resource, "{redacted}\ldap", "****");
+ * echo ldap_error($resource);
+ * 
+ * ```
+ * 
  * ## Examples
  * 
  * ### Authentication + create new users with static roles
@@ -30,7 +58,7 @@ use exface\Core\DataTypes\StringDataType;
  * ```
  * {
  * 		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\LdapAuthenticator",
- * 		"host": "MYLDAP",
+ * 		"host": "adserver",
  * 		"domains": [
  * 			"mydomain"
  * 		],
@@ -103,8 +131,8 @@ class LdapAuthenticator extends AbstractAuthenticator
         // verbinden zum ldap server
         $host = $this->getHost(); 
         $ldapconn = @ldap_connect($host);        
-        if (!$ldapconn) {            
-            throw new AuthenticationFailedError($this, 'No connection to LDAP server!', '7AL3J9X');
+        if (!$ldapconn) {
+            throw new AuthenticationFailedError($this, 'No connection to LDAP server "' . $host . '"! ', '7AL3J9X');
         }
         
         // those options are necessary for ldap_search to work, must be applied before the ldap_bind
@@ -114,7 +142,7 @@ class LdapAuthenticator extends AbstractAuthenticator
         // anmelden am ldap server
         $ldapbind = ldap_bind($ldapconn, $ldaprdn, $ldappass);
         if (! $ldapbind) {
-            throw new AuthenticationFailedError($this, 'LDAP authentication failed', '7AL3J9X', new RuntimeException(ldap_error($ldapconn), ldap_errno($ldapconn)));
+            throw new AuthenticationFailedError($this, 'LDAP error ' . ldap_errno($ldapconn) . ': ' . ldap_error($ldapconn), '7AL3J9X');
         }
         
         if ($token->isAnonymous() === false) {
