@@ -598,7 +598,7 @@ trait iPrefillWidgetTrait
      */
     public function setPrefillDataRefresh(string $value) : iPrefillWidget
     {
-        $const = iPrefillWidget::class . '\\REFRESH_' . strtoupper($value);
+        $const = iPrefillWidget::class . '::REFRESH_' . strtoupper($value);
         
         if (! defined($const)) {
             throw new ActionConfigurationError($this, 'Invalid value "' . $value . '" for property "prefill_data_refresh" in action "' . $this->getAliasWithNamespace() . '"!');

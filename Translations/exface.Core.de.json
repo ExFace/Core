@@ -355,6 +355,8 @@
 	"WIDGET.DATA.HELP.COLUMNS": "Spalten",
 	"WIDGET.DATA.NOT_LOADED": "Bitte zuerst Filter setzen und dann die Suche ausführen!",
 	"WIDGET.DATA.GROUP_EMPTY": "leer",
+	"WIDGET.DATA.DISCARD_INPUT": "Eingaben verwerfen",
+	"WIDGET.DATA.DISCARD_INPUT.TEXT": "Achtung: durch Nachladen der Daten gehen alle ungespeicherten Änderungen in der Tabelle verloren!",
 	
     "WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION": "Filter",
     "WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION": "Sortierung",
