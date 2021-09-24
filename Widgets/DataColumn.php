@@ -324,6 +324,10 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                 $cellWidget->setDataColumnName($this->getDataColumnName());
             }
             
+            if ($this->isBoundToAttribute() && $cellWidget instanceof iShowSingleAttribute) {
+                $cellWidget->setAttributeAlias($this->getAttributeAlias());
+            }
+            
             if ($cellWidget->getWidth()->isUndefined()) {
                 // Set the cell widget width to '100%' if no width is defined for it.
                 // We do this so it fills the entire column respecting padding and borders.
