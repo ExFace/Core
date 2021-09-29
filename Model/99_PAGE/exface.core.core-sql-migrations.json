@@ -10,8 +10,8 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "1970-01-01 01:00:00",
-    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2021-08-11 11:39:15",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2021-09-29 18:51:53",
     "contents": {
         "id": "MigrationsTable",
         "widget_type": "DataTable",
@@ -86,18 +86,8 @@
                     "conditions": [
                         {
                             "value_left": "=MigrationsTable!state",
-                            "comparator": "!==",
-                            "value_right": "FAILED_UP"
-                        },
-                        {
-                            "value_left": "=MigrationsTable!state",
-                            "comparator": "!==",
-                            "value_right": "FAILED_DOWN"
-                        },
-                        {
-                            "value_left": "=MigrationsTable!state",
-                            "comparator": "!==",
-                            "value_right": "DISABLED"
+                            "comparator": "![",
+                            "value_right": "FAILED_UP,FAILED_DOWN,DISABLED"
                         }
                     ]
                 },
@@ -106,10 +96,15 @@
                     "input_rows_min": 1,
                     "input_rows_max": 1,
                     "input_mapper": {
+                        "inherit_columns": false,
                         "column_to_column_mappings": [
                             {
                                 "from": "=not(skip_flag)",
                                 "to": "skip_flag"
+                            },
+                            {
+                                "from": "id",
+                                "to": "id"
                             }
                         ]
                     }
@@ -123,13 +118,8 @@
                     "conditions": [
                         {
                             "value_left": "=MigrationsTable!state",
-                            "comparator": "!==",
-                            "value_right": "FAILED_UP"
-                        },
-                        {
-                            "value_left": "=MigrationsTable!state",
-                            "comparator": "!==",
-                            "value_right": "DISABLED"
+                            "comparator": "![",
+                            "value_right": "FAILED_UP,DISABLED,DOWN"
                         }
                     ]
                 },
@@ -145,7 +135,12 @@
                         {
                             "alias": "exface.Core.UpdateData",
                             "input_mapper": {
+                                "inherit_columns": false,
                                 "column_to_column_mappings": [
+                                    {
+                                        "from": "id",
+                                        "to": "id"
+                                    },
                                     {
                                         "from": "=now()",
                                         "to": "up_datetime"
@@ -188,13 +183,8 @@
                     "conditions": [
                         {
                             "value_left": "=MigrationsTable!state",
-                            "comparator": "!==",
-                            "value_right": "FAILED_UP"
-                        },
-                        {
-                            "value_left": "=MigrationsTable!state",
-                            "comparator": "!==",
-                            "value_right": "DISABLED"
+                            "comparator": "![",
+                            "value_right": "FAILED_UP,DISABLED,UP"
                         }
                     ]
                 },
@@ -210,7 +200,12 @@
                         {
                             "alias": "exface.Core.UpdateData",
                             "input_mapper": {
+                                "inherit_columns": false,
                                 "column_to_column_mappings": [
+                                    {
+                                        "from": "id",
+                                        "to": "id"
+                                    },
                                     {
                                         "from": "=now()",
                                         "to": "down_datetime"
