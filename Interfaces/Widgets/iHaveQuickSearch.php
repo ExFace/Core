@@ -4,7 +4,7 @@ namespace exface\Core\Interfaces\Widgets;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Input;
-use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
 
 /**
  * This interface describes widgets, that have a quick search field.
@@ -57,11 +57,12 @@ interface iHaveQuickSearch extends WidgetInterface
     public function setQuickSearchWidget(UxonObject $uxon) : iHaveQuickSearch;
     
     /**
-     * Returns an array of aliases of attributes, that should be used for quick search relative to the meta object of the widget
-     *
-     * IDEA move to to configurator?
-     *
-     * @return MetaAttributeInterface[]
+     * Retrurns the condition group to be used for quick search using the given value.
+     * 
+     * By default the $value is NULL, so the condition group would be empty.
+     * 
+     * @param mixed|NULL $value
+     * @return ConditionGroupInterface
      */
-    public function getAttributesForQuickSearch() : array;
+    public function getQuickSearchConditionGroup($value = null) : ConditionGroupInterface;
 }

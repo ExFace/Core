@@ -77,14 +77,13 @@ class QuickSearchUrlParamReader implements MiddlewareInterface
         // the quick search filters are defined in the UXON of the widget.
         if ($task->isTriggeredByWidget()) {
             $widget = $task->getWidgetTriggeredBy();
-            $quick_search_filter = $widget->getMetaObject()->hasLabelAttribute() ? $widget->getMetaObject()->getLabelAttributeAlias() : '';
-            if ($widget instanceof iHaveQuickSearch && ! empty($widget->getAttributesForQuickSearch())) {
-                foreach ($widget->getAttributesForQuickSearch() as $attr) {
-                    $quick_search_filter .= ($quick_search_filter ? EXF_LIST_SEPARATOR : '') . $attr->getAliasWithRelationPath();
+            if ($widget instanceof iHaveQuickSearch) {
+                $quickSearchConditionGroup = $widget->getQuickSearchConditionGroup($quick_search);
+                if (! $quickSearchConditionGroup->isEmpty()) {
+                    $data_sheet->getFilters()->addNestedGroup($quickSearchConditionGroup);
                 }
-            }
-            if ($quick_search_filter) {
-                $data_sheet->getFilters()->addConditionFromString($quick_search_filter, $quick_search);
+            } elseif ($widget->getMetaObject()->hasLabelAttribute()) {
+                $data_sheet->getFilters()->addConditionFromString($widget->getMetaObject()->getLabelAttributeAlias(), $quick_search);
             } else {
                 throw new FacadeRequestParsingError('Cannot perform quick search on object "' . $widget->getMetaObject()->getAliasWithNamespace() . '": either mark one of the attributes as a label in the model or set inlude_in_quick_search = true for one of the filters in the widget definition!', '6T6HSL4');
             }

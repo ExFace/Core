@@ -25,6 +25,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
 
 /**
  * A filter for data widgets, etc - consists of a logical comparator and an input widget.
@@ -168,7 +169,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     
     private $apply_on_change = false;
     
-    private $customConditionGroup = null;
+    private $customConditionGroupUxon = null;
     
     private $attributeAlias = null;
     
@@ -810,7 +811,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         $uxon->setProperty('required', $this->isRequired());
         $uxon->setProperty('input_widget', $this->getInputWidget()->exportUxonObject());
         if ($this->hasCustomConditionGroup() === true) {
-            $uxon->setProperty('condition_group', $this->getCustomConditionGroup()->exportUxonObject());
+            $uxon->setProperty('condition_group', $this->getCustomConditionGroupUxon());
         }
         return $uxon;
     }
@@ -1037,27 +1038,36 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      * @return boolean
      */
     public function hasCustomConditionGroup() {
-        return $this->customConditionGroup !== null;
+        return $this->customConditionGroupUxon !== null;
     }
     
     /**
-     *
+     * Returns the custom condition group if defined (a new instance of ConditionGroup every time!).
+     * 
+     * The $value parameter allows to replace the placeholder by the given fixed value.
+     * 
+     * @param mixed $value
      * @return ConditionGroupInterface
      */
-    public function getCustomConditionGroup() : ConditionGroupInterface
+    public function getCustomConditionGroup($value = '[#value#]') : ConditionGroupInterface
     {
-        return $this->customConditionGroup;
+        $uxon = $this->getCustomConditionGroupUxon();
+        if ($uxon === null) {
+            throw new WidgetLogicError($this, 'Cannot get condition_group from ' . $this->getWidgetType() . ': it is empty!');
+        }
+        if ($value !== '[#value#]') {
+            $uxon = UxonObject::fromJson(str_replace('[#value#]', ($value ?? ''), $uxon->toJson()));
+        }
+        return ConditionGroupFactory::createFromUxon($this->getWorkbench(), $uxon, $this->getMetaObject());
     }
     
     /**
      * 
-     * @param ConditionGroupInterface $group
-     * @return Filter
+     * @return UxonObject|NULL
      */
-    public function setCustomConditionGroup(ConditionGroupInterface $group) : Filter
+    protected function getCustomConditionGroupUxon() : ?UxonObject
     {
-        $this->customConditionGroup = $group;
-        return $this;
+        return $this->customConditionGroupUxon;
     }
     
     /**
@@ -1141,7 +1151,8 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             }
             $uxon->setProperty('conditions', new UxonObject($enrichedConditions));
         }
-        return $this->setCustomConditionGroup(ConditionGroupFactory::createFromUxon($this->getWorkbench(), $uxon));
+        $this->customConditionGroupUxon = $uxon;
+        return $this;
     }
     
     /**
