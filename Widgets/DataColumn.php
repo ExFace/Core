@@ -71,12 +71,16 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $footer = null;
     
     private $widthMax = null;
+    
+    private $widthMin = null;
 
     /**
      * 
      * @var iHaveValue
      */
     private $cellWidget = null;
+    
+    private $cellWidgetUxon = null;
 
     private $editable = null;
     
@@ -260,9 +264,18 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function getCellWidget()
     {
         if ($this->cellWidget === null) {
+            $fallbackWidgetType = null;
+            if ($this->cellWidgetUxon !== null) {
+                $uxon = $this->cellWidgetUxon;
+                $cellWidgetDefinedInUxon = true;
+            } else {
+                $uxon = new UxonObject();
+                $cellWidgetDefinedInUxon = false;
+            }
+                
             // If the column is based on an attribute, use it's default editor/display widget to render
             // the cells.
-            if ($this->isBoundToAttribute() === true) {
+            if ($cellWidgetDefinedInUxon === false && $this->isBoundToAttribute() === true) {
                 $attr = $this->getAttribute();
                 switch (true) {
                     // If the column is hidden, always use InputHidden widgets to avoid instantiating
@@ -270,54 +283,69 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                     // manually if a `cell_widget` is explicitly defined. This code here is just used
                     // for autogenerating cell widgets!
                     case $this->isHidden():
-                        $uxon = new UxonObject([
-                            'attribute_alias' => $this->getAttributeAlias()
-                        ]);
-                        $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Display');
+                        $fallbackWidgetType = 'Display';
                         break;
                     // If the column is editable, use the default editor widget
                     case $this->isEditable() === true:
                         $uxon = $attr->getDefaultEditorUxon();
-                        $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
-                        $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Input');
+                        $fallbackWidgetType = 'Input';
                         break;
                     // Otherwise use the default display widget
                     default:
                         $uxon = $attr->getDefaultDisplayUxon();
-                        $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
-                        $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Display');
+                        $fallbackWidgetType = 'Display';
                         break;
                 }
+                
+                $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
+                
             } else {
                 // If the column is not based on an attribute, use generic input/display widgets
                 // Again, remember, that this code is only taking care of autogenerating cell
                 // widgets. If a widget is ecplicitly defined, it will be used as expected.
-                $this->cellWidget = WidgetFactory::create($this->getPage(), ($this->isEditable() ? 'Input' : 'Display'), $this);
+                $fallbackWidgetType = $this->isEditable() ? 'Input' : 'Display';
                 
                 // In older versions, formulas could be placed in `attribute_alias`. This is fallback
                 // to support these older UXON models. Currently, this should never happen.
                 if ($this->getAttributeAlias() && $this->cellWidget instanceof iShowSingleAttribute) {
-                    $this->cellWidget->setAttributeAlias($this->getAttributeAlias());
+                    $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
                 }
             }
             
-            if ($this->isBoundToDataColumn() && $this->cellWidget instanceof iShowDataColumn) {
-                $this->cellWidget->setDataColumnName($this->getDataColumnName());
+            $cellWidget = WidgetFactory::createFromUxon($this->getPage(), UxonObject::fromAnything($uxon), $this, $fallbackWidgetType);
+            $this->cellWidget = $cellWidget;
+            if ($cellWidgetDefinedInUxon === true && ($cellWidget instanceof iTakeInput)) {
+                $this->setEditable($cellWidget->isReadonly() === false);
+            } elseif ($cellWidget instanceof Display) {
+                $this->setEditable(false);
+            }            
+
+            if ($this->isBoundToDataColumn() && $cellWidget instanceof iShowDataColumn) {
+                $cellWidget->setDataColumnName($this->getDataColumnName());
             }
             
-            if ($this->cellWidget->getWidth()->isUndefined()) {
-                $this->cellWidget->setWidth($this->getWidth());
+            if ($this->isBoundToAttribute() && $cellWidget instanceof iShowSingleAttribute) {
+                $cellWidget->setAttributeAlias($this->getAttributeAlias());
+            }
+            
+            if ($cellWidget->getWidth()->isUndefined()) {
+                // Set the cell widget width to '100%' if no width is defined for it.
+                // We do this so it fills the entire column respecting padding and borders.
+                // If instead we set teh width of the cell widget the same as the column (for example '200px')
+                // it can lead to values not being shown (for example integer values in UI5 DataTables) because
+                // the cell widget is too wide for the column.
+                $cellWidget->setWidth('100%');
             }
             
             if ($this->isCalculated()) {
                 $expr = $this->getCalculationExpression();
                 if (! $expr->isEmpty()) {
-                    $this->cellWidget->setValue($expr);
+                    $cellWidget->setValue($expr);
                 }
             }
             
             // Some data types require special treatment within a table to make all rows comparable.
-            $type = $this->cellWidget->getValueDataType();
+            $type = $cellWidget->getValueDataType();
             if ($type instanceof NumberDataType) {
                 // Numbers with a variable, but limited amount of fraction digits should
                 // allways have the same amount of fraction digits in a table to ensure the
@@ -438,25 +466,16 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function setCellWidget(UxonObject $uxon_object)
     {
-        try {
-            $cellWidget = WidgetFactory::createFromUxon($this->getPage(), UxonObject::fromAnything($uxon_object), $this);
-            $cellWidget->setAttributeAlias($this->getAttributeAlias());
-            $this->cellWidget = $cellWidget;
-            if ($cellWidget instanceof iTakeInput) {
-                $this->setEditable($cellWidget->isReadonly() === false);
-            } elseif ($cellWidget instanceof Display) {
-                $this->setEditable(false);
-            }
-        } catch (\Throwable $e) {
-            throw new WidgetConfigurationError($this, 'Cannot set cell widget for ' . $this->getWidgetType() . '. ' . $e->getMessage() . ' See details below.', null, $e);
+        if ($this->cellWidget !== null) {
+            throw new WidgetConfigurationError($this, 'Cannot set cell_widget property of a ' . $this->getWidgetType() . ': the cell widget was already initialized!');
         }
+        $this->cellWidgetUxon = $uxon_object;
         return $this;
     }
 
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iCanBeAligned::getAlign()
      */
     public function getAlign()
@@ -784,15 +803,50 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     }
     
     /**
+     * Sets the minimun width for a column.
+     * 
+     * **NOTE:** this property may not have effect on some facades: try it out first!
+     * 
+     * This property takes the same values as "width" or "height", but unlike "width" it
+     * will allow the column to be wider, but never smaller, than the given value. "Width"
+     * on the other hand, will make the column have a fixed width.
+     * 
+     * @uxon-property width_min
+     * @uxon-type string
+     * 
+     * @param string|WidgetDimension $stringOrDimension
+     * @return DataColumn
+     */
+    public function setWidthMin($stringOrDimension) : DataColumn
+    {
+        $this->widthMin = WidgetDimensionFactory::createFromAnything($this->getWorkbench(), $stringOrDimension);
+        return $this;
+    }
+    
+    /**
+     *
+     * @return WidgetDimension
+     */
+    public function getWidthMin() : WidgetDimension
+    {
+        if ($this->widthMin === null) {
+            $this->widthMin = WidgetDimensionFactory::createEmpty($this->getWorkbench());
+        }
+        return $this->widthMin;
+    }
+    
+    /**
      * Sets the maximum width for a column.
+     *
+     * **NOTE:** this property may not have effect on some facades: try it out first!
      * 
      * This property takes the same values as "width" or "height", but unlike "width" it
      * will allow the column to be smaller, but never wider, than the given value. "Width"
      * on the other hand, will make the column have a fixed width.
-     * 
+     *
      * @uxon-property width_max
      * @uxon-type string
-     * 
+     *
      * @param string|WidgetDimension $stringOrDimension
      * @return DataColumn
      */

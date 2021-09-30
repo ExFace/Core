@@ -17,6 +17,7 @@ use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\ArrayDataType;
 use exface\Core\Uxon\QueryBuilderSchema;
+use exface\Core\Factories\ExpressionFactory;
 
 abstract class AbstractQueryBuilder implements QueryBuilderInterface
 {
@@ -651,15 +652,21 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     protected function replacePlaceholdersByFilterValues($string)
     {
         foreach (StringDataType::findPlaceholders($string) as $ph) {
-            if ($ph_filter = $this->getFilter($ph)) {
+            if (StringDataType::startsWith($ph, '=')) {
+                $expr = ExpressionFactory::createFromString($this->getWorkbench(), $ph);
+                if (! $expr->isFormula() && ! $expr->isStatic()) {
+                    throw new QueryBuilderException('Only static formulas can be used as placeholder in "' . $string . '"! Placeholder "' . $ph . '" is not a static formula!');
+                }
+                $string = str_replace('[#' . $ph . '#]', $expr->evaluate(), $string);
+            } elseif ($ph_filter = $this->getFilter($ph)) {
                 if (! is_null($ph_filter->getCompareValue())) {
                     $string = str_replace('[#' . $ph . '#]', $ph_filter->getDataType()->parse($ph_filter->getCompareValue()), $string);
                 } else {
                     // If at least one filter does not have a value, return false
-                    throw new QueryBuilderException('Missing filter value in "' . $ph_filter->getAlias() . '" needed for placeholder "' . $ph . '" in SQL "' . $string . '"!');
+                    throw new QueryBuilderException('Missing filter value in "' . $ph_filter->getAlias() . '" needed for placeholder "' . $ph . '" in data address "' . $string . '"!');
                 }
             } else {
-                // If at least one placeholder does not have a corresponding filter, return false
+                // If at least one placeholder does not have a corresponding filter or is a static formula, return false
                 throw new QueryBuilderException('Missing filter for placeholder "' . $ph . '" in SQL "' . $string . '"!');
             }
         }

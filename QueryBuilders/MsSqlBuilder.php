@@ -531,4 +531,14 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }
         return parent::create($data_connection);
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlSelectBinaryAsHEX()
+     */
+    protected function buildSqlSelectBinaryAsHEX(string $select_from) : string
+    {
+        return "LOWER(CONVERT(VARCHAR(34), {$select_from}, 1))";
+    }
 }
