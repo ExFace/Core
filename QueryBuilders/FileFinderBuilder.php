@@ -73,6 +73,14 @@ use exface\Core\DataTypes\BooleanDataType;
  * **NOTE**: the UID-attribute of the `FILE` object is it's relative pathname. The UID is
  * unique within the base path of the data connection.
  * 
+ * ## Limitations
+ *  
+ * In case there are files in different folders with the same name and files of both folders will be selected,
+ * with one of the selected files being such a file the FileFinder will find also the file in the other folder with that name.
+ * This can for example lead to files being accidentally deleted in a folder because they have the same name as a file of another folder
+ * but files in the first folder also were selected to delete.
+ *
+ * 
  * @author Andrej Kabachnik
  *        
  */
@@ -258,7 +266,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
                         //if attribute alias is a placeholder in the path patterns, replace it with the values (therefore creating more pattern entries)
                         if (in_array($qpart->getAlias(), $addrPhs)) {
                             foreach ($values as $val) {
-                                $addrPhsValues[$qpart->getAlias()] = $val;
+                                $addrPhsValues[$qpart->getAlias()] = trim($val);
                                 foreach ($pathPatterns as $pattern) {
                                     $newPatterns[] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
                                 }
@@ -266,7 +274,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
                             $pathPatterns = $newPatterns;
                         } else {
                             foreach ($values as $val) {
-                                $uidPaths[] = Filemanager::pathNormalize($val);
+                                $uidPaths[] = Filemanager::pathNormalize(trim($val));
                             }
                         }
                         break;
