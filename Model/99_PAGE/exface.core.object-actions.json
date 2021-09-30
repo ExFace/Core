@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2018-05-28 16:19:46",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2021-07-20 08:14:45",
+    "modified_on": "2021-09-29 10:43:24",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.OBJECT_ACTION",
@@ -52,22 +52,21 @@
                 "attribute_alias": "ALIAS"
             },
             {
-                "attribute_alias": "AUTHORIZATION_POLICY__UID:COUNT",
-                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.POLICIES')"
+                "calculation": "=Left(SHORT_DESCRIPTION, 60)"
             },
             {
-                "attribute_alias": "ACTION_PROTOTYPE",
-                "width_max": "300px"
+                "attribute_alias": "AUTHORIZATION_POLICY__UID:COUNT",
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.POLICIES')"
             },
             {
                 "attribute_alias": "OBJECT__LABEL"
             },
             {
-                "attribute_alias": "OBJECT__APP__LABEL",
+                "attribute_alias": "OBJECT__APP__NAME",
                 "caption": "Object App"
             },
             {
-                "attribute_alias": "SHORT_DESCRIPTION"
+                "attribute_alias": "ACTION_PROTOTYPE"
             },
             {
                 "attribute_alias": "CREATED_ON"

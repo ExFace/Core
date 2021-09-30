@@ -36,6 +36,9 @@ use exface\Core\Widgets\Parts\DataFooter;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Interfaces\Widgets\iCanAutoloadData;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -807,19 +810,30 @@ class Data
         $this->aggregate_all = $value;
         return $this;
     }
-
+    
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveQuickSearch::getAttributesForQuickSearch()
+     * @see \exface\Core\Interfaces\Widgets\iHaveQuickSearch::getQuickSearchConditionGroup()
      */
-    public function getAttributesForQuickSearch() : array
+    public function getQuickSearchConditionGroup($value = null) : ConditionGroupInterface
     {
-        $aliases = array();
-        foreach ($this->getConfiguratorWidget()->getQuickSearchFilters() as $fltr) {
-            $aliases[] = $fltr->getAttribute();
+        $dataObj = $this->getMetaObject();
+        $grp = ConditionGroupFactory::createEmpty($this->getWorkbench(), EXF_LOGICAL_OR, $dataObj);
+        if ($dataObj->hasLabelAttribute()) {
+            $grp->addConditionFromAttribute($dataObj->getLabelAttribute(), $value);
         }
-        return $aliases;
+        
+        foreach ($this->getConfiguratorWidget()->getQuickSearchFilters() as $fltr) {
+            if ($fltr->hasCustomConditionGroup()) {
+                $grp->addNestedGroup($fltr->getCustomConditionGroup($value));
+            }
+            if ($fltr->isBoundToAttribute()) {
+                $grp->addConditionFromAttribute($fltr->getAttribute(), ($fltr->hasValue() ? $fltr->getValue() : $value), $fltr->getComparator() ?? ComparatorDataType::IS);
+            }
+        }
+        
+        return $grp;
     }
 
     /**
@@ -1070,22 +1084,21 @@ class Data
         foreach ($this->getFilters() as $filter) {
             $row = array(
                 'TITLE' => $filter->getCaption(),
-                'GROUP' => $this->translate('WIDGET.DATA.HELP.FILTERS')
+                'GROUP' => $this->translate('WIDGET.DATA.HELP.FILTERS'),
+                'DESCRIPTION' => $filter->getHint()
             );
-            if ($attr = $filter->getAttribute()) {
-                $row = array_merge($row, $this->getHelpDataRowFromAttribute($attr, $filter));
-            }
             $data_sheet->addRow($row);
         }
         
         foreach ($this->getColumns() as $col) {
+            if ($col->isHidden() === true) {
+                continue;
+            }
             $row = array(
                 'TITLE' => $col->getCaption(),
-                'GROUP' => $this->translate('WIDGET.DATA.HELP.COLUMNS')
-            );
-            if ($col->isBoundToAttribute() && $attr = $col->getAttribute()) {
-                $row = array_merge($row, $this->getHelpDataRowFromAttribute($attr, $col->getCellWidget()));
-            }
+                'GROUP' => $this->translate('WIDGET.DATA.HELP.COLUMNS'),
+                'DESCRIPTION' => $col->getHint()
+            );            
             $data_sheet->addRow($row);
         }
         

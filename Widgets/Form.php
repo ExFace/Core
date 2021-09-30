@@ -153,11 +153,9 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
             } elseif ($widget->getCaption()) {
                 $row = [
                     'TITLE' => $widget->getCaption(),
-                    'GROUP' => $groupName ?? ''
-                ];
-                if ($widget instanceof iShowSingleAttribute && $attr = $widget->getAttribute()) {
-                    $row = array_merge($row, $this->getHelpDataRowFromAttribute($attr, $widget));
-                }
+                    'GROUP' => $groupName ?? '',
+                    'DESCRIPTION' => $widget->getHint()
+                ];                
                 $dataSheet->addRow($row);
             }
         }

@@ -24,6 +24,8 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
     
     private $ignore_rows_if_empty_except_column_names = null;
     
+    private $ignore_rows_if_empty_column_names = null;
+    
     private $ignore_rows_if_empty = false;
 
     /**
@@ -134,7 +136,11 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
         return $this;
     }
     
-    protected function getIgnoreRowsIfEmptyExceptColumnNames() : array
+    /**
+     * 
+     * @return array|NULL
+     */
+    protected function getIgnoreRowsIfEmptyExceptColumnNames() : ?array
     {
         return $this->ignore_rows_if_empty_except_column_names;
     }
@@ -161,6 +167,61 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
         $this->ignore_rows_if_empty_except_column_names = $arrayOfColumnNames->toArray();
         $this->ignore_rows_if_empty = true;
         return $this;
+    }
+    
+    /**
+     * If a row has an empty value for one of these columns it will be concidered empty and ignored.
+     * 
+     * Setting the property with automatically set `ignore_rows_if_empty` to `true`!
+     * 
+     * This is particularly handy if you have an in table input field and wnat to sort out the rows
+     * where the input field is empty.
+     *
+     * @uxon-property ignore_rows_if_empty_column_names
+     * @uxon-type array
+     * @uxon-template [""]
+     *
+     * @param UxonObject $arrayOfColumnNames
+     * @return SaveData
+     */
+    protected function setIgnoreRowsIfEmptyColumnNames(UxonObject $arrayOfColumnNames)  : SaveData
+    {
+        $this->ignore_rows_if_empty_column_names = $arrayOfColumnNames->toArray();
+        $this->ignore_rows_if_empty = true;
+        return $this;
+    }
+    
+    /**
+     * If a row has an empty value for one of these attributes it will be concidered empty and ignored.
+     * 
+     * Setting the property with automatically set `ignore_rows_if_empty` to `true`!
+     * 
+     * This is particularly handy if you have an in table input field and wnat to sort out the rows
+     * where the input field is empty.
+     *
+     * @uxon-property ignore_rows_if_empty_attributes
+     * @uxon-type metamodel:attribute[]
+     * @uxon-template [""]
+     *
+     * @param UxonObject $arrayOfAliases
+     * @return SaveData
+     */
+    protected function setIgnoreRowsIfEmptyAttributes(UxonObject $arrayOfAliases) : SaveData
+    {
+        foreach ($arrayOfAliases->toArray() as $alias) {
+            $this->ignore_rows_if_empty_column_names[] = DataColumn::sanitizeColumnName($alias);
+        }
+        $this->ignore_rows_if_empty = true;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return array|NULL
+     */
+    protected function getIgnoreRowsIfEmptyColumnNames() : ?array
+    {
+        return $this->ignore_rows_if_empty_column_names;
     }
     
     /**
@@ -209,17 +270,34 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
         
         if ($this->isIgnoringRowsIfEmpty()) {
             $exceptCols = $this->getIgnoreRowsIfEmptyExceptColumnNames();
-            for ($i = ($sheet->countRows()-1); $i >= 0; $i--) {
-                $row = $sheet->getRow($i);
-                foreach ($row as $colName => $val) {
-                    if (in_array($colName, $exceptCols)) {
-                        continue;
+            if ($exceptCols !== null) {
+                for ($i = ($sheet->countRows()-1); $i >= 0; $i--) {
+                    $row = $sheet->getRow($i);
+                    foreach ($row as $colName => $val) {
+                        if (in_array($colName, $exceptCols)) {
+                            continue;
+                        }
+                        if ($sheet->getColumns()->get($colName)->getDataType()->isValueEmpty($val) === false) {
+                            continue 2;
+                        }
                     }
-                    if ($sheet->getColumns()->get($colName)->getDataType()->isValueEmpty($val) === false) {
-                        continue 2;
-                    }
+                    $sheet->removeRow($i);
                 }
-                $sheet->removeRow($i);
+            }
+            $cols = $this->getIgnoreRowsIfEmptyColumnNames();
+            if ($cols !== null) {
+                for ($i = ($sheet->countRows()-1); $i >= 0; $i--) {
+                    $row = $sheet->getRow($i);
+                    foreach ($row as $colName => $val) {
+                        if (! in_array($colName, $cols)) {
+                            continue;
+                        }
+                        if ($sheet->getColumns()->get($colName)->getDataType()->isValueEmpty($val) === false) {
+                            continue 2;
+                        }
+                    }
+                    $sheet->removeRow($i);
+                }
             }
         }
         
