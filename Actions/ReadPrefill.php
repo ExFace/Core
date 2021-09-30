@@ -118,6 +118,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         }
         
         if ($mainSheet === null) {
+            $log .= '- No prefill data found so far: creating an empty data sheet.' . PHP_EOL;
             $mainSheet = DataSheetFactory::createFromObject($this->getMetaObject());
         }
         
