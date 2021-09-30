@@ -244,14 +244,20 @@ trait iPrefillWidgetTrait
             }
         }
         
+        // Add the combined prefill data to the result array and add the explicit prefill
+        // data additionally if they could not be merged.
+        // Make sure to disable auto-count as it is does not make sense to count prefill
+        // data and we want to avoid the possibly costly count operation in further processing.
         $result_sheets = [];
         if ($data_sheet) {
-            $log .= '- Prefill data found - will apply the prefill now.' . PHP_EOL;
+            $log .= '- Regular prefill data prepared.' . PHP_EOL;
+            $data_sheet->setAutoCount(false);
             $result_sheets[] = $data_sheet;
         }
         if ($prefill_data_merge_failed) {
-            $log .= '- Repeating prefill with dedicatd prefill data because merging input and prefill data failed' . PHP_EOL;
-            $result_sheets[] = $data_sheet;
+            $log .= '- Additional prefill data prepared because merging input and prefill data failed.' . PHP_EOL;
+            $prefill_data->setAutoCount(false);
+            $result_sheets[] = $prefill_data;
         }
         return $result_sheets;
     }
