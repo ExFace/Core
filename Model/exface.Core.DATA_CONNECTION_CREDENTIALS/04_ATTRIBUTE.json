@@ -173,7 +173,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2020-01-08 16:51:17",
+            "MODIFIED_ON": "2021-10-01 06:45:48",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x36373300000000000000000000000000",
@@ -186,10 +186,10 @@
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
             "DEFAULT_EDITOR_UXON": null,
-            "COPY_WITH_RELATED_OBJECT": null,
-            "DELETE_WITH_RELATED_OBJECT": "1",
+            "COPY_WITH_RELATED_OBJECT": "0",
+            "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,
-            "COMMENTS": "",
+            "COMMENTS": "DO NOT DELETE with connection! Since creds are not part of, deleting them will make a clean reinstall of an app impossible: the creds will be gone!",
             "NAME": "Data Connection",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
