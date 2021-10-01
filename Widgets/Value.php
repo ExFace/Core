@@ -25,6 +25,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Widgets\Traits\PrefillValueTrait;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
  * The Value widget simply shows a raw (unformatted) value.
@@ -440,11 +441,11 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     {
         if ($this->data_column_name === null) {
             if ($this->isBoundToAttribute()) {
-                $this->data_column_name = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getAttributeAlias());
+                $this->data_column_name = DataColumn::sanitizeColumnName($this->getAttributeAlias());
             } elseif ($this->hasValue()) {
                 $expr = $this->getValueExpression();
-                if (! $expr->isEmpty() && ! $expr->isReference()) {
-                    $this->data_column_name = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($expr->toString());
+                if (! $expr->isEmpty() && ! $expr->isReference() && ! ($expr->isString() && $expr->__toString() === '')) {
+                    $this->data_column_name = DataColumn::sanitizeColumnName($expr->toString());
                 }
             }
         }
@@ -484,7 +485,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function hasValue() : bool
     {
-        return is_null($this->getValue()) ? false : true;
+        return $this->getValue() === null ? false : true;
     }
     
     /**
