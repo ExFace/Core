@@ -5,7 +5,10 @@ use exface\Core\Interfaces\Widgets\iShowText;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 
 /**
- * The text widget simply shows text with an optional title (created from the caption of the widget).
+ * Displays multiline text with an optional title (created from the caption of the widget) and some simple formatting.
+ * 
+ * In contrast to the more generic `Display` widget, `Text` allows line breaks and will wrap long values. It also
+ * allows some simple formatting like `style`, `size` and `align`.
  *
  * @author Andrej Kabachnik
  *        

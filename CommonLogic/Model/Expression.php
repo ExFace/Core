@@ -236,7 +236,7 @@ class Expression implements ExpressionInterface
      */
     public function isEmpty() : bool
     {
-        return $this->toString() === null;
+        return $this->__toString() === null;
     }
     
     /**
@@ -246,7 +246,7 @@ class Expression implements ExpressionInterface
      */
     public function isLogicalNull() : bool
     {
-        return $this->toString() === EXF_LOGICAL_NULL;
+        return $this->__toString() === EXF_LOGICAL_NULL;
     }
 
     /**
