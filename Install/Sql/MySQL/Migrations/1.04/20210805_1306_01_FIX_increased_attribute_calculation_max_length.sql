@@ -9,5 +9,5 @@ UPDATE exf_attribute SET attribute_type = 'X' WHERE attribute_formatter IS NOT N
 	
 -- DOWN
 
-LTER TABLE `exf_attribute`
+ALTER TABLE `exf_attribute`
 	CHANGE COLUMN `attribute_formatter` `attribute_formatter` VARCHAR(200) NULL COLLATE 'utf8_general_ci' AFTER `data_properties`;
