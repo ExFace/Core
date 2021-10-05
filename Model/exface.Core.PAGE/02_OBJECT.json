@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2018-05-29 07:48:36",
-            "MODIFIED_ON": "2021-07-29 11:30:25",
+            "MODIFIED_ON": "2021-10-05 18:45:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e86314af5caf7f971b0205857feb80",
@@ -127,11 +127,6 @@
                                         "width": "max"
                                     },
                                     {
-                                        "attribute_alias": "INTRO",
-                                        "width": "max",
-                                        "height": 3
-                                    },
-                                    {
                                         "attribute_alias": "REPLACE_PAGE"
                                     },
                                     {
@@ -173,6 +168,20 @@
                                             },
                                             {
                                                 "attribute_alias": "AUTO_UPDATE_WITH_APP"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "widget_type": "WidgetGroup",
+                                        "caption": "Intro \/ help",
+                                        "height": "max",
+                                        "width": "max",
+                                        "widgets": [
+                                            {
+                                                "attribute_alias": "INTRO",
+                                                "hide_caption": true,
+                                                "width": "max",
+                                                "height": "max"
                                             }
                                         ]
                                     }

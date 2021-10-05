@@ -393,7 +393,7 @@
         },
         {
             "CREATED_ON": "2019-12-16 20:44:02",
-            "MODIFIED_ON": "2020-07-23 09:27:41",
+            "MODIFIED_ON": "2021-10-05 18:42:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea2044c88e43c6aa030205857feb80",
@@ -415,7 +415,7 @@
             "TYPE": "D",
             "COPYABLEFLAG": "1",
             "ALIAS": "INTRO",
-            "DATATYPE": "0x31310000000000000000000000000000",
+            "DATATYPE": "0x11e7b88efc3e81d586360205857feb80",
             "DATA_ADDRESS": "intro",
             "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
             "FORMATTER": "",
