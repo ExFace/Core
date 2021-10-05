@@ -51,6 +51,16 @@ class MySqlBuilder extends AbstractSqlBuilder
     }
     
     /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::getReservedWords()
+     */
+    protected function getReservedWords() : array
+    {
+        return array_merge(parent::getReservedWords(), ['system']);
+    }
+    
+    /**
      * In MySQL the select query is pretty straight-forward: there is no need to create nested queries,
      * since MySQL natively supports selecting pages (LIMIT).
      * However, if aggregators (GROUP BY) are used, we still need
