@@ -1374,10 +1374,12 @@ class UiPage implements UiPageInterface
     }
     
     /**
-     * Set to TRUE to indicate, that this page is to be installed at the top level of the main menu.
-     * 
-     * This is where each app typically has it's "home" page.
-     * 
+     * Set to TRUE to make this page be exported/installed as top-level item of the main menu - regardless of its current position.
+     *
+     * This option allows developers to decouple the menu structure in their dev-environment
+     * from the menu in production: a page may put in a subfolder on dev and still land at
+     * "home"-level in production.
+     *
      * @uxon-property menu_home
      * @uxon-type boolean
      * @uxon-default false

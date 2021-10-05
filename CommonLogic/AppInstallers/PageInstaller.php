@@ -23,6 +23,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 
 /**
  * Saves pages as UXON (JSON) files and imports these files back into model when needed.
@@ -42,6 +43,8 @@ class PageInstaller extends AbstractAppInstaller
     private $transaction = null;
     
     private $path = null;
+    
+    private $rootSelector = null;
     
     /**
      * 
@@ -128,7 +131,8 @@ class PageInstaller extends AbstractAppInstaller
                 
                 // Pages marked as top-level explicitly, get this installations root page as parent
                 if ($page->isMenuHome()) {
-                    $page->setParentPageSelector(UiPageSelector::getServerRootSelector($this->getWorkbench()));
+                    $page->setParentPageSelector($this->getServerRootSelector());
+                    $page->setParentPageSelectorDefault($this->getServerRootSelector());
                 }
                     
                 $pagesFile[] = $page;
@@ -585,5 +589,13 @@ class PageInstaller extends AbstractAppInstaller
             $languageCode = substr($defaultLocale, 0, strpos($defaultLocale, '_'));
         }
         return $source_absolute_path . DIRECTORY_SEPARATOR . 'Install' . DIRECTORY_SEPARATOR . 'Pages' . DIRECTORY_SEPARATOR . $languageCode;
+    }
+    
+    protected function getServerRootSelector() : UiPageSelectorInterface
+    {
+        if ($this->rootSelector === null) {
+            $this->rootSelector = UiPageSelector::getServerRootSelector($this->getWorkbench());
+        }
+        return $this->rootSelector;
     }
 }
