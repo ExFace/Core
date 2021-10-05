@@ -22,6 +22,13 @@ use exface\Core\DataTypes\StringDataType;
  * - `host` - IP address or hostname of the LDAP server
  * - `dn_string` - default is `[#domain#]\\[#username#]`.
  * - `domains` - array of domains for the user to pick from.
+ * - `ldap_options` - see below
+ * 
+ * ### LDAP options
+ * 
+ * PHP allows to configure its LDAP extension by setting various options as described here:
+ * https://www.php.net/manual/en/function.ldap-set-option.php. Some information about the
+ * possible values of these options can also be found here: https://www.php.net/manual/en/ldap.constants.php.
  * 
  * ## LDAPS (secure LDAP) and custom ports
  * 
@@ -110,6 +117,8 @@ class LdapAuthenticator extends AbstractAuthenticator
     
     private $ldapNamePattern = null;
     
+    private $ldapOptions = [];
+    
     /**
      *
      * {@inheritDoc}
@@ -136,8 +145,27 @@ class LdapAuthenticator extends AbstractAuthenticator
         }
         
         // those options are necessary for ldap_search to work, must be applied before the ldap_bind
-        ldap_set_option ($ldapconn, LDAP_OPT_REFERRALS, 0);
-        ldap_set_option($ldapconn, LDAP_OPT_PROTOCOL_VERSION, 3);
+        $defaultOptions = [
+            'LDAP_OPT_REFERRALS' => 0,
+            'LDAP_OPT_PROTOCOL_VERSION' => 3
+        ];
+        $options = array_merge($defaultOptions, $this->getLdapOptions());
+        foreach ($options as $opt => $val) {
+            $const = constant(strtoupper($opt));
+            if ($const === null) {
+                throw new InvalidArgumentException('Cannot initialize LDAP authenticator: unknown LDAP option "' . $opt . '"!');
+            }
+            if (is_string($val) && StringDataType::startsWith($val, 'LDAP_OPT_', false)) {
+                $val = constant(strtoupper($val));
+                if ($val === null) {
+                    throw new InvalidArgumentException('Cannot initialize LDAP authenticator: invalid value for LDAP option "' . $opt . '"!');
+                }
+            }
+            $optRs = ldap_set_option($ldapconn, $const, $val);
+            if ($optRs === false) {
+                throw new InvalidArgumentException('Cannot initialize LDAP authenticator: cannot set LDAP option "' . $opt . '" to "' . $val . '"!');
+            }
+        }
         
         // anmelden am ldap server
         $ldapbind = ldap_bind($ldapconn, $ldaprdn, $ldappass);
@@ -446,5 +474,34 @@ class LdapAuthenticator extends AbstractAuthenticator
         }
         
         return $container;
+    }
+    
+    /**
+     * Set the options of the PHP extendsion (see PHP's `ldap_set_option()`).
+     * 
+     * See https://www.php.net/manual/en/function.ldap-set-option.php for available options.
+     * 
+     * @uxon-property ldap_options
+     * @uxon-type array
+     * @uxon-template {"LDAP_OPT_PROTOCOL_VERSION": 3, "LDAP_OPT_REFERRALS": 0, "": ""}
+     * 
+     * @link https://www.php.net/manual/en/function.ldap-set-option.php
+     * 
+     * @param UxonObject|array $uxonOrArray
+     * @return LdapAuthenticator
+     */
+    public function setLdapOptions($uxonOrArray) : LdapAuthenticator
+    {
+        $this->ldapOptions = $uxonOrArray instanceof UxonObject ? $uxonOrArray->toArray() : $uxonOrArray;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    protected function getLdapOptions() : array
+    {
+        return $this->ldapOptions;
     }
 }
