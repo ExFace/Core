@@ -148,15 +148,15 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
     protected function migrateDown(SqlMigration $migration, SqlDataConnectorInterface $connection): SqlMigration
     {
         $this->ensureMigrationsTableExists($connection);
+        $time = new \DateTime();
         if (empty($migration->getDownScript())) {
             $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ' has no down script');
-            return false;
+            $migration->setDown(DateTimeDataType::formatDateNormalized($time), '');
         }
         try {
             $connection->transactionStart();
             $down_result = $this->runSqlMultiStatementScript($connection, $migration->getDownScript(), false);
             $down_result_string = $this->stringifyQueryResults($down_result);
-            $time = new \DateTime();
             $sql_script = $this->buildSqlMigrationDownUpdate($migration, $down_result_string, $time);
             $connection->runSql($sql_script);
             $connection->transactionCommit();
