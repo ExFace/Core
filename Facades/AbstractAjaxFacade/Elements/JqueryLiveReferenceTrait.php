@@ -4,6 +4,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Widgets\Value;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * This trait makes it easy to implement live references in jQuery based widgets.
@@ -45,8 +46,12 @@ trait JqueryLiveReferenceTrait {
         
         $output = '';
         if ($linked_element = $this->getLinkedFacadeElement()) {
+            $col = $this->getWidget()->getValueWidgetLink()->getTargetColumnId();
+            if (! StringDataType::startsWith($col, '~')) {
+                $col = DataColumn::sanitizeColumnName($col);
+            }
             $output = '
-					' . $this->buildJsValueSetter($linked_element->buildJsValueGetter(DataColumn::sanitizeColumnName($this->getWidget()->getValueWidgetLink()->getTargetColumnId()))) . ';';
+					' . $this->buildJsValueSetter($linked_element->buildJsValueGetter($col)) . ';';
         }
         return $output;
     }
