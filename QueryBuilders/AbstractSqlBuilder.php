@@ -1117,14 +1117,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     }
     
     /**
-     * Builds a group function for the SQL select statement (e.g.
-     * "SUM(field)") from an ExFace aggregator
-     * function. This method translates ExFace aggregators to SQL und thus will probably differ between
-     * SQL dialects.
-     * TODO Currently this method also parses the ExFace aggregator. This probably should be moved to the
-     * \exface\Core\CommonLogic\QueryBuilder\QueryPart because it is something entirely ExFace-specific an does not depend on the data source. It
-     * would also make it easier to override this method for specific sql dialects while reusing some
-     * basics (like SUM or AVG) from the general sql query builder.
+     * Builds a group function for the SQL select statement (e.g. "SUM(field)") from an ExFace aggregator function. 
+     * 
+     * This method translates ExFace aggregators to SQL und thus will probably differ between SQL dialects.
      *
      * @param QueryPart $qpart
      * @param string $select_from
