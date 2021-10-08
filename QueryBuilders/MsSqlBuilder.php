@@ -107,13 +107,25 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $where = $where ? "\n WHERE " . $where : '';
         $having = $having ? "\n WHERE " . $having : '';
         
-        $has_attributes_with_reverse_relations = count($this->getAttributesWithReverseRelations());
-        
         $uid_qpart = $this->getUidAttribute();
+        
+        /* IDEA The whole thing with $has_attributes_with_reverse_relations is a bit controversal.
+         * It seems, the original cause was the SQL Server requirement for GROUP BY queryies to either
+         * aggregate every select or add it to the GROUP BY expression. In case of enrichment, this would
+         * mean, that all subselects from the core query would need to get re-selected with an aggregation
+         * in the enrichment query. It was concidered simpler/better to place them ONLY in the enrichment.
+         * This has been causing side effects though. So far all of them could be overcome. However, currenlty
+         * nested aggregations are already supported in other SQL builders (e.g. MySQL). So it should also
+         * be possible to aggregate stuff in the core query and in the enrichment here too.
+         * 
+         * Compare the if($useEnrichment){} below with the MySqlBuilder version to see the differences
+         */
+        $has_attributes_with_reverse_relations = count($this->getAttributesWithReverseRelations());
+        $has_aggregation_on_uid = ($uid_qpart !== null && $this->isAggregatedBy($uid_qpart));
         
         // GROUP BY
         foreach ($this->getAggregations() as $qpart) {
-            $group_by .= ', ' . $this->buildSqlGroupBy($qpart, ($has_attributes_with_reverse_relations && (! $uid_qpart || ! $this->isAggregatedBy($uid_qpart)) ? 'EXFCOREQ' : null));
+            $group_by .= ', ' . $this->buildSqlGroupBy($qpart, ($has_attributes_with_reverse_relations && ! $has_aggregation_on_uid ? 'EXFCOREQ' : null));
         }
         $group_by = $group_by ? ' GROUP BY ' . substr($group_by, 2) : '';
         
@@ -183,6 +195,8 @@ class MsSqlBuilder extends AbstractSqlBuilder
         
         // Enrichment SELECT
         $enrichment_select = implode(', ', array_unique(array_filter($enrichment_selects)));
+        // Add selects with reverse relations to the enrichment - search for $has_attributes_with_reverse_relations for
+        // more info
         if (! ($group_by && $has_attributes_with_reverse_relations)) {
             $enrichment_select = 'EXFCOREQ' . $this->getAliasDelim() . '*' . ($enrichment_select ? ', ' . $enrichment_select : '');
         }
@@ -194,7 +208,12 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $join = implode(' ', $joins);
         $enrichment_join = implode(' ', $enrichment_joins);
         
-        $useEnrichment = ($group_by && ($where || $has_attributes_with_reverse_relations) && (! $uid_qpart || ! $this->isAggregatedBy($uid_qpart))) || $this->getSelectDistinct();
+        
+        // Use enrichment
+        // IF we have a GROUP BY
+        //  AND a WHERE OR subselects
+        //  UNLESS we are aggregating over the primary key column of the main object - in this case we can just GROUP without enrichment
+        $useEnrichment = ($group_by && ($where || $has_attributes_with_reverse_relations) && ! $has_aggregation_on_uid) || $this->getSelectDistinct();
         
         // ORDER BY
         // If there is a limit in the query, ensure there is an ORDER BY even if no sorters given.
@@ -418,20 +437,6 @@ class MsSqlBuilder extends AbstractSqlBuilder
         return $rows;
     }
     
-    protected function buildSqlSelectGrouped(QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, AggregatorInterface $aggregator = null)
-    {
-        $sql = parent::buildSqlSelectGrouped($qpart, $select_from, $select_column, $select_as, $aggregator);
-        $function_name = $aggregator->getFunction()->getValue();
-        switch ($function_name) {
-            case AggregatorFunctionsDataType::LIST_DISTINCT:
-                if ($select_column !== null) {
-                    $sql .= " FOR XML PATH(''), TYPE) AS VARCHAR(1000)), 1, 2, '')";
-                }
-                break;
-        }
-        return $sql;
-    }
-    
     /**
      * 
      * {@inheritDoc}
@@ -444,15 +449,44 @@ class MsSqlBuilder extends AbstractSqlBuilder
         switch ($function_name) {
             case AggregatorFunctionsDataType::LIST_DISTINCT:
             case AggregatorFunctionsDataType::LIST_ALL:
-                $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());                
-                return "STUFF(CAST(( SELECT " . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . "[text()] = " . ($args[0] ? $args[0] : "', '") . " + {$sql}";                
+                // This is a VERY strang way to concatennate row values, but it seems to be the only
+                // one available in SQL Server: STUFF(CAST(( SELECT ... FOR XML PATH(''), TYPE) AS VARCHAR(1000)), 1, 2, '')
+                // Since in case of subselects the `...` needs to be replaced by the whole subselect,
+                // we need to split the logic in two: `STUFF...` goes here and `FOR XML...` goes in
+                // buildSqlSelectSubselect() or buildSqlSelectGrouped() for subselects and regular
+                // columns a bit differently.
+                $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
+                return "STUFF(CAST(( SELECT " . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . "[text()] = " . ($args[0] ? $args[0] : "', '") . " + {$sql}";
             default:
                 return parent::buildSqlGroupByExpression($qpart, $sql, $aggregator);
         }
     }
     
     /**
-     * 
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlSelectGrouped()
+     */
+    protected function buildSqlSelectGrouped(QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, AggregatorInterface $aggregator = null)
+    {
+        $sql = parent::buildSqlSelectGrouped($qpart, $select_from, $select_column, $select_as, $aggregator);
+        $function_name = $aggregator->getFunction()->getValue();
+        switch ($function_name) {
+            // See buildSqlGroupByExpression() for details
+            case AggregatorFunctionsDataType::LIST_DISTINCT:
+            case AggregatorFunctionsDataType::LIST_ALL:
+                // Only do this special treatment if a $select_column is specified - otherwise it is
+                // an autogenerated subselect and will already contain the `FOR XML...` - see buildSqlSelectSubselect()
+                if ($select_column !== null) {
+                    $sql .= " FOR XML PATH(''), TYPE) AS VARCHAR(max)), 1, 2, '')";
+                }
+                break;
+        }
+        return $sql;
+    }
+    
+    /**
+     *
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlSelectSubselect()
      */
@@ -463,8 +497,12 @@ class MsSqlBuilder extends AbstractSqlBuilder
         if ($qpart->hasAggregator()) {
             $aggregator = $qpart->getAggregator();
             $function_name = $aggregator->getFunction()->getValue();
-            if ($function_name === AggregatorFunctionsDataType::LIST_DISTINCT) {
-                $subselect = substr($subselect, 0, -1) .  "FOR XML PATH(''), TYPE) AS VARCHAR(1000)), 1, 2, ''))";
+            switch ($function_name) {
+                // See buildSqlGroupByExpression() for details
+                case AggregatorFunctionsDataType::LIST_DISTINCT:
+                case AggregatorFunctionsDataType::LIST_ALL:
+                    $subselect = substr($subselect, 0, -1) .  "FOR XML PATH(''), TYPE) AS VARCHAR(max)), 1, 2, ''))";
+                    break;
             }
         }
         return $subselect;
