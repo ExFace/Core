@@ -109,9 +109,11 @@ class MsSqlBuilder extends AbstractSqlBuilder
         
         $has_attributes_with_reverse_relations = count($this->getAttributesWithReverseRelations());
         
+        $uid_qpart = $this->getUidAttribute();
+        
         // GROUP BY
         foreach ($this->getAggregations() as $qpart) {
-            $group_by .= ', ' . $this->buildSqlGroupBy($qpart, ($has_attributes_with_reverse_relations ? 'EXFCOREQ' : null));
+            $group_by .= ', ' . $this->buildSqlGroupBy($qpart, ($has_attributes_with_reverse_relations && (! $uid_qpart || ! $this->isAggregatedBy($uid_qpart)) ? 'EXFCOREQ' : null));
         }
         $group_by = $group_by ? ' GROUP BY ' . substr($group_by, 2) : '';
         
@@ -192,7 +194,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $join = implode(' ', $joins);
         $enrichment_join = implode(' ', $enrichment_joins);
         
-        $useEnrichment = ($group_by && ($where || $has_attributes_with_reverse_relations)) || $this->getSelectDistinct();
+        $useEnrichment = ($group_by && ($where || $has_attributes_with_reverse_relations) && (! $uid_qpart || ! $this->isAggregatedBy($uid_qpart))) || $this->getSelectDistinct();
         
         // ORDER BY
         // If there is a limit in the query, ensure there is an ORDER BY even if no sorters given.
