@@ -15,6 +15,8 @@ use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
+use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 
 /**
  * A query builder for Microsoft SQL Server 2012+ (T-SQL).
@@ -93,6 +95,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $enrichment_select = '';
         $enrichment_joins = array();
         $enrichment_join = '';
+        $enrichment_group_by = '';
         $limit = '';
         
         // WHERE
@@ -108,11 +111,30 @@ class MsSqlBuilder extends AbstractSqlBuilder
         
         $has_attributes_with_reverse_relations = count($this->getAttributesWithReverseRelations());
         
-        // GROUP BY
+        /*// GROUP BY
         foreach ($this->getAggregations() as $qpart) {
             $group_by .= ', ' . $this->buildSqlGroupBy($qpart, ($has_attributes_with_reverse_relations ? 'EXFCOREQ' : null));
         }
+        $group_by = $group_by ? ' GROUP BY ' . substr($group_by, 2) : '';*/
+        
+        // GROUP BY
+        $group_uid_alias = '';
+        foreach ($this->getAggregations() as $qpart) {
+            $group_by .= ', ' . $this->buildSqlGroupBy($qpart);
+            $enrichment_group_by .= ', ' . $this->buildSqlGroupBy($qpart, 'EXFCOREQ');
+            if (! $group_uid_alias) {
+                if ($rel_path = $qpart->getAttribute()->getRelationPath()->toString()) {
+                    $group_uid_alias = RelationPath::relationPathAdd($rel_path, $this->getMainObject()->getRelatedObject($rel_path)->getUidAttributeAlias());
+                }
+            }
+        }
         $group_by = $group_by ? ' GROUP BY ' . substr($group_by, 2) : '';
+        $enrichment_group_by = $enrichment_group_by ? ' GROUP BY ' . substr($enrichment_group_by, 2) : '';
+        if ($group_uid_alias) {
+            // $this->addAttribute($group_uid_alias);
+        }
+        
+        $uid_qpart = $this->getUidAttribute();
         
         // SELECT
         /*	@var $qpart \exface\Core\CommonLogic\QueryBuilder\QueryPartSelect */
@@ -124,9 +146,10 @@ class MsSqlBuilder extends AbstractSqlBuilder
             if ($qpartAttr->getDataAddressProperty('SQL_DATA_TYPE') == 'binary') {
                 $this->addBinaryColumn($qpart->getAlias());
             }
+            
             // if the query has a GROUP BY, we need to put the UID-Attribute in the core select as 
             // well as in the enrichment select otherwise the enrichment joins won't work!
-            if ($group_by && $qpartAttr->getObject()->hasUidAttribute() && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $has_attributes_with_reverse_relations && ! $qpart->getAggregator()) {
+            if ($group_by && $qpart === $uid_qpart && ! $has_attributes_with_reverse_relations && ! $qpart->getAggregator()) {
                 $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                 // In contrast to other SQL builders, we MUST NOT add the UID attribute to the 
                 // enrichment query as this will lead to an error due to the column being
@@ -139,6 +162,9 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 $selects[] = $this->buildSqlSelect($qpart);
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
+                /*if ($qpartAttr->getObject()->hasUidAttribute() && ! $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute())) {                    
+                    $skipped = true;
+                }*/
                 // If aggregating, also add attributes, that are aggregated over or can be assumed unique due to set filters
             } elseif ($this->isObjectGroupSafe($qpartAttr->getObject(), null, null, $qpartAttr->getRelationPath()) === true) {
                 $rels = $qpart->getUsedRelations();
@@ -153,6 +179,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
+                $skipped = true;
                 // If aggregating, also add attributes, that belong directly to objects, we are aggregating over (they can be assumed unique too, since their object is unique per row)
             } elseif ($group_by && $this->getAggregation($qpartAttr->getRelationPath()->toString())) {
                 $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
@@ -182,7 +209,9 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $enrichment_select = implode(', ', array_unique(array_filter($enrichment_selects)));
         if (! ($group_by && $has_attributes_with_reverse_relations)) {
             $enrichment_select = 'EXFCOREQ' . $this->getAliasDelim() . '*' . ($enrichment_select ? ', ' . $enrichment_select : '');
+            $enrichment_group_by = '';
         }
+        // $enrichment_select = 'EXFCOREQ' . $this->getAliasDelim() . '*' . ($enrichment_select ? ', ' . $enrichment_select : '');
         
         // FROM
         $from = $this->buildSqlFrom();
@@ -191,7 +220,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $join = implode(' ', $joins);
         $enrichment_join = implode(' ', $enrichment_joins);
         
-        $useEnrichment = ($group_by && ($where || $has_attributes_with_reverse_relations)) || $this->getSelectDistinct();
+        $useEnrichment = ($group_by && ($where || $has_attributes_with_reverse_relations) && (! $uid_qpart || ! $this->isAggregatedBy($uid_qpart))) || $this->getSelectDistinct();
         
         // ORDER BY
         // If there is a limit in the query, ensure there is an ORDER BY even if no sorters given.
@@ -215,10 +244,15 @@ class MsSqlBuilder extends AbstractSqlBuilder
             $limit = ' OFFSET ' . $this->getOffset() . ' ROWS FETCH NEXT ' . ($this->getLimit()+1) . ' ROWS ONLY';
         }
 
-        if ($useEnrichment) {
+        /*if ($useEnrichment) {
             $query = $this->buildSqlQuerySelectWithEnrichment($select, $enrichment_select, $select_comment, $from, $join, $enrichment_join, $where, $group_by, $having, $order_by, $limit, $distinct);
         } else {
             $query = $this->buildSqlQuerySelectWithoutEnrichment($select, $select_comment, $from, $join, $where, $group_by, $having, $order_by, $limit, $distinct);
+        }*/
+        if ($useEnrichment) {
+            $query = "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . $group_by . $having . ") EXFCOREQ " . $enrichment_join . $enrichment_group_by . $order_by . $limit;
+        } else {
+            $query = "\n SELECT " . $distinct . $select . $select_comment . " FROM " . $from . $join . $where . $group_by . $order_by . $having . $limit;
         }
         
         return $query;
@@ -373,7 +407,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $sql = parent::buildSqlSelect($qpart, $select_from, $select_column, $select_as, $aggregator, $make_groupable);
         $aggr = $aggregator ?? $qpart->getAggregator();
         if ($qpart->getQuery()->isSubquery() && $qpart->getQuery()->isAggregatedBy($qpart) && $aggr && ($aggr->getFunction()->getValue() === AggregatorFunctionsDataType::LIST_DISTINCT || $aggr->getFunction()->getValue() === AggregatorFunctionsDataType::LIST_ALL)) {
-            $sql = StringDataType::substringBefore($sql, ' AS ', $sql);
+            $sql = StringDataType::substringBefore($sql, ' AS ', $sql, false, true);
         }
         return $sql;
     }
@@ -413,6 +447,20 @@ class MsSqlBuilder extends AbstractSqlBuilder
             }
         }
         return $rows;
+    }
+    
+    protected function buildSqlSelectGrouped(QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, AggregatorInterface $aggregator = null)
+    {
+        $sql = parent::buildSqlSelectGrouped($qpart, $select_from, $select_column, $select_as, $aggregator);
+        $function_name = $aggregator->getFunction()->getValue();
+        switch ($function_name) {
+            case AggregatorFunctionsDataType::LIST_DISTINCT:
+                if ($select_column !== null) {
+                    $sql .= " FOR XML PATH(''), TYPE) AS VARCHAR(1000)), 1, 2, '')";
+                }
+                break;
+        }
+        return $sql;
     }
     
     /**
