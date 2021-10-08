@@ -15,6 +15,7 @@ use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
+use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 
 /**
  * A query builder for Microsoft SQL Server 2012+ (T-SQL).
@@ -373,7 +374,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $sql = parent::buildSqlSelect($qpart, $select_from, $select_column, $select_as, $aggregator, $make_groupable);
         $aggr = $aggregator ?? $qpart->getAggregator();
         if ($qpart->getQuery()->isSubquery() && $qpart->getQuery()->isAggregatedBy($qpart) && $aggr && ($aggr->getFunction()->getValue() === AggregatorFunctionsDataType::LIST_DISTINCT || $aggr->getFunction()->getValue() === AggregatorFunctionsDataType::LIST_ALL)) {
-            $sql = StringDataType::substringBefore($sql, ' AS ', $sql);
+            $sql = StringDataType::substringBefore($sql, ' AS ', $sql, false, true);
         }
         return $sql;
     }
@@ -413,6 +414,20 @@ class MsSqlBuilder extends AbstractSqlBuilder
             }
         }
         return $rows;
+    }
+    
+    protected function buildSqlSelectGrouped(QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, AggregatorInterface $aggregator = null)
+    {
+        $sql = parent::buildSqlSelectGrouped($qpart, $select_from, $select_column, $select_as, $aggregator);
+        $function_name = $aggregator->getFunction()->getValue();
+        switch ($function_name) {
+            case AggregatorFunctionsDataType::LIST_DISTINCT:
+                if ($select_column !== null) {
+                    $sql .= " FOR XML PATH(''), TYPE) AS VARCHAR(1000)), 1, 2, '')";
+                }
+                break;
+        }
+        return $sql;
     }
     
     /**
