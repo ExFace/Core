@@ -170,6 +170,24 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     {
         return $this->attributes[$alias];
     }
+    
+    /**
+     * Returns the query part for the UID attribute of the main object if present in the query and NULL otherwies.
+     * 
+     * @return QueryPartAttribute|NULL
+     */
+    protected function getUidAttribute() : ?QueryPartAttribute
+    {
+        if ($this->getMainObject()->hasUidAttribute()) {
+            $uidAttr = $this->getMainObject()->getUidAttribute();
+            foreach ($this->getAttributes() as $qpart) {
+                if ($qpart->getAttribute()->isExactly($uidAttr)) {
+                    return $qpart;
+                }
+            }
+        }
+        return null;
+    }
 
     /**
      * Adds a total row to the query (i.e.
