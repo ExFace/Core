@@ -7,6 +7,7 @@ use exface\Core\DataConnectors\TransparentConnector;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionQueryTypeError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
+use exface\Core\DataTypes\FilePathDataType;
 
 class FileFinderConnector extends TransparentConnector
 {
@@ -58,12 +59,12 @@ class FileFinderConnector extends TransparentConnector
         // Prepare an array of absolut paths to search in
         foreach ($query->getFolders() as $path) {
             if (! Filemanager::pathIsAbsolute($path) && ! is_null($this->getBasePath())) {
-                $paths[] = Filemanager::pathJoin(array(
+                $paths[] = FilePathDataType::normalize(FilePathDataType::join(array(
                     $this->getBasePath(),
                     $path
-                ));
+                )), DIRECTORY_SEPARATOR);
             } else {
-                $paths[] = $path;
+                $paths[] = FilePathDataType::normalize($path, DIRECTORY_SEPARATOR);
             }
         }
         
@@ -93,7 +94,7 @@ class FileFinderConnector extends TransparentConnector
             $query->getFinder()->append([]);
             return $query;
         }
-        
+        $paths = array_unique($paths);
         // Perform the search. This will fill the file and folder iterators in the finder instance. Thus, the resulting
         // files will be available through foreach($query as $splFileInfo) etc.
         try {
