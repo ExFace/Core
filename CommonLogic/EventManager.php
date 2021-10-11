@@ -40,7 +40,7 @@ class EventManager implements EventManagerInterface
      */
     public function addListener(string $eventName, callable $listener_callable, int $priority = null) : EventManagerInterface
     {
-        $this->dispatcher->addListener($eventName, $listener_callable, $priority ?? 0);
+        $this->dispatcher->addListener(mb_strtoupper($eventName), $listener_callable, $priority ?? 0);
         return $this;
     }
 
@@ -51,7 +51,7 @@ class EventManager implements EventManagerInterface
      */
     public function dispatch(EventInterface $event) : EventInterface
     {
-        return $this->dispatcher->dispatch($event, $event::getEventName());
+        return $this->dispatcher->dispatch($event, mb_strtoupper($event::getEventName()));
     }
 
     /**
@@ -61,7 +61,7 @@ class EventManager implements EventManagerInterface
      */
     public function removeListener(string $eventName, callable $listener) : EventManagerInterface
     {
-        $this->dispatcher->removeListener($eventName, $listener);
+        $this->dispatcher->removeListener(mb_strtoupper($eventName), $listener);
         return $this;
     }
 
@@ -72,7 +72,7 @@ class EventManager implements EventManagerInterface
      */
     public function getListeners(string $eventName) : array
     {
-        return $this->dispatcher->getListeners($eventName);
+        return $this->dispatcher->getListeners(mb_strtoupper($eventName));
     }
 
     /**
@@ -82,7 +82,7 @@ class EventManager implements EventManagerInterface
      */
     public function hasListeners(string $eventName) : bool
     {
-        return $this->dispatcher->hasListeners($eventName);
+        return $this->dispatcher->hasListeners(mb_strtoupper($eventName));
     }
 
     /**
