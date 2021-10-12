@@ -70,12 +70,18 @@ class MsSqlBuilder extends AbstractSqlBuilder
     }
     
     /**
-     * In MySQL the select query is pretty straight-forward: there is no need to create nested queries,
-     * since MySQL natively supports selecting pages (LIMIT).
-     * However, if aggregators (GROUP BY) are used, we still need
-     * to distinguish between core and enrichment elements in order to join enrchichment stuff after all
-     * the aggregating had been done.
-     *
+     * SELECT queries in MS SQL 
+     * 
+     * Differences between MS SQL and MySQL SELECTs:
+     * 
+     * - In MS SQL queryies with GROUP BY every select-clause MUST either have a group-function
+     * or be part of the GROUP BY itself.
+     * - SELECT * cannot be used on an inner query if the outer query has a GROUP BY (consequence
+     * of the above)
+     * - A sorter can only be used, if there is no GROUP BY, or the sorted attribute has unique values within the group
+     * - A paged query requires an ORDER BY in any case
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlQuerySelect()
      */
     public function buildSqlQuerySelect()
@@ -105,27 +111,11 @@ class MsSqlBuilder extends AbstractSqlBuilder
             $where = $this->appendCustomWhere($where, $custom_where);
         }
         $where = $where ? "\n WHERE " . $where : '';
-        $having = $having ? "\n WHERE " . $having : '';
-        
-        $uid_qpart = $this->getUidAttribute();
-        
-        /* IDEA The whole thing with $has_attributes_with_reverse_relations is a bit controversal.
-         * It seems, the original cause was the SQL Server requirement for GROUP BY queryies to either
-         * aggregate every select or add it to the GROUP BY expression. In case of enrichment, this would
-         * mean, that all subselects from the core query would need to get re-selected with an aggregation
-         * in the enrichment query. It was concidered simpler/better to place them ONLY in the enrichment.
-         * This has been causing side effects though. So far all of them could be overcome. However, currenlty
-         * nested aggregations are already supported in other SQL builders (e.g. MySQL). So it should also
-         * be possible to aggregate stuff in the core query and in the enrichment here too.
-         * 
-         * Compare the if($useEnrichment){} below with the MySqlBuilder version to see the differences
-         */
-        $has_attributes_with_reverse_relations = count($this->getAttributesWithReverseRelations());
-        $has_aggregation_on_uid = ($uid_qpart !== null && $this->isAggregatedBy($uid_qpart));
+        $having = $having ? "\n HAVING " . $having : '';
         
         // GROUP BY
         foreach ($this->getAggregations() as $qpart) {
-            $group_by .= ', ' . $this->buildSqlGroupBy($qpart, ($has_attributes_with_reverse_relations && ! $has_aggregation_on_uid ? 'EXFCOREQ' : null));
+            $group_by .= ', ' . $this->buildSqlGroupBy($qpart);
         }
         $group_by = $group_by ? ' GROUP BY ' . substr($group_by, 2) : '';
         
@@ -133,60 +123,66 @@ class MsSqlBuilder extends AbstractSqlBuilder
         /*	@var $qpart \exface\Core\CommonLogic\QueryBuilder\QueryPartSelect */
         foreach ($this->getAttributes() as $qpart) {
             $qpartAttr = $qpart->getAttribute();
-            $skipped = false;
             
             // First see, if the attribute has some kind of special data type (e.g. binary)
             if ($qpartAttr->getDataAddressProperty('SQL_DATA_TYPE') == 'binary') {
                 $this->addBinaryColumn($qpart->getAlias());
             }
-            // if the query has a GROUP BY, we need to put the UID-Attribute in the core select as 
-            // well as in the enrichment select otherwise the enrichment joins won't work!
-            if ($group_by && $qpartAttr->getObject()->hasUidAttribute() && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $has_attributes_with_reverse_relations && ! $qpart->getAggregator()) {
-                $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
-                // In contrast to other SQL builders, we MUST NOT add the UID attribute to the 
-                // enrichment query as this will lead to an error due to the column being
-                // ambiguosly defined. This will happen in particular when filtering with at
-                // least on aggregate_by_attribute.
-                // $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $qpartAttr->getObject()->getUidAttributeAlias());
-                $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
-            } elseif (! $group_by || $qpart->getAggregator() || $this->isAggregatedBy($qpart)) {
-                // If we are not aggregating or the attribute has a group function, add it regulary
-                $selects[] = $this->buildSqlSelect($qpart);
-                $joins = array_merge($joins, $this->buildSqlJoins($qpart));
-                $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
-                // If aggregating, also add attributes, that are aggregated over or can be assumed unique due to set filters
-            } elseif ($this->isObjectGroupSafe($qpartAttr->getObject(), null, null, $qpartAttr->getRelationPath()) === true) {
-                $rels = $qpart->getUsedRelations();
-                $first_rel = false;
-                if (! empty($rels)) {
-                    $first_rel = reset($rels);
-                    $first_rel_qpart = $this->addAttribute($first_rel->getAliasWithModifier());
-                    // IDEA this does not support relations based on custom sql. Perhaps this needs to change
-                    $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $this->buildSqlDataAddress($first_rel_qpart->getAttribute()), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
-                }
-                $enrichment_selects[] = $this->buildSqlSelect($qpart);
-                $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
-                $joins = array_merge($joins, $this->buildSqlJoins($qpart));
-                $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
-                // If aggregating, also add attributes, that belong directly to objects, we are aggregating over (they can be assumed unique too, since their object is unique per row)
-            } elseif ($group_by && $this->getAggregation($qpartAttr->getRelationPath()->toString())) {
-                $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
-                $joins = array_merge($joins, $this->buildSqlJoins($qpart));
-                $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
-            } else {
-                $skipped = true;
-                $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
-            }
             
-            // If we have attributes, that need reverse relations, we must move the group by to the outer (enrichment) query, because
-            // the subselects of the subqueries will reference UIDs of the core rows, thus making grouping in the core query impossible
-            if (! $skipped && $group_by && $has_attributes_with_reverse_relations) {
-                if ($aggregator = $qpart->getAggregator()) {
-                    $aggregator = $qpart->getAggregator()->getNextLevelAggregator();
-                } else {
-                    $aggregator = null;
-                }
-                $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()), null, $aggregator);
+            switch (true) {
+                // Put the UID-Attribute in the core query as well as in the enrichment select if the query has a GROUP BY.
+                // Otherwise the enrichment joins won't work! Be carefull to apply this rule only to the plain UID column, not to columns
+                // using the UID with aggregate functions
+                case $group_by && $qpartAttr->getObject()->hasUidAttribute() && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $qpart->getAggregator():
+                    $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
+                    // In contrast to other SQL builders, we MUST NOT add the UID attribute to the 
+                    // enrichment query as this will lead to an error due to the column being
+                    // ambiguosly defined. This will happen in particular when filtering with at
+                    // least on aggregate_by_attribute.
+                    // $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $qpartAttr->getObject()->getUidAttributeAlias());
+                    $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
+                    break;
+                // Add to core query and mark as group-safe
+                // if we are not aggregating
+                case ! $group_by:
+                // or the attribute has an aggregator
+                case $qpart->getAggregator():
+                // or we aggregate over that attribute
+                case $this->isAggregatedBy($qpart):
+                    $selects[] = $this->buildSqlSelect($qpart);
+                    $joins = array_merge($joins, $this->buildSqlJoins($qpart));
+                    $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
+                    break;
+                // Now we know, we have a GROUP BY
+                // Add to enrichment group-safe attributes (those, that do not need group-functions)
+                // FIXME allways putting selects for attributes of related group-safe object in the enrichment select will
+                // probably break sorting over these attributes because sorting is done in the core query too...
+                case $this->isObjectGroupSafe($qpartAttr->getObject(), null, null, $qpartAttr->getRelationPath()) === true:
+                    $rels = $qpart->getUsedRelations();
+                    $first_rel = false;
+                    if (! empty($rels)) {
+                        $first_rel = reset($rels);
+                        $first_rel_qpart = $this->addAttribute($first_rel->getAliasWithModifier());
+                        // IDEA this does not support relations based on custom sql. Perhaps this needs to change
+                        $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $this->buildSqlDataAddress($first_rel_qpart->getAttribute()), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
+                    }
+                    $enrichment_selects[] = $this->buildSqlSelect($qpart);
+                    $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
+                    $joins = array_merge($joins, $this->buildSqlJoins($qpart));
+                    $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
+                    break;
+                // Add to core query those attributes, that belong directly to objects, we are aggregating
+                // over (they can be assumed unique too, since their object is unique per row)
+                // FIXME #sql-is-group-safe it should be possible to integrate this into the if-branch with isObjectGroupSafe())
+                case $group_by && $this->getAggregation($qpartAttr->getRelationPath()->toString()):
+                    $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
+                    $joins = array_merge($joins, $this->buildSqlJoins($qpart));
+                    $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
+                    break;
+                // Skip all non-group-safe attributes when aggregating
+                default:
+                    $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
+                    break;
             }
         }
         // Core SELECT
@@ -195,11 +191,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         
         // Enrichment SELECT
         $enrichment_select = implode(', ', array_unique(array_filter($enrichment_selects)));
-        // Add selects with reverse relations to the enrichment - search for $has_attributes_with_reverse_relations for
-        // more info
-        if (! ($group_by && $has_attributes_with_reverse_relations)) {
-            $enrichment_select = 'EXFCOREQ' . $this->getAliasDelim() . '*' . ($enrichment_select ? ', ' . $enrichment_select : '');
-        }
+        $enrichment_select = 'EXFCOREQ' . $this->getAliasDelim() . '*' . ($enrichment_select ? ', ' . $enrichment_select : '');
         
         // FROM
         $from = $this->buildSqlFrom();
@@ -208,12 +200,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $join = implode(' ', $joins);
         $enrichment_join = implode(' ', $enrichment_joins);
         
-        
-        // Use enrichment
-        // IF we have a GROUP BY
-        //  AND a WHERE OR subselects
-        //  UNLESS we are aggregating over the primary key column of the main object - in this case we can just GROUP without enrichment
-        $useEnrichment = ($group_by && ($where || $has_attributes_with_reverse_relations) && ! $has_aggregation_on_uid) || $this->getSelectDistinct();
+        $useEnrichment = ($group_by && $where) || $this->getSelectDistinct();
         
         // ORDER BY
         // If there is a limit in the query, ensure there is an ORDER BY even if no sorters given.
@@ -221,7 +208,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
             $order_by .= ', ' . $this->buildSqlOrderByDefault($useEnrichment);
         }
         foreach ($this->getSorters() as $qpart) {
-            // A sorter can only be used, if there is no GROUP BY, or the sorted attribute has unique values within the group
+            // In MS SQL a sorter can only be used, if there is no GROUP BY, or the sorted attribute has unique values within the group
             if (! $this->getAggregations() || in_array($qpart->getAttribute()->getAliasWithRelationPath(), $group_safe_attribute_aliases)) {
                 $order_by .= ', ' . $this->buildSqlOrderBy($qpart);
             } else {
@@ -297,11 +284,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
      */
     protected function buildSqlQuerySelectWithEnrichment(string $select, string $enrichment_select, string $select_comment, string $from, string $join, string $enrichment_join, string $where, string $group_by, string $having, string $order_by, string $limit, string $distinct = '') : string
     {
-        if (count($this->getAttributesWithReverseRelations()) > 0) {
-            return "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . ") EXFCOREQ " . $enrichment_join . $group_by . $having . $order_by . $limit;
-        } else {
-            return "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . $group_by . $having . ") EXFCOREQ " . $enrichment_join . $order_by . $limit;
-        }
+        return "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . $group_by . $having . ") EXFCOREQ " . $enrichment_join . $order_by . $limit;
     }
     
     /**

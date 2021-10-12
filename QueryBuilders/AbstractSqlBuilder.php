@@ -2087,22 +2087,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return ($hex_value ? '0x' : '') . $hex_value;
     }
     
-    /**
-     * Returns an array with attributes to be joined over reverse relations (similarly to get_attributes(), which returns all attributes)
-     *
-     * @return QueryPartAttribute[]
-     */
-    protected function getAttributesWithReverseRelations()
-    {
-        $result = array();
-        foreach ($this->getAttributes() as $alias => $qpart) {
-            if ($qpart->getUsedRelations(RelationTypeDataType::REVERSE)) {
-                $result[$alias] = $qpart;
-            }
-        }
-        return $result;
-    }
-    
     public function getQueryId()
     {
         return $this->query_id;
