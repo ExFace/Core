@@ -81,9 +81,9 @@
     "rows": [
         {
             "CREATED_ON": "2021-01-27 21:33:37",
-            "MODIFIED_ON": "2021-05-18 16:38:36",
+            "MODIFIED_ON": "2021-10-13 18:24:32",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ebb374ef0b5eacb374847beb4a5184",
             "READABLE_FLAG": "1",
             "WRITABLE_FLAG": "1",
@@ -123,8 +123,7 @@
                                                 "attribute_alias": "SCHEDULE"
                                             },
                                             {
-                                                "attribute_alias": "FIRST_RUN",
-                                                "value": 0
+                                                "attribute_alias": "FIRST_RUN"
                                             },
                                             {
                                                 "attribute_alias": "QUEUE_TOPICS"

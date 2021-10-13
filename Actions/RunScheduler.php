@@ -18,6 +18,7 @@ use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Exceptions\Queues\SchedulerError;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * 
@@ -62,7 +63,7 @@ class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
         foreach ($scheduledDs->getRows() as $rowNo => $row) {
             yield PHP_EOL . 'Task "' . $row['NAME'] . '": ';
             
-            if ($row['DISABLED']) {
+            if (BooleanDataType::cast($row['ENABLED']) !== true) {
                 yield 'disabled.' . PHP_EOL;
                 continue;
             }
@@ -96,7 +97,7 @@ class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
                     yield 'failed. ' . $e->getMessage() . ' in ' . $e->getFile() . ' at line ' . $e->getLine();
                 } 
             } else {
-                yield 'not due at (next run at ' . DateTimeDataType::formatDateLocalized(CronDataType::findNextRunTime($row['SCHEDULE'], $lastRunTime), $this->getWorkbench()) . ').';
+                yield 'not due (next run at ' . DateTimeDataType::formatDateLocalized(CronDataType::findNextRunTime($row['SCHEDULE'], $lastRunTime), $this->getWorkbench()) . ').';
             }
             
             yield PHP_EOL;
@@ -119,7 +120,7 @@ class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
             'LAST_RUN',
             'QUEUE_TOPICS',
             'MODIFIED_ON',
-            'DISABLED'
+            'ENABLED'
         ]);
         $ds->dataRead();
         return $ds;
