@@ -124,42 +124,55 @@ class MySqlBuilder extends AbstractSqlBuilder
                 $this->addBinaryColumn($qpart->getAlias());
             }
             
-            if ($group_by && $qpartAttr->getObject()->hasUidAttribute() && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $qpart->getAggregator()) {
-                // If the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
-                // otherwise the enrichment joins won't work! Be carefull to apply this rule only to the plain UID column, not to columns
+            switch (true) {
+                // Put the UID-Attribute in the core query as well as in the enrichment select if the query has a GROUP BY.
+                // Otherwise the enrichment joins won't work! Be carefull to apply this rule only to the plain UID column, not to columns
                 // using the UID with aggregate functions
-                $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
-                $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()));
-            } elseif (! $group_by || $qpart->getAggregator() || $this->isAggregatedBy($qpart)) {
-                // If we are not aggregating or the attribute has a group function, add it regulary
-                $selects[] = $this->buildSqlSelect($qpart);
-                $joins = array_merge($joins, $this->buildSqlJoins($qpart));
-                $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
-            } elseif ($this->isObjectGroupSafe($qpartAttr->getObject(), null, null, $qpartAttr->getRelationPath()) === true) {
-                // If aggregating, also add attributes, that are aggregated over or can be assumed unique due to set filters
+                case $group_by && $qpartAttr->getObject()->hasUidAttribute() && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $qpart->getAggregator():
+                    $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
+                    $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()));
+                    break;
+                // Add to core query and mark as group-safe
+                // if we are not aggregating
+                case ! $group_by: 
+                // or the attribute has an aggregator
+                case $qpart->getAggregator():
+                // or we aggregate over that attribute
+                case $this->isAggregatedBy($qpart):
+                    $selects[] = $this->buildSqlSelect($qpart);
+                    $joins = array_merge($joins, $this->buildSqlJoins($qpart));
+                    $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
+                    break;
+                // Now we know, we have a GROUP BY
+                // Add to enrichment group-safe attributes (those, that do not need group-functions)
                 // FIXME allways putting selects for attributes of related group-safe object in the enrichment select will
                 // probably break sorting over these attributes because sorting is done in the core query too...
-                $rels = $qpart->getUsedRelations();
-                $first_rel = false;
-                if (! empty($rels)) {
-                    $first_rel = reset($rels);
-                    $first_rel_qpart = $this->addAttribute($first_rel->getAliasWithModifier());
-                    // IDEA this does not support relations based on custom sql. Perhaps this needs to change
-                    $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $this->buildSqlDataAddress($first_rel_qpart->getAttribute()), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
-                }
-                $enrichment_selects[] = $this->buildSqlSelect($qpart);
-                $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
-                $joins = array_merge($joins, $this->buildSqlJoins($qpart));
-                $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
-            } elseif ($group_by && $this->getAggregation($qpartAttr->getRelationPath()->toString())) {
-                // If aggregating, also add attributes, that belong directly to objects, we are aggregating 
+                case $this->isObjectGroupSafe($qpartAttr->getObject(), null, null, $qpartAttr->getRelationPath()) === true:
+                    $rels = $qpart->getUsedRelations();
+                    $first_rel = false;
+                    if (! empty($rels)) {
+                        $first_rel = reset($rels);
+                        $first_rel_qpart = $this->addAttribute($first_rel->getAliasWithModifier());
+                        // IDEA this does not support relations based on custom sql. Perhaps this needs to change
+                        $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $this->buildSqlDataAddress($first_rel_qpart->getAttribute()), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
+                    }
+                    $enrichment_selects[] = $this->buildSqlSelect($qpart);
+                    $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
+                    $joins = array_merge($joins, $this->buildSqlJoins($qpart));
+                    $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
+                    break;
+                // Add to core query those attributes, that belong directly to objects, we are aggregating 
                 // over (they can be assumed unique too, since their object is unique per row)
                 // FIXME #sql-is-group-safe it should be possible to integrate this into the if-branch with isObjectGroupSafe())
-                $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
-                $joins = array_merge($joins, $this->buildSqlJoins($qpart));
-                $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
-            } else {
-                $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
+                case $group_by && $this->getAggregation($qpartAttr->getRelationPath()->toString()):
+                    $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
+                    $joins = array_merge($joins, $this->buildSqlJoins($qpart));
+                    $group_safe_attribute_aliases[] = $qpartAttr->getAliasWithRelationPath();
+                    break;
+                // Skip all non-group-safe attributes when aggregating
+                default:
+                    $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
+                    break;
             }
         }
         
@@ -180,19 +193,13 @@ class MySqlBuilder extends AbstractSqlBuilder
         
         // ORDER BY
         foreach ($this->getSorters() as $qpart) {
-            // A sorter can only be used, if there is no GROUP BY, or the sorted attribute has unique values within the group
-            /*
-             * if (!$this->getAggregations() || in_array($qpart->getAttribute()->getAliasWithRelationPath(), $group_safe_attribute_aliases)){
-             * $order_by .= ', ' . $this->buildSqlOrderBy($qpart);
-             * }
-             */
             $order_by .= ', ' . $this->buildSqlOrderBy($qpart);
         }
         $order_by = $order_by ? ' ORDER BY ' . substr($order_by, 2) : '';
         
         $distinct = $this->getSelectDistinct() ? 'DISTINCT ' : '';
         
-        if ($this->getLimit() > 0) {
+        if ($this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
             // Increase limit by one to check if there are more rows (see AbstractSqlBuilder::read())
             $limit = ' LIMIT ' . ($this->getLimit()+1) . ' OFFSET ' . $this->getOffset();
         }
