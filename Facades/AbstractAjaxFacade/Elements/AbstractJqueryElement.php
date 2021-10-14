@@ -781,10 +781,11 @@ JS;
      */
     public function buildCssIconClass($icon)
     {
-        try {
-            $class = $this->getFacade()->getConfig()->getOption('ICON_CLASSES.' . strtoupper($icon));
-            return $class;
-        } catch (ConfigOptionNotFoundError $e) {
+        $opt = 'ICON_CLASSES.' . strtoupper($icon);
+        $config = $this->getFacade()->getConfig();
+        if ($config->hasOption($opt)) {
+            return $config->getOption($opt);
+        } else {
             $widget = $this->getWidget();
             if ($widget instanceof iHaveIcon && $widget->getIconSet()) {
                 $prefix = $widget->getIconSet() . ' ' . $widget->getIconSet() . '-';
