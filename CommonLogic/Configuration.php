@@ -58,7 +58,7 @@ class Configuration implements ConfigurationInterface
      */
     public function getOption(string $key)
     {
-        $key = strtoupper($key);
+        $key = mb_strtoupper($key);
         $val = $this->getConfigUxon()->getProperty($key);
         // If the value is NULL, we need to distinguish between an intended NULL and a missing property
         if ($val === null && $this->getConfigUxon()->hasProperty($key) === false) {
@@ -91,13 +91,12 @@ class Configuration implements ConfigurationInterface
      */
     public function hasOption(string $key, string $scope = null) : bool
     {
-        $config = $scope === null ? $this : $this->getScopeConfig($scope);
-        try {
-            $config->getOption($key);
-        } catch (ConfigOptionNotFoundError $e){
-            return false;
+        if ($scope !== null) {
+            return $this->getScopeConfig($scope)->hasOption($key);
         }
-        return true;
+        
+        $key = mb_strtoupper($key);
+        return array_key_exists($key, $this->getConfigUxon()->toArray());
     }
 
     protected function getConfigFilePath($scope)
@@ -118,7 +117,7 @@ class Configuration implements ConfigurationInterface
      */
     public function setOption(string $key, $value_or_object_or_string, string $configScope = null) : ConfigurationInterface
     {
-        $this->getConfigUxon()->setProperty(strtoupper($key), $value_or_object_or_string);
+        $this->getConfigUxon()->setProperty(mb_strtoupper($key), $value_or_object_or_string);
         
         if ($configScope !== null) {
             $config = $this->getScopeConfig($configScope);
@@ -164,7 +163,7 @@ class Configuration implements ConfigurationInterface
         if ($filename && file_exists($filename)) {
             $config = new self($this->getWorkbench());
             $config->loadConfigFile($filename);
-            file_put_contents($filename, $config->exportUxonObject()->unsetProperty(strtoupper($key))->toJson(true));
+            file_put_contents($filename, $config->exportUxonObject()->unsetProperty(mb_strtoupper($key))->toJson(true));
             $this->reloadFiles();
         }
         
