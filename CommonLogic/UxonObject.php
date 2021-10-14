@@ -121,7 +121,7 @@ class UxonObject implements \IteratorAggregate
      */
     public function hasProperty($name)
     {
-        return isset($this->array[$name]);
+        return array_key_exists($name, $this->array);
     }
 
     /**
