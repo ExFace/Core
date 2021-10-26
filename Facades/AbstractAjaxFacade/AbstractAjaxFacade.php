@@ -647,7 +647,15 @@ HTML;
         } else {
             $responseBody = $this->buildHtmlPage($loginPrompt, $this->getPageTemplateFilePathForUnauthorized());
         }
-        return new Response(401, $this->buildHeadersAccessControl(), $responseBody);
+        
+        // Add headers to prevent browser cache for the login-version of the page
+        $headers = array_merge($this->buildHeadersAccessControl(), [
+            'Cache-Control' => ['no-cache', 'no-store', 'must-revalidate'],
+            'Pragma' => ['no-cache'],
+            'Expires' => [0]
+        ]);
+        
+        return new Response(401, $headers, $responseBody);
     }
     
     /**
