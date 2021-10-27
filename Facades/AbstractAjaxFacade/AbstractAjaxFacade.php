@@ -591,7 +591,7 @@ HTML;
             }
         }
         
-        $headers = $this->buildHeadersAccessControl();
+        $headers = array_merge($this->buildHeadersAccessControl(), $this->buildHeadersForErrors());
         $body = '';
         
         switch (true) {
@@ -649,13 +649,22 @@ HTML;
         }
         
         // Add headers to prevent browser cache for the login-version of the page
-        $headers = array_merge($this->buildHeadersAccessControl(), [
+        $headers = array_merge($this->buildHeadersAccessControl(), $this->buildHeadersForErrors());
+        
+        return new Response(401, $headers, $responseBody);
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    protected function buildHeadersForErrors() : array
+    {
+        return [
             'Cache-Control' => ['no-cache', 'no-store', 'must-revalidate'],
             'Pragma' => ['no-cache'],
             'Expires' => [0]
-        ]);
-        
-        return new Response(401, $headers, $responseBody);
+        ];
     }
     
     /**
