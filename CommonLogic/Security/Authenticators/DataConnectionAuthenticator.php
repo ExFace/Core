@@ -13,6 +13,8 @@ use exface\Core\CommonLogic\Security\AuthenticationToken\DataConnectionUsernameP
 use exface\Core\Factories\DataConnectionFactory;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTrait;
+use exface\Core\Exceptions\UxonSyntaxError;
+use exface\Core\Exceptions\Security\AuthenticatorConfigError;
 
 /**
  * Performs authentication via selected data connections.
@@ -43,6 +45,9 @@ use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTr
  * ```
  * 
  * If you specify multiple connections, the user will be able to choose one berfor logging in.
+ * For a single connection you can also hide the connection selector completely by setting
+ * `hide_connection_selector` to `true`. This way the user will not even see, which data source
+ * he or she is going to authenticate agains.
  * 
  * If `create_new_users` is `true`, a new workbench user will be created automatically once
  * a new username is authenticated successfully. These new users can be assigned some roles
@@ -61,6 +66,8 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
     private $authenticatedToken = null;
     
     private $connectionAliases = null;
+    
+    private $hideConnectionSelector = false;
     
     /**
      *
@@ -202,6 +209,11 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
             }
         }        
         
+        $hideSelector = $this->getHideConnectionSelector();
+        if ($hideSelector && count($conAliases) > 1) {
+            throw new AuthenticatorConfigError($this, 'Cannot hide data connection selector in authenticator "' . $this->getName() . '": multiple connections specified!');
+        }
+        
         $container->setWidgets(new UxonObject([
             [
                 'data_column_name' => 'DATACONNECTIONALIAS',
@@ -209,7 +221,8 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
                 'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.DATACONNECTION.CONNECTION'),
                 'selectable_options' => array_combine($conAliases, $conNames) ?? [],
                 'required' => true,
-                'value' => count($conAliases) === 1 ? $conAliases[0] : null
+                'value' => count($conAliases) === 1 ? $conAliases[0] : null,
+                'hidden' => $this->getHideConnectionSelector()
             ],[
                 'attribute_alias' => 'USERNAME',
                 'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.DATACONNECTION.USERNAME'),
@@ -236,5 +249,30 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
         }
         
         return $container;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function getHideConnectionSelector() : bool
+    {
+        return $this->hideConnectionSelector;
+    }
+    
+    /**
+     * Set to TRUE to hide the widget that allows the user to select a connection on the login promt.
+     * 
+     * @uxon-property hide_connection_selector
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return DataConnectionAuthenticator
+     */
+    protected function setHideConnectionSelector(bool $value) : DataConnectionAuthenticator
+    {
+        $this->hideConnectionSelector = $value;
+        return $this;
     }
 }

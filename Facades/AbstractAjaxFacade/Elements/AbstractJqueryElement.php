@@ -556,7 +556,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
             $this->width_minimum = $this->getFacade()->getConfig()->getOption('WIDGET.ALL.WIDTH_MINIMUM');
             $width = $this->getWidget()->getWidth();
             if ($width->isRelative() === true && $width->isMax() === false) {
-                $this->width_minimum = round($this->width_minimum * $this->getWidget()->getWidth()->getValue(), 0);
+                $this->width_minimum = round($this->width_minimum * ($width->getValue() < 1 ? $width->getValue() : 1), 0);
             }
         }
         return $this->width_minimum;
@@ -781,10 +781,11 @@ JS;
      */
     public function buildCssIconClass($icon)
     {
-        try {
-            $class = $this->getFacade()->getConfig()->getOption('ICON_CLASSES.' . strtoupper($icon));
-            return $class;
-        } catch (ConfigOptionNotFoundError $e) {
+        $opt = 'ICON_CLASSES.' . strtoupper($icon);
+        $config = $this->getFacade()->getConfig();
+        if ($config->hasOption($opt)) {
+            return $config->getOption($opt);
+        } else {
             $widget = $this->getWidget();
             if ($widget instanceof iHaveIcon && $widget->getIconSet()) {
                 $prefix = $widget->getIconSet() . ' ' . $widget->getIconSet() . '-';

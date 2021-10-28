@@ -94,11 +94,27 @@ class FileFinderConnector extends TransparentConnector
             $query->getFinder()->append([]);
             return $query;
         }
+        
+        // Make sure not to have double paths as Symfony FileFinder will yield results for each path separately 
         $paths = array_unique($paths);
+        // Also try to filter out paths that match paterns in other paths
+        $pathsFiltered = $paths;
+        foreach ($paths as $path) {
+            $path = FilePathDataType::normalize($path);
+            if (strpos($path, '*')) {
+                foreach ($paths as $i => $otherPath) {
+                    $otherPath = FilePathDataType::normalize($otherPath);
+                    if ($otherPath !== $path && fnmatch($path, $otherPath)) {
+                        unset($pathsFiltered[$i]);
+                    }
+                }
+            }
+        }
+        
         // Perform the search. This will fill the file and folder iterators in the finder instance. Thus, the resulting
         // files will be available through foreach($query as $splFileInfo) etc.
         try {
-            $query->getFinder()->in($paths);
+            $query->getFinder()->in($pathsFiltered);
         } catch (\Exception $e) {
             throw new DataQueryFailedError($query, "Data query failed!", null, $e);
             return array();
