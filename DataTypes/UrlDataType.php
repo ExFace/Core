@@ -74,4 +74,20 @@ class UrlDataType extends StringDataType
         }
         return $uri->getPath() ?? '';
     }
+    
+    /**
+     * Removes all query parameters including the `?` from the given URI.
+     * 
+     * For example: http://domain.com/path?param1=1&param2=2 -> http://domain.com/path.
+     * 
+     * @param UriInterface|string $stringOrUri
+     * @return string
+     */
+    public static function stripQuery($stringOrUri) : string
+    {
+        if ($stringOrUri instanceof UriInterface) {
+            return $stringOrUri->withQuery('')->__toString();
+        }
+        return self::substringBefore($stringOrUri, '?', $stringOrUri);
+    }
 }
