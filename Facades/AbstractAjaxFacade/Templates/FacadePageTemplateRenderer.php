@@ -11,6 +11,7 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\Exceptions\Facades\FacadeOutputError;
 
 /**
  * A generic HTML template renderer working with [#placeholders#].
@@ -212,7 +213,7 @@ class FacadePageTemplateRenderer implements TemplateRendererInterface
                 break;
             case StringDataType::startsWith($placeholder, '~session:') === true;
                 $option = StringDataType::substringAfter($placeholder, '~session:');
-                $val = $this-> renderPlaceholderSessionOption($option);
+                $val = $this->renderPlaceholderSessionOption($option);
                 break;
             case StringDataType::startsWith($placeholder, '~facade:') === true;
                 $option = StringDataType::substringAfter($placeholder, '~facade:');
@@ -222,8 +223,13 @@ class FacadePageTemplateRenderer implements TemplateRendererInterface
                     break;
                 } 
             default:
-                throw new RuntimeException('Unknown placehodler "[#' . $placeholder . '#]" found in template "' . $this->getTemplateFilePath() . '"!');
+                throw new FacadeOutputError('Unknown placehodler "[#' . $placeholder . '#]" found in template "' . $this->getTemplateFilePath() . '"!');
         }
+        
+        if ($val === null) {
+            throw new FacadeOutputError('No value found for placeholder "[#' . $placeholder . '#]" in template "' . $this->getTemplateFilePath() . '"!');
+        }
+        
         return $val;
     }
     

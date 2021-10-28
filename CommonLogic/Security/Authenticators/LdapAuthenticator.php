@@ -440,13 +440,15 @@ class LdapAuthenticator extends AbstractAuthenticator
      */
     public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
     {
+        $domains = $this->getDomains() ?? [];
         $container->setWidgets(new UxonObject([
             [
                 'data_column_name' => 'DOMAIN',
                 'widget_type' => 'InputSelect',
                 'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.LDAP.DOMAIN'),
-                'selectable_options' => $this->getDomains() ?? [],
-                'required' => true
+                'selectable_options' => $domains,
+                'required' => true,
+                'value' => count($domains) === 1 ? $domains[0] : null
             ],[
                 'attribute_alias' => 'USERNAME',
                 'caption' => $this->getUsernameInputCaption(),
