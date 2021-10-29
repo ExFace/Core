@@ -4,6 +4,12 @@ namespace exface\Core\Interfaces;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\OutOfBoundsException;
 
+/**
+ * Interface for configuration data objects allowing access to config options in different scopes.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 interface ConfigurationInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon
 {
 
@@ -14,6 +20,23 @@ interface ConfigurationInterface extends WorkbenchDependantInterface, iCanBeConv
      * @return mixed
      */
     public function getOption(string $key);
+    
+    /**
+     * Returns all options from a given group namespace (i.e. with the samep part before the `.`).
+     * 
+     * The namespace can be optionally stripped off the option name by setting `$removeNamespace` to TRUE.
+     * 
+     * Examples:
+     * 
+     * - getOptionGroup('MONITOR.ERRORS') -> ['MONITOR.ERRORS.ENABLED' => true, 'MONITOR.ERRORS.DAY_TO_KEEP' ... ]
+     * - getOptionGroup('MONITOR.ERRORS', true) -> ['ENABLED' => true, 'DAY_TO_KEEP' ... ]
+     * - getOptionGroup('MONITOR') -> ['MONITOR.ACTIONS.ENABLED' => true, 'MONITOR.ERRORS.ENABLED' ... ]
+     * - getOptionGroup('MONITOR', true) -> ['ACTIONS.ENABLED' => true, 'ERRORS.ENABLED' ... ]
+     * 
+     * @param string $namespace
+     * @return array
+     */
+    public function getOptionGroup(string $namespace, bool $removeNamespace = false) : array;
     
     /**
      * 

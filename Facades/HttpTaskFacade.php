@@ -51,9 +51,15 @@ class HttpTaskFacade extends AbstractAjaxFacade
         } else {
             $status_code = 500;
         }
-        $headers = $this->buildHeadersAccessControl();
-        $body = $this->encodeData($this->buildResponseDataError($exception));
+        
+        $headers = array_merge(
+            $this->buildHeadersCommon(),
+            $this->buildHeadersForAjax(),
+            $this->buildHeadersForErrors()
+        );
         $headers['Content-Type'] = ['application/json;charset=utf-8'];
+        
+        $body = $this->encodeData($this->buildResponseDataError($exception));
         $this->getWorkbench()->getLogger()->logException($exception);
         
         return new Response($status_code, $headers, $body);
@@ -62,7 +68,12 @@ class HttpTaskFacade extends AbstractAjaxFacade
     protected function createResponseFromTaskResult(ServerRequestInterface $request, ResultInterface $result): ResponseInterface
     {
         if ($result instanceof ResultWidgetInterface || $result instanceof ResultTextContentInterface) {
-            $headers = $this->buildHeadersAccessControl();
+            $headers = array_merge(
+                $this->buildHeadersCommon(),
+                $this->buildHeadersForAjax()
+            );
+            $headers['Content-type'] = ['application/json;charset=utf-8'];
+            
             $json = [
                 'success' => $result->getMessage()
             ];
@@ -70,8 +81,8 @@ class HttpTaskFacade extends AbstractAjaxFacade
                 $context_bar = $result->getTask()->getPageTriggeredOn()->getContextBar();
                 $json['extras']['ContextBar'] = $this->getElement($context_bar)->buildJsonContextBarUpdate();
             }
-            $headers['Content-type'] = ['application/json;charset=utf-8'];
             $body = $this->encodeData($json);
+            
             $response = new Response($result->getResponseCode(), $headers, $body);
         } else {
             $response = parent::createResponseFromTaskResult($request, $result);
