@@ -151,6 +151,10 @@ class StringDataType extends AbstractDataType
     {
         $value = parent::parse($string);
         
+        if ($this->isValueEmpty($string) || $this->isValueLogicalNull($string)) {
+            return $string;
+        }
+        
         // validate length
         $length = mb_strlen($value);
         if ($this->getLengthMin() > 0 && $length < $this->getLengthMin()){
