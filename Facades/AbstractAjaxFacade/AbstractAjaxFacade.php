@@ -60,6 +60,8 @@ use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\Contexts\DebugContext;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
+use exface\Core\DataTypes\UrlDataType;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * 
@@ -447,7 +449,13 @@ HTML;
         }
         
         /* @var $headers array [header_name => array_of_values] */
-        $headers = $this->buildHeadersAccessControl();
+        $headers = $this->buildHeadersCommon();
+        if ($this->isRequestAjax($request)) {
+            $headers = array_merge($headers, $this->buildHeadersForAjax());
+        } else {
+            $headers = array_merge($headers, $this->buildHeadersForHtml());
+        }
+        
         /* @var $status_code int */
         $status_code = $result->getResponseCode();
         
@@ -591,7 +599,7 @@ HTML;
             }
         }
         
-        $headers = array_merge($this->buildHeadersAccessControl(), $this->buildHeadersForErrors());
+        $headers = $this->buildHeadersCommon();
         $body = '';
         
         switch (true) {
@@ -599,19 +607,24 @@ HTML;
             case $exception instanceof AuthorizationExceptionInterface && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous():
                 // If details needed, render a widget
                 $body = $this->buildHtmlFromError($request, $exception, $page);
+                $headers = array_merge($headers, $this->buildHeadersForHtml());
                 $headers['Content-Type'] = ['text/html;charset=utf-8'];
                 break;
             default:
                 if ($this->isRequestAjax($request)) {
                     // Render error data for AJAX requests, so the JS can interpret it.
                     $body = $this->encodeData($this->buildResponseDataError($exception));
+                    $headers = array_merge($headers, $this->buildHeadersForAjax());
                     $headers['Content-Type'] = ['application/json;charset=utf-8'];
                 } else {
                     // If we were rendering a widget, return HTML even for non-detail cases
                     $body = $this->buildHtmlFromError($request, $exception, $page);
+                    $headers = array_merge($headers, $this->buildHeadersForHtml());
                     $headers['Content-Type'] = ['text/html;charset=utf-8'];
                 }
-        }     
+        }
+        
+        $headers = array_merge($headers, $this->buildHeadersForErrors());
         
         $this->getWorkbench()->getLogger()->logException($exception);
         
@@ -648,23 +661,13 @@ HTML;
             $responseBody = $this->buildHtmlPage($loginPrompt, $this->getPageTemplateFilePathForUnauthorized());
         }
         
-        // Add headers to prevent browser cache for the login-version of the page
-        $headers = array_merge($this->buildHeadersAccessControl(), $this->buildHeadersForErrors());
+        $headers = array_merge(
+            $this->buildHeadersCommon(), 
+            $this->buildHeadersForHtml(),
+            $this->buildHeadersForErrors()
+        );
         
         return new Response(401, $headers, $responseBody);
-    }
-    
-    /**
-     * 
-     * @return array
-     */
-    protected function buildHeadersForErrors() : array
-    {
-        return [
-            'Cache-Control' => ['no-cache', 'no-store', 'must-revalidate'],
-            'Pragma' => ['no-cache'],
-            'Expires' => [0]
-        ];
     }
     
     /**
@@ -792,18 +795,72 @@ HTML;
     }
     
     /**
-     * Returns an array of allowed origins for AJAX requests to the facade.
      * 
-     * The core config key FACADES.AJAX.ACCESS_CONTROL_ALLOW_ORIGIN provides basic configuration
-     * for all AJAX facades. Facades are free to use their own configuration though - please
-     * refer to the documentation of the facade used.
-     * 
-     * @return string[]
+     * @return array
      */
-    protected function buildHeadersAccessControl() : array
+    protected function buildHeadersCommon() : array
     {
-        $headers = $this->getConfig()->getOption('FACADE.AJAX.ACCESS_CONTROL_HEADERS')->toArray();
+        return array_filter($this->getConfig()->getOption('FACADE.HEADERS.COMMON')->toArray());
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    protected function buildHeadersForHtml() : array
+    {
+        $headers = array_filter($this->getConfig()->getOption('FACADE.HEADERS.HTML')->toArray());
+                
+        $workbenchHosts = [];
+        foreach ($this->getWorkbench()->getConfig()->getOption('SERVER.BASE_URLS') as $url) {
+            $host = UrlDataType::findHost($url);
+            if ($host) {
+                $workbenchHosts[] = $host;
+            }
+        }
+        
+        $cspString = '';
+        foreach ($this->getConfig()->getOptionGroup('FACADE.HEADERS.CONTENT_SECURITY_POLICY', true) as $directive => $values) {
+            // Skip the directive if the config option has no value (thus removing the directive)
+            if (empty($values)) {
+                continue;
+            }
+            // Otherwise add this directive to the policy
+            $directive = str_replace('_', '-', mb_strtolower($directive));
+            if ($directive === 'flags') {
+                $cspString .= $values . ' ; ';
+            } else {
+                // Add the hosts of the workbench base URLs to every directive to aviod issues
+                // with workbenches behind reverse proxies, where the same workbench can be
+                // reached through different URLs.
+                $cspString .= $directive . ' ' . implode(' ', $workbenchHosts) . ' ' . $values . ' ; ';
+            }
+        }
+        
+        return array_merge(['Content-Security-Policy' => $cspString], $headers);
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    protected function buildHeadersForAjax() : array
+    {
+        $headers = $this->getConfig()->getOption('FACADE.HEADERS.AJAX')->toArray();
         return array_filter($headers);
+    }
+    
+    /**
+     *
+     * @return array
+     */
+    protected function buildHeadersForErrors() : array
+    {
+        return [
+            'Cache-Control' => ['no-cache', 'no-store', 'must-revalidate'],
+            'Pragma' => ['no-cache'],
+            'Expires' => [0]
+        ];
     }
     
     protected function buildHtmlHeadIcons() : array
