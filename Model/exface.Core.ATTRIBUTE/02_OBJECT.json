@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2021-08-13 15:14:21",
+            "MODIFIED_ON": "2021-11-01 14:44:30",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32350000000000000000000000000000",
@@ -266,10 +266,17 @@
                                                 "attribute_alias": "DEFAULT_AGGREGATE_FUNCTION"
                                             },
                                             {
-                                                "attribute_alias": "SORTERPOS"
-                                            },
-                                            {
-                                                "attribute_alias": "SORTERDIR"
+                                                "widget_type": "InlineGroup",
+                                                "caption": "Use as default sorter",
+                                                "hint": "Set a positive index to place this attribute in the default sorter at that position and select the sorting direction to use. ",
+                                                "widgets": [
+                                                    {
+                                                        "attribute_alias": "SORTERPOS"
+                                                    },
+                                                    {
+                                                        "attribute_alias": "SORTERDIR"
+                                                    }
+                                                ]
                                             },
                                             {
                                                 "attribute_alias": "VALUE_LIST_DELIMITER"
