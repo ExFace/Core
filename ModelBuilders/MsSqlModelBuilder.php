@@ -2,11 +2,10 @@
 namespace exface\Core\ModelBuilders;
 
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 
-class MSSqlModelBuilder extends AbstractSqlModelBuilder
+class MsSqlModelBuilder extends AbstractSqlModelBuilder
 {
     /**
      * Replace all characters except alphanumeric signs or underscore with underscore in a given string.
@@ -95,7 +94,7 @@ class MSSqlModelBuilder extends AbstractSqlModelBuilder
         
         $sql = "SELECT 
                 table_name AS NAME, 
-                CONCAT(table_schema, '.', table_name) AS DATA_ADDRESS, 
+                (table_schema + '.' + table_name) AS DATA_ADDRESS, 
                 table_name AS ALIAS, 
                 (CASE table_type WHEN 'VIEW' THEN 0 ELSE 1 END) AS WRITABLE_FLAG
             FROM INFORMATION_SCHEMA.TABLES {$filter}";
