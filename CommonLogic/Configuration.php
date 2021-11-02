@@ -70,6 +70,26 @@ class Configuration implements ConfigurationInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ConfigurationInterface::getOptionGroup()
+     */
+    public function getOptionGroup(string $namespace, bool $removeNamespace = false) : array
+    {
+        $namespace = rtrim($namespace, ".") . '.';
+        $opts = $this->findOptions('/^' . preg_quote($namespace, '/') . '.*/');
+        if ($removeNamespace) {
+            $optsWithNamespace = $opts;
+            $opts = [];
+            $namespaceLength = strlen($namespace);
+            foreach ($optsWithNamespace as $opt => $val) {
+                $opts[substr($opt, $namespaceLength)] = $val;
+            }
+        }
+        return $opts;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\ConfigurationInterface::findOptions()
      */
     public function findOptions(string $regEx) : array
