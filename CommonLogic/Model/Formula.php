@@ -97,6 +97,13 @@ abstract class Formula implements FormulaInterface
                 $this->currentDataSheet = $data_sheet;
                 $this->currentRowNumber = $row_number;
                 $row = $data_sheet->getRow($row_number);
+                if ($row === null && $data_sheet->hasColumTotals()) {
+                    $totals_number = $row_number - $data_sheet->countRows();
+                    $row = $data_sheet->getTotalsRow($totals_number, false);
+                }
+                if ($row === null) {
+                    throw new InvalidArgumentException('Row number "' . $row_number . '" not found in data sheet!');
+                }
             }
             $expressionLanguage = new SymfonyExpressionLanguage($this->getWorkbench());
             $result = $expressionLanguage->evaluate($this, $row);
