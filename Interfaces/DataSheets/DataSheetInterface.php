@@ -371,12 +371,30 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function getRowByColumnValue($column_name, $value);
 
     /**
-     * Returns the total rows as assotiative arrays.
-     * Multiple total rows can be used to display multiple totals per column.
-     *
-     * @return array [ column_id => total value ]
+     * Returns the rows containing column totals as assotiative arrays (similar to regular `getRows()`).
+     * 
+     * Each row contains only columns, that actually have totals (unless $onlyTotaledCols=false). Multiple total 
+     * rows are returned if at least one column has multiple totals.
+     * 
+     * If the data sheet has no column totals, an empty array is returned.
+     * 
+     * @param bool $onlyTotaledCols
+     * @return array [[ column_id => total value ], [ ... ], ...]
      */
-    public function getTotalsRows();
+    public function getTotalsRows(bool $onlyTotaledCols = true) : array;
+    
+    /**
+     * Returns a specific totals row by index (starting with 0).
+     * 
+     * If the index is ommitted, the first totals row (with index 0) is returned.
+     * 
+     * By default, the totals
+     * 
+     * @param int $idx
+     * @param bool $onlyTotaledCols
+     * @return array|NULL
+     */
+    public function getTotalsRow(int $idx = 0, bool $onlyTotaledCols = true) : ?array;
 
     /**
      * Returns an array of DataColumns
