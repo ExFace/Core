@@ -22,6 +22,7 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Widgets\InputComboTable;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
+use exface\Core\Interfaces\Widgets\iUseInputWidget;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -753,7 +754,7 @@ JS;
     {
         $widget = $this->getWidget();
         $rows = $this->buildJsConvertArrayToData("{$this->buildJsJqueryElement()}.jexcel('getData', false)");
-        $dataObj = $widget->hasParent() ? $widget->getParent()->getMetaObject() : $action->getMetaObject();
+        $dataObj = $this->getMetaObjectForDataGetter($action);
         
         // If we have an action, that is based on another object and does not have an input mapper for
         // the widgets's object, the data should become a subsheet. Otherwise we just return the data
@@ -904,18 +905,22 @@ function() {
         var aRow = [];
         var sHeaderName, iColIdx, iLastIdx;
         for (var sColName in oRow) {
-            iColIdx = oColIdxCache[sColName];
-            if (iColIdx !== undefined) {
-                oRowIndexed[iColIdx] = oRow[sColName];
+            if (oColIdxCache[sColName] !== undefined) {
+                oColIdxCache[sColName].forEach(function(iColIdx) {
+                    oRowIndexed[iColIdx] = oRow[sColName];
+                });
             }
 
-            sHeaderName = Object.keys(oColNames).find(key => oColNames[key] === sColName);
-            if (! sHeaderName) continue;
-            iColIdx = aColHeaders.indexOf(sHeaderName);
-            if (iColIdx >= 0) {
-                oRowIndexed[iColIdx] = aFormatters[sColName] ? aFormatters[sColName](oRow[sColName]) : oRow[sColName];
-                oColIdxCache[sColName] = iColIdx;
-            }
+            Object.keys(oColNames)
+            .filter(key => oColNames[key] === sColName)
+            .forEach(function(sHeaderName) {
+                if (! sHeaderName) return;
+                iColIdx = aColHeaders.indexOf(sHeaderName);
+                if (iColIdx >= 0) {
+                    oRowIndexed[iColIdx] = aFormatters[sColName] ? aFormatters[sColName](oRow[sColName]) : oRow[sColName];
+                    oColIdxCache[sColName] = [...(oColIdxCache[sColName] || []), ...[iColIdx]];
+                }
+            });
         }
         
         iLastIdx = -1;
@@ -930,7 +935,7 @@ function() {
         
         aData.push(aRow);
     });
-    
+
     return aData;
 }()
 
