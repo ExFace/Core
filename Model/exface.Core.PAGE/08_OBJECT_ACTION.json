@@ -120,7 +120,7 @@
         },
         {
             "CREATED_ON": "2020-05-11 09:59:27",
-            "MODIFIED_ON": "2020-09-01 10:14:09",
+            "MODIFIED_ON": "2021-11-03 16:09:39",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea936e192716e4a9d10205857feb80",
@@ -193,7 +193,7 @@
                                     "attribute_alias": "MENU_VISIBLE"
                                 },
                                 {
-                                    "attribute_alias": "PAGE_GROUP_PAGES__UID:COUNT",
+                                    "attribute_alias": "PAGE_GROUP_PAGES__PAGE_GROUP__LABEL:LIST_DISTINCT",
                                     "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.PAGE_GROUPS')"
                                 },
                                 {

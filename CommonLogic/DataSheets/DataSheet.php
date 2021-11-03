@@ -1688,14 +1688,40 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     * Returns the total rows as assotiative arrays.
-     * Multiple total rows can be used to display multiple totals per column.
-     *
-     * @return array [ column_id => total value ]
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getTotalsRows()
      */
-    function getTotalsRows()
+    public function getTotalsRows(bool $onlyTotaledCols = true) : array
     {
-        return $this->totals_rows;
+        if ($onlyTotaledCols === true) {
+            return $this->totals_rows;
+        } else {
+            $cnt = count($this->totals_rows);
+            $rows = [];
+            for ($i = 0; $i < $cnt; $i++) {
+                $rows[$i] = $this->getTotalsRow($i, $onlyTotaledCols);
+            }
+            return $rows;
+        }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getTotalsRow()
+     */
+    public function getTotalsRow(int $idx = 0, bool $onlyTotaledCols = true) : ?array
+    {
+        $row = $this->getTotalsRows()[$idx];
+        if ($row !== null && $onlyTotaledCols === false) {
+            foreach ($this->getColumns() as $col) {
+                if (! array_key_exists($col->getName(), $row)) {
+                    $row[$col->getName()] = null;
+                }
+            }
+        }
+        return $row;
     }
 
     /**
