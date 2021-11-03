@@ -16,6 +16,7 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\Interfaces\Widgets\iUseInputWidget;
 
 /**
  * Implementation for the AjaxFacadeElementInterface based on jQuery.
@@ -601,6 +602,31 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
             }
         }
         return "{oId: '{$widget->getMetaObject()->getId()}', rows: [{$rowsJs}]}";
+    }
+    
+    /**
+     * Returns the meta object of the data this widget is expected to provide for a certain aciton.
+     * 
+     * This method helps to determine, if the input data for the given action will be based on
+     * the widgets object or another one:
+     * 
+     * - If the input widget of the action is known, the input data will be based on the object of that widget
+     * - Otherwise (in particular, if no action is provided), the input data will be based on this
+     * widgets own object.
+     * 
+     * @param ActionInterface $action
+     * @return MetaObjectInterface
+     */
+    protected function getMetaObjectForDataGetter(ActionInterface $action = null) : MetaObjectInterface
+    {
+        switch (true) {
+            case $action !== null && ($action->getWidgetDefinedIn() instanceof iUseInputWidget):
+                return $action->getWidgetDefinedIn()->getInputWidget()->getMetaObject();
+            /*case $action !== null && $widget->hasParent():
+                return $this->getWidget()->getParent()->getMetaObject();*/
+            default:
+                return $this->getMetaObject();
+        }
     }
     
     /**

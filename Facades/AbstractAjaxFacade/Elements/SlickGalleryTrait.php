@@ -472,7 +472,7 @@ JS;
             $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""')}).append(file.preview)[0]);
             fileReader.onload = function () {
                 var sContent = {$this->buildJsFileContentEncoder($uploader->getFileContentAttribute()->getDataType(), 'fileReader.result', 'file.type')};
-                {$this->buildJsBusyIconShow()}console.log(file.type);
+                {$this->buildJsBusyIconShow()};
                 oParams.data = {
                     oId: '{$this->getMetaObject()->getId()}',
                     rows: [{

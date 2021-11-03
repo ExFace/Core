@@ -65,6 +65,11 @@ class Tab extends Panel
         return $this->prepareDataSheetToX(parent::prepareDataSheetToPrefill($data_sheet));
     }
     
+    /**
+     * 
+     * @param DataSheetInterface $data_sheet
+     * @return DataSheetInterface
+     */
     protected function prepareDataSheetToX(DataSheetInterface $data_sheet) : DataSheetInterface
     {
         if ($this->getBadgeAttributeAlias()) {
@@ -73,6 +78,10 @@ class Tab extends Panel
         return $data_sheet;
     }
 
+    /**
+     * 
+     * @return string|NULL
+     */
     public function getBadgeValue() : ?string
     {
         return $this->badge_value;
@@ -96,6 +105,11 @@ class Tab extends Panel
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Container::doPrefill()
+     */
     protected function doPrefill(DataSheetInterface $data_sheet)
     {
         parent::doPrefill($data_sheet);
@@ -136,5 +150,13 @@ class Tab extends Panel
     {
         return $this->getParent();
     }
+    
+    /**
+     * 
+     * @return int
+     */
+    public function getTabIndex() : int
+    {
+        return $this->getTabs()->getWidgetIndex($this);
+    }
 }
-?>
