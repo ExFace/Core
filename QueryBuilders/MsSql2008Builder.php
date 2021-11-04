@@ -134,6 +134,13 @@ SQL;
         ) {
             return $this->buildSqlSelect($qpart, null, null, '') . ' ' . $qpart->getOrder();
         }
+        
+        // Similarly, we must use the original select clause if we are trying to sort over a joined
+        // or subselected column
+        if (! empty($qpart->getUsedRelations()) && ! $qpart->getDataAddressProperty("SQL_ORDER_BY")) {
+            return $this->buildSqlSelect($qpart, null, null, '') . ' ' . $qpart->getOrder();
+        }
+        
         return parent::buildSqlOrderBy($qpart, $select_from);
     }
 }
