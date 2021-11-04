@@ -55,8 +55,10 @@ use exface\Core\DataTypes\RegularExpressionDataType;
  * ```
  * 
  * Here is how alias generation works for the object `exface.Core.PAGES`. In addition
- * to the simples case, a namespace will be appended, the result will be lowercased
- * and whitespaces will be replaced by `-` instead of the default `_`.
+ * to the simplest case, a namespace will be appended, the result will be lowercased
+ * and whitespaces will be replaced by `-` instead of the default `_`. Any characters
+ * accept for lating letters, `_` and `-` will be removed by the last entry in
+ * `replace_characters`.
  * 
  * ```
  * {
@@ -65,7 +67,8 @@ use exface\Core\DataTypes\RegularExpressionDataType;
  *  "source_attribute_alias": "NAME",
  *  "case": "lower",
  *  "replace_characters": {
- *      " ": "-"
+ *      " ": "-",
+ *      "/[^a-zA-Z0-9_-]/": ""
  *  }
  * }
  * 
@@ -523,6 +526,18 @@ class AliasGeneratingBehavior extends AbstractBehavior
      *  "replace_characters": {
      *      " ": "-",
      *      "/\\t/": ""
+     *  }
+     * }
+     * 
+     * ```
+     * 
+     * Another example: remove all characters except for latin letters and underscores via
+     * regular expression:
+     * 
+     * ```
+     * {
+     *  "replace_characters": {
+     *      "/[^a-zA-Z0-9_]/": ""
      *  }
      * }
      * 
