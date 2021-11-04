@@ -124,7 +124,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
      */
     public function runCustomQuery(string $string) : DataQueryInterface
     {
-        return $this->runSql($string);
+        return $this->runSql($string, true);
     }
 
     public function getUser()
