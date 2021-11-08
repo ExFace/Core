@@ -9,7 +9,6 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
