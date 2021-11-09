@@ -45,6 +45,7 @@ use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
 use exface\Core\Exceptions\AppNotFoundError;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -75,6 +76,8 @@ class App implements AppInterface
     const CONFIG_FILE_SUFFIX = 'config';
     
     const CONFIG_FILE_EXTENSION = '.json';
+    
+    protected static $modelSheet = null;
     
     private $selector = null;
     
@@ -124,6 +127,10 @@ class App implements AppInterface
         return $this->getSelector()->getAppAlias();
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function getClassnameSuffixToStripFromAlias() : string
     {
         return 'App';
@@ -160,7 +167,6 @@ class App implements AppInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\AppInterface::getDirectoryAbsolutePath()
      */
     public function getDirectoryAbsolutePath()
@@ -168,6 +174,11 @@ class App implements AppInterface
         return $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $this->getDirectory();
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
+     */
     public function getNamespace()
     {
         return $this->selector->getVendorAlias();
@@ -285,23 +296,13 @@ class App implements AppInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\AppInterface::getUid()
      */
     public function getUid()
     {
-        if (is_null($this->uid)) {
-            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.APP');
-            $ds->getColumns()->addFromUidAttribute();
-            $ds->getFilters()->addConditionFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
-            $ds->dataRead();
-            if ($ds->countRows() == 0) {
-                throw new AppNotFoundError('No app matching alias "' . $this->getAliasWithNamespace() . '" is installed!');
-            }
-            if ($ds->countRows() > 1) {
-                throw new LogicException('Multiple apps matching the alias "' . $this->getAliasWithNamespace() . '" found!');
-            }
-            $this->uid = $ds->getUidColumn()->getCellValue(0);
+        if ($this->uid === null) {
+            $ds = $this->getAppModelDataSheet();
+            $this->uid = $ds->getUidColumn()->getValue($ds->getColumns()->get('ALIAS')->findRowByValue($this->getAliasWithNamespace()));
             if (! $this->uid) {
                 throw new AppNotFoundError('App "' . $this->getAliasWithNamespace() . '" not found in the meta model! Please reinstall the app!');
             }
@@ -439,7 +440,7 @@ class App implements AppInterface
     public function getLanguageDefault() : string
     {
         try { 
-            $language = $this->getAppModelDataSheet()->getCellValue('DEFAULT_LANGUAGE_CODE', 0);
+            $language = $this->getAppModelDataSheet()->getRowByColumnValue('ALIAS', $this->getAliasWithNamespace())['DEFAULT_LANGUAGE_CODE'];
             if ($language != null) {
                 return $language;
             } else {
@@ -463,19 +464,37 @@ class App implements AppInterface
         return $this->getTranslator()->getLanguagesAvailable($forceLocale);
     }
     
-    protected function getAppModelDataSheet()
+    /**
+     * Returns a data sheet with basic infomration about all installed apps.
+     * 
+     * This centralized method allows to quickly fetch any app property without querying
+     * the model DB every time - it reads all data once when called for the first time an
+     * caches it statically, so all derivatives of this class will use it.
+     * 
+     * @return DataSheetInterface
+     */
+    protected function getAppModelDataSheet() : DataSheetInterface
     {
-        $app_object = $this->getWorkbench()->model()->getObject('exface.Core.App');
-        $ds = DataSheetFactory::createFromObject($app_object);
-        $cols = $ds->getColumns();
-        $cols->addFromExpression('UID');
-        $cols->addFromExpression('DEFAULT_LANGUAGE_CODE');
-        $cols->addFromExpression('NAME');
-        $ds->getFilters()->addConditionFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
-        $ds->dataRead();
-        return $ds;
+        if (static::$modelSheet === null) {
+            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.App');
+            $ds->getColumns()->addMultiple([
+                'UID',
+                'ALIAS',
+                'NAME',
+                'DEFAULT_LANGUAGE_CODE'
+            ]);
+            $ds->dataRead();
+            static::$modelSheet = $ds;
+        }
+        
+        return static::$modelSheet;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\TaskHandlerInterface::handle()
+     */
     public function handle(TaskInterface $task): ResultInterface
     {
         if ($task->isTriggeredByWidget()) {
@@ -585,6 +604,11 @@ class App implements AppInterface
         }
     }
     
+    /**
+     * 
+     * @param PrototypeSelectorInterface $selector
+     * @return string
+     */
     protected function getPrototypeClassSuffix(PrototypeSelectorInterface $selector) : string
     {
         switch (true) {
@@ -594,6 +618,11 @@ class App implements AppInterface
         return '';
     }
     
+    /**
+     * 
+     * @param PrototypeSelectorInterface $selector
+     * @return string
+     */
     protected function getPrototypeClassSubNamespace(PrototypeSelectorInterface $selector) : string
     {
         switch (true) {
@@ -704,6 +733,12 @@ class App implements AppInterface
         return false;
     }
     
+    /**
+     * 
+     * @param SelectorInterface $selector
+     * @throws AppComponentNotFoundError
+     * @return unknown
+     */
     protected function loadFromModel(SelectorInterface $selector) 
     {
         if ($selector instanceof DataTypeSelectorInterface) {
