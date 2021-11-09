@@ -824,17 +824,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     
     /**
      * {@inheritdoc}
-     *
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::delete()
      */
-    function delete(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
+    public function delete(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         // filters -> WHERE
-        // Relations (joins) are not supported in delete clauses, so check for them first!
-        if (count($this->getFilters()->getUsedRelations()) > 0) {
-            throw new QueryBuilderException('Filters over attributes of related objects are not supported in DELETE queries!');
-        }
-        $where = $this->buildSqlWhere($this->getFilters());
+        $where = $this->buildSqlWhere($this->getFilters(), false);
         $where = $where ? "\n WHERE " . $where : '';
         if (! $where) {
             throw new QueryBuilderException('Cannot delete all data from "' . $this->main_object->getAlias() . '". Forbidden operation!');
@@ -846,6 +841,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return new DataQueryResultData([], $query->countAffectedRows());
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::count()
+     */
     public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $result = $data_connection->runSql($this->buildSqlQueryCount());
@@ -854,6 +854,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return new DataQueryResultData([], $cnt, true, $cnt);
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildSqlQueryCount() : string
     {
         return $this->buildSqlQueryTotals();
