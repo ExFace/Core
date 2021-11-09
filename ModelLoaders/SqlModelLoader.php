@@ -1143,11 +1143,11 @@ class SqlModelLoader implements ModelLoaderInterface
      * @param string $sqlWhere
      * @return string
      */
-    protected function buildSqlGroupConcat(string $sqlColumn, string $sqlFrom, string $sqlWhere) : string
+    protected function buildSqlGroupConcat(string $sqlColumn, string $sqlFrom, string $sqlWhere, string $delimiter = ',') : string
     {
         return <<<SQL
         
-        SELECT GROUP_CONCAT({$sqlColumn}, ',')
+        SELECT GROUP_CONCAT({$sqlColumn}, '{$delimiter}')
         FROM {$sqlFrom}
         WHERE {$sqlWhere}
 SQL;
@@ -1266,7 +1266,7 @@ SQL;
             // Load all policies of this user's group
             // + all policies of the built-in group exface.Core.AUTHENTICATED
             // + all policies without a user group
-            $authenticatedGroupOid = UserRoleSelector::AUTHENTICATED_USER_ROLE_OID;
+            $authenticatedGroupOid = UserRoleSelector::AUTHENTICATED_USER_ROLE_UID;
             $userFilter = <<<SQL
             
         apol.target_user_role_oid IN (
