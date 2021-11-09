@@ -112,6 +112,8 @@ class SqlModelLoader implements ModelLoaderInterface
     
     private $menu_tress_loaded = [];
     
+    private $auth_policies_loaded = null;
+    
     
     /**
      * 
@@ -1246,12 +1248,17 @@ SQL;
      */
     public function loadAuthorizationPolicies(AuthorizationPointInterface $authPoint, UserImpersonationInterface $userOrToken) : AuthorizationPointInterface
     {
-        if ($userOrToken->isAnonymous()) {
-            // Load all policies of the anonymous user
-            // + all policies without a user group
-            $anonymouseUserOid = UserSelector::ANONYMOUS_USER_OID;
-            $userFilter = <<<SQL
-            
+        // When called for the first time, load all policies for the given user to a cache-array indexed by 
+        // UIDs of the authorization point. All subsequent calls for specific authorization points will then
+        // use this array instead of querying the DB every time. This should be faster as most authorization
+        // points will be required for every request anyway, so we simply save DB queries here.
+        if ($this->auth_policies_loaded === null) {
+            if ($userOrToken->isAnonymous()) {
+                // Load all policies of the anonymous user
+                // + all policies without a user group
+                $anonymouseUserOid = UserSelector::ANONYMOUS_USER_OID;
+                $userFilter = <<<SQL
+                
         apol.target_user_role_oid IN (
             SELECT
                 turu.user_role_oid
@@ -1262,11 +1269,11 @@ SQL;
         )
         OR
 SQL;
-        } else {
-            // Load all policies of this user's group
-            // + all policies of the built-in group exface.Core.AUTHENTICATED
-            // + all policies without a user group
-            $authenticatedGroupOid = UserRoleSelector::AUTHENTICATED_USER_ROLE_UID;
+            } else {
+                // Load all policies of this user's group
+                // + all policies of the built-in group exface.Core.AUTHENTICATED
+                // + all policies without a user group
+                $authenticatedGroupOid = UserRoleSelector::AUTHENTICATED_USER_ROLE_UID;
             $userFilter = <<<SQL
             
         apol.target_user_role_oid IN (
@@ -1281,11 +1288,12 @@ SQL;
         OR apol.target_user_role_oid = $authenticatedGroupOid
         OR
 SQL;
-        }
-        
-        $sql = <<<SQL
+            }
+            
+            $sql = <<<SQL
 SELECT
     apol.*,
+    {$this->buildSqlUuidSelector('apol.auth_point_oid')} AS auth_point_oid,
     {$this->buildSqlUuidSelector('apol.target_page_group_oid')} AS target_page_group_oid,
     {$this->buildSqlUuidSelector('apol.target_user_role_oid')} AS target_user_role_oid,
     {$this->buildSqlUuidSelector('apol.target_object_oid')} AS target_object_oid,
@@ -1297,14 +1305,20 @@ FROM
 LEFT JOIN exf_object_action baction ON apol.target_object_action_oid = baction.oid
 LEFT JOIN exf_app capp ON baction.action_app_oid = capp.oid
 WHERE
-    apol.auth_point_oid = {$authPoint->getUid()}
-    AND apol.disabled_flag = 0
+    apol.disabled_flag = 0
     AND (
         {$userFilter}
         apol.target_user_role_oid IS NULL
     )
 SQL;
-        foreach ($this->getDataConnection()->runSql($sql)->getResultArray() as $row) {
+            $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
+            $this->auth_policies_loaded = [];
+            foreach ($rows as $row) {
+                $this->auth_policies_loaded[$row['auth_point_oid']][] = $row;
+            }
+        }
+        
+        foreach (($this->auth_policies_loaded[$authPoint->getUid()] ?? []) as $row) {
             $action = null;
             if ($row['target_object_action_oid'] !== null && $row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {
                 throw new RuntimeException('Policy cant have object action and action prototype values!');
