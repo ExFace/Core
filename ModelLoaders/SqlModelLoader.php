@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\ModelLoaders;
 
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
