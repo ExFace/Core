@@ -4,8 +4,8 @@
 
 To run PowerUI on an IIS server with SQL, configure the IIS server and install PHP as shown in one of these guides: 
 
-- [Install via "Microsoft Web Platform Installer" (Web PI) or manually on Windows Server 2016+](https://docs.microsoft.com/en-us/iis/application-frameworks/scenario-build-a-php-website-on-iis/configuring-step-1-install-iis-and-php)
-- [Install manually on Windows Server 2008+ (IIS 7+)](https://docs.microsoft.com/en-us/iis/application-frameworks/install-and-configure-php-applications-on-iis/using-fastcgi-to-host-php-applications-on-iis)
+- [Install on Windows Server 2016+ manually or via "Microsoft Web Platform Installer" (Web PI)](https://docs.microsoft.com/en-us/iis/application-frameworks/scenario-build-a-php-website-on-iis/configuring-step-1-install-iis-and-php)
+- [Install on Windows Server 2008+ (IIS 7+) manually](https://docs.microsoft.com/en-us/iis/application-frameworks/install-and-configure-php-applications-on-iis/using-fastcgi-to-host-php-applications-on-iis)
 
 ### Recommended PHP installation
 
