@@ -318,15 +318,18 @@ class FileFinderBuilder extends AbstractQueryBuilder
                 throw new QueryBuilderException('No filter value given to replace placeholders in path "' . $path . "!'");
             }
         }
+        $patterns = [];
         if ($oper === EXF_LOGICAL_OR) {
-            return array_unique(array_merge($pathPatterns, $uidPatterns));
+            $patterns = array_unique(array_merge($pathPatterns, $uidPatterns));
         } elseif (! empty($pathPatterns) && ! empty($uidPatterns)) {
             throw new QueryBuilderException('Can not add multiple different paths from different "' . EXF_LOGICAL_AND .'" combined filters!');
         } elseif (! empty($pathPatterns)) {
-            return $pathPatterns;
+            $patterns = $pathPatterns;
         } else {
-            return $uidPatterns;
+            $patterns = $uidPatterns;
         }
+        
+        return empty($patterns) ? [$addr] : $patterns;
     }
 
     /**

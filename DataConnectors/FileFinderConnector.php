@@ -3,7 +3,6 @@ namespace exface\Core\DataConnectors;
 
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\DataQueries\FileFinderDataQuery;
-use exface\Core\DataConnectors\TransparentConnector;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionQueryTypeError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
