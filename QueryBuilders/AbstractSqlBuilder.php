@@ -118,96 +118,197 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPart;
  * 
  * The default dialect-tag and `@OTHER:` can be used to define a fallback for all
  * dialects not explicitly addressed.
- * 
- * ## Data source options
- * 
- * ### On object level
- * 
- * - `SQL_SELECT_WHERE` - custom where statement automatically appended to
- * direct selects for this object (not if the object's table is joined!).
- * Usefull for generic tables, where different meta objects are stored and
- * distinguished by specific keys in a special column. The value of
- * `SQL_SELECT_WHERE` should contain the `[#~alias#]` placeholder: e.g.
- * `[#~alias#].mycolumn = 'myvalue'`.
- * 
- * ### On attribute level
- * 
- * - `SQL_DATA_TYPE` - tells the query builder what data type the column has.
- * This is only needed for complex types that require conversion: e.g. binary,
- * LOB, etc. Refer to the description of the specific query builder for concrete
- * usage instructions.
- * 
- * - `SQL_SELECT` - custom SQL SELECT statement. It replaces the entire select
- * generator and will be used as-is except for replacing placeholders. The
- * placeholder `[#~alias#]` is supported as well as placeholders for other attributes.
- * This is usefull to write wrappers for columns (e.g. `NVL([#~value#].MY_COLUMN, 0)`.
- * If the wrapper is placed here, the data address would remain writable, while
- * replacing the column name with a custom SQL statement in the data address itself,
- * would cause an SQL error when writing to it (unless `SQL_UPDATE` and `SQL_INSERT`
- * are used, of course). Note, that since this is a complete replacement, the
- * table to select from must be specified manually or via [#~alias#] placeholder.
- * 
- * - `SQL_SELECT_DATA_ADDRESS` - replaces the data address for SELECT queries.
- * In contrast to SQL_SELECT, this property will be processed by the generator
- * just like a data address would be (including all placeholders). In particular,
- * the table alias will be generated automatically, while in SQL_SELECT it
- * must be defined by the user.
- * 
- * - `SQL_JOIN_ON` - replaces the ON-part for JOINs generated from this attribute.
- * This only works for attributes, that represent a forward (n-1) relation! The
- * option only supports these static placeholders: `[#~left_alias#]` and
- * `[#~right_alias#]` (will be replaced by the aliases of the left and right
- * tables in the JOIN accordingly). Use this option to JOIN on multiple columns
- * like `[#~left_alias#].col1 = [#~right_alias#].col3 AND [#~left_alias#].col2
- * = [#~right_alias#].col4` or introduce other conditions like `[#~left_alias#].col1
- * = [#~right_alias#].col2 AND [#~right_alias#].status > 0`.
- * 
- * - `SQL_INSERT` - custom SQL INSERT statement used instead of the generator.
- * The placeholders [#~alias#] and [#~value#] are supported in addition to
- * attribute placeholders. This is usefull to write wrappers for values
- * (e.g. `to_clob('[#~value#]')` to save a string value to an Oracle CLOB column)
- * or generators (e.g. you could use `UUID()` in MySQL to have a column always created
- * with a UUID). If you need to use a generator only if no value is given explicitly,
- * use something like this: IF([#~value#]!='', [#~value#], UUID()).
- * 
- * - `SQL_UPDATE` - custom SQL for UPDATE statement. It replaces the generator
- * completely and must include the data address and the value. In contrast to
- * this, using `SQL_UPDATE_DATA_ADDRESS` will only replace the data address, while
- * the value will be generated automatically. `SQL_UPDATE` supports the placeholders
- * [#~alias#] and [#~value#] in addition to placeholders for other attributes.
- * The `SQL_UPDATE` property is usefull to write wrappers for values (e.g.
- * `to_clob('[#~value#]')` to save a string value to an Oracle CLOB column) or
- * generators (e.g. you could use `NOW()` in MySQL to have a column always updated
- * with the current date). If you need to use a generator only if no value is given
- * explicitly, use something like this: `IF([#~value#]!='', [#~value#], UUID())`.
- * 
- * - `SQL_UPDATE_DATA_ADDRESS` - replaces the data address for UPDATE queries.
- * In contrast to `SQL_UPDATE`, the value will be added automatically via generator.
- * `SQL_UPDATE_DATA_ADDRESS` supports the placeholder [#~alias#] only!
- * 
- * - `SQL_WHERE` - an entire custom WHERE clause with place with static placeholders
- * `[#~alias#]` and `[#~value#]`. It is particularly usefull for attribute
- * with custom SQL in the data address, that you do not want to calculate within the
- * WHERE clause: e.g. if you have an attribute, which concatenates `col1` and `col2`
- * via SQL, you could use the following `SQL_WHERE`: `([#~alias#].col1 LIKE '[#~value#]%'
- * OR [#~alias#].col2 LIKE '[#~value#]%')`. However, this property has a major drawback:
- * the comparator is being hardcoded. Use `SQL_WHERE_DATA_ADDRESS` instead, unless you
- * really require multiple columns.
- * 
- * - `SQL_WHERE_DATA_ADDRESS` - replaces the data address in the WHERE clause.
- * The comparator and the value will added automatically be the generator.
- * Supports the [#~alias#] placeholder in addition to placeholders for other
- * attributes. This is usefull to write wrappers to be used in filters: e.g.
- * `NVL([#~alias#].MY_COLUMN, 10)` to change comparing behavior of NULL values.
- * 
- * - `SQL_ORDER_BY` - a custom ORDER BY clause. This option currently does not
- * support any placeholders!
  *
  * @author Andrej Kabachnik
  *
  */
 abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 {
+    /**
+     * Custom where statement automatically appended to direct selects for this object (not if the object's table is joined!).
+     * 
+     * Usefull for generic tables, where different meta objects are stored and
+     * distinguished by specific keys in a special column. The value of
+     * `SQL_SELECT_WHERE` should contain the `[#~alias#]` placeholder: e.g.
+     * `[#~alias#].mycolumn = 'myvalue'`.
+     *
+     * @uxon-property SQL_SELECT_WHERE
+     * @uxon-target object
+     * @uxon-type string
+     */
+    const DAP_SQL_SELECT_WHERE = 'SQL_SELECT_WHERE';
+    
+    /**
+     * Tells the query builder what type the SQL column has.
+     * 
+     * This is only needed for complex types that require conversion: e.g. binary,
+     * LOB, etc. Refer to the description of the specific query builder for concrete
+     * usage instructions.
+     *
+     * @uxon-property SQL_DATA_TYPE
+     * @uxon-target attribute
+     * @uxon-type string
+     */
+    const DAP_SQL_DATA_TYPE = 'SQL_DATA_TYPE';
+    
+    /**
+     * Custom SQL SELECT clause for this attribute. 
+     * 
+     * It replaces the entire select generator and will be used as-is except for replacing placeholders. 
+     * The placeholder `[#~alias#]` is supported as well as placeholders for other attributes.
+     * This is usefull to write wrappers for columns (e.g. `NVL([#~value#].MY_COLUMN, 0)`.
+     * If the wrapper is placed here, the data address would remain writable, while
+     * replacing the column name with a custom SQL statement in the data address itself,
+     * would cause an SQL error when writing to it (unless `SQL_UPDATE` and `SQL_INSERT`
+     * are used, of course). Note, that since this is a complete replacement, the
+     * table to select from must be specified manually or via `[#~alias#]` placeholder.
+     *
+     * @uxon-property SQL_SELECT
+     * @uxon-target attribute
+     * @uxon-type string
+     */
+    const DAP_SQL_SELECT = 'SQL_SELECT';
+    
+    /**
+     * Replaces the data address for SELECT queries.
+     * 
+     * In contrast to `SQL_SELECT`, this property will be processed by the generator
+     * just like a data address would be (including all placeholders). In particular,
+     * the table alias will be generated automatically, while in `SQL_SELECT` it
+     * must be defined by the user.
+     *
+     * @uxon-property SQL_SELECT_DATA_ADDRESS
+     * @uxon-target attribute
+     * @uxon-type string
+     */
+    const DAP_SQL_SELECT_DATA_ADDRESS = 'SQL_SELECT_DATA_ADDRESS';
+    
+    /**
+     * Replaces the ON-part for JOINs generated from this attribute.
+     * 
+     * This only works for attributes, that represent a forward (n-1) relation! The
+     * option only supports these static placeholders: `[#~left_alias#]` and
+     * `[#~right_alias#]` (will be replaced by the aliases of the left and right
+     * tables in the JOIN accordingly). Use this option to JOIN on multiple columns
+     * like `[#~left_alias#].col1 = [#~right_alias#].col3 AND [#~left_alias#].col2
+     * = [#~right_alias#].col4` or introduce other conditions like `[#~left_alias#].col1
+     * = [#~right_alias#].col2 AND [#~right_alias#].status > 0`.
+     *
+     * @uxon-property SQL_JOIN_ON
+     * @uxon-target attribute
+     * @uxon-type string
+     */
+    const DAP_SQL_JOIN_ON = 'SQL_JOIN_ON';
+    
+    /**
+     * Custom SQL INSERT statement used instead of the value - typically a wrapper for the value.
+     * 
+     * The placeholders `[#~alias#]` and `[#~value#]` are supported in addition to
+     * attribute placeholders. This is usefull to write wrappers for values
+     * (e.g. `to_clob('[#~value#]')` to save a string value to an Oracle CLOB column)
+     * or generators (e.g. you could use `UUID()` in MySQL to have a column always created
+     * with a UUID). If you need to use a generator only if no value is given explicitly,
+     * use something like this: `IF([#~value#]!='', [#~value#], UUID())`.
+     *
+     * @uxon-property SQL_INSERT
+     * @uxon-target attribute
+     * @uxon-type string
+     */
+    const DAP_SQL_INSERT = 'SQL_INSERT';
+    
+    /**
+     * Replaces the data address for INSERT queries.
+     *
+     * @uxon-property SQL_INSERT_DATA_ADDRESS
+     * @uxon-target attribute
+     * @uxon-type string
+     */
+    const DAP_SQL_INSERT_DATA_ADDRESS = 'SQL_INSERT_DATA_ADDRESS';
+    
+    /**
+     * Set to TRUE to generate a UUID on INSERT that is optimized for column indexing (recommended for UUID primary keys)
+     * 
+     * If you need UUIDs as primary keys, you can use this built-in generator, that reorders a
+     * natively generated time-based UUID in a way, that it is more-or-less sequential (later
+     * generated UUIDs are larger when compared to previous ones) - this makes them better
+     * suitable for indexing in SQL tables.
+     *
+     * @uxon-property SQL_INSERT_UUID_OPTIMIZED
+     * @uxon-target attribute
+     * @uxon-type boolean
+     */
+    const DAP_SQL_INSERT_UUID_OPTIMIZED = 'SQL_INSERT_UUID_OPTIMIZED';
+    
+    /**
+     * Custom SQL for UPDATE statements to use instead of the value - typically some wrapper for the value. 
+     * 
+     * The `SQL_UPDATE` property is usefull to write wrappers for values (e.g.
+     * `to_clob('[#~value#]')` to save a string value to an Oracle CLOB column) or
+     * generators (e.g. you could use `NOW()` in MySQL to have a column always updated
+     * with the current date). If you need to use a generator only if no value is given
+     * explicitly, use something like this: `IF([#~value#]!='', [#~value#], UUID())`.
+     * 
+     * `SQL_UPDATE` supports the placeholders `[#~alias#]` and `[#~value#]` in addition to 
+     * placeholders for other attributes.
+     *
+     * @uxon-property SQL_UPDATE
+     * @uxon-target attribute
+     * @uxon-type string
+     */
+    const DAP_SQL_UPDATE = 'SQL_UPDATE';
+    
+    /**
+     * Replaces the data address for UPDATE queries.
+     *
+     * @uxon-property SQL_UPDATE_DATA_ADDRESS
+     * @uxon-target attribute
+     * @uxon-type string
+     */
+    const DAP_SQL_UPDATE_DATA_ADDRESS = 'SQL_UPDATE_DATA_ADDRESS';
+    
+    /**
+     * An entire custom WHERE clause with place with static placeholders `[#~alias#]` and `[#~value#]`. 
+     * 
+     * It is particularly usefull for attribute with custom SQL in the data address, that you 
+     * do not want to calculate within the WHERE clause: e.g. if you have an attribute, which 
+     * concatenates `col1` and `col2` via SQL, you could use the following: 
+     * 
+     * `SQL_WHERE`: `([#~alias#].col1 LIKE '[#~value#]%' OR [#~alias#].col2 LIKE '[#~value#]%')`
+     * 
+     * However, this property has a major drawback: the comparator is being hardcoded. Use 
+     * `SQL_WHERE_DATA_ADDRESS` instead, unless you really require multiple columns.
+     *
+     * @uxon-property SQL_WHERE
+     * @uxon-target attribute
+     * @uxon-type string
+     */
+    const DAP_SQL_WHERE = 'SQL_WHERE';
+    
+    /**
+     * Replaces the data address in the WHERE clause.
+     * 
+     * The comparator and the value will added automatically be the generator.
+     * Supports the `[#~alias#]` placeholder in addition to placeholders for other
+     * attributes. This is usefull to write wrappers to be used in filters: e.g.
+     * `NVL([#~alias#].MY_COLUMN, 10)` to change comparing behavior of NULL values.
+     *
+     * @uxon-property SQL_WHERE_DATA_ADDRESS
+     * @uxon-target attribute
+     * @uxon-type string
+     */
+    const DAP_SQL_WHERE_DATA_ADDRESS = 'SQL_WHERE_DATA_ADDRESS';
+    
+    /**
+     * A custom ORDER BY clause. 
+     * 
+     * This option currently does not support any placeholders!
+     *
+     * @uxon-property SQL_ORDER_BY
+     * @uxon-target attribute
+     * @uxon-type string
+     */
+    const DAP_SQL_ORDER_BY = 'SQL_ORDER_BY';
+    
     // Config
     private $reserved_words = array(
         'SIZE',
@@ -446,7 +547,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             // Ignore attributes, that do not reference an sql column (= do not have a data address at all)
             $attrAddress = $this->buildSqlDataAddress($attr);
-            if (! $attrAddress || $this->checkForSqlStatement($attrAddress)) {
+            $attrInsertAddress = $qpart->getDataAddressProperty(self::DAP_SQL_INSERT_DATA_ADDRESS);
+            $custom_insert_sql = $qpart->getDataAddressProperty(self::DAP_SQL_INSERT);
+            $column = $attrAddress ? $attrInsertAddress : $attrAddress;
+            if ((! $column || $this->checkForSqlStatement($column)) && ! $custom_insert_sql) {
                 continue;
             }
             // Save the query part for later processing if it is the object's UID
@@ -457,11 +561,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // Prepare arrays with column aliases and values to implode them later when building the query
             // Make sure, every column is only addressed once! So the keys of both array actually need to be the column aliases
             // to prevent duplicates
-            $columns[$attrAddress] = $attrAddress;
-            $custom_insert_sql = $qpart->getDataAddressProperty('SQL_INSERT');
+            $columns[$column] = $column;
             foreach ($qpart->getValues() as $row => $value) {
                 try {
-                    $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                    $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE));
                 } catch (\Throwable $e) {
                     throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row ' . $row . ' of CREATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . StringDataType::truncate($value, 100, false), null, $e);
                 }
@@ -476,7 +579,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 } else {
                     $insert_sql = $value;
                 }
-                $values[$row][$attrAddress] = $insert_sql;
+                $values[$row][$column] = $insert_sql;
             }
         }
         
@@ -484,13 +587,19 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // This is important because the UID will mostly not be marked as a mandatory attribute in order to preserve the
         // possibility of mixed creates and updates among multiple rows. But an empty non-required attribute will never
         // show up as a value here. Still that value is required!
-        $uidIsOptimizedUUID = BooleanDataType::cast($mainObj->getUidAttribute()->getDataAddressProperty('SQL_USE_OPTIMIZED_UID'));
-        $uidCustomSqlInsert = $mainObj->getUidAttribute()->getDataAddressProperty('SQL_INSERT');
-        if ($uidCustomSqlInsert === '') {
+        if ($mainObj->hasUidAttribute()) {
+            $uidAttr = $mainObj->getUidAttribute();
+            $uidIsOptimizedUUID = BooleanDataType::cast($uidAttr->getDataAddressProperty(self::DAP_SQL_INSERT_UUID_OPTIMIZED));
+            $uidCustomSqlInsert = $uidAttr->getDataAddressProperty(self::DAP_SQL_INSERT);
+            if ($uidCustomSqlInsert === '') {
+                $uidCustomSqlInsert = null;
+            }
+        } else {
+            $uidIsOptimizedUUID = false;
             $uidCustomSqlInsert = null;
         }
         if ($uid_qpart === null && ($uidIsOptimizedUUID == true || $uidCustomSqlInsert)) {
-            $uid_qpart = $this->addValue($mainObj->getUidAttributeAlias(), null);
+            $uid_qpart = $this->addValue($uidAttr, null);
             $uidAddress = $this->buildSqlDataAddress($uid_qpart);
             $columns[$uidAddress] = $uidAddress;
         }
@@ -500,7 +609,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         
         if ($uidIsOptimizedUUID && $uidCustomSqlInsert) {
-            throw new QueryBuilderException('Invalid SQL data address configuration for UID of object "' . $mainObj->getAliasWithNamespace() . '": Cannot use SQL_INSERT and SQL_USE_OPTIMIZED_UID at the same time!');
+            throw new QueryBuilderException('Invalid SQL data address configuration for UID of object "' . $mainObj->getAliasWithNamespace() . '": Cannot use SQL_INSERT and SQL_INSERT_UUID_OPTIMIZED at the same time!');
         }
         
         // If the UID query part has a custom SQL insert statement, render it here and make sure it's saved
@@ -511,7 +620,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 '[#~value#]'
             ), array(
                 $mainObj->getAlias(),
-                $this->prepareInputValue('', $uid_qpart->getAttribute()->getDataType(), $uid_qpart->getDataAddressProperty('SQL_DATA_TYPE'))
+                $this->prepareInputValue('', $uid_qpart->getAttribute()->getDataType(), $uid_qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE))
             ), $uidCustomSqlInsert);
             
             $columns[$uidAddress] = $uidAddress;
@@ -540,8 +649,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             } elseif ($last_uid_sql_var) {
                 // If the primary key was a custom generated one, it was saved to the corresponding SQL variable.
                 // Fetch it from the data base
-                if (strcasecmp($uid_qpart->getDataAddressProperty('SQL_DATA_TYPE'), 'binary') === 0) {
-                    $last_id_q = $data_connection->runSql('SELECT CONCAT(\'0x\', LOWER(HEX(' . $last_uid_sql_var . ')))');
+                if (strcasecmp($uid_qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE), 'binary') === 0) {
+                    $last_id_q = $data_connection->runSql('SELECT ' . $this->buildSqlSelectBinaryAsHEX($last_uid_sql_var));
                 } else {
                     $last_id_q = $data_connection->runSql('SELECT ' . $last_uid_sql_var );
                 }
@@ -555,7 +664,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // TODO How to get multiple inserted ids???
             if ($cnt = $query->countAffectedRows()) {
                 $insertedCounter += $cnt;
-                if ($uidAlias !== null || $this->getMainObject()->hasUidAttribute() && $this->getMainObject()->getUidAttribute()->getDataAddress()) {
+                if ($uidAlias !== null || ($uidAttr && $uidAttr->getDataAddress())) {
                     $insertedIds[] = [$uidAlias ?? $this->getMainObject()->getUidAttribute()->getAlias() => $last_id];
                 }
             }
@@ -580,7 +689,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
          if ($last_uid_sql_var) {
          // If the primary key was a custom generated one, it was saved to the corresponding SQL variable.
          // Fetch it from the data base
-         $last_id = reset($data_connection->runSql('SELECT CONCAT(\'0x\', HEX(' . $last_uid_sql_var . '))')->getResultArray()[0]);
+         $last_id = reset($data_connection->runSql('SELECT ' . $this->buildSqlSelectBinaryAsHEX($last_uid_sql_var))->getResultArray()[0]);
          } else {
          // If the primary key was autogenerated, fetch it via built-in function
          $last_id = $query->getLastInsertId();
@@ -644,22 +753,22 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 
                 $attrAddress = $this->buildSqlDataAddress($attr);
                 // Ignore attributes, that do not reference an sql column (or do not have a data address at all)
-                if (! $qpart->getDataAddressProperty('SQL_UPDATE') && ! $qpart->getDataAddressProperty('SQL_UPDATE_DATA_ADDRESS') && $this->checkForSqlStatement($attrAddress)) {
+                if (! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE) && ! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS) && $this->checkForSqlStatement($attrAddress)) {
                     continue;
                 }
                 
-                if ($qpart->getDataAddressProperty('SQL_UPDATE_DATA_ADDRESS')){
-                    $column = str_replace('[#~alias#]', $table_alias, $qpart->getDataAddressProperty('SQL_UPDATE_DATA_ADDRESS'));
+                if ($qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS)){
+                    $column = str_replace('[#~alias#]', $table_alias, $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS));
                 } else {
                     $column = $table_alias . $this->getAliasDelim() . $attrAddress;
                 }
                 
-                $custom_update_sql = $qpart->getDataAddressProperty('SQL_UPDATE');
+                $custom_update_sql = $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE);
                 
                 if (count($qpart->getValues()) == 1) {
                     $values = $qpart->getValues();
                     try {
-                        $value = $this->prepareInputValue(reset($values), $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                        $value = $this->prepareInputValue(reset($values), $qpart->getDataType(), $attr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE));
                     } catch (\Throwable $e) {
                         throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row 0 of UPDATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . $value, null, $e);
                     }
@@ -679,7 +788,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     
                     foreach ($qpart->getValues() as $row_nr => $value) {
                         try {
-                            $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                            $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE));
                         } catch (\Throwable $e) {
                             throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row ' . $row_nr . ' of SQL UPDATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . $value, null, $e);
                         }
@@ -907,7 +1016,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $address = $this->buildSqlDataAddress($qpart);
         
         // skip attributes with no select (e.g. calculated from other values via formatters)
-        if (! $address && ! $qpart->getDataAddressProperty('SQL_SELECT') && ! $qpart->getDataAddressProperty('SQL_SELECT_DATA_ADDRESS')) {
+        if (! $address && ! $qpart->getDataAddressProperty(self::DAP_SQL_SELECT) && ! $qpart->getDataAddressProperty(self::DAP_SQL_SELECT_DATA_ADDRESS)) {
             return;
         }
         
@@ -965,12 +1074,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             } elseif ($this->checkForSqlStatement($address)) {
                 // see if the attribute is a statement. If so, just replace placeholders
                 $output = $this->replacePlaceholdersInSqlAddress($address, $qpart->getAttribute()->getRelationPath(), ['~alias' => $select_from], $select_from);
-            } elseif ($custom_select = $qpart->getDataAddressProperty('SQL_SELECT')){
+            } elseif ($custom_select = $qpart->getDataAddressProperty(self::DAP_SQL_SELECT)){
                 // IF there is a custom SQL_SELECT statement, use it.
                 $output = $this->replacePlaceholdersInSqlAddress($custom_select, $qpart->getAttribute()->getRelationPath(), ['~alias' => $select_from], $select_from);
             } else {
                 // otherwise get the select from the attribute
-                if (! $data_address = $qpart->getDataAddressProperty('SQL_SELECT_DATA_ADDRESS')){
+                if (! $data_address = $qpart->getDataAddressProperty(self::DAP_SQL_SELECT_DATA_ADDRESS)){
                     $data_address = $address;
                 }
                 $output = $select_from . $this->getAliasDelim() . $data_address;
@@ -1070,7 +1179,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // This only makes sense, if we have a reference to the parent query (= the $select_from parameter is set)
             if ($select_from) {
                 $rightKeyAttribute = $rev_rel->getRightKeyAttribute();
-                $customJoinOn = $qpart->getDataAddressProperty('SQL_JOIN_ON');
+                $customJoinOn = $qpart->getDataAddressProperty(self::DAP_SQL_JOIN_ON);
                 if (! $reg_rel_path->isEmpty()) {
                     // attach to the related object key of the last regular relation before the reverse one
                     $junction_attribute = $this->getMainObject()->getAttribute(RelationPath::relationPathAdd($reg_rel_path->toString(), $this->getMainObject()->getRelation($reg_rel_path->toString())->getRightKeyAttribute()->getAlias()));
@@ -1111,7 +1220,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     }
                     // If it's a custom JOIN, calculate it here
                     $customJoinOn = StringDataType::replacePlaceholders($customJoinOn, ['~left_alias' => $this->getShortAlias($this->getMainObject()->getAlias()), '~right_alias' => $select_from]);
-                    $junctionQpart->setDataAddressProperty('SQL_WHERE', $customJoinOn);
+                    $junctionQpart->setDataAddressProperty(self::DAP_SQL_WHERE, $customJoinOn);
                 }
             }
             
@@ -1138,7 +1247,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $select = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false);
         
         // Can't just list binary values - need to transform them to strings first!
-        if (strcasecmp($qpart->getAttribute()->getDataAddressProperty('SQL_DATA_TYPE'),'binary') === 0 && ($aggregator->getFunction() == AggregatorFunctionsDataType::LIST_ALL || $aggregator->getFunction() == AggregatorFunctionsDataType::LIST_DISTINCT)) {
+        if (strcasecmp($qpart->getAttribute()->getDataAddressProperty(self::DAP_SQL_DATA_TYPE),'binary') === 0 && ($aggregator->getFunction() == AggregatorFunctionsDataType::LIST_ALL || $aggregator->getFunction() == AggregatorFunctionsDataType::LIST_DISTINCT)) {
             $select = $this->buildSqlSelectBinaryAsHEX($select);
         }
         
@@ -1192,7 +1301,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if (!$if_comp || is_null($if_val)) {
                     throw new QueryBuilderException('Invalid argument for COUNT_IF aggregator: "' . $cond . '"!', '6WXNHMN');
                 }
-                $output = "SUM(CASE WHEN " . $this->buildSqlWhereComparator($sql, $if_comp, $if_val, $qpart->getAttribute()->getDataType(), $qpart->getDataAddressProperty('SQL_DATA_TYPE'), $qpart->getValueListDelimiter()). " THEN 1 ELSE 0 END)";
+                $output = "SUM(CASE WHEN " . $this->buildSqlWhereComparator($sql, $if_comp, $if_val, $qpart->getAttribute()->getDataType(), $qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE), $qpart->getValueListDelimiter()). " THEN 1 ELSE 0 END)";
                 break;
             default:
                 break;
@@ -1208,7 +1317,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $table = str_replace('[#~alias#]', $alias, $this->buildSqlDataAddress($this->getMainObject()));
         $from = $table . $this->buildSqlAsForTables($this->getMainTableAlias());
         
-        // Replace dynamic palceholder
+        // Replace dynamic palceholders
         $from = $this->replacePlaceholdersByFilterValues($from);
         
         return $from;
@@ -1284,7 +1393,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         // generate the join sql
                         $join = "\n " . $this->buildSqlJoinType($rel) . ' JOIN ' . str_replace('[#~alias#]', $right_table_alias, $this->buildSqlDataAddress($right_obj)) . $this->buildSqlAsForTables($right_table_alias) . ' ON ';
                         $leftKeyAttr = $rel->getLeftKeyAttribute();
-                        if ($customOn = $leftKeyAttr->getDataAddressProperty('SQL_JOIN_ON')) {
+                        if ($customOn = $leftKeyAttr->getDataAddressProperty(self::DAP_SQL_JOIN_ON)) {
                             // If a custom join condition ist specified in the attribute, that defines the relation, just replace the aliases in it
                             $join .= StringDataType::replacePlaceholders($customOn, ['~left_alias' => $left_table_alias, '~right_alias' => $right_table_alias]);
                         } else {
@@ -1338,7 +1447,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $left_join_on = $this->buildSqlJoinSide($this->buildSqlDataAddress($leftKeyAttr), $leftTableAlias);
             $right_join_on = $this->buildSqlJoinSide($this->buildSqlDataAddress($rightKeyAttr), $rightTableAlias);
             $join .=  $left_join_on . ' = ' . $right_join_on;
-            if ($customSelectWhere = $right_obj->getDataAddressProperty('SQL_SELECT_WHERE')) {
+            if ($customSelectWhere = $right_obj->getDataAddressProperty(self::DAP_SQL_SELECT_WHERE)) {
                 if (stripos($customSelectWhere, 'SELECT ') === false) {
                     $join .= ' AND ' . StringDataType::replacePlaceholders($customSelectWhere, ['~alias' => $rightTableAlias]);
                 } else {
@@ -1439,7 +1548,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $delimiter = $qpart->getValueListDelimiter();
         
         $select = $this->buildSqlSelectGrouped($qpart);
-        $customWhereClause = $qpart->getDataAddressProperty('SQL_WHERE');
+        $customWhereClause = $qpart->getDataAddressProperty(self::DAP_SQL_WHERE);
         $object_alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() : $this->getMainObject()->getAlias());
         $table_alias = $this->getShortAlias($object_alias . $this->getQueryId());
         // doublecheck that the attribut is known
@@ -1465,7 +1574,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $subj = $select;
             }
             // Do the actual comparing
-            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'), $delimiter, $qpart->isValueDataAddress());
+            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $qpart->getDataType(), $attr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE), $delimiter, $qpart->isValueDataAddress());
         }
         
         return $output;
@@ -1568,8 +1677,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $delimiter = $qpart->getValueListDelimiter();
         
         $select = $this->buildSqlDataAddress($attr);
-        $customWhereClause = $qpart->getDataAddressProperty('SQL_WHERE');
-        $customWhereAddress = $qpart->getDataAddressProperty('SQL_WHERE_DATA_ADDRESS');
+        $customWhereClause = $qpart->getDataAddressProperty(self::DAP_SQL_WHERE);
+        $customWhereAddress = $qpart->getDataAddressProperty(self::DAP_SQL_WHERE_DATA_ADDRESS);
         $object_alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() : $this->getMainObject()->getAlias());
         $table_alias = $this->getShortAlias($object_alias . $this->getQueryId());
         
@@ -1610,7 +1719,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
             // Do the actual comparing
-            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'), $delimiter, $qpart->isValueDataAddress());
+            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $qpart->getDataType(), $attr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE), $delimiter, $qpart->isValueDataAddress());
         }
         return $output;
     }
@@ -1872,10 +1981,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // If the key attribute does not have a data address, but we use a custom join we can
                 // select all (*) - that's OK because custom JOINs use WHERE EXISTS
                 if ($this->buildSqlDataAddress($relqKeyPart) === ''
-                    && ! $relqKeyPart->getDataAddressProperty('SQL_SELECT')
-                    && ! $relqKeyPart->getDataAddressProperty('SQL_SELECT_DATA_ADDRESS')
-                    && $relqKeyPart->getDataAddressProperty('SQL_JOIN_ON')) {
-                        $relqKeyPart->setDataAddressProperty('SQL_SELECT', '*');
+                    && ! $relqKeyPart->getDataAddressProperty(self::DAP_SQL_SELECT)
+                    && ! $relqKeyPart->getDataAddressProperty(self::DAP_SQL_SELECT_DATA_ADDRESS)
+                    && $relqKeyPart->getDataAddressProperty(self::DAP_SQL_JOIN_ON)) {
+                        $relqKeyPart->setDataAddressProperty(self::DAP_SQL_SELECT, '*');
                     }
                     
                     // Add the filter relative to the first reverse relation with the same $value and $comparator
@@ -1905,10 +2014,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // Handle SQL_JOIN_ON if it is defined for the right attribute (i.e. if we would join our left table to our right table,
                     // the JOIN would use this custom ON statement). Here we build the custom ON statement and use it as a WHERE clause in
                     // the subselect.
-                    if ($customJoinOn = $start_rel->getRightKeyAttribute()->getDataAddressProperty('SQL_JOIN_ON')) {
+                    if ($customJoinOn = $start_rel->getRightKeyAttribute()->getDataAddressProperty(self::DAP_SQL_JOIN_ON)) {
                         $customJoinOn = StringDataType::replacePlaceholders($customJoinOn, ['~left_alias' => $relq->getMainTableAlias(), '~right_alias' => $this->getMainTableAlias()]);
                         $joinFilterQpart = $relq->addFilterFromString($start_rel->getRightKeyAttribute()->getAlias(), $qpart->getCompareValue(), $qpart->getComparator());
-                        $joinFilterQpart->setDataAddressProperty('SQL_WHERE', $customJoinOn);
+                        $joinFilterQpart->setDataAddressProperty(self::DAP_SQL_WHERE, $customJoinOn);
                         $sql = ' EXISTS (' . $relq->buildSqlQuerySelect() . ')';
                         return $sql;
                     }
@@ -1955,7 +2064,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 break;
         }
         
-        if ($customOrderBy = $qpart->getDataAddressProperty("SQL_ORDER_BY")) {
+        if ($customOrderBy = $qpart->getDataAddressProperty(self::DAP_SQL_ORDER_BY)) {
             $phs = StringDataType::findPlaceholders($customOrderBy);
             if (empty($phs)) {
                 // Fallback to older code in case the SQL_ORDER_BY has no placeholders
