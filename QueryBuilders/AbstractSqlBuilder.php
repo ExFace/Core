@@ -599,7 +599,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $uidCustomSqlInsert = null;
         }
         if ($uid_qpart === null && ($uidIsOptimizedUUID == true || $uidCustomSqlInsert)) {
-            $uid_qpart = $this->addValue($uidAttr, null);
+            $uid_qpart = $this->addValue($uidAttr->getAlias(), null);
             $uidAddress = $this->buildSqlDataAddress($uid_qpart);
             $columns[$uidAddress] = $uidAddress;
         }
