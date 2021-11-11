@@ -86,6 +86,16 @@ use exface\Core\DataTypes\BooleanDataType;
  */
 class FileFinderBuilder extends AbstractQueryBuilder
 {
+    
+    /**
+     * If set to TRUE request without at least a single filter are skipped returning an empty result automatically.
+     *
+     * @uxon-property force_filtering
+     * @uxon-target object
+     * @uxon-type boolean
+     */
+    const DAP_FORCE_FILTERING = 'force_filtering';
+    
     /**
      * Restrict the depth of traversing folders.
      * 
@@ -402,7 +412,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
         $result_rows = array();
         $pagination_applied = false;
         // Check if force filtering is enabled
-        if ($this->getMainObject()->getDataAddressProperty('force_filtering') && count($this->getFilters()->getFiltersAndNestedGroups()) < 1) {
+        if ($this->getMainObject()->getDataAddressProperty(self::DAP_FORCE_FILTERING) && count($this->getFilters()->getFiltersAndNestedGroups()) < 1) {
             return false;
         }
         
