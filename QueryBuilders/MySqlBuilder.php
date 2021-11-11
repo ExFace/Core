@@ -93,7 +93,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         $joins = $this->buildSqlJoins($this->getFilters());
         
         // Object data source property SQL_SELECT_WHERE -> WHERE
-        if ($custom_where = $this->getMainObject()->getDataAddressProperty('SQL_SELECT_WHERE')) {
+        if ($custom_where = $this->getMainObject()->getDataAddressProperty(static::DAP_SQL_SELECT_WHERE)) {
             $where = $this->appendCustomWhere($where, $custom_where);
         }
         
@@ -120,7 +120,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         foreach ($this->getAttributes() as $qpart) {
             $qpartAttr = $qpart->getAttribute();
             // First see, if the attribute has some kind of special data type (e.g. binary)
-            if ($qpartAttr->getDataAddressProperty('SQL_DATA_TYPE') == 'binary') {
+            if ($qpartAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE) == 'binary') {
                 $this->addBinaryColumn($qpart->getAlias());
             }
             
@@ -248,7 +248,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         $totals_having = $this->buildSqlHaving($this->getFilters());
         $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($this->getFilters()));
         // Object data source property SQL_SELECT_WHERE -> WHERE
-        if ($custom_where = $this->getMainObject()->getDataAddressProperty('SQL_SELECT_WHERE')) {
+        if ($custom_where = $this->getMainObject()->getDataAddressProperty(static::DAP_SQL_SELECT_WHERE)) {
             $totals_where = $this->appendCustomWhere($totals_where, $custom_where);
         }
         // GROUP BY

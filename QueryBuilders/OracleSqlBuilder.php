@@ -106,7 +106,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             }
             
             // Object data source property SQL_SELECT_WHERE -> WHERE
-            if ($custom_where = $this->getMainObject()->getDataAddressProperty('SQL_SELECT_WHERE')) {
+            if ($custom_where = $this->getMainObject()->getDataAddressProperty(static::DAP_SQL_SELECT_WHERE)) {
                 $where = $this->appendCustomWhere($where, $custom_where);
             }
             
@@ -254,7 +254,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             $joins = $this->buildSqlJoins($this->getFilters());
             
             // Object data source property SQL_SELECT_WHERE -> WHERE
-            if ($custom_where = $this->getMainObject()->getDataAddressProperty('SQL_SELECT_WHERE')) {
+            if ($custom_where = $this->getMainObject()->getDataAddressProperty(static::DAP_SQL_SELECT_WHERE)) {
                 $where = $this->appendCustomWhere($where, $custom_where);
             }
             $where = $where ? "\n WHERE " . $where : '';
@@ -344,7 +344,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($this->getFilters()));
         
         // Object data source property SQL_SELECT_WHERE -> WHERE
-        if ($custom_where = $this->getMainObject()->getDataAddressProperty('SQL_SELECT_WHERE')) {
+        if ($custom_where = $this->getMainObject()->getDataAddressProperty(static::DAP_SQL_SELECT_WHERE)) {
             $totals_where = $this->appendCustomWhere($totals_where, $custom_where);
         }
         
@@ -391,8 +391,8 @@ class OracleSqlBuilder extends AbstractSqlBuilder
      */
     protected function buildSqlOrderBy(QueryPartSorter $qpart, $select_from = null) : string
     {
-        if ($qpart->getDataAddressProperty("SQL_ORDER_BY")) {
-            $output = ($select_from ? $select_from : $this->getShortAlias($qpart->getAttribute()->getRelationPath()->toString())) . $this->getAliasDelim() . $qpart->getDataAddressProperty("SQL_ORDER_BY");
+        if ($qpart->getDataAddressProperty(static::DAP_SQL_ORDER_BY)) {
+            $output = ($select_from ? $select_from : $this->getShortAlias($qpart->getAttribute()->getRelationPath()->toString())) . $this->getAliasDelim() . $qpart->getDataAddressProperty(static::DAP_SQL_ORDER_BY);
         } else {
             $output = '"' . $this->getShortAlias($qpart->getColumnKey()) . '"';
             
@@ -499,18 +499,18 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             }
             // Ignore attributes, that do not reference an sql column (= do not have a data address at all)
             $qpartAddress = $this->buildSqlDataAddress($qpart);
-            if (! $qpart->getDataAddressProperty('SQL_INSERT') && (! $qpartAddress || $this->checkForSqlStatement($qpartAddress))) {
+            if (! $qpart->getDataAddressProperty(static::DAP_SQL_INSERT) && (! $qpartAddress || $this->checkForSqlStatement($qpartAddress))) {
                 continue;
             }
             // Save the query part for later processing if it is the object's UID
             if ($attr->isUidForObject()) {
                 $uid_qpart = $qpart;
             }
-            $column = $qpart->getDataAddressProperty('SQL_INSERT_DATA_ADDRESS') ? $qpart->getDataAddressProperty('SQL_INSERT_DATA_ADDRESS') : $qpartAddress;
+            $column = $qpart->getDataAddressProperty(static::DAP_SQL_INSERT_DATA_ADDRESS) ? $qpart->getDataAddressProperty(static::DAP_SQL_INSERT_DATA_ADDRESS) : $qpartAddress;
             $columns[$column] = $column;
-            $custom_insert_sql = $qpart->getDataAddressProperty('SQL_INSERT');
+            $custom_insert_sql = $qpart->getDataAddressProperty(static::DAP_SQL_INSERT);
             foreach ($qpart->getValues() as $row => $value) {
-                $value = $this->prepareInputValue($value, $attr->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                $value = $this->prepareInputValue($value, $attr->getDataType(), $attr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE));
                 if ($custom_insert_sql) {
                     // If there is a custom insert SQL for the attribute, use it
                     $values[$row][$column] = str_replace(array(
@@ -531,7 +531,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             // This is important because the UID will mostly not be marked as a mandatory attribute in order to preserve the
             // possibility of mixed creates and updates among multiple rows. But an empty non-required attribute will never
             // show up as a value here. Still that value is required!
-            if ($uid_generator = $this->getMainObject()->getUidAttribute()->getDataAddressProperty('SQL_INSERT')) {
+            if ($uid_generator = $this->getMainObject()->getUidAttribute()->getDataAddressProperty(static::DAP_SQL_INSERT)) {
                 $last_uid_sql_var = '@last_uid';
                 $columns[] = $this->buildSqlDataAddress($this->getMainObject()->getUidAttribute());
                 foreach ($values as $nr => $row) {
