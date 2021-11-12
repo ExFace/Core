@@ -176,9 +176,9 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::setDisabled()
      */
-    public function setDisabled(?bool $trueOrFalseOrNull) : WidgetInterface
+    public function setDisabled(?bool $trueOrFalseOrNull, string $reason = null) : WidgetInterface
     {
-        return parent::setDisabled($trueOrFalseOrNull);
+        return parent::setDisabled($trueOrFalseOrNull, $reason);
     }
 
     /**

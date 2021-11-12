@@ -406,10 +406,16 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         if ($hint = parent::getHint()) {
             return $hint;
         }
-        if ($this->hasAction() && $hint = $this->getAction()->getHint()) {
-            return $hint;
+        if (! ($this->hasAction() && $hint = $this->getAction()->getHint())) {
+            $hint = $this->getCaption();
         }
-        return $this->getCaption();
+        
+        // Disabled reason
+        if ($this->isDisabled() && $disabledReason = $this->getDisabledReason()) {
+            $hint .= ($hint ? "\n\n" : '') . $disabledReason;
+        }
+        
+        return $hint;
     } 
     
     /**

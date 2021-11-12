@@ -68,7 +68,9 @@ abstract class AbstractWidget implements WidgetInterface
 
     private $object_qualified_alias = null;
 
-    private $disabled = NULL;
+    private $disabled = null;
+    
+    private $disabled_reason = null;
 
     private $width = null;
 
@@ -611,10 +613,20 @@ abstract class AbstractWidget implements WidgetInterface
      * 
      * @see \exface\Core\Interfaces\WidgetInterface::setDisabled()
      */
-    public function setDisabled(?bool $trueOrFalseOrNull) : WidgetInterface
+    public function setDisabled(?bool $trueOrFalseOrNull, string $reason = null) : WidgetInterface
     {
         $this->disabled = $trueOrFalseOrNull;
+        $this->disabled_reason = $reason;
         return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getDisabledReason() : ?string
+    {
+        return $this->disabled_reason;
     }
 
     /**
@@ -848,6 +860,8 @@ abstract class AbstractWidget implements WidgetInterface
             }
             $hint = $this->hint_generated;
         }
+        
+        // Input specific formatting 
         if ($this instanceof iTakeInput && $this instanceof iShowSingleAttribute && $this->isBoundToAttribute() && $this->isDisabled() !== true) {
             $attr = $this->getAttribute();
             if ($dataTypeHint = $attr->getDataType()->getInputFormatHint()) {
@@ -857,6 +871,11 @@ abstract class AbstractWidget implements WidgetInterface
             if ($this->isRequired() === true) {
                 $hint .= ($hint ? "\n\n" : '') . $this->translate('WIDGET.INPUT.REQUIRED_HINT');
             }
+        }
+        
+        // Disabled reason
+        if ($hint && $this->isDisabled() && $disabledReason = $this->getDisabledReason()) {
+            $hint .= $disabledReason;
         }
         return $hint;
     }

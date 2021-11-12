@@ -190,7 +190,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
         return $this;
     }
 
-    public function getUidColumn()
+    public function getUidColumn() : DataColumn
     {
         if (! $this->getUidColumnId()) {
             throw new WidgetHasNoUidColumnError($this, 'No UID column found in DataColumnGroup: either set uid_column_id for the column group explicitly or give the object "' . $this->getMetaObject()->getAliasWithNamespace() . '" a UID attribute!');
@@ -206,7 +206,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      *
      * @return boolean
      */
-    public function hasUidColumn()
+    public function hasUidColumn() : bool
     {
         try {
             $this->getUidColumn();

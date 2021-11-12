@@ -173,6 +173,7 @@
     "CONTEXT.OBJECTBASKET.SHOW_DETAILS_DIALOG": "Show content",
     "CONTEXT.OBJECTBASKET.REMOVE": "Remove",
     "CONTEXT.OBJECTBASKET.REMOVE_ALL": "Remove all",
+	"CONTEXT.OBJECTBASKET.BUTTON_WITHOUT_UID_DISABLED_REASON": "Not available for widgets, that cannot select a single object",
     
     "CONTEXT.USER.NAME": "User",
     "CONTEXT.USER.NOT_LOGGED_IN_HINT": "You are not logged in. Please Login!",
@@ -440,8 +441,7 @@
 	"WIDGET.INPUT.REQUIRED_HINT": "This field cannot be empty!",
 	"WIDGET.INPUT.VALIDATION_REQUIRED": "Cannot be empty!",
 	"WIDGET.INPUT.VALIDATION_MUST": "Must",
-	"WIDGET.INPUT.VALIDATION_LENGTH_CONDITION": "have %condition% characters",	
-	"WIDGET.INPUT.VALIDATION_REGEX_CONDITION": "match pattern %regex%",
+	"WIDGET.INPUT.VALIDATION_LENGTH_CONDITION": "have %condition% characters",
 	"WIDGET.INPUT.VALIDATION_AND": "and",
 	"WIDGET.INPUTCOMBOTABLE.COLUMN_NAME_USES": "Uses",
 	
@@ -460,5 +460,4 @@
 	"ERROR.SUPPORT_HINT_WITH_EMAIL": "Please be sure to include the LOG-number of this error when contacting <a href=\"mailto:%support_mail%?subject=Support%20request%20[%system_name%]%20%log_id%\">support</a>: \"%log_id%\"!",
 	"ERROR.SUPPORT_HINT": "Please be sure to include the LOG-number of this error when contacting support: \"%log_id%\"!",
 	"WARNING.CAPTION": "Warning"
-	
 }

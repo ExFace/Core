@@ -3,6 +3,9 @@ namespace exface\Core\Widgets\Traits;
 
 use exface\Core\Widgets\Button;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iHaveColumns;
+use exface\Core\Interfaces\Widgets\iUseData;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 trait iHaveButtonsAndToolbarsTrait 
 {
@@ -199,5 +202,28 @@ trait iHaveButtonsAndToolbarsTrait
             $this->buttonsPropertyValue = null;
         }
         return $tb;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::hasUidData()
+     */
+    public function hasUidData() : bool
+    {
+        switch (true) {
+            case $this instanceof iHaveColumns:
+                return $this->hasUidColumn();
+            case $this instanceof iUseData:
+                return $this->getData()->hasUidColumn();
+            case $this instanceof iContainOtherWidgets:
+                if ($this->getMetaObject()->hasUidAttribute()) {
+                    if (! empty($this->findChildrenByAttribute($this->getMetaObject()->getUidAttribute()))) {
+                        return true;
+                    }
+                }
+                break;
+        }
+        return false;
     }
 }
