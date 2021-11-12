@@ -199,7 +199,7 @@ class DataRowGrouper implements WidgetPartInterface, iHaveCaption
     /**
      * Set to FALSE to collapse all groups when loading data - TRUE by default.
      *
-     * @uxon-property expand_all_groups
+     * @uxon-property expand_first_group_ony
      * @uxon-type boolean
      * @uxon-default false
      *

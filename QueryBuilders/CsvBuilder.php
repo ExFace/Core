@@ -13,16 +13,38 @@ use exface\Core\Exceptions\QueryBuilderException;
 /**
  * A query builder to read CSV files.
  *
- * Supported data address properties
- * - DELIMITER - defaults to comma (,)
- * - ENCLOSURE - defaults to double quotes (")
- * - HAS_HEADER_ROW - specifies if the file has a header row with coulumn titles or not. Defaults to no (0)
- *
  * @author Andrej Kabachnik
  *        
  */
 class CsvBuilder extends FileContentsBuilder
-{
+{    
+    /**
+     * Delimiter between row values - defaults to comma (,)
+     *
+     * @uxon-property DELIMITER
+     * @uxon-target object
+     * @uxon-type string
+     */
+    const DAP_DELIMITER = 'DELIMITER';
+    
+    /**
+     * Enclosing character for strings - defaults to double quotes (")
+     *
+     * @uxon-property ENCLOSURE
+     * @uxon-target object
+     * @uxon-type string
+     */
+    const DAP_ENCLOSURE = 'ENCLOSURE';
+    
+    /**
+     * Specifies if the file has a header row with coulumn titles or not - defaults to no (0)
+     *
+     * @uxon-property HAS_HEADER_ROW
+     * @uxon-target object
+     * @uxon-type boolean
+     */
+    const DAP_HAS_HEADER_ROW = 'HAS_HEADER_ROW';
+    
     /**
      * 
      * {@inheritDoc}
@@ -178,7 +200,7 @@ class CsvBuilder extends FileContentsBuilder
      */
     protected function getDelimiter() : string
     {
-        return $this->getMainObject()->getDataAddressProperty('DELIMITER') ? $this->getMainObject()->getDataAddressProperty('DELIMITER') : ',';
+        return $this->getMainObject()->getDataAddressProperty(self::DAP_DELIMITER) ? $this->getMainObject()->getDataAddressProperty(self::DAP_DELIMITER) : ',';
     }
     
     /**
@@ -187,15 +209,19 @@ class CsvBuilder extends FileContentsBuilder
      */
     protected function getEnclosure() : string
     {
-        return $this->getMainObject()->getDataAddressProperty('ENCLOSURE') ? $this->getMainObject()->getDataAddressProperty('ENCLOSURE') : "'";
+        return $this->getMainObject()->getDataAddressProperty(self::DAP_ENCLOSURE) ? $this->getMainObject()->getDataAddressProperty(self::DAP_ENCLOSURE) : "'";
     }
     
+    /**
+     * 
+     * @return bool
+     */
     protected function hasHeaderRow() : bool
     {
-        if ($this->getMainObject()->getDataAddressProperty('HAS_HEADER_ROW') === null) {
+        if ($this->getMainObject()->getDataAddressProperty(self::DAP_HAS_HEADER_ROW) === null) {
             return false;
         } else {
-            return BooleanDataType::cast($this->getMainObject()->getDataAddressProperty('HAS_HEADER_ROW'));
+            return BooleanDataType::cast($this->getMainObject()->getDataAddressProperty(self::DAP_HAS_HEADER_ROW));
         }
     }
 

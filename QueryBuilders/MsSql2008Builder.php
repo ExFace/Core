@@ -129,11 +129,18 @@ SQL;
         // SQL Server 2008 cannot sort over an alias from the SELECT - need to place the entire data address 
         // in the ORDER BY in case the attribute is a custom SQL statement.
         if ($this->checkForSqlStatement($qpart->getDataAddress()) 
-            && ! $qpart->getDataAddressProperty("SQL_ORDER_BY") 
+            && ! $qpart->getDataAddressProperty(static::DAP_SQL_ORDER_BY) 
             && $select_from === $this->getShortAlias($this->getMainObject()->getAlias())
         ) {
             return $this->buildSqlSelect($qpart, null, null, '') . ' ' . $qpart->getOrder();
         }
+        
+        // Similarly, we must use the original select clause if we are trying to sort over a joined
+        // or subselected column
+        if (! empty($qpart->getUsedRelations()) && ! $qpart->getDataAddressProperty(static::DAP_SQL_ORDER_BY)) {
+            return $this->buildSqlSelect($qpart, null, null, '') . ' ' . $qpart->getOrder();
+        }
+        
         return parent::buildSqlOrderBy($qpart, $select_from);
     }
 }
