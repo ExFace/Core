@@ -195,5 +195,14 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
     {
         return $this->getMenu()->createButton($uxon);
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::hasUidData()
+     */
+    public function hasUidData() : bool
+    {
+        return $this->getInputWidget()->hasUidData();
+    }
 }
-?>

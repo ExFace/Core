@@ -112,31 +112,29 @@ trait iHaveColumnsAndColumnGroupsTrait
     }
 
     /**
-     * Returns the UID column as DataColumn
      *
-     * @return \exface\Core\Widgets\DataColumn
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getUidColumn()
      */
-    public function getUidColumn()
+    public function getUidColumn() : DataColumn
     {
         return $this->getColumnGroupMain()->getUidColumn();
     }
 
     /**
-     * Returns TRUE if this data widget has a UID column or FALSE otherwise.
-     *
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::hasUidColumn()
      */
-    public function hasUidColumn()
+    public function hasUidColumn() : bool
     {
         return $this->getColumnGroupMain()->hasUidColumn();
     }
     
     /**
-     * Returns an array with all columns of the grid.
-     * If no columns have been added yet,
-     * default display attributes of the meta object are added as columns automatically.
-     *
-     * @return DataColumn[]
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getColumns()
      */
     public function getColumns() : array
     {

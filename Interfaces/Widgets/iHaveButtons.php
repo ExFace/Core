@@ -96,4 +96,11 @@ interface iHaveButtons extends WidgetInterface
      * @return number
      */
     public function countButtons(callable $filter_callback = null);
+    
+    /**
+     * Returns TRUE if this widget can provide UIDs in the input data for the button and FALSE otherwise.
+     * 
+     * @return bool
+     */
+    public function hasUidData() : bool;
 }
