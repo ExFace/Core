@@ -194,9 +194,11 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
 
     /**
      *
-     * @param bool|NULL $value            
+     * @param bool|NULL $value
+     * @param string|NULL $reason 
+     * @return WidgetInterface           
      */
-    public function setDisabled(?bool $trueOrFalseOrNull) : WidgetInterface;
+    public function setDisabled(?bool $trueOrFalseOrNull, string $reason = null) : WidgetInterface;
 
     /**
      * Returns a dimension object representing the height of the widget.

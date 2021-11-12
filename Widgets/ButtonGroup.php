@@ -192,5 +192,18 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
         $this->setButtons($btns);
         return $this;
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::hasUidData()
+     */
+    public function hasUidData() : bool
+    {
+        $input = $this->getInputWidget();
+        if ($input instanceof iHaveButtons) {
+            return $input->hasUidData();
+        }
+        return false;
+    }
 }
-?>

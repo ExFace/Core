@@ -173,6 +173,7 @@
     "CONTEXT.OBJECTBASKET.SHOW_DETAILS_DIALOG": "Show content",
     "CONTEXT.OBJECTBASKET.REMOVE": "Remove",
     "CONTEXT.OBJECTBASKET.REMOVE_ALL": "Remove all",
+	"CONTEXT.OBJECTBASKET.BUTTON_WITHOUT_UID_DISABLED_REASON": "Not available for widgets, that cannot select a single object",
     
     "CONTEXT.USER.NAME": "User",
     "CONTEXT.USER.NOT_LOGGED_IN_HINT": "You are not logged in. Please Login!",

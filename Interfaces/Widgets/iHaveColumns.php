@@ -88,4 +88,18 @@ interface iHaveColumns extends WidgetInterface
      * @return \exface\Core\Widgets\DataColumn
      */
     public function createColumnFromUxon(UxonObject $uxon) : DataColumn;
+    
+    /**
+     * Returns the UID column as DataColumn
+     *
+     * @return \exface\Core\Widgets\DataColumn
+     */
+    public function getUidColumn() : DataColumn;
+    
+    /**
+     * Returns TRUE if this data widget has a UID column or FALSE otherwise.
+     *
+     * @return boolean
+     */
+    public function hasUidColumn() : bool;
 }
