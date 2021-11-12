@@ -5,7 +5,6 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\ResultFactory;
-use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Actions\iExportData;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
@@ -13,6 +12,11 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Exceptions\Actions\ActionLogicError;
+use exface\Core\Interfaces\Widgets\iUseData;
+use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Widgets\Container;
 
 /**
  * This action exports data as a JSON array of key-value-pairs.
@@ -201,23 +205,10 @@ class ExportJSON extends ReadData implements iExportData
             }
         }
         
-        $widget = $this->getWidgetToReadFor($task);
-        /* @var $widget \exface\Core\Interfaces\Widgets\iShowData */
-        if (! ($widget instanceof iShowData)) {
-            $page = $task->getPageTriggeredOn();
-            $widget = WidgetFactory::create($page, 'Data');
-            foreach ($dataSheetMaster->getColumns() as $col) {
-                if ($col->getHidden()) {
-                    continue;
-                }
-                $colWidget = WidgetFactory::create($page, 'DataColumn', $widget);
-                $colWidget->setAttributeAlias($col->getAttributeAlias());
-                $widget->addColumn($colWidget);
-            }
-        }
+        $exportedWidget = $this->getWidgetToReadFor($task);
         
         // Datei erzeugen und schreiben
-        $columnNames = $this->writeHeader($widget);
+        $columnNames = $this->writeHeader($exportedWidget);
         $rowsOnPage = $this->getLimitRowsPerRequest();
         $rowOffset = 0;
         $errorMessage = null;
@@ -253,23 +244,52 @@ class ExportJSON extends ReadData implements iExportData
     }
     
     /**
-     * Generates an array of column names from the passed DataSheet and writes it as headers
-     * to the file.
+     * Generates an array of column names from the passed array of widgets.
      *
      * The column name array is returned.
      *
-     * @param iShowData $dataWidget
+     * @param WidgetInterface $widget
      * @return string[]
      */
-    protected function writeHeader(iShowData $dataWidget) : array
+    protected function writeHeader(WidgetInterface $exportedWidget) : array
     {
         $header = [];
-        foreach ($dataWidget->getColumns() as $col) {
-            if (! $col->getHidden()) {
-                $header[$col->getDataColumnName()] = $this->getUseAttributeAliasAsHeader() === true ? $col->getAttributeAlias() : $col->getCaption();
+        $columnWidgets = $this->getExportColumnWidgets($exportedWidget);
+        foreach ($columnWidgets as $widget) {
+            if (! $widget->getHidden() && $widget instanceof iShowDataColumn && $widget->isBoundToDataColumn()) {
+                if ($this->getUseAttributeAliasAsHeader() && ($widget instanceof iShowSingleAttribute) && $widget->isBoundToAttribute()) {
+                    $headerName = $widget->getAttributeAlias();
+                } else {
+                    $headerName = $widget->getCaption();
+                }
+                $header[$widget->getDataColumnName()] = $headerName;
             }
         }
         return $header;
+    }
+    
+    /**
+     * 
+     * @param WidgetInterface $exportedWidget
+     * @return array
+     */
+    protected function getExportColumnWidgets(WidgetInterface $exportedWidget) : array
+    {
+        switch (true) {
+            case $exportedWidget instanceof iUseData:
+                $widgets = $exportedWidget->getData()->getColumns();
+                break;
+            case $exportedWidget instanceof iShowData:
+                $widgets = $exportedWidget->getColumns();
+                break;
+            case $exportedWidget instanceof Container:
+                $widgets = $exportedWidget->getWidgets();
+                break;
+            default:
+                $widgets = [];
+        }
+        
+        return $widgets;
     }
     
     /**

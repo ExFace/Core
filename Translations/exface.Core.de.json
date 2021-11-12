@@ -106,6 +106,7 @@
     "ACTION.OBJECTBASKETREMOVE.NAME": "Entfernen",
     "ACTION.OBJECTBASKETREMOVE.RESULT": "%context_name%: %number%x %object_name% entfernt.",
     "ACTION.OBJECTBASKETREMOVE.RESULT_ALL": "%context_name%: Alle Objekte vom Typ %object_name% entfernt.",
+	"CONTEXT.OBJECTBASKET.BUTTON_WITHOUT_UID_DISABLED_REASON": "Nicht verfügbar, wenn keine einzelnen Objekte selektiert werden können",
 
     "ACTION.READDATA.NAME": "Suchen",
     "ACTION.READDATA.SEARCH": "Suchen",
