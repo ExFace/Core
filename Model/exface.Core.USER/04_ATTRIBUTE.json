@@ -393,9 +393,9 @@
         },
         {
             "CREATED_ON": "2019-11-19 15:49:43",
-            "MODIFIED_ON": "2020-05-12 13:49:58",
+            "MODIFIED_ON": "2021-11-09 12:04:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ea0ae4273af8e1be19e4b318306b9a",
             "SORTABLEFLAG": "1",
             "FILTERABLEFLAG": "1",
@@ -433,7 +433,9 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": {
+                "password_policy_config": "=GetConfig('SECURITY.PASSWORD_CONFIG', 'exface.Core')"
+            }
         },
         {
             "CREATED_ON": "2020-05-12 13:49:14",

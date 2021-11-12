@@ -158,7 +158,11 @@ class StringDataType extends AbstractDataType
         // validate length
         $length = mb_strlen($value);
         if ($this->getLengthMin() > 0 && $length < $this->getLengthMin()){
-            throw $this->createValidationError('The lenght of the string "' . $value . '" (' . $length . ') is less, than the minimum length required for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengthMin() . ')!');
+            $excValue = '';
+            if (! $this->isSensitiveData()) {
+                $excValue = '"' . $value . '" (' . $length . ')';
+            }
+            throw $this->createValidationError('The lenght of the string ' . $excValue . ' is less, than the minimum length required for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengthMin() . ')!');
         }
         if ($this->getLengthMax() && $length > $this->getLengthMax()){
             $value = substr($value, 0, $this->getLengthMax());
@@ -173,7 +177,11 @@ class StringDataType extends AbstractDataType
             }
             
             if (! $match){
-                throw $this->createValidationError('Value "' . $value . '" does not match the regular expression mask "' . $this->getValidatorRegex() . '" of data type ' . $this->getAliasWithNamespace() . '!');
+                $excValue = '';
+                if (! $this->isSensitiveData()) {
+                    $excValue = '"' . $value . '"';
+                }
+                throw $this->createValidationError('Value ' . $excValue . ' does not match the regular expression mask "' . $this->getValidatorRegex() . '" of data type ' . $this->getAliasWithNamespace() . '!');
             }
         }
         

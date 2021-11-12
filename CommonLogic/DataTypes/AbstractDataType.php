@@ -16,6 +16,8 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Traits\MetaModelPrototypeTrait;
 use exface\Core\Uxon\DatatypeSchema;
 use exface\Core\Exceptions\SecurityException;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\CommonLogic\Selectors\AppSelector;
 
 abstract class AbstractDataType implements DataTypeInterface
 {
@@ -474,6 +476,23 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public function getValidationErrorText() : ?string
     {
+        if (! $this->validationErrorText && $this->validationErrorCode) {
+            $exface = $this->getWorkbench();
+            $ds = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.MESSAGE');
+            $ds->getColumns()->addMultiple(['TITLE', 'HINT', 'DESCRIPTION', 'TYPE', 'APP']);
+            $ds->getFilters()->addConditionFromString('CODE', $this->getValidationErrorCode());
+            $ds->dataRead();
+            if (! $ds->isEmpty()) {
+                $row = $ds->getRow(0);
+                $app = $exface->getApp(new AppSelector($exface, $row['APP']));
+                $translator = $app->getTranslator();
+                $domain = 'Messages/' . $this->getValidationErrorCode();
+                if (! $translator->hasTranslationDomain($domain)) {
+                    return null;
+                }                
+                return $translator->translate('TITLE', null, null, $domain, $row['TITLE']);
+            }
+        }
         return $this->validationErrorText;
     }
 

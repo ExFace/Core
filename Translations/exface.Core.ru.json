@@ -390,7 +390,8 @@
 	"WIDGET.INPUT.REQUIRED_HINT": "This field cannot be empty!",
 	"WIDGET.INPUT.VALIDATION_REQUIRED": "Cannot be empty!",
 	"WIDGET.INPUT.VALIDATION_MUST": "Must",
-	"WIDGET.INPUT.VALIDATION_LENGTH_CONDITION": "have %condition% characters",
+	"WIDGET.INPUT.VALIDATION_LENGTH_CONDITION": "have %condition% characters",	
+	"WIDGET.INPUT.VALIDATION_REGEX_CONDITION": "match pattern %regex%",
 	"WIDGET.INPUT.VALIDATION_AND": "and",
 	"WIDGET.INPUTCOMBOTABLE.COLUMN_NAME_USES": "Использовано",
 	
