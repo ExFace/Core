@@ -549,7 +549,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $attrAddress = $this->buildSqlDataAddress($attr);
             $attrInsertAddress = $qpart->getDataAddressProperty(self::DAP_SQL_INSERT_DATA_ADDRESS);
             $custom_insert_sql = $qpart->getDataAddressProperty(self::DAP_SQL_INSERT);
-            $column = $attrAddress ? $attrInsertAddress : $attrAddress;
+            $column = $attrAddress ? $attrAddress : $attrInsertAddress;
             if ((! $column || $this->checkForSqlStatement($column)) && ! $custom_insert_sql) {
                 continue;
             }
