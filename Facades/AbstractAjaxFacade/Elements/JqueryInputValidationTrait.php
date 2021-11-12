@@ -38,15 +38,16 @@ trait JqueryInputValidationTrait {
      * {@inheritdoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsValidator()
      */
-    public function buildJsValidator()
+    public function buildJsValidator(string $valJs = null)
     {
         $validatorJs = $this->buildJsValidatorCheckRequired('val', 'return false;')
         . $this->buildJsValidatorCheckDataType('val', 'return false;', $this->getWidget()->getValueDataType());
         
+        $valJs = $valJs ?? $this->buildJsValueGetter();
         if ($validatorJs !== '') {
             return "(function(){ 
-                        var val = {$this->buildJsValueGetter()}; 
-                        $validatorJs; 
+                        var val = {$valJs}; 
+                        $validatorJs;
                         return true; 
                     })()";
         } else {
@@ -97,6 +98,10 @@ trait JqueryInputValidationTrait {
                     $js .= "if($valueJs.toString().length > {$type->getLengthMax()}) { $onFailJs } \n";
                 }
                 
+                if ($type->getValidatorRegex() !== null) {
+                    $js .= "if({$type->getValidatorRegex()}.test({$valueJs}) == false) { {$onFailJs} } \n";
+                }
+                
                 break;
         }
         return $js;
@@ -135,6 +140,9 @@ trait JqueryInputValidationTrait {
                 }
                 if ($lengthCond) {
                     $text .= $translator->translate('WIDGET.INPUT.VALIDATION_LENGTH_CONDITION', ['%condition%' => $lengthCond]);
+                }
+                if ($type->getValidatorRegex()) {
+                    $text = ($text ? $text . ' ' . $and . ' ' : '') . $translator->translate('WIDGET.INPUT.VALIDATION_REGEX_CONDITION', ['%regex%' => $type->getValidatorRegex()]);
                 }
                 break;
         }
