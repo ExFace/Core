@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
+use exface\Core\Interfaces\Events\DataSheetEventInterface;
 
 /**
  * This behavior will hash password attribute values when data is created or updated.
@@ -26,12 +27,12 @@ class PasswordHashingBehavior extends AbstractBehavior
         // any other behaviors get their hands on the data!
         $this->getWorkbench()->eventManager()
         ->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleOnCreateEvent'], 1000)
-        ->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnUpdateEvent'], 1000);
+        ->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnCreateEvent'], 1000);
         $this->setRegistered(true);
         return $this;
     }
     
-    public function handleOnCreateEvent(OnBeforeCreateDataEvent $event) 
+    public function handleOnCreateEvent(DataSheetEventInterface $event) 
     {
         if ($this->isDisabled()) {
             return;
@@ -48,31 +49,8 @@ class PasswordHashingBehavior extends AbstractBehavior
         // Check if the updated_on column is present in the sheet
         if ($column = $data_sheet->getColumns()->getByAttribute($this->getPasswordAttribute())) {
             foreach ($column->getValues(false) as $rowNr => $value) {
-                $column->setValue($rowNr, $this->hash($value));
-            }
-        }
-        return;
-    }
-    
-    public function handleOnUpdateEvent(OnBeforeUpdateDataEvent $event)
-    {
-        if ($this->isDisabled()) {
-            return;
-        }
-        
-        $data_sheet = $event->getDataSheet();
-        
-        // Do not do anything, if the base object of the data sheet is not the object with the behavior and is not
-        // extended from it.
-        if (! $data_sheet->getMetaObject()->is($this->getObject())) {
-            return;
-        }
-        
-        // Check if the updated_on column is present in the sheet
-        if ($column = $data_sheet->getColumns()->getByAttribute($this->getPasswordAttribute())) {
-            foreach ($column->getValues(false) as $rowNr => $value) {
-                if ($this->isHash($value) === false) {
-                    $column->setValue($rowNr, $this->hash($value));
+                if ($this->isHash($value) === false && ! $column->getDataType()->isValueEmpty($value)) {
+                    $column->setValue($rowNr, $this->hash($column->getDataType()->parse($value)));
                 }
             }
         }
