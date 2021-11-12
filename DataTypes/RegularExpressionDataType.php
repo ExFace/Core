@@ -113,7 +113,7 @@ class RegularExpressionDataType extends StringDataType
             return null;
         }
         
-        $delimiters = $delimiters ?? self::REGEX_DELIMITERS;
+        $delimiters = $delimiters ?? self::DELIMITERS;
         foreach ($delimiters as $delim) {
             if (StringDataType::startsWith($pattern, $delim) === true && StringDataType::endsWith($pattern, $delim) === true) {
                 return $delim;

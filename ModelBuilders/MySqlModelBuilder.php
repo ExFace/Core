@@ -49,8 +49,13 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
                     $row['REQUIREDFLAG'] = 0;
                 }
                 
-                if ($def !== '') {
-                    $row['DEFAULT_VALUE'] = is_numeric($def) ? $def : "'$def'";
+                switch (true) {
+                    case $def === 'CURRENT_TIMESTAMP':
+                        $row['DEFAULT_VALUE'] = '=Now()';
+                        break;
+                    case $def !== '':
+                        $row['DEFAULT_VALUE'] = is_numeric($def) ? $def : "'$def'";
+                        break;
                 }
             }
             

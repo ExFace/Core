@@ -22,7 +22,8 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Widgets\InputComboTable;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
-use exface\Core\Interfaces\Widgets\iUseInputWidget;
+use exface\Core\Interfaces\Actions\iModifyData;
+use exface\Core\Actions\SaveData;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -203,6 +204,7 @@ JS;
 
     {$this->buildJsJqueryElement()}
     .data('_exfColumnNames', {$colNamesJson})
+    {$this->buildJsResetSelection('')}
     .jexcel({
         data: [ [] ],
         allowRenameColumn: false,
@@ -232,6 +234,20 @@ JS;
         },
         ondeleterow: function(el, rowNumber, numOfRows, rowDOMElements, rowData, cellAttributes) {
             {$this->buildJsFixedFootersSpread()}
+        },
+        onselection: function(el, x1, y1, x2, y2, origin) {
+            $(el).data('_exfSelection', {
+                x1: x1,
+                y1: y1,
+                x2: x2,
+                y2: y2
+            });
+        },
+        onblur: function(el) {
+            var oSel = $(el).data('_exfSelection');
+            if (oSel.x1 !== null) {
+                $(el).jexcel('updateSelectionFromCoords', oSel.x1, oSel.y1, oSel.x2, oSel.y2);
+            }
         }
     });
     
@@ -756,26 +772,39 @@ JS;
         $rows = $this->buildJsConvertArrayToData("{$this->buildJsJqueryElement()}.jexcel('getData', false)");
         $dataObj = $this->getMetaObjectForDataGetter($action);
         
-        // If we have an action, that is based on another object and does not have an input mapper for
-        // the widgets's object, the data should become a subsheet. Otherwise we just return the data
-        // as-is.
-        if ($widget->isEditable() && $action && ! $dataObj->is($widget->getMetaObject()) && $action->getInputMapper($widget->getMetaObject()) === null) {
-            // If the action is based on the same object as the widget's parent, use the widget's
-            // logic to find the relation to the parent. Otherwise try to find a relation to the
-            // action's object and throw an error if this fails.
-            if ($widget->hasParent() && $dataObj->is($widget->getParent()->getMetaObject()) && $relPath = $widget->getObjectRelationPathFromParent()) {
-                $relAlias = $relPath->toString();
-            } elseif ($relPath = $dataObj->findRelationPath($widget->getMetaObject())) {
-                $relAlias = $relPath->toString();
-            }
-            
-            if ($relAlias === null || $relAlias === '') {
-                throw new WidgetConfigurationError($widget, 'Cannot use data from widget "' . $widget->getId() . '" with action on object "' . $dataObj->getAliasWithNamespace() . '": no relation can be found from widget object to action object', '7CYA39T');
-            }
-            
-            $configurator_element = $this->getFacade()->getElement($this->getWidget()->getConfiguratorWidget());
-            
-            $data = <<<JS
+        switch (true) {
+            // If there is no action or the action 
+            case $action === null:
+            case $widget->isEditable() && ($action instanceof iModifyData) && $dataObj->is($widget->getMetaObject()):
+                $data = <<<JS
+    {
+        oId: '{$this->getWidget()->getMetaObject()->getId()}',
+        rows: {$rows}
+    }
+    
+JS;
+                break;
+                
+            // If we have an action, that is based on another object and does not have an input mapper for
+            // the widgets's object, the data should become a subsheet. Otherwise we just return the data
+            // as-is.
+            case $widget->isEditable() && ! $dataObj->is($widget->getMetaObject()) && $action->getInputMapper($widget->getMetaObject()) === null:
+                // If the action is based on the same object as the widget's parent, use the widget's
+                // logic to find the relation to the parent. Otherwise try to find a relation to the
+                // action's object and throw an error if this fails.
+                if ($widget->hasParent() && $dataObj->is($widget->getParent()->getMetaObject()) && $relPath = $widget->getObjectRelationPathFromParent()) {
+                    $relAlias = $relPath->toString();
+                } elseif ($relPath = $dataObj->findRelationPath($widget->getMetaObject())) {
+                    $relAlias = $relPath->toString();
+                }
+                
+                if ($relAlias === null || $relAlias === '') {
+                    throw new WidgetConfigurationError($widget, 'Cannot use data from widget "' . $widget->getId() . '" with action on object "' . $dataObj->getAliasWithNamespace() . '": no relation can be found from widget object to action object', '7CYA39T');
+                }
+                
+                $configurator_element = $this->getFacade()->getElement($this->getWidget()->getConfiguratorWidget());
+                
+                $data = <<<JS
     {
         oId: '{$dataObj->getId()}',
         rows: [
@@ -793,15 +822,23 @@ JS;
     }
     
 JS;
-        } else {
-        
-            $data = <<<JS
+                break;
+                
+            // If we are reading, than we need the special data from the configurator
+            // widget: filters, sorters, etc.
+            case $action instanceof iReadData:
+                return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
+            
+            default:
+                $data = <<<JS
     {
         oId: '{$this->getWidget()->getMetaObject()->getId()}',
-        rows: {$rows}
+        rows: ({$rows} || []).filter(function(oRow, i){
+            return $('#{$this->getId()}').jexcel('getSelectedRows', true).indexOf(i) >= 0;
+        })
     }
-    
-JS;
+
+JS;         
         }
             
         return "function(){ {$this->buildJsFixedFootersSpread()}; return {$data} }()";
@@ -829,6 +866,7 @@ JS;
         }
     }
     {$this->buildJsJqueryElement()}.jexcel('setData', aData);
+    {$this->buildJsResetSelection($this->buildJsJqueryElement())};
 }()
 
 JS;
@@ -947,11 +985,19 @@ JS;
         return $this->buildJsJExcelColumnEditorOptions($col) === null && ! ($col->getCellWidget() instanceof Display && $col->getCellWidget()->getDisableFormatting());
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function buildJsDataResetter() : string
     {
-        return "{$this->buildJsJqueryElement()}.jexcel('setData', [ [] ])";
+        return "(function(){ {$this->buildJsJqueryElement()}.jexcel('setData', [ [] ]); {$this->buildJsResetSelection($this->buildJsJqueryElement())} })()";
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsFunctionsForJExcel() : string
     {
         return <<<JS
@@ -970,6 +1016,12 @@ JS;
         return "jexcel.destroy({$this->buildJsJqueryElement()}[0], true); $('.exf-partof-{$this->getId()}').remove();";
     }
     
+    /**
+     * 
+     * @param NumberDataType $dataType
+     * @param string $decimalSeparator
+     * @return string
+     */
     protected function buildMaskNumeric(NumberDataType $dataType, string $decimalSeparator = null) : string
     {
         if ($dataType->getPrecisionMax() === 0) {
@@ -1087,5 +1139,15 @@ JS;
     return aVals.join('{$delimiter}');
 })()
 JS;
+    }
+    
+    /**
+     * 
+     * @param string $elementJs
+     * @return string
+     */
+    protected function buildJsResetSelection(string $elementJs) : string
+    {
+        return "$elementJs.data('_exfSelection', {x1: null, y1: null, x2: null, y2: null})";
     }
 }
