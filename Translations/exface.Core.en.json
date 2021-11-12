@@ -442,6 +442,7 @@
 	"WIDGET.INPUT.VALIDATION_REQUIRED": "Cannot be empty!",
 	"WIDGET.INPUT.VALIDATION_MUST": "Must",
 	"WIDGET.INPUT.VALIDATION_LENGTH_CONDITION": "have %condition% characters",
+	"WIDGET.INPUT.VALIDATION_REGEX_CONDITION": "match the pattern %regex%",
 	"WIDGET.INPUT.VALIDATION_AND": "and",
 	"WIDGET.INPUTCOMBOTABLE.COLUMN_NAME_USES": "Uses",
 	
@@ -460,4 +461,5 @@
 	"ERROR.SUPPORT_HINT_WITH_EMAIL": "Please be sure to include the LOG-number of this error when contacting <a href=\"mailto:%support_mail%?subject=Support%20request%20[%system_name%]%20%log_id%\">support</a>: \"%log_id%\"!",
 	"ERROR.SUPPORT_HINT": "Please be sure to include the LOG-number of this error when contacting support: \"%log_id%\"!",
 	"WARNING.CAPTION": "Warning"
+	
 }
