@@ -1450,17 +1450,23 @@ JS;
             _index: {$series->getIndex()},
             type: 'heatmap',
             label: {
-            normal: {
-                show: true,
-                formatter: function(param){
-                    if (param.data['{$series->getValueDataColumn()->getDataColumnName()}'] ===  0) {
-                        return 'N/A';
-                    } else {
-                        return param.data['{$series->getValueDataColumn()->getDataColumnName()}']
+                normal: {
+                    show: true,
+                    formatter: function(param){
+                        if (param.data['{$series->getValueDataColumn()->getDataColumnName()}'] ===  0) {
+                            return 'N/A';
+                        } else {
+                            return param.data['{$series->getValueDataColumn()->getDataColumnName()}']
+                        }
                     }
                 }
+            },
+            emphasis: {
+                itemStyle: {
+                    shadowBlur: 10,
+                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                }
             }
-        },
             coordinateSystem: 'cartesian2d',
             encode: {
                 x: '{$series->getXAxis()->getDataColumn()->getDataColumnName()}',
@@ -3107,7 +3113,7 @@ JS;
                 $yAxisCaption = $series->getYAxis()->getCaption();
                 $yAxisName = $series->getYAxis()->getDataColumn()->getDataColumnName();
                 $valueName = $series->getValueDataColumn()->getDataColumnName();
-                $valueCaption = $series->getValueDataColumn()->getCaption();
+                $valueCaption = $series->getCaption();
                 return <<<JS
                 
 {
