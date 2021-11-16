@@ -213,9 +213,7 @@ class DebugContext extends AbstractContext
         
         // Disable global actions and basket action as we know exactly, what we
         // want to do here
-        $data_list->getToolbarMain()
-        ->setIncludeGlobalActions(false)
-        ->setIncludeObjectBasketActions(false);
+        $data_list->getToolbarMain()->setIncludeGlobalActions(false);
         
         // Add the filename column (the UID column is always there)
         $data_list->addColumn($data_list->createColumnFromAttribute($data_list->getMetaObject()->getAttribute('NAME')));

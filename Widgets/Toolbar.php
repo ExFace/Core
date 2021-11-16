@@ -359,5 +359,17 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
         return $widgets[$index];
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::hasUidData()
+     */
+    public function hasUidData() : bool
+    {
+        $input = $this->getInputWidget();
+        if ($input instanceof iHaveButtons) {
+            return $input->hasUidData();
+        }
+        return false;
+    }
 }
-?>

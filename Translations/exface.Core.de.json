@@ -106,6 +106,7 @@
     "ACTION.OBJECTBASKETREMOVE.NAME": "Entfernen",
     "ACTION.OBJECTBASKETREMOVE.RESULT": "%context_name%: %number%x %object_name% entfernt.",
     "ACTION.OBJECTBASKETREMOVE.RESULT_ALL": "%context_name%: Alle Objekte vom Typ %object_name% entfernt.",
+	"CONTEXT.OBJECTBASKET.BUTTON_WITHOUT_UID_DISABLED_REASON": "Nicht verfügbar, wenn keine einzelnen Objekte selektiert werden können",
 
     "ACTION.READDATA.NAME": "Suchen",
     "ACTION.READDATA.SEARCH": "Suchen",
@@ -429,7 +430,6 @@
 	"WIDGET.INPUT.VALIDATION_REQUIRED": "Darf nicht leer sein!",
 	"WIDGET.INPUT.VALIDATION_MUST": "Muss",
 	"WIDGET.INPUT.VALIDATION_LENGTH_CONDITION": "%condition% Zeichen lang sein",
-	"WIDGET.INPUT.VALIDATION_REGEX_CONDITION": "Muster %regex% entsprechen",
 	"WIDGET.INPUT.VALIDATION_AND": "und",
 	"WIDGET.INPUTCOMBOTABLE.COLUMN_NAME_USES": "Verwendungen",
 	

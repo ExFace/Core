@@ -4,11 +4,6 @@
     "FACADES.DEFAULT_WIDGET_FOR_UNKNOWN_DATA_TYPES" : "Input",
     "FACADES.DEFAULT_WIDGET_FOR_RELATIONS" : "InputComboTable",
 	
-	"SECURITY.PASSWORD_CONFIG": {
-		"validator_regex": "/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?([^\\\\w\\\\s]|[_])).{8,}$/",
-		"validation_error_code": "7INNL87"
-	},
-	
 	"WIDGET.CONTEXTBAR": {
 	   "contexts": [
 	       	{

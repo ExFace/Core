@@ -129,8 +129,6 @@ class ObjectBasketShowDialog extends ShowDialog
         $dialog->addButton($menu);
         
         // Add actions menu to info dialog too
-        // FIXME change to $info_button->getAction()->getDialogWidget()->getToolbarMain()->setIncludeObjectBasketActions(true);
-        // because the input widget for the menu still is the table (see above)
         $info_button->getAction()->getWidget()->addButton($menu);
         
         return $dialog;

@@ -6,6 +6,8 @@ use League\Csv\Writer;
 use exface\Core\CommonLogic\Constants\Icons;
 use League\Csv\Reader;
 use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * Exports data to a csv file.
@@ -53,33 +55,34 @@ class ExportCSV extends ExportJSON
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportJSON::writeHeader()
      */
-    protected function writeHeader(iShowData $dataWidget) : array
+    protected function writeHeader(WidgetInterface $exportedWidget) : array
     {
         $header = [];
         $output = [];
         $indexes = [];
-        foreach ($dataWidget->getColumns() as $col) {
-            if (! $col->isHidden()) {
-                // Name der Spalte
-                if ($this->getUseAttributeAliasAsHeader() === false) {
-                    $colName = $col->getCaption();
-                } else {
-                    $colName = $col->getAttributeAlias();
-                }
-                $colId = $col->getDataColumnName();
-                
-                // Der Name muss einzigartig sein, sonst werden zu wenige Headerspalten
-                // geschrieben.
-                $idx = $indexes[$colId] ?? 0;
-                $indexes[$colId] = $idx + 1;
-                if ($idx > 1) {
-                    $colName = $idx;
-                }
-                
-                
-                $header[] = $colName;
-                $output[] = $colId;
+        foreach ($this->getExportColumnWidgets($exportedWidget) as $widget) {
+            if ($widget->isHidden()) {
+                continue;   
             }
+            
+            // Name der Spalte
+            if ($this->getUseAttributeAliasAsHeader() === true && ($widget instanceof iShowDataColumn) && $widget->isBoundToDataColumn()) {
+                $colName = $widget->getAttributeAlias();
+            } else {
+                $colName = $widget->getCaption();
+            }
+            $colId = $widget->getDataColumnName();
+            
+            // Der Name muss einzigartig sein, sonst werden zu wenige Headerspalten
+            // geschrieben.
+            $idx = $indexes[$colId] ?? 0;
+            $indexes[$colId] = $idx + 1;
+            if ($idx > 1) {
+                $colName = $idx;
+            }
+            
+            $header[] = $colName;
+            $output[] = $colId;
         }
         $this->getWriter()->insertOne($header);
         return $output;
