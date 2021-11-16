@@ -1466,7 +1466,7 @@ JS;
                     shadowBlur: 10,
                     shadowColor: 'rgba(0, 0, 0, 0.5)'
                 }
-            }
+            },
             coordinateSystem: 'cartesian2d',
             encode: {
                 x: '{$series->getXAxis()->getDataColumn()->getDataColumnName()}',
