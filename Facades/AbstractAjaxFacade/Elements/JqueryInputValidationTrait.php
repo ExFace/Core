@@ -126,8 +126,11 @@ trait JqueryInputValidationTrait {
         if ($type->getValidationErrorCode()) {
             // TODO get message from error message model
         }
-        if ($type->getValidationErrorText()) {
-            return $type->getValidationErrorText();
+        if ($msg = $type->getValidationErrorMessage()) {
+            $text = $msg->getTitle();
+            if ($text) {
+                return $text;
+            }
         }
         switch (true) {
             case $type instanceof StringDataType:

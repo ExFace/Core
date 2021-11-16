@@ -7,6 +7,7 @@ use exface\Core\Widgets\ErrorMessage;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Interfaces\Model\MessageInterface;
 
 /**
  * This interface describes workbench exceptions. 
@@ -115,64 +116,9 @@ interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWid
     /**
      * 
      * @param WorkbenchInterface $workbench
-     * @return string|NULL
+     * @return MessageInterface|NULL
      */
-    public function getMessageTitle(WorkbenchInterface $workbench) : ?string;
-    
-    /**
-     * 
-     * @param string $text
-     * @return ExceptionInterface
-     */
-    public function setMessageTitle(string $text) : ExceptionInterface;
-    
-    /**
-     * 
-     * @param WorkbenchInterface $workbench
-     * @return string|NULL
-     */
-    public function getMessageHint(WorkbenchInterface $workbench) : ?string;
-    
-    /**
-     *
-     * @param string $text
-     * @return ExceptionInterface
-     */
-    public function setMessageHint(string $text) : ExceptionInterface;
-    
-    /**
-     * 
-     * @param WorkbenchInterface $workbench
-     * @return string|NULL
-     */
-    public function getMessageDescription(WorkbenchInterface $workbench) : ?string;
-    
-    /**
-     *
-     * @param string $text
-     * @return ExceptionInterface
-     */
-    public function setMessageDescription(string $text) : ExceptionInterface;
-    
-    /**
-     * 
-     * @param WorkbenchInterface $workbench
-     * @return string|NULL
-     */
-    public function getMessageType(WorkbenchInterface $workbench) : ?string;
-    
-    /**
-     *
-     * @param string $text
-     * @return ExceptionInterface
-     */
-    public function setMessageType(string $text) : ExceptionInterface;
-    
-    /**
-     * 
-     * @return AppSelectorInterface|NULL
-     */
-    public function getMessageAppSelector(WorkbenchInterface $workbench) : ?AppSelectorInterface;
+    public function getMessageModel(WorkbenchInterface $workbench) : MessageInterface; 
     
     /**
      * Makes the errors displayed use the exception message as title instead of attempting to

@@ -8,19 +8,14 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Widgets\ErrorMessage;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Widgets\DebugMessage;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\DataTypes\MessageTypeDataType;
 use exface\Core\Interfaces\WorkbenchInterface;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Events\Errors\OnErrorCodeLookupEvent;
-use exface\Core\Interfaces\Selectors\AppSelectorInterface;
-use exface\Core\CommonLogic\Selectors\AppSelector;
 use exface\Core\Widgets\Message;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\CommonLogic\Log\Helpers\LogHelper;
 use exface\Core\CommonLogic\Log\Logger;
+use exface\Core\Interfaces\Model\MessageInterface;
+use exface\Core\Factories\MessageFactory;
 
 /**
  * This trait contains a default implementation of ExceptionInterface to be used on-top
@@ -42,20 +37,8 @@ trait ExceptionTrait {
     private $id = null;
 
     private $exception_widget = null;
-
-    private $systemName = null;
-
-    private $support_mail = null;
     
-    private $messageData = null;
-    
-    private $messageTitle = null;
-    
-    private $messageHint = null;
-    
-    private $messageDescription = null;
-    
-    private $messageType = null;
+    private $messageModel = null;
     
     private $useExceptionMessageAsTitle = false;
 
@@ -115,15 +98,15 @@ trait ExceptionTrait {
             $error_tab->setNumberOfColumns(1);
             if ($this->getAlias()) {
                 try {
-                    $error_ds = $this->getMessageModelData($page->getWorkbench(), $this->getAlias());
+                    $msgModel = $this->getMessageModel($page->getWorkbench());
                     $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
                         ->setHeadingLevel(2)
-                        ->setValue($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION') . ' ' . $this->getAlias() . ': ' . $error_ds->getCellValue('TITLE', 0));
+                        ->setValue($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION') . ' ' . $this->getAlias() . ': ' . $msgModel->getTitle());
                     $error_tab->addWidget($error_heading);
                     $error_text = WidgetFactory::create($page, 'Text', $error_tab)
                         ->setValue($this->getMessage());
                     $error_tab->addWidget($error_text);
-                    if ($hint = $error_ds->getCellValue('HINT', 0)) {
+                    if ($hint = $msgModel->getHint()) {
                         $error_hint = WidgetFactory::create($page, 'Message', $error_tab)
                         ->setText($hint)
                         ->setType(MessageTypeDataType::HINT);
@@ -131,9 +114,9 @@ trait ExceptionTrait {
                     }
                     $error_descr = WidgetFactory::create($page, 'Markdown', $error_tab)
                         ->setAttributeAlias('DESCRIPTION')
-                        ->setHideCaption(true);
+                        ->setHideCaption(true)
+                        ->setValue($msgModel->getDescription());
                     $error_tab->addWidget($error_descr);
-                    $error_tab->prefill($error_ds);
                 } catch (\Throwable $e) {
                     $debug_widget->getWorkbench()->getLogger()->logException(new RuntimeException('Cannot fetch message with code "' . $this->getAlias() . '" - falling back to simplified error display!', null, $e));
                     $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)->setHeadingLevel(2)->setValue($this->getMessage());
@@ -231,187 +214,29 @@ trait ExceptionTrait {
         
         return $hintWidget;
     }
-
+    
     /**
-     * 
-     * @param Workbench $exface
-     * @param string $error_code
-     * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getMessageModel()
      */
-    public function getMessageModelData(Workbench $exface, string $error_code) : DataSheetInterface
+    public function getMessageModel(WorkbenchInterface $workbench) : MessageInterface
     {
-        if ($this->messageData === null) {
+        if ($this->messageModel === null) {
             if ($this->getPrevious() && $this->getPrevious() instanceof ExceptionInterface){
-                $modelMessageData = $this->getPrevious()->getMessageModelData($exface, $error_code);
+                $this->messageModel = $this->getPrevious()->getMessageModel();
             } else {
-                $ds = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.MESSAGE');
-                $ds->getColumns()->addMultiple(['TITLE', 'HINT', 'DESCRIPTION', 'TYPE', 'APP']);
-                if ($error_code) {
-                    $ds->getFilters()->addConditionFromString('CODE', $error_code);
-                    $ds->dataRead();
+                if (! ($alias = $this->getAlias())) {
+                    $alias = '6VCYFND'; // Internal error
                 }
-                $modelMessageData = $ds;
+                $this->messageModel = MessageFactory::createFromCode($workbench, $alias);
             }
             
             if ($this->getUseExceptionMessageAsTitle() === true) {
-                
-                $ds = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.MESSAGE');
-                if (! $descr = $modelMessageData->getCellValue('DESCRIPTION', 0)) {
-                    if (! $descr = $modelMessageData->getCellValue('TITLE', 0)) {
-                        $descr = '';
-                    }
-                }
-                $ds->addRow([
-                    'TITLE' => parent::getMessage(),
-                    'HINT' => $modelMessageData->getCellValue('HINT', 0) ?? '',
-                    'DESCRIPTION' => $descr,
-                    'TYPE' => $modelMessageData->getCellValue('TYPE', 0) ?? 'ERROR'
-                ]);
-                $modelMessageData = $ds;
+                $this->messageModel->setTitle($this->getMessage());
             }
-            
-            $this->messageData = $modelMessageData;
-            
-            $exface->eventManager()->dispatch(new OnErrorCodeLookupEvent($exface, $this));
         }
-        
-        return $this->messageData;
-    }
-    
-    /**
-     * {@inheritdoc}
-     * @see ExceptionInterface::getMessageTitle()
-     */
-    public function getMessageTitle(WorkbenchInterface $workbench) : ?string
-    {
-        if ($this->messageTitle !== null) {
-            return $this->messageTitle;
-        }
-        
-        try {
-            $ds = $this->getMessageModelData($workbench, $this->getAlias());
-            return $ds->getCellValue('TITLE', 0);
-        } catch (\Throwable $e) {
-            return null;
-        }
-    }
-    
-    /**
-     * {@inheritdoc}
-     * @see ExceptionInterface::setMessageTitle()
-     */
-    public function setMessageTitle(string $text) : ExceptionInterface
-    {
-        $this->messageTitle = $text;
-        if ($this->messageData !== null) {
-            $this->messageData->setCellValue('TITLE', 0, $text);
-        }
-        return $this;
-    }
-    
-    /**
-     * {@inheritdoc}
-     * @see ExceptionInterface::getMessageHint()
-     */
-    public function getMessageHint(WorkbenchInterface $workbench) : ?string
-    {
-        if ($this->messageHint !== null) {
-            return $this->messageHint;
-        }
-        
-        try {
-            $ds = $this->getMessageModelData($workbench, $this->getAlias());
-            return $ds->getCellValue('HINT', 0);
-        } catch (\Throwable $e) {
-            return null;
-        }
-    }
-    
-    /**
-     * {@inheritdoc}
-     * @see ExceptionInterface::setMessageHint()
-     */
-    public function setMessageHint(string $text) : ExceptionInterface
-    {
-        $this->messageHint = $text;
-        if ($this->messageData !== null) {
-            $this->messageData->setCellValue('HINT', 0, $text);
-        }
-        return $this;
-    }
-    
-    /**
-     * {@inheritdoc}
-     * @see ExceptionInterface::getMessageDescription()
-     */
-    public function getMessageDescription(WorkbenchInterface $workbench) : ?string
-    {
-        if ($this->messageDescription !== null) {
-            return $this->messageDescription;
-        }
-        
-        try {
-            $ds = $this->getMessageModelData($workbench, $this->getAlias());
-            return $ds->getCellValue('DESCRIPTION', 0);
-        } catch (\Throwable $e) {
-            return null;
-        }
-    }
-    
-    /**
-     * {@inheritdoc}
-     * @see ExceptionInterface::setMessageDescription()
-     */
-    public function setMessageDescription(string $text) : ExceptionInterface
-    {
-        $this->messageDescription = $text;
-        if ($this->messageData !== null) {
-            $this->messageData->setCellValue('DESCRIPTION', 0, $text);
-        }
-        return $this;
-    }
-    
-    /**
-     * {@inheritdoc}
-     * @see ExceptionInterface::setMessageDescription()
-     */
-    public function getMessageType(WorkbenchInterface $workbench) : ?string
-    {
-        if ($this->messageType !== null) {
-            return $this->messageType;
-        }
-        
-        try {
-            $ds = $this->getMessageModelData($workbench, $this->getAlias());
-            return $ds->getCellValue('TYPE', 0);
-        } catch (\Throwable $e) {
-            return null;
-        }
-    }
-    
-    /**
-     * {@inheritdoc}
-     * @see ExceptionInterface::setMessageDescription()
-     */
-    public function setMessageType(string $text) : ExceptionInterface
-    {
-        $this->messageType = $text;
-        return $this;
-    }
-    
-    /**
-     * {@inheritdoc}
-     * @see ExceptionInterface::getMessageAppSelector()
-     */
-    public function getMessageAppSelector(WorkbenchInterface $workbench) : ?AppSelectorInterface
-    {
-        try {
-            $ds = $this->getMessageModelData($workbench, $this->getAlias());
-            $uid = $ds->getCellValue('APP', 0);
-            return $uid === null ? $uid : new AppSelector($workbench, $uid);
-        } catch (\Throwable $e) {
-            return null;
-        }
+        return $this->messageModel;
     }
 
     /**

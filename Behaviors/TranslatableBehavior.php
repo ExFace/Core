@@ -30,11 +30,11 @@ use exface\Core\Events\Model\OnMetaObjectActionLoadedEvent;
 use exface\Core\Events\Model\OnUiMenuItemLoadedEvent;
 use exface\Core\Events\Model\OnBeforeDefaultObjectEditorInitEvent;
 use exface\Core\Events\Model\OnBeforeMetaObjectActionLoadedEvent;
-use exface\Core\Events\Errors\OnErrorCodeLookupEvent;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\DataTypes\LocaleDataType;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Events\Model\OnMessageLoadedEvent;
 
 /**
  * Makes the data of certain attributes of the object translatable.
@@ -148,8 +148,8 @@ class TranslatableBehavior extends AbstractBehavior
         "exface.Core.Model.OnBeforeDefaultObjectEditorInit" => [
             "\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectEditorInitTranslate"
         ],
-        "exface.Core.Errors.OnErrorCodeLookup" => [
-            "\\exface\\Core\\Behaviors\\TranslatableBehavior::onErrorTranslateMessage"
+        "exface.Core.Errors.OnMessageLoaded" => [
+            "\\exface\\Core\\Behaviors\\TranslatableBehavior::onMessageLoadedTranslate"
         ]
     ];
     
@@ -449,32 +449,30 @@ class TranslatableBehavior extends AbstractBehavior
     }
     
     /**
-     * Translates messages in errors
+     * Translates messages for errors etc.
      * 
-     * @param OnErrorCodeLookupEvent $event
+     * @param OnMessageLoadedEvent $event
      */
-    public static function onErrorTranslateMessage(OnErrorCodeLookupEvent $event)
+    public static function onMessageLoadedTranslate(OnMessageLoadedEvent $event)
     {
-        $e = $event->getException();
-        $wb = $event->getWorkbench();
+        $msg = $event->getMessage();
         
-        if (($appSel = $e->getMessageAppSelector($wb)) === null) {
+        if (($app = $msg->getApp()) === null) {
             return;
         }
         
         try {
-            $app = $wb->getApp($appSel);
             $translator = $app->getTranslator();
-            $domain = 'Messages/' . $e->getAlias();
+            $domain = 'Messages/' . $msg->getCode();
             if (! $translator->hasTranslationDomain($domain)) {
                 return;
             }
             
-            $e->setMessageTitle($translator->translate('TITLE', null, null, $domain, $e->getMessageTitle($wb)));
-            $e->setMessageHint($translator->translate('HINT', null, null, $domain, $e->getMessageHint($wb)));
-            $e->setMessageDescription($translator->translate('DESCRIPTION', null, null, $domain, $e->getMessageDescription($wb)));
-        } catch (\Throwable $e2) {
-            $wb->getLogger()->logException($e2);
+            $msg->setTitle($translator->translate('TITLE', null, null, $domain, $msg->getTitle()));
+            $msg->setHint($translator->translate('HINT', null, null, $domain, $msg->getHint()));
+            $msg->setDescription($translator->translate('DESCRIPTION', null, null, $domain, $msg->getDescription()));
+        } catch (\Throwable $e) {
+            $event->getWorkbench()->getLogger()->logException($e);
         }
     }
     
