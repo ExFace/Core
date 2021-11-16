@@ -9,6 +9,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Exceptions\EncryptionError;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Model\MessageInterface;
 
 /**
  * Allows to encrypt any other data using the widespread libsodium encryption library.
@@ -280,11 +281,11 @@ class EncryptedDataType extends StringDataType
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getValidationErrorText()
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getValidationErrorMessage()
      */
-    public function getValidationErrorText() : ?string
+    public function getValidationErrorMessage() : ?MessageInterface
     {
-        return parent::getValidationErrorText() ?? $this->getInnerDataType()->getValidationErrorText();
+        return parent::getValidationErrorMessage() ?? $this->getInnerDataType()->getValidationErrorMessage();
     }
     
     /**

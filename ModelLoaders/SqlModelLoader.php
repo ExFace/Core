@@ -79,6 +79,8 @@ use exface\Core\Events\Model\OnUiMenuItemLoadedEvent;
 use exface\Core\Events\Model\OnUiPageLoadedEvent;
 use exface\Core\Events\Model\OnBeforeMetaObjectActionLoadedEvent;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\MessageInterface;
+use exface\Core\Events\Model\OnMessageLoadedEvent;
 
 /**
  * Loads metamodel entities from SQL databases supporting the MySQL dialect.
@@ -1764,6 +1766,11 @@ SQL;
         return $rows;        
     }
     
+    /**
+     * 
+     * @param string $string
+     * @return string
+     */
     protected function buildSqlEscapedString(string $string) : string
     {
         if (function_exists('mb_ereg_replace')) {
@@ -1771,5 +1778,37 @@ SQL;
         } else {
             return preg_replace('~[\x00\x0A\x0D\x1A\x22\x27\x5C]~u', '\\\$0', $string);
         }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadMessageData()
+     */
+    public function loadMessageData(MessageInterface $message) : MessageInterface
+    {
+        $sql = <<<SQL
+SELECT code, type, title, hint, description, {$this->buildSqlUuidSelector('app_oid')} AS app_oid
+    FROM exf_message
+    WHERE code = '{$message->getCode()}'
+SQL;
+        $result = $this->getDataConnection()->runSql($sql);
+        $row = $result->getResultArray()[0];
+        $message->setTitle($row['title']);
+        $message->setType($row['type']);
+        
+        if ($row['hint']) {
+            $message->setHint($row['hint']);
+        }
+        if ($row['description']) {
+            $message->setDescription($row['description']);
+        }
+        if ($row['app_oid']) {
+            $message->setAppSelector($row['app_oid']);
+        }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnMessageLoadedEvent($message));
+        
+        return $message;
     }
 }

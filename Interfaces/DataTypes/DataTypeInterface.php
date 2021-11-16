@@ -13,6 +13,7 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Model\MetaModelPrototypeInterface;
 use exface\Core\Interfaces\ValueObjectInterface;
 use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
+use exface\Core\Interfaces\Model\MessageInterface;
 
 /**
  * 
@@ -143,13 +144,6 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      */
     public function setValidationErrorCode(string $string) : DataTypeInterface;
     
-    /**
-     * Returns the text explaining validation errors (e.g. "Model entity aliases must not start with '_' or '~').
-     * 
-     * @return string|NULL
-     */
-    public function getValidationErrorText() : ?string;
-    
     
     /**
      * Changes the explanation text for validation errors.
@@ -158,6 +152,12 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * @return DataTypeInterface
      */
     public function setValidationErrorText(string $string) : DataTypeInterface;
+    
+    /**
+     * 
+     * @return MessageInterface|NULL
+     */
+    public function getValidationErrorMessage() : ?MessageInterface;
 
     /**
      * Returns TRUE if the given value matches the data type (and thus can be parsed) or FALSE otherwise.

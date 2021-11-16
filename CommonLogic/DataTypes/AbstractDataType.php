@@ -18,6 +18,8 @@ use exface\Core\Uxon\DatatypeSchema;
 use exface\Core\Exceptions\SecurityException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Selectors\AppSelector;
+use exface\Core\Interfaces\Model\MessageInterface;
+use exface\Core\Factories\MessageFactory;
 
 abstract class AbstractDataType implements DataTypeInterface
 {
@@ -46,6 +48,8 @@ abstract class AbstractDataType implements DataTypeInterface
     private $validationErrorCode = null;
     
     private $validationErrorText = null;
+    
+    private $validationErrorMessage = null;
     
     private $value = null;
     
@@ -468,36 +472,12 @@ abstract class AbstractDataType implements DataTypeInterface
         $this->validationErrorCode = $validationErrorCode;
         return $this;
     }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getValidationErrorText()
-     */
-    public function getValidationErrorText() : ?string
-    {
-        if (! $this->validationErrorText && $this->validationErrorCode) {
-            $exface = $this->getWorkbench();
-            $ds = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.MESSAGE');
-            $ds->getColumns()->addMultiple(['TITLE', 'HINT', 'DESCRIPTION', 'TYPE', 'APP']);
-            $ds->getFilters()->addConditionFromString('CODE', $this->getValidationErrorCode());
-            $ds->dataRead();
-            if (! $ds->isEmpty()) {
-                $row = $ds->getRow(0);
-                $app = $exface->getApp(new AppSelector($exface, $row['APP']));
-                $translator = $app->getTranslator();
-                $domain = 'Messages/' . $this->getValidationErrorCode();
-                if (! $translator->hasTranslationDomain($domain)) {
-                    return null;
-                }                
-                return $translator->translate('TITLE', null, null, $domain, $row['TITLE']);
-            }
-        }
-        return $this->validationErrorText;
-    }
 
     /**
      * An explanation text for validation errors - typically explaining, what the data type expects.
+     * 
+     * This property only has effect if no validation error code is set - otherwise the
+     * message will be loaded from the meta model using that code.
      * 
      * @uxon-property validation_error_text
      * @uxon-type string
@@ -508,6 +488,24 @@ abstract class AbstractDataType implements DataTypeInterface
     {
         $this->validationErrorText = $string;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getValidationErrorMessage()
+     */
+    public function getValidationErrorMessage() : ?MessageInterface
+    {
+        if ($this->validationErrorMessage === null) {
+            if ($this->validationErrorCode !== null) {
+                $this->validationErrorMessage = MessageFactory::createFromCode($this->getWorkbench(), $this->validationErrorCode);
+            } elseif ($this->validationErrorText !== null) {
+                $this->validationErrorMessage = MessageFactory::createError($this->getWorkbench(), $this->validationErrorText);
+            }
+        }
+        
+        return $this->validationErrorMessage;
     }
     
     /**
@@ -596,4 +594,3 @@ abstract class AbstractDataType implements DataTypeInterface
     }
 
 }
-?>

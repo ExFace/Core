@@ -31,6 +31,7 @@ use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
+use exface\Core\Interfaces\Model\MessageInterface;
 
 interface ModelLoaderInterface extends WorkbenchDependantInterface
 {
@@ -231,4 +232,14 @@ interface ModelLoaderInterface extends WorkbenchDependantInterface
      * @return DataConnectionInterface
      */
     public function loadDataConnection(DataConnectionSelectorInterface $selector) : DataConnectionInterface;
+    
+    /**
+     * Enriches a given message by loading its model from the data connection
+     * 
+     * @triggers \exface\Core\Events\Model\OnMessageLoadedEvent for every message
+     * 
+     * @param MessageInterface $message
+     * @return MessageInterface
+     */
+    public function loadMessageData(MessageInterface $message) : MessageInterface;
 }

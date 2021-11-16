@@ -125,7 +125,7 @@ trait JqueryContainerTrait {
 				if(!' . $validator . ') { invalidElements.push("' . $alias . '"); }';
         }
         $output .= '
-				' . $this->buildJsShowMessageError('"' . $this->translate('MESSAGE.FILL_REQUIRED_ATTRIBUTES') . '" + invalidElements.join(", ")');
+				' . $this->buildJsShowMessageError('"' . $this->translate('MESSAGE.FILL_REQUIRED_ATTRIBUTES') . ' " + invalidElements.join(", ")');
         
         return $output;
     }

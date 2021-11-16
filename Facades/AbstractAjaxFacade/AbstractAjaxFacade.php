@@ -743,13 +743,15 @@ HTML;
         ];
         
         if ($exception instanceof ExceptionInterface) {
-            $wb = $this->getWorkbench();
             $error['code'] = $exception->getAlias();
             $error['logid'] = $exception->getId();
-            $error['title'] = $exception->getMessageTitle($wb);
-            $error['hint'] = $exception->getMessageHint($wb);
-            $error['description'] = $exception->getMessageDescription($wb);
-            $error['type'] = $exception->getMessageType($wb);
+            
+            $wb = $this->getWorkbench();
+            $msg = $exception->getMessageModel($wb);
+            $error['title'] = $msg->getTitle();
+            $error['hint'] = $msg->getHint();
+            $error['description'] = $msg->getDescription();
+            $error['type'] = $msg->getType();
         }
         
         return [

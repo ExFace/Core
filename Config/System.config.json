@@ -83,8 +83,8 @@
     	"exface.Core.Model.OnBeforeDefaultObjectEditorInit": [
     		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectEditorInitTranslate"
     	],
-    	"exface.Core.Errors.OnErrorCodeLookup": [
-    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onErrorTranslateMessage"
+    	"exface.Core.Model.OnMessageLoaded": [
+    		"\\exface\\Core\\Behaviors\\TranslatableBehavior::onMessageLoadedTranslate"
     	],
     	"exface.Core.Workbench.OnCleanUp": [
     		"\\exface\\Core\\CommonLogic\\Monitor::onCleanUp",
