@@ -11,11 +11,17 @@ To run PowerUI on an IIS server with SQL, configure the IIS server and install P
 
 Since the Web PI does not offer most recent versions of PHP, it is probably a good idea to install everything manually. 
 
-1. Download one of the latest [PHP binaries](https://windows.php.net/download/) - pick the non-thread-safe (nts) version.
-2. Unpack it into `C:\Program Files\PHP\bin`
-3. Follow the guides above to register it as a FastCGI module in IIS
-4. Create a `tmp` folder in your PHP folder. (`C:\Program Files\PHP\tmp`)
+1. Create the following folder structure
+	- `C:\Program Files\PHP\`
+		- `bin`
+		- `logs`
+		- `tmp`
+		- `wincache` (if required)
+2. Download one of the latest [PHP binaries](https://windows.php.net/download/) - pick the non-thread-safe (nts) version.
+3. Unpack it into `C:\Program Files\PHP\bin`
+4. Follow the guides above to register it as a FastCGI module in IIS
 5. Give the users `IUSR` and `IIS AppPool\DefaultAppPool` read/write and modify permissions for the `tmp` folder.
+6. The other folders will be used in `php.ini` - see below.
 
 ## Rewrite Module Installation
 
@@ -26,7 +32,7 @@ For the workbench to work properly, the support for rewrite rules needs to be en
 
 ## WinCache Extension Installation
 
-The WinCache Extension is definitely recommended. It accelerates PHP on IIS greatly (comparable to opcache on Apache-based servers).
+The WinCache extension is recommended for PHP < 8 in addition to opcache. It accelerates PHP on IIS greatly. So far there is no WinCache for PHP 8.
 
 1. [Download WinCache](https://sourceforge.net/projects/wincache/). Donwload the `nts` version if you have used the `nts` PHP binary above. Look in the `development` folder if you can't find your desired PHP version.
 2. Unpack the files somewhere (e.g. `C:\Program Files\PHP\wincache`).
@@ -99,6 +105,6 @@ Different web facades use different file types and extensions. When installing a
 3. Click on the `MIME Types` feature icon
 4. Click on the `Add...` action on the right and map the required extension to a MIME type
 
-For exampe, the `exface.UI5Facade` based on SAP UI5 uses `*.properties` files for translations. This extension is not part of the standard IIS MIME mapping, so it needs to be added with MIME type `text/plain`.
+For exampe, the `exface.UI5Facade` based on SAP UI5 uses `.properties` files for translations. This extension is not part of the standard IIS MIME mapping, so it needs to be added with MIME type `text/plain`.
 
 To find out if MIME types are missing, look for `404`-errors in your browsers network debug tools (i.e. richt click > Inspect element).
