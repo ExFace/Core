@@ -49,7 +49,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-05-13 13:53:43",
-            "MODIFIED_ON": "2021-11-04 11:05:20",
+            "MODIFIED_ON": "2021-11-16 22:51:15",
             "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea951065280b26a66b025041000001",
@@ -61,7 +61,7 @@
                 "case": "Lower",
                 "replace_characters": {
                     " ": "-",
-                    "\/[^a-zA-Z0-9_-]\/": ""
+                    "\/[^a-zA-Z0-9_.-]\/": ""
                 }
             },
             "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
