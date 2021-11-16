@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\DataTypes;
 
-use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 
@@ -16,22 +14,22 @@ class PasswordHashDataType extends StringDataType
 {
     private $hashAlgorithm = null;
     
-    public function __construct(DataTypeSelectorInterface $selector, $value = null, UxonObject $configuration = null)
-    {
-        $workbench = $selector->getWorkbench();
-        $uxon = $workbench->getConfig()->getOption('SECURITY.PASSWORD_CONFIG');
-        if (! $uxon->isEmpty()) {
-            $this->importUxonObject($uxon);
-        }
-        parent::__construct($selector, $value, $configuration);
-    }
-    
+    /**
+     * 
+     * @param string $password
+     * @return bool
+     */
     public static function isHash(string $password) : bool
     {
         $nfo = password_get_info($password);
         return $nfo['algo'] !== 0;
     }
     
+    /**
+     * 
+     * @param string $password
+     * @return string
+     */
     protected function hash(string $password) : string
     {
         return password_hash($password, $this->getHashAlgorithm());
@@ -78,6 +76,11 @@ class PasswordHashDataType extends StringDataType
         return $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::isSensitiveData()
+     */
     public function isSensitiveData() : bool
     {
         return true;

@@ -504,20 +504,6 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
         $this->context_menu = $menu;
         return $this;
     }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\Data::getToolbars()
-     */
-    public function getToolbars()
-    {
-        $toolbars = parent::getToolbars();
-        if ($this->hasAggregations()) {
-            $toolbars[0]->setIncludeGlobalActions(false)->setIncludeObjectBasketActions(false);
-        }
-        return $toolbars;
-    }
     
     /**
      * 

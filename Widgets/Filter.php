@@ -755,12 +755,12 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      * 
      * @see \exface\Core\Widgets\Container::setDisabled()
      */
-    public function setDisabled(?bool $trueOrFalseOrNull) : WidgetInterface
+    public function setDisabled(?bool $trueOrFalseOrNull, string $reason = null) : WidgetInterface
     {
         if ($this->isInputWidgetInitialized() === true) {
-            $this->getInputWidget()->setDisabled($trueOrFalseOrNull);
+            $this->getInputWidget()->setDisabled($trueOrFalseOrNull, $reason);
         }
-        return parent::setDisabled($trueOrFalseOrNull);
+        return parent::setDisabled($trueOrFalseOrNull, $reason);
     }
     
     /**
