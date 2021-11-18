@@ -13,7 +13,7 @@ use exface\Core\DataTypes\StringDataType;
  */
 class IISServerInstaller extends AbstractAppInstaller
 {
-    const IIS_USERNAME = IUSR;
+    const IIS_USERNAME = 'IUSR';
     
     public function backup(string $absolute_path) : \Iterator
     {
