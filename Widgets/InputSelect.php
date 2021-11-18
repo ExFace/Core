@@ -512,17 +512,17 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function getValues() : array
     {
-        if ($this->getValue()) {
+        $array = [];
+        if ($val = $this->getValue()) {
             // Split the value by value delimiter, but only if the raw value does not match
             // one of the selectable options exactly!
-            if (! array_key_exists($this->getValue(), $this->getSelectableOptions())) {
-                return array_map('trim', explode($this->getMultiSelectValueDelimiter(), $this->getValue()));
+            if (! array_key_exists($val, $this->getSelectableOptions())) {
+                $array = array_map('trim', explode($this->getMultiSelectValueDelimiter(), $this->getValue()));
             } else {
-                return [$this->getValue()];
+                $array = [$this->getValue()];
             }
-        } else {
-            return array();
-        }
+        } 
+        return $array;
     }
 
     /**
