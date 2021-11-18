@@ -94,9 +94,10 @@ class ShowMassEditDialog extends ShowDialog
     protected function getAffectedCounterText(DataSheetInterface $input_data)
     {
         if ($input_data) {
+            $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
             if ($input_data->countRows()) {
                 $counter = $input_data ? $input_data->countRows() : 0;
-                return $this->translate('EDITING_SELECTED', array(
+                return $translator->translate('ACTION.SHOWMASSEDITDIALOG.EDITING_SELECTED', array(
                     "%number%" => $counter
                 ), $counter);
             } else {
@@ -106,11 +107,11 @@ class ShowMassEditDialog extends ShowDialog
                     foreach ($filter_conditions as $cond) {
                         $filters[$cond->getExpression()->toString()] = $cond->getExpression()->getAttribute()->getName() . ' (' . $cond->getExpression()->getAttribute()->getDataAddress() . ') ' . $cond->getComparator() . ' ' . $cond->getValue();
                     }
-                    return $this->translate('EDITING_BY_FILTER', array(
+                    return $translator->translate('ACTION.SHOWMASSEDITDIALOG.EDITING_BY_FILTER', array(
                         '%filters%' => implode($filters, ' AND ')
                     ));
                 } else {
-                    return $this->translate('EDITING_ALL');
+                    return $translator->translate('ACTION.SHOWMASSEDITDIALOG.EDITING_ALL');
                 }
             }
         }
