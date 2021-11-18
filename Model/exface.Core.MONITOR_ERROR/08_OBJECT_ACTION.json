@@ -61,7 +61,7 @@
     "rows": [
         {
             "CREATED_ON": "2021-04-21 09:41:05",
-            "MODIFIED_ON": "2021-08-03 21:06:25",
+            "MODIFIED_ON": "2021-11-18 21:24:06",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebbeb2ee0e0c3ebeb2025041000001",
@@ -160,11 +160,12 @@
                             "widget_type": "WidgetGroup",
                             "caption": "Log",
                             "width": "max",
+                            "height": "max",
                             "widgets": [
                                 {
                                     "widget_type": "DataTable",
                                     "object_alias": "exface.Core.LOG_ENTRY",
-                                    "height": 9,
+                                    "height": "100%",
                                     "empty_text": "No data found! Please note, that log entries are only provided as long as the corresponding log file is not old enough to be deleted. Older monitor messages will not have log entries.",
                                     "filters": [
                                         {
