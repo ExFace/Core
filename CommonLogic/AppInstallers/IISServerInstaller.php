@@ -40,7 +40,7 @@ class IISServerInstaller extends AbstractAppInstaller
     {
         $output = [];
         $user = self::IIS_USERNAME;
-        exec("CACLS {$path} /e /t /p {$user}:c", $output);
+        exec("CACLS {$path} /e /p {$user}:c", $output);
         $shortPath = StringDataType::substringAfter($path, DIRECTORY_SEPARATOR, false, false, true);
         if (empty($output)) {
             return "Permission for the user '{$user}' and folder/file '{$shortPath}' could not be changed!";
