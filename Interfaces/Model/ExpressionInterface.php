@@ -144,9 +144,9 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
      * 
      * @see evaluate()
      *
-     * @return string|NULL
+     * @return string
      */
-    public function __toString() : ?string;
+    public function __toString() : string;
     
     public function getRawValue();
     
