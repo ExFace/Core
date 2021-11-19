@@ -27,6 +27,8 @@ class MsSqlConnector extends AbstractSqlConnector
     private $warningsReturnAsErrors = false;
     
     private $resultCounter = null;
+    
+    private $multiqueryResults = null;
 
     /**
      *
@@ -88,28 +90,36 @@ class MsSqlConnector extends AbstractSqlConnector
         $sql = $query->getSql();
         $this->resultCounter = null;
         if ($query->isMultipleStatements()) {
-            $stmtNo = 1;
+            $stmtNo = 0;
             $this->resultCounter = 0;
             
             $stmt = sqlsrv_query($this->getCurrentConnection(), $sql);
             if ($stmt === false) {
-                throw $this->createQueryError($query, "SQL multi-query statement {$stmtNo} failed! " . $this->getLastError());
+                throw $this->createQueryError($query, 'SQL multi-query statement ' . ($stmtNo + 1) . ' failed! ' . $this->getLastError());
             } else {
                 $query->setResultResource($stmt);
             }
             
             // Consume the first result without calling sqlsrv_next_result.
-            $this->resultCounter = sqlsrv_rows_affected($stmt);
+            $this->resultCounter = max(sqlsrv_rows_affected($stmt), 0);
+            $this->multiqueryResults[$stmtNo] = [];
+            while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+                $this->multiqueryResults[$stmtNo][] = $row;
+            }
             
             // Move to the next result and display results.
             $next_result = sqlsrv_next_result($stmt);
             while ($next_result === true) {
                 $stmtNo++;
                 $next_result = sqlsrv_next_result($stmt);
-                $this->resultCounter += sqlsrv_rows_affected($stmt);
+                $this->resultCounter += max(sqlsrv_rows_affected($stmt), 0);
+                $this->multiqueryResults[$stmtNo] = [];
+                while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+                    $this->multiqueryResults[$stmtNo][] = $row;
+                }
             }
             if($next_result === false) {
-                throw $this->createQueryError($query, "SQL multi-query statement {$stmtNo} failed! " . $this->getLastError());
+                throw $this->createQueryError($query, 'SQL multi-query statement ' . ($stmtNo+1) . ' failed! ' . $this->getLastError());
             }
         } else {
             if (StringDataType::startsWith($sql, 'INSERT', false) === true) {
@@ -153,8 +163,8 @@ class MsSqlConnector extends AbstractSqlConnector
         $id = "";
         $resource = $query->getResultResource();
         if ($resource) {
-            sqlsrv_next_result($resource);
-            sqlsrv_fetch($resource);
+            $next = sqlsrv_next_result($resource);
+            $fetch = sqlsrv_fetch($resource);
             $id = sqlsrv_get_field($resource, 0);
         }
         return $id;
@@ -222,11 +232,20 @@ class MsSqlConnector extends AbstractSqlConnector
     public function makeArray(SqlDataQuery $query)
     {
         $rs = $query->getResultResource();
-        if (! $rs)
-            return array();
-        $array = array();
-        while ($row = sqlsrv_fetch_array($rs, SQLSRV_FETCH_ASSOC)) {
-            $array[] = $row;
+        $array = [];
+        if (! $rs) {
+            return $array;
+        }
+        if ($query->isMultipleStatements() && ! empty($this->multiqueryResults)) {
+            foreach ($this->multiqueryResults as $rows) {
+                if (! empty($rows)) {
+                    return $rows;
+                }
+            }
+        } else {
+            while ($row = sqlsrv_fetch_array($rs, SQLSRV_FETCH_ASSOC)) {
+                $array[] = $row;
+            }
         }
         return $array;
     }
