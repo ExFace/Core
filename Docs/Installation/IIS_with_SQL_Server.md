@@ -83,6 +83,10 @@ Use the following configuration in addition to the server-independent [recommend
 	
 ## Installing the workbench
 
+Create a folder for the workbench in `C:\inetpub\wwwroot`. The name of the forlder will also be the path in your future URLs.
+
+**IMPORTANT**: the built-in user `IUSR` MUST have full access to the newly created folder! Otherwise many administration features will not work properly.
+
 Now it is time to install the workbench via [Composer](Install_via_Composer.md) or the [deployer app](https://github.com/axenox/deployer/blob/1.x-dev/Docs/index.md) (if you already have a build server).
 
 **IMPORTANT**: Don't forget to add the IIS-specific installer to the configuration file `System.config.json` to make sure the workbench has proper access to all files and folders it needs after installtion:
