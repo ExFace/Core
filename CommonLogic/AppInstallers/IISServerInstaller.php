@@ -44,7 +44,6 @@ class IISServerInstaller extends AbstractAppInstaller
         $indent = $this->getOutputIndentation();
         $fm = $this->getWorkbench()->filemanager();
         $user = self::IIS_USERNAME;
-        yield $indent . $this->setPermissionsForPath($fm->getPathToBaseFolder(), $user) . PHP_EOL;
         yield $indent . $this->setPermissionsForPath($fm->getPathToDataFolder(), $user) . PHP_EOL;
         yield $indent . $this->setPermissionsForPath($fm->getPathToLogFolder(), $user) . PHP_EOL;
         yield $indent . $this->setPermissionsForPath($fm->getPathToConfigFolder(), $user) . PHP_EOL;
