@@ -646,12 +646,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $uidBeforeEach = $uidAttr->getDataAddressProperty(self::DAP_SQL_INSERT_BEFORE);
                 $uidBeforeEach = StringDataType::replacePlaceholders($uidBeforeEach, [
                     '~alias' => $mainObj->getAlias(),
-                    '~value' => $this->prepareInputValue('', $uidAttr->getDataType(), $uid_qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE))
+                    '~value' => $this->prepareInputValue('', $uidAttr->getDataType(), $uidAttr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE))
                 ]);
                 $uidAfterEach = $uidAttr->getDataAddressProperty(self::DAP_SQL_INSERT_AFTER);
                 $uidAfterEach = StringDataType::replacePlaceholders($uidAfterEach, [
                     '~alias' => $mainObj->getAlias(),
-                    '~value' => $this->prepareInputValue('', $uidAttr->getDataType(), $uid_qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE))
+                    '~value' => $this->prepareInputValue('', $uidAttr->getDataType(), $uidAttr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE))
                 ]);
             }
             if ($uidCustomSqlInsert === '') {
