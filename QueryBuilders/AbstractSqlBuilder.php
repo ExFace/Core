@@ -644,15 +644,19 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // the respective query part above already
             if (! $uid_qpart) {
                 $uidBeforeEach = $uidAttr->getDataAddressProperty(self::DAP_SQL_INSERT_BEFORE);
-                $uidBeforeEach = StringDataType::replacePlaceholders($uidBeforeEach, [
-                    '~alias' => $mainObj->getAlias(),
-                    '~value' => $this->prepareInputValue('', $uidAttr->getDataType(), $uidAttr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE))
-                ]);
+                if ($uidBeforeEach) {
+                    $uidBeforeEach = StringDataType::replacePlaceholders($uidBeforeEach, [
+                        '~alias' => $mainObj->getAlias(),
+                        '~value' => $this->prepareInputValue('', $uidAttr->getDataType(), $uidAttr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE))
+                    ]);
+                }
                 $uidAfterEach = $uidAttr->getDataAddressProperty(self::DAP_SQL_INSERT_AFTER);
-                $uidAfterEach = StringDataType::replacePlaceholders($uidAfterEach, [
-                    '~alias' => $mainObj->getAlias(),
-                    '~value' => $this->prepareInputValue('', $uidAttr->getDataType(), $uidAttr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE))
-                ]);
+                if ($uidAfterEach) {
+                    $uidAfterEach = StringDataType::replacePlaceholders($uidAfterEach, [
+                        '~alias' => $mainObj->getAlias(),
+                        '~value' => $this->prepareInputValue('', $uidAttr->getDataType(), $uidAttr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE))
+                    ]);
+                }
             }
             if ($uidCustomSqlInsert === '') {
                 $uidCustomSqlInsert = null;
