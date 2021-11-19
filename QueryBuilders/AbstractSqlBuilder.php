@@ -209,12 +209,49 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * or generators (e.g. you could use `UUID()` in MySQL to have a column always created
      * with a UUID). If you need to use a generator only if no value is given explicitly,
      * use something like this: `IF([#~value#]!='', [#~value#], UUID())`.
+     * 
+     * NOTE: if you use a custom `SQL_INSERT` to generate a primary key, you generate it
+     * into a variable using `SQL_INSERT_BEFORE` place the variable into `SQL_INSERT` and
+     * select that variable in `SQL_INSERT_AFTER`. It should now be correctly returned by
+     * the query builder.
+     * 
+     * Here is an example of the use of an ID-table in MS SQL. Note the `@insertId` being
+     * selected with the name of the primary key column at the end.
+     * 
+     * ```
+     *  {
+     *      "SQL_INSERT": "@insertedId",
+     *      "SQL_INSERT_BEFORE": "DECLARE @insertedId int; EXEC generator; SELECT @insertedId = ID FROM ...;",
+     *      "SQL_INSERT_AFTER": "SELECT @insertedId AS Id;"
+     *  }
+     *  
+     * ```
      *
      * @uxon-property SQL_INSERT
      * @uxon-target attribute
      * @uxon-type string
      */
     const DAP_SQL_INSERT = 'SQL_INSERT';
+    
+    /**
+     * SQL statement to be executed before every INSERT - e.g. to initialize a variable used in `SQL_INSERT`
+     * 
+     * @uxon-property SQL_INSERT_BEFORE
+     * @uxon-type string
+     * 
+     * @var string
+     */
+    const DAP_SQL_INSERT_BEFORE = 'SQL_INSERT_BEFORE';
+    
+    /**
+     * SQL statement to be executed after every INSERT - e.g. to deal with a variable used in `SQL_INSERT`
+     *
+     * @uxon-property SQL_INSERT_AFTER
+     * @uxon-type string
+     *
+     * @var string
+     */
+    const DAP_SQL_INSERT_AFTER = 'SQL_INSERT_AFTER';
     
     /**
      * Replaces the data address for INSERT queries.
@@ -537,6 +574,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         $values = array();
         $columns = array();
+        $before_each_insert_sqls = [];
+        $after_each_insert_sqls = [];
         $uid_qpart = null;
         // add values
         foreach ($this->getValues() as $qpart) {
@@ -549,6 +588,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $attrAddress = $this->buildSqlDataAddress($attr);
             $attrInsertAddress = $qpart->getDataAddressProperty(self::DAP_SQL_INSERT_DATA_ADDRESS);
             $custom_insert_sql = $qpart->getDataAddressProperty(self::DAP_SQL_INSERT);
+            $before_each_insert_sql = $qpart->getDataAddressProperty(self::DAP_SQL_INSERT_BEFORE);
+            $after_each_insert_sql = $qpart->getDataAddressProperty(self::DAP_SQL_INSERT_AFTER);
             $column = $attrAddress ? $attrAddress : $attrInsertAddress;
             if ((! $column || $this->checkForSqlStatement($column)) && ! $custom_insert_sql) {
                 continue;
@@ -580,6 +621,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     $insert_sql = $value;
                 }
                 $values[$row][$column] = $insert_sql;
+                
+                if ($before_each_insert_sql) {
+                    $before_each_insert_sqls[$row] = $this->replacePlaceholdersInSqlAddress($before_each_insert_sql, null, ['~alias' => $mainObj->getAlias(), '~value' => $value], $mainObj->getAlias());
+                }
+                
+                if ($after_each_insert_sql) {
+                    $after_each_insert_sqls[$row] = $this->replacePlaceholdersInSqlAddress($after_each_insert_sql, null, ['~alias' => $mainObj->getAlias(), '~value' => $value], $mainObj->getAlias());
+                }
             }
         }
         
@@ -591,6 +640,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $uidAttr = $mainObj->getUidAttribute();
             $uidIsOptimizedUUID = BooleanDataType::cast($uidAttr->getDataAddressProperty(self::DAP_SQL_INSERT_UUID_OPTIMIZED));
             $uidCustomSqlInsert = $uidAttr->getDataAddressProperty(self::DAP_SQL_INSERT);
+            // Add before and after queries of the UID attribute if they were not added for
+            // the respective query part above already
+            if (! $uid_qpart) {
+                $uidBeforeEach = $uidAttr->getDataAddressProperty(self::DAP_SQL_INSERT_BEFORE);
+                $uidBeforeEach = StringDataType::replacePlaceholders($uidBeforeEach, [
+                    '~alias' => $mainObj->getAlias(),
+                    '~value' => $this->prepareInputValue('', $uidAttr->getDataType(), $uid_qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE))
+                ]);
+                $uidAfterEach = $uidAttr->getDataAddressProperty(self::DAP_SQL_INSERT_AFTER);
+                $uidAfterEach = StringDataType::replacePlaceholders($uidAfterEach, [
+                    '~alias' => $mainObj->getAlias(),
+                    '~value' => $this->prepareInputValue('', $uidAttr->getDataType(), $uid_qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE))
+                ]);
+            }
             if ($uidCustomSqlInsert === '') {
                 $uidCustomSqlInsert = null;
             }
@@ -615,18 +678,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // If the UID query part has a custom SQL insert statement, render it here and make sure it's saved
         // into a variable because all sorts of last_insert_id() function will not return such a value.
         if ($uid_qpart && $uid_qpart->hasValues() === false && $uidCustomSqlInsert) {
-            $uidCustomSqlInsert = str_replace(array(
-                '[#~alias#]',
-                '[#~value#]'
-            ), array(
-                $mainObj->getAlias(),
-                $this->prepareInputValue('', $uid_qpart->getAttribute()->getDataType(), $uid_qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE))
-            ), $uidCustomSqlInsert);
+            $uidCustomSqlInsert = StringDataType::replacePlaceholders($uidCustomSqlInsert, [
+                '~alias' => $mainObj->getAlias(),
+                '~value' => $this->prepareInputValue('', $uidAttr->getDataType(), $uid_qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE))
+            ]);
             
             $columns[$uidAddress] = $uidAddress;
-            $last_uid_sql_var = '@last_uid';
             foreach ($values as $nr => $row) {
-                $values[$nr][$uidAddress] = $last_uid_sql_var . ' := ' . $uidCustomSqlInsert;
+                $values[$nr][$uidAddress] = $uidCustomSqlInsert;
             }
         }
         
@@ -641,20 +700,23 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $row[$uidAddress] = $customUid;
             }
             $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj) . ' (' . implode(', ', $columns) . ') VALUES (' . implode(',', $row) . ')';
-            $query = $data_connection->runSql($sql);
+            
+            $beforeSql = $before_each_insert_sqls[$nr] . ($uidBeforeEach ?? '');
+            $afterSql = $after_each_insert_sqls[$nr] . ($uidAfterEach ?? '');
+            if ($beforeSql || $afterSql) {
+                $query = $data_connection->runSql($beforeSql . $sql . '; ' . $afterSql, true);
+                if ($uidAddress && ! $customUid && $rRow = $query->getResultArray()[0]) {
+                    if ($rRow[$uidAddress] !== null) {
+                        $customUid = $query->getResultArray()[0][$uidAddress];
+                    }
+                }
+            } else {            
+                $query = $data_connection->runSql($sql);
+            }
             
             // Now get the primary key of the last insert.
             if ($customUid) {
                 $last_id = $customUid;
-            } elseif ($last_uid_sql_var) {
-                // If the primary key was a custom generated one, it was saved to the corresponding SQL variable.
-                // Fetch it from the data base
-                if (strcasecmp($uid_qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE), 'binary') === 0) {
-                    $last_id_q = $data_connection->runSql('SELECT ' . $this->buildSqlSelectBinaryAsHEX($last_uid_sql_var));
-                } else {
-                    $last_id_q = $data_connection->runSql('SELECT ' . $last_uid_sql_var );
-                }
-                $last_id = reset($last_id_q->getResultArray()[0]);
             } else {
                 // If the primary key was autogenerated, fetch it via built-in function
                 $last_id = $query->getLastInsertId();
