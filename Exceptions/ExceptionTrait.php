@@ -224,7 +224,7 @@ trait ExceptionTrait {
     {
         if ($this->messageModel === null) {
             if ($this->getPrevious() && $this->getPrevious() instanceof ExceptionInterface){
-                $this->messageModel = $this->getPrevious()->getMessageModel();
+                $this->messageModel = $this->getPrevious()->getMessageModel($workbench);
             } else {
                 if (! ($alias = $this->getAlias())) {
                     $alias = '6VCYFND'; // Internal error
