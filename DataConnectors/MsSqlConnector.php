@@ -163,8 +163,8 @@ class MsSqlConnector extends AbstractSqlConnector
         $id = "";
         $resource = $query->getResultResource();
         if ($resource) {
-            $next = sqlsrv_next_result($resource);
-            $fetch = sqlsrv_fetch($resource);
+            sqlsrv_next_result($resource);
+            sqlsrv_fetch($resource);
             $id = sqlsrv_get_field($resource, 0);
         }
         return $id;
