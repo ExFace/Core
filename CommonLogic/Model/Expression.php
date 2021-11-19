@@ -412,7 +412,7 @@ class Expression implements ExpressionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::__toString()
      */
-    public function __toString() : ?string
+    public function __toString() : string
     {
         switch ($this->getType()) {
             case self::TYPE_ATTRIBUTE:
@@ -423,7 +423,7 @@ class Expression implements ExpressionInterface
                 // expression will yield the alias including the relation path...
                 return ($this->relation_path ? RelationPath::relationPathAdd($this->relation_path, $this->attribute_alias) : $this->attribute_alias);
             default:
-                return $this->originalString;
+                return $this->originalString ?? '';
         }
     }
 
