@@ -7,9 +7,13 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
+use exface\Core\DataTypes\PasswordHashDataType;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 
 /**
  * This behavior will hash password attribute values when data is created or updated.
+ * 
+ * **NOTE:** The attribute MUST have the data type "exface.Core.PasswordHash" to work with this behavior!
  * 
  * @author Andrej Kabachnik
  *
@@ -32,6 +36,11 @@ class PasswordHashingBehavior extends AbstractBehavior
         return $this;
     }
     
+    /**
+     * 
+     * @param DataSheetEventInterface $event
+     * @throws BehaviorConfigurationError
+     */
     public function handleOnCreateEvent(DataSheetEventInterface $event) 
     {
         if ($this->isDisabled()) {
@@ -48,27 +57,24 @@ class PasswordHashingBehavior extends AbstractBehavior
         
         // Check if the updated_on column is present in the sheet
         if ($column = $data_sheet->getColumns()->getByAttribute($this->getPasswordAttribute())) {
+            $type = $column->getDataType();
+            if (! ($type instanceof PasswordHashDataType)) {
+                throw new BehaviorConfigurationError($this->getObject(), 'Cannot use PasswordHashingBehavior on attribute "' . $this->getPasswordAttributeAlias() . '": the attribute MUST have the data type "exface.Core.PasswordHash"!');
+            }
             foreach ($column->getValues(false) as $rowNr => $value) {
-                if ($this->isHash($value) === false && ! $column->getDataType()->isValueEmpty($value)) {
-                    $column->setValue($rowNr, $this->hash($column->getDataType()->parse($value)));
+                if ($type::isHash($value) === false && ! $type->isValueEmpty($value)) {
+                    $column->setValue($rowNr, $type->hash($type->parse($value)));
                 }
             }
         }
         return;
     }
-    
-    protected function isHash(string $password) : bool
-    {
-        $nfo = password_get_info($password);
-        return $nfo['algo'] !== 0;
-    }
-    
-    protected function hash(string $password) : string
-    {
-        return password_hash($password, $this->getHashAlgorithmConstant());
-    }
 
-    public function getPasswordAttributeAlias()
+    /**
+     * 
+     * @return string
+     */
+    public function getPasswordAttributeAlias() : string
     {
         return $this->passwordAttribute;
     }
@@ -78,6 +84,7 @@ class PasswordHashingBehavior extends AbstractBehavior
      * 
      * @uxon-property password_attribute_alias
      * @uxon-type metamodel:attribute
+     * @uxon-required true
      * 
      * @param string $value
      * @return PasswordHashingBehavior
@@ -86,11 +93,6 @@ class PasswordHashingBehavior extends AbstractBehavior
     {
         $this->passwordAttribute = $value;
         return $this;
-    }
-
-    public function getCheckForConflictsOnUpdate()
-    {
-        return $this->check_for_conflicts_on_update;
     }
 
     /**
@@ -111,46 +113,6 @@ class PasswordHashingBehavior extends AbstractBehavior
     {
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('password_attribute_alias', $this->getPasswordAttributeAlias());
-        $uxon->setProperty('hash_algorithm', $this->getHashAlgorithm());
         return $uxon;
-    }
-    
-    /**
-     *
-     * @return int
-     */
-    protected function getHashAlgorithmConstant() : int
-    {
-        if ($this->hashAlgorithm !== null) {
-            return constant('PASSWORD_' . strtoupper($this->hashAlgorithm));
-        } else {
-            return PASSWORD_DEFAULT;
-        }
-    }
-    
-    /**
-     * 
-     * @return string
-     */
-    protected function getHashAlgorithm() : string
-    {
-        return $this->hashAlgorithm;
-    }
-    
-    /**
-     * One of the password hashing algorithms suppoerted by PHP.
-     * 
-     * @link https://www.php.net/manual/en/function.password-hash.php
-     * 
-     * @uxon-property hash_algorithm
-     * @uxon-type [default,bcrypt,argon2i,argon2id]
-     * 
-     * @param string $value
-     * @return PasswordHashingBehavior
-     */
-    public function setHashAlgorithm(string $value) : PasswordHashingBehavior
-    {
-        $this->hashAlgorithm = $value;
-        return $this;
     }
 }
