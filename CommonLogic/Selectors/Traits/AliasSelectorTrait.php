@@ -78,7 +78,11 @@ trait AliasSelectorTrait
     protected function split()
     {
         if ($this->splitParts === null) {
-            $this->splitParts = explode(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $this->toString());
+            $string = $this->toString();
+            if (mb_substr($string, 0, 1) === '.' || mb_substr($string, -1) === '.') {
+                throw new SelectorInvalidError('"' . $string . '" is not a valid alias selector!');
+            }
+            $this->splitParts = explode(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $string);
         }
         return $this->splitParts;
     }
