@@ -238,8 +238,9 @@ class DataColumnList extends EntityList implements DataColumnListInterface
      */
     public function getByAttribute(MetaAttributeInterface $attribute)
     {
+        $attrAlias = $attribute->getAliasWithRelationPath();
         foreach ($this->getAll() as $col) {
-            if ($col->getAttribute() && $col->getAttribute()->getAliasWithRelationPath() == $attribute->getAliasWithRelationPath()) {
+            if ($col->getAttribute() && $col->getAttribute()->getAliasWithRelationPath() == $attrAlias) {
                 return $col;
             }
         }
