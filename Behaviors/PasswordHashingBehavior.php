@@ -55,6 +55,10 @@ class PasswordHashingBehavior extends AbstractBehavior
             return;
         }
         
+        if ($data_sheet->hasAggregations() || $data_sheet->hasAggregateAll()) {
+            return;
+        }
+        
         // Check if the updated_on column is present in the sheet
         if ($column = $data_sheet->getColumns()->getByAttribute($this->getPasswordAttribute())) {
             $type = $column->getDataType();
