@@ -104,7 +104,7 @@
             },
             {
                 "widget_type": "MenuButton",
-                "caption": "=Translate('exface.Core.', 'ACTION.SHOWOBJECTCOPYDIALOG.NAME')",
+                "caption": "=Translate('exface.Core', 'ACTION.SHOWOBJECTCOPYDIALOG.NAME')",
                 "icon": "clone",
                 "buttons": [
                     {
