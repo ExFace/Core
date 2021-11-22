@@ -81,6 +81,7 @@ use exface\Core\Events\Model\OnBeforeMetaObjectActionLoadedEvent;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MessageInterface;
 use exface\Core\Events\Model\OnMessageLoadedEvent;
+use exface\Core\Exceptions\AppNotFoundError;
 
 /**
  * Loads metamodel entities from SQL databases supporting the MySQL dialect.
@@ -114,6 +115,8 @@ class SqlModelLoader implements ModelLoaderInterface
     private $menu_tress_loaded = [];
     
     private $auth_policies_loaded = null;
+    
+    private $apps_loaded = null;
     
     
     /**
@@ -1810,5 +1813,36 @@ SQL;
         $this->getWorkbench()->eventManager()->dispatch(new OnMessageLoadedEvent($message));
         
         return $message;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadAppData()
+     */
+    public function loadAppData(AppInterface $app) : AppInterface
+    {
+        if ($this->apps_loaded === null) {
+            $sql = <<<SQL
+SELECT {$this->buildSqlUuidSelector('oid')} AS UID, app_alias AS ALIAS, app_name AS NAME, default_language_code AS DEFAULT_LANGUAGE_CODE
+    FROM exf_app;
+SQL;
+            $result = $this->getDataConnection()->runSql($sql);
+            $this->apps_loaded = $result->getResultArray();
+        }
+        $selector = $app->getSelector();
+        $rows = array_filter($this->apps_loaded, function($row) use ($selector) {
+            if ($selector->isUid()) {
+                return strcasecmp($row['UID'], $selector->toString()) === 0;
+            } else {
+                return strcasecmp($row['ALIAS'], $selector->toString()) === 0;
+            }
+        });
+        if (empty($rows)) {
+            throw new AppNotFoundError('App "' . $selector->toString() . '" not found in meta model!');
+        }
+        $row = reset($rows);
+        $app->importUxonObject(UxonObject::fromArray($row, CASE_LOWER));
+        return $app;
     }
 }
