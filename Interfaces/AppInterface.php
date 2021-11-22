@@ -23,7 +23,7 @@ use exface\Core\Exceptions\Actions\ActionNotFoundError;
  * @author Andrej Kabachnik
  *
  */
-interface AppInterface extends WorkbenchDependantInterface, AliasInterface, TaskHandlerInterface, ContainerInterface
+interface AppInterface extends WorkbenchDependantInterface, AliasInterface, TaskHandlerInterface, ContainerInterface, iCanBeConvertedToUxon
 {
     
     const CONFIG_SCOPE_SYSTEM = 'SYSTEM';
@@ -116,13 +116,10 @@ interface AppInterface extends WorkbenchDependantInterface, AliasInterface, Task
 
     /**
      * Returns the unique identifier of this app.
-     * It is a UUID by default.
      * 
-     * @throws LogicException if app has no UID or is not installed
-     * 
-     * @return string
+     * @return string|NULL
      */
-    public function getUid();
+    public function getUid() : ?string;
 
     /**
      * Returns an array with data variables stored for this app in the given context scope
@@ -197,6 +194,12 @@ interface AppInterface extends WorkbenchDependantInterface, AliasInterface, Task
     public function getSelector();
     
     /**
+     * 
+     * @return string
+     */
+    public function getName() : string;
+    
+    /**
      * Returns the ISO 639-1 code for the default language of the app.
      * 
      * @return string
@@ -230,4 +233,3 @@ interface AppInterface extends WorkbenchDependantInterface, AliasInterface, Task
      */
     public function getPrototypeClass(PrototypeSelectorInterface $selector) : string;
 }
-?>

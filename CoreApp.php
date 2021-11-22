@@ -15,7 +15,6 @@ use exface\Core\CommonLogic\AppInstallers\FileContentInstaller;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Facades\HttpTaskFacade;
 use exface\Core\CommonLogic\AppInstallers\SchedulerInstaller;
-use exface\Core\DataTypes\FilePathDataType;
 
 class CoreApp extends App
 {
@@ -30,7 +29,7 @@ class CoreApp extends App
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Model\App::getUid()
      */
-    public function getUid()
+    public function getUid() : ?string
     {
         // Hardcode the UID of the core app, because some installers might attempt to use it
         // before the model is fully functional on first time installing.

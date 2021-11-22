@@ -46,6 +46,9 @@ use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
 use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -69,6 +72,8 @@ class App implements AppInterface
 {
     use AliasTrait;
     
+    use ImportUxonObjectTrait;
+    
     const CONFIG_FOLDER_IN_APP = 'Config';
     
     const CONFIG_FOLDER_IN_USER_DATA = '.config';
@@ -76,8 +81,6 @@ class App implements AppInterface
     const CONFIG_FILE_SUFFIX = 'config';
     
     const CONFIG_FILE_EXTENSION = '.json';
-    
-    protected static $modelSheet = null;
     
     private $selector = null;
     
@@ -94,6 +97,10 @@ class App implements AppInterface
     private $translator = null;
     
     private $selector_cache = [];
+    
+    private $defaultLanguageCode = null;
+    
+    private $name;
     
     /**
      *
@@ -125,6 +132,19 @@ class App implements AppInterface
     public function getAliasWithNamespace()
     {
         return $this->getSelector()->getAppAlias();
+    }
+    
+    /**
+     * 
+     * @param string $alias
+     * @return AppInterface
+     */
+    protected function setAlias(string $alias) : AppInterface
+    {
+        if (strcasecmp($alias, $this->getAliasWithNamespace()) !== 0) {
+            throw new RuntimeException('Cannot change the alias of an app at runtime! Please change it in the model before loading the app.');
+        }
+        return $this;
     }
     
     /**
@@ -298,16 +318,27 @@ class App implements AppInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\AppInterface::getUid()
      */
-    public function getUid()
+    public function getUid() : ?string
     {
         if ($this->uid === null) {
-            $ds = $this->getAppModelDataSheet();
-            $this->uid = $ds->getUidColumn()->getValue($ds->getColumns()->get('ALIAS')->findRowByValue($this->getAliasWithNamespace()));
-            if (! $this->uid) {
-                throw new AppNotFoundError('App "' . $this->getAliasWithNamespace() . '" not found in the meta model! Please reinstall the app!');
+            try {
+                $this->getWorkbench()->model()->getModelLoader()->loadAppData($this);
+            } catch (AppNotFoundError $e) {
+                return null;
             }
         }
         return $this->uid;
+    }
+    
+    /**
+     *
+     * @param string $value
+     * @return AppInterface
+     */
+    protected function setUid(string $value) : AppInterface
+    {
+        $this->uid = $value;
+        return $this;
     }
     
     /**
@@ -439,19 +470,25 @@ class App implements AppInterface
      */
     public function getLanguageDefault() : string
     {
-        try { 
-            $language = $this->getAppModelDataSheet()->getRowByColumnValue('ALIAS', $this->getAliasWithNamespace())['DEFAULT_LANGUAGE_CODE'];
-            if ($language != null) {
-                return $language;
-            } else {
-                return $this->getWorkbench()->getConfig()->getOption('SERVER.DEFAULT_LOCALE');
+        if ($this->defaultLanguageCode === null) {
+            try {
+                $this->getWorkbench()->model()->getModelLoader()->loadAppData($this);
+            } catch (AppNotFoundError $e) {
+                $this->defaultLanguageCode = $this->getWorkbench()->getConfig()->getOption('SERVER.DEFAULT_LOCALE');
             }
-        } catch (DataSheetReadError $e) {
-            // Catch read errors in case, the app does not yet exist in the model (this may happen
-            // on rare occasions, when apps are just being installed)
-            $this->getWorkbench()->getLogger()->logException($e);
-            return $this->getWorkbench()->getConfig()->getOption('SERVER.DEFAULT_LOCALE');
         }
+        return $this->defaultLanguageCode;
+    }
+    
+    /**
+     * 
+     * @param string $code
+     * @return AppInterface
+     */
+    protected function setDefaultLanguageCode(string $code) : AppInterface
+    {
+        $this->defaultLanguageCode = $code;
+        return $this;
     }
     
     /**
@@ -462,32 +499,6 @@ class App implements AppInterface
     public function getLanguages(bool $forceLocale = true) : array
     {
         return $this->getTranslator()->getLanguagesAvailable($forceLocale);
-    }
-    
-    /**
-     * Returns a data sheet with basic infomration about all installed apps.
-     * 
-     * This centralized method allows to quickly fetch any app property without querying
-     * the model DB every time - it reads all data once when called for the first time an
-     * caches it statically, so all derivatives of this class will use it.
-     * 
-     * @return DataSheetInterface
-     */
-    protected function getAppModelDataSheet() : DataSheetInterface
-    {
-        if (static::$modelSheet === null) {
-            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.App');
-            $ds->getColumns()->addMultiple([
-                'UID',
-                'ALIAS',
-                'NAME',
-                'DEFAULT_LANGUAGE_CODE'
-            ]);
-            $ds->dataRead();
-            static::$modelSheet = $ds;
-        }
-        
-        return static::$modelSheet;
     }
     
     /**
@@ -774,5 +785,48 @@ class App implements AppInterface
     public function getAlias()
     {
         return StringDataType::substringAfter($this->getAliasWithNamespace(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        return new UxonObject([
+            'UID' => $this->getUid(),
+            'ALIAS' => $this->getAliasWithNamespace(),
+            'NAME' => $this->getName(),
+            'DEFAULT_LANGUAGE_CODE' => $this->getLanguageDefault()
+        ]);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppInterface::getName()
+     */
+    public function getName() : string
+    {
+        if ($this->name === null) {
+            try {
+                $this->getWorkbench()->model()->getModelLoader()->loadAppData($this);
+            } catch (AppNotFoundError $e) {
+                $this->name = '';
+            }
+        }
+        return $this->name;
+    }
+    
+    /**
+     * 
+     * @param string $value
+     * @return AppInterface
+     */
+    protected function setName(string $value) : AppInterface
+    {
+        $this->name = $value;
+        return $this;
     }
 }

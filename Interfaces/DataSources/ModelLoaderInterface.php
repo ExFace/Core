@@ -32,6 +32,7 @@ use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
 use exface\Core\Interfaces\Model\MessageInterface;
+use exface\Core\Exceptions\AppNotFoundError;
 
 interface ModelLoaderInterface extends WorkbenchDependantInterface
 {
@@ -242,4 +243,12 @@ interface ModelLoaderInterface extends WorkbenchDependantInterface
      * @return MessageInterface
      */
     public function loadMessageData(MessageInterface $message) : MessageInterface;
+    
+    /**
+     *
+     * @param AppInterface $app
+     * @throws AppNotFoundError
+     * @return AppInterface
+     */
+    public function loadAppData(AppInterface $app) : AppInterface;
 }
