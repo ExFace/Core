@@ -68,7 +68,7 @@ HTML;
      * {@inheritdoc}
      * @see AbstractJqueryElement::buildJsValueSetter()
      */
-    public function buildJsValueSetter($value_js)
+    public function buildJsValueSetter($value_js, $disable_formatting = false)
     {
         return "$('#{$this->getId()}').replaceWith($({$this->buildJsValueDecorator($value_js)}))";
     }
