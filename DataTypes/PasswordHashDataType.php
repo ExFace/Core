@@ -22,7 +22,7 @@ class PasswordHashDataType extends StringDataType
     public static function isHash(string $password) : bool
     {
         $nfo = password_get_info($password);
-        return $nfo['algo'] !== null && $nfo['algo'] > 0;
+        return $nfo['algo'] !== null && $nfo['algo'] !== 0;
     }
     
     /**
