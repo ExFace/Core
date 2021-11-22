@@ -22,7 +22,7 @@ class PasswordHashDataType extends StringDataType
     public static function isHash(string $password) : bool
     {
         $nfo = password_get_info($password);
-        return $nfo['algo'] !== 0;
+        return $nfo['algo'] !== null && $nfo['algo'] > 0;
     }
     
     /**
@@ -30,7 +30,7 @@ class PasswordHashDataType extends StringDataType
      * @param string $password
      * @return string
      */
-    protected function hash(string $password) : string
+    public function hash(string $password) : string
     {
         return password_hash($password, $this->getHashAlgorithm());
     }
@@ -100,12 +100,15 @@ class PasswordHashDataType extends StringDataType
     }
     
     /**
-     * Set the configuration key and app where the password policy for the datatype is defined.
-     * Password policy can be defined in the app configuration by setting a minimal length, a maximal length and a regular expression.
+     * Expression to fetch additional password policy options: e.g. a formula to load them from somewhere.
+     * 
+     * The expression MUST produce a valid config UXON for this data type. For example, the password
+     * policy for built-in user passwords of the workbench is loaded from the system config file like
+     * this: `=GetConfig('SECURITY.PASSWORD_CONFIG', 'exface.Core')`.
      * 
      * @uxon-property password_policy_config
      * @uxon-type string
-     * @uxon-default =GetConfig()
+     * @uxon-template =GetConfig('SECURITY.PASSWORD_CONFIG', 'exface.Core')
      * 
      * @param string $string
      * @throws DataTypeConfigurationError
