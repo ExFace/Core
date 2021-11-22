@@ -47,7 +47,7 @@
     
     "SECURITY.DISABLE_ANONYMOUS_ACCESS": false,
 	"SECURITY.PASSWORD_CONFIG": {
-		"validator_regex": "/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?([^\\\\w\\\\s]|[_])).{8,}$/",
+		"validator_regex": "/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?([^\\w\\s]|[_])).{8,}$/",
 		"validation_error_code": "7INNL87"
 	},
     "SECURITY.AUTHENTICATORS" : [
