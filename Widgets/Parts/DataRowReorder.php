@@ -5,6 +5,7 @@ use exface\Core\Widgets\Traits\DataWidgetPartTrait;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * This widget part is used to reorder rows in a `DataTable` or `DataTree`.
@@ -47,10 +48,10 @@ class DataRowReorder implements WidgetPartInterface
      */
     public function exportUxonObject()
     {
-        $uxon = parent::exportUxonObject();
-        $uxon->setProperty('order_index_attribute_alias', $this->getOrderIndexAttributeAlias());
-        $uxon->setProperty('direction', $this->direction);
-        
+        $uxon = new UxonObject([
+            'order_index_attribute_alias' => $this->getOrderIndexAttributeAlias(),
+            'direction' => $this->direction
+        ]);
         return $uxon;
     }
     

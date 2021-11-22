@@ -163,7 +163,7 @@ trait EChartsTrait
     {
         $facade = $this->getFacade();
         $includes = [];
-        if ($this->getChartType() === $this->chartTypes[CHART_TYPE_HEATMAP]) {
+        if ($this->getChartType() === $this->chartTypes['CHART_TYPE_HEATMAP']) {
             $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.ECHARTS.ECHARTSHEATMAP_JS') . '"></script>';
         } else {
             $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.ECHARTS.ECHARTS_JS') . '"></script>';
@@ -206,7 +206,7 @@ trait EChartsTrait
             'hint' => 'Change chart type'
         ]));
         $tb->getButtonGroupForSearchActions()->addButton($menu, 1);
-        if ($this->getChartType() === $this->chartTypes[CHART_TYPE_GRAPH]) {
+        if ($this->getChartType() === $this->chartTypes['CHART_TYPE_GRAPH']) {
             $buttonUxon = $buttonTemplate->copy();
             $buttonUxon->setProperty('caption', 'Circle');
             $buttonUxon->setProperty('icon', 'circle-o');
@@ -274,7 +274,7 @@ JS;
         $handlersJs = $this->buildJsLegendSelectHandler();
         $handlersJs .= $this->buildJsOnClickHandler();
         $handlersJs .= $this->buildJsBindToClickHandler();
-        if ($this->getChartType() === $this->chartTypes[CHART_TYPE_GRAPH]) {
+        if ($this->getChartType() === $this->chartTypes['CHART_TYPE_GRAPH']) {
             $handlersJs .= $this->buildJsOnGraphHoverHandler();
         }
         return $handlersJs;
@@ -458,7 +458,7 @@ JS;
     protected function buildJsGetSelectedRowFunction(string $selection) : string
     {
         switch ($this->getChartType()) {
-            case $this->chartTypes[CHART_TYPE_PIE]:
+            case $this->chartTypes['CHART_TYPE_PIE']:
                 return <<<JS
                 
                     function(){
@@ -473,7 +473,7 @@ JS;
                     }()
                     
 JS;
-            case $this->chartTypes[CHART_TYPE_GRAPH]:
+            case $this->chartTypes['CHART_TYPE_GRAPH']:
                 return <<<JS
                 
                     function(){
@@ -495,7 +495,7 @@ JS;
                     }()
                     
 JS;
-            case $this->chartTypes[CHART_TYPE_SANKEY]:
+            case $this->chartTypes['CHART_TYPE_SANKEY']:
                 return <<<JS
                     ''
 
@@ -751,7 +751,7 @@ JS;
     protected function buildJsSingleClickFunctionBody(string $params) : string
     {
         switch ($this->getChartType()) {
-            case $this->chartTypes[CHART_TYPE_PIE]:
+            case $this->chartTypes['CHART_TYPE_PIE']:
                 return <<<JS
         var params = {$params};
         var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};
@@ -781,7 +781,7 @@ JS;
         
 JS;
             
-            case $this->chartTypes[CHART_TYPE_GRAPH]:
+            case $this->chartTypes['CHART_TYPE_GRAPH']:
                 return <<<JS
         var echart = {$this->buildJsEChartsVar()};
         var params = {$params};
@@ -817,9 +817,9 @@ JS;
         
 JS;
                 
-            case $this->chartTypes[CHART_TYPE_HEATMAP]:
+            case $this->chartTypes['CHART_TYPE_HEATMAP']:
                 return '';
-            case $this->chartTypes[CHART_TYPE_SANKEY]:
+            case $this->chartTypes['CHART_TYPE_SANKEY']:
                 return '';
             default:
                 return <<<JS
@@ -883,7 +883,7 @@ JS;
         $widget = $this->getWidget();
         $output = '';
         
-        if ($this->getChartType() === $this->chartTypes[CHART_TYPE_GRAPH]) {
+        if ($this->getChartType() === $this->chartTypes['CHART_TYPE_GRAPH']) {
             // click actions for graph charts
             // for now you can only call an action when clicking on a node
             if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[0]) {
@@ -1513,7 +1513,7 @@ JS;
      */
     protected function buildJsAxes() : string
     {
-        if ($this->getChartType() !== $this->chartTypes[CHART_TYPE_XY] && $this->getChartType() !== $this->chartTypes[CHART_TYPE_HEATMAP]) {
+        if ($this->getChartType() !== $this->chartTypes['CHART_TYPE_XY'] && $this->getChartType() !== $this->chartTypes['CHART_TYPE_HEATMAP']) {
             return '';
         }
         $countAxisRight = 0;
@@ -1990,13 +1990,13 @@ JS;
             $uidField =  $this->getWidget()->getData()->getUidColumn()->getDataColumnName();
         }
         switch ($this->getChartType()) {
-            case $this->chartTypes[CHART_TYPE_PIE]:
+            case $this->chartTypes['CHART_TYPE_PIE']:
                 $js = $this->buildJsRedrawPie('newSelection', 'rowData');
                 break;
-            case $this->chartTypes[CHART_TYPE_GRAPH]:
+            case $this->chartTypes['CHART_TYPE_GRAPH']:
                 $js = $this->buildJsRedrawGraph('newSelection', 'rowData');
                 break;
-            case $this->chartTypes[CHART_TYPE_SANKEY]:
+            case $this->chartTypes['CHART_TYPE_SANKEY']:
                 $js = $this->buildJsRedrawSankey('newSelection', 'rowData');
                 break;
             default:
@@ -2974,15 +2974,15 @@ JS;
             case $s instanceof PieChartSeries:
             case $s instanceof DonutChartSeries:
             case $s instanceof RoseChartSeries:
-                return $this->chartTypes[CHART_TYPE_PIE];
+                return $this->chartTypes['CHART_TYPE_PIE'];
             case $s instanceof GraphChartSeries:
-                return $this->chartTypes[CHART_TYPE_GRAPH];;
+                return $this->chartTypes['CHART_TYPE_GRAPH'];;
             case $s instanceof HeatmapChartSeries:
-                return $this->chartTypes[CHART_TYPE_HEATMAP];
+                return $this->chartTypes['CHART_TYPE_HEATMAP'];
             case $s instanceof SankeyChartSeries:
-                return $this->chartTypes[CHART_TYPE_SANKEY];
+                return $this->chartTypes['CHART_TYPE_SANKEY'];
             default:
-                return $this->chartTypes[CHART_TYPE_XY];
+                return $this->chartTypes['CHART_TYPE_XY'];
         }
     }
     
@@ -3083,7 +3083,7 @@ function(canvasMousePos, params, tooltipDom, rect, sizes) {
     }
 JS;
         switch ($this->getChartType()) {
-            case $this->chartTypes[CHART_TYPE_PIE]:
+            case $this->chartTypes['CHART_TYPE_PIE']:
                 return <<<JS
                 
 {
@@ -3094,7 +3094,7 @@ JS;
 },
 
 JS;
-            case $this->chartTypes[CHART_TYPE_GRAPH]:
+            case $this->chartTypes['CHART_TYPE_GRAPH']:
                 return <<<JS
                 
 {
@@ -3106,7 +3106,7 @@ JS;
 },
 
 JS;
-            case $this->chartTypes[CHART_TYPE_HEATMAP]:
+            case $this->chartTypes['CHART_TYPE_HEATMAP']:
                 $series = $this->getWidget()->getSeries()[0];
                 $xAxisCaption = $series->getXAxis()->getCaption();
                 $xAxisName = $series->getXAxis()->getDataColumn()->getDataColumnName();
@@ -3151,7 +3151,7 @@ JS;
 },
 
 JS;
-            case $this->chartTypes[CHART_TYPE_SANKEY]:
+            case $this->chartTypes['CHART_TYPE_SANKEY']:
                 return <<<JS
                 
 {
