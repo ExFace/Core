@@ -4,8 +4,7 @@ namespace exface\Core\CommonLogic\AppInstallers;
 use exface\Core\DataTypes\StringDataType;
 
 /**
- * This installer gives the user `IIS_USERNAME`, default its 'IUSR', `the change` permissions for the folders `data`, `log`, `config`, `cache`, `backup`, `translations` and all their subfolders.
- * The permissions are set via the cmd command `CALCS`.
+ * This installer takes care of file permissions an other settings required to run on Microsoft IIS.
  * 
  * @author Ralf Mulansky
  *        
