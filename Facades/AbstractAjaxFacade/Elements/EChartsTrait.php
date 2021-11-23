@@ -3421,12 +3421,13 @@ JS;
     protected function isLegendHidden() : bool
     {
         $widget = $this->getWidget();
-        if ($widget->getLegendPosition() !== null) {
-            return false;
-        }
         if ($widget->getHideLegend() === true) {
             return true;
         }
+        if ($widget->getLegendPosition() !== null) {
+            return false;
+        }
+        
         $firstSeries = $widget->getSeries()[0];
         if (count($widget->getSeries()) === 1 && (($firstSeries instanceof PieChartSeries) === false || $firstSeries instanceof GraphChartSeries === false || $firstSeries instanceof SankeyChartSeries === false)) {
             if ($firstSeries->getValueDataColumn() === $firstSeries->getValueAxis()->getDataColumn()){
