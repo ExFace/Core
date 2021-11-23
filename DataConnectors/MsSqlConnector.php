@@ -74,7 +74,9 @@ class MsSqlConnector extends AbstractSqlConnector
      */
     protected function performDisconnect()
     {
-        @ sqlsrv_close($this->getCurrentConnection());
+        if (($conn = $this->getCurrentConnection()) !== null) {
+            @sqlsrv_close($conn);
+        }
     }
 
     /**
