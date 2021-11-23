@@ -12,8 +12,6 @@ use exface\Core\DataTypes\StringDataType;
  */
 class IISServerInstaller extends AbstractAppInstaller
 {
-    const IIS_USERNAME = 'IUSR';
-    
     /**
      * 
      * {@inheritDoc}
@@ -43,13 +41,17 @@ class IISServerInstaller extends AbstractAppInstaller
     {
         $indent = $this->getOutputIndentation();
         $fm = $this->getWorkbench()->filemanager();
-        $user = self::IIS_USERNAME;
+        
+        $user = 'IUSR';
         yield $indent . $this->setPermissionsForPath($fm->getPathToDataFolder(), $user) . PHP_EOL;
         yield $indent . $this->setPermissionsForPath($fm->getPathToLogFolder(), $user) . PHP_EOL;
         yield $indent . $this->setPermissionsForPath($fm->getPathToConfigFolder(), $user) . PHP_EOL;
         yield $indent . $this->setPermissionsForPath($fm->getPathToCacheFolder(), $user) . PHP_EOL;
         yield $indent . $this->setPermissionsForPath($fm->getPathToBackupFolder(), $user) . PHP_EOL;
-        yield $indent . $this->setPermissionsForPath($fm->getPathToTranslationsFolder(), $user) . PHP_EOL;                
+        yield $indent . $this->setPermissionsForPath($fm->getPathToTranslationsFolder(), $user) . PHP_EOL;  
+        
+        $user = 'IIS_IUSRS';
+        yield $indent . $this->setPermissionsForPath($fm->getPathToDataFolder(), $user) . PHP_EOL;
     }
     
     /**
