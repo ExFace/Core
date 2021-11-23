@@ -61,7 +61,7 @@
     "rows": [
         {
             "CREATED_ON": "2019-04-14 07:13:11",
-            "MODIFIED_ON": "2021-07-07 18:10:59",
+            "MODIFIED_ON": "2021-11-23 13:01:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e95e84baee610e9677e4b318306b9a",
@@ -92,8 +92,15 @@
                             "filters": [
                                 {
                                     "attribute_alias": "OBJECT",
-                                    "widget_type": "InputHidden",
-                                    "required": true
+                                    "hidden": true
+                                },
+                                {
+                                    "attribute_alias": "UID",
+                                    "hidden": true,
+                                    "input_widget": {
+                                        "widget_type": "InputHidden",
+                                        "multiple_values_allowed": true
+                                    }
                                 }
                             ],
                             "columns": [
