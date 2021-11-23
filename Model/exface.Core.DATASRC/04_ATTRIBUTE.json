@@ -305,7 +305,7 @@
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2021-11-04 11:17:00",
+            "MODIFIED_ON": "2021-11-23 12:56:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x39380000000000000000000000000000",
@@ -325,7 +325,7 @@
             "NAME": "Data Source Alias",
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
-            "COPYABLEFLAG": "1",
+            "COPYABLEFLAG": "0",
             "ALIAS": "ALIAS",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "alias",
