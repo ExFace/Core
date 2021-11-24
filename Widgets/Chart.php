@@ -107,7 +107,7 @@ class Chart extends AbstractWidget implements
      *
      * @var bool
      */
-    private $hide_footer = false;
+    private $hide_footer = null;
     
     private $hide_axes = null;
     
@@ -642,7 +642,12 @@ class Chart extends AbstractWidget implements
         return $this;
     }
 
-    public function getHideFooter()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveFooter::getHideFooter()
+     */
+    public function getHideFooter() : ?bool
     {
         return $this->hide_footer;
     }
@@ -656,7 +661,7 @@ class Chart extends AbstractWidget implements
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveFooter::setHideFooter()
      */
-    public function setHideFooter($value)
+    public function setHideFooter($value) : iHaveFooter
     {
         $this->hide_footer = $value;
         return $this;
