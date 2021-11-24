@@ -3,15 +3,22 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iUseData;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
 
 /**
- * A special toolbar for data widgets with extra features like automatically
- * included button groups for global actions, search actions, etc.
+ * A special toolbar for data widgets that includes global actions and search actions automatically.
+ * 
+ * The auto-generated buttons are added as separate button groups __after__ any regular buttons.
+ * Search actions have opposite alignment by default.
+ * 
+ * If a `DataToolbar` is instantiated manually, the properties `include_global_actions`
+ * and `include_search_actions` can used to control automatically added buttons explicitly.
+ * By default button groups for these actions are only added to the main toolbar of a
+ * widget.
  * 
  * @see Toolbar
  *
@@ -35,8 +42,7 @@ class DataToolbar extends Toolbar
     /** @var ButtonGroup */
     private $search_button_group = null;
     
-    /** @var ButtonGroup */
-    private $object_basket_button_group = null;
+    private $included_buttons_initialized = false;
     
     /**
      * 
@@ -96,6 +102,7 @@ class DataToolbar extends Toolbar
     public function setIncludeNoExtraActions(bool $true_or_false) : DataToolbar
     {
         $this->disable_autoinclude_actions = $true_or_false;
+        $this->included_buttons_initialized = false;
         return $this;
     }
     
@@ -135,56 +142,64 @@ class DataToolbar extends Toolbar
     public function setIncludeGlobalActions(bool $true_or_false) : DataToolbar
     {
         $this->include_global_actions = $true_or_false;
+        $this->included_buttons_initialized = false;
         return $this;
     }
+    
+    /**
+     * Instantiates the auto-included button groups for global actions and search-related actions.
+     * 
+     * It is important to generate these button groups together as they must always be in the same
+     * order and with the same ids - regardless of why and where their initialization was triggered.
+     * 
+     * @return void
+     */
+    protected function initAutoIncludedButtonGroups()
+    {
+        if ($this->getIncludeGlobalActions()) {
+            $this->global_action_button_group = WidgetFactory::create($this->getPage(), 'ButtonGroup', $this);
+            $this->global_action_button_group->setVisibility(WidgetVisibilityDataType::OPTIONAL);
+            
+            foreach ($this->getWorkbench()->getConfig()->getOption('WIDGET.DATATOOLBAR.GLOBAL_ACTIONS') as $uxon){
+                /* @var $btn \exface\Core\Widgets\Button */
+                $btn = $this->global_action_button_group->createButton();
+                $btn->setAction($uxon);
+                $btn->setVisibility(WidgetVisibilityDataType::OPTIONAL);
+                $this->global_action_button_group->addButton($btn);
+            }
+        }
+        
+        if ($this->getIncludeSearchActions()) {
+            $this->search_button_group = WidgetFactory::create($this->getPage(), 'ButtonGroup', $this);
+            
+            $search_button = $this->search_button_group->createButton();
+            $search_button
+                ->setActionAlias('exface.Core.RefreshWidget')
+                ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.READDATA.SEARCH'))
+                ->setIcon(Icons::SEARCH)
+                ->setAlign(EXF_ALIGN_OPPOSITE);
+            
+            $this->search_button_group->addButton($search_button);
+        }
+        $this->included_buttons_initialized = true;
+        return;
+    }
+    
     
     /**
      * Returns a button group with buttons for global actions.
      * 
      * The button group has visibility "optional" by default!
      * 
-     * @return ButtonGroup
+     * @return ButtonGroup|NULL
      */
-    public function getButtonGroupForGlobalActions() : ButtonGroup
+    public function getButtonGroupForGlobalActions() : ?ButtonGroup
     {
-        if (is_null($this->global_action_button_group)){
-            $this->global_action_button_group = WidgetFactory::create($this->getPage(), 'ButtonGroup', $this);
-            $this->global_action_button_group->setVisibility(EXF_WIDGET_VISIBILITY_OPTIONAL);
-            
-            foreach ($this->getWorkbench()->getConfig()->getOption('WIDGET.DATATOOLBAR.GLOBAL_ACTIONS') as $uxon){
-                /* @var $btn \exface\Core\Widgets\Button */
-                $btn = $this->global_action_button_group->createButton();
-                $btn->setAction($uxon);
-                $btn->setVisibility(EXF_WIDGET_VISIBILITY_OPTIONAL);
-                $this->global_action_button_group->addButton($btn);
-            }
+        if ($this->included_buttons_initialized === false){
+            $this->initAutoIncludedButtonGroups();
         }
         
         return $this->global_action_button_group;
-    }
-    
-    /**
-     * Returns a button group with buttons for object basket actions.
-     * 
-     * The button group has visibility "optional" by default!
-     * 
-     * @return ButtonGroup
-     */
-    public function getButtonGroupForObjectBasketActions() : ButtonGroup
-    {
-        if (is_null($this->object_basket_button_group)){
-            $this->object_basket_button_group = WidgetFactory::create($this->getPage(), 'ButtonGroup', $this);
-            $this->object_basket_button_group->setVisibility(EXF_WIDGET_VISIBILITY_OPTIONAL);
-            
-            foreach ($this->getMetaObject()->getActions()->getUsedInObjectBasket() as $action){
-                /* @var $btn \exface\Core\Widgets\Button */
-                $btn = $this->object_basket_button_group->createButton();
-                $btn->setAction($action);
-                $this->object_basket_button_group->addButton($btn);
-            }
-        }
-        
-        return $this->object_basket_button_group;
     }
     
     /**
@@ -192,21 +207,12 @@ class DataToolbar extends Toolbar
      * 
      * The button group has opposite alignment and normal visibility by default!
      * 
-     * @return \exface\Core\Widgets\ButtonGroup
+     * @return ButtonGroup|NULL
      */
-    public function getButtonGroupForSearchActions() : ButtonGroup
+    public function getButtonGroupForSearchActions() : ?ButtonGroup
     {
-        if (is_null($this->search_button_group)){
-            $this->search_button_group = WidgetFactory::create($this->getPage(), 'ButtonGroup', $this);
-            
-            $search_button = $this->search_button_group->createButton();
-            $search_button
-            ->setActionAlias('exface.Core.RefreshWidget')
-            ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.READDATA.SEARCH'))
-            ->setIcon(Icons::SEARCH)
-            ->setAlign(EXF_ALIGN_OPPOSITE);
-            
-            $this->search_button_group->addButton($search_button);
+        if ($this->included_buttons_initialized === false){
+            $this->initAutoIncludedButtonGroups();
         }
         
         return $this->search_button_group;
@@ -228,7 +234,7 @@ class DataToolbar extends Toolbar
         // Add automatic button groups - but only if their parent is still this
         // toolbar. If they were moved, the parent changes and we don't want
         // to see them here anymore.
-        // Adding these groups must be done every time, because the must allways
+        // Adding these groups must be done every time, because they must allways
         // be at the end
         $groups = parent::getWidgets();
         if ($this->getIncludeGlobalActions() && $this->getButtonGroupForGlobalActions()->getParent() === $this){
@@ -286,6 +292,7 @@ class DataToolbar extends Toolbar
     public function setIncludeSearchActions(bool $true_or_false) : DataToolbar
     {
         $this->include_search_actions = $true_or_false;
+        $this->included_buttons_initialized = false;
         return $this;
     }
 
@@ -309,4 +316,3 @@ class DataToolbar extends Toolbar
         return $this->getInputWidget()->getToolbarMain() === $this ? true : false;
     }
 }
-?>
