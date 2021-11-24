@@ -127,7 +127,7 @@ class Data
 
     private $hide_header = null;
     
-    private $hide_footer = false;
+    private $hide_footer = null;
     
     private $has_system_columns = false;
     
@@ -1198,7 +1198,12 @@ class Data
         return $this;
     }
     
-    public function getHideFooter()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveFooter::getHideFooter()
+     */
+    public function getHideFooter() : ?bool
     {
         return $this->hide_footer;
     }
@@ -1211,7 +1216,7 @@ class Data
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveHeader::setHideHeader()
      */
-    public function setHideFooter($value)
+    public function setHideFooter($value) : iHaveFooter
     {
         $this->hide_footer = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
