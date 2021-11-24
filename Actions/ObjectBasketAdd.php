@@ -16,6 +16,7 @@ use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
+use exface\Core\Widgets\Data;
 
 /**
  * Adds the input rows to the object basket in a specified context_scope (by default, the window scope)
@@ -48,8 +49,16 @@ class ObjectBasketAdd extends AbstractAction implements iModifyContext
         // Disable buttons if widget cannot provide UID data (nothing to put into the object basket)
         if ($triggerWidget = $this->getWidgetDefinedIn()) {
             if (($triggerWidget instanceof iUseInputWidget) && ($inputWidget = $triggerWidget->getInputWidget()) && $inputWidget instanceof iHaveButtons) {
-                if (! $inputWidget->hasUidData()) {
-                    $triggerWidget->setDisabled(true, $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.OBJECTBASKET.BUTTON_WITHOUT_UID_DISABLED_REASON'));
+                switch (true) {
+                    // The above is the case if there simply is no UID column
+                    case ! $inputWidget->hasUidData():
+                    // ...or if there are any aggregations
+                    // IDEA theoretically there may be aggregations that include the UID column (e.g. aggregated via UID)
+                    // perhaps it might be possible to detect these cases and allow object basket actions
+                    case ($inputWidget instanceof Data) && ($inputWidget->hasAggregations() || $inputWidget->hasAggregateAll()):
+                    case ($inputWidget instanceof iUseData) && ($inputWidget->getData()->hasAggregations() || $inputWidget->getData()->hasAggregateAll()):
+                        $triggerWidget->setDisabled(true, $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.OBJECTBASKET.BUTTON_WITHOUT_UID_DISABLED_REASON'));
+                        break;
                 }
             }
         }
