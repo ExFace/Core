@@ -7,13 +7,13 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
-use exface\Core\DataTypes\PasswordHashDataType;
+use exface\Core\DataTypes\PasswordDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 
 /**
  * This behavior will hash password attribute values when data is created or updated.
  * 
- * **NOTE:** The attribute MUST have the data type "exface.Core.PasswordHash" to work with this behavior!
+ * **NOTE:** The attribute MUST have the data type "exface.Core.Password" to work with this behavior!
  * 
  * @author Andrej Kabachnik
  *
@@ -62,7 +62,7 @@ class PasswordHashingBehavior extends AbstractBehavior
         // Check if the updated_on column is present in the sheet
         if ($column = $data_sheet->getColumns()->getByAttribute($this->getPasswordAttribute())) {
             $type = $column->getDataType();
-            if (! ($type instanceof PasswordHashDataType)) {
+            if (! ($type instanceof PasswordDataType)) {
                 throw new BehaviorConfigurationError($this->getObject(), 'Cannot use PasswordHashingBehavior on attribute "' . $this->getPasswordAttributeAlias() . '": the attribute MUST have the data type "exface.Core.PasswordHash"!');
             }
             foreach ($column->getValues(false) as $rowNr => $value) {
