@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Factories\DataSheetMapperFactory;
 
 /**
  * Renders a dialog to create a copy of the input object.
@@ -16,6 +17,11 @@ use exface\Core\CommonLogic\UxonObject;
  * the metamodel of their relation attributes. However, you can also specify the related objects
  * to be copied explicitly by adding their corresponding relations to  `copy_related_objects'.
  * In this case, the `CopyData` action will perform a deep-copy.
+ * 
+ * Also note, that by default the editors of non-copyable attributes will remain empty (since they
+ * should not be copied). However, this behavior is automatically disable if the action has `input_mappers`.
+ * So, if for any reason, you need a prefill for non-copyable attributes, use input mappers to define the
+ * values explicitly.
  * 
  * @author Andrej Kabachnik
  *
@@ -34,40 +40,49 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
         parent::init();
         $this->setIcon(Icons::CLONE_);
         $this->setSaveActionAlias('exface.Core.CopyData');
+        $this->setPrefillWithFilterContext(false);
     }
 
     /**
-     * In the case of the dublicate-action we need to remove the UID column from the data sheet to ensure, that the
-     * duplicated object will get new ids.
-     *
+     * 
      * {@inheritdoc} 
      * @see \exface\Core\Actions\ShowWidget::prefillWidget()
      */
     protected function prefillWidget(TaskInterface $task, WidgetInterface $widget) : WidgetInterface
     {
-        // If it is a deep copy, we need to make sure, widget eventually displaying related objects are 
-        // prefilled just like they are in ShowObjectEditDialog.
-        if ($this->isDeepCopy()) {
-            return parent::prefillWidget($task, $widget);
-        }
-        
-        $data_sheet = $this->getInputDataSheet($task);
-        
-        if ($data_sheet->getUidColumn()) {
-            $data_sheet = $this->getWidget()->prepareDataSheetToPrefill($data_sheet);
-            if (! $data_sheet->isFresh() && $data_sheet->hasUidColumn(true)) {
-                $data_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
-                $data_sheet->dataRead();
+        // If there are no explicit input mappers and the task object is the same as the actions object,
+        // create a special input mapper to make sure the prefill data does not contain non-copyable 
+        // attributes. This mapper will explicitly empty non-copyable attributes while keeping
+        // copyable system attributes.
+        // This trick will only work if the meta object has a UID attribute and thus all required data
+        // can be loaded from the data source.
+        $obj = $this->getMetaObject();
+        if (! $this->hasInputMappers() && $obj->hasUidAttribute() && $obj->isReadable() && (! $task->hasMetaObject() || $obj->is($task->getMetaObject()))) {
+            $mappings = [];
+            foreach ($this->getMetaObject()->getAttributes() as $attr) {
+                if ($attr->isUidForObject() || ($attr->isSystem() && $attr->isCopyable())) {
+                    $mappings[] = [
+                        'from' => $attr->getAlias(),
+                        'to' => $attr->getAlias()
+                    ];
+                    continue;
+                }
+                if ($attr->isCopyable() === false) {
+                    $mappings[] = [
+                        'from' => "=''",
+                        'to' => $attr->getAlias()
+                    ];
+                    continue;
+                }
             }
-            // TODO #copy-data Really remove the UID column here? The CopyData action might
-            // need it to load additional values... Various disablers for child object tables
-            // in default editors count on the UID field being empty. 
-            $data_sheet->getColumns()->removeByKey($data_sheet->getUidColumn()->getName());
+            $this->addInputMapper(DataSheetMapperFactory::createFromUxon(
+                $this->getWorkbench(), 
+                new UxonObject(["column_to_column_mappings" => $mappings]), 
+                $task->getMetaObject(), 
+                $this->getMetaObject()
+            ));
         }
-        
-        $widget->prefill($data_sheet);
-        
-        return $widget;
+        return parent::prefillWidget($task, $widget);
     }
     
     /**
