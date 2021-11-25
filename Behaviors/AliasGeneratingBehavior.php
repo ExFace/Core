@@ -17,14 +17,26 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\RegularExpressionDataType;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Generates a the value for an alias-type attribute from another attribute (typically a name).
  * 
- * Affects update/create operations on data having the target (alias) column. This means, if
- * alias is emptied intentionally, it will be regenerated. This also means, that the behavior
+ * Affects update/create operations on data having the target (alias) column. A new values will
+ * be generated for every cell in the column, that has no value yet. This means, the behavior
  * will not have effect on operations, that do not inlcude the target column: e.g. partial
  * updates.
+ * 
+ * In the simplest scenario, the value for the `target_attribute_alias` will be generated 
+ * from the `source_attribute_alias` by applying transformation rules defined in
+ * `replace_characters` and `case` - every time the `target_attribute_alias` is empty.
+ * In particular, if the alias is emptied intentionally, it will be regenerated. For example,
+ * this scenario is used in the meta object `exface.Core.CONNECTION`.
+ * 
+ * There is also an option to generate namespaced aliases using `namespace_attribute_alias`
+ * and `namespace_separator`. The namespace is added if there is no alias yet or the
+ * existing alias does not have any namespace yet. This approach is used in the meta object 
+ * `exface.Core.PAGE`.
  * 
  * Generation is done as follows:
  * 
@@ -34,8 +46,6 @@ use exface\Core\DataTypes\RegularExpressionDataType;
  * 3. Replace characters accoring to `replace_characters` configuration
  * 4. Transliterate the result using PHP's `transliterator_transliterate()`
  * 5. Transform the result's case if required by the `case` property
- * 
- * **NOTE**: Generation is only done if the target cell in the data sheet is empty!
  * 
  * If you need to customize the transliteration, use `replace_characters` to define custom
  * rules. 
@@ -67,7 +77,7 @@ use exface\Core\DataTypes\RegularExpressionDataType;
  *  "case": "lower",
  *  "replace_characters": {
  *      " ": "-",
- *      "/[^a-zA-Z0-9_-]/": ""
+ *      "/[^a-zA-Z0-9_\.-]/": ""
  *  }
  * }
  * 
@@ -172,14 +182,9 @@ class AliasGeneratingBehavior extends AbstractBehavior
         
         // If the target column exists and already has all values, don't do anything!
         if ($targetCol = $eventSheet->getColumns()->getByAttribute($this->getTargetAttribute())) {
-            if ($targetCol->hasEmptyValues() === false) {
-                return;
-            }
-        } else {
-            return;
+            $this->generateTransliteratedAliases($eventSheet, $targetCol, $event);
         }
         
-        $this->generateTransliteratedAliases($eventSheet, $targetCol);
         return;
     }
     
@@ -192,40 +197,70 @@ class AliasGeneratingBehavior extends AbstractBehavior
      * 
      * @return DataSheetInterface
      */
-    protected function generateTransliteratedAliases(DataSheetInterface $dataSheet, DataColumnInterface $targetCol) : DataSheetInterface
+    protected function generateTransliteratedAliases(DataSheetInterface $dataSheet, DataColumnInterface $targetCol, DataSheetEventInterface $event) : DataSheetInterface
     {
+        if (! $this->hasNamespace() && ! $targetCol->hasEmptyValues()) {
+            return $dataSheet;
+        }
+        
         if ($srcCol = $dataSheet->getColumns()->getByAttribute($this->getSourceAttribute())) {
             $srcValues = $srcCol->getValues();
         } else {
             throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ' from source attribute "' . $this->getSourceAttribute()->getAliasWithRelationPath() . '": no input data found for source attribute found!');
         }
         
+        // If namepacing is no, see where the namespaces had changed
         if ($this->hasNamespace()) {
             $nsAttr = $this->getNamespaceAttribute();
-            if ($nsCol = $dataSheet->getColumns()->getByAttribute($nsAttr)) {
-                if ($nsCol->hasEmptyValues()) {
+            if (! $nsAttr->isRelated()) {
+                // If the namespace is taken from a direct attribute, check if that attribute changed
+                $nsCol = $dataSheet->getColumns()->getByAttribute($nsAttr);
+                if (! $nsCol || $nsCol->hasEmptyValues()) {
                     throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ': missing values in input data for namespace column "' . $this->getNamespaceAttribute()->getAliasWithRelationPath() . '"!');
                 }
                 $nsValues = $nsCol->getValues(false);
-            } else {
-                if ($nsAttr->isRelated() === false) {
-                    throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ': missing values in input data for namespace column "' . $this->getNamespaceAttribute()->getAliasWithRelationPath() . '"!');
+                if ($event instanceof OnBeforeUpdateDataEvent) {
+                    // If updating, ask the event, what changed
+                    $nsChangedRowNos = array_keys($event->getChanges($nsCol) ?? []);
+                } else {
+                    // If creating, treat all rows as changes
+                    $nsChangedRowNos = array_keys($nsValues);
                 }
+            } else {
+                // If the namespace is taken from a related object, watch for changes on the foreign key
                 $nsValues = null;
+                if ($event instanceof OnBeforeUpdateDataEvent) {
+                    // If updating, ask the event for changes on the foreign key column
+                    $nsRelLeftCol = $dataSheet->getColumns()->getByAttribute($nsAttr->getRelationPath()->getRelationFirst()->getLeftKeyAttribute());
+                    $nsChangedRowNos = array_keys($event->getChanges($nsRelLeftCol) ?? []);
+                } else {
+                    // If creating, treat all rows as changed
+                    $nsChangedRowNos = array_keys($dataSheet->getRows());
+                }
             }
         }
         
         $namespace = null;
+        $sep = $this->getNamespaceSeparator();
         foreach ($srcValues as $rowNo => $srcVal) {
             $targetVal = $targetCol->getCellValue($rowNo);
-            if ($targetVal !== null && $targetVal !== '') {
+            $nsChanged = in_array($rowNo, $nsChangedRowNos);
+            $doGenerate = true;
+            $hasAlias = $targetVal !== null && $targetVal !== '';
+            $hasAliasWithNamespace = $hasAlias && stripos($targetVal, $sep) !== false;
+            
+            // Don't bother if there is an alias already unless namespacing is on and the namespace has changed
+            if ($hasAlias && ! ($this->hasNamespace() && $nsChanged)) {
                 continue;
             }
             
+            // Now as we know, we will probably need to generating, double check if there is a source
+            // value to generate from
             if ($srcVal === null || $srcVal === '') {    
                 throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ' from source attribute "' . $this->getSourceAttribute()->getAliasWithRelationPath() . '": no input data found for source attribute found!');
             }
             
+            // If namespacing is on, get the current namespace and check if it has changed
             if ($this->hasNamespace()) {
                 if ($nsValues !== null) {
                     $namespace = $nsValues[$rowNo];
@@ -233,15 +268,27 @@ class AliasGeneratingBehavior extends AbstractBehavior
                     $namespace = $this->getNamespaceFromRelation($dataSheet, $rowNo);
                 }
                 
-                if ($namespace !== null && $namespace !== '') {
-                    // Make sure the alias itself does not have any namespace separators!
-                    $srcVal = str_replace($this->getNamespaceSeparator(), '', trim($srcVal));
-                    $srcVal = $namespace . $this->getNamespaceSeparator() . $srcVal;
+                //if ($namespace === null || $namespace === '' || $hasAliasWithNamespace)
+                
+                // Generate a new alias if 
+                // - a namespace could be determined
+                // - AND there either is no alias yet or the existing alias has no namespace or that namespace changed
+                if ($namespace !== null && $namespace !== '' && (! $hasAlias || ($nsChanged && ! $hasAliasWithNamespace))) {
+                    if ($hasAlias) {
+                        $srcVal = StringDataType::substringAfter($targetVal, $sep, $targetVal, false, true);
+                    } else {
+                        $srcVal = str_replace($sep, '', $srcVal);
+                    }
+                    $srcVal = $namespace . $sep . $srcVal;
+                } elseif ($hasAlias) {
+                    $doGenerate = false;
                 }
             }
             
-            $transliterated = $this->transliterate($srcVal);
-            $targetCol->setValue($rowNo, $transliterated);
+            if ($doGenerate) {
+                $transliterated = $this->transliterate($srcVal);
+                $targetCol->setValue($rowNo, $transliterated);
+            }
         }
         
         return $dataSheet;

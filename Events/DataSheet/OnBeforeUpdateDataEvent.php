@@ -12,6 +12,12 @@ use exface\Core\Interfaces\DataSheets\DataColumnInterface;
  * Use `$event->preventUpdate()` to disable the general create logic of the data sheet: i.e.
  * the UPDATE-query to the data source(s).
  * 
+ * The event also allows to get information about changes, that the update is expected to cause:
+ * 
+ * - `getChanges($col)`
+ * - `willChange($col)`
+ * - etc.
+ * 
  * @event exface.Core.DataSheet.OnBeforeUpdateData
  * 
  * @author Andrej Kabachnik
@@ -162,23 +168,11 @@ class OnBeforeUpdateDataEvent extends AbstractDataSheetEvent
      */
     public function willChange(DataColumnInterface $newCol) : ?bool
     {
-        $newData = $this->getDataSheet();
-        
-        if ($newData->hasAggregations()) {
+        $changes = $this->getChanges($newCol);
+        if ($changes === null) {
             return null;
         }
-        
-        $oldData = $this->getDataSheetWithOldData();
-        if ($oldData === null) {
-            return null;
-        }
-        $oldCol = $oldData->getColumns()->get($newCol->getName());
-        
-        if ($newData->hasUidColumn(true)) {
-            return empty($newCol->diffValuesByUid($oldCol)) === false;
-        }
-        
-        return null;
+        return empty($changes) === false;
     }
     
     /**
@@ -200,6 +194,42 @@ class OnBeforeUpdateDataEvent extends AbstractDataSheetEvent
             }
         }
         return false;
+    }
+    
+    /**
+     * Returns an array of changed values in the speicifed column with the corresponding row numbers as keys.
+     * 
+     * In a sence, this method is what you would get by calling $newCol->getValues(), but only for
+     * those values, that will change with this update.
+     * 
+     * @param DataColumnInterface $newCol
+     * @return array|NULL
+     */
+    public function getChanges(DataColumnInterface $newCol) : ?array
+    {
+        $newData = $this->getDataSheet();
+        
+        if ($newData->hasAggregations()) {
+            return null;
+        }
+        
+        $oldData = $this->getDataSheetWithOldData();
+        if ($oldData === null) {
+            return null;
+        }
+        $oldCol = $oldData->getColumns()->get($newCol->getName());
+        
+        if ($newData->hasUidColumn(true)) {
+            $diffs = $newCol->diffValuesByUid($oldCol);
+            $uidCol = $newData->getUidColumn();
+            $changesByRow = [];
+            foreach ($diffs as $uid => $val) {
+                $changesByRow[$uidCol->findRowByValue($uid)] = $val;
+            }
+            return $changesByRow;
+        }
+        
+        return null;
     }
     
     /**
