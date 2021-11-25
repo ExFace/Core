@@ -432,6 +432,11 @@ class InputSelect extends Input implements iSupportMultiSelect
         return;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Value::doPrefill()
+     */
     protected function doPrefill(DataSheetInterface $data_sheet)
     {
         // Do not do anything, if the value is already set explicitly (e.g. a fixed value)
@@ -466,6 +471,11 @@ class InputSelect extends Input implements iSupportMultiSelect
         return;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Value::prepareDataSheetToPrefill()
+     */
     public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
     {
         $data_sheet = parent::prepareDataSheetToPrefill($data_sheet);
@@ -477,6 +487,12 @@ class InputSelect extends Input implements iSupportMultiSelect
         return $data_sheet;
     }
     
+    /**
+     * 
+     * @param DataColumnInterface $value_column
+     * @param DataColumnInterface $text_column
+     * @return \exface\Core\Widgets\InputSelect
+     */
     protected function setOptionsFromPrefillColumns(DataColumnInterface $value_column, DataColumnInterface $text_column = null)
     {
         $values = $value_column->getValues(false);
@@ -495,6 +511,11 @@ class InputSelect extends Input implements iSupportMultiSelect
         return $this;
     }
 
+    /**
+     * 
+     * @param DataSheetInterface $data_sheet
+     * @return \exface\Core\Widgets\InputSelect
+     */
     protected function setOptionsFromDataSheet(DataSheetInterface $data_sheet)
     {
         $data_sheet->getColumns()->addFromAttribute($this->getValueAttribute());
@@ -507,7 +528,6 @@ class InputSelect extends Input implements iSupportMultiSelect
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iHaveValues::getValues()
      */
     public function getValues() : array
@@ -522,6 +542,25 @@ class InputSelect extends Input implements iSupportMultiSelect
                 $array = [$this->getValue()];
             }
         } 
+        return $array;
+    }
+    
+    /**
+     * 
+     * @see getValueWithDefaults()
+     * @return array
+     */
+    public function getValuesWithDefaults() : array
+    {
+        $array = $this->getValues();
+        if (empty($array) && $def = $this->getDefaultValue()) {
+            if (is_array($def)) {
+                $array = $def;
+            } else {
+                $sep = $this->getMultipleValuesDelimiter();
+                $array = explode($sep, $def);
+            }
+        }
         return $array;
     }
 
