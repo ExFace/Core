@@ -5,12 +5,33 @@ use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 
 /**
- * PHP password hashes
+ * Data type for passwords and secrets.
  * 
- * @author aka
+ * This data type supports password policy validation and hashing. In particular,
+ * password strength can be checked using regular expressions: e.g.
+ * 
+ * ```
+ *  {
+ *     "validator_regex": "/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?([^\\w\\s]|[_])).{8,}$/",
+ *     "validation_error_code": "7INNL87" 
+ *  }
+ * 
+ * ```
+ * 
+ * Keep in mind, that auto-generated hints and errors for string validation based
+ * on regular expressions are not really helpful, as regexes are not really readable.
+ * Be sure to include a `validation_error_code` pointing to a translatable message
+ * in the meta model or at least a `validation_error_text` for a static message.
+ * 
+ * Although this data type offers hashing methods and supports validation of
+ * hashed data along with plain-text data, using this data type is not enough
+ * to actively hash data in a data source: use the `PasswordHashingBehavior`
+ * or data source logic additionally to really perform hashing.
+ * 
+ * @author Andrej Kabachnik
  *
  */
-class PasswordHashDataType extends StringDataType
+class PasswordDataType extends StringDataType
 {
     private $hashAlgorithm = null;
     
@@ -68,9 +89,9 @@ class PasswordHashDataType extends StringDataType
      * @uxon-type [default,bcrypt,argon2i,argon2id]
      *
      * @param string $value
-     * @return PasswordHashDataType
+     * @return PasswordDataType
      */
-    public function setHashAlgorithm(string $value) : PasswordHashDataType
+    public function setHashAlgorithm(string $value) : PasswordDataType
     {
         $this->hashAlgorithm = $value;
         return $this;
@@ -93,7 +114,7 @@ class PasswordHashDataType extends StringDataType
      */
     public function parse($value)
     {
-        if ($this->isHash($value)) {
+        if ($this::isHash($value)) {
             return $value;
         }
         return parent::parse($value);
@@ -112,9 +133,9 @@ class PasswordHashDataType extends StringDataType
      * 
      * @param string $string
      * @throws DataTypeConfigurationError
-     * @return PasswordHashDataType
+     * @return PasswordDataType
      */
-    public function setPasswordPolicyConfig(string $string) : PasswordHashDataType
+    public function setPasswordPolicyConfig(string $string) : PasswordDataType
     {
         $expr = ExpressionFactory::createFromString($this->getWorkbench(), $string);
         if (! $expr->isFormula() || ! $expr->isStatic()) {

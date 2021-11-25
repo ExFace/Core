@@ -10,7 +10,7 @@ use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthTok
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\Security\PasswordMismatchError;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
-use exface\Core\DataTypes\PasswordHashDataType;
+use exface\Core\DataTypes\PasswordDataType;
 
 /**
  * Action to change password of a user. Only for internal purpose, dont use otherwise as it needs very specific input data configuration.
@@ -44,7 +44,7 @@ class ChangeMyPassword extends UpdateData
         if (! $dataSheet->getColumns()->getByExpression('USERNAME') || ! $dataSheet->getColumns()->getByExpression('PASSWORD') || ! $dataSheet->getColumns()->getByExpression('OLD_PASSWORD')) {
             throw new ActionInputMissingError($this, "Can not update password, make sure the input data contains the Columns 'USER', 'PASSWORD' and 'OLD_PASSWORD'!");
         }
-        $dataSheet->getColumns()->getByExpression('OLD_PASSWORD')->setDataType(PasswordHashDataType::class);
+        $dataSheet->getColumns()->getByExpression('OLD_PASSWORD')->setDataType(PasswordDataType::class);
         $user = $dataSheet->getRow(0)['USERNAME'];
         if ($user !== $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUsername()) {
             throw new ActionRuntimeError($this, "Password could not be updated, it is not possible to change the password of another user.");

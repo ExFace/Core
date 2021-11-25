@@ -768,15 +768,15 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea0aea84bb7da1be19e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Password Hash",
-            "PROTOTYPE": "exface\/Core\/DataTypes\/PasswordHashDataType.php",
+            "NAME": "Password",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/PasswordDataType.php",
             "CONFIG_UXON": null,
             "VALIDATION_ERROR": "",
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputPassword"
             },
-            "ALIAS": "PasswordHash",
+            "ALIAS": "Password",
             "SHORT_DESCRIPTION": ""
         },
         {
