@@ -19,9 +19,7 @@ use exface\Core\Exceptions\LogicException;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\DataTypes\ComparatorDataType;
-use exface\Core\DataTypes\StringDataType;
 
 /**
  * A condition is a simple conditional predicate consisting of a (left) expression,
