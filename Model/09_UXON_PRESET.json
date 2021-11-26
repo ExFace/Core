@@ -2391,7 +2391,7 @@
         },
         {
             "CREATED_ON": "2020-03-19 20:23:49",
-            "MODIFIED_ON": "2020-03-20 13:07:16",
+            "MODIFIED_ON": "2021-11-26 22:38:42",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea6a1f8afdd918a3480205857feb80",
@@ -2410,9 +2410,7 @@
                     {
                         "attribute_alias": "\/\/ REPLACE WITH RELATION TO MASTER OBJECT!",
                         "required": true,
-                        "input_widget": {
-                            "widget_type": "InputHidden"
-                        }
+                        "hidden": true
                     }
                 ],
                 "columns": [
@@ -2425,7 +2423,7 @@
             },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": ""
         },
         {
             "CREATED_ON": "2020-04-21 07:13:34",
@@ -4100,7 +4098,7 @@
         },
         {
             "CREATED_ON": "2021-04-30 20:23:30",
-            "MODIFIED_ON": "2021-05-05 11:21:20",
+            "MODIFIED_ON": "2021-11-26 22:40:22",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebbb5d2ac44ab2bb5d025041000001",
@@ -4119,7 +4117,7 @@
                     {
                         "attribute_alias": "\/\/ REPLACE WITH RELATION TO PARENT OBJECT",
                         "required": true,
-                        "widget_type": "InputHidden",
+                        "hidden": true,
                         "value": ""
                     }
                 ],
