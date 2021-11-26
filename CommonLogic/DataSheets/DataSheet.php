@@ -1414,6 +1414,7 @@ class DataSheet implements DataSheetInterface
         $query->setFiltersConditionGroup($this->getFilters());
         
         // Add a UID-filter if we know, which UIDs are to be deleted
+        // Otherwise just use all filters of the data sheet
         $uidsToDelete = [];
         if ($uidCol = $this->getUidColumn()) {
             if ($uidsToDelete = $uidCol->getValues(false)) {
