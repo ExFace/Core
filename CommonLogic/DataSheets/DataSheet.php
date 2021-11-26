@@ -1419,6 +1419,8 @@ class DataSheet implements DataSheetInterface
             if ($uidsToDelete = $uidCol->getValues(false)) {
                 $query->addFilterCondition(ConditionFactory::createFromExpression($this->exface, $this->getUidColumn()->getExpressionObj(), implode($this->getUidColumn()->getAttribute()->getValueListDelimiter(), $uidsToDelete), EXF_COMPARATOR_IN));
             }
+        } else {
+            $query->addFilterConditionGroup($this->getFilters());
         }
         
         if ($eventBefore->isPreventDeleteCascade() === false) {
@@ -1433,30 +1435,46 @@ class DataSheet implements DataSheetInterface
                 if ((! $ds->hasUidColumn() || $ds->getUidColumn()->isEmpty()) && $ds->getFilters()->isEmpty()) {
                     continue;
                 }
+                
+                // See if the data sheet has any columns and add the system attributes if not
+                // We need some columns as we will read data later on
+                if ($ds->getColumns()->isEmpty()) {
+                    $ds->getColumns()->addFromSystemAttributes();
+                }
+                
                 // If the there can be data, but there are no rows, read the data
                 try {
-                    if ($ds->dataRead() > 0) {                    
-                        // If the sheet has a filled UID column, better replace all filters
-                        // by a simple IN-filter over UIDs. This simplifies the logic in most
-                        // query builders a lot! No all data sources can delete filtering over
-                        // relations, but most will be able to delete by UID.
-                        if ($ds->hasUidColumn(true)) {
-                            $dsUidCol = $ds->getUidColumn();
-                            // Remove all filters except for those over the UID column
-                            foreach ($ds->getFilters()->getConditions(function(ConditionInterface $cond) use ($dsUidCol) {
-                                return $cond->getExpression()->toString() !== $dsUidCol->getAttributeAlias();
-                            }) as $cond) {
-                                $ds->getFilters()->removeCondition($cond);
+                    switch (true) {
+                        // If there are no columns, delete without reading current data. This still can happen
+                        // even after we added system columns a few lines ago - there may not be any system columns
+                        // - e.g. for a SQL view which was accidently marked as writable in the metamodel
+                        case $ds->getColumns()->isEmpty():
+                            $ds->dataDelete($transaction);
+                            break;
+                        // Read current data to double-check there is something to delete
+                        case $ds->dataRead() > 0:                    
+                            // If the sheet has a filled UID column, better replace all filters
+                            // by a simple IN-filter over UIDs. This simplifies the logic in most
+                            // query builders a lot! No all data sources can delete filtering over
+                            // relations, but most will be able to delete by UID.
+                            if ($ds->hasUidColumn(true)) {
+                                $dsUidCol = $ds->getUidColumn();
+                                // Remove all filters except for those over the UID column
+                                foreach ($ds->getFilters()->getConditions(function(ConditionInterface $cond) use ($dsUidCol) {
+                                    return $cond->getExpression()->toString() !== $dsUidCol->getAttributeAlias();
+                                }) as $cond) {
+                                    $ds->getFilters()->removeCondition($cond);
+                                }
+                                // Add an IN-filter for the UID column
+                                $ds->getFilters()->addConditionFromColumnValues($ds->getUidColumn());
                             }
-                            // Add an IN-filter for the UID column
-                            $ds->getFilters()->addConditionFromColumnValues($ds->getUidColumn());
-                        }
-                        $ds->dataDelete($transaction);
+                            $ds->dataDelete($transaction);
+                            break;
                     }
                 } catch (MetaObjectHasNoDataSourceError $e) {
                     // Just ignore objects without data sources - there is nothing to delete there!
                 } catch (\Throwable $e) {
-                    throw new DataSheetDeleteError($ds, 'Cannot delete related data for "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . '). Please remove related "' . $ds->getMetaObject()->getName() . '" (' . $ds->getMetaObject()->getAliasWithNamespace() . ') manually and try again.', '6ZISUAJ', $e);
+                    throw new DataSheetDeleteError($ds, 'Cannot delete related data for "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . '): ' . rtrim($e->getMessage(), ".!") . '. Please remove related "' . $ds->getMetaObject()->getName() . '" (' . $ds->getMetaObject()->getAliasWithNamespace() . ') manually and try again.', '6ZISUAJ', $e);
                 }
             }
         }
@@ -1525,7 +1543,7 @@ class DataSheet implements DataSheetInterface
                 continue;
             }
             
-            // See if the relation is mandatory for the right (= related) object
+            // See if the relation is marked to delete its right object (= related) together with the left object
             if ($rel->isRightObjectToBeDeletedWithLeftObject()) {
                 $ds = DataSheetFactory::createFromObject($rel->getRightObject());
                 // Use all filters of the original query in the cascading queries
@@ -1535,7 +1553,10 @@ class DataSheet implements DataSheetInterface
                 if ($thisUidCol = $this->getUidColumn()) {
                     $uids = $thisUidCol->getValues(false);
                     if (! empty($uids)) {
-                        $ds->getFilters()->addConditionFromValueArray($thisUidCol->getExpressionObj()->rebase($rel->getAliasWithModifier())->toString(), $uids);
+                        // Add a filter of the key attribute of the relation on its right side (e.g. if deleting USERs, we
+                        // would also delete USER_ROLE_USERS with a filter over the USER attribute - which is the right key
+                        // of the reverse relation from USER to USER_ROLE_USERS)
+                        $ds->getFilters()->addConditionFromValueArray($rel->getRightKeyAttribute()->getAlias(), $uids);
                     }
                     
                     // For self-relations some additional filters need to be done on cascading delete sheets!
