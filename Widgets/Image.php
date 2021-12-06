@@ -29,7 +29,10 @@ class Image extends Display implements iShowImage, iCanBeAligned, iCanUseProxyFa
     
     public function getUri() : ?string
     {
-        return $this->getValue();
+        if ($this->hasValue() && ! $this->getValueExpression()->isReference()) {
+            return $this->getValue();
+        }
+        return null;
     }
     
     /**
