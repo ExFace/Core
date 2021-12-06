@@ -68,7 +68,7 @@ trait HtmlImageTrait
     public function buildJsValueDecorator($value_js)
     {
         if ($base = $this->getWidget()->getBaseUrl()) {
-            $value_js = "'{$base}'+" . $value_js;
+            $value_js = "({$value_js} ? '{$base}' : '') + {$value_js}";
         }
         
         if ($this->getWidget()->getUseProxy()) {
@@ -86,5 +86,17 @@ JS;
 '{$this->buildHtmlImage("'+" . $value_js . "+'")}'
 JS;
     }
+    
+    /**
+     * 
+     * @param string $value_js
+     * @return string
+     */
+    protected function buildJsImgSrcSetter(string $value_js) : string
+    {
+        if ($base = $this->getWidget()->getBaseUrl()) {
+            $value_js = "({$value_js} ? '{$base}' : '') + {$value_js}";
+        }
+        return "$('#{$this->getId()}').attr('src', {$value_js})";
+    }
 }
-?>
