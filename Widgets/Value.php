@@ -311,20 +311,19 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     {
         if ($this->data_type === null) {
             $expr = $this->getValueExpression();
-            if ($expr && ! $expr->isEmpty() && ! $expr->isConstant()) {
-                $this->data_type = $expr->getDataType();
-            } else {
-                switch (true) {
-                    case $this->isBoundToAttribute():
-                        $this->data_type = ExpressionFactory::createFromString($this->getWorkbench(), $this->getAttributeAlias(), $this->getMetaObject())->getDataType();
-                        break;
-                    case $expr:
-                        $this->data_type = $expr->getDataType();
-                        break;
-                    default:
-                        $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
-                        break;
-                }
+            switch (true) {
+                case $expr && ! $expr->isEmpty() && ! $expr->isConstant() && ! $expr->isReference():
+                    $this->data_type = $expr->getDataType();
+                    break;
+                case $this->isBoundToAttribute():
+                    $this->data_type = ExpressionFactory::createFromString($this->getWorkbench(), $this->getAttributeAlias(), $this->getMetaObject())->getDataType();
+                    break;
+                case $expr:
+                    $this->data_type = $expr->getDataType();
+                    break;
+                default:
+                    $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
+                    break;
             }
         }
         return $this->data_type;
