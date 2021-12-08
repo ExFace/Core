@@ -87,7 +87,7 @@ trait JqueryInputValidationTrait {
             case $type instanceof StringDataType:
                 // Validate string min legnth
                 if ($type->getLengthMin() > 0) {
-                    $js .= "if($valueJs.toString() !== $nullStr && $valueJs.toString().length < {$type->getLengthMin()}) { $onFailJs } \n";
+                    $js .= "if($valueJs.toString() !== '' && $valueJs.toString() !== $nullStr && $valueJs.toString().length < {$type->getLengthMin()}) { $onFailJs } \n";
                 }
                 
                 // Validate string max length
