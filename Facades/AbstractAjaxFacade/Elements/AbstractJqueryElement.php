@@ -53,8 +53,6 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     private $function_prefix = null;
 
     private $id = null;
-
-    private $element_type = null;
     
     private $element_class = 'exf-element';
     
@@ -248,19 +246,6 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
         }
         return $this->function_prefix;
     }
-
-    /**
-     * Returns the type attribute of the resulting HTML-element.
-     * In pure HTML this is only usefull for elements like
-     * input fields (the type would be "text", "hidden", etc.), but many UI-frameworks use this kind of attribute
-     * to identify types of widgets. Returns NULL by default.
-     *
-     * @return string
-     */
-    public function getElementType()
-    {
-        return $this->element_type;
-    }
     
     /**
      * Returns the CSS classes for this element (i.e. the contents of the HTML attribute class="...")
@@ -314,20 +299,6 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
         return $this;
     }
     
-    
-
-    /**
-     * Sets the element type
-     *
-     * @param string $value            
-     * @return AbstractJqueryElement
-     */
-    public function setElementType($value)
-    {
-        $this->element_type = $value;
-        return $this;
-    }
-
     /**
      * Returns the id of the HTML-element representing the widget.
      * Passing a widget id makes the method return the id of the element
