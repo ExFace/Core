@@ -498,7 +498,8 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function isInTable() : bool
     {
-        return $this->getParent() instanceof DataColumn;
+        // DataColumn namespace needed here because the DataSheet columns are used in this file too! 
+        return $this->getParent() instanceof \exface\Core\Widgets\DataColumn;
     }
     
     /**
