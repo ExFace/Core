@@ -16,24 +16,6 @@ trait HtmlImageTrait
     use JqueryAlignmentTrait;
     
     /**
-     * 
-     * @see AbstractJqueryElement::buildHtml()
-     */
-    public function buildHtml()
-    {
-        return $this->buildHtmlImage($this->getWidget()->getUri());
-    }
-
-    /**
-     *
-     * @see AbstractJqueryElement::buildJs()
-     */
-    public function buildJs()
-    {
-        return '';
-    }
-    
-    /**
      * Returns the <img> HTML tag with the given source.
      * 
      * @param string $src
