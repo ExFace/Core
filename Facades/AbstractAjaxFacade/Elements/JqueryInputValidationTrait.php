@@ -82,11 +82,12 @@ trait JqueryInputValidationTrait {
     protected function buildJsValidatorCheckDataType(string $valueJs, string $onFailJs, DataTypeInterface $type) : string
     {
         $js = '';
+        $nullStr = "'" . EXF_LOGICAL_NULL . "'";
         switch (true) {
             case $type instanceof StringDataType:
                 // Validate string min legnth
                 if ($type->getLengthMin() > 0) {
-                    $js .= "if($valueJs.toString().length < {$type->getLengthMin()}) { $onFailJs } \n";
+                    $js .= "if($valueJs.toString() !== $nullStr && $valueJs.toString().length < {$type->getLengthMin()}) { $onFailJs } \n";
                 }
                 
                 // Validate string max length
@@ -95,11 +96,11 @@ trait JqueryInputValidationTrait {
                     break;
                 }
                 if ($type->getLengthMax() > 0) {
-                    $js .= "if($valueJs.toString().length > {$type->getLengthMax()}) { $onFailJs } \n";
+                    $js .= "if($valueJs.toString() !== '' && $valueJs.toString() !== $nullStr && $valueJs.toString().length > {$type->getLengthMax()}) { $onFailJs } \n";
                 }
                 
                 if ($type->getValidatorRegex() !== null) {
-                    $js .= "if({$type->getValidatorRegex()}.test({$valueJs}) == false) { {$onFailJs} } \n";
+                    $js .= "if($valueJs.toString() !== '' && $valueJs.toString() !== $nullStr && {$type->getValidatorRegex()}.test({$valueJs}) == false) { {$onFailJs} } \n";
                 }
                 
                 break;
