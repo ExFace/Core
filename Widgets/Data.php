@@ -193,8 +193,8 @@ class Data
         }
         
         // Pagination
-        if ($this->getPaginator()->getPageSize()) {
-            $data_sheet->setRowsLimit($this->getPaginator()->getPageSize());
+        if (! $data_sheet->isPaged() && $pgSize = $this->getPaginator()->getPageSize()) {
+            $data_sheet->setRowsLimit($pgSize);
         }
         if ($this->getPaginator()->getCountAllRows() === false) {
             $data_sheet->setAutoCount(false);
