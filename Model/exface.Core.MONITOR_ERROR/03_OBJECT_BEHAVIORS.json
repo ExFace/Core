@@ -49,7 +49,7 @@
     "rows": [
         {
             "CREATED_ON": "2021-04-15 16:34:40",
-            "MODIFIED_ON": "2021-04-21 09:14:33",
+            "MODIFIED_ON": "2021-12-10 18:05:19",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb87dcb685391287dc025041000001",
@@ -90,7 +90,7 @@
                         ]
                     },
                     "90": {
-                        "name": "Ignored",
+                        "name": "Obsolete\/Duplicate",
                         "color": "lightgray",
                         "icon": "eye-slash",
                         "transitions": [
