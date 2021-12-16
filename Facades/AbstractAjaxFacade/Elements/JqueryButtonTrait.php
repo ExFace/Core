@@ -15,6 +15,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Factories\ExpressionFactory;
 
 /**
  * 
@@ -152,10 +153,50 @@ JS;
             $js_check_button_state = $this->getWidget()->isDisabled() === true ? 'return false;' : '';
         }
         
+        if ($customData = $this->getWidget()->getInputData()) {
+            $customDataRows = '';
+            foreach ($customData->getRows() as $row) {
+                $jsRow = '';
+                foreach ($row as $colName => $val) {
+                    $val = trim($val);
+                    if (substr($val, 0, 1) === '=') {
+                        $expr = ExpressionFactory::createForObject($customData->getMetaObject(), $val);
+                        switch (true) {
+                            case $expr->isReference():
+                                $jsRow .= $colName . ': ' . $this->getFacade()->getElement($expr->getWidgetLink($this->getWidget())->getTargetWidget())->buildJsValueGetter() . ',';
+                                break;
+                            case $expr->isConstant():
+                                $jsRow .= $colName . ': ' . $expr->__toString() . ',';
+                                break;
+                            case $expr->isStatic():
+                                $jsRow .= $colName . ': "' . $expr->evaluate() . '",';
+                                break;
+                            default:
+                                throw new WidgetConfigurationError($this, 'Invalid row value "' . $val . '" in input_data of ' . $this->getWidget()->getWidgetType());
+                        }
+                    } else {
+                        
+                    }
+                }
+                $customDataRows .= '{' . $jsRow . '},';
+            }
+            $js_get_data = <<<JS
+{
+    "oId": "{$customData->getMetaObject()->getId()}",
+    "rows": [
+        {$customDataRows}
+    ]
+}
+
+JS;
+        } else {
+            $js_get_data = $input_element->buildJsDataGetter($action);
+        }
+        
         return <<<JS
 
                     $js_check_button_state
-					var requestData = {$input_element->buildJsDataGetter($action)};
+					var requestData = {$js_get_data};console.log(requestData);
 					$js_check_input_rows
 
 JS;
