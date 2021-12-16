@@ -21,6 +21,8 @@ use exface\Core\Interfaces\Widgets\iCanBeDisabled;
 use exface\Core\Interfaces\Actions\iResetWidgets;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\Model\UiPage;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Factories\DataSheetFactory;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -73,6 +75,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     private $hiddenIfAccessDenied = false;
     
     private $appearance = self::APPEARANCE_DEFAULT;
+    
+    private $inputDataUxon = null;
     
     /**
      * 
@@ -547,6 +551,52 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             throw new WidgetConfigurationError('Invalid value "' . $value . '" for property `appearance` of widget "' . $this->getWidgetType() . '": expecting `default`, `link`, `filled` or `stroked`.');
         }
         $this->appearance = constant($constName);
+        return $this;
+    }
+    
+    public function getInputData() : ?DataSheetInterface
+    {
+        if ($this->inputDataUxon !== null) {
+            return DataSheetFactory::createFromUxon($this->getWorkbench(), $this->inputDataUxon);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Custom input data for this buttons action.
+     * 
+     * Allows to specify input data for this specific button explicitly - including live references to
+     * other widgets. In contrast to `input_mapper` and `input_data_sheet` of the action, this property
+     * only affects this one button and not the action in general. Hence, it allows to reference other
+     * widgets on the page. This makes it possible to "gather" any data from the page without sticking
+     * to a single widget - you can even put together values from widgets with different objects!
+     * 
+     * ```
+     *  "input_data": {
+     *      "object_alias": "my.App.my_object",
+     *      "rows": [
+     *          {
+     *              "attribute1": "=some_widget_id",
+     *              "attribute2": "=some_table_id!column",
+     *              "attribute3": 23,
+     *              "attribute4": "=Now()"
+     *          }
+     *      ]
+     *  }
+     * 
+     * ```
+     * 
+     * @uxon-property input_data
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
+     * @uxon-template {"object_alias": "", "rows": [{"": ""}]}
+     * 
+     * @param UxonObject $value
+     * @return Button
+     */
+    public function setInputData(UxonObject $value) : Button
+    {
+        $this->inputDataUxon = $value;
         return $this;
     }
 }
