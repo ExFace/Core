@@ -150,7 +150,7 @@ class Data
             foreach ($this->getColumns() as $col) {
                 // If it's a calculated column, add the corresponding expression column
                 if ($col->isCalculated() && ! $col->getCalculationExpression()->isEmpty() && ! $col->getCalculationExpression()->isReference()) {
-                    $data_sheet->getColumns()->addFromExpression($col->getCalculationExpression());
+                    $data_sheet->getColumns()->addFromExpression($col->getCalculationExpression(), $col->getDataColumnName());
                 }
                 
                 $cellWidget = $col->getCellWidget();
